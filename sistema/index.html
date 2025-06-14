@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo de Carga Térmica</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-section { background: #f9f9f9; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; }
+        .checkbox-group label { display: inline-block; margin-right: 15px; font-weight: normal; }
+        button { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .required:after { content: " *"; color: red; }
+    </style>
+</head>
+<body>
+    <h1>Calculadora de Carga Térmica</h1>
+    <form action="processa.php" method="POST">
+        
+        <!-- Seção: Dados do Cliente -->
+        <div class="form-section">
+            <h2>Dados do Cliente</h2>
+            <label for="nome" class="required">Nome:</label>
+            <input type="text" name="nome" required>
+            
+            <label for="empresa">Empresa:</label>
+            <input type="text" name="empresa">
+            
+            <label for="cnpj">CNPJ:</label>
+            <input type="text" name="cnpj" placeholder="00.000.000/0000-00">
+            
+            <label for="telefone" class="required">Telefone:</label>
+            <input type="text" name="telefone" required>
+            
+            <label for="email" class="required">E-mail:</label>
+            <input type="email" name="email" required>
+        </div>
+
+        <!-- Seção: Dados do Ambiente -->
+        <div class="form-section">
+            <h2>Dados do Ambiente</h2>
+            <label for="projeto" class="required">Nome do Projeto:</label>
+            <input type="text" name="projeto" required>
+            
+            <label for="area" class="required">Área (m²):</label>
+            <input type="number" name="area" step="0.01" min="0" required>
+            
+            <label for="pe_direito" class="required">Pé-direito (m):</label>
+            <input type="number" name="pe_direito" step="0.01" min="0" required>
+            
+            <label for="dissipacao" class="required">Dissipação Térmica (W):</label>
+            <input type="number" name="dissipacao" min="0" required>
+            
+            <label for="n_pessoas" class="required">Número de Pessoas:</label>
+            <input type="number" name="n_pessoas" min="0" required>
+        </div>
+
+        <!-- Seção: Detalhes de Construção (Novos Campos) -->
+        <div class="form-section">
+            <h2>Detalhes de Construção</h2>
+            <label>Tipo de Construção:
+                <select name="tipo_construcao" required>
+                    <option value="eletrocentro">Eletrocentro</option>
+                    <option value="alvenaria">Alvenaria</option>
+                </select>
+            </label>
+            
+            <label>Área de Paredes (m²):
+                <input type="number" name="area_paredes" step="0.01" required>
+            </label>
+            
+            <label>Pressurização (Pa):
+                <input type="number" name="pressurizacao" step="0.1" required>
+            </label>
+        </div>
+
+        <!-- Seção: Portas -->
+        <div class="form-section">
+            <h2>Portas</h2>
+            <label>Número de Portas Duplas:
+                <input type="number" name="portas_duplas" min="0" value="0">
+            </label>
+            
+            <label>Número de Portas Simples:
+                <input type="number" name="portas_simples" min="0" value="0">
+            </label>
+        </div>
+
+        <!-- Seção: Backup -->
+        <div class="form-section">
+            <h2>Configuração de Backup</h2>
+            <div class="checkbox-group">
+                <label><input type="radio" name="backup" value="N" checked> N (Sem redundância)</label>
+                <label><input type="radio" name="backup" value="N+1"> N+1 (Redundância parcial)</label>
+                <label><input type="radio" name="backup" value="2N"> 2N (Redundância total)</label>
+            </div>
+        </div>
+
+        <button type="submit">Gerar Proposta</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,14 @@
+[
+    {
+        "modelo": "MX-5",
+        "capacidade_tr": 5,
+        "capacidade_w": 17585,
+        "preco": 12000
+    },
+    {
+        "modelo": "MX-10",
+        "capacidade_tr": 10,
+        "capacidade_w": 35170,
+        "preco": 22000
+    }
+]
