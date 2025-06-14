@@ -16,88 +16,75 @@
 </head>
 <body>
     <h1>Calculadora de Carga Térmica</h1>
-    <form action="processa.php" method="POST">
+    <form id="form-carga-termica" action="processa.php" method="POST">
         
-        <!-- Seção: Dados do Cliente -->
+        <!-- SEÇÃO 1: DADOS DO CLIENTE -->
         <div class="form-section">
             <h2>Dados do Cliente</h2>
-            <label for="nome" class="required">Nome:</label>
-            <input type="text" name="nome" required>
-            
-            <label for="empresa">Empresa:</label>
-            <input type="text" name="empresa">
-            
-            <label for="cnpj">CNPJ:</label>
-            <input type="text" name="cnpj" placeholder="00.000.000/0000-00">
-            
-            <label for="telefone" class="required">Telefone:</label>
-            <input type="text" name="telefone" required>
-            
-            <label for="email" class="required">E-mail:</label>
-            <input type="email" name="email" required>
+            <input type="text" name="cliente[nome]" placeholder="Nome" required>
+            <input type="text" name="cliente[empresa]" placeholder="Empresa">
+            <input type="text" name="cliente[cnpj]" placeholder="CNPJ">
         </div>
 
-        <!-- Seção: Dados do Ambiente -->
+        <!-- SEÇÃO 2: DADOS DO AMBIENTE -->
         <div class="form-section">
             <h2>Dados do Ambiente</h2>
-            <label for="projeto" class="required">Nome do Projeto:</label>
-            <input type="text" name="projeto" required>
+            <input type="text" name="ambiente[projeto]" placeholder="Nome do Projeto" required>
+            <input type="number" name="ambiente[area]" step="0.01" placeholder="Área (m²)" required>
+            <input type="number" name="ambiente[pe_direito]" step="0.01" placeholder="Pé-direito (m)" required>
             
-            <label for="area" class="required">Área (m²):</label>
-            <input type="number" name="area" step="0.01" min="0" required>
-            
-            <label for="pe_direito" class="required">Pé-direito (m):</label>
-            <input type="number" name="pe_direito" step="0.01" min="0" required>
-            
-            <label for="dissipacao" class="required">Dissipação Térmica (W):</label>
-            <input type="number" name="dissipacao" min="0" required>
-            
-            <label for="n_pessoas" class="required">Número de Pessoas:</label>
-            <input type="number" name="n_pessoas" min="0" required>
+            <select name="ambiente[tipo_construcao]" required>
+                <option value="eletrocentro">Eletrocentro</option>
+                <option value="alvenaria">Alvenaria</option>
+            </select>
         </div>
 
-        <!-- Seção: Detalhes de Construção (Novos Campos) -->
+        <!-- SEÇÃO 3: PAREDES EXTERNAS -->
         <div class="form-section">
-            <h2>Detalhes de Construção</h2>
-            <label>Tipo de Construção:
-                <select name="tipo_construcao" required>
-                    <option value="eletrocentro">Eletrocentro</option>
-                    <option value="alvenaria">Alvenaria</option>
-                </select>
-            </label>
-            
-            <label>Área de Paredes (m²):
-                <input type="number" name="area_paredes" step="0.01" required>
-            </label>
-            
-            <label>Pressurização (Pa):
-                <input type="number" name="pressurizacao" step="0.1" required>
-            </label>
+            <h2>Paredes Externas</h2>
+            <input type="number" name="paredes[oeste]" step="0.01" placeholder="Parede Oeste (m)">
+            <input type="number" name="paredes[leste]" step="0.01" placeholder="Parede Leste (m)">
+            <input type="number" name="paredes[norte]" step="0.01" placeholder="Parede Norte (m)">
+            <input type="number" name="paredes[sul]" step="0.01" placeholder="Parede Sul (m)">
         </div>
 
-        <!-- Seção: Portas -->
+        <!-- SEÇÃO 4: DIVISÓRIAS -->
         <div class="form-section">
-            <h2>Portas</h2>
-            <label>Número de Portas Duplas:
-                <input type="number" name="portas_duplas" min="0" value="0">
-            </label>
-            
-            <label>Número de Portas Simples:
-                <input type="number" name="portas_simples" min="0" value="0">
-            </label>
+            <h2>Divisórias</h2>
+            <input type="number" name="divisorias[nao_climatizada_1]" step="0.01" placeholder="Área não climatizada 1 (m)">
+            <input type="number" name="divisorias[nao_climatizada_2]" step="0.01" placeholder="Área não climatizada 2 (m)">
+            <input type="number" name="divisorias[climatizada_1]" step="0.01" placeholder="Área climatizada 1 (m)">
+            <input type="number" name="divisorias[climatizada_2]" step="0.01" placeholder="Área climatizada 2 (m)">
         </div>
 
-        <!-- Seção: Backup -->
+        <!-- SEÇÃO 5: PORTAS E PRESSURIZAÇÃO -->
         <div class="form-section">
-            <h2>Configuração de Backup</h2>
-            <div class="checkbox-group">
-                <label><input type="radio" name="backup" value="N" checked> N (Sem redundância)</label>
-                <label><input type="radio" name="backup" value="N+1"> N+1 (Redundância parcial)</label>
-                <label><input type="radio" name="backup" value="2N"> 2N (Redundância total)</label>
-            </div>
+            <h2>Portas e Pressurização</h2>
+            <input type="number" name="portas[duplas]" placeholder="N° Portas Duplas" min="0">
+            <input type="number" name="portas[simples]" placeholder="N° Portas Simples" min="0">
+            <input type="number" name="pressurizacao" step="0.1" placeholder="Pressurização (Pa)">
         </div>
 
-        <button type="submit">Gerar Proposta</button>
+        <!-- SEÇÃO 6: CARGA TÉRMICA INTERNA -->
+        <div class="form-section">
+            <h2>Carga Térmica Interna</h2>
+            <input type="number" name="carga_interna[dissipacao]" placeholder="Dissipação (W)">
+            <input type="number" name="carga_interna[n_pessoas]" placeholder="N° de Pessoas" min="0">
+            <input type="number" name="carga_interna[vazao_ar]" step="0.01" placeholder="Vazão Ar Externo (l/s)">
+        </div>
+
+        <!-- SEÇÃO 7: CONFIGURAÇÕES -->
+        <div class="form-section">
+            <h2>Configurações</h2>
+            <select name="backup" required>
+                <option value="N">N (Sem redundância)</option>
+                <option value="N+1">N+1 (Redundância parcial)</option>
+                <option value="2N">2N (Redundância total)</option>
+            </select>
+            <input type="number" name="setpoint" step="0.1" placeholder="Setpoint (°C)">
+        </div>
+
+        <button type="submit">Calcular Carga Térmica</button>
     </form>
 </body>
 </html>

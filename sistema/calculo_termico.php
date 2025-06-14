@@ -1,49 +1,80 @@
 <?php
-// CONSTANTES BASE (DA PLANILHA)
-define('TR_W', 3517); // 1 TR = 3517W
+// Constantes globais
+define('TR_W', 3517); // 1TR = 3517W
 define('U_TETO_ALVENARIA', 3.961);
 define('U_PAREDE_ALVENARIA', 2.546);
 define('U_PISO_ELETROCENTRO', 2.7);
-define('FATOR_LUMINOSIDADE', 7); // W/m²
+define('FATOR_LUMINOSIDADE', 7);
 
 function calcularCargaTermica($dados) {
-    // 1. GANHOS POR PAREDES/TETO
-    $ganho_teto = $dados['area'] * U_TETO_ALVENARIA * 20; // ΔT=20°C fixo
-    $ganho_paredes = $dados['area_paredes'] * U_PAREDE_ALVENARIA * 13; // ΔT=13°C fixo
-    
-    // 2. GANHOS POR PISO
-    $ganho_piso = $dados['area'] * U_PISO_ELETROCENTRO * 7.5; // ΔT=7.5°C fixo
-    
-    // 3. GANHOS POR PORTAS
-    $ganho_portas = calcularCargaPortas($dados['portas_duplas'], $dados['portas_simples'], $dados['pressurizacao']);
-    
-    // 4. OUTROS COMPONENTES
-    $ganho_luminosidade = $dados['area'] * FATOR_LUMINOSIDADE;
-    $ganho_pessoas = $dados['n_pessoas'] * (86.5 + 133.3); // Csp + Clp
-    $ganho_dissipacao = $dados['dissipacao'];
-    
-    // SOMA TOTAL
-    $total_w = $ganho_teto + $ganho_paredes + $ganho_piso + $ganho_portas 
-               + $ganho_luminosidade + $ganho_pessoas + $ganho_dissipacao;
-    
+    // Validação dos dados obrigatórios
+    if (
+        empty($dados['paredes']['oeste']) || empty($dados['paredes']['leste']) ||
+        empty($dados['paredes']['norte']) || empty($dados['paredes']['sul']) ||
+        empty($dados['ambiente']['area']) || empty($dados['ambiente']['pe_direito']) ||
+        !isset($dados['portas']['simples']) || !isset($dados['portas']['duplas']) ||
+        !isset($dados['pressurizacao']) ||
+        !isset($dados['carga_interna']['dissipacao']) || !isset($dados['carga_interna']['n_pessoas']) ||
+        !isset($dados['carga_interna']['vazao_ar'])
+    ) {
+        throw new Exception("Dados insuficientes para cálculo.");
+    }
+
+    // Cálculo da área total das paredes
+    $area_paredes = (
+        $dados['paredes']['oeste'] + $dados['paredes']['leste'] +
+        $dados['paredes']['norte'] + $dados['paredes']['sul']
+    ) * $dados['ambiente']['pe_direito'];
+
+    $ganhos = [
+        'teto' => $dados['ambiente']['area'] * U_TETO_ALVENARIA * 20,
+        'paredes' => $area_paredes * U_PAREDE_ALVENARIA * 13,
+        'portas' => calcularPortas($dados['portas'], $dados['pressurizacao']),
+        'piso' => $dados['ambiente']['area'] * U_PISO_ELETROCENTRO * 7.5,
+        'iluminacao' => $dados['ambiente']['area'] * FATOR_LUMINOSIDADE,
+        'dissipacao' => $dados['carga_interna']['dissipacao'],
+        'pessoas' => $dados['carga_interna']['n_pessoas'] * (86.5 + 133.3),
+        'ar_externo' => calcularArExterno($dados['carga_interna']['vazao_ar']),
+    ];
+
+    $total_w = array_sum($ganhos);
+    $total_tr = $total_w / TR_W;
+
     return [
-        'w' => $total_w,
-        'tr' => $total_w / TR_W,
-        'detalhes' => [
-            'teto' => $ganho_teto,
-            'paredes' => $ganho_paredes,
-            'piso' => $ganho_piso,
-            'portas' => $ganho_portas,
-            'luminosidade' => $ganho_luminosidade,
-            'pessoas' => $ganho_pessoas,
-            'dissipacao' => $ganho_dissipacao
-        ]
+        'detalhes' => $ganhos,
+        'total_w' => $total_w,
+        'total_tr' => $total_tr,
     ];
 }
 
-function calcularCargaPortas($n_portas_duplas, $n_portas_simples, $pressurizacao) {
-    $carga_duplas = 0.827 * $n_portas_duplas * 0.0402 * (pow($pressurizacao, 0.5)) * 3600;
-    $carga_simples = 0.827 * $n_portas_simples * 0.024 * (pow($pressurizacao, 0.5)) * 3600;
-    return $carga_duplas + $carga_simples;
+function calcularPortas($portas, $pressurizacao) {
+    return (0.827 * $portas['duplas'] * 0.0402 * sqrt($pressurizacao) * 3600) +
+           (0.827 * $portas['simples'] * 0.024 * sqrt($pressurizacao) * 3600);
+}
+
+function calcularArExterno($vazao) {
+    $sensivel = $vazao * 0.24 * 10 / 1000 * 1.16;
+    $latente = $vazao * 3.01 * 8.47;
+    return $sensivel + $latente;
+}
+
+function gerarSolucoes($total_tr, $backup) {
+    $modelos = json_decode(file_get_contents('dados/modelos.json'), true);
+    $solucoes = [];
+
+    foreach ($modelos as $modelo) {
+        $qtd_base = ceil($total_tr / $modelo['capacidade_tr']);
+
+        $solucoes[] = [
+            'modelo' => $modelo['modelo'],
+            'capacidade' => $modelo['capacidade_tr'],
+            'N' => $qtd_base,
+            'N+1' => $qtd_base + 1,
+            '2N' => $qtd_base * 2,
+            'preco_base' => $modelo['preco_base'],
+        ];
+    }
+
+    return $solucoes;
 }
 ?>
