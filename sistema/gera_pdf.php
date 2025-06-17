@@ -1,357 +1,490 @@
 <?php
-/**
- * Script para geração de PDF de proposta técnica
- * Versão robusta com tratamento completo de erros
- */
-
-// =============================================
-// CONFIGURAÇÃO INICIAL E PROTEÇÃO CONTRA ERROS
-// =============================================
-
-// Nível máximo de buffer para evitar saídas precoces
-while (ob_get_level() > 0) ob_end_clean();
-ob_start();
-
-// Desativa warnings que podem gerar saída indesejada
-error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE);
-ini_set('display_errors', 0);
-
-// =============================================
-// REQUISITOS E DEPENDÊNCIAS
-// =============================================
-
-// Caminhos absolutos para evitar problemas de inclusão
 require_once __DIR__ . '/tcpdf/tcpdf.php';
 require_once __DIR__ . '/classes/pdf_mc_table.php';
 
-// =============================================
-// VALIDAÇÃO DOS DADOS DE ENTRADA
-// =============================================
-
-try {
-    // Verificação robusta da estrutura de dados
-    if (!isset($dadosCompletos)) {
-        throw new Exception("Nenhum dado foi fornecido para geração do PDF");
+class GeradorProposta {
+    private $dados;
+    private $resultados;
+    
+    public function __construct($dados, $resultados) {
+        $this->dados = $dados;
+        $this->resultados = $resultados;
     }
-
-    if (!is_array($dadosCompletos)) {
-        throw new Exception("Os dados fornecidos não estão no formato esperado");
+    
+    public function gerarPropostaComercial() {
+        $pdf = new PDF_MC_Table();
+        $pdf->SetCreator('Sistema HVAC');
+        $pdf->SetAuthor('ACTEMIUM');
+        $pdf->SetTitle('PROPOSTA COMERCIAL');
+        $pdf->SetSubject('Proposta Comercial para Sistema HVAC');
+        
+        // Configurações de página
+        $pdf->SetMargins(15, 15, 15);
+        $pdf->SetHeaderMargin(10);
+        $pdf->SetFooterMargin(10);
+        $pdf->SetAutoPageBreak(true, 25);
+        
+        $pdf->AddPage();
+        
+        // Cabeçalho
+        $this->gerarCabecalho($pdf, 'PROPOSTA COMERCIAL (PC)');
+        
+        // 1 - OBJETO
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, '1 - OBJETO', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->MultiCell(0, 7, 'Serviços de projeto de ar-condicionado dos objetos descritos abaixo, a serem executados no padrão do cliente. Para mais detalhes, gentileza consultar a Proposta Técnica (PT) enviada juntamente com esta Proposta Comercial (PC).', 0, 'J');
+        $pdf->Ln(5);
+        
+        $this->adicionarItemLista($pdf, 'Projeto do sistema HVAC da(s) Sala(s) de Painéis.');
+        $this->adicionarItemLista($pdf, 'Acompanhamento dos testes nas dependências do cliente na região metropolitana de Belo Horizonte/MG (item ofertado como cortesia, não haverá desconto em caso de não realização do serviço).');
+        $pdf->Ln(10);
+        
+        // 2 - PREÇO
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, '2 - PREÇO', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        // Climatização
+        $this->gerarSecaoClimatizacao($pdf);
+        
+        // Pressurização
+        if (!empty($this->resultados['solucao']['pressurizacao'])) {
+            $this->gerarSecaoPressurizacao($pdf);
+        }
+        
+        // Exaustão
+        if (!empty($this->resultados['solucao']['exaustao'])) {
+            $this->gerarSecaoExaustao($pdf);
+        }
+                // Engenharia
+        $this->gerarSecaoEngenharia($pdf);
+                // TOTAL
+        $this->gerarTotalProposta($pdf);
+                // 3 - DADOS
+        $this->gerarSecaoDados($pdf);
+                // 4 - INFORMAÇÕES PERTINENTES
+        $this->gerarSecaoInformacoes($pdf);
+                // 5 - VALIDADE
+        $this->gerarSecaoValidade($pdf);
+                // 6 - FORMA DE PAGAMENTO
+        $this->gerarSecaoPagamento($pdf);
+                // 7 - PRAZO DE PAGAMENTO
+        $this->gerarSecaoPrazoPagamento($pdf);
+                // Assinatura
+        $this->gerarAssinatura($pdf);
+        return $pdf;
     }
-
-    // Estrutura padrão com todos os campos necessários
-    $defaults = [
-        'cliente' => [
-            'nome' => 'Não informado',
-            'empresa' => 'Não informado',
-            'cnpj' => 'Não informado',
-            'telefone' => 'Não informado',
-            'email' => 'Não informado'
-        ],
-        'ambiente' => [
-            'area' => 0,
-            'pe_direito' => 0,
-            'projeto' => 'Projeto Padrão',
-            'tipo' => 'Comercial',
-            'setpoint' => 24
-        ],
-        'portas' => [
-            'simples' => 0,
-            'duplas' => 0
-        ],
-        'config' => [
-            'pressurizacao' => 0,
-            'backup' => 'sem_backup'
-        ],
-        'resultados' => [
-            'total_w' => 0,
-            'total_tr' => 0,
-            'detalhes' => [
-                'externos' => ['total' => 0],
-                'piso' => ['total' => 0],
-                'iluminacao' => 0,
-                'pessoas' => 0,
-                'ar_externo' => 0
-            ],
-            'solucoes' => [
-                [
-                    'modelo' => 'Modelo Padrão',
-                    'capacidade' => 0,
-                    'sem_backup' => 0,
-                    'com_backup' => 0
-                ]
-            ]
-        ]
-    ];
-
-    // Preenche os dados faltantes com valores padrão
-    $dadosCompletos = array_replace_recursive($defaults, $dadosCompletos);
-
-    // =============================================
-    // DEFINIÇÃO DAS CLASSES DO PDF
-    // =============================================
-
-    class MYPDF extends TCPDF {
-        public $widths;
-        public $aligns;
-
-        public function SetWidths($w) {
-            $this->widths = $w;
+    
+    public function gerarPropostaTecnica() {
+        $pdf = new PDF_MC_Table();
+        $pdf->SetCreator('Sistema HVAC');
+        $pdf->SetAuthor('ACTEMIUM');
+        $pdf->SetTitle('PROPOSTA TÉCNICA');
+        $pdf->SetSubject('Proposta Técnica para Sistema HVAC');
+        
+        // Configurações de página
+        $pdf->SetMargins(15, 15, 15);
+        $pdf->SetHeaderMargin(10);
+        $pdf->SetFooterMargin(10);
+        $pdf->SetAutoPageBreak(true, 25);
+        
+        $pdf->AddPage();
+        
+        // Cabeçalho
+        $this->gerarCabecalho($pdf, 'PROPOSTA TÉCNICA (PT)');
+        
+        // 1 - OBJETO
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, '1 - OBJETO', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->MultiCell(0, 7, 'Serviços de projeto de ar-condicionado dos objetos descritos abaixo, a serem executados no padrão do cliente. Para mais detalhes, gentileza consultar a Proposta Comercial (PC) enviada juntamente com esta Proposta Técnica (PT).', 0, 'J');
+        $pdf->Ln(5);
+        
+        $this->adicionarItemLista($pdf, 'Projeto do sistema HVAC da(s) Sala(s) de Painéis.');
+        $this->adicionarItemLista($pdf, 'Acompanhamento dos testes nas dependências do cliente na região metropolitana de Belo Horizonte/MG (item ofertado como cortesia, não haverá desconto em caso de não realização do serviço).');
+        $pdf->Ln(10);
+        
+        // Fora de escopo
+        $this->gerarSecaoForaEscopo($pdf);
+        
+        // Premissas
+        $this->gerarSecaoPremissas($pdf);
+        
+        // 1 - GENERALIDADES DO SISTEMA
+        $this->gerarSecaoGeneralidades($pdf);
+        
+        return $pdf;
+    }
+    
+    private function gerarCabecalho($pdf, $titulo) {
+        $pdf->SetFont('helvetica', 'B', 16);
+        $pdf->Cell(0, 10, $titulo, 0, 1, 'C');
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(0, 5, 'Belo Horizonte, ' . date('d/m/Y'), 0, 1, 'R');
+        $pdf->Ln(10);
+        
+        // Logo
+        $logoPath = __DIR__ . '/images/logo_actemium.jpg';
+        if (file_exists($logoPath)) {
+            $pdf->Image($logoPath, 15, 20, 40);
         }
-
-        public function SetAligns($a) {
-            $this->aligns = $a;
+        $pdf->Ln(25);
+    }
+    
+    private function adicionarItemLista($pdf, $texto, $nivel = 0) {
+        $pdf->Cell(5 + ($nivel * 5), 7, '', 0, 0);
+        $pdf->Cell(5, 7, '-', 0, 0);
+        $pdf->MultiCell(0, 7, $texto, 0, 'J');
+    }
+    
+    private function gerarSecaoClimatizacao($pdf) {
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Climatização:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        // Verifica se existe a seção de climatização e se não está vazia
+        if (empty($this->resultados['solucao']['climatizacao']) || !is_array($this->resultados['solucao']['climatizacao'])) {
+            $pdf->Cell(5, 7, '', 0, 0);
+            $pdf->Cell(0, 7, 'Nenhum equipamento de climatização selecionado', 0, 1);
+            $pdf->Ln(5);
+            return;
         }
-
-        public function Row($data, $header = false) {
-            $nb = 0;
-            $data_count = count($data);
+        
+        foreach ($this->resultados['solucao']['climatizacao'] as $equipamento) {
+            // Valores padrão caso as chaves não existam
+            $precoUnitario = $equipamento['preco_unitario'] ?? 0;
+            $quantidade = $equipamento['quantidade_n1'] ?? 1;
+            $capacidade = $equipamento['capacidade_tr'] ?? 0;
+            $modelo = $equipamento['modelo'] ?? 'Wall Mounted';
             
-            for ($i = 0; $i < $data_count; $i++) {
-                $nb = max($nb, $this->NbLines($this->widths[$i], $data[$i]));
-            }
+            $pdf->Cell(5, 7, '', 0, 0);
+            $pdf->SetFont('helvetica', 'B', 10);
+            $pdf->Cell(0, 7, 'R$ ' . number_format($precoUnitario * $quantidade, 2, ',', '.'), 0, 1);
+            $pdf->SetFont('helvetica', '', 10);
             
-            $h = 5 * $nb;
-            $this->CheckPageBreak($h);
-            
-            for ($i = 0; $i < $data_count; $i++) {
-                $w = $this->widths[$i];
-                $a = isset($this->aligns[$i]) ? $this->aligns[$i] : 'L';
-                $x = $this->GetX();
-                $y = $this->GetY();
+            $pdf->Cell(10, 7, '', 0, 0);
+            $pdf->MultiCell(0, 7, 
+                'Referentes a ' . $quantidade . ' equipamento(s) ' . $modelo . ' de ' . 
+                $capacidade . 'TR da Sala de Painéis - Faturamento Direto TOSI.', 
+                0, 'J');
                 
-                if ($header) {
-                    $this->Rect($x, $y, $w, $h, 'F');
-                } else {
-                    $this->Rect($x, $y, $w, $h);
-                }
-                
-                $this->MultiCell($w, 5, $data[$i], 0, $a);
-                $this->SetXY($x + $w, $y);
-            }
-            $this->Ln($h);
-        }
-
-        public function NbLines($w, $txt) {
-            // Garante que $txt seja uma string válida
-            $txt = (is_string($txt) || is_numeric($txt)) ? (string)$txt : '';
-            
-            $cw = &$this->CurrentFont['cw'];
-            if ($w == 0) {
-                $w = $this->w - $this->rMargin - $this->x;
-            }
-            
-            $margins = $this->getMargins();
-            $wmax = ($w - ($margins['left'] + $margins['right'])) * 1000 / $this->FontSize;
-
-            $s = str_replace("\r", '', $txt);
-            $nb = strlen($s);
-            if ($nb > 0 && $s[$nb - 1] == "\n") {
-                $nb--;
-            }
-            $sep = -1;
-            $i = 0;
-            $j = 0;
-            $l = 0;
-            $nl = 1;
-            while ($i < $nb) {
-                $c = $s[$i];
-                if ($c == "\n") {
-                    $i++;
-                    $sep = -1;
-                    $j = $i;
-                    $l = 0;
-                    $nl++;
-                    continue;
-                }
-                if ($c == ' ') {
-                    $sep = $i;
-                }
-                $l += isset($cw[$c]) ? $cw[$c] : 0;
-                if ($l > $wmax) {
-                    if ($sep == -1) {
-                        if ($i == $j) {
-                            $i++;
-                        }
-                    } else {
-                        $i = $sep + 1;
-                    }
-                    $sep = -1;
-                    $j = $i;
-                    $l = 0;
-                    $nl++;
-                } else {
-                    $i++;
-                }
-            }
-            return $nl;
-        }
-
-        public function checkPageBreak($h = 0, $y = null, $addpage = true) {
-            if ($y === null) {
-                $y = $this->GetY();
-            }
-            if ($y + $h > $this->PageBreakTrigger) {
-                if ($addpage) {
-                    $this->AddPage($this->CurOrientation);
-                }
-                return true;
-            }
-            return false;
+            $pdf->Cell(10, 7, '', 0, 0);
+            $pdf->Cell(0, 7, 'Entrega em: Cabreúva/SP;', 0, 1);
+            $pdf->Cell(10, 7, '', 0, 0);
+            $pdf->Cell(0, 7, 'ICMS: 12% incluso; IPI: Isento', 0, 1);
+            $pdf->Ln(5);
         }
     }
-
-    class PropostaPDF extends MYPDF {
-        public function Header() {
-            $logoPath = __DIR__ . '/images/logo.jpg';
-            if (file_exists($logoPath)) {
-                $this->Image($logoPath, 15, 10, 30);
-            }
-            $this->SetFont('helvetica', 'B', 16);
-            $this->Cell(0, 15, 'PROPOSTA TÉCNICA COMPLETA', 0, 1, 'C');
-            $this->SetFont('helvetica', '', 10);
-            $this->Cell(0, 5, 'Data: ' . date('d/m/Y'), 0, 1, 'R');
-            $this->Line(15, 30, $this->GetPageWidth()-15, 30);
-        }
-
-        public function Footer() {
-            $this->SetY(-15);
-            $this->SetFont('helvetica', 'I', 8);
-            $this->Cell(0, 10, 'Página ' . $this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, 0, 'C');
-        }
+        
+    private function gerarSecaoPressurizacao($pdf) {
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Pressurização:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        $pdf->Cell(5, 7, '', 0, 0);
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'R$ 7.900,00', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(10, 7, '', 0, 0);
+        $pdf->MultiCell(0, 7, 'Referentes a 1 gabinete de ventilação para promover pressão positiva. - Faturamento Direto Sicflux.', 0, 'J');
+        $pdf->Cell(10, 7, '', 0, 0);
+        $pdf->Cell(0, 7, 'Entrega em: Contagem/MG;', 0, 1);
+        $pdf->Ln(5);
+        
+        $pdf->Cell(5, 7, '', 0, 0);
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'R$ 3.250,00', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(10, 7, '', 0, 0);
+        $pdf->MultiCell(0, 7, 'Referentes aos acessórios de difusão e controle de ar associados ao sistema de ventilação - Faturamento Direto Tropical (grupo TOSI).', 0, 'J');
+        $pdf->Cell(10, 7, '', 0, 0);
+        $pdf->Cell(0, 7, 'Entrega em: Cabreúva/SP;', 0, 1);
+        $pdf->Cell(10, 7, '', 0, 0);
+        $pdf->Cell(0, 7, 'ICMS: 12% incluso; IPI: EXCLUSO DE 5%;', 0, 1);
+        $pdf->Ln(5);
     }
-
-    // =============================================
-    // GERAÇÃO DO PDF
-    // =============================================
-
-    // Limpeza final antes de criar o PDF
-    ob_end_clean();
-
-    $pdf = new PropostaPDF();
-    $pdf->AddPage();
-
-    // 1. DADOS DO CLIENTE
-    $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'DADOS DO CLIENTE', 0, 1);
-    $pdf->SetFont('helvetica', '', 10);
-
-    $cliente = $dadosCompletos['cliente'];
-    $pdf->Cell(40, 7, 'Nome:', 0, 0); 
-    $pdf->Cell(0, 7, $cliente['nome'], 0, 1);
-    $pdf->Cell(40, 7, 'Empresa:', 0, 0); 
-    $pdf->Cell(0, 7, $cliente['empresa'], 0, 1);
-    $pdf->Cell(40, 7, 'CNPJ:', 0, 0); 
-    $pdf->Cell(0, 7, $cliente['cnpj'], 0, 1);
-    $pdf->Cell(40, 7, 'Projeto:', 0, 0); 
-    $pdf->Cell(0, 7, $dadosCompletos['ambiente']['projeto'], 0, 1);
-
-    $pdf->Ln(10);
-
-    // 2. PARÂMETROS DO AMBIENTE
-    $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'PARÂMETROS DO AMBIENTE', 0, 1);
-    $pdf->SetFont('helvetica', '', 9);
-
-    // Tabela de parâmetros
-    $header = ['Parâmetro', 'Valor', 'Unidade'];
-    $data = [
-        ['Área', number_format($dadosCompletos['ambiente']['area'], 2, ',', '.'), 'm²'],
-        ['Pé-direito', number_format($dadosCompletos['ambiente']['pe_direito'], 2, ',', '.'), 'm'],
-        ['Tipo de construção', $dadosCompletos['ambiente']['tipo'], ''],
-        ['Temperatura desejada', $dadosCompletos['ambiente']['setpoint'].' °C', ''],
-        ['Pressurização', $dadosCompletos['config']['pressurizacao'].' Pa', ''],
-        ['Portas duplas', $dadosCompletos['portas']['duplas'], 'un'],
-        ['Portas simples', $dadosCompletos['portas']['simples'], 'un']
-    ];
-
-    // Cabeçalho da tabela
-    $pdf->SetFillColor(240, 240, 240);
-    $pdf->SetTextColor(0);
-    $pdf->SetFont('', 'B');
-    foreach ($header as $col) {
-        $pdf->Cell(60, 7, $col, 1, 0, 'C', 1);
-    }
-    $pdf->Ln();
-
-    // Dados da tabela
-    $pdf->SetFont('', '');
-    $fill = false;
-    foreach ($data as $row) {
-        $pdf->Cell(60, 6, $row[0], 'LR', 0, 'L', $fill);
-        $pdf->Cell(60, 6, $row[1], 'LR', 0, 'C', $fill);
-        $pdf->Cell(60, 6, $row[2], 'LR', 0, 'C', $fill);
-        $pdf->Ln();
-        $fill = !$fill;
-    }
-    $pdf->Cell(180, 0, '', 'T');
-
-    $pdf->Ln(15);
-
-    // 3. RESULTADOS DOS CÁLCULOS
-    $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'RESULTADOS DOS CÁLCULOS', 0, 1);
-
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->Cell(0, 7, sprintf('Carga Térmica Total: %.2f TR (%.0f W)', 
-        $dadosCompletos['resultados']['total_tr'], 
-        $dadosCompletos['resultados']['total_w']), 0, 1);
-
-    // Tabela de detalhamento
-    $pdf->SetWidths([120, 60]);
-    $pdf->SetFont('', 'B');
-    $pdf->Row(['Componente', 'Carga Térmica (W)'], true);
-
-    $pdf->SetFont('', '');
-    $pdf->Row(['Paredes e teto', number_format($dadosCompletos['resultados']['detalhes']['externos']['total'], 0, ',', '.').' W']);
-    $pdf->Row(['Piso', number_format($dadosCompletos['resultados']['detalhes']['piso']['total'], 0, ',', '.').' W']);
-    $pdf->Row(['Iluminação', number_format($dadosCompletos['resultados']['detalhes']['iluminacao'], 0, ',', '.').' W']);
-    $pdf->Row(['Pessoas', number_format($dadosCompletos['resultados']['detalhes']['pessoas'], 0, ',', '.').' W']);
-    $pdf->Row(['Ar externo', number_format($dadosCompletos['resultados']['detalhes']['ar_externo'], 0, ',', '.').' W']);
-
-    $pdf->Ln(10);
-
-    // 4. SOLUÇÃO RECOMENDADA
-    $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'SOLUÇÃO RECOMENDADA', 0, 1);
-
-    $solucao = $dadosCompletos['resultados']['solucoes'][0];
-    $backupType = $dadosCompletos['config']['backup'];
-
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->Cell(0, 7, sprintf('Modelo: %s (%d TR)', $solucao['modelo'], $solucao['capacidade']), 0, 1);
-    $pdf->Cell(0, 7, sprintf('Quantidade: %d unidade(s) (%s)', $solucao[$backupType], $backupType), 0, 1);
-    $pdf->Cell(0, 7, sprintf('Capacidade Total: %d TR', $solucao['capacidade'] * $solucao[$backupType]), 0, 1);
-
-    $pdf->Ln(10);
-
-    // 5. OBSERVAÇÕES
-    $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'OBSERVAÇÕES', 0, 1);
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->MultiCell(0, 7, "1. Proposta válida por 15 dias\n2. Preços sujeitos a alteração\n3. Condições de pagamento a negociar");
-
-    // Saída do PDF
-    $pdf->Output('proposta_tecnica.pdf', 'I');
-    exit;
-
-} catch (Exception $e) {
-    // Limpeza completa em caso de erro
-    while (ob_get_level() > 0) ob_end_clean();
     
-    // Mensagem de erro segura
-    header('Content-Type: text/plain');
-    echo "ERRO NA GERAÇÃO DO PDF:\n";
-    echo "------------------------\n";
-    echo "Mensagem: " . $e->getMessage() . "\n\n";
-    echo "Por favor, entre em contato com o suporte técnico.\n";
+    private function gerarSecaoExaustao($pdf) {
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Exaustão da Baia de Transformadores:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        $pdf->Cell(5, 7, '', 0, 0);
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'R$ 8.520,00', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(10, 7, '', 0, 0);
+        $pdf->MultiCell(0, 7, 'Referentes ao exaustor tubo-axial do sistema de exaustão da Baia de Transformador (Entrega em Joinville/SC; 12% ICMS incluso, IPI isento - Faturamento Direto Aeroville).', 0, 'J');
+        $pdf->Ln(5);
+    }
     
-    // Log detalhado do erro
-    error_log("ERRO gera_pdf: " . date('Y-m-d H:i:s') . "\n" . 
-              "Mensagem: " . $e->getMessage() . "\n" .
-              "Arquivo: " . $e->getFile() . "\n" .
-              "Linha: " . $e->getLine() . "\n" .
-              "Trace: " . $e->getTraceAsString() . "\n\n", 
-              3, __DIR__ . '/logs/erros_pdf.log');
+    private function gerarSecaoEngenharia($pdf) {
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Engenharia:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        $pdf->Cell(5, 7, '', 0, 0);
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'R$ 14.133,00', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(10, 7, '', 0, 0);
+        $pdf->MultiCell(0, 7, 'Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI.', 0, 'J');
+        $pdf->Ln(10);
+    }
     
-    exit(1);
+    private function gerarTotalProposta($pdf) {
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, 'TOTAL: R$ ' . number_format($this->calcularTotalProposta(), 2, ',', '.'), 0, 1, 'R');
+        $pdf->Ln(10);
+    }
+    
+    private function gerarSecaoDados($pdf) {
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, '3 - DADOS:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(0, 7, 'ESI ENERGIA:', 0, 1);
+        $pdf->Cell(0, 7, 'Razão Social: ESI - ENERGIA SOLUÇÕES INTELIGENTES LTDA.', 0, 1);
+        $pdf->Cell(0, 7, 'CNPJ: 20.232.429/0001-11', 0, 1);
+        $pdf->Ln(10);
+    }
+    
+    private function gerarSecaoInformacoes($pdf) {
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, '4 - INFORMAÇÕES PERTINENTES:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->MultiCell(0, 7, 'ATENÇÃO! Esta proposta foi elaborada de maneira a obter a melhor solução técnica, atendendo às normas vigentes com o menor custo possível. Ao analisar qualquer proposta, certifique-se que ela atende aos requisitos mínimos da norma ABNT 16.401, NR15 e NR10 para mérito de equalização de propostas.', 0, 'J');
+        $pdf->Ln(5);
+        $pdf->MultiCell(0, 7, 'A obediência às normas é imprescindível para estar isento de problemas futuros.', 0, 'J');
+        $pdf->Ln(10);
+    }
+    
+    private function gerarSecaoValidade($pdf) {
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, '5 - VALIDADE DESTA PROPOSTA:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(0, 7, '10 (dez) dias.', 0, 1);
+        $pdf->Ln(10);
+    }
+    
+    private function gerarSecaoPagamento($pdf) {
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, '6 - FORMA DE PAGAMENTO:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(0, 7, 'Para as máquinas: (à negociar)', 0, 1);
+        $pdf->Cell(0, 7, 'Serviços: 100% na entrega da REV0 do projeto.', 0, 1);
+        $pdf->Ln(5);
+    }
+    
+    private function gerarSecaoPrazoPagamento($pdf) {
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, '7 - PRAZO DE PAGAMENTO:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(0, 7, 'Para as máquinas: (à negociar)', 0, 1);
+        $pdf->Cell(0, 7, 'Serviços: 30ddl', 0, 1);
+        $pdf->Ln(10);
+    }
+    
+    private function gerarAssinatura($pdf) {
+        $pdf->MultiCell(0, 7, 'Sendo o que temos a apresentar, nos colocamos à disposição para quaisquer esclarecimentos adicionais.', 0, 'J');
+        $pdf->Ln(15);
+        $pdf->Cell(0, 7, 'Atenciosamente,', 0, 1);
+        $pdf->Ln(10);
+        $pdf->Cell(0, 7, '________________________________________________', 0, 1, 'C');
+        $pdf->Cell(0, 7, 'Matheus Pacheco Herzeberg Gonçalves', 0, 1, 'C');
+        $pdf->Cell(0, 7, 'Engenheiro Mecânico - ESI Energia', 0, 1, 'C');
+    }
+    
+    private function gerarSecaoForaEscopo($pdf) {
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, 'Fora de escopo:', 0, 1);
+        
+        // Força e controle
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Força e controle:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        $itens = [
+            'Sensores/alarmes que não venham de fábrica com os equipamentos',
+            'Painel de força e comando (alimentar diretamente do QD do cliente)',
+            'Cabos elétricos de força e controle para alimentação das máquinas e dos painéis',
+            'Disponibilização de energia para alimentação das máquinas nos testes e na aplicação final',
+            'Interligação elétrica entre os painéis dos eletrocentros, caso exista',
+            'Automatismos dos sistemas de exaustão e ventilação (quando aplicável. Deverá ser previsto lógica elétrica nos painéis de força e comando conforme descritivo funcional, documento integrante do projeto HVAC)'
+        ];
+        
+        foreach ($itens as $item) {
+            $this->adicionarItemLista($pdf, $item);
+        }
+        $pdf->Ln(5);
+        
+        // Montagens e transportes
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Montagens e transportes:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        $itens = [
+            'Qualquer tipo de montagem, instalação, fixação/acoplamento (máquinas, acessórios, dutos ou painéis nas Salas Elétricas)',
+            'Transporte e movimentação horizontal e vertical das máquinas',
+            'Suportes e plataformas de acesso para manutenção, instalação ou testes (se aplicável)',
+            'Suportes metálicos das máquinas, caso necessário',
+            'Qualquer intervenção de natureza civil, rasgos e acabamentos nas Salas Elétricas'
+        ];
+        
+        foreach ($itens as $item) {
+            $this->adicionarItemLista($pdf, $item);
+        }
+        $pdf->Ln(5);
+        
+        // Serviços e engenharia
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Serviços e engenharia:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        $itens = [
+            'Treinamentos',
+            'Qualquer documento de engenharia que não esteja presente no item "documentação de projeto" da proposta técnica',
+            'Projetos elétricos e de automação',
+            'Projeto elétrico de instalação interna à Sala Elétrica, rota de cabos etc',
+            'Projeto e diagrama de interligação',
+            'Projetos de exaustão ou ventilação de ambientes não relacionados na PT',
+            'Inspeções em fábrica ou visitas técnicas, exceto quando explicitado na proposta',
+            'Qualquer tipo de operação assistida, exceto quando explicitado na proposta'
+        ];
+        
+        foreach ($itens as $item) {
+            $this->adicionarItemLista($pdf, $item);
+        }
+    }
+    
+    private function gerarSecaoPremissas($pdf) {
+        $pdf->AddPage();
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, 'Premissas:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        $premissas = [
+            'Premissas - Irei adicionar'
+        ];
+        
+        foreach ($premissas as $premissa) {
+            $this->adicionarItemLista($pdf, $premissa);
+        }
+    }
+    
+    private function gerarSecaoGeneralidades($pdf) {
+        $pdf->AddPage();
+        $pdf->SetFont('helvetica', 'B', 14);
+        $pdf->Cell(0, 10, '1 - GENERALIDADES DO SISTEMA', 0, 1);
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, '1.1. - CONSIDERAÇÕES DA SOLUÇÃO', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        // Climatização
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Climatização:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        
+        foreach ($this->resultados['solucao']['climatizacao'] as $equipamento) {
+            $pdf->Cell(5, 7, '', 0, 0);
+            $pdf->MultiCell(0, 7, 'Sala de Painéis: ' . $equipamento['quantidade_n1'] . ' equipamento(s) do tipo Wall Mounted de capacidade ' . $equipamento['capacidade_tr'] . 'TR, onde 1 (um) é atuante como back-up (n+1).', 0, 'J');
+            $pdf->Cell(5, 7, '', 0, 0);
+            $pdf->Cell(5, 7, '☒', 0, 0);
+            $pdf->Cell(0, 7, 'Back-up.', 0, 1);
+            $pdf->Cell(5, 7, '', 0, 0);
+            $pdf->Cell(5, 7, '☒', 0, 0);
+            $pdf->Cell(0, 7, 'Pressurização.', 0, 1);
+            $pdf->Cell(5, 7, '', 0, 0);
+            $pdf->Cell(0, 7, 'Setpoint: ' . $this->dados['setpoint']['temperatura'] . '°C', 0, 1);
+            $pdf->Cell(5, 7, '', 0, 0);
+            $pdf->Cell(0, 7, 'Dif. Pressão: ' . $this->dados['pressurizacao']['delta_p'] . 'Pa', 0, 1);
+            $pdf->Ln(5);
+        }
+        
+        // Configuração
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Configuração:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->MultiCell(0, 7, 'Bocal de insuflamento protegido por grelha diretamente no ambiente. Bocal acoplado à rede de dutos por lona flexível. Distribuição por grelhas. Condicionadores fixados externamente à SE, sobre mão-francesa na parede.', 0, 'J');
+        $pdf->Ln(5);
+        $pdf->Cell(0, 7, 'Legenda:', 0, 1);
+        $pdf->Cell(5, 7, '☒', 0, 0);
+        $pdf->Cell(0, 7, 'Incluso', 0, 1);
+        $pdf->Cell(5, 7, '☐', 0, 0);
+        $pdf->Cell(0, 7, 'Não incluso', 0, 1);
+        $pdf->Ln(10);
+        
+        // Ventilação/Renovação/Pressurização
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Ventilação/Renovação/Pressurização:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->MultiCell(0, 7, 'Uma caixa de ventilação com rotor do tipo centrífugo realizará o insuflamento de ar necessário para a manutenção de pressão positiva no ambiente, garantindo também a renovação mínima prevista.', 0, 'J');
+        $pdf->Cell(5, 7, '', 0, 0);
+        $pdf->Cell(5, 7, '☒', 0, 0);
+        $pdf->Cell(0, 7, 'Back-up.', 0, 1);
+        $pdf->Cell(5, 7, '', 0, 0);
+        $pdf->Cell(5, 7, '☒', 0, 0);
+        $pdf->Cell(0, 7, 'Limpeza automática do filtro.', 0, 1);
+        $pdf->Ln(5);
+        $pdf->Cell(0, 7, 'Legenda:', 0, 1);
+        $pdf->Cell(5, 7, '☒', 0, 0);
+        $pdf->Cell(0, 7, 'Incluso', 0, 1);
+        $pdf->Cell(5, 7, '☐', 0, 0);
+        $pdf->Cell(0, 7, 'Não incluso', 0,1);
+        $pdf->Ln(10);
+        
+        // Exaustão
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Exaustão da Sala de Baterias:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(0, 7, 'N/I', 0, 1);
+        $pdf->Ln(5);
+        
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'Exaustão da Baia de Transformador:', 0, 1);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->MultiCell(0, 7, 'Exaustor com rotor tipo tubo-axial realizará a exaustão necessária para manutenção da temperatura no ambiente. Premissa: ∆T = 10°C', 0, 'J');
+        $pdf->Cell(5, 7, '', 0, 0);
+        $pdf->Cell(5, 7, '☒', 0, 0);
+        $pdf->Cell(0, 7, 'Admissão de ar filtrada', 0, 1);
+        $pdf->Cell(5, 7, '', 0, 0);
+        $pdf->Cell(5, 7, '☒', 0, 0);
+        $pdf->Cell(0, 7, 'Back-up.', 0, 1);
+        $pdf->Ln(5);
+        $pdf->Cell(0, 7, 'Legenda:', 0, 1);
+        $pdf->Cell(5, 7, '☒', 0, 0);
+        $pdf->Cell(0, 7, 'Incluso', 0, 1);
+        $pdf->Cell(5, 7, '☐', 0, 0);
+        $pdf->Cell(0, 7, 'Não incluso', 0, 1);
+    }
+    
+    private function calcularTotalProposta() {
+        $total = 0;
+        
+        // Soma dos equipamentos de climatização
+        foreach ($this->resultados['solucao']['climatizacao'] as $equipamento) {
+            $total += $equipamento['preco_unitario'] * $equipamento['quantidade_n1'];
+        }
+        
+        // Adicionar valores fixos para outros itens
+        if (!empty($this->resultados['solucao']['pressurizacao'])) {
+            $total += 7900 + 3250; // Gabinete + acessórios
+        }
+        
+        if (!empty($this->resultados['solucao']['exaustao'])) {
+            $total += 8520; // Exaustor
+        }
+        
+        // Engenharia
+        $total += 14133;
+        
+        return $total;
+    }
+    
+    public function gerarPropostas() {
+        return [
+            'pc' => $this->gerarPropostaComercial()->Output('', 'S'),
+            'pt' => $this->gerarPropostaTecnica()->Output('', 'S')
+        ];
+    }
 }

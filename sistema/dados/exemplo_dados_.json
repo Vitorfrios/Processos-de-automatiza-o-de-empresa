@@ -1,0 +1,184 @@
+{
+  "cliente": {
+    "nome": "João da Silva",
+    "empresa": "Indústria XYZ Ltda",
+    "cnpj": "12.345.678/0001-99",
+    "telefone": "(31) 98765-4321",
+    "email": "joao.silva@industriaxyz.com.br",
+    "endereco": {
+      "rua": "Av. Industrial",
+      "numero": "1000",
+      "cidade": "Belo Horizonte",
+      "estado": "MG"
+    }
+  },
+  "projeto": {
+    "nome": "Climatização Sala de Painéis",
+    "numero": "HVAC-2023-001",
+    "data": "2023-11-15",
+    "responsavel": "Eng. Maria Souza"
+  },
+  "ambiente": {
+    "tipo": "Sala de Painéis",
+    "area": 60,
+    "pe_direito": 3,
+    "volume": 180,
+    "tipo_construcao": "Eletrocentro",
+    "setpoint": {
+      "temperatura": 25,
+      "umidade_absoluta": 9.92
+    }
+  },
+  "paredes": {
+    "oeste": 5,
+    "leste": 5,
+    "norte": 6,
+    "sul": 6,
+    "u_value": {
+      "teto": 1.145,
+      "parede": 1.12,
+      "piso": 2.7
+    }
+  },
+  "divisorias": [
+    {
+      "comprimento": 4,
+      "tipo": "nao_climatizada",
+      "u_value": 3.0
+    },
+    {
+      "comprimento": 3,
+      "tipo": "climatizada",
+      "u_value": 2.7
+    }
+  ],
+  "portas": {
+    "simples": 1,
+    "duplas": 1,
+    "dimensoes": {
+      "simples": {
+        "altura": 2.1,
+        "largura": 0.9
+      },
+      "duplas": {
+        "altura": 2.1,
+        "largura": 1.8
+      }
+    }
+  },
+  "pressurizacao": {
+    "necessaria": true,
+    "delta_p": 25,
+    "vazao_ar": 1200
+  },
+  "carga_interna": {
+    "dissipacao": 10000,
+    "n_pessoas": 2,
+    "iluminacao": {
+      "tipo": "LED",
+      "potencia": 7
+    },
+    "equipamentos": [
+      {
+        "nome": "Painel Elétrico",
+        "dissipacao": 5000
+      },
+      {
+        "nome": "Servidor",
+        "dissipacao": 3000
+      }
+    ]
+  },
+  "condicoes_externas": {
+    "temperatura": 32,
+    "umidade_relativa": 60,
+    "umidade_absoluta": 18.39,
+    "localizacao": {
+      "cidade": "Belo Horizonte",
+      "estado": "MG",
+      "altitude": 858
+    }
+  },
+  "exaustao": {
+    "necessaria": true,
+    "tipo": "Baia de Transformador",
+    "carga_termica": 14900,
+    "delta_t": 10,
+    "filtragem": true
+  },
+  "config": {
+    "backup": "N+1",
+    "fator_seguranca": 1.1,
+    "normas": ["ABNT 16401", "NR15", "NR10"],
+    "opcionais": {
+      "automatizacao": true,
+      "monitoramento": true,
+      "filtros": "G4"
+    }
+  },
+  "calculos": {
+    "ganhos_termicos": {
+      "transmissao": {
+        "teto": 2468,
+        "paredes_externas": 1875,
+        "piso": 1215,
+        "divisorias": 945
+      },
+      "internos": {
+        "iluminacao": 420,
+        "equipamentos": 10000,
+        "pessoas": 440
+      },
+      "ar_externo": {
+        "sensivel": 1250,
+        "latente": 680
+      }
+    },
+    "total_w": 18293,
+    "total_tr": 5.2,
+    "total_tr_arredondado": 6
+  },
+  "solucao": {
+    "climatizacao": [
+      {
+        "modelo": "WM-7.5TR-TOSI",
+        "capacidade_tr": 7.5,
+        "quantidade": 1,
+        "quantidade_n1": 2,
+        "preco_unitario": 254932,
+        "opcionais": ["automatizacao", "filtros"]
+      }
+    ],
+    "pressurizacao": {
+      "equipamento": "VPR-2500",
+      "vazao_m3h": 1500,
+      "preco": 7900
+    },
+    "exaustao": {
+      "equipamento": "EXT-3000",
+      "vazao_m3h": 3000,
+      "preco": 8520
+    }
+  },
+  "comercial": {
+    "validade": "2023-12-15",
+    "condicoes_pagamento": "30/60/90 dias",
+    "entrega": "45 dias úteis",
+    "garantia": "12 meses",
+    "total": 400441.00,
+    "itens": [
+      {
+        "descricao": "2x Wall Mounted 7.5TR",
+        "valor": 254932.00
+      },
+      {
+        "descricao": "Sistema Pressurização",
+        "valor": 7900.00
+      },
+      {
+        "descricao": "Sistema Exaustão",
+        "valor": 8520.00
+      }
+    ]
+  }
+}

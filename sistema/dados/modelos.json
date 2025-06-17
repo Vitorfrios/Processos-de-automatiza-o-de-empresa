@@ -1,14 +1,211 @@
-[
-    {
-        "modelo": "MX-5",
+{
+  "configuracoes": {
+    "unidades": {
+      "tr_para_w": 3517,
+      "fator_seguranca": 1.1,
+      "densidade_ar": 1.14,
+      "calor_especifico_ar": 0.24,
+      "fator_ar_externo": 3.01,
+    "fator_conversao_lps_para_kgh": 3.6
+
+    },
+    "padroes": {
+      "setpoint_temperatura": 25,
+      "setpoint_umidade": 9.92,
+      "temperatura_externa": 32,
+      "umidade_externa": 18.39,
+      "delta_p_pressurizacao": 25,
+      "delta_t_exaustao": 10
+    }
+  },
+  "materiais": {
+    "paredes": {
+      "alvenaria": {
+        "condutividade": 2.546,
+        "delta_t_padrao": 13
+      },
+      "la_rocha": {
+        "condutividade": 1.12,
+        "delta_t_padrao": 13
+      }
+    },
+    "teto": {
+      "alvenaria": {
+        "condutividade": 3.961,
+        "delta_t_padrao": 36
+      },
+      "la_rocha": {
+        "condutividade": 1.145,
+        "delta_t_padrao": 36
+      }
+    },
+    "piso": {
+      "eletrocentro": {
+        "condutividade": 2.7,
+        "delta_t_padrao": 6
+      }
+    },
+    "divisorias": {
+      "climatizada": {
+        "condutividade": 2.7,
+        "delta_t_padrao": 3
+      },
+      "nao_climatizada": {
+        "condutividade": 3.0,
+        "delta_t_padrao": 10
+      }
+    }
+  },
+  "fatores": {
+    "iluminacao": 7,
+    "calor_pessoa": {
+      "sensivel": 86.5,
+      "latente": 133.3
+    },
+    "portas": {
+      "simples": {
+        "coeficiente_infiltracao": 0.024
+      },
+      "duplas": {
+        "coeficiente_infiltracao": 0.0402
+      }
+    },
+    "renovacao_ar": {
+      "por_pessoa": 5,
+      "fator_conversao_lps_para_kgh": 3.6
+    }
+  },
+  "modelos_equipamentos": {
+    "climatizacao": [
+      {
+        "id": "wm-5tr",
+        "modelo": "TOSI WM-5TR",
+        "tipo": "wall_mounted",
         "capacidade_tr": 5,
         "capacidade_w": 17585,
-        "preco": 12000
-    },
-    {
-        "modelo": "MX-10",
-        "capacidade_tr": 10,
-        "capacidade_w": 35170,
-        "preco": 22000
+        "preco_base": 12500,
+        "fabricante": "TOSI",
+        "opcionais": [
+          {
+            "id": "filtro-hepa",
+            "descricao": "Filtro HEPA",
+            "preco": 850
+          },
+          {
+            "id": "controlador-digital",
+            "descricao": "Controlador Digital",
+            "preco": 1200
+          }
+        ],
+        "dimensoes": {
+          "altura": 800,
+          "largura": 600,
+          "profundidade": 300
+        }
+      },
+      {
+        "id": "wm-7.5tr",
+        "modelo": "TOSI WM-7.5TR",
+        "tipo": "wall_mounted",
+        "capacidade_tr": 7.5,
+        "capacidade_w": 26377.5,
+        "preco_base": 18700,
+        "fabricante": "TOSI",
+        "opcionais": [
+          {
+            "id": "filtro-hepa",
+            "descricao": "Filtro HEPA",
+            "preco": 950
+          },
+          {
+            "id": "controlador-digital",
+            "descricao": "Controlador Digital",
+            "preco": 1500
+          }
+        ],
+        "dimensoes": {
+          "altura": 900,
+          "largura": 700,
+          "profundidade": 350
+        }
+      }
+    ],
+    "pressurizacao": [
+      {
+        "id": "v-100",
+        "modelo": "Sicflux V-100",
+        "capacidade_m3h": 1000,
+        "preco_base": 7900,
+        "fabricante": "Sicflux",
+        "opcionais": [
+          {
+            "id": "filtro-auto-limpante",
+            "descricao": "Filtro Auto-limpante",
+            "preco": 2200
+          }
+        ]
+      }
+    ],
+    "exaustao": [
+      {
+        "id": "at-200",
+        "modelo": "Aeroville AT-200",
+        "capacidade_m3h": 2000,
+        "preco_base": 8520,
+        "fabricante": "Aeroville",
+        "opcionais": [
+          {
+            "id": "dampers",
+            "descricao": "Dampers de Controle",
+            "preco": 1800
+          }
+        ]
+      }
+    ]
+  },
+  "solucoes_padrao": {
+    "redundancia": [
+      {
+        "tipo": "N",
+        "descricao": "Sem redundância",
+        "fator": 1
+      },
+      {
+        "tipo": "N+1",
+        "descricao": "Redundância parcial",
+        "fator": 1.2
+      },
+      {
+        "tipo": "2N",
+        "descricao": "Redundância total",
+        "fator": 2
+      }
+    ],
+    "configuracoes_tipicas": {
+      "eletrocentro": {
+        "u_parede": 1.12,
+        "u_teto": 1.145,
+        "u_piso": 2.7
+      },
+      "alvenaria": {
+        "u_parede": 2.546,
+        "u_teto": 3.961,
+        "u_piso": 2.7
+      }
     }
-]
+  },
+  "custos": {
+    "engenharia": {
+      "projeto_basico": 8000,
+      "projeto_executivo": 12000,
+      "acompanhamento_startup": 3500
+    },
+    "instalacao": {
+      "por_tr": 2500,
+      "taxa_minima": 10000
+    },
+    "manutencao": {
+      "anual_por_equipamento": 1500
+    }
+  }
+}
