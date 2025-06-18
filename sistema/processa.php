@@ -2,7 +2,7 @@
 require_once __DIR__ . '/calculo.php';
 require_once __DIR__ . '/tcpdf/tcpdf.php';
 require_once __DIR__ . '/classes/pdf_mc_table.php';
-require_once __DIR__ . '/gera_pdf.php';
+require_once __DIR__ . '/GeradorPropostas.php';
 
 header('Content-Type: application/json');
 
