@@ -1,30 +1,36 @@
 {
   "Projeto1": {
-    "nome": "Projeto1",
+    "nome": "Projeto 1",
     "Sala1": {
-      "nome": "Sala1",
-      "Climatizacao": {
-        "Ambiente": "",
-        "Back-up": "",
-        "Area_m2": "",
-        "Tipo_Construcao": "",
-        "Parede_Oeste": "",
-        "Parede_Leste": "",
-        "Parede_Norte": "",
-        "Parede_Sul": "",
-        "Pe_Direito": "",
-        "Div_Nao_Climatizada1": "",
-        "Div_Nao_Climatizada2": "",
-        "Div_Climatizada1": "",
-        "Div_Climatizada2": "",
-        "Dissipacao": "",
-        "Numero_Pessoas": "",
-        "Numero_Portas_Duplas": "",
-        "Numero_Portas_Simples": "",
-        "Pressurizacao": "",
-        "Setpoint": "",
-        "Vazao_Ar_Externo": "",
-        "Combate_Incendio": ""
+      "nome": "Sala 1",
+      "climatizacao": {
+        "ambiente": "",
+        "backup": "",
+        "area": "",
+        "tipoConstrucao": "",
+        "paredeOeste": "",
+        "paredeLeste": "",
+        "paredeNorte": "",
+        "paredeSul": "",
+        "peDireito": "",
+        "divisoriaNaoClima1": "",
+        "divisoriaNaoClima2": "",
+        "divisoriaClima1": "",
+        "divisoriaClima2": "",
+        "dissipacao": "",
+        "numPessoas": "",
+        "numPortasDuplas": "",
+        "numPortasSimples": "",
+        "pressurizacao": "",
+        "setpoint": "",
+        "vazaoArExterno": "",
+        "combateIncendio": ""
+      },
+      "maquinas": [],
+      "configuracaoGeral": {
+        "responsavel": "",
+        "dataInstalacao": "",
+        "observacoes": ""
       }
     }
   }

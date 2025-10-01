@@ -3,9 +3,7 @@
 // ============================================
 
 // Armazena temporariamente os dados dos projetos
-let projectsData = {
-  projects: [],
-}
+let projectsData = {}
 
 let systemConstants = null
 
@@ -13,7 +11,7 @@ async function loadSystemConstants() {
   try {
     console.log("[v0] Tentando carregar json/dados.json")
     const response = await fetch("./json/dados.json")
-    
+
     if (!response.ok) {
       throw new Error(`Status HTTP: ${response.status}`)
     }
@@ -28,20 +26,195 @@ async function loadSystemConstants() {
     systemConstants = data.constants
     console.log("[v0] Constantes do sistema carregadas:", systemConstants)
     showSystemStatus("Constantes do sistema carregadas com sucesso", "success")
-
   } catch (error) {
     console.error("[v0] ERRO CRÍTICO: Não foi possível carregar dados.json:", error)
     showSystemStatus(
       "ERRO: Não foi possível carregar o arquivo dados.json. Os cálculos não funcionarão até que o arquivo seja carregado corretamente.",
-      "error"
+      "error",
     )
     systemConstants = null
   }
 }
+// Carregar dados do backup.json
+async function loadBackupData() {
+  try {
+    console.log("[v0] Tentando carregar json/backup.json")
+    const response = await fetch("./json/backup.json")
+
+    if (!response.ok) {
+      throw new Error(`Status HTTP: ${response.status}`)
+    }
+
+    const data = await response.json()
+    projectsData = data
+    console.log("[v0] Dados de backup carregados:", projectsData)
+
+    // Load data into the UI
+    loadDataIntoUI()
+
+    showSystemStatus("Dados carregados com sucesso", "success")
+  } catch (error) {
+    console.error("[v0] ERRO: Não foi possível carregar backup.json:", error)
+    showSystemStatus("ERRO: Não foi possível carregar o arquivo backup.json.", "error")
+    projectsData = {}
+  }
+}
+
+async function saveBackupData() {
+  try {
+    console.log("[v0] Salvando dados em json/backup.json")
+
+    // Extract data from UI
+    extractDataFromUI()
+
+    // In a real implementation, this would send data to a server
+    // For now, we'll just log it and update localStorage as a fallback
+    console.log("[v0] Dados a serem salvos:", projectsData)
+    localStorage.setItem("backupData", JSON.stringify(projectsData))
+
+    console.log("[v0] Dados salvos com sucesso")
+  } catch (error) {
+    console.error("[v0] ERRO ao salvar backup.json:", error)
+  }
+}
+
+function loadDataIntoUI() {
+  // Load project names and room names
+  const projectBlocks = document.querySelectorAll(".project-block")
+
+  projectBlocks.forEach((projectBlock) => {
+    const projectKey = Object.keys(projectsData)[0] // For now, just handle first project
+    if (!projectKey || !projectsData[projectKey]) return
+
+    const projectData = projectsData[projectKey]
+
+    // Update project title
+    const projectTitle = projectBlock.querySelector(".project-title")
+    if (projectTitle && projectData.nome) {
+      projectTitle.textContent = projectData.nome
+    }
+
+    // Load room data
+    const roomBlocks = projectBlock.querySelectorAll(".room-block")
+    roomBlocks.forEach((roomBlock) => {
+      const roomKey = roomBlock.dataset.roomKey
+      if (!roomKey || !projectData[roomKey]) return
+
+      const roomData = projectData[roomKey]
+
+      // Update room title
+      const roomTitle = roomBlock.querySelector(".room-title")
+      if (roomTitle && roomData.nome) {
+        roomTitle.textContent = roomData.nome
+      }
+
+      // Load climatizacao data
+      if (roomData.climatizacao) {
+        const climaInputs = roomBlock.querySelectorAll(".clima-input")
+        climaInputs.forEach((input) => {
+          const field = input.dataset.field
+          if (field && roomData.climatizacao[field] !== undefined) {
+            input.value = roomData.climatizacao[field]
+          }
+        })
+      }
+
+      // Load configuracaoGeral data
+      if (roomData.configuracaoGeral) {
+        const configSection = roomBlock.querySelector('[id*="-config"]')
+        if (configSection) {
+          const responsavelInput = configSection.querySelector('input[placeholder*="responsável"]')
+          if (responsavelInput && roomData.configuracaoGeral.responsavel) {
+            responsavelInput.value = roomData.configuracaoGeral.responsavel
+          }
+
+          const dataInput = configSection.querySelector('input[type="date"]')
+          if (dataInput && roomData.configuracaoGeral.dataInstalacao) {
+            dataInput.value = roomData.configuracaoGeral.dataInstalacao
+          }
+
+          const obsInput = configSection.querySelector("textarea")
+          if (obsInput && roomData.configuracaoGeral.observacoes) {
+            obsInput.value = roomData.configuracaoGeral.observacoes
+          }
+        }
+      }
+    })
+  })
+}
+
+function extractDataFromUI() {
+  const projectBlocks = document.querySelectorAll(".project-block")
+
+  projectBlocks.forEach((projectBlock) => {
+    const projectKey = "Projeto1" // For now, hardcoded
+
+    if (!projectsData[projectKey]) {
+      projectsData[projectKey] = {}
+    }
+
+    // Extract project name
+    const projectTitle = projectBlock.querySelector(".project-title")
+    if (projectTitle) {
+      projectsData[projectKey].nome = projectTitle.textContent.trim()
+    }
+
+    // Extract room data
+    const roomBlocks = projectBlock.querySelectorAll(".room-block")
+    roomBlocks.forEach((roomBlock) => {
+      const roomKey = roomBlock.dataset.roomKey || "Sala1"
+
+      if (!projectsData[projectKey][roomKey]) {
+        projectsData[projectKey][roomKey] = {
+          nome: "",
+          climatizacao: {},
+          maquinas: [],
+          configuracaoGeral: {},
+        }
+      }
+
+      // Extract room name
+      const roomTitle = roomBlock.querySelector(".room-title")
+      if (roomTitle) {
+        projectsData[projectKey][roomKey].nome = roomTitle.textContent.trim()
+      }
+
+      // Extract climatizacao data
+      const climaInputs = roomBlock.querySelectorAll(".clima-input")
+      climaInputs.forEach((input) => {
+        const field = input.dataset.field
+        if (field) {
+          projectsData[projectKey][roomKey].climatizacao[field] = input.value
+        }
+      })
+
+      // Extract configuracaoGeral data
+      const configSection = roomBlock.querySelector('[id*="-config"]')
+      if (configSection) {
+        const responsavelInput = configSection.querySelector('input[placeholder*="responsável"]')
+        if (responsavelInput) {
+          projectsData[projectKey][roomKey].configuracaoGeral.responsavel = responsavelInput.value
+        }
+
+        const dataInput = configSection.querySelector('input[type="date"]')
+        if (dataInput) {
+          projectsData[projectKey][roomKey].configuracaoGeral.dataInstalacao = dataInput.value
+        }
+
+        const obsInput = configSection.querySelector("textarea")
+        if (obsInput) {
+          projectsData[projectKey][roomKey].configuracaoGeral.observacoes = obsInput.value
+        }
+      }
+    })
+  })
+}
 
 function showSystemStatus(message, type) {
   const existingBanner = document.getElementById("system-status-banner")
-  if (existingBanner) existingBanner.remove()
+  if (existingBanner) {
+    existingBanner.remove()
+  }
 
   const banner = document.createElement("div")
   banner.id = "system-status-banner"
@@ -53,14 +226,15 @@ function showSystemStatus(message, type) {
 
   // Remove banner de sucesso após 5 segundos
   if (type === "success") {
-    setTimeout(() => banner.remove(), 5000)
+    setTimeout(() => {
+      banner.remove()
+    }, 5000)
   }
 }
 
-// Carrega dados salvos do localStorage ao iniciar
 window.addEventListener("DOMContentLoaded", async () => {
   await loadSystemConstants()
-  loadFromLocalStorage()
+  await loadBackupData()
   console.log("[v0] Sistema inicializado")
 })
 
@@ -224,6 +398,7 @@ function makeEditable(element, type) {
   )
 }
 
+// Updated function to save to backup.json
 function saveInlineEdit(element, type) {
   const newText = element.textContent.trim()
   const originalText = element.dataset.originalText
@@ -243,8 +418,7 @@ function saveInlineEdit(element, type) {
   if (newText !== originalText) {
     element.textContent = newText
 
-    // Salva no localStorage
-    saveToLocalStorage()
+    saveBackupData()
 
     console.log(`[v0] ${type === "project" ? "Projeto" : "Sala"} renomeado para: ${newText}`)
   }
@@ -739,38 +913,10 @@ function downloadWord(projectId) {
 // FUNÇÕES DE ARMAZENAMENTO LOCAL
 // ============================================
 
-// Salva todos os dados no localStorage
+// Updated function to use saveBackupData
 function saveToLocalStorage() {
-  const projects = []
-  const projectBlocks = document.querySelectorAll(".project-block")
-
-  projectBlocks.forEach((block) => {
-    const projectId = block.dataset.projectId
-    const projectData = {
-      id: projectId,
-      name: block.querySelector(".project-title").textContent,
-      rooms: [],
-    }
-
-    const rooms = block.querySelectorAll(".room-block")
-    rooms.forEach((room) => {
-      projectData.rooms.push(extractRoomData(room))
-    })
-
-    projects.push(projectData)
-  })
-
-  localStorage.setItem("projectsData", JSON.stringify(projects))
-  console.log("[v0] Dados salvos no localStorage")
-}
-
-// Carrega dados do localStorage
-function loadFromLocalStorage() {
-  const savedData = localStorage.getItem("projectsData")
-  if (savedData) {
-    projectsData = JSON.parse(savedData)
-    console.log("[v0] Dados carregados do localStorage:", projectsData)
-  }
+  saveBackupData()
+  console.log("[v0] Dados salvos")
 }
 
 // ============================================
@@ -780,7 +926,7 @@ function loadFromLocalStorage() {
 // Exporta dados para JSON (para integração futura com Python)
 function exportToJSON() {
   saveToLocalStorage()
-  const data = localStorage.getItem("projectsData")
+  const data = localStorage.getItem("backupData")
   const blob = new Blob([data], { type: "application/json" })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
@@ -794,7 +940,7 @@ function exportToJSON() {
 function importFromJSON(jsonData) {
   try {
     const data = JSON.parse(jsonData)
-    localStorage.setItem("projectsData", jsonData)
+    localStorage.setItem("backupData", jsonData)
     location.reload() // Recarrega a página para aplicar os dados
     console.log("[v0] Dados importados do JSON")
   } catch (error) {
@@ -811,7 +957,7 @@ async function calculateVazaoAr(roomId) {
   // Espera até systemConstants estar carregado
   while (!systemConstants) {
     console.log("[v0] aguardando constantes do sistema...")
-    await new Promise(resolve => setTimeout(resolve, 100)) // espera 100ms
+    await new Promise((resolve) => setTimeout(resolve, 100)) // espera 100ms
   }
 
   if (!systemConstants.VARIAVEL_PD || !systemConstants.VARIAVEL_PS) {

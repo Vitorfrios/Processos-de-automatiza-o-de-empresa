@@ -52,30 +52,36 @@
                     </div>
 
                     <!-- Conteúdo do Projeto -->
-                    <div class="project-content" id="project-content-1">
+                    <!-- Added collapsed class to load minimized by default -->
+                    <div class="project-content collapsed" id="project-content-1">
                         <!-- Sala 1 -->
-                        <div class="room-block" data-room-id="1-1">
+                        <div class="room-block" data-room-id="1-1" data-project-key="Projeto1" data-room-key="Sala1">
                             <div class="room-header">
-                                <button class="minimizer" onclick="toggleRoom('1-1')">−</button>
+                                <button class="minimizer" onclick="toggleRoom('1-1')">+</button>
                                 <h3 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">Sala 1</h3>
                                 <button class="btn btn-delete-small" onclick="deleteRoom('1-1')">Deletar</button>
                             </div>
 
-                            <div class="room-content" id="room-content-1-1">
+                            <!-- Added collapsed class to load minimized by default -->
+                            <div class="room-content collapsed" id="room-content-1-1">
                                 <!-- Seção: Climatização -->
                                 <div class="section-block">
                                     <div class="section-header">
-                                        <button class="minimizer" onclick="toggleSection('1-1-clima')">−</button>
+                                        <!-- Changed minimizer to + for collapsed state -->
+                                        <button class="minimizer" onclick="toggleSection('1-1-clima')">+</button>
                                         <h4 class="section-title">Climatização</h4>
                                     </div>
-                                    <div class="section-content" id="section-content-1-1-clima">
+                                    <!-- Added collapsed class to load minimized by default -->
+                                    <div class="section-content collapsed" id="section-content-1-1-clima">
                                         <!-- Reorganized into collapsible table with two-column layout -->
                                         <div class="subsection-block">
                                             <div class="subsection-header">
-                                                <button class="minimizer" onclick="toggleSubsection('1-1-clima-table')">−</button>
+                                                <!-- Changed minimizer to + for collapsed state -->
+                                                <button class="minimizer" onclick="toggleSubsection('1-1-clima-table')">+</button>
                                                 <h5 class="subsection-title">Tabela de Inputs</h5>
                                             </div>
-                                            <div class="subsection-content" id="subsection-content-1-1-clima-table">
+                                            <!-- Added collapsed class to load minimized by default -->
+                                            <div class="subsection-content collapsed" id="subsection-content-1-1-clima-table">
                                                 <div class="clima-table">
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
@@ -213,11 +219,13 @@
                                 <!-- Seção: Máquinas -->
                                 <div class="section-block">
                                     <div class="section-header">
-                                        <button class="minimizer" onclick="toggleSection('1-1-maquinas')">−</button>
+                                        <!-- Changed minimizer to + for collapsed state -->
+                                        <button class="minimizer" onclick="toggleSection('1-1-maquinas')">+</button>
                                         <h4 class="section-title">Máquinas</h4>
                                         <button class="btn btn-add-small" onclick="addMachine('1-1')">+ Adicionar Máquina</button>
                                     </div>
-                                    <div class="section-content" id="section-content-1-1-maquinas">
+                                    <!-- Added collapsed class to load minimized by default -->
+                                    <div class="section-content collapsed" id="section-content-1-1-maquinas">
                                         <div class="machines-container" id="machines-1-1">
                                             <!-- Máquina 1 -->
                                             <div class="machine-item">
@@ -255,10 +263,12 @@
                                 <!-- Seção: Configuração Geral -->
                                 <div class="section-block">
                                     <div class="section-header">
-                                        <button class="minimizer" onclick="toggleSection('1-1-config')">−</button>
+                                        <!-- Changed minimizer to + for collapsed state -->
+                                        <button class="minimizer" onclick="toggleSection('1-1-config')">+</button>
                                         <h4 class="section-title">Configuração Geral</h4>
                                     </div>
-                                    <div class="section-content" id="section-content-1-1-config">
+                                    <!-- Added collapsed class to load minimized by default -->
+                                    <div class="section-content collapsed" id="section-content-1-1-config">
                                         <div class="form-grid">
                                             <div class="form-group">
                                                 <label>Responsável:</label>
@@ -281,18 +291,6 @@
                                     <button class="btn btn-update" onclick="updateRoom('1-1')">Atualizar Dados</button>
                                     <button class="btn btn-save" onclick="saveRoom('1-1')">Salvar</button>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Sala 2 -->
-                        <div class="room-block" data-room-id="1-2">
-                            <div class="room-header">
-                                <button class="minimizer" onclick="toggleRoom('1-2')">−</button>
-                                <h3 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">Sala 2</h3>
-                                <button class="btn btn-delete-small" onclick="deleteRoom('1-2')">Deletar</button>
-                            </div>
-                            <div class="room-content" id="room-content-1-2">
-                                <p class="empty-message">Configure as seções desta sala...</p>
                             </div>
                         </div>
 
