@@ -72,16 +72,16 @@ Climatização
                 B40=AUX Portas Simples
 
             Calculo de AUX Portas Duplas
-                =(0,827*B18*Varivel_PD*(POWER(B20;0,5))*3600)
+                =(0,827*B18*VARIAVEL_PD*(POWER(B20;0,5))*3600)
                 B18=N° Portas Duplas
                 B20=Pressurização Pa
-                Varivel_PD=0,042, estará no banco de dados dados.json como Varivel_PD
+                VARIAVEL_PD=0,042, estará no banco de dados dados.json como VARIAVEL_PD
             
             Calculo de AUX Portas Simples
-                =(0,827*B19*Varivel_PS*(POWER(B20;0,5))*3600)
+                =(0,827*B19*VARIAVEL_PS*(POWER(B20;0,5))*3600)
                 B19=N° Portas Simples
                 B20=Pressurização Pa
-                Varivel_PS=0,024, estará no banco de dados dados.json como Varivel_PS
+                VARIAVEL_PS=0,024, estará no banco de dados dados.json como VARIAVEL_PS
                 
     Calculo de ganhos
         conteiner após a tabela de imput com as mesmas formatações, iniciação minimizada;OBS: não há inputs, somente mostra de resultados de calculos.

@@ -1,0 +1,6 @@
+{
+  "constants": {
+    "VARIAVEL_PD": 0.0402,
+    "VARIAVEL_PS": 0.024
+  }
+}

@@ -614,3 +614,24 @@ textarea.form-input {
     display: none;
   }
 }
+
+/* System status banner styles for dados.json loading feedback */
+.system-status-banner {
+  padding: 1rem 2rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.system-status-banner.success {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+}
+
+.system-status-banner.error {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: white;
+  border: 2px solid #dc3545;
+}

@@ -7,23 +7,53 @@ let projectsData = {
   projects: [],
 }
 
-let systemConstants = {
-  VARIVEL_PD: 0.042, // Valor padrão caso o JSON não carregue
-  VARIVEL_PS: 0.024, // Valor padrão caso o JSON não carregue
-}
+let systemConstants = null
 
 async function loadSystemConstants() {
   try {
-    const response = await fetch("dados.json")
+    console.log("[v0] Tentando carregar json/dados.json")
+    const response = await fetch("./json/dados.json")
+    
     if (!response.ok) {
-      throw new Error("Não foi possível carregar dados.json")
+      throw new Error(`Status HTTP: ${response.status}`)
     }
+
     const data = await response.json()
+
+    // Verifica se as constantes existem no JSON
+    if (!data.constants) {
+      throw new Error("O arquivo JSON não contém 'constants'")
+    }
+
     systemConstants = data.constants
     console.log("[v0] Constantes do sistema carregadas:", systemConstants)
+    showSystemStatus("Constantes do sistema carregadas com sucesso", "success")
+
   } catch (error) {
-    console.warn("[v0] Erro ao carregar dados.json, usando valores padrão:", error)
-    // Mantém os valores padrão já definidos
+    console.error("[v0] ERRO CRÍTICO: Não foi possível carregar dados.json:", error)
+    showSystemStatus(
+      "ERRO: Não foi possível carregar o arquivo dados.json. Os cálculos não funcionarão até que o arquivo seja carregado corretamente.",
+      "error"
+    )
+    systemConstants = null
+  }
+}
+
+function showSystemStatus(message, type) {
+  const existingBanner = document.getElementById("system-status-banner")
+  if (existingBanner) existingBanner.remove()
+
+  const banner = document.createElement("div")
+  banner.id = "system-status-banner"
+  banner.className = `system-status-banner ${type}`
+  banner.textContent = message
+
+  const mainContent = document.querySelector(".main-content")
+  mainContent.insertBefore(banner, mainContent.firstChild)
+
+  // Remove banner de sucesso após 5 segundos
+  if (type === "success") {
+    setTimeout(() => banner.remove(), 5000)
   }
 }
 
@@ -777,20 +807,32 @@ function importFromJSON(jsonData) {
 // FUNÇÕES DE CÁLCULO
 // ============================================
 
-function calculateVazaoAr(roomId) {
+async function calculateVazaoAr(roomId) {
+  // Espera até systemConstants estar carregado
+  while (!systemConstants) {
+    console.log("[v0] aguardando constantes do sistema...")
+    await new Promise(resolve => setTimeout(resolve, 100)) // espera 100ms
+  }
+
+  if (!systemConstants.VARIAVEL_PD || !systemConstants.VARIAVEL_PS) {
+    console.error("[v0] ERRO: Constantes do sistema não carregadas corretamente.")
+    alert("ERRO: As constantes do sistema não foram carregadas corretamente.")
+    return
+  }
+
   const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`)
   if (!roomBlock) return
 
   const climaSection = roomBlock.querySelector('[id*="-clima"]')
   if (!climaSection) return
 
-  const VARIVEL_PD = systemConstants.VARIVEL_PD
-  const VARIVEL_PS = systemConstants.VARIVEL_PS
+  const VARIAVEL_PD = systemConstants.VARIAVEL_PD
+  const VARIAVEL_PS = systemConstants.VARIAVEL_PS
 
   console.log("[v0] ===== INÍCIO DO CÁLCULO DE VAZÃO =====")
   console.log("[v0] Constantes carregadas:")
-  console.log("[v0] VARIVEL_PD:", VARIVEL_PD)
-  console.log("[v0] VARIVEL_PS:", VARIVEL_PS)
+  console.log("[v0] VARIAVEL_PD:", VARIAVEL_PD)
+  console.log("[v0] VARIAVEL_PS:", VARIAVEL_PS)
 
   // Coleta todos os valores dos inputs
   const inputs = climaSection.querySelectorAll(".clima-input")
@@ -812,12 +854,12 @@ function calculateVazaoAr(roomId) {
   console.log("[v0] N° Portas Simples (B19):", numPortasSimples)
   console.log("[v0] Pressurização Pa (B20):", pressurizacao)
 
-  // Fórmula: 0.827 * B18 * Varivel_PD * (B20^0.5) * 3600
-  const auxPortasDuplas = 0.827 * numPortasDuplas * 0.0402 * Math.pow(pressurizacao, 0.5) * 3600;
-  //=(0,827*B18*0,0402*(POWER(B20;0,5))*3600)
+  // Fórmula: 0.827 * B18 * VARIAVEL_PD * (B20^0.5) * 3600
+  const auxPortasDuplas = 0.827 * numPortasDuplas * VARIAVEL_PD * Math.pow(pressurizacao, 0.5) * 3600
 
-  // Fórmula: 0.827 * B19 * Varivel_PS * (B20^0.5) * 3600
-  const auxPortasSimples = 0.827 * numPortasSimples * VARIVEL_PS * Math.pow(pressurizacao, 0.5) * 3600
+  // Fórmula: 0.827 * B19 * VARIAVEL_PS * (B20^0.5) * 3600
+  const auxPortasSimples = 0.827 * numPortasSimples * VARIAVEL_PS * Math.pow(pressurizacao, 0.5) * 3600
+
   console.log("[v0] Cálculos intermediários:")
   console.log("[v0] AUX Portas Duplas (B39):", auxPortasDuplas)
   console.log("[v0] AUX Portas Simples (B40):", auxPortasSimples)
