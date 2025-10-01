@@ -72,23 +72,104 @@
                                         <div class="form-grid">
                                             <div class="form-group">
                                                 <label>Ambiente:</label>
-                                                <input type="text" class="form-input" placeholder="Ex: Sala de Servidores">
+                                                <input type="text" class="form-input clima-input" data-field="ambiente" placeholder="Ex: Sala de Servidores">
                                             </div>
                                             <div class="form-group">
                                                 <label>Back-up:</label>
-                                                <select class="form-input">
+                                                <select class="form-input clima-input" data-field="backup">
+                                                    <option value="">Selecione</option>
+                                                    <option value="n">n</option>
+                                                    <option value="n+1">n+1</option>
+                                                    <option value="n+2">n+2</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Área (m²):</label>
+                                                <input type="number" class="form-input clima-input" data-field="area" placeholder="Ex: 50" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Tipo de Construção:</label>
+                                                <select class="form-input clima-input" data-field="tipoConstrucao">
+                                                    <option value="">Selecione</option>
+                                                    <option value="alvenaria">Alvenaria</option>
+                                                    <option value="eletrocentro">Eletrocentro</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Parede Oeste (m):</label>
+                                                <input type="number" class="form-input clima-input" data-field="paredeOeste" placeholder="Ex: 5.5" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Parede Leste (m):</label>
+                                                <input type="number" class="form-input clima-input" data-field="paredeLeste" placeholder="Ex: 5.5" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Parede Norte (m):</label>
+                                                <input type="number" class="form-input clima-input" data-field="paredeNorte" placeholder="Ex: 8.0" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Parede Sul (m):</label>
+                                                <input type="number" class="form-input clima-input" data-field="paredeSul" placeholder="Ex: 8.0" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Pé Direito (m):</label>
+                                                <input type="number" class="form-input clima-input" data-field="peDireito" placeholder="Ex: 3.0" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Divisória com Área não Climatizada 1 (m²):</label>
+                                                <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima1" placeholder="Ex: 10" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Divisória com Área não Climatizada 2 (m²):</label>
+                                                <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima2" placeholder="Ex: 10" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Divisória com Área Climatizada 1 (m²):</label>
+                                                <input type="number" class="form-input clima-input" data-field="divisoriaClima1" placeholder="Ex: 15" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Divisória com Área Climatizada 2 (m²):</label>
+                                                <input type="number" class="form-input clima-input" data-field="divisoriaClima2" placeholder="Ex: 15" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Dissipação (W):</label>
+                                                <input type="number" class="form-input clima-input" data-field="dissipacao" placeholder="Ex: 5000" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>N° Pessoas:</label>
+                                                <input type="number" class="form-input clima-input" data-field="numPessoas" placeholder="Ex: 10" min="0">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>N° Portas Duplas:</label>
+                                                <input type="number" class="form-input clima-input" data-field="numPortasDuplas" placeholder="Ex: 2" min="0">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>N° Portas Simples:</label>
+                                                <input type="number" class="form-input clima-input" data-field="numPortasSimples" placeholder="Ex: 3" min="0">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Pressurização (Pa):</label>
+                                                <input type="number" class="form-input clima-input" data-field="pressurizacao" placeholder="Ex: 50" step="0.01">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Setpoint (°C):</label>
+                                                <input type="number" class="form-input clima-input" data-field="setpoint" placeholder="Ex: 22" step="0.1">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Combate a Incêndio:</label>
+                                                <select class="form-input clima-input" data-field="combateIncendio">
                                                     <option value="">Selecione</option>
                                                     <option value="sim">Sim</option>
                                                     <option value="nao">Não</option>
                                                 </select>
                                             </div>
-                                            <div class="form-group">
-                                                <label>Área (m²):</label>
-                                                <input type="number" class="form-input" placeholder="Ex: 50">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Tipo de Construção:</label>
-                                                <input type="text" class="form-input" placeholder="Ex: Alvenaria">
+                                        </div>
+                                        
+                                        <!-- Campo calculado não editável -->
+                                        <div class="calculated-result">
+                                            <div class="result-box">
+                                                <label>Vazão de Ar Externo (l/s):</label>
+                                                <div class="result-value" id="vazao-ar-1-1">0.00</div>
                                             </div>
                                         </div>
                                     </div>

@@ -476,3 +476,39 @@ textarea.form-input {
 .editable-title.editing:focus {
   outline: 2px solid #667eea;
 }
+
+/* Estilos para campo calculado de vazão de ar */
+.calculated-result {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #dee2e6;
+}
+
+.result-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1.5rem;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.result-box label {
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.result-value {
+  background: white;
+  color: #667eea;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  min-width: 120px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
