@@ -1,0 +1,31 @@
+{
+  "Projeto1": {
+    "nome": "Projeto1",
+    "Sala1": {
+      "nome": "Sala1",
+      "Climatizacao": {
+        "Ambiente": "",
+        "Back-up": "",
+        "Area_m2": "",
+        "Tipo_Construcao": "",
+        "Parede_Oeste": "",
+        "Parede_Leste": "",
+        "Parede_Norte": "",
+        "Parede_Sul": "",
+        "Pe_Direito": "",
+        "Div_Nao_Climatizada1": "",
+        "Div_Nao_Climatizada2": "",
+        "Div_Climatizada1": "",
+        "Div_Climatizada2": "",
+        "Dissipacao": "",
+        "Numero_Pessoas": "",
+        "Numero_Portas_Duplas": "",
+        "Numero_Portas_Simples": "",
+        "Pressurizacao": "",
+        "Setpoint": "",
+        "Vazao_Ar_Externo": "",
+        "Combate_Incendio": ""
+      }
+    }
+  }
+}

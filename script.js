@@ -7,8 +7,29 @@ let projectsData = {
   projects: [],
 }
 
+let systemConstants = {
+  VARIVEL_PD: 0.042, // Valor padrão caso o JSON não carregue
+  VARIVEL_PS: 0.024, // Valor padrão caso o JSON não carregue
+}
+
+async function loadSystemConstants() {
+  try {
+    const response = await fetch("dados.json")
+    if (!response.ok) {
+      throw new Error("Não foi possível carregar dados.json")
+    }
+    const data = await response.json()
+    systemConstants = data.constants
+    console.log("[v0] Constantes do sistema carregadas:", systemConstants)
+  } catch (error) {
+    console.warn("[v0] Erro ao carregar dados.json, usando valores padrão:", error)
+    // Mantém os valores padrão já definidos
+  }
+}
+
 // Carrega dados salvos do localStorage ao iniciar
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadSystemConstants()
   loadFromLocalStorage()
   console.log("[v0] Sistema inicializado")
 })
@@ -48,6 +69,20 @@ function toggleRoom(roomId) {
 // Minimiza/expande uma seção
 function toggleSection(sectionId) {
   const content = document.getElementById(`section-content-${sectionId}`)
+  const minimizer = event.target
+
+  if (content.classList.contains("collapsed")) {
+    content.classList.remove("collapsed")
+    minimizer.textContent = "−"
+  } else {
+    content.classList.add("collapsed")
+    minimizer.textContent = "+"
+  }
+}
+
+// Minimiza/expande um subbloco
+function toggleSubsection(subsectionId) {
+  const content = document.getElementById(`subsection-content-${subsectionId}`)
   const minimizer = event.target
 
   if (content.classList.contains("collapsed")) {
@@ -225,106 +260,141 @@ function addNewRoom(projectId) {
                         <h4 class="section-title">Climatização</h4>
                     </div>
                     <div class="section-content" id="section-content-${roomId}-clima">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Ambiente:</label>
-                                <input type="text" class="form-input clima-input" data-field="ambiente" placeholder="Ex: Sala de Servidores" onchange="calculateVazaoAr('${roomId}')">
+                        <div class="subsection-block">
+                            <div class="subsection-header">
+                                <button class="minimizer" onclick="toggleSubsection('${roomId}-clima-table')">−</button>
+                                <h5 class="subsection-title">Tabela de Inputs</h5>
                             </div>
-                            <div class="form-group">
-                                <label>Back-up:</label>
-                                <select class="form-input clima-input" data-field="backup" onchange="calculateVazaoAr('${roomId}')">
-                                    <option value="">Selecione</option>
-                                    <option value="n">n</option>
-                                    <option value="n+1">n+1</option>
-                                    <option value="n+2">n+2</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Área (m²):</label>
-                                <input type="number" class="form-input clima-input" data-field="area" placeholder="Ex: 50" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo de Construção:</label>
-                                <select class="form-input clima-input" data-field="tipoConstrucao" onchange="calculateVazaoAr('${roomId}')">
-                                    <option value="">Selecione</option>
-                                    <option value="alvenaria">Alvenaria</option>
-                                    <option value="eletrocentro">Eletrocentro</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Parede Oeste (m):</label>
-                                <input type="number" class="form-input clima-input" data-field="paredeOeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Parede Leste (m):</label>
-                                <input type="number" class="form-input clima-input" data-field="paredeLeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Parede Norte (m):</label>
-                                <input type="number" class="form-input clima-input" data-field="paredeNorte" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Parede Sul (m):</label>
-                                <input type="number" class="form-input clima-input" data-field="paredeSul" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Pé Direito (m):</label>
-                                <input type="number" class="form-input clima-input" data-field="peDireito" placeholder="Ex: 3.0" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Divisória com Área não Climatizada 1 (m²):</label>
-                                <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima1" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Divisória com Área não Climatizada 2 (m²):</label>
-                                <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima2" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Divisória com Área Climatizada 1 (m²):</label>
-                                <input type="number" class="form-input clima-input" data-field="divisoriaClima1" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Divisória com Área Climatizada 2 (m²):</label>
-                                <input type="number" class="form-input clima-input" data-field="divisoriaClima2" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Dissipação (W):</label>
-                                <input type="number" class="form-input clima-input" data-field="dissipacao" placeholder="Ex: 5000" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>N° Pessoas:</label>
-                                <input type="number" class="form-input clima-input" data-field="numPessoas" placeholder="Ex: 10" min="0" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>N° Portas Duplas:</label>
-                                <input type="number" class="form-input clima-input" data-field="numPortasDuplas" placeholder="Ex: 2" min="0" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>N° Portas Simples:</label>
-                                <input type="number" class="form-input clima-input" data-field="numPortasSimples" placeholder="Ex: 3" min="0" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Pressurização (Pa):</label>
-                                <input type="number" class="form-input clima-input" data-field="pressurizacao" placeholder="Ex: 50" step="0.01" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Setpoint (°C):</label>
-                                <input type="number" class="form-input clima-input" data-field="setpoint" placeholder="Ex: 22" step="0.1" onchange="calculateVazaoAr('${roomId}')">
-                            </div>
-                            <div class="form-group">
-                                <label>Combate a Incêndio:</label>
-                                <select class="form-input clima-input" data-field="combateIncendio" onchange="calculateVazaoAr('${roomId}')">
-                                    <option value="">Selecione</option>
-                                    <option value="sim">Sim</option>
-                                    <option value="nao">Não</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="calculated-result">
-                            <div class="result-box">
-                                <label>Vazão de Ar Externo (l/s):</label>
-                                <div class="result-value" id="vazao-ar-${roomId}">0.00</div>
+                            <div class="subsection-content" id="subsection-content-${roomId}-clima-table">
+                                <div class="clima-table">
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Ambiente:</label>
+                                            <input type="text" class="form-input clima-input" data-field="ambiente" placeholder="Ex: Sala de Servidores" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell">
+                                            <label>Back-up:</label>
+                                            <select class="form-input clima-input" data-field="backup" onchange="calculateVazaoAr('${roomId}')">
+                                                <option value="">Selecione</option>
+                                                <option value="n">n</option>
+                                                <option value="n+1">n+1</option>
+                                                <option value="n+2">n+2</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Área (m²):</label>
+                                            <input type="number" class="form-input clima-input" data-field="area" placeholder="Ex: 50" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell">
+                                            <label>Tipo de Construção:</label>
+                                            <select class="form-input clima-input" data-field="tipoConstrucao" onchange="calculateVazaoAr('${roomId}')">
+                                                <option value="">Selecione</option>
+                                                <option value="alvenaria">Alvenaria</option>
+                                                <option value="eletrocentro">Eletrocentro</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Parede Oeste (m):</label>
+                                            <input type="number" class="form-input clima-input" data-field="paredeOeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell">
+                                            <label>Parede Leste (m):</label>
+                                            <input type="number" class="form-input clima-input" data-field="paredeLeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Parede Norte (m):</label>
+                                            <input type="number" class="form-input clima-input" data-field="paredeNorte" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell">
+                                            <label>Parede Sul (m):</label>
+                                            <input type="number" class="form-input clima-input" data-field="paredeSul" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Pé Direito (m):</label>
+                                            <input type="number" class="form-input clima-input" data-field="peDireito" placeholder="Ex: 3.0" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell clima-cell-empty"></div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Divisória Área Não Climatizada 1 (m²):</label>
+                                            <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima1" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell">
+                                            <label>Divisória Área Não Climatizada 2 (m²):</label>
+                                            <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima2" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Divisória Área Climatizada 1 (m²):</label>
+                                            <input type="number" class="form-input clima-input" data-field="divisoriaClima1" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell">
+                                            <label>Divisória Área Climatizada 2 (m²):</label>
+                                            <input type="number" class="form-input clima-input" data-field="divisoriaClima2" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Dissipação (W):</label>
+                                            <input type="number" class="form-input clima-input" data-field="dissipacao" placeholder="Ex: 5000" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell">
+                                            <label>N° Pessoas:</label>
+                                            <input type="number" class="form-input clima-input" data-field="numPessoas" placeholder="Ex: 10" min="0" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>N° Portas Duplas:</label>
+                                            <input type="number" class="form-input clima-input" data-field="numPortasDuplas" placeholder="Ex: 2" min="0" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell">
+                                            <label>N° Portas Simples:</label>
+                                            <input type="number" class="form-input clima-input" data-field="numPortasSimples" placeholder="Ex: 3" min="0" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Pressurização (Pa):</label>
+                                            <input type="number" class="form-input clima-input" data-field="pressurizacao" placeholder="Ex: 50" step="0.01" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                        <div class="clima-cell">
+                                            <label>Setpoint (°C):</label>
+                                            <input type="number" class="form-input clima-input" data-field="setpoint" placeholder="Ex: 22" step="0.1" onchange="calculateVazaoAr('${roomId}')">
+                                        </div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell clima-cell-result">
+                                            <label>Vazão de Ar Externo (l/s):</label>
+                                            <div class="result-value-inline" id="vazao-ar-${roomId}">0</div>
+                                        </div>
+                                        <div class="clima-cell clima-cell-empty"></div>
+                                    </div>
+                                    <div class="clima-row">
+                                        <div class="clima-cell">
+                                            <label>Combate a Incêndio:</label>
+                                            <select class="form-input clima-input" data-field="combateIncendio" onchange="calculateVazaoAr('${roomId}')">
+                                                <option value="">Selecione</option>
+                                                <option value="manual">Manual/Detecção</option>
+                                                <option value="fm200">FM200</option>
+                                                <option value="novec">NOVEC</option>
+                                                <option value="firepro">FirePRO</option>
+                                                <option value="ni">N/I</option>
+                                            </select>
+                                        </div>
+                                        <div class="clima-cell clima-cell-empty"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -377,11 +447,9 @@ function addNewRoom(projectId) {
         </div>
     `
 
-  // Insere antes da seção de adicionar sala
   const addRoomSection = projectContent.querySelector(".add-room-section")
   addRoomSection.insertAdjacentHTML("beforebegin", roomHTML)
 
-  // Remove mensagem vazia se existir
   const emptyMessage = projectContent.querySelector(".empty-message")
   if (emptyMessage) {
     emptyMessage.remove()
@@ -716,6 +784,14 @@ function calculateVazaoAr(roomId) {
   const climaSection = roomBlock.querySelector('[id*="-clima"]')
   if (!climaSection) return
 
+  const VARIVEL_PD = systemConstants.VARIVEL_PD
+  const VARIVEL_PS = systemConstants.VARIVEL_PS
+
+  console.log("[v0] ===== INÍCIO DO CÁLCULO DE VAZÃO =====")
+  console.log("[v0] Constantes carregadas:")
+  console.log("[v0] VARIVEL_PD:", VARIVEL_PD)
+  console.log("[v0] VARIVEL_PS:", VARIVEL_PS)
+
   // Coleta todos os valores dos inputs
   const inputs = climaSection.querySelectorAll(".clima-input")
   const data = {}
@@ -726,35 +802,44 @@ function calculateVazaoAr(roomId) {
     data[field] = value !== "" ? Number.parseFloat(value) || value : 0
   })
 
-  // Fórmula simplificada para cálculo de vazão de ar externo
-  // Esta é uma fórmula exemplo - deve ser ajustada conforme as normas técnicas específicas
-  let vazao = 0
+  // Extrai valores necessários para o cálculo
+  const numPortasDuplas = data.numPortasDuplas || 0
+  const numPortasSimples = data.numPortasSimples || 0
+  const pressurizacao = data.pressurizacao || 0
 
-  // Vazão baseada em pessoas (7.5 l/s por pessoa conforme ASHRAE)
-  const vazaoPessoas = (data.numPessoas || 0) * 7.5
+  console.log("[v0] Valores de entrada:")
+  console.log("[v0] N° Portas Duplas (B18):", numPortasDuplas)
+  console.log("[v0] N° Portas Simples (B19):", numPortasSimples)
+  console.log("[v0] Pressurização Pa (B20):", pressurizacao)
 
-  // Vazão baseada em área (0.3 l/s por m² como base)
-  const vazaoArea = (data.area || 0) * 0.3
+  // Fórmula: 0.827 * B18 * Varivel_PD * (B20^0.5) * 3600
+  const auxPortasDuplas = 0.827 * numPortasDuplas * 0.0402 * Math.pow(pressurizacao, 0.5) * 3600;
+  //=(0,827*B18*0,0402*(POWER(B20;0,5))*3600)
 
-  // Vazão adicional por dissipação térmica (fator de 0.001)
-  const vazaoDissipacao = (data.dissipacao || 0) * 0.001
+  // Fórmula: 0.827 * B19 * Varivel_PS * (B20^0.5) * 3600
+  const auxPortasSimples = 0.827 * numPortasSimples * VARIVEL_PS * Math.pow(pressurizacao, 0.5) * 3600
+  console.log("[v0] Cálculos intermediários:")
+  console.log("[v0] AUX Portas Duplas (B39):", auxPortasDuplas)
+  console.log("[v0] AUX Portas Simples (B40):", auxPortasSimples)
+  console.log("[v0] Soma (B39+B40):", auxPortasDuplas + auxPortasSimples)
 
-  // Fator de backup
-  let fatorBackup = 1.0
-  if (data.backup === "n+1") fatorBackup = 1.2
-  if (data.backup === "n+2") fatorBackup = 1.4
+  // Fórmula Excel: ROUNDUP((B39+B40)/3,6*1,25*1;0)
+  const soma = auxPortasDuplas + auxPortasSimples
+  const divisao = soma / 3.6
+  const multiplicacao = divisao * 1.25 * 1
+  const vazao = Math.ceil(multiplicacao)
 
-  // Fator de pressurização (adiciona 10% para cada 10 Pa)
-  const fatorPressurizacao = 1 + ((data.pressurizacao || 0) / 100) * 0.1
-
-  // Cálculo final
-  vazao = (vazaoPessoas + vazaoArea + vazaoDissipacao) * fatorBackup * fatorPressurizacao
+  console.log("[v0] Cálculo final passo a passo:")
+  console.log("[v0] (B39+B40) / 3.6 =", divisao)
+  console.log("[v0] Resultado * 1.25 * 1 =", multiplicacao)
+  console.log("[v0] ROUNDUP (Math.ceil) =", vazao)
+  console.log("[v0] ===== FIM DO CÁLCULO DE VAZÃO =====")
 
   // Atualiza o campo de resultado
   const resultElement = document.getElementById(`vazao-ar-${roomId}`)
   if (resultElement) {
-    resultElement.textContent = vazao.toFixed(2)
+    resultElement.textContent = vazao
   }
 
-  console.log(`[v0] Vazão de ar calculada para sala ${roomId}: ${vazao.toFixed(2)} l/s`)
+  saveToLocalStorage()
 }

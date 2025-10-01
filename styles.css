@@ -512,3 +512,105 @@ textarea.form-input {
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+/* Subsection blocks and clima table layout */
+.subsection-block {
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.subsection-header {
+  background: #d6d8db;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 6px 6px 0 0;
+}
+
+.subsection-title {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.subsection-content {
+  padding: 1.5rem;
+}
+
+.subsection-header .minimizer {
+  background: #adb5bd;
+  color: #495057;
+}
+
+.subsection-header .minimizer:hover {
+  background: #868e96;
+}
+
+/* Clima table layout */
+.clima-table {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.clima-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.clima-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.clima-cell label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.clima-cell-empty {
+  visibility: hidden;
+}
+
+.clima-cell-result {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clima-cell-result label {
+  color: white;
+  margin: 0;
+}
+
+.result-value-inline {
+  background: white;
+  color: #667eea;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Responsive adjustments for clima table */
+@media (max-width: 768px) {
+  .clima-row {
+    grid-template-columns: 1fr;
+  }
+
+  .clima-cell-empty {
+    display: none;
+  }
+}
