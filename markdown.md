@@ -47,3 +47,33 @@ Dados importantes:
         Área |Lugar do imput|
         Tipo de Construção |Lugar do imput|
     Os outros topicos seguem o mesmo processo
+Climatização
+    Ambiente
+    Back-up n/n+1/n+2
+    Área em m²
+    Tipo de Construção alvenaria/eletrocentro
+
+    Parede Oeste em m
+    Parede Leste em m
+    Parede Norte em m
+    Parede Sul em m
+
+    Pé Direito
+
+    Divisória com Área não Climatizada 1
+    Divisória com Área não Climatizada 2
+    Divisória com Área Climatizada
+    Divisória com Área Climatizada
+
+    Dissipação
+
+    N° Pessoas
+
+    Vazão de Ar Externo (l/s) (não eh imput e sim resultado de calculo)
+
+    N° Portas Duplas
+    N° Portas Simples
+
+    Pressurização Pa
+    Setpoint
+    Combate a Incêndio
