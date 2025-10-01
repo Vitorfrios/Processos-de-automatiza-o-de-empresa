@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gerenciamento de Projetos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header class="header">
+        <div class="header-left">
+            <img src="/placeholder.svg?height=50&width=50" alt="Logo Esquerda" class="logo">
+        </div>
+        <div class="header-center">
+            <h1>Sistema de Gerenciamento de Projetos</h1>
+        </div>
+        <div class="header-right">
+            <img src="/placeholder.svg?height=50&width=50" alt="Logo Direita" class="logo">
+        </div>
+    </header>
+
+    <!-- Barra de Navegação -->
+    <nav class="navbar">
+        <ul class="nav-list">
+            <li><a href="#projetos">Projetos</a></li>
+            <li><a href="#relatorios">Relatórios</a></li>
+            <li><a href="#configuracoes">Configurações</a></li>
+            <li><a href="#ajuda">Ajuda</a></li>
+        </ul>
+    </nav>
+
+    <!-- Área Principal -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Botão para adicionar novo projeto -->
+            <div class="add-project-section">
+                <button class="btn btn-add" onclick="addNewProject()">+ Adicionar Novo Projeto</button>
+            </div>
+
+            <!-- Container de Projetos -->
+            <div id="projects-container">
+                <!-- Projeto 1 (Exemplo) -->
+                <div class="project-block" data-project-id="1">
+                    <!-- Cabeçalho do Projeto -->
+                    <div class="project-header">
+                        <button class="minimizer" onclick="toggleProject(1)">−</button>
+                        <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">Projeto 1</h2>
+                        <div class="project-actions">
+                            <button class="btn btn-delete" onclick="deleteProject(1)">Deletar</button>
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo do Projeto -->
+                    <div class="project-content" id="project-content-1">
+                        <!-- Sala 1 -->
+                        <div class="room-block" data-room-id="1-1">
+                            <div class="room-header">
+                                <button class="minimizer" onclick="toggleRoom('1-1')">−</button>
+                                <h3 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">Sala 1</h3>
+                                <button class="btn btn-delete-small" onclick="deleteRoom('1-1')">Deletar</button>
+                            </div>
+
+                            <div class="room-content" id="room-content-1-1">
+                                <!-- Seção: Climatização -->
+                                <div class="section-block">
+                                    <div class="section-header">
+                                        <button class="minimizer" onclick="toggleSection('1-1-clima')">−</button>
+                                        <h4 class="section-title">Climatização</h4>
+                                    </div>
+                                    <div class="section-content" id="section-content-1-1-clima">
+                                        <div class="form-grid">
+                                            <div class="form-group">
+                                                <label>Ambiente:</label>
+                                                <input type="text" class="form-input" placeholder="Ex: Sala de Servidores">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Back-up:</label>
+                                                <select class="form-input">
+                                                    <option value="">Selecione</option>
+                                                    <option value="sim">Sim</option>
+                                                    <option value="nao">Não</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Área (m²):</label>
+                                                <input type="number" class="form-input" placeholder="Ex: 50">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Tipo de Construção:</label>
+                                                <input type="text" class="form-input" placeholder="Ex: Alvenaria">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Seção: Máquinas -->
+                                <div class="section-block">
+                                    <div class="section-header">
+                                        <button class="minimizer" onclick="toggleSection('1-1-maquinas')">−</button>
+                                        <h4 class="section-title">Máquinas</h4>
+                                        <button class="btn btn-add-small" onclick="addMachine('1-1')">+ Adicionar Máquina</button>
+                                    </div>
+                                    <div class="section-content" id="section-content-1-1-maquinas">
+                                        <div class="machines-container" id="machines-1-1">
+                                            <!-- Máquina 1 -->
+                                            <div class="machine-item">
+                                                <div class="machine-header">
+                                                    <span class="machine-title">Máquina 1</span>
+                                                    <button class="btn btn-delete-small" onclick="deleteMachine(this)">×</button>
+                                                </div>
+                                                <div class="form-grid">
+                                                    <div class="form-group">
+                                                        <label>Nome:</label>
+                                                        <input type="text" class="form-input" placeholder="Ex: Servidor Principal">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Modelo:</label>
+                                                        <input type="text" class="form-input" placeholder="Ex: Dell PowerEdge">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Potência (W):</label>
+                                                        <input type="number" class="form-input" placeholder="Ex: 500">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Status:</label>
+                                                        <select class="form-input">
+                                                            <option value="ativo">Ativo</option>
+                                                            <option value="inativo">Inativo</option>
+                                                            <option value="manutencao">Manutenção</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Seção: Configuração Geral -->
+                                <div class="section-block">
+                                    <div class="section-header">
+                                        <button class="minimizer" onclick="toggleSection('1-1-config')">−</button>
+                                        <h4 class="section-title">Configuração Geral</h4>
+                                    </div>
+                                    <div class="section-content" id="section-content-1-1-config">
+                                        <div class="form-grid">
+                                            <div class="form-group">
+                                                <label>Responsável:</label>
+                                                <input type="text" class="form-input" placeholder="Nome do responsável">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Data de Instalação:</label>
+                                                <input type="date" class="form-input">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Observações:</label>
+                                                <textarea class="form-input" rows="3" placeholder="Observações gerais"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Botões da Sala -->
+                                <div class="room-actions">
+                                    <button class="btn btn-update" onclick="updateRoom('1-1')">Atualizar Dados</button>
+                                    <button class="btn btn-save" onclick="saveRoom('1-1')">Salvar</button>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Botão para adicionar nova sala -->
+                        <div class="add-room-section">
+                            <button class="btn btn-add-secondary" onclick="addNewRoom(1)">+ Adicionar Nova Sala</button>
+                        </div>
+
+                        <!-- Botões Gerais do Projeto -->
+                        <div class="project-actions-footer">
+                            <button class="btn btn-verify" onclick="verifyProjectData(1)">Verificar Dados</button>
+                            <button class="btn btn-save" onclick="saveProject(1)">Salvar Projeto</button>
+                            <button class="btn btn-download" onclick="downloadPDF(1)">Baixar PDF</button>
+                            <button class="btn btn-download" onclick="downloadWord(1)">Baixar Word</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

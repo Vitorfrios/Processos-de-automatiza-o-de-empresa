@@ -1,0 +1,626 @@
+// ============================================
+// GERENCIAMENTO DE DADOS LOCAIS
+// ============================================
+
+// Armazena temporariamente os dados dos projetos
+let projectsData = {
+  projects: [],
+}
+
+// Carrega dados salvos do localStorage ao iniciar
+window.addEventListener("DOMContentLoaded", () => {
+  loadFromLocalStorage()
+  console.log("[v0] Sistema inicializado")
+})
+
+// ============================================
+// FUNÇÕES DE MINIMIZAR/EXPANDIR
+// ============================================
+
+// Minimiza/expande um projeto completo
+function toggleProject(projectId) {
+  const content = document.getElementById(`project-content-${projectId}`)
+  const minimizer = event.target
+
+  if (content.classList.contains("collapsed")) {
+    content.classList.remove("collapsed")
+    minimizer.textContent = "−"
+  } else {
+    content.classList.add("collapsed")
+    minimizer.textContent = "+"
+  }
+}
+
+// Minimiza/expande uma sala
+function toggleRoom(roomId) {
+  const content = document.getElementById(`room-content-${roomId}`)
+  const minimizer = event.target
+
+  if (content.classList.contains("collapsed")) {
+    content.classList.remove("collapsed")
+    minimizer.textContent = "−"
+  } else {
+    content.classList.add("collapsed")
+    minimizer.textContent = "+"
+  }
+}
+
+// Minimiza/expande uma seção
+function toggleSection(sectionId) {
+  const content = document.getElementById(`section-content-${sectionId}`)
+  const minimizer = event.target
+
+  if (content.classList.contains("collapsed")) {
+    content.classList.remove("collapsed")
+    minimizer.textContent = "−"
+  } else {
+    content.classList.add("collapsed")
+    minimizer.textContent = "+"
+  }
+}
+
+// ============================================
+// FUNÇÕES DE GERENCIAMENTO DE PROJETOS
+// ============================================
+
+// Adiciona um novo projeto
+function addNewProject() {
+  const projectsContainer = document.getElementById("projects-container")
+  const projectCount = projectsContainer.children.length + 1
+  const projectId = Date.now() // ID único baseado em timestamp
+
+  const projectHTML = `
+        <div class="project-block" data-project-id="${projectId}">
+            <div class="project-header">
+                <button class="minimizer" onclick="toggleProject(${projectId})">−</button>
+                <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">Projeto ${projectCount}</h2>
+                <div class="project-actions">
+                    <button class="btn btn-edit" onclick="editProject(${projectId})">Editar</button>
+                    <button class="btn btn-delete" onclick="deleteProject(${projectId})">Deletar</button>
+                </div>
+            </div>
+            <div class="project-content" id="project-content-${projectId}">
+                <p class="empty-message">Adicione salas a este projeto...</p>
+                <div class="add-room-section">
+                    <button class="btn btn-add-secondary" onclick="addNewRoom(${projectId})">+ Adicionar Nova Sala</button>
+                </div>
+                <div class="project-actions-footer">
+                    <button class="btn btn-verify" onclick="verifyProjectData(${projectId})">Verificar Dados</button>
+                    <button class="btn btn-save" onclick="saveProject(${projectId})">Salvar Projeto</button>
+                    <button class="btn btn-download" onclick="downloadPDF(${projectId})">Baixar PDF</button>
+                    <button class="btn btn-download" onclick="downloadWord(${projectId})">Baixar Word</button>
+                </div>
+            </div>
+        </div>
+    `
+
+  projectsContainer.insertAdjacentHTML("beforeend", projectHTML)
+  console.log(`[v0] Projeto ${projectCount} adicionado`)
+}
+
+// Deleta um projeto
+function deleteProject(projectId) {
+  if (confirm("Tem certeza que deseja deletar este projeto? Esta ação não pode ser desfeita.")) {
+    const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`)
+    projectBlock.remove()
+    console.log(`[v0] Projeto ${projectId} deletado`)
+  }
+}
+
+// ============================================
+// FUNÇÕES DE EDIÇÃO INLINE
+// ============================================
+
+function makeEditable(element, type) {
+  // Previne múltiplas edições simultâneas
+  if (element.classList.contains("editing")) {
+    return
+  }
+
+  // Armazena o texto original
+  const originalText = element.textContent.trim()
+  element.dataset.originalText = originalText
+
+  // Torna o elemento editável
+  element.contentEditable = true
+  element.classList.add("editing")
+
+  // Seleciona todo o texto
+  const range = document.createRange()
+  const selection = window.getSelection()
+  range.selectNodeContents(element)
+  selection.removeAllRanges()
+  selection.addRange(range)
+
+  // Foca no elemento
+  element.focus()
+
+  // Salva ao pressionar Enter
+  element.addEventListener("keydown", function handleEnter(e) {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      saveInlineEdit(element, type)
+      element.removeEventListener("keydown", handleEnter)
+    } else if (e.key === "Escape") {
+      e.preventDefault()
+      cancelInlineEdit(element)
+      element.removeEventListener("keydown", handleEnter)
+    }
+  })
+
+  // Salva ao clicar fora
+  element.addEventListener(
+    "blur",
+    function handleBlur() {
+      saveInlineEdit(element, type)
+      element.removeEventListener("blur", handleBlur)
+    },
+    { once: true },
+  )
+}
+
+function saveInlineEdit(element, type) {
+  const newText = element.textContent.trim()
+  const originalText = element.dataset.originalText
+
+  // Remove estado de edição
+  element.contentEditable = false
+  element.classList.remove("editing")
+
+  // Se o texto estiver vazio, restaura o original
+  if (newText === "") {
+    element.textContent = originalText
+    alert("O nome não pode estar vazio.")
+    return
+  }
+
+  // Se o texto mudou, atualiza
+  if (newText !== originalText) {
+    element.textContent = newText
+
+    // Salva no localStorage
+    saveToLocalStorage()
+
+    console.log(`[v0] ${type === "project" ? "Projeto" : "Sala"} renomeado para: ${newText}`)
+  }
+
+  // Remove o atributo temporário
+  delete element.dataset.originalText
+}
+
+function cancelInlineEdit(element) {
+  const originalText = element.dataset.originalText
+
+  element.contentEditable = false
+  element.classList.remove("editing")
+  element.textContent = originalText
+
+  delete element.dataset.originalText
+
+  console.log("[v0] Edição cancelada")
+}
+
+// ============================================
+// FUNÇÕES DE GERENCIAMENTO DE SALAS
+// ============================================
+
+// Adiciona uma nova sala a um projeto
+function addNewRoom(projectId) {
+  const projectContent = document.getElementById(`project-content-${projectId}`)
+  const roomCount = projectContent.querySelectorAll(".room-block").length + 1
+  const roomId = `${projectId}-${Date.now()}`
+
+  const roomHTML = `
+        <div class="room-block" data-room-id="${roomId}">
+            <div class="room-header">
+                <button class="minimizer" onclick="toggleRoom('${roomId}')">−</button>
+                <h3 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">Sala ${roomCount}</h3>
+                <button class="btn btn-delete-small" onclick="deleteRoom('${roomId}')">Deletar</button>
+            </div>
+            <div class="room-content" id="room-content-${roomId}">
+                <!-- Seção: Climatização -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <button class="minimizer" onclick="toggleSection('${roomId}-clima')">−</button>
+                        <h4 class="section-title">Climatização</h4>
+                    </div>
+                    <div class="section-content" id="section-content-${roomId}-clima">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Ambiente:</label>
+                                <input type="text" class="form-input" placeholder="Ex: Sala de Servidores">
+                            </div>
+                            <div class="form-group">
+                                <label>Back-up:</label>
+                                <select class="form-input">
+                                    <option value="">Selecione</option>
+                                    <option value="sim">Sim</option>
+                                    <option value="nao">Não</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Área (m²):</label>
+                                <input type="number" class="form-input" placeholder="Ex: 50">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Construção:</label>
+                                <input type="text" class="form-input" placeholder="Ex: Alvenaria">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção: Máquinas -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <button class="minimizer" onclick="toggleSection('${roomId}-maquinas')">−</button>
+                        <h4 class="section-title">Máquinas</h4>
+                        <button class="btn btn-add-small" onclick="addMachine('${roomId}')">+ Adicionar Máquina</button>
+                    </div>
+                    <div class="section-content" id="section-content-${roomId}-maquinas">
+                        <div class="machines-container" id="machines-${roomId}">
+                            <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção: Configuração Geral -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <button class="minimizer" onclick="toggleSection('${roomId}-config')">−</button>
+                        <h4 class="section-title">Configuração Geral</h4>
+                    </div>
+                    <div class="section-content" id="section-content-${roomId}-config">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Responsável:</label>
+                                <input type="text" class="form-input" placeholder="Nome do responsável">
+                            </div>
+                            <div class="form-group">
+                                <label>Data de Instalação:</label>
+                                <input type="date" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Observações:</label>
+                                <textarea class="form-input" rows="3" placeholder="Observações gerais"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões da Sala -->
+                <div class="room-actions">
+                    <button class="btn btn-update" onclick="updateRoom('${roomId}')">Atualizar Dados</button>
+                    <button class="btn btn-save" onclick="saveRoom('${roomId}')">Salvar</button>
+                </div>
+            </div>
+        </div>
+    `
+
+  // Insere antes da seção de adicionar sala
+  const addRoomSection = projectContent.querySelector(".add-room-section")
+  addRoomSection.insertAdjacentHTML("beforebegin", roomHTML)
+
+  // Remove mensagem vazia se existir
+  const emptyMessage = projectContent.querySelector(".empty-message")
+  if (emptyMessage) {
+    emptyMessage.remove()
+  }
+
+  console.log(`[v0] Sala ${roomCount} adicionada ao projeto ${projectId}`)
+}
+
+// Deleta uma sala
+function deleteRoom(roomId) {
+  if (confirm("Tem certeza que deseja deletar esta sala? Esta ação não pode ser desfeita.")) {
+    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`)
+    const projectContent = roomBlock.closest(".project-content")
+
+    roomBlock.remove()
+
+    // Se não houver mais salas, mostra mensagem vazia
+    const remainingRooms = projectContent.querySelectorAll(".room-block")
+    if (remainingRooms.length === 0) {
+      const addRoomSection = projectContent.querySelector(".add-room-section")
+      addRoomSection.insertAdjacentHTML("beforebegin", '<p class="empty-message">Adicione salas a este projeto...</p>')
+    }
+
+    // Salva no localStorage
+    saveToLocalStorage()
+
+    console.log(`[v0] Sala ${roomId} deletada`)
+  }
+}
+
+// ============================================
+// FUNÇÕES DE GERENCIAMENTO DE MÁQUINAS
+// ============================================
+
+// Adiciona uma nova máquina a uma sala
+function addMachine(roomId) {
+  const machinesContainer = document.getElementById(`machines-${roomId}`)
+  const machineCount = machinesContainer.querySelectorAll(".machine-item").length + 1
+
+  // Remove mensagem vazia se existir
+  const emptyMessage = machinesContainer.querySelector(".empty-message")
+  if (emptyMessage) {
+    emptyMessage.remove()
+  }
+
+  const machineHTML = `
+        <div class="machine-item">
+            <div class="machine-header">
+                <span class="machine-title">Máquina ${machineCount}</span>
+                <button class="btn btn-delete-small" onclick="deleteMachine(this)">×</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nome:</label>
+                    <input type="text" class="form-input" placeholder="Ex: Servidor Principal">
+                </div>
+                <div class="form-group">
+                    <label>Modelo:</label>
+                    <input type="text" class="form-input" placeholder="Ex: Dell PowerEdge">
+                </div>
+                <div class="form-group">
+                    <label>Potência (W):</label>
+                    <input type="number" class="form-input" placeholder="Ex: 500">
+                </div>
+                <div class="form-group">
+                    <label>Status:</label>
+                    <select class="form-input">
+                        <option value="ativo">Ativo</option>
+                        <option value="inativo">Inativo</option>
+                        <option value="manutencao">Manutenção</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    `
+
+  machinesContainer.insertAdjacentHTML("beforeend", machineHTML)
+  console.log(`[v0] Máquina ${machineCount} adicionada à sala ${roomId}`)
+}
+
+// Deleta uma máquina
+function deleteMachine(button) {
+  if (confirm("Deseja remover esta máquina?")) {
+    const machineItem = button.closest(".machine-item")
+    const machinesContainer = machineItem.closest(".machines-container")
+    machineItem.remove()
+
+    // Se não houver mais máquinas, mostra mensagem vazia
+    if (machinesContainer.querySelectorAll(".machine-item").length === 0) {
+      machinesContainer.innerHTML = '<p class="empty-message">Nenhuma máquina adicionada ainda.</p>'
+    }
+
+    console.log("[v0] Máquina removida")
+  }
+}
+
+// ============================================
+// FUNÇÕES DE ATUALIZAÇÃO E SALVAMENTO
+// ============================================
+
+// Atualiza os dados de uma sala (validação local)
+function updateRoom(roomId) {
+  const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`)
+  const inputs = roomBlock.querySelectorAll(".form-input")
+
+  let hasEmptyFields = false
+  inputs.forEach((input) => {
+    if (input.value.trim() === "" && input.hasAttribute("required")) {
+      hasEmptyFields = true
+      input.style.borderColor = "#dc3545"
+    } else {
+      input.style.borderColor = "#dee2e6"
+    }
+  })
+
+  if (hasEmptyFields) {
+    alert("Por favor, preencha todos os campos obrigatórios.")
+  } else {
+    alert("Dados da sala atualizados localmente!")
+    console.log(`[v0] Dados da sala ${roomId} atualizados`)
+  }
+}
+
+// Salva os dados de uma sala
+function saveRoom(roomId) {
+  const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`)
+  const roomData = extractRoomData(roomBlock)
+
+  console.log(`[v0] Salvando dados da sala ${roomId}:`, roomData)
+
+  // Salva no localStorage
+  saveToLocalStorage()
+
+  alert("Dados da sala salvos com sucesso!")
+}
+
+// Extrai dados de uma sala para JSON
+function extractRoomData(roomBlock) {
+  const roomData = {
+    id: roomBlock.dataset.roomId,
+    name: roomBlock.querySelector(".room-title").textContent,
+    climatizacao: {},
+    maquinas: [],
+    configuracaoGeral: {},
+  }
+
+  // Extrai dados de climatização
+  const climaSection = roomBlock.querySelector('[id*="-clima"]')
+  if (climaSection) {
+    const inputs = climaSection.querySelectorAll(".form-input")
+    inputs.forEach((input) => {
+      const label = input.previousElementSibling?.textContent.replace(":", "")
+      roomData.climatizacao[label] = input.value
+    })
+  }
+
+  // Extrai dados de máquinas
+  const machines = roomBlock.querySelectorAll(".machine-item")
+  machines.forEach((machine) => {
+    const machineData = {}
+    const inputs = machine.querySelectorAll(".form-input")
+    inputs.forEach((input) => {
+      const label = input.previousElementSibling?.textContent.replace(":", "")
+      machineData[label] = input.value
+    })
+    roomData.maquinas.push(machineData)
+  })
+
+  // Extrai dados de configuração geral
+  const configSection = roomBlock.querySelector('[id*="-config"]')
+  if (configSection) {
+    const inputs = configSection.querySelectorAll(".form-input")
+    inputs.forEach((input) => {
+      const label = input.previousElementSibling?.textContent.replace(":", "")
+      roomData.configuracaoGeral[label] = input.value
+    })
+  }
+
+  return roomData
+}
+
+// ============================================
+// FUNÇÕES DE PROJETO
+// ============================================
+
+// Verifica os dados de um projeto
+function verifyProjectData(projectId) {
+  const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`)
+  const rooms = projectBlock.querySelectorAll(".room-block")
+
+  let report = `Verificação do Projeto:\n\n`
+  report += `Total de salas: ${rooms.length}\n\n`
+
+  rooms.forEach((room, index) => {
+    const roomName = room.querySelector(".room-title").textContent
+    const inputs = room.querySelectorAll(".form-input")
+    const filledInputs = Array.from(inputs).filter((input) => input.value.trim() !== "").length
+    const totalInputs = inputs.length
+    const percentage = totalInputs > 0 ? ((filledInputs / totalInputs) * 100).toFixed(1) : 0
+
+    report += `${roomName}: ${filledInputs}/${totalInputs} campos preenchidos (${percentage}%)\n`
+  })
+
+  alert(report)
+  console.log(`[v0] Verificação do projeto ${projectId} concluída`)
+}
+
+// Salva um projeto completo
+function saveProject(projectId) {
+  const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`)
+  const projectData = {
+    id: projectId,
+    name: projectBlock.querySelector(".project-title").textContent,
+    rooms: [],
+  }
+
+  const rooms = projectBlock.querySelectorAll(".room-block")
+  rooms.forEach((room) => {
+    projectData.rooms.push(extractRoomData(room))
+  })
+
+  console.log(`[v0] Salvando projeto ${projectId}:`, projectData)
+
+  // Salva no localStorage
+  saveToLocalStorage()
+
+  alert("Projeto salvo com sucesso!")
+}
+
+// ============================================
+// FUNÇÕES DE EXPORTAÇÃO
+// ============================================
+
+// Baixa o projeto em PDF (simulado)
+function downloadPDF(projectId) {
+  const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`)
+  const projectName = projectBlock.querySelector(".project-title").textContent
+
+  alert(
+    `Funcionalidade de download PDF será implementada.\n\nProjeto: ${projectName}\n\nEsta função pode ser integrada com bibliotecas como jsPDF ou html2pdf.js`,
+  )
+  console.log(`[v0] Download PDF solicitado para projeto ${projectId}`)
+}
+
+// Baixa o projeto em Word (simulado)
+function downloadWord(projectId) {
+  const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`)
+  const projectName = projectBlock.querySelector(".project-title").textContent
+
+  alert(
+    `Funcionalidade de download Word será implementada.\n\nProjeto: ${projectName}\n\nEsta função pode ser integrada com bibliotecas como docx.js`,
+  )
+  console.log(`[v0] Download Word solicitado para projeto ${projectId}`)
+}
+
+// ============================================
+// FUNÇÕES DE ARMAZENAMENTO LOCAL
+// ============================================
+
+// Salva todos os dados no localStorage
+function saveToLocalStorage() {
+  const projects = []
+  const projectBlocks = document.querySelectorAll(".project-block")
+
+  projectBlocks.forEach((block) => {
+    const projectId = block.dataset.projectId
+    const projectData = {
+      id: projectId,
+      name: block.querySelector(".project-title").textContent,
+      rooms: [],
+    }
+
+    const rooms = block.querySelectorAll(".room-block")
+    rooms.forEach((room) => {
+      projectData.rooms.push(extractRoomData(room))
+    })
+
+    projects.push(projectData)
+  })
+
+  localStorage.setItem("projectsData", JSON.stringify(projects))
+  console.log("[v0] Dados salvos no localStorage")
+}
+
+// Carrega dados do localStorage
+function loadFromLocalStorage() {
+  const savedData = localStorage.getItem("projectsData")
+  if (savedData) {
+    projectsData = JSON.parse(savedData)
+    console.log("[v0] Dados carregados do localStorage:", projectsData)
+  }
+}
+
+// ============================================
+// FUNÇÕES AUXILIARES
+// ============================================
+
+// Exporta dados para JSON (para integração futura com Python)
+function exportToJSON() {
+  saveToLocalStorage()
+  const data = localStorage.getItem("projectsData")
+  const blob = new Blob([data], { type: "application/json" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "projetos-data.json"
+  a.click()
+  console.log("[v0] Dados exportados para JSON")
+}
+
+// Importa dados de JSON (para integração futura com Python)
+function importFromJSON(jsonData) {
+  try {
+    const data = JSON.parse(jsonData)
+    localStorage.setItem("projectsData", jsonData)
+    location.reload() // Recarrega a página para aplicar os dados
+    console.log("[v0] Dados importados do JSON")
+  } catch (error) {
+    console.error("[v0] Erro ao importar JSON:", error)
+    alert("Erro ao importar dados. Verifique o formato do arquivo JSON.")
+  }
+}
