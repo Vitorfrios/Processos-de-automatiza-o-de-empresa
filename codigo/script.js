@@ -856,9 +856,9 @@ async function saveProject(projectName, event) {
     return
   }
 
-  const projectId = projectBlock.dataset.projectId
+  const projectId = projectBlock.dataset.projectId ? Number.parseInt(projectBlock.dataset.projectId) : null
 
-  const projectData = buildProjectData(projectBlock)
+  const projectData = buildProjectData(projectBlock, projectId)
 
   const result = projectId
     ? await updateExistingProject(projectId, projectData)
@@ -872,10 +872,14 @@ async function saveProject(projectName, event) {
   }
 }
 
-function buildProjectData(projectBlock) {
+function buildProjectData(projectBlock, projectId) {
   const projectData = {
     nome: projectBlock.querySelector(".project-title").textContent.trim(),
     salas: [],
+  }
+
+  if (projectId) {
+    projectData.id = projectId
   }
 
   const roomBlocks = projectBlock.querySelectorAll(".room-block")
@@ -939,7 +943,7 @@ async function updateExistingProject(projectId, projectData) {
 async function createNewProject(projectData, projectBlock) {
   const result = await createProject(projectData)
   if (result) {
-    projectBlock.dataset.projectId = result.id
+    projectBlock.dataset.projectId = Number.parseInt(result.id)
   }
   return result
 }
@@ -1378,8 +1382,8 @@ function saveFirstProjectIdOfSession(projectId) {
   const existingId = sessionStorage.getItem(SESSION_STORAGE_KEY)
 
   if (!existingId) {
-    // Se não existe, salva o ID atual como o primeiro da sessão
-    sessionStorage.setItem(SESSION_STORAGE_KEY, projectId.toString())
-    console.log(`[v0] Primeiro projeto da sessão salvo: ID ${projectId}`)
+    const idAsInteger = Number.parseInt(projectId)
+    sessionStorage.setItem(SESSION_STORAGE_KEY, idAsInteger.toString())
+    console.log(`[v0] Primeiro projeto da sessão salvo: ID ${idAsInteger}`)
   }
 }
