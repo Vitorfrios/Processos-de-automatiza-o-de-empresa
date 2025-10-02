@@ -40,14 +40,27 @@ let projectCounter = 0
 
 const SESSION_STORAGE_KEY = "firstProjectIdOfSession"
 const REMOVED_PROJECTS_KEY = "removedProjectsFromScreen"
+const NORMALIZATION_DONE_KEY = "idsNormalizedOnServer"
+
+// ============================================
+// INICIALIZAÇÃO
+// ============================================
+
+window.addEventListener("DOMContentLoaded", async () => {
+  console.log("[v0] Inicializando sistema...")
+
+  await normalizeAllProjectsOnServer()
+  await loadSystemConstants()
+  await loadProjectsFromServer()
+  await initializeProjectCounter()
+
+  console.log("[v0] Sistema inicializado - projetos carregados do servidor")
+})
 
 // ============================================
 // CARREGAMENTO DE DADOS
 // ============================================
 
-/**
- * Carrega as constantes do sistema do servidor
- */
 async function loadSystemConstants() {
   try {
     console.log("[v0] Carregando constantes do sistema...")
@@ -67,9 +80,6 @@ async function loadSystemConstants() {
   }
 }
 
-/**
- * Busca todos os projetos do servidor
- */
 async function fetchProjects() {
   try {
     console.log("[v0] Buscando projetos...")
@@ -80,8 +90,26 @@ async function fetchProjects() {
     }
 
     const projects = await response.json()
-    console.log("[v0] Projetos carregados:", projects)
-    return projects
+
+    const normalizedProjects = projects.map((project) => {
+      if (project.id !== undefined && project.id !== null) {
+        project.id = ensureIntegerId(project.id)
+      }
+
+      if (project.salas && Array.isArray(project.salas)) {
+        project.salas = project.salas.map((sala) => {
+          if (sala.id !== undefined && sala.id !== null) {
+            sala.id = ensureIntegerId(sala.id)
+          }
+          return sala
+        })
+      }
+
+      return project
+    })
+
+    console.log("[v0] Projetos carregados e normalizados:", normalizedProjects)
+    return normalizedProjects
   } catch (error) {
     console.error("[v0] Erro ao buscar projetos:", error)
     showSystemStatus("ERRO: Não foi possível carregar projetos", "error")
@@ -93,9 +121,6 @@ async function fetchProjects() {
 // GERENCIAMENTO DE IDs
 // ============================================
 
-/**
- * Determina o próximo ID de projeto
- */
 async function getNextProjectId() {
   const projects = await fetchProjects()
 
@@ -107,17 +132,11 @@ async function getNextProjectId() {
   return maxId >= UI_CONSTANTS.INITIAL_PROJECT_ID ? maxId + 1 : UI_CONSTANTS.INITIAL_PROJECT_ID
 }
 
-/**
- * Obtém o próximo número de projeto
- */
 function getNextProjectNumber() {
   projectCounter++
   return projectCounter
 }
 
-/**
- * Inicializa o contador de projetos baseado nos existentes
- */
 async function initializeProjectCounter() {
   const projects = document.querySelectorAll(".project-block")
 
@@ -136,65 +155,246 @@ async function initializeProjectCounter() {
   projectCounter = projectNumbers.length > 0 ? Math.max(...projectNumbers) : 0
 }
 
+function ensureIntegerId(id) {
+  if (id === null || id === undefined || id === "") {
+    return null
+  }
+  const parsed = Number.parseInt(id)
+  if (Number.isNaN(parsed)) {
+    console.error(`[v0] ERRO: ID inválido: ${id}`)
+    return null
+  }
+  return parsed
+}
+
+function normalizeProjectIds(projectData) {
+  if (projectData.id !== undefined && projectData.id !== null) {
+    projectData.id = ensureIntegerId(projectData.id)
+  }
+
+  if (projectData.salas && Array.isArray(projectData.salas)) {
+    projectData.salas.forEach((sala) => {
+      if (sala.id !== undefined && sala.id !== null) {
+        sala.id = ensureIntegerId(sala.id)
+      }
+    })
+  }
+
+  return projectData
+}
+
 // ============================================
 // OPERAÇÕES DE PROJETO (CRUD)
 // ============================================
 
 /**
- * Cria um novo projeto no servidor
+ * SALVA um NOVO projeto no servidor (CREATE)
  */
-async function createProject(projectData) {
+async function salvarProjeto(projectData) {
   try {
     if (!projectData.id) {
       projectData.id = await getNextProjectId()
     }
 
-    console.log("[v0] Criando projeto:", projectData)
+    projectData = normalizeProjectIds(projectData)
+
+    console.log("[v0] SALVANDO novo projeto:", projectData)
     const response = await fetch(`${API_CONFIG.projects}/projetos`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(projectData),
+      body: JSON.stringify(projectData, (key, value) => {
+        if (key === "id" && typeof value === "string") {
+          return Number.parseInt(value)
+        }
+        return value
+      }),
     })
 
     if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`)
+      const errorText = await response.text();
+      console.error('[v0] Erro ao SALVAR projeto:', errorText);
+      throw new Error(`Erro ao salvar projeto: ${errorText}`);
     }
 
     const createdProject = await response.json()
-    console.log("[v0] Projeto criado:", createdProject)
+    createdProject.id = ensureIntegerId(createdProject.id)
+    console.log("[v0] Projeto SALVO com sucesso:", createdProject)
     showSystemStatus("Projeto salvo com sucesso!", "success")
     return createdProject
   } catch (error) {
-    console.error("[v0] Erro ao criar projeto:", error)
+    console.error("[v0] Erro ao SALVAR projeto:", error)
     showSystemStatus("ERRO: Não foi possível salvar o projeto", "error")
     return null
   }
 }
 
 /**
- * Atualiza um projeto existente no servidor
+ * ATUALIZA um projeto EXISTENTE no servidor (UPDATE)
  */
-async function updateProject(projectId, projectData) {
+async function atualizarProjeto(projectId, projectData) {
   try {
-    console.log("[v0] Atualizando projeto:", projectId)
-    const response = await fetch(`${API_CONFIG.projects}/projetos/${projectId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(projectData),
-    })
+    projectId = ensureIntegerId(projectId);
 
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`)
+    if (projectId === null || projectId === undefined) {
+      console.error("[v0] ERRO: Tentativa de ATUALIZAR projeto sem ID válido");
+      showSystemStatus("ERRO: ID do projeto inválido para atualização", "error");
+      return null;
     }
 
-    const updatedProject = await response.json()
-    console.log("[v0] Projeto atualizado:", updatedProject)
-    showSystemStatus("Projeto atualizado com sucesso!", "success")
-    return updatedProject
+    projectData = normalizeProjectIds(projectData);
+    projectData.id = projectId;
+
+    console.log(`[v0] ATUALIZANDO projeto ID ${projectId}...`);
+    
+    const url = `${API_CONFIG.projects}/projetos/${projectId}`;
+    
+    console.log(`[v0] Fazendo PUT para ATUALIZAR: ${url}`);
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(projectData)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[v0] Erro ao ATUALIZAR projeto:', errorText);
+      throw new Error(`Erro ao atualizar projeto: ${errorText}`);
+    }
+
+    const updatedProject = await response.json();
+    updatedProject.id = ensureIntegerId(updatedProject.id);
+    console.log("[v0] Projeto ATUALIZADO com sucesso:", updatedProject);
+    showSystemStatus("Projeto atualizado com sucesso!", "success");
+    return updatedProject;
+
   } catch (error) {
-    console.error("[v0] Erro ao atualizar projeto:", error)
-    showSystemStatus("ERRO: Não foi possível atualizar o projeto", "error")
-    return null
+    console.error("[v0] Erro ao ATUALIZAR projeto:", error);
+    showSystemStatus("ERRO: Não foi possível atualizar o projeto", "error");
+    return null;
+  }
+}
+
+/**
+ * Função principal que decide entre SALVAR ou ATUALIZAR
+ */
+async function saveProject(projectName, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  console.log(`[v0] ===== SALVANDO PROJETO ${projectName} =====`);
+
+  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
+  if (!projectBlock) {
+    console.error(`[v0] Projeto ${projectName} não encontrado`);
+    showSystemStatus("ERRO: Projeto não encontrado na interface", "error");
+    return;
+  }
+
+  let projectId = projectBlock.dataset.projectId;
+  console.log(`[v0] DEBUG - dataset.projectId RAW: "${projectId}" (tipo: ${typeof projectId})`);
+
+  projectId =
+    projectId && projectId !== "" && projectId !== "undefined" && projectId !== "null"
+      ? ensureIntegerId(projectId)
+      : null;
+
+  console.log(`[v0] DEBUG - projectId após conversão: ${projectId} (tipo: ${typeof projectId})`);
+
+  const projectData = buildProjectData(projectBlock, projectId);
+  console.log(`[v0] DEBUG - projectData.id: ${projectData.id}`);
+  console.log(`[v0] Dados do projeto coletados:`, projectData);
+
+  let result = null;
+
+  if (projectId === null || projectId === undefined) {
+    console.log("[v0] Nenhum ID encontrado - SALVANDO novo projeto...");
+    result = await salvarProjeto(projectData);
+  } else {
+    console.log(`[v0] ID ${projectId} encontrado - ATUALIZANDO projeto existente...`);
+    result = await atualizarProjeto(projectId, projectData);
+  }
+
+  if (result) {
+    const finalId = ensureIntegerId(result.id);
+    projectBlock.dataset.projectId = finalId;
+    console.log(`[v0] DEBUG - ID salvo no dataset: ${finalId}`);
+
+    updateProjectButton(projectName, true);
+    saveFirstProjectIdOfSession(finalId);
+    collapseProjectAfterSave(projectName, projectBlock);
+    console.log(`[v0] ===== PROJETO ${projectName} SALVO COM SUCESSO (ID: ${finalId}) =====`);
+  } else {
+    console.error(`[v0] ===== FALHA AO SALVAR PROJETO ${projectName} =====`);
+  }
+}
+
+function buildProjectData(projectBlock, projectId) {
+  const projectData = {
+    nome: projectBlock.querySelector(".project-title").textContent.trim(),
+    salas: [],
+  }
+
+  if (projectId !== null && projectId !== undefined) {
+    projectData.id = ensureIntegerId(projectId)
+  }
+
+  const roomBlocks = projectBlock.querySelectorAll(".room-block")
+  roomBlocks.forEach((roomBlock, index) => {
+    const roomData = extractRoomData(roomBlock)
+    roomData.id = index + 1
+    projectData.salas.push(roomData)
+  })
+
+  return projectData
+}
+
+function extractRoomData(roomBlock) {
+  const roomData = {
+    nome: roomBlock.querySelector(".room-title").textContent.trim(),
+    inputs: {},
+  }
+
+  const climaInputs = roomBlock.querySelectorAll(".clima-input")
+  climaInputs.forEach((input) => {
+    const field = input.dataset.field
+    const value = input.value
+
+    if (value === "" || value === null || value === undefined) {
+      roomData.inputs[field] = input.type === "number" ? 0 : ""
+      return
+    }
+
+    if (input.tagName === "SELECT" || input.type === "text") {
+      roomData.inputs[field] = value
+    }
+    else if (input.type === "number") {
+      roomData.inputs[field] = Number.parseFloat(value) || 0
+    }
+    else {
+      roomData.inputs[field] = value
+    }
+  })
+
+  const roomId = roomBlock.querySelector('[id^="room-content-"]')?.id.replace("room-content-", "")
+  if (roomId) {
+    const vazaoElement = document.getElementById(`vazao-ar-${roomId}`)
+    if (vazaoElement) {
+      const vazaoValue = vazaoElement.textContent.trim()
+      roomData.inputs.vazaoArExterno = Number.parseInt(vazaoValue) || 0
+    }
+  }
+
+  return roomData
+}
+
+function collapseProjectAfterSave(projectName, projectBlock) {
+  const projectContent = document.getElementById(`project-content-${projectName}`)
+  const minimizer = projectBlock.querySelector(".project-header .minimizer")
+
+  if (projectContent && !projectContent.classList.contains(UI_CONSTANTS.COLLAPSED_CLASS)) {
+    collapseElement(projectContent, minimizer)
   }
 }
 
@@ -202,9 +402,6 @@ async function updateProject(projectId, projectData) {
 // UI - MENSAGENS DE STATUS
 // ============================================
 
-/**
- * Exibe mensagem de status do sistema
- */
 function showSystemStatus(message, type) {
   removeExistingStatusBanner()
 
@@ -246,9 +443,6 @@ function scheduleStatusBannerRemoval(banner) {
 // UI - TOGGLE (MINIMIZAR/EXPANDIR)
 // ============================================
 
-/**
- * Alterna visibilidade de um elemento
- */
 function toggleElementVisibility(contentId, minimizerElement) {
   const content = document.getElementById(contentId)
   if (!content) return
@@ -292,9 +486,6 @@ function toggleSubsection(subsectionId) {
 // UI - CRIAÇÃO DE PROJETOS
 // ============================================
 
-/**
- * Cria um projeto vazio na interface
- */
 function createEmptyProject(projectName, projectId) {
   const projectHTML = buildProjectHTML(projectName, projectId)
   insertProjectIntoDOM(projectHTML)
@@ -302,6 +493,8 @@ function createEmptyProject(projectName, projectId) {
 }
 
 function buildProjectHTML(projectName, projectId) {
+  const hasId = projectId !== null && projectId !== undefined && projectId !== ""
+
   return `
     <div class="project-block" data-project-id="${projectId || ""}" data-project-name="${projectName}">
       <div class="project-header">
@@ -316,17 +509,20 @@ function buildProjectHTML(projectName, projectId) {
         <div class="add-room-section">
           <button class="btn btn-add-secondary" onclick="addNewRoom('${projectName}')">+ Adicionar Nova Sala</button>
         </div>
-        ${buildProjectActionsFooter(projectName)}
+        ${buildProjectActionsFooter(projectName, hasId)}
       </div>
     </div>
   `
 }
 
-function buildProjectActionsFooter(projectName) {
+function buildProjectActionsFooter(projectName, hasId = false) {
+  const buttonText = hasId ? "Atualizar Projeto" : "Salvar Projeto"
+  const buttonClass = hasId ? "btn-update" : "btn-save"
+
   return `
     <div class="project-actions-footer">
       <button class="btn btn-verify" onclick="verifyProjectData('${projectName}')">Verificar Dados</button>
-      <button class="btn btn-save" onclick="event.preventDefault(); saveProject('${projectName}', event)">Salvar Projeto</button>
+      <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveProject('${projectName}', event)">${buttonText}</button>
       <button class="btn btn-download" onclick="downloadPDF('${projectName}')">Baixar PDF</button>
       <button class="btn btn-download" onclick="downloadWord('${projectName}')">Baixar Word</button>
     </div>
@@ -338,9 +534,6 @@ function insertProjectIntoDOM(projectHTML) {
   projectsContainer.insertAdjacentHTML("beforeend", projectHTML)
 }
 
-/**
- * Adiciona um novo projeto à interface
- */
 async function addNewProject() {
   const projectNumber = getNextProjectNumber()
   const projectName = `Projeto${projectNumber}`
@@ -349,33 +542,27 @@ async function addNewProject() {
   console.log(`[v0] ${projectName} adicionado`)
 }
 
-/**
- * Deleta um projeto da interface
- */
 function deleteProject(projectName) {
   const confirmMessage = "Tem certeza que deseja deletar este projeto? Os dados permanecerão no servidor."
 
   if (!confirm(confirmMessage)) return
 
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  const projectId = projectBlock.dataset.projectId
+  const projectId = projectBlock.dataset.projectId ? ensureIntegerId(projectBlock.dataset.projectId) : null
 
   projectBlock.remove()
 
   if (projectId) {
-    addProjectToRemovedList(Number.parseInt(projectId))
+    addProjectToRemovedList(projectId)
   }
 
   console.log(`[v0] Projeto ${projectName} removido da interface`)
 }
 
 // ============================================
-// UI - CRIAÇÃO DE SALAS
+// CRIAÇÃO DE SALAS
 // ============================================
 
-/**
- * Cria uma sala vazia na interface
- */
 function createEmptyRoom(projectName, roomName, roomId) {
   const projectContent = document.getElementById(`project-content-${projectName}`)
   const roomHTML = buildRoomHTML(projectName, roomName, roomId)
@@ -584,12 +771,12 @@ function buildTextInput(field, roomId) {
   const min = field.field.includes("num") ? 'min="0"' : ""
 
   return `
-    <input 
-      type="${field.type}" 
-      class="form-input clima-input" 
-      data-field="${field.field}" 
-      placeholder="${field.placeholder}" 
-      ${step} 
+    <input
+      type="${field.type}"
+      class="form-input clima-input"
+      data-field="${field.field}"
+      placeholder="${field.placeholder}"
+      ${step}
       ${min}
       onchange="calculateVazaoAr('${roomId}')"
     >
@@ -655,12 +842,7 @@ function buildConfigurationSection(projectName, roomName) {
 }
 
 function buildRoomActions(projectName, roomName) {
-  return `
-    <div class="room-actions">
-      <button class="btn btn-update" onclick="updateRoom('${projectName}', '${roomName}')">Atualizar Dados</button>
-      <button class="btn btn-save" onclick="event.preventDefault(); saveRoom('${projectName}', '${roomName}', event)">Salvar</button>
-    </div>
-  `
+  return ""
 }
 
 function insertRoomIntoProject(projectContent, roomHTML) {
@@ -675,9 +857,6 @@ function removeEmptyProjectMessage(projectContent) {
   }
 }
 
-/**
- * Adiciona uma nova sala a um projeto
- */
 function addNewRoom(projectName) {
   const projectContent = document.getElementById(`project-content-${projectName}`)
   const roomCount = projectContent.querySelectorAll(".room-block").length + 1
@@ -687,9 +866,6 @@ function addNewRoom(projectName) {
   console.log(`[v0] ${roomName} adicionada ao ${projectName}`)
 }
 
-/**
- * Deleta uma sala da interface
- */
 function deleteRoom(projectName, roomName) {
   const confirmMessage = "Tem certeza que deseja deletar esta sala? Os dados permanecerão no servidor."
 
@@ -717,9 +893,6 @@ function showEmptyProjectMessageIfNeeded(projectContent) {
 // GERENCIAMENTO DE MÁQUINAS
 // ============================================
 
-/**
- * Adiciona uma nova máquina a uma sala
- */
 function addMachine(roomId) {
   const machinesContainer = document.getElementById(`machines-${roomId}`)
   const machineCount = machinesContainer.querySelectorAll(".machine-item").length + 1
@@ -772,9 +945,6 @@ function buildMachineHTML(machineCount) {
   `
 }
 
-/**
- * Deleta uma máquina
- */
 function deleteMachine(button) {
   if (!confirm("Deseja remover esta máquina?")) return
 
@@ -797,177 +967,6 @@ function showEmptyMachinesMessageIfNeeded(container) {
 // OPERAÇÕES DE SALA
 // ============================================
 
-/**
- * Atualiza os dados de uma sala (validação local)
- */
-function updateRoom(projectName, roomName) {
-  const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`)
-  const inputs = roomBlock.querySelectorAll(".form-input")
-
-  const hasEmptyRequiredFields = validateRoomInputs(inputs)
-
-  if (hasEmptyRequiredFields) {
-    alert("Por favor, preencha todos os campos obrigatórios.")
-  } else {
-    alert("Dados da sala atualizados localmente!")
-    console.log(`[v0] Dados da sala ${roomName} atualizados`)
-  }
-}
-
-function validateRoomInputs(inputs) {
-  let hasEmptyFields = false
-
-  inputs.forEach((input) => {
-    const isEmpty = input.value.trim() === "" && input.hasAttribute("required")
-
-    input.style.borderColor = isEmpty ? "#dc3545" : "#dee2e6"
-
-    if (isEmpty) {
-      hasEmptyFields = true
-    }
-  })
-
-  return hasEmptyFields
-}
-
-/**
- * Salva os dados de uma sala
- */
-async function saveRoom(projectName, roomName, event) {
-  if (event) {
-    event.preventDefault()
-    event.stopPropagation()
-  }
-
-  console.log(`[v0] Salvando sala ${roomName} do projeto ${projectName}`)
-  await saveProject(projectName)
-}
-
-// ============================================
-// OPERAÇÕES DE PROJETO
-// ============================================
-
-/**
- * Salva um projeto completo no servidor
- */
-async function saveProject(projectName, event) {
-  if (event) {
-    event.preventDefault()
-    event.stopPropagation()
-  }
-
-  console.log(`[v0] Salvando projeto ${projectName}...`)
-
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  if (!projectBlock) {
-    console.error(`[v0] Projeto ${projectName} não encontrado`)
-    return
-  }
-
-  const projectId = projectBlock.dataset.projectId ? Number.parseInt(projectBlock.dataset.projectId) : null
-
-  const projectData = buildProjectData(projectBlock, projectId)
-
-  const result = projectId
-    ? await updateExistingProject(projectId, projectData)
-    : await createNewProject(projectData, projectBlock)
-
-  if (result) {
-    saveFirstProjectIdOfSession(result.id)
-
-    collapseProjectAfterSave(projectName, projectBlock)
-    console.log(`[v0] Projeto ${projectName} salvo com sucesso e minimizado`)
-  }
-}
-
-function buildProjectData(projectBlock, projectId) {
-  const projectData = {
-    nome: projectBlock.querySelector(".project-title").textContent.trim(),
-    salas: [],
-  }
-
-  if (projectId) {
-    projectData.id = projectId
-  }
-
-  const roomBlocks = projectBlock.querySelectorAll(".room-block")
-  roomBlocks.forEach((roomBlock, index) => {
-    const roomData = extractRoomData(roomBlock)
-    roomData.id = index + 1
-    projectData.salas.push(roomData)
-  })
-
-  return projectData
-}
-
-function extractRoomData(roomBlock) {
-  const roomData = {
-    nome: roomBlock.querySelector(".room-title").textContent.trim(),
-    inputs: {},
-  }
-
-  const climaInputs = roomBlock.querySelectorAll(".clima-input")
-  climaInputs.forEach((input) => {
-    const field = input.dataset.field
-    const value = input.value
-
-    // Se o campo estiver vazio, usar valor padrão apropriado
-    if (value === "" || value === null || value === undefined) {
-      roomData.inputs[field] = input.type === "number" ? 0 : ""
-      return
-    }
-
-    // Se for um select ou campo de texto, manter como string
-    if (input.tagName === "SELECT" || input.type === "text") {
-      roomData.inputs[field] = value
-    }
-    // Se for um campo numérico, converter para número
-    else if (input.type === "number") {
-      roomData.inputs[field] = Number.parseFloat(value) || 0
-    }
-    // Fallback: manter o valor original
-    else {
-      roomData.inputs[field] = value
-    }
-  })
-
-  const roomId = roomBlock.querySelector('[id^="room-content-"]')?.id.replace("room-content-", "")
-  if (roomId) {
-    const vazaoElement = document.getElementById(`vazao-ar-${roomId}`)
-    if (vazaoElement) {
-      const vazaoValue = vazaoElement.textContent.trim()
-      roomData.inputs.vazaoArExterno = Number.parseInt(vazaoValue) || 0
-    }
-  }
-
-  return roomData
-}
-
-async function updateExistingProject(projectId, projectData) {
-  projectData.id = Number.parseInt(projectId)
-  return await updateProject(projectId, projectData)
-}
-
-async function createNewProject(projectData, projectBlock) {
-  const result = await createProject(projectData)
-  if (result) {
-    projectBlock.dataset.projectId = Number.parseInt(result.id)
-  }
-  return result
-}
-
-function collapseProjectAfterSave(projectName, projectBlock) {
-  const projectContent = document.getElementById(`project-content-${projectName}`)
-  const minimizer = projectBlock.querySelector(".project-header .minimizer")
-
-  if (projectContent && !projectContent.classList.contains(UI_CONSTANTS.COLLAPSED_CLASS)) {
-    collapseElement(projectContent, minimizer)
-  }
-}
-
-/**
- * Verifica os dados de um projeto
- */
 function verifyProjectData(projectName) {
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
   const rooms = projectBlock.querySelectorAll(".room-block")
@@ -1009,9 +1008,6 @@ function calculateRoomCompletionStats(room) {
 // EDIÇÃO INLINE
 // ============================================
 
-/**
- * Habilita edição inline de títulos
- */
 function makeEditable(element, type) {
   if (element.classList.contains("editing")) return
 
@@ -1060,9 +1056,6 @@ function attachEditingEventListeners(element, type) {
   )
 }
 
-/**
- * Salva a edição inline
- */
 function saveInlineEdit(element, type) {
   const newText = element.textContent.trim()
   const originalText = element.dataset.originalText
@@ -1094,9 +1087,6 @@ function validateEditedText(newText, originalText, element) {
   return true
 }
 
-/**
- * Cancela a edição inline
- */
 function cancelInlineEdit(element) {
   const originalText = element.dataset.originalText
 
@@ -1111,9 +1101,6 @@ function cancelInlineEdit(element) {
 // CÁLCULOS
 // ============================================
 
-/**
- * Calcula a Vazão de Ar Externo para uma sala
- */
 async function calculateVazaoAr(roomId) {
   await waitForSystemConstants()
 
@@ -1222,9 +1209,6 @@ function downloadWord(projectName) {
 // CARREGAMENTO E RENDERIZAÇÃO DE PROJETOS
 // ============================================
 
-/**
- * Carrega projetos salvos do servidor e renderiza na tela
- */
 async function loadProjectsFromServer() {
   console.log("[v0] Verificando projetos da sessão atual...")
 
@@ -1257,10 +1241,8 @@ async function loadProjectsFromServer() {
 
   console.log(`[v0] ${sessionProjects.length} projeto(s) da sessão atual encontrado(s)`)
 
-  // Remove o projeto base do HTML se existir
   removeBaseProjectFromHTML()
 
-  // Renderiza cada projeto da sessão
   for (const projectData of sessionProjects) {
     renderProjectFromData(projectData)
   }
@@ -1268,9 +1250,6 @@ async function loadProjectsFromServer() {
   console.log("[v0] Todos os projetos da sessão foram carregados e renderizados")
 }
 
-/**
- * Remove o projeto base do HTML (se existir)
- */
 function removeBaseProjectFromHTML() {
   const projectsContainer = document.getElementById("projects-container")
   const existingProjects = projectsContainer.querySelectorAll(".project-block")
@@ -1282,19 +1261,14 @@ function removeBaseProjectFromHTML() {
   console.log("[v0] Projetos base do HTML removidos")
 }
 
-/**
- * Renderiza um projeto completo a partir dos dados JSON
- */
 function renderProjectFromData(projectData) {
   const projectName = projectData.nome
-  const projectId = projectData.id
+  const projectId = ensureIntegerId(projectData.id)
 
   console.log(`[v0] Renderizando projeto: ${projectName} (ID: ${projectId})`)
 
-  // Cria o projeto vazio
   createEmptyProject(projectName, projectId)
 
-  // Renderiza cada sala do projeto
   if (projectData.salas && projectData.salas.length > 0) {
     const projectContent = document.getElementById(`project-content-${projectName}`)
     const emptyMessage = projectContent.querySelector(".empty-message")
@@ -1307,7 +1281,10 @@ function renderProjectFromData(projectData) {
     })
   }
 
-  // Atualiza o contador de projetos
+  if (projectId) {
+    updateProjectButton(projectName, true)
+  }
+
   const projectNumber = Number.parseInt(projectName.replace("Projeto", "")) || 0
   if (projectNumber > projectCounter) {
     projectCounter = projectNumber
@@ -1316,19 +1293,14 @@ function renderProjectFromData(projectData) {
   console.log(`[v0] Projeto ${projectName} renderizado com sucesso`)
 }
 
-/**
- * Renderiza uma sala completa a partir dos dados JSON
- */
 function renderRoomFromData(projectName, roomData) {
   const roomName = roomData.nome
-  const roomId = roomData.id
+  const roomId = ensureIntegerId(roomData.id)
 
   console.log(`[v0] Renderizando sala: ${roomName} no projeto ${projectName}`)
 
-  // Cria a sala vazia
   createEmptyRoom(projectName, roomName, roomId)
 
-  // Preenche os inputs da sala com os dados salvos
   if (roomData.inputs) {
     populateRoomInputs(projectName, roomName, roomData.inputs)
   }
@@ -1336,9 +1308,6 @@ function renderRoomFromData(projectName, roomData) {
   console.log(`[v0] Sala ${roomName} renderizada com sucesso`)
 }
 
-/**
- * Preenche os inputs de uma sala com dados salvos
- */
 function populateRoomInputs(projectName, roomName, inputsData) {
   const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`)
   if (!roomBlock) {
@@ -1348,9 +1317,7 @@ function populateRoomInputs(projectName, roomName, inputsData) {
 
   const roomId = `${projectName}-${roomName}`
 
-  // Preenche cada input com o valor salvo
   Object.entries(inputsData).forEach(([field, value]) => {
-    // Ignora o campo vazaoArExterno pois é calculado
     if (field === "vazaoArExterno") {
       const vazaoElement = document.getElementById(`vazao-ar-${roomId}`)
       if (vazaoElement) {
@@ -1369,41 +1336,76 @@ function populateRoomInputs(projectName, roomName, inputsData) {
 }
 
 // ============================================
-// INICIALIZAÇÃO
+// NORMALIZAÇÃO DE IDs NO SERVIDOR
 // ============================================
 
-window.addEventListener("DOMContentLoaded", async () => {
-  console.log("[v0] Inicializando sistema...")
+async function normalizeAllProjectsOnServer() {
+  const alreadyNormalized = sessionStorage.getItem(NORMALIZATION_DONE_KEY)
+  if (alreadyNormalized === "true") {
+    console.log("[v0] IDs já foram normalizados nesta sessão")
+    return
+  }
 
-  // Carrega as constantes do sistema
-  await loadSystemConstants()
+  console.log("[v0] Iniciando normalização de IDs no servidor...")
 
-  await loadProjectsFromServer()
+  try {
+    const allProjects = await fetchProjects()
 
-  // Inicializa o contador de projetos baseado nos projetos existentes na tela
-  await initializeProjectCounter()
+    if (allProjects.length === 0) {
+      console.log("[v0] Nenhum projeto para normalizar")
+      sessionStorage.setItem(NORMALIZATION_DONE_KEY, "true")
+      return
+    }
 
-  console.log("[v0] Sistema inicializado - projetos carregados do servidor")
-})
+    console.log(`[v0] Normalizando ${allProjects.length} projeto(s)...`)
 
-/**
- * Salva o ID do primeiro projeto da sessão no sessionStorage
- */
-function saveFirstProjectIdOfSession(projectId) {
-  // Verifica se já existe um ID salvo na sessão
-  const existingId = sessionStorage.getItem(SESSION_STORAGE_KEY)
+    let normalizedCount = 0
+    for (const project of allProjects) {
+      const needsNormalization = typeof project.id === "string"
 
-  if (!existingId) {
-    const idAsInteger = Number.parseInt(projectId)
-    sessionStorage.setItem(SESSION_STORAGE_KEY, idAsInteger.toString())
-    console.log(`[v0] Primeiro projeto da sessão salvo: ID ${idAsInteger}`)
+      if (needsNormalization) {
+        const normalizedProject = normalizeProjectIds(project)
+        const result = await atualizarProjeto(normalizedProject.id, normalizedProject)
+
+        if (result) {
+          normalizedCount++
+          console.log(`[v0] Projeto ID ${normalizedProject.id} normalizado no servidor`)
+        }
+      }
+    }
+
+    if (normalizedCount > 0) {
+      console.log(`[v0] ${normalizedCount} projeto(s) normalizado(s) no servidor`)
+      showSystemStatus(`${normalizedCount} projeto(s) com IDs corrigidos no servidor`, "success")
+    } else {
+      console.log("[v0] Todos os projetos já estavam com IDs corretos")
+    }
+
+    sessionStorage.setItem(NORMALIZATION_DONE_KEY, "true")
+  } catch (error) {
+    console.error("[v0] Erro ao normalizar IDs no servidor:", error)
+    showSystemStatus("ERRO: Não foi possível normalizar IDs no servidor", "error")
   }
 }
 
-/**
- * Adiciona um projeto à lista de removidos da sessão
- */
+// ============================================
+// FUNÇÕES AUXILIARES
+// ============================================
+
+function saveFirstProjectIdOfSession(projectId) {
+  const existingId = sessionStorage.getItem(SESSION_STORAGE_KEY)
+  if (!existingId) {
+    const idAsInteger = ensureIntegerId(projectId)
+    if (idAsInteger !== null) {
+      sessionStorage.setItem(SESSION_STORAGE_KEY, idAsInteger.toString())
+      console.log(`[v0] Primeiro projeto da sessão salvo: ID ${idAsInteger}`)
+    }
+  }
+}
+
 function addProjectToRemovedList(projectId) {
+  projectId = ensureIntegerId(projectId)
+
   const removedList = getRemovedProjectsList()
 
   if (!removedList.includes(projectId)) {
@@ -1413,18 +1415,34 @@ function addProjectToRemovedList(projectId) {
   }
 }
 
-/**
- * Retorna a lista de projetos removidos da sessão
- */
 function getRemovedProjectsList() {
   const stored = sessionStorage.getItem(REMOVED_PROJECTS_KEY)
   return stored ? JSON.parse(stored) : []
 }
 
-/**
- * Verifica se um projeto está na lista de removidos
- */
 function isProjectRemoved(projectId) {
   const removedList = getRemovedProjectsList()
   return removedList.includes(projectId)
+}
+
+function updateProjectButton(projectName, hasId) {
+  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
+  if (!projectBlock) return;
+
+  const saveButton = projectBlock.querySelector(
+    ".project-actions-footer .btn-save, .project-actions-footer .btn-update",
+  );
+  if (!saveButton) return;
+
+  if (hasId) {
+    saveButton.textContent = "Atualizar Projeto";
+    saveButton.classList.remove("btn-save");
+    saveButton.classList.add("btn-update");
+    console.log(`[v0] Botão do projeto ${projectName} alterado para "Atualizar Projeto"`);
+  } else {
+    saveButton.textContent = "Salvar Projeto";
+    saveButton.classList.remove("btn-update");
+    saveButton.classList.add("btn-save");
+    console.log(`[v0] Botão do projeto ${projectName} alterado para "Salvar Projeto"`);
+  }
 }
