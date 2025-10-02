@@ -227,27 +227,28 @@ function showSystemStatus(message, type) {
  */
 window.addEventListener("DOMContentLoaded", async () => {
   await loadSystemConstants()
-
-  console.log("[v0] Criando projeto inicial completo com sala padrão...")
   
-  // Inicializa o contador com projetos existentes no banco
-  const projetos = await fetchProjects()
-  if (projetos.length > 0) {
-    const numbers = projetos.map((projeto) => {
+  // Inicializa o contador baseado nos projetos existentes no servidor
+  const projetosExistentes = await fetchProjects()
+  
+  if (projetosExistentes.length > 0) {
+    const numbers = projetosExistentes.map((projeto) => {
       const match = projeto.nome.match(/Projeto(\d+)/)
       return match ? Number.parseInt(match[1]) : 0
     })
     projectCounter = Math.max(...numbers)
   } else {
-    projectCounter = 0 // Começa do 0, pois getNextProjectNumber() incrementa
+    projectCounter = 0
   }
-
+  
+  // SEMPRE cria um projeto base vazio na interface
+  // Isso é apenas para a interface, não está salvando no servidor ainda
   const projectName = `Projeto${getNextProjectNumber()}`
-
   createEmptyProject(projectName, null)
   createEmptyRoom(projectName, "Sala1", null)
-
-  console.log("[v0] Sistema inicializado com projeto e sala padrão")
+  
+  systemInitialized = true
+  console.log("[v0] Sistema inicializado com projeto base para interface")
 })
 
 // Função única para obter próximo número
@@ -604,9 +605,7 @@ function toggleSubsection(subsectionId) {
  * Chama createEmptyProject para criar a estrutura HTML
  */
 async function addNewProject() {
-  const nextNumber = await getNextProjectNumber()
-  const projectName = `Projeto${nextNumber}`
-
+  const projectName = `Projeto${getNextProjectNumber()}`
   createEmptyProject(projectName, null)
   console.log(`[v0] ${projectName} adicionado à interface`)
 }
@@ -634,6 +633,12 @@ function deleteProject(projectName) {
  */
 async function saveProject(projectName) {
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+  
+  if (!projectBlock) {
+    console.error(`[v0] Projeto ${projectName} não encontrado na interface`)
+    return
+  }
+
   const projectId = projectBlock.dataset.projectId
 
   // Extrai dados do projeto
@@ -650,33 +655,296 @@ async function saveProject(projectName) {
     projectData.salas.push(roomData)
   })
 
-  // Se o projeto já tem ID, atualiza; senão, cria novo
   let result
-  if (projectId) {
-    projectData.id = Number.parseInt(projectId)
-    result = await updateProject(projectId, projectData)
-  } else {
-    result = await createProject(projectData)
-    if (result) {
-      // Atualiza o data-project-id no DOM
-      projectBlock.dataset.projectId = result.id
-    }
-  }
-
-  if (result) {
-    const projectContent = document.getElementById(`project-content-${projectName}`)
-    const minimizer = projectBlock.querySelector(".project-header .minimizer")
-
-    if (projectContent && !projectContent.classList.contains("collapsed")) {
-      projectContent.classList.add("collapsed")
-      if (minimizer) {
-        minimizer.textContent = "+"
+  try {
+    if (projectId && projectId !== "") {
+      // Projeto já existe - ATUALIZA
+      projectData.id = Number.parseInt(projectId)
+      result = await updateProject(projectId, projectData)
+      console.log(`[v0] Projeto ${projectName} (ID: ${projectId}) atualizado no servidor`)
+    } else {
+      // Projeto novo - CRIA
+      result = await createProject(projectData)
+      if (result) {
+        // Atualiza o data-project-id no DOM para futuras atualizações
+        projectBlock.dataset.projectId = result.id
+        console.log(`[v0] Projeto ${projectName} criado no servidor com ID: ${result.id}`)
       }
     }
 
-    console.log(`[v0] Projeto ${projectName} salvo com sucesso e minimizado`)
+    if (result) {
+      // Apenas minimiza o projeto, mantém na tela
+      const projectContent = document.getElementById(`project-content-${projectName}`)
+      const minimizer = projectBlock.querySelector(".project-header .minimizer")
+
+      if (projectContent && !projectContent.classList.contains("collapsed")) {
+        projectContent.classList.add("collapsed")
+        if (minimizer) {
+          minimizer.textContent = "+"
+        }
+      }
+
+      console.log(`[v0] Projeto ${projectName} salvo com sucesso e minimizado`)
+      
+      // CRIA UM NOVO PROJETO BASE APÓS SALVAR - Isso é o que você quer
+      if (systemInitialized) {
+        const newProjectName = `Projeto${getNextProjectNumber()}`
+        createEmptyProject(newProjectName, null)
+        createEmptyRoom(newProjectName, "Sala1", null)
+        console.log(`[v0] Novo projeto base ${newProjectName} criado após salvamento`)
+      }
+    }
+  } catch (error) {
+    console.error(`[v0] Erro ao salvar projeto ${projectName}:`, error)
+    showSystemStatus("ERRO: Não foi possível salvar o projeto", "error")
   }
 }
+
+/**
+ * Carrega projetos existentes do servidor para a interface
+ * FUNÇÃO NOVA - para carregar projetos salvos se necessário
+ */
+async function loadExistingProjectsToInterface() {
+  const projetos = await fetchProjects()
+  
+  projetos.forEach(projeto => {
+    // Verifica se o projeto já não está na interface
+    const existingProject = document.querySelector(`[data-project-id="${projeto.id}"]`)
+    if (!existingProject) {
+      // Cria o projeto na interface com os dados do servidor
+      createProjectFromData(projeto)
+    }
+  })
+}
+
+/**
+ * Cria um projeto na interface a partir de dados do servidor
+ * FUNÇÃO NOVA - para reconstruir projetos salvos
+ */
+function createProjectFromData(projectData) {
+  const projectName = projectData.nome
+  createEmptyProject(projectName, projectData.id)
+  
+  // Adiciona as salas do projeto
+  if (projectData.salas && projectData.salas.length > 0) {
+    projectData.salas.forEach(sala => {
+      createRoomFromData(projectName, sala)
+    })
+  } else {
+    createEmptyRoom(projectName, "Sala1", null)
+  }
+}
+
+
+//=======================================
+// NOVAS FUNÇÕES PARA ITERAÇÃO 
+/**
+ * Cria uma sala na interface a partir de dados do servidor
+ * Preenche todos os campos com os dados existentes do servidor
+ */
+function createRoomFromData(projectName, roomData) {
+  // Primeiro cria a sala vazia
+  createEmptyRoom(projectName, roomData.nome, roomData.id)
+  
+  // Aguarda um pouco para garantir que o DOM foi atualizado
+  setTimeout(() => {
+    const roomBlock = document.querySelector(`[data-room-name="${roomData.nome}"]`)
+    if (!roomBlock) {
+      console.error(`[v0] Sala ${roomData.nome} não encontrada na interface`)
+      return
+    }
+
+    console.log(`[v0] Preenchendo dados da sala ${roomData.nome}`, roomData)
+
+    // Preenche dados de climatização
+    if (roomData.climatizacao) {
+      const climaInputs = roomBlock.querySelectorAll('.clima-input')
+      climaInputs.forEach(input => {
+        const field = input.dataset.field
+        if (field && roomData.climatizacao[field] !== undefined) {
+          input.value = roomData.climatizacao[field]
+          console.log(`[v0] Campo ${field} preenchido com:`, roomData.climatizacao[field])
+        }
+      })
+
+      // Atualiza o resultado da vazão de ar se existir
+      const vazaoArElement = document.getElementById(`vazao-ar-${projectName}-${roomData.nome}`)
+      if (vazaoArElement && roomData.climatizacao.vazaoArResultado) {
+        vazaoArElement.textContent = roomData.climatizacao.vazaoArResultado
+      }
+    }
+
+    // Preenche máquinas
+    if (roomData.maquinas && roomData.maquinas.length > 0) {
+      const machinesContainer = roomBlock.querySelector(`#machines-${projectName}-${roomData.nome}`)
+      if (machinesContainer) {
+        // Remove mensagem de "nenhuma máquina"
+        const emptyMessage = machinesContainer.querySelector('.empty-message')
+        if (emptyMessage) {
+          emptyMessage.remove()
+        }
+
+        // Adiciona cada máquina
+        roomData.maquinas.forEach((machineData, index) => {
+          const machineHTML = `
+            <div class="machine-item">
+              <div class="machine-header">
+                <span class="machine-title">Máquina ${index + 1}</span>
+                <button class="btn btn-delete-small" onclick="deleteMachine(this)">×</button>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Nome:</label>
+                  <input type="text" class="form-input" placeholder="Ex: Servidor Principal" value="${machineData.Nome || ''}">
+                </div>
+                <div class="form-group">
+                  <label>Modelo:</label>
+                  <input type="text" class="form-input" placeholder="Ex: Dell PowerEdge" value="${machineData.Modelo || ''}">
+                </div>
+                <div class="form-group">
+                  <label>Potência (W):</label>
+                  <input type="number" class="form-input" placeholder="Ex: 500" value="${machineData.Potência || ''}">
+                </div>
+                <div class="form-group">
+                  <label>Status:</label>
+                  <select class="form-input">
+                    <option value="ativo" ${machineData.Status === 'ativo' ? 'selected' : ''}>Ativo</option>
+                    <option value="inativo" ${machineData.Status === 'inativo' ? 'selected' : ''}>Inativo</option>
+                    <option value="manutencao" ${machineData.Status === 'manutencao' ? 'selected' : ''}>Manutenção</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          `
+          machinesContainer.insertAdjacentHTML('beforeend', machineHTML)
+        })
+      }
+    }
+
+    // Preenche configuração geral
+    if (roomData.configuracaoGeral) {
+      const configSection = roomBlock.querySelector('[id*="-config"]')
+      if (configSection) {
+        // Responsável
+        const responsavelInput = configSection.querySelector('input[placeholder*="responsável"]')
+        if (responsavelInput && roomData.configuracaoGeral.responsavel) {
+          responsavelInput.value = roomData.configuracaoGeral.responsavel
+        }
+
+        // Data de instalação
+        const dataInput = configSection.querySelector('input[type="date"]')
+        if (dataInput && roomData.configuracaoGeral.dataInstalacao) {
+          dataInput.value = roomData.configuracaoGeral.dataInstalacao
+        }
+
+        // Observações
+        const obsInput = configSection.querySelector('textarea')
+        if (obsInput && roomData.configuracaoGeral.observacoes) {
+          obsInput.value = roomData.configuracaoGeral.observacoes
+        }
+      }
+    }
+
+    // Expande a sala para mostrar os dados preenchidos
+    const roomContent = document.getElementById(`room-content-${projectName}-${roomData.nome}`)
+    const roomMinimizer = roomBlock.querySelector('.room-header .minimizer')
+    if (roomContent && roomMinimizer) {
+      roomContent.classList.remove('collapsed')
+      roomMinimizer.textContent = "−"
+    }
+
+    console.log(`[v0] Sala ${roomData.nome} preenchida com dados do servidor`)
+
+  }, 100) // Pequeno delay para garantir que o DOM foi atualizado
+}
+
+/**
+ * Função auxiliar para criar projeto completo a partir de dados do servidor
+ */
+function createProjectFromData(projectData) {
+  const projectName = projectData.nome
+  
+  // Cria o projeto na interface
+  const projectHTML = `
+    <div class="project-block" data-project-id="${projectData.id}" data-project-name="${projectName}">
+      <div class="project-header">
+        <button class="minimizer" onclick="toggleProject('${projectName}')">+</button>
+        <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">${projectName}</h2>
+        <div class="project-actions">
+          <button class="btn btn-delete" onclick="deleteProject('${projectName}')">Remover</button>
+        </div>
+      </div>
+      <div class="project-content" id="project-content-${projectName}">
+        <div class="add-room-section">
+          <button class="btn btn-add-secondary" onclick="addNewRoom('${projectName}')">+ Adicionar Nova Sala</button>
+        </div>
+        <div class="project-actions-footer">
+          <button class="btn btn-verify" onclick="verifyProjectData('${projectName}')">Verificar Dados</button>
+          <button class="btn btn-save" onclick="saveProject('${projectName}')">Salvar Projeto</button>
+          <button class="btn btn-download" onclick="downloadPDF('${projectName}')">Baixar PDF</button>
+          <button class="btn btn-download" onclick="downloadWord('${projectName}')">Baixar Word</button>
+        </div>
+      </div>
+    </div>
+  `
+
+  const projectsContainer = document.getElementById("projects-container")
+  projectsContainer.insertAdjacentHTML("beforeend", projectHTML)
+
+  // Adiciona as salas do projeto
+  if (projectData.salas && projectData.salas.length > 0) {
+    projectData.salas.forEach(sala => {
+      createRoomFromData(projectName, sala)
+    })
+  } else {
+    // Se não tem salas, cria uma vazia
+    createEmptyRoom(projectName, "Sala1", null)
+  }
+
+  console.log(`[v0] Projeto ${projectName} carregado do servidor com ${projectData.salas ? projectData.salas.length : 0} salas`)
+}
+
+/**
+ * Função para carregar todos os projetos existentes para a interface
+ */
+async function loadAllProjectsToInterface() {
+  const projetos = await fetchProjects()
+  
+  // Limpa projetos existentes na interface (exceto o projeto base atual)
+  const projectsContainer = document.getElementById("projects-container")
+  const existingProjects = projectsContainer.querySelectorAll('.project-block')
+  
+  // Remove apenas projetos que já foram salvos (com ID)
+  existingProjects.forEach(project => {
+    const projectId = project.dataset.projectId
+    if (projectId && projectId !== "") {
+      project.remove()
+    }
+  })
+  
+  // Carrega cada projeto do servidor
+  projetos.forEach(projeto => {
+    createProjectFromData(projeto)
+  })
+  
+  console.log(`[v0] ${projetos.length} projetos carregados do servidor para a interface`)
+}
+
+/**
+ * Nova função para alternar entre modo "novo projeto" e "carregar existentes"
+ */
+function toggleProjectMode() {
+  const loadBtn = document.getElementById('load-projects-btn')
+  if (loadBtn.textContent.includes('Carregar')) {
+    loadAllProjectsToInterface()
+    loadBtn.textContent = '↺ Voltar para Novo Projeto'
+    showSystemStatus('Projetos existentes carregados do servidor', 'success')
+  } else {
+    location.reload() // Recarrega para voltar ao estado inicial
+  }
+}
+//=================================================
+
 
 /**
  * Verifica os dados de um projeto

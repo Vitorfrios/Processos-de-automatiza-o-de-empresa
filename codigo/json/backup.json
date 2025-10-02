@@ -1,5 +1,74 @@
 {
   "projetos": [
-
+    {
+      "id": 1001,
+      "nome": "teste 1",
+      "salas": [
+        {
+          "nome": "teste2",
+          "climatizacao": {
+            "ambiente": "",
+            "backup": "",
+            "area": "",
+            "tipoConstrucao": "",
+            "paredeOeste": "",
+            "paredeLeste": "",
+            "paredeNorte": "",
+            "paredeSul": "",
+            "peDireito": "",
+            "divisoriaNaoClima1": "",
+            "divisoriaNaoClima2": "",
+            "divisoriaClima1": "",
+            "divisoriaClima2": "",
+            "dissipacao": "",
+            "numPessoas": "",
+            "numPortasDuplas": "",
+            "numPortasSimples": "",
+            "pressurizacao": "",
+            "setpoint": "",
+            "combateIncendio": ""
+          },
+          "maquinas": [],
+          "configuracaoGeral": {
+            "responsavel": "",
+            "dataInstalacao": "",
+            "observacoes": ""
+          },
+          "id": 1
+        },
+        {
+          "nome": "522add",
+          "climatizacao": {
+            "ambiente": "",
+            "backup": "",
+            "area": "",
+            "tipoConstrucao": "",
+            "paredeOeste": "",
+            "paredeLeste": "",
+            "paredeNorte": "",
+            "paredeSul": "",
+            "peDireito": "",
+            "divisoriaNaoClima1": "",
+            "divisoriaNaoClima2": "",
+            "divisoriaClima1": "",
+            "divisoriaClima2": "",
+            "dissipacao": "",
+            "numPessoas": "",
+            "numPortasDuplas": "",
+            "numPortasSimples": "",
+            "pressurizacao": "",
+            "setpoint": "",
+            "combateIncendio": ""
+          },
+          "maquinas": [],
+          "configuracaoGeral": {
+            "responsavel": "",
+            "dataInstalacao": "",
+            "observacoes": ""
+          },
+          "id": 2
+        }
+      ]
+    }
   ]
 }
