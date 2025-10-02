@@ -39,6 +39,7 @@ let systemConstants = null
 let projectCounter = 0
 
 const SESSION_STORAGE_KEY = "firstProjectIdOfSession"
+const REMOVED_PROJECTS_KEY = "removedProjectsFromScreen"
 
 // ============================================
 // CARREGAMENTO DE DADOS
@@ -357,7 +358,14 @@ function deleteProject(projectName) {
   if (!confirm(confirmMessage)) return
 
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+  const projectId = projectBlock.dataset.projectId
+
   projectBlock.remove()
+
+  if (projectId) {
+    addProjectToRemovedList(Number.parseInt(projectId))
+  }
+
   console.log(`[v0] Projeto ${projectName} removido da interface`)
 }
 
@@ -1236,10 +1244,14 @@ async function loadProjectsFromServer() {
     return
   }
 
-  const sessionProjects = allProjects.filter((project) => project.id >= Number.parseInt(firstProjectId))
+  const sessionProjects = allProjects.filter((project) => {
+    const isFromSession = project.id >= Number.parseInt(firstProjectId)
+    const isNotRemoved = !isProjectRemoved(project.id)
+    return isFromSession && isNotRemoved
+  })
 
   if (sessionProjects.length === 0) {
-    console.log("[v0] Nenhum projeto da sessão atual encontrado")
+    console.log("[v0] Nenhum projeto da sessão atual encontrado (ou todos foram removidos)")
     return
   }
 
@@ -1386,4 +1398,33 @@ function saveFirstProjectIdOfSession(projectId) {
     sessionStorage.setItem(SESSION_STORAGE_KEY, idAsInteger.toString())
     console.log(`[v0] Primeiro projeto da sessão salvo: ID ${idAsInteger}`)
   }
+}
+
+/**
+ * Adiciona um projeto à lista de removidos da sessão
+ */
+function addProjectToRemovedList(projectId) {
+  const removedList = getRemovedProjectsList()
+
+  if (!removedList.includes(projectId)) {
+    removedList.push(projectId)
+    sessionStorage.setItem(REMOVED_PROJECTS_KEY, JSON.stringify(removedList))
+    console.log(`[v0] Projeto ID ${projectId} adicionado à lista de removidos`)
+  }
+}
+
+/**
+ * Retorna a lista de projetos removidos da sessão
+ */
+function getRemovedProjectsList() {
+  const stored = sessionStorage.getItem(REMOVED_PROJECTS_KEY)
+  return stored ? JSON.parse(stored) : []
+}
+
+/**
+ * Verifica se um projeto está na lista de removidos
+ */
+function isProjectRemoved(projectId) {
+  const removedList = getRemovedProjectsList()
+  return removedList.includes(projectId)
 }
