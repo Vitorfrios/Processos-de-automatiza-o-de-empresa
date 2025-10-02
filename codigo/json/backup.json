@@ -2,29 +2,29 @@
   "projetos": [
     {
       "id": 1001,
-      "nome": "teste 1",
+      "nome": "projeto base 1",
       "salas": [
         {
-          "nome": "teste2",
+          "nome": "sala bse 1",
           "climatizacao": {
             "ambiente": "",
             "backup": "",
-            "area": "",
+            "area": "34",
             "tipoConstrucao": "",
-            "paredeOeste": "",
-            "paredeLeste": "",
-            "paredeNorte": "",
-            "paredeSul": "",
-            "peDireito": "",
-            "divisoriaNaoClima1": "",
-            "divisoriaNaoClima2": "",
-            "divisoriaClima1": "",
-            "divisoriaClima2": "",
-            "dissipacao": "",
-            "numPessoas": "",
-            "numPortasDuplas": "",
-            "numPortasSimples": "",
-            "pressurizacao": "",
+            "paredeOeste": "12",
+            "paredeLeste": "13",
+            "paredeNorte": "14",
+            "paredeSul": "15",
+            "peDireito": "15",
+            "divisoriaNaoClima1": "1",
+            "divisoriaNaoClima2": "2",
+            "divisoriaClima1": "3",
+            "divisoriaClima2": "4",
+            "dissipacao": "1500",
+            "numPessoas": "15",
+            "numPortasDuplas": "1",
+            "numPortasSimples": "3",
+            "pressurizacao": "25",
             "setpoint": "",
             "combateIncendio": ""
           },
@@ -35,40 +35,13 @@
             "observacoes": ""
           },
           "id": 1
-        },
-        {
-          "nome": "522add",
-          "climatizacao": {
-            "ambiente": "",
-            "backup": "",
-            "area": "",
-            "tipoConstrucao": "",
-            "paredeOeste": "",
-            "paredeLeste": "",
-            "paredeNorte": "",
-            "paredeSul": "",
-            "peDireito": "",
-            "divisoriaNaoClima1": "",
-            "divisoriaNaoClima2": "",
-            "divisoriaClima1": "",
-            "divisoriaClima2": "",
-            "dissipacao": "",
-            "numPessoas": "",
-            "numPortasDuplas": "",
-            "numPortasSimples": "",
-            "pressurizacao": "",
-            "setpoint": "",
-            "combateIncendio": ""
-          },
-          "maquinas": [],
-          "configuracaoGeral": {
-            "responsavel": "",
-            "dataInstalacao": "",
-            "observacoes": ""
-          },
-          "id": 2
         }
       ]
+    },
+    {
+      "id": 1002,
+      "nome": "Projeto2",
+      "salas": []
     }
   ]
 }

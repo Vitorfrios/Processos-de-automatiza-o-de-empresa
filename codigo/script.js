@@ -2,134 +2,143 @@
 // CONFIGURAÇÃO DA API
 // ============================================
 
-const API_BASE_URL = "http://localhost:3000" // URL base para a API de projetos
-const DADOS_API_URL = "http://localhost:3001" // URL base para a API de dados/constantes
+const API_CONFIG = {
+  projects: "http://localhost:3000",
+  data: "http://localhost:3001",
+}
 
 // ============================================
-// GERENCIAMENTO DE DADOS
+// CONSTANTES DE CÁLCULO
 // ============================================
 
-let systemConstants = null // Armazena as constantes do sistema carregadas do arquivo dados.json
+const CALCULATION_CONSTANTS = {
+  FLOW_COEFFICIENT: 0.827,
+  SECONDS_PER_HOUR: 3600,
+  FLOW_DIVISOR: 3.6,
+  SAFETY_FACTOR: 1.25,
+  PRESSURE_EXPONENT: 0.5,
+}
+
+// ============================================
+// CONSTANTES DE UI
+// ============================================
+
+const UI_CONSTANTS = {
+  MINIMIZED_SYMBOL: "+",
+  EXPANDED_SYMBOL: "−",
+  SUCCESS_MESSAGE_DURATION: 5000,
+  INITIAL_PROJECT_ID: 1001,
+  COLLAPSED_CLASS: "collapsed",
+}
+
+// ============================================
+// GERENCIAMENTO DE ESTADO
+// ============================================
+
+let systemConstants = null
 let projectCounter = 0
 
-
+// ============================================
+// CARREGAMENTO DE DADOS
+// ============================================
 
 /**
- * Carrega as constantes do sistema do arquivo dados.json via json-server
- * Realiza uma requisição GET para obter as constantes do sistema
- * Atualiza a variável global systemConstants com os dados carregados
- * Exibe status de sucesso ou erro no sistema
+ * Carrega as constantes do sistema do servidor
  */
 async function loadSystemConstants() {
   try {
-    console.log("[v0] Tentando carregar dados.json via json-server")
-    const response = await fetch(`${DADOS_API_URL}/constants`)
+    console.log("[v0] Carregando constantes do sistema...")
+    const response = await fetch(`${API_CONFIG.data}/constants`)
 
     if (!response.ok) {
-      throw new Error(`Status HTTP: ${response.status}`)
+      throw new Error(`Erro HTTP: ${response.status}`)
     }
 
-    const data = await response.json()
-
-    // json-server retorna o objeto diretamente
-    systemConstants = data
-    console.log("[v0] Constantes do sistema carregadas:", systemConstants)
+    systemConstants = await response.json()
+    console.log("[v0] Constantes carregadas:", systemConstants)
     showSystemStatus("Constantes do sistema carregadas com sucesso", "success")
   } catch (error) {
-    console.error("[v0] ERRO CRÍTICO: Não foi possível carregar dados.json:", error)
-    showSystemStatus(
-      "ERRO: Não foi possível carregar o arquivo dados.json. Os cálculos não funcionarão até que o arquivo seja carregado corretamente.",
-      "error",
-    )
+    console.error("[v0] Erro ao carregar constantes:", error)
+    showSystemStatus("ERRO: Não foi possível carregar as constantes do sistema", "error")
     systemConstants = null
   }
 }
 
-
-
 /**
- * Busca todos os projetos do json-server
- * Realiza uma requisição GET para obter a lista de projetos
- * Retorna array de projetos ou array vazio em caso de erro
+ * Busca todos os projetos do servidor
  */
 async function fetchProjects() {
   try {
-    console.log("[v0] Buscando projetos do json-server...")
-    const response = await fetch(`${API_BASE_URL}/projetos`)
+    console.log("[v0] Buscando projetos...")
+    const response = await fetch(`${API_CONFIG.projects}/projetos`)
 
     if (!response.ok) {
-      throw new Error(`Status HTTP: ${response.status}`)
+      throw new Error(`Erro HTTP: ${response.status}`)
     }
 
-    const projetos = await response.json()
-    console.log("[v0] Projetos carregados:", projetos)
-    return projetos
+    const projects = await response.json()
+    console.log("[v0] Projetos carregados:", projects)
+    return projects
   } catch (error) {
     console.error("[v0] Erro ao buscar projetos:", error)
-    showSystemStatus("ERRO: Não foi possível carregar projetos do servidor", "error")
+    showSystemStatus("ERRO: Não foi possível carregar projetos", "error")
     return []
   }
 }
 
-
-
-/**
- * Determina o próximo número de projeto baseado nos projetos existentes no servidor
- *
-async function getNextProjectNumber() {
-  const projetos = await fetchProjects()
-  
-  // Conta também os projetos já criados na interface atual
-  const existingProjects = document.querySelectorAll('.project-item').length
-  
-  if (projetos.length === 0 && existingProjects === 0) {
-    return 1
-  }
-
-  // Extrai números dos nomes dos projetos do banco
-  const dbNumbers = projetos.map((projeto) => {
-    const match = projeto.nome.match(/Projeto(\d+)/)
-    return match ? Number.parseInt(match[1]) : 0
-  })
-
-  // Extrai números dos projetos na interface
-  const interfaceNumbers = Array.from(document.querySelectorAll('.project-item')).map((projectElement) => {
-    const projectName = projectElement.querySelector('.project-name').textContent
-    const match = projectName.match(/Projeto(\d+)/)
-    return match ? Number.parseInt(match[1]) : 0
-  })
-
-  // Combina todos os números e encontra o máximo
-  const allNumbers = [...dbNumbers, ...interfaceNumbers]
-  const maxNumber = Math.max(...allNumbers)
-  
-  return maxNumber + 1
-}*/
-
-
+// ============================================
+// GERENCIAMENTO DE IDs
+// ============================================
 
 /**
- * Determina o próximo ID de projeto baseado nos projetos existentes no servidor
- * Busca todos os projetos e encontra o maior ID existente
- * Retorna 1001 se não houver projetos, ou o próximo ID sequencial
+ * Determina o próximo ID de projeto
  */
 async function getNextProjectId() {
-  const projetos = await fetchProjects()
+  const projects = await fetchProjects()
 
-  if (projetos.length === 0) {
-    return 1001
+  if (projects.length === 0) {
+    return UI_CONSTANTS.INITIAL_PROJECT_ID
   }
 
-  // Encontra o maior ID existente
-  const maxId = Math.max(...projetos.map((p) => p.id || 0))
-  return maxId >= 1001 ? maxId + 1 : 1001
+  const maxId = Math.max(...projects.map((p) => p.id || 0))
+  return maxId >= UI_CONSTANTS.INITIAL_PROJECT_ID ? maxId + 1 : UI_CONSTANTS.INITIAL_PROJECT_ID
 }
 
 /**
- * Cria um novo projeto no json-server
- * Envia uma requisição POST com os dados do projeto
- * Atribui um ID automático se não fornecido
- * Retorna o projeto criado ou null em caso de erro
+ * Obtém o próximo número de projeto
+ */
+function getNextProjectNumber() {
+  projectCounter++
+  return projectCounter
+}
+
+/**
+ * Inicializa o contador de projetos baseado nos existentes
+ */
+async function initializeProjectCounter() {
+  const projects = await fetchProjects()
+
+  if (projects.length === 0) {
+    projectCounter = 0
+    return
+  }
+
+  const projectNumbers = projects
+    .map((project) => {
+      const match = project.nome.match(/Projeto(\d+)/)
+      return match ? Number.parseInt(match[1]) : 0
+    })
+    .filter((num) => num > 0)
+
+  projectCounter = projectNumbers.length > 0 ? Math.max(...projectNumbers) : 0
+}
+
+// ============================================
+// OPERAÇÕES DE PROJETO (CRUD)
+// ============================================
+
+/**
+ * Cria um novo projeto no servidor
  */
 async function createProject(projectData) {
   try {
@@ -137,21 +146,19 @@ async function createProject(projectData) {
       projectData.id = await getNextProjectId()
     }
 
-    console.log("[v0] Criando novo projeto no servidor:", projectData)
-    const response = await fetch(`${API_BASE_URL}/projetos`, {
+    console.log("[v0] Criando projeto:", projectData)
+    const response = await fetch(`${API_CONFIG.projects}/projetos`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(projectData),
     })
 
     if (!response.ok) {
-      throw new Error(`Status HTTP: ${response.status}`)
+      throw new Error(`Erro HTTP: ${response.status}`)
     }
 
     const createdProject = await response.json()
-    console.log("[v0] Projeto criado com sucesso:", createdProject)
+    console.log("[v0] Projeto criado:", createdProject)
     showSystemStatus("Projeto salvo com sucesso!", "success")
     return createdProject
   } catch (error) {
@@ -162,27 +169,23 @@ async function createProject(projectData) {
 }
 
 /**
- * Atualiza um projeto existente no json-server
- * Envia uma requisição PUT com os dados atualizados do projeto
- * Retorna o projeto atualizado ou null em caso de erro
+ * Atualiza um projeto existente no servidor
  */
 async function updateProject(projectId, projectData) {
   try {
-    console.log("[v0] Atualizando projeto no servidor:", projectId, projectData)
-    const response = await fetch(`${API_BASE_URL}/projetos/${projectId}`, {
+    console.log("[v0] Atualizando projeto:", projectId)
+    const response = await fetch(`${API_CONFIG.projects}/projetos/${projectId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(projectData),
     })
 
     if (!response.ok) {
-      throw new Error(`Status HTTP: ${response.status}`)
+      throw new Error(`Erro HTTP: ${response.status}`)
     }
 
     const updatedProject = await response.json()
-    console.log("[v0] Projeto atualizado com sucesso:", updatedProject)
+    console.log("[v0] Projeto atualizado:", updatedProject)
     showSystemStatus("Projeto atualizado com sucesso!", "success")
     return updatedProject
   } catch (error) {
@@ -192,81 +195,111 @@ async function updateProject(projectId, projectData) {
   }
 }
 
+// ============================================
+// UI - MENSAGENS DE STATUS
+// ============================================
+
 /**
  * Exibe mensagem de status do sistema
- * Cria um banner temporário com mensagem de sucesso ou erro
- * Remove automaticamente banners de sucesso após 5 segundos
  */
 function showSystemStatus(message, type) {
+  removeExistingStatusBanner()
+
+  const banner = createStatusBanner(message, type)
+  insertStatusBanner(banner)
+
+  if (type === "success") {
+    scheduleStatusBannerRemoval(banner)
+  }
+}
+
+function removeExistingStatusBanner() {
   const existingBanner = document.getElementById("system-status-banner")
   if (existingBanner) {
     existingBanner.remove()
   }
+}
 
+function createStatusBanner(message, type) {
   const banner = document.createElement("div")
   banner.id = "system-status-banner"
   banner.className = `system-status-banner ${type}`
   banner.textContent = message
+  return banner
+}
 
+function insertStatusBanner(banner) {
   const mainContent = document.querySelector(".main-content")
   mainContent.insertBefore(banner, mainContent.firstChild)
-
-  // Remove banner de sucesso após 5 segundos
-  if (type === "success") {
-    setTimeout(() => {
-      banner.remove()
-    }, 5000)
-  }
 }
 
+function scheduleStatusBannerRemoval(banner) {
+  setTimeout(() => {
+    banner.remove()
+  }, UI_CONSTANTS.SUCCESS_MESSAGE_DURATION)
+}
+
+// ============================================
+// UI - TOGGLE (MINIMIZAR/EXPANDIR)
+// ============================================
 
 /**
- * Inicializa o sistema ao carregar a página
- * Carrega as constantes do sistema e cria projeto inicial
- * Configura o contador de projetos baseado nos existentes no banco
+ * Alterna visibilidade de um elemento
  */
-window.addEventListener("DOMContentLoaded", async () => {
-  await loadSystemConstants()
-  
-  // Inicializa o contador baseado nos projetos existentes no servidor
-  const projetosExistentes = await fetchProjects()
-  
-  if (projetosExistentes.length > 0) {
-    const numbers = projetosExistentes.map((projeto) => {
-      const match = projeto.nome.match(/Projeto(\d+)/)
-      return match ? Number.parseInt(match[1]) : 0
-    })
-    projectCounter = Math.max(...numbers)
-  } else {
-    projectCounter = 0
-  }
-  
-  // SEMPRE cria um projeto base vazio na interface
-  // Isso é apenas para a interface, não está salvando no servidor ainda
-  const projectName = `Projeto${getNextProjectNumber()}`
-  createEmptyProject(projectName, null)
-  createEmptyRoom(projectName, "Sala1", null)
-  
-  systemInitialized = true
-  console.log("[v0] Sistema inicializado com projeto base para interface")
-})
+function toggleElementVisibility(contentId, minimizerElement) {
+  const content = document.getElementById(contentId)
+  if (!content) return
 
-// Função única para obter próximo número
-function getNextProjectNumber() {
-  projectCounter++
-  return projectCounter
+  const isCollapsed = content.classList.contains(UI_CONSTANTS.COLLAPSED_CLASS)
+
+  if (isCollapsed) {
+    expandElement(content, minimizerElement)
+  } else {
+    collapseElement(content, minimizerElement)
+  }
 }
+
+function expandElement(element, minimizerElement) {
+  element.classList.remove(UI_CONSTANTS.COLLAPSED_CLASS)
+  minimizerElement.textContent = UI_CONSTANTS.EXPANDED_SYMBOL
+}
+
+function collapseElement(element, minimizerElement) {
+  element.classList.add(UI_CONSTANTS.COLLAPSED_CLASS)
+  minimizerElement.textContent = UI_CONSTANTS.MINIMIZED_SYMBOL
+}
+
+function toggleProject(projectName) {
+  toggleElementVisibility(`project-content-${projectName}`, event.target)
+}
+
+function toggleRoom(roomId) {
+  toggleElementVisibility(`room-content-${roomId}`, event.target)
+}
+
+function toggleSection(sectionId) {
+  toggleElementVisibility(`section-content-${sectionId}`, event.target)
+}
+
+function toggleSubsection(subsectionId) {
+  toggleElementVisibility(`subsection-content-${subsectionId}`, event.target)
+}
+
 // ============================================
-// FUNÇÕES DE CRIAÇÃO DE PROJETOS E SALAS
+// UI - CRIAÇÃO DE PROJETOS
 // ============================================
 
 /**
- * Cria um projeto vazio na interface (sem dados pré-preenchidos)
- * Gera HTML do projeto e insere no container de projetos
- * Inclui botões de ação e seção para adicionar salas
+ * Cria um projeto vazio na interface
  */
 function createEmptyProject(projectName, projectId) {
-  const projectHTML = `
+  const projectHTML = buildProjectHTML(projectName, projectId)
+  insertProjectIntoDOM(projectHTML)
+  console.log(`[v0] Projeto ${projectName} criado`)
+}
+
+function buildProjectHTML(projectName, projectId) {
+  return `
     <div class="project-block" data-project-id="${projectId || ""}" data-project-name="${projectName}">
       <div class="project-header">
         <button class="minimizer" onclick="toggleProject('${projectName}')">+</button>
@@ -280,802 +313,360 @@ function createEmptyProject(projectName, projectId) {
         <div class="add-room-section">
           <button class="btn btn-add-secondary" onclick="addNewRoom('${projectName}')">+ Adicionar Nova Sala</button>
         </div>
-        <div class="project-actions-footer">
-          <button class="btn btn-verify" onclick="verifyProjectData('${projectName}')">Verificar Dados</button>
-          <button class="btn btn-save" onclick="saveProject('${projectName}')">Salvar Projeto</button>
-          <button class="btn btn-download" onclick="downloadPDF('${projectName}')">Baixar PDF</button>
-          <button class="btn btn-download" onclick="downloadWord('${projectName}')">Baixar Word</button>
-        </div>
+        ${buildProjectActionsFooter(projectName)}
       </div>
     </div>
   `
+}
 
+function buildProjectActionsFooter(projectName) {
+  return `
+    <div class="project-actions-footer">
+      <button class="btn btn-verify" onclick="verifyProjectData('${projectName}')">Verificar Dados</button>
+      <button class="btn btn-save" onclick="saveProject('${projectName}')">Salvar Projeto</button>
+      <button class="btn btn-download" onclick="downloadPDF('${projectName}')">Baixar PDF</button>
+      <button class="btn btn-download" onclick="downloadWord('${projectName}')">Baixar Word</button>
+    </div>
+  `
+}
+
+function insertProjectIntoDOM(projectHTML) {
   const projectsContainer = document.getElementById("projects-container")
   projectsContainer.insertAdjacentHTML("beforeend", projectHTML)
-
-  console.log(`[v0] Projeto ${projectName} criado (vazio)`)
 }
 
 /**
- * Cria uma sala vazia na interface (sem dados pré-preenchidos)
- * Gera HTML completo da sala com seções de climatização, máquinas e configuração
- * Adiciona a sala ao projeto especificado
+ * Adiciona um novo projeto à interface
+ */
+async function addNewProject() {
+  const projectNumber = getNextProjectNumber()
+  const projectName = `Projeto${projectNumber}`
+
+  createEmptyProject(projectName, null)
+  console.log(`[v0] ${projectName} adicionado`)
+}
+
+/**
+ * Deleta um projeto da interface
+ */
+function deleteProject(projectName) {
+  const confirmMessage = "Tem certeza que deseja deletar este projeto? Os dados permanecerão no servidor."
+
+  if (!confirm(confirmMessage)) return
+
+  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+  projectBlock.remove()
+  console.log(`[v0] Projeto ${projectName} removido da interface`)
+}
+
+// ============================================
+// UI - CRIAÇÃO DE SALAS
+// ============================================
+
+/**
+ * Cria uma sala vazia na interface
  */
 function createEmptyRoom(projectName, roomName, roomId) {
   const projectContent = document.getElementById(`project-content-${projectName}`)
+  const roomHTML = buildRoomHTML(projectName, roomName, roomId)
 
-  const roomHTML = `
+  insertRoomIntoProject(projectContent, roomHTML)
+  removeEmptyProjectMessage(projectContent)
+
+  console.log(`[v0] Sala ${roomName} criada`)
+}
+
+function buildRoomHTML(projectName, roomName, roomId) {
+  return `
     <div class="room-block" data-room-id="${roomId || ""}" data-room-name="${roomName}">
-      <div class="room-header">
-        <button class="minimizer" onclick="toggleRoom('${projectName}-${roomName}')">+</button>
-        <h3 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">${roomName}</h3>
-        <button class="btn btn-delete-small" onclick="deleteRoom('${projectName}', '${roomName}')">Deletar</button>
-      </div>
+      ${buildRoomHeader(projectName, roomName)}
       <div class="room-content collapsed" id="room-content-${projectName}-${roomName}">
-        <!-- Seção: Climatização -->
-        <div class="section-block">
-          <div class="section-header">
-            <button class="minimizer" onclick="toggleSection('${projectName}-${roomName}-clima')">+</button>
-            <h4 class="section-title">Climatização</h4>
-          </div>
-          <div class="section-content collapsed" id="section-content-${projectName}-${roomName}-clima">
-            <div class="subsection-block">
-              <div class="subsection-header">
-                <button class="minimizer" onclick="toggleSubsection('${projectName}-${roomName}-clima-table')">+</button>
-                <h5 class="subsection-title">Tabela de Inputs</h5>
-              </div>
-              <div class="subsection-content collapsed" id="subsection-content-${projectName}-${roomName}-clima-table">
-                <div class="clima-table">
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Ambiente:</label>
-                      <input type="text" class="form-input clima-input" data-field="ambiente" placeholder="Ex: Sala de Servidores" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell">
-                      <label>Back-up:</label>
-                      <select class="form-input clima-input" data-field="backup" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                        <option value="">Selecione</option>
-                        <option value="n">n</option>
-                        <option value="n+1">n+1</option>
-                        <option value="n+2">n+2</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Área (m²):</label>
-                      <input type="number" class="form-input clima-input" data-field="area" placeholder="Ex: 50" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell">
-                      <label>Tipo de Construção:</label>
-                      <select class="form-input clima-input" data-field="tipoConstrucao" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                        <option value="">Selecione</option>
-                        <option value="alvenaria">Alvenaria</option>
-                        <option value="eletrocentro">Eletrocentro</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Parede Oeste (m):</label>
-                      <input type="number" class="form-input clima-input" data-field="paredeOeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell">
-                      <label>Parede Leste (m):</label>
-                      <input type="number" class="form-input clima-input" data-field="paredeLeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Parede Norte (m):</label>
-                      <input type="number" class="form-input clima-input" data-field="paredeNorte" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell">
-                      <label>Parede Sul (m):</label>
-                      <input type="number" class="form-input clima-input" data-field="paredeSul" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Pé Direito (m):</label>
-                      <input type="number" class="form-input clima-input" data-field="peDireito" placeholder="Ex: 3.0" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell clima-cell-empty"></div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Divisória Área Não Climatizada 1 (m²):</label>
-                      <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima1" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell">
-                      <label>Divisória Área Não Climatizada 2 (m²):</label>
-                      <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima2" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Divisória Área Climatizada 1 (m²):</label>
-                      <input type="number" class="form-input clima-input" data-field="divisoriaClima1" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell">
-                      <label>Divisória Área Climatizada 2 (m²):</label>
-                      <input type="number" class="form-input clima-input" data-field="divisoriaClima2" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Dissipação (W):</label>
-                      <input type="number" class="form-input clima-input" data-field="dissipacao" placeholder="Ex: 5000" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell">
-                      <label>N° Pessoas:</label>
-                      <input type="number" class="form-input clima-input" data-field="numPessoas" placeholder="Ex: 10" min="0" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>N° Portas Duplas:</label>
-                      <input type="number" class="form-input clima-input" data-field="numPortasDuplas" placeholder="Ex: 2" min="0" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell">
-                      <label>N° Portas Simples:</label>
-                      <input type="number" class="form-input clima-input" data-field="numPortasSimples" placeholder="Ex: 3" min="0" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Pressurização (Pa):</label>
-                      <input type="number" class="form-input clima-input" data-field="pressurizacao" placeholder="Ex: 50" step="0.01" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                    <div class="clima-cell">
-                      <label>Setpoint (°C):</label>
-                      <input type="number" class="form-input clima-input" data-field="setpoint" placeholder="Ex: 22" step="0.1" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                    </div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell clima-cell-result">
-                      <label>Vazão de Ar Externo (l/s):</label>
-                      <div class="result-value-inline" id="vazao-ar-${projectName}-${roomName}">0</div>
-                    </div>
-                    <div class="clima-cell clima-cell-empty"></div>
-                  </div>
-                  <div class="clima-row">
-                    <div class="clima-cell">
-                      <label>Combate a Incêndio:</label>
-                      <select class="form-input clima-input" data-field="combateIncendio" onchange="calculateVazaoAr('${projectName}-${roomName}')">
-                        <option value="">Selecione</option>
-                        <option value="manual">Manual/Detecção</option>
-                        <option value="fm200">FM200</option>
-                        <option value="novec">NOVEC</option>
-                        <option value="firepro">FirePRO</option>
-                        <option value="ni">N/I</option>
-                      </select>
-                    </div>
-                    <div class="clima-cell clima-cell-empty"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        ${buildClimatizationSection(projectName, roomName)}
+        ${buildMachinesSection(projectName, roomName)}
+        ${buildConfigurationSection(projectName, roomName)}
+        ${buildRoomActions(projectName, roomName)}
+      </div>
+    </div>
+  `
+}
 
-        <!-- Seção: Máquinas -->
-        <div class="section-block">
-          <div class="section-header">
-            <button class="minimizer" onclick="toggleSection('${projectName}-${roomName}-maquinas')">+</button>
-            <h4 class="section-title">Máquinas</h4>
-            <button class="btn btn-add-small" onclick="addMachine('${projectName}-${roomName}')">+ Adicionar Máquina</button>
-          </div>
-          <div class="section-content collapsed" id="section-content-${projectName}-${roomName}-maquinas">
-            <div class="machines-container" id="machines-${projectName}-${roomName}">
-              <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
-            </div>
-          </div>
-        </div>
+function buildRoomHeader(projectName, roomName) {
+  return `
+    <div class="room-header">
+      <button class="minimizer" onclick="toggleRoom('${projectName}-${roomName}')">+</button>
+      <h3 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">${roomName}</h3>
+      <button class="btn btn-delete-small" onclick="deleteRoom('${projectName}', '${roomName}')">Deletar</button>
+    </div>
+  `
+}
 
-        <!-- Seção: Configuração Geral -->
-        <div class="section-block">
-          <div class="section-header">
-            <button class="minimizer" onclick="toggleSection('${projectName}-${roomName}-config')">+</button>
-            <h4 class="section-title">Configuração Geral</h4>
+function buildClimatizationSection(projectName, roomName) {
+  const roomId = `${projectName}-${roomName}`
+  return `
+    <div class="section-block">
+      <div class="section-header">
+        <button class="minimizer" onclick="toggleSection('${roomId}-clima')">+</button>
+        <h4 class="section-title">Climatização</h4>
+      </div>
+      <div class="section-content collapsed" id="section-content-${roomId}-clima">
+        <div class="subsection-block">
+          <div class="subsection-header">
+            <button class="minimizer" onclick="toggleSubsection('${roomId}-clima-table')">+</button>
+            <h5 class="subsection-title">Tabela de Inputs</h5>
           </div>
-          <div class="section-content collapsed" id="section-content-${projectName}-${roomName}-config">
-            <div class="form-grid">
-              <div class="form-group">
-                <label>Responsável:</label>
-                <input type="text" class="form-input" placeholder="Nome do responsável">
-              </div>
-              <div class="form-group">
-                <label>Data de Instalação:</label>
-                <input type="date" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Observações:</label>
-                <textarea class="form-input" rows="3" placeholder="Observações gerais"></textarea>
-              </div>
-            </div>
+          <div class="subsection-content collapsed" id="subsection-content-${roomId}-clima-table">
+            ${buildClimatizationTable(roomId)}
           </div>
-        </div>
-
-        <!-- Botões da Sala -->
-        <div class="room-actions">
-          <button class="btn btn-update" onclick="updateRoom('${projectName}', '${roomName}')">Atualizar Dados</button>
-          <button class="btn btn-save" onclick="saveRoom('${projectName}', '${roomName}')">Salvar</button>
         </div>
       </div>
     </div>
   `
+}
 
+function buildClimatizationTable(roomId) {
+  return `
+    <div class="clima-table">
+      ${buildClimaRow(
+        [
+          { label: "Ambiente:", field: "ambiente", type: "text", placeholder: "Ex: Sala de Servidores" },
+          { label: "Back-up:", field: "backup", type: "select", options: ["", "n", "n+1", "n+2"] },
+        ],
+        roomId,
+      )}
+      ${buildClimaRow(
+        [
+          { label: "Área (m²):", field: "area", type: "number", placeholder: "Ex: 50" },
+          {
+            label: "Tipo de Construção:",
+            field: "tipoConstrucao",
+            type: "select",
+            options: ["", "alvenaria", "eletrocentro"],
+          },
+        ],
+        roomId,
+      )}
+      ${buildClimaRow(
+        [
+          { label: "Parede Oeste (m):", field: "paredeOeste", type: "number", placeholder: "Ex: 5.5" },
+          { label: "Parede Leste (m):", field: "paredeLeste", type: "number", placeholder: "Ex: 5.5" },
+        ],
+        roomId,
+      )}
+      ${buildClimaRow(
+        [
+          { label: "Parede Norte (m):", field: "paredeNorte", type: "number", placeholder: "Ex: 8.0" },
+          { label: "Parede Sul (m):", field: "paredeSul", type: "number", placeholder: "Ex: 8.0" },
+        ],
+        roomId,
+      )}
+      ${buildClimaRow(
+        [{ label: "Pé Direito (m):", field: "peDireito", type: "number", placeholder: "Ex: 3.0" }, null],
+        roomId,
+      )}
+      ${buildClimaRow(
+        [
+          {
+            label: "Divisória Área Não Climatizada 1 (m²):",
+            field: "divisoriaNaoClima1",
+            type: "number",
+            placeholder: "Ex: 10",
+          },
+          {
+            label: "Divisória Área Não Climatizada 2 (m²):",
+            field: "divisoriaNaoClima2",
+            type: "number",
+            placeholder: "Ex: 10",
+          },
+        ],
+        roomId,
+      )}
+      ${buildClimaRow(
+        [
+          {
+            label: "Divisória Área Climatizada 1 (m²):",
+            field: "divisoriaClima1",
+            type: "number",
+            placeholder: "Ex: 15",
+          },
+          {
+            label: "Divisória Área Climatizada 2 (m²):",
+            field: "divisoriaClima2",
+            type: "number",
+            placeholder: "Ex: 15",
+          },
+        ],
+        roomId,
+      )}
+      ${buildClimaRow(
+        [
+          { label: "Dissipação (W):", field: "dissipacao", type: "number", placeholder: "Ex: 5000" },
+          { label: "N° Pessoas:", field: "numPessoas", type: "number", placeholder: "Ex: 10" },
+        ],
+        roomId,
+      )}
+      ${buildClimaRow(
+        [
+          { label: "N° Portas Duplas:", field: "numPortasDuplas", type: "number", placeholder: "Ex: 2" },
+          { label: "N° Portas Simples:", field: "numPortasSimples", type: "number", placeholder: "Ex: 3" },
+        ],
+        roomId,
+      )}
+      ${buildClimaRow(
+        [
+          { label: "Pressurização (Pa):", field: "pressurizacao", type: "number", placeholder: "Ex: 50" },
+          { label: "Setpoint (°C):", field: "setpoint", type: "number", placeholder: "Ex: 22" },
+        ],
+        roomId,
+      )}
+      ${buildResultRow(roomId)}
+      ${buildClimaRow(
+        [
+          {
+            label: "Combate a Incêndio:",
+            field: "combateIncendio",
+            type: "select",
+            options: ["", "manual", "fm200", "novec", "firepro", "ni"],
+          },
+          null,
+        ],
+        roomId,
+      )}
+    </div>
+  `
+}
+
+function buildClimaRow(fields, roomId) {
+  const cells = fields
+    .map((field) => {
+      if (!field) return '<div class="clima-cell clima-cell-empty"></div>'
+      return buildClimaCell(field, roomId)
+    })
+    .join("")
+
+  return `<div class="clima-row">${cells}</div>`
+}
+
+function buildClimaCell(field, roomId) {
+  const input = field.type === "select" ? buildSelectInput(field, roomId) : buildTextInput(field, roomId)
+
+  return `
+    <div class="clima-cell">
+      <label>${field.label}</label>
+      ${input}
+    </div>
+  `
+}
+
+function buildSelectInput(field, roomId) {
+  const options = field.options
+    .map((opt) => `<option value="${opt}">${opt === "" ? "Selecione" : opt}</option>`)
+    .join("")
+
+  return `
+    <select class="form-input clima-input" data-field="${field.field}" onchange="calculateVazaoAr('${roomId}')">
+      ${options}
+    </select>
+  `
+}
+
+function buildTextInput(field, roomId) {
+  const step = field.type === "number" ? 'step="0.01"' : ""
+  const min = field.field.includes("num") ? 'min="0"' : ""
+
+  return `
+    <input 
+      type="${field.type}" 
+      class="form-input clima-input" 
+      data-field="${field.field}" 
+      placeholder="${field.placeholder}" 
+      ${step} 
+      ${min}
+      onchange="calculateVazaoAr('${roomId}')"
+    >
+  `
+}
+
+function buildResultRow(roomId) {
+  return `
+    <div class="clima-row">
+      <div class="clima-cell clima-cell-result">
+        <label>Vazão de Ar Externo (l/s):</label>
+        <div class="result-value-inline" id="vazao-ar-${roomId}">0</div>
+      </div>
+      <div class="clima-cell clima-cell-empty"></div>
+    </div>
+  `
+}
+
+function buildMachinesSection(projectName, roomName) {
+  const roomId = `${projectName}-${roomName}`
+  return `
+    <div class="section-block">
+      <div class="section-header">
+        <button class="minimizer" onclick="toggleSection('${roomId}-maquinas')">+</button>
+        <h4 class="section-title">Máquinas</h4>
+        <button class="btn btn-add-small" onclick="addMachine('${roomId}')">+ Adicionar Máquina</button>
+      </div>
+      <div class="section-content collapsed" id="section-content-${roomId}-maquinas">
+        <div class="machines-container" id="machines-${roomId}">
+          <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function buildConfigurationSection(projectName, roomName) {
+  const roomId = `${projectName}-${roomName}`
+  return `
+    <div class="section-block">
+      <div class="section-header">
+        <button class="minimizer" onclick="toggleSection('${roomId}-config')">+</button>
+        <h4 class="section-title">Configuração Geral</h4>
+      </div>
+      <div class="section-content collapsed" id="section-content-${roomId}-config">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Responsável:</label>
+            <input type="text" class="form-input" placeholder="Nome do responsável">
+          </div>
+          <div class="form-group">
+            <label>Data de Instalação:</label>
+            <input type="date" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Observações:</label>
+            <textarea class="form-input" rows="3" placeholder="Observações gerais"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function buildRoomActions(projectName, roomName) {
+  return `
+    <div class="room-actions">
+      <button class="btn btn-update" onclick="updateRoom('${projectName}', '${roomName}')">Atualizar Dados</button>
+      <button class="btn btn-save" onclick="saveRoom('${projectName}', '${roomName}')">Salvar</button>
+    </div>
+  `
+}
+
+function insertRoomIntoProject(projectContent, roomHTML) {
   const addRoomSection = projectContent.querySelector(".add-room-section")
   addRoomSection.insertAdjacentHTML("beforebegin", roomHTML)
+}
 
-  // Remove mensagem vazia se existir
+function removeEmptyProjectMessage(projectContent) {
   const emptyMessage = projectContent.querySelector(".empty-message")
   if (emptyMessage) {
     emptyMessage.remove()
   }
-
-  console.log(`[v0] Sala ${roomName} criada (vazia)`)
 }
-
-// ============================================
-// FUNÇÕES DE MINIMIZAR/EXPANDIR
-// ============================================
-
-/**
- * Alterna entre estado minimizado e expandido de um projeto
- * Controla a visibilidade do conteúdo do projeto
- * Atualiza o texto do botão minimizador
- */
-function toggleProject(projectName) {
-  const content = document.getElementById(`project-content-${projectName}`)
-  const minimizer = event.target
-
-  if (content.classList.contains("collapsed")) {
-    content.classList.remove("collapsed")
-    minimizer.textContent = "−"
-  } else {
-    content.classList.add("collapsed")
-    minimizer.textContent = "+"
-  }
-}
-
-/**
- * Alterna entre estado minimizado e expandido de uma sala
- * Controla a visibilidade do conteúdo da sala
- * Atualiza o texto do botão minimizador
- */
-function toggleRoom(roomId) {
-  const content = document.getElementById(`room-content-${roomId}`)
-  const minimizer = event.target
-
-  if (content.classList.contains("collapsed")) {
-    content.classList.remove("collapsed")
-    minimizer.textContent = "−"
-  } else {
-    content.classList.add("collapsed")
-    minimizer.textContent = "+"
-  }
-}
-
-/**
- * Alterna entre estado minimizado e expandido de uma seção
- * Controla a visibilidade do conteúdo da seção
- * Atualiza o texto do botão minimizador
- */
-function toggleSection(sectionId) {
-  const content = document.getElementById(`section-content-${sectionId}`)
-  const minimizer = event.target
-
-  if (content.classList.contains("collapsed")) {
-    content.classList.remove("collapsed")
-    minimizer.textContent = "−"
-  } else {
-    content.classList.add("collapsed")
-    minimizer.textContent = "+"
-  }
-}
-
-/**
- * Alterna entre estado minimizado e expandido de uma subseção
- * Controla a visibilidade do conteúdo da subseção
- * Atualiza o texto do botão minimizador
- */
-
-function toggleSubsection(subsectionId) {
-  const content = document.getElementById(`subsection-content-${subsectionId}`)
-  const minimizer = event.target
-
-  if (content.classList.contains("collapsed")) {
-    content.classList.remove("collapsed")
-    minimizer.textContent = "−"
-  } else {
-    content.classList.add("collapsed")
-    minimizer.textContent = "+"
-  }
-}
-
-// ============================================
-// FUNÇÕES DE GERENCIAMENTO DE PROJETOS
-// ============================================
-
-/**
- * Adiciona um novo projeto à interface
- * Gera nome automático baseado no contador
- * Chama createEmptyProject para criar a estrutura HTML
- */
-async function addNewProject() {
-  const projectName = `Projeto${getNextProjectNumber()}`
-  createEmptyProject(projectName, null)
-  console.log(`[v0] ${projectName} adicionado à interface`)
-}
-
-/**
- * Deleta um projeto da interface (apenas visual, não remove do backup.json)
- * Remove o elemento HTML do projeto após confirmação do usuário
- * Mantém os dados no servidor
- */
-function deleteProject(projectName) {
-  if (confirm("Tem certeza que deseja deletar este projeto da tela? Os dados permanecerão salvos no servidor.")) {
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-    projectBlock.remove()
-
-    console.log(`[v0] Projeto ${projectName} removido da tela (apenas visual)`)
-  }
-}
-
-
-/**
- * Salva um projeto completo no json-server
- * Extrai dados de todas as salas do projeto
- * Cria novo projeto ou atualiza existente baseado no ID
- * Minimiza o projeto após salvar com sucesso
- */
-async function saveProject(projectName) {
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  
-  if (!projectBlock) {
-    console.error(`[v0] Projeto ${projectName} não encontrado na interface`)
-    return
-  }
-
-  const projectId = projectBlock.dataset.projectId
-
-  // Extrai dados do projeto
-  const projectData = {
-    nome: projectBlock.querySelector(".project-title").textContent.trim(),
-    salas: [],
-  }
-
-  // Extrai dados de todas as salas
-  const roomBlocks = projectBlock.querySelectorAll(".room-block")
-  roomBlocks.forEach((roomBlock, index) => {
-    const roomData = extractRoomData(roomBlock)
-    roomData.id = index + 1
-    projectData.salas.push(roomData)
-  })
-
-  let result
-  try {
-    if (projectId && projectId !== "") {
-      // Projeto já existe - ATUALIZA
-      projectData.id = Number.parseInt(projectId)
-      result = await updateProject(projectId, projectData)
-      console.log(`[v0] Projeto ${projectName} (ID: ${projectId}) atualizado no servidor`)
-    } else {
-      // Projeto novo - CRIA
-      result = await createProject(projectData)
-      if (result) {
-        // Atualiza o data-project-id no DOM para futuras atualizações
-        projectBlock.dataset.projectId = result.id
-        console.log(`[v0] Projeto ${projectName} criado no servidor com ID: ${result.id}`)
-      }
-    }
-
-    if (result) {
-      // Apenas minimiza o projeto, mantém na tela
-      const projectContent = document.getElementById(`project-content-${projectName}`)
-      const minimizer = projectBlock.querySelector(".project-header .minimizer")
-
-      if (projectContent && !projectContent.classList.contains("collapsed")) {
-        projectContent.classList.add("collapsed")
-        if (minimizer) {
-          minimizer.textContent = "+"
-        }
-      }
-
-      console.log(`[v0] Projeto ${projectName} salvo com sucesso e minimizado`)
-      
-      // CRIA UM NOVO PROJETO BASE APÓS SALVAR - Isso é o que você quer
-      if (systemInitialized) {
-        const newProjectName = `Projeto${getNextProjectNumber()}`
-        createEmptyProject(newProjectName, null)
-        createEmptyRoom(newProjectName, "Sala1", null)
-        console.log(`[v0] Novo projeto base ${newProjectName} criado após salvamento`)
-      }
-    }
-  } catch (error) {
-    console.error(`[v0] Erro ao salvar projeto ${projectName}:`, error)
-    showSystemStatus("ERRO: Não foi possível salvar o projeto", "error")
-  }
-}
-
-/**
- * Carrega projetos existentes do servidor para a interface
- * FUNÇÃO NOVA - para carregar projetos salvos se necessário
- */
-async function loadExistingProjectsToInterface() {
-  const projetos = await fetchProjects()
-  
-  projetos.forEach(projeto => {
-    // Verifica se o projeto já não está na interface
-    const existingProject = document.querySelector(`[data-project-id="${projeto.id}"]`)
-    if (!existingProject) {
-      // Cria o projeto na interface com os dados do servidor
-      createProjectFromData(projeto)
-    }
-  })
-}
-
-/**
- * Cria um projeto na interface a partir de dados do servidor
- * FUNÇÃO NOVA - para reconstruir projetos salvos
- */
-function createProjectFromData(projectData) {
-  const projectName = projectData.nome
-  createEmptyProject(projectName, projectData.id)
-  
-  // Adiciona as salas do projeto
-  if (projectData.salas && projectData.salas.length > 0) {
-    projectData.salas.forEach(sala => {
-      createRoomFromData(projectName, sala)
-    })
-  } else {
-    createEmptyRoom(projectName, "Sala1", null)
-  }
-}
-
-
-//=======================================
-// NOVAS FUNÇÕES PARA ITERAÇÃO 
-/**
- * Cria uma sala na interface a partir de dados do servidor
- * Preenche todos os campos com os dados existentes do servidor
- */
-function createRoomFromData(projectName, roomData) {
-  // Primeiro cria a sala vazia
-  createEmptyRoom(projectName, roomData.nome, roomData.id)
-  
-  // Aguarda um pouco para garantir que o DOM foi atualizado
-  setTimeout(() => {
-    const roomBlock = document.querySelector(`[data-room-name="${roomData.nome}"]`)
-    if (!roomBlock) {
-      console.error(`[v0] Sala ${roomData.nome} não encontrada na interface`)
-      return
-    }
-
-    console.log(`[v0] Preenchendo dados da sala ${roomData.nome}`, roomData)
-
-    // Preenche dados de climatização
-    if (roomData.climatizacao) {
-      const climaInputs = roomBlock.querySelectorAll('.clima-input')
-      climaInputs.forEach(input => {
-        const field = input.dataset.field
-        if (field && roomData.climatizacao[field] !== undefined) {
-          input.value = roomData.climatizacao[field]
-          console.log(`[v0] Campo ${field} preenchido com:`, roomData.climatizacao[field])
-        }
-      })
-
-      // Atualiza o resultado da vazão de ar se existir
-      const vazaoArElement = document.getElementById(`vazao-ar-${projectName}-${roomData.nome}`)
-      if (vazaoArElement && roomData.climatizacao.vazaoArResultado) {
-        vazaoArElement.textContent = roomData.climatizacao.vazaoArResultado
-      }
-    }
-
-    // Preenche máquinas
-    if (roomData.maquinas && roomData.maquinas.length > 0) {
-      const machinesContainer = roomBlock.querySelector(`#machines-${projectName}-${roomData.nome}`)
-      if (machinesContainer) {
-        // Remove mensagem de "nenhuma máquina"
-        const emptyMessage = machinesContainer.querySelector('.empty-message')
-        if (emptyMessage) {
-          emptyMessage.remove()
-        }
-
-        // Adiciona cada máquina
-        roomData.maquinas.forEach((machineData, index) => {
-          const machineHTML = `
-            <div class="machine-item">
-              <div class="machine-header">
-                <span class="machine-title">Máquina ${index + 1}</span>
-                <button class="btn btn-delete-small" onclick="deleteMachine(this)">×</button>
-              </div>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>Nome:</label>
-                  <input type="text" class="form-input" placeholder="Ex: Servidor Principal" value="${machineData.Nome || ''}">
-                </div>
-                <div class="form-group">
-                  <label>Modelo:</label>
-                  <input type="text" class="form-input" placeholder="Ex: Dell PowerEdge" value="${machineData.Modelo || ''}">
-                </div>
-                <div class="form-group">
-                  <label>Potência (W):</label>
-                  <input type="number" class="form-input" placeholder="Ex: 500" value="${machineData.Potência || ''}">
-                </div>
-                <div class="form-group">
-                  <label>Status:</label>
-                  <select class="form-input">
-                    <option value="ativo" ${machineData.Status === 'ativo' ? 'selected' : ''}>Ativo</option>
-                    <option value="inativo" ${machineData.Status === 'inativo' ? 'selected' : ''}>Inativo</option>
-                    <option value="manutencao" ${machineData.Status === 'manutencao' ? 'selected' : ''}>Manutenção</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          `
-          machinesContainer.insertAdjacentHTML('beforeend', machineHTML)
-        })
-      }
-    }
-
-    // Preenche configuração geral
-    if (roomData.configuracaoGeral) {
-      const configSection = roomBlock.querySelector('[id*="-config"]')
-      if (configSection) {
-        // Responsável
-        const responsavelInput = configSection.querySelector('input[placeholder*="responsável"]')
-        if (responsavelInput && roomData.configuracaoGeral.responsavel) {
-          responsavelInput.value = roomData.configuracaoGeral.responsavel
-        }
-
-        // Data de instalação
-        const dataInput = configSection.querySelector('input[type="date"]')
-        if (dataInput && roomData.configuracaoGeral.dataInstalacao) {
-          dataInput.value = roomData.configuracaoGeral.dataInstalacao
-        }
-
-        // Observações
-        const obsInput = configSection.querySelector('textarea')
-        if (obsInput && roomData.configuracaoGeral.observacoes) {
-          obsInput.value = roomData.configuracaoGeral.observacoes
-        }
-      }
-    }
-
-    // Expande a sala para mostrar os dados preenchidos
-    const roomContent = document.getElementById(`room-content-${projectName}-${roomData.nome}`)
-    const roomMinimizer = roomBlock.querySelector('.room-header .minimizer')
-    if (roomContent && roomMinimizer) {
-      roomContent.classList.remove('collapsed')
-      roomMinimizer.textContent = "−"
-    }
-
-    console.log(`[v0] Sala ${roomData.nome} preenchida com dados do servidor`)
-
-  }, 100) // Pequeno delay para garantir que o DOM foi atualizado
-}
-
-/**
- * Função auxiliar para criar projeto completo a partir de dados do servidor
- */
-function createProjectFromData(projectData) {
-  const projectName = projectData.nome
-  
-  // Cria o projeto na interface
-  const projectHTML = `
-    <div class="project-block" data-project-id="${projectData.id}" data-project-name="${projectName}">
-      <div class="project-header">
-        <button class="minimizer" onclick="toggleProject('${projectName}')">+</button>
-        <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">${projectName}</h2>
-        <div class="project-actions">
-          <button class="btn btn-delete" onclick="deleteProject('${projectName}')">Remover</button>
-        </div>
-      </div>
-      <div class="project-content" id="project-content-${projectName}">
-        <div class="add-room-section">
-          <button class="btn btn-add-secondary" onclick="addNewRoom('${projectName}')">+ Adicionar Nova Sala</button>
-        </div>
-        <div class="project-actions-footer">
-          <button class="btn btn-verify" onclick="verifyProjectData('${projectName}')">Verificar Dados</button>
-          <button class="btn btn-save" onclick="saveProject('${projectName}')">Salvar Projeto</button>
-          <button class="btn btn-download" onclick="downloadPDF('${projectName}')">Baixar PDF</button>
-          <button class="btn btn-download" onclick="downloadWord('${projectName}')">Baixar Word</button>
-        </div>
-      </div>
-    </div>
-  `
-
-  const projectsContainer = document.getElementById("projects-container")
-  projectsContainer.insertAdjacentHTML("beforeend", projectHTML)
-
-  // Adiciona as salas do projeto
-  if (projectData.salas && projectData.salas.length > 0) {
-    projectData.salas.forEach(sala => {
-      createRoomFromData(projectName, sala)
-    })
-  } else {
-    // Se não tem salas, cria uma vazia
-    createEmptyRoom(projectName, "Sala1", null)
-  }
-
-  console.log(`[v0] Projeto ${projectName} carregado do servidor com ${projectData.salas ? projectData.salas.length : 0} salas`)
-}
-
-/**
- * Função para carregar todos os projetos existentes para a interface
- */
-async function loadAllProjectsToInterface() {
-  const projetos = await fetchProjects()
-  
-  // Limpa projetos existentes na interface (exceto o projeto base atual)
-  const projectsContainer = document.getElementById("projects-container")
-  const existingProjects = projectsContainer.querySelectorAll('.project-block')
-  
-  // Remove apenas projetos que já foram salvos (com ID)
-  existingProjects.forEach(project => {
-    const projectId = project.dataset.projectId
-    if (projectId && projectId !== "") {
-      project.remove()
-    }
-  })
-  
-  // Carrega cada projeto do servidor
-  projetos.forEach(projeto => {
-    createProjectFromData(projeto)
-  })
-  
-  console.log(`[v0] ${projetos.length} projetos carregados do servidor para a interface`)
-}
-
-/**
- * Nova função para alternar entre modo "novo projeto" e "carregar existentes"
- */
-function toggleProjectMode() {
-  const loadBtn = document.getElementById('load-projects-btn')
-  if (loadBtn.textContent.includes('Carregar')) {
-    loadAllProjectsToInterface()
-    loadBtn.textContent = '↺ Voltar para Novo Projeto'
-    showSystemStatus('Projetos existentes carregados do servidor', 'success')
-  } else {
-    location.reload() // Recarrega para voltar ao estado inicial
-  }
-}
-//=================================================
-
-
-/**
- * Verifica os dados de um projeto
- * Analisa todos os campos preenchidos em cada sala
- * Gera relatório com estatísticas de preenchimento
- * Exibe alerta com o resumo da verificação
- */
-function verifyProjectData(projectName) {
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  const rooms = projectBlock.querySelectorAll(".room-block")
-
-  let report = `Verificação do Projeto:\n\n`
-  report += `Total de salas: ${rooms.length}\n\n`
-
-  rooms.forEach((room) => {
-    const roomName = room.querySelector(".room-title").textContent
-    const inputs = room.querySelectorAll(".form-input")
-    const filledInputs = Array.from(inputs).filter((input) => input.value.trim() !== "").length
-    const totalInputs = inputs.length
-    const percentage = totalInputs > 0 ? ((filledInputs / totalInputs) * 100).toFixed(1) : 0
-
-    report += `${roomName}: ${filledInputs}/${totalInputs} campos preenchidos (${percentage}%)\n`
-  })
-
-  alert(report)
-  console.log(`[v0] Verificação do projeto ${projectName} concluída`)
-}
-
-// ============================================
-// FUNÇÕES DE EDIÇÃO INLINE
-// ============================================
-
-/**
- * Habilita edição inline de títulos de projetos e salas
- * Transforma o elemento em editável e seleciona o conteúdo
- * Controla salvamento com Enter e cancelamento com Escape
- */
-function makeEditable(element, type) {
-  if (element.classList.contains("editing")) {
-    return
-  }
-
-  const originalText = element.textContent.trim()
-  element.dataset.originalText = originalText
-
-  element.contentEditable = true
-  element.classList.add("editing")
-
-  const range = document.createRange()
-  const selection = window.getSelection()
-  range.selectNodeContents(element)
-  selection.removeAllRanges()
-  selection.addRange(range)
-
-  element.focus()
-
-  element.addEventListener("keydown", function handleEnter(e) {
-    if (e.key === "Enter") {
-      e.preventDefault()
-      saveInlineEdit(element, type)
-      element.removeEventListener("keydown", handleEnter)
-    } else if (e.key === "Escape") {
-      e.preventDefault()
-      cancelInlineEdit(element)
-      element.removeEventListener("keydown", handleEnter)
-    }
-  })
-
-  element.addEventListener(
-    "blur",
-    function handleBlur() {
-      saveInlineEdit(element, type)
-      element.removeEventListener("blur", handleBlur)
-    },
-    { once: true },
-  )
-}
-
-/**
- * Salva a edição inline de um título
- * Valida se o texto não está vazio
- * Atualiza o conteúdo do elemento e registra a mudança
- */
-function saveInlineEdit(element, type) {
-  const newText = element.textContent.trim()
-  const originalText = element.dataset.originalText
-
-  element.contentEditable = false
-  element.classList.remove("editing")
-
-  if (newText === "") {
-    element.textContent = originalText
-    alert("O nome não pode estar vazio.")
-    return
-  }
-
-  if (newText !== originalText) {
-    element.textContent = newText
-    console.log(`[v0] ${type === "project" ? "Projeto" : "Sala"} renomeado para: ${newText}`)
-  }
-
-  delete element.dataset.originalText
-}
-
-
-/**
- * Cancela a edição inline e restaura o texto original
- * Reverte para o conteúdo anterior sem salvar alterações
- */
-function cancelInlineEdit(element) {
-  const originalText = element.dataset.originalText
-
-  element.contentEditable = false
-  element.classList.remove("editing")
-  element.textContent = originalText
-
-  delete element.dataset.originalText
-
-  console.log("[v0] Edição cancelada")
-}
-
-
-
-// ============================================
-// FUNÇÕES DE GERENCIAMENTO DE SALAS
-// ============================================
 
 /**
  * Adiciona uma nova sala a um projeto
- * Gera nome automático baseado no número de salas existentes
- * Chama createEmptyRoom para criar a estrutura HTML
  */
 function addNewRoom(projectName) {
   const projectContent = document.getElementById(`project-content-${projectName}`)
@@ -1086,148 +677,60 @@ function addNewRoom(projectName) {
   console.log(`[v0] ${roomName} adicionada ao ${projectName}`)
 }
 
-
 /**
- * Deleta uma sala da interface (apenas visual, não remove do backup.json)
- * Remove o elemento HTML da sala após confirmação
- * Mostra mensagem vazia se não houver mais salas no projeto
+ * Deleta uma sala da interface
  */
 function deleteRoom(projectName, roomName) {
-  if (confirm("Tem certeza que deseja deletar esta sala da tela? Os dados permanecerão salvos no servidor.")) {
-    const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`)
-    const projectContent = roomBlock.closest(".project-content")
+  const confirmMessage = "Tem certeza que deseja deletar esta sala? Os dados permanecerão no servidor."
 
-    roomBlock.remove()
+  if (!confirm(confirmMessage)) return
 
-    // Se não houver mais salas, mostra mensagem vazia
-    const remainingRooms = projectContent.querySelectorAll(".room-block")
-    if (remainingRooms.length === 0) {
-      const addRoomSection = projectContent.querySelector(".add-room-section")
-      addRoomSection.insertAdjacentHTML("beforebegin", '<p class="empty-message">Adicione salas a este projeto...</p>')
-    }
-
-    console.log(`[v0] Sala ${roomName} removida da tela (apenas visual)`)
-  }
-}
-
-/**
- * Atualiza os dados de uma sala (validação local)
- * Verifica campos obrigatórios preenchidos
- * Aplica estilos visuais para campos inválidos
- * Exibe alerta com resultado da validação
- */
-function updateRoom(projectName, roomName) {
   const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`)
-  const inputs = roomBlock.querySelectorAll(".form-input")
+  const projectContent = roomBlock.closest(".project-content")
 
-  let hasEmptyFields = false
-  inputs.forEach((input) => {
-    if (input.value.trim() === "" && input.hasAttribute("required")) {
-      hasEmptyFields = true
-      input.style.borderColor = "#dc3545"
-    } else {
-      input.style.borderColor = "#dee2e6"
-    }
-  })
+  roomBlock.remove()
+  showEmptyProjectMessageIfNeeded(projectContent)
 
-  if (hasEmptyFields) {
-    alert("Por favor, preencha todos os campos obrigatórios.")
-  } else {
-    alert("Dados da sala atualizados localmente!")
-    console.log(`[v0] Dados da sala ${roomName} atualizados`)
-  }
+  console.log(`[v0] Sala ${roomName} removida da interface`)
 }
 
-/**
- * Salva os dados de uma sala (salva o projeto inteiro)
- * Chama saveProject para persistir todos os dados do projeto
- * Inclui a sala específica no processo de salvamento
- */ 
-//AQUI DEVERIA SALVAR APENAS A SALA NO BACKEND AO INVES DE SALVAR TUDO, DOIS BOTÕES DIFERENTES UM DE SALA, QUE SALVA A SALA(ADICIONA OU ALTERA AS INFORMAÇÕES), OUTRO DO PROJETO QUE SALVA O PROJETO COMPLETO
-async function saveRoom(projectName, roomName) {
-  console.log(`[v0] Salvando sala ${roomName} do projeto ${projectName}`)
+function showEmptyProjectMessageIfNeeded(projectContent) {
+  const remainingRooms = projectContent.querySelectorAll(".room-block")
 
-  // Salva o projeto inteiro (que inclui todas as salas)
-  await saveProject(projectName)
-}
-
-/**
- * Extrai dados de uma sala para JSON
- * Coleta informações de climatização, máquinas e configuração geral
- * Estrutura os dados no formato adequado para persistência
- */
-function extractRoomData(roomBlock) {
-  const roomData = {
-    nome: roomBlock.querySelector(".room-title").textContent.trim(),
-    climatizacao: {},
-    maquinas: [],
-    configuracaoGeral: {},
+  if (remainingRooms.length === 0) {
+    const addRoomSection = projectContent.querySelector(".add-room-section")
+    addRoomSection.insertAdjacentHTML("beforebegin", '<p class="empty-message">Adicione salas a este projeto...</p>')
   }
-
-  // Extrai dados de climatização
-  const climaInputs = roomBlock.querySelectorAll(".clima-input")
-  climaInputs.forEach((input) => {
-    const field = input.dataset.field
-    if (field) {
-      roomData.climatizacao[field] = input.value
-    }
-  })
-
-  // Extrai dados de máquinas
-  const machines = roomBlock.querySelectorAll(".machine-item")
-  machines.forEach((machine) => {
-    const machineData = {}
-    const inputs = machine.querySelectorAll(".form-input")
-    inputs.forEach((input) => {
-      const label = input.closest(".form-group")?.querySelector("label")?.textContent.replace(":", "")
-      if (label) {
-        machineData[label] = input.value
-      }
-    })
-    roomData.maquinas.push(machineData)
-  })
-
-  // Extrai dados de configuração geral
-  const configSection = roomBlock.querySelector('[id*="-config"]')
-  if (configSection) {
-    const responsavelInput = configSection.querySelector('input[placeholder*="responsável"]')
-    if (responsavelInput) {
-      roomData.configuracaoGeral.responsavel = responsavelInput.value
-    }
-
-    const dataInput = configSection.querySelector('input[type="date"]')
-    if (dataInput) {
-      roomData.configuracaoGeral.dataInstalacao = dataInput.value
-    }
-
-    const obsInput = configSection.querySelector("textarea")
-    if (obsInput) {
-      roomData.configuracaoGeral.observacoes = obsInput.value
-    }
-  }
-
-  return roomData
 }
 
 // ============================================
-// FUNÇÕES DE GERENCIAMENTO DE MÁQUINAS
+// GERENCIAMENTO DE MÁQUINAS
 // ============================================
 
 /**
  * Adiciona uma nova máquina a uma sala
- * Cria formulário para dados da máquina com campos padrão
- * Remove mensagem de "nenhuma máquina" se existir
  */
 function addMachine(roomId) {
   const machinesContainer = document.getElementById(`machines-${roomId}`)
   const machineCount = machinesContainer.querySelectorAll(".machine-item").length + 1
 
-  const emptyMessage = machinesContainer.querySelector(".empty-message")
+  removeEmptyMachinesMessage(machinesContainer)
+
+  const machineHTML = buildMachineHTML(machineCount)
+  machinesContainer.insertAdjacentHTML("beforeend", machineHTML)
+
+  console.log(`[v0] Máquina ${machineCount} adicionada`)
+}
+
+function removeEmptyMachinesMessage(container) {
+  const emptyMessage = container.querySelector(".empty-message")
   if (emptyMessage) {
     emptyMessage.remove()
   }
+}
 
-  const machineHTML = `
+function buildMachineHTML(machineCount) {
+  return `
     <div class="machine-item">
       <div class="machine-header">
         <span class="machine-title">Máquina ${machineCount}</span>
@@ -1257,75 +760,363 @@ function addMachine(roomId) {
       </div>
     </div>
   `
-
-  machinesContainer.insertAdjacentHTML("beforeend", machineHTML)
-  console.log(`[v0] Máquina ${machineCount} adicionada`)
 }
 
 /**
  * Deleta uma máquina
- * Remove o elemento HTML da máquina após confirmação
- * Restaura mensagem de "nenhuma máquina" se for a última
  */
 function deleteMachine(button) {
-  if (confirm("Deseja remover esta máquina?")) {
-    const machineItem = button.closest(".machine-item")
-    const machinesContainer = machineItem.closest(".machines-container")
-    machineItem.remove()
+  if (!confirm("Deseja remover esta máquina?")) return
 
-    if (machinesContainer.querySelectorAll(".machine-item").length === 0) {
-      machinesContainer.innerHTML = '<p class="empty-message">Nenhuma máquina adicionada ainda.</p>'
-    }
+  const machineItem = button.closest(".machine-item")
+  const machinesContainer = machineItem.closest(".machines-container")
 
-    console.log("[v0] Máquina removida")
+  machineItem.remove()
+  showEmptyMachinesMessageIfNeeded(machinesContainer)
+
+  console.log("[v0] Máquina removida")
+}
+
+function showEmptyMachinesMessageIfNeeded(container) {
+  if (container.querySelectorAll(".machine-item").length === 0) {
+    container.innerHTML = '<p class="empty-message">Nenhuma máquina adicionada ainda.</p>'
   }
 }
 
 // ============================================
-// FUNÇÕES DE EXPORTAÇÃO
+// OPERAÇÕES DE SALA
 // ============================================
 
 /**
- * Prepara download do projeto em formato PDF
- * Exibe alerta informativo (funcionalidade a ser implementada)
- * Será integrada com bibliotecas como jsPDF ou html2pdf.js
+ * Atualiza os dados de uma sala (validação local)
  */
-function downloadPDF(projectName) {
-  // ... implementação
+function updateRoom(projectName, roomName) {
+  const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`)
+  const inputs = roomBlock.querySelectorAll(".form-input")
+
+  const hasEmptyRequiredFields = validateRoomInputs(inputs)
+
+  if (hasEmptyRequiredFields) {
+    alert("Por favor, preencha todos os campos obrigatórios.")
+  } else {
+    alert("Dados da sala atualizados localmente!")
+    console.log(`[v0] Dados da sala ${roomName} atualizados`)
+  }
+}
+
+function validateRoomInputs(inputs) {
+  let hasEmptyFields = false
+
+  inputs.forEach((input) => {
+    const isEmpty = input.value.trim() === "" && input.hasAttribute("required")
+
+    input.style.borderColor = isEmpty ? "#dc3545" : "#dee2e6"
+
+    if (isEmpty) {
+      hasEmptyFields = true
+    }
+  })
+
+  return hasEmptyFields
 }
 
 /**
- * Prepara download do projeto em formato Word
- * Exibe alerta informativo (funcionalidade a ser implementada)
- * Será integrada com bibliotecas como docx.js
+ * Salva os dados de uma sala
  */
-function downloadWord(projectName) {
-  // ... implementação
+async function saveRoom(projectName, roomName) {
+  console.log(`[v0] Salvando sala ${roomName} do projeto ${projectName}`)
+  await saveProject(projectName)
+}
+
+/**
+ * Extrai dados de uma sala para JSON
+ */
+function extractRoomData(roomBlock) {
+  return {
+    nome: extractRoomName(roomBlock),
+    climatizacao: extractClimatizationData(roomBlock),
+    maquinas: extractMachinesData(roomBlock),
+    configuracaoGeral: extractConfigurationData(roomBlock),
+  }
+}
+
+function extractRoomName(roomBlock) {
+  return roomBlock.querySelector(".room-title").textContent.trim()
+}
+
+function extractClimatizationData(roomBlock) {
+  const climatizationData = {}
+  const climaInputs = roomBlock.querySelectorAll(".clima-input")
+
+  climaInputs.forEach((input) => {
+    const field = input.dataset.field
+    if (field) {
+      climatizationData[field] = input.value
+    }
+  })
+
+  return climatizationData
+}
+
+function extractMachinesData(roomBlock) {
+  const machinesData = []
+  const machines = roomBlock.querySelectorAll(".machine-item")
+
+  machines.forEach((machine) => {
+    const machineData = {}
+    const inputs = machine.querySelectorAll(".form-input")
+
+    inputs.forEach((input) => {
+      const label = input.closest(".form-group")?.querySelector("label")?.textContent.replace(":", "")
+      if (label) {
+        machineData[label] = input.value
+      }
+    })
+
+    machinesData.push(machineData)
+  })
+
+  return machinesData
+}
+
+function extractConfigurationData(roomBlock) {
+  const configData = {}
+  const configSection = roomBlock.querySelector('[id*="-config"]')
+
+  if (!configSection) return configData
+
+  const responsavelInput = configSection.querySelector('input[placeholder*="responsável"]')
+  if (responsavelInput) {
+    configData.responsavel = responsavelInput.value
+  }
+
+  const dataInput = configSection.querySelector('input[type="date"]')
+  if (dataInput) {
+    configData.dataInstalacao = dataInput.value
+  }
+
+  const obsInput = configSection.querySelector("textarea")
+  if (obsInput) {
+    configData.observacoes = obsInput.value
+  }
+
+  return configData
 }
 
 // ============================================
-// FUNÇÕES DE CÁLCULO
+// OPERAÇÕES DE PROJETO
+// ============================================
+
+/**
+ * Salva um projeto completo no servidor
+ */
+async function saveProject(projectName) {
+  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+  const projectId = projectBlock.dataset.projectId
+
+  const projectData = buildProjectData(projectBlock)
+
+  const result = projectId
+    ? await updateExistingProject(projectId, projectData)
+    : await createNewProject(projectData, projectBlock)
+
+  if (result) {
+    collapseProjectAfterSave(projectName, projectBlock)
+    console.log(`[v0] Projeto ${projectName} salvo e minimizado`)
+  }
+}
+
+function buildProjectData(projectBlock) {
+  const projectData = {
+    nome: projectBlock.querySelector(".project-title").textContent.trim(),
+    salas: [],
+  }
+
+  const roomBlocks = projectBlock.querySelectorAll(".room-block")
+  roomBlocks.forEach((roomBlock, index) => {
+    const roomData = extractRoomData(roomBlock)
+    roomData.id = index + 1
+    projectData.salas.push(roomData)
+  })
+
+  return projectData
+}
+
+async function updateExistingProject(projectId, projectData) {
+  projectData.id = Number.parseInt(projectId)
+  return await updateProject(projectId, projectData)
+}
+
+async function createNewProject(projectData, projectBlock) {
+  const result = await createProject(projectData)
+  if (result) {
+    projectBlock.dataset.projectId = result.id
+  }
+  return result
+}
+
+function collapseProjectAfterSave(projectName, projectBlock) {
+  const projectContent = document.getElementById(`project-content-${projectName}`)
+  const minimizer = projectBlock.querySelector(".project-header .minimizer")
+
+  if (projectContent && !projectContent.classList.contains(UI_CONSTANTS.COLLAPSED_CLASS)) {
+    collapseElement(projectContent, minimizer)
+  }
+}
+
+/**
+ * Verifica os dados de um projeto
+ */
+function verifyProjectData(projectName) {
+  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+  const rooms = projectBlock.querySelectorAll(".room-block")
+
+  const report = generateProjectVerificationReport(rooms)
+
+  alert(report)
+  console.log(`[v0] Verificação do projeto ${projectName} concluída`)
+}
+
+function generateProjectVerificationReport(rooms) {
+  let report = `Verificação do Projeto:\n\n`
+  report += `Total de salas: ${rooms.length}\n\n`
+
+  rooms.forEach((room) => {
+    const roomName = room.querySelector(".room-title").textContent
+    const stats = calculateRoomCompletionStats(room)
+
+    report += `${roomName}: ${stats.filled}/${stats.total} campos preenchidos (${stats.percentage}%)\n`
+  })
+
+  return report
+}
+
+function calculateRoomCompletionStats(room) {
+  const inputs = room.querySelectorAll(".form-input")
+  const filledInputs = Array.from(inputs).filter((input) => input.value.trim() !== "").length
+  const totalInputs = inputs.length
+  const percentage = totalInputs > 0 ? ((filledInputs / totalInputs) * 100).toFixed(1) : 0
+
+  return {
+    filled: filledInputs,
+    total: totalInputs,
+    percentage: percentage,
+  }
+}
+
+// ============================================
+// EDIÇÃO INLINE
+// ============================================
+
+/**
+ * Habilita edição inline de títulos
+ */
+function makeEditable(element, type) {
+  if (element.classList.contains("editing")) return
+
+  const originalText = element.textContent.trim()
+  element.dataset.originalText = originalText
+
+  enableEditing(element)
+  selectElementContent(element)
+  attachEditingEventListeners(element, type)
+}
+
+function enableEditing(element) {
+  element.contentEditable = true
+  element.classList.add("editing")
+}
+
+function selectElementContent(element) {
+  const range = document.createRange()
+  const selection = window.getSelection()
+  range.selectNodeContents(element)
+  selection.removeAllRanges()
+  selection.addRange(range)
+  element.focus()
+}
+
+function attachEditingEventListeners(element, type) {
+  element.addEventListener("keydown", function handleKeydown(e) {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      saveInlineEdit(element, type)
+      element.removeEventListener("keydown", handleKeydown)
+    } else if (e.key === "Escape") {
+      e.preventDefault()
+      cancelInlineEdit(element)
+      element.removeEventListener("keydown", handleKeydown)
+    }
+  })
+
+  element.addEventListener(
+    "blur",
+    function handleBlur() {
+      saveInlineEdit(element, type)
+      element.removeEventListener("blur", handleBlur)
+    },
+    { once: true },
+  )
+}
+
+/**
+ * Salva a edição inline
+ */
+function saveInlineEdit(element, type) {
+  const newText = element.textContent.trim()
+  const originalText = element.dataset.originalText
+
+  disableEditing(element)
+
+  if (!validateEditedText(newText, originalText, element)) return
+
+  if (newText !== originalText) {
+    element.textContent = newText
+    const entityType = type === "project" ? "Projeto" : "Sala"
+    console.log(`[v0] ${entityType} renomeado para: ${newText}`)
+  }
+
+  delete element.dataset.originalText
+}
+
+function disableEditing(element) {
+  element.contentEditable = false
+  element.classList.remove("editing")
+}
+
+function validateEditedText(newText, originalText, element) {
+  if (newText === "") {
+    element.textContent = originalText
+    alert("O nome não pode estar vazio.")
+    return false
+  }
+  return true
+}
+
+/**
+ * Cancela a edição inline
+ */
+function cancelInlineEdit(element) {
+  const originalText = element.dataset.originalText
+
+  disableEditing(element)
+  element.textContent = originalText
+  delete element.dataset.originalText
+
+  console.log("[v0] Edição cancelada")
+}
+
+// ============================================
+// CÁLCULOS
 // ============================================
 
 /**
  * Calcula a Vazão de Ar Externo para uma sala
- * Utiliza constantes do sistema e fórmulas específicas
- * Processa dados de portas, pressurização e constantes PD/PS
- * Executa cálculo passo a passo similar à planilha Excel
- * Atualiza o resultado na interface do usuário
  */
 async function calculateVazaoAr(roomId) {
-  // Espera até systemConstants estar carregado
-  while (!systemConstants) {
-    console.log("[v0] aguardando constantes do sistema...")
-    await new Promise((resolve) => setTimeout(resolve, 100))
-  }
+  await waitForSystemConstants()
 
-  if (!systemConstants.VARIAVEL_PD || !systemConstants.VARIAVEL_PS) {
-    console.error("[v0] ERRO: Constantes do sistema não carregadas corretamente.")
-    alert("ERRO: As constantes do sistema não foram carregadas corretamente.")
-    return
-  }
+  if (!validateSystemConstants()) return
 
   const roomContent = document.getElementById(`room-content-${roomId}`)
   if (!roomContent) return
@@ -1333,15 +1124,29 @@ async function calculateVazaoAr(roomId) {
   const climaSection = roomContent.querySelector('[id*="-clima"]')
   if (!climaSection) return
 
-  const VARIAVEL_PD = systemConstants.VARIAVEL_PD
-  const VARIAVEL_PS = systemConstants.VARIAVEL_PS
+  const inputData = collectClimatizationInputs(climaSection)
+  const flowRate = computeAirFlowRate(inputData)
 
-  console.log("[v0] ===== INÍCIO DO CÁLCULO DE VAZÃO =====")
-  console.log("[v0] Constantes carregadas:")
-  console.log("[v0] VARIAVEL_PD:", VARIAVEL_PD)
-  console.log("[v0] VARIAVEL_PS:", VARIAVEL_PS)
+  updateFlowRateDisplay(roomId, flowRate)
+}
 
-  // Coleta todos os valores dos inputs
+async function waitForSystemConstants() {
+  while (!systemConstants) {
+    console.log("[v0] Aguardando constantes do sistema...")
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+}
+
+function validateSystemConstants() {
+  if (!systemConstants.VARIAVEL_PD || !systemConstants.VARIAVEL_PS) {
+    console.error("[v0] Constantes do sistema não carregadas")
+    alert("ERRO: As constantes do sistema não foram carregadas corretamente.")
+    return false
+  }
+  return true
+}
+
+function collectClimatizationInputs(climaSection) {
   const inputs = climaSection.querySelectorAll(".clima-input")
   const data = {}
 
@@ -1351,42 +1156,80 @@ async function calculateVazaoAr(roomId) {
     data[field] = value !== "" ? Number.parseFloat(value) || value : 0
   })
 
-  // Extrai valores necessários para o cálculo
-  const numPortasDuplas = data.numPortasDuplas || 0
-  const numPortasSimples = data.numPortasSimples || 0
-  const pressurizacao = data.pressurizacao || 0
+  return data
+}
 
-  console.log("[v0] Valores de entrada:")
-  console.log("[v0] N° Portas Duplas (B18):", numPortasDuplas)
-  console.log("[v0] N° Portas Simples (B19):", numPortasSimples)
-  console.log("[v0] Pressurização Pa (B20):", pressurizacao)
+function computeAirFlowRate(inputData) {
+  const { numPortasDuplas = 0, numPortasSimples = 0, pressurizacao = 0 } = inputData
 
-  // Fórmula: 0.827 * B18 * VARIAVEL_PD * (B20^0.5) * 3600
-  const auxPortasDuplas = 0.827 * numPortasDuplas * VARIAVEL_PD * Math.pow(pressurizacao, 0.5) * 3600
+  console.log("[v0] ===== CÁLCULO DE VAZÃO =====")
+  console.log("[v0] Portas Duplas:", numPortasDuplas)
+  console.log("[v0] Portas Simples:", numPortasSimples)
+  console.log("[v0] Pressurização (Pa):", pressurizacao)
 
-  // Fórmula: 0.827 * B19 * VARIAVEL_PS * (B20^0.5) * 3600
-  const auxPortasSimples = 0.827 * numPortasSimples * VARIAVEL_PS * Math.pow(pressurizacao, 0.5) * 3600
+  const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, systemConstants.VARIAVEL_PD, pressurizacao)
 
-  console.log("[v0] Cálculos intermediários:")
-  console.log("[v0] AUX Portas Duplas (B39):", auxPortasDuplas)
-  console.log("[v0] AUX Portas Simples (B40):", auxPortasSimples)
-  console.log("[v0] Soma (B39+B40):", auxPortasDuplas + auxPortasSimples)
+  const singleDoorFlow = calculateDoorFlow(numPortasSimples, systemConstants.VARIAVEL_PS, pressurizacao)
 
-  // Fórmula Excel: ROUNDUP((B39+B40)/3,6*1,25*1;0)
-  const soma = auxPortasDuplas + auxPortasSimples
-  const divisao = soma / 3.6
-  const multiplicacao = divisao * 1.25 * 1
-  const vazao = Math.ceil(multiplicacao)
+  console.log("[v0] Fluxo Portas Duplas:", doubleDoorFlow)
+  console.log("[v0] Fluxo Portas Simples:", singleDoorFlow)
 
-  console.log("[v0] Cálculo final passo a passo:")
-  console.log("[v0] (B39+B40) / 3.6 =", divisao)
-  console.log("[v0] Resultado * 1.25 * 1 =", multiplicacao)
-  console.log("[v0] ROUNDUP (Math.ceil) =", vazao)
-  console.log("[v0] ===== FIM DO CÁLCULO DE VAZÃO =====")
+  const totalFlow = doubleDoorFlow + singleDoorFlow
+  const adjustedFlow = totalFlow / CALCULATION_CONSTANTS.FLOW_DIVISOR
+  const finalFlow = adjustedFlow * CALCULATION_CONSTANTS.SAFETY_FACTOR
+  const roundedFlow = Math.ceil(finalFlow)
 
-  // Atualiza o campo de resultado
+  console.log("[v0] Fluxo Total:", totalFlow)
+  console.log("[v0] Fluxo Ajustado:", adjustedFlow)
+  console.log("[v0] Fluxo Final:", finalFlow)
+  console.log("[v0] Vazão Arredondada:", roundedFlow)
+  console.log("[v0] ===== FIM DO CÁLCULO =====")
+
+  return roundedFlow
+}
+
+function calculateDoorFlow(doorCount, doorVariable, pressure) {
+  return (
+    CALCULATION_CONSTANTS.FLOW_COEFFICIENT *
+    doorCount *
+    doorVariable *
+    Math.pow(pressure, CALCULATION_CONSTANTS.PRESSURE_EXPONENT) *
+    CALCULATION_CONSTANTS.SECONDS_PER_HOUR
+  )
+}
+
+function updateFlowRateDisplay(roomId, flowRate) {
   const resultElement = document.getElementById(`vazao-ar-${roomId}`)
   if (resultElement) {
-    resultElement.textContent = vazao
+    resultElement.textContent = flowRate
   }
 }
+
+// ============================================
+// EXPORTAÇÃO (PLACEHOLDERS)
+// ============================================
+
+function downloadPDF(projectName) {
+  alert(`Funcionalidade de exportação PDF será implementada para ${projectName}`)
+}
+
+function downloadWord(projectName) {
+  alert(`Funcionalidade de exportação Word será implementada para ${projectName}`)
+}
+
+// ============================================
+// INICIALIZAÇÃO
+// ============================================
+
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadSystemConstants()
+  await initializeProjectCounter()
+
+  console.log("[v0] Criando projeto inicial...")
+
+  const projectName = `Projeto${getNextProjectNumber()}`
+  createEmptyProject(projectName, null)
+  createEmptyRoom(projectName, "Sala1", null)
+
+  console.log("[v0] Sistema inicializado")
+})
