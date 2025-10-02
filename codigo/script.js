@@ -82,10 +82,29 @@ async function getNextProjectNumber() {
 }
 
 /**
+ * Determina o próximo ID de projeto baseado nos projetos existentes no servidor
+ */
+async function getNextProjectId() {
+  const projetos = await fetchProjects()
+
+  if (projetos.length === 0) {
+    return 1001
+  }
+
+  // Encontra o maior ID existente
+  const maxId = Math.max(...projetos.map((p) => p.id || 0))
+  return maxId >= 1001 ? maxId + 1 : 1001
+}
+
+/**
  * Cria um novo projeto no json-server
  */
 async function createProject(projectData) {
   try {
+    if (!projectData.id) {
+      projectData.id = await getNextProjectId()
+    }
+
     console.log("[v0] Criando novo projeto no servidor:", projectData)
     const response = await fetch(`${API_BASE_URL}/projetos`, {
       method: "POST",
@@ -170,12 +189,16 @@ function showSystemStatus(message, type) {
 window.addEventListener("DOMContentLoaded", async () => {
   await loadSystemConstants()
 
-  // Cria um projeto inicial vazio para o usuário começar
-  console.log("[v0] Criando projeto inicial vazio...")
+  console.log("[v0] Criando projeto inicial completo com sala padrão...")
   const nextNumber = await getNextProjectNumber()
-  createEmptyProject(`Projeto${nextNumber}`, null)
+  const projectName = `Projeto${nextNumber}`
 
-  console.log("[v0] Sistema inicializado")
+  createEmptyProject(projectName, null)
+
+  // Adiciona uma sala padrão ao projeto inicial
+  createEmptyRoom(projectName, "Sala1", null)
+
+  console.log("[v0] Sistema inicializado com projeto e sala padrão")
 })
 
 // ============================================
@@ -192,7 +215,7 @@ function createEmptyProject(projectName, projectId) {
         <button class="minimizer" onclick="toggleProject('${projectName}')">+</button>
         <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">${projectName}</h2>
         <div class="project-actions">
-          <button class="btn btn-delete" onclick="deleteProject('${projectName}')">Deletar</button>
+          <button class="btn btn-delete" onclick="deleteProject('${projectName}')">Remover</button>
         </div>
       </div>
       <div class="project-content collapsed" id="project-content-${projectName}">
@@ -554,7 +577,17 @@ async function saveProject(projectName) {
   }
 
   if (result) {
-    console.log(`[v0] Projeto ${projectName} salvo com sucesso`)
+    const projectContent = document.getElementById(`project-content-${projectName}`)
+    const minimizer = projectBlock.querySelector(".project-header .minimizer")
+
+    if (projectContent && !projectContent.classList.contains("collapsed")) {
+      projectContent.classList.add("collapsed")
+      if (minimizer) {
+        minimizer.textContent = "+"
+      }
+    }
+
+    console.log(`[v0] Projeto ${projectName} salvo com sucesso e minimizado`)
   }
 }
 
