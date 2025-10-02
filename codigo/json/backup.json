@@ -1,37 +1,47 @@
 {
-  "Projeto1": {
-    "nome": "Projeto 1",
-    "Sala1": {
-      "nome": "Sala 1",
-      "climatizacao": {
-        "ambiente": "",
-        "backup": "",
-        "area": "",
-        "tipoConstrucao": "",
-        "paredeOeste": "",
-        "paredeLeste": "",
-        "paredeNorte": "",
-        "paredeSul": "",
-        "peDireito": "",
-        "divisoriaNaoClima1": "",
-        "divisoriaNaoClima2": "",
-        "divisoriaClima1": "",
-        "divisoriaClima2": "",
-        "dissipacao": "",
-        "numPessoas": "",
-        "numPortasDuplas": "",
-        "numPortasSimples": "",
-        "pressurizacao": "",
-        "setpoint": "",
-        "vazaoArExterno": "",
-        "combateIncendio": ""
-      },
-      "maquinas": [],
-      "configuracaoGeral": {
-        "responsavel": "",
-        "dataInstalacao": "",
-        "observacoes": ""
-      }
+  "projetos": [
+    {
+      "id": "01c1",
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "climatizacao": {
+            "ambiente": "",
+            "backup": "",
+            "area": "34",
+            "tipoConstrucao": "",
+            "paredeOeste": "12",
+            "paredeLeste": "13",
+            "paredeNorte": "14",
+            "paredeSul": "15",
+            "peDireito": "15",
+            "divisoriaNaoClima1": "1",
+            "divisoriaNaoClima2": "2",
+            "divisoriaClima1": "3",
+            "divisoriaClima2": "4",
+            "dissipacao": "1500",
+            "numPessoas": "15",
+            "numPortasDuplas": "1",
+            "numPortasSimples": "3",
+            "pressurizacao": "25",
+            "setpoint": "25",
+            "combateIncendio": "fm200"
+          },
+          "maquinas": [],
+          "configuracaoGeral": {
+            "responsavel": "sgg",
+            "dataInstalacao": "2004-12-12",
+            "observacoes": "bdbbdfbdbdbd"
+          },
+          "id": 1
+        }
+      ]
+    },
+    {
+      "id": "ae8c",
+      "nome": "Projeto2",
+      "salas": []
     }
-  }
+  ]
 }
