@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Cabeçalho -->
+     <!-- Cabeçalho  -->
     <header class="header">
         <div class="header-left">
             <img src="/placeholder.svg?height=50&width=50" alt="Logo Esquerda" class="logo">
@@ -20,7 +20,7 @@
         </div>
     </header>
 
-    <!-- Barra de Navegação -->
+     <!-- Barra de Navegação  -->
     <nav class="navbar">
         <ul class="nav-list">
             <li><a href="#projetos">Projetos</a></li>
@@ -30,17 +30,253 @@
         </ul>
     </nav>
 
-    <!-- Área Principal -->
+     <!-- Área Principal  -->
     <main class="main-content">
         <div class="container">
-            <!-- Botão para adicionar novo projeto -->
+             <!-- Botão para adicionar novo projeto  -->
             <div class="add-project-section">
                 <button class="btn btn-add" onclick="addNewProject()" id="add-project-btn">+ Adicionar Novo Projeto</button>
             </div>
 
-            <!-- Container de Projetos -->
+             <!-- Container de Projetos  -->
             <div id="projects-container">
-                <!-- Projects will be added dynamically by the user -->
+                 <!-- Primeiro projeto gerado por HTML  -->
+                <div class="project-block" data-project-id="" data-project-name="Projeto1">
+                    <div class="project-header">
+                        <button class="minimizer" onclick="toggleProject('Projeto1')">+</button>
+                        <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">Projeto1</h2>
+                        <div class="project-actions">
+                            <button class="btn btn-delete" onclick="deleteProject('Projeto1')">Remover</button>
+                        </div>
+                    </div>
+                    <div class="project-content collapsed" id="project-content-Projeto1">
+                         <!-- Sala1 inicial  -->
+                        <div class="room-block" data-room-id="" data-room-name="Sala1">
+                            <div class="room-header">
+                                <button class="minimizer" onclick="toggleRoom('Projeto1-Sala1')">+</button>
+                                <h3 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">Sala1</h3>
+                                <button class="btn btn-delete-small" onclick="deleteRoom('Projeto1', 'Sala1')">Deletar</button>
+                            </div>
+                            <div class="room-content collapsed" id="room-content-Projeto1-Sala1">
+                                 <!-- Seção de Climatização  -->
+                                <div class="section-block">
+                                    <div class="section-header">
+                                        <button class="minimizer" onclick="toggleSection('Projeto1-Sala1-clima')">+</button>
+                                        <h4 class="section-title">Climatização</h4>
+                                    </div>
+                                    <div class="section-content collapsed" id="section-content-Projeto1-Sala1-clima">
+                                        <div class="subsection-block">
+                                            <div class="subsection-header">
+                                                <button class="minimizer" onclick="toggleSubsection('Projeto1-Sala1-clima-table')">+</button>
+                                                <h5 class="subsection-title">Tabela de Inputs</h5>
+                                            </div>
+                                            <div class="subsection-content collapsed" id="subsection-content-Projeto1-Sala1-clima-table">
+                                                <div class="clima-table">
+                                                     <!-- Linha 1  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Ambiente:</label>
+                                                            <input type="text" class="form-input clima-input" data-field="ambiente" placeholder="Ex: Sala de Servidores" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell">
+                                                            <label>Back-up:</label>
+                                                            <select class="form-input clima-input" data-field="backup" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                                <option value="">Selecione</option>
+                                                                <option value="n">n</option>
+                                                                <option value="n+1">n+1</option>
+                                                                <option value="n+2">n+2</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                     <!-- Linha 2  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Área (m²):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="area" placeholder="Ex: 50" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell">
+                                                            <label>Tipo de Construção:</label>
+                                                            <select class="form-input clima-input" data-field="tipoConstrucao" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                                <option value="">Selecione</option>
+                                                                <option value="alvenaria">alvenaria</option>
+                                                                <option value="eletrocentro">eletrocentro</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                     <!-- Linha 3  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Parede Oeste (m):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="paredeOeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell">
+                                                            <label>Parede Leste (m):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="paredeLeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                    </div>
+                                                     <!-- Linha 4  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Parede Norte (m):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="paredeNorte" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell">
+                                                            <label>Parede Sul (m):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="paredeSul" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                    </div>
+                                                     <!-- Linha 5  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Pé Direito (m):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="peDireito" placeholder="Ex: 3.0" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell clima-cell-empty"></div>
+                                                    </div>
+                                                     <!-- Linha 6  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Divisória Área Não Climatizada 1 (m²):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima1" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell">
+                                                            <label>Divisória Área Não Climatizada 2 (m²):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima2" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                    </div>
+                                                     <!-- Linha 7  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Divisória Área Climatizada 1 (m²):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="divisoriaClima1" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell">
+                                                            <label>Divisória Área Climatizada 2 (m²):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="divisoriaClima2" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                    </div>
+                                                     <!-- Linha 8  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Dissipação (W):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="dissipacao" placeholder="Ex: 5000" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell">
+                                                            <label>N° Pessoas:</label>
+                                                            <input type="number" class="form-input clima-input" data-field="numPessoas" placeholder="Ex: 10" min="0" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                    </div>
+                                                     <!-- Linha 9  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>N° Portas Duplas:</label>
+                                                            <input type="number" class="form-input clima-input" data-field="numPortasDuplas" placeholder="Ex: 2" min="0" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell">
+                                                            <label>N° Portas Simples:</label>
+                                                            <input type="number" class="form-input clima-input" data-field="numPortasSimples" placeholder="Ex: 3" min="0" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                    </div>
+                                                     <!-- Linha 10  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Pressurização (Pa):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="pressurizacao" placeholder="Ex: 50" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                        <div class="clima-cell">
+                                                            <label>Setpoint (°C):</label>
+                                                            <input type="number" class="form-input clima-input" data-field="setpoint" placeholder="Ex: 22" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                        </div>
+                                                    </div>
+                                                     <!-- Linha 11 - Resultado  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell clima-cell-result">
+                                                            <label>Vazão de Ar Externo (l/s):</label>
+                                                            <div class="result-value-inline" id="vazao-ar-Projeto1-Sala1">0</div>
+                                                        </div>
+                                                        <div class="clima-cell clima-cell-empty"></div>
+                                                    </div>
+                                                     <!-- Linha 12  -->
+                                                    <div class="clima-row">
+                                                        <div class="clima-cell">
+                                                            <label>Combate a Incêndio:</label>
+                                                            <select class="form-input clima-input" data-field="combateIncendio" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                                <option value="">Selecione</option>
+                                                                <option value="manual">manual</option>
+                                                                <option value="fm200">fm200</option>
+                                                                <option value="novec">novec</option>
+                                                                <option value="firepro">firepro</option>
+                                                                <option value="ni">ni</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="clima-cell clima-cell-empty"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                 <!-- Seção de Máquinas  -->
+                                <div class="section-block">
+                                    <div class="section-header">
+                                        <button class="minimizer" onclick="toggleSection('Projeto1-Sala1-maquinas')">+</button>
+                                        <h4 class="section-title">Máquinas</h4>
+                                        <button class="btn btn-add-small" onclick="addMachine('Projeto1-Sala1')">+ Adicionar Máquina</button>
+                                    </div>
+                                    <div class="section-content collapsed" id="section-content-Projeto1-Sala1-maquinas">
+                                        <div class="machines-container" id="machines-Projeto1-Sala1">
+                                            <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                 <!-- Seção de Configuração  -->
+                                <div class="section-block">
+                                    <div class="section-header">
+                                        <button class="minimizer" onclick="toggleSection('Projeto1-Sala1-config')">+</button>
+                                        <h4 class="section-title">Configuração Geral</h4>
+                                    </div>
+                                    <div class="section-content collapsed" id="section-content-Projeto1-Sala1-config">
+                                        <div class="form-grid">
+                                            <div class="form-group">
+                                                <label>Responsável:</label>
+                                                <input type="text" class="form-input" placeholder="Nome do responsável">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Data de Instalação:</label>
+                                                <input type="date" class="form-input">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Observações:</label>
+                                                <textarea class="form-input" rows="3" placeholder="Observações gerais"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                 <!-- Ações da Sala  -->
+                                <div class="room-actions">
+                                    <button class="btn btn-update" onclick="updateRoom('Projeto1', 'Sala1')">Atualizar Dados</button>
+                                    <button class="btn btn-save" onclick="saveRoom('Projeto1', 'Sala1', event)">Salvar</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botão para adicionar nova sala  -->
+                        <div class="add-room-section">
+                            <button class="btn btn-add-secondary" onclick="addNewRoom('Projeto1')">+ Adicionar Nova Sala</button>
+                        </div>
+
+                        <!-- Ações do Projeto  -->
+                        <div class="project-actions-footer">
+                            <button class="btn btn-verify" onclick="verifyProjectData('Projeto1')">Verificar Dados</button>
+                            <button class="btn btn-save" onclick="saveProject('Projeto1', event)">Salvar Projeto</button>
+                            <button class="btn btn-download" onclick="downloadPDF('Projeto1')">Baixar PDF</button>
+                            <button class="btn btn-download" onclick="downloadWord('Projeto1')">Baixar Word</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>

@@ -1,46 +1,79 @@
 {
   "projetos": [
     {
-      "id": 1001,
-      "nome": "projeto base 1",
+      "id": "1003",
+      "nome": "Projeto1 base 1lioduh",
       "salas": [
         {
-          "nome": "sala bse 1",
-          "climatizacao": {
+          "nome": "Sala1",
+          "inputs": {
             "ambiente": "",
             "backup": "",
-            "area": "34",
+            "area": 0,
             "tipoConstrucao": "",
-            "paredeOeste": "12",
-            "paredeLeste": "13",
-            "paredeNorte": "14",
-            "paredeSul": "15",
-            "peDireito": "15",
-            "divisoriaNaoClima1": "1",
-            "divisoriaNaoClima2": "2",
-            "divisoriaClima1": "3",
-            "divisoriaClima2": "4",
-            "dissipacao": "1500",
-            "numPessoas": "15",
-            "numPortasDuplas": "1",
-            "numPortasSimples": "3",
-            "pressurizacao": "25",
-            "setpoint": "",
-            "combateIncendio": ""
-          },
-          "maquinas": [],
-          "configuracaoGeral": {
-            "responsavel": "",
-            "dataInstalacao": "",
-            "observacoes": ""
+            "paredeOeste": 0,
+            "paredeLeste": 0,
+            "paredeNorte": 0,
+            "paredeSul": 0,
+            "peDireito": 0,
+            "divisoriaNaoClima1": 0,
+            "divisoriaNaoClima2": 0,
+            "divisoriaClima1": 0,
+            "divisoriaClima2": 0,
+            "dissipacao": 0,
+            "numPessoas": 0,
+            "numPortasDuplas": 0,
+            "numPortasSimples": 0,
+            "pressurizacao": 0,
+            "setpoint": 0,
+            "combateIncendio": "",
+            "vazaoArExterno": 0
           },
           "id": 1
         }
       ]
     },
     {
-      "id": 1002,
-      "nome": "Projeto2",
+      "id": "1004",
+      "nome": "Projeto2 3333333",
+      "salas": []
+    },
+    {
+      "id": 1005,
+      "nome": "Projeto1fffdfdfdfdfdfd",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "",
+            "backup": "",
+            "area": 0,
+            "tipoConstrucao": "",
+            "paredeOeste": 0,
+            "paredeLeste": 0,
+            "paredeNorte": 0,
+            "paredeSul": 0,
+            "peDireito": 0,
+            "divisoriaNaoClima1": 0,
+            "divisoriaNaoClima2": 0,
+            "divisoriaClima1": 0,
+            "divisoriaClima2": 0,
+            "dissipacao": 0,
+            "numPessoas": 0,
+            "numPortasDuplas": 0,
+            "numPortasSimples": 0,
+            "pressurizacao": 0,
+            "setpoint": 0,
+            "combateIncendio": "",
+            "vazaoArExterno": 0
+          },
+          "id": 1
+        }
+      ]
+    },
+    {
+      "id": 1006,
+      "nome": "dfdfddfdfdfdfd",
       "salas": []
     }
   ]

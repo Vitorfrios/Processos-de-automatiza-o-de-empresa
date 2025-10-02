@@ -38,6 +38,8 @@ const UI_CONSTANTS = {
 let systemConstants = null
 let projectCounter = 0
 
+const SESSION_STORAGE_KEY = "firstProjectIdOfSession"
+
 // ============================================
 // CARREGAMENTO DE DADOS
 // ============================================
@@ -116,16 +118,16 @@ function getNextProjectNumber() {
  * Inicializa o contador de projetos baseado nos existentes
  */
 async function initializeProjectCounter() {
-  const projects = await fetchProjects()
+  const projects = document.querySelectorAll(".project-block")
 
   if (projects.length === 0) {
     projectCounter = 0
     return
   }
 
-  const projectNumbers = projects
+  const projectNumbers = Array.from(projects)
     .map((project) => {
-      const match = project.nome.match(/Projeto(\d+)/)
+      const match = project.dataset.projectName.match(/Projeto(\d+)/)
       return match ? Number.parseInt(match[1]) : 0
     })
     .filter((num) => num > 0)
@@ -323,7 +325,7 @@ function buildProjectActionsFooter(projectName) {
   return `
     <div class="project-actions-footer">
       <button class="btn btn-verify" onclick="verifyProjectData('${projectName}')">Verificar Dados</button>
-      <button class="btn btn-save" onclick="saveProject('${projectName}')">Salvar Projeto</button>
+      <button class="btn btn-save" onclick="event.preventDefault(); saveProject('${projectName}', event)">Salvar Projeto</button>
       <button class="btn btn-download" onclick="downloadPDF('${projectName}')">Baixar PDF</button>
       <button class="btn btn-download" onclick="downloadWord('${projectName}')">Baixar Word</button>
     </div>
@@ -648,7 +650,7 @@ function buildRoomActions(projectName, roomName) {
   return `
     <div class="room-actions">
       <button class="btn btn-update" onclick="updateRoom('${projectName}', '${roomName}')">Atualizar Dados</button>
-      <button class="btn btn-save" onclick="saveRoom('${projectName}', '${roomName}')">Salvar</button>
+      <button class="btn btn-save" onclick="event.preventDefault(); saveRoom('${projectName}', '${roomName}', event)">Salvar</button>
     </div>
   `
 }
@@ -823,84 +825,14 @@ function validateRoomInputs(inputs) {
 /**
  * Salva os dados de uma sala
  */
-async function saveRoom(projectName, roomName) {
+async function saveRoom(projectName, roomName, event) {
+  if (event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
   console.log(`[v0] Salvando sala ${roomName} do projeto ${projectName}`)
   await saveProject(projectName)
-}
-
-/**
- * Extrai dados de uma sala para JSON
- */
-function extractRoomData(roomBlock) {
-  return {
-    nome: extractRoomName(roomBlock),
-    climatizacao: extractClimatizationData(roomBlock),
-    maquinas: extractMachinesData(roomBlock),
-    configuracaoGeral: extractConfigurationData(roomBlock),
-  }
-}
-
-function extractRoomName(roomBlock) {
-  return roomBlock.querySelector(".room-title").textContent.trim()
-}
-
-function extractClimatizationData(roomBlock) {
-  const climatizationData = {}
-  const climaInputs = roomBlock.querySelectorAll(".clima-input")
-
-  climaInputs.forEach((input) => {
-    const field = input.dataset.field
-    if (field) {
-      climatizationData[field] = input.value
-    }
-  })
-
-  return climatizationData
-}
-
-function extractMachinesData(roomBlock) {
-  const machinesData = []
-  const machines = roomBlock.querySelectorAll(".machine-item")
-
-  machines.forEach((machine) => {
-    const machineData = {}
-    const inputs = machine.querySelectorAll(".form-input")
-
-    inputs.forEach((input) => {
-      const label = input.closest(".form-group")?.querySelector("label")?.textContent.replace(":", "")
-      if (label) {
-        machineData[label] = input.value
-      }
-    })
-
-    machinesData.push(machineData)
-  })
-
-  return machinesData
-}
-
-function extractConfigurationData(roomBlock) {
-  const configData = {}
-  const configSection = roomBlock.querySelector('[id*="-config"]')
-
-  if (!configSection) return configData
-
-  const responsavelInput = configSection.querySelector('input[placeholder*="responsável"]')
-  if (responsavelInput) {
-    configData.responsavel = responsavelInput.value
-  }
-
-  const dataInput = configSection.querySelector('input[type="date"]')
-  if (dataInput) {
-    configData.dataInstalacao = dataInput.value
-  }
-
-  const obsInput = configSection.querySelector("textarea")
-  if (obsInput) {
-    configData.observacoes = obsInput.value
-  }
-
-  return configData
 }
 
 // ============================================
@@ -910,8 +842,20 @@ function extractConfigurationData(roomBlock) {
 /**
  * Salva um projeto completo no servidor
  */
-async function saveProject(projectName) {
+async function saveProject(projectName, event) {
+  if (event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  console.log(`[v0] Salvando projeto ${projectName}...`)
+
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+  if (!projectBlock) {
+    console.error(`[v0] Projeto ${projectName} não encontrado`)
+    return
+  }
+
   const projectId = projectBlock.dataset.projectId
 
   const projectData = buildProjectData(projectBlock)
@@ -921,8 +865,10 @@ async function saveProject(projectName) {
     : await createNewProject(projectData, projectBlock)
 
   if (result) {
+    saveFirstProjectIdOfSession(result.id)
+
     collapseProjectAfterSave(projectName, projectBlock)
-    console.log(`[v0] Projeto ${projectName} salvo e minimizado`)
+    console.log(`[v0] Projeto ${projectName} salvo com sucesso e minimizado`)
   }
 }
 
@@ -940,6 +886,49 @@ function buildProjectData(projectBlock) {
   })
 
   return projectData
+}
+
+function extractRoomData(roomBlock) {
+  const roomData = {
+    nome: roomBlock.querySelector(".room-title").textContent.trim(),
+    inputs: {},
+  }
+
+  const climaInputs = roomBlock.querySelectorAll(".clima-input")
+  climaInputs.forEach((input) => {
+    const field = input.dataset.field
+    const value = input.value
+
+    // Se o campo estiver vazio, usar valor padrão apropriado
+    if (value === "" || value === null || value === undefined) {
+      roomData.inputs[field] = input.type === "number" ? 0 : ""
+      return
+    }
+
+    // Se for um select ou campo de texto, manter como string
+    if (input.tagName === "SELECT" || input.type === "text") {
+      roomData.inputs[field] = value
+    }
+    // Se for um campo numérico, converter para número
+    else if (input.type === "number") {
+      roomData.inputs[field] = Number.parseFloat(value) || 0
+    }
+    // Fallback: manter o valor original
+    else {
+      roomData.inputs[field] = value
+    }
+  })
+
+  const roomId = roomBlock.querySelector('[id^="room-content-"]')?.id.replace("room-content-", "")
+  if (roomId) {
+    const vazaoElement = document.getElementById(`vazao-ar-${roomId}`)
+    if (vazaoElement) {
+      const vazaoValue = vazaoElement.textContent.trim()
+      roomData.inputs.vazaoArExterno = Number.parseInt(vazaoValue) || 0
+    }
+  }
+
+  return roomData
 }
 
 async function updateExistingProject(projectId, projectData) {
@@ -1218,18 +1207,179 @@ function downloadWord(projectName) {
 }
 
 // ============================================
+// CARREGAMENTO E RENDERIZAÇÃO DE PROJETOS
+// ============================================
+
+/**
+ * Carrega projetos salvos do servidor e renderiza na tela
+ */
+async function loadProjectsFromServer() {
+  console.log("[v0] Verificando projetos da sessão atual...")
+
+  const firstProjectId = sessionStorage.getItem(SESSION_STORAGE_KEY)
+
+  if (!firstProjectId) {
+    console.log("[v0] Nenhum projeto salvo nesta sessão - mantendo projeto base do HTML")
+    return
+  }
+
+  console.log(`[v0] Carregando projetos a partir do ID ${firstProjectId}...`)
+
+  const allProjects = await fetchProjects()
+
+  if (allProjects.length === 0) {
+    console.log("[v0] Nenhum projeto encontrado no servidor")
+    return
+  }
+
+  const sessionProjects = allProjects.filter((project) => project.id >= Number.parseInt(firstProjectId))
+
+  if (sessionProjects.length === 0) {
+    console.log("[v0] Nenhum projeto da sessão atual encontrado")
+    return
+  }
+
+  console.log(`[v0] ${sessionProjects.length} projeto(s) da sessão atual encontrado(s)`)
+
+  // Remove o projeto base do HTML se existir
+  removeBaseProjectFromHTML()
+
+  // Renderiza cada projeto da sessão
+  for (const projectData of sessionProjects) {
+    renderProjectFromData(projectData)
+  }
+
+  console.log("[v0] Todos os projetos da sessão foram carregados e renderizados")
+}
+
+/**
+ * Remove o projeto base do HTML (se existir)
+ */
+function removeBaseProjectFromHTML() {
+  const projectsContainer = document.getElementById("projects-container")
+  const existingProjects = projectsContainer.querySelectorAll(".project-block")
+
+  existingProjects.forEach((project) => {
+    project.remove()
+  })
+
+  console.log("[v0] Projetos base do HTML removidos")
+}
+
+/**
+ * Renderiza um projeto completo a partir dos dados JSON
+ */
+function renderProjectFromData(projectData) {
+  const projectName = projectData.nome
+  const projectId = projectData.id
+
+  console.log(`[v0] Renderizando projeto: ${projectName} (ID: ${projectId})`)
+
+  // Cria o projeto vazio
+  createEmptyProject(projectName, projectId)
+
+  // Renderiza cada sala do projeto
+  if (projectData.salas && projectData.salas.length > 0) {
+    const projectContent = document.getElementById(`project-content-${projectName}`)
+    const emptyMessage = projectContent.querySelector(".empty-message")
+    if (emptyMessage) {
+      emptyMessage.remove()
+    }
+
+    projectData.salas.forEach((roomData) => {
+      renderRoomFromData(projectName, roomData)
+    })
+  }
+
+  // Atualiza o contador de projetos
+  const projectNumber = Number.parseInt(projectName.replace("Projeto", "")) || 0
+  if (projectNumber > projectCounter) {
+    projectCounter = projectNumber
+  }
+
+  console.log(`[v0] Projeto ${projectName} renderizado com sucesso`)
+}
+
+/**
+ * Renderiza uma sala completa a partir dos dados JSON
+ */
+function renderRoomFromData(projectName, roomData) {
+  const roomName = roomData.nome
+  const roomId = roomData.id
+
+  console.log(`[v0] Renderizando sala: ${roomName} no projeto ${projectName}`)
+
+  // Cria a sala vazia
+  createEmptyRoom(projectName, roomName, roomId)
+
+  // Preenche os inputs da sala com os dados salvos
+  if (roomData.inputs) {
+    populateRoomInputs(projectName, roomName, roomData.inputs)
+  }
+
+  console.log(`[v0] Sala ${roomName} renderizada com sucesso`)
+}
+
+/**
+ * Preenche os inputs de uma sala com dados salvos
+ */
+function populateRoomInputs(projectName, roomName, inputsData) {
+  const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`)
+  if (!roomBlock) {
+    console.error(`[v0] Sala ${roomName} não encontrada`)
+    return
+  }
+
+  const roomId = `${projectName}-${roomName}`
+
+  // Preenche cada input com o valor salvo
+  Object.entries(inputsData).forEach(([field, value]) => {
+    // Ignora o campo vazaoArExterno pois é calculado
+    if (field === "vazaoArExterno") {
+      const vazaoElement = document.getElementById(`vazao-ar-${roomId}`)
+      if (vazaoElement) {
+        vazaoElement.textContent = value
+      }
+      return
+    }
+
+    const input = roomBlock.querySelector(`.clima-input[data-field="${field}"]`)
+    if (input) {
+      input.value = value
+    }
+  })
+
+  console.log(`[v0] Inputs da sala ${roomName} preenchidos`)
+}
+
+// ============================================
 // INICIALIZAÇÃO
 // ============================================
 
 window.addEventListener("DOMContentLoaded", async () => {
+  console.log("[v0] Inicializando sistema...")
+
+  // Carrega as constantes do sistema
   await loadSystemConstants()
+
+  await loadProjectsFromServer()
+
+  // Inicializa o contador de projetos baseado nos projetos existentes na tela
   await initializeProjectCounter()
 
-  console.log("[v0] Criando projeto inicial...")
-
-  const projectName = `Projeto${getNextProjectNumber()}`
-  createEmptyProject(projectName, null)
-  createEmptyRoom(projectName, "Sala1", null)
-
-  console.log("[v0] Sistema inicializado")
+  console.log("[v0] Sistema inicializado - projetos carregados do servidor")
 })
+
+/**
+ * Salva o ID do primeiro projeto da sessão no sessionStorage
+ */
+function saveFirstProjectIdOfSession(projectId) {
+  // Verifica se já existe um ID salvo na sessão
+  const existingId = sessionStorage.getItem(SESSION_STORAGE_KEY)
+
+  if (!existingId) {
+    // Se não existe, salva o ID atual como o primeiro da sessão
+    sessionStorage.setItem(SESSION_STORAGE_KEY, projectId.toString())
+    console.log(`[v0] Primeiro projeto da sessão salvo: ID ${projectId}`)
+  }
+}
