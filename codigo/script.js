@@ -63,24 +63,36 @@ async function fetchProjects() {
 
 /**
  * Determina o próximo número de projeto baseado nos projetos existentes no servidor
- */
+ *
 async function getNextProjectNumber() {
   const projetos = await fetchProjects()
-
-  if (projetos.length === 0) {
+  
+  // Conta também os projetos já criados na interface atual
+  const existingProjects = document.querySelectorAll('.project-item').length
+  
+  if (projetos.length === 0 && existingProjects === 0) {
     return 1
   }
 
-  // Extrai números dos nomes dos projetos e encontra o máximo
-  const numbers = projetos.map((projeto) => {
+  // Extrai números dos nomes dos projetos do banco
+  const dbNumbers = projetos.map((projeto) => {
     const match = projeto.nome.match(/Projeto(\d+)/)
     return match ? Number.parseInt(match[1]) : 0
   })
 
-  const maxNumber = Math.max(...numbers)
-  return maxNumber + 1
-}
+  // Extrai números dos projetos na interface
+  const interfaceNumbers = Array.from(document.querySelectorAll('.project-item')).map((projectElement) => {
+    const projectName = projectElement.querySelector('.project-name').textContent
+    const match = projectName.match(/Projeto(\d+)/)
+    return match ? Number.parseInt(match[1]) : 0
+  })
 
+  // Combina todos os números e encontra o máximo
+  const allNumbers = [...dbNumbers, ...interfaceNumbers]
+  const maxNumber = Math.max(...allNumbers)
+  
+  return maxNumber + 1
+}*/
 /**
  * Determina o próximo ID de projeto baseado nos projetos existentes no servidor
  */
@@ -186,20 +198,45 @@ function showSystemStatus(message, type) {
 /**
  * Inicializa o sistema ao carregar a página
  */
+let projectCounter = 0
+
+// Função única para obter próximo número
+function getNextProjectNumber() {
+  projectCounter++
+  return projectCounter
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   await loadSystemConstants()
 
   console.log("[v0] Criando projeto inicial completo com sala padrão...")
-  const nextNumber = await getNextProjectNumber()
-  const projectName = `Projeto${nextNumber}`
+  
+  // Inicializa o contador com projetos existentes no banco
+  const projetos = await fetchProjects()
+  if (projetos.length > 0) {
+    const numbers = projetos.map((projeto) => {
+      const match = projeto.nome.match(/Projeto(\d+)/)
+      return match ? Number.parseInt(match[1]) : 0
+    })
+    projectCounter = Math.max(...numbers)
+  } else {
+    projectCounter = 0 // Começa do 0, pois getNextProjectNumber() incrementa
+  }
+
+  const projectName = `Projeto${getNextProjectNumber()}`
 
   createEmptyProject(projectName, null)
-
-  // Adiciona uma sala padrão ao projeto inicial
   createEmptyRoom(projectName, "Sala1", null)
 
   console.log("[v0] Sistema inicializado com projeto e sala padrão")
 })
+
+async function addNewProject() {
+  const projectName = `Projeto${getNextProjectNumber()}`
+  createEmptyProject(projectName, null)
+  console.log(`[v0] ${projectName} adicionado à interface`)
+}
+
 
 // ============================================
 // FUNÇÕES DE CRIAÇÃO DE PROJETOS E SALAS
