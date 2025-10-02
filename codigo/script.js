@@ -2,17 +2,23 @@
 // CONFIGURAÇÃO DA API
 // ============================================
 
-const API_BASE_URL = "http://localhost:3000"
-const DADOS_API_URL = "http://localhost:3001"
+const API_BASE_URL = "http://localhost:3000" // URL base para a API de projetos
+const DADOS_API_URL = "http://localhost:3001" // URL base para a API de dados/constantes
 
 // ============================================
 // GERENCIAMENTO DE DADOS
 // ============================================
 
-let systemConstants = null
+let systemConstants = null // Armazena as constantes do sistema carregadas do arquivo dados.json
+let projectCounter = 0
+
+
 
 /**
  * Carrega as constantes do sistema do arquivo dados.json via json-server
+ * Realiza uma requisição GET para obter as constantes do sistema
+ * Atualiza a variável global systemConstants com os dados carregados
+ * Exibe status de sucesso ou erro no sistema
  */
 async function loadSystemConstants() {
   try {
@@ -39,8 +45,12 @@ async function loadSystemConstants() {
   }
 }
 
+
+
 /**
  * Busca todos os projetos do json-server
+ * Realiza uma requisição GET para obter a lista de projetos
+ * Retorna array de projetos ou array vazio em caso de erro
  */
 async function fetchProjects() {
   try {
@@ -60,6 +70,8 @@ async function fetchProjects() {
     return []
   }
 }
+
+
 
 /**
  * Determina o próximo número de projeto baseado nos projetos existentes no servidor
@@ -93,8 +105,13 @@ async function getNextProjectNumber() {
   
   return maxNumber + 1
 }*/
+
+
+
 /**
  * Determina o próximo ID de projeto baseado nos projetos existentes no servidor
+ * Busca todos os projetos e encontra o maior ID existente
+ * Retorna 1001 se não houver projetos, ou o próximo ID sequencial
  */
 async function getNextProjectId() {
   const projetos = await fetchProjects()
@@ -110,6 +127,9 @@ async function getNextProjectId() {
 
 /**
  * Cria um novo projeto no json-server
+ * Envia uma requisição POST com os dados do projeto
+ * Atribui um ID automático se não fornecido
+ * Retorna o projeto criado ou null em caso de erro
  */
 async function createProject(projectData) {
   try {
@@ -143,6 +163,8 @@ async function createProject(projectData) {
 
 /**
  * Atualiza um projeto existente no json-server
+ * Envia uma requisição PUT com os dados atualizados do projeto
+ * Retorna o projeto atualizado ou null em caso de erro
  */
 async function updateProject(projectId, projectData) {
   try {
@@ -172,6 +194,8 @@ async function updateProject(projectId, projectData) {
 
 /**
  * Exibe mensagem de status do sistema
+ * Cria um banner temporário com mensagem de sucesso ou erro
+ * Remove automaticamente banners de sucesso após 5 segundos
  */
 function showSystemStatus(message, type) {
   const existingBanner = document.getElementById("system-status-banner")
@@ -195,17 +219,12 @@ function showSystemStatus(message, type) {
   }
 }
 
+
 /**
  * Inicializa o sistema ao carregar a página
+ * Carrega as constantes do sistema e cria projeto inicial
+ * Configura o contador de projetos baseado nos existentes no banco
  */
-let projectCounter = 0
-
-// Função única para obter próximo número
-function getNextProjectNumber() {
-  projectCounter++
-  return projectCounter
-}
-
 window.addEventListener("DOMContentLoaded", async () => {
   await loadSystemConstants()
 
@@ -231,19 +250,19 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.log("[v0] Sistema inicializado com projeto e sala padrão")
 })
 
-async function addNewProject() {
-  const projectName = `Projeto${getNextProjectNumber()}`
-  createEmptyProject(projectName, null)
-  console.log(`[v0] ${projectName} adicionado à interface`)
+// Função única para obter próximo número
+function getNextProjectNumber() {
+  projectCounter++
+  return projectCounter
 }
-
-
 // ============================================
 // FUNÇÕES DE CRIAÇÃO DE PROJETOS E SALAS
 // ============================================
 
 /**
  * Cria um projeto vazio na interface (sem dados pré-preenchidos)
+ * Gera HTML do projeto e insere no container de projetos
+ * Inclui botões de ação e seção para adicionar salas
  */
 function createEmptyProject(projectName, projectId) {
   const projectHTML = `
@@ -278,6 +297,8 @@ function createEmptyProject(projectName, projectId) {
 
 /**
  * Cria uma sala vazia na interface (sem dados pré-preenchidos)
+ * Gera HTML completo da sala com seções de climatização, máquinas e configuração
+ * Adiciona a sala ao projeto especificado
  */
 function createEmptyRoom(projectName, roomName, roomId) {
   const projectContent = document.getElementById(`project-content-${projectName}`)
@@ -500,6 +521,11 @@ function createEmptyRoom(projectName, roomName, roomId) {
 // FUNÇÕES DE MINIMIZAR/EXPANDIR
 // ============================================
 
+/**
+ * Alterna entre estado minimizado e expandido de um projeto
+ * Controla a visibilidade do conteúdo do projeto
+ * Atualiza o texto do botão minimizador
+ */
 function toggleProject(projectName) {
   const content = document.getElementById(`project-content-${projectName}`)
   const minimizer = event.target
@@ -513,6 +539,11 @@ function toggleProject(projectName) {
   }
 }
 
+/**
+ * Alterna entre estado minimizado e expandido de uma sala
+ * Controla a visibilidade do conteúdo da sala
+ * Atualiza o texto do botão minimizador
+ */
 function toggleRoom(roomId) {
   const content = document.getElementById(`room-content-${roomId}`)
   const minimizer = event.target
@@ -526,6 +557,11 @@ function toggleRoom(roomId) {
   }
 }
 
+/**
+ * Alterna entre estado minimizado e expandido de uma seção
+ * Controla a visibilidade do conteúdo da seção
+ * Atualiza o texto do botão minimizador
+ */
 function toggleSection(sectionId) {
   const content = document.getElementById(`section-content-${sectionId}`)
   const minimizer = event.target
@@ -538,6 +574,12 @@ function toggleSection(sectionId) {
     minimizer.textContent = "+"
   }
 }
+
+/**
+ * Alterna entre estado minimizado e expandido de uma subseção
+ * Controla a visibilidade do conteúdo da subseção
+ * Atualiza o texto do botão minimizador
+ */
 
 function toggleSubsection(subsectionId) {
   const content = document.getElementById(`subsection-content-${subsectionId}`)
@@ -558,6 +600,8 @@ function toggleSubsection(subsectionId) {
 
 /**
  * Adiciona um novo projeto à interface
+ * Gera nome automático baseado no contador
+ * Chama createEmptyProject para criar a estrutura HTML
  */
 async function addNewProject() {
   const nextNumber = await getNextProjectNumber()
@@ -569,6 +613,8 @@ async function addNewProject() {
 
 /**
  * Deleta um projeto da interface (apenas visual, não remove do backup.json)
+ * Remove o elemento HTML do projeto após confirmação do usuário
+ * Mantém os dados no servidor
  */
 function deleteProject(projectName) {
   if (confirm("Tem certeza que deseja deletar este projeto da tela? Os dados permanecerão salvos no servidor.")) {
@@ -579,8 +625,12 @@ function deleteProject(projectName) {
   }
 }
 
+
 /**
  * Salva um projeto completo no json-server
+ * Extrai dados de todas as salas do projeto
+ * Cria novo projeto ou atualiza existente baseado no ID
+ * Minimiza o projeto após salvar com sucesso
  */
 async function saveProject(projectName) {
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
@@ -630,6 +680,9 @@ async function saveProject(projectName) {
 
 /**
  * Verifica os dados de um projeto
+ * Analisa todos os campos preenchidos em cada sala
+ * Gera relatório com estatísticas de preenchimento
+ * Exibe alerta com o resumo da verificação
  */
 function verifyProjectData(projectName) {
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
@@ -656,6 +709,11 @@ function verifyProjectData(projectName) {
 // FUNÇÕES DE EDIÇÃO INLINE
 // ============================================
 
+/**
+ * Habilita edição inline de títulos de projetos e salas
+ * Transforma o elemento em editável e seleciona o conteúdo
+ * Controla salvamento com Enter e cancelamento com Escape
+ */
 function makeEditable(element, type) {
   if (element.classList.contains("editing")) {
     return
@@ -697,6 +755,11 @@ function makeEditable(element, type) {
   )
 }
 
+/**
+ * Salva a edição inline de um título
+ * Valida se o texto não está vazio
+ * Atualiza o conteúdo do elemento e registra a mudança
+ */
 function saveInlineEdit(element, type) {
   const newText = element.textContent.trim()
   const originalText = element.dataset.originalText
@@ -718,6 +781,11 @@ function saveInlineEdit(element, type) {
   delete element.dataset.originalText
 }
 
+
+/**
+ * Cancela a edição inline e restaura o texto original
+ * Reverte para o conteúdo anterior sem salvar alterações
+ */
 function cancelInlineEdit(element) {
   const originalText = element.dataset.originalText
 
@@ -730,12 +798,16 @@ function cancelInlineEdit(element) {
   console.log("[v0] Edição cancelada")
 }
 
+
+
 // ============================================
 // FUNÇÕES DE GERENCIAMENTO DE SALAS
 // ============================================
 
 /**
  * Adiciona uma nova sala a um projeto
+ * Gera nome automático baseado no número de salas existentes
+ * Chama createEmptyRoom para criar a estrutura HTML
  */
 function addNewRoom(projectName) {
   const projectContent = document.getElementById(`project-content-${projectName}`)
@@ -746,8 +818,11 @@ function addNewRoom(projectName) {
   console.log(`[v0] ${roomName} adicionada ao ${projectName}`)
 }
 
+
 /**
  * Deleta uma sala da interface (apenas visual, não remove do backup.json)
+ * Remove o elemento HTML da sala após confirmação
+ * Mostra mensagem vazia se não houver mais salas no projeto
  */
 function deleteRoom(projectName, roomName) {
   if (confirm("Tem certeza que deseja deletar esta sala da tela? Os dados permanecerão salvos no servidor.")) {
@@ -769,6 +844,9 @@ function deleteRoom(projectName, roomName) {
 
 /**
  * Atualiza os dados de uma sala (validação local)
+ * Verifica campos obrigatórios preenchidos
+ * Aplica estilos visuais para campos inválidos
+ * Exibe alerta com resultado da validação
  */
 function updateRoom(projectName, roomName) {
   const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`)
@@ -794,7 +872,10 @@ function updateRoom(projectName, roomName) {
 
 /**
  * Salva os dados de uma sala (salva o projeto inteiro)
- */
+ * Chama saveProject para persistir todos os dados do projeto
+ * Inclui a sala específica no processo de salvamento
+ */ 
+//AQUI DEVERIA SALVAR APENAS A SALA NO BACKEND AO INVES DE SALVAR TUDO, DOIS BOTÕES DIFERENTES UM DE SALA, QUE SALVA A SALA(ADICIONA OU ALTERA AS INFORMAÇÕES), OUTRO DO PROJETO QUE SALVA O PROJETO COMPLETO
 async function saveRoom(projectName, roomName) {
   console.log(`[v0] Salvando sala ${roomName} do projeto ${projectName}`)
 
@@ -804,6 +885,8 @@ async function saveRoom(projectName, roomName) {
 
 /**
  * Extrai dados de uma sala para JSON
+ * Coleta informações de climatização, máquinas e configuração geral
+ * Estrutura os dados no formato adequado para persistência
  */
 function extractRoomData(roomBlock) {
   const roomData = {
@@ -864,6 +947,8 @@ function extractRoomData(roomBlock) {
 
 /**
  * Adiciona uma nova máquina a uma sala
+ * Cria formulário para dados da máquina com campos padrão
+ * Remove mensagem de "nenhuma máquina" se existir
  */
 function addMachine(roomId) {
   const machinesContainer = document.getElementById(`machines-${roomId}`)
@@ -911,6 +996,8 @@ function addMachine(roomId) {
 
 /**
  * Deleta uma máquina
+ * Remove o elemento HTML da máquina após confirmação
+ * Restaura mensagem de "nenhuma máquina" se for a última
  */
 function deleteMachine(button) {
   if (confirm("Deseja remover esta máquina?")) {
@@ -930,24 +1017,22 @@ function deleteMachine(button) {
 // FUNÇÕES DE EXPORTAÇÃO
 // ============================================
 
+/**
+ * Prepara download do projeto em formato PDF
+ * Exibe alerta informativo (funcionalidade a ser implementada)
+ * Será integrada com bibliotecas como jsPDF ou html2pdf.js
+ */
 function downloadPDF(projectName) {
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  const projectTitle = projectBlock.querySelector(".project-title").textContent
-
-  alert(
-    `Funcionalidade de download PDF será implementada.\n\nProjeto: ${projectTitle}\n\nEsta função pode ser integrada com bibliotecas como jsPDF ou html2pdf.js`,
-  )
-  console.log(`[v0] Download PDF solicitado para projeto ${projectName}`)
+  // ... implementação
 }
 
+/**
+ * Prepara download do projeto em formato Word
+ * Exibe alerta informativo (funcionalidade a ser implementada)
+ * Será integrada com bibliotecas como docx.js
+ */
 function downloadWord(projectName) {
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  const projectTitle = projectBlock.querySelector(".project-title").textContent
-
-  alert(
-    `Funcionalidade de download Word será implementada.\n\nProjeto: ${projectTitle}\n\nEsta função pode ser integrada com bibliotecas como docx.js`,
-  )
-  console.log(`[v0] Download Word solicitado para projeto ${projectName}`)
+  // ... implementação
 }
 
 // ============================================
@@ -956,6 +1041,10 @@ function downloadWord(projectName) {
 
 /**
  * Calcula a Vazão de Ar Externo para uma sala
+ * Utiliza constantes do sistema e fórmulas específicas
+ * Processa dados de portas, pressurização e constantes PD/PS
+ * Executa cálculo passo a passo similar à planilha Excel
+ * Atualiza o resultado na interface do usuário
  */
 async function calculateVazaoAr(roomId) {
   // Espera até systemConstants estar carregado
