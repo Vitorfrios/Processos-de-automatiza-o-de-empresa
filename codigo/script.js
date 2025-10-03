@@ -3,7 +3,7 @@
 // ============================================
 
 const API_CONFIG = {
-  projects: "http://localhost:3000",
+  projects: "http://localhost:3004",
   data: "http://localhost:3001",
 }
 
@@ -80,6 +80,13 @@ async function loadSystemConstants() {
   }
 }
 
+
+function ensureStringId(id) {
+  if (id === null || id === undefined || id === "") return null;
+  return String(id);
+}
+
+
 async function fetchProjects() {
   try {
     console.log("[v0] Buscando projetos...")
@@ -93,13 +100,13 @@ async function fetchProjects() {
 
     const normalizedProjects = projects.map((project) => {
       if (project.id !== undefined && project.id !== null) {
-        project.id = ensureIntegerId(project.id)
+        project.id = ensureStringId(project.id)
       }
 
       if (project.salas && Array.isArray(project.salas)) {
         project.salas = project.salas.map((sala) => {
           if (sala.id !== undefined && sala.id !== null) {
-            sala.id = ensureIntegerId(sala.id)
+            sala.id = ensureStringId(sala.id)
           }
           return sala
         })
@@ -122,15 +129,17 @@ async function fetchProjects() {
 // ============================================
 
 async function getNextProjectId() {
-  const projects = await fetchProjects()
+  const projects = await fetchProjects();
 
   if (projects.length === 0) {
-    return UI_CONSTANTS.INITIAL_PROJECT_ID
+    return ensureStringId(UI_CONSTANTS.INITIAL_PROJECT_ID);
   }
 
-  const maxId = Math.max(...projects.map((p) => p.id || 0))
-  return maxId >= UI_CONSTANTS.INITIAL_PROJECT_ID ? maxId + 1 : UI_CONSTANTS.INITIAL_PROJECT_ID
+  const maxId = Math.max(...projects.map((p) => Number(p.id) || 0));
+  const nextId = maxId >= UI_CONSTANTS.INITIAL_PROJECT_ID ? maxId + 1 : UI_CONSTANTS.INITIAL_PROJECT_ID;
+  return ensureStringId(nextId);
 }
+
 
 function getNextProjectNumber() {
   projectCounter++
@@ -155,33 +164,25 @@ async function initializeProjectCounter() {
   projectCounter = projectNumbers.length > 0 ? Math.max(...projectNumbers) : 0
 }
 
-function ensureIntegerId(id) {
-  if (id === null || id === undefined || id === "") {
-    return null
-  }
-  const parsed = Number.parseInt(id)
-  if (Number.isNaN(parsed)) {
-    console.error(`[v0] ERRO: ID inválido: ${id}`)
-    return null
-  }
-  return parsed
-}
+
+
 
 function normalizeProjectIds(projectData) {
   if (projectData.id !== undefined && projectData.id !== null) {
-    projectData.id = ensureIntegerId(projectData.id)
+    projectData.id = ensureStringId(projectData.id);
   }
 
   if (projectData.salas && Array.isArray(projectData.salas)) {
     projectData.salas.forEach((sala) => {
       if (sala.id !== undefined && sala.id !== null) {
-        sala.id = ensureIntegerId(sala.id)
+        sala.id = ensureStringId(sala.id);
       }
-    })
+    });
   }
 
-  return projectData
+  return projectData;
 }
+
 
 // ============================================
 // OPERAÇÕES DE PROJETO (CRUD)
@@ -193,38 +194,34 @@ function normalizeProjectIds(projectData) {
 async function salvarProjeto(projectData) {
   try {
     if (!projectData.id) {
-      projectData.id = await getNextProjectId()
+      projectData.id = await getNextProjectId(); // já retorna string
     }
 
-    projectData = normalizeProjectIds(projectData)
+    projectData = normalizeProjectIds(projectData);
 
-    console.log("[v0] SALVANDO novo projeto:", projectData)
+    console.log("[v0] SALVANDO novo projeto:", projectData);
     const response = await fetch(`${API_CONFIG.projects}/projetos`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(projectData, (key, value) => {
-        if (key === "id" && typeof value === "string") {
-          return Number.parseInt(value)
-        }
-        return value
-      }),
-    })
+      body: JSON.stringify(projectData) // IDs já são strings
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[v0] Erro ao SALVAR projeto:', errorText);
+      console.error("[v0] Erro ao SALVAR projeto:", errorText);
       throw new Error(`Erro ao salvar projeto: ${errorText}`);
     }
 
-    const createdProject = await response.json()
-    createdProject.id = ensureIntegerId(createdProject.id)
-    console.log("[v0] Projeto SALVO com sucesso:", createdProject)
-    showSystemStatus("Projeto salvo com sucesso!", "success")
-    return createdProject
+    const createdProject = await response.json();
+    createdProject.id = ensureStringId(createdProject.id);
+    console.log("[v0] Projeto SALVO com sucesso:", createdProject);
+    showSystemStatus("Projeto salvo com sucesso!", "success");
+    return createdProject;
+
   } catch (error) {
-    console.error("[v0] Erro ao SALVAR projeto:", error)
-    showSystemStatus("ERRO: Não foi possível salvar o projeto", "error")
-    return null
+    console.error("[v0] Erro ao SALVAR projeto:", error);
+    showSystemStatus("ERRO: Não foi possível salvar o projeto", "error");
+    return null;
   }
 }
 
@@ -233,9 +230,9 @@ async function salvarProjeto(projectData) {
  */
 async function atualizarProjeto(projectId, projectData) {
   try {
-    projectId = ensureIntegerId(projectId);
+    projectId = ensureStringId(projectId);
 
-    if (projectId === null || projectId === undefined) {
+    if (!projectId) {
       console.error("[v0] ERRO: Tentativa de ATUALIZAR projeto sem ID válido");
       showSystemStatus("ERRO: ID do projeto inválido para atualização", "error");
       return null;
@@ -247,12 +244,12 @@ async function atualizarProjeto(projectId, projectData) {
     console.log(`[v0] ATUALIZANDO projeto ID ${projectId}...`);
     
     const url = `${API_CONFIG.projects}/projetos/${projectId}`;
-    
     console.log(`[v0] Fazendo PUT para ATUALIZAR: ${url}`);
+
     const response = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(projectData)
+      body: JSON.stringify(projectData) // IDs como string
     });
 
     if (!response.ok) {
@@ -262,7 +259,7 @@ async function atualizarProjeto(projectId, projectData) {
     }
 
     const updatedProject = await response.json();
-    updatedProject.id = ensureIntegerId(updatedProject.id);
+    updatedProject.id = ensureStringId(updatedProject.id);
     console.log("[v0] Projeto ATUALIZADO com sucesso:", updatedProject);
     showSystemStatus("Projeto atualizado com sucesso!", "success");
     return updatedProject;
@@ -297,7 +294,7 @@ async function saveProject(projectName, event) {
 
   projectId =
     projectId && projectId !== "" && projectId !== "undefined" && projectId !== "null"
-      ? ensureIntegerId(projectId)
+      ? ensureStringId(projectId)
       : null;
 
   console.log(`[v0] DEBUG - projectId após conversão: ${projectId} (tipo: ${typeof projectId})`);
@@ -308,7 +305,7 @@ async function saveProject(projectName, event) {
 
   let result = null;
 
-  if (projectId === null || projectId === undefined) {
+  if (!projectId) {
     console.log("[v0] Nenhum ID encontrado - SALVANDO novo projeto...");
     result = await salvarProjeto(projectData);
   } else {
@@ -317,7 +314,7 @@ async function saveProject(projectName, event) {
   }
 
   if (result) {
-    const finalId = ensureIntegerId(result.id);
+    const finalId = ensureStringId(result.id);
     projectBlock.dataset.projectId = finalId;
     console.log(`[v0] DEBUG - ID salvo no dataset: ${finalId}`);
 
@@ -330,6 +327,7 @@ async function saveProject(projectName, event) {
   }
 }
 
+
 function buildProjectData(projectBlock, projectId) {
   const projectData = {
     nome: projectBlock.querySelector(".project-title").textContent.trim(),
@@ -337,18 +335,19 @@ function buildProjectData(projectBlock, projectId) {
   }
 
   if (projectId !== null && projectId !== undefined) {
-    projectData.id = ensureIntegerId(projectId)
+    projectData.id = ensureStringId(projectId);
   }
 
   const roomBlocks = projectBlock.querySelectorAll(".room-block")
   roomBlocks.forEach((roomBlock, index) => {
-    const roomData = extractRoomData(roomBlock)
-    roomData.id = index + 1
-    projectData.salas.push(roomData)
-  })
+    const roomData = extractRoomData(roomBlock);
+    roomData.id = ensureStringId(index + 1);
+    projectData.salas.push(roomData);
+  });
 
-  return projectData
+  return projectData;
 }
+
 
 function extractRoomData(roomBlock) {
   const roomData = {
@@ -548,7 +547,7 @@ function deleteProject(projectName) {
   if (!confirm(confirmMessage)) return
 
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  const projectId = projectBlock.dataset.projectId ? ensureIntegerId(projectBlock.dataset.projectId) : null
+  const projectId = projectBlock.dataset.projectId ? ensureStringId(projectBlock.dataset.projectId) : null
 
   projectBlock.remove()
 
@@ -1263,7 +1262,7 @@ function removeBaseProjectFromHTML() {
 
 function renderProjectFromData(projectData) {
   const projectName = projectData.nome
-  const projectId = ensureIntegerId(projectData.id)
+  const projectId = ensureStringId(projectData.id)
 
   console.log(`[v0] Renderizando projeto: ${projectName} (ID: ${projectId})`)
 
@@ -1295,7 +1294,7 @@ function renderProjectFromData(projectData) {
 
 function renderRoomFromData(projectName, roomData) {
   const roomName = roomData.nome
-  const roomId = ensureIntegerId(roomData.id)
+  const roomId = ensureStringId(roomData.id)
 
   console.log(`[v0] Renderizando sala: ${roomName} no projeto ${projectName}`)
 
@@ -1395,7 +1394,7 @@ async function normalizeAllProjectsOnServer() {
 function saveFirstProjectIdOfSession(projectId) {
   const existingId = sessionStorage.getItem(SESSION_STORAGE_KEY)
   if (!existingId) {
-    const idAsInteger = ensureIntegerId(projectId)
+    const idAsInteger = ensureStringId(projectId)
     if (idAsInteger !== null) {
       sessionStorage.setItem(SESSION_STORAGE_KEY, idAsInteger.toString())
       console.log(`[v0] Primeiro projeto da sessão salvo: ID ${idAsInteger}`)
@@ -1404,7 +1403,7 @@ function saveFirstProjectIdOfSession(projectId) {
 }
 
 function addProjectToRemovedList(projectId) {
-  projectId = ensureIntegerId(projectId)
+  projectId = ensureStringId(projectId)
 
   const removedList = getRemovedProjectsList()
 
