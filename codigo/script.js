@@ -555,7 +555,11 @@ async function addNewProject() {
   const projectName = `Projeto${projectNumber}`
 
   createEmptyProject(projectName, null)
-  console.log(`[v0] ${projectName} adicionado`)
+
+  const defaultRoomName = "Sala 1"
+  createEmptyRoom(projectName, defaultRoomName, null)
+
+  console.log(`[v0] ${projectName} adicionado com sala padrão: ${defaultRoomName}`)
 }
 
 function deleteProject(projectName) {
