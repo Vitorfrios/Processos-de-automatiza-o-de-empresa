@@ -1133,6 +1133,11 @@ function collectClimatizationInputs(climaSection, roomId) {
     data[field] = value !== "" ? Number.parseFloat(value) || value : 0
   })
 
+  // Ensure peDireito is always available, even if not explicitly set by user
+  if (data.peDireito === undefined || data.peDireito === null || data.peDireito === "") {
+    data.peDireito = 0
+  }
+
   return data
 }
 
@@ -1471,7 +1476,8 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
 
   // Calcular ganhos individuais
   const gains = {
-    teto: calculateCeilingGain(inputData, uValues, systemConstants),
+    // Passar inputData.area para calculateCeilingGain
+    teto: calculateCeilingGain(inputData.area, uValues.teto, systemConstants.deltaT_teto),
     paredeOeste: calculateWallGain(
       inputData.paredeOeste,
       inputData.peDireito,
@@ -1497,22 +1503,22 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
       systemConstants.deltaT_parede_Sul,
     ),
     divisoriaNaoClima1: calculatePartitionGain(
-      inputData.divisoriaNaoClima1,
+      inputData.divisoriaNaoClima1 * inputData.peDireito,
       uValues.parede,
       systemConstants.deltaT_divi_N_clim1,
     ),
     divisoriaNaoClima2: calculatePartitionGain(
-      inputData.divisoriaNaoClima2,
+      inputData.divisoriaNaoClima2 * inputData.peDireito,
       uValues.parede,
       systemConstants.deltaT_divi_N_clim2,
     ),
     divisoriaClima1: calculatePartitionGain(
-      inputData.divisoriaClima1,
+      inputData.divisoriaClima1 * inputData.peDireito,
       uValues.parede,
       systemConstants.deltaT_divi_clim1,
     ),
     divisoriaClima2: calculatePartitionGain(
-      inputData.divisoriaClima2,
+      inputData.divisoriaClima2 * inputData.peDireito,
       uValues.parede,
       systemConstants.deltaT_divi_clim2,
     ),
@@ -1582,12 +1588,8 @@ function calculateAuxiliaryVariables(inputData) {
 /**
  * Ganho de teto
  */
-function calculateCeilingGain(inputData, uValues, constants) {
-  const area = inputData.area || 0
-  const uValue = uValues.teto
-  const deltaT = constants.deltaT_teto || 20
-
-  return area * uValue * deltaT
+function calculateCeilingGain(area, uValue, deltaT) {
+  return (area || 0) * uValue * deltaT
 }
 
 /**
@@ -1771,7 +1773,6 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
 
   updateElementText(`total-externo-${roomId}`, totals.externo)
 
-  // Atualizar tabela de divisórias
   updatePartitionDisplay(
     roomId,
     "nc1",
@@ -1779,6 +1780,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     systemConstants.deltaT_divi_N_clim1,
     inputData.divisoriaNaoClima1,
+    inputData.peDireito,
   )
   updatePartitionDisplay(
     roomId,
@@ -1787,6 +1789,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     systemConstants.deltaT_divi_N_clim2,
     inputData.divisoriaNaoClima2,
+    inputData.peDireito,
   )
   updatePartitionDisplay(
     roomId,
@@ -1795,6 +1798,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     systemConstants.deltaT_divi_clim1,
     inputData.divisoriaClima1,
+    inputData.peDireito,
   )
   updatePartitionDisplay(
     roomId,
@@ -1803,6 +1807,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     systemConstants.deltaT_divi_clim2,
     inputData.divisoriaClima2,
+    inputData.peDireito,
   )
 
   updateElementText(`total-divisoes-${roomId}`, totals.divisoes)
@@ -1874,8 +1879,9 @@ function updateWallDisplay(roomId, direction, gain, uValue, deltaT, comprimento,
 /**
  * Atualiza display de divisória
  */
-function updatePartitionDisplay(roomId, type, gain, uValue, deltaT, area) {
-  updateElementText(`ganho-divisoria-${type}-area-${roomId}`, (area || 0).toFixed(2))
+function updatePartitionDisplay(roomId, type, gain, uValue, deltaT, inputArea, peDireito) {
+  const areaCalculada = (inputArea || 0) * (peDireito || 0)
+  updateElementText(`ganho-divisoria-${type}-area-${roomId}`, areaCalculada.toFixed(2))
   updateElementText(`ganho-divisoria-${type}-uvalue-${roomId}`, uValue.toFixed(3))
   updateElementText(`ganho-divisoria-${type}-delta-${roomId}`, deltaT)
   updateElementText(`ganho-divisoria-${type}-valor-${roomId}`, Math.ceil(gain))
