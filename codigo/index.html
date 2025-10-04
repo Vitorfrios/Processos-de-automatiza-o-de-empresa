@@ -59,6 +59,7 @@
                             </div>
                             <div class="room-content collapsed" id="room-content-Projeto1-Sala1">
                                   <!-- Seção de Climatização   -->
+<!-- Seção de Climatização   -->
                                 <div class="section-block">
                                     <div class="section-header">
                                         <button class="minimizer" onclick="toggleSection('Projeto1-Sala1-clima')">+</button>
@@ -98,8 +99,8 @@
                                                             <label>Tipo de Construção:</label>
                                                             <select class="form-input clima-input" data-field="tipoConstrucao" onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                                 <option value="">Selecione</option>
-                                                                <option value="alvenaria">alvenaria</option>
-                                                                <option value="eletrocentro">eletrocentro</option>
+                                                                <option value="alvenaria">Alvenaria</option>
+                                                                <option value="eletrocentro">Aletrocentro</option>
                                                             </select>
                                                         </div>
                                                     </div>
@@ -211,6 +212,312 @@
                                                         </div>
                                                         <div class="clima-cell clima-cell-empty"></div>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Added thermal gains calculation section -->
+                                        <div class="subsection-block">
+                                            <div class="subsection-header">
+                                                <!-- adicionar botao de minimizar -->
+                                                 <button class="minimizer" onclick="toggleSubsection('Projeto1-Sala1-ganhos-termicos')">+</button>
+                                                <h5 class="subsection-title">Cálculo de Ganhos Térmicos</h5>
+                                            </div>
+                                            <div class="subsection-content collapsed" id="subsection-content-Projeto1-Sala1-ganhos-termicos">
+                                                <!-- Summary Header -->
+                                                <div class="thermal-summary">
+                                                    <span class="thermal-summary-item">
+                                                        <strong>Total de Ganhos em W:</strong>
+                                                        <span id="total-ganhos-w-Projeto1-Sala1" class="thermal-value">0</span>
+                                                    </span>
+                                                    <span class="thermal-divider">|</span>
+                                                    <span class="thermal-summary-item">
+                                                        <strong>TR:</strong>
+                                                        <span id="total-tr-Projeto1-Sala1" class="thermal-value">0</span>
+                                                    </span>
+                                                </div>
+
+                                                <!-- Ganho de paredes e teto -->
+                                                <div class="thermal-table-container">
+                                                    <h6 class="thermal-table-title">Ganho de paredes e teto</h6>
+                                                    <table class="thermal-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Elemento</th>
+                                                                <th>Área (m²)</th>
+                                                                <th>U-Value (W/m².K)</th>
+                                                                <th>ΔT corrigido (°C)</th>
+                                                                <th>Ganho Térmico (W)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Teto</td>
+                                                                <td id="area-teto-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-teto-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-teto-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-teto-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Parede Oeste</td>
+                                                                <td id="area-parede-oeste-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-parede-oeste-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-parede-oeste-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-parede-oeste-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Parede Leste</td>
+                                                                <td id="area-parede-leste-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-parede-leste-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-parede-leste-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-parede-leste-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Parede Norte</td>
+                                                                <td id="area-parede-norte-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-parede-norte-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-parede-norte-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-parede-norte-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Parede Sul</td>
+                                                                <td id="area-parede-sul-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-parede-sul-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-parede-sul-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-parede-sul-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr class="thermal-total-row">
+                                                                <td colspan="4"><strong>Total Externo</strong></td>
+                                                                <td id="total-externo-Projeto1-Sala1"><strong>0</strong></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Ganho por divisórias -->
+                                                <div class="thermal-table-container">
+                                                    <h6 class="thermal-table-title">Ganho por divisórias</h6>
+                                                    <table class="thermal-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Elemento</th>
+                                                                <th>Área (m²)</th>
+                                                                <th>U-Value (W/m².K)</th>
+                                                                <th>ΔT (°C)</th>
+                                                                <th>Ganho Térmico (W)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Divisória Não Climatizada 1</td>
+                                                                <td id="area-divi-nc1-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-divi-nc1-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-divi-nc1-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-divi-nc1-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Divisória Não Climatizada 2</td>
+                                                                <td id="area-divi-nc2-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-divi-nc2-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-divi-nc2-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-divi-nc2-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Divisória Climatizada 1</td>
+                                                                <td id="area-divi-c1-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-divi-c1-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-divi-c1-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-divi-c1-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Divisória Climatizada 2</td>
+                                                                <td id="area-divi-c2-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-divi-c2-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-divi-c2-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-divi-c2-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr class="thermal-total-row">
+                                                                <td colspan="4"><strong>Total Divisões</strong></td>
+                                                                <td id="total-divisoes-Projeto1-Sala1"><strong>0</strong></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Ganho por piso -->
+                                                <div class="thermal-table-container">
+                                                    <h6 class="thermal-table-title">Ganho por piso</h6>
+                                                    <table class="thermal-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Elemento</th>
+                                                                <th>Área (m²)</th>
+                                                                <th>U-Value (W/m².K)</th>
+                                                                <th>ΔT (°C)</th>
+                                                                <th>Ganho Térmico (W)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Piso</td>
+                                                                <td id="area-piso-Projeto1-Sala1">0</td>
+                                                                <td id="uvalue-piso-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-piso-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-piso-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr class="thermal-total-row">
+                                                                <td colspan="4"><strong>Total Piso</strong></td>
+                                                                <td id="total-piso-Projeto1-Sala1"><strong>0</strong></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Ganho por iluminação -->
+                                                <div class="thermal-table-container">
+                                                    <h6 class="thermal-table-title">Ganho por iluminação</h6>
+                                                    <table class="thermal-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Elemento</th>
+                                                                <th>Área (m²)</th>
+                                                                <th>Fator (W/m²)</th>
+                                                                <th>Fs</th>
+                                                                <th>Ganho Térmico (W)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Iluminação</td>
+                                                                <td id="area-iluminacao-Projeto1-Sala1">0</td>
+                                                                <td id="fator-iluminacao-Projeto1-Sala1">0</td>
+                                                                <td id="fs-iluminacao-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-iluminacao-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr class="thermal-total-row">
+                                                                <td colspan="4"><strong>Total Iluminação</strong></td>
+                                                                <td id="total-iluminacao-Projeto1-Sala1"><strong>0</strong></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Dissipação térmica interna -->
+                                                <div class="thermal-table-container">
+                                                    <h6 class="thermal-table-title">Dissipação térmica interna</h6>
+                                                    <table class="thermal-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Elemento</th>
+                                                                <th>Fator Conversão</th>
+                                                                <th>Pe (W)</th>
+                                                                <th>Fs</th>
+                                                                <th>Ganho Térmico (W)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Dissipação Térmica Interna</td>
+                                                                <td id="fator-conversao-dissi-Projeto1-Sala1">0</td>
+                                                                <td id="pe-dissi-Projeto1-Sala1">0</td>
+                                                                <td id="fs-dissi-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-dissi-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr class="thermal-total-row">
+                                                                <td colspan="4"><strong>Total</strong></td>
+                                                                <td id="total-dissi-Projeto1-Sala1"><strong>0</strong></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Ganhos por ocupação de pessoas -->
+                                                <div class="thermal-table-container">
+                                                    <h6 class="thermal-table-title">Ganhos por ocupação de pessoas</h6>
+                                                    <table class="thermal-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Elemento</th>
+                                                                <th>Csp</th>
+                                                                <th>Clp</th>
+                                                                <th>O</th>
+                                                                <th>Fs</th>
+                                                                <th>Ganho Térmico (W)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Ocupação de Pessoas</td>
+                                                                <td id="csp-pessoas-Projeto1-Sala1">0</td>
+                                                                <td id="clp-pessoas-Projeto1-Sala1">0</td>
+                                                                <td id="o-pessoas-Projeto1-Sala1">0</td>
+                                                                <td id="fs-pessoas-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-pessoas-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr class="thermal-total-row">
+                                                                <td colspan="5"><strong>Total Pessoas</strong></td>
+                                                                <td id="total-pessoas-Projeto1-Sala1"><strong>0</strong></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Ganho sensível de ar externo -->
+                                                <div class="thermal-table-container">
+                                                    <h6 class="thermal-table-title">Ganho sensível de ar externo</h6>
+                                                    <table class="thermal-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Elemento</th>
+                                                                <th>m (kg)</th>
+                                                                <th>c</th>
+                                                                <th>ΔT (°C)</th>
+                                                                <th>Ganho Térmico (W)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Ar Sensível</td>
+                                                                <td id="m-ar-sensivel-Projeto1-Sala1">0</td>
+                                                                <td id="c-ar-sensivel-Projeto1-Sala1">0</td>
+                                                                <td id="deltat-ar-sensivel-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-ar-sensivel-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr class="thermal-total-row">
+                                                                <td colspan="4"><strong>Total Ar Sensível</strong></td>
+                                                                <td id="total-ar-sensivel-Projeto1-Sala1"><strong>0</strong></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Ganho latente de ar externo -->
+                                                <div class="thermal-table-container">
+                                                    <h6 class="thermal-table-title">Ganho latente de ar externo</h6>
+                                                    <table class="thermal-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Elemento</th>
+                                                                <th>Var (l/s)</th>
+                                                                <th>f</th>
+                                                                <th>ΔUa (g/Kg)</th>
+                                                                <th>Ganho Térmico (W)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Ar Latente</td>
+                                                                <td id="var-ar-latente-Projeto1-Sala1">0</td>
+                                                                <td id="f-ar-latente-Projeto1-Sala1">0</td>
+                                                                <td id="deltaua-ar-latente-Projeto1-Sala1">0</td>
+                                                                <td id="ganho-ar-latente-Projeto1-Sala1">0</td>
+                                                            </tr>
+                                                            <tr class="thermal-total-row">
+                                                                <td colspan="4"><strong>Total Ar Latente</strong></td>
+                                                                <td id="total-ar-latente-Projeto1-Sala1"><strong>0</strong></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             </div>
                                         </div>

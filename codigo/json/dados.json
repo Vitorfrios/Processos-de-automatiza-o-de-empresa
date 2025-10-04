@@ -1,6 +1,24 @@
 {
   "constants": {
     "VARIAVEL_PD": 0.0402,
-    "VARIAVEL_PS": 0.024
+    "VARIAVEL_PS": 0.024,
+    "AUX_U_Value_Piso": 2.7,
+    "AUX_Fator_Iluminacao": 7,
+    "AUX_Fs_Iluminacao": 1,
+    "AUX_Fator_Conver_Painel": 1,
+    "AUX_Fs_Paineis": 100,
+    "Densi_ar": 1.17,
+    "AUX_c_ArExterno": 0.24,
+    "AUX_deltaT_ArExterno": 10,
+    "deltaT_piso": 7.5,
+    "deltaT_teto": 20,
+    "deltaT_parede_Oes": 13,
+    "deltaT_parede_Les": 13,
+    "deltaT_parede_Nor": 13,
+    "deltaT_parede_Sul": 13,
+    "deltaT_divi_N_clim1": 10,
+    "deltaT_divi_N_clim2": 10,
+    "deltaT_divi_clim1": 3,
+    "deltaT_divi_clim2": 3
   }
 }

@@ -84,8 +84,6 @@ Climatização
                 VARIAVEL_PS=0,024, estará no banco de dados dados.json como VARIAVEL_PS
                 
     Calculo de ganhos
-        conteiner após a tabela de imput com as mesmas formatações, iniciação minimizada;OBS: não há inputs, somente mostra de resultados de calculos.
-
         correlação entre celulas e inputs
             //Ceuluas = input
             B2 = Ambiente
@@ -122,12 +120,14 @@ Climatização
             AUX_Fs_Iluminacao = 1
             AUX_Fator_Conver_Painel = 1
             AUX_Fs_Paineis = 100
-            
+            AUX_OCp_Csp = 86,5
+            AUX_OCp_Clp = 133,3
             Densi_ar=1,17
             AUX_m_ArExterno = =B17*3,6*Densi_ar*1000      
             AUX_c_ArExterno = 0,24         
             AUX_deltaT_ArExterno = 10      
-
+            AUX_f_ArExterno = 3,01
+            AUX_deltaUa_ArExterno = 8,47
             deltaT_piso = 7,5
             deltaT_teto = 20
             deltaT_parede_Oes = 13
@@ -160,12 +160,12 @@ Climatização
 
 
         Ganho por divisórias
-            | Elemento       | INPUT | Área (m²) |       U-Value      |          ΔT         |            Ganho Térmico (W)                 |
-            | ganho_divi_Anc1|  B11  |    B11    | AUX_U_Value_Parede | deltaT_divi_An_clim1|  =B11*AUX_U_Value_Parede*deltaT_divi_N_clim1 |
-            | ganho_divi_Anc2|  B12  |    B12    | AUX_U_Value_Parede | deltaT_divi_An_clim2|  =B12*AUX_U_Value_Parede*deltaT_divi_N_clim2 |
-            | ganho_divi_c1  |  B13  |    B13    | AUX_U_Value_Parede |  deltaT_divi_clim1  |  =B13*AUX_U_Value_Parede*deltaT_divi_clim1   |
-            | ganho_divi_c2  |  B14  |    B14    | AUX_U_Value_Parede |  deltaT_divi_clim2  |  =B14*AUX_U_Value_Parede*deltaT_divi_clim2   |
-            | total_divisoes |          = ganho_divi_nc1 + ganho_divi_Anc2 + ganho_divi_c1+ ganho_divi_c2                                  |
+            | Elemento       | INPUT | Área (m²)        |       U-Value      |          ΔT         |            Ganho Térmico (W)                 |
+            | ganho_divi_Anc1|  B11  |    =B11*$B$10    | AUX_U_Value_Parede | deltaT_divi_An_clim1|  =B11*AUX_U_Value_Parede*deltaT_divi_N_clim1 |
+            | ganho_divi_Anc2|  B12  |    =B12*$B$10    | AUX_U_Value_Parede | deltaT_divi_An_clim2|  =B12*AUX_U_Value_Parede*deltaT_divi_N_clim2 |
+            | ganho_divi_c1  |  B13  |    =B13*$B$10    | AUX_U_Value_Parede |  deltaT_divi_clim1  |  =B13*AUX_U_Value_Parede*deltaT_divi_clim1   |
+            | ganho_divi_c2  |  B14  |    =B14*$B$10    | AUX_U_Value_Parede |  deltaT_divi_clim2  |  =B14*AUX_U_Value_Parede*deltaT_divi_clim2   |
+            | total_divisoes |          = ganho_divi_nc1 + ganho_divi_Anc2 + ganho_divi_c1+ ganho_divi_c2                                         |
 
 
 
@@ -231,6 +231,23 @@ Climatização
                 
                 								
         
+erros para corrigir
+Ganho por divisórias
+    tabela de calculos atualizada
+            | Elemento       | INPUT | Área (m²)        |       U-Value      |          ΔT         |            Ganho Térmico (W)                 |
+            | ganho_divi_Anc1|  B11  |    =B11*$B$10    | AUX_U_Value_Parede | deltaT_divi_An_clim1|  =B11*AUX_U_Value_Parede*deltaT_divi_N_clim1 |
+            | ganho_divi_Anc2|  B12  |    =B12*$B$10    | AUX_U_Value_Parede | deltaT_divi_An_clim2|  =B12*AUX_U_Value_Parede*deltaT_divi_N_clim2 |
+            | ganho_divi_c1  |  B13  |    =B13*$B$10    | AUX_U_Value_Parede |  deltaT_divi_clim1  |  =B13*AUX_U_Value_Parede*deltaT_divi_clim1   |
+            | ganho_divi_c2  |  B14  |    =B14*$B$10    | AUX_U_Value_Parede |  deltaT_divi_clim2  |  =B14*AUX_U_Value_Parede*deltaT_divi_clim2   |
+            | total_divisoes |          = ganho_divi_nc1 + ganho_divi_Anc2 + ganho_divi_c1+ ganho_divi_c2                                         |
+Ganhos por ocupação de pessoas
+    constantes adicionadas no json 
+            AUX_OCp_Csp
+            AUX_OCp_Clp
+Ganho latende de ar externo 
+    constantes adicionadas no json 
+            AUX_f_ArExterno 
+            AUX_deltaUa_ArExterno 
 
 
 	 
