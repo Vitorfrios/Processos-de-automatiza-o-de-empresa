@@ -1,14 +1,215 @@
 {
   "projetos": [
     {
-      "id": "1001",
-      "nome": "Projeto1",
+      "nome": "Projeto1hlugyjgnm,nljiohui",
+      "salas": [
+        {
+          "nome": "Sala1hugyujvhkh",
+          "inputs": {
+            "ambiente": "khigu",
+            "backup": "n",
+            "area": 34,
+            "tipoConstrucao": "eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "novec",
+            "vazaoArExterno": 580
+          },
+          "ganhosTermicos": {
+            "totalW": 40741,
+            "totalTR": 12,
+            "totalExterno": 12573,
+            "totalDivisoes": 857,
+            "totalPiso": 689,
+            "totalIluminacao": 238,
+            "totalEquipamentos": 1500,
+            "totalPessoas": 3297,
+            "totalArExterno": 0
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1001"
+    },
+    {
+      "id": "1002",
+      "nome": "Projeto2",
       "salas": [
         {
           "nome": "Sala1",
           "inputs": {
-            "ambiente": "",
-            "backup": "",
+            "ambiente": "hkgjfgh",
+            "backup": "n",
+            "area": 34,
+            "tipoConstrucao": "eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "",
+            "vazaoArExterno": 580
+          },
+          "id": "1"
+        }
+      ]
+    },
+    {
+      "id": "1003",
+      "nome": "Projeto3",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "khigu",
+            "backup": "n",
+            "area": 34,
+            "tipoConstrucao": "eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "novec",
+            "vazaoArExterno": 580
+          },
+          "ganhosTermicos": {
+            "totalW": 40741,
+            "totalTR": 12
+          },
+          "id": "1"
+        }
+      ]
+    },
+    {
+      "nome": "bkjbjbjbjjyudxcb b,mkjlilyuiutydfcvb m,kjlioyuituydfcvbnbjkhiyutrydfg",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "khuyfhcnbmnkljçouoyiturtydfcnbbjiyiturtydfc",
+            "backup": "n",
+            "area": 34,
+            "tipoConstrucao": "eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "fm200",
+            "vazaoArExterno": 580
+          },
+          "ganhosTermicos": {
+            "totalW": 40741,
+            "totalTR": 12,
+            "totalExterno": 12573,
+            "totalDivisoes": 857,
+            "totalPiso": 689,
+            "totalIluminacao": 238,
+            "totalEquipamentos": 1500,
+            "totalPessoas": 3297,
+            "totalArExterno": 21589
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1004"
+    },
+    {
+      "id": "1005",
+      "nome": "Projeto3",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "khuyfhcnbmnkljçouoyiturtydfcnbbjiyiturtydfc",
+            "backup": "n",
+            "area": 34,
+            "tipoConstrucao": "eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "fm200",
+            "vazaoArExterno": 580
+          },
+          "ganhosTermicos": {
+            "totalW": 40741,
+            "totalTR": 12,
+            "totalExterno": 12573,
+            "totalDivisoes": 857,
+            "totalPiso": 689,
+            "totalIluminacao": 238,
+            "totalEquipamentos": 1500,
+            "totalPessoas": 3297,
+            "totalArExterno": 21589
+          },
+          "id": "1"
+        }
+      ]
+    },
+    {
+      "nome": "ultimo projeto",
+      "salas": [
+        {
+          "nome": "ultima sala",
+          "inputs": {
+            "ambiente": "servidor",
+            "backup": "n",
             "area": 34,
             "tipoConstrucao": "alvenaria",
             "paredeOeste": 12,
@@ -26,13 +227,24 @@
             "numPortasSimples": 3,
             "pressurizacao": 25,
             "setpoint": 25,
-            "combateIncendio": "firepro",
+            "combateIncendio": "manual",
             "vazaoArExterno": 580
           },
-          "resultados": {},
+          "ganhosTermicos": {
+            "totalW": 58763,
+            "totalTR": 17,
+            "totalExterno": 29503,
+            "totalDivisoes": 1948,
+            "totalPiso": 689,
+            "totalIluminacao": 238,
+            "totalEquipamentos": 1500,
+            "totalPessoas": 3297,
+            "totalArExterno": 21589
+          },
           "id": "1"
         }
-      ]
+      ],
+      "id": "1006"
     }
   ]
 }

@@ -250,4 +250,6 @@ Ganho latende de ar externo
             AUX_deltaUa_ArExterno 
 
 
-	 
+	 salvamento de dados termicos gerais
+     no json 
+     

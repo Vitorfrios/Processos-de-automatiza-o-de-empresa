@@ -344,31 +344,61 @@ function extractRoomData(roomBlock) {
     inputs: {},
   }
 
-  const climaInputs = roomBlock.querySelectorAll(".clima-input")
-  climaInputs.forEach((input) => {
-    const field = input.dataset.field
-    const value = input.value
-
-    if (value === "" || value === null || value === undefined) {
-      roomData.inputs[field] = input.type === "number" ? 0 : ""
-      return
-    }
-
-    if (input.tagName === "SELECT" || input.type === "text") {
-      roomData.inputs[field] = value
-    } else if (input.type === "number") {
-      roomData.inputs[field] = Number.parseFloat(value) || 0
-    } else {
-      roomData.inputs[field] = value
-    }
-  })
-
   const roomId = roomBlock.querySelector('[id^="room-content-"]')?.id.replace("room-content-", "")
   if (roomId) {
+    const climaInputs = roomBlock.querySelectorAll(".clima-input")
+    climaInputs.forEach((input) => {
+      const field = input.dataset.field
+      const value = input.value
+
+      if (value === "" || value === null || value === undefined) {
+        roomData.inputs[field] = input.type === "number" ? 0 : ""
+        return
+      }
+
+      if (input.tagName === "SELECT" || input.type === "text") {
+        roomData.inputs[field] = value
+      } else if (input.type === "number") {
+        roomData.inputs[field] = Number.parseFloat(value) || 0
+      } else {
+        roomData.inputs[field] = value
+      }
+    })
+
     const vazaoElement = document.getElementById(`vazao-ar-${roomId}`)
     if (vazaoElement) {
       const vazaoValue = vazaoElement.textContent.trim()
       roomData.inputs.vazaoArExterno = Number.parseInt(vazaoValue) || 0
+    }
+
+    const totalGanhosElement = document.getElementById(`total-ganhos-w-${roomId}`)
+    const totalTRElement = document.getElementById(`total-tr-${roomId}`)
+
+    const totalExternoElement = document.getElementById(`total-externo-${roomId}`)
+    const totalDivisoesElement = document.getElementById(`total-divisoes-${roomId}`)
+    const totalPisoElement = document.getElementById(`total-piso-${roomId}`)
+    const totalIluminacaoElement = document.getElementById(`total-iluminacao-${roomId}`)
+    const totalDissiElement = document.getElementById(`total-dissi-${roomId}`)
+    const totalPessoasElement = document.getElementById(`total-pessoas-${roomId}`)
+
+    const totalArSensivelElement = document.getElementById(`total-ar-sensivel-${roomId}`)
+    const totalArLatenteElement = document.getElementById(`total-ar-latente-${roomId}`)
+    const totalArExterno =
+      (Number.parseInt(totalArSensivelElement?.textContent) || 0) +
+      (Number.parseInt(totalArLatenteElement?.textContent) || 0)
+
+    if (totalGanhosElement && totalTRElement) {
+      roomData.ganhosTermicos = {
+        totalW: Number.parseInt(totalGanhosElement.textContent) || 0,
+        totalTR: Number.parseInt(totalTRElement.textContent) || 0,
+        totalExterno: Number.parseInt(totalExternoElement?.textContent) || 0,
+        totalDivisoes: Number.parseInt(totalDivisoesElement?.textContent) || 0,
+        totalPiso: Number.parseInt(totalPisoElement?.textContent) || 0,
+        totalIluminacao: Number.parseInt(totalIluminacaoElement?.textContent) || 0,
+        totalEquipamentos: Number.parseInt(totalDissiElement?.textContent) || 0,
+        totalPessoas: Number.parseInt(totalPessoasElement?.textContent) || 0,
+        totalArExterno: totalArExterno,
+      }
     }
   }
 
@@ -782,6 +812,314 @@ function buildResultRow(roomId) {
   `
 }
 
+function buildThermalGainsSection(roomId) {
+  return `
+    <div class="subsection-block">
+      <div class="subsection-header">
+        <button class="minimizer" onclick="toggleSubsection('${roomId}-ganhos')">+</button>
+        <h5 class="subsection-title">Cálculo de Ganhos Térmicos</h5>
+      </div>
+      <div class="subsection-content collapsed" id="subsection-content-${roomId}-ganhos">
+        <div class="thermal-summary">
+          <div class="thermal-summary-item">
+            <span class="thermal-summary-label">Total de Ganhos Térmicos:</span>
+            <span class="thermal-summary-value" id="total-ganhos-w-${roomId}">0</span>
+            <span class="thermal-summary-unit">W</span>
+          </div>
+          <div class="thermal-summary-item">
+            <span class="thermal-summary-label">Total em TR:</span>
+            <span class="thermal-summary-value" id="total-tr-${roomId}">0</span>
+            <span class="thermal-summary-unit">TR</span>
+          </div>
+        </div>
+
+        <!-- Tabela de Paredes e Teto -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Paredes Externas e Teto</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Área (m²)</th>
+                <th>U-Value</th>
+                <th>ΔT (°C)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Teto</td>
+                <td id="area-teto-${roomId}">0</td>
+                <td id="uvalue-teto-${roomId}">0</td>
+                <td id="deltat-teto-${roomId}">0</td>
+                <td id="ganho-teto-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Parede Oeste</td>
+                <td id="area-parede-oeste-${roomId}">0</td>
+                <td id="uvalue-parede-oeste-${roomId}">0</td>
+                <td id="deltat-parede-oeste-${roomId}">0</td>
+                <td id="ganho-parede-oeste-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Parede Leste</td>
+                <td id="area-parede-leste-${roomId}">0</td>
+                <td id="uvalue-parede-leste-${roomId}">0</td>
+                <td id="deltat-parede-leste-${roomId}">0</td>
+                <td id="ganho-parede-leste-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Parede Norte</td>
+                <td id="area-parede-norte-${roomId}">0</td>
+                <td id="uvalue-parede-norte-${roomId}">0</td>
+                <td id="deltat-parede-norte-${roomId}">0</td>
+                <td id="ganho-parede-norte-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Parede Sul</td>
+                <td id="area-parede-sul-${roomId}">0</td>
+                <td id="uvalue-parede-sul-${roomId}">0</td>
+                <td id="deltat-parede-sul-${roomId}">0</td>
+                <td id="ganho-parede-sul-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Paredes Externas e Teto</td>
+                <td id="total-externo-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Divisórias -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Divisórias</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Área (m²)</th>
+                <th>U-Value</th>
+                <th>ΔT (°C)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Divisória Não Climatizada 1</td>
+                <td id="area-divi-nc1-${roomId}">0</td>
+                <td id="uvalue-divi-nc1-${roomId}">0</td>
+                <td id="deltat-divi-nc1-${roomId}">0</td>
+                <td id="ganho-divi-nc1-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Divisória Não Climatizada 2</td>
+                <td id="area-divi-nc2-${roomId}">0</td>
+                <td id="uvalue-divi-nc2-${roomId}">0</td>
+                <td id="deltat-divi-nc2-${roomId}">0</td>
+                <td id="ganho-divi-nc2-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Divisória Climatizada 1</td>
+                <td id="area-divi-c1-${roomId}">0</td>
+                <td id="uvalue-divi-c1-${roomId}">0</td>
+                <td id="deltat-divi-c1-${roomId}">0</td>
+                <td id="ganho-divi-c1-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Divisória Climatizada 2</td>
+                <td id="area-divi-c2-${roomId}">0</td>
+                <td id="uvalue-divi-c2-${roomId}">0</td>
+                <td id="deltat-divi-c2-${roomId}">0</td>
+                <td id="ganho-divi-c2-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Divisórias</td>
+                <td id="total-divisoes-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Piso -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Piso</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Área (m²)</th>
+                <th>U-Value</th>
+                <th>ΔT (°C)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Piso</td>
+                <td id="area-piso-${roomId}">0</td>
+                <td id="uvalue-piso-${roomId}">0</td>
+                <td id="deltat-piso-${roomId}">0</td>
+                <td id="ganho-piso-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Piso</td>
+                <td id="total-piso-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Iluminação -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Iluminação</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Área (m²)</th>
+                <th>Fator</th>
+                <th>Fs</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Iluminação</td>
+                <td id="area-iluminacao-${roomId}">0</td>
+                <td id="fator-iluminacao-${roomId}">0</td>
+                <td id="fs-iluminacao-${roomId}">0</td>
+                <td id="ganho-iluminacao-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Iluminação</td>
+                <td id="total-iluminacao-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Dissipação Térmica Interna -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Dissipação Térmica Interna</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Fator Conversão</th>
+                <th>Pe (W)</th>
+                <th>Fs (%)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Equipamentos</td>
+                <td id="fator-conversao-dissi-${roomId}">0</td>
+                <td id="pe-dissi-${roomId}">0</td>
+                <td id="fs-dissi-${roomId}">0</td>
+                <td id="ganho-dissi-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Equipamentos</td>
+                <td id="total-dissi-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Ocupação de Pessoas -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Ocupação de Pessoas</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Csp</th>
+                <th>Clp</th>
+                <th>O</th>
+                <th>Fs (%)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Pessoas</td>
+                <td id="csp-pessoas-${roomId}">0</td>
+                <td id="clp-pessoas-${roomId}">0</td>
+                <td id="o-pessoas-${roomId}">0</td>
+                <td id="fs-pessoas-${roomId}">0</td>
+                <td id="ganho-pessoas-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="5">Total Pessoas</td>
+                <td id="total-pessoas-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Ar Externo Sensível -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos de Ar Externo - Sensível</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>m</th>
+                <th>c</th>
+                <th>ΔT (°C)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ar Externo Sensível</td>
+                <td id="m-ar-sensivel-${roomId}">0</td>
+                <td id="c-ar-sensivel-${roomId}">0</td>
+                <td id="deltat-ar-sensivel-${roomId}">0</td>
+                <td id="ganho-ar-sensivel-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Ar Externo Sensível</td>
+                <td id="total-ar-sensivel-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Ar Externo Latente -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos de Ar Externo - Latente</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Var</th>
+                <th>f</th>
+                <th>ΔUa</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ar Externo Latente</td>
+                <td id="var-ar-latente-${roomId}">0</td>
+                <td id="f-ar-latente-${roomId}">0</td>
+                <td id="deltaua-ar-latente-${roomId}">0</td>
+                <td id="ganho-ar-latente-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Ar Externo Latente</td>
+                <td id="total-ar-latente-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
+}
+
 function buildMachinesSection(projectName, roomName) {
   const roomId = `${projectName}-${roomName}`
   return `
@@ -1187,16 +1525,409 @@ function updateFlowRateDisplay(roomId, flowRate) {
   }
 }
 
-// ============================================
-// EXPORTAÇÃO (PLACEHOLDERS)
-// ============================================
-
-function downloadPDF(projectName) {
-  alert(`Funcionalidade de exportação PDF será implementada para ${projectName}`)
+async function calculateVazaoArAndThermalGains(roomId) {
+  const flowRate = await calculateVazaoAr(roomId)
+  await calculateThermalGains(roomId, flowRate)
 }
 
-function downloadWord(projectName) {
-  alert(`Funcionalidade de exportação Word será implementada para ${projectName}`)
+// ============================================
+// CÁLCULO DE GANHOS TÉRMICOS
+// ============================================
+
+/**
+ * Calcula todos os ganhos térmicos para uma sala
+ */
+async function calculateThermalGains(roomId, vazaoArExterno = 0) {
+  // Accept vazaoArExterno as parameter
+  await waitForSystemConstants()
+
+  if (!validateSystemConstants()) return
+
+  const roomContent = document.getElementById(`room-content-${roomId}`)
+  if (!roomContent) return
+
+  const climaSection = roomContent.querySelector('[id*="-clima"]')
+  if (!climaSection) return
+
+  const inputData = collectClimatizationInputs(climaSection, roomId)
+
+  inputData.vazaoArExterno = vazaoArExterno
+
+  console.log("[v0] ===== CÁLCULO DE GANHOS TÉRMICOS =====")
+  console.log("[v0] Dados de entrada:", inputData)
+  console.log("[v0] Vazão de ar externo:", vazaoArExterno)
+
+  // Calcular U-Values baseado no tipo de construção
+  const uValues = calculateUValues(inputData.tipoConstrucao)
+
+  // Calcular variáveis auxiliares
+  const auxVars = calculateAuxiliaryVariables(inputData)
+
+  // Calcular ganhos individuais
+  const gains = {
+    // Passar inputData.area para calculateCeilingGain
+    teto: calculateCeilingGain(inputData.area, uValues.teto, systemConstants.deltaT_teto),
+    paredeOeste: calculateWallGain(
+      inputData.paredeOeste,
+      inputData.peDireito,
+      uValues.parede,
+      systemConstants.deltaT_parede_Oes,
+    ),
+    paredeLeste: calculateWallGain(
+      inputData.paredeLeste,
+      inputData.peDireito,
+      uValues.parede,
+      systemConstants.deltaT_parede_Les,
+    ),
+    paredeNorte: calculateWallGain(
+      inputData.paredeNorte,
+      inputData.peDireito,
+      uValues.parede,
+      systemConstants.deltaT_parede_Nor,
+    ),
+    paredeSul: calculateWallGain(
+      inputData.paredeSul,
+      inputData.peDireito,
+      uValues.parede,
+      systemConstants.deltaT_parede_Sul,
+    ),
+    divisoriaNaoClima1: calculatePartitionGain(
+      inputData.divisoriaNaoClima1,
+      inputData.peDireito,
+      uValues.parede,
+      systemConstants.deltaT_divi_N_clim1,
+    ),
+    divisoriaNaoClima2: calculatePartitionGain(
+      inputData.divisoriaNaoClima2,
+      inputData.peDireito,
+      uValues.parede,
+      systemConstants.deltaT_divi_N_clim2,
+    ),
+    divisoriaClima1: calculatePartitionGain(
+      inputData.divisoriaClima1,
+      inputData.peDireito,
+      uValues.parede,
+      systemConstants.deltaT_divi_clim1,
+    ),
+    divisoriaClima2: calculatePartitionGain(
+      inputData.divisoriaClima2,
+      inputData.peDireito,
+      uValues.parede,
+      systemConstants.deltaT_divi_clim2,
+    ),
+    piso: calculateFloorGain(inputData.area, systemConstants),
+    iluminacao: calculateLightingGain(inputData.area, systemConstants),
+    dissipacao: calculateDissipationGain(inputData.dissipacao, systemConstants),
+    pessoas: calculatePeopleGain(inputData.numPessoas, systemConstants),
+    arSensivel: calculateExternalAirSensibleGain(inputData.vazaoArExterno || 0, auxVars, systemConstants),
+    arLatente: calculateExternalAirLatentGain(inputData.vazaoArExterno || 0, systemConstants),
+  }
+
+  // Calcular totais
+  const totals = calculateTotals(gains)
+
+  console.log("[v0] Ganhos calculados:", gains)
+  console.log("[v0] Totais:", totals)
+  console.log("[v0] ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====")
+
+  updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData)
+}
+
+// ============================================
+// CÁLCULOS DE GANHOS TÉRMICOS (DETALHADO)
+// ============================================
+
+function calculateUValues(tipoConstrucao) {
+  const U_VALUE_ALVENARIA_TETO = 3.961
+  const U_VALUE_ALVENARIA_PAREDE = 2.546
+  const U_VALUE_LA_ROCHA_TETO = 1.145
+  const U_VALUE_LA_ROCHA_PAREDE = 1.12
+
+  let uValueParede, uValueTeto
+
+  if (tipoConstrucao === "eletrocentro") {
+    uValueParede = U_VALUE_LA_ROCHA_PAREDE
+    uValueTeto = U_VALUE_LA_ROCHA_TETO
+  } else if (tipoConstrucao === "alvenaria") {
+    uValueParede = U_VALUE_ALVENARIA_PAREDE
+    uValueTeto = U_VALUE_ALVENARIA_TETO
+  } else {
+    console.error("[v0] Tipo de construção inválido:", tipoConstrucao)
+    uValueParede = 0
+    uValueTeto = 0
+  }
+
+  return {
+    parede: uValueParede,
+    teto: uValueTeto,
+    piso: systemConstants.AUX_U_Value_Piso || 2.7,
+  }
+}
+
+function calculateAuxiliaryVariables(inputData) {
+  const vazaoArExterno = inputData.vazaoArExterno || 0
+  const densiAr = systemConstants.Densi_ar || 1.17
+
+  // AUX_m_ArExterno = B17 * 3.6 * Densi_ar * 1000
+  const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000
+
+  return {
+    m_ArExterno: m_ArExterno,
+  }
+}
+
+function calculateCeilingGain(area, uValue, deltaT) {
+  return (area || 0) * uValue * deltaT
+}
+
+function calculateWallGain(comprimento, peDireito, uValue, deltaT) {
+  const area = (comprimento || 0) * (peDireito || 0)
+  return area * uValue * deltaT
+}
+
+function calculatePartitionGain(inputArea, peDireito, uValue, deltaT) {
+  const area = (inputArea || 0) * (peDireito || 0)
+  return area * uValue * deltaT
+}
+
+function calculateFloorGain(area, constants) {
+  const uValue = constants.AUX_U_Value_Piso || 2.7
+  const deltaT = constants.deltaT_piso || 7.5
+  return (area || 0) * uValue * deltaT
+}
+
+function calculateLightingGain(area, constants) {
+  const fatorIluminacao = constants.AUX_Fator_Iluminacao || 7
+  const fsIluminacao = constants.AUX_Fs_Iluminacao || 1
+  return (area || 0) * fatorIluminacao * fsIluminacao
+}
+
+function calculateDissipationGain(dissipacao, constants) {
+  const fatorConversao = constants.AUX_Fator_Conver_Painel || 1
+  const fsPaineis = constants.AUX_Fs_Paineis || 100
+  return (fatorConversao * (dissipacao || 0) * fsPaineis) / 100
+}
+
+function calculatePeopleGain(numPessoas, constants) {
+  const csp = constants.AUX_OCp_Csp || 86.5
+  const clp = constants.AUX_OCp_Clp || 133.3
+  const fsPessoas = 100
+  const pessoas = numPessoas || 0
+  const ganhoSensivel = (csp * pessoas * fsPessoas) / 100
+  const ganhoLatente = (clp * pessoas * fsPessoas) / 100
+  return ganhoSensivel + ganhoLatente
+}
+
+function calculateExternalAirSensibleGain(vazaoArExterno, auxVars, constants) {
+  const c_ArExterno = constants.AUX_c_ArExterno || 0.24
+  const deltaT_ArExterno = constants.AUX_deltaT_ArExterno || 10
+  const calc_Gsens_ArE = auxVars.m_ArExterno * c_ArExterno * deltaT_ArExterno
+  return (calc_Gsens_ArE / 1000) * 1.16
+}
+
+function calculateExternalAirLatentGain(vazaoArExterno, constants) {
+  const f_ArExterno = constants.AUX_f_ArExterno || 3.01
+  const deltaUa_ArExterno = constants.AUX_deltaUa_ArExterno || 8.47
+  return (vazaoArExterno || 0) * f_ArExterno * deltaUa_ArExterno
+}
+
+function calculateTotals(gains) {
+  const totalExterno = gains.teto + gains.paredeOeste + gains.paredeLeste + gains.paredeNorte + gains.paredeSul
+  const totalDivisoes =
+    gains.divisoriaNaoClima1 + gains.divisoriaNaoClima2 + gains.divisoriaClima1 + gains.divisoriaClima2
+  const totalPiso = gains.piso
+  const totalIluminacao = gains.iluminacao
+  const totalEquipamentos = gains.dissipacao
+  const totalPessoas = gains.pessoas
+  const totalArSensivel = gains.arSensivel
+  const totalArLatente = gains.arLatente
+  const totalArExterno = totalArSensivel + totalArLatente
+
+  const totalGeralW =
+    totalExterno + totalDivisoes + totalPiso + totalIluminacao + totalEquipamentos + totalPessoas + totalArExterno
+
+  const totalGeralTR = totalGeralW / 3517
+
+  return {
+    externo: Math.ceil(totalExterno),
+    divisoes: Math.ceil(totalDivisoes),
+    piso: Math.ceil(totalPiso),
+    iluminacao: Math.ceil(totalIluminacao),
+    equipamentos: Math.ceil(totalEquipamentos),
+    pessoas: Math.ceil(totalPessoas),
+    arSensivel: Math.ceil(totalArSensivel),
+    arLatente: Math.ceil(totalArLatente),
+    arExterno: Math.ceil(totalArExterno),
+    geralW: Math.ceil(totalGeralW),
+    geralTR: Math.ceil(totalGeralTR),
+  }
+}
+
+function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
+  updateElementText(`total-ganhos-w-${roomId}`, totals.geralW)
+  updateElementText(`total-tr-${roomId}`, totals.geralTR)
+
+  updateElementText(`area-teto-${roomId}`, Math.ceil(inputData.area || 0))
+  updateElementText(`uvalue-teto-${roomId}`, uValues.teto.toFixed(3))
+  updateElementText(`deltat-teto-${roomId}`, systemConstants.deltaT_teto || 20)
+  updateElementText(`ganho-teto-${roomId}`, Math.ceil(gains.teto))
+
+  updateWallDisplay(
+    roomId,
+    "oeste",
+    gains.paredeOeste,
+    uValues.parede,
+    inputData.paredeOeste,
+    inputData.peDireito,
+    systemConstants.deltaT_parede_Oes,
+  )
+
+  updateWallDisplay(
+    roomId,
+    "leste",
+    gains.paredeLeste,
+    uValues.parede,
+    inputData.paredeLeste,
+    inputData.peDireito,
+    systemConstants.deltaT_parede_Les,
+  )
+
+  updateWallDisplay(
+    roomId,
+    "norte",
+    gains.paredeNorte,
+    uValues.parede,
+    inputData.paredeNorte,
+    inputData.peDireito,
+    systemConstants.deltaT_parede_Nor,
+  )
+
+  updateWallDisplay(
+    roomId,
+    "sul",
+    gains.paredeSul,
+    uValues.parede,
+    inputData.paredeSul,
+    inputData.peDireito,
+    systemConstants.deltaT_parede_Sul,
+  )
+
+  updatePartitionDisplay(
+    roomId,
+    "nc1",
+    gains.divisoriaNaoClima1,
+    uValues.parede,
+    inputData.divisoriaNaoClima1,
+    inputData.peDireito,
+    systemConstants.deltaT_divi_N_clim1,
+  )
+
+  updatePartitionDisplay(
+    roomId,
+    "nc2",
+    gains.divisoriaNaoClima2,
+    uValues.parede,
+    inputData.divisoriaNaoClima2,
+    inputData.peDireito,
+    systemConstants.deltaT_divi_N_clim2,
+  )
+
+  updatePartitionDisplay(
+    roomId,
+    "c1",
+    gains.divisoriaClima1,
+    uValues.parede,
+    inputData.divisoriaClima1,
+    inputData.peDireito,
+    systemConstants.deltaT_divi_clim1,
+  )
+
+  updatePartitionDisplay(
+    roomId,
+    "c2",
+    gains.divisoriaClima2,
+    uValues.parede,
+    inputData.divisoriaClima2,
+    inputData.peDireito,
+    systemConstants.deltaT_divi_clim2,
+  )
+
+  updateElementText(`area-piso-${roomId}`, Math.ceil(inputData.area || 0))
+  updateElementText(`uvalue-piso-${roomId}`, uValues.piso.toFixed(3))
+  updateElementText(`deltat-piso-${roomId}`, systemConstants.deltaT_piso || 5)
+  updateElementText(`ganho-piso-${roomId}`, Math.ceil(gains.piso))
+  updateElementText(`total-piso-${roomId}`, totals.piso)
+
+  updateElementText(`area-iluminacao-${roomId}`, Math.ceil(inputData.area || 0))
+  updateElementText(`fator-iluminacao-${roomId}`, systemConstants.AUX_Fator_Iluminacao || 7)
+  updateElementText(`fs-iluminacao-${roomId}`, systemConstants.AUX_Fs_Iluminacao || 1)
+  updateElementText(`ganho-iluminacao-${roomId}`, Math.ceil(gains.iluminacao))
+  updateElementText(`total-iluminacao-${roomId}`, totals.iluminacao)
+
+  updateElementText(`fator-conversao-dissi-${roomId}`, systemConstants.AUX_Fator_Conver_Painel || 1)
+  updateElementText(`pe-dissi-${roomId}`, inputData.dissipacao || 0)
+  updateElementText(`fs-dissi-${roomId}`, systemConstants.AUX_Fs_Paineis || 100)
+  updateElementText(`ganho-dissi-${roomId}`, Math.ceil(gains.dissipacao))
+  updateElementText(`total-dissi-${roomId}`, totals.equipamentos)
+
+  updateElementText(`csp-pessoas-${roomId}`, systemConstants.AUX_OCp_Csp || 86.5)
+  updateElementText(`clp-pessoas-${roomId}`, systemConstants.AUX_OCp_Clp || 133.3)
+  updateElementText(`o-pessoas-${roomId}`, inputData.numPessoas || 0)
+  updateElementText(`fs-pessoas-${roomId}`, 100)
+  updateElementText(`ganho-pessoas-${roomId}`, Math.ceil(gains.pessoas))
+  updateElementText(`total-pessoas-${roomId}`, totals.pessoas)
+
+  const vazaoArExterno = inputData.vazaoArExterno || 0
+  const densiAr = systemConstants.Densi_ar || 1.17
+  const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000
+
+  updateElementText(`vazao-ar-externo-${roomId}`, vazaoArExterno)
+  updateElementText(`m-ar-sensivel-${roomId}`, Math.ceil(m_ArExterno))
+  updateElementText(`c-ar-sensivel-${roomId}`, systemConstants.AUX_c_ArExterno || 0.24)
+  updateElementText(`deltat-ar-sensivel-${roomId}`, systemConstants.AUX_deltaT_ArExterno || 10)
+  updateElementText(`ganho-ar-sensivel-${roomId}`, Math.ceil(gains.arSensivel))
+  updateElementText(`total-ar-sensivel-${roomId}`, totals.arSensivel)
+
+  updateElementText(`var-ar-latente-${roomId}`, vazaoArExterno)
+  updateElementText(`f-ar-latente-${roomId}`, systemConstants.AUX_f_ArExterno || 3.01)
+  updateElementText(`deltaua-ar-latente-${roomId}`, systemConstants.AUX_deltaUa_ArExterno || 8.47)
+  updateElementText(`ganho-ar-latente-${roomId}`, Math.ceil(gains.arLatente))
+  updateElementText(`total-ar-latente-${roomId}`, totals.arLatente)
+
+  updateElementText(`total-externo-${roomId}`, totals.externo)
+  updateElementText(`total-divisoes-${roomId}`, totals.divisoes)
+}
+
+/**
+ * Atualiza display de parede
+ */
+function updateWallDisplay(roomId, direction, gain, uValue, inputWidth, peDireito, deltaT) {
+  const area = (inputWidth || 0) * (peDireito || 0)
+  updateElementText(`area-parede-${direction}-${roomId}`, Math.ceil(area))
+  updateElementText(`uvalue-parede-${direction}-${roomId}`, uValue.toFixed(3))
+  updateElementText(`deltat-parede-${direction}-${roomId}`, deltaT || 0)
+  updateElementText(`ganho-parede-${direction}-${roomId}`, Math.ceil(gain))
+}
+
+/**
+ * Atualiza display de divisória
+ */
+function updatePartitionDisplay(roomId, type, gain, uValue, inputArea, peDireito, deltaT) {
+  const areaCalculada = (inputArea || 0) * (peDireito || 0)
+  updateElementText(`area-divi-${type}-${roomId}`, Math.ceil(areaCalculada))
+  updateElementText(`uvalue-divi-${type}-${roomId}`, uValue.toFixed(3))
+  updateElementText(`deltat-divi-${type}-${roomId}`, deltaT || 0)
+  updateElementText(`ganho-divi-${type}-${roomId}`, Math.ceil(gain))
+}
+
+/**
+ * Atualiza texto de elemento
+ */
+function updateElementText(elementId, value) {
+  const element = document.getElementById(elementId)
+  if (element) {
+    element.textContent = value
+  }
 }
 
 // ============================================
@@ -1296,13 +2027,13 @@ function renderRoomFromData(projectName, roomData) {
   createEmptyRoom(projectName, roomName, roomId)
 
   if (roomData.inputs) {
-    populateRoomInputs(projectName, roomName, roomData.inputs)
+    populateRoomInputs(projectName, roomName, roomData.inputs, roomData.ganhosTermicos)
   }
 
   console.log(`[v0] Sala ${roomName} renderizada com sucesso`)
 }
 
-function populateRoomInputs(projectName, roomName, inputsData) {
+function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos) {
   const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`)
   if (!roomBlock) {
     console.error(`[v0] Sala ${roomName} não encontrada`)
@@ -1326,7 +2057,9 @@ function populateRoomInputs(projectName, roomName, inputsData) {
     }
   })
 
-  console.log(`[v0] Inputs da sala ${roomName} preenchidos`)
+  calculateVazaoArAndThermalGains(roomId)
+
+  console.log(`[v0] Inputs da sala ${roomName} preenchidos e cálculos recalculados`)
 }
 
 // ============================================
@@ -1439,776 +2172,4 @@ function updateProjectButton(projectName, hasId) {
     saveButton.classList.add("btn-save")
     console.log(`[v0] Botão do projeto ${projectName} alterado para "Salvar Projeto"`)
   }
-}
-
-// ==========================
-// IMPLEMENTAÇÃO DAS FUNÇÕES PARA A MOSTRAGEM DO TOTAL DE W E TR
-// ==========================
-
-/**
- * Calcula todos os ganhos térmicos para uma sala
- */
-async function calculateThermalGains(roomId, vazaoArExterno = 0) {
-  // Accept vazaoArExterno as parameter
-  await waitForSystemConstants()
-
-  if (!validateSystemConstants()) return
-
-  const roomContent = document.getElementById(`room-content-${roomId}`)
-  if (!roomContent) return
-
-  const climaSection = roomContent.querySelector('[id*="-clima"]')
-  if (!climaSection) return
-
-  const inputData = collectClimatizationInputs(climaSection, roomId)
-
-  inputData.vazaoArExterno = vazaoArExterno
-
-  console.log("[v0] ===== CÁLCULO DE GANHOS TÉRMICOS =====")
-  console.log("[v0] Dados de entrada:", inputData)
-  console.log("[v0] Vazão de ar externo:", vazaoArExterno)
-
-  // Calcular U-Values baseado no tipo de construção
-  const uValues = calculateUValues(inputData.tipoConstrucao)
-
-  // Calcular variáveis auxiliares
-  const auxVars = calculateAuxiliaryVariables(inputData)
-
-  // Calcular ganhos individuais
-  const gains = {
-    // Passar inputData.area para calculateCeilingGain
-    teto: calculateCeilingGain(inputData.area, uValues.teto, systemConstants.deltaT_teto),
-    paredeOeste: calculateWallGain(
-      inputData.paredeOeste,
-      inputData.peDireito,
-      uValues.parede,
-      systemConstants.deltaT_parede_Oes,
-    ),
-    paredeLeste: calculateWallGain(
-      inputData.paredeLeste,
-      inputData.peDireito,
-      uValues.parede,
-      systemConstants.deltaT_parede_Les,
-    ),
-    paredeNorte: calculateWallGain(
-      inputData.paredeNorte,
-      inputData.peDireito,
-      uValues.parede,
-      systemConstants.deltaT_parede_Nor,
-    ),
-    paredeSul: calculateWallGain(
-      inputData.paredeSul,
-      inputData.peDireito,
-      uValues.parede,
-      systemConstants.deltaT_parede_Sul,
-    ),
-    divisoriaNaoClima1: calculatePartitionGain(
-      inputData.divisoriaNaoClima1 * inputData.peDireito,
-      uValues.parede,
-      systemConstants.deltaT_divi_N_clim1,
-    ),
-    divisoriaNaoClima2: calculatePartitionGain(
-      inputData.divisoriaNaoClima2 * inputData.peDireito,
-      uValues.parede,
-      systemConstants.deltaT_divi_N_clim2,
-    ),
-    divisoriaClima1: calculatePartitionGain(
-      inputData.divisoriaClima1 * inputData.peDireito,
-      uValues.parede,
-      systemConstants.deltaT_divi_clim1,
-    ),
-    divisoriaClima2: calculatePartitionGain(
-      inputData.divisoriaClima2 * inputData.peDireito,
-      uValues.parede,
-      systemConstants.deltaT_divi_clim2,
-    ),
-    piso: calculateFloorGain(inputData.area, systemConstants),
-    iluminacao: calculateLightingGain(inputData.area, systemConstants),
-    dissipacao: calculateDissipationGain(inputData.dissipacao, systemConstants),
-    pessoas: calculatePeopleGain(inputData.numPessoas, systemConstants),
-    arSensivel: calculateExternalAirSensibleGain(inputData.vazaoArExterno || 0, auxVars, systemConstants),
-    arLatente: calculateExternalAirLatentGain(inputData.vazaoArExterno || 0, systemConstants),
-  }
-
-  // Calcular totais
-  const totals = calculateTotals(gains)
-
-  console.log("[v0] Ganhos calculados:", gains)
-  console.log("[v0] Totais:", totals)
-  console.log("[v0] ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====")
-
-  updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData)
-}
-
-/**
- * Calcula U-Values baseado no tipo de construção
- */
-function calculateUValues(tipoConstrucao) {
-  const U_VALUE_ALVENARIA_TETO = 3.961
-  const U_VALUE_ALVENARIA_PAREDE = 2.546
-  const U_VALUE_LA_ROCHA_TETO = 1.145
-  const U_VALUE_LA_ROCHA_PAREDE = 1.12
-
-  let uValueParede, uValueTeto
-
-  if (tipoConstrucao === "eletrocentro") {
-    uValueParede = U_VALUE_LA_ROCHA_PAREDE
-    uValueTeto = U_VALUE_LA_ROCHA_TETO
-  } else if (tipoConstrucao === "alvenaria") {
-    uValueParede = U_VALUE_ALVENARIA_PAREDE
-    uValueTeto = U_VALUE_ALVENARIA_TETO
-  } else {
-    console.error("[v0] Tipo de construção inválido:", tipoConstrucao)
-    uValueParede = 0
-    uValueTeto = 0
-  }
-
-  return {
-    parede: uValueParede,
-    teto: uValueTeto,
-    piso: systemConstants.AUX_U_Value_Piso || 2.7,
-  }
-}
-
-/**
- * Calcula variáveis auxiliares para ar externo
- */
-function calculateAuxiliaryVariables(inputData) {
-  const vazaoArExterno = inputData.vazaoArExterno || 0
-  const densiAr = systemConstants.Densi_ar || 1.17
-
-  // AUX_m_ArExterno = B17 * 3.6 * Densi_ar * 1000
-  const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000
-
-  return {
-    m_ArExterno: m_ArExterno,
-  }
-}
-
-/**
- * Ganho de teto
- */
-function calculateCeilingGain(area, uValue, deltaT) {
-  return (area || 0) * uValue * deltaT
-}
-
-/**
- * Ganho de parede
- */
-function calculateWallGain(comprimento, peDireito, uValue, deltaT) {
-  const area = (comprimento || 0) * (peDireito || 0)
-  return area * uValue * deltaT
-}
-
-/**
- * Ganho por divisória
- */
-function calculatePartitionGain(area, uValue, deltaT) {
-  return (area || 0) * uValue * deltaT
-}
-
-/**
- * Ganho por piso
- */
-function calculateFloorGain(area, constants) {
-  const uValue = constants.AUX_U_Value_Piso || 2.7
-  const deltaT = constants.deltaT_piso || 7.5
-
-  return (area || 0) * uValue * deltaT
-}
-
-/**
- * Ganho por iluminação
- */
-function calculateLightingGain(area, constants) {
-  const fatorIluminacao = constants.AUX_Fator_Iluminacao || 7
-  const fsIluminacao = constants.AUX_Fs_Iluminacao || 1
-
-  return (area || 0) * fatorIluminacao * fsIluminacao
-}
-
-/**
- * Dissipação térmica interna
- */
-function calculateDissipationGain(dissipacao, constants) {
-  const fatorConversao = constants.AUX_Fator_Conver_Painel || 1
-  const fsPaineis = constants.AUX_Fs_Paineis || 100
-
-  return (fatorConversao * (dissipacao || 0) * fsPaineis) / 100
-}
-
-/**
- * Ganho por ocupação de pessoas
- */
-function calculatePeopleGain(numPessoas, constants) {
-  const csp = constants.AUX_OCp_Csp || 75 // Calor sensível por pessoa
-  const clp = constants.AUX_OCp_Clp || 55 // Calor latente por pessoa
-  const fsPessoas = constants.AUX_Fs_OCp_Pessoas || 100
-
-  const pessoas = numPessoas || 0
-
-  const ganhoSensivel = (csp * pessoas * fsPessoas) / 100
-  const ganhoLatente = (clp * pessoas * fsPessoas) / 100
-
-  return ganhoSensivel + ganhoLatente
-}
-
-/**
- * Ganho sensível de ar externo
- */
-function calculateExternalAirSensibleGain(vazaoArExterno, auxVars, constants) {
-  const c_ArExterno = constants.AUX_c_ArExterno || 0.24
-  const deltaT_ArExterno = constants.AUX_deltaT_ArExterno || 10
-
-  // Calc_Gsens_ArE = AUX_m_ArExterno * AUX_c_ArExterno * AUX_deltaT_ArExterno
-  const calc_Gsens_ArE = auxVars.m_ArExterno * c_ArExterno * deltaT_ArExterno
-
-  // ganho_ar_sensivel = Calc_Gsens_ArE / 1000 * 1.16
-  return (calc_Gsens_ArE / 1000) * 1.16
-}
-
-/**
- * Ganho latente de ar externo
- */
-function calculateExternalAirLatentGain(vazaoArExterno, constants) {
-  const f_ArExterno = constants.AUX_f_ArExterno || 2.93
-  const deltaUa_ArExterno = constants.AUX_deltaUa_ArExterno || 5.5
-
-  // ganho_ar_latente = B17 * AUX_f_ArExterno * AUX_deltaUa_ArExterno
-  return (vazaoArExterno || 0) * f_ArExterno * deltaUa_ArExterno
-}
-
-/**
- * Calcula totais
- */
-function calculateTotals(gains) {
-  // Total paredes externas
-  const totalExterno = gains.teto + gains.paredeOeste + gains.paredeLeste + gains.paredeNorte + gains.paredeSul
-
-  // Total divisórias
-  const totalDivisoes =
-    gains.divisoriaNaoClima1 + gains.divisoriaNaoClima2 + gains.divisoriaClima1 + gains.divisoriaClima2
-
-  // Total piso
-  const totalPiso = gains.piso
-
-  // Total iluminação
-  const totalIluminacao = gains.iluminacao
-
-  // Total equipamentos (dissipação)
-  const totalEquipamentos = gains.dissipacao
-
-  // Total pessoas
-  const totalPessoas = gains.pessoas
-
-  // Total ar externo (sensível + latente)
-  const totalArExterno = gains.arSensivel + gains.arLatente
-
-  // Total geral em W
-  const totalGeralW =
-    totalExterno + totalDivisoes + totalPiso + totalIluminacao + totalEquipamentos + totalPessoas + totalArExterno
-
-  // Total geral em TR (1 TR = 3517 W)
-  const totalGeralTR = totalGeralW / 3517
-
-  return {
-    externo: Math.ceil(totalExterno),
-    divisoes: Math.ceil(totalDivisoes),
-    piso: Math.ceil(totalPiso),
-    iluminacao: Math.ceil(totalIluminacao),
-    equipamentos: Math.ceil(totalEquipamentos),
-    pessoas: Math.ceil(totalPessoas),
-    arExterno: Math.ceil(totalArExterno),
-    geralW: Math.ceil(totalGeralW),
-    geralTR: Math.ceil(totalGeralTR),
-  }
-}
-
-/**
- * Atualiza o display dos ganhos térmicos
- */
-function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
-  // Atualizar tabela de paredes e teto
-  updateElementText(`ganho-teto-area-${roomId}`, (inputData.area || 0).toFixed(2))
-  updateElementText(`ganho-teto-uvalue-${roomId}`, uValues.teto.toFixed(3))
-  updateElementText(`ganho-teto-delta-${roomId}`, systemConstants.deltaT_teto || 20)
-  updateElementText(`ganho-teto-valor-${roomId}`, Math.ceil(gains.teto))
-
-  updateWallDisplay(
-    roomId,
-    "oeste",
-    gains.paredeOeste,
-    uValues.parede,
-    systemConstants.deltaT_parede_Oes,
-    inputData.paredeOeste,
-    inputData.peDireito,
-  )
-  updateWallDisplay(
-    roomId,
-    "leste",
-    gains.paredeLeste,
-    uValues.parede,
-    systemConstants.deltaT_parede_Les,
-    inputData.paredeLeste,
-    inputData.peDireito,
-  )
-  updateWallDisplay(
-    roomId,
-    "norte",
-    gains.paredeNorte,
-    uValues.parede,
-    systemConstants.deltaT_parede_Nor,
-    inputData.paredeNorte,
-    inputData.peDireito,
-  )
-  updateWallDisplay(
-    roomId,
-    "sul",
-    gains.paredeSul,
-    uValues.parede,
-    systemConstants.deltaT_parede_Sul,
-    inputData.paredeSul,
-    inputData.peDireito,
-  )
-
-  updateElementText(`total-externo-${roomId}`, totals.externo)
-
-  updatePartitionDisplay(
-    roomId,
-    "nc1",
-    gains.divisoriaNaoClima1,
-    uValues.parede,
-    systemConstants.deltaT_divi_N_clim1,
-    inputData.divisoriaNaoClima1,
-    inputData.peDireito,
-  )
-  updatePartitionDisplay(
-    roomId,
-    "nc2",
-    gains.divisoriaNaoClima2,
-    uValues.parede,
-    systemConstants.deltaT_divi_N_clim2,
-    inputData.divisoriaNaoClima2,
-    inputData.peDireito,
-  )
-  updatePartitionDisplay(
-    roomId,
-    "c1",
-    gains.divisoriaClima1,
-    uValues.parede,
-    systemConstants.deltaT_divi_clim1,
-    inputData.divisoriaClima1,
-    inputData.peDireito,
-  )
-  updatePartitionDisplay(
-    roomId,
-    "c2",
-    gains.divisoriaClima2,
-    uValues.parede,
-    systemConstants.deltaT_divi_clim2,
-    inputData.divisoriaClima2,
-    inputData.peDireito,
-  )
-
-  updateElementText(`total-divisoes-${roomId}`, totals.divisoes)
-
-  // Atualizar tabela de piso
-  updateElementText(`ganho-piso-area-${roomId}`, (inputData.area || 0).toFixed(2))
-  updateElementText(`ganho-piso-uvalue-${roomId}`, uValues.piso.toFixed(3))
-  updateElementText(`ganho-piso-delta-${roomId}`, systemConstants.deltaT_piso || 7.5)
-  updateElementText(`ganho-piso-valor-${roomId}`, Math.ceil(gains.piso))
-  updateElementText(`total-piso-${roomId}`, totals.piso)
-
-  // Atualizar tabela de iluminação
-  updateElementText(`ganho-iluminacao-area-${roomId}`, (inputData.area || 0).toFixed(2))
-  updateElementText(`ganho-iluminacao-fator-${roomId}`, systemConstants.AUX_Fator_Iluminacao || 7)
-  updateElementText(`ganho-iluminacao-fs-${roomId}`, systemConstants.AUX_Fs_Iluminacao || 1)
-  updateElementText(`ganho-iluminacao-valor-${roomId}`, Math.ceil(gains.iluminacao))
-  updateElementText(`total-iluminacao-${roomId}`, totals.iluminacao)
-
-  // Atualizar tabela de dissipação
-  updateElementText(`ganho-dissipacao-fator-${roomId}`, systemConstants.AUX_Fator_Conver_Painel || 1)
-  updateElementText(`ganho-dissipacao-pe-${roomId}`, inputData.dissipacao || 0)
-  updateElementText(`ganho-dissipacao-fs-${roomId}`, systemConstants.AUX_Fs_Paineis || 100)
-  updateElementText(`ganho-dissipacao-valor-${roomId}`, Math.ceil(gains.dissipacao))
-  updateElementText(`total-equipamentos-${roomId}`, totals.equipamentos)
-
-  // Atualizar tabela de pessoas
-  updateElementText(`ganho-pessoas-csp-${roomId}`, systemConstants.AUX_OCp_Csp || 75)
-  updateElementText(`ganho-pessoas-clp-${roomId}`, systemConstants.AUX_OCp_Clp || 55)
-  updateElementText(`ganho-pessoas-o-${roomId}`, inputData.numPessoas || 0)
-  updateElementText(`ganho-pessoas-fs-${roomId}`, systemConstants.AUX_Fs_OCp_Pessoas || 100)
-  updateElementText(`ganho-pessoas-valor-${roomId}`, Math.ceil(gains.pessoas))
-  updateElementText(`total-pessoas-${roomId}`, totals.pessoas)
-
-  // Calcular m para ar sensível
-  const vazaoArExterno = inputData.vazaoArExterno || 0
-  const densiAr = systemConstants.Densi_ar || 1.17
-  const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000
-
-  // Atualizar tabela de ar externo sensível
-  updateElementText(`ganho-ar-sensivel-m-${roomId}`, m_ArExterno.toFixed(2))
-  updateElementText(`ganho-ar-sensivel-c-${roomId}`, systemConstants.AUX_c_ArExterno || 0.24)
-  updateElementText(`ganho-ar-sensivel-delta-${roomId}`, systemConstants.AUX_deltaT_ArExterno || 10)
-  updateElementText(`ganho-ar-sensivel-valor-${roomId}`, Math.ceil(gains.arSensivel))
-  updateElementText(`ganho-ar-sensivel-total-${roomId}`, Math.ceil(gains.arSensivel))
-
-  // Atualizar tabela de ar externo latente
-  updateElementText(`ganho-ar-latente-var-${roomId}`, vazaoArExterno)
-  updateElementText(`ganho-ar-latente-f-${roomId}`, systemConstants.AUX_f_ArExterno || 2.93)
-  updateElementText(`ganho-ar-latente-delta-${roomId}`, systemConstants.AUX_deltaUa_ArExterno || 5.5)
-  updateElementText(`ganho-ar-latente-valor-${roomId}`, Math.ceil(gains.arLatente))
-  updateElementText(`ganho-ar-latente-total-${roomId}`, Math.ceil(gains.arLatente))
-
-  // Atualizar totais finais
-  updateElementText(`total-geral-w-${roomId}`, totals.geralW)
-  updateElementText(`total-geral-tr-${roomId}`, totals.geralTR)
-}
-
-/**
- * Atualiza display de parede
- */
-function updateWallDisplay(roomId, direction, gain, uValue, deltaT, comprimento, peDireito) {
-  const area = (comprimento || 0) * (peDireito || 0)
-  updateElementText(`ganho-parede-${direction}-area-${roomId}`, area.toFixed(2))
-  updateElementText(`ganho-parede-${direction}-uvalue-${roomId}`, uValue.toFixed(3))
-  updateElementText(`ganho-parede-${direction}-delta-${roomId}`, deltaT)
-  updateElementText(`ganho-parede-${direction}-valor-${roomId}`, Math.ceil(gain))
-}
-
-/**
- * Atualiza display de divisória
- */
-function updatePartitionDisplay(roomId, type, gain, uValue, deltaT, inputArea, peDireito) {
-  const areaCalculada = (inputArea || 0) * (peDireito || 0)
-  updateElementText(`ganho-divisoria-${type}-area-${roomId}`, areaCalculada.toFixed(2))
-  updateElementText(`ganho-divisoria-${type}-uvalue-${roomId}`, uValue.toFixed(3))
-  updateElementText(`ganho-divisoria-${type}-delta-${roomId}`, deltaT)
-  updateElementText(`ganho-divisoria-${type}-valor-${roomId}`, Math.ceil(gain))
-}
-
-/**
- * Atualiza texto de elemento
- */
-function updateElementText(elementId, value) {
-  const element = document.getElementById(elementId)
-  if (element) {
-    element.textContent = value
-  }
-}
-
-/**
- * Função principal que calcula vazão e ganhos térmicos
- */
-async function calculateVazaoArAndThermalGains(roomId) {
-  const flowRate = await calculateVazaoAr(roomId)
-  await calculateThermalGains(roomId, flowRate)
-}
-
-function buildThermalGainsSection(roomId) {
-  return `
-    <div class="subsection-block">
-      <div class="subsection-header">
-        <button class="minimizer" onclick="toggleSubsection('${roomId}-ganhos')">+</button>
-        <h5 class="subsection-title">Cálculo de Ganhos Térmicos</h5>
-      </div>
-      <div class="subsection-content collapsed" id="subsection-content-${roomId}-ganhos">
-        <div class="thermal-summary">
-          <div class="thermal-summary-item">
-            <span class="thermal-summary-label">Total de Ganhos Térmicos:</span>
-            <span class="thermal-summary-value" id="total-geral-w-${roomId}">0</span>
-            <span class="thermal-summary-unit">W</span>
-          </div>
-          <div class="thermal-summary-item">
-            <span class="thermal-summary-label">Total em TR:</span>
-            <span class="thermal-summary-value" id="total-geral-tr-${roomId}">0</span>
-            <span class="thermal-summary-unit">TR</span>
-          </div>
-        </div>
-
-         Tabela de Paredes e Teto
-        <div class="thermal-table-container">
-          <h6 class="thermal-table-title">Ganhos por Paredes Externas e Teto</h6>
-          <table class="thermal-table">
-            <thead>
-              <tr>
-                <th>Elemento</th>
-                <th>Área (m²)</th>
-                <th>U-Value</th>
-                <th>ΔT (°C)</th>
-                <th>Ganho (W)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Teto</td>
-                <td id="ganho-teto-area-${roomId}">0</td>
-                <td id="ganho-teto-uvalue-${roomId}">0</td>
-                <td id="ganho-teto-delta-${roomId}">0</td>
-                <td id="ganho-teto-valor-${roomId}">0</td>
-              </tr>
-              <tr>
-                <td>Parede Oeste</td>
-                <td id="ganho-parede-oeste-area-${roomId}">0</td>
-                <td id="ganho-parede-oeste-uvalue-${roomId}">0</td>
-                <td id="ganho-parede-oeste-delta-${roomId}">0</td>
-                <td id="ganho-parede-oeste-valor-${roomId}">0</td>
-              </tr>
-              <tr>
-                <td>Parede Leste</td>
-                <td id="ganho-parede-leste-area-${roomId}">0</td>
-                <td id="ganho-parede-leste-uvalue-${roomId}">0</td>
-                <td id="ganho-parede-leste-delta-${roomId}">0</td>
-                <td id="ganho-parede-leste-valor-${roomId}">0</td>
-              </tr>
-              <tr>
-                <td>Parede Norte</td>
-                <td id="ganho-parede-norte-area-${roomId}">0</td>
-                <td id="ganho-parede-norte-uvalue-${roomId}">0</td>
-                <td id="ganho-parede-norte-delta-${roomId}">0</td>
-                <td id="ganho-parede-norte-valor-${roomId}">0</td>
-              </tr>
-              <tr>
-                <td>Parede Sul</td>
-                <td id="ganho-parede-sul-area-${roomId}">0</td>
-                <td id="ganho-parede-sul-uvalue-${roomId}">0</td>
-                <td id="ganho-parede-sul-delta-${roomId}">0</td>
-                <td id="ganho-parede-sul-valor-${roomId}">0</td>
-              </tr>
-              <tr class="thermal-table-total">
-                <td colspan="4">Total Paredes Externas e Teto</td>
-                <td id="total-externo-${roomId}">0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-         Tabela de Divisórias
-        <div class="thermal-table-container">
-          <h6 class="thermal-table-title">Ganhos por Divisórias</h6>
-          <table class="thermal-table">
-            <thead>
-              <tr>
-                <th>Tipo</th>
-                <th>Área (m²)</th>
-                <th>U-Value</th>
-                <th>ΔT (°C)</th>
-                <th>Ganho (W)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Divisória Não Climatizada 1</td>
-                <td id="ganho-divisoria-nc1-area-${roomId}">0</td>
-                <td id="ganho-divisoria-nc1-uvalue-${roomId}">0</td>
-                <td id="ganho-divisoria-nc1-delta-${roomId}">0</td>
-                <td id="ganho-divisoria-nc1-valor-${roomId}">0</td>
-              </tr>
-              <tr>
-                <td>Divisória Não Climatizada 2</td>
-                <td id="ganho-divisoria-nc2-area-${roomId}">0</td>
-                <td id="ganho-divisoria-nc2-uvalue-${roomId}">0</td>
-                <td id="ganho-divisoria-nc2-delta-${roomId}">0</td>
-                <td id="ganho-divisoria-nc2-valor-${roomId}">0</td>
-              </tr>
-              <tr>
-                <td>Divisória Climatizada 1</td>
-                <td id="ganho-divisoria-c1-area-${roomId}">0</td>
-                <td id="ganho-divisoria-c1-uvalue-${roomId}">0</td>
-                <td id="ganho-divisoria-c1-delta-${roomId}">0</td>
-                <td id="ganho-divisoria-c1-valor-${roomId}">0</td>
-              </tr>
-              <tr>
-                <td>Divisória Climatizada 2</td>
-                <td id="ganho-divisoria-c2-area-${roomId}">0</td>
-                <td id="ganho-divisoria-c2-uvalue-${roomId}">0</td>
-                <td id="ganho-divisoria-c2-delta-${roomId}">0</td>
-                <td id="ganho-divisoria-c2-valor-${roomId}">0</td>
-              </tr>
-              <tr class="thermal-table-total">
-                <td colspan="4">Total Divisórias</td>
-                <td id="total-divisoes-${roomId}">0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-         Tabela de Piso
-        <div class="thermal-table-container">
-          <h6 class="thermal-table-title">Ganhos por Piso</h6>
-          <table class="thermal-table">
-            <thead>
-              <tr>
-                <th>Elemento</th>
-                <th>Área (m²)</th>
-                <th>U-Value</th>
-                <th>ΔT (°C)</th>
-                <th>Ganho (W)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Piso</td>
-                <td id="ganho-piso-area-${roomId}">0</td>
-                <td id="ganho-piso-uvalue-${roomId}">0</td>
-                <td id="ganho-piso-delta-${roomId}">0</td>
-                <td id="ganho-piso-valor-${roomId}">0</td>
-              </tr>
-              <tr class="thermal-table-total">
-                <td colspan="4">Total Piso</td>
-                <td id="total-piso-${roomId}">0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-         Tabela de Iluminação
-        <div class="thermal-table-container">
-          <h6 class="thermal-table-title">Ganhos por Iluminação</h6>
-          <table class="thermal-table">
-            <thead>
-              <tr>
-                <th>Elemento</th>
-                <th>Área (m²)</th>
-                <th>Fator</th>
-                <th>Fs</th>
-                <th>Ganho (W)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Iluminação</td>
-                <td id="ganho-iluminacao-area-${roomId}">0</td>
-                <td id="ganho-iluminacao-fator-${roomId}">0</td>
-                <td id="ganho-iluminacao-fs-${roomId}">0</td>
-                <td id="ganho-iluminacao-valor-${roomId}">0</td>
-              </tr>
-              <tr class="thermal-table-total">
-                <td colspan="4">Total Iluminação</td>
-                <td id="total-iluminacao-${roomId}">0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-         Tabela de Dissipação Térmica Interna
-        <div class="thermal-table-container">
-          <h6 class="thermal-table-title">Dissipação Térmica Interna</h6>
-          <table class="thermal-table">
-            <thead>
-              <tr>
-                <th>Elemento</th>
-                <th>Fator Conversão</th>
-                <th>Pe (W)</th>
-                <th>Fs (%)</th>
-                <th>Ganho (W)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Equipamentos</td>
-                <td id="ganho-dissipacao-fator-${roomId}">0</td>
-                <td id="ganho-dissipacao-pe-${roomId}">0</td>
-                <td id="ganho-dissipacao-fs-${roomId}">0</td>
-                <td id="ganho-dissipacao-valor-${roomId}">0</td>
-              </tr>
-              <tr class="thermal-table-total">
-                <td colspan="4">Total Equipamentos</td>
-                <td id="total-equipamentos-${roomId}">0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-         Tabela de Ocupação de Pessoas
-        <div class="thermal-table-container">
-          <h6 class="thermal-table-title">Ganhos por Ocupação de Pessoas</h6>
-          <table class="thermal-table">
-            <thead>
-              <tr>
-                <th>Elemento</th>
-                <th>Csp</th>
-                <th>Clp</th>
-                <th>O</th>
-                <th>Fs (%)</th>
-                <th>Ganho (W)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Pessoas</td>
-                <td id="ganho-pessoas-csp-${roomId}">0</td>
-                <td id="ganho-pessoas-clp-${roomId}">0</td>
-                <td id="ganho-pessoas-o-${roomId}">0</td>
-                <td id="ganho-pessoas-fs-${roomId}">0</td>
-                <td id="ganho-pessoas-valor-${roomId}">0</td>
-              </tr>
-              <tr class="thermal-table-total">
-                <td colspan="5">Total Pessoas</td>
-                <td id="total-pessoas-${roomId}">0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-         Tabela de Ar Externo Sensível
-        <div class="thermal-table-container">
-          <h6 class="thermal-table-title">Ganhos de Ar Externo - Sensível</h6>
-          <table class="thermal-table">
-            <thead>
-              <tr>
-                <th>Elemento</th>
-                <th>m</th>
-                <th>c</th>
-                <th>ΔT (°C)</th>
-                <th>Ganho (W)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Ar Externo Sensível</td>
-                <td id="ganho-ar-sensivel-m-${roomId}">0</td>
-                <td id="ganho-ar-sensivel-c-${roomId}">0</td>
-                <td id="ganho-ar-sensivel-delta-${roomId}">0</td>
-                <td id="ganho-ar-sensivel-valor-${roomId}">0</td>
-              </tr>
-              <tr class="thermal-table-total">
-                <td colspan="4">Total Ar Externo Sensível</td>
-                <td id="ganho-ar-sensivel-total-${roomId}">0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-         Tabela de Ar Externo Latente
-        <div class="thermal-table-container">
-          <h6 class="thermal-table-title">Ganhos de Ar Externo - Latente</h6>
-          <table class="thermal-table">
-            <thead>
-              <tr>
-                <th>Elemento</th>
-                <th>Var</th>
-                <th>f</th>
-                <th>ΔUa</th>
-                <th>Ganho (W)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Ar Externo Latente</td>
-                <td id="ganho-ar-latente-var-${roomId}">0</td>
-                <td id="ganho-ar-latente-f-${roomId}">0</td>
-                <td id="ganho-ar-latente-delta-${roomId}">0</td>
-                <td id="ganho-ar-latente-valor-${roomId}">0</td>
-              </tr>
-              <tr class="thermal-table-total">
-                <td colspan="4">Total Ar Externo Latente</td>
-                <td id="ganho-ar-latente-total-${roomId}">0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  `
 }
