@@ -37,6 +37,7 @@ const UI_CONSTANTS = {
 
 let systemConstants = null
 let projectCounter = 0
+let GeralCount = 0
 
 const SESSION_STORAGE_KEY = "firstProjectIdOfSession"
 const REMOVED_PROJECTS_KEY = "removedProjectsFromScreen"
@@ -295,6 +296,7 @@ async function saveProject(projectName, event) {
   console.log(`[v0] Dados do projeto coletados:`, projectData)
 
   let result = null
+  const isNewProject = !projectId
 
   if (!projectId) {
     console.log("[v0] Nenhum ID encontrado - SALVANDO novo projeto...")
@@ -311,6 +313,12 @@ async function saveProject(projectName, event) {
 
     updateProjectButton(projectName, true)
     saveFirstProjectIdOfSession(finalId)
+
+    if (isNewProject) {
+      GeralCount++
+      console.log(`[v0] GeralCount incrementado: ${GeralCount}`)
+    }
+
     collapseProjectAfterSave(projectName, projectBlock)
     console.log(`[v0] ===== PROJETO ${projectName} SALVO COM SUCESSO (ID: ${finalId}) =====`)
   } else {
@@ -574,6 +582,14 @@ function deleteProject(projectName) {
 
   if (projectId) {
     addProjectToRemovedList(projectId)
+    GeralCount--
+    console.log(`[v0] GeralCount decrementado: ${GeralCount}`)
+
+    if (GeralCount <= 0) {
+      GeralCount = 0
+      console.log("[v0] GeralCount = 0 - Reiniciando lógica de exibição")
+      resetDisplayLogic()
+    }
   }
 
   console.log(`[v0] Projeto ${projectName} removido da interface`)
@@ -1945,6 +1961,7 @@ async function loadProjectsFromServer() {
 
   if (!firstProjectId) {
     console.log("[v0] Nenhum projeto salvo nesta sessão - mantendo projeto base do HTML")
+    GeralCount = 0
     return
   }
 
@@ -1954,6 +1971,7 @@ async function loadProjectsFromServer() {
 
   if (allProjects.length === 0) {
     console.log("[v0] Nenhum projeto encontrado no servidor")
+    GeralCount = 0
     return
   }
 
@@ -1965,10 +1983,14 @@ async function loadProjectsFromServer() {
 
   if (sessionProjects.length === 0) {
     console.log("[v0] Nenhum projeto da sessão atual encontrado (ou todos foram removidos)")
+    resetDisplayLogic()
     return
   }
 
   console.log(`[v0] ${sessionProjects.length} projeto(s) da sessão atual encontrado(s)`)
+
+  GeralCount = sessionProjects.length
+  console.log(`[v0] GeralCount inicializado: ${GeralCount}`)
 
   removeBaseProjectFromHTML()
 
@@ -2176,4 +2198,18 @@ function updateProjectButton(projectName, hasId) {
     saveButton.classList.add("btn-save")
     console.log(`[v0] Botão do projeto ${projectName} alterado para "Salvar Projeto"`)
   }
+}
+
+function resetDisplayLogic() {
+  // Clear the first project ID of session
+  sessionStorage.removeItem(SESSION_STORAGE_KEY)
+  console.log("[v0] SESSION_STORAGE_KEY limpo")
+
+  // Clear the removed projects list
+  sessionStorage.removeItem(REMOVED_PROJECTS_KEY)
+  console.log("[v0] REMOVED_PROJECTS_KEY limpo")
+
+  // Reset GeralCount
+  GeralCount = 0
+  console.log("[v0] Lógica de exibição reiniciada - próximo save será o novo ponto inicial")
 }
