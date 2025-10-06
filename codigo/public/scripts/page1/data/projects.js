@@ -1,13 +1,21 @@
 import { 
   API_CONFIG, 
-  UI_CONSTANTS,
-  SESSION_STORAGE_KEY,
-  REMOVED_PROJECTS_KEY,
-  NORMALIZATION_DONE_KEY
+  UI_CONSTANTS
 } from '../config/config.js'
 import { ensureStringId } from '../utils/utils.js'
 import { showSystemStatus } from '../ui/interface.js'
 import { buildProjectData, extractRoomData } from './data-utils.js'
+// CORREÇÃO 1: Importar TODAS as funções necessárias do server.js
+import { 
+  incrementGeralCount, 
+  decrementGeralCount, 
+  getGeralCount,
+  createSingleBaseProject,
+  addProjectToRemovedList,
+  saveFirstProjectIdOfSession,
+  updateProjectButton,
+  resetDisplayLogic
+} from './server.js'
 
 async function fetchProjects() {
   try {
@@ -82,6 +90,9 @@ async function initializeProjectCounter() {
 }
 
 function getNextProjectNumber() {
+  if (typeof window.projectCounter === 'undefined') {
+    window.projectCounter = 0;
+  }
   window.projectCounter++;
   console.log(`[v0] projectCounter incrementado: ${window.projectCounter}`);
   return window.projectCounter;
@@ -223,12 +234,14 @@ async function saveProject(projectName, event) {
     projectBlock.dataset.projectId = finalId
     console.log(`[v0] DEBUG - ID salvo no dataset: ${finalId}`)
 
+    // CORREÇÃO 2: Usar as funções importadas, não as locais
     updateProjectButton(projectName, true)
     saveFirstProjectIdOfSession(finalId)
 
+    // CORREÇÃO 3: Usar a função incrementGeralCount para novos projetos
     if (isNewProject) {
-      window.GeralCount++; // ← CORRIGIR: usar window.GeralCount
-      console.log(`[v0] GeralCount incrementado: ${window.GeralCount}`)
+      incrementGeralCount();
+      console.log(`[v0] Novo projeto salvo - GeralCount: ${getGeralCount()}`)
     }
 
     collapseProjectAfterSave(projectName, projectBlock)
@@ -253,27 +266,36 @@ function deleteProject(projectName) {
   if (!confirm(confirmMessage)) return
 
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+  if (!projectBlock) {
+    console.error(`[v0] Projeto ${projectName} não encontrado para deleção`);
+    return;
+  }
+
   const projectId = projectBlock.dataset.projectId ? ensureStringId(projectBlock.dataset.projectId) : null
 
   projectBlock.remove()
 
+  // CORREÇÃO 4: Lógica de deleção simplificada e robusta
   if (projectId) {
-    addProjectToRemovedList(projectId)
-    window.GeralCount--; // ← CORRIGIR: usar window.GeralCount
-    console.log(`[v0] GeralCount decrementado: ${window.GeralCount}`)
-
-    if (window.GeralCount <= 0) {
-      window.GeralCount = 0;
-      console.log("[v0] GeralCount = 0 - Reiniciando lógica de exibição")
-      resetDisplayLogic()
-    }
+    console.log(`[v0] Deletando projeto com ID: ${projectId}`);
+    addProjectToRemovedList(projectId); // ← Esta função já chama decrementGeralCount()
+  } else {
+    console.log(`[v0] Deletando projeto sem ID: ${projectName}`);
+    decrementGeralCount(); // ← Decrementar diretamente para projetos não salvos
   }
 
-  console.log(`[v0] Projeto ${projectName} removido da interface`)
+  console.log(`[v0] Projeto ${projectName} removido - GeralCount: ${getGeralCount()}`);
+  
+  // CORREÇÃO 5: A criação do projeto base é tratada automaticamente no decrementGeralCount()
 }
 
 function verifyProjectData(projectName) {
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+  if (!projectBlock) {
+    console.error(`[v0] Projeto ${projectName} não encontrado para verificação`);
+    return;
+  }
+  
   const rooms = projectBlock.querySelectorAll(".room-block")
 
   const report = generateProjectVerificationReport(rooms)
@@ -287,7 +309,7 @@ function generateProjectVerificationReport(rooms) {
   report += `Total de salas: ${rooms.length}\n\n`
 
   rooms.forEach((room) => {
-    const roomName = room.querySelector(".room-title").textContent
+    const roomName = room.querySelector(".room-title")?.textContent || 'Sala sem nome';
     const stats = calculateRoomCompletionStats(room)
 
     report += `${roomName}: ${stats.filled}/${stats.total} campos preenchidos (${stats.percentage}%)\n`
@@ -309,36 +331,45 @@ function calculateRoomCompletionStats(room) {
   }
 }
 
+// CORREÇÃO 6: Remover as funções duplicadas - usar apenas as importadas
+// (Remover as declarações locais de updateProjectButton, saveFirstProjectIdOfSession, etc.)
+
 // ADICIONAR funções auxiliares que podem estar faltando
 function collapseElement(element, minimizerElement) {
+  if (!element || !minimizerElement) {
+    console.warn('[v0] Elemento ou minimizer não encontrado para collapse');
+    return;
+  }
+  
   element.classList.add(UI_CONSTANTS.COLLAPSED_CLASS)
   minimizerElement.textContent = UI_CONSTANTS.MINIMIZED_SYMBOL
 }
 
-// Funções que podem ser importadas de outros módulos - adicionar placeholders se necessário
-function updateProjectButton(projectName, hasId) {
-  // Esta função provavelmente está em server.js
-  console.log(`[v0] updateProjectButton chamado para ${projectName}, hasId: ${hasId}`);
+// CORREÇÃO 7: Debug aprimorado
+function debugProjectsState() {
+  console.log('=== DEBUG PROJECTS STATE ===');
+  console.log('- window.GeralCount:', window.GeralCount);
+  console.log('- getGeralCount():', getGeralCount());
+  console.log('- window.projectCounter:', window.projectCounter);
+  console.log('- Projetos no DOM:', document.querySelectorAll('.project-block').length);
+  console.log('- Container encontrado:', !!document.getElementById('projects-container'));
+  
+  const projects = document.querySelectorAll('.project-block');
+  projects.forEach((project, index) => {
+    console.log(`- Projeto ${index + 1}:`, {
+      name: project.dataset.projectName,
+      id: project.dataset.projectId,
+      hasId: !!project.dataset.projectId
+    });
+  });
 }
 
-function saveFirstProjectIdOfSession(projectId) {
-  // Esta função provavelmente está em server.js
-  console.log(`[v0] saveFirstProjectIdOfSession chamado para ${projectId}`);
-}
-
-function addProjectToRemovedList(projectId) {
-  // Esta função provavelmente está em server.js
-  console.log(`[v0] addProjectToRemovedList chamado para ${projectId}`);
-}
-
-function resetDisplayLogic() {
-  // Esta função provavelmente está em server.js
-  console.log("[v0] resetDisplayLogic chamado");
-}
+// Executar debug após um tempo
+setTimeout(debugProjectsState, 2000);
 
 export {
   fetchProjects,
-  getNextProjectId, // ← AGORA ESTÁ DEFINIDA
+  getNextProjectId,
   getNextProjectNumber,
   initializeProjectCounter,
   normalizeProjectIds,
@@ -349,5 +380,6 @@ export {
   deleteProject,
   verifyProjectData,
   generateProjectVerificationReport,
-  calculateRoomCompletionStats
+  calculateRoomCompletionStats,
+  debugProjectsState // Exportar debug para uso externo
 }

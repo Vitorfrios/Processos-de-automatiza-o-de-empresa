@@ -8,12 +8,27 @@ import { fetchProjects, normalizeProjectIds, atualizarProjeto } from './projects
 import { showSystemStatus } from '../ui/interface.js'
 import { renderProjectFromData, renderRoomFromData, populateRoomInputs } from './server-utils.js'
 
+// CORREÇÃO 1: Inicialização robusta do GeralCount
+function initializeGeralCount() {
+  if (typeof window.GeralCount === 'undefined' || window.GeralCount === null) {
+    window.GeralCount = 0;
+    console.log("[v0] window.GeralCount inicializado como 0");
+  }
+  return window.GeralCount;
+}
 
+// Inicializar imediatamente
+initializeGeralCount();
 
-// ADICIONAR a função removeBaseProjectFromHTML que estava faltando
 function removeBaseProjectFromHTML() {
   const projectsContainer = document.getElementById("projects-container")
+  if (!projectsContainer) {
+    console.error("[v0] Container de projetos não encontrado para remoção");
+    return;
+  }
+  
   const existingProjects = projectsContainer.querySelectorAll(".project-block")
+  console.log(`[v0] Removendo ${existingProjects.length} projetos base do HTML`);
 
   existingProjects.forEach((project) => {
     project.remove()
@@ -22,16 +37,21 @@ function removeBaseProjectFromHTML() {
   console.log("[v0] Projetos base do HTML removidos")
 }
 
-
 async function loadProjectsFromServer() {
   console.log("[v0] Verificando projetos da sessão atual...")
 
   const firstProjectId = sessionStorage.getItem(SESSION_STORAGE_KEY)
 
   if (!firstProjectId) {
-    console.log("[v0] Nenhum projeto salvo nesta sessão - mantendo projeto base do HTML")
-    window.GeralCount = 0; // ← CORRIGIR: usar window.GeralCount
-    return
+    console.log("[v0] Nenhum projeto salvo nesta sessão");
+    // CORREÇÃO 2: Garantir que o projeto base seja criado
+    setTimeout(() => {
+      if (getGeralCount() === 0) {
+        console.log("[v0] Nenhum projeto encontrado - criando projeto base");
+        createSingleBaseProject();
+      }
+    }, 100);
+    return;
   }
 
   console.log(`[v0] Carregando projetos a partir do ID ${firstProjectId}...`)
@@ -40,8 +60,13 @@ async function loadProjectsFromServer() {
 
   if (allProjects.length === 0) {
     console.log("[v0] Nenhum projeto encontrado no servidor")
-    window.GeralCount = 0; // ← CORRIGIR: usar window.GeralCount
-    return
+    // CORREÇÃO 3: Criar projeto base se não há projetos
+    setTimeout(() => {
+      if (getGeralCount() === 0) {
+        createSingleBaseProject();
+      }
+    }, 100);
+    return;
   }
 
   const sessionProjects = allProjects.filter((project) => {
@@ -53,13 +78,17 @@ async function loadProjectsFromServer() {
   if (sessionProjects.length === 0) {
     console.log("[v0] Nenhum projeto da sessão atual encontrado (ou todos foram removidos)")
     resetDisplayLogic()
-    return
+    // CORREÇÃO 4: Criar projeto base após reset
+    setTimeout(() => {
+      createSingleBaseProject();
+    }, 100);
+    return;
   }
 
   console.log(`[v0] ${sessionProjects.length} projeto(s) da sessão atual encontrado(s)`)
 
-  window.GeralCount = sessionProjects.length; // ← CORRIGIR: usar window.GeralCount
-  console.log(`[v0] GeralCount inicializado: ${window.GeralCount}`)
+  window.GeralCount = sessionProjects.length;
+  console.log(`[v0] GeralCount definido como: ${window.GeralCount}`)
 
   removeBaseProjectFromHTML()
 
@@ -70,21 +99,106 @@ async function loadProjectsFromServer() {
   console.log("[v0] Todos os projetos da sessão foram carregados e renderizados")
 }
 
+// FUNÇÕES PARA GERENCIAR O CONTADOR - CORRIGIDAS
+function incrementGeralCount() {
+  initializeGeralCount(); // Garantir que está inicializado
+  window.GeralCount++;
+  console.log(`[v0] GeralCount incrementado para: ${window.GeralCount}`);
+  return window.GeralCount;
+}
 
-// abaixo desta linha deve vir apenas outras funções
+function decrementGeralCount() {
+  initializeGeralCount(); // Garantir que está inicializado
+  
+  if (window.GeralCount > 0) {
+    window.GeralCount--;
+    console.log(`[v0] GeralCount decrementado para: ${window.GeralCount}`);
+    
+    // VERIFICAR SE PRECISA RESETAR
+    if (window.GeralCount === 0) {
+      console.log("[v0] GeralCount chegou a ZERO - reiniciando lógica de exibição");
+      resetDisplayLogic();
+      // CORREÇÃO 5: Pequeno delay para garantir que o DOM está pronto
+      setTimeout(() => {
+        createSingleBaseProject();
+      }, 50);
+    }
+  }
+  return window.GeralCount;
+}
+
+function getGeralCount() {
+  initializeGeralCount(); // Sempre garantir que está inicializado
+  return window.GeralCount;
+}
 
 function resetDisplayLogic() {
   sessionStorage.removeItem(SESSION_STORAGE_KEY)
-  console.log("[v0] SESSION_STORAGE_KEY limpo")
-
   sessionStorage.removeItem(REMOVED_PROJECTS_KEY)
-  console.log("[v0] REMOVED_PROJECTS_KEY limpo")
-
-  window.GeralCount = 0; // ← CORRIGIR: usar window.GeralCount
+  window.GeralCount = 0;
   console.log("[v0] Lógica de exibição reiniciada - próximo save será o novo ponto inicial")
 }
 
+// FUNÇÃO PARA CRIAR APENAS 1 PROJETO BASE - CORRIGIDA
+function createSingleBaseProject() {
+  console.log("[v0] Criando projeto base único...");
+  
+  const projectsContainer = document.getElementById("projects-container");
+  if (!projectsContainer) {
+    console.error("[v0] Container de projetos não encontrado");
+    // CORREÇÃO 6: Tentar encontrar o container novamente
+    setTimeout(() => {
+      const retryContainer = document.getElementById("projects-container");
+      if (retryContainer) {
+        console.log("[v0] Container encontrado na segunda tentativa");
+        createProjectBaseHTML(retryContainer);
+      } else {
+        console.error("[v0] Container de projetos ainda não encontrado após retry");
+      }
+    }, 100);
+    return;
+  }
+  
+  createProjectBaseHTML(projectsContainer);
+}
 
+function createProjectBaseHTML(container) {
+  // Limpar container completamente
+  container.innerHTML = '';
+  
+  // Criar apenas UM projeto base
+  const projectHTML = `
+    <div class="project-block" data-project-id="" data-project-name="Projeto1">
+      <div class="project-header">
+        <button class="minimizer" onclick="toggleProject('Projeto1')">+</button>
+        <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">Projeto1</h2>
+        <div class="project-actions">
+          <button class="btn btn-delete" onclick="deleteProject('Projeto1')">Remover</button>
+        </div>
+      </div>
+      <div class="project-content collapsed" id="project-content-Projeto1">
+        <p class="empty-message">Nenhuma sala adicionada ainda.</p>
+        <div class="add-room-section">
+          <button class="btn btn-add-secondary" onclick="addNewRoom('Projeto1')">+ Adicionar Nova Sala</button>
+        </div>
+        <div class="project-actions-footer">
+          <button class="btn btn-verify" onclick="verifyProjectData('Projeto1')">Verificar Dados</button>
+          <button class="btn btn-save project-save-btn" onclick="saveProject('Projeto1', event)" data-project-name="Projeto1">Salvar Projeto</button>
+          <button class="btn btn-download" onclick="downloadPDF('Projeto1')">Baixar PDF</button>
+          <button class="btn btn-download" onclick="downloadWord('Projeto1')">Baixar Word</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  container.innerHTML = projectHTML;
+  
+  // CORREÇÃO 7: Atualizar o contador após criar o projeto base
+  window.GeralCount = 1;
+  console.log("[v0] Projeto base único criado com sucesso - GeralCount: 1");
+}
+
+// MODIFICAR: Função saveFirstProjectIdOfSession para usar o contador
 function saveFirstProjectIdOfSession(projectId) {
   const existingId = sessionStorage.getItem(SESSION_STORAGE_KEY)
   if (!existingId) {
@@ -92,10 +206,14 @@ function saveFirstProjectIdOfSession(projectId) {
     if (idAsInteger !== null) {
       sessionStorage.setItem(SESSION_STORAGE_KEY, idAsInteger.toString())
       console.log(`[v0] Primeiro projeto da sessão salvo: ID ${idAsInteger}`)
+      
+      // CORREÇÃO 8: Usar incrementGeralCount em vez de setar diretamente
+      incrementGeralCount();
     }
   }
 }
 
+// MODIFICAR: Função addProjectToRemovedList para decrementar contador
 function addProjectToRemovedList(projectId) {
   projectId = ensureStringId(projectId)
 
@@ -105,6 +223,9 @@ function addProjectToRemovedList(projectId) {
     removedList.push(projectId)
     sessionStorage.setItem(REMOVED_PROJECTS_KEY, JSON.stringify(removedList))
     console.log(`[v0] Projeto ID ${projectId} adicionado à lista de removidos`)
+    
+    // DECREMENTAR CONTADOR
+    decrementGeralCount();
   }
 }
 
@@ -120,12 +241,18 @@ function isProjectRemoved(projectId) {
 
 function updateProjectButton(projectName, hasId) {
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  if (!projectBlock) return
+  if (!projectBlock) {
+    console.warn(`[v0] Projeto ${projectName} não encontrado para atualizar botão`);
+    return;
+  }
 
   const saveButton = projectBlock.querySelector(
     ".project-actions-footer .btn-save, .project-actions-footer .btn-update",
   )
-  if (!saveButton) return
+  if (!saveButton) {
+    console.warn(`[v0] Botão de save não encontrado no projeto ${projectName}`);
+    return;
+  }
 
   if (hasId) {
     saveButton.textContent = "Atualizar Projeto"
@@ -189,7 +316,17 @@ async function normalizeAllProjectsOnServer() {
   }
 }
 
-// CORRIGIR AS EXPORTAÇÕES - garantir que cada função é exportada apenas uma vez
+// CORREÇÃO 9: Adicionar função de debug
+function debugGeralCount() {
+  console.log('=== DEBUG GERALCOUNT ===');
+  console.log('- window.GeralCount:', window.GeralCount);
+  console.log('- getGeralCount():', getGeralCount());
+  console.log('- sessionStorage SESSION_STORAGE_KEY:', sessionStorage.getItem(SESSION_STORAGE_KEY));
+  console.log('- Projetos no DOM:', document.querySelectorAll('.project-block').length);
+  console.log('- Container encontrado:', !!document.getElementById('projects-container'));
+}
+
+// EXPORTAR AS NOVAS FUNÇÕES DO CONTADOR
 export {
   loadProjectsFromServer,
   removeBaseProjectFromHTML,
@@ -202,5 +339,11 @@ export {
   getRemovedProjectsList,
   isProjectRemoved,
   updateProjectButton,
-  resetDisplayLogic
+  resetDisplayLogic,
+  // NOVAS FUNÇÕES DO CONTADOR
+  incrementGeralCount,
+  decrementGeralCount,
+  getGeralCount,
+  createSingleBaseProject,
+  debugGeralCount // Adicionar debug para testes
 }

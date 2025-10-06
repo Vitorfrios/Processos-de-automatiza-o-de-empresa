@@ -13,7 +13,7 @@ console.log("[v0] Variáveis globais inicializadas:", {
   GeralCount: window.GeralCount
 });
 // Importar APENAS o necessário para inicialização
-import { normalizeAllProjectsOnServer, loadProjectsFromServer } from './data/server.js'
+import { normalizeAllProjectsOnServer, loadProjectsFromServer,getGeralCount, createSingleBaseProject } from './data/server.js'
 
 // Carregar módulos dinamicamente
 let modulesLoaded = false;
