@@ -1,3 +1,4 @@
+/*
 // ============================================
 // CONFIGURAÇÃO DA API
 // ============================================
@@ -2213,3 +2214,5 @@ function resetDisplayLogic() {
   GeralCount = 0
   console.log("[v0] Lógica de exibição reiniciada - próximo save será o novo ponto inicial")
 }
+//arrumar depois que exclui todos os projetos nao reinicia a projeto 1 novamente
+// ex  tem 5 projetos deps que exclui tudo o proximo ao add será projeto 6 arrumar para ser projeto 1

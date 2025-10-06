@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "npx concurrently \"npx live-server codigo --open=/index.html\" \"npm run server1\" \"npm run server2\"",
+    "start": "npx concurrently \"npx live-server codigo --open=/public/pages/index.html\" \"npm run server1\" \"npm run server2\"",
     "server1": "json-server --watch codigo/json/backup.json --port 3004",
     "server2": "json-server --watch codigo/json/dados.json --port 3001",
     "dev": "next dev",
