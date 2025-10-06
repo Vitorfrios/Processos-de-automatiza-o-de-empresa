@@ -146,7 +146,6 @@ function createSingleBaseProject() {
   const projectsContainer = document.getElementById("projects-container");
   if (!projectsContainer) {
     console.error("[v0] Container de projetos não encontrado");
-    // CORREÇÃO 6: Tentar encontrar o container novamente
     setTimeout(() => {
       const retryContainer = document.getElementById("projects-container");
       if (retryContainer) {
@@ -155,7 +154,7 @@ function createSingleBaseProject() {
       } else {
         console.error("[v0] Container de projetos ainda não encontrado após retry");
       }
-    }, 100);
+    }, 1000);
     return;
   }
   
@@ -192,6 +191,12 @@ function createProjectBaseHTML(container) {
   `;
   
   container.innerHTML = projectHTML;
+  
+  // CORREÇÃO: CRIAR PRIMEIRA SALA AUTOMATICAMENTE
+  setTimeout(() => {
+    console.log("[v0] Criando primeira sala automaticamente para Projeto1");
+    addNewRoom('Projeto1'); // ← ADICIONAR ESTA LINHA
+  }, 800);
   
   // CORREÇÃO 7: Atualizar o contador após criar o projeto base
   window.GeralCount = 1;

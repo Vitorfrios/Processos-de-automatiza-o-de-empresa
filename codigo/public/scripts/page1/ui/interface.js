@@ -132,11 +132,12 @@ async function addNewProject() {
     const projectName = `Projeto${projectNumber}`
 
     createEmptyProject(projectName, null)
-
-    const defaultRoomName = "Sala 1"
+ 
+    const defaultRoomName = "Sala1"
     createEmptyRoom(projectName, defaultRoomName, null)
-
+    
     console.log(`[v0] ${projectName} adicionado com sala padrão: ${defaultRoomName}`)
+    
   } catch (error) {
     console.error("[v0] Erro ao adicionar novo projeto:", error)
     alert("Erro ao criar novo projeto. Verifique o console para detalhes.")

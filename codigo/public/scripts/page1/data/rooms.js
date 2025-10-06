@@ -3,13 +3,28 @@ import { calculateVazaoArAndThermalGains } from '../calculos/calculos.js'
 
 
 function createEmptyRoom(projectName, roomName, roomId) {
-  const projectContent = document.getElementById(`project-content-${projectName}`)
   const roomHTML = buildRoomHTML(projectName, roomName, roomId)
+  const projectContent = document.getElementById(`project-content-${projectName}`)
+  
+  if (!projectContent) {
+    console.error(`[v0] Conteúdo do projeto ${projectName} não encontrado para adicionar sala`)
+    return false
+  }
 
-  insertRoomIntoProject(projectContent, roomHTML)
+  // Remover mensagem de "nenhuma sala" se existir
   removeEmptyProjectMessage(projectContent)
+  
+  // Inserir a sala antes do botão "Adicionar Nova Sala"
+  const addRoomSection = projectContent.querySelector('.add-room-section')
+  if (addRoomSection) {
+    addRoomSection.insertAdjacentHTML('beforebegin', roomHTML)
+  } else {
+    // Se não encontrar a seção, inserir no final
+    projectContent.insertAdjacentHTML('beforeend', roomHTML)
+  }
 
-  console.log(`[v0] Sala ${roomName} criada`)
+  console.log(`[v0] Sala ${roomName} criada no projeto ${projectName}`)
+  return true
 }
 
 function buildRoomHTML(projectName, roomName, roomId) {
