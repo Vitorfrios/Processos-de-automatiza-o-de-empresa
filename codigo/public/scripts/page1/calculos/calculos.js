@@ -4,11 +4,11 @@ import {
 
 async function waitForSystemConstants() {
   let attempts = 0;
-  const maxAttempts = 100; // Aumentei para dar mais tempo
+  const maxAttempts = 100;
   
   while ((!window.systemConstants || !window.systemConstants.VARIAVEL_PD) && attempts < maxAttempts) {
     console.log("[v0] Aguardando constantes do sistema...", attempts);
-    await new Promise((resolve) => setTimeout(resolve, 200)); // Aumentei o intervalo
+    await new Promise((resolve) => setTimeout(resolve, 200));
     attempts++;
   }
   
@@ -50,35 +50,37 @@ function collectClimatizationInputs(climaSection, roomId) {
     const field = input.dataset.field
     let value = input.value
     
-    // Converter para número se for campo numérico
-    if (input.type === 'number' || input.tagName === 'SELECT') {
-      value = value !== "" ? Number.parseFloat(value) || 0 : 0
+    // Converter para número APENAS se for campo numérico E tiver valor
+    if (input.type === 'number') {
+      // Para campos numéricos, manter vazio se não preenchido
+      value = value !== "" ? Number.parseFloat(value) : ""
+    } else if (input.tagName === 'SELECT') {
+      // Para selects, manter o value como string
+      value = value !== "" ? value : ""
+    } else if (input.type === 'text') {
+      // Para textos, manter como string
+      value = value !== "" ? value : ""
     }
     
     data[field] = value
   })
 
-  // Garantir valores padrão para campos obrigatórios
-  const requiredFields = ['peDireito', 'numPortasDuplas', 'numPortasSimples', 'pressurizacao'];
-  requiredFields.forEach(field => {
-    if (data[field] === undefined || data[field] === null || data[field] === "") {
-      data[field] = 0;
-    }
-  });
-
-  console.log("[v0] Dados coletados para cálculo:", data)
+  console.log("[v0] Dados coletados para cálculo (valores originais):", data)
   return data
 }
 
+
 function computeAirFlowRate(inputData) {
-  const { numPortasDuplas = 0, numPortasSimples = 0, pressurizacao = 0 } = inputData
+  // Usar valores padrão apenas se estiverem vazios
+  const numPortasDuplas = inputData.numPortasDuplas || 0
+  const numPortasSimples = inputData.numPortasSimples || 0
+  const pressurizacao = inputData.pressurizacao || 0
 
   console.log("[v0] ===== CÁLCULO DE VAZÃO =====")
   console.log("[v0] Portas Duplas:", numPortasDuplas)
   console.log("[v0] Portas Simples:", numPortasSimples)
   console.log("[v0] Pressurização (Pa):", pressurizacao)
 
-  // Obter constantes do sistema
   console.log("[v0] Constantes do sistema:", window.systemConstants)
 
   if (!window.systemConstants || !window.systemConstants.VARIAVEL_PD || !window.systemConstants.VARIAVEL_PS) {
@@ -108,14 +110,12 @@ function computeAirFlowRate(inputData) {
 }
 
 function calculateDoorFlow(doorCount, doorVariable, pressure) {
-  // Garantir que todos os valores são números válidos
   const count = Number(doorCount) || 0
   const variable = Number(doorVariable) || 0
   const press = Number(pressure) || 0
   
   console.log(`[v0] calculateDoorFlow: count=${count}, variable=${variable}, pressure=${press}`)
   
-  // Verificar se pressure é maior que 0 para evitar NaN
   const pressureExponent = press > 0 ? Math.pow(press, CALCULATION_CONSTANTS.PRESSURE_EXPONENT) : 0
   
   const flow = CALCULATION_CONSTANTS.FLOW_COEFFICIENT *
@@ -164,7 +164,6 @@ async function calculateVazaoAr(roomId) {
   }
 }
 
-
 function updateFlowRateDisplay(roomId, flowRate) {
   const resultElement = document.getElementById(`vazao-ar-${roomId}`)
   if (resultElement) {
@@ -173,8 +172,8 @@ function updateFlowRateDisplay(roomId, flowRate) {
 }
 
 async function calculateVazaoArAndThermalGains(roomId) {
-  const flowRate = await calculateVazaoAr(roomId)
-  await calculateThermalGains(roomId, flowRate)
+  const flowRate = await calculateVazaoAr(roomId);
+  await calculateThermalGains(roomId, flowRate);
 }
 
 async function calculateThermalGains(roomId, vazaoArExterno = 0) {
@@ -189,71 +188,89 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
   if (!climaSection) return
 
   const inputData = collectClimatizationInputs(climaSection, roomId)
-  inputData.vazaoArExterno = vazaoArExterno
+  
+  // Aplicar valores padrão APENAS para cálculos, mantendo inputs vazios
+  const calcData = {
+    ...inputData,
+    area: inputData.area || 0,
+    paredeOeste: inputData.paredeOeste || 0,
+    paredeLeste: inputData.paredeLeste || 0,
+    paredeNorte: inputData.paredeNorte || 0,
+    paredeSul: inputData.paredeSul || 0,
+    peDireito: inputData.peDireito || 0,
+    divisoriaNaoClima1: inputData.divisoriaNaoClima1 || 0,
+    divisoriaNaoClima2: inputData.divisoriaNaoClima2 || 0,
+    divisoriaClima1: inputData.divisoriaClima1 || 0,
+    divisoriaClima2: inputData.divisoriaClima2 || 0,
+    dissipacao: inputData.dissipacao || 0,
+    numPessoas: inputData.numPessoas || 0,
+    vazaoArExterno: vazaoArExterno
+  }
 
   console.log("[v0] ===== CÁLCULO DE GANHOS TÉRMICOS =====")
-  console.log("[v0] Dados de entrada:", inputData)
+  console.log("[v0] Dados de entrada (originais):", inputData)
+  console.log("[v0] Dados para cálculo (com defaults):", calcData)
   console.log("[v0] Vazão de ar externo:", vazaoArExterno)
 
-  const uValues = calculateUValues(inputData.tipoConstrucao)
-  const auxVars = calculateAuxiliaryVariables(inputData)
+  const uValues = calculateUValues(calcData.tipoConstrucao)
+  const auxVars = calculateAuxiliaryVariables(calcData)
 
   const gains = {
-    teto: calculateCeilingGain(inputData.area, uValues.teto, systemConstants.deltaT_teto),
+    teto: calculateCeilingGain(calcData.area, uValues.teto, window.systemConstants.deltaT_teto),
     paredeOeste: calculateWallGain(
-      inputData.paredeOeste,
-      inputData.peDireito,
+      calcData.paredeOeste,
+      calcData.peDireito,
       uValues.parede,
-      systemConstants.deltaT_parede_Oes,
+      window.systemConstants.deltaT_parede_Oes,
     ),
     paredeLeste: calculateWallGain(
       inputData.paredeLeste,
       inputData.peDireito,
       uValues.parede,
-      systemConstants.deltaT_parede_Les,
+      window.systemConstants.deltaT_parede_Les,
     ),
     paredeNorte: calculateWallGain(
       inputData.paredeNorte,
       inputData.peDireito,
       uValues.parede,
-      systemConstants.deltaT_parede_Nor,
+      window.systemConstants.deltaT_parede_Nor,
     ),
     paredeSul: calculateWallGain(
       inputData.paredeSul,
       inputData.peDireito,
       uValues.parede,
-      systemConstants.deltaT_parede_Sul,
+      window.systemConstants.deltaT_parede_Sul,
     ),
     divisoriaNaoClima1: calculatePartitionGain(
       inputData.divisoriaNaoClima1,
       inputData.peDireito,
       uValues.parede,
-      systemConstants.deltaT_divi_N_clim1,
+      window.systemConstants.deltaT_divi_N_clim1,
     ),
     divisoriaNaoClima2: calculatePartitionGain(
       inputData.divisoriaNaoClima2,
       inputData.peDireito,
       uValues.parede,
-      systemConstants.deltaT_divi_N_clim2,
+      window.systemConstants.deltaT_divi_N_clim2,
     ),
     divisoriaClima1: calculatePartitionGain(
       inputData.divisoriaClima1,
       inputData.peDireito,
       uValues.parede,
-      systemConstants.deltaT_divi_clim1,
+      window.systemConstants.deltaT_divi_clim1,
     ),
     divisoriaClima2: calculatePartitionGain(
       inputData.divisoriaClima2,
       inputData.peDireito,
       uValues.parede,
-      systemConstants.deltaT_divi_clim2,
+      window.systemConstants.deltaT_divi_clim2,
     ),
-    piso: calculateFloorGain(inputData.area, systemConstants),
-    iluminacao: calculateLightingGain(inputData.area, systemConstants),
-    dissipacao: calculateDissipationGain(inputData.dissipacao, systemConstants),
-    pessoas: calculatePeopleGain(inputData.numPessoas, systemConstants),
-    arSensivel: calculateExternalAirSensibleGain(inputData.vazaoArExterno || 0, auxVars, systemConstants),
-    arLatente: calculateExternalAirLatentGain(inputData.vazaoArExterno || 0, systemConstants),
+    piso: calculateFloorGain(inputData.area, window.systemConstants),
+    iluminacao: calculateLightingGain(inputData.area, window.systemConstants),
+    dissipacao: calculateDissipationGain(inputData.dissipacao, window.systemConstants),
+    pessoas: calculatePeopleGain(inputData.numPessoas, window.systemConstants),
+    arSensivel: calculateExternalAirSensibleGain(inputData.vazaoArExterno || 0, auxVars, window.systemConstants),
+    arLatente: calculateExternalAirLatentGain(inputData.vazaoArExterno || 0, window.systemConstants),
   }
 
   const totals = calculateTotals(gains)
@@ -266,36 +283,47 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
 }
 
 function calculateUValues(tipoConstrucao) {
-  const constants = systemConstants.get();
   const U_VALUE_ALVENARIA_TETO = 3.961
   const U_VALUE_ALVENARIA_PAREDE = 2.546
   const U_VALUE_LA_ROCHA_TETO = 1.145
   const U_VALUE_LA_ROCHA_PAREDE = 1.12
 
+  console.log(`[v0] calculateUValues chamado com tipoConstrucao: "${tipoConstrucao}" (tipo: ${typeof tipoConstrucao})`)
+
   let uValueParede, uValueTeto
 
   if (tipoConstrucao === "eletrocentro") {
+    console.log("[v0] Tipo de construção identificado: ELETROCENTRO")
     uValueParede = U_VALUE_LA_ROCHA_PAREDE
     uValueTeto = U_VALUE_LA_ROCHA_TETO
   } else if (tipoConstrucao === "alvenaria") {
+    console.log("[v0] Tipo de construção identificado: ALVENARIA")
     uValueParede = U_VALUE_ALVENARIA_PAREDE
     uValueTeto = U_VALUE_ALVENARIA_TETO
+  } else if (tipoConstrucao === "" || tipoConstrucao === null || tipoConstrucao === undefined) {
+    console.log("[v0] Tipo de construção não selecionado")
+    uValueParede = 0
+    uValueTeto = 0
   } else {
     console.error("[v0] Tipo de construção inválido:", tipoConstrucao)
     uValueParede = 0
     uValueTeto = 0
   }
 
-  return {
+  const result = {
     parede: uValueParede,
     teto: uValueTeto,
-    piso: constants?.AUX_U_Value_Piso || 2.7,
+    piso: window.systemConstants?.AUX_U_Value_Piso || 2.7,
   }
+
+  console.log("[v0] UValues calculados:", result)
+  return result
 }
 
 function calculateAuxiliaryVariables(inputData) {
   const vazaoArExterno = inputData.vazaoArExterno || 0
-  const densiAr = systemConstants.Densi_ar || 1.17
+  const densiAr = window.systemConstants?.Densi_ar || 1.17
+
   const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000
 
   return {
@@ -318,26 +346,26 @@ function calculatePartitionGain(inputArea, peDireito, uValue, deltaT) {
 }
 
 function calculateFloorGain(area, constants) {
-  const uValue = constants.AUX_U_Value_Piso || 2.7
-  const deltaT = constants.deltaT_piso || 7.5
+  const uValue = window.systemConstants?.AUX_U_Value_Piso || 2.7
+  const deltaT = window.systemConstants?.deltaT_piso || 7.5
   return (area || 0) * uValue * deltaT
 }
 
 function calculateLightingGain(area, constants) {
-  const fatorIluminacao = constants.AUX_Fator_Iluminacao || 7
-  const fsIluminacao = constants.AUX_Fs_Iluminacao || 1
+  const fatorIluminacao = window.systemConstants?.AUX_Fator_Iluminacao || 7
+  const fsIluminacao = window.systemConstants?.AUX_Fs_Iluminacao || 1
   return (area || 0) * fatorIluminacao * fsIluminacao
 }
 
 function calculateDissipationGain(dissipacao, constants) {
-  const fatorConversao = constants.AUX_Fator_Conver_Painel || 1
-  const fsPaineis = constants.AUX_Fs_Paineis || 100
+  const fatorConversao = window.systemConstants?.AUX_Fator_Conver_Painel || 1
+  const fsPaineis = window.systemConstants?.AUX_Fs_Paineis || 100
   return (fatorConversao * (dissipacao || 0) * fsPaineis) / 100
 }
 
 function calculatePeopleGain(numPessoas, constants) {
-  const csp = constants.AUX_OCp_Csp || 86.5
-  const clp = constants.AUX_OCp_Clp || 133.3
+  const csp = window.systemConstants?.AUX_OCp_Csp || 86.5
+  const clp = window.systemConstants?.AUX_OCp_Clp || 133.3
   const fsPessoas = 100
   const pessoas = numPessoas || 0
   const ganhoSensivel = (csp * pessoas * fsPessoas) / 100
@@ -346,15 +374,15 @@ function calculatePeopleGain(numPessoas, constants) {
 }
 
 function calculateExternalAirSensibleGain(vazaoArExterno, auxVars, constants) {
-  const c_ArExterno = constants.AUX_c_ArExterno || 0.24
-  const deltaT_ArExterno = constants.AUX_deltaT_ArExterno || 10
+  const c_ArExterno = window.systemConstants?.AUX_c_ArExterno || 0.24
+  const deltaT_ArExterno = window.systemConstants?.AUX_deltaT_ArExterno || 10
   const calc_Gsens_ArE = auxVars.m_ArExterno * c_ArExterno * deltaT_ArExterno
   return (calc_Gsens_ArE / 1000) * 1.16
 }
 
 function calculateExternalAirLatentGain(vazaoArExterno, constants) {
-  const f_ArExterno = constants.AUX_f_ArExterno || 3.01
-  const deltaUa_ArExterno = constants.AUX_deltaUa_ArExterno || 8.47
+  const f_ArExterno = window.systemConstants?.AUX_f_ArExterno || 3.01
+  const deltaUa_ArExterno = window.systemConstants?.AUX_deltaUa_ArExterno || 8.47
   return (vazaoArExterno || 0) * f_ArExterno * deltaUa_ArExterno
 }
 
@@ -396,7 +424,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
 
   updateElementText(`area-teto-${roomId}`, Math.ceil(inputData.area || 0))
   updateElementText(`uvalue-teto-${roomId}`, uValues.teto.toFixed(3))
-  updateElementText(`deltat-teto-${roomId}`, systemConstants.deltaT_teto || 20)
+  updateElementText(`deltat-teto-${roomId}`, window.systemConstants?.deltaT_teto || 20)
   updateElementText(`ganho-teto-${roomId}`, Math.ceil(gains.teto))
 
   updateWallDisplay(
@@ -406,7 +434,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     inputData.paredeOeste,
     inputData.peDireito,
-    systemConstants.deltaT_parede_Oes,
+    window.systemConstants?.deltaT_parede_Oes || 0,
   )
 
   updateWallDisplay(
@@ -416,7 +444,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     inputData.paredeLeste,
     inputData.peDireito,
-    systemConstants.deltaT_parede_Les,
+    window.systemConstants?.deltaT_parede_Les || 0,
   )
 
   updateWallDisplay(
@@ -426,7 +454,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     inputData.paredeNorte,
     inputData.peDireito,
-    systemConstants.deltaT_parede_Nor,
+    window.systemConstants?.deltaT_parede_Nor || 0,
   )
 
   updateWallDisplay(
@@ -436,7 +464,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     inputData.paredeSul,
     inputData.peDireito,
-    systemConstants.deltaT_parede_Sul,
+    window.systemConstants?.deltaT_parede_Sul || 0,
   )
 
   updatePartitionDisplay(
@@ -446,7 +474,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     inputData.divisoriaNaoClima1,
     inputData.peDireito,
-    systemConstants.deltaT_divi_N_clim1,
+    window.systemConstants?.deltaT_divi_N_clim1 || 0,
   )
 
   updatePartitionDisplay(
@@ -456,7 +484,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     inputData.divisoriaNaoClima2,
     inputData.peDireito,
-    systemConstants.deltaT_divi_N_clim2,
+    window.systemConstants?.deltaT_divi_N_clim2 || 0,
   )
 
   updatePartitionDisplay(
@@ -466,7 +494,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     inputData.divisoriaClima1,
     inputData.peDireito,
-    systemConstants.deltaT_divi_clim1,
+    window.systemConstants?.deltaT_divi_clim1 || 0,
   )
 
   updatePartitionDisplay(
@@ -476,48 +504,48 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
     uValues.parede,
     inputData.divisoriaClima2,
     inputData.peDireito,
-    systemConstants.deltaT_divi_clim2,
+    window.systemConstants?.deltaT_divi_clim2 || 0,
   )
 
   updateElementText(`area-piso-${roomId}`, Math.ceil(inputData.area || 0))
   updateElementText(`uvalue-piso-${roomId}`, uValues.piso.toFixed(3))
-  updateElementText(`deltat-piso-${roomId}`, systemConstants.deltaT_piso || 5)
+  updateElementText(`deltat-piso-${roomId}`, window.systemConstants?.deltaT_piso || 5)
   updateElementText(`ganho-piso-${roomId}`, Math.ceil(gains.piso))
   updateElementText(`total-piso-${roomId}`, totals.piso)
 
   updateElementText(`area-iluminacao-${roomId}`, Math.ceil(inputData.area || 0))
-  updateElementText(`fator-iluminacao-${roomId}`, systemConstants.AUX_Fator_Iluminacao || 7)
-  updateElementText(`fs-iluminacao-${roomId}`, systemConstants.AUX_Fs_Iluminacao || 1)
+  updateElementText(`fator-iluminacao-${roomId}`, window.systemConstants?.AUX_Fator_Iluminacao || 7)
+  updateElementText(`fs-iluminacao-${roomId}`, window.systemConstants?.AUX_Fs_Iluminacao || 1)
   updateElementText(`ganho-iluminacao-${roomId}`, Math.ceil(gains.iluminacao))
   updateElementText(`total-iluminacao-${roomId}`, totals.iluminacao)
 
-  updateElementText(`fator-conversao-dissi-${roomId}`, systemConstants.AUX_Fator_Conver_Painel || 1)
+  updateElementText(`fator-conversao-dissi-${roomId}`, window.systemConstants?.AUX_Fator_Conver_Painel || 1)
   updateElementText(`pe-dissi-${roomId}`, inputData.dissipacao || 0)
-  updateElementText(`fs-dissi-${roomId}`, systemConstants.AUX_Fs_Paineis || 100)
+  updateElementText(`fs-dissi-${roomId}`, window.systemConstants?.AUX_Fs_Paineis || 100)
   updateElementText(`ganho-dissi-${roomId}`, Math.ceil(gains.dissipacao))
   updateElementText(`total-dissi-${roomId}`, totals.equipamentos)
 
-  updateElementText(`csp-pessoas-${roomId}`, systemConstants.AUX_OCp_Csp || 86.5)
-  updateElementText(`clp-pessoas-${roomId}`, systemConstants.AUX_OCp_Clp || 133.3)
+  updateElementText(`csp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Csp || 86.5)
+  updateElementText(`clp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Clp || 133.3)
   updateElementText(`o-pessoas-${roomId}`, inputData.numPessoas || 0)
   updateElementText(`fs-pessoas-${roomId}`, 100)
   updateElementText(`ganho-pessoas-${roomId}`, Math.ceil(gains.pessoas))
   updateElementText(`total-pessoas-${roomId}`, totals.pessoas)
 
   const vazaoArExterno = inputData.vazaoArExterno || 0
-  const densiAr = systemConstants.Densi_ar || 1.17
+  const densiAr = window.systemConstants?.Densi_ar || 1.17
   const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000
 
   updateElementText(`vazao-ar-externo-${roomId}`, vazaoArExterno)
   updateElementText(`m-ar-sensivel-${roomId}`, Math.ceil(m_ArExterno))
-  updateElementText(`c-ar-sensivel-${roomId}`, systemConstants.AUX_c_ArExterno || 0.24)
-  updateElementText(`deltat-ar-sensivel-${roomId}`, systemConstants.AUX_deltaT_ArExterno || 10)
+  updateElementText(`c-ar-sensivel-${roomId}`, window.systemConstants?.AUX_c_ArExterno || 0.24)
+  updateElementText(`deltat-ar-sensivel-${roomId}`, window.systemConstants?.AUX_deltaT_ArExterno || 10)
   updateElementText(`ganho-ar-sensivel-${roomId}`, Math.ceil(gains.arSensivel))
   updateElementText(`total-ar-sensivel-${roomId}`, totals.arSensivel)
 
   updateElementText(`var-ar-latente-${roomId}`, vazaoArExterno)
-  updateElementText(`f-ar-latente-${roomId}`, systemConstants.AUX_f_ArExterno || 3.01)
-  updateElementText(`deltaua-ar-latente-${roomId}`, systemConstants.AUX_deltaUa_ArExterno || 8.47)
+  updateElementText(`f-ar-latente-${roomId}`, window.systemConstants?.AUX_f_ArExterno || 3.01)
+  updateElementText(`deltaua-ar-latente-${roomId}`, window.systemConstants?.AUX_deltaUa_ArExterno || 8.47)
   updateElementText(`ganho-ar-latente-${roomId}`, Math.ceil(gains.arLatente))
   updateElementText(`total-ar-latente-${roomId}`, totals.arLatente)
 

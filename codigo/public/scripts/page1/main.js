@@ -2,11 +2,16 @@ import {
   API_CONFIG
 } from './config/config.js'
 
-// Variáveis globais simples
+// Inicializar variáveis globais simples
 window.systemConstants = null;
 window.projectCounter = 0;
 window.GeralCount = 0;
 
+console.log("[v0] Variáveis globais inicializadas:", {
+  systemConstants: window.systemConstants,
+  projectCounter: window.projectCounter,
+  GeralCount: window.GeralCount
+});
 // Importar APENAS o necessário para inicialização
 import { normalizeAllProjectsOnServer, loadProjectsFromServer } from './data/server.js'
 
@@ -22,7 +27,8 @@ async function loadAllModules() {
       import('./ui/edit.js'),
       import('./data/projects.js'),
       import('./data/rooms.js'),
-      import('./calculos/calculos.js')
+      import('./calculos/calculos.js'),
+      import('./utils/utils.js') // ← ADICIONAR utils
     ]);
 
     const [
@@ -30,7 +36,8 @@ async function loadAllModules() {
       editModule,
       projectsModule,
       roomsModule,
-      calculosModule
+      calculosModule,
+      utilsModule // ← NOVO MÓDULO
     ] = modules;
 
     // Atribuir TODAS as funções ao window
@@ -65,7 +72,10 @@ async function loadAllModules() {
       // Cálculos
       calculateVazaoArAndThermalGains: calculosModule.calculateVazaoArAndThermalGains,
       calculateVazaoAr: calculosModule.calculateVazaoAr,
-      calculateThermalGains: calculosModule.calculateThermalGains
+      calculateThermalGains: calculosModule.calculateThermalGains,
+
+      // Utils
+      ensureStringId: utilsModule.ensureStringId // ← ADICIONAR
     });
 
     modulesLoaded = true;
@@ -106,7 +116,6 @@ async function loadSystemConstants() {
     if (window.showSystemStatus) {
       window.showSystemStatus("ERRO CRÍTICO: Não foi possível carregar as constantes do sistema. Verifique o servidor.", "error")
     }
-    // NÃO usar fallback - parar a execução se não carregar do JSON
     throw error;
   }
 }
@@ -115,16 +124,19 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.log("[v0] Inicializando sistema...")
   
   try {
-    // Carregar módulos primeiro
+    // 1. Carregar módulos primeiro
     await loadAllModules();
     
-    // Carregar constantes do sistema ANTES de qualquer cálculo
+    // 2. Normalizar projetos no servidor
+    await normalizeAllProjectsOnServer()
+    
+    // 3. Carregar constantes do sistema
     await loadSystemConstants();
     
-    await normalizeAllProjectsOnServer()
+    // 4. AGORA carregar projetos do servidor (depois das constantes)
     await loadProjectsFromServer()
     
-    // Inicializar project counter usando a função do módulo
+    // 5. Inicializar project counter
     if (window.initializeProjectCounter) {
       await window.initializeProjectCounter();
     }
@@ -134,7 +146,13 @@ window.addEventListener("DOMContentLoaded", async () => {
     
   } catch (error) {
     console.error("[v0] ERRO na inicialização do sistema:", error);
-    alert("ERRO: Não foi possível inicializar o sistema. Verifique o console para detalhes.");
+    
+    // Mostrar projeto base mesmo com erro
+    console.log("[v0] Mantendo projeto base do HTML devido ao erro");
+    
+    if (window.showSystemStatus) {
+      window.showSystemStatus("Sistema carregado com avisos - verifique o console", "warning")
+    }
   }
 })
 

@@ -2,11 +2,11 @@ import { createEmptyProject } from '../ui/interface.js'
 import { createEmptyRoom } from './rooms.js'
 import { updateProjectButton } from './server.js'
 import { calculateVazaoArAndThermalGains } from '../calculos/calculos.js'
-
+import { ensureStringId } from '../utils/utils.js' // ← CORRIGIR IMPORT
 
 function renderProjectFromData(projectData) {
   const projectName = projectData.nome
-  const projectId = ensureStringId(projectData.id)
+  const projectId = ensureStringId(projectData.id) // ← AGORA ESTÁ IMPORTADA
 
   console.log(`[v0] Renderizando projeto: ${projectName} (ID: ${projectId})`)
 
@@ -29,8 +29,8 @@ function renderProjectFromData(projectData) {
   }
 
   const projectNumber = Number.parseInt(projectName.replace("Projeto", "")) || 0
-  if (projectNumber > projectCounter) {
-    projectCounter = projectNumber
+  if (projectNumber > window.projectCounter) {
+    window.projectCounter = projectNumber
   }
 
   console.log(`[v0] Projeto ${projectName} renderizado com sucesso`)
@@ -38,7 +38,7 @@ function renderProjectFromData(projectData) {
 
 function renderRoomFromData(projectName, roomData) {
   const roomName = roomData.nome
-  const roomId = ensureStringId(roomData.id)
+  const roomId = ensureStringId(roomData.id) // ← AGORA ESTÁ IMPORTADA
 
   console.log(`[v0] Renderizando sala: ${roomName} no projeto ${projectName}`)
 

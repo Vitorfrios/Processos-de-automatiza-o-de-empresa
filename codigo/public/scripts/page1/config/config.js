@@ -23,40 +23,6 @@ const SESSION_STORAGE_KEY = "firstProjectIdOfSession"
 const REMOVED_PROJECTS_KEY = "removedProjectsFromScreen"
 const NORMALIZATION_DONE_KEY = "idsNormalizedOnServer"
 
-// Estado mutável usando closure
-let _systemConstants = null;
-let _projectCounter = 0;
-let _GeralCount = 0;
-
-// Exportar funções para acessar e modificar o estado
-export const systemConstants = {
-  get: () => _systemConstants,
-  set: (value) => {
-    _systemConstants = value;
-    console.log("[v0] systemConstants atualizado:", _systemConstants);
-  }
-};
-
-export const projectCounter = {
-  get: () => _projectCounter,
-  set: (value) => {
-    _projectCounter = value;
-    console.log("[v0] projectCounter atualizado:", _projectCounter);
-  },
-  increment: () => {
-    _projectCounter++;
-    console.log("[v0] projectCounter incrementado:", _projectCounter);
-    return _projectCounter;
-  }
-};
-
-export const GeralCount = {
-  get: () => _GeralCount,
-  set: (value) => {
-    _GeralCount = value;
-    console.log("[v0] GeralCount atualizado:", _GeralCount);
-  }
-};
 
 export {
   API_CONFIG,

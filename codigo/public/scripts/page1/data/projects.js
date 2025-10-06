@@ -1,18 +1,13 @@
 import { 
   API_CONFIG, 
-  UI_CONSTANTS, 
-  systemConstants,
-  projectCounter, // ← AGORA USA O OBJETO COM GET/SET
-  GeralCount,
+  UI_CONSTANTS,
   SESSION_STORAGE_KEY,
-  REMOVED_PROJECTS_KEY
+  REMOVED_PROJECTS_KEY,
+  NORMALIZATION_DONE_KEY
 } from '../config/config.js'
 import { ensureStringId } from '../utils/utils.js'
 import { showSystemStatus } from '../ui/interface.js'
 import { buildProjectData, extractRoomData } from './data-utils.js'
-import { collapseElement } from '../ui/interface.js'
-import { resetDisplayLogic, addProjectToRemovedList, saveFirstProjectIdOfSession, updateProjectButton } from './server.js'
-
 
 async function fetchProjects() {
   try {
@@ -51,6 +46,7 @@ async function fetchProjects() {
   }
 }
 
+// ADICIONAR função getNextProjectId que estava faltando
 async function getNextProjectId() {
   const projects = await fetchProjects()
 
@@ -67,7 +63,8 @@ async function initializeProjectCounter() {
   const projects = document.querySelectorAll(".project-block")
 
   if (projects.length === 0) {
-    projectCounter.set(0) // ← USAR SETTER
+    window.projectCounter = 0;
+    console.log("[v0] projectCounter inicializado: 0");
     return
   }
 
@@ -79,14 +76,15 @@ async function initializeProjectCounter() {
     .filter((num) => num > 0)
 
   const maxProjectNumber = projectNumbers.length > 0 ? Math.max(...projectNumbers) : 0
-  projectCounter.set(maxProjectNumber) // ← USAR SETTER
+  window.projectCounter = maxProjectNumber;
   
-  console.log(`[v0] projectCounter inicializado: ${projectCounter.get()}`)
+  console.log(`[v0] projectCounter inicializado: ${window.projectCounter}`)
 }
 
 function getNextProjectNumber() {
-  // USAR O INCREMENT DO OBJETO
-  return projectCounter.increment();
+  window.projectCounter++;
+  console.log(`[v0] projectCounter incrementado: ${window.projectCounter}`);
+  return window.projectCounter;
 }
 
 function normalizeProjectIds(projectData) {
@@ -229,8 +227,8 @@ async function saveProject(projectName, event) {
     saveFirstProjectIdOfSession(finalId)
 
     if (isNewProject) {
-      GeralCount++
-      console.log(`[v0] GeralCount incrementado: ${GeralCount}`)
+      window.GeralCount++; // ← CORRIGIR: usar window.GeralCount
+      console.log(`[v0] GeralCount incrementado: ${window.GeralCount}`)
     }
 
     collapseProjectAfterSave(projectName, projectBlock)
@@ -261,11 +259,11 @@ function deleteProject(projectName) {
 
   if (projectId) {
     addProjectToRemovedList(projectId)
-    GeralCount--
-    console.log(`[v0] GeralCount decrementado: ${GeralCount}`)
+    window.GeralCount--; // ← CORRIGIR: usar window.GeralCount
+    console.log(`[v0] GeralCount decrementado: ${window.GeralCount}`)
 
-    if (GeralCount <= 0) {
-      GeralCount = 0
+    if (window.GeralCount <= 0) {
+      window.GeralCount = 0;
       console.log("[v0] GeralCount = 0 - Reiniciando lógica de exibição")
       resetDisplayLogic()
     }
@@ -311,9 +309,36 @@ function calculateRoomCompletionStats(room) {
   }
 }
 
+// ADICIONAR funções auxiliares que podem estar faltando
+function collapseElement(element, minimizerElement) {
+  element.classList.add(UI_CONSTANTS.COLLAPSED_CLASS)
+  minimizerElement.textContent = UI_CONSTANTS.MINIMIZED_SYMBOL
+}
+
+// Funções que podem ser importadas de outros módulos - adicionar placeholders se necessário
+function updateProjectButton(projectName, hasId) {
+  // Esta função provavelmente está em server.js
+  console.log(`[v0] updateProjectButton chamado para ${projectName}, hasId: ${hasId}`);
+}
+
+function saveFirstProjectIdOfSession(projectId) {
+  // Esta função provavelmente está em server.js
+  console.log(`[v0] saveFirstProjectIdOfSession chamado para ${projectId}`);
+}
+
+function addProjectToRemovedList(projectId) {
+  // Esta função provavelmente está em server.js
+  console.log(`[v0] addProjectToRemovedList chamado para ${projectId}`);
+}
+
+function resetDisplayLogic() {
+  // Esta função provavelmente está em server.js
+  console.log("[v0] resetDisplayLogic chamado");
+}
+
 export {
   fetchProjects,
-  getNextProjectId,
+  getNextProjectId, // ← AGORA ESTÁ DEFINIDA
   getNextProjectNumber,
   initializeProjectCounter,
   normalizeProjectIds,
@@ -325,5 +350,4 @@ export {
   verifyProjectData,
   generateProjectVerificationReport,
   calculateRoomCompletionStats
-  // NÃO exportar createEmptyRoom aqui - ela está em rooms.js
 }

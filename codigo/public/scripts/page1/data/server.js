@@ -1,15 +1,28 @@
 import { 
   SESSION_STORAGE_KEY, 
   REMOVED_PROJECTS_KEY, 
-  NORMALIZATION_DONE_KEY,
-  GeralCount
+  NORMALIZATION_DONE_KEY
 } from '../config/config.js'
 import { ensureStringId } from '../utils/utils.js'
 import { fetchProjects, normalizeProjectIds, atualizarProjeto } from './projects.js'
 import { showSystemStatus } from '../ui/interface.js'
 import { renderProjectFromData, renderRoomFromData, populateRoomInputs } from './server-utils.js'
 
-// CORRIGIR: Usar o setter do GeralCount
+
+
+// ADICIONAR a função removeBaseProjectFromHTML que estava faltando
+function removeBaseProjectFromHTML() {
+  const projectsContainer = document.getElementById("projects-container")
+  const existingProjects = projectsContainer.querySelectorAll(".project-block")
+
+  existingProjects.forEach((project) => {
+    project.remove()
+  })
+
+  console.log("[v0] Projetos base do HTML removidos")
+}
+
+
 async function loadProjectsFromServer() {
   console.log("[v0] Verificando projetos da sessão atual...")
 
@@ -17,7 +30,7 @@ async function loadProjectsFromServer() {
 
   if (!firstProjectId) {
     console.log("[v0] Nenhum projeto salvo nesta sessão - mantendo projeto base do HTML")
-    GeralCount.set(0) // ← USAR SETTER
+    window.GeralCount = 0; // ← CORRIGIR: usar window.GeralCount
     return
   }
 
@@ -27,7 +40,7 @@ async function loadProjectsFromServer() {
 
   if (allProjects.length === 0) {
     console.log("[v0] Nenhum projeto encontrado no servidor")
-    GeralCount.set(0) // ← USAR SETTER
+    window.GeralCount = 0; // ← CORRIGIR: usar window.GeralCount
     return
   }
 
@@ -45,8 +58,8 @@ async function loadProjectsFromServer() {
 
   console.log(`[v0] ${sessionProjects.length} projeto(s) da sessão atual encontrado(s)`)
 
-  GeralCount.set(sessionProjects.length) // ← USAR SETTER
-  console.log(`[v0] GeralCount inicializado: ${GeralCount.get()}`)
+  window.GeralCount = sessionProjects.length; // ← CORRIGIR: usar window.GeralCount
+  console.log(`[v0] GeralCount inicializado: ${window.GeralCount}`)
 
   removeBaseProjectFromHTML()
 
@@ -57,54 +70,20 @@ async function loadProjectsFromServer() {
   console.log("[v0] Todos os projetos da sessão foram carregados e renderizados")
 }
 
-async function normalizeAllProjectsOnServer() {
-  const alreadyNormalized = sessionStorage.getItem(NORMALIZATION_DONE_KEY)
-  if (alreadyNormalized === "true") {
-    console.log("[v0] IDs já foram normalizados nesta sessão")
-    return
-  }
 
-  console.log("[v0] Iniciando normalização de IDs no servidor...")
+// abaixo desta linha deve vir apenas outras funções
 
-  try {
-    const allProjects = await fetchProjects()
+function resetDisplayLogic() {
+  sessionStorage.removeItem(SESSION_STORAGE_KEY)
+  console.log("[v0] SESSION_STORAGE_KEY limpo")
 
-    if (allProjects.length === 0) {
-      console.log("[v0] Nenhum projeto para normalizar")
-      sessionStorage.setItem(NORMALIZATION_DONE_KEY, "true")
-      return
-    }
+  sessionStorage.removeItem(REMOVED_PROJECTS_KEY)
+  console.log("[v0] REMOVED_PROJECTS_KEY limpo")
 
-    console.log(`[v0] Normalizando ${allProjects.length} projeto(s)...`)
-
-    let normalizedCount = 0
-    for (const project of allProjects) {
-      const needsNormalization = typeof project.id === "string"
-
-      if (needsNormalization) {
-        const normalizedProject = normalizeProjectIds(project)
-        const result = await atualizarProjeto(normalizedProject.id, normalizedProject)
-
-        if (result) {
-          normalizedCount++
-          console.log(`[v0] Projeto ID ${normalizedProject.id} normalizado no servidor`)
-        }
-      }
-    }
-
-    if (normalizedCount > 0) {
-      console.log(`[v0] ${normalizedCount} projeto(s) normalizado(s) no servidor`)
-      showSystemStatus(`${normalizedCount} projeto(s) com IDs corrigidos no servidor`, "success")
-    } else {
-      console.log("[v0] Todos os projetos já estavam com IDs corretos")
-    }
-
-    sessionStorage.setItem(NORMALIZATION_DONE_KEY, "true")
-  } catch (error) {
-    console.error("[v0] Erro ao normalizar IDs no servidor:", error)
-    showSystemStatus("ERRO: Não foi possível normalizar IDs no servidor", "error")
-  }
+  window.GeralCount = 0; // ← CORRIGIR: usar window.GeralCount
+  console.log("[v0] Lógica de exibição reiniciada - próximo save será o novo ponto inicial")
 }
+
 
 function saveFirstProjectIdOfSession(projectId) {
   const existingId = sessionStorage.getItem(SESSION_STORAGE_KEY)
@@ -161,20 +140,59 @@ function updateProjectButton(projectName, hasId) {
   }
 }
 
-function resetDisplayLogic() {
-  sessionStorage.removeItem(SESSION_STORAGE_KEY)
-  console.log("[v0] SESSION_STORAGE_KEY limpo")
+async function normalizeAllProjectsOnServer() {
+  const alreadyNormalized = sessionStorage.getItem(NORMALIZATION_DONE_KEY)
+  if (alreadyNormalized === "true") {
+    console.log("[v0] IDs já foram normalizados nesta sessão")
+    return
+  }
 
-  sessionStorage.removeItem(REMOVED_PROJECTS_KEY)
-  console.log("[v0] REMOVED_PROJECTS_KEY limpo")
+  console.log("[v0] Iniciando normalização de IDs no servidor...")
 
-  GeralCount = 0
-  console.log("[v0] Lógica de exibição reiniciada - próximo save será o novo ponto inicial")
+  try {
+    const allProjects = await fetchProjects()
+
+    if (allProjects.length === 0) {
+      console.log("[v0] Nenhum projeto para normalizar")
+      sessionStorage.setItem(NORMALIZATION_DONE_KEY, "true")
+      return
+    }
+
+    console.log(`[v0] Normalizando ${allProjects.length} projeto(s)...`)
+
+    let normalizedCount = 0
+    for (const project of allProjects) {
+      const needsNormalization = typeof project.id === "string"
+
+      if (needsNormalization) {
+        const normalizedProject = normalizeProjectIds(project)
+        const result = await atualizarProjeto(normalizedProject.id, normalizedProject)
+
+        if (result) {
+          normalizedCount++
+          console.log(`[v0] Projeto ID ${normalizedProject.id} normalizado no servidor`)
+        }
+      }
+    }
+
+    if (normalizedCount > 0) {
+      console.log(`[v0] ${normalizedCount} projeto(s) normalizado(s) no servidor`)
+      showSystemStatus(`${normalizedCount} projeto(s) com IDs corrigidos no servidor`, "success")
+    } else {
+      console.log("[v0] Todos os projetos já estavam com IDs corretos")
+    }
+
+    sessionStorage.setItem(NORMALIZATION_DONE_KEY, "true")
+  } catch (error) {
+    console.error("[v0] Erro ao normalizar IDs no servidor:", error)
+    showSystemStatus("ERRO: Não foi possível normalizar IDs no servidor", "error")
+  }
 }
 
+// CORRIGIR AS EXPORTAÇÕES - garantir que cada função é exportada apenas uma vez
 export {
   loadProjectsFromServer,
-  // removeBaseProjectFromHTML, ← REMOVER ESTA LINHA
+  removeBaseProjectFromHTML,
   renderProjectFromData,
   renderRoomFromData,
   populateRoomInputs,

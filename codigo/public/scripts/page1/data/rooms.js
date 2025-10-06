@@ -256,7 +256,288 @@ function buildThermalGainsSection(roomId) {
             <span class="thermal-summary-unit">TR</span>
           </div>
         </div>
-        <!-- Restante da estrutura das tabelas de ganhos térmicos -->
+        <!-- Tabela de Paredes e Teto -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Paredes Externas e Teto</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Área (m²)</th>
+                <th>U-Value</th>
+                <th>ΔT (°C)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Teto</td>
+                <td id="area-teto-${roomId}">0</td>
+                <td id="uvalue-teto-${roomId}">0</td>
+                <td id="deltat-teto-${roomId}">0</td>
+                <td id="ganho-teto-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Parede Oeste</td>
+                <td id="area-parede-oeste-${roomId}">0</td>
+                <td id="uvalue-parede-oeste-${roomId}">0</td>
+                <td id="deltat-parede-oeste-${roomId}">0</td>
+                <td id="ganho-parede-oeste-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Parede Leste</td>
+                <td id="area-parede-leste-${roomId}">0</td>
+                <td id="uvalue-parede-leste-${roomId}">0</td>
+                <td id="deltat-parede-leste-${roomId}">0</td>
+                <td id="ganho-parede-leste-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Parede Norte</td>
+                <td id="area-parede-norte-${roomId}">0</td>
+                <td id="uvalue-parede-norte-${roomId}">0</td>
+                <td id="deltat-parede-norte-${roomId}">0</td>
+                <td id="ganho-parede-norte-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Parede Sul</td>
+                <td id="area-parede-sul-${roomId}">0</td>
+                <td id="uvalue-parede-sul-${roomId}">0</td>
+                <td id="deltat-parede-sul-${roomId}">0</td>
+                <td id="ganho-parede-sul-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Paredes Externas e Teto</td>
+                <td id="total-externo-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Divisórias -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Divisórias</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Área (m²)</th>
+                <th>U-Value</th>
+                <th>ΔT (°C)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Divisória Não Climatizada 1</td>
+                <td id="area-divi-nc1-${roomId}">0</td>
+                <td id="uvalue-divi-nc1-${roomId}">0</td>
+                <td id="deltat-divi-nc1-${roomId}">0</td>
+                <td id="ganho-divi-nc1-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Divisória Não Climatizada 2</td>
+                <td id="area-divi-nc2-${roomId}">0</td>
+                <td id="uvalue-divi-nc2-${roomId}">0</td>
+                <td id="deltat-divi-nc2-${roomId}">0</td>
+                <td id="ganho-divi-nc2-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Divisória Climatizada 1</td>
+                <td id="area-divi-c1-${roomId}">0</td>
+                <td id="uvalue-divi-c1-${roomId}">0</td>
+                <td id="deltat-divi-c1-${roomId}">0</td>
+                <td id="ganho-divi-c1-${roomId}">0</td>
+              </tr>
+              <tr>
+                <td>Divisória Climatizada 2</td>
+                <td id="area-divi-c2-${roomId}">0</td>
+                <td id="uvalue-divi-c2-${roomId}">0</td>
+                <td id="deltat-divi-c2-${roomId}">0</td>
+                <td id="ganho-divi-c2-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Divisórias</td>
+                <td id="total-divisoes-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Piso -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Piso</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Área (m²)</th>
+                <th>U-Value</th>
+                <th>ΔT (°C)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Piso</td>
+                <td id="area-piso-${roomId}">0</td>
+                <td id="uvalue-piso-${roomId}">0</td>
+                <td id="deltat-piso-${roomId}">0</td>
+                <td id="ganho-piso-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Piso</td>
+                <td id="total-piso-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Iluminação -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Iluminação</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Área (m²)</th>
+                <th>Fator</th>
+                <th>Fs</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Iluminação</td>
+                <td id="area-iluminacao-${roomId}">0</td>
+                <td id="fator-iluminacao-${roomId}">0</td>
+                <td id="fs-iluminacao-${roomId}">0</td>
+                <td id="ganho-iluminacao-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Iluminação</td>
+                <td id="total-iluminacao-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Dissipação Térmica Interna -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Dissipação Térmica Interna</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Fator Conversão</th>
+                <th>Pe (W)</th>
+                <th>Fs (%)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Equipamentos</td>
+                <td id="fator-conversao-dissi-${roomId}">0</td>
+                <td id="pe-dissi-${roomId}">0</td>
+                <td id="fs-dissi-${roomId}">0</td>
+                <td id="ganho-dissi-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Equipamentos</td>
+                <td id="total-dissi-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Ocupação de Pessoas -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos por Ocupação de Pessoas</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Csp</th>
+                <th>Clp</th>
+                <th>O</th>
+                <th>Fs (%)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Pessoas</td>
+                <td id="csp-pessoas-${roomId}">0</td>
+                <td id="clp-pessoas-${roomId}">0</td>
+                <td id="o-pessoas-${roomId}">0</td>
+                <td id="fs-pessoas-${roomId}">0</td>
+                <td id="ganho-pessoas-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="5">Total Pessoas</td>
+                <td id="total-pessoas-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Ar Externo Sensível -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos de Ar Externo - Sensível</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>m</th>
+                <th>c</th>
+                <th>ΔT (°C)</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ar Externo Sensível</td>
+                <td id="m-ar-sensivel-${roomId}">0</td>
+                <td id="c-ar-sensivel-${roomId}">0</td>
+                <td id="deltat-ar-sensivel-${roomId}">0</td>
+                <td id="ganho-ar-sensivel-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Ar Externo Sensível</td>
+                <td id="total-ar-sensivel-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela de Ar Externo Latente -->
+        <div class="thermal-table-container">
+          <h6 class="thermal-table-title">Ganhos de Ar Externo - Latente</h6>
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Var</th>
+                <th>f</th>
+                <th>ΔUa</th>
+                <th>Ganho (W)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ar Externo Latente</td>
+                <td id="var-ar-latente-${roomId}">0</td>
+                <td id="f-ar-latente-${roomId}">0</td>
+                <td id="deltaua-ar-latente-${roomId}">0</td>
+                <td id="ganho-ar-latente-${roomId}">0</td>
+              </tr>
+              <tr class="thermal-table-total">
+                <td colspan="4">Total Ar Externo Latente</td>
+                <td id="total-ar-latente-${roomId}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   `
