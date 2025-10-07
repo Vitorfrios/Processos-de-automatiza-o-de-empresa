@@ -43,6 +43,101 @@
         }
       ],
       "id": "1001"
+    },
+    {
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "dg",
+            "backup": "n+1",
+            "area": 34,
+            "tipoConstrucao": "Eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "manual",
+            "vazaoArExterno": 580
+          },
+          "ganhosTermicos": {
+            "totalW": 40741,
+            "totalTR": 12,
+            "totalExterno": 12573,
+            "totalDivisoes": 857,
+            "totalPiso": 689,
+            "totalIluminacao": 238,
+            "totalEquipamentos": 1500,
+            "totalPessoas": 3297,
+            "totalArExterno": 21589
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1002"
+    },
+    {
+      "id": "1003",
+      "nome": "teste final",
+      "salas": [
+        {
+          "nome": "fbfb",
+          "inputs": {
+            "ambiente": "dfbf",
+            "backup": "n",
+            "area": 34,
+            "tipoConstrucao": "Eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "manual",
+            "vazaoArExterno": 580
+          },
+          "configuracoes": {
+            "opcoesInstalacao": [
+              "bocal_insuflamento_protegido",
+              "bocal_acoplado_dutos",
+              "evaporadoras_casa_maquinas"
+            ]
+          },
+          "ganhosTermicos": {
+            "totalW": 40741,
+            "totalTR": 12,
+            "totalExterno": 12573,
+            "totalDivisoes": 857,
+            "totalPiso": 689,
+            "totalIluminacao": 238,
+            "totalEquipamentos": 1500,
+            "totalPessoas": 3297,
+            "totalArExterno": 21589
+          },
+          "id": "1"
+        }
+      ]
     }
   ]
 }

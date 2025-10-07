@@ -542,21 +542,42 @@
                                 <div class="section-block">
                                     <div class="section-header">
                                         <button class="minimizer" onclick="toggleSection('Projeto1-Sala1-config')">+</button>
-                                        <h4 class="section-title">Configuração Geral</h4>
+                                        <h4 class="section-title">Configuração de Instalação</h4>
                                     </div>
                                     <div class="section-content collapsed" id="section-content-Projeto1-Sala1-config">
                                         <div class="form-grid">
-                                            <div class="form-group">
-                                                <label>Responsável:</label>
-                                                <input type="text" class="form-input" placeholder="Nome do responsável">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Data de Instalação:</label>
-                                                <input type="date" class="form-input">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Observações:</label>
-                                                <textarea class="form-input" rows="3" placeholder="Observações gerais"></textarea>
+                                            <div class="form-group full-width">
+                                                <label class="config-label">Opções de Instalação (selecione uma ou mais):</label>
+                                                <div class="checkbox-options-grid">
+                                                    <div class="checkbox-column">
+                                                        <div class="checkbox-option">
+                                                            <input type="checkbox" id="opcao1-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="bocal_insuflamento_protegido" data-field="opcoesInstalacao">
+                                                            <label for="opcao1-Projeto1-Sala1">Bocal de insuflamento protegido por grelha diretamente no ambiente</label>
+                                                        </div>
+                                                        <div class="checkbox-option">
+                                                            <input type="checkbox" id="opcao2-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="bocal_acoplado_dutos" data-field="opcoesInstalacao">
+                                                            <label for="opcao2-Projeto1-Sala1">Bocal acoplado à rede de dutos por lona flexível. Distribuição por grelhas</label>
+                                                        </div>
+                                                        <div class="checkbox-option">
+                                                            <input type="checkbox" id="opcao3-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="condicionadores_externos_se" data-field="opcoesInstalacao">
+                                                            <label for="opcao3-Projeto1-Sala1">Condicionadores fixados externamente à SE, sobre mão-francesa na parede</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="checkbox-column">
+                                                        <div class="checkbox-option">
+                                                            <input type="checkbox" id="opcao4-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="evaporadoras_internas" data-field="opcoesInstalacao">
+                                                            <label for="opcao4-Projeto1-Sala1">Evaporadoras internas ao ambiente climatizado</label>
+                                                        </div>
+                                                        <div class="checkbox-option">
+                                                            <input type="checkbox" id="opcao5-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="evaporadoras_casa_maquinas" data-field="opcoesInstalacao">
+                                                            <label for="opcao5-Projeto1-Sala1">Evaporadoras em casa de máquinas</label>
+                                                        </div>
+                                                        <div class="checkbox-option">
+                                                            <input type="checkbox" id="opcao6-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="condensadores_externos" data-field="opcoesInstalacao">
+                                                            <label for="opcao6-Projeto1-Sala1">Condensadores fixados externamente à sala elétrica</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

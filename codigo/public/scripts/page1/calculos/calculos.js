@@ -67,6 +67,14 @@ function collectClimatizationInputs(climaSection, roomId) {
     const field = input.dataset.field
     let value = input.value
     
+    // DEBUG ESPECÍFICO PARA TIPO CONSTRUÇÃO
+    if (field === "tipoConstrucao") {
+      console.log(`[DEBUG COLLECT] Input tipoConstrucao encontrado:`)
+      console.log(`[DEBUG COLLECT] - value: "${value}"`)
+      console.log(`[DEBUG COLLECT] - selectedIndex: ${input.selectedIndex}`)
+      console.log(`[DEBUG COLLECT] - options:`, Array.from(input.options).map(opt => ({value: opt.value, text: opt.text, selected: opt.selected})))
+    }
+    
     // Converter para número APENAS se for campo numérico E tiver valor
     if (input.type === 'number') {
       value = value !== "" ? Number.parseFloat(value) : ""
@@ -77,7 +85,7 @@ function collectClimatizationInputs(climaSection, roomId) {
     data[field] = value
   })
 
-  console.log("[v0] Dados coletados para cálculo:", data)
+  console.log("[DEBUG COLLECT] Dados coletados para cálculo:", data)
   return data
 }
 
@@ -225,6 +233,11 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
     const inputData = collectClimatizationInputs(climaSection, roomId)
     console.log(`[DEBUG] Dados coletados:`, inputData);
     
+    // DEBUG ESPECÍFICO PARA TIPO DE CONSTRUÇÃO
+    console.log(`[DEBUG CRÍTICO] TipoConstrucao: "${inputData.tipoConstrucao}"`);
+    console.log(`[DEBUG CRÍTICO] Comparação com "eletrocentro": ${inputData.tipoConstrucao === "eletrocentro"}`);
+    console.log(`[DEBUG CRÍTICO] Comparação com "alvenaria": ${inputData.tipoConstrucao === "alvenaria"}`);
+    
     // Aplicar valores padrão APENAS para cálculos, mantendo inputs vazios
     const calcData = {
       ...inputData,
@@ -240,7 +253,7 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
       divisoriaClima2: safeNumber(inputData.divisoriaClima2),
       dissipacao: safeNumber(inputData.dissipacao),
       numPessoas: safeNumber(inputData.numPessoas),
-      vazaoArExterno: vazaoArExterno // ← USAR A VAZÃO CALCULADA, NÃO DO INPUT
+      vazaoArExterno: vazaoArExterno
     }
 
     console.log("[v0] ===== CÁLCULO DE GANHOS TÉRMICOS =====")
@@ -303,20 +316,23 @@ function calculateUValues(tipoConstrucao) {
   const U_VALUE_LA_ROCHA_TETO = 1.145
   const U_VALUE_LA_ROCHA_PAREDE = 1.12
 
-  console.log(`[v0] calculateUValues chamado com tipoConstrucao: "${tipoConstrucao}"`)
+  console.log(`[DEBUG UVALUES] tipoConstrucao recebido: "${tipoConstrucao}"`)
 
   let uValueParede, uValueTeto
 
-  if (tipoConstrucao === "eletrocentro") {
-    console.log("[v0] Tipo de construção: ELETROCENTRO")
+  // CORREÇÃO: Converter para minúsculas para comparar
+  const tipoLower = tipoConstrucao ? tipoConstrucao.toLowerCase() : ""
+  
+  if (tipoLower === "eletrocentro") {
+    console.log("[DEBUG UVALUES] ✅ ENTROU EM ELETROCENTRO")
     uValueParede = U_VALUE_LA_ROCHA_PAREDE
     uValueTeto = U_VALUE_LA_ROCHA_TETO
-  } else if (tipoConstrucao === "alvenaria") {
-    console.log("[v0] Tipo de construção: ALVENARIA")
+  } else if (tipoLower === "alvenaria") {
+    console.log("[DEBUG UVALUES] ✅ ENTROU EM ALVENARIA")
     uValueParede = U_VALUE_ALVENARIA_PAREDE
     uValueTeto = U_VALUE_ALVENARIA_TETO
   } else {
-    console.log("[v0] Tipo de construção não selecionado")
+    console.log("[DEBUG UVALUES] ❌ TIPO NÃO RECONHECIDO")
     uValueParede = 0
     uValueTeto = 0
   }
@@ -327,7 +343,7 @@ function calculateUValues(tipoConstrucao) {
     piso: window.systemConstants?.AUX_U_Value_Piso || 2.7,
   }
 
-  console.log("[v0] UValues calculados:", result)
+  console.log("[DEBUG UVALUES] UValues calculados:", result)
   return result
 }
 
@@ -348,15 +364,22 @@ function calculateAuxiliaryVariables(inputData) {
 }
 
 function calculateCeilingGain(area, uValue, deltaT) {
-  const result = safeNumber(area) * uValue * deltaT
-  console.log(`[DEBUG] calculateCeilingGain: ${area} * ${uValue} * ${deltaT} = ${result}`)
+  const areaNum = safeNumber(area)
+  const uValueNum = safeNumber(uValue)
+  const deltaTNum = safeNumber(deltaT)
+  const result = areaNum * uValueNum * deltaTNum
+  console.log(`[DEBUG DETAIL] calculateCeilingGain: ${areaNum} * ${uValueNum} * ${deltaTNum} = ${result}`)
   return result
 }
 
 function calculateWallGain(comprimento, peDireito, uValue, deltaT) {
-  const area = safeNumber(comprimento) * safeNumber(peDireito)
-  const result = area * uValue * deltaT
-  console.log(`[DEBUG] calculateWallGain: (${comprimento} * ${peDireito}) * ${uValue} * ${deltaT} = ${result}`)
+  const compNum = safeNumber(comprimento)
+  const peDireitoNum = safeNumber(peDireito)
+  const uValueNum = safeNumber(uValue)
+  const deltaTNum = safeNumber(deltaT)
+  const area = compNum * peDireitoNum
+  const result = area * uValueNum * deltaTNum
+  console.log(`[DEBUG DETAIL] calculateWallGain: (${compNum} * ${peDireitoNum}) = ${area}m² * ${uValueNum} * ${deltaTNum} = ${result}`)
   return result
 }
 
@@ -463,7 +486,45 @@ function calculateTotals(gains) {
   return totals
 }
 
+function debugThermalElements(roomId) {
+  console.log(`[DEBUG] === VERIFICANDO ELEMENTOS PARA ${roomId} ===`);
+  
+  const elementsToCheck = [
+    `area-teto-${roomId}`,
+    `uvalue-teto-${roomId}`,
+    `deltat-teto-${roomId}`,
+    `ganho-teto-${roomId}`,
+    `area-parede-oeste-${roomId}`,
+    `uvalue-parede-oeste-${roomId}`,
+    `deltat-parede-oeste-${roomId}`,
+    `ganho-parede-oeste-${roomId}`,
+    `total-externo-${roomId}`,
+    `area-divi-nc1-${roomId}`,
+    `uvalue-divi-nc1-${roomId}`,
+    `deltat-divi-nc1-${roomId}`,
+    `ganho-divi-nc1-${roomId}`,
+    `total-divisoes-${roomId}`
+  ];
+  
+  elementsToCheck.forEach(id => {
+    const element = document.getElementById(id);
+    console.log(`[DEBUG] ${id}:`, element ? 'ENCONTRADO' : 'NÃO ENCONTRADO');
+    if (element) {
+      console.log(`[DEBUG]   Conteúdo atual: "${element.textContent}"`);
+    }
+  });
+  
+  console.log(`[DEBUG] === FIM DA VERIFICAÇÃO ===`);
+}
 function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
+  console.log(`[DEBUG] updateThermalGainsDisplay INICIADO para ${roomId}`);
+  console.log(`[DEBUG] gains recebidos:`, gains);
+  console.log(`[DEBUG] totals recebidos:`, totals);
+  console.log(`[DEBUG] uValues recebidos:`, uValues);
+  console.log(`[DEBUG] inputData recebidos:`, inputData);
+  
+  // DEBUG: Verificar elementos antes de atualizar
+  debugThermalElements(roomId);
   
   // Atualizar totais gerais
   updateElementText(`total-ganhos-w-${roomId}`, totals.geralW)
@@ -519,7 +580,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   const densiAr = window.systemConstants?.Densi_ar || 1.17
   const m_ArExterno = (inputData.vazaoArExterno || 0) * 3.6 * densiAr * 1000
 
-  updateElementText(`vazao-ar-externo-${roomId}`, inputData.vazaoArExterno || 0)
+  //updateElementText(`vazao-ar-externo-${roomId}`, inputData.vazaoArExterno || 0)
   updateElementText(`m-ar-sensivel-${roomId}`, Math.ceil(m_ArExterno))
   updateElementText(`c-ar-sensivel-${roomId}`, window.systemConstants?.AUX_c_ArExterno || 0.24)
   updateElementText(`deltat-ar-sensivel-${roomId}`, window.systemConstants?.AUX_deltaT_ArExterno || 10)
@@ -537,6 +598,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   // Totais
   updateElementText(`total-externo-${roomId}`, totals.externo)
   updateElementText(`total-divisoes-${roomId}`, totals.divisoes)
+  console.log(`[DEBUG] updateThermalGainsDisplay FINALIZADO para ${roomId}`);
 
 }
 
@@ -590,5 +652,8 @@ export {
   updateThermalGainsDisplay,
   updateWallDisplay,
   updatePartitionDisplay,
-  updateElementText
+  updateElementText,
+  debugThermalElements
 }
+
+

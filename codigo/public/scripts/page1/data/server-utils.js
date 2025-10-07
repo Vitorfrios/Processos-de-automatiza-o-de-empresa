@@ -3,8 +3,8 @@ import { createEmptyRoom } from './rooms.js'
 import { updateProjectButton } from './server.js'
 import { calculateVazaoArAndThermalGains } from '../calculos/calculos.js'
 import { ensureStringId } from '../utils/utils.js'
-// CORREÇÃO: Importar funções do contador
 import { getGeralCount, incrementGeralCount } from './server.js'
+
 
 function renderProjectFromData(projectData) {
   const projectName = projectData.nome
@@ -65,8 +65,15 @@ function renderRoomFromData(projectName, roomData) {
 
     // CORREÇÃO: Delay adicional para garantir que a sala foi criada antes de preencher inputs
     setTimeout(() => {
-      if (roomData.inputs) {
-        populateRoomInputs(projectName, roomName, roomData.inputs, roomData.ganhosTermicos)
+      if (roomData.inputs || roomData.configuracoes || roomData.maquinas) {
+        populateRoomInputs(
+          projectName, 
+          roomName, 
+          roomData.inputs || {}, 
+          roomData.ganhosTermicos, 
+          roomData.maquinas,
+          roomData.configuracoes // ← NOVO PARÂMETRO
+        )
       }
     }, 50);
     
@@ -75,7 +82,7 @@ function renderRoomFromData(projectName, roomData) {
   console.log(`[v0] Sala ${roomName} renderizada com sucesso`)
 }
 
-function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos) {
+function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, maquinasData, configuracoesData) {
   // CORREÇÃO: Tentar encontrar a sala múltiplas vezes com timeout
   let attempts = 0;
   const maxAttempts = 10;
@@ -97,6 +104,7 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos) {
 
     const roomId = `${projectName}-${roomName}`
 
+    // Preencher inputs de climatização
     Object.entries(inputsData).forEach(([field, value]) => {
       if (field === "vazaoArExterno") {
         const vazaoElement = document.getElementById(`vazao-ar-${roomId}`)
@@ -106,6 +114,18 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos) {
         return
       }
 
+      // Preencher inputs de configuração geral (se houver)
+      const configInput = roomBlock.querySelector(`.section-content [data-field="${field}"]`)
+      if (configInput) {
+        if (configInput.type === 'radio' || configInput.type === 'checkbox') {
+          configInput.checked = (configInput.value === value)
+        } else {
+          configInput.value = value || ""
+        }
+        return
+      }
+
+      // Preencher inputs de climatização
       const input = roomBlock.querySelector(`.clima-input[data-field="${field}"]`)
       if (input) {
         // CORREÇÃO: Não preencher inputs com zero
@@ -117,6 +137,57 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos) {
       }
     })
 
+    // CORREÇÃO: Preencher opções de instalação (checkboxes) do objeto configuracoes
+    if (configuracoesData && configuracoesData.opcoesInstalacao) {
+      console.log(`[v0] Preenchendo opções de instalação:`, configuracoesData.opcoesInstalacao)
+      
+      configuracoesData.opcoesInstalacao.forEach(opcao => {
+        const checkboxInput = roomBlock.querySelector(`input[name^="opcoesInstalacao-"][value="${opcao}"]`)
+        if (checkboxInput) {
+          checkboxInput.checked = true
+          console.log(`[v0] Checkbox ${opcao} marcado`)
+        } else {
+          console.warn(`[v0] Checkbox não encontrado para opção: ${opcao}`)
+        }
+      })
+    }
+
+    // Preencher máquinas se existirem
+    if (maquinasData && maquinasData.length > 0) {
+      // Remover máquina padrão se existir
+      const emptyMessage = document.getElementById(`machines-${roomId}`)?.querySelector('.empty-message')
+      if (emptyMessage) {
+        emptyMessage.remove()
+      }
+
+      // Adicionar máquinas
+      maquinasData.forEach((machineData, index) => {
+        // Adicionar máquina
+        const addMachineButton = roomBlock.querySelector(`button[onclick="addMachine('${roomId}')"]`)
+        if (addMachineButton) {
+          addMachineButton.click()
+          
+          // Preencher dados da máquina após ser adicionada
+          setTimeout(() => {
+            const machineContainer = document.getElementById(`machines-${roomId}`)
+            if (machineContainer) {
+              const machineItems = machineContainer.querySelectorAll('.machine-item')
+              const lastMachine = machineItems[machineItems.length - 1]
+              
+              if (lastMachine) {
+                Object.entries(machineData).forEach(([field, value]) => {
+                  const machineInput = lastMachine.querySelector(`[data-field="maquina_${field}"]`)
+                  if (machineInput) {
+                    machineInput.value = value || ""
+                  }
+                })
+              }
+            }
+          }, 50)
+        }
+      })
+    }
+
     // CORREÇÃO: Pequeno delay para garantir que os inputs foram renderizados
     setTimeout(() => {
       calculateVazaoArAndThermalGains(roomId)
@@ -127,6 +198,7 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos) {
   
   tryPopulate();
 }
+
 
 // CORREÇÃO: Adicionar função de debug
 function debugServerUtils() {

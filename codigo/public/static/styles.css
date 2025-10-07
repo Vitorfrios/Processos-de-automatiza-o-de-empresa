@@ -735,6 +735,68 @@ textarea.form-input {
   padding: 1rem 0.75rem;
 }
 
+.checkbox-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 8px;
+}
+
+.checkbox-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+  transition: all 0.2s ease;
+}
+
+.checkbox-option:hover {
+  background: #f0f0f0;
+  border-color: #ccc;
+}
+
+.checkbox-option input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.checkbox-option label {
+  font-size: 0.9em;
+  line-height: 1.3;
+  cursor: pointer;
+  margin: 0;
+  user-select: none;
+}
+
+.checkbox-option input[type="checkbox"]:checked + label {
+  font-weight: 600;
+}
+
+.checkbox-option input[type="checkbox"]:checked ~ .checkbox-option {
+  background: #e8f4fd;
+  border-color: #007acc;
+}
+
+.config-label {
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+
 /* Responsive adjustments for thermal tables */
 @media (max-width: 768px) {
   .thermal-summary {
@@ -757,5 +819,8 @@ textarea.form-input {
   .thermal-table th,
   .thermal-table td {
     padding: 0.5rem;
+  }
+  .checkbox-options-grid {
+    grid-template-columns: 1fr;
   }
 }
