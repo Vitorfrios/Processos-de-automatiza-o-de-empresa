@@ -236,15 +236,7 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, m
   };
   
   tryPopulate();
-  // Na função populateRoomInputs, após preencher os inputs, adicione:
 
-  // Sincronizar backup com a tabela de capacidade
-  // Na função populateRoomInputs, adicione no final:
-  setTimeout(() => {
-    if (typeof window.syncCapacityTableBackup !== 'undefined') {
-      window.syncCapacityTableBackup(roomId);
-    }
-  }, 1000);
 }
 
 
