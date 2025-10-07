@@ -1,7 +1,6 @@
 {
   "projetos": [
     {
-      "id": "1001",
       "nome": "Projeto teste final",
       "salas": [
         {
@@ -10,7 +9,7 @@
             "ambiente": "sistemas",
             "backup": "n+1",
             "area": 34,
-            "tipoConstrucao": "eletrocentro",
+            "tipoConstrucao": "alvenaria",
             "paredeOeste": 12,
             "paredeLeste": 13,
             "paredeNorte": 14,
@@ -30,10 +29,10 @@
             "vazaoArExterno": 580
           },
           "ganhosTermicos": {
-            "totalW": 40741,
-            "totalTR": 12,
-            "totalExterno": 12573,
-            "totalDivisoes": 857,
+            "totalW": 58763,
+            "totalTR": 17,
+            "totalExterno": 29503,
+            "totalDivisoes": 1948,
             "totalPiso": 689,
             "totalIluminacao": 238,
             "totalEquipamentos": 1500,
@@ -42,7 +41,8 @@
           },
           "id": "1"
         }
-      ]
+      ],
+      "id": "1001"
     }
   ]
 }

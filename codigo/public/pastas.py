@@ -18,7 +18,7 @@ def print_tree(path, prefix=""):
             print_tree(entry_path, prefix + extension)
 
 # Caminho da pasta 'public'
-source_dir = "codigo\public"
+source_dir = "codigo"
 
 print(source_dir + "/")
 print_tree(source_dir)

@@ -154,7 +154,7 @@ function createSingleBaseProject() {
       } else {
         console.error("[v0] Container de projetos ainda não encontrado após retry");
       }
-    }, 1000);
+    }, 600);
     return;
   }
   

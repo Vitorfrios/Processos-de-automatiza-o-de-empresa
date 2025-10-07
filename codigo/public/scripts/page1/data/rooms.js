@@ -92,7 +92,7 @@ function buildClimatizationTable(roomId) {
         label: "Tipo de Construção:",
         field: "tipoConstrucao",
         type: "select",
-        options: ["", "alvenaria", "eletrocentro"],
+        options: ["", "Alvenaria", "Eletrocentro"],
       },
     ],
     roomId,
