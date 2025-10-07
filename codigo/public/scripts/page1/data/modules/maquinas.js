@@ -1,6 +1,5 @@
-const API_CONFIG = {
-  data: "http://localhost:3001",
-}
+
+import { API_CONFIG } from '../../config/config.js'
 
 const capacityConfig = {
   maxInitAttempts: 3,
@@ -65,51 +64,55 @@ function buildCapacityCalculationTable(roomId) {
   return `
     <div class="capacity-calculation-table">
       <h5 class="table-title">Cálculo de Capacidade de Refrigeração</h5>
-      <table class="thermal-capacity-table">
-        <thead>
-          <tr>
-            <th>Carga Estimada (TR)</th>
-            <th>Fator de Seg.</th>
-            <th>Cap. Unit. (TR)</th>
-            <th>Solução</th>
-            <th>Com back-up</th>
-            <th>TOTAL (TR)</th>
-            <th>FOLGA (%)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td id="carga-estimada-${roomId}">0</td>
-            <td>
-              <input type="number" id="fator-seguranca-${roomId}" step="0.01" 
-                     class="capacity-input" onchange="calculateCapacitySolution('${roomId}')">
-            </td>
-            <td>
-              <select id="capacidade-unitaria-${roomId}" class="capacity-select" 
-                      onchange="calculateCapacitySolution('${roomId}')">
-                ${[1, 2, 3, 4, 5, 7.5, 10, 12.5, 15, 20, 25, 30]
-                  .map((tr) => `<option value="${tr}">${tr} TR</option>`)
-                  .join("")}
-              </select>
-            </td>
-            <td id="solucao-${roomId}">0</td>
-            <td class="backup-cell">
-              <div class="backup-selection">
-                <select class="backup-select" onchange="updateBackupConfiguration(this)">
-                  ${["n", "n+1", "n+2"]
-                    .map((opt) => `<option value="${opt}" ${backupValue === opt ? "selected" : ""}>${opt}</option>`)
+      <div class="table-container">
+        <table class="thermal-capacity-table">
+          <thead>
+            <tr>
+              <th>Carga Estimada (TR)</th>
+              <th>Fator de Seg.</th>
+              <th>Cap. Unit. (TR)</th>
+              <th>Solução</th>
+              <th>Com back-up</th>
+              <th>TOTAL (TR)</th>
+              <th>FOLGA (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td id="carga-estimada-${roomId}">0</td>
+              <td>
+                <input type="number" id="fator-seguranca-${roomId}" step="0.01" 
+                      class="capacity-input" 
+                      onchange="calculateCapacitySolution('${roomId}')"
+                      oninput="calculateCapacitySolution('${roomId}')">
+              </td>
+              <td>
+                <select id="capacidade-unitaria-${roomId}" class="capacity-select" 
+                        onchange="calculateCapacitySolution('${roomId}')">
+                  ${[1, 2, 3, 4, 5, 7.5, 10, 12.5, 15, 20, 25, 30]
+                    .map((tr) => `<option value="${tr}">${tr} TR</option>`)
                     .join("")}
                 </select>
-              </div>
-              <div class="backup-solution">
-                <span id="solucao-backup-${roomId}">0</span>
-              </div>
-            </td>
-            <td id="total-capacidade-${roomId}">0</td>
-            <td id="folga-${roomId}">0%</td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+              <td id="solucao-${roomId}">0</td>
+              <td class="backup-cell">
+                <div class="backup-selection">
+                  <select class="backup-select" onchange="updateBackupConfiguration(this)">
+                    ${["n", "n+1", "n+2"]
+                      .map((opt) => `<option value="${opt}" ${backupValue === opt ? "selected" : ""}>${opt}</option>`)
+                      .join("")}
+                  </select>
+                </div>
+                <div class="backup-solution">
+                  <span id="solucao-backup-${roomId}">0</span>
+                </div>
+              </td>
+              <td id="total-capacidade-${roomId}">0</td>
+              <td id="folga-${roomId}">0%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   `
 }
@@ -439,10 +442,185 @@ function calculateCapacitySolution(roomId) {
     const folga = cargaEstimada > 0 ? (total / cargaEstimada - 1) * 100 : 0
 
     updateCapacityDisplay(roomId, cargaEstimada, unidadesOperacionais, unidadesTotais, total, folga, backupType)
+    
+    // SALVAR AUTOMATICAMENTE APÓS CALCULAR
+    const roomContent = document.getElementById(`room-content-${roomId}`)
+    if (roomContent) {
+      const projectName = roomContent.getAttribute('data-project-name')
+      const roomName = roomContent.getAttribute('data-room-name')
+      if (projectName && roomName) {
+        saveCapacityData(projectName, roomName)
+      }
+    }
   } catch (error) {
     console.error(`Erro ao calcular capacidade para sala ${roomId}:`, error)
   }
 }
+
+// ========== EVENT LISTENER PARA FATOR DE SEGURANÇA ==========
+function initializeFatorSegurancaListeners() {
+  document.addEventListener('change', (event) => {
+    if (event.target.id && event.target.id.startsWith('fator-seguranca-')) {
+      const roomId = event.target.id.replace('fator-seguranca-', '')
+      calculateCapacitySolution(roomId)
+    }
+  })
+}
+// ========== CAPACITY DATA MANAGEMENT ==========
+
+
+// ========== CAPACITY DATA MANAGEMENT ==========
+
+function getCapacityData(roomId) {
+  const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
+  const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`)
+  const backupSelect = document.querySelector(`#room-content-${roomId} .backup-select`)
+
+  if (!fatorSegurancaInput || !capacidadeUnitariaSelect || !backupSelect) return null
+
+  return {
+    fatorSeguranca: Number.parseFloat(fatorSegurancaInput.value) || 10,
+    capacidadeUnitaria: Number.parseFloat(capacidadeUnitariaSelect.value) || 1,
+    backup: backupSelect.value || "n",
+    cargaEstimada: getThermalLoadTR(roomId),
+    solucao: document.getElementById(`solucao-${roomId}`)?.textContent || "0",
+    solucaoBackup: document.getElementById(`solucao-backup-${roomId}`)?.textContent || "0",
+    totalCapacidade: document.getElementById(`total-capacidade-${roomId}`)?.textContent || "0",
+    folga: document.getElementById(`folga-${roomId}`)?.textContent || "0%"
+  }
+}
+
+function saveCapacityData(projectName, roomName) {
+  try {
+    const roomId = `${projectName}-${roomName}`
+    const capacityData = getCapacityData(roomId)
+    
+    if (!capacityData) return
+
+    // Buscar dados atuais do projeto do seu servidor JSON
+    fetch(`${API_CONFIG.projects}/projetos`)  // ← CORREÇÃO: usar API_CONFIG.projects
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        return response.json()
+      })
+      .then(projetos => {
+        // Encontrar o projeto específico
+        const projetoIndex = projetos.findIndex(p => p.nome === projectName)
+        if (projetoIndex === -1) {
+          console.warn(`[CAPACITY] Projeto ${projectName} não encontrado`)
+          return
+        }
+
+        // Encontrar a sala específica
+        const salaIndex = projetos[projetoIndex].salas.findIndex(sala => sala.nome === roomName)
+        if (salaIndex === -1) {
+          console.warn(`[CAPACITY] Sala ${roomName} não encontrada no projeto ${projectName}`)
+          return
+        }
+
+        // Salvar dados de capacidade no campo correto
+        if (!projetos[projetoIndex].salas[salaIndex]['Cálculo_Capacidade_Refrigeração']) {
+          projetos[projetoIndex].salas[salaIndex]['Cálculo_Capacidade_Refrigeração'] = {}
+        }
+        
+        projetos[projetoIndex].salas[salaIndex]['Cálculo_Capacidade_Refrigeração'] = capacityData
+        
+        // Atualizar no servidor JSON
+        return fetch(`${API_CONFIG.projects}/projetos`, {  // ← CORREÇÃO: usar API_CONFIG.projects
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(projetos)
+        })
+      })
+      .then(response => {
+        if (response && response.ok) {
+          console.log(`[CAPACITY] Dados de capacidade salvos para ${roomId}`, capacityData)
+        }
+      })
+      .catch(error => {
+        console.error('[CAPACITY] Erro ao salvar dados de capacidade:', error)
+      })
+      
+  } catch (error) {
+    console.error('[CAPACITY] Erro ao salvar dados de capacidade:', error)
+  }
+}
+
+function loadCapacityData(projectName, roomName) {
+  try {
+    const roomId = `${projectName}-${roomName}`
+    
+    console.log(`[CAPACITY] Tentando carregar dados para ${projectName}-${roomName}`)
+    
+    fetch(`${API_CONFIG.projects}/projetos`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        return response.json()
+      })
+      .then(projetos => {
+        console.log(`[CAPACITY] Projetos carregados:`, projetos)
+        
+        const projeto = projetos.find(p => p.nome === projectName)
+        if (!projeto) {
+          console.warn(`[CAPACITY] Projeto ${projectName} não encontrado. Projetos disponíveis:`, projetos.map(p => p.nome))
+          return false
+        }
+
+        const sala = projeto.salas.find(sala => sala.nome === roomName)
+        if (!sala) {
+          console.warn(`[CAPACITY] Sala ${roomName} não encontrada. Salas disponíveis:`, projeto.salas.map(s => s.nome))
+          return false
+        }
+
+        if (!sala['Cálculo_Capacidade_Refrigeração']) {
+          console.log(`[CAPACITY] Nenhum dado de capacidade encontrado para ${roomName}`)
+          return false
+        }
+
+        const capacityData = sala['Cálculo_Capacidade_Refrigeração']
+        applyCapacityData(roomId, capacityData)
+        return true
+      })
+      .catch(error => {
+        console.error('[CAPACITY] Erro ao carregar projetos:', error)
+        return false
+      })
+      
+  } catch (error) {
+    console.error('[CAPACITY] Erro geral:', error)
+    return false
+  }
+}
+
+function applyCapacityData(roomId, capacityData) {
+  const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
+  const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`)
+  const backupSelect = document.querySelector(`#room-content-${roomId} .backup-select`)
+
+  if (fatorSegurancaInput && capacityData.fatorSeguranca) {
+    fatorSegurancaInput.value = capacityData.fatorSeguranca
+  }
+
+  if (capacidadeUnitariaSelect && capacityData.capacidadeUnitaria) {
+    capacidadeUnitariaSelect.value = capacityData.capacidadeUnitaria
+  }
+
+  if (backupSelect && capacityData.backup) {
+    backupSelect.value = capacityData.backup
+  }
+
+  // Recalcular após carregar os dados
+  setTimeout(() => {
+    calculateCapacitySolution(roomId)
+  }, 100)
+}
+
 
 function applyBackupConfiguration(unidadesOperacionais, backupType) {
   switch (backupType) {
@@ -485,6 +663,26 @@ function updateCapacityFromThermalGains(roomId) {
 
 // ========== BACKUP CONFIGURATION ==========
 
+
+function updateBackupConfiguration(selectElement) {
+  const roomId = findRoomId(selectElement.closest(".capacity-calculation-table"))
+  if (roomId) {
+    const newBackupValue = selectElement.value
+    syncBackupWithClimaInputs(roomId, newBackupValue)
+    calculateCapacitySolution(roomId)
+    
+    // Salvar após alterar backup
+    const roomContent = document.getElementById(`room-content-${roomId}`)
+    if (roomContent) {
+      const projectName = roomContent.getAttribute('data-project-name')
+      const roomName = roomContent.getAttribute('data-room-name')
+      if (projectName && roomName) {
+        saveCapacityData(projectName, roomName)
+      }
+    }
+  }
+}
+
 function handleClimaInputBackupChange(roomId, newBackupValue) {
   const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`)
 
@@ -493,16 +691,17 @@ function handleClimaInputBackupChange(roomId, newBackupValue) {
     if (backupSelect && backupSelect.value !== newBackupValue) {
       backupSelect.value = newBackupValue
       calculateCapacitySolution(roomId)
+      
+      // Salvar após alterar backup via inputs de clima
+      const roomContent = document.getElementById(`room-content-${roomId}`)
+      if (roomContent) {
+        const projectName = roomContent.getAttribute('data-project-name')
+        const roomName = roomContent.getAttribute('data-room-name')
+        if (projectName && roomName) {
+          saveCapacityData(projectName, roomName)
+        }
+      }
     }
-  }
-}
-
-function updateBackupConfiguration(selectElement) {
-  const roomId = findRoomId(selectElement.closest(".capacity-calculation-table"))
-  if (roomId) {
-    const newBackupValue = selectElement.value
-    syncBackupWithClimaInputs(roomId, newBackupValue)
-    calculateCapacitySolution(roomId)
   }
 }
 
@@ -540,8 +739,18 @@ function syncCapacityTableBackup(roomId) {
 async function loadSavedMachines(roomId, savedMachines) {
   const machinesContainer = document.getElementById(`machines-${roomId}`)
 
+  // PRIMEIRO CARREGAR DADOS DE CAPACIDADE
+  const roomContent = document.getElementById(`room-content-${roomId}`)
+  if (roomContent) {
+    const projectName = roomContent.getAttribute('data-project-name')
+    const roomName = roomContent.getAttribute('data-room-name')
+    if (projectName && roomName) {
+      // Carregar dados de capacidade do JSON
+      loadCapacityData(projectName, roomName)
+    }
+  }
+
   if (!savedMachines?.length) {
-    setTimeout(() => calculateCapacitySolution(roomId), 100)
     return
   }
 
@@ -554,8 +763,6 @@ async function loadSavedMachines(roomId, savedMachines) {
       const machineHTML = buildClimatizationMachineFromSavedData(index + 1, savedMachine, machinesData.machines)
       machinesContainer.insertAdjacentHTML("beforeend", machineHTML)
     })
-
-    setTimeout(() => calculateCapacitySolution(roomId), 300)
   } catch (error) {
     console.error("Erro ao carregar máquinas salvas:", error)
   }
@@ -794,13 +1001,17 @@ Object.assign(window, {
   updateBackupConfiguration,
   syncCapacityTableBackup,
   handleClimaInputBackupChange,
-  
+  saveCapacityData,
+  loadCapacityData,
+  getCapacityData,
+  applyCapacityData
 })
 
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(initializeCapacityCalculations, 1500)
   setTimeout(initializeBackupSync, 2000)
   initializeClimaInputBackupListener()
+  initializeFatorSegurancaListeners()
 })
 
 export {

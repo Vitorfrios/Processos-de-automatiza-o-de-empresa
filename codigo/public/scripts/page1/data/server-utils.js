@@ -77,8 +77,9 @@ function renderRoomFromData(projectName, roomData) {
           roomName, 
           roomData.inputs || {}, 
           roomData.ganhosTermicos, 
-          maquinasUnificadas, // ← DADOS UNIFICADOS
-          roomData.configuracoes
+          maquinasUnificadas, 
+          roomData.configuracoes,
+          roomData // ← AGORA PASSANDO O roomData COMPLETO
         )
       }
     }, 50);
@@ -99,7 +100,7 @@ function renderRoomFromData(projectName, roomData) {
   }, 150);
 }
 
-function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, maquinasData, configuracoesData) {
+function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, maquinasData, configuracoesData, roomData = null) {
   // CORREÇÃO: Tentar encontrar a sala múltiplas vezes com timeout
   let attempts = 0;
   const maxAttempts = 10;
@@ -169,6 +170,27 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, m
       })
     }
 
+    // ========== CARREGAR DADOS DE CAPACIDADE DE REFRIGERAÇÃO ==========
+    // CORREÇÃO: Usar roomData que agora é passado como parâmetro
+    if (roomData && roomData['Cálculo_Capacidade_Refrigeração']) {
+      console.log(`[SERVER-UTILS] Carregando dados de capacidade de refrigeração para ${roomName}`);
+      
+      // Aguardar um pouco para garantir que a tabela de capacidade esteja renderizada
+      setTimeout(() => {
+        if (typeof window.loadCapacityData !== 'undefined') {
+          window.loadCapacityData(projectName, roomName);
+        } else {
+          console.warn('[SERVER-UTILS] Função loadCapacityData não disponível ainda');
+          // Tentar novamente depois
+          setTimeout(() => {
+            if (typeof window.loadCapacityData !== 'undefined') {
+              window.loadCapacityData(projectName, roomName);
+            }
+          }, 1000);
+        }
+      }, 600);
+    }
+
     // ========== CARREGAR MÁQUINAS DE CLIMATIZAÇÃO ==========
     if (maquinasData && maquinasData.maquinasClimatizacao && Array.isArray(maquinasData.maquinasClimatizacao)) {
       console.log(`[SERVER-UTILS] Carregando ${maquinasData.maquinasClimatizacao.length} máquina(s) de climatização para ${roomName}`);
@@ -236,7 +258,6 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, m
   };
   
   tryPopulate();
-
 }
 
 

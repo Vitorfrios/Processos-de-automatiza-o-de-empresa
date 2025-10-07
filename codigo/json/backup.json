@@ -1,62 +1,11 @@
 {
   "projetos": [
     {
-      "nome": "teste",
-      "salas": [
-        {
-          "nome": "Sala1",
-          "inputs": {
-            "ambiente": "",
-            "backup": "n+1",
-            "area": 34,
-            "tipoConstrucao": "Eletrocentro",
-            "paredeOeste": 12,
-            "paredeLeste": 13,
-            "paredeNorte": 14,
-            "paredeSul": 15,
-            "peDireito": 15,
-            "divisoriaNaoClima1": 1,
-            "divisoriaNaoClima2": 2,
-            "divisoriaClima1": 3,
-            "divisoriaClima2": 4,
-            "dissipacao": 1500,
-            "numPessoas": 15,
-            "numPortasDuplas": 1,
-            "numPortasSimples": 3,
-            "pressurizacao": 25,
-            "setpoint": 25,
-            "combateIncendio": "manual",
-            "vazaoArExterno": 580
-          },
-          "configuracoes": {
-            "opcoesInstalacao": [
-              "bocal_insuflamento_protegido",
-              "bocal_acoplado_dutos",
-              "evaporadoras_internas",
-              "evaporadoras_casa_maquinas"
-            ]
-          },
-          "ganhosTermicos": {
-            "totalW": 40741,
-            "totalTR": 12,
-            "totalExterno": 12573,
-            "totalDivisoes": 857,
-            "totalPiso": 689,
-            "totalIluminacao": 238,
-            "totalEquipamentos": 1500,
-            "totalPessoas": 3297,
-            "totalArExterno": 21589
-          },
-          "id": "1"
-        }
-      ],
-      "id": "1001"
-    },
-    {
       "nome": "sssss",
       "salas": [
         {
           "nome": "ssss",
+          "Cálculo_Capacidade_Refrigeração": [],
           "inputs": {
             "ambiente": "sgg",
             "backup": "n+1",
@@ -129,7 +78,7 @@
       "nome": "Projeto1",
       "salas": [
         {
-          "nome": "Sala1",
+          "nome": "d",
           "inputs": {
             "ambiente": "oi8uyo",
             "backup": "n+2",
@@ -159,6 +108,16 @@
               "evaporadoras_internas",
               "evaporadoras_casa_maquinas"
             ]
+          },
+          "Cálculo_Capacidade_Refrigeração": {
+            "fatorSeguranca": 13,
+            "capacidadeUnitaria": 1,
+            "backup": "n+2",
+            "cargaEstimada": 12,
+            "solucao": "14",
+            "solucaoBackup": "16",
+            "totalCapacidade": 14,
+            "folga": "16.7%"
           },
           "maquinasClimatizacao": [
             {

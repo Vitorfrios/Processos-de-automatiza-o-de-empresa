@@ -59,6 +59,13 @@ function extractRoomData(roomBlock) {
       }
     }
 
+    // ========== COLETA DOS DADOS DE CAPACIDADE DE REFRIGERAÇÃO ==========
+    const capacityData = extractCapacityData(roomBlock, roomId)
+    if (capacityData && Object.keys(capacityData).length > 0) {
+      roomData['Cálculo_Capacidade_Refrigeração'] = capacityData
+      console.log(`[DATA-UTILS] Dados de capacidade coletados para sala ${roomData.nome}:`, capacityData)
+    }
+
     // ========== COLETA DAS MÁQUINAS DE CLIMATIZAÇÃO ==========
     const climatizationMachines = roomBlock.querySelectorAll('.climatization-machine')
     if (climatizationMachines.length > 0) {
@@ -137,6 +144,52 @@ function extractRoomData(roomBlock) {
   return roomData
 }
 
+// ========== FUNÇÃO PARA COLETAR DADOS DE CAPACIDADE DE REFRIGERAÇÃO ==========
+
+function extractCapacityData(roomBlock, roomId) {
+  try {
+    const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
+    const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`)
+    const backupSelect = roomBlock.querySelector('.backup-select')
+    
+    const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`)
+    const solucaoElement = document.getElementById(`solucao-${roomId}`)
+    const solucaoBackupElement = document.getElementById(`solucao-backup-${roomId}`)
+    const totalCapacidadeElement = document.getElementById(`total-capacidade-${roomId}`)
+    const folgaElement = document.getElementById(`folga-${roomId}`)
+
+    // Verificar se todos os elementos necessários existem
+    if (!fatorSegurancaInput || !capacidadeUnitariaSelect || !backupSelect) {
+      console.warn(`[DATA-UTILS] Elementos de capacidade não encontrados para sala ${roomId}`)
+      return null
+    }
+
+    const capacityData = {
+      fatorSeguranca: Number.parseFloat(fatorSegurancaInput.value) || 10,
+      capacidadeUnitaria: Number.parseFloat(capacidadeUnitariaSelect.value) || 1,
+      backup: backupSelect.value || "n",
+      cargaEstimada: parseFloat(cargaEstimadaElement?.textContent) || 0,
+      solucao: solucaoElement?.textContent || "0",
+      solucaoBackup: solucaoBackupElement?.textContent || "0",
+      totalCapacidade: parseFloat(totalCapacidadeElement?.textContent) || 0,
+      folga: folgaElement?.textContent || "0%"
+    }
+
+    // Validar se os dados são significativos (não apenas zeros)
+    const hasValidData = Object.values(capacityData).some(value => {
+      if (typeof value === 'number') return value !== 0
+      if (typeof value === 'string') return value !== "0" && value !== "0%"
+      return true
+    })
+
+    return hasValidData ? capacityData : null
+
+  } catch (error) {
+    console.error(`[DATA-UTILS] Erro ao extrair dados de capacidade para ${roomId}:`, error)
+    return null
+  }
+}
+
 // ========== FUNÇÃO PARA COLETAR DADOS DAS MÁQUINAS DE CLIMATIZAÇÃO ==========
 
 function extractClimatizationMachineData(machineElement) {
@@ -174,5 +227,6 @@ function parseMachinePrice(priceText) {
 export {
   buildProjectData,
   extractRoomData,
-  extractClimatizationMachineData
+  extractClimatizationMachineData,
+  extractCapacityData
 }

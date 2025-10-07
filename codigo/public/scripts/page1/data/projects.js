@@ -1,28 +1,22 @@
-import { 
-  API_CONFIG, 
-  UI_CONSTANTS
-} from '../config/config.js'
-import { ensureStringId } from '../utils/utils.js'
-import { showSystemStatus } from '../ui/interface.js'
-import { buildProjectData, extractRoomData, extractClimatizationMachineData} from './data-utils.js'
-// CORREÇÃO 1: Importar TODAS as funções necessárias do server.js
-import { 
-  incrementGeralCount, 
-  decrementGeralCount, 
+import { API_CONFIG, UI_CONSTANTS } from "../config/config.js"
+import { ensureStringId } from "../utils/utils.js"
+import { showSystemStatus } from "../ui/interface.js"
+import { buildProjectData } from "./data-utils.js"
+import {
+  incrementGeralCount,
+  decrementGeralCount,
   getGeralCount,
-  createSingleBaseProject,
   addProjectToRemovedList,
   saveFirstProjectIdOfSession,
   updateProjectButton,
-  resetDisplayLogic
-} from './server.js'
+} from "./server.js"
 
-
-
-
+/**
+ * Busca todos os projetos do servidor
+ * @returns {Promise<Array>} Lista de projetos normalizados
+ */
 async function fetchProjects() {
   try {
-    console.log("[v0] Buscando projetos...")
     const response = await fetch(`${API_CONFIG.projects}/projetos`)
 
     if (!response.ok) {
@@ -48,7 +42,6 @@ async function fetchProjects() {
       return project
     })
 
-    console.log("[v0] Projetos carregados e normalizados:", normalizedProjects)
     return normalizedProjects
   } catch (error) {
     console.error("[v0] Erro ao buscar projetos:", error)
@@ -57,7 +50,10 @@ async function fetchProjects() {
   }
 }
 
-// ADICIONAR função getNextProjectId que estava faltando
+/**
+ * Obtém o próximo ID disponível para um novo projeto
+ * @returns {Promise<number>} Próximo ID de projeto
+ */
 async function getNextProjectId() {
   const projects = await fetchProjects()
 
@@ -70,12 +66,14 @@ async function getNextProjectId() {
   return ensureStringId(nextId)
 }
 
+/**
+ * Inicializa o contador de projetos baseado nos projetos existentes no DOM
+ */
 async function initializeProjectCounter() {
   const projects = document.querySelectorAll(".project-block")
 
   if (projects.length === 0) {
-    window.projectCounter = 0;
-    console.log("[v0] projectCounter inicializado: 0");
+    window.projectCounter = 0
     return
   }
 
@@ -87,20 +85,26 @@ async function initializeProjectCounter() {
     .filter((num) => num > 0)
 
   const maxProjectNumber = projectNumbers.length > 0 ? Math.max(...projectNumbers) : 0
-  window.projectCounter = maxProjectNumber;
-  
-  console.log(`[v0] projectCounter inicializado: ${window.projectCounter}`)
+  window.projectCounter = maxProjectNumber
 }
 
+/**
+ * Retorna o próximo número de projeto disponível
+ * @returns {number} Próximo número de projeto
+ */
 function getNextProjectNumber() {
-  if (typeof window.projectCounter === 'undefined') {
-    window.projectCounter = 0;
+  if (typeof window.projectCounter === "undefined") {
+    window.projectCounter = 0
   }
-  window.projectCounter++;
-  console.log(`[v0] projectCounter incrementado: ${window.projectCounter}`);
-  return window.projectCounter;
+  window.projectCounter++
+  return window.projectCounter
 }
 
+/**
+ * Normaliza todos os IDs de um projeto (projeto e salas)
+ * @param {Object} projectData - Dados do projeto
+ * @returns {Object} Projeto com IDs normalizados
+ */
 function normalizeProjectIds(projectData) {
   if (projectData.id !== undefined && projectData.id !== null) {
     projectData.id = ensureStringId(projectData.id)
@@ -117,6 +121,11 @@ function normalizeProjectIds(projectData) {
   return projectData
 }
 
+/**
+ * Salva um novo projeto no servidor
+ * @param {Object} projectData - Dados do projeto a ser salvo
+ * @returns {Promise<Object|null>} Projeto criado ou null em caso de erro
+ */
 async function salvarProjeto(projectData) {
   try {
     if (!projectData.id) {
@@ -125,7 +134,6 @@ async function salvarProjeto(projectData) {
 
     projectData = normalizeProjectIds(projectData)
 
-    console.log("[v0] SALVANDO novo projeto:", projectData)
     const response = await fetch(`${API_CONFIG.projects}/projetos`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -134,13 +142,11 @@ async function salvarProjeto(projectData) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] Erro ao SALVAR projeto:", errorText)
       throw new Error(`Erro ao salvar projeto: ${errorText}`)
     }
 
     const createdProject = await response.json()
     createdProject.id = ensureStringId(createdProject.id)
-    console.log("[v0] Projeto SALVO com sucesso:", createdProject)
     showSystemStatus("Projeto salvo com sucesso!", "success")
     return createdProject
   } catch (error) {
@@ -150,12 +156,18 @@ async function salvarProjeto(projectData) {
   }
 }
 
+/**
+ * Atualiza um projeto existente no servidor
+ * @param {string|number} projectId - ID do projeto
+ * @param {Object} projectData - Dados atualizados do projeto
+ * @returns {Promise<Object|null>} Projeto atualizado ou null em caso de erro
+ */
 async function atualizarProjeto(projectId, projectData) {
   try {
     projectId = ensureStringId(projectId)
 
     if (!projectId) {
-      console.error("[v0] ERRO: Tentativa de ATUALIZAR projeto sem ID válido")
+      console.error("[v0] ERRO: ID do projeto inválido para atualização")
       showSystemStatus("ERRO: ID do projeto inválido para atualização", "error")
       return null
     }
@@ -163,10 +175,7 @@ async function atualizarProjeto(projectId, projectData) {
     projectData = normalizeProjectIds(projectData)
     projectData.id = projectId
 
-    console.log(`[v0] ATUALIZANDO projeto ID ${projectId}...`)
-
     const url = `${API_CONFIG.projects}/projetos/${projectId}`
-    console.log(`[v0] Fazendo PUT para ATUALIZAR: ${url}`)
 
     const response = await fetch(url, {
       method: "PUT",
@@ -176,13 +185,11 @@ async function atualizarProjeto(projectId, projectData) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] Erro ao ATUALIZAR projeto:", errorText)
       throw new Error(`Erro ao atualizar projeto: ${errorText}`)
     }
 
     const updatedProject = await response.json()
     updatedProject.id = ensureStringId(updatedProject.id)
-    console.log("[v0] Projeto ATUALIZADO com sucesso:", updatedProject)
     showSystemStatus("Projeto atualizado com sucesso!", "success")
     return updatedProject
   } catch (error) {
@@ -192,68 +199,61 @@ async function atualizarProjeto(projectId, projectData) {
   }
 }
 
+/**
+ * Salva ou atualiza um projeto (função principal chamada pela interface)
+ * @param {string} projectName - Nome do projeto
+ * @param {Event} event - Evento do clique
+ */
 async function saveProject(projectName, event) {
   if (event) {
     event.preventDefault()
     event.stopPropagation()
   }
 
-  console.log(`[v0] ===== SALVANDO PROJETO ${projectName} =====`)
-
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
   if (!projectBlock) {
-    console.error(`[v0] Projeto ${projectName} não encontrado`)
     showSystemStatus("ERRO: Projeto não encontrado na interface", "error")
     return
   }
 
   let projectId = projectBlock.dataset.projectId
-  console.log(`[v0] DEBUG - dataset.projectId RAW: "${projectId}" (tipo: ${typeof projectId})`)
 
   projectId =
     projectId && projectId !== "" && projectId !== "undefined" && projectId !== "null"
       ? ensureStringId(projectId)
       : null
 
-  console.log(`[v0] DEBUG - projectId após conversão: ${projectId} (tipo: ${typeof projectId})`)
-
   const projectData = buildProjectData(projectBlock, projectId)
-  console.log(`[v0] DEBUG - projectData.id: ${projectData.id}`)
-  console.log(`[v0] Dados do projeto coletados:`, projectData)
 
   let result = null
   const isNewProject = !projectId
 
   if (!projectId) {
-    console.log("[v0] Nenhum ID encontrado - SALVANDO novo projeto...")
     result = await salvarProjeto(projectData)
   } else {
-    console.log(`[v0] ID ${projectId} encontrado - ATUALIZANDO projeto existente...`)
     result = await atualizarProjeto(projectId, projectData)
   }
 
   if (result) {
     const finalId = ensureStringId(result.id)
     projectBlock.dataset.projectId = finalId
-    console.log(`[v0] DEBUG - ID salvo no dataset: ${finalId}`)
 
-    // CORREÇÃO 2: Usar as funções importadas, não as locais
     updateProjectButton(projectName, true)
     saveFirstProjectIdOfSession(finalId)
 
-    // CORREÇÃO 3: Usar a função incrementGeralCount para novos projetos
     if (isNewProject) {
-      incrementGeralCount();
-      console.log(`[v0] Novo projeto salvo - GeralCount: ${getGeralCount()}`)
+      incrementGeralCount()
     }
 
     collapseProjectAfterSave(projectName, projectBlock)
-    console.log(`[v0] ===== PROJETO ${projectName} SALVO COM SUCESSO (ID: ${finalId}) =====`)
-  } else {
-    console.error(`[v0] ===== FALHA AO SALVAR PROJETO ${projectName} =====`)
   }
 }
 
+/**
+ * Colapsa o projeto após salvar
+ * @param {string} projectName - Nome do projeto
+ * @param {HTMLElement} projectBlock - Elemento do projeto
+ */
 function collapseProjectAfterSave(projectName, projectBlock) {
   const projectContent = document.getElementById(`project-content-${projectName}`)
   const minimizer = projectBlock.querySelector(".project-header .minimizer")
@@ -263,70 +263,62 @@ function collapseProjectAfterSave(projectName, projectBlock) {
   }
 }
 
+/**
+ * Deleta um projeto da interface
+ * @param {string} projectName - Nome do projeto a ser deletado
+ */
 function deleteProject(projectName) {
   const confirmMessage = "Tem certeza que deseja deletar este projeto? Os dados permanecerão no servidor."
 
   if (!confirm(confirmMessage)) return
 
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  if (!projectBlock) {
-    console.error(`[v0] Projeto ${projectName} não encontrado para deleção`);
-    return;
-  }
+  if (!projectBlock) return
 
   const projectId = projectBlock.dataset.projectId ? ensureStringId(projectBlock.dataset.projectId) : null
 
-  // CORREÇÃO: Remover APENAS o projeto específico
   projectBlock.remove()
-  console.log(`[v0] Projeto ${projectName} removido da interface`);
-
-  // CORREÇÃO: Lógica de contador mais robusta
-  const currentCount = getGeralCount();
-  console.log(`[v0] Contador atual antes da deleção: ${currentCount}`);
 
   if (projectId) {
-    console.log(`[v0] Projeto com ID ${projectId} removido - adicionando à lista de removidos`);
-    addProjectToRemovedList(projectId);
+    addProjectToRemovedList(projectId)
   } else {
-    console.log(`[v0] Projeto ${projectName} (sem ID) removido - decrementando contador`);
-    decrementGeralCount();
+    decrementGeralCount()
   }
 
-  // CORREÇÃO: Debug para verificar estado
   setTimeout(() => {
-    const remainingProjects = document.querySelectorAll('.project-block');
-    console.log(`[v0] Estado após deleção de ${projectName}:`);
-    console.log(`[v0] - GeralCount: ${getGeralCount()}`);
-    console.log(`[v0] - Projetos no DOM: ${remainingProjects.length}`);
-    
-    // Listar projetos restantes para debug
-    remainingProjects.forEach((proj, index) => {
-      console.log(`[v0]   Projeto ${index + 1}: ${proj.dataset.projectName}`);
-    });
-  }, 200);
+    const remainingProjects = document.querySelectorAll(".project-block")
+    if (remainingProjects.length === 0 && getGeralCount() === 0) {
+      // Projeto base será criado automaticamente pelo decrementGeralCount
+    }
+  }, 200)
 }
 
+/**
+ * Verifica os dados de um projeto e gera relatório
+ * @param {string} projectName - Nome do projeto
+ */
 function verifyProjectData(projectName) {
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  if (!projectBlock) {
-    console.error(`[v0] Projeto ${projectName} não encontrado para verificação`);
-    return;
-  }
-  
+  if (!projectBlock) return
+
   const rooms = projectBlock.querySelectorAll(".room-block")
 
   const report = generateProjectVerificationReport(rooms)
 
   alert(report)
-  console.log(`[v0] Verificação do projeto ${projectName} concluída`)
 }
 
+/**
+ * Gera relatório de verificação do projeto
+ * @param {NodeList} rooms - Lista de salas do projeto
+ * @returns {string} Relatório formatado
+ */
 function generateProjectVerificationReport(rooms) {
   let report = `Verificação do Projeto:\n\n`
   report += `Total de salas: ${rooms.length}\n\n`
 
   rooms.forEach((room) => {
-    const roomName = room.querySelector(".room-title")?.textContent || 'Sala sem nome';
+    const roomName = room.querySelector(".room-title")?.textContent || "Sala sem nome"
     const stats = calculateRoomCompletionStats(room)
 
     report += `${roomName}: ${stats.filled}/${stats.total} campos preenchidos (${stats.percentage}%)\n`
@@ -335,6 +327,11 @@ function generateProjectVerificationReport(rooms) {
   return report
 }
 
+/**
+ * Calcula estatísticas de preenchimento de uma sala
+ * @param {HTMLElement} room - Elemento da sala
+ * @returns {Object} Estatísticas de preenchimento
+ */
 function calculateRoomCompletionStats(room) {
   const inputs = room.querySelectorAll(".form-input")
   const filledInputs = Array.from(inputs).filter((input) => input.value.trim() !== "").length
@@ -348,23 +345,17 @@ function calculateRoomCompletionStats(room) {
   }
 }
 
-// CORREÇÃO 6: Remover as funções duplicadas - usar apenas as importadas
-// (Remover as declarações locais de updateProjectButton, saveFirstProjectIdOfSession, etc.)
-
-// ADICIONAR funções auxiliares que podem estar faltando
+/**
+ * Colapsa um elemento na interface
+ * @param {HTMLElement} element - Elemento a ser colapsado
+ * @param {HTMLElement} minimizerElement - Botão minimizador
+ */
 function collapseElement(element, minimizerElement) {
-  if (!element || !minimizerElement) {
-    console.warn('[v0] Elemento ou minimizer não encontrado para collapse');
-    return;
-  }
-  
+  if (!element || !minimizerElement) return
+
   element.classList.add(UI_CONSTANTS.COLLAPSED_CLASS)
   minimizerElement.textContent = UI_CONSTANTS.MINIMIZED_SYMBOL
 }
-
-
-
-
 
 export {
   fetchProjects,

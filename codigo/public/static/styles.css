@@ -804,7 +804,6 @@ textarea.form-input {
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #e9ecef;
-  overflow-x: auto;
 }
 
 .capacity-calculation-table .table-title {
@@ -814,42 +813,87 @@ textarea.form-input {
   color: #495057;
 }
 
+/* CONTAINER DA TABELA COM SCROLL */
+.table-container {
+  overflow-x: auto;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  background: white;
+  width: 100%; /* Mudei de max-width para width */
+  -webkit-overflow-scrolling: touch;
+}
+
 .thermal-capacity-table {
-  width: 100%;
+  width: 100%; /* Voltei para 100% */
   border-collapse: collapse;
   background: white;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  min-width: 600px;
+  min-width: 800px; /* Aumentei para caber todas as colunas */
+  table-layout: fixed; /* Adicionei isso para controle melhor */
 }
 
 .thermal-capacity-table th {
   background: #343a40;
   color: white;
-  padding: 12px 8px;
+  padding: 12px 6px; /* Reduzi o padding */
   font-weight: 600;
-  font-size: 0.85em;
+  font-size: 0.8em; /* Reduzi a fonte */
   text-align: center;
   border: 1px solid #454d55;
   white-space: nowrap;
 }
 
 .thermal-capacity-table td {
-  padding: 10px 8px;
+  padding: 10px 6px; /* Reduzi o padding */
   text-align: center;
   border: 1px solid #dee2e6;
-  font-size: 0.9em;
+  font-size: 0.85em; /* Reduzi a fonte */
   white-space: nowrap;
   background: #e9ecef;
 }
 
-/* Células com fundo cinza - CORES FIXAS */
+/* Defina larguras específicas para as colunas */
+.thermal-capacity-table th:nth-child(1),
+.thermal-capacity-table td:nth-child(1) {
+  width: 120px; /* Carga Estimada */
+}
+
+.thermal-capacity-table th:nth-child(2),
+.thermal-capacity-table td:nth-child(2) {
+  width: 100px; /* Fator de Seg. */
+}
+
+.thermal-capacity-table th:nth-child(3),
+.thermal-capacity-table td:nth-child(3) {
+  width: 120px; /* Cap. Unit. */
+}
+
+.thermal-capacity-table th:nth-child(4),
+.thermal-capacity-table td:nth-child(4) {
+  width: 80px; /* Solução */
+}
+
+.thermal-capacity-table th:nth-child(5),
+.thermal-capacity-table td:nth-child(5) {
+  width: 120px; /* Com back-up */
+}
+
+.thermal-capacity-table th:nth-child(6),
+.thermal-capacity-table td:nth-child(6) {
+  width: 100px; /* TOTAL */
+}
+
+.thermal-capacity-table th:nth-child(7),
+.thermal-capacity-table td:nth-child(7) {
+  width: 100px; /* FOLGA */
+}
+
+/* Manter as cores fixas */
 .thermal-capacity-table td:first-child {
   background: #e9ecef;
   font-weight: 700;
   color: #1565c0;
 }
+
 .thermal-capacity-table td:nth-child(4) {
   background: #e9ecef;
   font-weight: 600;
@@ -868,62 +912,24 @@ textarea.form-input {
   color: #28a745;
 }
 
-/* REMOVER COMPLETAMENTE hover de todas as linhas e células */
-.thermal-capacity-table tr {
-  background: #e9ecef !important;
-}
-
-.thermal-capacity-table tr:hover {
-  background: #e9ecef !important;
-}
-
-.thermal-capacity-table tr:hover td {
-  background: inherit !important;
-}
-
-.thermal-capacity-table tr:hover td:first-child {
-  background: #e9ecef !important;
-}
-
-.thermal-capacity-table tr:hover td:nth-child(4) {
-  background: #e9ecef !important;
-}
-
-.thermal-capacity-table tr:hover td:nth-child(6) {
-  background: #e9ecef !important;
-}
-
-.thermal-capacity-table tr:hover td:nth-child(7) {
-  background: #e9ecef !important;
-}
-
+/* Ajuste dos inputs para caber nas colunas */
 .capacity-input {
-  width: 80px;
-  padding: 4px 8px;
+  width: 70px; /* Reduzi a largura */
+  padding: 4px 6px;
   border: 1px solid #ced4da;
   border-radius: 4px;
   text-align: center;
-  font-size: 0.9em;
+  font-size: 0.85em;
   background: white;
-}
-
-.capacity-input:focus {
-  border-color: #667eea;
-  outline: none;
 }
 
 .capacity-select {
-  width: 100px;
-  padding: 4px 8px;
+  width: 85px; /* Reduzi a largura */
+  padding: 4px 6px;
   border: 1px solid #ced4da;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: 0.85em;
   background: white;
-}
-
-.capacity-select:focus {
-  border-color: #667eea;
-  outline: none;
 }
 
 .backup-cell {
@@ -937,7 +943,8 @@ textarea.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid #696b6e;
+  margin: 5px;
   background: #e9ecef;
 }
 
@@ -951,148 +958,126 @@ textarea.form-input {
 }
 
 .backup-select {
-  width: 90%;
+  width: 85px; /* Reduzi a largura */
   padding: 2px 4px;
   border: 1px solid #ced4da;
   border-radius: 3px;
-  font-size: 0.9em;
+  font-size: 0.8em; /* Reduzi a fonte */
   background: #f8f9fa;
   text-align: center;
+  margin-bottom: 5px;
 }
 
-.backup-select:focus {
-  border-color: #667eea;
-  outline: none;
+/* Estilos da scrollbar MAIOR */
+.table-container::-webkit-scrollbar {
+  height: 16px;
 }
 
-.backup-solution span {
-  font-size: 0.9em;
-  color: #495057;
+.table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
 }
 
-/* ========== RESPONSIVIDADE ========== */
+.table-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 8px;
+  border: 3px solid #f1f1f1;
+}
 
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Para Firefox */
+.table-container {
+  scrollbar-width: auto;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Responsividade MELHORADA */
 @media (max-width: 1200px) {
   .thermal-capacity-table {
-    min-width: 550px;
-  }
-  
-  .thermal-capacity-table th,
-  .thermal-capacity-table td {
-    padding: 8px 6px;
-    font-size: 0.85em;
-  }
-  
-  .capacity-input {
-    width: 70px;
-    font-size: 0.85em;
-  }
-  
-  .capacity-select {
-    width: 90px;
-    font-size: 0.85em;
+    min-width: 750px;
   }
 }
 
 @media (max-width: 992px) {
   .thermal-capacity-table {
-    min-width: 500px;
+    min-width: 700px;
   }
   
-  .thermal-capacity-table th {
-    font-size: 0.8em;
-    padding: 10px 4px;
-  }
-  
+  .thermal-capacity-table th,
   .thermal-capacity-table td {
-    font-size: 0.8em;
     padding: 8px 4px;
-  }
-}
-
-@media (max-width: 768px) {
-  .capacity-calculation-table {
-    margin-bottom: 20px;
-    padding: 10px;
-  }
-  
-  .thermal-capacity-table {
-    min-width: 450px;
-  }
-  
-  .thermal-capacity-table th {
-    font-size: 0.75em;
-    padding: 8px 3px;
-  }
-  
-  .thermal-capacity-table td {
-    font-size: 0.75em;
-    padding: 6px 3px;
+    font-size: 0.8em;
   }
   
   .capacity-input {
-    width: 60px;
-    padding: 3px 6px;
+    width: 65px;
     font-size: 0.8em;
   }
   
   .capacity-select {
     width: 80px;
-    padding: 3px 6px;
     font-size: 0.8em;
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
   .capacity-calculation-table {
-    border-radius: 6px;
-    margin-bottom: 15px;
+    padding: 10px;
+    margin-bottom: 20px;
   }
   
   .thermal-capacity-table {
-    min-width: 400px;
+    min-width: 650px;
   }
   
-  .thermal-capacity-table th {
-    font-size: 0.7em;
-    padding: 6px 2px;
-  }
-  
+  .thermal-capacity-table th,
   .thermal-capacity-table td {
-    font-size: 0.7em;
-    padding: 5px 2px;
+    padding: 6px 3px;
+    font-size: 0.75em;
   }
   
   .capacity-input {
-    width: 50px;
-    padding: 2px 4px;
+    width: 60px;
+    padding: 3px 4px;
     font-size: 0.75em;
   }
   
   .capacity-select {
-    width: 70px;
-    padding: 2px 4px;
+    width: 75px;
+    padding: 3px 4px;
+    font-size: 0.75em;
+  }
+  
+  .backup-select {
+    width: 75px;
     font-size: 0.75em;
   }
 }
 
-/* Indicador de scroll */
-.capacity-calculation-table.scrollable::after {
-  content: "← Arraste →";
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.8em;
-  font-weight: 600;
-  pointer-events: none;
-  opacity: 0.7;
+@media (max-width: 576px) {
+  .thermal-capacity-table {
+    min-width: 600px;
+  }
+  
+  .thermal-capacity-table th,
+  .thermal-capacity-table td {
+    padding: 5px 2px;
+    font-size: 0.7em;
+  }
+  
+  .capacity-input {
+    width: 55px;
+    padding: 2px 3px;
+  }
+  
+  .capacity-select {
+    width: 70px;
+    padding: 2px 3px;
+  }
 }
-
 /* ========== ESTILOS PARA MÁQUINAS DE CLIMATIZAÇÃO ========== */
 
 .climatization-machine {
