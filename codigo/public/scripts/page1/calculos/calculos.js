@@ -194,7 +194,6 @@ async function calculateVazaoArAndThermalGains(roomId) {
     const flowRate = await calculateVazaoAr(roomId, false);
     console.log(`[DEBUG] Vazão calculada: ${flowRate}, chamando ganhos térmicos`);
     await calculateThermalGains(roomId, flowRate);
-    console.log(`[DEBUG] calculateVazaoArAndThermalGains concluído para ${roomId}`);
   } catch (error) {
     console.error(`[DEBUG] Erro em calculateVazaoArAndThermalGains:`, error);
   }
@@ -465,7 +464,6 @@ function calculateTotals(gains) {
 }
 
 function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
-  console.log(`[DEBUG] updateThermalGainsDisplay INICIADO para ${roomId}`)
   
   // Atualizar totais gerais
   updateElementText(`total-ganhos-w-${roomId}`, totals.geralW)
@@ -528,9 +526,7 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   updateElementText(`ganho-ar-sensivel-${roomId}`, Math.ceil(gains.arSensivel))
   updateElementText(`total-ar-sensivel-${roomId}`, totals.arSensivel)
 
-  // Ganho latente de ar externo - CORREÇÃO FINAL
-  console.log(`[DEBUG] updateThermalGainsDisplay - ganho latente:`, gains.arLatente)
-  console.log(`[DEBUG] updateThermalGainsDisplay - total latente:`, totals.arLatente)
+
   
   updateElementText(`var-ar-latente-${roomId}`, inputData.vazaoArExterno || 0)
   updateElementText(`f-ar-latente-${roomId}`, window.systemConstants?.AUX_f_ArExterno || 3.01)
@@ -542,7 +538,6 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   updateElementText(`total-externo-${roomId}`, totals.externo)
   updateElementText(`total-divisoes-${roomId}`, totals.divisoes)
 
-  console.log(`[DEBUG] updateThermalGainsDisplay CONCLUÍDO para ${roomId}`)
 }
 
 function updateWallDisplay(roomId, direction, gain, uValue, inputWidth, peDireito, deltaT) {
@@ -565,7 +560,6 @@ function updateElementText(elementId, value) {
   const element = document.getElementById(elementId)
   if (element) {
     element.textContent = value
-    console.log(`[DEBUG] Elemento ${elementId} atualizado para: ${value}`)
   } else {
     console.warn(`[DEBUG] Elemento ${elementId} não encontrado`)
   }
