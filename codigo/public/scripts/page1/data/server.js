@@ -98,7 +98,35 @@ async function loadProjectsFromServer() {
 
   console.log("[v0] Todos os projetos da sessão foram carregados e renderizados")
 }
+// ========== FUNÇÃO PARA CARREGAR MÁQUINAS SALVAS ==========
 
+async function loadSavedMachinesForRoom(roomBlock, roomData) {
+  const roomId = roomBlock.id.replace('room-content-', '');
+  
+  // Verificar se há máquinas de climatização salvas
+  if (roomData.maquinasClimatizacao && Array.isArray(roomData.maquinasClimatizacao)) {
+    console.log(`[SERVER] Carregando ${roomData.maquinasClimatizacao.length} máquina(s) de climatização para sala ${roomData.nome}`);
+    
+    // Aguardar um pouco para garantir que a seção de máquinas esteja renderizada
+    setTimeout(async () => {
+      try {
+        // Importar e usar a função do maquinas.js
+        if (typeof window.loadSavedMachines !== 'undefined') {
+          await window.loadSavedMachines(roomId, roomData.maquinasClimatizacao);
+        } else {
+          console.warn('[SERVER] Função loadSavedMachines não disponível');
+        }
+      } catch (error) {
+        console.error('[SERVER] Erro ao carregar máquinas:', error);
+      }
+    }, 500);
+  }
+  
+  // Manter compatibilidade com máquinas antigas se existirem
+  if (roomData.maquinas && Array.isArray(roomData.maquinas)) {
+    console.log(`[SERVER] ${roomData.maquinas.length} máquina(s) legada(s) encontrada(s) - compatibilidade mantida`);
+  }
+}
 // FUNÇÕES PARA GERENCIAR O CONTADOR - CORRIGIDAS
 function incrementGeralCount() {
   initializeGeralCount(); // Garantir que está inicializado

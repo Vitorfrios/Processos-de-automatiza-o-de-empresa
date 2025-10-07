@@ -41,6 +41,10 @@ function buildMachinesSection(projectName, roomName) {
 function buildCapacityCalculationTable(roomId) {
   scheduleCapacityInit(roomId);
   
+  // Buscar o valor do backup dos inputs de climatização
+  const backupFromInputs = getBackupFromClimaInputs(roomId);
+  console.log(`[CAPACITY] Backup dos inputs para tabela: ${backupFromInputs}`);
+  
   return `
     <div class="capacity-calculation-table">
       <h5 class="table-title">Cálculo de Capacidade de Refrigeração</h5>
@@ -83,10 +87,10 @@ function buildCapacityCalculationTable(roomId) {
             <td id="solucao-${roomId}">0</td>
             <td class="backup-cell">
               <div class="backup-selection">
-                <select class="backup-select" disabled>
-                  <option value="n">n</option>
-                  <option value="n+1">n+1</option>
-                  <option value="n+2">n+2</option>
+                <select class="backup-select" onchange="updateBackupConfiguration(this)">
+                  <option value="n" ${backupFromInputs === 'n' ? 'selected' : ''}>n</option>
+                  <option value="n+1" ${backupFromInputs === 'n+1' ? 'selected' : ''}>n+1</option>
+                  <option value="n+2" ${backupFromInputs === 'n+2' ? 'selected' : ''}>n+2</option>
                 </select>
               </div>
               <div class="backup-solution">
@@ -100,6 +104,18 @@ function buildCapacityCalculationTable(roomId) {
       </table>
     </div>
   `;
+}
+
+// Função auxiliar para buscar backup dos inputs de climatização
+function getBackupFromClimaInputs(roomId) {
+  const roomContent = document.getElementById(`room-content-${roomId}`);
+  if (roomContent) {
+    const backupInput = roomContent.querySelector(`.clima-input[data-field="backup"]`);
+    if (backupInput?.value) {
+      return backupInput.value;
+    }
+  }
+  return 'n'; // Valor padrão
 }
 
 // ========== CARREGAMENTO DOS DADOS DAS MÁQUINAS ==========
@@ -448,67 +464,102 @@ function applyFatorSeguranca(roomId, fatorSeguranca) {
 }
 
 function getThermalLoadTR(roomId) {
-  const totalTRElement = document.getElementById(`total-tr-${roomId}`);
-  if (totalTRElement) {
-    return parseFloat(totalTRElement.textContent) || 0;
+  try {
+    // Tentar elemento total-tr primeiro
+    const totalTRElement = document.getElementById(`total-tr-${roomId}`);
+    if (totalTRElement && totalTRElement.textContent) {
+      const trValue = parseFloat(totalTRElement.textContent) || 0;
+      console.log(`[CAPACITY] TR da sala ${roomId}: ${trValue} (do elemento total-tr)`);
+      return trValue;
+    }
+    
+    // Fallback para cálculo a partir de W
+    const totalGanhosWElement = document.getElementById(`total-ganhos-w-${roomId}`);
+    if (totalGanhosWElement && totalGanhosWElement.textContent) {
+      const totalW = parseFloat(totalGanhosWElement.textContent) || 0;
+      const trValue = totalW / 3517;
+      console.log(`[CAPACITY] TR da sala ${roomId}: ${trValue} (calculado de W: ${totalW}W)`);
+      return trValue;
+    }
+    
+    console.warn(`[CAPACITY] Não foi possível obter carga térmica para sala ${roomId}`);
+    return 0;
+    
+  } catch (error) {
+    console.error(`[CAPACITY] Erro ao obter carga térmica para sala ${roomId}:`, error);
+    return 0;
   }
-
-  const totalGanhosWElement = document.getElementById(`total-ganhos-w-${roomId}`);
-  if (totalGanhosWElement) {
-    const totalW = parseFloat(totalGanhosWElement.textContent) || 0;
-    return totalW / 3517;
-  }
-
-  return 0;
 }
 
 function calculateCapacitySolution(roomId) {
-  const cargaEstimada = getThermalLoadTR(roomId);
-  const fatorSeguranca = parseFloat(document.getElementById(`fator-seguranca-${roomId}`).value) / 100;
-  const capacidadeUnitaria = parseFloat(document.getElementById(`capacidade-unitaria-${roomId}`).value);
-  const backupType = getBackupFromClimatization(roomId);
+  try {
+    console.log(`[CAPACITY] Calculando capacidade para sala: ${roomId}`);
+    
+    const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`);
+    const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`);
+    
+    if (!fatorSegurancaInput || !capacidadeUnitariaSelect) {
+      console.warn(`[CAPACITY] Elementos não encontrados para sala ${roomId}`);
+      return;
+    }
+    
+    const cargaEstimada = getThermalLoadTR(roomId);
+    const fatorSeguranca = parseFloat(fatorSegurancaInput.value) / 100;
+    const capacidadeUnitaria = parseFloat(capacidadeUnitariaSelect.value);
+    const backupType = getBackupFromClimatization(roomId);
+    
+    const safeFatorSeguranca = isNaN(fatorSeguranca) ? 0.1 : fatorSeguranca;
+    const safeCapacidadeUnitaria = isNaN(capacidadeUnitaria) ? 1 : capacidadeUnitaria;
 
-  const capacidadeNecessaria = cargaEstimada * (1 + fatorSeguranca);
-  const unidadesOperacionais = Math.ceil(capacidadeNecessaria / capacidadeUnitaria);
-  const unidadesTotais = applyBackupConfiguration(unidadesOperacionais, backupType);
+    console.log(`[CAPACITY] Dados - Carga: ${cargaEstimada}, Fator: ${safeFatorSeguranca}, Cap. Unit: ${safeCapacidadeUnitaria}, Backup: ${backupType}`);
 
-  const total = unidadesOperacionais * capacidadeUnitaria;
-  const folga = cargaEstimada > 0 ? ((total / cargaEstimada) - 1) * 100 : 0;
+    const capacidadeNecessaria = cargaEstimada * (1 + safeFatorSeguranca);
+    const unidadesOperacionais = Math.ceil(capacidadeNecessaria / safeCapacidadeUnitaria);
+    const unidadesTotais = applyBackupConfiguration(unidadesOperacionais, backupType);
 
-  updateCapacityDisplay(roomId, cargaEstimada, unidadesOperacionais, unidadesTotais, total, folga, backupType);
+    const total = unidadesOperacionais * safeCapacidadeUnitaria;
+    const folga = cargaEstimada > 0 ? ((total / cargaEstimada) - 1) * 100 : 0;
+
+    console.log(`[CAPACITY] Resultados - Operacionais: ${unidadesOperacionais}, Com Backup: ${unidadesTotais}, Total: ${total}`);
+
+    updateCapacityDisplay(roomId, cargaEstimada, unidadesOperacionais, unidadesTotais, total, folga, backupType);
+    
+  } catch (error) {
+    console.error(`[CAPACITY] Erro ao calcular capacidade para sala ${roomId}:`, error);
+  }
 }
 
 function applyBackupConfiguration(unidadesOperacionais, backupType) {
-  switch (backupType) {
+  console.log(`[BACKUP] Aplicando configuração: ${unidadesOperacionais} unidades, backup: ${backupType}`);
+  
+  switch(backupType) {
     case 'n+1':
-      return unidadesOperacionais + 1;
+      const resultN1 = unidadesOperacionais + 1;
+      console.log(`[BACKUP] n+1: ${unidadesOperacionais} + 1 = ${resultN1}`);
+      return resultN1;
     case 'n+2':
-      return unidadesOperacionais + 2;
+      const resultN2 = unidadesOperacionais + 2;
+      console.log(`[BACKUP] n+2: ${unidadesOperacionais} + 2 = ${resultN2}`);
+      return resultN2;
     case 'n':
     default:
+      console.log(`[BACKUP] n: ${unidadesOperacionais} (sem backup adicional)`);
       return unidadesOperacionais;
   }
 }
 
 function getBackupFromClimatization(roomId) {
-  const roomContent = document.getElementById(`room-content-${roomId}`);
-  if (roomContent) {
-    const backupSelect = roomContent.querySelector(`[data-field="backup"]`);
-    if (backupSelect?.value) return backupSelect.value;
+  // SEMPRE usar o valor da tabela de capacidade (que reflete a seleção atual)
+  const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+  if (capacityTable) {
+    const backupSelect = capacityTable.querySelector('.backup-select');
+    if (backupSelect) {
+      return backupSelect.value;
+    }
   }
-
-  const climatizationSections = document.querySelectorAll('.section-block, [id*="-clima"]');
-  for (let section of climatizationSections) {
-    const backupSelect = section.querySelector(`[data-field="backup"]`);
-    if (backupSelect?.value) return backupSelect.value;
-  }
-
-  const backupSelects = document.querySelectorAll(`[data-field="backup"]`);
-  for (let select of backupSelects) {
-    if (select.value) return select.value;
-  }
-
-  return 'n';
+  
+  // Fallback: buscar nos inputs
+  return getBackupFromClimaInputs(roomId);
 }
 
 function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup, total, folga, backupType) {
@@ -518,10 +569,12 @@ function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup,
   updateElementText(`total-capacidade-${roomId}`, total.toFixed(1));
   updateElementText(`folga-${roomId}`, folga.toFixed(1) + '%');
 
-  document.querySelectorAll(`.backup-select`).forEach(select => {
-    select.value = backupType;
-    select.disabled = false;
-  });
+  // Atualizar e habilitar o select de backup
+  const backupSelect = document.querySelector(`#room-content-${roomId} .backup-select`);
+  if (backupSelect) {
+    backupSelect.value = backupType;
+    backupSelect.disabled = false; // Garantir que está habilitado
+  }
 }
 
 function updateElementText(elementId, value) {
@@ -531,6 +584,58 @@ function updateElementText(elementId, value) {
 
 function updateCapacityFromThermalGains(roomId) {
   calculateCapacitySolution(roomId);
+}
+// ========== FUNÇÃO PARA ATUALIZAR BACKUP ==========
+
+function updateBackupConfiguration(selectElement) {
+  const roomId = findRoomIdFromBackupSelect(selectElement);
+  if (roomId) {
+    const newBackupValue = selectElement.value;
+    console.log(`[BACKUP] Backup alterado na tabela para: ${newBackupValue}`);
+    
+    // 1. Sincronizar com os inputs de climatização
+    syncBackupWithClimaInputs(roomId, newBackupValue);
+    
+    // 2. Recalcular a capacidade com o novo backup
+    calculateCapacitySolution(roomId);
+    
+    console.log(`[BACKUP] Sincronização completa - Inputs atualizados e cálculo realizado`);
+  }
+}
+
+function syncBackupWithClimaInputs(roomId, backupValue) {
+  const roomContent = document.getElementById(`room-content-${roomId}`);
+  if (roomContent) {
+    const backupInputs = roomContent.querySelectorAll(`.clima-input[data-field="backup"]`);
+    let updatedCount = 0;
+    
+    backupInputs.forEach(input => {
+      if (input.value !== backupValue) {
+        input.value = backupValue;
+        updatedCount++;
+        
+        // Disparar evento change para atualizar qualquer cálculo dependente
+        const event = new Event('change', { bubbles: true });
+        input.dispatchEvent(event);
+      }
+    });
+    
+    console.log(`[BACKUP] ${updatedCount} input(s) de climatização atualizado(s) para: ${backupValue}`);
+  }
+}
+
+function findRoomIdFromBackupSelect(selectElement) {
+  // Encontrar o roomId a partir do elemento select de backup
+  const capacityTable = selectElement.closest('.capacity-calculation-table');
+  if (!capacityTable) return null;
+  
+  const roomBlock = capacityTable.closest('.room-block');
+  if (!roomBlock) return null;
+  
+  const roomContent = roomBlock.querySelector('[id^="room-content-"]');
+  if (!roomContent) return null;
+  
+  return roomContent.id.replace('room-content-', '');
 }
 
 function initializeStaticCapacityTable() {
@@ -549,20 +654,23 @@ if (typeof window.systemConstants === 'undefined') {
 }
 // ========== CARREGAMENTO DE MÁQUINAS SALVAS ==========
 
-function loadSavedMachines(roomId, savedMachines) {
+async function loadSavedMachines(roomId, savedMachines) {
   const machinesContainer = document.getElementById(`machines-${roomId}`);
   
   if (!savedMachines || !Array.isArray(savedMachines) || savedMachines.length === 0) {
     console.log(`[MAQUINAS] Nenhuma máquina salva para carregar na sala ${roomId}`);
+    // Mesmo sem máquinas, calcular capacidade
+    setTimeout(() => calculateCapacitySolution(roomId), 100);
     return;
   }
 
   removeEmptyMachinesMessage(machinesContainer);
   
-  console.log(`[MAQUINAS] Carregando ${savedMachines.length} máquina(s) salva(s) para sala ${roomId}:`, savedMachines);
+  console.log(`[MAQUINAS] Carregando ${savedMachines.length} máquina(s) salva(s) para sala ${roomId}`);
 
-  // Carregar dados das máquinas primeiro
-  loadMachinesData().then(machinesData => {
+  try {
+    const machinesData = await loadMachinesData();
+    
     savedMachines.forEach((savedMachine, index) => {
       const machineHTML = buildClimatizationMachineFromSavedData(
         index + 1, 
@@ -573,9 +681,16 @@ function loadSavedMachines(roomId, savedMachines) {
     });
     
     console.log(`[MAQUINAS] ${savedMachines.length} máquina(s) carregada(s) com sucesso`);
-  }).catch(error => {
+    
+    // FORÇAR CÁLCULO APÓS CARREGAR MÁQUINAS
+    setTimeout(() => {
+      console.log(`[MAQUINAS] Acionando cálculo de capacidade para ${roomId} após carregar máquinas`);
+      calculateCapacitySolution(roomId);
+    }, 300);
+    
+  } catch (error) {
     console.error('[MAQUINAS] Erro ao carregar máquinas salvas:', error);
-  });
+  }
 }
 
 function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allMachines) {
@@ -725,7 +840,136 @@ function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
     </div>
   `;
 }
+// ========== DETECÇÃO AUTOMÁTICA DE SALAS CARREGADAS ==========
 
+function initializeMachinesOnLoad() {
+  console.log('[MAQUINAS] Iniciando detecção de salas carregadas...');
+  
+  // Múltiplas tentativas para garantir que o DOM esteja carregado
+  const attempts = [100, 500, 1000, 2000];
+  
+  attempts.forEach(delay => {
+    setTimeout(() => {
+      const roomBlocks = document.querySelectorAll('.room-block');
+      console.log(`[MAQUINAS] Tentativa ${delay}ms: ${roomBlocks.length} sala(s) encontrada(s)`);
+      
+      roomBlocks.forEach(roomBlock => {
+        const roomId = roomBlock.id.replace('room-content-', '');
+        const machinesContainer = document.getElementById(`machines-${roomId}`);
+        
+        if (machinesContainer) {
+          console.log(`[MAQUINAS] Container de máquinas encontrado para ${roomId}`);
+          checkForSavedMachines(roomBlock, roomId);
+        }
+      });
+    }, delay);
+  });
+}
+// ========== CÁLCULO AUTOMÁTICO AO CARREGAR PROJETOS ==========
+
+function initializeCapacityCalculations() {
+  console.log('[CAPACITY] Iniciando cálculos automáticos de capacidade...');
+  
+  // Múltiplas tentativas para garantir que todas as salas estejam carregadas
+  const attempts = [100, 500, 1000, 2000];
+  
+  attempts.forEach(delay => {
+    setTimeout(() => {
+      const roomBlocks = document.querySelectorAll('.room-block');
+      console.log(`[CAPACITY] Tentativa ${delay}ms: ${roomBlocks.length} sala(s) encontrada(s)`);
+      
+      roomBlocks.forEach(roomBlock => {
+        const roomId = roomBlock.id.replace('room-content-', '');
+        
+        // Verificar se a seção de capacidade existe para esta sala
+        const capacityTable = roomBlock.querySelector('.capacity-calculation-table');
+        if (!capacityTable) {
+          console.log(`[CAPACITY] Sala ${roomId} não tem tabela de capacidade - pulando`);
+          return;
+        }
+        
+        // Verificar se os elementos necessários existem
+        const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`);
+        const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`);
+        
+        if (fatorSegurancaInput && capacidadeUnitariaSelect) {
+          console.log(`[CAPACITY] Calculando capacidade para sala: ${roomId}`);
+          calculateCapacitySolution(roomId);
+        } else {
+          console.warn(`[CAPACITY] Elementos não prontos para sala ${roomId} - tentando na próxima rodada`);
+        }
+      });
+    }, delay);
+  });
+}
+
+// Função para forçar atualização de todos os cálculos
+function refreshAllCapacityCalculations() {
+  const roomBlocks = document.querySelectorAll('.room-block');
+  console.log(`[CAPACITY] Atualizando cálculos para ${roomBlocks.length} sala(s)`);
+  
+  roomBlocks.forEach(roomBlock => {
+    const roomId = roomBlock.id.replace('room-content-', '');
+    calculateCapacitySolution(roomId);
+  });
+}
+
+
+// Função para quando o backup é alterado nos inputs de climatização
+function onClimaBackupChange(inputElement) {
+  const roomId = findRoomIdFromClimaInput(inputElement);
+  if (roomId) {
+    const newBackupValue = inputElement.value;
+    console.log(`[BACKUP] Backup alterado nos inputs para: ${newBackupValue}`);
+    
+    // Sincronizar com a tabela de capacidade
+    syncBackupWithCapacityTable(roomId, newBackupValue);
+  }
+}
+
+function syncBackupWithCapacityTable(roomId, backupValue) {
+  const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+  if (capacityTable) {
+    const backupSelect = capacityTable.querySelector('.backup-select');
+    if (backupSelect && backupSelect.value !== backupValue) {
+      backupSelect.value = backupValue;
+      console.log(`[BACKUP] Tabela de capacidade atualizada para: ${backupValue}`);
+      
+      // Recalcular capacidade
+      calculateCapacitySolution(roomId);
+    }
+  }
+}
+
+function findRoomIdFromClimaInput(inputElement) {
+  const roomContent = inputElement.closest('[id^="room-content-"]');
+  if (roomContent) {
+    return roomContent.id.replace('room-content-', '');
+  }
+  return null;
+}
+// ========== FUNÇÃO PARA SINCRONIZAR BACKUP APÓS CARREGAMENTO ==========
+
+function syncCapacityTableBackup(roomId) {
+  console.log(`[SYNC] Sincronizando backup da tabela para sala ${roomId}`);
+  
+  // Aguardar um pouco para garantir que os inputs estão carregados
+  setTimeout(() => {
+    const backupFromInputs = getBackupFromClimaInputs(roomId);
+    const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+    
+    if (capacityTable) {
+      const backupSelect = capacityTable.querySelector('.backup-select');
+      if (backupSelect && backupSelect.value !== backupFromInputs) {
+        backupSelect.value = backupFromInputs;
+        console.log(`[SYNC] Backup da tabela atualizado para: ${backupFromInputs}`);
+        
+        // Recalcular com o backup correto
+        calculateCapacitySolution(roomId);
+      }
+    }
+  }, 500);
+}
 // ========== TORNAR FUNÇÕES GLOBAIS ==========
 
 window.calculateMachinePrice = calculateMachinePrice;
@@ -737,7 +981,45 @@ window.addMachine = addMachine;
 window.calculateCapacitySolution = calculateCapacitySolution;
 window.updateCapacityFromThermalGains = updateCapacityFromThermalGains;
 window.initializeStaticCapacityTable = initializeStaticCapacityTable;
+window.loadSavedMachines = loadSavedMachines; // ← ADICIONAR ESTA LINHA
+window.initializeMachinesOnLoad = initializeMachinesOnLoad; // ← E ESTA
+window.updateBackupConfiguration = updateBackupConfiguration; // ← NOVA FUNÇÃO
+window.syncCapacityTableBackup = syncCapacityTableBackup;
 
+// Inicialização automática quando a página carrega
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('[CAPACITY] Página carregada - aguardando para cálculos automáticos...');
+  
+  // Aguardar um pouco mais para garantir que tudo está carregado
+  setTimeout(() => {
+    initializeCapacityCalculations();
+  }, 1500);
+});
+// ========== VERIFICAÇÃO PERIÓDICA DE SINCRONIZAÇÃO ==========
+
+function initializeBackupSync() {
+  console.log('[SYNC] Iniciando verificação de sincronização de backup...');
+  
+  // Verificar a cada 2 segundos por 10 segundos (para cobrir diferentes tempos de carregamento)
+  const intervals = [1000, 3000, 5000, 7000, 10000];
+  
+  intervals.forEach(delay => {
+    setTimeout(() => {
+      const roomBlocks = document.querySelectorAll('.room-block');
+      console.log(`[SYNC] Verificação ${delay}ms: ${roomBlocks.length} sala(s)`);
+      
+      roomBlocks.forEach(roomBlock => {
+        const roomId = roomBlock.id.replace('room-content-', '');
+        syncCapacityTableBackup(roomId);
+      });
+    }, delay);
+  });
+}
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(initializeBackupSync, 2000);
+});
 export {
   buildMachinesSection,
   addMachine,
@@ -749,5 +1031,8 @@ export {
   deleteClimatizationMachine,
   toggleMachineSection,
   updateMachineTitle,
-  loadSavedMachines  // ← NOVA FUNÇÃO
+  loadSavedMachines,
+  initializeMachinesOnLoad,
+  initializeCapacityCalculations,  // ← NOVA
+  refreshAllCapacityCalculations   // ← NOVA
 };

@@ -31,7 +31,12 @@ function createEmptyRoom(projectName, roomName, roomId) {
       initializeFatorSeguranca(newRoomId);
     }
   }, 500);
-  
+  setTimeout(() => {
+    const fullRoomId = `${projectName}-${roomName}`;
+    if (typeof window.syncCapacityTableBackup !== 'undefined') {
+      window.syncCapacityTableBackup(fullRoomId);
+    }
+  }, 800);
   return true
 }
 function insertRoomIntoProject(projectContent, roomHTML) {

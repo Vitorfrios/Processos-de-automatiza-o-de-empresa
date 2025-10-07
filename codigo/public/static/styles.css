@@ -796,12 +796,15 @@ textarea.form-input {
   grid-column: 1 / -1;
 }
 
+/* ========== ESTILOS RESPONSIVOS PARA TABELA DE CAPACIDADE ========== */
+
 .capacity-calculation-table {
   margin-bottom: 30px;
   padding: 15px;
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #e9ecef;
+  overflow-x: auto;
 }
 
 .capacity-calculation-table .table-title {
@@ -818,6 +821,7 @@ textarea.form-input {
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  min-width: 600px;
 }
 
 .thermal-capacity-table th {
@@ -828,6 +832,7 @@ textarea.form-input {
   font-size: 0.85em;
   text-align: center;
   border: 1px solid #454d55;
+  white-space: nowrap;
 }
 
 .thermal-capacity-table td {
@@ -835,6 +840,61 @@ textarea.form-input {
   text-align: center;
   border: 1px solid #dee2e6;
   font-size: 0.9em;
+  white-space: nowrap;
+  background: #e9ecef;
+}
+
+/* Células com fundo cinza - CORES FIXAS */
+.thermal-capacity-table td:first-child {
+  background: #e9ecef;
+  font-weight: 700;
+  color: #1565c0;
+}
+.thermal-capacity-table td:nth-child(4) {
+  background: #e9ecef;
+  font-weight: 600;
+  color: #495057;
+}
+
+.thermal-capacity-table td:nth-child(6) {
+  background: #e9ecef;
+  font-weight: 700;
+  color: #1565c0;
+}
+
+.thermal-capacity-table td:nth-child(7) {
+  background: #e9ecef;
+  font-weight: 600;
+  color: #28a745;
+}
+
+/* REMOVER COMPLETAMENTE hover de todas as linhas e células */
+.thermal-capacity-table tr {
+  background: #e9ecef !important;
+}
+
+.thermal-capacity-table tr:hover {
+  background: #e9ecef !important;
+}
+
+.thermal-capacity-table tr:hover td {
+  background: inherit !important;
+}
+
+.thermal-capacity-table tr:hover td:first-child {
+  background: #e9ecef !important;
+}
+
+.thermal-capacity-table tr:hover td:nth-child(4) {
+  background: #e9ecef !important;
+}
+
+.thermal-capacity-table tr:hover td:nth-child(6) {
+  background: #e9ecef !important;
+}
+
+.thermal-capacity-table tr:hover td:nth-child(7) {
+  background: #e9ecef !important;
 }
 
 .capacity-input {
@@ -844,6 +904,12 @@ textarea.form-input {
   border-radius: 4px;
   text-align: center;
   font-size: 0.9em;
+  background: white;
+}
+
+.capacity-input:focus {
+  border-color: #667eea;
+  outline: none;
 }
 
 .capacity-select {
@@ -852,78 +918,181 @@ textarea.form-input {
   border: 1px solid #ced4da;
   border-radius: 4px;
   font-size: 0.9em;
+  background: white;
 }
 
-.thermal-capacity-table td:first-child,
-.thermal-capacity-table td:nth-child(4),
-.thermal-capacity-table td:nth-child(6),
-.thermal-capacity-table td:nth-child(7) {
-  background: #e9ecef;
-  font-weight: 600;
-  color: #495057;
+.capacity-select:focus {
+  border-color: #667eea;
+  outline: none;
 }
-
 
 .backup-cell {
-    padding: 0 !important;
-    vertical-align: top;
+  padding: 0 !important;
+  vertical-align: top;
+  background: white;
 }
 
-.backup-selection, .backup-solution {
-    height: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid #dee2e6;
+.backup-selection {
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #dee2e6;
+  background: #e9ecef;
 }
 
 .backup-solution {
-    background: #e9ecef;
-    font-weight: 600;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e9ecef;
+  font-weight: 600;
 }
 
 .backup-select {
-    width: 90%;
-    padding: 2px 4px;
-    border: 1px solid #ced4da;
-    border-radius: 3px;
-    font-size: 0.8em;
-    background: #f8f9fa;
-    text-align: center;
+  width: 90%;
+  padding: 2px 4px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  font-size: 0.9em;
+  background: #f8f9fa;
+  text-align: center;
+}
+
+.backup-select:focus {
+  border-color: #667eea;
+  outline: none;
 }
 
 .backup-solution span {
-    font-size: 0.9em;
-    color: #495057;
+  font-size: 0.9em;
+  color: #495057;
 }
 
-/* Responsive adjustments for thermal tables */
+/* ========== RESPONSIVIDADE ========== */
+
+@media (max-width: 1200px) {
+  .thermal-capacity-table {
+    min-width: 550px;
+  }
+  
+  .thermal-capacity-table th,
+  .thermal-capacity-table td {
+    padding: 8px 6px;
+    font-size: 0.85em;
+  }
+  
+  .capacity-input {
+    width: 70px;
+    font-size: 0.85em;
+  }
+  
+  .capacity-select {
+    width: 90px;
+    font-size: 0.85em;
+  }
+}
+
+@media (max-width: 992px) {
+  .thermal-capacity-table {
+    min-width: 500px;
+  }
+  
+  .thermal-capacity-table th {
+    font-size: 0.8em;
+    padding: 10px 4px;
+  }
+  
+  .thermal-capacity-table td {
+    font-size: 0.8em;
+    padding: 8px 4px;
+  }
+}
+
 @media (max-width: 768px) {
-  .thermal-summary {
-    flex-direction: column;
-    gap: 1rem;
+  .capacity-calculation-table {
+    margin-bottom: 20px;
+    padding: 10px;
   }
-
-  .thermal-divider {
-    display: none;
+  
+  .thermal-capacity-table {
+    min-width: 450px;
   }
-
-  .thermal-table-container {
-    overflow-x: auto;
+  
+  .thermal-capacity-table th {
+    font-size: 0.75em;
+    padding: 8px 3px;
   }
-
-  .thermal-table {
-    font-size: 0.8rem;
+  
+  .thermal-capacity-table td {
+    font-size: 0.75em;
+    padding: 6px 3px;
   }
-
-  .thermal-table th,
-  .thermal-table td {
-    padding: 0.5rem;
+  
+  .capacity-input {
+    width: 60px;
+    padding: 3px 6px;
+    font-size: 0.8em;
   }
-  .checkbox-options-grid {
-    grid-template-columns: 1fr;
+  
+  .capacity-select {
+    width: 80px;
+    padding: 3px 6px;
+    font-size: 0.8em;
   }
 }
+
+@media (max-width: 576px) {
+  .capacity-calculation-table {
+    border-radius: 6px;
+    margin-bottom: 15px;
+  }
+  
+  .thermal-capacity-table {
+    min-width: 400px;
+  }
+  
+  .thermal-capacity-table th {
+    font-size: 0.7em;
+    padding: 6px 2px;
+  }
+  
+  .thermal-capacity-table td {
+    font-size: 0.7em;
+    padding: 5px 2px;
+  }
+  
+  .capacity-input {
+    width: 50px;
+    padding: 2px 4px;
+    font-size: 0.75em;
+  }
+  
+  .capacity-select {
+    width: 70px;
+    padding: 2px 4px;
+    font-size: 0.75em;
+  }
+}
+
+/* Indicador de scroll */
+.capacity-calculation-table.scrollable::after {
+  content: "← Arraste →";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
 /* ========== ESTILOS PARA MÁQUINAS DE CLIMATIZAÇÃO ========== */
 
 .climatization-machine {

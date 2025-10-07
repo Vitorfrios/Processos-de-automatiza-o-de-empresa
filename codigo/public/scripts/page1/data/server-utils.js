@@ -65,21 +65,38 @@ function renderRoomFromData(projectName, roomData) {
 
     // CORREÇÃO: Delay adicional para garantir que a sala foi criada antes de preencher inputs
     setTimeout(() => {
-      if (roomData.inputs || roomData.configuracoes || roomData.maquinas) {
+      if (roomData.inputs || roomData.configuracoes || roomData.maquinas || roomData.maquinasClimatizacao) {
+        // Criar objeto unificado para máquinas
+        const maquinasUnificadas = {
+          maquinas: roomData.maquinas,
+          maquinasClimatizacao: roomData.maquinasClimatizacao
+        };
+        
         populateRoomInputs(
           projectName, 
           roomName, 
           roomData.inputs || {}, 
           roomData.ganhosTermicos, 
-          roomData.maquinas,
-          roomData.configuracoes // ← NOVO PARÂMETRO
+          maquinasUnificadas, // ← DADOS UNIFICADOS
+          roomData.configuracoes
         )
       }
     }, 50);
     
   }, 50);
 
-  console.log(`[v0] Sala ${roomName} renderizada com sucesso`)
+  // CORREÇÃO: Pequeno delay para garantir que os inputs foram renderizados
+  setTimeout(() => {
+    calculateVazaoArAndThermalGains(roomId);
+    
+    // NOVO: Forçar cálculo de capacidade após preencher todos os inputs
+    setTimeout(() => {
+      if (typeof window.calculateCapacitySolution !== 'undefined') {
+        console.log(`[SERVER-UTILS] Acionando cálculo de capacidade para ${roomId}`);
+        window.calculateCapacitySolution(roomId);
+      }
+    }, 200);
+  }, 150);
 }
 
 function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, maquinasData, configuracoesData) {
@@ -152,8 +169,30 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, m
       })
     }
 
-    // Preencher máquinas se existirem
-    if (maquinasData && maquinasData.length > 0) {
+    // ========== CARREGAR MÁQUINAS DE CLIMATIZAÇÃO ==========
+    if (maquinasData && maquinasData.maquinasClimatizacao && Array.isArray(maquinasData.maquinasClimatizacao)) {
+      console.log(`[SERVER-UTILS] Carregando ${maquinasData.maquinasClimatizacao.length} máquina(s) de climatização para ${roomName}`);
+      
+      // Aguardar um pouco para garantir que a seção de máquinas esteja renderizada
+      setTimeout(() => {
+        if (typeof window.loadSavedMachines !== 'undefined') {
+          window.loadSavedMachines(roomId, maquinasData.maquinasClimatizacao);
+        } else {
+          console.warn('[SERVER-UTILS] Função loadSavedMachines não disponível ainda');
+          // Tentar novamente depois
+          setTimeout(() => {
+            if (typeof window.loadSavedMachines !== 'undefined') {
+              window.loadSavedMachines(roomId, maquinasData.maquinasClimatizacao);
+            }
+          }, 1000);
+        }
+      }, 800);
+    }
+
+    // Manter compatibilidade com máquinas antigas se existirem
+    if (maquinasData && Array.isArray(maquinasData) && maquinasData.length > 0) {
+      console.log(`[v0] ${maquinasData.length} máquina(s) legada(s) encontrada(s) - compatibilidade mantida`);
+      
       // Remover máquina padrão se existir
       const emptyMessage = document.getElementById(`machines-${roomId}`)?.querySelector('.empty-message')
       if (emptyMessage) {
@@ -197,6 +236,15 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, m
   };
   
   tryPopulate();
+  // Na função populateRoomInputs, após preencher os inputs, adicione:
+
+  // Sincronizar backup com a tabela de capacidade
+  // Na função populateRoomInputs, adicione no final:
+  setTimeout(() => {
+    if (typeof window.syncCapacityTableBackup !== 'undefined') {
+      window.syncCapacityTableBackup(roomId);
+    }
+  }, 1000);
 }
 
 
