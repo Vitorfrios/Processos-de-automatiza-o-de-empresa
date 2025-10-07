@@ -924,3 +924,334 @@ textarea.form-input {
     grid-template-columns: 1fr;
   }
 }
+/* ========== ESTILOS PARA MÁQUINAS DE CLIMATIZAÇÃO ========== */
+
+.climatization-machine {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.climatization-machine:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.1);
+}
+
+/* Header da máquina - estilo igual aos outros headers */
+.climatization-machine .machine-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 6px 6px 0 0;
+}
+
+/* Input editável - estilo igual aos outros títulos editáveis */
+.machine-title-editable {
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  flex: 1;
+  cursor: text;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.machine-title-editable:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.machine-title-editable:focus {
+  outline: none;
+  background: white;
+  color: #333;
+  border-color: rgba(255, 255, 255, 0.6);
+  cursor: text;
+}
+
+.machine-title-editable::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Minimizador - estilo consistente */
+.climatization-machine .minimizer {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+}
+
+.climatization-machine .minimizer:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Botão de deletar */
+.climatization-machine .btn-delete-small {
+  background: #dc3545;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.4rem 0.8rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.climatization-machine .btn-delete-small:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Conteúdo da máquina */
+.machine-content {
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.machine-content.collapsed {
+  display: none;
+}
+
+/* Grid do formulário */
+.climatization-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f8f9fa;
+}
+
+.climatization-form-grid .form-group {
+  margin-bottom: 0;
+}
+
+/* Seção de opções */
+.machine-options-section {
+  margin-bottom: 1.5rem;
+}
+
+.machine-options-section h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.75rem;
+}
+
+.option-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.option-checkbox:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.option-checkbox input[type="checkbox"] {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+/* Estilos para opções com valor em baixo */
+.option-checkbox label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  width: 100%;
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.option-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #495057;
+  line-height: 1.3;
+  margin-bottom: 0.25rem;
+}
+
+.option-price {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #28a745;
+  line-height: 1.2;
+  margin-top: 10px;
+}
+
+.option-checkbox input[type="checkbox"]:checked + .option-content .option-name {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.option-checkbox input[type="checkbox"]:checked + .option-content .option-price {
+  color: #218838;
+}
+.option-checkbox input[type="checkbox"]:checked + label {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.option-checkbox:has(input[type="checkbox"]:checked) {
+  background: #e8f4fd;
+  border-color: #667eea;
+}
+
+/* Preços */
+.price-display {
+  background: #f8f9fa;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-weight: 600;
+  color: #28a745;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.machine-total-price {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.machine-total-price strong {
+  color: white;
+  font-size: 1.1rem;
+}
+
+.machine-total-price span {
+  background: white;
+  color: #667eea;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 700;
+  margin-left: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Selects específicos */
+.machine-type-select,
+.machine-potency-select,
+.machine-voltage-select {
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.machine-type-select:focus,
+.machine-potency-select:focus,
+.machine-voltage-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.climatization-machine {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .climatization-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .climatization-machine .machine-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .machine-content {
+    padding: 1rem;
+  }
+  
+  .machine-total-price {
+    padding: 0.75rem 1rem;
+  }
+  
+  .machine-total-price strong {
+    font-size: 1rem;
+  }
+  
+  .machine-total-price span {
+    padding: 0.4rem 0.8rem;
+    margin-left: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .climatization-machine .machine-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .option-checkbox {
+    padding: 0.5rem;
+  }
+  
+  .option-checkbox label {
+    font-size: 0.85rem;
+  }
+}

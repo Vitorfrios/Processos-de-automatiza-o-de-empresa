@@ -25,6 +25,332 @@
     "deltaT_divi_clim1": 3,
     "deltaT_divi_clim2": 3,
     "FATOR_SEGURANCA_CAPACIDADE": 10
-
-  }
+  },
+  "machines": [
+    {
+      "type": "Wall Mounted",
+      "baseValue": 10000,
+      "potencies": [
+        "1TR",
+        "2TR",
+        "3TR",
+        "4TR",
+        "5TR",
+        "7,5TR",
+        "10TR",
+        "12,5TR",
+        "15TR",
+        "20TR",
+        "25TR",
+        "30TR"
+      ],
+      "options": [
+        {
+          "id": 1,
+          "name": "Automação Embarcada",
+          "value": 500
+        },
+        {
+          "id": 2,
+          "name": "Modbus TCP-IP",
+          "value": 300
+        },
+        {
+          "id": 3,
+          "name": "Sensor de umidade para monitoramento",
+          "value": 200
+        },
+        {
+          "id": 4,
+          "name": "Sensor de filtro sujo",
+          "value": 150
+        },
+        {
+          "id": 5,
+          "name": "Sensor de fluxo",
+          "value": 150
+        },
+        {
+          "id": 6,
+          "name": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+          "value": 600
+        },
+        {
+          "id": 17,
+          "name": "Dupla alimentação de energia",
+          "value": 800
+        },
+        {
+          "id": 21,
+          "name": "Parafusos, porcas e arruelas em INOX",
+          "value": 100
+        }
+      ],
+      "voltages": [
+        "127V/1F",
+        "220V/1F",
+        "220V/3F",
+        "380V/3F",
+        "440V/3F",
+        "460V/3F",
+        "480V/3F"
+      ]
+    },
+    {
+      "type": "Split System",
+      "baseValue": 15000,
+      "potencies": [
+        "5TR",
+        "7,5TR",
+        "10TR",
+        "12,5TR",
+        "15TR",
+        "20TR",
+        "25TR",
+        "30TR",
+        "35TR",
+        "40TR",
+        "50TR",
+        "60TR"
+      ],
+      "options": [
+        {
+          "id": 1,
+          "name": "Automação Embarcada",
+          "value": 600
+        },
+        {
+          "id": 2,
+          "name": "Modbus TCP-IP",
+          "value": 350
+        },
+        {
+          "id": 3,
+          "name": "Sensor de umidade para monitoramento",
+          "value": 250
+        },
+        {
+          "id": 4,
+          "name": "Sensor de filtro sujo",
+          "value": 200
+        },
+        {
+          "id": 5,
+          "name": "Sensor de fluxo",
+          "value": 200
+        },
+        {
+          "id": 6,
+          "name": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+          "value": 700
+        },
+        {
+          "id": 17,
+          "name": "Dupla alimentação de energia",
+          "value": 900
+        },
+        {
+          "id": 21,
+          "name": "Parafusos, porcas e arruelas em INOX",
+          "value": 150
+        }
+      ],
+      "voltages": [
+        "220V/1F",
+        "220V/3F",
+        "380V/3F",
+        "440V/3F",
+        "460V/3F",
+        "480V/3F"
+      ]
+    },
+    {
+      "type": "Self Contained",
+      "baseValue": 20000,
+      "potencies": [
+        "10TR",
+        "15TR",
+        "20TR",
+        "25TR",
+        "30TR",
+        "35TR",
+        "40TR",
+        "50TR",
+        "60TR"
+      ],
+      "options": [
+        {
+          "id": 1,
+          "name": "Automação Embarcada",
+          "value": 700
+        },
+        {
+          "id": 2,
+          "name": "Modbus TCP-IP",
+          "value": 400
+        },
+        {
+          "id": 3,
+          "name": "Sensor de umidade para monitoramento",
+          "value": 300
+        },
+        {
+          "id": 6,
+          "name": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+          "value": 800
+        },
+        {
+          "id": 17,
+          "name": "Dupla alimentação de energia",
+          "value": 1000
+        }
+      ],
+      "voltages": [
+        "220V/3F",
+        "380V/3F",
+        "440V/3F",
+        "460V/3F"
+      ]
+    },
+    {
+      "type": "Rooftop",
+      "baseValue": 25000,
+      "potencies": [
+        "15TR",
+        "20TR",
+        "25TR",
+        "30TR",
+        "40TR",
+        "50TR",
+        "60TR"
+      ],
+      "options": [
+        {
+          "id": 1,
+          "name": "Automação Embarcada",
+          "value": 800
+        },
+        {
+          "id": 2,
+          "name": "Modbus TCP-IP",
+          "value": 450
+        },
+        {
+          "id": 3,
+          "name": "Sensor de umidade para monitoramento",
+          "value": 350
+        },
+        {
+          "id": 6,
+          "name": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+          "value": 900
+        },
+        {
+          "id": 17,
+          "name": "Dupla alimentação de energia",
+          "value": 1100
+        }
+      ],
+      "voltages": [
+        "220V/3F",
+        "380V/3F",
+        "440V/3F",
+        "460V/3F"
+      ]
+    },
+    {
+      "type": "Split",
+      "baseValue": 18000,
+      "potencies": [
+        "5TR",
+        "7,5TR",
+        "10TR",
+        "12,5TR",
+        "15TR",
+        "20TR",
+        "25TR",
+        "30TR"
+      ],
+      "options": [
+        {
+          "id": 1,
+          "name": "Automação Embarcada",
+          "value": 650
+        },
+        {
+          "id": 2,
+          "name": "Modbus TCP-IP",
+          "value": 370
+        },
+        {
+          "id": 3,
+          "name": "Sensor de umidade para monitoramento",
+          "value": 270
+        },
+        {
+          "id": 6,
+          "name": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+          "value": 750
+        },
+        {
+          "id": 17,
+          "name": "Dupla alimentação de energia",
+          "value": 950
+        }
+      ],
+      "voltages": [
+        "220V/1F",
+        "220V/3F",
+        "380V/3F",
+        "440V/3F"
+      ]
+    },
+    {
+      "type": "Rackplug",
+      "baseValue": 22000,
+      "potencies": [
+        "10TR",
+        "15TR",
+        "20TR",
+        "25TR",
+        "30TR",
+        "35TR",
+        "40TR"
+      ],
+      "options": [
+        {
+          "id": 1,
+          "name": "Automação Embarcada",
+          "value": 750
+        },
+        {
+          "id": 2,
+          "name": "Modbus TCP-IP",
+          "value": 420
+        },
+        {
+          "id": 3,
+          "name": "Sensor de umidade para monitoramento",
+          "value": 320
+        },
+        {
+          "id": 6,
+          "name": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+          "value": 850
+        },
+        {
+          "id": 17,
+          "name": "Dupla alimentação de energia",
+          "value": 1000
+        }
+      ],
+      "voltages": [
+        "220V/1F",
+        "220V/3F",
+        "380V/3F",
+        "440V/3F",
+        "460V/3F"
+      ]
+    }
+  ]
 }

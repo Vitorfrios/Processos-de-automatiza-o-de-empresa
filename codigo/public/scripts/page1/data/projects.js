@@ -4,7 +4,7 @@ import {
 } from '../config/config.js'
 import { ensureStringId } from '../utils/utils.js'
 import { showSystemStatus } from '../ui/interface.js'
-import { buildProjectData, extractRoomData } from './data-utils.js'
+import { buildProjectData, extractRoomData, extractClimatizationMachineData} from './data-utils.js'
 // CORREÇÃO 1: Importar TODAS as funções necessárias do server.js
 import { 
   incrementGeralCount, 

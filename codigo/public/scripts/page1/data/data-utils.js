@@ -17,6 +17,7 @@ function buildProjectData(projectBlock, projectId) {
     projectData.salas.push(roomData)
   })
 
+  console.log('[DATA-UTILS] Dados do projeto coletados:', projectData)
   return projectData
 }
 
@@ -58,7 +59,20 @@ function extractRoomData(roomBlock) {
       }
     }
 
-    // Coletar dados das máquinas
+    // ========== COLETA DAS MÁQUINAS DE CLIMATIZAÇÃO ==========
+    const climatizationMachines = roomBlock.querySelectorAll('.climatization-machine')
+    if (climatizationMachines.length > 0) {
+      roomData.maquinasClimatizacao = []
+      climatizationMachines.forEach((machineElement) => {
+        const machineData = extractClimatizationMachineData(machineElement)
+        if (Object.keys(machineData).length > 0) {
+          roomData.maquinasClimatizacao.push(machineData)
+        }
+      })
+      console.log(`[DATA-UTILS] ${roomData.maquinasClimatizacao.length} máquina(s) de climatização coletadas para sala ${roomData.nome}`)
+    }
+
+    // Coletar dados das máquinas antigas (se ainda existirem)
     const machineItems = roomBlock.querySelectorAll('.machine-item')
     if (machineItems.length > 0) {
       roomData.maquinas = []
@@ -123,7 +137,42 @@ function extractRoomData(roomBlock) {
   return roomData
 }
 
+// ========== FUNÇÃO PARA COLETAR DADOS DAS MÁQUINAS DE CLIMATIZAÇÃO ==========
+
+function extractClimatizationMachineData(machineElement) {
+  const machineData = {
+    nome: machineElement.querySelector('.machine-title-editable')?.value || '',
+    tipo: machineElement.querySelector('.machine-type-select')?.value || '',
+    potencia: machineElement.querySelector('.machine-potency-select')?.value || '',
+    tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
+    precoBase: parseMachinePrice(machineElement.querySelector('.price-display')?.textContent),
+    opcoesSelecionadas: [],
+    precoTotal: parseMachinePrice(machineElement.querySelector('.machine-total-price span')?.textContent)
+  };
+
+  // Coletar opções selecionadas
+  const opcoesCheckboxes = machineElement.querySelectorAll('.option-checkbox input[type="checkbox"]:checked');
+  opcoesCheckboxes.forEach(checkbox => {
+    const optionElement = checkbox.closest('.option-checkbox');
+    machineData.opcoesSelecionadas.push({
+      id: parseInt(checkbox.dataset.optionId) || 0,
+      nome: optionElement.querySelector('.option-name')?.textContent || '',
+      valor: parseFloat(checkbox.value) || 0
+    });
+  });
+
+  console.log('[DATA-UTILS] Máquina coletada:', machineData)
+  return machineData;
+}
+
+// Função auxiliar para parsear preços
+function parseMachinePrice(priceText) {
+  if (!priceText) return 0;
+  return parseFloat(priceText.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) || 0;
+}
+
 export {
   buildProjectData,
-  extractRoomData
+  extractRoomData,
+  extractClimatizationMachineData
 }

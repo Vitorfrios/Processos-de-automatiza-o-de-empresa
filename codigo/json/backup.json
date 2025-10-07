@@ -51,6 +51,68 @@
         }
       ],
       "id": "1001"
+    },
+    {
+      "nome": "sssss",
+      "salas": [
+        {
+          "nome": "ssss",
+          "inputs": {
+            "ambiente": "sgg",
+            "backup": "n+1",
+            "area": 34,
+            "tipoConstrucao": "Eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "fm200",
+            "vazaoArExterno": 580
+          },
+          "configuracoes": {
+            "opcoesInstalacao": [
+              "bocal_acoplado_dutos",
+              "evaporadoras_internas",
+              "condensadores_externos"
+            ]
+          },
+          "maquinasClimatizacao": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "1TR",
+              "tensao": "127V/1F",
+              "precoBase": 10000,
+              "opcoesSelecionadas": [],
+              "precoTotal": 10000
+            }
+          ],
+          "ganhosTermicos": {
+            "totalW": 40741,
+            "totalTR": 12,
+            "totalExterno": 12573,
+            "totalDivisoes": 857,
+            "totalPiso": 689,
+            "totalIluminacao": 238,
+            "totalEquipamentos": 1500,
+            "totalPessoas": 3297,
+            "totalArExterno": 21589
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1002"
     }
   ]
 }

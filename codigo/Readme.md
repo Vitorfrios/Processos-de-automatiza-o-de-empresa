@@ -24,6 +24,12 @@ codigo/
     │   │   │   └─ config.js
     │   │   ├─ data/
     │   │   │   ├─ projects.js
+    |   |   |   ├─ modules/
+    │   │   │   |   └─ climatizacaoo.js
+    │   │   │   |   └─ configuracao.js
+    │   │   │   |   └─ maquinas.js
+    │   │   │   |   └─ projetos.js
+    │   │   │   |   └─ salas.js
     │   │   │   ├─ rooms.js
     │   │   │   ├─ server.js
     │   │   │   ├─ server-utils.js

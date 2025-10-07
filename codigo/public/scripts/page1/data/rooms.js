@@ -28,7 +28,7 @@ import {
 import { 
   buildMachinesSection,
   addMachine,
-  deleteMachine,
+  deleteClimatizationMachine,
   calculateCapacitySolution,
   updateCapacityFromThermalGains,
   initializeStaticCapacityTable
@@ -110,7 +110,7 @@ export {
   // Máquinas
   buildMachinesSection,
   addMachine,
-  deleteMachine,
+  deleteClimatizationMachine,
   initializeAllCapacityInputs, // ← esta função está definida neste arquivo
   
   // Configuração

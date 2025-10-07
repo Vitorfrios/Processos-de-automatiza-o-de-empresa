@@ -1,4 +1,12 @@
 // ========== CONFIGURAÇÕES E ESTADOS ==========
+// REMOVA o import se não está funcionando
+// import { API_CONFIG } from '../../config/config.js';
+
+// Defina API_CONFIG diretamente já que sabemos a URL
+const API_CONFIG = {
+  data: "http://localhost:3001"
+};
+
 const capacityConfig = {
   maxInitAttempts: 3,
   initDelay: 500,
@@ -6,6 +14,7 @@ const capacityConfig = {
 };
 
 const capacityState = new Map();
+let machinesData = null;
 
 // ========== SEÇÃO DE MÁQUINAS ==========
 
@@ -30,7 +39,6 @@ function buildMachinesSection(projectName, roomName) {
 }
 
 function buildCapacityCalculationTable(roomId) {
-  // Inicialização única e controlada
   scheduleCapacityInit(roomId);
   
   return `
@@ -94,69 +102,363 @@ function buildCapacityCalculationTable(roomId) {
   `;
 }
 
-// ========== INICIALIZAÇÃO CONTROLADA ==========
+// ========== CARREGAMENTO DOS DADOS DAS MÁQUINAS ==========
+
+// ========== CARREGAMENTO DOS DADOS DAS MÁQUINAS ==========
+
+async function loadMachinesData() {
+  if (machinesData) return machinesData;
+
+  try {
+    const url = `${API_CONFIG.data}/machines`;
+    console.log('🔍 Tentando carregar dados de:', url);
+    
+    const response = await fetch(url);
+    
+    console.log('📡 Status da resposta:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Dados recebidos (array):', data);
+    
+    // CORREÇÃO: Os dados vêm como array direto, não como {machines: [...]}
+    machinesData = { machines: data }; // Convertemos array para o formato esperado
+    
+    console.log(`📋 Total de máquinas carregadas: ${machinesData.machines.length}`);
+    
+    return machinesData;
+    
+  } catch (error) {
+    console.error('❌ Erro ao carregar dados:', error);
+    throw error;
+  }
+}
+
+// ========== GERENCIAMENTO DE MÁQUINAS DE CLIMATIZAÇÃO ==========
+
+async function addMachine(roomId) {
+  const machinesContainer = document.getElementById(`machines-${roomId}`);
+  const machineCount = machinesContainer.querySelectorAll(".climatization-machine").length + 1;
+
+  removeEmptyMachinesMessage(machinesContainer);
+
+  try {
+    console.log('🔄 Iniciando carregamento de dados para máquina...');
+    const data = await loadMachinesData();
+    
+    console.log('📋 Dados recebidos no addMachine:', data);
+    
+    // Verificar se os dados foram carregados corretamente
+    if (!data || !data.machines || data.machines.length === 0) {
+      throw new Error('Nenhum dado de máquina disponível');
+    }
+    
+    console.log(`✅ ${data.machines.length} máquinas carregadas`);
+    
+    const machineHTML = buildClimatizationMachineHTML(machineCount, data.machines);
+    machinesContainer.insertAdjacentHTML("beforeend", machineHTML);
+    
+    console.log('🎉 Máquina adicionada com sucesso!');
+    
+  } catch (error) {
+    console.error('❌ Erro ao adicionar máquina:', error);
+    alert(`Erro ao carregar dados: ${error.message}. Verifique o console.`);
+  }
+}
+
+function removeEmptyMachinesMessage(container) {
+  const emptyMessage = container.querySelector(".empty-message");
+  if (emptyMessage) emptyMessage.remove();
+}
+
+function buildClimatizationMachineHTML(machineCount, machines) {
+  const machineTypes = machines.map(m => m.type);
+  const firstMachine = machines[0];
+  
+  return `
+    <div class="climatization-machine" data-machine-index="${machineCount}">
+      <div class="machine-header">
+        <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
+        
+        <input type="text" 
+               class="machine-title-editable" 
+               value="Equipamento de Climatização ${machineCount}"
+               onchange="updateMachineTitle(this, ${machineCount})"
+               onclick="this.select()">
+               
+        <button class="btn btn-delete-small" onclick="deleteClimatizationMachine(this)">Remover</button>
+      </div>
+      
+      <div class="machine-content" id="machine-content-${machineCount}">
+        <div class="climatization-form-grid">
+          <div class="form-group">
+            <label>Tipo de Equipamento:</label>
+            <select class="form-input machine-type-select" 
+                    data-machine-index="${machineCount}"
+                    onchange="updateMachineOptions(this)">
+              ${machineTypes.map(type => 
+                `<option value="${type}">${type}</option>`
+              ).join('')}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Potência (TR):</label>
+            <select class="form-input machine-potency-select" 
+                    data-machine-index="${machineCount}"
+                    onchange="calculateMachinePrice(${machineCount})">
+              ${firstMachine.potencies.map(potency => 
+                `<option value="${potency}">${potency}</option>`
+              ).join('')}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tensão:</label>
+            <select class="form-input machine-voltage-select" 
+                    data-machine-index="${machineCount}"
+                    onchange="calculateMachinePrice(${machineCount})">
+              ${firstMachine.voltages.map(voltage => 
+                `<option value="${voltage}">${voltage}</option>`
+              ).join('')}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Preço Base:</label>
+            <div class="price-display" id="base-price-${machineCount}">
+              R$ ${firstMachine.baseValue.toLocaleString('pt-BR')}
+            </div>
+          </div>
+        </div>
+
+        <div class="machine-options-section">
+          <h6>Opções Adicionais:</h6>
+          <div class="options-grid" id="options-container-${machineCount}">
+            ${firstMachine.options.map(option => `
+              <div class="option-checkbox">
+                <input type="checkbox" 
+                      value="${option.value}" 
+                      data-option-id="${option.id}"
+                      onchange="calculateMachinePrice(${machineCount})"
+                      id="option-${machineCount}-${option.id}">
+                <label for="option-${machineCount}-${option.id}">
+                  <div class="option-text-wrapper">
+                    <div class="option-name">${option.name}</div>
+                    <div class="option-price">+R$ ${option.value.toLocaleString('pt-BR')}</div>
+                  </div>
+                </label>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="machine-total-price">
+          <strong>Preço Total: <span id="total-price-${machineCount}">R$ ${firstMachine.baseValue.toLocaleString('pt-BR')}</span></strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ========== NOVAS FUNÇÕES PARA EDITAR E MINIMIZAR ==========
+
+function toggleMachineSection(button) {
+  const machineItem = button.closest('.climatization-machine');
+  const machineContent = machineItem.querySelector('.machine-content');
+  const isCollapsed = machineContent.classList.contains('collapsed');
+
+  if (isCollapsed) {
+    machineContent.classList.remove('collapsed');
+    button.textContent = '−';
+  } else {
+    machineContent.classList.add('collapsed');
+    button.textContent = '+';
+  }
+}
+
+function updateMachineTitle(input, machineIndex) {
+  const newTitle = input.value.trim();
+  if (!newTitle) {
+    input.value = `Equipamento de Climatização ${machineIndex}`;
+  }
+  console.log(`Máquina ${machineIndex} renomeada para: ${newTitle}`);
+}
+
+
+// ========== ATUALIZAÇÃO DINÂMICA DAS OPÇÕES ==========
+
+async function updateMachineOptions(selectElement) {
+  const machineIndex = selectElement.getAttribute('data-machine-index');
+  const selectedType = selectElement.value;
+  
+  try {
+    const data = await loadMachinesData();
+    const selectedMachine = data.machines.find(m => m.type === selectedType);
+    
+    if (!selectedMachine) {
+      console.error('Máquina não encontrada:', selectedType);
+      console.log('Máquinas disponíveis:', data.machines.map(m => m.type));
+      return;
+    }
+    
+    console.log('🔄 Atualizando opções para:', selectedType, selectedMachine);
+    
+    // Atualizar opções de potência
+    const potencySelect = document.querySelector(`.machine-potency-select[data-machine-index="${machineIndex}"]`);
+    if (potencySelect && selectedMachine.potencies) {
+      potencySelect.innerHTML = selectedMachine.potencies.map(potency => 
+        `<option value="${potency}">${potency}</option>`
+      ).join('');
+    }
+    
+    // Atualizar opções de tensão
+    const voltageSelect = document.querySelector(`.machine-voltage-select[data-machine-index="${machineIndex}"]`);
+    if (voltageSelect && selectedMachine.voltages) {
+      voltageSelect.innerHTML = selectedMachine.voltages.map(voltage => 
+        `<option value="${voltage}">${voltage}</option>`
+      ).join('');
+    }
+    
+    // Atualizar preço base
+    const basePriceElement = document.getElementById(`base-price-${machineIndex}`);
+    if (basePriceElement && selectedMachine.baseValue !== undefined) {
+      basePriceElement.textContent = `R$ ${selectedMachine.baseValue.toLocaleString('pt-BR')}`;
+    }
+    
+    // Atualizar opções adicionais - CORRIGIDO para a nova estrutura
+    const optionsContainer = document.getElementById(`options-container-${machineIndex}`);
+    if (optionsContainer && selectedMachine.options) {
+      optionsContainer.innerHTML = selectedMachine.options.map(option => `
+        <div class="option-checkbox">
+          <input type="checkbox" 
+                 value="${option.value}" 
+                 data-option-id="${option.id}"
+                 onchange="calculateMachinePrice(${machineIndex})"
+                 id="option-${machineIndex}-${option.id}">
+          <label for="option-${machineIndex}-${option.id}">
+            <div class="option-text-wrapper">
+              <div class="option-name">${option.name}</div>
+              <div class="option-price">+R$ ${option.value.toLocaleString('pt-BR')}</div>
+            </div>
+          </label>
+        </div>
+      `).join('');
+    }
+    
+    // Recalcular preço
+    calculateMachinePrice(machineIndex);
+    
+  } catch (error) {
+    console.error('Erro ao atualizar opções da máquina:', error);
+  }
+}
+
+// ========== CÁLCULO DO PREÇO ==========
+
+function calculateMachinePrice(machineIndex) {
+  try {
+    const basePriceElement = document.getElementById(`base-price-${machineIndex}`);
+    if (!basePriceElement) return;
+    
+    const basePriceText = basePriceElement.textContent.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
+    const basePrice = parseFloat(basePriceText) || 0;
+    
+    const optionsContainer = document.getElementById(`options-container-${machineIndex}`);
+    let optionsTotal = 0;
+    
+    if (optionsContainer) {
+      const selectedOptions = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+      selectedOptions.forEach(option => {
+        optionsTotal += parseFloat(option.value) || 0;
+      });
+    }
+    
+    const totalPrice = basePrice + optionsTotal;
+    const totalPriceElement = document.getElementById(`total-price-${machineIndex}`);
+    
+    if (totalPriceElement) {
+      totalPriceElement.textContent = `R$ ${totalPrice.toLocaleString('pt-BR')}`;
+    }
+    
+  } catch (error) {
+    console.error('Erro ao calcular preço:', error);
+  }
+}
+
+// ========== EXCLUSÃO DE MÁQUINA ==========
+
+function deleteClimatizationMachine(button) {
+  if (!confirm("Deseja remover este equipamento de climatização?")) return;
+
+  const machineItem = button.closest(".climatization-machine");
+  const machinesContainer = machineItem.closest(".machines-container");
+
+  machineItem.remove();
+  showEmptyMachinesMessageIfNeeded(machinesContainer);
+}
+
+function showEmptyMachinesMessageIfNeeded(container) {
+  if (container.querySelectorAll(".climatization-machine").length === 0) {
+    container.innerHTML = '<p class="empty-message">Nenhuma máquina adicionada ainda.</p>';
+  }
+}
+
+// ========== FUNÇÕES EXISTENTES ==========
 
 function scheduleCapacityInit(roomId) {
-  // Garantir inicialização única
   if (capacityState.has(roomId)) return;
-  
+
   capacityState.set(roomId, {
     initialized: false,
     attempts: 0
   });
-  
-  // Delay único para inicialização
+
   setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.initDelay);
 }
 
 function initializeCapacitySystem(roomId) {
   const state = capacityState.get(roomId);
   if (!state || state.initialized) return;
-  
+
   state.attempts++;
-  
-  const systemConstantsReady = window.systemConstants && 
-                              window.systemConstants.FATOR_SEGURANCA_CAPACIDADE !== undefined;
-  
+
+  const systemConstantsReady = window.systemConstants &&
+    window.systemConstants.FATOR_SEGURANCA_CAPACIDADE !== undefined;
+
   if (systemConstantsReady || state.attempts >= capacityConfig.maxInitAttempts) {
-    const fatorSeguranca = systemConstantsReady ? 
-      window.systemConstants.FATOR_SEGURANCA_CAPACIDADE : 
+    const fatorSeguranca = systemConstantsReady ?
+      window.systemConstants.FATOR_SEGURANCA_CAPACIDADE :
       capacityConfig.fallbackFatorSeguranca;
-    
+
     applyFatorSeguranca(roomId, fatorSeguranca);
     state.initialized = true;
-    
-    console.log(`[CAPACITY] ${roomId} inicializado com fator: ${fatorSeguranca}%`);
-  } else {
-    // Tentar novamente apenas se não excedeu as tentativas
-    setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.initDelay);
   }
 }
 
 function applyFatorSeguranca(roomId, fatorSeguranca) {
   const inputFator = document.getElementById(`fator-seguranca-${roomId}`);
   if (!inputFator) return;
-  
+
   inputFator.value = fatorSeguranca;
   calculateCapacitySolution(roomId);
 }
 
-// ========== CÁLCULOS DE CAPACIDADE ==========
-
 function getThermalLoadTR(roomId) {
-  // Tentar elemento total-tr primeiro
   const totalTRElement = document.getElementById(`total-tr-${roomId}`);
   if (totalTRElement) {
     return parseFloat(totalTRElement.textContent) || 0;
   }
-  
-  // Fallback para cálculo a partir de W
+
   const totalGanhosWElement = document.getElementById(`total-ganhos-w-${roomId}`);
   if (totalGanhosWElement) {
     const totalW = parseFloat(totalGanhosWElement.textContent) || 0;
     return totalW / 3517;
   }
-  
+
   return 0;
 }
 
@@ -165,21 +467,19 @@ function calculateCapacitySolution(roomId) {
   const fatorSeguranca = parseFloat(document.getElementById(`fator-seguranca-${roomId}`).value) / 100;
   const capacidadeUnitaria = parseFloat(document.getElementById(`capacidade-unitaria-${roomId}`).value);
   const backupType = getBackupFromClimatization(roomId);
-  
-  // Cálculos
+
   const capacidadeNecessaria = cargaEstimada * (1 + fatorSeguranca);
   const unidadesOperacionais = Math.ceil(capacidadeNecessaria / capacidadeUnitaria);
   const unidadesTotais = applyBackupConfiguration(unidadesOperacionais, backupType);
-  
-  // CORREÇÃO: TOTAL usa unidades operacionais, não unidades totais com backup
-  const total = unidadesOperacionais * capacidadeUnitaria; // ← AQUI ESTAVA O ERRO
+
+  const total = unidadesOperacionais * capacidadeUnitaria;
   const folga = cargaEstimada > 0 ? ((total / cargaEstimada) - 1) * 100 : 0;
-  
+
   updateCapacityDisplay(roomId, cargaEstimada, unidadesOperacionais, unidadesTotais, total, folga, backupType);
 }
 
 function applyBackupConfiguration(unidadesOperacionais, backupType) {
-  switch(backupType) {
+  switch (backupType) {
     case 'n+1':
       return unidadesOperacionais + 1;
     case 'n+2':
@@ -191,123 +491,47 @@ function applyBackupConfiguration(unidadesOperacionais, backupType) {
 }
 
 function getBackupFromClimatization(roomId) {
-  // Estratégia 1: Buscar no room-content específico
   const roomContent = document.getElementById(`room-content-${roomId}`);
   if (roomContent) {
     const backupSelect = roomContent.querySelector(`[data-field="backup"]`);
     if (backupSelect?.value) return backupSelect.value;
   }
-  
-  // Estratégia 2: Buscar em seções de climatização
+
   const climatizationSections = document.querySelectorAll('.section-block, [id*="-clima"]');
   for (let section of climatizationSections) {
     const backupSelect = section.querySelector(`[data-field="backup"]`);
     if (backupSelect?.value) return backupSelect.value;
   }
-  
-  // Estratégia 3: Buscar qualquer select de backup
+
   const backupSelects = document.querySelectorAll(`[data-field="backup"]`);
   for (let select of backupSelects) {
     if (select.value) return select.value;
   }
-  
-  return 'n'; // Valor padrão
+
+  return 'n';
 }
 
 function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup, total, folga, backupType) {
-  // Atualizar elementos visuais
   updateElementText(`carga-estimada-${roomId}`, cargaEstimada.toFixed(1));
   updateElementText(`solucao-${roomId}`, solucao);
   updateElementText(`solucao-backup-${roomId}`, solucaoComBackup);
   updateElementText(`total-capacidade-${roomId}`, total.toFixed(1));
   updateElementText(`folga-${roomId}`, folga.toFixed(1) + '%');
-  
-  // Atualizar visual do backup
+
   document.querySelectorAll(`.backup-select`).forEach(select => {
     select.value = backupType;
     select.disabled = false;
   });
 }
 
-
 function updateElementText(elementId, value) {
   const element = document.getElementById(elementId);
   if (element) element.textContent = value;
 }
 
-// ========== GERENCIAMENTO DE MÁQUINAS ==========
-
-function addMachine(roomId) {
-  const machinesContainer = document.getElementById(`machines-${roomId}`);
-  const machineCount = machinesContainer.querySelectorAll(".machine-item").length + 1;
-
-  removeEmptyMachinesMessage(machinesContainer);
-
-  const machineHTML = buildMachineHTML(machineCount);
-  machinesContainer.insertAdjacentHTML("beforeend", machineHTML);
-}
-
-function removeEmptyMachinesMessage(container) {
-  const emptyMessage = container.querySelector(".empty-message");
-  if (emptyMessage) emptyMessage.remove();
-}
-
-function buildMachineHTML(machineCount) {
-  return `
-    <div class="machine-item">
-      <div class="machine-header">
-        <span class="machine-title">Máquina ${machineCount}</span>
-        <button class="btn btn-delete-small" onclick="deleteMachine(this)">×</button>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Nome:</label>
-          <input type="text" class="form-input" data-field="maquina_nome" placeholder="Ex: Servidor Principal">
-        </div>
-        <div class="form-group">
-          <label>Modelo:</label>
-          <input type="text" class="form-input" data-field="maquina_modelo" placeholder="Ex: Dell PowerEdge">
-        </div>
-        <div class="form-group">
-          <label>Potência (W):</label>
-          <input type="number" class="form-input" data-field="maquina_potencia" placeholder="Ex: 500">
-        </div>
-        <div class="form-group">
-          <label>Status:</label>
-          <select class="form-input" data-field="maquina_status">
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
-            <option value="manutencao">Manutenção</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function deleteMachine(button) {
-  if (!confirm("Deseja remover esta máquina?")) return;
-
-  const machineItem = button.closest(".machine-item");
-  const machinesContainer = machineItem.closest(".machines-container");
-
-  machineItem.remove();
-  showEmptyMachinesMessageIfNeeded(machinesContainer);
-}
-
-function showEmptyMachinesMessageIfNeeded(container) {
-  if (container.querySelectorAll(".machine-item").length === 0) {
-    container.innerHTML = '<p class="empty-message">Nenhuma máquina adicionada ainda.</p>';
-  }
-}
-
-// ========== FUNÇÕES DE INTEGRAÇÃO ==========
-
 function updateCapacityFromThermalGains(roomId) {
   calculateCapacitySolution(roomId);
 }
-
-// ========== INICIALIZAÇÃO PARA HTML ESTÁTICO ==========
 
 function initializeStaticCapacityTable() {
   const staticTable = document.querySelector('.capacity-calculation-table');
@@ -316,22 +540,214 @@ function initializeStaticCapacityTable() {
   }
 }
 
-// Inicializar quando a página carregar
 document.addEventListener('DOMContentLoaded', initializeStaticCapacityTable);
 
-// Fallback global para systemConstants
 if (typeof window.systemConstants === 'undefined') {
   window.systemConstants = {
     FATOR_SEGURANCA_CAPACIDADE: 10
   };
 }
+// ========== CARREGAMENTO DE MÁQUINAS SALVAS ==========
+
+function loadSavedMachines(roomId, savedMachines) {
+  const machinesContainer = document.getElementById(`machines-${roomId}`);
+  
+  if (!savedMachines || !Array.isArray(savedMachines) || savedMachines.length === 0) {
+    console.log(`[MAQUINAS] Nenhuma máquina salva para carregar na sala ${roomId}`);
+    return;
+  }
+
+  removeEmptyMachinesMessage(machinesContainer);
+  
+  console.log(`[MAQUINAS] Carregando ${savedMachines.length} máquina(s) salva(s) para sala ${roomId}:`, savedMachines);
+
+  // Carregar dados das máquinas primeiro
+  loadMachinesData().then(machinesData => {
+    savedMachines.forEach((savedMachine, index) => {
+      const machineHTML = buildClimatizationMachineFromSavedData(
+        index + 1, 
+        savedMachine, 
+        machinesData.machines
+      );
+      machinesContainer.insertAdjacentHTML("beforeend", machineHTML);
+    });
+    
+    console.log(`[MAQUINAS] ${savedMachines.length} máquina(s) carregada(s) com sucesso`);
+  }).catch(error => {
+    console.error('[MAQUINAS] Erro ao carregar máquinas salvas:', error);
+  });
+}
+
+function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allMachines) {
+  // Encontrar o tipo de máquina correspondente nos dados
+  const machineType = allMachines.find(m => m.type === savedMachine.tipo);
+  
+  if (!machineType) {
+    console.warn(`[MAQUINAS] Tipo de máquina não encontrado: ${savedMachine.tipo}`);
+    return buildFallbackMachineFromSavedData(machineCount, savedMachine);
+  }
+
+  return `
+    <div class="climatization-machine" data-machine-index="${machineCount}">
+      <div class="machine-header">
+        <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
+        
+        <input type="text" 
+               class="machine-title-editable" 
+               value="${savedMachine.nome || `Equipamento de Climatização ${machineCount}`}"
+               onchange="updateMachineTitle(this, ${machineCount})"
+               onclick="this.select()">
+               
+        <button class="btn btn-delete-small" onclick="deleteClimatizationMachine(this)">Remover</button>
+      </div>
+      
+      <div class="machine-content" id="machine-content-${machineCount}">
+        <div class="climatization-form-grid">
+          <div class="form-group">
+            <label>Tipo de Equipamento:</label>
+            <select class="form-input machine-type-select" 
+                    data-machine-index="${machineCount}"
+                    onchange="updateMachineOptions(this)">
+              ${allMachines.map(machine => 
+                `<option value="${machine.type}" ${machine.type === savedMachine.tipo ? 'selected' : ''}>${machine.type}</option>`
+              ).join('')}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Potência (TR):</label>
+            <select class="form-input machine-potency-select" 
+                    data-machine-index="${machineCount}"
+                    onchange="calculateMachinePrice(${machineCount})">
+              ${machineType.potencies.map(potency => 
+                `<option value="${potency}" ${potency === savedMachine.potencia ? 'selected' : ''}>${potency}</option>`
+              ).join('')}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tensão:</label>
+            <select class="form-input machine-voltage-select" 
+                    data-machine-index="${machineCount}"
+                    onchange="calculateMachinePrice(${machineCount})">
+              ${machineType.voltages.map(voltage => 
+                `<option value="${voltage}" ${voltage === savedMachine.tensao ? 'selected' : ''}>${voltage}</option>`
+              ).join('')}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Preço Base:</label>
+            <div class="price-display" id="base-price-${machineCount}">
+              R$ ${savedMachine.precoBase.toLocaleString('pt-BR')}
+            </div>
+          </div>
+        </div>
+
+        <div class="machine-options-section">
+          <h6>Opções Adicionais:</h6>
+          <div class="options-grid" id="options-container-${machineCount}">
+            ${machineType.options.map(option => {
+              const isChecked = savedMachine.opcoesSelecionadas?.some(selected => selected.id === option.id) || false;
+              return `
+                <div class="option-checkbox">
+                  <input type="checkbox" 
+                         value="${option.value}" 
+                         data-option-id="${option.id}"
+                         onchange="calculateMachinePrice(${machineCount})"
+                         id="option-${machineCount}-${option.id}"
+                         ${isChecked ? 'checked' : ''}>
+                  <label for="option-${machineCount}-${option.id}">
+                    <div class="option-text-wrapper">
+                      <div class="option-name">${option.name}</div>
+                      <div class="option-price">+R$ ${option.value.toLocaleString('pt-BR')}</div>
+                    </div>
+                  </label>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <div class="machine-total-price">
+          <strong>Preço Total: <span id="total-price-${machineCount}">R$ ${savedMachine.precoTotal.toLocaleString('pt-BR')}</span></strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
+  return `
+    <div class="climatization-machine" data-machine-index="${machineCount}">
+      <div class="machine-header">
+        <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
+        
+        <input type="text" 
+               class="machine-title-editable" 
+               value="${savedMachine.nome || `Equipamento de Climatização ${machineCount}`}"
+               onchange="updateMachineTitle(this, ${machineCount})"
+               onclick="this.select()">
+               
+        <button class="btn btn-delete-small" onclick="deleteClimatizationMachine(this)">Remover</button>
+      </div>
+      
+      <div class="machine-content" id="machine-content-${machineCount}">
+        <div style="padding: 1rem; background: #fff3cd; border-radius: 4px; margin: 1rem;">
+          <strong>Aviso:</strong> Tipo de máquina "${savedMachine.tipo}" não encontrado nos dados atuais.
+        </div>
+        
+        <div class="climatization-form-grid">
+          <div class="form-group">
+            <label>Tipo de Equipamento:</label>
+            <select class="form-input machine-type-select" disabled>
+              <option>${savedMachine.tipo} (não disponível)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Potência (TR):</label>
+            <div class="form-input">${savedMachine.potencia}</div>
+          </div>
+          <div class="form-group">
+            <label>Tensão:</label>
+            <div class="form-input">${savedMachine.tensao}</div>
+          </div>
+          <div class="form-group">
+            <label>Preço Base:</label>
+            <div class="price-display">R$ ${savedMachine.precoBase.toLocaleString('pt-BR')}</div>
+          </div>
+        </div>
+
+        <div class="machine-total-price">
+          <strong>Preço Total: <span>R$ ${savedMachine.precoTotal.toLocaleString('pt-BR')}</span></strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ========== TORNAR FUNÇÕES GLOBAIS ==========
+
+window.calculateMachinePrice = calculateMachinePrice;
+window.updateMachineOptions = updateMachineOptions;
+window.deleteClimatizationMachine = deleteClimatizationMachine;
+window.toggleMachineSection = toggleMachineSection;
+window.updateMachineTitle = updateMachineTitle;
+window.addMachine = addMachine;
+window.calculateCapacitySolution = calculateCapacitySolution;
+window.updateCapacityFromThermalGains = updateCapacityFromThermalGains;
+window.initializeStaticCapacityTable = initializeStaticCapacityTable;
 
 export {
   buildMachinesSection,
   addMachine,
-  deleteMachine,
   calculateCapacitySolution,
   updateCapacityFromThermalGains,
-  initializeStaticCapacityTable
-  // Não exporte funções internas a menos que sejam necessárias
+  initializeStaticCapacityTable,
+  calculateMachinePrice,
+  updateMachineOptions,
+  deleteClimatizationMachine,
+  toggleMachineSection,
+  updateMachineTitle,
+  loadSavedMachines  // ← NOVA FUNÇÃO
 };
