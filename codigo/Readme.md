@@ -250,14 +250,14 @@ codigo/
 
 #### 🗂️ Gerenciamento do Projeto
 
-**📁 Projeto 1 (–)**
+##### **📁 Projeto 1 (–)**
 
 ```txt
 | **Ações** | Campo **Edit** | Campo **Add** | Campo **Dell** |
 |:----------|:--------------:|:-------------:|:--------------:|
 ```
 
-**🏠 Sala 1 (–)**
+###### **🏠 Sala 1 (–)**
 
 ```txt
 | **Ação** | Campo **Edit** |
@@ -273,7 +273,7 @@ codigo/
 | 🔄 Atualizar Dados | 💾 Salvar |
 ```
 
-**⚙️ Ações do Projeto**
+##### **⚙️ Ações do Projeto**
 
 ```txt
 | **Ações do Projeto** |          |                   |
@@ -545,4 +545,4 @@ Calc_Gsens_ArE = AUX_m_ArExterno * AUX_c_ArExterno * AUX_deltaT_ArExterno
 
 solução =ROUNDUP((N17*(O17+1))/P17;0)
 
-| Carga Estimada N17 | Fator de Seg. O17 | Cap. Unit. P18 | Solução | Com back-up | TOTAL | FOLGA | |----------------|---------------|------------|---------|-------------|-------|--------| | 12 TR | 10,00% | 2 TR | 7 | n=solução se n/n+1/n+2 | 14 TR | 16,67% | solução =ROUNDUP((N17*(O17+1))/P17;0)
+| Carga Estimada N17 | Fator de Seg. O17 | Cap. Unit. P18 | Solução | Com back-up | TOTAL | FOLGA | |----------------|---------------|------------|---------|-------------|-------|--------| | 12 TR | 10,00% | 2 TR | 7 | n=solução se n/n+1/n+2 | 14 TR | 16,67% | solução =ROUNDUP((N17*(O17+1))/P17;0) | | | | |
