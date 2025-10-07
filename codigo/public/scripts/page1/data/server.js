@@ -114,14 +114,17 @@ function decrementGeralCount() {
     window.GeralCount--;
     console.log(`[v0] GeralCount decrementado para: ${window.GeralCount}`);
     
-    // VERIFICAR SE PRECISA RESETAR
-    if (window.GeralCount === 0) {
-      console.log("[v0] GeralCount chegou a ZERO - reiniciando lógica de exibição");
-      resetDisplayLogic();
-      // CORREÇÃO 5: Pequeno delay para garantir que o DOM está pronto
+    // CORREÇÃO: Verificar se realmente não há projetos antes de criar base
+    const existingProjects = document.querySelectorAll('.project-block');
+    
+    if (window.GeralCount === 0 && existingProjects.length === 0) {
+      console.log("[v0] GeralCount chegou a ZERO e não há projetos no DOM - criando projeto base");
       setTimeout(() => {
         createSingleBaseProject();
       }, 50);
+    } else if (window.GeralCount === 0 && existingProjects.length > 0) {
+      console.log(`[v0] GeralCount é ZERO mas existem ${existingProjects.length} projeto(s) no DOM - corrigindo contador`);
+      window.GeralCount = existingProjects.length;
     }
   }
   return window.GeralCount;
@@ -158,12 +161,27 @@ function createSingleBaseProject() {
     return;
   }
   
-  createProjectBaseHTML(projectsContainer);
+  // CORREÇÃO: Verificar se JÁ EXISTE algum projeto antes de criar
+  const existingProjects = projectsContainer.querySelectorAll('.project-block');
+  
+  if (existingProjects.length === 0) {
+    console.log("[v0] Nenhum projeto existente - criando projeto base");
+    createProjectBaseHTML(projectsContainer);
+  } else {
+    console.log(`[v0] Já existem ${existingProjects.length} projeto(s) - não criando projeto base`);
+  }
 }
 
+
 function createProjectBaseHTML(container) {
-  // Limpar container completamente
-  container.innerHTML = '';
+  // CORREÇÃO: NÃO limpar o container! Apenas adicionar se não existir
+  
+  // Verificar se já existe um projeto base
+  const existingBaseProject = container.querySelector('[data-project-name="Projeto1"]');
+  if (existingBaseProject) {
+    console.log("[v0] Projeto base já existe - não criando duplicado");
+    return;
+  }
   
   // Criar apenas UM projeto base
   const projectHTML = `
@@ -190,17 +208,18 @@ function createProjectBaseHTML(container) {
     </div>
   `;
   
-  container.innerHTML = projectHTML;
+  // CORREÇÃO: Usar insertAdjacentHTML em vez de innerHTML para não remover projetos existentes
+  container.insertAdjacentHTML('beforeend', projectHTML);
   
   // CORREÇÃO: CRIAR PRIMEIRA SALA AUTOMATICAMENTE
   setTimeout(() => {
     console.log("[v0] Criando primeira sala automaticamente para Projeto1");
-    addNewRoom('Projeto1'); // ← ADICIONAR ESTA LINHA
+    addNewRoom('Projeto1');
   }, 800);
   
-  // CORREÇÃO 7: Atualizar o contador após criar o projeto base
-  window.GeralCount = 1;
-  console.log("[v0] Projeto base único criado com sucesso - GeralCount: 1");
+  // CORREÇÃO: Atualizar o contador apenas se realmente criou um novo projeto
+  window.GeralCount = Math.max(window.GeralCount, 1);
+  console.log("[v0] Projeto base único criado com sucesso - GeralCount:", window.GeralCount);
 }
 
 // MODIFICAR: Função saveFirstProjectIdOfSession para usar o contador

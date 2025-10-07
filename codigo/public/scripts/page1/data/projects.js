@@ -273,20 +273,34 @@ function deleteProject(projectName) {
 
   const projectId = projectBlock.dataset.projectId ? ensureStringId(projectBlock.dataset.projectId) : null
 
+  // CORREÇÃO: Remover APENAS o projeto específico
   projectBlock.remove()
+  console.log(`[v0] Projeto ${projectName} removido da interface`);
 
-  // CORREÇÃO 4: Lógica de deleção simplificada e robusta
+  // CORREÇÃO: Lógica de contador mais robusta
+  const currentCount = getGeralCount();
+  console.log(`[v0] Contador atual antes da deleção: ${currentCount}`);
+
   if (projectId) {
-    console.log(`[v0] Deletando projeto com ID: ${projectId}`);
-    addProjectToRemovedList(projectId); // ← Esta função já chama decrementGeralCount()
+    console.log(`[v0] Projeto com ID ${projectId} removido - adicionando à lista de removidos`);
+    addProjectToRemovedList(projectId);
   } else {
-    console.log(`[v0] Deletando projeto sem ID: ${projectName}`);
-    decrementGeralCount(); // ← Decrementar diretamente para projetos não salvos
+    console.log(`[v0] Projeto ${projectName} (sem ID) removido - decrementando contador`);
+    decrementGeralCount();
   }
 
-  console.log(`[v0] Projeto ${projectName} removido - GeralCount: ${getGeralCount()}`);
-  
-  // CORREÇÃO 5: A criação do projeto base é tratada automaticamente no decrementGeralCount()
+  // CORREÇÃO: Debug para verificar estado
+  setTimeout(() => {
+    const remainingProjects = document.querySelectorAll('.project-block');
+    console.log(`[v0] Estado após deleção de ${projectName}:`);
+    console.log(`[v0] - GeralCount: ${getGeralCount()}`);
+    console.log(`[v0] - Projetos no DOM: ${remainingProjects.length}`);
+    
+    // Listar projetos restantes para debug
+    remainingProjects.forEach((proj, index) => {
+      console.log(`[v0]   Projeto ${index + 1}: ${proj.dataset.projectName}`);
+    });
+  }, 200);
 }
 
 function verifyProjectData(projectName) {
