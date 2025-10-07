@@ -67,13 +67,6 @@ function collectClimatizationInputs(climaSection, roomId) {
     const field = input.dataset.field
     let value = input.value
     
-    // DEBUG ESPECÍFICO PARA TIPO CONSTRUÇÃO
-    if (field === "tipoConstrucao") {
-      console.log(`[DEBUG COLLECT] Input tipoConstrucao encontrado:`)
-      console.log(`[DEBUG COLLECT] - value: "${value}"`)
-      console.log(`[DEBUG COLLECT] - selectedIndex: ${input.selectedIndex}`)
-      console.log(`[DEBUG COLLECT] - options:`, Array.from(input.options).map(opt => ({value: opt.value, text: opt.text, selected: opt.selected})))
-    }
     
     // Converter para número APENAS se for campo numérico E tiver valor
     if (input.type === 'number') {
@@ -191,16 +184,15 @@ function updateFlowRateDisplay(roomId, flowRate) {
   const resultElement = document.getElementById(`vazao-ar-${roomId}`)
   if (resultElement) {
     resultElement.textContent = flowRate
-    console.log(`[DEBUG] Vazão atualizada para ${roomId}: ${flowRate} l/s`)
+
   }
 }
 
 async function calculateVazaoArAndThermalGains(roomId) {
-  console.log(`[DEBUG] calculateVazaoArAndThermalGains iniciado para ${roomId}`);
   
   try {
     const flowRate = await calculateVazaoAr(roomId, false);
-    console.log(`[DEBUG] Vazão calculada: ${flowRate}, chamando ganhos térmicos`);
+
     await calculateThermalGains(roomId, flowRate);
   } catch (error) {
     console.error(`[DEBUG] Erro em calculateVazaoArAndThermalGains:`, error);
@@ -208,7 +200,6 @@ async function calculateVazaoArAndThermalGains(roomId) {
 }
 
 async function calculateThermalGains(roomId, vazaoArExterno = 0) {
-  console.log(`[DEBUG] calculateThermalGains INICIADO para ${roomId}, vazao: ${vazaoArExterno}`);
   
   try {
     await waitForSystemConstants()
@@ -231,13 +222,9 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
     }
 
     const inputData = collectClimatizationInputs(climaSection, roomId)
-    console.log(`[DEBUG] Dados coletados:`, inputData);
+
     
-    // DEBUG ESPECÍFICO PARA TIPO DE CONSTRUÇÃO
-    console.log(`[DEBUG CRÍTICO] TipoConstrucao: "${inputData.tipoConstrucao}"`);
-    console.log(`[DEBUG CRÍTICO] Comparação com "eletrocentro": ${inputData.tipoConstrucao === "eletrocentro"}`);
-    console.log(`[DEBUG CRÍTICO] Comparação com "alvenaria": ${inputData.tipoConstrucao === "alvenaria"}`);
-    
+
     // Aplicar valores padrão APENAS para cálculos, mantendo inputs vazios
     const calcData = {
       ...inputData,
@@ -256,19 +243,13 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
       vazaoArExterno: vazaoArExterno
     }
 
-    console.log("[v0] ===== CÁLCULO DE GANHOS TÉRMICOS =====")
-    console.log("[v0] Dados de entrada:", inputData)
-    console.log("[v0] Dados para cálculo:", calcData)
-    console.log("[v0] Vazão de ar externo:", vazaoArExterno)
+
 
     const uValues = calculateUValues(calcData.tipoConstrucao)
-    console.log(`[DEBUG] UValues calculados:`, uValues);
 
     const auxVars = calculateAuxiliaryVariables({...calcData, vazaoArExterno})
-    console.log(`[DEBUG] Variáveis auxiliares:`, auxVars);
 
-    // CÁLCULOS INDIVIDUAIS COM DEBUG
-    console.log(`[DEBUG] Iniciando cálculos individuais...`);
+
     
     const gains = {
       teto: calculateCeilingGain(calcData.area, uValues.teto, window.systemConstants.deltaT_teto),
@@ -288,7 +269,7 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
       arLatente: calculateExternalAirLatentGain(vazaoArExterno, window.systemConstants),
     }
 
-    console.log(`[DEBUG] Cálculos individuais concluídos:`, gains);
+
 
     const totals = calculateTotals(gains)
 
@@ -298,12 +279,49 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
 
     updateThermalGainsDisplay(roomId, gains, totals, uValues, {...inputData, vazaoArExterno})
     
-    // FORÇAR ABRIR A SEÇÃO DE GANHOS TÉRMICOS
-    const thermalSubsection = document.getElementById(`subsection-content-${roomId}-ganhos-termicos`);
-    if (thermalSubsection) {
-      thermalSubsection.classList.remove('collapsed');
-      console.log(`[DEBUG] Seção de ganhos térmicos aberta para ${roomId}`);
-    }
+
+
+    // ATUALIZAR TABELA DE CAPACIDADE - CORREÇÃO AQUI
+    console.log(`[THERMAL] Tentando atualizar tabela de capacidade para ${roomId}`);
+    
+    // Tentar múltiplas abordagens para garantir que a função seja encontrada
+    setTimeout(() => {
+      console.log(`[THERMAL] Verificando funções disponíveis...`);
+      console.log(`[THERMAL] calculateCapacitySolution:`, typeof calculateCapacitySolution);
+      console.log(`[THERMAL] updateCapacityFromThermalGains:`, typeof updateCapacityFromThermalGains);
+      console.log(`[THERMAL] window.calculateCapacitySolution:`, typeof window.calculateCapacitySolution);
+      
+      if (typeof calculateCapacitySolution === 'function') {
+        console.log(`[THERMAL] Chamando calculateCapacitySolution para ${roomId}`);
+        calculateCapacitySolution(roomId);
+      } else if (typeof window.calculateCapacitySolution === 'function') {
+        console.log(`[THERMAL] Chamando window.calculateCapacitySolution para ${roomId}`);
+        window.calculateCapacitySolution(roomId);
+      } else if (typeof updateCapacityFromThermalGains === 'function') {
+        console.log(`[THERMAL] Chamando updateCapacityFromThermalGains para ${roomId}`);
+        updateCapacityFromThermalGains(roomId);
+      } else if (typeof window.updateCapacityFromThermalGains === 'function') {
+        console.log(`[THERMAL] Chamando window.updateCapacityFromThermalGains para ${roomId}`);
+        window.updateCapacityFromThermalGains(roomId);
+      } else {
+        console.error(`[THERMAL] Nenhuma função de capacidade encontrada para ${roomId}`);
+        
+        // Tentar forçar a inicialização
+        const capacityTable = document.querySelector('.capacity-calculation-table');
+        if (capacityTable) {
+          console.log(`[THERMAL] Tabela de capacidade encontrada, tentando inicialização manual`);
+          // Forçar recálculo manual dos elementos
+          const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`);
+          const totalTRElement = document.getElementById(`total-tr-${roomId}`);
+          
+          if (totalTRElement && cargaEstimadaElement) {
+            const totalTR = parseFloat(totalTRElement.textContent) || 0;
+            cargaEstimadaElement.textContent = totalTR.toFixed(1);
+            console.log(`[THERMAL] Carga estimada atualizada manualmente: ${totalTR}`);
+          }
+        }
+      }
+    }, 300); // Aumentei o delay para garantir que o DOM foi atualizado
     
   } catch (error) {
     console.error(`[DEBUG] Erro em calculateThermalGains:`, error);
@@ -324,15 +342,12 @@ function calculateUValues(tipoConstrucao) {
   const tipoLower = tipoConstrucao ? tipoConstrucao.toLowerCase() : ""
   
   if (tipoLower === "eletrocentro") {
-    console.log("[DEBUG UVALUES] ✅ ENTROU EM ELETROCENTRO")
     uValueParede = U_VALUE_LA_ROCHA_PAREDE
     uValueTeto = U_VALUE_LA_ROCHA_TETO
   } else if (tipoLower === "alvenaria") {
-    console.log("[DEBUG UVALUES] ✅ ENTROU EM ALVENARIA")
     uValueParede = U_VALUE_ALVENARIA_PAREDE
     uValueTeto = U_VALUE_ALVENARIA_TETO
   } else {
-    console.log("[DEBUG UVALUES] ❌ TIPO NÃO RECONHECIDO")
     uValueParede = 0
     uValueTeto = 0
   }
@@ -351,11 +366,9 @@ function calculateAuxiliaryVariables(inputData) {
   const vazaoArExterno = safeNumber(inputData.vazaoArExterno)
   const densiAr = window.systemConstants?.Densi_ar || 1.17
 
-  console.log(`[DEBUG] calculateAuxiliaryVariables: vazaoArExterno=${vazaoArExterno}, densiAr=${densiAr}`);
 
   const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000
 
-  console.log(`[DEBUG] m_ArExterno calculado: ${m_ArExterno}`);
 
   return {
     m_ArExterno: m_ArExterno,
@@ -386,7 +399,6 @@ function calculateWallGain(comprimento, peDireito, uValue, deltaT) {
 function calculatePartitionGain(inputArea, peDireito, uValue, deltaT) {
   const area = safeNumber(inputArea) * safeNumber(peDireito)
   const result = area * uValue * deltaT
-  console.log(`[DEBUG] calculatePartitionGain: (${inputArea} * ${peDireito}) * ${uValue} * ${deltaT} = ${result}`)
   return result
 }
 
@@ -394,7 +406,6 @@ function calculateFloorGain(area, constants) {
   const uValue = window.systemConstants?.AUX_U_Value_Piso || 2.7
   const deltaT = window.systemConstants?.deltaT_piso || 7.5
   const result = safeNumber(area) * uValue * deltaT
-  console.log(`[DEBUG] calculateFloorGain: ${area} * ${uValue} * ${deltaT} = ${result}`)
   return result
 }
 
@@ -402,7 +413,6 @@ function calculateLightingGain(area, constants) {
   const fatorIluminacao = window.systemConstants?.AUX_Fator_Iluminacao || 7
   const fsIluminacao = window.systemConstants?.AUX_Fs_Iluminacao || 1
   const result = safeNumber(area) * fatorIluminacao * fsIluminacao
-  console.log(`[DEBUG] calculateLightingGain: ${area} * ${fatorIluminacao} * ${fsIluminacao} = ${result}`)
   return result
 }
 
@@ -410,7 +420,6 @@ function calculateDissipationGain(dissipacao, constants) {
   const fatorConversao = window.systemConstants?.AUX_Fator_Conver_Painel || 1
   const fsPaineis = window.systemConstants?.AUX_Fs_Paineis || 100
   const result = (fatorConversao * safeNumber(dissipacao) * fsPaineis) / 100
-  console.log(`[DEBUG] calculateDissipationGain: (${fatorConversao} * ${dissipacao} * ${fsPaineis}) / 100 = ${result}`)
   return result
 }
 
@@ -422,12 +431,10 @@ function calculatePeopleGain(numPessoas, constants) {
   const ganhoSensivel = (csp * pessoas * fsPessoas) / 100
   const ganhoLatente = (clp * pessoas * fsPessoas) / 100
   const result = ganhoSensivel + ganhoLatente
-  console.log(`[DEBUG] calculatePeopleGain: (${csp} * ${pessoas} * ${fsPessoas}/100) + (${clp} * ${pessoas} * ${fsPessoas}/100) = ${result}`)
   return result
 }
 
 function calculateExternalAirSensibleGain(vazaoArExterno, auxVars, constants) {
-  console.log(`[DEBUG] calculateExternalAirSensibleGain INICIADO: vazao=${vazaoArExterno}, auxVars=`, auxVars);
   
   const c_ArExterno = window.systemConstants?.AUX_c_ArExterno || 0.24
   const deltaT_ArExterno = window.systemConstants?.AUX_deltaT_ArExterno || 10
@@ -435,7 +442,6 @@ function calculateExternalAirSensibleGain(vazaoArExterno, auxVars, constants) {
   const calc_Gsens_ArE = auxVars.m_ArExterno * c_ArExterno * deltaT_ArExterno
   const resultado = (calc_Gsens_ArE / 1000) * 1.16
   
-  console.log(`[DEBUG] calculateExternalAirSensibleGain: (${auxVars.m_ArExterno} * ${c_ArExterno} * ${deltaT_ArExterno}) / 1000 * 1.16 = ${resultado}`)
   return resultado
 }
 
@@ -443,17 +449,14 @@ function calculateExternalAirLatentGain(vazaoArExterno, constants) {
   const f_ArExterno = window.systemConstants?.AUX_f_ArExterno || 3.01
   const deltaUa_ArExterno = window.systemConstants?.AUX_deltaUa_ArExterno || 8.47
   
-  console.log(`[DEBUG] calculateExternalAirLatentGain INICIADO: vazao=${vazaoArExterno}, f=${f_ArExterno}, deltaUa=${deltaUa_ArExterno}`)
   
   const vazao = safeNumber(vazaoArExterno)
   const ganho = vazao * f_ArExterno * deltaUa_ArExterno
   
-  console.log(`[DEBUG] calculateExternalAirLatentGain: ${vazao} * ${f_ArExterno} * ${deltaUa_ArExterno} = ${ganho}`)
   return ganho
 }
 
 function calculateTotals(gains) {
-  console.log(`[DEBUG] calculateTotals INICIADO:`, gains)
   
   const totalExterno = gains.teto + gains.paredeOeste + gains.paredeLeste + gains.paredeNorte + gains.paredeSul
   const totalDivisoes = gains.divisoriaNaoClima1 + gains.divisoriaNaoClima2 + gains.divisoriaClima1 + gains.divisoriaClima2
@@ -482,49 +485,11 @@ function calculateTotals(gains) {
     geralTR: Math.ceil(totalGeralTR),
   }
 
-  console.log(`[DEBUG] calculateTotals RESULTADO:`, totals)
   return totals
 }
 
-function debugThermalElements(roomId) {
-  console.log(`[DEBUG] === VERIFICANDO ELEMENTOS PARA ${roomId} ===`);
-  
-  const elementsToCheck = [
-    `area-teto-${roomId}`,
-    `uvalue-teto-${roomId}`,
-    `deltat-teto-${roomId}`,
-    `ganho-teto-${roomId}`,
-    `area-parede-oeste-${roomId}`,
-    `uvalue-parede-oeste-${roomId}`,
-    `deltat-parede-oeste-${roomId}`,
-    `ganho-parede-oeste-${roomId}`,
-    `total-externo-${roomId}`,
-    `area-divi-nc1-${roomId}`,
-    `uvalue-divi-nc1-${roomId}`,
-    `deltat-divi-nc1-${roomId}`,
-    `ganho-divi-nc1-${roomId}`,
-    `total-divisoes-${roomId}`
-  ];
-  
-  elementsToCheck.forEach(id => {
-    const element = document.getElementById(id);
-    console.log(`[DEBUG] ${id}:`, element ? 'ENCONTRADO' : 'NÃO ENCONTRADO');
-    if (element) {
-      console.log(`[DEBUG]   Conteúdo atual: "${element.textContent}"`);
-    }
-  });
-  
-  console.log(`[DEBUG] === FIM DA VERIFICAÇÃO ===`);
-}
 function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
-  console.log(`[DEBUG] updateThermalGainsDisplay INICIADO para ${roomId}`);
-  console.log(`[DEBUG] gains recebidos:`, gains);
-  console.log(`[DEBUG] totals recebidos:`, totals);
-  console.log(`[DEBUG] uValues recebidos:`, uValues);
-  console.log(`[DEBUG] inputData recebidos:`, inputData);
-  
-  // DEBUG: Verificar elementos antes de atualizar
-  debugThermalElements(roomId);
+
   
   // Atualizar totais gerais
   updateElementText(`total-ganhos-w-${roomId}`, totals.geralW)
@@ -598,7 +563,6 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   // Totais
   updateElementText(`total-externo-${roomId}`, totals.externo)
   updateElementText(`total-divisoes-${roomId}`, totals.divisoes)
-  console.log(`[DEBUG] updateThermalGainsDisplay FINALIZADO para ${roomId}`);
 
 }
 
@@ -626,7 +590,6 @@ function updateElementText(elementId, value) {
     console.warn(`[DEBUG] Elemento ${elementId} não encontrado`)
   }
 }
-
 export {
   calculateVazaoAr,
   waitForSystemConstants,
@@ -653,7 +616,7 @@ export {
   updateWallDisplay,
   updatePartitionDisplay,
   updateElementText,
-  debugThermalElements
+  
 }
 
 

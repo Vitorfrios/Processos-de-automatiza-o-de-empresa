@@ -24,20 +24,67 @@ import {
   buildThermalGainsSection
 } from './modules/climatizacao.js'
 
+// CORREÇÃO: Importe apenas as funções que existem em maquinas.js
 import { 
   buildMachinesSection,
   addMachine,
-  removeEmptyMachinesMessage,
-  buildMachineHTML,
   deleteMachine,
-  showEmptyMachinesMessageIfNeeded
-} from './modules/maquinas.js'
+  calculateCapacitySolution,
+  updateCapacityFromThermalGains,
+  initializeStaticCapacityTable
+  // REMOVA estas linhas - são funções internas:
+  // buildMachineHTML,
+  // removeEmptyMachinesMessage,
+  // showEmptyMachinesMessageIfNeeded
+} from './modules/maquinas.js';
 
 import { 
   buildConfigurationSection 
 } from './modules/configuracao.js'
 
-// Exportar tudo para manter compatibilidade
+// CORREÇÃO: Disponibilizar apenas funções que existem
+window.calculateCapacitySolution = calculateCapacitySolution;
+window.updateCapacityFromThermalGains = updateCapacityFromThermalGains;
+window.initializeStaticCapacityTable = initializeStaticCapacityTable;
+// REMOVA estas linhas - não estão disponíveis:
+// window.initializeFatorSeguranca = initializeFatorSeguranca;
+// window.getThermalLoadTR = getThermalLoadTR;
+
+// Correção para inputs existentes
+function initializeAllCapacityInputs() {
+  console.log('[INIT] Inicializando todos os inputs de capacidade...');
+  
+  // Esperar systemConstants carregar
+  const waitForConstants = (callback, attempt = 1) => {
+    if (window.systemConstants && window.systemConstants.FATOR_SEGURANCA_CAPACIDADE !== undefined) {
+      callback();
+    } else if (attempt < 10) {
+      setTimeout(() => waitForConstants(callback, attempt + 1), 500);
+    } else {
+      console.error('[INIT] ❌ systemConstants não carregado');
+      callback(true);
+    }
+  };
+  
+  waitForConstants((useFallback = false) => {
+    const inputs = document.querySelectorAll('input[id^="fator-seguranca-"]');
+    const valor = useFallback ? 10 : window.systemConstants.FATOR_SEGURANCA_CAPACIDADE;
+    
+    inputs.forEach(input => {
+      if (input.value === '') {
+        input.value = valor;
+        console.log(`[INIT] ✅ ${input.id} inicializado: ${valor}%`);
+      }
+    });
+  });
+}
+
+// Executar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(initializeAllCapacityInputs, 3000);
+});
+
+// CORREÇÃO: Exporte apenas o que existe neste arquivo
 export {
   // Projeto
   createEmptyRoom,
@@ -63,10 +110,8 @@ export {
   // Máquinas
   buildMachinesSection,
   addMachine,
-  removeEmptyMachinesMessage,
-  buildMachineHTML,
   deleteMachine,
-  showEmptyMachinesMessageIfNeeded,
+  initializeAllCapacityInputs, // ← esta função está definida neste arquivo
   
   // Configuração
   buildConfigurationSection

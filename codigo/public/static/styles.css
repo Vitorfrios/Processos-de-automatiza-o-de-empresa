@@ -796,6 +796,106 @@ textarea.form-input {
   grid-column: 1 / -1;
 }
 
+.capacity-calculation-table {
+  margin-bottom: 30px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.capacity-calculation-table .table-title {
+  margin: 0 0 15px 0;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #495057;
+}
+
+.thermal-capacity-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.thermal-capacity-table th {
+  background: #343a40;
+  color: white;
+  padding: 12px 8px;
+  font-weight: 600;
+  font-size: 0.85em;
+  text-align: center;
+  border: 1px solid #454d55;
+}
+
+.thermal-capacity-table td {
+  padding: 10px 8px;
+  text-align: center;
+  border: 1px solid #dee2e6;
+  font-size: 0.9em;
+}
+
+.capacity-input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+.capacity-select {
+  width: 100px;
+  padding: 4px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.thermal-capacity-table td:first-child,
+.thermal-capacity-table td:nth-child(4),
+.thermal-capacity-table td:nth-child(6),
+.thermal-capacity-table td:nth-child(7) {
+  background: #e9ecef;
+  font-weight: 600;
+  color: #495057;
+}
+
+
+.backup-cell {
+    padding: 0 !important;
+    vertical-align: top;
+}
+
+.backup-selection, .backup-solution {
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.backup-solution {
+    background: #e9ecef;
+    font-weight: 600;
+}
+
+.backup-select {
+    width: 90%;
+    padding: 2px 4px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 0.8em;
+    background: #f8f9fa;
+    text-align: center;
+}
+
+.backup-solution span {
+    font-size: 0.9em;
+    color: #495057;
+}
 
 /* Responsive adjustments for thermal tables */
 @media (max-width: 768px) {

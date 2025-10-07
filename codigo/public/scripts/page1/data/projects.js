@@ -17,6 +17,9 @@ import {
   resetDisplayLogic
 } from './server.js'
 
+
+
+
 async function fetchProjects() {
   try {
     console.log("[v0] Buscando projetos...")
@@ -359,27 +362,9 @@ function collapseElement(element, minimizerElement) {
   minimizerElement.textContent = UI_CONSTANTS.MINIMIZED_SYMBOL
 }
 
-// CORREÇÃO 7: Debug aprimorado
-function debugProjectsState() {
-  console.log('=== DEBUG PROJECTS STATE ===');
-  console.log('- window.GeralCount:', window.GeralCount);
-  console.log('- getGeralCount():', getGeralCount());
-  console.log('- window.projectCounter:', window.projectCounter);
-  console.log('- Projetos no DOM:', document.querySelectorAll('.project-block').length);
-  console.log('- Container encontrado:', !!document.getElementById('projects-container'));
-  
-  const projects = document.querySelectorAll('.project-block');
-  projects.forEach((project, index) => {
-    console.log(`- Projeto ${index + 1}:`, {
-      name: project.dataset.projectName,
-      id: project.dataset.projectId,
-      hasId: !!project.dataset.projectId
-    });
-  });
-}
 
-// Executar debug após um tempo
-setTimeout(debugProjectsState, 2000);
+
+
 
 export {
   fetchProjects,
@@ -395,5 +380,4 @@ export {
   verifyProjectData,
   generateProjectVerificationReport,
   calculateRoomCompletionStats,
-  debugProjectsState // Exportar debug para uso externo
 }

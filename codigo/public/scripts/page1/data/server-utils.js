@@ -200,30 +200,8 @@ function populateRoomInputs(projectName, roomName, inputsData, ganhosTermicos, m
 }
 
 
-// CORREÇÃO: Adicionar função de debug
-function debugServerUtils() {
-  console.log('=== DEBUG SERVER-UTILS ===');
-  console.log('- Projetos renderizados:', document.querySelectorAll('.project-block').length);
-  console.log('- Salas renderizadas:', document.querySelectorAll('.room-block').length);
-  console.log('- GeralCount:', getGeralCount());
-  
-  // Debug detalhado das salas
-  const projects = document.querySelectorAll('.project-block');
-  projects.forEach((project, pIndex) => {
-    const projectName = project.dataset.projectName;
-    const rooms = project.querySelectorAll('.room-block');
-    console.log(`- Projeto ${pIndex + 1} (${projectName}): ${rooms.length} salas`);
-    
-    rooms.forEach((room, rIndex) => {
-      const roomName = room.dataset.roomName;
-      console.log(`  - Sala ${rIndex + 1}: ${roomName}`);
-    });
-  });
-}
-
 export {
   renderProjectFromData,
   renderRoomFromData,
   populateRoomInputs,
-  debugServerUtils
 }

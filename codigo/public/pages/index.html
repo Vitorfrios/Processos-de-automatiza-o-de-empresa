@@ -523,8 +523,7 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                  <!-- Seção de Máquinas   -->
+                                <!-- Seção de Máquinas -->
                                 <div class="section-block">
                                     <div class="section-header">
                                         <button class="minimizer" onclick="toggleSection('Projeto1-Sala1-maquinas')">+</button>
@@ -532,6 +531,67 @@
                                         <button class="btn btn-add-small" onclick="addMachine('Projeto1-Sala1')">+ Adicionar Máquina</button>
                                     </div>
                                     <div class="section-content collapsed" id="section-content-Projeto1-Sala1-maquinas">
+                                        
+                                        <!-- TABELA INTERATIVA DE CAPACIDADE DE REFRIGERAÇÃO -->
+                                        <div class="capacity-calculation-table">
+                                            <h5 class="table-title">Cálculo de Capacidade de Refrigeração</h5>
+                                            <table class="thermal-capacity-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Carga Estimada (TR)</th>
+                                                        <th>Fator de Seg.</th>
+                                                        <th>Cap. Unit. (TR)</th>
+                                                        <th>Solução</th>
+                                                        <th>Com back-up</th>
+                                                        <th>TOTAL (TR)</th>
+                                                        <th>FOLGA (%)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td id="carga-estimada-Projeto1-Sala1">0</td>
+                                                        <td>
+                                                            <!-- VALOR DO JSON - SEM VALUE FIXO -->
+                                                            <input type="number" id="fator-seguranca-Projeto1-Sala1" step="0.01" class="capacity-input" onchange="calculateCapacitySolution('Projeto1-Sala1')">
+                                                        </td>
+                                                        <td>
+                                                            <select id="capacidade-unitaria-Projeto1-Sala1" class="capacity-select" onchange="calculateCapacitySolution('Projeto1-Sala1')">
+                                                                <option value="1">1 TR</option>
+                                                                <option value="2">2 TR</option>
+                                                                <option value="3">3 TR</option>
+                                                                <option value="4">4 TR</option>
+                                                                <option value="5">5 TR</option>
+                                                                <option value="7.5">7,5 TR</option>
+                                                                <option value="10">10 TR</option>
+                                                                <option value="12.5">12,5 TR</option>
+                                                                <option value="15">15 TR</option>
+                                                                <option value="20">20 TR</option>
+                                                                <option value="25">25 TR</option>
+                                                                <option value="30">30 TR</option>
+                                                            </select>
+                                                        </td>
+                                                        <td id="solucao-Projeto1-Sala1">0</td>
+                                                        <td class="backup-cell">
+                                                            <!-- Linha superior: Seleção do backup -->
+                                                            <div class="backup-selection">
+                                                                <select class="backup-select" disabled>
+                                                                    <option value="n">n</option>
+                                                                    <option value="n+1">n+1</option>
+                                                                    <option value="n+2">n+2</option>
+                                                                </select>
+                                                            </div>
+                                                            <!-- Linha inferior: Solução com backup -->
+                                                            <div class="backup-solution">
+                                                                <span id="solucao-backup-Projeto1-Sala1">0</span>
+                                                            </div>
+                                                        </td>
+                                                        <td id="total-capacidade-Projeto1-Sala1">0</td>
+                                                        <td id="folga-Projeto1-Sala1">0%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
                                         <div class="machines-container" id="machines-Projeto1-Sala1">
                                             <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
                                         </div>

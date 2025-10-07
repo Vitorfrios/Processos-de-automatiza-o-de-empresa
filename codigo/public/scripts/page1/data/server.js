@@ -340,15 +340,7 @@ async function normalizeAllProjectsOnServer() {
   }
 }
 
-// CORREÇÃO 9: Adicionar função de debug
-function debugGeralCount() {
-  console.log('=== DEBUG GERALCOUNT ===');
-  console.log('- window.GeralCount:', window.GeralCount);
-  console.log('- getGeralCount():', getGeralCount());
-  console.log('- sessionStorage SESSION_STORAGE_KEY:', sessionStorage.getItem(SESSION_STORAGE_KEY));
-  console.log('- Projetos no DOM:', document.querySelectorAll('.project-block').length);
-  console.log('- Container encontrado:', !!document.getElementById('projects-container'));
-}
+
 
 // EXPORTAR AS NOVAS FUNÇÕES DO CONTADOR
 export {
@@ -369,5 +361,4 @@ export {
   decrementGeralCount,
   getGeralCount,
   createSingleBaseProject,
-  debugGeralCount // Adicionar debug para testes
 }

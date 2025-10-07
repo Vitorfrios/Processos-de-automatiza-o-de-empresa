@@ -23,6 +23,8 @@
     "deltaT_divi_N_clim1": 10,
     "deltaT_divi_N_clim2": 10,
     "deltaT_divi_clim1": 3,
-    "deltaT_divi_clim2": 3
+    "deltaT_divi_clim2": 3,
+    "FATOR_SEGURANCA_CAPACIDADE": 10
+
   }
 }

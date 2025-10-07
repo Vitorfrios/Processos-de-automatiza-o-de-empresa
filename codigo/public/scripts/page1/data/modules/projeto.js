@@ -23,9 +23,17 @@ function createEmptyRoom(projectName, roomName, roomId) {
   }
 
   console.log(`[v0] Sala ${roomName} criada no projeto ${projectName}`)
+  
+  // CORREÇÃO: Inicializar fator de segurança após criar a sala
+  setTimeout(() => {
+    if (typeof initializeFatorSeguranca === 'function') {
+      const newRoomId = roomId || `${projectName}-${roomName}`;
+      initializeFatorSeguranca(newRoomId);
+    }
+  }, 500);
+  
   return true
 }
-
 function insertRoomIntoProject(projectContent, roomHTML) {
   const addRoomSection = projectContent.querySelector(".add-room-section")
   addRoomSection.insertAdjacentHTML("beforebegin", roomHTML)
@@ -39,6 +47,35 @@ function addNewRoom(projectName) {
   createEmptyRoom(projectName, roomName, null)
   console.log(`[v0] ${roomName} adicionada ao ${projectName}`)
 }
+
+// Função para corrigir inputs de fator de segurança em HTML existente
+function fixExistingCapacityInputs() {
+  console.log('[FIX] Verificando inputs de capacidade existentes...');
+  
+  // Encontrar todas as salas
+  const roomBlocks = document.querySelectorAll('.room-block');
+  
+  roomBlocks.forEach(roomBlock => {
+    const roomName = roomBlock.dataset.roomName;
+    const projectName = roomBlock.closest('.project-block')?.dataset.projectName;
+    
+    if (roomName && projectName) {
+      const roomId = `${projectName}-${roomName}`;
+      const input = document.getElementById(`fator-seguranca-${roomId}`);
+      
+      if (input && input.value === '') {
+        const valor = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE || 10;
+        input.value = valor;
+        console.log(`[FIX] ✅ Input ${roomId} corrigido: ${valor}%`);
+      }
+    }
+  });
+}
+
+// Executar quando o projeto for carregado
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(fixExistingCapacityInputs, 2000);
+});
 
 function deleteRoom(projectName, roomName) {
   const confirmMessage = "Tem certeza que deseja deletar esta sala? Os dados permanecerão no servidor."
