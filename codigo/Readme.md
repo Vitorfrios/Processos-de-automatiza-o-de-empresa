@@ -8,37 +8,76 @@ Este projeto é um sistema modular voltado para **gerenciamento e cálculo térm
 
 ```txt
 codigo/
-├─ json/
-│   ├─ backup.json
-│   └─ dados.json
-├─ markdown.md
-└─ public/
-    ├─ pages/
+├─ Readme.md
+├─ json
+│   ├─ backup.json   
+│   └─ dados.json    
+└─ public
+    ├─ pages
     │   └─ index.html
-    ├─ pastas.py
-    ├─ scripts/
-    │   ├─ page1/
-    │   │   ├─ calculos/
-    │   │   │   └─ calculos.js
-    │   │   ├─ config/
+    ├─ pastas.py     
+    ├─ scripts       
+    │   ├─ page1
+    │   │   ├─ calculos
+    │   │   │   ├─ airFlow
+    │   │   │   │   ├─ airFlowCalculations.js
+    │   │   │   │   └─ airFlowDisplay.js
+    │   │   │   ├─ calculos.js
+    │   │   │   ├─ thermalGains
+    │   │   │   │   ├─ thermalCalculations.js
+    │   │   │   │   ├─ thermalComponents.js
+    │   │   │   │   └─ thermalDisplay.js
+    │   │   │   └─ utils
+    │   │   │       └─ helpers.js
+    │   │   ├─ config
     │   │   │   └─ config.js
-    │   │   ├─ data/
+    │   │   ├─ data
+    │   │   │   ├─ data-utils.js
+    │   │   │   ├─ modules
+    │   │   │   │   ├─ climatizacao.js
+    │   │   │   │   ├─ configuracao.js
+    │   │   │   │   ├─ machines
+    │   │   │   │   │   ├─ capacityCalculator.js
+    │   │   │   │   │   ├─ machineManagement.js
+    │   │   │   │   │   ├─ machinesBuilder.js
+    │   │   │   │   │   └─ utilities.js
+    │   │   │   │   ├─ maquinas.js
+    │   │   │   │   ├─ projeto.js
+    │   │   │   │   └─ salas.js
     │   │   │   ├─ projects.js
-    |   |   |   ├─ modules/
-    │   │   │   |   └─ climatizacaoo.js
-    │   │   │   |   └─ configuracao.js
-    │   │   │   |   └─ maquinas.js
-    │   │   │   |   └─ projetos.js
-    │   │   │   |   └─ salas.js
     │   │   │   ├─ rooms.js
-    │   │   │   ├─ server.js
     │   │   │   ├─ server-utils.js
-    │   │   │   └─ data-utils.js
-    │   │   ├─ ui/
-    │   │   │   ├─ interface.js
-    │   │   │   └─ edit.js
-    │   │   └─ utils/
+    │   │   │   └─ server.js
+    │   │   ├─ globals.js
+    │   │   ├─ main.js
+    │   │   ├─ ui
+    │   │   │   ├─ edit.js
+    │   │   │   └─ interface.js
+    │   │   └─ utils
     │   │       └─ utils.js
+    │   └─ page2
+    └─ static
+        ├─ page1
+        │   ├─ base
+        │   │   ├─ reset.css
+        │   │   └─ variables.css
+        │   ├─ components
+        │   │   ├─ buttons.css
+        │   │   ├─ cards.css
+        │   │   ├─ forms.css
+        │   │   ├─ header.css
+        │   │   ├─ machines.css
+        │   │   ├─ navigation.css
+        │   │   └─ tables.css
+        │   ├─ layout
+        │   │   ├─ grid.css
+        │   │   └─ sections.css
+        │   ├─ main.css
+        │   └─ pages
+        │       ├─ projects.css
+        │       └─ thermal-calculation.css
+        └─ page2
+
 ```
 
 ---
