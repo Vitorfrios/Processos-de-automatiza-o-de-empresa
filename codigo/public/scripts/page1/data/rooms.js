@@ -24,7 +24,6 @@ import {
   buildThermalGainsSection
 } from './modules/climatizacao.js'
 
-// CORREÇÃO: Importe apenas as funções que existem em maquinas.js
 import { 
   buildMachinesSection,
   addMachine,
@@ -32,25 +31,18 @@ import {
   calculateCapacitySolution,
   updateCapacityFromThermalGains,
   initializeStaticCapacityTable
-  // REMOVA estas linhas - são funções internas:
-  // buildMachineHTML,
-  // removeEmptyMachinesMessage,
-  // showEmptyMachinesMessageIfNeeded
+
 } from './modules/maquinas.js';
 
 import { 
   buildConfigurationSection 
 } from './modules/configuracao.js'
 
-// CORREÇÃO: Disponibilizar apenas funções que existem
 window.calculateCapacitySolution = calculateCapacitySolution;
 window.updateCapacityFromThermalGains = updateCapacityFromThermalGains;
 window.initializeStaticCapacityTable = initializeStaticCapacityTable;
-// REMOVA estas linhas - não estão disponíveis:
-// window.initializeFatorSeguranca = initializeFatorSeguranca;
-// window.getThermalLoadTR = getThermalLoadTR;
 
-// Correção para inputs existentes
+
 function initializeAllCapacityInputs() {
   console.log('[INIT] Inicializando todos os inputs de capacidade...');
   
@@ -84,7 +76,6 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initializeAllCapacityInputs, 3000);
 });
 
-// CORREÇÃO: Exporte apenas o que existe neste arquivo
 export {
   // Projeto
   createEmptyRoom,
@@ -111,7 +102,7 @@ export {
   buildMachinesSection,
   addMachine,
   deleteClimatizationMachine,
-  initializeAllCapacityInputs, // ← esta função está definida neste arquivo
+  initializeAllCapacityInputs, 
   
   // Configuração
   buildConfigurationSection

@@ -1,0 +1,30 @@
+/* Variáveis CSS */
+:root {
+  /* Cores */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  
+  /* Cores sólidas */
+  --color-white: #ffffff;
+  --color-dark: #333333;
+  --color-gray-dark: #495057;
+  --color-gray: #6c757d;
+  --color-gray-light: #dee2e6;
+  --color-gray-lighter: #e9ecef;
+  --color-gray-lightest: #f8f9fa;
+  
+  /* Espaçamentos */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* Bordas */
+  --border-radius: 6px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+}

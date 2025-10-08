@@ -1,0 +1,77 @@
+/* Arquivo principal - imports todos os módulos */
+@import url('base/variables.css');
+@import url('base/reset.css');
+@import url('components/header.css');
+@import url('components/navigation.css');
+@import url('components/buttons.css');
+@import url('components/forms.css');
+@import url('components/cards.css');
+@import url('components/tables.css');
+@import url('layout/grid.css');
+@import url('pages/thermal-calculation.css');
+@import url('pages/projects.css');
+@import url('components/machines.css'); 
+
+/* Estilos de responsividade */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    text-align: center;
+  }
+
+  .header-left,
+  .header-right {
+    flex: 0 0 auto;
+  }
+
+  .header-center h1 {
+    font-size: 1.3rem;
+  }
+
+  .nav-list {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-actions,
+  .room-actions,
+  .project-actions-footer {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .clima-row {
+    grid-template-columns: 1fr;
+  }
+
+  .clima-cell-empty {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: var(--spacing-md);
+  }
+
+  .project-header,
+  .room-header {
+    padding: var(--spacing-md);
+  }
+
+  .project-title {
+    font-size: 1.2rem;
+  }
+
+  .room-title {
+    font-size: 1rem;
+  }
+}

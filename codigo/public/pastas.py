@@ -1,24 +1,20 @@
 import os
 
-def print_tree(path, prefix=""):
-    # Pega lista de arquivos e pastas ordenada
-    entries = sorted(os.listdir(path))
-    entries_count = len(entries)
-    
-    for index, entry in enumerate(entries):
-        entry_path = os.path.join(path, entry)
-        is_last = index == entries_count - 1
-        connector = "└─ " if is_last else "├─ "
-        
-        print(prefix + connector + entry)
-        
-        # Se for pasta, chama recursivamente
-        if os.path.isdir(entry_path):
-            extension = "    " if is_last else "│   "
-            print_tree(entry_path, prefix + extension)
+# Estrutura de diretórios e arquivos
+structure = {
+    "constants": ["systemConstants.js"],
+    "utils": ["helpers.js"],
+    "airFlow": ["airFlowCalculations.js", "airFlowDisplay.js"],
+    "thermalGains": ["thermalCalculations.js", "thermalComponents.js", "thermalDisplay.js"],
+    "types": ["validation.js"]
+}
 
-# Caminho da pasta 'public'
-source_dir = "codigo"
+# Criação das pastas e arquivos
+for folder, files in structure.items():
+    os.makedirs(folder, exist_ok=True)  # Cria a pasta, se ainda não existir
+    for file in files:
+        path = os.path.join(folder, file)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("")  # Cria arquivo JS vazio
 
-print(source_dir + "/")
-print_tree(source_dir)
+print("✅ Estrutura de pastas e arquivos JS criada com sucesso!")

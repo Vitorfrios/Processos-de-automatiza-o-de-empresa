@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gerenciamento de Projetos</title>
-    <link rel="stylesheet" href="../static/styles.css">
+    <link rel="stylesheet" href="../static/page1/main.css">
+
 </head>
+
 <body>
-      <!-- Cabeçalho   -->
+    <!-- Cabeçalho   -->
     <header class="header">
         <div class="header-left">
             <img src="" alt="Logo Esquerda" class="logo">
@@ -20,7 +23,7 @@
         </div>
     </header>
 
-      <!-- Barra de Navegação   -->
+    <!-- Barra de Navegação   -->
     <nav class="navbar">
         <ul class="nav-list">
             <li><a href="#projetos">Projetos</a></li>
@@ -30,58 +33,68 @@
         </ul>
     </nav>
 
-      <!-- Área Principal   -->
+    <!-- Área Principal   -->
     <main class="main-content">
         <div class="container">
-              <!-- Botão para adicionar novo projeto   -->
+            <!-- Botão para adicionar novo projeto   -->
             <div class="add-project-section">
-                <button class="btn btn-add" onclick="addNewProject()" id="add-project-btn">+ Adicionar Novo Projeto</button>
+                <button class="btn btn-add" onclick="addNewProject()" id="add-project-btn">+ Adicionar Novo
+                    Projeto</button>
             </div>
 
-              <!-- Container de Projetos   -->
+            <!-- Container de Projetos   -->
             <div id="projects-container">
-                  <!-- Primeiro projeto gerado por HTML   -->
+                <!-- Primeiro projeto gerado por HTML   -->
                 <div class="project-block" data-project-id="" data-project-name="Projeto1">
                     <div class="project-header">
                         <button class="minimizer" onclick="toggleProject('Projeto1')">+</button>
-                        <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">Projeto1</h2>
+                        <h2 class="project-title editable-title" data-editable="true"
+                            onclick="makeEditable(this, 'project')">Projeto1</h2>
                         <div class="project-actions">
                             <button class="btn btn-delete" onclick="deleteProject('Projeto1')">Remover</button>
                         </div>
                     </div>
                     <div class="project-content collapsed" id="project-content-Projeto1">
-                          <!-- Sala1 inicial   -->
+                        <!-- Sala1 inicial   -->
                         <div class="room-block" data-room-id="" data-room-name="Sala1">
                             <div class="room-header">
                                 <button class="minimizer" onclick="toggleRoom('Projeto1-Sala1')">+</button>
-                                <h3 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">Sala1</h3>
-                                <button class="btn btn-delete-small" onclick="deleteRoom('Projeto1', 'Sala1')">Deletar</button>
+                                <h3 class="room-title editable-title" data-editable="true"
+                                    onclick="makeEditable(this, 'room')">Sala1</h3>
+                                <button class="btn btn-delete-small"
+                                    onclick="deleteRoom('Projeto1', 'Sala1')">Deletar</button>
                             </div>
                             <div class="room-content collapsed" id="room-content-Projeto1-Sala1">
-                                  <!-- Seção de Climatização   -->
-<!-- Seção de Climatização   -->
+                                <!-- Seção de Climatização   -->
                                 <div class="section-block">
                                     <div class="section-header">
-                                        <button class="minimizer" onclick="toggleSection('Projeto1-Sala1-clima')">+</button>
+                                        <button class="minimizer"
+                                            onclick="toggleSection('Projeto1-Sala1-clima')">+</button>
                                         <h4 class="section-title">Climatização</h4>
                                     </div>
                                     <div class="section-content collapsed" id="section-content-Projeto1-Sala1-clima">
                                         <div class="subsection-block">
                                             <div class="subsection-header">
-                                                <button class="minimizer" onclick="toggleSubsection('Projeto1-Sala1-clima-table')">+</button>
+                                                <button class="minimizer"
+                                                    onclick="toggleSubsection('Projeto1-Sala1-clima-table')">+</button>
                                                 <h5 class="subsection-title">Tabela de Inputs</h5>
                                             </div>
-                                            <div class="subsection-content collapsed" id="subsection-content-Projeto1-Sala1-clima-table">
+                                            <div class="subsection-content collapsed"
+                                                id="subsection-content-Projeto1-Sala1-clima-table">
                                                 <div class="clima-table">
-                                                      <!-- Linha 1   -->
+                                                    <!-- Linha 1   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Ambiente:</label>
-                                                            <input type="text" class="form-input clima-input" data-field="ambiente" placeholder="Ex: Sala de Servidores" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="text" class="form-input clima-input"
+                                                                data-field="ambiente"
+                                                                placeholder="Ex: Sala de Servidores"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>Back-up:</label>
-                                                            <select class="clima-input" data-field="backup" onchange="onClimaBackupChange(this)">
+                                                            <select class="form-input clima-input" data-field="backup"
+                                                                    onchange="calculateVazaoArAndThermalGains('Projeto1-Sala1')"> <!-- CORRIGIDO -->
                                                                 <option value="">Selecione</option>
                                                                 <option value="n">n</option>
                                                                 <option value="n+1">n+1</option>
@@ -89,119 +102,165 @@
                                                             </select>
                                                         </div>
                                                     </div>
-                                                      <!-- Linha 2   -->
+                                                    <!-- Linha 2   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Área (m²):</label>
-                                                            <input type="text" class="form-input clima-input" data-field="area" placeholder="Ex: 50" step="0.01" value="" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="text" class="form-input clima-input"
+                                                                data-field="area" placeholder="Ex: 50" step="0.01"
+                                                                value="" onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>Tipo de Construção:</label>
-                                                            <select class="form-input clima-input" data-field="tipoConstrucao" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <select class="form-input clima-input"
+                                                                data-field="tipoConstrucao"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                                 <option value="">Selecione</option>
                                                                 <option value="alvenaria">Alvenaria</option>
                                                                 <option value="eletrocentro">Eletrocentro</option>
                                                             </select>
                                                         </div>
                                                     </div>
-                                                      <!-- Linha 3   -->
+                                                    <!-- Linha 3   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Parede Oeste (m):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="paredeOeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="paredeOeste" placeholder="Ex: 5.5"
+                                                                step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>Parede Leste (m):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="paredeLeste" placeholder="Ex: 5.5" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="paredeLeste" placeholder="Ex: 5.5"
+                                                                step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                      <!-- Linha 4   -->
+                                                    <!-- Linha 4   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Parede Norte (m):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="paredeNorte" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="paredeNorte" placeholder="Ex: 8.0"
+                                                                step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>Parede Sul (m):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="paredeSul" placeholder="Ex: 8.0" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="paredeSul" placeholder="Ex: 8.0" step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                      <!-- Linha 5   -->
+                                                    <!-- Linha 5   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Pé Direito (m):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="peDireito" placeholder="Ex: 3.0" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="peDireito" placeholder="Ex: 3.0" step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell clima-cell-empty"></div>
                                                     </div>
-                                                      <!-- Linha 6   -->
+                                                    <!-- Linha 6   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Divisória Área Não Climatizada 1 (m²):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima1" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="divisoriaNaoClima1" placeholder="Ex: 10"
+                                                                step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>Divisória Área Não Climatizada 2 (m²):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="divisoriaNaoClima2" placeholder="Ex: 10" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="divisoriaNaoClima2" placeholder="Ex: 10"
+                                                                step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                      <!-- Linha 7   -->
+                                                    <!-- Linha 7   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Divisória Área Climatizada 1 (m²):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="divisoriaClima1" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="divisoriaClima1" placeholder="Ex: 15"
+                                                                step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>Divisória Área Climatizada 2 (m²):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="divisoriaClima2" placeholder="Ex: 15" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="divisoriaClima2" placeholder="Ex: 15"
+                                                                step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                      <!-- Linha 8   -->
+                                                    <!-- Linha 8   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Dissipação (W):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="dissipacao" placeholder="Ex: 5000" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="dissipacao" placeholder="Ex: 5000"
+                                                                step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>N° Pessoas:</label>
-                                                            <input type="number" class="form-input clima-input" data-field="numPessoas" placeholder="Ex: 10" min="0" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="numPessoas" placeholder="Ex: 10" min="0"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                      <!-- Linha 9   -->
+                                                    <!-- Linha 9   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>N° Portas Duplas:</label>
-                                                            <input type="number" class="form-input clima-input" data-field="numPortasDuplas" placeholder="Ex: 2" min="0" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="numPortasDuplas" placeholder="Ex: 2" min="0"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>N° Portas Simples:</label>
-                                                            <input type="number" class="form-input clima-input" data-field="numPortasSimples" placeholder="Ex: 3" min="0" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="numPortasSimples" placeholder="Ex: 3"
+                                                                min="0" onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                      <!-- Linha 10   -->
+                                                    <!-- Linha 10   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Pressurização (Pa):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="pressurizacao" placeholder="Ex: 50" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="pressurizacao" placeholder="Ex: 50"
+                                                                step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>Setpoint (°C):</label>
-                                                            <input type="number" class="form-input clima-input" data-field="setpoint" placeholder="Ex: 22" step="0.01" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <input type="number" class="form-input clima-input"
+                                                                data-field="setpoint" placeholder="Ex: 22" step="0.01"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                      <!-- Linha 11 - Resultado   -->
+                                                    <!-- Linha 11 - Resultado   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell clima-cell-result">
                                                             <label>Vazão de Ar Externo (l/s):</label>
-                                                            <div class="result-value-inline" id="vazao-ar-Projeto1-Sala1">0</div>
+                                                            <div class="result-value-inline"
+                                                                id="vazao-ar-Projeto1-Sala1">0</div>
                                                         </div>
                                                         <div class="clima-cell clima-cell-empty"></div>
                                                     </div>
-                                                      <!-- Linha 12   -->
+                                                    <!-- Linha 12   -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Combate a Incêndio:</label>
-                                                            <select class="form-input clima-input" data-field="combateIncendio" onchange="calculateVazaoAr('Projeto1-Sala1')">
+                                                            <select class="form-input clima-input"
+                                                                data-field="combateIncendio"
+                                                                onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                                 <option value="">Selecione</option>
                                                                 <option value="manual">manual</option>
                                                                 <option value="fm200">fm200</option>
@@ -220,20 +279,24 @@
                                         <div class="subsection-block">
                                             <div class="subsection-header">
                                                 <!-- adicionar botao de minimizar -->
-                                                 <button class="minimizer" onclick="toggleSubsection('Projeto1-Sala1-ganhos-termicos')">+</button>
+                                                <button class="minimizer"
+                                                    onclick="toggleSubsection('Projeto1-Sala1-ganhos-termicos')">+</button>
                                                 <h5 class="subsection-title">Cálculo de Ganhos Térmicos</h5>
                                             </div>
-                                            <div class="subsection-content collapsed" id="subsection-content-Projeto1-Sala1-ganhos-termicos">
+                                            <div class="subsection-content collapsed"
+                                                id="subsection-content-Projeto1-Sala1-ganhos-termicos">
                                                 <!-- Summary Header -->
                                                 <div class="thermal-summary">
                                                     <span class="thermal-summary-item">
                                                         <strong>Total de Ganhos em W:</strong>
-                                                        <span id="total-ganhos-w-Projeto1-Sala1" class="thermal-value">0</span>
+                                                        <span id="total-ganhos-w-Projeto1-Sala1"
+                                                            class="thermal-value">0</span>
                                                     </span>
                                                     <span class="thermal-divider">|</span>
                                                     <span class="thermal-summary-item">
                                                         <strong>TR:</strong>
-                                                        <span id="total-tr-Projeto1-Sala1" class="thermal-value">0</span>
+                                                        <span id="total-tr-Projeto1-Sala1"
+                                                            class="thermal-value">0</span>
                                                     </span>
                                                 </div>
 
@@ -288,7 +351,8 @@
                                                             </tr>
                                                             <tr class="thermal-total-row">
                                                                 <td colspan="4"><strong>Total Externo</strong></td>
-                                                                <td id="total-externo-Projeto1-Sala1"><strong>0</strong></td>
+                                                                <td id="total-externo-Projeto1-Sala1"><strong>0</strong>
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -338,7 +402,9 @@
                                                             </tr>
                                                             <tr class="thermal-total-row">
                                                                 <td colspan="4"><strong>Total Divisões</strong></td>
-                                                                <td id="total-divisoes-Projeto1-Sala1"><strong>0</strong></td>
+                                                                <td id="total-divisoes-Projeto1-Sala1">
+                                                                    <strong>0</strong>
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -367,7 +433,8 @@
                                                             </tr>
                                                             <tr class="thermal-total-row">
                                                                 <td colspan="4"><strong>Total Piso</strong></td>
-                                                                <td id="total-piso-Projeto1-Sala1"><strong>0</strong></td>
+                                                                <td id="total-piso-Projeto1-Sala1"><strong>0</strong>
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -396,7 +463,9 @@
                                                             </tr>
                                                             <tr class="thermal-total-row">
                                                                 <td colspan="4"><strong>Total Iluminação</strong></td>
-                                                                <td id="total-iluminacao-Projeto1-Sala1"><strong>0</strong></td>
+                                                                <td id="total-iluminacao-Projeto1-Sala1">
+                                                                    <strong>0</strong>
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -425,7 +494,8 @@
                                                             </tr>
                                                             <tr class="thermal-total-row">
                                                                 <td colspan="4"><strong>Total</strong></td>
-                                                                <td id="total-dissi-Projeto1-Sala1"><strong>0</strong></td>
+                                                                <td id="total-dissi-Projeto1-Sala1"><strong>0</strong>
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -456,7 +526,8 @@
                                                             </tr>
                                                             <tr class="thermal-total-row">
                                                                 <td colspan="5"><strong>Total Pessoas</strong></td>
-                                                                <td id="total-pessoas-Projeto1-Sala1"><strong>0</strong></td>
+                                                                <td id="total-pessoas-Projeto1-Sala1"><strong>0</strong>
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -485,7 +556,9 @@
                                                             </tr>
                                                             <tr class="thermal-total-row">
                                                                 <td colspan="4"><strong>Total Ar Sensível</strong></td>
-                                                                <td id="total-ar-sensivel-Projeto1-Sala1"><strong>0</strong></td>
+                                                                <td id="total-ar-sensivel-Projeto1-Sala1">
+                                                                    <strong>0</strong>
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -514,7 +587,9 @@
                                                             </tr>
                                                             <tr class="thermal-total-row">
                                                                 <td colspan="4"><strong>Total Ar Latente</strong></td>
-                                                                <td id="total-ar-latente-Projeto1-Sala1"><strong>0</strong></td>
+                                                                <td id="total-ar-latente-Projeto1-Sala1">
+                                                                    <strong>0</strong>
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -535,106 +610,136 @@
                                         <!-- TABELA INTERATIVA DE CAPACIDADE DE REFRIGERAÇÃO -->
                                         <div class="capacity-calculation-table">
                                             <h5 class="table-title">Cálculo de Capacidade de Refrigeração</h5>
-                                            <table class="thermal-capacity-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Carga Estimada (TR)</th>
-                                                        <th>Fator de Seg.</th>
-                                                        <th>Cap. Unit. (TR)</th>
-                                                        <th>Solução</th>
-                                                        <th>Com back-up</th>
-                                                        <th>TOTAL (TR)</th>
-                                                        <th>FOLGA (%)</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td id="carga-estimada-Projeto1-Sala1">0</td>
-                                                        <td>
-                                                            <!-- VALOR DO JSON - SEM VALUE FIXO -->
-                                                            <input type="number" id="fator-seguranca-Projeto1-Sala1" step="0.01" class="capacity-input" onchange="calculateCapacitySolution('Projeto1-Sala1')">
-                                                        </td>
-                                                        <td>
-                                                            <select id="capacidade-unitaria-Projeto1-Sala1" class="capacity-select" onchange="calculateCapacitySolution('Projeto1-Sala1')">
-                                                                <option value="1">1 TR</option>
-                                                                <option value="2">2 TR</option>
-                                                                <option value="3">3 TR</option>
-                                                                <option value="4">4 TR</option>
-                                                                <option value="5">5 TR</option>
-                                                                <option value="7.5">7,5 TR</option>
-                                                                <option value="10">10 TR</option>
-                                                                <option value="12.5">12,5 TR</option>
-                                                                <option value="15">15 TR</option>
-                                                                <option value="20">20 TR</option>
-                                                                <option value="25">25 TR</option>
-                                                                <option value="30">30 TR</option>
-                                                            </select>
-                                                        </td>
-                                                        <td id="solucao-Projeto1-Sala1">0</td>
-                                                        <td class="backup-cell">
-                                                            <!-- Linha superior: Seleção do backup -->
-                                                            <div class="backup-selection">
-                                                                <select class="backup-select" disabled>
-                                                                    <option value="n">n</option>
-                                                                    <option value="n+1">n+1</option>
-                                                                    <option value="n+2">n+2</option>
+                                            <div class="table-container">
+                                                <table class="thermal-capacity-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Carga Estimada (TR)</th>
+                                                            <th>Fator de Seg.</th>
+                                                            <th>Cap. Unit. (TR)</th>
+                                                            <th>Solução</th>
+                                                            <th>Com back-up</th>
+                                                            <th>TOTAL (TR)</th>
+                                                            <th>FOLGA (%)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td id="carga-estimada-Projeto1-Sala1">0</td>
+                                                            <td>
+                                                                <input type="number" id="fator-seguranca-Projeto1-Sala1" step="0.01" 
+                                                                    class="capacity-input" 
+                                                                    onchange="calculateCapacitySolution('Projeto1-Sala1')"
+                                                                    oninput="calculateCapacitySolution('Projeto1-Sala1')">
+                                                            </td>
+                                                            <td>
+                                                                <select id="capacidade-unitaria-Projeto1-Sala1" class="capacity-select" 
+                                                                        onchange="calculateCapacitySolution('Projeto1-Sala1')">
+                                                                    <option value="1">1 TR</option>
+                                                                    <option value="2">2 TR</option>
+                                                                    <option value="3">3 TR</option>
+                                                                    <option value="4">4 TR</option>
+                                                                    <option value="5">5 TR</option>
+                                                                    <option value="7.5">7.5 TR</option>
+                                                                    <option value="10">10 TR</option>
+                                                                    <option value="12.5">12.5 TR</option>
+                                                                    <option value="15">15 TR</option>
+                                                                    <option value="20">20 TR</option>
+                                                                    <option value="25">25 TR</option>
+                                                                    <option value="30">30 TR</option>
                                                                 </select>
-                                                            </div>
-                                                            <!-- Linha inferior: Solução com backup -->
-                                                            <div class="backup-solution">
-                                                                <span id="solucao-backup-Projeto1-Sala1">0</span>
-                                                            </div>
-                                                        </td>
-                                                        <td id="total-capacidade-Projeto1-Sala1">0</td>
-                                                        <td id="folga-Projeto1-Sala1">0%</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                                            </td>
+                                                            <td id="solucao-Projeto1-Sala1">0</td>
+                                                            <td class="backup-cell">
+                                                                <div class="backup-selection">
+                                                                    <select class="backup-select" onchange="updateBackupConfiguration(this)">
+                                                                        <option value="n" selected>n</option>
+                                                                        <option value="n+1">n+1</option>
+                                                                        <option value="n+2">n+2</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="backup-solution">
+                                                                    <span id="solucao-backup-Projeto1-Sala1">0</span>
+                                                                </div>
+                                                            </td>
+                                                            <td id="total-capacidade-Projeto1-Sala1">0</td>
+                                                            <td id="folga-Projeto1-Sala1">0%</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                        
+
                                         <div class="machines-container" id="machines-Projeto1-Sala1">
                                             <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                  <!-- Seção de Configuração   -->
+                                <!-- Seção de Configuração   -->
                                 <div class="section-block">
                                     <div class="section-header">
-                                        <button class="minimizer" onclick="toggleSection('Projeto1-Sala1-config')">+</button>
+                                        <button class="minimizer"
+                                            onclick="toggleSection('Projeto1-Sala1-config')">+</button>
                                         <h4 class="section-title">Configuração de Instalação</h4>
                                     </div>
                                     <div class="section-content collapsed" id="section-content-Projeto1-Sala1-config">
                                         <div class="form-grid">
                                             <div class="form-group full-width">
-                                                <label class="config-label">Opções de Instalação (selecione uma ou mais):</label>
+                                                <label class="config-label">Opções de Instalação (selecione uma ou
+                                                    mais):</label>
                                                 <div class="checkbox-options-grid">
                                                     <div class="checkbox-column">
                                                         <div class="checkbox-option">
-                                                            <input type="checkbox" id="opcao1-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="bocal_insuflamento_protegido" data-field="opcoesInstalacao">
-                                                            <label for="opcao1-Projeto1-Sala1">Bocal de insuflamento protegido por grelha diretamente no ambiente</label>
+                                                            <input type="checkbox" id="opcao1-Projeto1-Sala1"
+                                                                name="opcoesInstalacao-Projeto1-Sala1"
+                                                                value="bocal_insuflamento_protegido"
+                                                                data-field="opcoesInstalacao">
+                                                            <label for="opcao1-Projeto1-Sala1">Bocal de insuflamento
+                                                                protegido por grelha diretamente no ambiente</label>
                                                         </div>
                                                         <div class="checkbox-option">
-                                                            <input type="checkbox" id="opcao2-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="bocal_acoplado_dutos" data-field="opcoesInstalacao">
-                                                            <label for="opcao2-Projeto1-Sala1">Bocal acoplado à rede de dutos por lona flexível. Distribuição por grelhas</label>
+                                                            <input type="checkbox" id="opcao2-Projeto1-Sala1"
+                                                                name="opcoesInstalacao-Projeto1-Sala1"
+                                                                value="bocal_acoplado_dutos"
+                                                                data-field="opcoesInstalacao">
+                                                            <label for="opcao2-Projeto1-Sala1">Bocal acoplado à rede de
+                                                                dutos por lona flexível. Distribuição por
+                                                                grelhas</label>
                                                         </div>
                                                         <div class="checkbox-option">
-                                                            <input type="checkbox" id="opcao3-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="condicionadores_externos_se" data-field="opcoesInstalacao">
-                                                            <label for="opcao3-Projeto1-Sala1">Condicionadores fixados externamente à SE, sobre mão-francesa na parede</label>
+                                                            <input type="checkbox" id="opcao3-Projeto1-Sala1"
+                                                                name="opcoesInstalacao-Projeto1-Sala1"
+                                                                value="condicionadores_externos_se"
+                                                                data-field="opcoesInstalacao">
+                                                            <label for="opcao3-Projeto1-Sala1">Condicionadores fixados
+                                                                externamente à SE, sobre mão-francesa na parede</label>
                                                         </div>
                                                     </div>
                                                     <div class="checkbox-column">
                                                         <div class="checkbox-option">
-                                                            <input type="checkbox" id="opcao4-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="evaporadoras_internas" data-field="opcoesInstalacao">
-                                                            <label for="opcao4-Projeto1-Sala1">Evaporadoras internas ao ambiente climatizado</label>
+                                                            <input type="checkbox" id="opcao4-Projeto1-Sala1"
+                                                                name="opcoesInstalacao-Projeto1-Sala1"
+                                                                value="evaporadoras_internas"
+                                                                data-field="opcoesInstalacao">
+                                                            <label for="opcao4-Projeto1-Sala1">Evaporadoras internas ao
+                                                                ambiente climatizado</label>
                                                         </div>
                                                         <div class="checkbox-option">
-                                                            <input type="checkbox" id="opcao5-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="evaporadoras_casa_maquinas" data-field="opcoesInstalacao">
-                                                            <label for="opcao5-Projeto1-Sala1">Evaporadoras em casa de máquinas</label>
+                                                            <input type="checkbox" id="opcao5-Projeto1-Sala1"
+                                                                name="opcoesInstalacao-Projeto1-Sala1"
+                                                                value="evaporadoras_casa_maquinas"
+                                                                data-field="opcoesInstalacao">
+                                                            <label for="opcao5-Projeto1-Sala1">Evaporadoras em casa de
+                                                                máquinas</label>
                                                         </div>
                                                         <div class="checkbox-option">
-                                                            <input type="checkbox" id="opcao6-Projeto1-Sala1" name="opcoesInstalacao-Projeto1-Sala1" value="condensadores_externos" data-field="opcoesInstalacao">
-                                                            <label for="opcao6-Projeto1-Sala1">Condensadores fixados externamente à sala elétrica</label>
+                                                            <input type="checkbox" id="opcao6-Projeto1-Sala1"
+                                                                name="opcoesInstalacao-Projeto1-Sala1"
+                                                                value="condensadores_externos"
+                                                                data-field="opcoesInstalacao">
+                                                            <label for="opcao6-Projeto1-Sala1">Condensadores fixados
+                                                                externamente à sala elétrica</label>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -643,19 +748,22 @@
                                     </div>
                                 </div>
 
-                                  <!-- Removidos os botões "Atualizar Dados" e "Salvar" das salas  -->
+                                <!-- Removidos os botões "Atualizar Dados" e "Salvar" das salas  -->
                             </div>
                         </div>
 
-                         <!-- Botão para adicionar nova sala   -->
+                        <!-- Botão para adicionar nova sala   -->
                         <div class="add-room-section">
-                            <button class="btn btn-add-secondary" onclick="addNewRoom('Projeto1')">+ Adicionar Nova Sala</button>
+                            <button class="btn btn-add-secondary" onclick="addNewRoom('Projeto1')">+ Adicionar Nova
+                                Sala</button>
                         </div>
 
-                         <!-- Adicionado botão dinâmico que muda de "Salvar" para "Atualizar"  -->
+                        <!-- Adicionado botão dinâmico que muda de "Salvar" para "Atualizar"  -->
                         <div class="project-actions-footer">
-                            <button class="btn btn-verify" onclick="verifyProjectData('Projeto1')">Verificar Dados</button>
-                            <button class="btn btn-save project-save-btn" onclick="saveProject('Projeto1', event)" data-project-name="Projeto1">Salvar Projeto</button>
+                            <button class="btn btn-verify" onclick="verifyProjectData('Projeto1')">Verificar
+                                Dados</button>
+                            <button class="btn btn-save project-save-btn" onclick="saveProject('Projeto1', event)"
+                                data-project-name="Projeto1">Salvar Projeto</button>
                             <button class="btn btn-download" onclick="downloadPDF('Projeto1')">Baixar PDF</button>
                             <button class="btn btn-download" onclick="downloadWord('Projeto1')">Baixar Word</button>
                         </div>
@@ -667,6 +775,7 @@
 
     <script type="module" src="../scripts/page1/main.js"></script>
 
-    
+
 </body>
+
 </html>

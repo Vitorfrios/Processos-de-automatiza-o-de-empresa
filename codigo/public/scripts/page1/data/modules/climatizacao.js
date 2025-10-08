@@ -1,5 +1,10 @@
+
 import { calculateVazaoArAndThermalGains } from '../../calculos/calculos.js'
 
+/**
+ * Constrói seção completa de climatização para uma sala específica
+ * Organiza inputs de dados e resultados de cálculos térmicos de forma hierárquica
+ */
 function buildClimatizationSection(projectName, roomName) {
   const roomId = `${projectName}-${roomName}`
   return `
@@ -24,7 +29,14 @@ function buildClimatizationSection(projectName, roomName) {
   `
 }
 
+// =============================================================================
+// SEÇÃO: CONSTRUÇÃO DA INTERFACE DE INPUTS
+// =============================================================================
 
+/**
+ * Constrói tabela completa de inputs para dados de climatização
+ * Agrupa campos relacionados para melhor organização visual e usabilidade
+ */
 function buildClimatizationTable(roomId) {
   return `
     <div class="clima-table">
@@ -137,6 +149,10 @@ function buildClimatizationTable(roomId) {
   `
 }
 
+/**
+ * Constrói linha da tabela com campos de input
+ * Permite células vazias para layout flexível de formulário
+ */
 function buildClimaRow(fields, roomId) {
   const cells = fields
     .map((field) => {
@@ -148,6 +164,10 @@ function buildClimaRow(fields, roomId) {
   return `<div class="clima-row">${cells}</div>`
 }
 
+/**
+ * Constrói célula individual com label e campo de input
+ * Define estrutura consistente para diferentes tipos de campos
+ */
 function buildClimaCell(field, roomId) {
   const input = field.type === "select" ? buildSelectInput(field, roomId) : buildTextInput(field, roomId)
 
@@ -159,6 +179,10 @@ function buildClimaCell(field, roomId) {
   `
 }
 
+/**
+ * Constrói elemento select com opções pré-definidas
+ * Inclua placeholder padrão para indicar seleção obrigatória
+ */
 function buildSelectInput(field, roomId) {
   const options = field.options
     .map((opt) => `<option value="${opt}">${opt === "" ? "Selecione" : opt}</option>`)
@@ -171,9 +195,13 @@ function buildSelectInput(field, roomId) {
   `
 }
 
+/**
+ * Constrói campo de input textual ou numérico
+ * Aplica validações específicas baseadas no tipo de campo
+ */
 function buildTextInput(field, roomId) {
   const step = field.type === "number" ? 'step="0.01"' : ""
-  const min = field.field.includes("num") ? 'min="0"' : ""
+  const min = field.field.includes("num") ? 'min="0"' : "" // Prevenir valores negativos para quantidades
 
   return `
     <input
@@ -188,6 +216,10 @@ function buildTextInput(field, roomId) {
   `
 }
 
+/**
+ * Constrói linha de exibição de resultado calculado
+ * Mostra vazão de ar externo como resultado primário dos cálculos
+ */
 function buildResultRow(roomId) {
   return `
     <div class="clima-row">
@@ -200,6 +232,14 @@ function buildResultRow(roomId) {
   `
 }
 
+// =============================================================================
+// SEÇÃO: CONSTRUÇÃO DA INTERFACE DE RESULTADOS TÉRMICOS
+// =============================================================================
+
+/**
+ * Constrúa seção completa de resultados de ganhos térmicos
+ * Organiza dados calculados em tabelas categorizadas para análise detalhada
+ */
 function buildThermalGainsSection(roomId) {
   return `
     <div class="subsection-block">
@@ -507,6 +547,7 @@ function buildThermalGainsSection(roomId) {
     </div>
   `
 }
+
 
 export {
   buildClimatizationSection,

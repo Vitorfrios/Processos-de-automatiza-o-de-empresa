@@ -1,0 +1,26 @@
+/* Barra de Navegação */
+.navbar {
+  background: #2d3748;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: var(--spacing-md) 0;
+}
+
+.nav-list li a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius);
+  transition: background 0.3s ease;
+}
+
+.nav-list li a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
