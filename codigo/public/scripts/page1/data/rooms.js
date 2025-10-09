@@ -42,7 +42,7 @@ window.calculateCapacitySolution = calculateCapacitySolution;
 window.updateCapacityFromThermalGains = updateCapacityFromThermalGains;
 window.initializeStaticCapacityTable = initializeStaticCapacityTable;
 
-
+// Inicializando todos os inputs de capacidade
 function initializeAllCapacityInputs() {
   console.log('[INIT] Inicializando todos os inputs de capacidade...');
   

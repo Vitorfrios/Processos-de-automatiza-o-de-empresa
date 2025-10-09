@@ -11,6 +11,7 @@
 @import url('pages/thermal-calculation.css');
 @import url('pages/projects.css');
 @import url('components/machines.css'); 
+@import url('components/capacity-tables.css'); 
 
 /* Estilos de responsividade */
 @media (max-width: 768px) {

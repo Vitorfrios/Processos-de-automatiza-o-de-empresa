@@ -16,7 +16,7 @@ function calculateDoorFlow(doorCount, doorVariable, pressure) {
   const variable = safeNumber(doorVariable);
   const press = safeNumber(pressure);
   
-  console.log(`[v0] calculateDoorFlow: count=${count}, variable=${variable}, pressure=${press}`);
+  console.log(` calculateDoorFlow: count=${count}, variable=${variable}, pressure=${press}`);
   
   const pressureExponent = press > 0 ? Math.pow(press, CALCULATION_CONSTANTS.PRESSURE_EXPONENT) : 0;
   
@@ -26,7 +26,7 @@ function calculateDoorFlow(doorCount, doorVariable, pressure) {
     pressureExponent *
     CALCULATION_CONSTANTS.SECONDS_PER_HOUR;
     
-  console.log(`[v0] Fluxo calculado: ${flow}`);
+  console.log(` Fluxo calculado: ${flow}`);
   return flow;
 }
 
@@ -38,13 +38,13 @@ function computeAirFlowRate(inputData) {
   const numPortasSimples = safeNumber(inputData.numPortasSimples);
   const pressurizacao = safeNumber(inputData.pressurizacao);
 
-  console.log("[v0] ===== CÁLCULO DE VAZÃO =====");
-  console.log("[v0] Portas Duplas:", numPortasDuplas);
-  console.log("[v0] Portas Simples:", numPortasSimples);
-  console.log("[v0] Pressurização (Pa):", pressurizacao);
+  console.log(" ===== CÁLCULO DE VAZÃO =====");
+  console.log(" Portas Duplas:", numPortasDuplas);
+  console.log(" Portas Simples:", numPortasSimples);
+  console.log(" Pressurização (Pa):", pressurizacao);
 
   if (!window.systemConstants || !window.systemConstants.VARIAVEL_PD || !window.systemConstants.VARIAVEL_PS) {
-    console.error("[v0] ERRO: Constantes do sistema não disponíveis para cálculo");
+    console.error(" ERRO: Constantes do sistema não disponíveis para cálculo");
     alert("ERRO: Constantes do sistema não carregadas. Verifique o servidor.");
     return 0;
   }
@@ -52,19 +52,19 @@ function computeAirFlowRate(inputData) {
   const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD, pressurizacao);
   const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS, pressurizacao);
 
-  console.log("[v0] Fluxo Portas Duplas:", doubleDoorFlow);
-  console.log("[v0] Fluxo Portas Simples:", singleDoorFlow);
+  console.log(" Fluxo Portas Duplas:", doubleDoorFlow);
+  console.log(" Fluxo Portas Simples:", singleDoorFlow);
 
   const totalFlow = doubleDoorFlow + singleDoorFlow;
   const adjustedFlow = totalFlow / CALCULATION_CONSTANTS.FLOW_DIVISOR;
   const finalFlow = adjustedFlow * CALCULATION_CONSTANTS.SAFETY_FACTOR;
   const roundedFlow = Math.ceil(finalFlow);
 
-  console.log("[v0] Fluxo Total:", totalFlow);
-  console.log("[v0] Fluxo Ajustado:", adjustedFlow);
-  console.log("[v0] Fluxo Final:", finalFlow);
-  console.log("[v0] Vazão Arredondada:", roundedFlow);
-  console.log("[v0] ===== FIM DO CÁLCULO =====");
+  console.log(" Fluxo Total:", totalFlow);
+  console.log(" Fluxo Ajustado:", adjustedFlow);
+  console.log(" Fluxo Final:", finalFlow);
+  console.log(" Vazão Arredondada:", roundedFlow);
+  console.log(" ===== FIM DO CÁLCULO =====");
 
   return roundedFlow;
 }
@@ -74,24 +74,24 @@ function computeAirFlowRate(inputData) {
  */
 async function calculateVazaoAr(roomId, calculateThermal = true) {
   try {
-    console.log(`[v0] Iniciando cálculo de vazão para ${roomId}`);
+    console.log(` Iniciando cálculo de vazão para ${roomId}`);
     
     await waitForSystemConstants();
     
     if (!validateSystemConstants()) {
-      console.error("[v0] Constantes do sistema inválidas");
+      console.error(" Constantes do sistema inválidas");
       return 0;
     }
 
     const roomContent = document.getElementById(`room-content-${roomId}`);
     if (!roomContent) {
-      console.error("[v0] Sala não encontrada:", roomId);
+      console.error(" Sala não encontrada:", roomId);
       return 0;
     }
 
     const climaSection = roomContent.querySelector('[id*="-clima"]');
     if (!climaSection) {
-      console.error("[v0] Seção de climatização não encontrada");
+      console.error(" Seção de climatização não encontrada");
       return 0;
     }
 
@@ -101,13 +101,13 @@ async function calculateVazaoAr(roomId, calculateThermal = true) {
     updateFlowRateDisplay(roomId, flowRate);
 
     if (calculateThermal) {
-      console.log(`[v0] Chamando cálculo de ganhos térmicos para ${roomId}`);
+      console.log(` Chamando cálculo de ganhos térmicos para ${roomId}`);
       await calculateThermalGains(roomId, flowRate);
     }
 
     return flowRate;
   } catch (error) {
-    console.error("[v0] Erro no cálculo de vazão:", error);
+    console.error(" Erro no cálculo de vazão:", error);
     alert("Erro ao calcular vazão. Verifique se as constantes do sistema foram carregadas.");
     return 0;
   }

@@ -320,7 +320,7 @@ async function normalizeAllProjectsOnServer() {
 
     sessionStorage.setItem(NORMALIZATION_DONE_KEY, "true")
   } catch (error) {
-    console.error("[v0] Erro ao normalizar IDs no servidor:", error)
+    console.error(" Erro ao normalizar IDs no servidor:", error)
     showSystemStatus("ERRO: Não foi possível normalizar IDs no servidor", "error")
   }
 }

@@ -2,6 +2,11 @@
 import { loadMachinesData } from './machinesBuilder.js'
 import { updateElementText, removeEmptyMessage, showEmptyMessage } from './utilities.js'
 
+/**
+ * Adiciona uma nova máquina de climatização à sala especificada
+ * Carrega dados das máquinas e constrói a interface HTML
+ * @param {string} roomId - ID da sala onde a máquina será adicionada
+ */
 async function addMachine(roomId) {
   const machinesContainer = document.getElementById(`machines-${roomId}`)
   const machineCount = machinesContainer.querySelectorAll(".climatization-machine").length + 1
@@ -22,6 +27,13 @@ async function addMachine(roomId) {
   }
 }
 
+/**
+ * Constrói o HTML completo para uma máquina de climatização
+ * Inclui cabeçalho, formulário de configuração e seção de opções
+ * @param {number} machineCount - Número sequencial da máquina
+ * @param {Array} machines - Lista de máquinas disponíveis
+ * @returns {string} HTML da máquina de climatização
+ */
 function buildClimatizationMachineHTML(machineCount, machines) {
   const machineTypes = machines.map((m) => m.type)
   const firstMachine = machines[0]
@@ -82,6 +94,12 @@ function buildClimatizationMachineHTML(machineCount, machines) {
   `
 }
 
+/**
+ * Constrói um grupo de formulário com label e conteúdo
+ * @param {string} label - Texto do label
+ * @param {string} content - Conteúdo HTML do campo
+ * @returns {string} HTML do grupo de formulário
+ */
 function buildFormGroup(label, content) {
   return `
     <div class="form-group">
@@ -91,6 +109,14 @@ function buildFormGroup(label, content) {
   `
 }
 
+/**
+ * Constrói um elemento select com opções e handlers
+ * @param {Array} options - Lista de opções do select
+ * @param {number} machineIndex - Índice da máquina
+ * @param {string} className - Classe CSS do select
+ * @param {string} onchangeHandler - Função a ser executada onchange
+ * @returns {string} HTML do elemento select
+ */
 function buildSelect(options, machineIndex, className, onchangeHandler) {
   return `
     <select class="form-input ${className}" 
@@ -101,6 +127,12 @@ function buildSelect(options, machineIndex, className, onchangeHandler) {
   `
 }
 
+/**
+ * Constrói a interface de opções adicionais da máquina
+ * @param {Array} options - Lista de opções disponíveis
+ * @param {number} machineCount - Número da máquina
+ * @returns {string} HTML das opções
+ */
 function buildOptionsHTML(options, machineCount) {
   return options
     .map(
@@ -123,12 +155,21 @@ function buildOptionsHTML(options, machineCount) {
     .join("")
 }
 
+/**
+ * Alterna a exibição da seção da máquina (expandir/recolher)
+ * @param {HTMLButtonElement} button - Botão que acionou a função
+ */
 function toggleMachineSection(button) {
   const machineContent = button.closest(".climatization-machine").querySelector(".machine-content")
   const isCollapsed = machineContent.classList.toggle("collapsed")
   button.textContent = isCollapsed ? "+" : "−"
 }
 
+/**
+ * Atualiza o título da máquina quando editado pelo usuário
+ * @param {HTMLInputElement} input - Campo de input do título
+ * @param {number} machineIndex - Índice da máquina
+ */
 function updateMachineTitle(input, machineIndex) {
   const newTitle = input.value.trim()
   if (!newTitle) {
@@ -136,6 +177,11 @@ function updateMachineTitle(input, machineIndex) {
   }
 }
 
+/**
+ * Atualiza as opções da máquina quando o tipo é alterado
+ * Carrega novos dados de potência, tensão e opções
+ * @param {HTMLSelectElement} selectElement - Select do tipo de máquina
+ */
 async function updateMachineOptions(selectElement) {
   const machineIndex = selectElement.getAttribute("data-machine-index")
   const selectedType = selectElement.value
@@ -164,6 +210,11 @@ async function updateMachineOptions(selectElement) {
   }
 }
 
+/**
+ * Atualiza as opções de um elemento select
+ * @param {string} selector - Seletor do elemento select
+ * @param {Array} options - Novas opções a serem adicionadas
+ */
 function updateSelect(selector, options) {
   const select = document.querySelector(selector)
   if (select) {
@@ -171,6 +222,10 @@ function updateSelect(selector, options) {
   }
 }
 
+/**
+ * Calcula o preço total da máquina considerando preço base e opções selecionadas
+ * @param {number} machineIndex - Índice da máquina a ser calculada
+ */
 function calculateMachinePrice(machineIndex) {
   try {
     const basePriceElement = document.getElementById(`base-price-${machineIndex}`)
@@ -196,6 +251,10 @@ function calculateMachinePrice(machineIndex) {
   }
 }
 
+/**
+ * Remove uma máquina de climatização após confirmação do usuário
+ * @param {HTMLButtonElement} button - Botão de remover que acionou a função
+ */
 function deleteClimatizationMachine(button) {
   if (!confirm("Deseja remover este equipamento de climatização?")) return
 
@@ -206,7 +265,7 @@ function deleteClimatizationMachine(button) {
   showEmptyMessage(machinesContainer, "Nenhuma máquina adicionada ainda.")
 }
 
-// modules/machineManagement.js
+// Exportação das funções do módulo de gerenciamento de máquinas
 export {
   addMachine,
   buildClimatizationMachineHTML,

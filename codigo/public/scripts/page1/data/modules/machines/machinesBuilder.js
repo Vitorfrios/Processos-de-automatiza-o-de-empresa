@@ -3,8 +3,16 @@ import { buildCapacityCalculationTable } from './capacityCalculator.js'
 import { buildClimatizationMachineHTML } from './machineManagement.js'
 import { removeEmptyMessage, showEmptyMessage } from './utilities.js'
 
+// Cache para dados das máquinas
 let machinesData = null
 
+/**
+ * Constrói a seção completa de máquinas para uma sala
+ * Inclui tabela de capacidade e container para máquinas
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @returns {string} HTML da seção de máquinas
+ */
 function buildMachinesSection(projectName, roomName) {
   const roomId = `${projectName}-${roomName}`
 
@@ -25,6 +33,10 @@ function buildMachinesSection(projectName, roomName) {
   `
 }
 
+/**
+ * Carrega os dados das máquinas do servidor com cache
+ * @returns {Promise<Object>} Dados das máquinas disponíveis
+ */
 async function loadMachinesData() {
   if (machinesData) return machinesData
 
@@ -43,6 +55,11 @@ async function loadMachinesData() {
   }
 }
 
+/**
+ * Carrega máquinas salvas previamente para uma sala
+ * @param {string} roomId - ID da sala
+ * @param {Array} savedMachines - Lista de máquinas salvas
+ */
 async function loadSavedMachines(roomId, savedMachines) {
   const machinesContainer = document.getElementById(`machines-${roomId}`)
   const roomContent = document.getElementById(`room-content-${roomId}`)
@@ -73,6 +90,13 @@ async function loadSavedMachines(roomId, savedMachines) {
   }
 }
 
+/**
+ * Constrói uma máquina de climatização a partir de dados salvos
+ * @param {number} machineCount - Número sequencial da máquina
+ * @param {Object} savedMachine - Dados da máquina salvos
+ * @param {Array} allMachines - Lista de todas as máquinas disponíveis
+ * @returns {string} HTML da máquina reconstruída
+ */
 function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allMachines) {
   const machineType = allMachines.find((m) => m.type === savedMachine.tipo)
 
@@ -144,6 +168,12 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
   `
 }
 
+/**
+ * Constrói um grupo de formulário com label e conteúdo
+ * @param {string} label - Texto do label
+ * @param {string} content - Conteúdo HTML do campo
+ * @returns {string} HTML do grupo de formulário
+ */
 function buildFormGroup(label, content) {
   return `
     <div class="form-group">
@@ -153,6 +183,15 @@ function buildFormGroup(label, content) {
   `
 }
 
+/**
+ * Constrói um elemento select com opção pré-selecionada
+ * @param {Array} options - Lista de opções
+ * @param {number} machineIndex - Índice da máquina
+ * @param {string} className - Classe CSS
+ * @param {string} onchangeHandler - Handler de change
+ * @param {string} selectedValue - Valor pré-selecionado
+ * @returns {string} HTML do select com seleção
+ */
 function buildSelectWithSelected(options, machineIndex, className, onchangeHandler, selectedValue) {
   return `
     <select class="form-input ${className}" 
@@ -165,6 +204,13 @@ function buildSelectWithSelected(options, machineIndex, className, onchangeHandl
   `
 }
 
+/**
+ * Constrói opções com seleções pré-definidas a partir de dados salvos
+ * @param {Array} options - Lista de opções disponíveis
+ * @param {number} machineCount - Número da máquina
+ * @param {Array} selectedOptions - Opções que estavam selecionadas
+ * @returns {string} HTML das opções com checkboxes marcados
+ */
 function buildSavedOptionsHTML(options, machineCount, selectedOptions = []) {
   return options
     .map((option) => {
@@ -189,9 +235,15 @@ function buildSavedOptionsHTML(options, machineCount, selectedOptions = []) {
     .join("")
 }
 
+/**
+ * Constrói uma máquina fallback quando o tipo não é encontrado
+ * @param {number} machineCount - Número sequencial da máquina
+ * @param {Object} savedMachine - Dados da máquina salvos
+ * @returns {string} HTML da máquina fallback (somente leitura)
+ */
 function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
   return `
-    <div class="climatization-machine" data-machine-index="${machineCount}">
+    <div class="climatization-machine" data-machine-index="${roomId}">
       <div class="machine-header">
         <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
         <input type="text" class="machine-title-editable" 
@@ -220,10 +272,18 @@ function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
   `
 }
 
+/**
+ * Atualiza os cálculos de capacidade quando os ganhos térmicos mudam
+ * @param {string} roomId - ID da sala
+ */
 function updateCapacityFromThermalGains(roomId) {
   calculateCapacitySolution(roomId)
 }
 
+/**
+ * Inicializa os cálculos de capacidade com múltiplas tentativas
+ * Usa timeouts progressivos para garantir que a DOM esteja pronta
+ */
 function initializeCapacityCalculations() {
   const attempts = [100, 500, 1000, 2000]
   attempts.forEach((delay) => {
@@ -243,6 +303,10 @@ function initializeCapacityCalculations() {
   })
 }
 
+/**
+ * Atualiza todos os cálculos de capacidade em todas as salas
+ * Útil para recálculos em lote
+ */
 function refreshAllCapacityCalculations() {
   document.querySelectorAll(".room-block").forEach((roomBlock) => {
     const roomId = roomBlock.id.replace("room-content-", "")
@@ -250,7 +314,7 @@ function refreshAllCapacityCalculations() {
   })
 }
 
-// modules/machinesBuilder.js
+// Exportação das funções do módulo
 export {
   buildMachinesSection,
   loadMachinesData,

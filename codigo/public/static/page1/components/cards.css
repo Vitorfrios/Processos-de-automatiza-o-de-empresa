@@ -1,8 +1,8 @@
-/* Blocos de Projeto */
+/* Cards */
 .project-block {
-  background: white;
+  background: var(--card-bg);
   border-radius: var(--border-radius-xl);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px var(--card-shadow);
   margin-bottom: var(--spacing-xl);
   overflow: hidden;
   transition: transform 0.2s ease;
@@ -10,7 +10,7 @@
 
 .project-block:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 12px var(--card-hover-shadow);
 }
 
 .project-header {
@@ -140,9 +140,8 @@
 }
 
 .editable-title:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: var(--editable-title-hover-bg);
 }
-
 .editable-title.editing {
   background-color: white;
   color: #333;

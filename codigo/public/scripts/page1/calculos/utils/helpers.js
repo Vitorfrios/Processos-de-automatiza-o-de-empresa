@@ -17,18 +17,18 @@ async function waitForSystemConstants() {
   const maxAttempts = 100;
   
   while ((!window.systemConstants || !window.systemConstants.VARIAVEL_PD) && attempts < maxAttempts) {
-    console.log("[v0] Aguardando constantes do sistema...", attempts);
+    console.log(" Aguardando constantes do sistema...", attempts);
     await new Promise((resolve) => setTimeout(resolve, 200));
     attempts++;
   }
   
   if (attempts >= maxAttempts) {
-    console.error("[v0] TIMEOUT: Constantes do sistema não carregadas após", maxAttempts, "tentativas");
-    console.error("[v0] systemConstants atual:", window.systemConstants);
+    console.error(" TIMEOUT: Constantes do sistema não carregadas após", maxAttempts, "tentativas");
+    console.error(" systemConstants atual:", window.systemConstants);
     throw new Error("Constantes do sistema não carregadas");
   }
   
-  console.log("[v0] Constantes do sistema disponíveis após", attempts, "tentativas");
+  console.log(" Constantes do sistema disponíveis após", attempts, "tentativas");
   return true;
 }
 
@@ -37,7 +37,7 @@ async function waitForSystemConstants() {
  */
 function validateSystemConstants() {
   if (!window.systemConstants) {
-    console.error("[v0] systemConstants é null ou undefined");
+    console.error(" systemConstants é null ou undefined");
     return false;
   }
   
@@ -56,11 +56,11 @@ function validateSystemConstants() {
   );
   
   if (missingConstants.length > 0) {
-    console.error("[v0] Constantes faltando:", missingConstants);
+    console.error(" Constantes faltando:", missingConstants);
     return false;
   }
   
-  console.log("[v0] Todas as constantes necessárias estão disponíveis");
+  console.log(" Todas as constantes necessárias estão disponíveis");
   return true;
 }
 

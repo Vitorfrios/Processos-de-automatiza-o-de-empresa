@@ -56,7 +56,7 @@ export function initializeGlobals() {
   // Status do sistema
   window.showSystemStatus = showSystemStatus;
   
-  console.log("[v0] Todas as funções globais foram inicializadas");
+  console.log(" Todas as funções globais foram inicializadas");
 }
 
 // Exportar individualmente se necessário

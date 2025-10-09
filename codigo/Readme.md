@@ -84,188 +84,290 @@ codigo/
 
 ## ⚙️ ARQUIVOS E FUNÇÕES
 
-### **config/config.js**
-
-| Função/Constante | Descrição |
-|-----------------|-----------|
-| `API_CONFIG` | Configurações de endpoints da API |
-| `CALCULATION_CONSTANTS` | Constantes para cálculos de engenharia |
-| `NORMALIZATION_DONE_KEY` | Chave para controle de normalização de IDs |
-| `REMOVED_PROJECTS_KEY` | Chave para lista de projetos removidos |
-| `SESSION_STORAGE_KEY` | Chave para ID do primeiro projeto da sessão |
-| `UI_CONSTANTS` | Constantes de interface do usuário |
-
----
-
-### **data/server.js**
+### [globals.js]
 
 | Função | Descrição |
-|--------|-----------|
-| `incrementGeralCount()` | Incrementa contador global de projetos |
-| `decrementGeralCount()` | Decrementa contador global de projetos |
-| `getGeralCount()` | Retorna contador atual de projetos |
-| `addProjectToRemovedList()` | Adiciona projeto à lista de removidos |
-| `createSingleBaseProject()` | Cria projeto base único automaticamente |
-| `debugGeralCount()` | Debug do contador de projetos |
-| `getRemovedProjectsList()` | Retorna lista de projetos removidos |
-| `isProjectRemoved()` | Verifica se projeto está na lista de removidos |
-| `loadProjectsFromServer()` | Carrega projetos do servidor |
-| `normalizeAllProjectsOnServer()` | Normaliza IDs no servidor |
-| `removeBaseProjectFromHTML()` | Remove projetos base do HTML |
-| `resetDisplayLogic()` | Reinicia lógica de exibição |
-| `saveFirstProjectIdOfSession()` | Salva ID do primeiro projeto da sessão |
-| `updateProjectButton()` | Atualiza texto do botão (Salvar/Atualizar) |
 
----
+- **initializeGlobals**: | Função para inicializar todas as funções globais
 
-### **data/projects.js**
+### [main.js]
 
 | Função | Descrição |
-|--------|-----------|
-| `atualizarProjeto()` | Atualiza projeto existente no servidor |
-| `collapseProjectAfterSave()` | Colapsa projeto após salvar |
-| `debugProjectsState()` | Debug do estado dos projetos |
-| `deleteProject()` | Remove projeto da interface |
-| `fetchProjects()` | Busca projetos do servidor |
-| `generateProjectVerificationReport()` | Gera relatório de verificação |
-| `getNextProjectId()` | Gera próximo ID de projeto |
-| `getNextProjectNumber()` | Gera próximo número de projeto |
-| `initializeProjectCounter()` | Inicializa contador de projetos |
-| `normalizeProjectIds()` | Normaliza IDs de projetos |
-| `salvarProjeto()` | Salva novo projeto no servidor |
-| `saveProject()` | Salva/atualiza projeto (interface) |
-| `verifyProjectData()` | Verifica dados do projeto |
-| `calculateRoomCompletionStats()` | Calcula estatísticas de preenchimento |
 
----
+- **loadAllModules**: | Carrega todos os módulos do sistema dinamicamente e os atribui ao escopo global. Garante que todas as funções estejam disponíveis no objeto window
+- **loadSystemConstants**: | Carrega as constantes do sistema do servidor. Essenciais para todos os cálculos do sistema
+- **verifyAndCreateBaseProject**: | Verifica se é necessário criar um projeto base quando não há projetos existentes. Garante que o usuário sempre tenha pelo menos um projeto para trabalhar
+- **finalSystemDebug**: | Função de debug para verificar o estado final do sistema após inicialização. Exibe informações detalhadas sobre projetos, salas e módulos carregados
 
-### **data/server-utils.js**
+### [airFlowCalculations.js]
 
 | Função | Descrição |
-|--------|-----------|
-| `debugServerUtils()` | Debug das utilidades do servidor |
-| `populateRoomInputs()` | Preenche inputs da sala com dados |
-| `renderProjectFromData()` | Renderiza projeto a partir de dados |
-| `renderRoomFromData()` | Renderiza sala a partir de dados |
 
----
+- **calculateDoorFlow**: | Calcula fluxo de ar individual por porta
+- **computeAirFlowRate**: | Calcula vazão total de ar baseada em portas e pressurização
+- **calculateVazaoAr**: | Orquestra cálculo completo de vazão com validações
+- **calculateVazaoArAndThermalGains**: | Coordena cálculo sequencial de vazão e ganhos térmicos
 
-### **data/data-utils.js**
+### [airFlowDisplay.js]
 
 | Função | Descrição |
-|--------|-----------|
-| `buildProjectData()` | Constrói objeto de dados do projeto |
-| `extractRoomData()` | Extrai dados da sala |
 
----
+- **updateFlowRateDisplay**: | Atualiza exibição do resultado de vazão na interface
 
-### **data/rooms.js**
+### [thermalCalculations.js]
 
 | Função | Descrição |
-|--------|-----------|
-| `addMachine()` | Adiciona máquina à sala |
-| `addNewRoom()` | Adiciona nova sala ao projeto |
-| `buildClimaCell()` | Constrói célula da tabela de climatização |
-| `buildClimaRow()` | Constrói linha da tabela de climatização |
-| `buildClimatizationSection()` | Constrói seção de climatização |
-| `buildClimatizationTable()` | Constrói tabela de climatização |
-| `buildConfigurationSection()` | Constrói seção de configuração |
-| `buildMachineHTML()` | Constrói HTML da máquina |
-| `buildMachinesSection()` | Constrói seção de máquinas |
-| `buildResultRow()` | Constrói linha de resultados |
-| `buildRoomActions()` | Constrói ações da sala |
-| `buildRoomHeader()` | Constrói cabeçalho da sala |
-| `buildRoomHTML()` | Constrói HTML da sala |
-| `buildSelectInput()` | Constrói input select |
-| `buildTextInput()` | Constrói input de texto |
-| `buildThermalGainsSection()` | Constrói seção de ganhos térmicos |
-| `createEmptyRoom()` | Cria sala vazia |
-| `deleteMachine()` | Remove máquina da sala |
-| `deleteRoom()` | Remove sala do projeto |
-| `insertRoomIntoProject()` | Insere sala no projeto |
-| `removeEmptyMachinesMessage()` | Remove mensagem de máquinas vazias |
-| `showEmptyMachinesMessageIfNeeded()` | Mostra mensagem se não há máquinas |
 
----
+- **calculateThermalGains**: | Calcula ganhos térmicos totais do ambiente
+- **calculateUValues**: | Determina coeficientes de transferência térmica
+- **calculateAuxiliaryVariables**: | Calcula variáveis auxiliares para cálculos de ar externo
 
-### **ui/interface.js**
+### [thermalComponents.js]
 
 | Função | Descrição |
-|--------|-----------|
-| `addNewProject()` | Adiciona novo projeto (botão) |
-| `buildProjectActionsFooter()` | Constrói rodapé de ações do projeto |
-| `buildProjectHTML()` | Constrói HTML do projeto |
-| `createEmptyProject()` | Cria projeto vazio |
-| `createStatusBanner()` | Cria banner de status |
-| `insertProjectIntoDOM()` | Insere projeto no DOM |
-| `insertStatusBanner()` | Insere banner de status |
-| `removeEmptyProjectMessage()` | Remove mensagem de projeto vazio |
-| `removeExistingStatusBanner()` | Remove banner de status existente |
-| `scheduleStatusBannerRemoval()` | Agenda remoção do banner |
-| `showEmptyProjectMessageIfNeeded()` | Mostra mensagem se projeto vazio |
-| `showSystemStatus()` | Mostra status do sistema |
-| `toggleElementVisibility()` | Alterna visibilidade do elemento |
-| `toggleProject()` | Alterna visibilidade do projeto |
-| `toggleRoom()` | Alterna visibilidade da sala |
-| `toggleSection()` | Alterna visibilidade da seção |
-| `toggleSubsection()` | Alterna visibilidade da subseção |
-| `collapseElement()` | Colapsa elemento |
-| `expandElement()` | Expande elemento |
 
----
+- **calculateCeilingGain**: | Calcula ganho térmico através do teto por condução
+- **calculateWallGain**: | Calcula ganho térmico através de paredes
+- **calculatePartitionGain**: | Calcula ganho térmico através de divisórias internas
+- **calculateFloorGain**: | Calcula ganho térmico através do piso
+- **calculateLightingGain**: | Calcula ganho térmico da iluminação artificial
+- **calculateDissipationGain**: | Calcula ganho térmico de equipamentos elétricos
+- **calculatePeopleGain**: | Calcula ganho térmico por ocupação humana
+- **calculateExternalAirSensibleGain**: | Calcula ganho sensível do ar externo
+- **calculateExternalAirLatentGain**: | Calcula ganho latente do ar externo
 
-### **ui/edit.js**
+### [thermalDisplay.js]
 
 | Função | Descrição |
-|--------|-----------|
-| `attachEditingEventListeners()` | Anexa listeners de edição |
-| `cancelInlineEdit()` | Cancela edição inline |
-| `disableEditing()` | Desabilita edição |
-| `enableEditing()` | Habilita edição |
-| `makeEditable()` | Torna elemento editável |
-| `saveInlineEdit()` | Salva edição inline |
-| `selectElementContent()` | Seleciona conteúdo do elemento |
-| `validateEditedText()` | Valida texto editado |
 
----
+- **calculateTotals**: | Consolida totais de ganhos térmicos
+- **updateThermalGainsDisplay**: | Atualiza interface com resultados detalhados
+- **updateWallDisplay**: | Atualiza exibição de dados de parede específica
+- **updatePartitionDisplay**: | Atualiza exibição de dados de divisória específica
 
-### **calculos/calculos.js**
+### [helpers.js]
 
 | Função | Descrição |
-|--------|-----------|
-| `calculateAuxiliaryVariables()` | Calcula variáveis auxiliares |
-| `calculateCeilingGain()` | Calcula ganho do teto |
-| `calculateDissipationGain()` | Calcula ganho por dissipação |
-| `calculateDoorFlow()` | Calcula fluxo de portas |
-| `calculateExternalAirLatentGain()` | Calcula ganho latente do ar externo |
-| `calculateExternalAirSensibleGain()` | Calcula ganho sensível do ar externo |
-| `calculateFloorGain()` | Calcula ganho do piso |
-| `calculateLightingGain()` | Calcula ganho por iluminação |
-| `calculatePartitionGain()` | Calcula ganho por divisórias |
-| `calculatePeopleGain()` | Calcula ganho por pessoas |
-| `calculateThermalGains()` | Calcula todos os ganhos térmicos |
-| `calculateTotals()` | Calcula totais dos ganhos |
-| `calculateUValues()` | Calcula valores U (coeficientes) |
-| `calculateVazaoAr()` | Calcula vazão de ar |
-| `calculateVazaoArAndThermalGains()` | Calcula vazão e ganhos térmicos |
-| `calculateWallGain()` | Calcula ganho das paredes |
-| `collectClimatizationInputs()` | Coleta inputs de climatização |
-| `computeAirFlowRate()` | Calcula taxa de fluxo de ar |
-| `updateElementText()` | Atualiza texto do elemento |
-| `updateFlowRateDisplay()` | Atualiza display de vazão |
-| `updatePartitionDisplay()` | Atualiza display de divisórias |
-| `updateThermalGainsDisplay()` | Atualiza display de ganhos térmicos |
-| `updateWallDisplay()` | Atualiza display de paredes |
-| `validateSystemConstants()` | Valida constantes do sistema |
-| `waitForSystemConstants()` | Aguarda constantes do sistema carregarem |
 
----
+- **safeNumber**: | Converte valores de entrada de forma segura para números, tratando casos vazios
+- **waitForSystemConstants**: | Aguarda carregamento assíncrono das constantes do sistema
+- **validateSystemConstants**: | Valida integridade das constantes do sistema
+- **collectClimatizationInputs**: | Coleta dados de entrada da interface para processamento
+- **updateElementText**: | Atualiza elemento de texto genérico
 
-### **utils/utils.js**
+### [data-utils.js]
 
 | Função | Descrição |
-|--------|-----------|
-| `ensureStringId()` | Garante que ID seja string |
+
+- **buildProjectData**: | Constrói o objeto de dados completo de um projeto a partir do HTML. Coleta nome do projeto, salas e todos os dados associados
+- **extractRoomData**: | Extrai todos os dados de uma sala a partir do elemento HTML. Coleta inputs, configurações, máquinas, ganhos térmicos e capacidade
+- **extractCapacityData**: | Extrai dados de capacidade de refrigeração de uma sala. Coleta fator de segurança, capacidade unitária, backup e cálculos
+- **extractClimatizationMachineData**: | Extrai dados de uma máquina de climatização individual. Coleta tipo, potência, tensão, preço e opções selecionadas
+- **parseMachinePrice**: | Função auxiliar para converter texto de preço em número. Remove formatação brasileira (R$, pontos e vírgulas)
+
+### [projects.js]
+
+| Função | Descrição |
+
+- **fetchProjects**: | Busca todos os projetos do servidor e normaliza os IDs
+- **getNextProjectId**: | Obtém o próximo ID disponível para um novo projeto
+- **initializeProjectCounter**: | Inicializa o contador de projetos baseado nos projetos existentes no DOM
+- **getNextProjectNumber**: | Retorna o próximo número de projeto disponível
+- **normalizeProjectIds**: | Normaliza todos os IDs de um projeto (projeto e salas)
+- **salvarProjeto**: | Salva um novo projeto no servidor
+- **atualizarProjeto**: | Atualiza um projeto existente no servidor
+- **saveProject**: | Salva ou atualiza um projeto (função principal chamada pela interface)
+- **collapseProjectAfterSave**: | Colapsa o projeto após salvar
+- **deleteProject**: | Deleta um projeto da interface
+- **verifyProjectData**: | Verifica os dados de um projeto e gera relatório
+- **generateProjectVerificationReport**: | Gera relatório de verificação do projeto
+- **calculateRoomCompletionStats**: | Calcula estatísticas de preenchimento de uma sala
+- **collapseElement**: | Colapsa um elemento na interface
+
+### [rooms.js]
+
+| Função | Descrição |
+
+- **initializeAllCapacityInputs**: | Inicializando todos os inputs de capacidade
+
+### [server-utils.js]
+
+| Função | Descrição |
+
+- **renderProjectFromData**: | Renderiza um projeto completo a partir dos dados carregados. Cria a estrutura do projeto e todas as suas salas
+- **renderRoomFromData**: | Renderiza uma sala individual a partir dos dados carregados. Cria a sala e preenche todos os inputs e configurações
+- **populateRoomInputs**: | Preenche todos os inputs e configurações de uma sala com dados carregados. Inclui inputs de climatização, opções, máquinas e dados de capacidade
+
+### [server.js]
+
+| Função | Descrição |
+
+- **initializeGeralCount**: | Inicializa o contador global de projetos
+- **removeBaseProjectFromHTML**: | Remove todos os projetos base do HTML
+- **loadProjectsFromServer**: | Carrega projetos salvos do servidor para a sessão atual
+- **loadSavedMachinesForRoom**: | Carrega máquinas salvas para uma sala específica
+- **incrementGeralCount**: | Incrementa o contador global de projetos
+- **decrementGeralCount**: | Decrementa o contador global de projetos
+- **getGeralCount**: | Retorna o valor atual do contador global
+- **resetDisplayLogic**: | Reseta a lógica de exibição de projetos
+- **createSingleBaseProject**: | Cria um único projeto base na interface
+- **createProjectBaseHTML**: | Cria o HTML do projeto base
+- **saveFirstProjectIdOfSession**: | Salva o ID do primeiro projeto da sessão
+- **addProjectToRemovedList**: | Adiciona um projeto à lista de removidos
+- **getRemovedProjectsList**: | Retorna a lista de projetos removidos
+- **isProjectRemoved**: | Verifica se um projeto foi removido
+- **updateProjectButton**: | Atualiza o botão de salvar/atualizar do projeto
+- **normalizeAllProjectsOnServer**: | Normaliza todos os IDs de projetos no servidor
+
+### [climatizacao.js]
+
+| Função | Descrição |
+
+- **buildClimatizationSection**: | Constrói seção completa de climatização para uma sala específica. Organiza inputs de dados e resultados de cálculos térmicos de forma hierárquica
+- **buildClimatizationTable**: | Constrói tabela completa de inputs para dados de climatização. Agrupa campos relacionados para melhor organização visual e usabilidade
+- **buildClimaRow**: | Constrói linha da tabela com campos de input. Permite células vazias para layout flexível de formulário
+- **buildClimaCell**: | Constrói célula individual com label e campo de input. Define estrutura consistente para diferentes tipos de campos
+- **buildSelectInput**: | Constrói elemento select com opções pré-definidas. Inclui placeholder padrão para indicar seleção obrigatória
+- **buildTextInput**: | Constrói campo de input textual ou numérico. Aplica validações específicas baseadas no tipo de campo
+- **buildResultRow**: | Constrói linha de exibição de resultado calculado. Mostra vazão de ar externo como resultado primário dos cálculos
+- **buildThermalGainsSection**: | Constrói seção completa de resultados de ganhos térmicos. Organiza dados calculados em tabelas categorizadas para análise detalhada
+
+### [configuracao.js]
+
+| Função | Descrição |
+
+- **buildConfigurationSection**: | Criação da seção de configuração
+
+### [maquinas.js]
+
+| Função | Descrição |
+
+- **initializeMachinesModule**: | Inicialização
+- **initializeBackupSync**: | Sem descrição
+- **initializeClimaInputBackupListener**: | Sem descrição
+- **initializeFatorSegurancaListeners**: | Sem descrição
+
+### [projeto.js]
+
+| Função | Descrição |
+
+- **createEmptyRoom**: | Cria uma nova sala vazia no projeto especificado. Insere o HTML da sala e inicializa componentes necessários
+- **insertRoomIntoProject**: | Insere o HTML de uma sala no conteúdo do projeto
+- **addNewRoom**: | Adiciona uma nova sala ao projeto com nome automático
+- **fixExistingCapacityInputs**: | Corrige inputs de fator de segurança que estejam vazios. Aplica valores padrão baseados nas constantes do sistema
+- **deleteRoom**: | Remove uma sala do projeto após confirmação do usuário
+
+### [salas.js]
+
+| Função | Descrição |
+
+- **buildRoomHTML**: | Constrói o HTML completo de uma sala com todas as seções
+- **buildRoomHeader**: | Constrói o cabeçalho da sala com título editável e botões de ação
+- **buildRoomActions**: | Constrói a seção de ações da sala (atualmente vazia)
+
+### [capacityCalculator.js]
+
+| Função | Descrição |
+
+- **buildCapacityCalculationTable**: | Constrói a tabela de cálculo de capacidade de refrigeração para uma sala
+- **initializeStaticCapacityTable**: | Inicializa a tabela de capacidade estática (para casos específicos)
+- **scheduleCapacityInit**: | Agenda a inicialização do sistema de capacidade para uma sala
+- **initializeCapacitySystem**: | Inicializa o sistema de capacidade com tentativas de fallback
+- **applyFatorSeguranca**: | Aplica o fator de segurança ao input correspondente
+- **getThermalLoadTR**: | Obtém a carga térmica em TR (Tons de Refrigeração) para uma sala
+- **calculateCapacitySolution**: | Calcula a solução de capacidade de refrigeração baseada nos parâmetros
+- **getCapacityData**: | Obtém os dados atuais de capacidade de uma sala
+- **saveCapacityData**: | Salva os dados de capacidade no servidor
+- **loadCapacityData**: | Carrega os dados de capacidade do servidor para uma sala
+- **applyCapacityData**: | Aplica os dados de capacidade carregados aos elementos da interface
+- **applyBackupConfiguration**: | Aplica a configuração de backup ao número de unidades
+- **getBackupFromClimatization**: | Obtém o tipo de backup configurado para climatização da sala
+- **getBackupFromClimaInputs**: | Obtém o backup dos inputs de clima da sala
+- **updateCapacityDisplay**: | Atualiza a exibição dos resultados de capacidade na tabela
+- **updateBackupConfiguration**: | Atualiza a configuração de backup quando alterada pelo usuário
+- **handleClimaInputBackupChange**: | Manipula mudanças no backup provenientes dos inputs de clima
+- **syncBackupWithClimaInputs**: | Sincroniza o backup com os inputs de clima da sala
+- **syncCapacityTableBackup**: | Sincroniza o backup da tabela de capacidade com os valores atuais
+
+### [machineManagement.js]
+
+| Função | Descrição |
+
+- **addMachine**: | Adiciona uma nova máquina de climatização à sala especificada. Carrega dados das máquinas e constrói a interface HTML
+- **buildClimatizationMachineHTML**: | Constrói o HTML completo para uma máquina de climatização. Inclui cabeçalho, formulário de configuração e seção de opções
+- **buildFormGroup**: | Constrói um grupo de formulário com label e conteúdo
+- **buildSelect**: | Constrói um elemento select com opções e handlers
+- **buildOptionsHTML**: | Constrói a interface de opções adicionais da máquina
+- **toggleMachineSection**: | Alterna a exibição da seção da máquina (expandir/recolher)
+- **updateMachineTitle**: | Atualiza o título da máquina quando editado pelo usuário
+- **updateMachineOptions**: | Atualiza as opções da máquina quando o tipo é alterado. Carrega novos dados de potência, tensão e opções
+- **updateSelect**: | Atualiza as opções de um elemento select
+- **calculateMachinePrice**: | Calcula o preço total da máquina considerando preço base e opções selecionadas
+- **deleteClimatizationMachine**: | Remove uma máquina de climatização após confirmação do usuário
+
+### [machinesBuilder.js]
+
+| Função | Descrição |
+
+- **buildMachinesSection**: | Constrói a seção completa de máquinas para uma sala. Inclui tabela de capacidade e container para máquinas
+- **loadMachinesData**: | Carrega os dados das máquinas do servidor com cache
+- **loadSavedMachines**: | Carrega máquinas salvas previamente para uma sala
+- **buildClimatizationMachineFromSavedData**: | Constrói uma máquina de climatização a partir de dados salvos
+- **buildFormGroup**: | Constrói um grupo de formulário com label e conteúdo
+- **buildSelectWithSelected**: | Constrói um elemento select com opção pré-selecionada
+- **buildSavedOptionsHTML**: | Constrói opções com seleções pré-definidas a partir de dados salvos
+- **buildFallbackMachineFromSavedData**: | Constrói uma máquina fallback quando o tipo não é encontrado
+- **updateCapacityFromThermalGains**: | Atualiza os cálculos de capacidade quando os ganhos térmicos mudam
+- **initializeCapacityCalculations**: | Inicializa os cálculos de capacidade com múltiplas tentativas. Usa timeouts progressivos para garantir que a DOM esteja pronta
+- **refreshAllCapacityCalculations**: | Atualiza todos os cálculos de capacidade em todas as salas. Útil para recálculos em lote
+
+### [utilities.js]
+
+| Função | Descrição |
+
+- **updateElementText**: | Atualiza o texto de um elemento HTML baseado no seu ID. Função utilitária para manipulação segura de elementos DOM
+- **removeEmptyMessage**: | Remove mensagens de "vazio" de um container. Usado para limpar mensagens padrão quando conteúdo é adicionado
+- **showEmptyMessage**: | Exibe uma mensagem de "vazio" em um container se estiver vazio. Útil para fornecer feedback visual quando não há conteúdo
+- **findRoomId**: | Encontra o ID da sala a partir de um elemento dentro dela. Navega pela árvore DOM para encontrar o container da sala
+
+### [edit.js]
+
+| Função | Descrição |
+
+- **makeEditable**: | Inicia o modo de edição inline para um elemento (projeto ou sala). Permite que o usuário edite o texto diretamente no elemento
+- **enableEditing**: | Habilita a edição do elemento configurando contentEditable
+- **selectElementContent**: | Seleciona todo o conteúdo do elemento para facilitar a edição
+- **attachEditingEventListeners**: | Anexa event listeners para tratar teclas e perda de foco durante edição
+- **handleKeydown**: | Sem descrição
+- **handleBlur**: | Sem descrição
+- **saveInlineEdit**: | Salva as alterações feitas durante a edição inline
+- **disableEditing**: | Desabilita o modo de edição do elemento
+- **validateEditedText**: | Valida o texto editado pelo usuário
+- **cancelInlineEdit**: | Cancela a edição e restaura o texto original
+
+### [interface.js]
+
+| Função | Descrição |
+
+- **showSystemStatus**: | Exibe um banner de status do sistema (sucesso, erro, etc.)
+- **removeExistingStatusBanner**: | Remove qualquer banner de status existente
+- **createStatusBanner**: | Cria um elemento de banner de status
+- **insertStatusBanner**: | Insere o banner de status no DOM
+- **scheduleStatusBannerRemoval**: | Agenda a remoção automática do banner de sucesso
+- **toggleElementVisibility**: | Alterna a visibilidade de um elemento (expandir/recolher)
+- **expandElement**: | Expande um elemento na interface
+- **collapseElement**: | Recolhe um elemento na interface
+- **toggleProject**: | Alterna a visibilidade de um projeto
+- **toggleRoom**: | Alterna a visibilidade de uma sala
+- **toggleSection**: | Alterna a visibilidade de uma seção
+- **toggleSubsection**: | Alterna a visibilidade de uma subseção
+- **createEmptyProject**: | Cria um projeto vazio na interface
+- **buildProjectHTML**: | Constrói o HTML de um projeto
+- **buildProjectActionsFooter**: | Constrói o rodapé de ações do projeto
+- **insertProjectIntoDOM**: | Insere o HTML do projeto no DOM
+- **addNewProject**: | Adiciona um novo projeto à interface
+- **removeEmptyProjectMessage**: | Remove a mensagem de "projeto vazio" quando salas são adicionadas
+- **showEmptyProjectMessageIfNeeded**: | Exibe mensagem de "projeto vazio" se não houver salas
 
 ---
 
@@ -569,7 +671,7 @@ Calc_Gsens_ArE = AUX_m_ArExterno * AUX_c_ArExterno * AUX_deltaT_ArExterno
 
 - Cada **projeto** pode conter **n salas**
 - Cada **sala** possui suas **seções independentes**:
-  - *Climatização* (tabela e cálculos)
+|   - *Climatização* (tabela e cálculos)
   - *Máquinas* (cada uma com configuração própria)
   - *Configuração geral* (dados globais da sala)
 - Todos os botões de **salvar**, **editar** e **deletar** estão conectados a funções JS específicas

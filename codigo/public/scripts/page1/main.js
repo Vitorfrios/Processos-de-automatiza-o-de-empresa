@@ -7,7 +7,7 @@ window.systemConstants = null;
 window.projectCounter = 0;
 window.GeralCount = 0;
 
-console.log("[v0] Variáveis globais inicializadas:", {
+console.log(" Variáveis globais inicializadas:", {
   systemConstants: window.systemConstants,
   projectCounter: window.projectCounter,
   GeralCount: window.GeralCount
@@ -19,6 +19,10 @@ import { normalizeAllProjectsOnServer, loadProjectsFromServer, getGeralCount, cr
 // Carregar módulos dinamicamente
 let modulesLoaded = false;
 
+/**
+ * Carrega todos os módulos do sistema dinamicamente e os atribui ao escopo global
+ * Garante que todas as funções estejam disponíveis no objeto window
+ */
 async function loadAllModules() {
   if (modulesLoaded) return;
   
@@ -80,16 +84,20 @@ async function loadAllModules() {
     });
 
     modulesLoaded = true;
-    console.log("[v0] Todos os módulos foram carregados com sucesso");
+    console.log(" Todos os módulos foram carregados com sucesso");
     
   } catch (error) {
-    console.error("[v0] Erro ao carregar módulos:", error);
+    console.error(" Erro ao carregar módulos:", error);
   }
 }
 
+/**
+ * Carrega as constantes do sistema do servidor
+ * Essenciais para todos os cálculos do sistema
+ */
 async function loadSystemConstants() {
   try {
-    console.log("[v0] Carregando constantes do sistema...")
+    console.log(" Carregando constantes do sistema...")
     const response = await fetch(`${API_CONFIG.data}/constants`)
 
     if (!response.ok) {
@@ -98,10 +106,10 @@ async function loadSystemConstants() {
 
     const constantsData = await response.json();
     window.systemConstants = constantsData;
-    console.log("[v0] Constantes carregadas do JSON:", window.systemConstants);
+    console.log(" Constantes carregadas do JSON:", window.systemConstants);
     
     if (!window.systemConstants.VARIAVEL_PD || !window.systemConstants.VARIAVEL_PS) {
-      console.error("[v0] ERRO: Constantes essenciais não encontradas no JSON:", {
+      console.error(" ERRO: Constantes essenciais não encontradas no JSON:", {
         VARIAVEL_PD: window.systemConstants.VARIAVEL_PD,
         VARIAVEL_PS: window.systemConstants.VARIAVEL_PS
       });
@@ -112,7 +120,7 @@ async function loadSystemConstants() {
       window.showSystemStatus("Constantes do sistema carregadas com sucesso", "success")
     }
   } catch (error) {
-    console.error("[v0] ERRO CRÍTICO ao carregar constantes:", error)
+    console.error(" ERRO CRÍTICO ao carregar constantes:", error)
     if (window.showSystemStatus) {
       window.showSystemStatus("ERRO CRÍTICO: Não foi possível carregar as constantes do sistema. Verifique o servidor.", "error")
     }
@@ -120,28 +128,34 @@ async function loadSystemConstants() {
   }
 }
 
-// CORREÇÃO: Função para verificar e criar projeto base se necessário
+/**
+ * Verifica se é necessário criar um projeto base quando não há projetos existentes
+ * Garante que o usuário sempre tenha pelo menos um projeto para trabalhar
+ */
 async function verifyAndCreateBaseProject() {
-  console.log("[v0] Verificando necessidade de criar projeto base...");
+  console.log(" Verificando necessidade de criar projeto base...");
   
-  // Aguardar um pouco para garantir que tudo foi carregado
+  // Aguardar para garantir carregamento
   await new Promise(resolve => setTimeout(resolve, 500));
   
   const currentCount = getGeralCount();
   const projectsInDOM = document.querySelectorAll('.project-block').length;
   
-  console.log(`[v0] Estado atual - GeralCount: ${currentCount}, Projetos no DOM: ${projectsInDOM}`);
+  console.log(` Estado atual - GeralCount: ${currentCount}, Projetos no DOM: ${projectsInDOM}`);
   
   // Se não há projetos, criar projeto base
   if (currentCount === 0 && projectsInDOM === 0) {
-    console.log("[v0] Nenhum projeto encontrado - criando projeto base...");
+    console.log(" Nenhum projeto encontrado - criando projeto base...");
     createSingleBaseProject();
   } else {
-    console.log(`[v0] Projetos já existem - GeralCount: ${currentCount}, DOM: ${projectsInDOM}`);
+    console.log(` Projetos já existem - GeralCount: ${currentCount}, DOM: ${projectsInDOM}`);
   }
 }
 
-// CORREÇÃO: Função de debug final
+/**
+ * Função de debug para verificar o estado final do sistema após inicialização
+ * Exibe informações detalhadas sobre projetos, salas e módulos carregados
+ */
 function finalSystemDebug() {
   console.log('=== DEBUG FINAL DO SISTEMA ===');
   console.log('- window.GeralCount:', window.GeralCount);
@@ -161,8 +175,12 @@ function finalSystemDebug() {
   });
 }
 
+/**
+ * Inicialização principal do sistema quando o DOM estiver carregado
+ * Orquestra o carregamento de módulos, constantes e projetos na ordem correta
+ */
 window.addEventListener("DOMContentLoaded", async () => {
-  console.log("[v0] Inicializando sistema...")
+  console.log(" Inicializando sistema...")
   
   try {
     // 1. Carregar módulos primeiro
@@ -174,7 +192,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     // 3. Carregar constantes do sistema
     await loadSystemConstants();
     
-    // 4. AGORA carregar projetos do servidor (depois das constantes)
+    // 4. Carregar projetos do servidor (depois das constantes)
     await loadProjectsFromServer()
     
     // 5. Inicializar project counter
@@ -182,20 +200,20 @@ window.addEventListener("DOMContentLoaded", async () => {
       await window.initializeProjectCounter();
     }
     
-    // CORREÇÃO 6: Verificar e criar projeto base se necessário
+    // Verificar e criar projeto base se necessário
     await verifyAndCreateBaseProject();
     
-    console.log("[v0] Sistema inicializado - projetos carregados do servidor")
-    console.log("[v0] Constantes disponíveis para cálculos:", window.systemConstants);
+    console.log(" Sistema inicializado - projetos carregados do servidor")
+    console.log(" Constantes disponíveis para cálculos:", window.systemConstants);
     
-    // CORREÇÃO 7: Debug final
+    // Debug final
     setTimeout(finalSystemDebug, 1000);
     
   } catch (error) {
-    console.error("[v0] ERRO na inicialização do sistema:", error);
+    console.error(" ERRO na inicialização do sistema:", error);
     
-    // CORREÇÃO: Mesmo com erro, tentar criar projeto base
-    console.log("[v0] Tentando criar projeto base mesmo com erro...");
+
+    console.log(" Tentando criar projeto base mesmo com erro...");
     setTimeout(() => {
       verifyAndCreateBaseProject();
     }, 1000);
@@ -206,7 +224,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 })
 
-// Carregar módulos também quando uma função for chamada (fallback)
+/**
+ * Fallback: Carrega módulos quando qualquer função for chamada (caso não tenham carregado ainda)
+ * Garante que o sistema funcione mesmo se o carregamento inicial falhar
+ */
 window.addEventListener('click', async (event) => {
   if (!modulesLoaded) {
     await loadAllModules();

@@ -5,16 +5,16 @@
   border-radius: var(--border-radius-lg);
   font-weight: 600;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--status-banner-shadow);
 }
 
 .system-status-banner.success {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
+  background: var(--status-banner-success-bg);
+  color: var(--status-banner-text-color);
 }
 
 .system-status-banner.error {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-  color: white;
-  border: 2px solid #dc3545;
+  background: var(--status-banner-error-bg);
+  color: var(--status-banner-text-color);
+  border: 2px solid var(--status-banner-error-border);
 }

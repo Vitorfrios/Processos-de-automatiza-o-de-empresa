@@ -1,14 +1,21 @@
 import { API_CONFIG } from '../../../config/config.js'  
 import { updateElementText, findRoomId } from './utilities.js'
 
+// Configurações para inicialização do sistema de capacidade
 const capacityConfig = {
   maxInitAttempts: 3,
   initDelay: 500,
   fallbackFatorSeguranca: 10,
 }
 
+// Estado global para controle de inicialização por sala
 const capacityState = new Map()
 
+/**
+ * Constrói a tabela de cálculo de capacidade de refrigeração para uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {string} HTML da tabela de capacidade
+ */
 function buildCapacityCalculationTable(roomId) {
   scheduleCapacityInit(roomId)
   const backupValue = getBackupFromClimaInputs(roomId)
@@ -69,12 +76,20 @@ function buildCapacityCalculationTable(roomId) {
   `
 }
 
+/**
+ * Inicializa a tabela de capacidade estática (para casos específicos)
+ */
 function initializeStaticCapacityTable() {
   const staticTable = document.querySelector(".capacity-calculation-table")
   if (staticTable) {
     scheduleCapacityInit("Projeto1-Sala1")
   }
 }
+
+/**
+ * Agenda a inicialização do sistema de capacidade para uma sala
+ * @param {string} roomId - ID da sala
+ */
 function scheduleCapacityInit(roomId) {
   if (capacityState.has(roomId)) return
 
@@ -82,6 +97,10 @@ function scheduleCapacityInit(roomId) {
   setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.initDelay)
 }
 
+/**
+ * Inicializa o sistema de capacidade com tentativas de fallback
+ * @param {string} roomId - ID da sala
+ */
 function initializeCapacitySystem(roomId) {
   const state = capacityState.get(roomId)
   if (!state || state.initialized) return
@@ -100,6 +119,11 @@ function initializeCapacitySystem(roomId) {
   }
 }
 
+/**
+ * Aplica o fator de segurança ao input correspondente
+ * @param {string} roomId - ID da sala
+ * @param {number} fatorSeguranca - Valor do fator de segurança
+ */
 function applyFatorSeguranca(roomId, fatorSeguranca) {
   const inputFator = document.getElementById(`fator-seguranca-${roomId}`)
   if (!inputFator) return
@@ -108,6 +132,11 @@ function applyFatorSeguranca(roomId, fatorSeguranca) {
   calculateCapacitySolution(roomId)
 }
 
+/**
+ * Obtém a carga térmica em TR (Tons de Refrigeração) para uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {number} Carga térmica em TR
+ */
 function getThermalLoadTR(roomId) {
   try {
     const totalTRElement = document.getElementById(`total-tr-${roomId}`)
@@ -128,6 +157,10 @@ function getThermalLoadTR(roomId) {
   }
 }
 
+/**
+ * Calcula a solução de capacidade de refrigeração baseada nos parâmetros
+ * @param {string} roomId - ID da sala
+ */
 function calculateCapacitySolution(roomId) {
   try {
     const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
@@ -166,6 +199,11 @@ function calculateCapacitySolution(roomId) {
   }
 }
 
+/**
+ * Obtém os dados atuais de capacidade de uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {Object|null} Dados de capacidade ou null se não encontrado
+ */
 function getCapacityData(roomId) {
   const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
   const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`)
@@ -185,6 +223,11 @@ function getCapacityData(roomId) {
   }
 }
 
+/**
+ * Salva os dados de capacidade no servidor
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ */
 function saveCapacityData(projectName, roomName) {
   try {
     const roomId = `${projectName}-${roomName}`
@@ -240,6 +283,12 @@ function saveCapacityData(projectName, roomName) {
   }
 }
 
+/**
+ * Carrega os dados de capacidade do servidor para uma sala
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @returns {boolean} True se os dados foram carregados com sucesso
+ */
 function loadCapacityData(projectName, roomName) {
   try {
     const roomId = `${projectName}-${roomName}`
@@ -288,6 +337,11 @@ function loadCapacityData(projectName, roomName) {
   }
 }
 
+/**
+ * Aplica os dados de capacidade carregados aos elementos da interface
+ * @param {string} roomId - ID da sala
+ * @param {Object} capacityData - Dados de capacidade a serem aplicados
+ */
 function applyCapacityData(roomId, capacityData) {
   const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
   const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`)
@@ -311,6 +365,12 @@ function applyCapacityData(roomId, capacityData) {
   }, 100)
 }
 
+/**
+ * Aplica a configuração de backup ao número de unidades
+ * @param {number} unidadesOperacionais - Número de unidades operacionais
+ * @param {string} backupType - Tipo de backup ("n", "n+1", "n+2")
+ * @returns {number} Número total de unidades considerando backup
+ */
 function applyBackupConfiguration(unidadesOperacionais, backupType) {
   switch (backupType) {
     case "n+1":
@@ -322,6 +382,11 @@ function applyBackupConfiguration(unidadesOperacionais, backupType) {
   }
 }
 
+/**
+ * Obtém o tipo de backup configurado para climatização da sala
+ * @param {string} roomId - ID da sala
+ * @returns {string} Tipo de backup ("n", "n+1", "n+2")
+ */
 function getBackupFromClimatization(roomId) {
   const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`)
   if (capacityTable) {
@@ -332,6 +397,11 @@ function getBackupFromClimatization(roomId) {
   return getBackupFromClimaInputs(roomId)
 }
 
+/**
+ * Obtém o backup dos inputs de clima da sala
+ * @param {string} roomId - ID da sala
+ * @returns {string} Tipo de backup ("n", "n+1", "n+2")
+ */
 function getBackupFromClimaInputs(roomId) {
   const roomContent = document.getElementById(`room-content-${roomId}`)
   if (roomContent) {
@@ -341,6 +411,16 @@ function getBackupFromClimaInputs(roomId) {
   return "n"
 }
 
+/**
+ * Atualiza a exibição dos resultados de capacidade na tabela
+ * @param {string} roomId - ID da sala
+ * @param {number} cargaEstimada - Carga térmica estimada em TR
+ * @param {number} solucao - Número de unidades da solução
+ * @param {number} solucaoComBackup - Número de unidades com backup
+ * @param {number} total - Capacidade total em TR
+ * @param {number} folga - Percentual de folga
+ * @param {string} backupType - Tipo de backup
+ */
 function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup, total, folga, backupType) {
   updateElementText(`carga-estimada-${roomId}`, cargaEstimada.toFixed(1))
   updateElementText(`solucao-${roomId}`, solucao)
@@ -355,6 +435,10 @@ function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup,
   }
 }
 
+/**
+ * Atualiza a configuração de backup quando alterada pelo usuário
+ * @param {HTMLSelectElement} selectElement - Elemento select do backup
+ */
 function updateBackupConfiguration(selectElement) {
   const roomId = findRoomId(selectElement.closest(".capacity-calculation-table"))
   if (roomId) {
@@ -374,6 +458,11 @@ function updateBackupConfiguration(selectElement) {
   }
 }
 
+/**
+ * Manipula mudanças no backup provenientes dos inputs de clima
+ * @param {string} roomId - ID da sala
+ * @param {string} newBackupValue - Novo valor de backup
+ */
 function handleClimaInputBackupChange(roomId, newBackupValue) {
   const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`)
 
@@ -396,6 +485,11 @@ function handleClimaInputBackupChange(roomId, newBackupValue) {
   }
 }
 
+/**
+ * Sincroniza o backup com os inputs de clima da sala
+ * @param {string} roomId - ID da sala
+ * @param {string} backupValue - Valor de backup a ser sincronizado
+ */
 function syncBackupWithClimaInputs(roomId, backupValue) {
   const roomContent = document.getElementById(`room-content-${roomId}`)
   if (roomContent) {
@@ -410,6 +504,10 @@ function syncBackupWithClimaInputs(roomId, backupValue) {
   }
 }
 
+/**
+ * Sincroniza o backup da tabela de capacidade com os valores atuais
+ * @param {string} roomId - ID da sala
+ */
 function syncCapacityTableBackup(roomId) {
   setTimeout(() => {
     const backupFromInputs = getBackupFromClimaInputs(roomId)
@@ -425,7 +523,7 @@ function syncCapacityTableBackup(roomId) {
   }, 500)
 }
 
-// modules/capacityCalculator.js
+// Exportação das funções do módulo
 export {
   buildCapacityCalculationTable,
   calculateCapacitySolution,

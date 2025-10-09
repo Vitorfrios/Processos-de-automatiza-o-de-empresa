@@ -1,30 +1,35 @@
 import { showEmptyProjectMessageIfNeeded, removeEmptyProjectMessage } from '../../ui/interface.js'
 import { buildRoomHTML } from './salas.js' 
 
+/**
+ * Cria uma nova sala vazia no projeto especificado
+ * Insere o HTML da sala e inicializa componentes necessários
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @param {string} roomId - ID único da sala (opcional)
+ * @returns {boolean} True se a sala foi criada com sucesso
+ */
 function createEmptyRoom(projectName, roomName, roomId) {
   const roomHTML = buildRoomHTML(projectName, roomName, roomId)
   const projectContent = document.getElementById(`project-content-${projectName}`)
   
   if (!projectContent) {
-    console.error(`[v0] Conteúdo do projeto ${projectName} não encontrado para adicionar sala`)
+    console.error(` Conteúdo do projeto ${projectName} não encontrado para adicionar sala`)
     return false
   }
 
-  // Remover mensagem de "nenhuma sala" se existir
   removeEmptyProjectMessage(projectContent)
   
-  // Inserir a sala antes do botão "Adicionar Nova Sala"
   const addRoomSection = projectContent.querySelector('.add-room-section')
   if (addRoomSection) {
     addRoomSection.insertAdjacentHTML('beforebegin', roomHTML)
   } else {
-    // Se não encontrar a seção, inserir no final
+
     projectContent.insertAdjacentHTML('beforeend', roomHTML)
   }
 
-  console.log(`[v0] Sala ${roomName} criada no projeto ${projectName}`)
+  console.log(` Sala ${roomName} criada no projeto ${projectName}`)
   
-  // CORREÇÃO: Inicializar fator de segurança após criar a sala
   setTimeout(() => {
     if (typeof initializeFatorSeguranca === 'function') {
       const newRoomId = roomId || `${projectName}-${roomName}`;
@@ -39,21 +44,34 @@ function createEmptyRoom(projectName, roomName, roomId) {
   }, 800);
   return true
 }
+
+/**
+ * Insere o HTML de uma sala no conteúdo do projeto
+ * @param {HTMLElement} projectContent - Elemento do conteúdo do projeto
+ * @param {string} roomHTML - HTML da sala a ser inserida
+ */
 function insertRoomIntoProject(projectContent, roomHTML) {
   const addRoomSection = projectContent.querySelector(".add-room-section")
   addRoomSection.insertAdjacentHTML("beforebegin", roomHTML)
 }
 
+/**
+ * Adiciona uma nova sala ao projeto com nome automático
+ * @param {string} projectName - Nome do projeto onde adicionar a sala
+ */
 function addNewRoom(projectName) {
   const projectContent = document.getElementById(`project-content-${projectName}`)
   const roomCount = projectContent.querySelectorAll(".room-block").length + 1
   const roomName = `Sala${roomCount}`
 
   createEmptyRoom(projectName, roomName, null)
-  console.log(`[v0] ${roomName} adicionada ao ${projectName}`)
+  console.log(` ${roomName} adicionada ao ${projectName}`)
 }
 
-// Função para corrigir inputs de fator de segurança em HTML existente
+/**
+ * Corrige inputs de fator de segurança que estejam vazios
+ * Aplica valores padrão baseados nas constantes do sistema
+ */
 function fixExistingCapacityInputs() {
   console.log('[FIX] Verificando inputs de capacidade existentes...');
   
@@ -82,6 +100,11 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(fixExistingCapacityInputs, 2000);
 });
 
+/**
+ * Remove uma sala do projeto após confirmação do usuário
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala a ser removida
+ */
 function deleteRoom(projectName, roomName) {
   const confirmMessage = "Tem certeza que deseja deletar esta sala? Os dados permanecerão no servidor."
 
@@ -93,7 +116,7 @@ function deleteRoom(projectName, roomName) {
   roomBlock.remove()
   showEmptyProjectMessageIfNeeded(projectContent)
 
-  console.log(`[v0] Sala ${roomName} removida da interface`)
+  console.log(` Sala ${roomName} removida da interface`)
 }
 
 export {

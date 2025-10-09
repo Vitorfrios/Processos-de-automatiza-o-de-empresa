@@ -1,40 +1,40 @@
 /* ========== ESTILOS PARA MÁQUINAS DE CLIMATIZAÇÃO ========== */
 
 .climatization-machine {
-  background: white;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background: var(--machine-bg);
+  border: 2px solid var(--machine-border);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--machine-margin-bottom);
+  box-shadow: 0 2px 4px var(--machine-shadow);
   transition: all 0.3s ease;
   overflow: hidden;
 }
 
 .climatization-machine:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.1);
+  border-color: var(--machine-hover-border);
+  box-shadow: 0 4px 8px var(--machine-hover-shadow);
 }
 
 /* Header da máquina */
 .climatization-machine .machine-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 1rem 1.5rem;
+  background: var(--machine-header-bg);
+  color: var(--color-white);
+  padding: var(--machine-header-padding);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  border-radius: 6px 6px 0 0;
+  gap: var(--machine-header-gap);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
 /* Input editável */
 .machine-title-editable {
   background: transparent;
   border: 2px solid transparent;
-  border-radius: 4px;
-  padding: 0.25rem 0.5rem;
+  border-radius: var(--border-radius-sm);
+  padding: var(--machine-title-padding);
   font-size: 1.1rem;
   font-weight: 600;
-  color: white;
+  color: var(--color-white);
   flex: 1;
   cursor: text;
   transition: all 0.2s ease;
@@ -42,30 +42,30 @@
 }
 
 .machine-title-editable:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--minimizer-hover-bg);
   border-color: rgba(255, 255, 255, 0.3);
 }
 
 .machine-title-editable:focus {
   outline: none;
-  background: white;
-  color: #333;
+  background: var(--machine-title-focus-bg);
+  color: var(--machine-title-focus-color);
   border-color: rgba(255, 255, 255, 0.6);
   cursor: text;
 }
 
 .machine-title-editable::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--machine-title-placeholder);
 }
 
 /* Minimizador */
 .climatization-machine .minimizer {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: var(--minimizer-bg);
+  color: var(--color-white);
   border: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
+  width: var(--machine-minimizer-size);
+  height: var(--machine-minimizer-size);
+  border-radius: var(--machine-minimizer-radius);
   font-size: 1.2rem;
   cursor: pointer;
   display: flex;
@@ -76,29 +76,29 @@
 }
 
 .climatization-machine .minimizer:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--minimizer-hover-bg);
 }
 
 /* Botão de deletar */
 .climatization-machine .btn-delete-small {
-  background: #dc3545;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 0.4rem 0.8rem;
+  background: var(--btn-delete-small-bg);
+  color: var(--color-white);
+  border: 1px solid var(--machine-delete-border);
+  padding: var(--machine-delete-padding);
   font-size: 1rem;
-  border-radius: 4px;
+  border-radius: var(--machine-minimizer-radius);
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
 
 .climatization-machine .btn-delete-small:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--minimizer-hover-bg);
   transform: scale(1.05);
 }
 
 /* Conteúdo da máquina */
 .machine-content {
-  padding: 1.5rem;
+  padding: var(--machine-content-padding);
   transition: all 0.3s ease;
 }
 
@@ -110,9 +110,9 @@
 .climatization-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 2px solid #f8f9fa;
+  gap: var(--machine-form-gap);
+  padding-bottom: var(--machine-form-padding);
+  border-bottom: 2px solid var(--machine-form-border);
 }
 
 .climatization-form-grid .form-group {
@@ -121,38 +121,38 @@
 
 /* Seção de opções */
 .machine-options-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--spacing-lg);
 }
 
 .machine-options-section h6 {
   font-size: 1rem;
   font-weight: 600;
-  color: #495057;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #dee2e6;
+  color: var(--color-gray-dark);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--options-section-border);
 }
 
 .options-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 0.75rem;
+  gap: var(--options-grid-gap);
 }
 
 .option-checkbox {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
+  gap: var(--option-gap);
+  padding: var(--option-padding);
+  background: var(--option-bg);
+  border: 1px solid var(--option-border);
+  border-radius: var(--border-radius);
   transition: all 0.2s ease;
 }
 
 .option-checkbox:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
+  background: var(--option-hover-bg);
+  border-color: var(--option-hover-border);
 }
 
 .option-checkbox input[type="checkbox"] {
@@ -164,7 +164,7 @@
 .option-checkbox label {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: var(--option-gap);
   cursor: pointer;
   width: 100%;
 }
@@ -178,7 +178,7 @@
 .option-name {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #495057;
+  color: var(--option-name-color);
   line-height: 1.3;
   margin-bottom: 0.25rem;
 }
@@ -186,68 +186,68 @@
 .option-price {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #28a745;
+  color: var(--option-price-color);
   line-height: 1.2;
   margin-top: 10px;
 }
 
 .option-checkbox input[type="checkbox"]:checked + .option-content .option-name {
   font-weight: 600;
-  color: #667eea;
+  color: var(--option-checked-name);
 }
 
 .option-checkbox input[type="checkbox"]:checked + .option-content .option-price {
-  color: #218838;
+  color: var(--option-checked-price);
 }
 
 .option-checkbox:has(input[type="checkbox"]:checked) {
-  background: #e8f4fd;
-  border-color: #667eea;
+  background: var(--option-checked-bg);
+  border-color: var(--option-checked-border);
 }
 
 /* Preços */
 .price-display {
-  background: #f8f9fa;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  padding: 0.75rem;
+  background: var(--price-display-bg);
+  border: 2px solid var(--price-display-border);
+  border-radius: var(--border-radius);
+  padding: var(--price-display-padding);
   font-weight: 600;
-  color: #28a745;
+  color: var(--price-display-color);
   text-align: center;
   font-size: 1rem;
 }
 
 .machine-total-price {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
+  background: var(--machine-total-bg);
+  padding: var(--machine-total-padding);
+  border-radius: var(--border-radius);
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--machine-total-shadow);
 }
 
 .machine-total-price strong {
-  color: white;
+  color: var(--color-white);
   font-size: 1.1rem;
 }
 
 .machine-total-price span {
-  background: white;
-  color: #667eea;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  background: var(--machine-total-span-bg);
+  color: var(--machine-total-span-color);
+  padding: var(--machine-total-span-padding);
+  border-radius: var(--border-radius);
   font-weight: 700;
-  margin-left: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-left: var(--spacing-xs);
+  box-shadow: var(--machine-total-span-shadow);
 }
 
 /* Selects específicos */
 .machine-type-select,
 .machine-potency-select,
 .machine-voltage-select {
-  background: white;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  padding: 0.75rem;
+  background: var(--color-white);
+  border: 2px solid var(--select-border);
+  border-radius: var(--border-radius);
+  padding: var(--select-padding);
   font-size: 0.95rem;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -257,8 +257,8 @@
 .machine-potency-select:focus,
 .machine-voltage-select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--select-focus-border);
+  box-shadow: var(--select-focus-shadow);
 }
 
 /* Animações */
@@ -275,449 +275,4 @@
 
 .climatization-machine {
   animation: fadeIn 0.3s ease-out;
-}
-
-/* ========== ESTILOS PARA TABELA DE CAPACIDADE ========== */
-
-.capacity-calculation-table {
-  margin-bottom: 30px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-}
-
-.capacity-calculation-table .table-title {
-  margin: 0;
-  padding: 15px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #495057;
-  background: #f8f9fa;
-  border-radius: 8px 8px 0 0;
-  border-bottom: 1px solid #e9ecef;
-}
-
-/* CONTAINER DA TABELA COM SCROLL - SOMENTE A TABELA */
-.table-container {
-  overflow-x: auto;
-  border-radius: 0 0 8px 8px;
-  background: white;
-  width: 100%;
-  -webkit-overflow-scrolling: touch;
-}
-
-.thermal-capacity-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  min-width: 800px;
-  table-layout: fixed;
-  margin: 0;
-  font-size: 0.85rem; /* Tamanho fixo para desktop */
-}
-
-.thermal-capacity-table th {
-  background: #343a40;
-  color: white;
-  padding: 12px 8px;
-  font-weight: 600;
-  font-size: 0.85rem; /* Tamanho fixo */
-  text-align: center;
-  border: 1px solid #454d55;
-  white-space: nowrap;
-}
-
-.thermal-capacity-table td {
-  padding: 10px 8px;
-  text-align: center;
-  border: 1px solid #dee2e6;
-  font-size: 0.85rem; /* Tamanho fixo */
-  white-space: nowrap;
-  background: #e9ecef;
-}
-
-/* Defina larguras específicas para as colunas */
-.thermal-capacity-table th:nth-child(1),
-.thermal-capacity-table td:nth-child(1) {
-  width: 130px; /* Carga Estimada */
-}
-
-.thermal-capacity-table th:nth-child(2),
-.thermal-capacity-table td:nth-child(2) {
-  width: 110px; /* Fator de Seg. */
-}
-
-.thermal-capacity-table th:nth-child(3),
-.thermal-capacity-table td:nth-child(3) {
-  width: 130px; /* Cap. Unit. */
-}
-
-.thermal-capacity-table th:nth-child(4),
-.thermal-capacity-table td:nth-child(4) {
-  width: 90px; /* Solução */
-}
-
-.thermal-capacity-table th:nth-child(5),
-.thermal-capacity-table td:nth-child(5) {
-  width: 130px; /* Com back-up */
-}
-
-.thermal-capacity-table th:nth-child(6),
-.thermal-capacity-table td:nth-child(6) {
-  width: 110px; /* TOTAL */
-}
-
-.thermal-capacity-table th:nth-child(7),
-.thermal-capacity-table td:nth-child(7) {
-  width: 110px; /* FOLGA */
-}
-
-/* Cores das células */
-.thermal-capacity-table td:first-child {
-  background: #e9ecef;
-  font-weight: 700;
-  color: #1565c0;
-}
-
-.thermal-capacity-table td:nth-child(4) {
-  background: #e9ecef;
-  font-weight: 600;
-  color: #495057;
-}
-
-.thermal-capacity-table td:nth-child(6) {
-  background: #e9ecef;
-  font-weight: 700;
-  color: #1565c0;
-}
-
-.thermal-capacity-table td:nth-child(7) {
-  background: #e9ecef;
-  font-weight: 600;
-  color: #28a745;
-}
-
-/* Inputs da tabela de capacidade */
-.capacity-input {
-  width: 100%;
-  max-width: 80px;
-  padding: 6px 8px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 0.85rem; /* Tamanho fixo */
-  background: white;
-  transition: all 0.2s ease;
-}
-
-.capacity-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-}
-
-.capacity-select {
-  width: 100%;
-  max-width: 95px;
-  padding: 6px 8px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 0.85rem; /* Tamanho fixo */
-  background: white;
-  transition: all 0.2s ease;
-}
-
-.capacity-select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-}
-
-.backup-cell {
-  padding: 0 !important;
-  vertical-align: top;
-  background: white;
-}
-
-.backup-selection {
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 1px solid #696b6e;
-  margin: 5px;
-  background: #e9ecef;
-  font-size: 0.85rem; /* Tamanho fixo */
-}
-
-.backup-solution {
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #e9ecef;
-  font-weight: 600;
-  font-size: 0.85rem; /* Tamanho fixo */
-}
-
-.backup-select {
-  width: 100%;
-  max-width: 95px;
-  padding: 4px 6px;
-  border: 1px solid #ced4da;
-  border-radius: 3px;
-  font-size: 0.85rem; /* Tamanho fixo */
-  background: #f8f9fa;
-  text-align: center;
-  margin-bottom: 5px;
-  transition: all 0.2s ease;
-}
-
-.backup-select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-}
-
-/* Scrollbar Melhorada */
-.table-container::-webkit-scrollbar {
-  height: 14px;
-}
-
-.table-container::-webkit-scrollbar-track {
-  background: #f8f9fa;
-  border-radius: 0 0 10px 10px;
-}
-
-.table-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 10px;
-  border: 3px solid #f8f9fa;
-  transition: all 0.3s ease;
-}
-
-.table-container::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-  transform: scale(1.05);
-}
-
-.table-container::-webkit-scrollbar-corner {
-  background: #f8f9fa;
-  border-radius: 0 0 10px 0;
-}
-
-.table-container {
-  scrollbar-width: thin;
-}
-
-/* ========== LAYOUT RESPONSIVO AVANÇADO ========== */
-
-/* Tableta - Apenas ajusta padding, mantém fonte */
-@media (max-width: 1024px) {
-  .thermal-capacity-table th,
-  .thermal-capacity-table td {
-    padding: 10px 6px;
-    /* Fonte mantém 0.85rem */
-  }
-  
-  .capacity-input {
-    max-width: 70px;
-    padding: 5px 6px;
-  }
-  
-  .capacity-select {
-    max-width: 85px;
-    padding: 5px 6px;
-  }
-  
-  .backup-select {
-    max-width: 85px;
-    padding: 3px 5px;
-  }
-}
-
-/* Mobile Grande - Apenas ajusta padding, mantém fonte */
-@media (max-width: 768px) {
-  .capacity-calculation-table {
-    margin-bottom: 1.5rem;
-  }
-  
-  .capacity-calculation-table .table-title {
-    font-size: 1.1rem; /* Mantém mesmo tamanho */
-    padding: 12px 15px;
-  }
-  
-  .thermal-capacity-table th,
-  .thermal-capacity-table td {
-    padding: 8px 4px;
-    /* Fonte mantém 0.85rem */
-  }
-  
-  .capacity-input {
-    max-width: 65px;
-    padding: 4px 5px;
-  }
-  
-  .capacity-select {
-    max-width: 80px;
-    padding: 4px 5px;
-  }
-  
-  .backup-select {
-    max-width: 80px;
-    padding: 3px 4px;
-  }
-  
-  .backup-selection,
-  .backup-solution {
-    height: 26px;
-  }
-  
-  /* Ajustes para máquinas - mantém fontes */
-  .climatization-form-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
-  .options-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .climatization-machine .machine-header {
-    padding: 0.75rem 1rem;
-  }
-  
-  .machine-content {
-    padding: 1rem;
-  }
-  
-  .machine-total-price {
-    padding: 0.75rem 1rem;
-  }
-  
-  .machine-total-price strong {
-    font-size: 1.1rem; /* Mantém tamanho */
-  }
-  
-  .machine-total-price span {
-    padding: 0.4rem 0.8rem;
-    margin-left: 0.25rem;
-  }
-}
-
-/* Mobile Pequeno - Apenas ajusta padding, mantém fonte legível */
-@media (max-width: 480px) {
-  .thermal-capacity-table th,
-  .thermal-capacity-table td {
-    padding: 6px 3px;
-    /* Fonte mantém 0.85rem para legibilidade */
-  }
-  
-  .capacity-input {
-    max-width: 60px;
-    padding: 4px 4px;
-  }
-  
-  .capacity-select {
-    max-width: 75px;
-    padding: 4px 4px;
-  }
-  
-  .backup-select {
-    max-width: 75px;
-    padding: 2px 3px;
-  }
-  
-  .climatization-machine .machine-header {
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
-  }
-  
-  .option-checkbox {
-    padding: 0.5rem;
-  }
-  
-  .table-container::-webkit-scrollbar {
-    height: 8px;
-  }
-}
-
-/* Mobile Muito Pequeno - Mantém fonte mínima legível */
-@media (max-width: 360px) {
-  .thermal-capacity-table th,
-  .thermal-capacity-table td {
-    padding: 5px 2px;
-    font-size: 0.8rem; /* Mínimo para legibilidade */
-  }
-  
-  .capacity-input {
-    max-width: 55px;
-    padding: 3px 3px;
-    font-size: 0.8rem;
-  }
-  
-  .capacity-select {
-    max-width: 70px;
-    padding: 3px 3px;
-    font-size: 0.8rem;
-  }
-  
-  .backup-select {
-    max-width: 70px;
-    padding: 2px 3px;
-    font-size: 0.8rem;
-  }
-  
-  .backup-selection,
-  .backup-solution {
-    height: 24px;
-    font-size: 0.8rem;
-  }
-}
-
-/* ========== MODO CARDS PARA TELAS MUITO PEQUENAS ========== */
-@media (max-width: 320px) {
-  .table-container {
-    overflow-x: visible;
-  }
-  
-  .thermal-capacity-table {
-    display: block;
-    min-width: auto;
-    font-size: 0.85rem; /* Mantém legível */
-  }
-  
-  .thermal-capacity-table thead {
-    display: none;
-  }
-  
-  .thermal-capacity-table tbody,
-  .thermal-capacity-table tr {
-    display: block;
-  }
-  
-  .thermal-capacity-table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem;
-    border-bottom: 1px solid #dee2e6;
-    text-align: left;
-    font-size: 0.85rem; /* Mantém legível */
-  }
-  
-  .thermal-capacity-table td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #495057;
-    margin-right: 1rem;
-    flex-shrink: 0;
-    font-size: 0.85rem; /* Mantém legível */
-  }
-  
-  /* Esconde células vazias no modo card */
-  .thermal-capacity-table td:empty {
-    display: none;
-  }
 }

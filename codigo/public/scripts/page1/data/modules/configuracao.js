@@ -1,3 +1,4 @@
+//Criação da seção de configuração 
 function buildConfigurationSection(projectName, roomName) {
   const roomId = `${projectName}-${roomName}`
   return `

@@ -12,7 +12,7 @@ import {
 } from "./server.js"
 
 /**
- * Busca todos os projetos do servidor
+ * Busca todos os projetos do servidor e normaliza os IDs
  * @returns {Promise<Array>} Lista de projetos normalizados
  */
 async function fetchProjects() {
@@ -44,7 +44,7 @@ async function fetchProjects() {
 
     return normalizedProjects
   } catch (error) {
-    console.error("[v0] Erro ao buscar projetos:", error)
+    console.error(" Erro ao buscar projetos:", error)
     showSystemStatus("ERRO: Não foi possível carregar projetos", "error")
     return []
   }
@@ -150,7 +150,7 @@ async function salvarProjeto(projectData) {
     showSystemStatus("Projeto salvo com sucesso!", "success")
     return createdProject
   } catch (error) {
-    console.error("[v0] Erro ao SALVAR projeto:", error)
+    console.error(" Erro ao SALVAR projeto:", error)
     showSystemStatus("ERRO: Não foi possível salvar o projeto", "error")
     return null
   }
@@ -167,7 +167,7 @@ async function atualizarProjeto(projectId, projectData) {
     projectId = ensureStringId(projectId)
 
     if (!projectId) {
-      console.error("[v0] ERRO: ID do projeto inválido para atualização")
+      console.error(" ERRO: ID do projeto inválido para atualização")
       showSystemStatus("ERRO: ID do projeto inválido para atualização", "error")
       return null
     }
@@ -193,7 +193,7 @@ async function atualizarProjeto(projectId, projectData) {
     showSystemStatus("Projeto atualizado com sucesso!", "success")
     return updatedProject
   } catch (error) {
-    console.error("[v0] Erro ao ATUALIZAR projeto:", error)
+    console.error(" Erro ao ATUALIZAR projeto:", error)
     showSystemStatus("ERRO: Não foi possível atualizar o projeto", "error")
     return null
   }

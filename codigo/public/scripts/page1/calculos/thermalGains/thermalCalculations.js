@@ -86,9 +86,9 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
 
     const totals = calculateTotals(gains);
 
-    console.log("[v0] Ganhos calculados:", gains);
-    console.log("[v0] Totais:", totals);
-    console.log("[v0] ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====");
+    console.log(" Ganhos calculados:", gains);
+    console.log(" Totais:", totals);
+    console.log(" ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====");
 
     updateThermalGainsDisplay(roomId, gains, totals, uValues, {...inputData, vazaoArExterno});
 

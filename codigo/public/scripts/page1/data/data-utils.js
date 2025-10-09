@@ -1,5 +1,12 @@
 import { ensureStringId } from '../utils/utils.js'
 
+/**
+ * Constrói o objeto de dados completo de um projeto a partir do HTML
+ * Coleta nome do projeto, salas e todos os dados associados
+ * @param {HTMLElement} projectBlock - Elemento HTML do projeto
+ * @param {string|number} projectId - ID único do projeto
+ * @returns {Object} Dados estruturados do projeto
+ */
 function buildProjectData(projectBlock, projectId) {
   const projectData = {
     nome: projectBlock.querySelector(".project-title").textContent.trim(),
@@ -21,6 +28,12 @@ function buildProjectData(projectBlock, projectId) {
   return projectData
 }
 
+/**
+ * Extrai todos os dados de uma sala a partir do elemento HTML
+ * Coleta inputs, configurações, máquinas, ganhos térmicos e capacidade
+ * @param {HTMLElement} roomBlock - Elemento HTML da sala
+ * @returns {Object} Dados completos da sala
+ */
 function extractRoomData(roomBlock) {
   const roomData = {
     nome: roomBlock.querySelector(".room-title").textContent.trim(),
@@ -144,8 +157,13 @@ function extractRoomData(roomBlock) {
   return roomData
 }
 
-// ========== FUNÇÃO PARA COLETAR DADOS DE CAPACIDADE DE REFRIGERAÇÃO ==========
-
+/**
+ * Extrai dados de capacidade de refrigeração de uma sala
+ * Coleta fator de segurança, capacidade unitária, backup e cálculos
+ * @param {HTMLElement} roomBlock - Elemento HTML da sala
+ * @param {string} roomId - ID único da sala
+ * @returns {Object|null} Dados de capacidade ou null se inválidos
+ */
 function extractCapacityData(roomBlock, roomId) {
   try {
     const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
@@ -190,8 +208,12 @@ function extractCapacityData(roomBlock, roomId) {
   }
 }
 
-// ========== FUNÇÃO PARA COLETAR DADOS DAS MÁQUINAS DE CLIMATIZAÇÃO ==========
-
+/**
+ * Extrai dados de uma máquina de climatização individual
+ * Coleta tipo, potência, tensão, preço e opções selecionadas
+ * @param {HTMLElement} machineElement - Elemento HTML da máquina
+ * @returns {Object} Dados completos da máquina
+ */
 function extractClimatizationMachineData(machineElement) {
   const machineData = {
     nome: machineElement.querySelector('.machine-title-editable')?.value || '',
@@ -218,7 +240,12 @@ function extractClimatizationMachineData(machineElement) {
   return machineData;
 }
 
-// Função auxiliar para parsear preços
+/**
+ * Função auxiliar para converter texto de preço em número
+ * Remove formatação brasileira (R$, pontos e vírgulas)
+ * @param {string} priceText - Texto do preço formatado
+ * @returns {number} Valor numérico do preço
+ */
 function parseMachinePrice(priceText) {
   if (!priceText) return 0;
   return parseFloat(priceText.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) || 0;

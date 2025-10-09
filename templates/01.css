@@ -3,39 +3,39 @@
 
 :root {
   /* ===== CORES PRIMÁRIAS E GRADIENTES ===== */
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* buttons.css, machines.css, capacity-tables.css */
+  --primary-gradient: linear-gradient(135deg, #1E3A5F 0%, #2D5F8B 100%); /* buttons.css, machines.css, capacity-tables.css */
 
   /* buttons.css */
-  --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); 
-  --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%); 
-  --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-  --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --success-gradient: linear-gradient(135deg, #00A859 0%, #00C46B 100%); 
+  --danger-gradient: linear-gradient(135deg, #D9534F 0%, #E74C3C 100%); 
+  --warning-gradient: linear-gradient(135deg, #F39C12 0%, #F1C40F 100%); 
+  --info-gradient: linear-gradient(135deg, #3498DB 0%, #5DADE2 100%);
   
   /* Gradientes específicos */
-  --body-bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* reset.css */
+  --body-bg-gradient: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%); /* reset.css */
 
   /* buttons.css */
-  --btn-save-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); 
-  --btn-verify-gradient: linear-gradient(135deg, #fa8bff 0%, #2bd2ff 100%); 
-  --btn-download-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); 
+  --btn-save-gradient: linear-gradient(135deg, #00A859 0%, #00C46B 100%); 
+  --btn-verify-gradient: linear-gradient(135deg, #8E44AD 0%, #9B59B6 100%); 
+  --btn-download-gradient: linear-gradient(135deg, #ECF0F1 0%, #BDC3C7 100%); 
 
   /* projects.css */
-  --status-banner-success-bg: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); 
-  --status-banner-error-bg: linear-gradient(135deg, #fa709a 0%, #fee140 100%); 
+  --status-banner-success-bg: linear-gradient(135deg, #00A859 0%, #00C46B 100%); 
+  --status-banner-error-bg: linear-gradient(135deg, #D9534F 0%, #E74C3C 100%); 
 
   /* ===== PALETA DE CORES SÓLIDAS ===== */
   /* All */
-  --color-white: #ffffff; 
-  --color-dark: #333333; 
+  --color-white: #FFFFFF; 
+  --color-dark: #2C3E50; 
 
   /* Specific */
-  --color-gray-dark: #495057; /* machines.css, capacity-tables.css, navigation.css */
-  --color-gray-lightest: #f8f9fa; /* machines.css, capacity-tables.css, cards.css */
-  --color-gray: #6c757d; /* reset.css, cards.css */
+  --color-gray-dark: #34495E; /* machines.css, capacity-tables.css, navigation.css */
+  --color-gray-lightest: #F8F9FA; /* machines.css, capacity-tables.css, cards.css */
+  --color-gray: #7F8C8D; /* reset.css, cards.css */
 
   /* machines.css, capacity-tables.css */
-  --color-gray-light: #dee2e6; 
-  --color-gray-lighter: #e9ecef; 
+  --color-gray-light: #ECF0F1; 
+  --color-gray-lighter: #F5F7F8; 
 
   /* ===== CORES DE TEXTO E FUNDO ===== */
 
@@ -48,104 +48,104 @@
   /* ===== CORES DE COMPONENTES ===== */
   
   /* Botões - buttons.css */
-  --btn-add-small-bg: #38ef7d;
-  --btn-delete-small-bg: #dc3545;
-  --btn-shadow: rgba(0, 0, 0, 0.2);
+  --btn-add-small-bg: #00C46B;
+  --btn-delete-small-bg: #E74C3C;
+  --btn-shadow: rgba(44, 62, 80, 0.15);
   
   /* Minimizadores - buttons.css, machines.css */
   --minimizer-bg: rgba(255, 255, 255, 0.2);
   --minimizer-hover-bg: rgba(255, 255, 255, 0.3);
-  --section-minimizer-bg: #ced4da;
-  --section-minimizer-color: #495057;
-  --section-minimizer-hover-bg: #adb5bd;
+  --section-minimizer-bg: #3498DB;
+  --section-minimizer-color: #FFFFFF;
+  --section-minimizer-hover-bg: #2980B9;
 
   /* Cards - cards.css */
   --card-bg: var(--color-white);
-  --card-shadow: rgba(0, 0, 0, 0.1);
-  --card-hover-shadow: rgba(0, 0, 0, 0.15);
+  --card-shadow: rgba(44, 62, 80, 0.08);
+  --card-hover-shadow: rgba(44, 62, 80, 0.12);
   --editable-title-hover-bg: rgba(255, 255, 255, 0.15);
 
   /* Header e Navegação - header.css, navigation.css */
-  --header-shadow: rgba(0, 0, 0, 0.1);
-  --navbar-bg: #2d3748;
-  --navbar-shadow: rgba(0, 0, 0, 0.1);
+  --header-shadow: rgba(30, 58, 95, 0.1);
+  --navbar-bg: #1E3A5F;
+  --navbar-shadow: rgba(30, 58, 95, 0.15);
   --nav-link-color: var(--color-white);
-  --nav-link-hover-bg: rgba(255, 255, 255, 0.1);
+  --nav-link-hover-bg: rgba(52, 152, 219, 0.2);
 
   /* Projetos e Status - projects.css */
-  --status-banner-shadow: rgba(0, 0, 0, 0.1);
-  --status-banner-error-border: #dc3545;
+  --status-banner-shadow: rgba(44, 62, 80, 0.1);
+  --status-banner-error-border: #E74C3C;
   --status-banner-text-color: var(--color-white);
 
   /* ===== MÁQUINAS DE CLIMATIZAÇÃO - machines.css ===== */
   --machine-bg: var(--color-white);
-  --machine-border: #e9ecef;
-  --machine-shadow: rgba(0, 0, 0, 0.05);
-  --machine-hover-border: #667eea;
-  --machine-hover-shadow: rgba(102, 126, 234, 0.1);
+  --machine-border: #ECF0F1;
+  --machine-shadow: rgba(44, 62, 80, 0.04);
+  --machine-hover-border: #3498DB;
+  --machine-hover-shadow: rgba(52, 152, 219, 0.08);
   --machine-header-bg: var(--primary-gradient);
   --machine-title-placeholder: rgba(255, 255, 255, 0.7);
   --machine-title-focus-bg: var(--color-white);
   --machine-title-focus-color: var(--color-dark);
   --machine-delete-border: rgba(255, 255, 255, 0.3);
-  --machine-form-border: #f8f9fa;
+  --machine-form-border: #F8F9FA;
 
   /* Opções de Máquinas - machines.css */
-  --option-bg: #f8f9fa;
-  --option-border: #dee2e6;
-  --option-hover-bg: #e9ecef;
-  --option-hover-border: #adb5bd;
-  --option-name-color: #495057;
-  --option-price-color: #28a745;
-  --option-checked-bg: #e8f4fd;
-  --option-checked-border: #667eea;
-  --option-checked-name: #667eea;
-  --option-checked-price: #218838;
+  --option-bg: #F8F9FA;
+  --option-border: #ECF0F1;
+  --option-hover-bg: #ECF0F1;
+  --option-hover-border: #3498DB;
+  --option-name-color: #34495E;
+  --option-price-color: #00A859;
+  --option-checked-bg: #E8F6F3;
+  --option-checked-border: #3498DB;
+  --option-checked-name: #1E3A5F;
+  --option-checked-price: #00A859;
 
   /* Preços e Seletores - machines.css */
-  --price-display-bg: #f8f9fa;
-  --price-display-border: #dee2e6;
-  --price-display-color: #28a745;
+  --price-display-bg: #F8F9FA;
+  --price-display-border: #ECF0F1;
+  --price-display-color: #00A859;
   --machine-total-bg: var(--primary-gradient);
-  --machine-total-shadow: rgba(0, 0, 0, 0.1);
+  --machine-total-shadow: rgba(30, 58, 95, 0.1);
   --machine-total-span-bg: var(--color-white);
-  --machine-total-span-color: #667eea;
-  --machine-total-span-shadow: rgba(0, 0, 0, 0.1);
-  --select-border: #dee2e6;
-  --select-focus-border: #667eea;
-  --select-focus-shadow: rgba(102, 126, 234, 0.1);
+  --machine-total-span-color: #1E3A5F;
+  --machine-total-span-shadow: rgba(30, 58, 95, 0.1);
+  --select-border: #ECF0F1;
+  --select-focus-border: #3498DB;
+  --select-focus-shadow: rgba(52, 152, 219, 0.1);
 
   /* ===== TABELAS DE CAPACIDADE - capacity-tables.css ===== */
-  --capacity-table-bg: #f8f9fa;
-  --capacity-table-border: #e9ecef;
-  --capacity-title-bg: #f8f9fa;
-  --capacity-title-color: #495057;
-  --capacity-title-border: #e9ecef;
+  --capacity-table-bg: #F8F9FA;
+  --capacity-table-border: #ECF0F1;
+  --capacity-title-bg: #F8F9FA;
+  --capacity-title-color: #34495E;
+  --capacity-title-border: #ECF0F1;
   --table-container-bg: var(--color-white);
-  --table-header-bg: #343a40;
+  --table-header-bg: #1E3A5F;
   --table-header-color: var(--color-white);
-  --table-header-border: #454d55;
-  --table-cell-bg: #e9ecef;
-  --table-cell-border: #dee2e6;
-  --table-cell-first-color: #1565c0;
-  --table-cell-solution-color: #495057;
-  --table-cell-total-color: #1565c0;
-  --table-cell-folga-color: #28a745;
+  --table-header-border: #2D5F8B;
+  --table-cell-bg: #ECF0F1;
+  --table-cell-border: #D5DBDB;
+  --table-cell-first-color: #1E3A5F;
+  --table-cell-solution-color: #34495E;
+  --table-cell-total-color: #1E3A5F;
+  --table-cell-folga-color: #00A859;
 
   /* Inputs de Tabela - capacity-tables.css */
-  --capacity-input-border: #ced4da;
-  --capacity-input-focus-border: #667eea;
-  --capacity-input-focus-shadow: rgba(102, 126, 234, 0.1);
+  --capacity-input-border: #D5DBDB;
+  --capacity-input-focus-border: #3498DB;
+  --capacity-input-focus-shadow: rgba(52, 152, 219, 0.1);
 
   /* Backup e Scroll - capacity-tables.css */
   --backup-cell-bg: var(--color-white);
-  --backup-selection-bg: #e9ecef;
-  --backup-selection-border: #696b6e;
-  --backup-solution-bg: #e9ecef;
-  --backup-select-bg: #f8f9fa;
-  --scrollbar-track-bg: #f8f9fa;
+  --backup-selection-bg: #ECF0F1;
+  --backup-selection-border: #7F8C8D;
+  --backup-solution-bg: #ECF0F1;
+  --backup-select-bg: #F8F9FA;
+  --scrollbar-track-bg: #F8F9FA;
   --scrollbar-thumb-bg: var(--primary-gradient);
-  --scrollbar-thumb-hover-bg: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  --scrollbar-thumb-hover-bg: linear-gradient(135deg, #152B4A 0%, #264A78 100%);
 
   /* ===== SISTEMA DE ESPAÇAMENTOS ===== */
   /* Utilizado em: 

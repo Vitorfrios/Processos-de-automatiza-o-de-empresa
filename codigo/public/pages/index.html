@@ -10,7 +10,6 @@
 </head>
 
 <body>
-    <!-- Cabeçalho   -->
     <header class="header">
         <div class="header-left">
             <img src="" alt="Logo Esquerda" class="logo">
@@ -23,7 +22,7 @@
         </div>
     </header>
 
-    <!-- Barra de Navegação   -->
+    <!-- Barra de Navegação -->
     <nav class="navbar">
         <ul class="nav-list">
             <li><a href="#projetos">Projetos</a></li>
@@ -33,48 +32,62 @@
         </ul>
     </nav>
 
-    <!-- Área Principal   -->
+    <!-- Main html -->
     <main class="main-content">
         <div class="container">
-            <!-- Botão para adicionar novo projeto   -->
+            <!-- Botão para adicionar novo projeto - Chama addNewProject() do modules/interface.js -->
             <div class="add-project-section">
                 <button class="btn btn-add" onclick="addNewProject()" id="add-project-btn">+ Adicionar Novo
                     Projeto</button>
             </div>
 
-            <!-- Container de Projetos   -->
+            <!-- Container de Projetos - Renderizado dinamicamente pelo JavaScript -->
+            <!-- Projetos são carregados via loadProjectsFromServer() e renderizados com renderProjectFromData() -->
             <div id="projects-container">
-                <!-- Primeiro projeto gerado por HTML   -->
+                <!-- Primeiro projeto gerado por HTML - Serve como template inicial -->
+                <!-- Projetos subsequentes são criados via createEmptyProject() -->
                 <div class="project-block" data-project-id="" data-project-name="Projeto1">
                     <div class="project-header">
+                        <!-- Botão minimizador - Chama toggleProject() do modules/interface.js -->
                         <button class="minimizer" onclick="toggleProject('Projeto1')">+</button>
+                        <!-- Título editável - Chama makeEditable() do modules/edit.js -->
                         <h2 class="project-title editable-title" data-editable="true"
                             onclick="makeEditable(this, 'project')">Projeto1</h2>
                         <div class="project-actions">
+                            <!-- Botão remover projeto - Chama deleteProject() do modules/projects.js -->
                             <button class="btn btn-delete" onclick="deleteProject('Projeto1')">Remover</button>
                         </div>
                     </div>
+                    <!-- Conteúdo do projeto - Inicialmente colapsado -->
+                    <!-- Expandido/recolhido via toggleElementVisibility() -->
                     <div class="project-content collapsed" id="project-content-Projeto1">
-                        <!-- Sala1 inicial   -->
+                        <!-- Sala1 inicial - Salas são criadas via createEmptyRoom() do modules/rooms.js -->
                         <div class="room-block" data-room-id="" data-room-name="Sala1">
                             <div class="room-header">
+                                <!-- Botão minimizador da sala - Chama toggleRoom() do modules/interface.js -->
                                 <button class="minimizer" onclick="toggleRoom('Projeto1-Sala1')">+</button>
+                                <!-- Título editável da sala - Chama makeEditable() do modules/edit.js -->
                                 <h3 class="room-title editable-title" data-editable="true"
                                     onclick="makeEditable(this, 'room')">Sala1</h3>
+                                <!-- Botão remover sala - Chama deleteRoom() do modules/rooms.js -->
                                 <button class="btn btn-delete-small"
                                     onclick="deleteRoom('Projeto1', 'Sala1')">Deletar</button>
                             </div>
+                            <!-- Conteúdo da sala - Inicialmente colapsado -->
                             <div class="room-content collapsed" id="room-content-Projeto1-Sala1">
-                                <!-- Seção de Climatização   -->
+                                <!-- Seção de Climatização - Contém inputs e cálculos térmicos -->
                                 <div class="section-block">
                                     <div class="section-header">
+                                        <!-- Botão minimizador da seção - Chama toggleSection() do modules/interface.js -->
                                         <button class="minimizer"
                                             onclick="toggleSection('Projeto1-Sala1-clima')">+</button>
                                         <h4 class="section-title">Climatização</h4>
                                     </div>
                                     <div class="section-content collapsed" id="section-content-Projeto1-Sala1-clima">
+                                        <!-- Subseção: Tabela de Inputs de Climatização -->
                                         <div class="subsection-block">
                                             <div class="subsection-header">
+                                                <!-- Botão minimizador da subseção - Chama toggleSubsection() do modules/interface.js -->
                                                 <button class="minimizer"
                                                     onclick="toggleSubsection('Projeto1-Sala1-clima-table')">+</button>
                                                 <h5 class="subsection-title">Tabela de Inputs</h5>
@@ -82,7 +95,8 @@
                                             <div class="subsection-content collapsed"
                                                 id="subsection-content-Projeto1-Sala1-clima-table">
                                                 <div class="clima-table">
-                                                    <!-- Linha 1   -->
+                                                    <!-- Linha 1 - Dados básicos do ambiente -->
+                                                    <!-- Todos os inputs têm data-field para identificação no extractRoomData() -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Ambiente:</label>
@@ -93,6 +107,7 @@
                                                         </div>
                                                         <div class="clima-cell">
                                                             <label>Back-up:</label>
+                                                            <!-- Select de backup - também sincronizado com a tabela de capacidade -->
                                                             <select class="form-input clima-input" data-field="backup"
                                                                     onchange="calculateVazaoArAndThermalGains('Projeto1-Sala1')"> <!-- CORRIGIDO -->
                                                                 <option value="">Selecione</option>
@@ -102,7 +117,7 @@
                                                             </select>
                                                         </div>
                                                     </div>
-                                                    <!-- Linha 2   -->
+                                                    <!-- Linha 2 - Dados de área e tipo de construção -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Área (m²):</label>
@@ -121,7 +136,7 @@
                                                             </select>
                                                         </div>
                                                     </div>
-                                                    <!-- Linha 3   -->
+                                                    <!-- Linha 3 - Dimensões das paredes (Oeste e Leste) -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Parede Oeste (m):</label>
@@ -138,7 +153,7 @@
                                                                 onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                    <!-- Linha 4   -->
+                                                    <!-- Linha 4 - Dimensões das paredes (Norte e Sul) -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Parede Norte (m):</label>
@@ -154,7 +169,7 @@
                                                                 onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                    <!-- Linha 5   -->
+                                                    <!-- Linha 5 - Altura do pé direito -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Pé Direito (m):</label>
@@ -164,7 +179,7 @@
                                                         </div>
                                                         <div class="clima-cell clima-cell-empty"></div>
                                                     </div>
-                                                    <!-- Linha 6   -->
+                                                    <!-- Linha 6 - Divisórias para áreas não climatizadas -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Divisória Área Não Climatizada 1 (m²):</label>
@@ -181,7 +196,7 @@
                                                                 onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                    <!-- Linha 7   -->
+                                                    <!-- Linha 7 - Divisórias para áreas climatizadas -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Divisória Área Climatizada 1 (m²):</label>
@@ -198,7 +213,7 @@
                                                                 onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                    <!-- Linha 8   -->
+                                                    <!-- Linha 8 - Dissipação e número de pessoas -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Dissipação (W):</label>
@@ -214,7 +229,7 @@
                                                                 onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                    <!-- Linha 9   -->
+                                                    <!-- Linha 9 - Quantidade de portas -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>N° Portas Duplas:</label>
@@ -229,7 +244,7 @@
                                                                 min="0" onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                    <!-- Linha 10   -->
+                                                    <!-- Linha 10 - Pressurização e setpoint -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Pressurização (Pa):</label>
@@ -245,7 +260,8 @@
                                                                 onchange="calculateVazaoAr('Projeto1-Sala1')">
                                                         </div>
                                                     </div>
-                                                    <!-- Linha 11 - Resultado   -->
+                                                    <!-- Linha 11 - Resultado do cálculo de vazão de ar -->
+                                                    <!-- Atualizado por calculateVazaoAr() via updateElementText() -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell clima-cell-result">
                                                             <label>Vazão de Ar Externo (l/s):</label>
@@ -254,7 +270,7 @@
                                                         </div>
                                                         <div class="clima-cell clima-cell-empty"></div>
                                                     </div>
-                                                    <!-- Linha 12   -->
+                                                    <!-- Linha 12 - Sistema de combate a incêndio -->
                                                     <div class="clima-row">
                                                         <div class="clima-cell">
                                                             <label>Combate a Incêndio:</label>
@@ -275,7 +291,8 @@
                                             </div>
                                         </div>
 
-                                        <!-- Added thermal gains calculation section -->
+                                        <!-- Subseção: Cálculo de Ganhos Térmicos -->
+                                        <!-- Todos os valores são calculados por calculateThermalGains() -->
                                         <div class="subsection-block">
                                             <div class="subsection-header">
                                                 <!-- adicionar botao de minimizar -->
@@ -285,7 +302,7 @@
                                             </div>
                                             <div class="subsection-content collapsed"
                                                 id="subsection-content-Projeto1-Sala1-ganhos-termicos">
-                                                <!-- Summary Header -->
+                                                <!-- Summary Header - Resumo dos totais -->
                                                 <div class="thermal-summary">
                                                     <span class="thermal-summary-item">
                                                         <strong>Total de Ganhos em W:</strong>
@@ -300,7 +317,8 @@
                                                     </span>
                                                 </div>
 
-                                                <!-- Ganho de paredes e teto -->
+                                                <!-- Tabela 1: Ganho de paredes e teto -->
+                                                <!-- Valores calculados com base nas dimensões da sala -->
                                                 <div class="thermal-table-container">
                                                     <h6 class="thermal-table-title">Ganho de paredes e teto</h6>
                                                     <table class="thermal-table">
@@ -358,7 +376,8 @@
                                                     </table>
                                                 </div>
 
-                                                <!-- Ganho por divisórias -->
+                                                <!-- Tabela 2: Ganho por divisórias -->
+                                                <!-- Baseado nas áreas de divisória informadas -->
                                                 <div class="thermal-table-container">
                                                     <h6 class="thermal-table-title">Ganho por divisórias</h6>
                                                     <table class="thermal-table">
@@ -410,7 +429,7 @@
                                                     </table>
                                                 </div>
 
-                                                <!-- Ganho por piso -->
+                                                <!-- Tabela 3: Ganho por piso -->
                                                 <div class="thermal-table-container">
                                                     <h6 class="thermal-table-title">Ganho por piso</h6>
                                                     <table class="thermal-table">
@@ -440,7 +459,7 @@
                                                     </table>
                                                 </div>
 
-                                                <!-- Ganho por iluminação -->
+                                                <!-- Tabela 4: Ganho por iluminação -->
                                                 <div class="thermal-table-container">
                                                     <h6 class="thermal-table-title">Ganho por iluminação</h6>
                                                     <table class="thermal-table">
@@ -471,7 +490,7 @@
                                                     </table>
                                                 </div>
 
-                                                <!-- Dissipação térmica interna -->
+                                                <!-- Tabela 5: Dissipação térmica interna -->
                                                 <div class="thermal-table-container">
                                                     <h6 class="thermal-table-title">Dissipação térmica interna</h6>
                                                     <table class="thermal-table">
@@ -501,7 +520,7 @@
                                                     </table>
                                                 </div>
 
-                                                <!-- Ganhos por ocupação de pessoas -->
+                                                <!-- Tabela 6: Ganhos por ocupação de pessoas -->
                                                 <div class="thermal-table-container">
                                                     <h6 class="thermal-table-title">Ganhos por ocupação de pessoas</h6>
                                                     <table class="thermal-table">
@@ -533,7 +552,7 @@
                                                     </table>
                                                 </div>
 
-                                                <!-- Ganho sensível de ar externo -->
+                                                <!-- Tabela 7: Ganho sensível de ar externo -->
                                                 <div class="thermal-table-container">
                                                     <h6 class="thermal-table-title">Ganho sensível de ar externo</h6>
                                                     <table class="thermal-table">
@@ -564,7 +583,7 @@
                                                     </table>
                                                 </div>
 
-                                                <!-- Ganho latente de ar externo -->
+                                                <!-- Tabela 8: Ganho latente de ar externo -->
                                                 <div class="thermal-table-container">
                                                     <h6 class="thermal-table-title">Ganho latente de ar externo</h6>
                                                     <table class="thermal-table">
@@ -598,16 +617,18 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Seção de Máquinas -->
+                                <!-- Seção de Máquinas - Gestão de equipamentos de climatização -->
                                 <div class="section-block">
                                     <div class="section-header">
                                         <button class="minimizer" onclick="toggleSection('Projeto1-Sala1-maquinas')">+</button>
                                         <h4 class="section-title">Máquinas</h4>
+                                        <!-- Botão para adicionar máquina - Chama addMachine() do modules/machineManagement.js -->
                                         <button class="btn btn-add-small" onclick="addMachine('Projeto1-Sala1')">+ Adicionar Máquina</button>
                                     </div>
                                     <div class="section-content collapsed" id="section-content-Projeto1-Sala1-maquinas">
                                         
                                         <!-- TABELA INTERATIVA DE CAPACIDADE DE REFRIGERAÇÃO -->
+                                        <!-- Construída por buildCapacityCalculationTable() do modules/capacityCalculator.js -->
                                         <div class="capacity-calculation-table">
                                             <h5 class="table-title">Cálculo de Capacidade de Refrigeração</h5>
                                             <div class="table-container">
@@ -625,14 +646,17 @@
                                                     </thead>
                                                     <tbody>
                                                         <tr>
+                                                            <!-- Carga estimada baseada nos ganhos térmicos calculados -->
                                                             <td id="carga-estimada-Projeto1-Sala1">0</td>
                                                             <td>
+                                                                <!-- Input do fator de segurança - Chama calculateCapacitySolution() -->
                                                                 <input type="number" id="fator-seguranca-Projeto1-Sala1" step="0.01" 
                                                                     class="capacity-input" 
                                                                     onchange="calculateCapacitySolution('Projeto1-Sala1')"
                                                                     oninput="calculateCapacitySolution('Projeto1-Sala1')">
                                                             </td>
                                                             <td>
+                                                                <!-- Seleção de capacidade unitária - Chama calculateCapacitySolution() -->
                                                                 <select id="capacidade-unitaria-Projeto1-Sala1" class="capacity-select" 
                                                                         onchange="calculateCapacitySolution('Projeto1-Sala1')">
                                                                     <option value="1">1 TR</option>
@@ -649,9 +673,12 @@
                                                                     <option value="30">30 TR</option>
                                                                 </select>
                                                             </td>
+                                                            <!-- Solução calculada (número de unidades) -->
                                                             <td id="solucao-Projeto1-Sala1">0</td>
                                                             <td class="backup-cell">
                                                                 <div class="backup-selection">
+                                                                    <!-- Seleção de backup - Chama updateBackupConfiguration() do modules/capacityCalculator.js -->
+                                                                    <!-- Sincronizado com o select de backup da seção de climatização -->
                                                                     <select class="backup-select" onchange="updateBackupConfiguration(this)">
                                                                         <option value="n" selected>n</option>
                                                                         <option value="n+1">n+1</option>
@@ -659,10 +686,13 @@
                                                                     </select>
                                                                 </div>
                                                                 <div class="backup-solution">
+                                                                    <!-- Solução com backup aplicado -->
                                                                     <span id="solucao-backup-Projeto1-Sala1">0</span>
                                                                 </div>
                                                             </td>
+                                                            <!-- Total de capacidade calculado -->
                                                             <td id="total-capacidade-Projeto1-Sala1">0</td>
+                                                            <!-- Folga percentual calculada -->
                                                             <td id="folga-Projeto1-Sala1">0%</td>
                                                         </tr>
                                                     </tbody>
@@ -670,13 +700,15 @@
                                             </div>
                                         </div>
 
+                                        <!-- Container para máquinas de climatização -->
+                                        <!-- Preenchido dinamicamente por addMachine() e loadSavedMachines() -->
                                         <div class="machines-container" id="machines-Projeto1-Sala1">
                                             <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Seção de Configuração   -->
+                                <!-- Seção de Configuração - Opções de instalação -->
                                 <div class="section-block">
                                     <div class="section-header">
                                         <button class="minimizer"
@@ -690,6 +722,8 @@
                                                     mais):</label>
                                                 <div class="checkbox-options-grid">
                                                     <div class="checkbox-column">
+                                                        <!-- Checkboxes de opções de instalação -->
+                                                        <!-- Coletados por extractRoomData() no modules/data-utils.js -->
                                                         <div class="checkbox-option">
                                                             <input type="checkbox" id="opcao1-Projeto1-Sala1"
                                                                 name="opcoesInstalacao-Projeto1-Sala1"
@@ -747,23 +781,25 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Removidos os botões "Atualizar Dados" e "Salvar" das salas  -->
                             </div>
                         </div>
 
-                        <!-- Botão para adicionar nova sala   -->
+                        <!-- Botão para adicionar nova sala - Chama addNewRoom() do modules/rooms.js -->
                         <div class="add-room-section">
                             <button class="btn btn-add-secondary" onclick="addNewRoom('Projeto1')">+ Adicionar Nova
                                 Sala</button>
                         </div>
 
-                        <!-- Adicionado botão dinâmico que muda de "Salvar" para "Atualizar"  -->
+                        <!-- Adicionado botão dinâmico que muda de "Salvar" para "Atualizar" -->
+                        <!-- Construído por buildProjectActionsFooter() do modules/interface.js -->
                         <div class="project-actions-footer">
+                            <!-- Botão para verificar dados - Chama verifyProjectData() do modules/projects.js -->
                             <button class="btn btn-verify" onclick="verifyProjectData('Projeto1')">Verificar
                                 Dados</button>
+                            <!-- Botão principal para salvar/atualizar - Chama saveProject() do modules/projects.js -->
                             <button class="btn btn-save project-save-btn" onclick="saveProject('Projeto1', event)"
                                 data-project-name="Projeto1">Salvar Projeto</button>
+                            <!-- Botões de exportação (funções não implementadas no código fornecido) -->
                             <button class="btn btn-download" onclick="downloadPDF('Projeto1')">Baixar PDF</button>
                             <button class="btn btn-download" onclick="downloadWord('Projeto1')">Baixar Word</button>
                         </div>
@@ -773,6 +809,8 @@
         </div>
     </main>
 
+    <!-- Script principal que inicializa todo o sistema -->
+    <!-- Carrega módulos, constantes e projetos na inicialização -->
     <script type="module" src="../scripts/page1/main.js"></script>
 
 
