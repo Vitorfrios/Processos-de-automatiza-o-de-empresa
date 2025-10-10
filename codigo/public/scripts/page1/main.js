@@ -1,6 +1,3 @@
-import { 
-  API_CONFIG
-} from './config/config.js'
 
 // Inicializar variáveis globais simples
 window.systemConstants = null;
@@ -98,7 +95,7 @@ async function loadAllModules() {
 async function loadSystemConstants() {
   try {
     console.log(" Carregando constantes do sistema...")
-    const response = await fetch(`${API_CONFIG.data}/constants`)
+    const response = await fetch(`/constants`)
 
     if (!response.ok) {
       throw new Error(`Erro HTTP: ${response.status}`)

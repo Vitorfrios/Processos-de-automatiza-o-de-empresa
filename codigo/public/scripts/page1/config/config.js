@@ -1,7 +1,4 @@
-const API_CONFIG = {
-  projects: "http://localhost:3004",
-  data: "http://localhost:3001",
-}
+
 
 const CALCULATION_CONSTANTS = {
   FLOW_COEFFICIENT: 0.827,
@@ -25,7 +22,6 @@ const NORMALIZATION_DONE_KEY = "idsNormalizedOnServer"
 
 
 export {
-  API_CONFIG,
   CALCULATION_CONSTANTS,
   UI_CONSTANTS,
   SESSION_STORAGE_KEY,

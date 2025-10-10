@@ -1,4 +1,4 @@
-import { API_CONFIG, UI_CONSTANTS } from "../config/config.js"
+import { UI_CONSTANTS } from "../config/config.js"
 import { ensureStringId } from "../utils/utils.js"
 import { showSystemStatus } from "../ui/interface.js"
 import { buildProjectData } from "./data-utils.js"
@@ -17,7 +17,8 @@ import {
  */
 async function fetchProjects() {
   try {
-    const response = await fetch(`${API_CONFIG.projects}/projetos`)
+    const response = await fetch('/projetos')
+
 
     if (!response.ok) {
       throw new Error(`Erro HTTP: ${response.status}`)
@@ -134,7 +135,7 @@ async function salvarProjeto(projectData) {
 
     projectData = normalizeProjectIds(projectData)
 
-    const response = await fetch(`${API_CONFIG.projects}/projetos`, {
+      const response = await fetch('/projetos', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(projectData),
@@ -175,7 +176,7 @@ async function atualizarProjeto(projectId, projectData) {
     projectData = normalizeProjectIds(projectData)
     projectData.id = projectId
 
-    const url = `${API_CONFIG.projects}/projetos/${projectId}`
+    const url = `/projetos/${projectId}`
 
     const response = await fetch(url, {
       method: "PUT",

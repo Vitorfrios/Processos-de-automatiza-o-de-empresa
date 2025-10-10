@@ -1,4 +1,3 @@
-import { API_CONFIG } from '../../../config/config.js'   
 import { buildCapacityCalculationTable } from './capacityCalculator.js'
 import { buildClimatizationMachineHTML } from './machineManagement.js'
 import { removeEmptyMessage, showEmptyMessage } from './utilities.js'
@@ -41,7 +40,7 @@ async function loadMachinesData() {
   if (machinesData) return machinesData
 
   try {
-    const response = await fetch(`${API_CONFIG.data}/machines`)
+    const response = await fetch(`/machines`)
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }

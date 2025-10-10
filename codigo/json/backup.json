@@ -1,3 +1,242 @@
 {
-  "projetos": []
+  "projetos": [
+    {
+      "nome": "abc",
+      "salas": [
+        {
+          "nome": "cba",
+          "inputs": {
+            "ambiente": "",
+            "backup": "",
+            "area": "",
+            "tipoConstrucao": "",
+            "paredeOeste": 0,
+            "paredeLeste": 0,
+            "paredeNorte": 0,
+            "paredeSul": 0,
+            "peDireito": 0,
+            "divisoriaNaoClima1": 0,
+            "divisoriaNaoClima2": 0,
+            "divisoriaClima1": 0,
+            "divisoriaClima2": 0,
+            "dissipacao": 0,
+            "numPessoas": 0,
+            "numPortasDuplas": 0,
+            "numPortasSimples": 0,
+            "pressurizacao": 0,
+            "setpoint": 0,
+            "combateIncendio": "",
+            "vazaoArExterno": 0
+          },
+          "Cálculo_Capacidade_Refrigeração": {
+            "fatorSeguranca": 10,
+            "capacidadeUnitaria": 1,
+            "backup": "n",
+            "cargaEstimada": 0,
+            "solucao": "0",
+            "solucaoBackup": "0",
+            "totalCapacidade": 0,
+            "folga": "0%"
+          },
+          "ganhosTermicos": {
+            "totalW": 0,
+            "totalTR": 0,
+            "totalExterno": 0,
+            "totalDivisoes": 0,
+            "totalPiso": 0,
+            "totalIluminacao": 0,
+            "totalEquipamentos": 0,
+            "totalPessoas": 0,
+            "totalArExterno": 0
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1001"
+    },
+    {
+      "nome": "uiyfuhv",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "",
+            "backup": "",
+            "area": 0,
+            "tipoConstrucao": "",
+            "paredeOeste": 0,
+            "paredeLeste": 0,
+            "paredeNorte": 0,
+            "paredeSul": 0,
+            "peDireito": 0,
+            "divisoriaNaoClima1": 0,
+            "divisoriaNaoClima2": 0,
+            "divisoriaClima1": 0,
+            "divisoriaClima2": 0,
+            "dissipacao": 0,
+            "numPessoas": 0,
+            "numPortasDuplas": 0,
+            "numPortasSimples": 0,
+            "pressurizacao": 0,
+            "setpoint": 0,
+            "combateIncendio": "",
+            "vazaoArExterno": 0
+          },
+          "Cálculo_Capacidade_Refrigeração": {
+            "fatorSeguranca": 10,
+            "capacidadeUnitaria": 1,
+            "backup": "n",
+            "cargaEstimada": 0,
+            "solucao": "0",
+            "solucaoBackup": "0",
+            "totalCapacidade": 0,
+            "folga": "0.0%"
+          },
+          "ganhosTermicos": {
+            "totalW": 0,
+            "totalTR": 0,
+            "totalExterno": 0,
+            "totalDivisoes": 0,
+            "totalPiso": 0,
+            "totalIluminacao": 0,
+            "totalEquipamentos": 0,
+            "totalPessoas": 0,
+            "totalArExterno": 0
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1002"
+    },
+    {
+      "nome": "Projeto3",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "",
+            "backup": "",
+            "area": 0,
+            "tipoConstrucao": "",
+            "paredeOeste": 0,
+            "paredeLeste": 0,
+            "paredeNorte": 0,
+            "paredeSul": 0,
+            "peDireito": 0,
+            "divisoriaNaoClima1": 0,
+            "divisoriaNaoClima2": 0,
+            "divisoriaClima1": 0,
+            "divisoriaClima2": 0,
+            "dissipacao": 0,
+            "numPessoas": 0,
+            "numPortasDuplas": 0,
+            "numPortasSimples": 0,
+            "pressurizacao": 0,
+            "setpoint": 0,
+            "combateIncendio": "",
+            "vazaoArExterno": 0
+          },
+          "Cálculo_Capacidade_Refrigeração": {
+            "fatorSeguranca": 10,
+            "capacidadeUnitaria": 1,
+            "backup": "n",
+            "cargaEstimada": 0,
+            "solucao": "0",
+            "solucaoBackup": "0",
+            "totalCapacidade": 0,
+            "folga": "0.0%"
+          },
+          "ganhosTermicos": {
+            "totalW": 0,
+            "totalTR": 0,
+            "totalExterno": 0,
+            "totalDivisoes": 0,
+            "totalPiso": 0,
+            "totalIluminacao": 0,
+            "totalEquipamentos": 0,
+            "totalPessoas": 0,
+            "totalArExterno": 0
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1003"
+    },
+    {
+      "nome": "656yeuooiutdh",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "",
+            "backup": "",
+            "area": "",
+            "tipoConstrucao": "",
+            "paredeOeste": 0,
+            "paredeLeste": 0,
+            "paredeNorte": 0,
+            "paredeSul": 0,
+            "peDireito": 0,
+            "divisoriaNaoClima1": 0,
+            "divisoriaNaoClima2": 0,
+            "divisoriaClima1": 0,
+            "divisoriaClima2": 0,
+            "dissipacao": 0,
+            "numPessoas": 0,
+            "numPortasDuplas": 0,
+            "numPortasSimples": 0,
+            "pressurizacao": 0,
+            "setpoint": 0,
+            "combateIncendio": "",
+            "vazaoArExterno": 0
+          },
+          "configuracoes": {
+            "opcoesInstalacao": [
+              "bocal_insuflamento_protegido"
+            ]
+          },
+          "Cálculo_Capacidade_Refrigeração": {
+            "fatorSeguranca": 10,
+            "capacidadeUnitaria": 1,
+            "backup": "n",
+            "cargaEstimada": 0,
+            "solucao": "0",
+            "solucaoBackup": "0",
+            "totalCapacidade": 0,
+            "folga": "0%"
+          },
+          "maquinasClimatizacao": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "1TR",
+              "tensao": "127V/1F",
+              "precoBase": 10000,
+              "opcoesSelecionadas": [
+                {
+                  "id": 6,
+                  "nome": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+                  "valor": 600
+                }
+              ],
+              "precoTotal": 10600
+            }
+          ],
+          "ganhosTermicos": {
+            "totalW": 0,
+            "totalTR": 0,
+            "totalExterno": 0,
+            "totalDivisoes": 0,
+            "totalPiso": 0,
+            "totalIluminacao": 0,
+            "totalEquipamentos": 0,
+            "totalPessoas": 0,
+            "totalArExterno": 0
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1004"
+    }
+  ]
 }

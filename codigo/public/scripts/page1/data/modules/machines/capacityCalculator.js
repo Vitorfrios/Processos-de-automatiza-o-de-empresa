@@ -1,4 +1,3 @@
-import { API_CONFIG } from '../../../config/config.js'  
 import { updateElementText, findRoomId } from './utilities.js'
 
 // Configurações para inicialização do sistema de capacidade
@@ -235,7 +234,7 @@ function saveCapacityData(projectName, roomName) {
     
     if (!capacityData) return
 
-    fetch(`${API_CONFIG.projects}/projetos`)
+    fetch(`/projetos`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -261,7 +260,7 @@ function saveCapacityData(projectName, roomName) {
         
         projetos[projetoIndex].salas[salaIndex]['Cálculo_Capacidade_Refrigeração'] = capacityData
         
-        return fetch(`${API_CONFIG.projects}/projetos`, {
+        return fetch(`/projetos`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -295,7 +294,7 @@ function loadCapacityData(projectName, roomName) {
     
     console.log(`[CAPACITY] Tentando carregar dados para ${projectName}-${roomName}`)
     
-    fetch(`${API_CONFIG.projects}/projetos`)
+    fetch(`/projetos`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
