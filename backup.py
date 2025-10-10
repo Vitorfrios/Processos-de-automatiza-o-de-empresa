@@ -24,13 +24,85 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     """Handler 100% compatível com sua lógica JavaScript"""
     
     def __init__(self, *args, **kwargs):
-        self.project_root = Path.cwd()
-        super().__init__(*args, directory=str(self.project_root), **kwargs)
+        # Encontra a pasta raiz do projeto
+        self.project_root = self.find_project_root()
+        print(f"📁 Servindo arquivos de: {self.project_root}")
+        
+        # Define o diretório base para servir arquivos
+        serve_directory = self.project_root
+        super().__init__(*args, directory=str(serve_directory), **kwargs)
     
+    def find_project_root(self):
+        """Encontra a raiz do projeto procurando pela estrutura de pastas"""
+        current_dir = Path.cwd()
+        
+        print(f"🔍 Procurando estrutura a partir de: {current_dir}")
+        
+        # Cenário 1: Estamos DENTRO da pasta codigo
+        if (current_dir / "public" / "pages" / "index.html").exists():
+            print("✅ Estrutura encontrada: Dentro da pasta codigo")
+            return current_dir
+        
+        # Cenário 2: A pasta codigo está no diretório atual
+        codigo_dir = current_dir / "codigo"
+        if (codigo_dir / "public" / "pages" / "index.html").exists():
+            print("✅ Estrutura encontrada: Pasta codigo no diretório atual")
+            return codigo_dir
+        
+        # Cenário 3: Procurar em diretórios pais
+        for parent in current_dir.parents:
+            codigo_dir = parent / "codigo"
+            if (codigo_dir / "public" / "pages" / "index.html").exists():
+                print(f"✅ Estrutura encontrada: {codigo_dir}")
+                return codigo_dir
+        
+        # Fallback: usa o diretório atual
+        print("⚠️  Estrutura de pastas não encontrada, usando diretório atual")
+        return current_dir
+    
+    def translate_path(self, path):
+        """Traduz o caminho URL para caminho de arquivo"""
+        path = urlparse(path).path
+        path = path.lstrip('/')
+        
+        # Se o path começa com 'codigo/', remove isso
+        if path.startswith('codigo/'):
+            path = path[7:]  # Remove 'codigo/'
+        
+        # Constrói o caminho completo
+        full_path = Path(self.directory) / path
+        
+        # Verifica se o arquivo existe
+        if full_path.exists() and full_path.is_file():
+            return str(full_path)
+        
+        # Se não encontrou, tenta adicionar 'index.html' se for um diretório
+        if full_path.is_dir():
+            index_path = full_path / "index.html"
+            if index_path.exists():
+                return str(index_path)
+        
+        # Fallback: comportamento padrão
+        return super().translate_path('/' + path)
+    
+    def log_message(self, format, *args):
+        """Log personalizado para evitar poluição visual"""
+        # Só mostra logs de erro
+        if args[1] != '200' and args[1] != '304':
+            super().log_message(format, *args)
+
     def do_GET(self):
         """Processa requisições GET"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
+        
+        # Remove 'codigo/' do início do path se existir
+        if path.startswith('/codigo/'):
+            path = path[7:]
+        
+        # Log apenas para requests importantes
+        if path not in ['/', '/favicon.ico'] and not path.startswith('/static/'):
+            print(f"📥 GET: {path}")
         
         if path == '/projetos' or path == '/projects':
             self.handle_get_projetos()
@@ -43,37 +115,17 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif path == '/machines':
             self.handle_get_machines()
         elif path == '/health-check':
-            # Rota especial para verificar se servidor está vivo
             self.send_json_response({"status": "online", "timestamp": time.time()})
         else:
             try:
                 super().do_GET()
             except Exception as e:
+                if path != '/favicon.ico':
+                    print(f"❌ Erro ao servir {path}: {e}")
                 self.send_error(404, f"Arquivo não encontrado: {path}")
     
-    def do_POST(self):
-        """Processa POST - para NOVOS projetos (sem ID)"""
-        parsed_path = urlparse(self.path)
-        path = parsed_path.path
-        
-        if path in ['/projetos', '/projects']:
-            self.handle_post_projetos()  # NOVO projeto
-        elif path == '/dados':
-            self.handle_post_dados()
-        elif path == '/backup':
-            self.handle_post_backup()
-        else:
-            self.send_error(404, "Rota não encontrada")
-    
-    def do_PUT(self):
-        """Processa PUT - para ATUALIZAR projetos existentes (com ID)"""
-        parsed_path = urlparse(self.path)
-        path = parsed_path.path
-        
-        if path.startswith('/projetos/') or path.startswith('/projects/'):
-            self.handle_put_projeto()  # ATUALIZAR projeto existente
-        else:
-            self.send_error(404, "Rota não encontrada")
+    # [MANTENHA TODOS OS OUTROS MÉTODOS EXATAMENTE COMO ESTAVAM]
+    # handle_get_projetos, handle_post_projetos, etc...
     
     def handle_get_projetos(self):
         """Retorna todos os projetos do BACKUP.json"""
@@ -94,7 +146,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Erro ao carregar projetos: {str(e)}")
             self.send_json_response([])
-    
+
     def handle_get_constants(self):
         """Constants do DADOS.json"""
         try:
@@ -113,7 +165,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Erro ao carregar constants: {str(e)}")
             self.send_json_response({})
-    
+
     def handle_get_machines(self):
         """Machines do DADOS.json"""
         try:
@@ -132,7 +184,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Erro ao carregar machines: {str(e)}")
             self.send_json_response([])
-    
+
     def handle_get_dados(self):
         """DADOS.json completo"""
         try:
@@ -152,7 +204,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Erro ao carregar dados: {str(e)}")
             self.send_error(500, f"Erro: {str(e)}")
-    
+
     def handle_get_backup(self):
         """BACKUP.json completo"""
         try:
@@ -172,7 +224,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Erro ao carregar backup: {str(e)}")
             self.send_error(500, f"Erro: {str(e)}")
-    
+
     def handle_post_projetos(self):
         """🔥 NOVO projeto (sem ID ou ID não existente)"""
         try:
@@ -182,7 +234,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             backup_file = self.find_json_file('backup.json')
             
-            # Lê backup existente
             if backup_file.exists():
                 with open(backup_file, 'r', encoding='utf-8') as f:
                     backup_data = json.load(f)
@@ -190,14 +241,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 backup_data = {"projetos": []}
             
             projetos = backup_data.get('projetos', [])
-            
-            # 🔥 SEMPRE adiciona como NOVO projeto (POST = novo)
             projetos.append(novo_projeto)
             print(f"➕ ADICIONANDO novo projeto ID: {novo_projeto.get('id')}")
             
             backup_data['projetos'] = projetos
             
-            # Salva
             with open(backup_file, 'w', encoding='utf-8') as f:
                 json.dump(backup_data, f, indent=2, ensure_ascii=False)
             
@@ -206,7 +254,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Erro ao adicionar projeto: {str(e)}")
             self.send_error(500, f"Erro: {str(e)}")
-    
+
     def handle_put_projeto(self):
         """🔥 ATUALIZA projeto existente (com ID)"""
         try:
@@ -228,7 +276,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             projetos = backup_data.get('projetos', [])
             projeto_encontrado = False
             
-            # 🔥 PROCURA e ATUALIZA o projeto pelo ID
             for i, projeto in enumerate(projetos):
                 if str(projeto.get('id')) == project_id:
                     projetos[i] = projeto_atualizado
@@ -242,7 +289,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             backup_data['projetos'] = projetos
             
-            # Salva
             with open(backup_file, 'w', encoding='utf-8') as f:
                 json.dump(backup_data, f, indent=2, ensure_ascii=False)
             
@@ -251,7 +297,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Erro ao atualizar projeto: {str(e)}")
             self.send_error(500, f"Erro: {str(e)}")
-    
+
     def handle_post_dados(self):
         """Salva DADOS.json"""
         try:
@@ -270,7 +316,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Erro ao salvar dados: {str(e)}")
             self.send_error(500, f"Erro: {str(e)}")
-    
+
     def handle_post_backup(self):
         """Salva BACKUP.json"""
         try:
@@ -289,20 +335,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Erro ao salvar backup: {str(e)}")
             self.send_error(500, f"Erro: {str(e)}")
-    
+
     def find_json_file(self, filename):
         """Encontra arquivos JSON"""
         possible_locations = [
-            self.project_root / "codigo" / "json" / filename,
             self.project_root / "json" / filename,
-            self.project_root / filename,
+            Path.cwd() / "json" / filename,
         ]
         
         for location in possible_locations:
             if location.exists():
                 return location
         
-        target_dir = self.project_root / "codigo" / "json"
+        target_dir = self.project_root / "json"
         target_dir.mkdir(parents=True, exist_ok=True)
         return target_dir / filename
     
@@ -376,25 +421,18 @@ def find_available_port(start_port=8000, max_attempts=10):
 
 def open_browser(port=8000):
     """Abre o navegador automaticamente"""
-    time.sleep(2)
+    time.sleep(2)  # Dá tempo para o servidor iniciar
     
-    # Procura o index.html na estrutura correta
-    possible_paths = [
-        Path.cwd() / "codigo" / "public" / "pages" / "index.html",
-        Path.cwd() / "public" / "pages" / "index.html",
-        Path.cwd() / "index.html",
-    ]
+    # URL direta para a página principal
+    url = f"http://localhost:{port}/public/pages/index.html"
+    print(f"🌐 Abrindo navegador: {url}")
     
-    for path in possible_paths:
-        if path.exists():
-            relative_path = path.relative_to(Path.cwd())
-            url = f"http://localhost:{port}/{relative_path}"
-            print(f"🌐 Abrindo: {url}")
-            webbrowser.open(url)
-            return
-    
-    # Fallback
-    webbrowser.open(f"http://localhost:{port}")
+    try:
+        webbrowser.open(url)
+        print("✅ Navegador aberto com sucesso!")
+    except Exception as e:
+        print(f"❌ Erro ao abrir navegador: {e}")
+        print(f"💡 Acesse manualmente: {url}")
 
 def shutdown_server_async(httpd):
     """Desliga o servidor de forma assíncrona com timeout"""
@@ -402,89 +440,72 @@ def shutdown_server_async(httpd):
         try:
             print("🔄 Iniciando shutdown do servidor...")
             httpd.shutdown()
+            httpd.server_close()
             print("✅ Servidor desligado com sucesso")
         except Exception as e:
             print(f"⚠️  Erro durante shutdown: {e}")
     
-    # Executa o shutdown em thread separada
     shutdown_thread = threading.Thread(target=shutdown_task, daemon=True)
     shutdown_thread.start()
-    
-    # Aguarda no máximo 1 segundo pelo shutdown
-    shutdown_thread.join(timeout=1.0)
+    shutdown_thread.join(timeout=3.0)
     
     if shutdown_thread.is_alive():
         print("⏰ Timeout no shutdown - forçando encerramento...")
-        # Força encerramento imediato do processo
         os._exit(0)
 
 def signal_handler(signum, frame):
-    """Handler para sinais de interrupção - MENSAGEM AMIGÁVEL"""
+    """Handler para sinais de interrupção"""
     global servidor_rodando
-    print(f"\n⏹️  ENCERRANDO SERVIDOR...")
-    print("💾 Salvando todos os dados...")
-    time.sleep(0.5)  # Pequeno delay para parecer que está salvando
+    print(f"\n⏹️  ENCERRANDO SERVIDOR (Sinal: {signum})...")
     servidor_rodando = False
-    print("✅ Servidor encerrado com sucesso!")
-    print("\n💡 DICA: Para usar novamente, dê duplo clique no arquivo 'servidor.py'")
-    
-    # Força saída imediata
-    os._exit(0)
 
 def monitorar_navegador(port, httpd):
-    """Monitora se o navegador foi fechado - 3 TENTATIVAS RÁPIDAS"""
-    print("🔍 Monitoramento ativo: servidor fechará automaticamente quando navegador for fechado")
+    """Monitora se o navegador foi fechado - VERSÃO SIMPLIFICADA"""
+    print("🔍 Monitoramento ativo: servidor ficará aberto até você fechar o navegador")
+    
+    # Aguarda um pouco antes de começar a monitorar
+    time.sleep(5)
     
     tentativas_falhas = 0
-    max_tentativas_falhas = 3
-    tempo_entre_verificacoes = 2
+    max_tentativas_falhas = 5
     
     while servidor_rodando:
         try:
-            # Tenta conectar no servidor para verificar se ainda está ativo
+            # Tenta conectar ao servidor
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(2)
+                s.settimeout(5)
                 resultado = s.connect_ex(('localhost', port))
                 
                 if resultado == 0:
-                    # Conexão bem-sucedida - servidor está respondendo
+                    # Servidor está respondendo - navegador provavelmente aberto
                     tentativas_falhas = 0
                 else:
-                    # Falha na conexão
+                    # Não conseguiu conectar
                     tentativas_falhas += 1
-                    print(f"⚠️  Verificando servidor... ({tentativas_falhas}/{max_tentativas_falhas})")
+                    print(f"⚠️  Tentativa {tentativas_falhas}/{max_tentativas_falhas} - Servidor não respondeu")
                 
                 if tentativas_falhas >= max_tentativas_falhas:
                     print("\n🌐 NAVEGADOR FECHADO DETECTADO")
                     print("⏹️  Encerrando servidor automaticamente...")
                     break
             
-            time.sleep(tempo_entre_verificacoes)
+            # Verifica a cada 5 segundos
+            time.sleep(5)
             
         except Exception as e:
-            tentativas_falhas += 1
-            print(f"⚠️  Verificando servidor... ({tentativas_falhas}/{max_tentativas_falhas})")
-            
-            if tentativas_falhas >= max_tentativas_falhas:
-                print("\n🌐 NAVEGADOR FECHADO DETECTADO")
-                print("⏹️  Encerrando servidor automaticamente...")
-                break
+            print(f"❌ Erro no monitor: {e}")
+            break
     
     if servidor_rodando:
-        print("💾 Salvando dados finais...")
-        time.sleep(0.5)  # Reduzido para encerrar mais rápido
-        
-        # Usa o shutdown assíncrono com timeout em vez de httpd.shutdown() direto
+        print("💾 Encerrando servidor...")
         shutdown_server_async(httpd)
-        
-        # Se chegou aqui, o shutdown foi bem-sucedido
-        print("✅ Servidor encerrado com sucesso!")
-        print("\n💡 DICA: Para usar novamente, dê duplo clique no arquivo 'servidor.py'")
-        sys.exit(0)
 
 def main():
-    """Função principal"""
+    """Função principal - VERSÃO SIMPLIFICADA E ESTÁVEL"""
     global servidor_rodando
+    
+    print("🚀 INICIANDO SERVIDOR...")
+    print("=" * 60)
     
     # Configura handlers de sinal
     signal.signal(signal.SIGINT, signal_handler)
@@ -492,31 +513,12 @@ def main():
     
     port = 8000
     
-    print("🚀 SERVIDOR INICIADO")
-    print("=" * 50)
-    print(f"📂 Pasta do projeto: {Path.cwd().name}")
-    print("🌐 Acesse: http://localhost:8000")
-    print("\n🎯 ENCERRAMENTO AUTOMÁTICO:")
-    print("   • Fechar o navegador → Servidor para automaticamente")
-    print("   • Ctrl+C no terminal → Para manualmente") 
-    print("   • Fechar janela → Para automaticamente")
-    print("=" * 50)
-    
-    # Verifica se a estrutura existe
-    if not (Path.cwd() / "codigo").exists():
-        print("❌ ERRO: Pasta 'codigo' não encontrada!")
-        print("💡 Solução: Coloque este arquivo na mesma pasta que a pasta 'codigo'")
-        input("Pressione Enter para sair...")
-        return
-    
-    # Verifica porta
+    # Verifica se a porta está disponível
     if is_port_in_use(port):
-        print(f"⚠️  Porta {port} está em uso!")
-        print("🔄 Tentando liberar a porta...")
-        
+        print(f"⚠️  Porta {port} está em uso! Tentando liberar...")
         if kill_process_on_port(port):
             print("✅ Processo anterior finalizado!")
-            time.sleep(3)
+            time.sleep(2)
         else:
             available_port = find_available_port(port)
             if available_port:
@@ -527,52 +529,62 @@ def main():
                 input("Pressione Enter para sair...")
                 return
     
-    # Cria pastas necessárias
-    json_dir = Path.cwd() / "codigo" / "json"
-    json_dir.mkdir(parents=True, exist_ok=True)
+    print(f"✅ Usando porta: {port}")
+    print(f"📂 Diretório atual: {Path.cwd()}")
     
     handler = UniversalHTTPRequestHandler
     
     try:
+        # Cria o servidor
         with socketserver.TCPServer(("", port), handler) as httpd:
-            # Configura timeout para evitar bloqueios eternos
-            httpd.timeout = 1
+            httpd.timeout = 1  # Timeout curto para responder a sinais
             
-            print(f"\n✅ SERVIDOR RODANDO: http://localhost:{port}")
-            print("📋 DICAS RÁPIDAS:")
-            print("   • Use Ctrl+C para parar manualmente")
-            print("   • Feche o navegador para parar automaticamente")
+            print(f"\n🎉 SERVIDOR RODANDO COM SUCESSO!")
+            print(f"🌐 URL: http://localhost:{port}/public/pages/index.html")
+            print("=" * 60)
+            print("📋 CONTROLES:")
+            print("   • Pressione Ctrl+C para PARAR o servidor")
+            print("   • Feche o navegador para PARAR automaticamente")
             print("   • Seu trabalho é salvo automaticamente")
-            print("=" * 50)
+            print("=" * 60)
             
-            # Abre navegador em thread separada
-            threading.Thread(target=open_browser, args=(port,), daemon=True).start()
+            # Inicia o navegador
+            browser_thread = threading.Thread(target=open_browser, args=(port,), daemon=True)
+            browser_thread.start()
             
-            # Inicia monitoramento do navegador em thread separada
+            # Inicia o monitoramento
             monitor_thread = threading.Thread(target=monitorar_navegador, args=(port, httpd), daemon=True)
             monitor_thread.start()
             
-            print("🟢 PRONTO PARA USAR! Trabalhe normalmente...")
+            print("🟢 PRONTO! Servidor está ativo e aguardando conexões...")
+            print("   Trabalhe normalmente no navegador que abriu")
+            print("   O servidor ficará aberto até você fechar o navegador ou pressionar Ctrl+C\n")
             
-            # Loop principal do servidor com verificação de estado
+            # LOOP PRINCIPAL SIMPLIFICADO
             while servidor_rodando:
                 try:
                     httpd.handle_request()
+                except socket.timeout:
+                    # Timeout é normal, continua o loop
+                    continue
                 except Exception as e:
-                    # Ignora exceções menores e continua
                     if servidor_rodando:
+                        # Erro menor, continua
                         continue
                     else:
+                        # Servidor está sendo encerrado
                         break
-                        
+            
+            print("👋 Encerrando servidor...")
+                
     except KeyboardInterrupt:
-        # Já tratado pelo signal_handler
-        pass
+        print("\n⏹️  Servidor interrompido pelo usuário (Ctrl+C)")
     except Exception as e:
-        print(f"❌ Erro inesperado: {e}")
+        print(f"❌ ERRO CRÍTICO: {e}")
         print("💡 Tente reiniciar o servidor")
     finally:
         servidor_rodando = False
+        print("✅ Servidor finalizado com sucesso!")
 
 if __name__ == "__main__":
     main()

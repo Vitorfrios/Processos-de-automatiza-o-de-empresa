@@ -8,6 +8,7 @@ Este projeto é um sistema modular voltado para **gerenciamento e cálculo térm
 
 ```txt
 codigo/
+├─ servidor.py
 ├─ Readme.md
 ├─ json
 │   ├─ backup.json   
