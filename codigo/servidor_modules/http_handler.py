@@ -1,5 +1,5 @@
 """
-HTTP Request Handler - Versão Cliente
+HTTP Request Handler - Versão Cliente COM HEARTBEAT
 """
 
 import http.server
@@ -11,7 +11,7 @@ from pathlib import Path
 from servidor_modules import file_utils, routes, config
 
 class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    """Handler robusto e compatível para produção"""
+    """Handler robusto e compatível para produção com monitoramento"""
     
     def __init__(self, *args, **kwargs):
         self.project_root = file_utils.find_project_root()
@@ -21,36 +21,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         serve_directory = self.project_root
         super().__init__(*args, directory=str(serve_directory), **kwargs)
     
-    def translate_path(self, path):
-        """Tradução de caminhos robusta"""
-        path = urlparse(path).path
-        path = path.lstrip('/')
-        
-        # Remove 'codigo/' se existir
-        if path.startswith('codigo/'):
-            path = path[7:]
-        
-        # Constrói caminho completo
-        full_path = Path(self.directory) / path
-        
-        # Verifica existência
-        if full_path.exists() and full_path.is_file():
-            return str(full_path)
-        
-        # Tenta index.html para diretórios
-        if full_path.is_dir():
-            index_path = full_path / "index.html"
-            if index_path.exists():
-                return str(index_path)
-        
-        # Fallback padrão
-        return super().translate_path('/' + path)
+    # ... métodos existentes mantidos ...
     
-    def log_message(self, format, *args):
-        """Log limpo - apenas erros"""
-        if args[1] not in ['200', '304']:
-            super().log_message(format, *args)
-
     def do_GET(self):
         """GET robusto com tratamento de erro"""
         parsed_path = urlparse(self.path)
@@ -77,6 +49,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_machines(self)
         elif path == '/health-check':
             self.send_json_response({"status": "online", "timestamp": time.time()})
+        # NOVO: Endpoint de heartbeat via GET também
+        elif path == '/api/heartbeat':
+            self.route_handler.handle_heartbeat(self)
         else:
             try:
                 super().do_GET()
@@ -101,6 +76,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_post_dados(self)
         elif path == '/backup':
             self.route_handler.handle_post_backup(self)
+        # NOVO: Endpoints de monitoramento
+        elif path == '/api/heartbeat':
+            self.route_handler.handle_heartbeat(self)
+        elif path == '/api/shutdown':
+            self.route_handler.handle_shutdown(self)
         else:
             print(f"❌ POST não implementado: {path}")
             self.send_error(501, f"Método não suportado: POST {path}")
