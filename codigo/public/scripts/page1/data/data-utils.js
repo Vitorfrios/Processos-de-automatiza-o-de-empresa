@@ -67,15 +67,44 @@ function buildProjectData(projectIdOrElement) {
 
 
 /**
- * Obtém o nome do projeto de forma segura
+ * Obtém o nome do projeto de forma segura 
  */
 function getProjectName(projectElement) {
-    const titleElement = projectElement.querySelector('.project-title-editable');
-    if (!titleElement) return `Projeto ${projectElement.id.replace('project-', '')}`;
     
-    return titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Projeto ${projectElement.id.replace('project-', '')}`;
+    const titleElement = projectElement.querySelector('.project-title');
+    
+    if (titleElement) {
+        
+        const titleText = titleElement.textContent || titleElement.innerText || '';
+        const trimmedText = titleText.trim();
+        
+        if (trimmedText) {
+            
+            const projectMatch = trimmedText.match(/Projeto\s*(\d*)/i);
+            if (projectMatch) {
+                const number = projectMatch[1] || '1';
+                return `Projeto ${number}`; 
+            }
+            return trimmedText; 
+        }
+    }
+    
+    
+    const projectNameFromData = projectElement.dataset.projectName;
+    if (projectNameFromData) {
+        const projectMatch = projectNameFromData.match(/Projeto\s*(\d*)/i);
+        if (projectMatch) {
+            const number = projectMatch[1] || '1';
+            return `Projeto ${number}`;
+        }
+        return projectNameFromData;
+    }
+    
+    
+    const allProjects = document.querySelectorAll('.project-block');
+    const projectNumber = allProjects.length > 0 ? allProjects.length : 1;
+    return `Projeto ${projectNumber}`;
 }
-
 
 /**
  * Extrai todos os dados de uma sala a partir do elemento HTML

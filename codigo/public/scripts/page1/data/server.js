@@ -32,49 +32,64 @@ function removeBaseProjectFromHTML() {
  * Carrega projetos salvos do servidor para a sessão atual
  */
 async function loadProjectsFromServer() {
-  const firstProjectId = sessionStorage.getItem(SESSION_STORAGE_KEY)
+  console.log("🔄 Carregando projetos do servidor...");
+  
+  // PRIMEIRO: Sempre buscar projetos do servidor
+  const allProjects = await fetchProjects();
+  console.log(`📊 Projetos encontrados no servidor: ${allProjects.length}`);
+
+  // SE não há projetos no servidor E não há sessão ativa
+  if (allProjects.length === 0) {
+    console.log("📭 Nenhum projeto no servidor - verificando necessidade de projeto base");
+    const firstProjectId = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    
+    if (!firstProjectId && getGeralCount() === 0) {
+      setTimeout(() => {
+        createSingleBaseProject();
+      }, 100);
+    }
+    return;
+  }
+
+  // SE há projetos no servidor: verificar sessão
+  const firstProjectId = sessionStorage.getItem(SESSION_STORAGE_KEY);
 
   if (!firstProjectId) {
-    setTimeout(() => {
-      if (getGeralCount() === 0) {
-        createSingleBaseProject()
-      }
-    }, 100)
-    return
+    console.log("🆕 Primeiro acesso - criando sessão com projetos existentes");
+    // Salvar o ID do primeiro projeto como início da sessão
+    const firstId = ensureStringId(allProjects[0].id);
+    sessionStorage.setItem(SESSION_STORAGE_KEY, firstId.toString());
   }
 
-  const allProjects = await fetchProjects()
-
-  if (allProjects.length === 0) {
-    setTimeout(() => {
-      if (getGeralCount() === 0) {
-        createSingleBaseProject()
-      }
-    }, 100)
-    return
-  }
-
+  // Filtrar projetos da sessão atual
   const sessionProjects = allProjects.filter((project) => {
-    const isFromSession = project.id >= Number.parseInt(firstProjectId)
-    const isNotRemoved = !isProjectRemoved(project.id)
-    return isFromSession && isNotRemoved
-  })
+    const projectIdNum = Number(project.id);
+    const firstIdNum = Number(firstProjectId);
+    const isFromSession = projectIdNum >= firstIdNum;
+    const isNotRemoved = !isProjectRemoved(project.id);
+    return isFromSession && isNotRemoved;
+  });
+
+  console.log(`🎯 Projetos da sessão atual: ${sessionProjects.length}`);
 
   if (sessionProjects.length === 0) {
-    resetDisplayLogic()
+    console.log("🔄 Nenhum projeto na sessão - resetando lógica");
+    resetDisplayLogic();
     setTimeout(() => {
-      createSingleBaseProject()
-    }, 100)
-    return
+      createSingleBaseProject();
+    }, 100);
+    return;
   }
 
-  window.GeralCount = sessionProjects.length
+  window.GeralCount = sessionProjects.length;
+  removeBaseProjectFromHTML();
 
-  removeBaseProjectFromHTML()
-
+  // Renderizar projetos da sessão
   for (const projectData of sessionProjects) {
-    renderProjectFromData(projectData)
+    renderProjectFromData(projectData);
   }
+  
+  console.log("✅ Projetos carregados com sucesso");
 }
 
 /**
@@ -162,7 +177,8 @@ function createSingleBaseProject() {
     return
   }
 
-  const existingProjects = projectsContainer.querySelectorAll(".project-block")
+  
+  const existingProjects = projectsContainer.querySelectorAll('.project-block[data-project-name="Projeto 1"]');
 
   if (existingProjects.length === 0) {
     createProjectBaseHTML(projectsContainer)
@@ -174,31 +190,33 @@ function createSingleBaseProject() {
  * @param {HTMLElement} container - Container onde o projeto será inserido
  */
 function createProjectBaseHTML(container) {
-  const existingBaseProject = container.querySelector('[data-project-name="Projeto1"]');
+  
+  const existingBaseProject = container.querySelector('[data-project-name="Projeto 1"]');
   if (existingBaseProject) return;
 
-  // ✅ CORREÇÃO: Gerar um ID temporário único baseado em timestamp
+  
   const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
+  
   const projectHTML = `
-    <div class="project-block" data-project-id="${tempId}" data-project-name="Projeto1">
+    <div class="project-block" data-project-id="${tempId}" data-project-name="Projeto 1">
       <div class="project-header">
-        <button class="minimizer" onclick="toggleProject('Projeto1')">+</button>
-        <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">Projeto1</h2>
+        <button class="minimizer" onclick="toggleProject('Projeto 1')">+</button>
+        <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">Projeto 1</h2>
         <div class="project-actions">
-          <button class="btn btn-delete" onclick="deleteProject('Projeto1')">Remover</button>
+          <button class="btn btn-delete" onclick="deleteProject('Projeto 1')">Remover</button>
         </div>
       </div>
-      <div class="project-content collapsed" id="project-content-Projeto1">
+      <div class="project-content collapsed" id="project-content-Projeto 1">
         <p class="empty-message">Nenhuma sala adicionada ainda.</p>
         <div class="add-room-section">
-          <button class="btn btn-add-secondary" onclick="addNewRoom('Projeto1')">+ Adicionar Nova Sala</button>
+          <button class="btn btn-add-secondary" onclick="addNewRoom('Projeto 1')">+ Adicionar Nova Sala</button>
         </div>
         <div class="project-actions-footer">
-          <button class="btn btn-verify" onclick="verifyProjectData('Projeto1')">Verificar Dados</button>
-          <button class="btn btn-save project-save-btn" onclick="saveProject('Projeto1', event)" data-project-name="Projeto1">Salvar Projeto</button>
-          <button class="btn btn-download" onclick="downloadPDF('Projeto1')">Baixar PDF</button>
-          <button class="btn btn-download" onclick="downloadWord('Projeto1')">Baixar Word</button>
+          <button class="btn btn-verify" onclick="verifyProjectData('Projeto 1')">Verificar Dados</button>
+          <button class="btn btn-save project-save-btn" onclick="saveProject('Projeto 1', event)" data-project-name="Projeto 1">Salvar Projeto</button>
+          <button class="btn btn-download" onclick="downloadPDF('Projeto 1')">Baixar PDF</button>
+          <button class="btn btn-download" onclick="downloadWord('Projeto 1')">Baixar Word</button>
         </div>
       </div>
     </div>
@@ -207,7 +225,7 @@ function createProjectBaseHTML(container) {
   container.insertAdjacentHTML("beforeend", projectHTML);
 
   setTimeout(() => {
-    addNewRoom("Projeto1");
+    addNewRoom("Projeto 1");
   }, 800);
 
   window.GeralCount = Math.max(window.GeralCount, 1);

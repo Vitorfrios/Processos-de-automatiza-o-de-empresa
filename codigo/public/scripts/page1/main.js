@@ -177,49 +177,44 @@ function finalSystemDebug() {
  * Orquestra o carregamento de módulos, constantes e projetos na ordem correta
  */
 window.addEventListener("DOMContentLoaded", async () => {
-  console.log(" Inicializando sistema...")
+  console.log("🚀 Inicializando sistema...");
   
   try {
     // 1. Carregar módulos primeiro
     await loadAllModules();
     
-    // 2. Normalizar projetos no servidor
-    await normalizeAllProjectsOnServer()
-    
-    // 3. Carregar constantes do sistema
+    // 2. Carregar constantes do sistema
     await loadSystemConstants();
     
-    // 4. Carregar projetos do servidor (depois das constantes)
-    await loadProjectsFromServer()
+    // 3. Normalizar projetos no servidor
+    await normalizeAllProjectsOnServer();
+    
+    // 4. Carregar projetos do servidor (AGORA FUNCIONA CORRETAMENTE)
+    await loadProjectsFromServer();
     
     // 5. Inicializar project counter
     if (window.initializeProjectCounter) {
       await window.initializeProjectCounter();
     }
     
-    // Verificar e criar projeto base se necessário
+    // 6. Verificação de fallback (apenas se realmente necessário)
     await verifyAndCreateBaseProject();
     
-    console.log(" Sistema inicializado - projetos carregados do servidor")
-    console.log(" Constantes disponíveis para cálculos:", window.systemConstants);
+    console.log("✅ Sistema inicializado com sucesso");
     
     // Debug final
     setTimeout(finalSystemDebug, 1000);
     
   } catch (error) {
-    console.error(" ERRO na inicialização do sistema:", error);
+    console.error("❌ ERRO na inicialização do sistema:", error);
     
-
-    console.log(" Tentando criar projeto base mesmo com erro...");
+    // Fallback robusto
     setTimeout(() => {
+      console.log("🔄 Executando fallback...");
       verifyAndCreateBaseProject();
     }, 1000);
-    
-    if (window.showSystemStatus) {
-      window.showSystemStatus("Sistema carregado com avisos - verifique o console", "warning")
-    }
   }
-})
+});
 
 /**
  * Fallback: Carrega módulos quando qualquer função for chamada (caso não tenham carregado ainda)
