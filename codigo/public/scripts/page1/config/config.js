@@ -19,7 +19,7 @@ const UI_CONSTANTS = {
 const SESSION_STORAGE_KEY = "firstProjectIdOfSession"
 const REMOVED_PROJECTS_KEY = "removedProjectsFromScreen"
 const NORMALIZATION_DONE_KEY = "idsNormalizedOnServer"
-
+export const SESSION_ACTIVE_KEY = 'session_active'; 
 
 export {
   CALCULATION_CONSTANTS,

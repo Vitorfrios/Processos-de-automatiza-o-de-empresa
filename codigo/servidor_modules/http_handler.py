@@ -48,6 +48,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_machines(self)
         elif path == '/health-check':
             self.send_json_response({"status": "online", "timestamp": time.time()})
+        elif path == '/api/session/projects':
+            self.route_handler.handle_get_session_projects(self)
         # Endpoint de heartbeat via GET também
         elif path == '/api/heartbeat':
             self.route_handler.handle_heartbeat(self)
@@ -80,6 +82,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_heartbeat(self)
         elif path == '/api/shutdown':
             self.route_handler.handle_shutdown(self)
+        elif path == '/api/session/start':
+            self.route_handler.handle_post_session_start(self)
+        elif path == '/api/session/end':
+            self.route_handler.handle_post_session_end(self)
         else:
             print(f"❌ POST não implementado: {path}")
             self.send_error(501, f"Método não suportado: POST {path}")
