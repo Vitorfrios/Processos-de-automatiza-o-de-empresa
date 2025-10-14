@@ -547,8 +547,199 @@
     {
       "id": "Projeto1",
       "nome": "Projeto ",
+      "salas": [
+        {
+          "id": "room-1760412675841-d8g7wlkin",
+          "nome": "Sala ",
+          "inputs": {},
+          "maquinas": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "30TR",
+              "tensao": "220V/3F",
+              "precoBase": 39000,
+              "opcoesSelecionadas": [
+                {
+                  "id": 1,
+                  "name": "Automação Embarcada",
+                  "value": 500
+                },
+                {
+                  "id": 2,
+                  "name": "Modbus TCP-IP",
+                  "value": 300
+                },
+                {
+                  "id": 3,
+                  "name": "Sensor de umidade para monitoramento",
+                  "value": 200
+                },
+                {
+                  "id": 4,
+                  "name": "Sensor de filtro sujo",
+                  "value": 150
+                },
+                {
+                  "id": 5,
+                  "name": "Sensor de fluxo",
+                  "value": 150
+                },
+                {
+                  "id": 6,
+                  "name": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+                  "value": 600
+                },
+                {
+                  "id": 17,
+                  "name": "Dupla alimentação de energia",
+                  "value": 800
+                },
+                {
+                  "id": 21,
+                  "name": "Parafusos, porcas e arruelas em INOX",
+                  "value": 100
+                }
+              ],
+              "precoTotal": 46800
+            }
+          ],
+          "capacidade": {},
+          "ganhosTermicos": {
+            "total-ganhos-w-Projeto1-Sala1": "40741",
+            "total-tr-Projeto1-Sala1": "12"
+          },
+          "configuracao": {}
+        }
+      ],
+      "timestamp": "2025-10-14T03:31:15.840Z"
+    },
+    {
+      "id": "Projeto1",
+      "nome": "Projeto ",
       "salas": [],
-      "timestamp": "2025-10-14T03:13:25.002Z"
+      "timestamp": "2025-10-14T03:20:45.134Z"
+    },
+    {
+      "id": "Projeto1",
+      "nome": "Projeto ",
+      "salas": [
+        {
+          "id": "room-1760412526236-ahkgsw0aj",
+          "nome": "Sala ",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {},
+          "ganhosTermicos": {
+            "total-ganhos-w-Projeto1-Sala1": "0",
+            "total-tr-Projeto1-Sala1": "0"
+          },
+          "configuracao": {}
+        }
+      ],
+      "timestamp": "2025-10-14T03:28:46.235Z"
+    },
+    {
+      "id": "Projeto1",
+      "nome": "Projeto ",
+      "salas": [
+        {
+          "id": "room-1760412602886-3p6ppqvpt",
+          "nome": "Sala ",
+          "inputs": {},
+          "maquinas": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "",
+              "tensao": "",
+              "precoBase": 0,
+              "opcoesSelecionadas": [
+                {
+                  "id": 1,
+                  "name": "Automação Embarcada",
+                  "value": 500
+                },
+                {
+                  "id": 2,
+                  "name": "Modbus TCP-IP",
+                  "value": 300
+                },
+                {
+                  "id": 3,
+                  "name": "Sensor de umidade para monitoramento",
+                  "value": 200
+                },
+                {
+                  "id": 4,
+                  "name": "Sensor de filtro sujo",
+                  "value": 150
+                },
+                {
+                  "id": 5,
+                  "name": "Sensor de fluxo",
+                  "value": 150
+                },
+                {
+                  "id": 6,
+                  "name": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+                  "value": 600
+                },
+                {
+                  "id": 17,
+                  "name": "Dupla alimentação de energia",
+                  "value": 800
+                },
+                {
+                  "id": 21,
+                  "name": "Parafusos, porcas e arruelas em INOX",
+                  "value": 100
+                }
+              ],
+              "precoTotal": 2800
+            }
+          ],
+          "capacidade": {},
+          "ganhosTermicos": {
+            "total-ganhos-w-Projeto1-Sala1": "0",
+            "total-tr-Projeto1-Sala1": "0"
+          },
+          "configuracao": {}
+        }
+      ],
+      "timestamp": "2025-10-14T03:30:02.885Z"
+    },
+    {
+      "id": "Projeto2",
+      "nome": "Projeto ",
+      "salas": [
+        {
+          "id": "room-1760412680689-2ca6gqhsm",
+          "nome": "Sala ",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {},
+          "ganhosTermicos": {},
+          "configuracao": {}
+        }
+      ],
+      "timestamp": "2025-10-14T03:31:20.689Z"
+    },
+    {
+      "id": "Projeto3",
+      "nome": "Projeto ",
+      "salas": [
+        {
+          "id": "room-1760412683726-i8tu9mamo",
+          "nome": "Sala ",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {},
+          "ganhosTermicos": {},
+          "configuracao": {}
+        }
+      ],
+      "timestamp": "2025-10-14T03:31:23.726Z"
     }
   ]
 }

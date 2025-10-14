@@ -206,49 +206,65 @@ async function atualizarProjeto(projectId, projectData) {
  * @param {Event} event - Evento do clique
  */
 async function saveProject(projectName, event) {
-  if (event) {
-    event.preventDefault()
-    event.stopPropagation()
-  }
-
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-  if (!projectBlock) {
-    showSystemStatus("ERRO: Projeto não encontrado na interface", "error")
-    return
-  }
-
-  let projectId = projectBlock.dataset.projectId
-
-  projectId =
-    projectId && projectId !== "" && projectId !== "undefined" && projectId !== "null"
-      ? ensureStringId(projectId)
-      : null
-
-  const projectData = buildProjectData(projectBlock, projectId)
-
-  let result = null
-  const isNewProject = !projectId
-
-  if (!projectId) {
-    result = await salvarProjeto(projectData)
-  } else {
-    result = await atualizarProjeto(projectId, projectData)
-  }
-
-  if (result) {
-    const finalId = ensureStringId(result.id)
-    projectBlock.dataset.projectId = finalId
-
-    updateProjectButton(projectName, true)
-    saveFirstProjectIdOfSession(finalId)
-
-    if (isNewProject) {
-      incrementGeralCount()
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
     }
 
-    collapseProjectAfterSave(projectName, projectBlock)
-  }
+    console.log(`💾 Iniciando salvamento do projeto: ${projectName}`);
+
+    // CORREÇÃO: Busca o projeto pelo data attribute
+    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
+    if (!projectBlock) {
+        console.error('❌ Projeto não encontrado:', projectName);
+        showSystemStatus("ERRO: Projeto não encontrado na interface", "error");
+        return;
+    }
+
+    let projectId = projectBlock.dataset.projectId;
+
+    projectId =
+        projectId && projectId !== "" && projectId !== "undefined" && projectId !== "null"
+            ? ensureStringId(projectId)
+            : null;
+
+    // CORREÇÃO: Passa o elemento diretamente para buildProjectData
+    const projectData = buildProjectData(projectBlock);
+
+    if (!projectData) {
+        console.error('❌ Falha ao construir dados do projeto');
+        showSystemStatus("ERRO: Falha ao construir dados do projeto", "error");
+        return;
+    }
+
+    console.log('📤 Enviando dados do projeto:', projectData);
+
+    let result = null;
+    const isNewProject = !projectId;
+
+    if (!projectId) {
+        result = await salvarProjeto(projectData);
+    } else {
+        result = await atualizarProjeto(projectId, projectData);
+    }
+
+    if (result) {
+        const finalId = ensureStringId(result.id);
+        projectBlock.dataset.projectId = finalId;
+
+        updateProjectButton(projectName, true);
+        saveFirstProjectIdOfSession(finalId);
+
+        if (isNewProject) {
+            incrementGeralCount();
+        }
+
+        collapseProjectAfterSave(projectName, projectBlock);
+    } else {
+        console.error('❌ Falha ao salvar projeto no servidor');
+    }
 }
+
 
 /**
  * Colapsa o projeto após salvar

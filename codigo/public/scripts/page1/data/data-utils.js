@@ -12,7 +12,10 @@ function buildProjectData(projectIdOrElement) {
     
     // Verifica se é um elemento ou ID string
     if (typeof projectIdOrElement === 'string') {
-        projectElement = document.getElementById(projectIdOrElement);
+        projectElement = document.querySelector(`[data-project-name="${projectIdOrElement}"]`);
+        if (!projectElement) {
+            projectElement = document.getElementById(projectIdOrElement);
+        }
     } else if (projectIdOrElement instanceof HTMLElement) {
         projectElement = projectIdOrElement;
     } else {
@@ -25,15 +28,11 @@ function buildProjectData(projectIdOrElement) {
         return null;
     }
 
-    // CORREÇÃO: Se não tem ID, usa o data-project-name ou cria um ID
-    let projectId = projectElement.id;
-    if (!projectId || projectId === '') {
-        projectId = projectElement.dataset.projectName || `project-${Date.now()}`;
-        console.log('🆔 ID gerado para projeto:', projectId);
-    }
-
+    // CORREÇÃO: Obtém o nome do projeto do data attribute
+    const projectName = projectElement.dataset.projectName || projectElement.id;
+    
     const projectData = {
-        id: projectId,
+        id: projectElement.dataset.projectId || projectName,
         nome: getProjectName(projectElement),
         salas: [],
         timestamp: new Date().toISOString()
@@ -41,16 +40,21 @@ function buildProjectData(projectIdOrElement) {
 
     // Coleta dados de todas as salas
     const roomElements = projectElement.querySelectorAll('.room-block');
-    roomElements.forEach(roomElement => {
+    console.log(`🔍 Encontradas ${roomElements.length} salas no projeto`);
+    
+    roomElements.forEach((roomElement, index) => {
         const roomData = extractRoomData(roomElement);
         if (roomData) {
             projectData.salas.push(roomData);
+        } else {
+            console.warn(`⚠️ Sala ${index} ignorada - dados inválidos`);
         }
     });
 
     console.log('📦 Dados do projeto construídos:', projectData);
     return projectData;
 }
+
 
 /**
  * Obtém o nome do projeto de forma segura
@@ -68,13 +72,22 @@ function getProjectName(projectElement) {
  * @returns {Object} Dados completos da sala
  */
 function extractRoomData(roomElement) {
-    if (!roomElement || !roomElement.id) {
-        console.error('❌ Elemento da sala inválido:', roomElement);
+    if (!roomElement) {
+        console.error('❌ Elemento da sala é nulo');
         return null;
     }
 
-    const roomId = roomElement.id.replace('room-content-', '');
+    // CORREÇÃO: Usa data-room-id como fallback se não tiver id
+    const roomId = roomElement.id 
+        ? roomElement.id.replace('room-content-', '') 
+        : roomElement.dataset.roomId || `room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
+    // CORREÇÃO: Verifica se pelo menos temos um ID válido
+    if (!roomId || roomId === '') {
+        console.error('❌ Elemento da sala inválido (sem ID):', roomElement);
+        return null;
+    }
+
     const roomData = {
         id: roomId,
         nome: getRoomName(roomElement),
@@ -98,7 +111,7 @@ function extractRoomData(roomElement) {
 
         // 2. Extrai dados de capacidade
         const capacityData = extractCapacityData(roomElement);
-        if (capacityData) {
+        if (capacityData && Object.keys(capacityData).length > 0) {
             roomData.capacidade = capacityData;
         }
 
@@ -126,7 +139,17 @@ function extractRoomData(roomElement) {
 
     } catch (error) {
         console.error(`❌ Erro ao extrair dados da sala ${roomId}:`, error);
-        return roomData; // Retorna dados parciais
+        // CORREÇÃO: Retorna dados básicos mesmo com erro
+        return {
+            id: roomId,
+            nome: getRoomName(roomElement),
+            inputs: {},
+            maquinas: [],
+            capacidade: {},
+            ganhosTermicos: {},
+            configuracao: {},
+            erro: error.message
+        };
     }
 }
 

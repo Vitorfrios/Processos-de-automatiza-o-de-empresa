@@ -797,8 +797,11 @@
                             <button class="btn btn-verify" onclick="verifyProjectData('Projeto1')">Verificar
                                 Dados</button>
                             <!-- Botão principal para salvar/atualizar - Chama saveProject() do modules/projects.js -->
-                            <button class="btn btn-save project-save-btn"  onclick="saveProject(this.closest('.project-block'))"
-                                data-project-name="Projeto1">Salvar Projeto</button>
+                            <button class="btn btn-save project-save-btn" 
+                                    onclick="saveProject('Projeto1', event)"
+                                    data-project-name="Projeto1">
+                                Salvar Projeto
+                            </button>
                             <!-- Botões de exportação (funções não implementadas no código fornecido) -->
                             <button class="btn btn-download" onclick="downloadPDF('Projeto1')">Baixar PDF</button>
                             <button class="btn btn-download" onclick="downloadWord('Projeto1')">Baixar Word</button>
