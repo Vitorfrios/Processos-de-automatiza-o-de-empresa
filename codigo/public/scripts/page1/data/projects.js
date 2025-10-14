@@ -213,7 +213,6 @@ async function saveProject(projectName, event) {
 
     console.log(`💾 Iniciando salvamento do projeto: ${projectName}`);
 
-    // CORREÇÃO: Busca o projeto pelo data attribute
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
     if (!projectBlock) {
         console.error('❌ Projeto não encontrado:', projectName);
@@ -221,14 +220,7 @@ async function saveProject(projectName, event) {
         return;
     }
 
-    let projectId = projectBlock.dataset.projectId;
-
-    projectId =
-        projectId && projectId !== "" && projectId !== "undefined" && projectId !== "null"
-            ? ensureStringId(projectId)
-            : null;
-
-    // CORREÇÃO: Passa o elemento diretamente para buildProjectData
+    // ✅ CORREÇÃO: Sempre construir dados primeiro para determinar se é novo projeto
     const projectData = buildProjectData(projectBlock);
 
     if (!projectData) {
@@ -240,12 +232,14 @@ async function saveProject(projectName, event) {
     console.log('📤 Enviando dados do projeto:', projectData);
 
     let result = null;
-    const isNewProject = !projectId;
+    
+    // ✅ CORREÇÃO: Determinar se é novo projeto baseado na ausência de ID válido
+    const isNewProject = !projectData.id || projectData.id.startsWith('temp-');
 
-    if (!projectId) {
+    if (isNewProject) {
         result = await salvarProjeto(projectData);
     } else {
-        result = await atualizarProjeto(projectId, projectData);
+        result = await atualizarProjeto(projectData.id, projectData);
     }
 
     if (result) {
@@ -260,6 +254,8 @@ async function saveProject(projectName, event) {
         }
 
         collapseProjectAfterSave(projectName, projectBlock);
+        
+        console.log(`✅ Projeto salvo com ID: ${finalId}`);
     } else {
         console.error('❌ Falha ao salvar projeto no servidor');
     }

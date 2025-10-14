@@ -10,7 +10,6 @@
 function buildProjectData(projectIdOrElement) {
     let projectElement;
     
-    // Verifica se é um elemento ou ID string
     if (typeof projectIdOrElement === 'string') {
         projectElement = document.querySelector(`[data-project-name="${projectIdOrElement}"]`);
         if (!projectElement) {
@@ -28,17 +27,26 @@ function buildProjectData(projectIdOrElement) {
         return null;
     }
 
-    // CORREÇÃO: Obtém o nome do projeto do data attribute
     const projectName = projectElement.dataset.projectName || projectElement.id;
     
+    // ✅ CORREÇÃO: NUNCA usar o nome como ID fallback
+    const projectId = projectElement.dataset.projectId;
+    
+    // Se o ID for temporário ou inválido, retornar null para forçar geração de novo ID
+    const shouldGenerateNewId = !projectId || 
+                               projectId === '' || 
+                               projectId === 'undefined' || 
+                               projectId === 'null' ||
+                               projectId.startsWith('temp-') ||
+                               projectId.startsWith('Projeto');
+
     const projectData = {
-        id: projectElement.dataset.projectId || projectName,
+        id: shouldGenerateNewId ? null : projectId, // ← Deixa o servidor gerar o ID correto
         nome: getProjectName(projectElement),
         salas: [],
-        timestamp: new Date().toISOString()
     };
 
-    // Coleta dados de todas as salas
+    // Coleta dados de todas as salas (código existente)
     const roomElements = projectElement.querySelectorAll('.room-block');
     console.log(`🔍 Encontradas ${roomElements.length} salas no projeto`);
     

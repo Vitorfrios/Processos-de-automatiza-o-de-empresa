@@ -174,11 +174,14 @@ function createSingleBaseProject() {
  * @param {HTMLElement} container - Container onde o projeto será inserido
  */
 function createProjectBaseHTML(container) {
-  const existingBaseProject = container.querySelector('[data-project-name="Projeto1"]')
-  if (existingBaseProject) return
+  const existingBaseProject = container.querySelector('[data-project-name="Projeto1"]');
+  if (existingBaseProject) return;
 
+  // ✅ CORREÇÃO: Gerar um ID temporário único baseado em timestamp
+  const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
   const projectHTML = `
-    <div class="project-block" data-project-id="" data-project-name="Projeto1">
+    <div class="project-block" data-project-id="${tempId}" data-project-name="Projeto1">
       <div class="project-header">
         <button class="minimizer" onclick="toggleProject('Projeto1')">+</button>
         <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">Projeto1</h2>
@@ -199,15 +202,15 @@ function createProjectBaseHTML(container) {
         </div>
       </div>
     </div>
-  `
+  `;
 
-  container.insertAdjacentHTML("beforeend", projectHTML)
+  container.insertAdjacentHTML("beforeend", projectHTML);
 
   setTimeout(() => {
-    addNewRoom("Projeto1")
-  }, 800)
+    addNewRoom("Projeto1");
+  }, 800);
 
-  window.GeralCount = Math.max(window.GeralCount, 1)
+  window.GeralCount = Math.max(window.GeralCount, 1);
 }
 
 /**
