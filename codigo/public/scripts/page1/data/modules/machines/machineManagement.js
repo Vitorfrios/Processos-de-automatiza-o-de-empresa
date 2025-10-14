@@ -152,17 +152,18 @@ function buildOptionsHTML(options, machineCount, selectedOptions = []) {
 
       return `
         <div class="option-item ${selectedClass}" onclick="handleOptionClick(${machineCount}, ${option.id})">
-          <div class="option-checkbox"></div>
-          <div class="option-content">
-            <div class="option-name">${option.name}</div>
-            <div class="option-price">+R$ ${option.value.toLocaleString("pt-BR")}</div>
+          <div class="option-checkbox">
+            <input type="checkbox" 
+                  value="${option.value}" 
+                  data-option-id="${option.id}"
+                  onchange="updateOptionSelection(${machineCount}, ${option.id})"
+                  id="option-${machineCount}-${option.id}"
+                  ${isSelected ? 'checked' : ''}>
+            <div class="option-content">
+              <div class="option-name">${option.name}</div>
+              <div class="option-price">+R$ ${option.value.toLocaleString("pt-BR")}</div>
+            </div>
           </div>
-          <input type="checkbox" 
-                value="${option.value}" 
-                data-option-id="${option.id}"
-                onchange="updateOptionSelection(${machineCount}, ${option.id})"
-                id="option-${machineCount}-${option.id}"
-                ${isSelected ? 'checked' : ''}>
         </div>
       `;
     })
@@ -270,7 +271,6 @@ async function updateMachineOptions(selectElement) {
     } catch (error) {
         console.error("❌ Erro crítico ao atualizar opções:", error);
 
-        createFallbackOptions(machineIndex);
     }
 }
 
@@ -297,34 +297,6 @@ function updateMachineUI(machineIndex, selectedMachine) {
 
     console.log(`✅ Opções atualizadas para máquina ${machineIndex}`);
 }
-
-/**
- * Fallback para quando não consegue carregar opções
- */
-function createFallbackOptions(machineIndex) {
-    const optionsContainer = document.getElementById(`options-container-${machineIndex}`);
-    if (optionsContainer) {
-        optionsContainer.innerHTML = `
-            <div class="option-item" onclick="handleOptionClick(${machineIndex}, 1)">
-                <div class="option-checkbox"></div>
-                <div class="option-content">
-                    <div class="option-name">Opção Básica 1</div>
-                    <div class="option-price">+R$ 100</div>
-                </div>
-                <input type="checkbox" value="100" data-option-id="1" onchange="updateOptionSelection(${machineIndex}, 1)">
-            </div>
-            <div class="option-item" onclick="handleOptionClick(${machineIndex}, 2)">
-                <div class="option-checkbox"></div>
-                <div class="option-content">
-                    <div class="option-name">Opção Básica 2</div>
-                    <div class="option-price">+R$ 200</div>
-                </div>
-                <input type="checkbox" value="200" data-option-id="2" onchange="updateOptionSelection(${machineIndex}, 2)">
-            </div>
-        `;
-    }
-}
-
 
 /**
  * Reseta os campos da máquina para o estado inicial
