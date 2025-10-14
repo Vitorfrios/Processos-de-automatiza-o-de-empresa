@@ -19,7 +19,6 @@ async function fetchProjects() {
   try {
     const response = await fetch('/projetos')
 
-
     if (!response.ok) {
       throw new Error(`Erro HTTP: ${response.status}`)
     }
@@ -45,7 +44,7 @@ async function fetchProjects() {
 
     return normalizedProjects
   } catch (error) {
-    console.error(" Erro ao buscar projetos:", error)
+    console.error("❌ Erro ao buscar projetos:", error)
     showSystemStatus("ERRO: Não foi possível carregar projetos", "error")
     return []
   }
@@ -135,7 +134,14 @@ async function salvarProjeto(projectData) {
 
     projectData = normalizeProjectIds(projectData)
 
-      const response = await fetch('/projetos', {
+    console.log('📤 SALVANDO NOVO PROJETO:', {
+      id: projectData.id,
+      nome: projectData.nome,
+      salas: projectData.salas?.length || 0,
+      timestamp: projectData.timestamp
+    });
+
+    const response = await fetch('/projetos', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(projectData),
@@ -149,9 +155,11 @@ async function salvarProjeto(projectData) {
     const createdProject = await response.json()
     createdProject.id = ensureStringId(createdProject.id)
     showSystemStatus("Projeto salvo com sucesso!", "success")
+    
+    console.log('✅ NOVO PROJETO SALVO:', createdProject);
     return createdProject
   } catch (error) {
-    console.error(" Erro ao SALVAR projeto:", error)
+    console.error("❌ Erro ao SALVAR projeto:", error)
     showSystemStatus("ERRO: Não foi possível salvar o projeto", "error")
     return null
   }
@@ -168,13 +176,27 @@ async function atualizarProjeto(projectId, projectData) {
     projectId = ensureStringId(projectId)
 
     if (!projectId) {
-      console.error(" ERRO: ID do projeto inválido para atualização")
+      console.error("❌ ERRO: ID do projeto inválido para atualização")
       showSystemStatus("ERRO: ID do projeto inválido para atualização", "error")
       return null
     }
 
     projectData = normalizeProjectIds(projectData)
     projectData.id = projectId
+
+    console.log('🔄 ATUALIZANDO PROJETO EXISTENTE:', {
+      id: projectData.id,
+      nome: projectData.nome,
+      salas: projectData.salas?.length || 0,
+      dadosPorSala: projectData.salas?.map(sala => ({
+        nome: sala.nome,
+        inputs: Object.keys(sala.inputs || {}).length,
+        maquinas: sala.maquinas?.length || 0,
+        capacidade: Object.keys(sala.capacidade || {}).length,
+        ganhosTermicos: Object.keys(sala.ganhosTermicos || {}).length,
+        configuracao: Object.keys(sala.configuracao || {}).length
+      }))
+    });
 
     const url = `/projetos/${projectId}`
 
@@ -192,9 +214,11 @@ async function atualizarProjeto(projectId, projectData) {
     const updatedProject = await response.json()
     updatedProject.id = ensureStringId(updatedProject.id)
     showSystemStatus("Projeto atualizado com sucesso!", "success")
+    
+    console.log('✅ PROJETO ATUALIZADO:', updatedProject);
     return updatedProject
   } catch (error) {
-    console.error(" Erro ao ATUALIZAR projeto:", error)
+    console.error("❌ Erro ao ATUALIZAR projeto:", error)
     showSystemStatus("ERRO: Não foi possível atualizar o projeto", "error")
     return null
   }
@@ -211,7 +235,7 @@ async function saveProject(projectName, event) {
         event.stopPropagation();
     }
 
-    console.log(`💾 Iniciando salvamento do projeto: ${projectName}`);
+    console.log(`💾 INICIANDO SALVAMENTO do projeto: "${projectName}"`);
 
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
     if (!projectBlock) {
@@ -220,7 +244,8 @@ async function saveProject(projectName, event) {
         return;
     }
 
-    // Sempre construir dados primeiro para determinar se é novo projeto
+    // Construir dados do projeto
+    console.log('🔨 Construindo dados do projeto...');
     const projectData = buildProjectData(projectBlock);
 
     if (!projectData) {
@@ -229,22 +254,63 @@ async function saveProject(projectName, event) {
         return;
     }
 
-    console.log('📤 Enviando dados do projeto:', projectData);
+    // VALIDAÇÃO DOS DADOS CONSTRUÍDOS
+    console.log('📋 VALIDAÇÃO DOS DADOS:');
+    console.log('- Nome do projeto:', projectData.nome);
+    console.log('- ID atual:', projectData.id);
+    console.log('- Número de salas:', projectData.salas?.length || 0);
+    
+    if (projectData.salas && projectData.salas.length > 0) {
+        projectData.salas.forEach((sala, index) => {
+            console.log(`  Sala ${index + 1} "${sala.nome}":`, {
+                inputs: Object.keys(sala.inputs || {}).length,
+                maquinas: sala.maquinas?.length || 0,
+                capacidade: Object.keys(sala.capacidade || {}).length,
+                ganhosTermicos: Object.keys(sala.ganhosTermicos || {}).length,
+                configuracao: Object.keys(sala.configuracao || {}).length
+            });
+        });
+    }
+
+    // DETERMINAR SE É NOVO PROJETO (CORRIGIDO)
+    const projectIdFromDOM = projectBlock.dataset.projectId;
+    const hasValidId = projectData.id && 
+                      projectData.id !== 'null' && 
+                      projectData.id !== 'undefined' && 
+                      !projectData.id.startsWith('temp-');
+    
+    const isNewProject = !hasValidId && !projectIdFromDOM;
+
+    console.log('🔍 VERIFICAÇÃO DE PROJETO NOVO:');
+    console.log('- ID nos dados:', projectData.id);
+    console.log('- ID no DOM:', projectIdFromDOM);
+    console.log('- Tem ID válido?:', hasValidId);
+    console.log('- É novo projeto?:', isNewProject);
 
     let result = null;
     
-    // Determinar se é novo projeto baseado na ausência de ID válido
-    const isNewProject = !projectData.id || projectData.id.startsWith('temp-');
-
     if (isNewProject) {
+        console.log('🆕 SALVANDO COMO NOVO PROJETO');
         result = await salvarProjeto(projectData);
     } else {
-        result = await atualizarProjeto(projectData.id, projectData);
+        // Usar ID do DOM se disponível, caso contrário usar ID dos dados
+        const finalId = projectIdFromDOM || projectData.id;
+        console.log('📝 ATUALIZANDO PROJETO EXISTENTE, ID:', finalId);
+        result = await atualizarProjeto(finalId, projectData);
     }
 
     if (result) {
         const finalId = ensureStringId(result.id);
+        
+        // ATUALIZAR DOM COM O ID CORRETO
         projectBlock.dataset.projectId = finalId;
+        projectBlock.dataset.projectName = projectData.nome;
+        
+        // Atualizar título se necessário
+        const titleElement = projectBlock.querySelector('.project-title');
+        if (titleElement && titleElement.textContent !== projectData.nome) {
+            titleElement.textContent = projectData.nome;
+        }
 
         updateProjectButton(projectName, true);
         saveFirstProjectIdOfSession(finalId);
@@ -255,12 +321,20 @@ async function saveProject(projectName, event) {
 
         collapseProjectAfterSave(projectName, projectBlock);
         
-        console.log(`✅ Projeto salvo com ID: ${finalId}`);
+        console.log(`✅ PROJETO SALVO COM SUCESSO! ID: ${finalId}`);
+        
+        // Log final para debug
+        console.log('🎯 ESTADO FINAL DO PROJETO:', {
+            id: finalId,
+            nome: projectData.nome,
+            salas: projectData.salas?.length || 0,
+            timestamp: projectData.timestamp
+        });
     } else {
-        console.error('❌ Falha ao salvar projeto no servidor');
+        console.error('❌ FALHA AO SALVAR PROJETO NO SERVIDOR');
+        showSystemStatus("ERRO: Falha ao salvar projeto no servidor", "error");
     }
 }
-
 
 /**
  * Colapsa o projeto após salvar
@@ -301,7 +375,7 @@ function deleteProject(projectName) {
   setTimeout(() => {
     const remainingProjects = document.querySelectorAll(".project-block")
     if (remainingProjects.length === 0 && getGeralCount() === 0) {
-
+      // Lógica para quando não há projetos
     }
   }, 200)
 }
