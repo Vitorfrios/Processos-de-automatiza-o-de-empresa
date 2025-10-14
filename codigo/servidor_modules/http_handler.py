@@ -21,7 +21,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         serve_directory = self.project_root
         super().__init__(*args, directory=str(serve_directory), **kwargs)
     
-    # ... métodos existentes mantidos ...
     
     def do_GET(self):
         """GET robusto com tratamento de erro"""
@@ -49,7 +48,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_machines(self)
         elif path == '/health-check':
             self.send_json_response({"status": "online", "timestamp": time.time()})
-        # NOVO: Endpoint de heartbeat via GET também
+        # Endpoint de heartbeat via GET também
         elif path == '/api/heartbeat':
             self.route_handler.handle_heartbeat(self)
         else:
@@ -76,7 +75,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_post_dados(self)
         elif path == '/backup':
             self.route_handler.handle_post_backup(self)
-        # NOVO: Endpoints de monitoramento
+        # Endpoints de monitoramento
         elif path == '/api/heartbeat':
             self.route_handler.handle_heartbeat(self)
         elif path == '/api/shutdown':

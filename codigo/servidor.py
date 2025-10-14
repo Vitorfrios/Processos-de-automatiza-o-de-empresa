@@ -13,7 +13,7 @@ def main():
     print("🚀 INICIANDO SISTEMA DE CLIMATIZAÇÃO")
     print("=" * 55)
     
-    # Configuração profissional
+    # Configuração 
     server_utils.setup_signal_handlers()
     
     # Configura porta

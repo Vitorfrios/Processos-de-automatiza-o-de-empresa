@@ -55,7 +55,7 @@ def load_json_file(filepath, default_data=None):
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
         elif default_data is not None:
-            # Se não existe e tem default, cria o arquivo
+
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(default_data, f, indent=2)
             return default_data

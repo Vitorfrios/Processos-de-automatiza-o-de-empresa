@@ -220,7 +220,7 @@ async function saveProject(projectName, event) {
         return;
     }
 
-    // ✅ CORREÇÃO: Sempre construir dados primeiro para determinar se é novo projeto
+    // Sempre construir dados primeiro para determinar se é novo projeto
     const projectData = buildProjectData(projectBlock);
 
     if (!projectData) {
@@ -233,7 +233,7 @@ async function saveProject(projectName, event) {
 
     let result = null;
     
-    // ✅ CORREÇÃO: Determinar se é novo projeto baseado na ausência de ID válido
+    // Determinar se é novo projeto baseado na ausência de ID válido
     const isNewProject = !projectData.id || projectData.id.startsWith('temp-');
 
     if (isNewProject) {
@@ -301,7 +301,7 @@ function deleteProject(projectName) {
   setTimeout(() => {
     const remainingProjects = document.querySelectorAll(".project-block")
     if (remainingProjects.length === 0 && getGeralCount() === 0) {
-      // Projeto base será criado automaticamente pelo decrementGeralCount
+
     }
   }, 200)
 }

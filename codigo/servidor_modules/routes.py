@@ -184,7 +184,7 @@ class RouteHandler:
             handler.send_error(500, f"Erro: {str(e)}")
     
      
-    # NOVO: Endpoint de heartbeat
+    # Endpoint de heartbeat
     def handle_heartbeat(self, handler):
         """Registra atividade do cliente"""
         try:
@@ -198,7 +198,7 @@ class RouteHandler:
             print(f"❌ Erro no heartbeat: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
     
-    # NOVO: Endpoint de shutdown graceful COM PARÂMETRO CORRETO
+    # Endpoint de shutdown graceful COM PARÂMETRO CORRETO
     def handle_shutdown(self, handler):
         """Cliente solicitou encerramento - COM VERIFICAÇÃO"""
         try:

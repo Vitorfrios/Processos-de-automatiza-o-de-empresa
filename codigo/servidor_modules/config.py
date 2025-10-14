@@ -11,7 +11,7 @@ SERVER_TIMEOUT = 1
 DEFAULT_PORT = 8000
 MAX_PORT_ATTEMPTS = 10
 
-# Configurações de monitoramento (OTIMIZADAS )
+# Configurações de monitoramento 
 MONITOR_MAX_ATTEMPTS = 6    
 MONITOR_CHECK_INTERVAL = 5  
 MONITOR_START_DELAY = 3     

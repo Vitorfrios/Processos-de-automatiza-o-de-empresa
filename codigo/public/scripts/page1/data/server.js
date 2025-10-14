@@ -346,7 +346,6 @@ async function normalizeAllProjectsOnServer() {
   }
 }
 
-// EXPORTAR AS NOVAS FUNÇÕES DO CONTADOR
 export {
   loadProjectsFromServer,
   removeBaseProjectFromHTML,

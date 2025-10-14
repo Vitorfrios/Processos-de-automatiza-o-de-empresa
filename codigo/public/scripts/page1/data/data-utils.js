@@ -44,12 +44,12 @@ function buildProjectData(projectIdOrElement) {
         timestamp: new Date().toISOString()
     };
 
-    // ✅ CORREÇÃO: IDs sequenciais simples (1, 2, 3...)
+    // IDs sequenciais simples (1, 2, 3...)
     const roomElements = projectElement.querySelectorAll('.room-block');
     console.log(`🔍 Encontradas ${roomElements.length} salas no projeto`);
     
     roomElements.forEach((roomElement, index) => {
-        // ✅ Número sequencial começando em 1
+        // Número sequencial começando em 1
         const roomNumber = index + 1;
         
         const roomData = extractRoomData(roomElement, roomNumber);
@@ -118,7 +118,7 @@ function extractRoomData(roomElement, roomNumber) {
         return null;
     }
 
-    // ✅ CORREÇÃO: ID sempre numérico sequencial
+    // ID sempre numérico sequencial
     const roomId = roomNumber.toString();
 
     const roomData = {
@@ -200,7 +200,7 @@ function getRoomName(roomElement) {
         if (name && name.trim() !== '') return name.trim();
     }
     
-    // Se não encontrar nome, retorna null e o extractRoomData usará "Sala X"
+
     return null;
 }
 
@@ -332,7 +332,6 @@ function parseMachinePrice(priceText) {
     if (!priceText || priceText === 'R$ 0,00') return 0;
     
     try {
-        // Remove "R$", pontos e converte vírgula para ponto
         const cleaned = priceText.replace('R$', '')
                                 .replace(/\./g, '')
                                 .replace(',', '.')

@@ -73,7 +73,6 @@ export {
   addNewRoom,
   deleteRoom,
   addMachine,
-  deleteMachine,
   calculateVazaoArAndThermalGains,
   showSystemStatus
 };

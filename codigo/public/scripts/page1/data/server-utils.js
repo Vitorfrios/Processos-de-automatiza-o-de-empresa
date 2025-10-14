@@ -20,14 +20,14 @@ function renderProjectFromData(projectData) {
 
   if (projectData.salas && projectData.salas.length > 0) {
     const projectContent = document.getElementById(`project-content-${projectName}`)
-    // Verificar se projectContent existe
+
     if (projectContent) {
       const emptyMessage = projectContent.querySelector(".empty-message")
       if (emptyMessage) {
         emptyMessage.remove()
       }
 
-      // Pequeno delay para garantir que o projeto foi criado antes de adicionar salas
+
       setTimeout(() => {
         projectData.salas.forEach((roomData) => {
           renderRoomFromData(projectName, roomData)
@@ -76,7 +76,8 @@ function renderRoomFromData(projectName, roomData) {
     // Delay adicional para garantir que a sala foi criada antes de preencher inputs
     setTimeout(() => {
       if (roomData.inputs || roomData.configuracoes || roomData.maquinas || roomData.maquinasClimatizacao) {
-        // Criar objeto unificado para máquinas
+
+
         const maquinasUnificadas = {
           maquinas: roomData.maquinas,
           maquinasClimatizacao: roomData.maquinasClimatizacao

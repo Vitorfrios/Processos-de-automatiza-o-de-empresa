@@ -29,14 +29,14 @@ def is_browser_connected(port):
         return False
     except Exception as e:
         print(f"⚠️  Aviso no monitor: {e}")
-        return True  # Fail-safe
+        return True  
 
 def check_heartbeat_timeout():
     """
     NOVO: Verifica se o cliente está inativo baseado no heartbeat
     """
     if config.ultimo_heartbeat is None:
-        # Primeira execução - ainda não recebeu heartbeat
+
         return False
     
     tempo_sem_heartbeat = time.time() - config.ultimo_heartbeat

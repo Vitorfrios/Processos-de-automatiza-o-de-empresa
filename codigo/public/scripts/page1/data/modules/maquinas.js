@@ -32,14 +32,6 @@ import {
   initializeStaticCapacityTable
 } from './machines/capacityCalculator.js'  
 
-import { 
-  updateElementText, 
-  removeEmptyMessage, 
-  showEmptyMessage, 
-  findRoomId 
-} from './machines/utilities.js'  
-
-
 
 // Configurações globais
 const capacityConfig = {
@@ -49,7 +41,6 @@ const capacityConfig = {
 }
 
 const capacityState = new Map()
-let machinesData = null
 
 // Inicialização
 function initializeMachinesModule() {

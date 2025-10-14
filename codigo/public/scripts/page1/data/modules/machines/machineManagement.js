@@ -15,8 +15,7 @@ async function addMachine(roomId) {
     console.log(`➕ Adicionando máquina ${machineCount} à sala ${roomId}`);
 
     try {
-        // VERIFICA SE JÁ EXISTE CACHE antes de carregar
-        if (!window.machinesData || window.machinesData.length === 0) {
+         if (!window.machinesData || window.machinesData.length === 0) {
             console.log("🔄 Cache não encontrado, carregando dados das máquinas...");
             await loadMachinesData();
         }
@@ -32,7 +31,7 @@ async function addMachine(roomId) {
 
     } catch (error) {
         console.error("❌ Erro ao adicionar máquina:", error);
-        // Fallback: cria máquina básica mesmo sem dados
+
         const fallbackHTML = buildFallbackMachineHTML(machineCount);
         machinesContainer.insertAdjacentHTML("beforeend", fallbackHTML);
     }
@@ -244,8 +243,7 @@ async function updateMachineOptions(selectElement) {
     }
 
     try {
-        // TENTATIVA IMEDIATA - usa cache se disponível
-        if (window.machinesData && window.machinesData.length > 0) {
+         if (window.machinesData && window.machinesData.length > 0) {
             const selectedMachine = window.machinesData.find((m) => m.type === selectedType);
             if (selectedMachine) {
                 updateMachineUI(machineIndex, selectedMachine);
@@ -253,7 +251,7 @@ async function updateMachineOptions(selectElement) {
             }
         }
 
-        // FALLBACK RÁPIDO - carrega dados
+
         console.log("🚀 Carregamento rápido de dados das máquinas...");
         const response = await fetch('/machines');
         if (response.ok) {
@@ -274,7 +272,7 @@ async function updateMachineOptions(selectElement) {
 
     } catch (error) {
         console.error("❌ Erro crítico ao atualizar opções:", error);
-        // FALLBACK FINAL - tenta criar opções básicas
+
         createFallbackOptions(machineIndex);
     }
 }
