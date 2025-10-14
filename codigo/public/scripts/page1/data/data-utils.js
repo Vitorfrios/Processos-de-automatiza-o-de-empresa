@@ -443,15 +443,21 @@ function getRoomName(roomElement) {
 }
 
 /**
- * Extrai dados de uma máquina de climatização individual
+ * Extrai dados de uma máquina de climatização individual - CORRIGIDO
+ * @param {HTMLElement} machineElement - Elemento da máquina
+ * @returns {Object} Dados da máquina
+ */
+/**
+ * Extrai dados de uma máquina de climatização individual - CORRIGIDO para data-machine-id
  * @param {HTMLElement} machineElement - Elemento da máquina
  * @returns {Object} Dados da máquina
  */
 function extractClimatizationMachineData(machineElement) {
-    const machineIndex = machineElement.getAttribute('data-machine-index');
+    // CORREÇÃO: Usar data-machine-id em vez de data-machine-index
+    const machineId = machineElement.getAttribute('data-machine-id') 
     
     const machineData = {
-        nome: getMachineName(machineElement, machineIndex),
+        nome: getMachineName(machineElement, machineId),
         tipo: machineElement.querySelector('.machine-type-select')?.value || '',
         potencia: machineElement.querySelector('.machine-power-select')?.value || '',
         tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
@@ -461,58 +467,158 @@ function extractClimatizationMachineData(machineElement) {
     };
 
     try {
-        // Preço base
-        const basePriceElement = document.getElementById(`base-price-${machineIndex}`);
-        if (basePriceElement) {
-            machineData.precoBase = parseMachinePrice(basePriceElement.textContent);
+        console.log(`🔍 Extraindo dados da máquina ${machineId}:`, machineElement);
+
+        // 1. PREÇO BASE - Busca por múltiplos seletores possíveis
+        let basePrice = 0;
+        const basePriceSelectors = [
+            `#base-price-${machineId}`,
+            `[data-machine-id="${machineId}"] .base-price`,
+            `[data-machine-id="${machineId}"] [data-price="base"]`,
+            '.base-price',
+            '[data-price="base"]'
+        ];
+
+        for (const selector of basePriceSelectors) {
+            const element = machineElement.querySelector(selector);
+            if (element) {
+                const priceText = element.textContent || element.value || element.getAttribute('data-value') || '0';
+                basePrice = parseMachinePrice(priceText);
+                if (basePrice > 0) {
+                    console.log(`💰 Preço base encontrado via ${selector}: R$ ${basePrice}`);
+                    break;
+                }
+            }
         }
 
-        // Preço total
-        const totalPriceElement = document.getElementById(`total-price-${machineIndex}`);
-        if (totalPriceElement) {
-            machineData.precoTotal = parseMachinePrice(totalPriceElement.textContent);
+        // Se não encontrou, tenta buscar no título ou elementos visíveis
+        if (basePrice === 0) {
+            const priceElements = machineElement.querySelectorAll('[class*="price"], [id*="price"]');
+            for (const element of priceElements) {
+                const text = element.textContent || '';
+                if (text.includes('R$') && !text.includes('Total')) {
+                    basePrice = parseMachinePrice(text);
+                    if (basePrice > 0) {
+                        console.log(`💰 Preço base encontrado via fallback: R$ ${basePrice}`);
+                        break;
+                    }
+                }
+            }
         }
 
-        // Opções selecionadas
-        const optionsContainer = document.getElementById(`options-container-${machineIndex}`);
-        if (optionsContainer) {
-            const selectedOptions = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
-            selectedOptions.forEach(option => {
-                const optionId = option.getAttribute('data-option-id');
-                const optionValue = parseFloat(option.value) || 0;
-                const optionName = option.closest('.option-item')?.querySelector('.option-name')?.textContent || `Opção ${optionId}`;
+        machineData.precoBase = basePrice;
+
+        // 2. OPÇÕES SELECIONADAS - Busca mais abrangente
+        const selectedOptions = [];
+        
+        // Busca por checkboxes marcados dentro da máquina
+        const optionCheckboxes = machineElement.querySelectorAll('input[type="checkbox"]:checked');
+        console.log(`📋 Checkboxes encontrados: ${optionCheckboxes.length}`);
+        
+        optionCheckboxes.forEach((checkbox, index) => {
+            const optionId = checkbox.getAttribute('data-option-id') || index.toString();
+            const optionValue = parseFloat(checkbox.value) || 0;
+            const optionName = checkbox.closest('.option-item')?.querySelector('.option-name')?.textContent || 
+                             checkbox.closest('label')?.textContent?.trim() || 
+                             `Opção ${optionId}`;
+            
+            // Remove "R$" e valores do nome se presente
+            const cleanName = optionName.replace(/\s*R\$\s*[\d.,]+/, '').trim();
+            
+            selectedOptions.push({
+                id: parseInt(optionId) || index,
+                name: cleanName || `Opção ${index + 1}`,
+                value: optionValue
+            });
+            
+            console.log(`✅ Opção selecionada: ${cleanName} - R$ ${optionValue}`);
+        });
+
+        // Busca por selects com opções selecionadas
+        const optionSelects = machineElement.querySelectorAll('select.option-select');
+        optionSelects.forEach((select, index) => {
+            if (select.value && select.value !== '') {
+                const optionValue = parseFloat(select.value) || 0;
+                const optionName = select.options[select.selectedIndex]?.text || `Opção ${index + 1}`;
+                const cleanName = optionName.replace(/\s*R\$\s*[\d.,]+/, '').trim();
                 
-                machineData.opcoesSelecionadas.push({
-                    id: parseInt(optionId),
-                    name: optionName,
+                selectedOptions.push({
+                    id: index + 1000, // IDs altos para diferenciar de checkboxes
+                    name: cleanName,
                     value: optionValue
                 });
-            });
+                
+                console.log(`✅ Select opção selecionada: ${cleanName} - R$ ${optionValue}`);
+            }
+        });
+
+        machineData.opcoesSelecionadas = selectedOptions;
+
+        // 3. PREÇO TOTAL - Busca por múltiplos seletores
+        let totalPrice = 0;
+        const totalPriceSelectors = [
+            `#total-price-${machineId}`,
+            `[data-machine-id="${machineId}"] .total-price`,
+            `[data-machine-id="${machineId}"] [data-price="total"]`,
+            '.total-price',
+            '[data-price="total"]',
+            '[class*="total"] [class*="price"]'
+        ];
+
+        for (const selector of totalPriceSelectors) {
+            const element = machineElement.querySelector(selector);
+            if (element) {
+                const priceText = element.textContent || element.value || element.getAttribute('data-value') || '0';
+                totalPrice = parseMachinePrice(priceText);
+                if (totalPrice > 0) {
+                    console.log(`💰 Preço total encontrado via ${selector}: R$ ${totalPrice}`);
+                    break;
+                }
+            }
         }
 
-        console.log(`🤖 Máquina ${machineIndex} extraída:`, {
+        // Se não encontrou, calcula base + opções
+        if (totalPrice === 0) {
+            totalPrice = basePrice + selectedOptions.reduce((sum, option) => sum + option.value, 0);
+            console.log(`🧮 Preço total calculado: R$ ${totalPrice} (base: R$ ${basePrice} + opções: R$ ${selectedOptions.reduce((sum, option) => sum + option.value, 0)})`);
+        }
+
+        machineData.precoTotal = totalPrice;
+
+        console.log(`🤖 Máquina ${machineId} extraída:`, {
             nome: machineData.nome,
             tipo: machineData.tipo,
+            precoBase: machineData.precoBase,
             opcoes: machineData.opcoesSelecionadas.length,
-            precoTotal: machineData.precoTotal
+            precoTotal: machineData.precoTotal,
+            detalhesOpcoes: machineData.opcoesSelecionadas
         });
 
         return machineData;
 
     } catch (error) {
-        console.error(`❌ Erro ao extrair dados da máquina ${machineIndex}:`, error);
+        console.error(`❌ Erro ao extrair dados da máquina ${machineId}:`, error);
+        
+        // Fallback: calcula valores mínimos
+        machineData.precoTotal = machineData.precoBase + 
+            machineData.opcoesSelecionadas.reduce((sum, option) => sum + option.value, 0);
+            
+        console.log(`🔄 Fallback aplicado - Preço total: R$ ${machineData.precoTotal}`);
+            
         return machineData;
     }
 }
 
 /**
- * Obtém o nome da máquina de forma segura
+ * Obtém o nome da máquina de forma segura - CORRIGIDO
  */
-function getMachineName(machineElement, machineIndex) {
+function getMachineName(machineElement, machineId) {
     const titleElement = machineElement.querySelector('.machine-title-editable');
-    if (!titleElement) return `Máquina ${machineIndex}`;
+    if (!titleElement) return `Máquina ${machineId}`;
     
-    return titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Máquina ${machineIndex}`;
+    // Para input type="text", usar value; para outros elementos, usar textContent
+    const name = titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Máquina ${machineId}`;
+    return name.trim() || `Máquina${machineId}`;
 }
 
 /**

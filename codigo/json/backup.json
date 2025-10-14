@@ -8,7 +8,7 @@
           "id": "1",
           "nome": "Sala1",
           "inputs": {
-            "ambiente": "sdfhdsf",
+            "ambiente": "dsff",
             "backup": "n+1",
             "area": "34",
             "tipoConstrucao": "Eletrocentro",
@@ -31,22 +31,98 @@
           },
           "maquinas": [
             {
-              "nome": "Equipamento de Climatização 1",
+              "nome": "Equipamento de Climatização 2",
               "tipo": "Wall Mounted",
-              "potencia": "12,5TR",
-              "tensao": "380V/3F",
-              "precoBase": 0,
-              "opcoesSelecionadas": [],
-              "precoTotal": 0
+              "potencia": "30TR",
+              "tensao": "220V/3F",
+              "precoBase": 39000,
+              "opcoesSelecionadas": [
+                {
+                  "id": 1,
+                  "name": "Automação Embarcada",
+                  "value": 500
+                },
+                {
+                  "id": 2,
+                  "name": "Modbus TCP-IP",
+                  "value": 300
+                },
+                {
+                  "id": 3,
+                  "name": "Sensor de umidade para monitoramento",
+                  "value": 200
+                },
+                {
+                  "id": 4,
+                  "name": "Sensor de filtro sujo",
+                  "value": 150
+                },
+                {
+                  "id": 5,
+                  "name": "Sensor de fluxo",
+                  "value": 150
+                },
+                {
+                  "id": 6,
+                  "name": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+                  "value": 600
+                },
+                {
+                  "id": 17,
+                  "name": "Dupla alimentação de energia",
+                  "value": 800
+                },
+                {
+                  "id": 21,
+                  "name": "Parafusos, porcas e arruelas em INOX",
+                  "value": 100
+                }
+              ],
+              "precoTotal": 46800
+            },
+            {
+              "nome": "Equipamento de Climatização 3",
+              "tipo": "Split System",
+              "potencia": "50TR",
+              "tensao": "440V/3F",
+              "precoBase": 84000,
+              "opcoesSelecionadas": [
+                {
+                  "id": 1,
+                  "name": "Automação Embarcada",
+                  "value": 600
+                },
+                {
+                  "id": 2,
+                  "name": "Modbus TCP-IP",
+                  "value": 350
+                },
+                {
+                  "id": 3,
+                  "name": "Sensor de umidade para monitoramento",
+                  "value": 250
+                },
+                {
+                  "id": 4,
+                  "name": "Sensor de filtro sujo",
+                  "value": 200
+                },
+                {
+                  "id": 5,
+                  "name": "Sensor de fluxo",
+                  "value": 200
+                }
+              ],
+              "precoTotal": 90600
             }
           ],
           "capacidade": {
             "fatoriluminacao-Projeto1-Sala1": 7,
             "fatorconversao-dissi-Projeto1-Sala1": 1,
             "fatorseguranca-Projeto1-Sala1": 10,
-            "capacidadeunitaria-Projeto1-Sala1": 1,
-            "solucaobackup-Projeto1-Sala1": 15,
-            "totalcapacidade-Projeto1-Sala1": 14
+            "capacidadeunitaria-Projeto1-Sala1": 15,
+            "solucaobackup-Projeto1-Sala1": 2,
+            "totalcapacidade-Projeto1-Sala1": 15
           },
           "ganhosTermicos": {
             "subsection-content-Projeto1-Sala1-ganhos": 40741,
@@ -72,12 +148,14 @@
             "opcoesInstalacao": [
               "bocal_insuflamento_protegido",
               "bocal_acoplado_dutos",
-              "evaporadoras_internas"
+              "evaporadoras_internas",
+              "evaporadoras_casa_maquinas",
+              "condensadores_externos"
             ]
           }
         }
       ],
-      "timestamp": "2025-10-14T21:22:34.484Z"
+      "timestamp": "2025-10-14T21:46:25.441Z"
     }
   ]
 }
