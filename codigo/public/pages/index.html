@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gerenciamento de Projetos</title>
     <link rel="stylesheet" href="../static/page1/main.css">
-
 </head>
 
 <body>
@@ -17,9 +16,8 @@
         <div class="header-center">
             <h1>Sistema de Gerenciamento de Projetos</h1>
         </div>
-        <div class="header-right">
-            <img src="" alt="Logo Direita" class="logo">
-        </div>
+
+        <button class="shutdown-btn" onclick="shutdownManual()" title="Encerrar Servidor">Encerrar Servidor</button>
     </header>
 
     <!-- Barra de Navegação -->
@@ -42,9 +40,8 @@
             </div>
 
             <!-- Container de Projetos - Renderizado dinamicamente pelo JavaScript -->
-            <!-- Projetos são carregados via loadProjectsFromServer() e renderizados com renderProjectFromData() -->
             <div id="projects-container">
-                
+                <!-- PROJETOS GERADOS DINAMICAMENTE -->
             </div>
         </div>
     </main>
@@ -52,63 +49,6 @@
     <!-- Script principal que inicializa todo o sistema -->
     <!-- Carrega módulos, constantes e projetos na inicialização -->
     <script type="module" src="../scripts/page1/main.js"></script>
-    <script>
-        // Sistema de Detecção de Fechamento (SEM HEARTBEAT)
-        class SessionMonitor {
-            constructor() {
-                this.isClosing = false;
-                this.init();
-            }
-
-            init() {
-                // Detecta fechamento da aba/janela
-                this.setupBeforeUnload();
-                console.log('🔍 Monitor de sessão ativo (sem heartbeat)');
-            }
-
-            setupBeforeUnload() {
-                window.addEventListener('beforeunload', () => {
-                    this.isClosing = true;
-                    this.sendShutdownSignal();
-                });
-
-                window.addEventListener('pagehide', () => {
-                    this.isClosing = true;
-                    this.sendShutdownSignal();
-                });
-            }
-
-            async sendShutdownSignal() {
-                try {
-                    // Envia sinal de fechamento apenas quando o usuário fecha a janela
-                    const data = new Blob([JSON.stringify({ 
-                        reason: 'window_close'
-                    })], {
-                        type: 'application/json'
-                    });
-                    
-                    if (navigator.sendBeacon) {
-                        navigator.sendBeacon('/api/shutdown', data);
-                    } else {
-                        // Fallback para fetch
-                        await fetch('/api/shutdown', {
-                            method: 'POST',
-                            body: data,
-                            keepalive: true // Mantém a requisição após fechamento
-                        });
-                    }
-                } catch (error) {
-                    // Silencia erros durante o fechamento
-                    console.log('🔌 Servidor encerrado');
-                }
-            }
-        }
-
-        // Inicia o monitor quando a página carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            new SessionMonitor();
-        });
-    </script>
 
 </body>
 

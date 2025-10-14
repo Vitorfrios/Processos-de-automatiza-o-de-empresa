@@ -13,6 +13,32 @@
 @import url('components/machines.css'); 
 @import url('components/capacity-tables.css'); 
 
+
+/* Botão de Shutdown */
+.shutdown-btn {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #b0b0b0;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 15px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.shutdown-btn:hover {
+    background: #ff4444;
+    color: white;
+    border-color: #ff4444;
+    transform: scale(1.05);
+}
+
+.shutdown-btn:active {
+    transform: scale(0.95);
+}
+
 /* Estilos de responsividade */
 @media (max-width: 768px) {
   .header {

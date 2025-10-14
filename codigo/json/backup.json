@@ -288,6 +288,446 @@
         }
       ],
       "timestamp": "2025-10-14T22:13:34.016Z"
+    },
+    {
+      "id": "1005",
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto1-Sala1": 0,
+            "fatorconversao-dissi-Projeto1-Sala1": 0,
+            "fatorseguranca-Projeto1-Sala1": 10,
+            "capacidadeunitaria-Projeto1-Sala1": 1,
+            "solucaobackup-Projeto1-Sala1": 0,
+            "totalcapacidade-Projeto1-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto1-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto1-Sala1": 0,
+            "total-tr-Projeto1-Sala1": 0,
+            "ganho-teto-Projeto1-Sala1": 0,
+            "ganho-parede-oeste-Projeto1-Sala1": 0,
+            "ganho-parede-leste-Projeto1-Sala1": 0,
+            "ganho-parede-norte-Projeto1-Sala1": 0,
+            "ganho-parede-sul-Projeto1-Sala1": 0,
+            "ganho-divi-nc1-Projeto1-Sala1": 0,
+            "ganho-divi-nc2-Projeto1-Sala1": 0,
+            "ganho-divi-c1-Projeto1-Sala1": 0,
+            "ganho-divi-c2-Projeto1-Sala1": 0,
+            "ganho-piso-Projeto1-Sala1": 0,
+            "ganho-iluminacao-Projeto1-Sala1": 0,
+            "ganho-dissi-Projeto1-Sala1": 0,
+            "ganho-pessoas-Projeto1-Sala1": 0,
+            "ganho-ar-sensivel-Projeto1-Sala1": 0,
+            "ganho-ar-latente-Projeto1-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:02:48.837Z"
+    },
+    {
+      "id": "1006",
+      "nome": "Projeto2",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto2-Sala1": 0,
+            "fatorconversao-dissi-Projeto2-Sala1": 0,
+            "fatorseguranca-Projeto2-Sala1": 10,
+            "capacidadeunitaria-Projeto2-Sala1": 1,
+            "solucaobackup-Projeto2-Sala1": 0,
+            "totalcapacidade-Projeto2-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto2-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto2-Sala1": 0,
+            "total-tr-Projeto2-Sala1": 0,
+            "ganho-teto-Projeto2-Sala1": 0,
+            "ganho-parede-oeste-Projeto2-Sala1": 0,
+            "ganho-parede-leste-Projeto2-Sala1": 0,
+            "ganho-parede-norte-Projeto2-Sala1": 0,
+            "ganho-parede-sul-Projeto2-Sala1": 0,
+            "ganho-divi-nc1-Projeto2-Sala1": 0,
+            "ganho-divi-nc2-Projeto2-Sala1": 0,
+            "ganho-divi-c1-Projeto2-Sala1": 0,
+            "ganho-divi-c2-Projeto2-Sala1": 0,
+            "ganho-piso-Projeto2-Sala1": 0,
+            "ganho-iluminacao-Projeto2-Sala1": 0,
+            "ganho-dissi-Projeto2-Sala1": 0,
+            "ganho-pessoas-Projeto2-Sala1": 0,
+            "ganho-ar-sensivel-Projeto2-Sala1": 0,
+            "ganho-ar-latente-Projeto2-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:02:54.216Z"
+    },
+    {
+      "id": "1007",
+      "nome": "Projeto3",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto3-Sala1": 0,
+            "fatorconversao-dissi-Projeto3-Sala1": 0,
+            "fatorseguranca-Projeto3-Sala1": 10,
+            "capacidadeunitaria-Projeto3-Sala1": 1,
+            "solucaobackup-Projeto3-Sala1": 0,
+            "totalcapacidade-Projeto3-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto3-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto3-Sala1": 0,
+            "total-tr-Projeto3-Sala1": 0,
+            "ganho-teto-Projeto3-Sala1": 0,
+            "ganho-parede-oeste-Projeto3-Sala1": 0,
+            "ganho-parede-leste-Projeto3-Sala1": 0,
+            "ganho-parede-norte-Projeto3-Sala1": 0,
+            "ganho-parede-sul-Projeto3-Sala1": 0,
+            "ganho-divi-nc1-Projeto3-Sala1": 0,
+            "ganho-divi-nc2-Projeto3-Sala1": 0,
+            "ganho-divi-c1-Projeto3-Sala1": 0,
+            "ganho-divi-c2-Projeto3-Sala1": 0,
+            "ganho-piso-Projeto3-Sala1": 0,
+            "ganho-iluminacao-Projeto3-Sala1": 0,
+            "ganho-dissi-Projeto3-Sala1": 0,
+            "ganho-pessoas-Projeto3-Sala1": 0,
+            "ganho-ar-sensivel-Projeto3-Sala1": 0,
+            "ganho-ar-latente-Projeto3-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:03:07.132Z"
+    },
+    {
+      "id": "1008",
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto1-Sala1": 0,
+            "fatorconversao-dissi-Projeto1-Sala1": 0,
+            "fatorseguranca-Projeto1-Sala1": 10,
+            "capacidadeunitaria-Projeto1-Sala1": 1,
+            "solucaobackup-Projeto1-Sala1": 0,
+            "totalcapacidade-Projeto1-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto1-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto1-Sala1": 0,
+            "total-tr-Projeto1-Sala1": 0,
+            "ganho-teto-Projeto1-Sala1": 0,
+            "ganho-parede-oeste-Projeto1-Sala1": 0,
+            "ganho-parede-leste-Projeto1-Sala1": 0,
+            "ganho-parede-norte-Projeto1-Sala1": 0,
+            "ganho-parede-sul-Projeto1-Sala1": 0,
+            "ganho-divi-nc1-Projeto1-Sala1": 0,
+            "ganho-divi-nc2-Projeto1-Sala1": 0,
+            "ganho-divi-c1-Projeto1-Sala1": 0,
+            "ganho-divi-c2-Projeto1-Sala1": 0,
+            "ganho-piso-Projeto1-Sala1": 0,
+            "ganho-iluminacao-Projeto1-Sala1": 0,
+            "ganho-dissi-Projeto1-Sala1": 0,
+            "ganho-pessoas-Projeto1-Sala1": 0,
+            "ganho-ar-sensivel-Projeto1-Sala1": 0,
+            "ganho-ar-latente-Projeto1-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:10:49.438Z"
+    },
+    {
+      "id": "1009",
+      "nome": "Projeto2",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto2-Sala1": 0,
+            "fatorconversao-dissi-Projeto2-Sala1": 0,
+            "fatorseguranca-Projeto2-Sala1": 10,
+            "capacidadeunitaria-Projeto2-Sala1": 1,
+            "solucaobackup-Projeto2-Sala1": 0,
+            "totalcapacidade-Projeto2-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto2-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto2-Sala1": 0,
+            "total-tr-Projeto2-Sala1": 0,
+            "ganho-teto-Projeto2-Sala1": 0,
+            "ganho-parede-oeste-Projeto2-Sala1": 0,
+            "ganho-parede-leste-Projeto2-Sala1": 0,
+            "ganho-parede-norte-Projeto2-Sala1": 0,
+            "ganho-parede-sul-Projeto2-Sala1": 0,
+            "ganho-divi-nc1-Projeto2-Sala1": 0,
+            "ganho-divi-nc2-Projeto2-Sala1": 0,
+            "ganho-divi-c1-Projeto2-Sala1": 0,
+            "ganho-divi-c2-Projeto2-Sala1": 0,
+            "ganho-piso-Projeto2-Sala1": 0,
+            "ganho-iluminacao-Projeto2-Sala1": 0,
+            "ganho-dissi-Projeto2-Sala1": 0,
+            "ganho-pessoas-Projeto2-Sala1": 0,
+            "ganho-ar-sensivel-Projeto2-Sala1": 0,
+            "ganho-ar-latente-Projeto2-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:10:51.783Z"
+    },
+    {
+      "id": "1010",
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto1-Sala1": 0,
+            "fatorconversao-dissi-Projeto1-Sala1": 0,
+            "fatorseguranca-Projeto1-Sala1": 10,
+            "capacidadeunitaria-Projeto1-Sala1": 1,
+            "solucaobackup-Projeto1-Sala1": 0,
+            "totalcapacidade-Projeto1-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto1-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto1-Sala1": 0,
+            "total-tr-Projeto1-Sala1": 0,
+            "ganho-teto-Projeto1-Sala1": 0,
+            "ganho-parede-oeste-Projeto1-Sala1": 0,
+            "ganho-parede-leste-Projeto1-Sala1": 0,
+            "ganho-parede-norte-Projeto1-Sala1": 0,
+            "ganho-parede-sul-Projeto1-Sala1": 0,
+            "ganho-divi-nc1-Projeto1-Sala1": 0,
+            "ganho-divi-nc2-Projeto1-Sala1": 0,
+            "ganho-divi-c1-Projeto1-Sala1": 0,
+            "ganho-divi-c2-Projeto1-Sala1": 0,
+            "ganho-piso-Projeto1-Sala1": 0,
+            "ganho-iluminacao-Projeto1-Sala1": 0,
+            "ganho-dissi-Projeto1-Sala1": 0,
+            "ganho-pessoas-Projeto1-Sala1": 0,
+            "ganho-ar-sensivel-Projeto1-Sala1": 0,
+            "ganho-ar-latente-Projeto1-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:17:35.438Z"
+    },
+    {
+      "id": "1011",
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto1-Sala1": 0,
+            "fatorconversao-dissi-Projeto1-Sala1": 0,
+            "fatorseguranca-Projeto1-Sala1": 10,
+            "capacidadeunitaria-Projeto1-Sala1": 1,
+            "solucaobackup-Projeto1-Sala1": 0,
+            "totalcapacidade-Projeto1-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto1-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto1-Sala1": 0,
+            "total-tr-Projeto1-Sala1": 0,
+            "ganho-teto-Projeto1-Sala1": 0,
+            "ganho-parede-oeste-Projeto1-Sala1": 0,
+            "ganho-parede-leste-Projeto1-Sala1": 0,
+            "ganho-parede-norte-Projeto1-Sala1": 0,
+            "ganho-parede-sul-Projeto1-Sala1": 0,
+            "ganho-divi-nc1-Projeto1-Sala1": 0,
+            "ganho-divi-nc2-Projeto1-Sala1": 0,
+            "ganho-divi-c1-Projeto1-Sala1": 0,
+            "ganho-divi-c2-Projeto1-Sala1": 0,
+            "ganho-piso-Projeto1-Sala1": 0,
+            "ganho-iluminacao-Projeto1-Sala1": 0,
+            "ganho-dissi-Projeto1-Sala1": 0,
+            "ganho-pessoas-Projeto1-Sala1": 0,
+            "ganho-ar-sensivel-Projeto1-Sala1": 0,
+            "ganho-ar-latente-Projeto1-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:47:16.931Z"
+    },
+    {
+      "id": "1012",
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto1-Sala1": 0,
+            "fatorconversao-dissi-Projeto1-Sala1": 0,
+            "fatorseguranca-Projeto1-Sala1": 10,
+            "capacidadeunitaria-Projeto1-Sala1": 1,
+            "solucaobackup-Projeto1-Sala1": 0,
+            "totalcapacidade-Projeto1-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto1-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto1-Sala1": 0,
+            "total-tr-Projeto1-Sala1": 0,
+            "ganho-teto-Projeto1-Sala1": 0,
+            "ganho-parede-oeste-Projeto1-Sala1": 0,
+            "ganho-parede-leste-Projeto1-Sala1": 0,
+            "ganho-parede-norte-Projeto1-Sala1": 0,
+            "ganho-parede-sul-Projeto1-Sala1": 0,
+            "ganho-divi-nc1-Projeto1-Sala1": 0,
+            "ganho-divi-nc2-Projeto1-Sala1": 0,
+            "ganho-divi-c1-Projeto1-Sala1": 0,
+            "ganho-divi-c2-Projeto1-Sala1": 0,
+            "ganho-piso-Projeto1-Sala1": 0,
+            "ganho-iluminacao-Projeto1-Sala1": 0,
+            "ganho-dissi-Projeto1-Sala1": 0,
+            "ganho-pessoas-Projeto1-Sala1": 0,
+            "ganho-ar-sensivel-Projeto1-Sala1": 0,
+            "ganho-ar-latente-Projeto1-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:51:44.652Z"
+    },
+    {
+      "id": "1013",
+      "nome": "Projeto2",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto2-Sala1": 0,
+            "fatorconversao-dissi-Projeto2-Sala1": 0,
+            "fatorseguranca-Projeto2-Sala1": 10,
+            "capacidadeunitaria-Projeto2-Sala1": 1,
+            "solucaobackup-Projeto2-Sala1": 0,
+            "totalcapacidade-Projeto2-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto2-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto2-Sala1": 0,
+            "total-tr-Projeto2-Sala1": 0,
+            "ganho-teto-Projeto2-Sala1": 0,
+            "ganho-parede-oeste-Projeto2-Sala1": 0,
+            "ganho-parede-leste-Projeto2-Sala1": 0,
+            "ganho-parede-norte-Projeto2-Sala1": 0,
+            "ganho-parede-sul-Projeto2-Sala1": 0,
+            "ganho-divi-nc1-Projeto2-Sala1": 0,
+            "ganho-divi-nc2-Projeto2-Sala1": 0,
+            "ganho-divi-c1-Projeto2-Sala1": 0,
+            "ganho-divi-c2-Projeto2-Sala1": 0,
+            "ganho-piso-Projeto2-Sala1": 0,
+            "ganho-iluminacao-Projeto2-Sala1": 0,
+            "ganho-dissi-Projeto2-Sala1": 0,
+            "ganho-pessoas-Projeto2-Sala1": 0,
+            "ganho-ar-sensivel-Projeto2-Sala1": 0,
+            "ganho-ar-latente-Projeto2-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:51:53.533Z"
+    },
+    {
+      "id": "1014",
+      "nome": "Projeto3",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [],
+          "capacidade": {
+            "fatoriluminacao-Projeto3-Sala1": 0,
+            "fatorconversao-dissi-Projeto3-Sala1": 0,
+            "fatorseguranca-Projeto3-Sala1": 10,
+            "capacidadeunitaria-Projeto3-Sala1": 1,
+            "solucaobackup-Projeto3-Sala1": 0,
+            "totalcapacidade-Projeto3-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto3-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto3-Sala1": 0,
+            "total-tr-Projeto3-Sala1": 0,
+            "ganho-teto-Projeto3-Sala1": 0,
+            "ganho-parede-oeste-Projeto3-Sala1": 0,
+            "ganho-parede-leste-Projeto3-Sala1": 0,
+            "ganho-parede-norte-Projeto3-Sala1": 0,
+            "ganho-parede-sul-Projeto3-Sala1": 0,
+            "ganho-divi-nc1-Projeto3-Sala1": 0,
+            "ganho-divi-nc2-Projeto3-Sala1": 0,
+            "ganho-divi-c1-Projeto3-Sala1": 0,
+            "ganho-divi-c2-Projeto3-Sala1": 0,
+            "ganho-piso-Projeto3-Sala1": 0,
+            "ganho-iluminacao-Projeto3-Sala1": 0,
+            "ganho-dissi-Projeto3-Sala1": 0,
+            "ganho-pessoas-Projeto3-Sala1": 0,
+            "ganho-ar-sensivel-Projeto3-Sala1": 0,
+            "ganho-ar-latente-Projeto3-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T23:52:00.927Z"
     }
   ]
 }

@@ -239,41 +239,41 @@ class RouteHandler:
     # DELETADO: handle_heartbeat
 
     def handle_shutdown(self, handler):
-        """Cliente solicitou encerramento - APENAS PARA FECHAMENTO REAL"""
+        """Encerra o servidor IMEDIATAMENTE - AMBOS os métodos"""
         try:
-            content_length = int(handler.headers.get('Content-Length', 0))
-            if content_length > 0:
-                post_data = handler.rfile.read(content_length)
-                shutdown_info = json.loads(post_data.decode('utf-8'))
-                reason = shutdown_info.get('reason', 'unknown')
-                
-                # SÓ encerra se for fechamento real da janela
-                if reason == 'window_close':
-                    print("👋 Cliente fechou a janela - encerrando servidor")
-                    config.servidor_rodando = False
-                    handler.send_json_response({
-                        "status": "shutting_down",
-                        "message": "Servidor encerrando por fechamento da janela"
-                    })
-                else:
-                    print("🔄 Cliente recarregou a página - mantendo servidor")
-                    handler.send_json_response({
-                        "status": "maintaining", 
-                        "message": "Servidor mantido (recarregamento)"
-                    })
-            else:
-                # Se não tem dados, assume fechamento por segurança
-                print("👋 Cliente desconectado - encerrando servidor")
-                config.servidor_rodando = False
-                handler.send_json_response({
-                    "status": "shutting_down",
-                    "message": "Servidor encerrando"
-                })
-                
+            print("🔴 SHUTDOWN SOLICITADO VIA BOTÃO - ENCERRANDO SERVIDOR")
+            
+            # 1. Envia resposta para o cliente
+            handler.send_json_response({
+                "status": "shutting_down",
+                "message": "Servidor encerrado com sucesso via botão"
+            })
+            
+            print("✅ Resposta enviada ao cliente - servidor será encerrado")
+            
+            # 2. Para o servidor HTTP (funciona com Ctrl+C)
+            config.servidor_rodando = False
+            
+            # 3. Força encerramento para garantir
+            def force_shutdown():
+                print("💥 Forçando encerramento do servidor...")
+                # Dá tempo para a resposta ser enviada
+                import time
+                time.sleep(1)
+                # Encerra o servidor
+                if hasattr(handler, 'server'):
+                    handler.server.shutdown()
+            
+            import threading
+            shutdown_thread = threading.Thread(target=force_shutdown)
+            shutdown_thread.daemon = True
+            shutdown_thread.start()
+            
         except Exception as e:
             print(f"❌ Erro no shutdown: {str(e)}")
-            handler.send_error(500, f"Erro: {str(e)}")
-
+            # Tenta encerrar mesmo com erro
+            config.servidor_rodando = False
+            
     def handle_get_constants(self, handler):
         """Constants do DADOS.json"""
         try:

@@ -1,4 +1,3 @@
-
 // Inicializar variáveis globais simples
 window.systemConstants = null;
 window.projectCounter = 0;
@@ -15,6 +14,106 @@ import { normalizeAllProjectsOnServer, loadProjectsFromServer, getGeralCount, cr
 
 // Carregar módulos dinamicamente
 let modulesLoaded = false;
+
+/**
+ * Sistema de Shutdown Manual
+ */
+class ShutdownManager {
+  constructor() {
+      this.init();
+  }
+
+  init() {
+      console.log('🔒 Sistema de shutdown manual ativado');
+      this.disableAutoShutdown();
+      this.createShutdownButton();
+  }
+
+  disableAutoShutdown() {
+      // Remove event listeners de shutdown automático se existirem
+      window.removeEventListener('beforeunload', this.autoShutdown);
+      window.removeEventListener('unload', this.autoShutdown);
+      window.removeEventListener('pagehide', this.autoShutdown);
+  }
+
+  createShutdownButton() {
+    // Verifica se o botão já existe
+    if (document.querySelector('.shutdown-btn')) return;
+    
+    // Cria botão no header
+    const headerRight = document.querySelector('.header-right');
+    if (headerRight) {
+        const shutdownBtn = document.createElement('button');
+        shutdownBtn.className = 'shutdown-btn';
+        shutdownBtn.innerHTML = '⏻';
+        shutdownBtn.title = 'Encerrar Servidor';
+        shutdownBtn.onclick = () => this.shutdownManual();
+        
+        headerRight.appendChild(shutdownBtn);
+        console.log('✅ Botão de shutdown adicionado ao header');
+    }
+  }
+
+  async shutdownManual() {
+      if (confirm('Deseja realmente ENCERRAR o servidor?')) {
+          try {
+              console.log('🔄 Enviando comando de shutdown...');
+              
+              const response = await fetch('/api/shutdown', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({ action: 'shutdown_now' })
+              });
+              
+              const data = await response.json();
+              console.log('✅ Resposta do servidor:', data);
+              
+              alert('Servidor encerrado! Esta janela será fechada.');
+              setTimeout(() => {
+                  window.close();
+              }, 1000);
+              
+          } catch (error) {
+              console.log('🔌 Servidor encerrado ou não responde');
+              alert('Servidor encerrado!');
+              setTimeout(() => {
+                  window.close();
+              }, 1000);
+          }
+      }
+  }
+
+  showShutdownMessage() {
+    const message = document.createElement('div');
+    message.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        font-family: Arial, sans-serif;
+        font-size: 24px;
+    `;
+    message.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 20px;">⏻</div>
+            <div>Servidor encerrado</div>
+            <div style="font-size: 14px; margin-top: 10px; opacity: 0.8;">Esta janela fechará automaticamente</div>
+        </div>
+    `;
+    document.body.appendChild(message);
+  }
+}
+
+// Inicializar shutdown manager
+let shutdownManager = null;
 
 /**
  * Carrega todos os módulos do sistema dinamicamente e os atribui ao escopo global
@@ -161,6 +260,7 @@ function finalSystemDebug() {
   console.log('- Salas no DOM:', document.querySelectorAll('.room-block').length);
   console.log('- Módulos carregados:', modulesLoaded);
   console.log('- Constantes carregadas:', !!window.systemConstants);
+  console.log('- Shutdown Manager:', !!shutdownManager);
   
   // Debug detalhado dos projetos
   const projects = document.querySelectorAll('.project-block');
@@ -180,6 +280,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Inicializando sistema...");
   
   try {
+    // 0. Inicializar sistema de shutdown primeiro
+    shutdownManager = new ShutdownManager();
+    
     // 1. Carregar módulos primeiro
     await loadAllModules();
     
@@ -225,3 +328,22 @@ window.addEventListener('click', async (event) => {
     await loadAllModules();
   }
 });
+
+// Função global para shutdown manual (caso precise ser chamada de outros lugares)
+window.shutdownManual = function() {
+  if (shutdownManager) {
+    shutdownManager.shutdownManual();
+  } else {
+    // Fallback simples
+    if (confirm('Deseja encerrar o servidor?')) {
+      fetch('/api/shutdown', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ reason: 'manual_shutdown' })
+      }).then(() => {
+        alert('Servidor encerrado!');
+        setTimeout(() => window.close(), 1000);
+      });
+    }
+  }
+};
