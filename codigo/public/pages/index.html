@@ -53,52 +53,17 @@
     <!-- Carrega módulos, constantes e projetos na inicialização -->
     <script type="module" src="../scripts/page1/main.js"></script>
     <script>
-        // Sistema de Heartbeat e Detecção de Fechamento
+        // Sistema de Detecção de Fechamento (SEM HEARTBEAT)
         class SessionMonitor {
             constructor() {
-                this.heartbeatInterval = null;
                 this.isClosing = false;
                 this.init();
             }
 
             init() {
-                // Inicia heartbeat a cada 10 segundos
-                this.startHeartbeat();
-                
                 // Detecta fechamento da aba/janela
                 this.setupBeforeUnload();
-                
-                console.log('🔍 Monitor de sessão ativo');
-            }
-
-            startHeartbeat() {
-                // Primeiro heartbeat imediato
-                this.sendHeartbeat();
-                
-                // Heartbeats periódicos a cada 10 segundos
-                this.heartbeatInterval = setInterval(() => {
-                    this.sendHeartbeat();
-                }, 10000);
-            }
-
-            async sendHeartbeat() {
-                try {
-                    const response = await fetch('/api/heartbeat', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    });
-                    
-                    if (!response.ok) {
-                        console.log('⚠️ Servidor não respondeu ao heartbeat');
-                    }
-                } catch (error) {
-                    // Silencia erros quando o servidor está encerrando
-                    if (!this.isClosing) {
-                        console.log('🌐 Servidor possivelmente offline');
-                    }
-                }
+                console.log('🔍 Monitor de sessão ativo (sem heartbeat)');
             }
 
             setupBeforeUnload() {
@@ -115,9 +80,10 @@
 
             async sendShutdownSignal() {
                 try {
-                    // Usa sendBeacon para garantir que a requisição seja enviada
-                    // mesmo durante o fechamento da página
-                    const data = new Blob([JSON.stringify({ action: 'shutdown' })], {
+                    // Envia sinal de fechamento apenas quando o usuário fecha a janela
+                    const data = new Blob([JSON.stringify({ 
+                        reason: 'window_close'
+                    })], {
                         type: 'application/json'
                     });
                     
@@ -133,11 +99,7 @@
                     }
                 } catch (error) {
                     // Silencia erros durante o fechamento
-                }
-                
-                // Para o heartbeat
-                if (this.heartbeatInterval) {
-                    clearInterval(this.heartbeatInterval);
+                    console.log('🔌 Servidor encerrado');
                 }
             }
         }

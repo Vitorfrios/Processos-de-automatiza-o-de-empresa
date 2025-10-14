@@ -1,5 +1,5 @@
 """
-Definição de todas as rotas da API - COM HEARTBEAT E CONTROLE DE SESSÃO
+Definição de todas as rotas da API - COM SESSÕES MAS SEM TIMEOUT
 """
 import json
 import time
@@ -7,7 +7,7 @@ from pathlib import Path
 from servidor_modules import file_utils, config  
 
 class RouteHandler:
-    """Handler para todas as rotas da API com monitoramento e controle de sessão"""
+    """Handler para todas as rotas da API com controle de sessão SEM TIMEOUT"""
     
     def __init__(self, project_root):
         self.project_root = project_root
@@ -73,10 +73,36 @@ class RouteHandler:
             backup_file = file_utils.find_json_file('backup.json', self.project_root)
             backup_data = file_utils.load_json_file(backup_file, {"projetos": []})
             
-            # Adiciona ao backup
+            # 🔥 CORREÇÃO COMPLETA: Garantir ID único e sequencial
             projetos = backup_data.get('projetos', [])
+            
+            # Extrair todos os IDs numéricos existentes
+            ids_existentes = []
+            for projeto in projetos:
+                try:
+                    id_str = projeto.get('id', '')
+                    if id_str and id_str.isdigit():
+                        ids_existentes.append(int(id_str))
+                except (ValueError, AttributeError):
+                    continue
+            
+            # Determinar próximo ID
+            if ids_existentes:
+                proximo_id = max(ids_existentes) + 1
+            else:
+                proximo_id = 1001  # Primeiro ID
+            
+            # Atribuir novo ID ao projeto
+            novo_projeto['id'] = str(proximo_id)
+            
+            # Adicionar timestamp se não existir
+            if 'timestamp' not in novo_projeto:
+                from datetime import datetime
+                novo_projeto['timestamp'] = datetime.now().isoformat()
+            
+            # Adiciona ao backup
             projetos.append(novo_projeto)
-            print(f"➕ ADICIONANDO novo projeto ID: {novo_projeto.get('id')}")
+            print(f"➕ ADICIONANDO novo projeto ID: {proximo_id}")
             
             backup_data['projetos'] = projetos
             
@@ -87,13 +113,14 @@ class RouteHandler:
             if current_session_id not in sessions_data["sessions"]:
                 sessions_data["sessions"][current_session_id] = []
             
-            project_id = str(novo_projeto.get('id'))
-            if project_id not in sessions_data["sessions"][current_session_id]:
-                sessions_data["sessions"][current_session_id].append(project_id)
+            project_id_str = str(proximo_id)
+            if project_id_str not in sessions_data["sessions"][current_session_id]:
+                sessions_data["sessions"][current_session_id].append(project_id_str)
             
             # Salva ambos
             if (file_utils.save_json_file(backup_file, backup_data) and 
                 self._save_sessions(sessions_data)):
+                print(f"✅ Projeto {proximo_id} salvo com sucesso na sessão {current_session_id}")
                 handler.send_json_response(novo_projeto)
             else:
                 handler.send_error(500, "Erro ao salvar projeto")
@@ -143,23 +170,14 @@ class RouteHandler:
             print(f"❌ Erro ao atualizar projeto: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
 
-    # NOVOS ENDPOINTS PARA CONTROLE DE SESSÃO
+    # MANTENDO endpoints de sessão mas REMOVENDO timeout
     def handle_post_session_start(self, handler):
-        """Inicia uma nova sessão"""
+        """Inicia uma nova sessão - SEM LIMPEZA AUTOMÁTICA"""
         try:
             sessions_data = self._load_sessions()
             current_session_id = self._get_current_session_id()
             
-            # Limpa sessões muito antigas (mais de 24 horas)
-            current_time = int(time.time())
-            old_sessions = []
-            for session_id in list(sessions_data["sessions"].keys()):
-                session_time = int(session_id.split('_')[1])
-                if current_time - session_time > 86400:  # 24 horas
-                    old_sessions.append(session_id)
-            
-            for old_session in old_sessions:
-                del sessions_data["sessions"][old_session]
+            # REMOVIDA a limpeza de sessões antigas (não causa mais timeout)
             
             # Garante que a sessão atual existe
             if current_session_id not in sessions_data["sessions"]:
@@ -217,63 +235,11 @@ class RouteHandler:
             print(f"❌ Erro ao obter projetos da sessão: {str(e)}")
             handler.send_json_response({"session_id": "error", "projects": []})
 
-    # ... (mantenha os outros métodos existentes: handle_get_constants, handle_get_machines, etc.)
-    def handle_post_dados(self, handler):
-        """Salva DADOS.json"""
-        try:
-            content_length = int(handler.headers['Content-Length'])
-            post_data = handler.rfile.read(content_length)
-            new_data = json.loads(post_data.decode('utf-8'))
-            
-            dados_file = file_utils.find_json_file('dados.json', self.project_root)
-            
-            if file_utils.save_json_file(dados_file, new_data):
-                print("💾 DADOS.json salvo")
-                handler.send_json_response({"status": "success", "message": "Dados salvos"})
-            else:
-                handler.send_error(500, "Erro ao salvar dados")
-            
-        except Exception as e:
-            print(f"❌ Erro ao salvar dados: {str(e)}")
-            handler.send_error(500, f"Erro: {str(e)}")
+    # REMOVENDO APENAS o heartbeat (causa timeout)
+    # DELETADO: handle_heartbeat
 
-    def handle_post_backup(self, handler):
-        """Salva BACKUP.json"""
-        try:
-            content_length = int(handler.headers['Content-Length'])
-            post_data = handler.rfile.read(content_length)
-            new_data = json.loads(post_data.decode('utf-8'))
-            
-            backup_file = file_utils.find_json_file('backup.json', self.project_root)
-            
-            if file_utils.save_json_file(backup_file, new_data):
-                print("💾 BACKUP.json salvo")
-                handler.send_json_response({"status": "success", "message": "Backup salvo"})
-            else:
-                handler.send_error(500, "Erro ao salvar backup")
-            
-        except Exception as e:
-            print(f"❌ Erro ao salvar backup: {str(e)}")
-            handler.send_error(500, f"Erro: {str(e)}")
-    
-     
-    # Endpoint de heartbeat
-    def handle_heartbeat(self, handler):
-        """Registra atividade do cliente"""
-        try:
-            config.ultimo_heartbeat = time.time()
-            print(f"💓 Heartbeat recebido - Cliente ativo")
-            handler.send_json_response({
-                "status": "alive", 
-                "timestamp": config.ultimo_heartbeat
-            })
-        except Exception as e:
-            print(f"❌ Erro no heartbeat: {str(e)}")
-            handler.send_error(500, f"Erro: {str(e)}")
-    
-    # Endpoint de shutdown graceful COM PARÂMETRO CORRETO
     def handle_shutdown(self, handler):
-        """Cliente solicitou encerramento - COM VERIFICAÇÃO"""
+        """Cliente solicitou encerramento - APENAS PARA FECHAMENTO REAL"""
         try:
             content_length = int(handler.headers.get('Content-Length', 0))
             if content_length > 0:
@@ -287,8 +253,7 @@ class RouteHandler:
                     config.servidor_rodando = False
                     handler.send_json_response({
                         "status": "shutting_down",
-                        "message": "Servidor encerrando por fechamento da janela",
-                        "reason": reason
+                        "message": "Servidor encerrando por fechamento da janela"
                     })
                 else:
                     print("🔄 Cliente recarregou a página - mantendo servidor")
@@ -308,20 +273,6 @@ class RouteHandler:
         except Exception as e:
             print(f"❌ Erro no shutdown: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
-
-    def handle_get_projetos(self, handler):
-        """Retorna todos os projetos do BACKUP.json"""
-        try:
-            backup_file = file_utils.find_json_file('backup.json', self.project_root)
-            backup_data = file_utils.load_json_file(backup_file, {"projetos": []})
-            
-            projetos = backup_data.get('projetos', [])
-            print(f"📊 Retornando {len(projetos)} projetos")
-            handler.send_json_response(projetos)
-            
-        except Exception as e:
-            print(f"❌ Erro ao carregar projetos: {str(e)}")
-            handler.send_json_response([])
 
     def handle_get_constants(self, handler):
         """Constants do DADOS.json"""
@@ -375,72 +326,6 @@ class RouteHandler:
             
         except Exception as e:
             print(f"❌ Erro ao carregar backup: {str(e)}")
-            handler.send_error(500, f"Erro: {str(e)}")
-
-    def handle_post_projetos(self, handler):
-        """🔥 NOVO projeto (sem ID ou ID não existente)"""
-        try:
-            content_length = int(handler.headers['Content-Length'])
-            post_data = handler.rfile.read(content_length)
-            novo_projeto = json.loads(post_data.decode('utf-8'))
-            
-            backup_file = file_utils.find_json_file('backup.json', self.project_root)
-            backup_data = file_utils.load_json_file(backup_file, {"projetos": []})
-            
-            projetos = backup_data.get('projetos', [])
-            projetos.append(novo_projeto)
-            print(f"➕ ADICIONANDO novo projeto ID: {novo_projeto.get('id')}")
-            
-            backup_data['projetos'] = projetos
-            
-            if file_utils.save_json_file(backup_file, backup_data):
-                handler.send_json_response(novo_projeto)
-            else:
-                handler.send_error(500, "Erro ao salvar projeto")
-            
-        except Exception as e:
-            print(f"❌ Erro ao adicionar projeto: {str(e)}")
-            handler.send_error(500, f"Erro: {str(e)}")
-
-    def handle_put_projeto(self, handler):
-        """🔥 ATUALIZA projeto existente (com ID)"""
-        try:
-            project_id = handler.path.split('/')[-1]
-            
-            content_length = int(handler.headers['Content-Length'])
-            put_data = handler.rfile.read(content_length)
-            projeto_atualizado = json.loads(put_data.decode('utf-8'))
-            
-            backup_file = file_utils.find_json_file('backup.json', self.project_root)
-            backup_data = file_utils.load_json_file(backup_file)
-            
-            if not backup_data:
-                handler.send_error(404, "Arquivo de backup não encontrado")
-                return
-            
-            projetos = backup_data.get('projetos', [])
-            projeto_encontrado = False
-            
-            for i, projeto in enumerate(projetos):
-                if str(projeto.get('id')) == project_id:
-                    projetos[i] = projeto_atualizado
-                    projeto_encontrado = True
-                    print(f"✏️  ATUALIZANDO projeto {project_id}")
-                    break
-            
-            if not projeto_encontrado:
-                handler.send_error(404, f"Projeto {project_id} não encontrado")
-                return
-            
-            backup_data['projetos'] = projetos
-            
-            if file_utils.save_json_file(backup_file, backup_data):
-                handler.send_json_response(projeto_atualizado)
-            else:
-                handler.send_error(500, "Erro ao atualizar projeto")
-            
-        except Exception as e:
-            print(f"❌ Erro ao atualizar projeto: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
 
     def handle_post_dados(self, handler):

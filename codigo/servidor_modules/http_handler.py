@@ -50,9 +50,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response({"status": "online", "timestamp": time.time()})
         elif path == '/api/session/projects':
             self.route_handler.handle_get_session_projects(self)
-        # Endpoint de heartbeat via GET também
-        elif path == '/api/heartbeat':
-            self.route_handler.handle_heartbeat(self)
+
         else:
             try:
                 super().do_GET()
@@ -77,9 +75,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_post_dados(self)
         elif path == '/backup':
             self.route_handler.handle_post_backup(self)
-        # Endpoints de monitoramento
-        elif path == '/api/heartbeat':
-            self.route_handler.handle_heartbeat(self)
         elif path == '/api/shutdown':
             self.route_handler.handle_shutdown(self)
         elif path == '/api/session/start':

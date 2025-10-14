@@ -1,14 +1,15 @@
 """
-Monitoramento do navegador - Versão OTIMIZADA com Heartbeat
+Monitoramento do navegador
 """
 
 import time
+import threading
 import psutil
 from servidor_modules import config, server_utils
 
 def is_browser_connected(port):
     """
-    Verifica se há navegadores conectados - Método secundário
+    Verifica se há navegadores conectados - Método OTIMIZADO
     """
     try:
         browser_processes = [
@@ -17,91 +18,79 @@ def is_browser_connected(port):
             'iexplore.exe', 'vivaldi.exe', 'waterfox.exe'
         ]
         
+        browser_count = 0
         for proc in psutil.process_iter(['name']):
             try:
                 proc_name = proc.info['name'].lower() if proc.info['name'] else ''
                 
                 if any(browser in proc_name for browser in browser_processes):
                     if proc.status() == psutil.STATUS_RUNNING:
-                        return True
+                        browser_count += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 continue
-        return False
+        
+        return browser_count > 0
+        
     except Exception as e:
         print(f"⚠️  Aviso no monitor: {e}")
-        return True  
-
-def check_heartbeat_timeout():
-    """
-    NOVO: Verifica se o cliente está inativo baseado no heartbeat
-    """
-    if config.ultimo_heartbeat is None:
-
-        return False
-    
-    tempo_sem_heartbeat = time.time() - config.ultimo_heartbeat
-    return tempo_sem_heartbeat > config.HEARTBEAT_TIMEOUT
+        return True  # Por segurança, assume que está conectado
 
 def monitorar_navegador(port, httpd):
     """
-    Monitoramento INTELIGENTE com heartbeat - REDUZIDO para 30s
+    Monitoramento RÁPIDO - só fecha quando o navegador for fechado
     """
-    print("🔍 MONITORAMENTO ATIVO - SISTEMA OTIMIZADO")
-    print("   • Detecção de inatividade: 15-30 segundos")
-    print("   • Recarregamentos NÃO encerram o servidor") 
-    print("   • Heartbeat ativo")
+    print("🔍 MONITORAMENTO ATIVO - FECHAMENTO RÁPIDO")
+    print("   • Servidor ficará ativo INDEFINIDAMENTE")
+    print("   • Fechamento em 5-10 segundos após fechar navegador")
     print("   • Pressione Ctrl+C para encerrar manualmente\n")
     
-    # Tempo reduzido para estabilização
-    time.sleep(config.MONITOR_START_DELAY)
+    time.sleep(2)  # Reduzido para 2 segundos
     print("✅ Sistema de monitoramento inicializado")
     
-    tentativas_inativas = 0
-    max_tentativas_inativas = config.MONITOR_MAX_ATTEMPTS  # 30 segundos total
-    ultima_conexao_ativa = time.time()
-
+    tentativas_sem_navegador = 0
+    max_tentativas = 3  # Apenas 3 verificações (5-10 segundos no total)
+    
     while config.servidor_rodando:
         try:
-            # MÉTODO PRINCIPAL: Verifica heartbeat (15 segundos)
-            if check_heartbeat_timeout():
-                print("🚨 CLIENTE INATIVO - Sem heartbeat por 15+ segundos")
-                break
+            # Verifica se o navegador ainda está aberto
+            navegador_aberto = is_browser_connected(port)
             
-            # MÉTODO SECUNDÁRIO: Verifica processos (backup)
-            navegador_ativo = is_browser_connected(port)
-            
-            if navegador_ativo:
-                if tentativas_inativas > 0:
-                    print("✅ Atividade detectada - reiniciando contador")
-                    tentativas_inativas = 0
-                ultima_conexao_ativa = time.time()
+            if navegador_aberto:
+                tentativas_sem_navegador = 0  # Reset do contador
+                # print("✅ Navegador ativo")  # Opcional: descomente para debug
             else:
-                tentativas_inativas += 1
-                tempo_inativo = time.time() - ultima_conexao_ativa
+                tentativas_sem_navegador += 1
+                print(f"📱 Navegador não encontrado ({tentativas_sem_navegador}/{max_tentativas})")
                 
-                if tentativas_inativas == 1:
-                    print("⏰ Aguardando atividade...")
-                elif tentativas_inativas % 3 == 0:  # A cada 15 segundos
-                    print(f"   ⏱️  {int(tempo_inativo)} segundos sem atividade de processo")
-                
-                # Timeout de backup: 30 segundos sem processo
-                if tentativas_inativas >= max_tentativas_inativas:
-                    print(f"\n🌐 SEM ATIVIDADE DE PROCESSO POR {int(tempo_inativo)} SEGUNDOS")
-                    print("⏹️  Encerrando servidor automaticamente...")
+                if tentativas_sem_navegador >= max_tentativas:
+                    print("🚨 NAVEGADOR FECHADO - Encerrando servidor...")
                     break
             
-            # Intervalo entre verificações
-            time.sleep(config.MONITOR_CHECK_INTERVAL)
+            # Verificação mais frequente para detectar fechamento rápido
+            time.sleep(3)  # Verifica a cada 3 segundos
             
         except KeyboardInterrupt:
             print("\n⏹️  Interrupção recebida no monitor")
             break
         except Exception as e:
             print(f"⚠️  Erro não crítico no monitor: {e}")
-            time.sleep(config.MONITOR_CHECK_INTERVAL)
+            time.sleep(3)
     
-    # Encerramento seguro
+    # Encerramento rápido
     if config.servidor_rodando:
-        print("💾 Finalizando servidor por inatividade do cliente...")
+        print("💾 Finalizando servidor (navegador fechado)...")
         config.servidor_rodando = False
-        server_utils.shutdown_server_async(httpd)
+        
+        # Encerramento mais rápido
+        def shutdown_rapido():
+            print("🔄 Finalizando conexões...")
+            try:
+                httpd.shutdown()
+                httpd.server_close()
+                print("✅ Servidor finalizado com sucesso")
+            except Exception as e:
+                print(f"⚠️  Aviso no encerramento: {e}")
+        
+        shutdown_thread = threading.Thread(target=shutdown_rapido, daemon=True)
+        shutdown_thread.start()
+        shutdown_thread.join(timeout=3.0)  # Timeout reduzido para 3 segundos
