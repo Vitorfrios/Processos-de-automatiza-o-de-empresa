@@ -28,11 +28,8 @@ function buildProjectData(projectIdOrElement) {
     }
 
     const projectName = projectElement.dataset.projectName || projectElement.id;
-    
-    // ✅ CORREÇÃO: NUNCA usar o nome como ID fallback
     const projectId = projectElement.dataset.projectId;
-    
-    // Se o ID for temporário ou inválido, retornar null para forçar geração de novo ID
+
     const shouldGenerateNewId = !projectId || 
                                projectId === '' || 
                                projectId === 'undefined' || 
@@ -41,21 +38,26 @@ function buildProjectData(projectIdOrElement) {
                                projectId.startsWith('Projeto');
 
     const projectData = {
-        id: shouldGenerateNewId ? null : projectId, // ← Deixa o servidor gerar o ID correto
+        id: shouldGenerateNewId ? null : projectId,
         nome: getProjectName(projectElement),
         salas: [],
+        timestamp: new Date().toISOString()
     };
 
-    // Coleta dados de todas as salas (código existente)
+    // ✅ CORREÇÃO: IDs sequenciais simples (1, 2, 3...)
     const roomElements = projectElement.querySelectorAll('.room-block');
     console.log(`🔍 Encontradas ${roomElements.length} salas no projeto`);
     
     roomElements.forEach((roomElement, index) => {
-        const roomData = extractRoomData(roomElement);
+        // ✅ Número sequencial começando em 1
+        const roomNumber = index + 1;
+        
+        const roomData = extractRoomData(roomElement, roomNumber);
         if (roomData) {
             projectData.salas.push(roomData);
+            console.log(`✅ Sala ${roomNumber} adicionada`);
         } else {
-            console.warn(`⚠️ Sala ${index} ignorada - dados inválidos`);
+            console.warn(`⚠️ Sala ${roomNumber} ignorada`);
         }
     });
 
@@ -74,31 +76,25 @@ function getProjectName(projectElement) {
     return titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Projeto ${projectElement.id.replace('project-', '')}`;
 }
 
+
 /**
  * Extrai todos os dados de uma sala a partir do elemento HTML
  * @param {HTMLElement} roomElement - Elemento da sala
+ * @param {number} roomNumber - Número sequencial da sala (1, 2, 3...)
  * @returns {Object} Dados completos da sala
  */
-function extractRoomData(roomElement) {
+function extractRoomData(roomElement, roomNumber) {
     if (!roomElement) {
         console.error('❌ Elemento da sala é nulo');
         return null;
     }
 
-    // CORREÇÃO: Usa data-room-id como fallback se não tiver id
-    const roomId = roomElement.id 
-        ? roomElement.id.replace('room-content-', '') 
-        : roomElement.dataset.roomId || `room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    // CORREÇÃO: Verifica se pelo menos temos um ID válido
-    if (!roomId || roomId === '') {
-        console.error('❌ Elemento da sala inválido (sem ID):', roomElement);
-        return null;
-    }
+    // ✅ CORREÇÃO: ID sempre numérico sequencial
+    const roomId = roomNumber.toString();
 
     const roomData = {
         id: roomId,
-        nome: getRoomName(roomElement),
+        nome: getRoomName(roomElement) || `Sala ${roomId}`,
         inputs: {},
         maquinas: [],
         capacidade: {},
@@ -147,10 +143,10 @@ function extractRoomData(roomElement) {
 
     } catch (error) {
         console.error(`❌ Erro ao extrair dados da sala ${roomId}:`, error);
-        // CORREÇÃO: Retorna dados básicos mesmo com erro
+        // Retorna dados básicos mesmo com erro
         return {
             id: roomId,
-            nome: getRoomName(roomElement),
+            nome: getRoomName(roomElement) || `Sala ${roomId}`,
             inputs: {},
             maquinas: [],
             capacidade: {},
@@ -161,14 +157,22 @@ function extractRoomData(roomElement) {
     }
 }
 
+
+
+
+
 /**
  * Obtém o nome da sala de forma segura
  */
 function getRoomName(roomElement) {
-    const titleElement = roomElement.querySelector('.room-title-editable');
-    if (!titleElement) return `Sala ${roomElement.id.replace('room-content-', '')}`;
+    const titleElement = roomElement.querySelector('.room-title');
+    if (titleElement) {
+        const name = titleElement.textContent || titleElement.value || titleElement.getAttribute('value');
+        if (name && name.trim() !== '') return name.trim();
+    }
     
-    return titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Sala ${roomElement.id.replace('room-content-', '')}`;
+    // Se não encontrar nome, retorna null e o extractRoomData usará "Sala X"
+    return null;
 }
 
 /**
