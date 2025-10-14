@@ -1,5 +1,83 @@
 {
   "projetos": [
-
+    {
+      "id": "1001",
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "sdfhdsf",
+            "backup": "n+1",
+            "area": "34",
+            "tipoConstrucao": "Eletrocentro",
+            "paredeOeste": "12",
+            "paredeLeste": "13",
+            "paredeNorte": "14",
+            "paredeSul": "15",
+            "peDireito": "15",
+            "divisoriaNaoClima1": "1",
+            "divisoriaNaoClima2": "2",
+            "divisoriaClima1": "3",
+            "divisoriaClima2": "4",
+            "dissipacao": "1500",
+            "numPessoas": "15",
+            "numPortasDuplas": "1",
+            "numPortasSimples": "3",
+            "pressurizacao": "25",
+            "setpoint": "25",
+            "combateIncendio": "fm200"
+          },
+          "maquinas": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "12,5TR",
+              "tensao": "380V/3F",
+              "precoBase": 0,
+              "opcoesSelecionadas": [],
+              "precoTotal": 0
+            }
+          ],
+          "capacidade": {
+            "fatoriluminacao-Projeto1-Sala1": 7,
+            "fatorconversao-dissi-Projeto1-Sala1": 1,
+            "fatorseguranca-Projeto1-Sala1": 10,
+            "capacidadeunitaria-Projeto1-Sala1": 1,
+            "solucaobackup-Projeto1-Sala1": 15,
+            "totalcapacidade-Projeto1-Sala1": 14
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto1-Sala1-ganhos": 40741,
+            "total-ganhos-w-Projeto1-Sala1": 40741,
+            "total-tr-Projeto1-Sala1": 12,
+            "ganho-teto-Projeto1-Sala1": 779,
+            "ganho-parede-oeste-Projeto1-Sala1": 2621,
+            "ganho-parede-leste-Projeto1-Sala1": 2840,
+            "ganho-parede-norte-Projeto1-Sala1": 3058,
+            "ganho-parede-sul-Projeto1-Sala1": 3277,
+            "ganho-divi-nc1-Projeto1-Sala1": 168,
+            "ganho-divi-nc2-Projeto1-Sala1": 336,
+            "ganho-divi-c1-Projeto1-Sala1": 152,
+            "ganho-divi-c2-Projeto1-Sala1": 202,
+            "ganho-piso-Projeto1-Sala1": 689,
+            "ganho-iluminacao-Projeto1-Sala1": 238,
+            "ganho-dissi-Projeto1-Sala1": 1500,
+            "ganho-pessoas-Projeto1-Sala1": 3297,
+            "ganho-ar-sensivel-Projeto1-Sala1": 6802,
+            "ganho-ar-latente-Projeto1-Sala1": 14787
+          },
+          "configuracao": {
+            "opcoesInstalacao": [
+              "bocal_insuflamento_protegido",
+              "bocal_acoplado_dutos",
+              "evaporadoras_internas"
+            ]
+          }
+        }
+      ],
+      "timestamp": "2025-10-14T21:22:34.484Z"
+    }
   ]
 }

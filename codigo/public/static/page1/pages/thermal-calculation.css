@@ -106,18 +106,24 @@
   visibility: hidden;
 }
 
-.clima-cell-result {
+/* CORREÇÃO: Ajuste para clima-cell-result */
+.clima-cell.clima-cell-result {
   background: var(--primary-gradient);
   padding: var(--spacing-md);
   border-radius: var(--border-radius-lg);
   display: flex;
+  flex-direction: row; /* Mudança importante */
   justify-content: space-between;
   align-items: center;
+  gap: var(--spacing-md);
 }
 
-.clima-cell-result label {
+.clima-cell.clima-cell-result label {
   color: white;
   margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .result-value-inline {
@@ -129,4 +135,17 @@
   font-weight: 700;
   min-width: 80px;
   text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.clima-cell:not(.clima-cell-result) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.clima-cell:not(.clima-cell-result) label {
+  font-weight: 600;
+  color: var(--color-gray-dark);
+  font-size: 0.9rem;
 }

@@ -133,18 +133,6 @@ function buildClimatizationTable(roomId) {
     roomId,
   )}
       ${buildResultRow(roomId)}
-      ${buildClimaRow(
-    [
-      {
-        label: "Combate a Incêndio:",
-        field: "combateIncendio",
-        type: "select",
-        options: ["", "manual", "fm200", "novec", "firepro", "ni"],
-      },
-      null,
-    ],
-    roomId,
-  )}
     </div>
   `
 }
@@ -227,7 +215,17 @@ function buildResultRow(roomId) {
         <label>Vazão de Ar Externo (l/s):</label>
         <div class="result-value-inline" id="vazao-ar-${roomId}">0</div>
       </div>
-      <div class="clima-cell clima-cell-empty"></div>
+      <div class="clima-cell">
+        <label>Combate a Incêndio:</label>
+        <select class="form-input clima-input" data-field="combateIncendio" onchange="calculateVazaoArAndThermalGains('${roomId}')">
+          <option value="">Selecione</option>
+          <option value="manual">Manual</option>
+          <option value="fm200">FM200</option>
+          <option value="novec">Novec</option>
+          <option value="firepro">FirePro</option>
+          <option value="ni">NI</option>
+        </select>
+      </div>
     </div>
   `
 }

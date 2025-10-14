@@ -21,15 +21,20 @@
 /* CONTAINER DA TABELA COM SCROLL - SOMENTE A TABELA */
 .table-container {
   overflow-x: auto;
+  overflow-y: hidden;
   border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
   background: var(--table-container-bg);
   width: 100%;
   -webkit-overflow-scrolling: touch;
 }
 
+/* ===== TABELA PRINCIPAL ===== */
 .thermal-capacity-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate; /* permite bordas arredondadas */
+  border-spacing: 0; /* remove espaços entre células */
+  border-radius: var(--border-radius-lg);
+  overflow: hidden; /* respeita o border-radius */
   background: var(--table-container-bg);
   min-width: 800px;
   table-layout: fixed;
@@ -37,12 +42,26 @@
   font-size: 0.85rem; /* Tamanho fixo para desktop */
 }
 
+/* CANTOS ARREDONDADOS DO CABEÇALHO E RODAPÉ */
+.thermal-capacity-table thead tr:first-child th:first-child {
+  border-top-left-radius: var(--border-radius-lg);
+}
+.thermal-capacity-table thead tr:first-child th:last-child {
+  border-top-right-radius: var(--border-radius-lg);
+}
+.thermal-capacity-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--border-radius-lg);
+}
+.thermal-capacity-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--border-radius-lg);
+}
+
 .thermal-capacity-table th {
   background: var(--table-header-bg);
   color: var(--table-header-color);
   padding: var(--table-header-padding);
   font-weight: 600;
-  font-size: 0.85rem; /* Tamanho fixo */
+  font-size: 0.85rem;
   text-align: center;
   border: 1px solid var(--table-header-border);
   white-space: nowrap;
@@ -52,7 +71,7 @@
   padding: var(--table-cell-padding);
   text-align: center;
   border: 1px solid var(--table-cell-border);
-  font-size: 0.85rem; /* Tamanho fixo */
+  font-size: 0.85rem;
   white-space: nowrap;
   background: var(--table-cell-bg);
 }
@@ -124,9 +143,9 @@
   max-width: 80px;
   padding: var(--capacity-input-padding);
   border: 1px solid var(--capacity-input-border);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--border-radius);
   text-align: center;
-  font-size: 0.85rem; /* Tamanho fixo */
+  font-size: 0.85rem;
   background: var(--color-white);
   transition: all 0.2s ease;
 }
@@ -143,7 +162,7 @@
   padding: var(--capacity-select-padding);
   border: 1px solid var(--capacity-input-border);
   border-radius: var(--border-radius-sm);
-  font-size: 0.85rem; /* Tamanho fixo */
+  font-size: 0.85rem;
   background: var(--color-white);
   transition: all 0.2s ease;
 }
@@ -154,6 +173,7 @@
   box-shadow: var(--capacity-input-focus-shadow);
 }
 
+/* BACKUP CELLS */
 .backup-cell {
   padding: 0 !important;
   vertical-align: top;
@@ -168,7 +188,7 @@
   border-bottom: 1px solid var(--backup-selection-border);
   margin: var(--backup-select-margin);
   background: var(--backup-selection-bg);
-  font-size: 0.85rem; /* Tamanho fixo */
+  font-size: 0.85rem;
 }
 
 .backup-solution {
@@ -178,7 +198,7 @@
   justify-content: center;
   background: var(--backup-solution-bg);
   font-weight: 600;
-  font-size: 0.85rem; /* Tamanho fixo */
+  font-size: 0.85rem;
 }
 
 .backup-select {
@@ -187,7 +207,7 @@
   padding: var(--backup-select-padding);
   border: 1px solid var(--capacity-input-border);
   border-radius: 3px;
-  font-size: 0.85rem; /* Tamanho fixo */
+  font-size: 0.85rem;
   background: var(--backup-select-bg);
   text-align: center;
   margin-bottom: var(--backup-select-margin);
@@ -233,122 +253,107 @@
 
 /* ========== LAYOUT RESPONSIVO AVANÇADO ========== */
 
-/* Tableta - Apenas ajusta padding, mantém fonte */
+/* Tableta */
 @media (max-width: 1024px) {
   .thermal-capacity-table th,
   .thermal-capacity-table td {
     padding: 10px 6px;
-    /* Fonte mantém 0.85rem */
   }
-  
+
   .capacity-input {
     max-width: 70px;
     padding: 5px 6px;
   }
-  
+
   .capacity-select {
     max-width: 85px;
     padding: 5px 6px;
   }
-  
+
   .backup-select {
     max-width: 85px;
     padding: 3px 5px;
   }
 }
 
-/* Mobile Grande - Apenas ajusta padding, mantém fonte */
+/* Mobile Grande */
 @media (max-width: 768px) {
   .capacity-calculation-table {
     margin-bottom: var(--spacing-lg);
   }
-  
+
   .capacity-calculation-table .table-title {
-    font-size: 1.1rem; /* Mantém mesmo tamanho */
+    font-size: 1.1rem;
     padding: 12px 15px;
   }
-  
+
   .thermal-capacity-table th,
   .thermal-capacity-table td {
     padding: 8px 4px;
-    /* Fonte mantém 0.85rem */
   }
-  
+
   .capacity-input {
     max-width: 65px;
     padding: 4px 5px;
   }
-  
+
   .capacity-select {
     max-width: 80px;
     padding: 4px 5px;
   }
-  
+
   .backup-select {
     max-width: 80px;
     padding: 3px 4px;
   }
-  
+
   .backup-selection,
   .backup-solution {
     height: 26px;
   }
 }
 
-/* Mobile Pequeno - Apenas ajusta padding, mantém fonte legível */
+/* Mobile Pequeno */
 @media (max-width: 480px) {
   .thermal-capacity-table th,
   .thermal-capacity-table td {
     padding: 6px 3px;
-    /* Fonte mantém 0.85rem para legibilidade */
   }
-  
+
   .capacity-input {
     max-width: 60px;
     padding: 4px 4px;
   }
-  
+
   .capacity-select {
     max-width: 75px;
     padding: 4px 4px;
   }
-  
+
   .backup-select {
     max-width: 75px;
     padding: 2px 3px;
   }
-  
+
   .table-container::-webkit-scrollbar {
     height: 8px;
   }
 }
 
-/* Mobile Muito Pequeno - Mantém fonte mínima legível */
+/* Mobile Muito Pequeno */
 @media (max-width: 360px) {
   .thermal-capacity-table th,
   .thermal-capacity-table td {
     padding: 5px 2px;
-    font-size: 0.8rem; /* Mínimo para legibilidade */
-  }
-  
-  .capacity-input {
-    max-width: 55px;
-    padding: 3px 3px;
     font-size: 0.8rem;
   }
-  
-  .capacity-select {
-    max-width: 70px;
-    padding: 3px 3px;
-    font-size: 0.8rem;
-  }
-  
+
+  .capacity-input,
+  .capacity-select,
   .backup-select {
-    max-width: 70px;
-    padding: 2px 3px;
     font-size: 0.8rem;
   }
-  
+
   .backup-selection,
   .backup-solution {
     height: 24px;
@@ -356,27 +361,27 @@
   }
 }
 
-/* ========== MODO CARDS PARA TELAS MUITO PEQUENAS ========== */
+/* MODO CARDS PARA TELAS MUITO PEQUENAS */
 @media (max-width: 320px) {
   .table-container {
     overflow-x: visible;
   }
-  
+
   .thermal-capacity-table {
     display: block;
     min-width: auto;
-    font-size: 0.85rem; /* Mantém legível */
+    font-size: 0.85rem;
   }
-  
+
   .thermal-capacity-table thead {
     display: none;
   }
-  
+
   .thermal-capacity-table tbody,
   .thermal-capacity-table tr {
     display: block;
   }
-  
+
   .thermal-capacity-table td {
     display: flex;
     justify-content: space-between;
@@ -384,19 +389,17 @@
     padding: var(--spacing-sm);
     border-bottom: 1px solid var(--table-cell-border);
     text-align: left;
-    font-size: 0.85rem; /* Mantém legível */
+    font-size: 0.85rem;
   }
-  
+
   .thermal-capacity-table td::before {
     content: attr(data-label);
     font-weight: 600;
     color: var(--capacity-title-color);
     margin-right: var(--spacing-md);
     flex-shrink: 0;
-    font-size: 0.85rem; /* Mantém legível */
   }
-  
-  /* Esconde células vazias no modo card */
+
   .thermal-capacity-table td:empty {
     display: none;
   }

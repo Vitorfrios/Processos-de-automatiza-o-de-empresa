@@ -34,52 +34,87 @@ textarea.form-input {
   resize: vertical;
   min-height: 80px;
 }
-
 /* Checkboxes */
 .checkbox-options-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: var(--options-grid-gap, 15px);
   margin-top: 8px;
 }
 
 .checkbox-column {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--option-gap, 12px);
 }
 
 .checkbox-option {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #f9f9f9;
+  gap: var(--option-gap, 8px);
+  padding: var(--option-padding, 10px);
+  background: var(--option-bg);
+  border: 1px solid var(--option-border);
+  border-radius: var(--border-radius, 4px);
   transition: all 0.2s ease;
 }
 
 .checkbox-option:hover {
-  background: #f0f0f0;
-  border-color: #ccc;
+  background: var(--option-hover-bg);
+  border-color: var(--option-hover-border);
 }
 
 .checkbox-option input[type="checkbox"] {
-  margin-top: 2px;
+  margin-top: 0.2rem;
   flex-shrink: 0;
 }
 
 .checkbox-option label {
-  font-size: 0.9em;
-  line-height: 1.3;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--option-gap, 8px);
   cursor: pointer;
+  width: 100%;
+  font-size: 0.9rem;
+  line-height: 1.3;
   margin: 0;
   user-select: none;
 }
 
-.checkbox-option input[type="checkbox"]:checked + label {
+.option-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.option-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--option-name-color);
+  line-height: 1.3;
+  margin-bottom: 0.25rem;
+}
+
+.option-price {
+  font-size: 0.8rem;
   font-weight: 600;
+  color: var(--option-price-color);
+  line-height: 1.2;
+  margin-top: 10px;
+}
+
+.checkbox-option input[type="checkbox"]:checked + .option-content .option-name {
+  font-weight: 600;
+  color: var(--option-checked-name);
+}
+
+.checkbox-option input[type="checkbox"]:checked + .option-content .option-price {
+  color: var(--option-checked-price);
+}
+
+.checkbox-option:has(input[type="checkbox"]:checked) {
+  background: var(--option-checked-bg);
+  border-color: var(--option-checked-border);
 }
 
 .config-label {
