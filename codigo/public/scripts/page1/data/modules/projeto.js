@@ -10,7 +10,7 @@ let machinesPreloadModule = null;
 async function loadMachinesPreloadModule() {
     if (!machinesPreloadModule) {
         try {
-            machinesPreloadModule = await import('./modules/machines/machinesBuilder.js');
+            machinesPreloadModule = await import('./machines/machinesBuilder.js');
             console.log("✅ Módulo de máquinas carregado para pré-carregamento");
         } catch (error) {
             console.error("❌ Erro ao carregar módulo de máquinas:", error);
@@ -88,14 +88,23 @@ function initializeRoomComponents(projectName, roomName, roomId) {
     }
   }, 800);
   
-  // 3. Verificar se os dados das máquinas estão disponíveis
+  // 3. Inicializar componentes das máquinas (NOVO)
+  setTimeout(() => {
+    if (typeof initializeMachineComponentsForRoom === 'function') {
+      initializeMachineComponentsForRoom(fullRoomId);
+    } else {
+      console.warn(`⚠️ initializeMachineComponentsForRoom não disponível para ${fullRoomId}`);
+    }
+  }, 1200);
+  
+  // 4. Verificar dados das máquinas
   setTimeout(() => {
     if (window.machinesData && window.machinesData.length > 0) {
       console.log(`✅ Dados das máquinas disponíveis para ${fullRoomId}: ${window.machinesData.length} máquinas`);
     } else {
-      console.warn(`⚠️  Dados das máquinas não disponíveis para ${fullRoomId}`);
+      console.warn(`⚠️ Dados das máquinas não disponíveis para ${fullRoomId}`);
     }
-  }, 1000);
+  }, 1500);
 }
 
 /**

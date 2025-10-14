@@ -83,7 +83,7 @@ function getProjectName(projectElement) {
             const projectMatch = trimmedText.match(/Projeto\s*(\d*)/i);
             if (projectMatch) {
                 const number = projectMatch[1] || '1';
-                return `Projeto ${number}`; 
+                return `Projeto${number}`; 
             }
             return trimmedText; 
         }
@@ -95,7 +95,7 @@ function getProjectName(projectElement) {
         const projectMatch = projectNameFromData.match(/Projeto\s*(\d*)/i);
         if (projectMatch) {
             const number = projectMatch[1] || '1';
-            return `Projeto ${number}`;
+            return `Projeto${number}`;
         }
         return projectNameFromData;
     }
@@ -103,7 +103,7 @@ function getProjectName(projectElement) {
     
     const allProjects = document.querySelectorAll('.project-block');
     const projectNumber = allProjects.length > 0 ? allProjects.length : 1;
-    return `Projeto ${projectNumber}`;
+    return `Projeto${projectNumber}`;
 }
 
 /**

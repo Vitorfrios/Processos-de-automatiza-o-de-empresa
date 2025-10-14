@@ -152,20 +152,17 @@ function buildOptionsHTML(options, machineCount, selectedOptions = []) {
 
       return `
         <div class="option-item ${selectedClass}" onclick="handleOptionClick(${machineCount}, ${option.id})">
-          <div class="option-checkbox">
-            <input type="checkbox" 
-                  value="${option.value}" 
-                  data-option-id="${option.id}"
-                  onchange="updateOptionSelection(${machineCount}, ${option.id})"
-                  id="option-${machineCount}-${option.id}"
-                  ${isSelected ? 'checked' : ''}>
-            <div class="option-content">
-              <div class="option-name">${option.name}</div>
-              <div class="option-price">+R$ ${option.value.toLocaleString("pt-BR")}</div>
-            </div>
-          
-          
+          <div class="option-checkbox"></div>
+          <div class="option-content">
+            <div class="option-name">${option.name}</div>
+            <div class="option-price">+R$ ${option.value.toLocaleString("pt-BR")}</div>
           </div>
+          <input type="checkbox" 
+                value="${option.value}" 
+                data-option-id="${option.id}"
+                onchange="updateOptionSelection(${machineCount}, ${option.id})"
+                id="option-${machineCount}-${option.id}"
+                ${isSelected ? 'checked' : ''}>
         </div>
       `;
     })
