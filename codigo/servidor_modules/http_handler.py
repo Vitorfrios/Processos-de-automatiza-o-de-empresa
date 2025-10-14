@@ -1,5 +1,5 @@
 """
-HTTP Request Handler principal
+HTTP Request Handler - Versão Cliente
 """
 
 import http.server
@@ -11,65 +11,60 @@ from pathlib import Path
 from servidor_modules import file_utils, routes, config
 
 class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    """Handler 100% compatível com sua lógica JavaScript"""
+    """Handler robusto e compatível para produção"""
     
     def __init__(self, *args, **kwargs):
-        # Encontra a pasta raiz do projeto
         self.project_root = file_utils.find_project_root()
-        print(f"📁 Servindo arquivos de: {self.project_root}")
+        print(f"📁 Diretório base: {self.project_root}")
         
-        # Inicializa o gerenciador de rotas
         self.route_handler = routes.RouteHandler(self.project_root)
-        
-        # Define o diretório base para servir arquivos
         serve_directory = self.project_root
         super().__init__(*args, directory=str(serve_directory), **kwargs)
     
     def translate_path(self, path):
-        """Traduz o caminho URL para caminho de arquivo"""
+        """Tradução de caminhos robusta"""
         path = urlparse(path).path
         path = path.lstrip('/')
         
-        # Se o path começa com 'codigo/', remove isso
+        # Remove 'codigo/' se existir
         if path.startswith('codigo/'):
-            path = path[7:]  # Remove 'codigo/'
+            path = path[7:]
         
-        # Constrói o caminho completo
+        # Constrói caminho completo
         full_path = Path(self.directory) / path
         
-        # Verifica se o arquivo existe
+        # Verifica existência
         if full_path.exists() and full_path.is_file():
             return str(full_path)
         
-        # Se não encontrou, tenta adicionar 'index.html' se for um diretório
+        # Tenta index.html para diretórios
         if full_path.is_dir():
             index_path = full_path / "index.html"
             if index_path.exists():
                 return str(index_path)
         
-        # Fallback: comportamento padrão
+        # Fallback padrão
         return super().translate_path('/' + path)
     
     def log_message(self, format, *args):
-        """Log personalizado para evitar poluição visual"""
-        # Só mostra logs de erro
-        if args[1] != '200' and args[1] != '304':
+        """Log limpo - apenas erros"""
+        if args[1] not in ['200', '304']:
             super().log_message(format, *args)
 
     def do_GET(self):
-        """Processa requisições GET"""
+        """GET robusto com tratamento de erro"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
-        # Remove 'codigo/' do início do path se existir
+        # Normaliza path
         if path.startswith('/codigo/'):
             path = path[7:]
         
-        # Log apenas para requests importantes
+        # Log seletivo
         if path not in ['/', '/favicon.ico'] and not path.startswith('/static/'):
             print(f"📥 GET: {path}")
         
-        # Roteamento das APIs GET
+        # Roteamento APIs
         if path == '/projetos' or path == '/projects':
             self.route_handler.handle_get_projetos(self)
         elif path == '/constants' or path == '/system-constants':
@@ -87,21 +82,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 super().do_GET()
             except Exception as e:
                 if path != '/favicon.ico':
-                    print(f"❌ Erro ao servir {path}: {e}")
-                self.send_error(404, f"Arquivo não encontrado: {path}")
+                    print(f"❌ Erro em {path}: {e}")
+                self.send_error(404, f"Recurso não encontrado: {path}")
 
     def do_POST(self):
-        """Processa POST - para NOVOS projetos (sem ID)"""
+        """POST com tratamento completo"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
-        # Remove 'codigo/' do início do path se existir
         if path.startswith('/codigo/'):
             path = path[7:]
         
-        print(f"📨 POST recebido: {path}")
+        print(f"📨 POST: {path}")
         
-        # Roteamento das APIs POST
         if path in ['/projetos', '/projects']:
             self.route_handler.handle_post_projetos(self)
         elif path == '/dados':
@@ -109,29 +102,27 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif path == '/backup':
             self.route_handler.handle_post_backup(self)
         else:
-            print(f"❌ Rota POST não encontrada: {path}")
-            self.send_error(501, f"Unsupported method ('POST') for path: {path}")
+            print(f"❌ POST não implementado: {path}")
+            self.send_error(501, f"Método não suportado: POST {path}")
 
     def do_PUT(self):
-        """Processa PUT - para ATUALIZAR projetos existentes (com ID)"""
+        """PUT para atualizações"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
-        # Remove 'codigo/' do início do path se existir
         if path.startswith('/codigo/'):
             path = path[7:]
         
-        print(f"📨 PUT recebido: {path}")
+        print(f"📨 PUT: {path}")
         
-        # Roteamento das APIs PUT
         if path.startswith('/projetos/') or path.startswith('/projects/'):
             self.route_handler.handle_put_projeto(self)
         else:
-            print(f"❌ Rota PUT não encontrada: {path}")
-            self.send_error(501, f"Unsupported method ('PUT') for path: {path}")
+            print(f"❌ PUT não implementado: {path}")
+            self.send_error(501, f"Método não suportado: PUT {path}")
     
     def send_json_response(self, data, status=200):
-        """Envia resposta JSON com CORS"""
+        """Resposta JSON padronizada"""
         self.send_response(status)
         self.send_header('Content-type', 'application/json; charset=utf-8')
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -143,13 +134,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(response)
     
     def end_headers(self):
-        """Headers CORS"""
+        """Headers CORS para desenvolvimento"""
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         super().end_headers()
     
     def do_OPTIONS(self):
-        """CORS"""
+        """Suporte CORS completo"""
         self.send_response(200)
         self.end_headers()

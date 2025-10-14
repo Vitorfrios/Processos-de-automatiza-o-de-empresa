@@ -1,267 +1,174 @@
-/* ========== ESTILOS PARA MÁQUINAS DE CLIMATIZAÇÃO ========== */
+/* ========== SEÇÃO DE OPÇÕES - LAYOUT CORRIGIDO ========== */
 
-.climatization-machine {
-  background: var(--machine-bg);
-  border: 2px solid var(--machine-border);
-  border-radius: var(--border-radius-lg);
-  margin-bottom: var(--machine-margin-bottom);
-  box-shadow: 0 2px 4px var(--machine-shadow);
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.climatization-machine:hover {
-  border-color: var(--machine-hover-border);
-  box-shadow: 0 4px 8px var(--machine-hover-shadow);
-}
-
-/* Header da máquina */
-.climatization-machine .machine-header {
-  background: var(--machine-header-bg);
-  color: var(--color-white);
-  padding: var(--machine-header-padding);
-  display: flex;
-  align-items: center;
-  gap: var(--machine-header-gap);
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
-}
-
-/* Input editável */
-.machine-title-editable {
-  background: transparent;
-  border: 2px solid transparent;
-  border-radius: var(--border-radius-sm);
-  padding: var(--machine-title-padding);
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-white);
-  flex: 1;
-  cursor: text;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.machine-title-editable:hover {
-  background: var(--minimizer-hover-bg);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.machine-title-editable:focus {
-  outline: none;
-  background: var(--machine-title-focus-bg);
-  color: var(--machine-title-focus-color);
-  border-color: rgba(255, 255, 255, 0.6);
-  cursor: text;
-}
-
-.machine-title-editable::placeholder {
-  color: var(--machine-title-placeholder);
-}
-
-/* Minimizador */
-.climatization-machine .minimizer {
-  background: var(--minimizer-bg);
-  color: var(--color-white);
-  border: none;
-  width: var(--machine-minimizer-size);
-  height: var(--machine-minimizer-size);
-  border-radius: var(--machine-minimizer-radius);
-  font-size: 1.2rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s ease;
-  flex-shrink: 0;
-}
-
-.climatization-machine .minimizer:hover {
-  background: var(--minimizer-hover-bg);
-}
-
-/* Botão de deletar */
-.climatization-machine .btn-delete-small {
-  background: var(--btn-delete-small-bg);
-  color: var(--color-white);
-  border: 1px solid var(--machine-delete-border);
-  padding: var(--machine-delete-padding);
-  font-size: 1rem;
-  border-radius: var(--machine-minimizer-radius);
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-
-.climatization-machine .btn-delete-small:hover {
-  background: var(--minimizer-hover-bg);
-  transform: scale(1.05);
-}
-
-/* Conteúdo da máquina */
-.machine-content {
-  padding: var(--machine-content-padding);
-  transition: all 0.3s ease;
-}
-
-.machine-content.collapsed {
-  display: none;
-}
-
-/* Grid do formulário */
-.climatization-form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--machine-form-gap);
-  padding-bottom: var(--machine-form-padding);
-  border-bottom: 2px solid var(--machine-form-border);
-}
-
-.climatization-form-grid .form-group {
-  margin-bottom: 0;
-}
-
-/* Seção de opções */
 .machine-options-section {
-  margin-bottom: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-md);
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--option-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .machine-options-section h6 {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--color-gray-dark);
   margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-xs);
-  border-bottom: 1px solid var(--options-section-border);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--options-section-border);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .options-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--options-grid-gap);
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--spacing-sm);
+  align-items: start;
 }
 
-.option-checkbox {
+/* CONTAINER COMPLETO DA OPÇÃO - CAIXA ÚNICA E COESA */
+.option-item {
+  position: relative;
   display: flex;
   align-items: flex-start;
-  gap: var(--option-gap);
-  padding: var(--option-padding);
+  padding: var(--spacing-md);
   background: var(--option-bg);
-  border: 1px solid var(--option-border);
+  border: 2px solid var(--option-border);
   border-radius: var(--border-radius);
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  min-height: 80px;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  gap: var(--spacing-md);
 }
 
-.option-checkbox:hover {
+/* CONTORNO ENTRE AS OPÇÕES */
+.option-item {
+  border-bottom: 1px solid var(--color-gray-light);
+  margin-bottom: 2px;
+}
+
+.option-item:last-child {
+  border-bottom: 2px solid var(--option-border);
+  margin-bottom: 0;
+}
+
+/* Efeito hover - CAIXA INTEIRA */
+.option-item:hover {
   background: var(--option-hover-bg);
+  border-color: var(--option-hover-border);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ESTADO SELECIONADO - CAIXA INTEIRA AZUL */
+.option-item.option-selected {
+  background: var(--option-checked-bg);
+  border-color: var(--option-checked-border);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Checkbox real - escondido */
+.option-item input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Checkbox visual personalizado - AGORA DENTRO DO FLUXO */
+.option-checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--option-border);
+  border-radius: 4px;
+  background: var(--color-white);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.option-item:hover .option-checkbox {
   border-color: var(--option-hover-border);
 }
 
-.option-checkbox input[type="checkbox"] {
-  margin-top: 0.2rem;
-  flex-shrink: 0;
+/* CHECKBOX SELECIONADO */
+.option-item.option-selected .option-checkbox {
+  background: var(--option-checked-border);
+  border-color: var(--option-checked-border);
 }
 
-/* Estilos para opções com valor */
-.option-checkbox label {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--option-gap);
-  cursor: pointer;
-  width: 100%;
+.option-item.option-selected .option-checkbox::after {
+  content: '✓';
+  color: var(--color-white);
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
 }
 
+/* Conteúdo da opção - AGORA FLEXÍVEL E ALINHADO */
 .option-content {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-xs);
   flex: 1;
+  min-width: 0; /* Permite que o texto quebre corretamente */
 }
 
 .option-name {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--option-name-color);
-  line-height: 1.3;
-  margin-bottom: 0.25rem;
+  line-height: 1.4;
+  margin: 0;
+  transition: color 0.3s ease;
+  word-wrap: break-word;
 }
 
-.option-price {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--option-price-color);
-  line-height: 1.2;
-  margin-top: 10px;
-}
-
-.option-checkbox input[type="checkbox"]:checked + .option-content .option-name {
+.option-item.option-selected .option-name {
   font-weight: 600;
   color: var(--option-checked-name);
 }
 
-.option-checkbox input[type="checkbox"]:checked + .option-content .option-price {
-  color: var(--option-checked-price);
+.option-price {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--option-price-color);
+  background: rgba(40, 167, 69, 0.1);
+  padding: 6px 12px;
+  border-radius: 16px;
+  align-self: flex-start;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
 
-.option-checkbox:has(input[type="checkbox"]:checked) {
-  background: var(--option-checked-bg);
+.option-item.option-selected .option-price {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--option-checked-price);
   border-color: var(--option-checked-border);
 }
 
-/* Preços */
-.price-display {
-  background: var(--price-display-bg);
-  border: 2px solid var(--price-display-border);
-  border-radius: var(--border-radius);
-  padding: var(--price-display-padding);
-  font-weight: 600;
-  color: var(--price-display-color);
+/* Mensagem quando não há opções */
+.empty-options-message {
   text-align: center;
-  font-size: 1rem;
-}
-
-.machine-total-price {
-  background: var(--machine-total-bg);
-  padding: var(--machine-total-padding);
+  color: var(--color-gray);
+  font-style: italic;
+  padding: var(--spacing-xl);
+  grid-column: 1 / -1;
+  background: var(--color-gray-lightest);
   border-radius: var(--border-radius);
-  text-align: center;
-  box-shadow: var(--machine-total-shadow);
+  border: 2px dashed var(--color-gray-light);
 }
 
-.machine-total-price strong {
-  color: var(--color-white);
-  font-size: 1.1rem;
-}
+/* ========== ANIMAÇÕES ========== */
 
-.machine-total-price span {
-  background: var(--machine-total-span-bg);
-  color: var(--machine-total-span-color);
-  padding: var(--machine-total-span-padding);
-  border-radius: var(--border-radius);
-  font-weight: 700;
-  margin-left: var(--spacing-xs);
-  box-shadow: var(--machine-total-span-shadow);
-}
-
-/* Selects específicos */
-.machine-type-select,
-.machine-potency-select,
-.machine-voltage-select {
-  background: var(--color-white);
-  border: 2px solid var(--select-border);
-  border-radius: var(--border-radius);
-  padding: var(--select-padding);
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.machine-type-select:focus,
-.machine-potency-select:focus,
-.machine-voltage-select:focus {
-  outline: none;
-  border-color: var(--select-focus-border);
-  box-shadow: var(--select-focus-shadow);
-}
-
-/* Animações */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -273,6 +180,45 @@
   }
 }
 
-.climatization-machine {
-  animation: fadeIn 0.3s ease-out;
+@keyframes optionSelect {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.option-item.option-selected {
+  animation: optionSelect 0.3s ease;
+}
+
+/* ========== RESPONSIVIDADE ========== */
+
+@media (max-width: 768px) {
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .option-item {
+    min-height: 70px;
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+  
+  .option-content {
+    gap: 4px;
+  }
+  
+  .option-name {
+    font-size: 0.9rem;
+  }
+  
+  .option-price {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+  }
 }

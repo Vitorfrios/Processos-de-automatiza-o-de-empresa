@@ -2,9 +2,10 @@ import { buildCapacityCalculationTable } from './capacityCalculator.js'
 import { buildClimatizationMachineHTML } from './machineManagement.js'
 import { removeEmptyMessage, showEmptyMessage } from './utilities.js'
 
-// Cache para dados das máquinas
-let machinesData = null
-
+// Cache para dados das máquinas - AGORA GLOBAL
+if (typeof window !== 'undefined' && !window.machinesDataCache) {
+    window.machinesDataCache = null;
+}
 /**
  * Constrói a seção completa de máquinas para uma sala
  * Inclui tabela de capacidade e container para máquinas
@@ -33,25 +34,53 @@ function buildMachinesSection(projectName, roomName) {
 }
 
 /**
+ * Pré-carrega os dados das máquinas quando uma sala é criada
+ */
+async function preloadMachinesDataForRoom(roomId) {
+    console.log(`🔄 Pré-carregando dados das máquinas para sala ${roomId}`);
+    try {
+        await loadMachinesData();
+        console.log(`✅ Dados pré-carregados para sala ${roomId}`);
+    } catch (error) {
+        console.error(`❌ Erro ao pré-carregar dados para sala ${roomId}:`, error);
+    }
+}
+
+/**
  * Carrega os dados das máquinas do servidor com cache
  * @returns {Promise<Object>} Dados das máquinas disponíveis
  */
 async function loadMachinesData() {
-  if (machinesData) return machinesData
-
-  try {
-    const response = await fetch(`/machines`)
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    // Usa cache global para todas as salas e máquinas
+    if (window.machinesDataCache) {
+        console.log("📦 Retornando dados das máquinas do cache GLOBAL");
+        return window.machinesDataCache;
     }
 
-    const data = await response.json()
-    machinesData = { machines: Array.isArray(data) ? data : data.machines }
-    return machinesData
-  } catch (error) {
-    console.error("Erro ao carregar dados das máquinas:", error)
-    throw error
-  }
+    try {
+        console.log("🔄 Carregando dados das máquinas do servidor...");
+        const response = await fetch(`/machines`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const machinesData = { machines: Array.isArray(data) ? data : data.machines };
+        
+        // Cache GLOBAL - disponível para todas as máquinas de todas as salas
+        window.machinesDataCache = machinesData;
+        window.machinesData = machinesData.machines;
+        
+        console.log(`✅ Dados das máquinas carregados GLOBALMENTE: ${machinesData.machines.length} máquinas`);
+        return machinesData;
+        
+    } catch (error) {
+        console.error("❌ Erro ao carregar dados das máquinas:", error);
+        // Retorna dados vazios para não quebrar a interface
+        const emptyData = { machines: [] };
+        window.machinesDataCache = emptyData;
+        return emptyData;
+    }
 }
 
 /**
@@ -60,35 +89,36 @@ async function loadMachinesData() {
  * @param {Array} savedMachines - Lista de máquinas salvas
  */
 async function loadSavedMachines(roomId, savedMachines) {
-  const machinesContainer = document.getElementById(`machines-${roomId}`)
-  const roomContent = document.getElementById(`room-content-${roomId}`)
-  
-  // Carregar dados de capacidade primeiro
-  if (roomContent) {
-    const projectName = roomContent.getAttribute('data-project-name')
-    const roomName = roomContent.getAttribute('data-room-name')
-    if (projectName && roomName) {
-      loadCapacityData(projectName, roomName)
+    const machinesContainer = document.getElementById(`machines-${roomId}`);
+    
+    if (!savedMachines?.length) {
+        console.log(`📭 Nenhuma máquina salva para a sala ${roomId}`);
+        return;
     }
-  }
 
-  if (!savedMachines?.length) {
-    return
-  }
+    removeEmptyMessage(machinesContainer);
 
-  removeEmptyMessage(machinesContainer)
+    try {
+        const machinesData = await loadMachinesData();
+        console.log(`🔄 Carregando ${savedMachines.length} máquinas salvas para ${roomId}`);
+        
+        savedMachines.forEach((savedMachine, index) => {
+            const machineHTML = buildClimatizationMachineFromSavedData(index + 1, savedMachine, machinesData.machines);
+            machinesContainer.insertAdjacentHTML("beforeend", machineHTML);
+            console.log(`✅ Máquina ${index + 1} carregada: ${savedMachine.nome}`);
+        });
 
-  try {
-    const machinesData = await loadMachinesData()
-    savedMachines.forEach((savedMachine, index) => {
-      const machineHTML = buildClimatizationMachineFromSavedData(index + 1, savedMachine, machinesData.machines)
-      machinesContainer.insertAdjacentHTML("beforeend", machineHTML)
-    })
-  } catch (error) {
-    console.error("Erro ao carregar máquinas salvas:", error)
-  }
+        // Recalcula preços após carregar todas as máquinas
+        setTimeout(() => {
+            savedMachines.forEach((_, index) => {
+                calculateMachinePrice(index + 1);
+            });
+        }, 100);
+
+    } catch (error) {
+        console.error("❌ Erro ao carregar máquinas salvas:", error);
+    }
 }
-
 /**
  * Constrói uma máquina de climatização a partir de dados salvos
  * @param {number} machineCount - Número sequencial da máquina
@@ -102,6 +132,13 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
   if (!machineType) {
     return buildFallbackMachineFromSavedData(machineCount, savedMachine)
   }
+
+  // Obter potências e tensões disponíveis
+  const potencies = Object.keys(machineType.baseValues)
+  const voltageNames = machineType.voltages.map(v => v.name)
+  
+  // Calcular preço base atual
+  const basePrice = machineType.baseValues[savedMachine.potencia] || savedMachine.precoBase || 0
 
   return `
     <div class="climatization-machine" data-machine-index="${machineCount}">
@@ -129,9 +166,9 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
           ${buildFormGroup(
             "Potência (TR):",
             buildSelectWithSelected(
-              machineType.potencies,
+              potencies,
               machineCount,
-              "machine-potency-select",
+              "machine-power-select",
               `calculateMachinePrice(${machineCount})`,
               savedMachine.potencia,
             ),
@@ -139,7 +176,7 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
           ${buildFormGroup(
             "Tensão:",
             buildSelectWithSelected(
-              machineType.voltages,
+              voltageNames,
               machineCount,
               "machine-voltage-select",
               `calculateMachinePrice(${machineCount})`,
@@ -149,7 +186,7 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
           <div class="form-group">
             <label>Preço Base:</label>
             <div class="price-display" id="base-price-${machineCount}">
-              R$ ${savedMachine.precoBase.toLocaleString("pt-BR")}
+              R$ ${basePrice.toLocaleString("pt-BR")}
             </div>
           </div>
         </div>
@@ -196,6 +233,7 @@ function buildSelectWithSelected(options, machineIndex, className, onchangeHandl
     <select class="form-input ${className}" 
             data-machine-index="${machineIndex}"
             onchange="${onchangeHandler}">
+      <option value="">Selecionar</option>
       ${options
         .map((opt) => `<option value="${opt}" ${opt === selectedValue ? "selected" : ""}>${opt}</option>`)
         .join("")}
@@ -211,11 +249,15 @@ function buildSelectWithSelected(options, machineIndex, className, onchangeHandl
  * @returns {string} HTML das opções com checkboxes marcados
  */
 function buildSavedOptionsHTML(options, machineCount, selectedOptions = []) {
+  if (!options || options.length === 0) {
+    return '<p class="empty-options-message">Nenhuma opção disponível para esta máquina</p>'
+  }
+
   return options
     .map((option) => {
       const isChecked = selectedOptions.some((selected) => selected.id === option.id)
       return `
-      <div class="option-checkbox">
+      <div class="option-checkbox-container" onclick="handleOptionClick(event, ${machineCount}, ${option.id})">
         <input type="checkbox" 
                value="${option.value}" 
                data-option-id="${option.id}"
@@ -242,7 +284,7 @@ function buildSavedOptionsHTML(options, machineCount, selectedOptions = []) {
  */
 function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
   return `
-    <div class="climatization-machine" data-machine-index="${roomId}">
+    <div class="climatization-machine" data-machine-index="${machineCount}">
       <div class="machine-header">
         <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
         <input type="text" class="machine-title-editable" 
@@ -263,6 +305,17 @@ function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
             <div class="price-display">R$ ${savedMachine.precoBase.toLocaleString("pt-BR")}</div>
           </div>
         </div>
+        <div class="machine-options-section">
+          <h6>Opções Adicionais:</h6>
+          <div class="options-grid">
+            ${savedMachine.opcoesSelecionadas?.map(opt => `
+              <div class="option-checkbox-container">
+                <input type="checkbox" checked disabled>
+                <label>${opt.name} (+R$ ${opt.value?.toLocaleString("pt-BR")})</label>
+              </div>
+            `).join('') || '<p>Nenhuma opção selecionada</p>'}
+          </div>
+        </div>
         <div class="machine-total-price">
           <strong>Preço Total: <span>R$ ${savedMachine.precoTotal.toLocaleString("pt-BR")}</span></strong>
         </div>
@@ -270,6 +323,22 @@ function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
     </div>
   `
 }
+
+/**
+ * Calcula o preço base baseado no tipo de máquina e potência selecionada
+ * @param {Object} machineType - Tipo da máquina
+ * @param {string} potencia - Potência selecionada
+ * @returns {number} Preço base calculado
+ */
+function calculateBasePrice(machineType, potencia) {
+  if (!machineType || !machineType.baseValues) return 0
+  
+  // Garantir que a potência esteja no formato correto (ex: "7,5TR")
+  const formattedPotency = potencia.includes('TR') ? potencia : `${potencia}TR`
+  
+  return machineType.baseValues[formattedPotency] || 0
+}
+
 
 /**
  * Atualiza os cálculos de capacidade quando os ganhos térmicos mudam
@@ -318,6 +387,7 @@ export {
   buildMachinesSection,
   loadMachinesData,
   loadSavedMachines,
+  preloadMachinesDataForRoom,
   updateCapacityFromThermalGains,
   initializeCapacityCalculations,
   refreshAllCapacityCalculations

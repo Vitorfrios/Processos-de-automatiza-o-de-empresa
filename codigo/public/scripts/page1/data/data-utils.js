@@ -1,259 +1,299 @@
-import { ensureStringId } from '../utils/utils.js'
+/**
+ * Utilitários para extração e construção de dados - CORRIGIDO
+ */
 
 /**
  * Constrói o objeto de dados completo de um projeto a partir do HTML
- * Coleta nome do projeto, salas e todos os dados associados
- * @param {HTMLElement} projectBlock - Elemento HTML do projeto
- * @param {string|number} projectId - ID único do projeto
- * @returns {Object} Dados estruturados do projeto
+ * @param {string|HTMLElement} projectIdOrElement - ID do projeto ou elemento do projeto
+ * @returns {Object} Dados completos do projeto
  */
-function buildProjectData(projectBlock, projectId) {
-  const projectData = {
-    nome: projectBlock.querySelector(".project-title").textContent.trim(),
-    salas: [],
-  }
+function buildProjectData(projectIdOrElement) {
+    let projectElement;
+    
+    // Verifica se é um elemento ou ID string
+    if (typeof projectIdOrElement === 'string') {
+        projectElement = document.getElementById(projectIdOrElement);
+    } else if (projectIdOrElement instanceof HTMLElement) {
+        projectElement = projectIdOrElement;
+    } else {
+        console.error('❌ Tipo inválido para projectIdOrElement:', typeof projectIdOrElement, projectIdOrElement);
+        return null;
+    }
 
-  if (projectId !== null && projectId !== undefined) {
-    projectData.id = ensureStringId(projectId)
-  }
+    if (!projectElement) {
+        console.error('❌ Elemento do projeto não encontrado:', projectIdOrElement);
+        return null;
+    }
 
-  const roomBlocks = projectBlock.querySelectorAll(".room-block")
-  roomBlocks.forEach((roomBlock, index) => {
-    const roomData = extractRoomData(roomBlock)
-    roomData.id = ensureStringId(index + 1)
-    projectData.salas.push(roomData)
-  })
+    // CORREÇÃO: Se não tem ID, usa o data-project-name ou cria um ID
+    let projectId = projectElement.id;
+    if (!projectId || projectId === '') {
+        projectId = projectElement.dataset.projectName || `project-${Date.now()}`;
+        console.log('🆔 ID gerado para projeto:', projectId);
+    }
 
-  console.log('[DATA-UTILS] Dados do projeto coletados:', projectData)
-  return projectData
+    const projectData = {
+        id: projectId,
+        nome: getProjectName(projectElement),
+        salas: [],
+        timestamp: new Date().toISOString()
+    };
+
+    // Coleta dados de todas as salas
+    const roomElements = projectElement.querySelectorAll('.room-block');
+    roomElements.forEach(roomElement => {
+        const roomData = extractRoomData(roomElement);
+        if (roomData) {
+            projectData.salas.push(roomData);
+        }
+    });
+
+    console.log('📦 Dados do projeto construídos:', projectData);
+    return projectData;
+}
+
+/**
+ * Obtém o nome do projeto de forma segura
+ */
+function getProjectName(projectElement) {
+    const titleElement = projectElement.querySelector('.project-title-editable');
+    if (!titleElement) return `Projeto ${projectElement.id.replace('project-', '')}`;
+    
+    return titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Projeto ${projectElement.id.replace('project-', '')}`;
 }
 
 /**
  * Extrai todos os dados de uma sala a partir do elemento HTML
- * Coleta inputs, configurações, máquinas, ganhos térmicos e capacidade
- * @param {HTMLElement} roomBlock - Elemento HTML da sala
+ * @param {HTMLElement} roomElement - Elemento da sala
  * @returns {Object} Dados completos da sala
  */
-function extractRoomData(roomBlock) {
-  const roomData = {
-    nome: roomBlock.querySelector(".room-title").textContent.trim(),
-    inputs: {},
-  }
+function extractRoomData(roomElement) {
+    if (!roomElement || !roomElement.id) {
+        console.error('❌ Elemento da sala inválido:', roomElement);
+        return null;
+    }
 
-  const roomId = roomBlock.querySelector('[id^="room-content-"]')?.id.replace("room-content-", "")
-  if (roomId) {
-    // Coletar inputs de climatização
-    const climaInputs = roomBlock.querySelectorAll(".clima-input")
-    climaInputs.forEach((input) => {
-      const field = input.dataset.field
-      const value = input.value
-
-      if (value === "" || value === null || value === undefined) {
-        roomData.inputs[field] = input.type === "number" ? 0 : ""
-        return
-      }
-
-      if (input.tagName === "SELECT" || input.type === "text") {
-        roomData.inputs[field] = value
-      } else if (input.type === "number") {
-        roomData.inputs[field] = Number.parseFloat(value) || 0
-      } else {
-        roomData.inputs[field] = value
-      }
-    })
-
-    // CORREÇÃO: Coletar opções de instalação (checkboxes) como ARRAY
-    const opcoesInstalacaoCheckboxes = roomBlock.querySelectorAll('input[name^="opcoesInstalacao-"]:checked')
-    const opcoesSelecionadas = Array.from(opcoesInstalacaoCheckboxes).map(checkbox => checkbox.value)
+    const roomId = roomElement.id.replace('room-content-', '');
     
-    if (opcoesSelecionadas.length > 0) {
-      roomData.configuracoes = {
-        opcoesInstalacao: opcoesSelecionadas
-      }
-    }
+    const roomData = {
+        id: roomId,
+        nome: getRoomName(roomElement),
+        inputs: {},
+        maquinas: [],
+        capacidade: {},
+        ganhosTermicos: {},
+        configuracao: {}
+    };
 
-    // ========== COLETA DOS DADOS DE CAPACIDADE DE REFRIGERAÇÃO ==========
-    const capacityData = extractCapacityData(roomBlock, roomId)
-    if (capacityData && Object.keys(capacityData).length > 0) {
-      roomData['Cálculo_Capacidade_Refrigeração'] = capacityData
-      console.log(`[DATA-UTILS] Dados de capacidade coletados para sala ${roomData.nome}:`, capacityData)
-    }
+    try {
+        // 1. Extrai inputs de climatização
+        const climaInputs = roomElement.querySelectorAll('.climatization-input');
+        climaInputs.forEach(input => {
+            const name = input.name || input.id;
+            const value = input.type === 'checkbox' ? input.checked : input.value;
+            if (name && value !== undefined && value !== '') {
+                roomData.inputs[name] = value;
+            }
+        });
 
-    // ========== COLETA DAS MÁQUINAS DE CLIMATIZAÇÃO ==========
-    const climatizationMachines = roomBlock.querySelectorAll('.climatization-machine')
-    if (climatizationMachines.length > 0) {
-      roomData.maquinasClimatizacao = []
-      climatizationMachines.forEach((machineElement) => {
-        const machineData = extractClimatizationMachineData(machineElement)
-        if (Object.keys(machineData).length > 0) {
-          roomData.maquinasClimatizacao.push(machineData)
+        // 2. Extrai dados de capacidade
+        const capacityData = extractCapacityData(roomElement);
+        if (capacityData) {
+            roomData.capacidade = capacityData;
         }
-      })
-      console.log(`[DATA-UTILS] ${roomData.maquinasClimatizacao.length} máquina(s) de climatização coletadas para sala ${roomData.nome}`)
+
+        // 3. Extrai máquinas de climatização
+        const machineElements = roomElement.querySelectorAll('.climatization-machine');
+        machineElements.forEach(machineElement => {
+            const machineData = extractClimatizationMachineData(machineElement);
+            if (machineData) {
+                roomData.maquinas.push(machineData);
+            }
+        });
+
+        // 4. Extrai ganhos térmicos
+        const thermalElements = roomElement.querySelectorAll('.thermal-result, .thermal-value');
+        thermalElements.forEach(element => {
+            const name = element.id || element.className;
+            const value = element.textContent || element.value;
+            if (name && value) {
+                roomData.ganhosTermicos[name] = value;
+            }
+        });
+
+        console.log(`📊 Dados extraídos da sala ${roomId}:`, roomData);
+        return roomData;
+
+    } catch (error) {
+        console.error(`❌ Erro ao extrair dados da sala ${roomId}:`, error);
+        return roomData; // Retorna dados parciais
     }
+}
 
-    // Coletar dados das máquinas antigas (se ainda existirem)
-    const machineItems = roomBlock.querySelectorAll('.machine-item')
-    if (machineItems.length > 0) {
-      roomData.maquinas = []
-      machineItems.forEach((machineItem, index) => {
-        const machineData = {}
-        const machineInputs = machineItem.querySelectorAll('input[data-field], select[data-field]')
-        
-        machineInputs.forEach((input) => {
-          const field = input.dataset.field.replace('maquina_', '') // Remove prefixo
-          if (input.type === 'number') {
-            machineData[field] = input.value ? Number.parseFloat(input.value) : 0
-          } else {
-            machineData[field] = input.value || ""
-          }
-        })
-        
-        if (Object.keys(machineData).length > 0) {
-          roomData.maquinas.push(machineData)
-        }
-      })
-    }
-
-    // Coletar vazão de ar
-    const vazaoElement = document.getElementById(`vazao-ar-${roomId}`)
-    if (vazaoElement) {
-      const vazaoValue = vazaoElement.textContent.trim()
-      roomData.inputs.vazaoArExterno = Number.parseInt(vazaoValue) || 0
-    }
-
-    // Coletar ganhos térmicos
-    const totalGanhosElement = document.getElementById(`total-ganhos-w-${roomId}`)
-    const totalTRElement = document.getElementById(`total-tr-${roomId}`)
-
-    const totalExternoElement = document.getElementById(`total-externo-${roomId}`)
-    const totalDivisoesElement = document.getElementById(`total-divisoes-${roomId}`)
-    const totalPisoElement = document.getElementById(`total-piso-${roomId}`)
-    const totalIluminacaoElement = document.getElementById(`total-iluminacao-${roomId}`)
-    const totalDissiElement = document.getElementById(`total-dissi-${roomId}`)
-    const totalPessoasElement = document.getElementById(`total-pessoas-${roomId}`)
-
-    const totalArSensivelElement = document.getElementById(`total-ar-sensivel-${roomId}`)
-    const totalArLatenteElement = document.getElementById(`total-ar-latente-${roomId}`)
-    const totalArExterno =
-      (Number.parseInt(totalArSensivelElement?.textContent) || 0) +
-      (Number.parseInt(totalArLatenteElement?.textContent) || 0)
-
-    if (totalGanhosElement && totalTRElement) {
-      roomData.ganhosTermicos = {
-        totalW: Number.parseInt(totalGanhosElement.textContent) || 0,
-        totalTR: Number.parseInt(totalTRElement.textContent) || 0,
-        totalExterno: Number.parseInt(totalExternoElement?.textContent) || 0,
-        totalDivisoes: Number.parseInt(totalDivisoesElement?.textContent) || 0,
-        totalPiso: Number.parseInt(totalPisoElement?.textContent) || 0,
-        totalIluminacao: Number.parseInt(totalIluminacaoElement?.textContent) || 0,
-        totalEquipamentos: Number.parseInt(totalDissiElement?.textContent) || 0,
-        totalPessoas: Number.parseInt(totalPessoasElement?.textContent) || 0,
-        totalArExterno: totalArExterno,
-      }
-    }
-  }
-
-  return roomData
+/**
+ * Obtém o nome da sala de forma segura
+ */
+function getRoomName(roomElement) {
+    const titleElement = roomElement.querySelector('.room-title-editable');
+    if (!titleElement) return `Sala ${roomElement.id.replace('room-content-', '')}`;
+    
+    return titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Sala ${roomElement.id.replace('room-content-', '')}`;
 }
 
 /**
  * Extrai dados de capacidade de refrigeração de uma sala
- * Coleta fator de segurança, capacidade unitária, backup e cálculos
- * @param {HTMLElement} roomBlock - Elemento HTML da sala
- * @param {string} roomId - ID único da sala
- * @returns {Object|null} Dados de capacidade ou null se inválidos
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @returns {Object} Dados de capacidade
  */
-function extractCapacityData(roomBlock, roomId) {
-  try {
-    const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
-    const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`)
-    const backupSelect = roomBlock.querySelector('.backup-select')
-    
-    const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`)
-    const solucaoElement = document.getElementById(`solucao-${roomId}`)
-    const solucaoBackupElement = document.getElementById(`solucao-backup-${roomId}`)
-    const totalCapacidadeElement = document.getElementById(`total-capacidade-${roomId}`)
-    const folgaElement = document.getElementById(`folga-${roomId}`)
+function extractCapacityData(roomElement) {
+    const roomId = roomElement.id.replace('room-content-', '');
+    const capacityData = {};
 
-    // Verificar se todos os elementos necessários existem
-    if (!fatorSegurancaInput || !capacidadeUnitariaSelect || !backupSelect) {
-      console.warn(`[DATA-UTILS] Elementos de capacidade não encontrados para sala ${roomId}`)
-      return null
+    try {
+        // Fator de segurança
+        const fatorSeguranca = document.getElementById(`fator-seguranca-${roomId}`);
+        if (fatorSeguranca) {
+            capacityData.fatorSeguranca = safeNumber(fatorSeguranca.value);
+        }
+
+        // Capacidade unitária
+        const capacidadeUnitaria = document.getElementById(`capacidade-unitaria-${roomId}`);
+        if (capacidadeUnitaria) {
+            capacityData.capacidadeUnitaria = capacidadeUnitaria.value;
+        }
+
+        // Configuração de backup
+        const backupConfig = document.getElementById(`backup-config-${roomId}`);
+        if (backupConfig) {
+            capacityData.backupConfig = backupConfig.value;
+        }
+
+        // Número de unidades
+        const numUnidades = document.getElementById(`num-unidades-${roomId}`);
+        if (numUnidades) {
+            capacityData.numUnidades = safeNumber(numUnidades.value);
+        }
+
+        // Resultados calculados
+        const capacidadeNecessaria = document.getElementById(`capacidade-necessaria-${roomId}`);
+        if (capacidadeNecessaria) {
+            capacityData.capacidadeNecessaria = parseMachinePrice(capacidadeNecessaria.textContent);
+        }
+
+        const capacidadeEfetiva = document.getElementById(`capacidade-efetiva-${roomId}`);
+        if (capacidadeEfetiva) {
+            capacityData.capacidadeEfetiva = parseMachinePrice(capacidadeEfetiva.textContent);
+        }
+
+        return capacityData;
+
+    } catch (error) {
+        console.error(`❌ Erro ao extrair dados de capacidade da sala ${roomId}:`, error);
+        return capacityData;
     }
-
-    const capacityData = {
-      fatorSeguranca: Number.parseFloat(fatorSegurancaInput.value) || 10,
-      capacidadeUnitaria: Number.parseFloat(capacidadeUnitariaSelect.value) || 1,
-      backup: backupSelect.value || "n",
-      cargaEstimada: parseFloat(cargaEstimadaElement?.textContent) || 0,
-      solucao: solucaoElement?.textContent || "0",
-      solucaoBackup: solucaoBackupElement?.textContent || "0",
-      totalCapacidade: parseFloat(totalCapacidadeElement?.textContent) || 0,
-      folga: folgaElement?.textContent || "0%"
-    }
-
-    // Validar se os dados são significativos (não apenas zeros)
-    const hasValidData = Object.values(capacityData).some(value => {
-      if (typeof value === 'number') return value !== 0
-      if (typeof value === 'string') return value !== "0" && value !== "0%"
-      return true
-    })
-
-    return hasValidData ? capacityData : null
-
-  } catch (error) {
-    console.error(`[DATA-UTILS] Erro ao extrair dados de capacidade para ${roomId}:`, error)
-    return null
-  }
 }
 
 /**
  * Extrai dados de uma máquina de climatização individual
- * Coleta tipo, potência, tensão, preço e opções selecionadas
- * @param {HTMLElement} machineElement - Elemento HTML da máquina
- * @returns {Object} Dados completos da máquina
+ * @param {HTMLElement} machineElement - Elemento da máquina
+ * @returns {Object} Dados da máquina
  */
 function extractClimatizationMachineData(machineElement) {
-  const machineData = {
-    nome: machineElement.querySelector('.machine-title-editable')?.value || '',
-    tipo: machineElement.querySelector('.machine-type-select')?.value || '',
-    potencia: machineElement.querySelector('.machine-potency-select')?.value || '',
-    tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
-    precoBase: parseMachinePrice(machineElement.querySelector('.price-display')?.textContent),
-    opcoesSelecionadas: [],
-    precoTotal: parseMachinePrice(machineElement.querySelector('.machine-total-price span')?.textContent)
-  };
+    const machineIndex = machineElement.getAttribute('data-machine-index');
+    
+    const machineData = {
+        nome: getMachineName(machineElement, machineIndex),
+        tipo: machineElement.querySelector('.machine-type-select')?.value || '',
+        potencia: machineElement.querySelector('.machine-power-select')?.value || '',
+        tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
+        precoBase: 0,
+        opcoesSelecionadas: [],
+        precoTotal: 0
+    };
 
-  // Coletar opções selecionadas
-  const opcoesCheckboxes = machineElement.querySelectorAll('.option-checkbox input[type="checkbox"]:checked');
-  opcoesCheckboxes.forEach(checkbox => {
-    const optionElement = checkbox.closest('.option-checkbox');
-    machineData.opcoesSelecionadas.push({
-      id: parseInt(checkbox.dataset.optionId) || 0,
-      nome: optionElement.querySelector('.option-name')?.textContent || '',
-      valor: parseFloat(checkbox.value) || 0
-    });
-  });
+    try {
+        // Preço base
+        const basePriceElement = document.getElementById(`base-price-${machineIndex}`);
+        if (basePriceElement) {
+            machineData.precoBase = parseMachinePrice(basePriceElement.textContent);
+        }
 
-  console.log('[DATA-UTILS] Máquina coletada:', machineData)
-  return machineData;
+        // Preço total
+        const totalPriceElement = document.getElementById(`total-price-${machineIndex}`);
+        if (totalPriceElement) {
+            machineData.precoTotal = parseMachinePrice(totalPriceElement.textContent);
+        }
+
+        // Opções selecionadas
+        const optionsContainer = document.getElementById(`options-container-${machineIndex}`);
+        if (optionsContainer) {
+            const selectedOptions = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+            selectedOptions.forEach(option => {
+                const optionId = option.getAttribute('data-option-id');
+                const optionValue = parseFloat(option.value) || 0;
+                const optionName = option.closest('.option-item')?.querySelector('.option-name')?.textContent || `Opção ${optionId}`;
+                
+                machineData.opcoesSelecionadas.push({
+                    id: parseInt(optionId),
+                    name: optionName,
+                    value: optionValue
+                });
+            });
+        }
+
+        return machineData;
+
+    } catch (error) {
+        console.error(`❌ Erro ao extrair dados da máquina ${machineIndex}:`, error);
+        return machineData;
+    }
 }
 
 /**
- * Função auxiliar para converter texto de preço em número
- * Remove formatação brasileira (R$, pontos e vírgulas)
- * @param {string} priceText - Texto do preço formatado
- * @returns {number} Valor numérico do preço
+ * Obtém o nome da máquina de forma segura
+ */
+function getMachineName(machineElement, machineIndex) {
+    const titleElement = machineElement.querySelector('.machine-title-editable');
+    if (!titleElement) return `Máquina ${machineIndex}`;
+    
+    return titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Máquina ${machineIndex}`;
+}
+
+/**
+ * Converte texto de preço em número
+ * @param {string} priceText - Texto do preço (ex: "R$ 1.500,00")
+ * @returns {number} Valor numérico
  */
 function parseMachinePrice(priceText) {
-  if (!priceText) return 0;
-  return parseFloat(priceText.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) || 0;
+    if (!priceText || priceText === 'R$ 0,00') return 0;
+    
+    try {
+        // Remove "R$", pontos e converte vírgula para ponto
+        const cleaned = priceText.replace('R$', '')
+                                .replace(/\./g, '')
+                                .replace(',', '.')
+                                .trim();
+        return parseFloat(cleaned) || 0;
+    } catch (error) {
+        console.error('❌ Erro ao converter preço:', priceText, error);
+        return 0;
+    }
+}
+
+/**
+ * Função auxiliar para converter valores para número com segurança
+ */
+function safeNumber(value) {
+    if (value === null || value === undefined || value === '') return 0;
+    const num = parseFloat(value.toString().replace(',', '.'));
+    return isNaN(num) ? 0 : num;
 }
 
 export {
-  buildProjectData,
-  extractRoomData,
-  extractClimatizationMachineData,
-  extractCapacityData
+    buildProjectData,
+    extractRoomData,
+    extractCapacityData,
+    extractClimatizationMachineData,
+    parseMachinePrice,
+    safeNumber
 }

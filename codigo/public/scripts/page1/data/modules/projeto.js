@@ -1,6 +1,24 @@
 import { showEmptyProjectMessageIfNeeded, removeEmptyProjectMessage } from '../../ui/interface.js'
 import { buildRoomHTML } from './salas.js' 
 
+// Importar a função de pré-carregamento
+let machinesPreloadModule = null;
+
+/**
+ * Carrega o módulo de máquinas para pré-carregamento
+ */
+async function loadMachinesPreloadModule() {
+    if (!machinesPreloadModule) {
+        try {
+            machinesPreloadModule = await import('./modules/machines/machinesBuilder.js');
+            console.log("✅ Módulo de máquinas carregado para pré-carregamento");
+        } catch (error) {
+            console.error("❌ Erro ao carregar módulo de máquinas:", error);
+        }
+    }
+    return machinesPreloadModule;
+}
+
 /**
  * Cria uma nova sala vazia no projeto especificado
  * Insere o HTML da sala e inicializa componentes necessários
@@ -9,40 +27,75 @@ import { buildRoomHTML } from './salas.js'
  * @param {string} roomId - ID único da sala (opcional)
  * @returns {boolean} True se a sala foi criada com sucesso
  */
-function createEmptyRoom(projectName, roomName, roomId) {
-  const roomHTML = buildRoomHTML(projectName, roomName, roomId)
-  const projectContent = document.getElementById(`project-content-${projectName}`)
+async function createEmptyRoom(projectName, roomName, roomId) {
+  console.log(`🔄 Criando sala: ${roomName} no projeto ${projectName}`);
+  
+  try {
+    // PRÉ-CARREGA dados das máquinas ANTES de criar a sala
+    const machinesModule = await loadMachinesPreloadModule();
+    if (machinesModule && machinesModule.preloadMachinesDataForRoom) {
+      const fullRoomId = roomId || `${projectName}-${roomName}`;
+      await machinesModule.preloadMachinesDataForRoom(fullRoomId);
+    }
+  } catch (error) {
+    console.error("⚠️  Aviso: Não foi possível pré-carregar dados das máquinas:", error);
+  }
+
+  const roomHTML = buildRoomHTML(projectName, roomName, roomId);
+  const projectContent = document.getElementById(`project-content-${projectName}`);
   
   if (!projectContent) {
-    console.error(` Conteúdo do projeto ${projectName} não encontrado para adicionar sala`)
-    return false
+    console.error(`❌ Conteúdo do projeto ${projectName} não encontrado para adicionar sala`);
+    return false;
   }
 
-  removeEmptyProjectMessage(projectContent)
+  removeEmptyProjectMessage(projectContent);
   
-  const addRoomSection = projectContent.querySelector('.add-room-section')
+  const addRoomSection = projectContent.querySelector('.add-room-section');
   if (addRoomSection) {
-    addRoomSection.insertAdjacentHTML('beforebegin', roomHTML)
+    addRoomSection.insertAdjacentHTML('beforebegin', roomHTML);
   } else {
-
-    projectContent.insertAdjacentHTML('beforeend', roomHTML)
+    projectContent.insertAdjacentHTML('beforeend', roomHTML);
   }
 
-  console.log(` Sala ${roomName} criada no projeto ${projectName}`)
+  console.log(`✅ Sala ${roomName} criada no projeto ${projectName}`);
   
+  // Inicializa componentes após criação da sala
+  initializeRoomComponents(projectName, roomName, roomId);
+  
+  return true;
+}
+
+/**
+ * Inicializa todos os componentes da sala após criação
+ */
+function initializeRoomComponents(projectName, roomName, roomId) {
+  const fullRoomId = roomId || `${projectName}-${roomName}`;
+  
+  // 1. Inicializar fator de segurança
   setTimeout(() => {
     if (typeof initializeFatorSeguranca === 'function') {
-      const newRoomId = roomId || `${projectName}-${roomName}`;
-      initializeFatorSeguranca(newRoomId);
+      initializeFatorSeguranca(fullRoomId);
+      console.log(`✅ Fator de segurança inicializado para ${fullRoomId}`);
     }
   }, 500);
+  
+  // 2. Sincronizar backup
   setTimeout(() => {
-    const fullRoomId = `${projectName}-${roomName}`;
     if (typeof window.syncCapacityTableBackup !== 'undefined') {
       window.syncCapacityTableBackup(fullRoomId);
+      console.log(`✅ Backup sincronizado para ${fullRoomId}`);
     }
   }, 800);
-  return true
+  
+  // 3. Verificar se os dados das máquinas estão disponíveis
+  setTimeout(() => {
+    if (window.machinesData && window.machinesData.length > 0) {
+      console.log(`✅ Dados das máquinas disponíveis para ${fullRoomId}: ${window.machinesData.length} máquinas`);
+    } else {
+      console.warn(`⚠️  Dados das máquinas não disponíveis para ${fullRoomId}`);
+    }
+  }, 1000);
 }
 
 /**
@@ -51,21 +104,32 @@ function createEmptyRoom(projectName, roomName, roomId) {
  * @param {string} roomHTML - HTML da sala a ser inserida
  */
 function insertRoomIntoProject(projectContent, roomHTML) {
-  const addRoomSection = projectContent.querySelector(".add-room-section")
-  addRoomSection.insertAdjacentHTML("beforebegin", roomHTML)
+  const addRoomSection = projectContent.querySelector(".add-room-section");
+  if (addRoomSection) {
+    addRoomSection.insertAdjacentHTML("beforebegin", roomHTML);
+  } else {
+    projectContent.insertAdjacentHTML("beforeend", roomHTML);
+  }
 }
 
 /**
  * Adiciona uma nova sala ao projeto com nome automático
  * @param {string} projectName - Nome do projeto onde adicionar a sala
  */
-function addNewRoom(projectName) {
-  const projectContent = document.getElementById(`project-content-${projectName}`)
-  const roomCount = projectContent.querySelectorAll(".room-block").length + 1
-  const roomName = `Sala${roomCount}`
+async function addNewRoom(projectName) {
+  console.log(`➕ Adicionando nova sala ao projeto ${projectName}`);
+  
+  const projectContent = document.getElementById(`project-content-${projectName}`);
+  if (!projectContent) {
+    console.error(`❌ Projeto ${projectName} não encontrado`);
+    return;
+  }
+  
+  const roomCount = projectContent.querySelectorAll(".room-block").length + 1;
+  const roomName = `Sala${roomCount}`;
 
-  createEmptyRoom(projectName, roomName, null)
-  console.log(` ${roomName} adicionada ao ${projectName}`)
+  await createEmptyRoom(projectName, roomName, null);
+  console.log(`✅ ${roomName} adicionada ao ${projectName}`);
 }
 
 /**
@@ -73,7 +137,7 @@ function addNewRoom(projectName) {
  * Aplica valores padrão baseados nas constantes do sistema
  */
 function fixExistingCapacityInputs() {
-  console.log('[FIX] Verificando inputs de capacidade existentes...');
+  console.log('🔄 Verificando inputs de capacidade existentes...');
   
   // Encontrar todas as salas
   const roomBlocks = document.querySelectorAll('.room-block');
@@ -89,7 +153,7 @@ function fixExistingCapacityInputs() {
       if (input && input.value === '') {
         const valor = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE || 10;
         input.value = valor;
-        console.log(`[FIX] ✅ Input ${roomId} corrigido: ${valor}%`);
+        console.log(`✅ Input ${roomId} corrigido: ${valor}%`);
       }
     }
   });
@@ -106,17 +170,22 @@ document.addEventListener('DOMContentLoaded', function() {
  * @param {string} roomName - Nome da sala a ser removida
  */
 function deleteRoom(projectName, roomName) {
-  const confirmMessage = "Tem certeza que deseja deletar esta sala? Os dados permanecerão no servidor."
+  const confirmMessage = "Tem certeza que deseja deletar esta sala? Os dados permanecerão no servidor.";
 
-  if (!confirm(confirmMessage)) return
+  if (!confirm(confirmMessage)) return;
 
-  const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`)
-  const projectContent = roomBlock.closest(".project-content")
+  const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`);
+  if (!roomBlock) {
+    console.error(`❌ Sala ${roomName} não encontrada para remoção`);
+    return;
+  }
 
-  roomBlock.remove()
-  showEmptyProjectMessageIfNeeded(projectContent)
+  const projectContent = roomBlock.closest(".project-content");
 
-  console.log(` Sala ${roomName} removida da interface`)
+  roomBlock.remove();
+  showEmptyProjectMessageIfNeeded(projectContent);
+
+  console.log(`🗑️  Sala ${roomName} removida da interface`);
 }
 
 export {

@@ -1,61 +1,7 @@
 {
   "projetos": [
     {
-      "nome": "abc",
-      "salas": [
-        {
-          "nome": "cba",
-          "inputs": {
-            "ambiente": "",
-            "backup": "",
-            "area": "",
-            "tipoConstrucao": "",
-            "paredeOeste": 0,
-            "paredeLeste": 0,
-            "paredeNorte": 0,
-            "paredeSul": 0,
-            "peDireito": 0,
-            "divisoriaNaoClima1": 0,
-            "divisoriaNaoClima2": 0,
-            "divisoriaClima1": 0,
-            "divisoriaClima2": 0,
-            "dissipacao": 0,
-            "numPessoas": 0,
-            "numPortasDuplas": 0,
-            "numPortasSimples": 0,
-            "pressurizacao": 0,
-            "setpoint": 0,
-            "combateIncendio": "",
-            "vazaoArExterno": 0
-          },
-          "Cálculo_Capacidade_Refrigeração": {
-            "fatorSeguranca": 10,
-            "capacidadeUnitaria": 1,
-            "backup": "n",
-            "cargaEstimada": 0,
-            "solucao": "0",
-            "solucaoBackup": "0",
-            "totalCapacidade": 0,
-            "folga": "0%"
-          },
-          "ganhosTermicos": {
-            "totalW": 0,
-            "totalTR": 0,
-            "totalExterno": 0,
-            "totalDivisoes": 0,
-            "totalPiso": 0,
-            "totalIluminacao": 0,
-            "totalEquipamentos": 0,
-            "totalPessoas": 0,
-            "totalArExterno": 0
-          },
-          "id": "1"
-        }
-      ],
-      "id": "1001"
-    },
-    {
-      "nome": "uiyfuhv",
+      "nome": "Projeto2",
       "salas": [
         {
           "nome": "Sala1",
@@ -91,135 +37,16 @@
             "solucaoBackup": "0",
             "totalCapacidade": 0,
             "folga": "0.0%"
-          },
-          "ganhosTermicos": {
-            "totalW": 0,
-            "totalTR": 0,
-            "totalExterno": 0,
-            "totalDivisoes": 0,
-            "totalPiso": 0,
-            "totalIluminacao": 0,
-            "totalEquipamentos": 0,
-            "totalPessoas": 0,
-            "totalArExterno": 0
-          },
-          "id": "1"
-        }
-      ],
-      "id": "1002"
-    },
-    {
-      "nome": "Projeto3",
-      "salas": [
-        {
-          "nome": "Sala1",
-          "inputs": {
-            "ambiente": "",
-            "backup": "",
-            "area": 0,
-            "tipoConstrucao": "",
-            "paredeOeste": 0,
-            "paredeLeste": 0,
-            "paredeNorte": 0,
-            "paredeSul": 0,
-            "peDireito": 0,
-            "divisoriaNaoClima1": 0,
-            "divisoriaNaoClima2": 0,
-            "divisoriaClima1": 0,
-            "divisoriaClima2": 0,
-            "dissipacao": 0,
-            "numPessoas": 0,
-            "numPortasDuplas": 0,
-            "numPortasSimples": 0,
-            "pressurizacao": 0,
-            "setpoint": 0,
-            "combateIncendio": "",
-            "vazaoArExterno": 0
-          },
-          "Cálculo_Capacidade_Refrigeração": {
-            "fatorSeguranca": 10,
-            "capacidadeUnitaria": 1,
-            "backup": "n",
-            "cargaEstimada": 0,
-            "solucao": "0",
-            "solucaoBackup": "0",
-            "totalCapacidade": 0,
-            "folga": "0.0%"
-          },
-          "ganhosTermicos": {
-            "totalW": 0,
-            "totalTR": 0,
-            "totalExterno": 0,
-            "totalDivisoes": 0,
-            "totalPiso": 0,
-            "totalIluminacao": 0,
-            "totalEquipamentos": 0,
-            "totalPessoas": 0,
-            "totalArExterno": 0
-          },
-          "id": "1"
-        }
-      ],
-      "id": "1003"
-    },
-    {
-      "nome": "656yeuooiutdh",
-      "salas": [
-        {
-          "nome": "Sala1",
-          "inputs": {
-            "ambiente": "",
-            "backup": "",
-            "area": "",
-            "tipoConstrucao": "",
-            "paredeOeste": 0,
-            "paredeLeste": 0,
-            "paredeNorte": 0,
-            "paredeSul": 0,
-            "peDireito": 0,
-            "divisoriaNaoClima1": 0,
-            "divisoriaNaoClima2": 0,
-            "divisoriaClima1": 0,
-            "divisoriaClima2": 0,
-            "dissipacao": 0,
-            "numPessoas": 0,
-            "numPortasDuplas": 0,
-            "numPortasSimples": 0,
-            "pressurizacao": 0,
-            "setpoint": 0,
-            "combateIncendio": "",
-            "vazaoArExterno": 0
-          },
-          "configuracoes": {
-            "opcoesInstalacao": [
-              "bocal_insuflamento_protegido"
-            ]
-          },
-          "Cálculo_Capacidade_Refrigeração": {
-            "fatorSeguranca": 10,
-            "capacidadeUnitaria": 1,
-            "backup": "n",
-            "cargaEstimada": 0,
-            "solucao": "0",
-            "solucaoBackup": "0",
-            "totalCapacidade": 0,
-            "folga": "0%"
           },
           "maquinasClimatizacao": [
             {
-              "nome": "Equipamento de Climatização 1",
+              "nome": "Equipamento de Climatização 2",
               "tipo": "Wall Mounted",
-              "potencia": "1TR",
-              "tensao": "127V/1F",
-              "precoBase": 10000,
-              "opcoesSelecionadas": [
-                {
-                  "id": 6,
-                  "nome": "Controle de umidade com resistência de aquecimento e sensor de umidade",
-                  "valor": 600
-                }
-              ],
-              "precoTotal": 10600
+              "potencia": "2TR",
+              "tensao": "",
+              "precoBase": 4500,
+              "opcoesSelecionadas": [],
+              "precoTotal": 4500
             }
           ],
           "ganhosTermicos": {
@@ -236,7 +63,7 @@
           "id": "1"
         }
       ],
-      "id": "1004"
+      "id": "1001"
     },
     {
       "nome": "Projeto1",
@@ -276,6 +103,58 @@
             "totalCapacidade": 0,
             "folga": "0%"
           },
+          "maquinasClimatizacao": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "2TR",
+              "tensao": "380V/3F",
+              "precoBase": 4500,
+              "opcoesSelecionadas": [
+                {
+                  "id": 1,
+                  "nome": "Automação Embarcada",
+                  "valor": 500
+                },
+                {
+                  "id": 2,
+                  "nome": "Modbus TCP-IP",
+                  "valor": 300
+                },
+                {
+                  "id": 3,
+                  "nome": "Sensor de umidade para monitoramento",
+                  "valor": 200
+                },
+                {
+                  "id": 4,
+                  "nome": "Sensor de filtro sujo",
+                  "valor": 150
+                },
+                {
+                  "id": 5,
+                  "nome": "Sensor de fluxo",
+                  "valor": 150
+                },
+                {
+                  "id": 6,
+                  "nome": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+                  "valor": 600
+                },
+                {
+                  "id": 17,
+                  "nome": "Dupla alimentação de energia",
+                  "valor": 800
+                },
+                {
+                  "id": 21,
+                  "nome": "Parafusos, porcas e arruelas em INOX",
+                  "valor": 100
+                }
+              ],
+              "precoTotal": 7300
+            }
+          ],
           "ganhosTermicos": {
             "totalW": 0,
             "totalTR": 0,
@@ -338,7 +217,338 @@
           "id": "2"
         }
       ],
+      "id": "1002"
+    },
+    {
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "",
+            "backup": "",
+            "area": "",
+            "tipoConstrucao": "",
+            "paredeOeste": 0,
+            "paredeLeste": 0,
+            "paredeNorte": 0,
+            "paredeSul": 0,
+            "peDireito": 0,
+            "divisoriaNaoClima1": 0,
+            "divisoriaNaoClima2": 0,
+            "divisoriaClima1": 0,
+            "divisoriaClima2": 0,
+            "dissipacao": 0,
+            "numPessoas": 0,
+            "numPortasDuplas": 0,
+            "numPortasSimples": 0,
+            "pressurizacao": 0,
+            "setpoint": 0,
+            "combateIncendio": "",
+            "vazaoArExterno": 0
+          },
+          "Cálculo_Capacidade_Refrigeração": {
+            "fatorSeguranca": 10,
+            "capacidadeUnitaria": 1,
+            "backup": "n",
+            "cargaEstimada": 0,
+            "solucao": "0",
+            "solucaoBackup": "0",
+            "totalCapacidade": 0,
+            "folga": "0%"
+          },
+          "maquinasClimatizacao": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "",
+              "potencia": "",
+              "tensao": "",
+              "precoBase": 0,
+              "opcoesSelecionadas": [],
+              "precoTotal": 0
+            }
+          ],
+          "ganhosTermicos": {
+            "totalW": 0,
+            "totalTR": 0,
+            "totalExterno": 0,
+            "totalDivisoes": 0,
+            "totalPiso": 0,
+            "totalIluminacao": 0,
+            "totalEquipamentos": 0,
+            "totalPessoas": 0,
+            "totalArExterno": 0
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1003"
+    },
+    {
+      "nome": "programa 1",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "dsg",
+            "backup": "n+2",
+            "area": "34",
+            "tipoConstrucao": "eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "firepro",
+            "vazaoArExterno": 580
+          },
+          "configuracoes": {
+            "opcoesInstalacao": [
+              "bocal_insuflamento_protegido",
+              "bocal_acoplado_dutos",
+              "condicionadores_externos_se",
+              "evaporadoras_internas",
+              "evaporadoras_casa_maquinas",
+              "condensadores_externos"
+            ]
+          },
+          "Cálculo_Capacidade_Refrigeração": {
+            "fatorSeguranca": 10,
+            "capacidadeUnitaria": 20,
+            "backup": "n+2",
+            "cargaEstimada": 12,
+            "solucao": "1",
+            "solucaoBackup": "3",
+            "totalCapacidade": 20,
+            "folga": "66.7%"
+          },
+          "maquinasClimatizacao": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "3TR",
+              "tensao": "440V/3F",
+              "precoBase": 6000,
+              "opcoesSelecionadas": [
+                {
+                  "id": 3,
+                  "nome": "Sensor de umidade para monitoramento",
+                  "valor": 200
+                },
+                {
+                  "id": 4,
+                  "nome": "Sensor de filtro sujo",
+                  "valor": 150
+                },
+                {
+                  "id": 5,
+                  "nome": "Sensor de fluxo",
+                  "valor": 150
+                },
+                {
+                  "id": 6,
+                  "nome": "Controle de umidade com resistência de aquecimento e sensor de umidade",
+                  "valor": 600
+                },
+                {
+                  "id": 21,
+                  "nome": "Parafusos, porcas e arruelas em INOX",
+                  "valor": 100
+                }
+              ],
+              "precoTotal": 7200
+            }
+          ],
+          "ganhosTermicos": {
+            "totalW": 40741,
+            "totalTR": 12,
+            "totalExterno": 12573,
+            "totalDivisoes": 857,
+            "totalPiso": 689,
+            "totalIluminacao": 238,
+            "totalEquipamentos": 1500,
+            "totalPessoas": 3297,
+            "totalArExterno": 21589
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1004"
+    },
+    {
+      "nome": "ddd",
+      "salas": [
+        {
+          "nome": "dddd",
+          "inputs": {
+            "ambiente": "ds",
+            "backup": "n+1",
+            "area": "34",
+            "tipoConstrucao": "eletrocentro",
+            "paredeOeste": 12,
+            "paredeLeste": 13,
+            "paredeNorte": 14,
+            "paredeSul": 15,
+            "peDireito": 15,
+            "divisoriaNaoClima1": 1,
+            "divisoriaNaoClima2": 2,
+            "divisoriaClima1": 3,
+            "divisoriaClima2": 4,
+            "dissipacao": 1500,
+            "numPessoas": 15,
+            "numPortasDuplas": 1,
+            "numPortasSimples": 3,
+            "pressurizacao": 25,
+            "setpoint": 25,
+            "combateIncendio": "fm200",
+            "vazaoArExterno": 580
+          },
+          "configuracoes": {
+            "opcoesInstalacao": [
+              "bocal_insuflamento_protegido",
+              "bocal_acoplado_dutos",
+              "evaporadoras_casa_maquinas",
+              "condensadores_externos"
+            ]
+          },
+          "Cálculo_Capacidade_Refrigeração": {
+            "fatorSeguranca": 10,
+            "capacidadeUnitaria": 1,
+            "backup": "n+1",
+            "cargaEstimada": 12,
+            "solucao": "14",
+            "solucaoBackup": "15",
+            "totalCapacidade": 14,
+            "folga": "16.7%"
+          },
+          "maquinasClimatizacao": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "",
+              "tensao": "",
+              "precoBase": 0,
+              "opcoesSelecionadas": [],
+              "precoTotal": 0
+            }
+          ],
+          "ganhosTermicos": {
+            "totalW": 40741,
+            "totalTR": 12,
+            "totalExterno": 12573,
+            "totalDivisoes": 857,
+            "totalPiso": 689,
+            "totalIluminacao": 238,
+            "totalEquipamentos": 1500,
+            "totalPessoas": 3297,
+            "totalArExterno": 21589
+          },
+          "id": "1"
+        }
+      ],
       "id": "1005"
+    },
+    {
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "",
+            "backup": "",
+            "area": 0,
+            "tipoConstrucao": "",
+            "paredeOeste": 0,
+            "paredeLeste": 0,
+            "paredeNorte": 0,
+            "paredeSul": 0,
+            "peDireito": 0,
+            "divisoriaNaoClima1": 0,
+            "divisoriaNaoClima2": 0,
+            "divisoriaClima1": 0,
+            "divisoriaClima2": 0,
+            "dissipacao": 0,
+            "numPessoas": 0,
+            "numPortasDuplas": 0,
+            "numPortasSimples": 0,
+            "pressurizacao": 0,
+            "setpoint": 0,
+            "combateIncendio": "",
+            "vazaoArExterno": 0
+          },
+          "Cálculo_Capacidade_Refrigeração": {
+            "fatorSeguranca": 10,
+            "capacidadeUnitaria": 1,
+            "backup": "n",
+            "cargaEstimada": 0,
+            "solucao": "0",
+            "solucaoBackup": "0",
+            "totalCapacidade": 0,
+            "folga": "0.0%"
+          },
+          "maquinasClimatizacao": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "1TR",
+              "tensao": "380V/3F",
+              "precoBase": 3000,
+              "opcoesSelecionadas": [
+                {
+                  "id": 1,
+                  "nome": "Automação Embarcada",
+                  "valor": 500
+                },
+                {
+                  "id": 2,
+                  "nome": "Modbus TCP-IP",
+                  "valor": 300
+                },
+                {
+                  "id": 3,
+                  "nome": "Sensor de umidade para monitoramento",
+                  "valor": 200
+                },
+                {
+                  "id": 4,
+                  "nome": "Sensor de filtro sujo",
+                  "valor": 150
+                }
+              ],
+              "precoTotal": 4150
+            }
+          ],
+          "ganhosTermicos": {
+            "totalW": 0,
+            "totalTR": 0,
+            "totalExterno": 0,
+            "totalDivisoes": 0,
+            "totalPiso": 0,
+            "totalIluminacao": 0,
+            "totalEquipamentos": 0,
+            "totalPessoas": 0,
+            "totalArExterno": 0
+          },
+          "id": "1"
+        }
+      ],
+      "id": "1006"
+    },
+    {
+      "id": "Projeto1",
+      "nome": "Projeto ",
+      "salas": [],
+      "timestamp": "2025-10-14T03:13:25.002Z"
     }
   ]
 }
