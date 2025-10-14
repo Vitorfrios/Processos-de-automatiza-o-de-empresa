@@ -34,26 +34,13 @@ function buildMachinesSection(projectName, roomName) {
 }
 
 /**
- * Pré-carrega os dados das máquinas quando uma sala é criada
- */
-async function preloadMachinesDataForRoom(roomId) {
-    console.log(`🔄 Pré-carregando dados das máquinas para sala ${roomId}`);
-    try {
-        await loadMachinesData();
-        console.log(`✅ Dados pré-carregados para sala ${roomId}`);
-    } catch (error) {
-        console.error(`❌ Erro ao pré-carregar dados para sala ${roomId}:`, error);
-    }
-}
-
-/**
- * Carrega os dados das máquinas do servidor com cache
+ * Carrega os dados das máquinas do servidor com cache - CORRIGIDA
  * @returns {Promise<Object>} Dados das máquinas disponíveis
  */
 async function loadMachinesData() {
-    // Usa cache global para todas as salas e máquinas
-    if (window.machinesDataCache) {
-        console.log("📦 Retornando dados das máquinas do cache GLOBAL");
+    // Verificar se o cache é válido (não apenas se existe)
+    if (window.machinesDataCache && Array.isArray(window.machinesDataCache.machines) && window.machinesDataCache.machines.length > 0) {
+        console.log("📦 Retornando dados das máquinas do cache GLOBAL (válido)");
         return window.machinesDataCache;
     }
 
@@ -76,7 +63,12 @@ async function loadMachinesData() {
         
     } catch (error) {
         console.error("❌ Erro ao carregar dados das máquinas:", error);
-        // Retorna dados vazios para não quebrar a interface
+        // Se houver cache antigo, usar mesmo que incompleto
+        if (window.machinesDataCache) {
+            console.log("🔄 Usando cache antigo devido ao erro");
+            return window.machinesDataCache;
+        }
+        // Retorna dados vazios apenas se não houver cache
         const emptyData = { machines: [] };
         window.machinesDataCache = emptyData;
         return emptyData;
@@ -387,7 +379,6 @@ export {
   buildMachinesSection,
   loadMachinesData,
   loadSavedMachines,
-  preloadMachinesDataForRoom,
   updateCapacityFromThermalGains,
   initializeCapacityCalculations,
   refreshAllCapacityCalculations
