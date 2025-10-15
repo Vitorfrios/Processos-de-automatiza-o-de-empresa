@@ -270,7 +270,6 @@ async function startNewSession() {
     setSessionActive(true);
     window.GeralCount = 0;
     
-    await startBackendSession();
     
     console.log("🆕 Nova sessão iniciada");
 }
@@ -279,31 +278,111 @@ async function startNewSession() {
  * Encerra a sessão atual - FUNÇÃO PRINCIPAL DO BOTÃO "ENCERRAR SERVIDOR"
  */
 async function shutdownManual() {
-    if (!confirm('Tem certeza que deseja encerrar o servidor? Todos os projetos em sessão serão removidos.')) {
+    if (!confirm('Tem certeza que deseja encerrar o servidor? TODAS as sessões serão apagadas.')) {
         return;
     }
     
+    console.log("🔴 ENCERRANDO SERVIDOR E SESSÕES...");
+    
     try {
-        // Limpa sessão no backend
-        const response = await fetch('/api/sessions/shutdown', {
+        // 1. Limpa sessões no backend
+        console.log("🔄 Limpando sessões...");
+        const sessionsResponse = await fetch('/api/sessions/shutdown', {
             method: 'POST'
         });
         
-        if (response.ok) {
-            // Limpa sessão local
-            setSessionActive(false);
-            clearSessionProjects();
-            clearRenderedProjects();
-            window.GeralCount = 0;
-            
-            console.log("📭 Servidor encerrado - sessão limpa com sucesso");
-            showSystemStatus('Servidor encerrado. Sessão limpa com sucesso.', 'success');
-        } else {
-            throw new Error('Falha ao encerrar servidor no backend');
+        if (!sessionsResponse.ok) {
+            throw new Error('Falha ao limpar sessões');
         }
+        
+        const sessionsResult = await sessionsResponse.json();
+        console.log("✅ Sessões limpas:", sessionsResult);
+        
+        // 2. Limpa interface
+        setSessionActive(false);
+        clearSessionProjects();
+        clearRenderedProjects();
+        window.GeralCount = 0;
+        
+        // 3. Encerra servidor e recebe instrução para fechar
+        console.log("🔄 Encerrando servidor...");
+        const shutdownResponse = await fetch('/api/shutdown', {
+            method: 'POST'
+        });
+        
+        if (shutdownResponse.ok) {
+            const result = await shutdownResponse.json();
+            console.log("📭 Comando de shutdown enviado:", result);
+            
+            // ✅ Mostra mensagem elegante
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                color: #fff;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                text-align: center;
+                backdrop-filter: blur(4px);
+                animation: fadeIn 0.3s ease-out forwards;
+            `;
+
+            message.innerHTML = `
+                <div style="
+                    display: flex; 
+                    flex-direction: column; 
+                    align-items: center; 
+                    gap: 15px;
+                ">
+                    <div style="
+                        font-size: 64px; 
+                        margin-bottom: 10px; 
+                        color: #ff4c4c;
+                        animation: pulse 1s infinite alternate;
+                    ">✅</div>
+                    <div style="font-size: 28px; font-weight: bold;">Servidor encerrado</div>
+                    <div style="
+                        font-size: 16px; 
+                        margin-top: 5px; 
+                        opacity: 0.7;
+                    ">Esta janela fechará automaticamente</div>
+                </div>
+            `;
+            document.body.innerHTML = ''; // Limpa toda a página
+            document.body.appendChild(message);
+            
+            // ✅ Fecha a janela após o tempo especificado pelo Python
+            const closeDelay = result.close_delay || 2000; // 3 segundos padrão
+            console.log(`⏰ Fechando janela em ${closeDelay}ms...`);
+            
+            setTimeout(() => {
+                console.log("🚪 Fechando janela...");
+                window.close();
+                // Fallback se window.close não funcionar
+                if (!window.closed) {
+                    document.body.innerHTML = `
+                        <div style="padding: 20px; text-align: center;">
+                            <h1>✅ Servidor Encerrado</h1>
+                            <p>Você pode fechar esta aba manualmente.</p>
+                        </div>
+                    `;
+                }
+            }, closeDelay);
+        }
+        
     } catch (error) {
-        console.error('❌ Erro ao encerrar servidor:', error);
-        showSystemStatus('Erro ao encerrar servidor', 'error');
+        console.error('❌ Erro no shutdown:', error);
+        // Fecha após 3 segundos mesmo com erro
+        setTimeout(() => {
+            window.close();
+        }, 3000);
     }
 }
 
@@ -475,45 +554,7 @@ async function normalizeAllProjectsOnServer() {
 
 // FUNÇÕES PARA SINCRONIZAÇÃO COM BACKEND
 
-/**
- * Inicia sessão no backend
- */
-async function startBackendSession() {
-    try {
-        const response = await fetch('/api/session/start', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        const result = await response.json();
-        console.log("🆕 Sessão iniciada no backend:", result.session_id);
-        return result;
-    } catch (error) {
-        console.error("❌ Erro ao iniciar sessão no backend:", error);
-        return null;
-    }
-}
 
-/**
- * Encerra sessão no backend
- */
-async function endBackendSession() {
-    try {
-        const response = await fetch('/api/session/end', {
-            method: 'POST', 
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        const result = await response.json();
-        console.log("📭 Sessão encerrada no backend:", result.session_id);
-        return result;
-    } catch (error) {
-        console.error("❌ Erro ao encerrar sessão no backend:", error);
-        return null;
-    }
-}
 
 
 /**
@@ -533,6 +574,9 @@ async function initializeSession() {
     // Carrega projetos da sessão
     await loadProjectsFromServer();
 }
+
+
+window.shutdownManual = shutdownManual;
 
 // E modifique a exportação para incluir a nova função:
 export {

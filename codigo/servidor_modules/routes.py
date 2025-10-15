@@ -17,9 +17,8 @@ class RouteHandler:
         """Retorna apenas projetos da sessão atual (BUSCA POR IDs)"""
         try:
             # 1. Busca IDs da sessão atual
-            current_session = sessions_manager.get_current_session()
             current_session_id = sessions_manager.get_current_session_id()
-            session_projects_ids = current_session["sessions"][current_session_id]["projects"]
+            session_projects_ids = current_session_id["sessions"][current_session_id]["projects"]
             
             print(f"📋 IDs da sessão {current_session_id}: {session_projects_ids}")
             
@@ -135,21 +134,31 @@ class RouteHandler:
 
     # ENDPOINTS DE SESSÕES SIMPLIFICADOS
 
+
+
     def handle_get_sessions_current(self, handler):
-        """Retorna a sessão atual APENAS com IDs"""
+        """Retorna a sessão atual - CORRIGIDA"""
         try:
-            current_session = sessions_manager.get_current_session()
+            # Usa _load_sessions_data diretamente para evitar recriação
+            data = sessions_manager._load_sessions_data()
             current_session_id = sessions_manager.get_current_session_id()
             
-            project_ids = current_session["sessions"][current_session_id]["projects"]
-            print(f"📊 Retornando sessão {current_session_id} com {len(project_ids)} projetos: {project_ids}")
+            # Se não há sessão, retorna vazio
+            if current_session_id not in data["sessions"]:
+                handler.send_json_response({"sessions": {}})
+                return
             
-            handler.send_json_response(current_session)
+            # Retorna apenas a sessão atual
+            current_session = {
+                current_session_id: data["sessions"][current_session_id]
+            }
+            
+            print(f"📊 Retornando sessão {current_session_id}: {current_session}")
+            handler.send_json_response({"sessions": current_session})
             
         except Exception as e:
             print(f"❌ Erro ao obter sessão atual: {str(e)}")
             handler.send_json_response({"sessions": {}})
-
     def handle_delete_sessions_remove_project(self, handler):
         """Remove um projeto específico da sessão atual (APENAS ID)"""
         try:
@@ -172,24 +181,49 @@ class RouteHandler:
             handler.send_error(500, f"Erro: {str(e)}")
 
     def handle_post_sessions_shutdown(self, handler):
-        """Limpa completamente a sessão atual"""
+        """Limpa COMPLETAMENTE TODAS as sessões"""
         try:
-            print(f"🔴 SHUTDOWN: Limpando sessão atual")
+            print(f"🔴 SHUTDOWN COMPLETO: Deletando TODAS as sessões")
             
+            # Estado ANTES
+            data_before = sessions_manager._load_sessions_data()
+            print(f"📄 Estado ANTES do shutdown: {data_before}")
+            
+            # Limpa COMPLETAMENTE
             success = sessions_manager.clear_session()
             
-            if success:
+            # Estado DEPOIS - verifica diretamente o arquivo
+            data_after = sessions_manager._load_sessions_data()
+            print(f"📄 Estado DEPOIS do shutdown: {data_after}")
+            
+            # Verificação simples: sessions deve estar vazio
+            is_empty = not data_after.get("sessions") or data_after["sessions"] == {}
+            
+            if success and is_empty:
                 handler.send_json_response({
                     "success": True,
-                    "message": "Sessão encerrada e limpa com sucesso",
-                    "session_id": sessions_manager.get_current_session_id()
+                    "message": "Sessões DELETADAS completamente",
+                    "final_state": data_after
                 })
             else:
-                handler.send_error(500, "Erro ao limpar sessão")
+                # Se não funcionou, força a limpeza
+                print("🔄 Método normal falhou - forçando limpeza...")
+                success = sessions_manager.force_clear_all_sessions()
+                data_final = sessions_manager._load_sessions_data()
+                
+                if success and not data_final.get("sessions"):
+                    handler.send_json_response({
+                        "success": True,
+                        "message": "Sessões DELETADAS (forçado)",
+                        "final_state": data_final
+                    })
+                else:
+                    handler.send_error(500, f"FALHA TOTAL: {data_final}")
                 
         except Exception as e:
-            print(f"❌ Erro ao limpar sessão: {str(e)}")
+            print(f"❌ Erro no shutdown: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
+
 
     def handle_post_sessions_ensure_single(self, handler):
         """Garante que apenas uma sessão esteja ativa por vez"""
@@ -232,25 +266,32 @@ class RouteHandler:
 
 
     def handle_shutdown(self, handler):
-        """Encerra o servidor IMEDIATAMENTE"""
+        """Encerra o servidor E envia comando para fechar janela"""
         try:
             print("🔴 SHUTDOWN SOLICITADO VIA BOTÃO - ENCERRANDO SERVIDOR")
             
+            # 1. Envia resposta com instrução para fechar janela
             handler.send_json_response({
-                "status": "shutting_down",
-                "message": "Servidor encerrado com sucesso via botão"
+                "status": "shutting_down", 
+                "message": "Servidor encerrado com sucesso via botão",
+                "action": "close_window",  # ✅ Nova instrução
+                "close_delay": 2000        # ✅ Fechar após 3 segundos
             })
             
             print("✅ Resposta enviada ao cliente - servidor será encerrado")
             
+            # 2. Para o servidor HTTP
             config.servidor_rodando = False
             
             def force_shutdown():
                 print("💥 Forçando encerramento do servidor...")
                 import time
-                time.sleep(1)
-                if hasattr(handler, 'server'):
-                    handler.server.shutdown()
+                time.sleep(1)  # Dá tempo para a resposta ser enviada
+                
+                # ✅ Encerra o processo
+                import os
+                print("🚪 Encerrando processo Python...")
+                os._exit(0)
             
             import threading
             shutdown_thread = threading.Thread(target=force_shutdown)
@@ -260,7 +301,10 @@ class RouteHandler:
         except Exception as e:
             print(f"❌ Erro no shutdown: {str(e)}")
             config.servidor_rodando = False
-            
+            import os
+            os._exit(1)
+
+
     def handle_get_constants(self, handler):
         """Constants do DADOS.json"""
         try:

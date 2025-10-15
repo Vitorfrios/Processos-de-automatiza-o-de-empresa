@@ -56,33 +56,23 @@ class ShutdownManager {
   }
 
   async shutdownManual() {
-      if (confirm('Deseja realmente ENCERRAR o servidor?')) {
-          try {
-              console.log('🔄 Enviando comando de shutdown...');
-              
-              const response = await fetch('/api/shutdown', {
-                  method: 'POST',
-                  headers: {'Content-Type': 'application/json'},
-                  body: JSON.stringify({ action: 'shutdown_now' })
-              });
-              
-              const data = await response.json();
-              console.log('✅ Resposta do servidor:', data);
-              
-              alert('Servidor encerrado! Esta janela será fechada.');
-              setTimeout(() => {
-                  window.close();
-              }, 1000);
-              
-          } catch (error) {
-              console.log('🔌 Servidor encerrado ou não responde');
-              alert('Servidor encerrado!');
-              setTimeout(() => {
-                  window.close();
-              }, 1000);
-          }
-      }
-  }
+        if (confirm('Deseja realmente ENCERRAR o servidor?')) {
+            try {
+                console.log('🔄 Executando shutdown COMPLETO...');
+                
+                // ✅ USA a função CORRETA do server.js
+                if (typeof window.shutdownManual === 'function') {
+                    await window.shutdownManual();
+                } else {
+                    console.error('❌ Função shutdownManual não encontrada');
+                }
+                
+            } catch (error) {
+                console.log('🔌 Servidor encerrado ou não responde:', error);
+            }
+        }
+    }
+  
 
   showShutdownMessage() {
     const message = document.createElement('div');
@@ -316,21 +306,3 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 
 
-// Função global para shutdown manual (caso precise ser chamada de outros lugares)
-window.shutdownManual = function() {
-  if (shutdownManager) {
-    shutdownManager.shutdownManual();
-  } else {
-    // Fallback simples
-    if (confirm('Deseja encerrar o servidor?')) {
-      fetch('/api/shutdown', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ reason: 'manual_shutdown' })
-      }).then(() => {
-        alert('Servidor encerrado!');
-        setTimeout(() => window.close(), 1000);
-      });
-    }
-  }
-};

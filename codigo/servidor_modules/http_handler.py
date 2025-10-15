@@ -72,21 +72,21 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"📨 POST: {path}")
         
-        if path in ['/projetos', '/projects']:
-            self.route_handler.handle_post_projetos(self)
-        elif path == '/dados':
-            self.route_handler.handle_post_dados(self)
-        elif path == '/backup':
-            self.route_handler.handle_post_backup(self)
+        if path == '/api/sessions/shutdown':
+            self.route_handler.handle_post_sessions_shutdown(self)
+
         elif path == '/api/shutdown':
             self.route_handler.handle_shutdown(self)
-        elif path == '/api/session/start':
-            self.route_handler.handle_post_session_start(self)
-        elif path == '/api/session/end':
-            self.route_handler.handle_post_session_end(self)
-        # NOVAS ROTAS DE SESSÕES
-        elif path == '/api/sessions/shutdown':
-            self.route_handler.handle_post_sessions_shutdown(self)
+
+        elif path in ['/projetos', '/projects']:
+            self.route_handler.handle_post_projetos(self)
+
+        elif path == '/dados':
+            self.route_handler.handle_post_dados(self)
+
+        elif path == '/backup':
+            self.route_handler.handle_post_backup(self)
+
         elif path == '/api/sessions/ensure-single':
             self.route_handler.handle_post_sessions_ensure_single(self)
         else:

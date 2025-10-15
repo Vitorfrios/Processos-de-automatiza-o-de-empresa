@@ -41,22 +41,7 @@ class SessionsManager:
         session_window = current_time - (current_time % 3600)
         return f"session_{session_window}"
     
-    def get_current_session(self) -> dict:
-        """Retorna a sessão atual APENAS com IDs de projetos"""
-        data = self._load_sessions_data()
-        current_session_id = self.get_current_session_id()
-        
-        # Se não há sessão, cria uma vazia
-        if current_session_id not in data["sessions"]:
-            data["sessions"][current_session_id] = {"projects": []}
-            self._save_sessions_data(data)
-        
-        return {
-            "sessions": {
-                current_session_id: data["sessions"][current_session_id]
-            }
-        }
-    
+
     def add_project_to_session(self, project_id: str) -> bool:
         """Adiciona um projeto à sessão atual (APENAS ID)"""
         data = self._load_sessions_data()
@@ -89,16 +74,39 @@ class SessionsManager:
         return True  # Projeto não estava na sessão
     
     def clear_session(self) -> bool:
-        """Limpa completamente a sessão atual"""
-        data = self._load_sessions_data()
-        current_session_id = self.get_current_session_id()
+        """Limpa COMPLETAMENTE TODAS as sessões - Deixa apenas {"sessions": {}}"""
+        print("🔴 SHUTDOWN: Deletando TODAS as sessões")
         
-        if current_session_id in data["sessions"]:
-            data["sessions"][current_session_id]["projects"] = []
-            return self._save_sessions_data(data)
+        # Estrutura COMPLETAMENTE VAZIA
+        empty_data = {"sessions": {}}
         
-        return True
-    
+        success = self._save_sessions_data(empty_data)
+        
+        if success:
+            # Confirmação
+            final_data = self._load_sessions_data()
+            print(f"✅ sessions.json após limpeza: {final_data}")
+            return True
+        else:
+            print("❌ ERRO: Não foi possível salvar sessions.json vazio")
+            return False
+   
+    def force_clear_all_sessions(self) -> bool:
+        """Força a limpeza TOTAL - método alternativo"""
+        try:
+            # Deleta fisicamente o arquivo e recria vazio
+            if self.sessions_file.exists():
+                self.sessions_file.unlink()
+                print("🗑️  Arquivo sessions.json deletado fisicamente")
+            
+            # Recria vazio
+            self._initialize_sessions_file()
+            print("📄 Arquivo sessions.json recriado vazio")
+            
+            return True
+        except Exception as e:
+            print(f"❌ Erro ao forçar limpeza: {e}")
+            return False
     def ensure_single_session(self) -> bool:
         """Garante que apenas UMA sessão esteja ativa"""
         data = self._load_sessions_data()
