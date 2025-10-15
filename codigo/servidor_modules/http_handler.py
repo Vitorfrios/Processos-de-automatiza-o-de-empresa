@@ -1,5 +1,5 @@
 """
-HTTP Request Handler - Versão Cliente COM HEARTBEAT
+HTTP Request Handler - Versão Cliente COM SISTEMA COMPLETO DE SESSÕES
 """
 
 import http.server
@@ -11,7 +11,7 @@ from pathlib import Path
 from servidor_modules import file_utils, routes, config
 
 class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    """Handler robusto e compatível para produção com monitoramento"""
+    """Handler robusto e compatível para produção com sistema completo de sessões"""
     
     def __init__(self, *args, **kwargs):
         self.project_root = file_utils.find_project_root()
@@ -50,6 +50,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response({"status": "online", "timestamp": time.time()})
         elif path == '/api/session/projects':
             self.route_handler.handle_get_session_projects(self)
+        # NOVAS ROTAS DE SESSÕES
+        elif path == '/api/sessions/current':
+            self.route_handler.handle_get_sessions_current(self)
 
         else:
             try:
@@ -81,6 +84,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_post_session_start(self)
         elif path == '/api/session/end':
             self.route_handler.handle_post_session_end(self)
+        # NOVAS ROTAS DE SESSÕES
+        elif path == '/api/sessions/shutdown':
+            self.route_handler.handle_post_sessions_shutdown(self)
+        elif path == '/api/sessions/ensure-single':
+            self.route_handler.handle_post_sessions_ensure_single(self)
         else:
             print(f"❌ POST não implementado: {path}")
             self.send_error(501, f"Método não suportado: POST {path}")
@@ -100,6 +108,23 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         else:
             print(f"❌ PUT não implementado: {path}")
             self.send_error(501, f"Método não suportado: PUT {path}")
+
+    def do_DELETE(self):
+        """DELETE para remoção de recursos"""
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+        
+        if path.startswith('/codigo/'):
+            path = path[7:]
+        
+        print(f"🗑️  DELETE: {path}")
+        
+        # NOVAS ROTAS DE SESSÕES - DELETE
+        if path.startswith('/api/sessions/remove-project/'):
+            self.route_handler.handle_delete_sessions_remove_project(self)
+        else:
+            print(f"❌ DELETE não implementado: {path}")
+            self.send_error(501, f"Método não suportado: DELETE {path}")
     
     def send_json_response(self, data, status=200):
         """Resposta JSON padronizada"""

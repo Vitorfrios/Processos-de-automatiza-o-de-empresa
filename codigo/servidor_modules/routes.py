@@ -1,59 +1,37 @@
 """
-Definição de todas as rotas da API - COM SESSÕES MAS SEM TIMEOUT
+Definição de todas as rotas da API - ESTRUTURA SIMPLIFICADA
 """
 import json
 import time
 from pathlib import Path  
-from servidor_modules import file_utils, config  
+from servidor_modules import file_utils, config
+from servidor_modules.sessions_manager import sessions_manager
 
 class RouteHandler:
-    """Handler para todas as rotas da API com controle de sessão SEM TIMEOUT"""
+    """Handler para todas as rotas da API com estrutura simplificada"""
     
     def __init__(self, project_root):
         self.project_root = project_root
-        self.sessions_file = Path(project_root) / "sessions.json"
-    
-    def _load_sessions(self):
-        """Carrega dados de sessões"""
-        try:
-            if self.sessions_file.exists():
-                return file_utils.load_json_file(self.sessions_file, {"sessions": {}})
-            return {"sessions": {}}
-        except:
-            return {"sessions": {}}
-    
-    def _save_sessions(self, sessions_data):
-        """Salva dados de sessões"""
-        try:
-            return file_utils.save_json_file(self.sessions_file, sessions_data)
-        except:
-            return False
-    
-    def _get_current_session_id(self):
-        """Obtém o ID da sessão atual baseado no timestamp"""
-        # Usa o timestamp de início da sessão como ID
-        current_time = int(time.time())
-        session_window = current_time - (current_time % 3600)  # Agrupa por hora
-        return f"session_{session_window}"
     
     def handle_get_projetos(self, handler):
-        """Retorna apenas projetos da sessão atual"""
+        """Retorna apenas projetos da sessão atual (BUSCA POR IDs)"""
         try:
+            # 1. Busca IDs da sessão atual
+            current_session = sessions_manager.get_current_session()
+            current_session_id = sessions_manager.get_current_session_id()
+            session_projects_ids = current_session["sessions"][current_session_id]["projects"]
+            
+            print(f"📋 IDs da sessão {current_session_id}: {session_projects_ids}")
+            
+            # 2. Busca todos os projetos do backup
             backup_file = file_utils.find_json_file('backup.json', self.project_root)
             backup_data = file_utils.load_json_file(backup_file, {"projetos": []})
-            
-            # Carrega sessões para filtrar projetos
-            sessions_data = self._load_sessions()
-            current_session_id = self._get_current_session_id()
-            
-            # Obtém projetos da sessão atual
-            session_projects = sessions_data.get("sessions", {}).get(current_session_id, [])
-            
-            # Filtra apenas projetos da sessão atual
             all_projects = backup_data.get('projetos', [])
+            
+            # 3. Filtra apenas projetos que estão na sessão
             projetos_da_sessao = [
                 projeto for projeto in all_projects 
-                if str(projeto.get('id')) in session_projects
+                if str(projeto.get('id')) in session_projects_ids
             ]
             
             print(f"📊 Sessão {current_session_id}: {len(projetos_da_sessao)}/{len(all_projects)} projetos")
@@ -64,7 +42,7 @@ class RouteHandler:
             handler.send_json_response([])
 
     def handle_post_projetos(self, handler):
-        """Salva novo projeto e associa à sessão atual"""
+        """Salva novo projeto e associa APENAS ID à sessão atual"""
         try:
             content_length = int(handler.headers['Content-Length'])
             post_data = handler.rfile.read(content_length)
@@ -73,10 +51,8 @@ class RouteHandler:
             backup_file = file_utils.find_json_file('backup.json', self.project_root)
             backup_data = file_utils.load_json_file(backup_file, {"projetos": []})
             
-            # 🔥 CORREÇÃO COMPLETA: Garantir ID único e sequencial
+            # Gera ID único
             projetos = backup_data.get('projetos', [])
-            
-            # Extrair todos os IDs numéricos existentes
             ids_existentes = []
             for projeto in projetos:
                 try:
@@ -86,16 +62,13 @@ class RouteHandler:
                 except (ValueError, AttributeError):
                     continue
             
-            # Determinar próximo ID
             if ids_existentes:
                 proximo_id = max(ids_existentes) + 1
             else:
-                proximo_id = 1001  # Primeiro ID
+                proximo_id = 1001
             
-            # Atribuir novo ID ao projeto
             novo_projeto['id'] = str(proximo_id)
             
-            # Adicionar timestamp se não existir
             if 'timestamp' not in novo_projeto:
                 from datetime import datetime
                 novo_projeto['timestamp'] = datetime.now().isoformat()
@@ -106,21 +79,11 @@ class RouteHandler:
             
             backup_data['projetos'] = projetos
             
-            # Associa à sessão atual
-            sessions_data = self._load_sessions()
-            current_session_id = self._get_current_session_id()
+            # Associa APENAS ID à sessão atual
+            success = sessions_manager.add_project_to_session(proximo_id)
             
-            if current_session_id not in sessions_data["sessions"]:
-                sessions_data["sessions"][current_session_id] = []
-            
-            project_id_str = str(proximo_id)
-            if project_id_str not in sessions_data["sessions"][current_session_id]:
-                sessions_data["sessions"][current_session_id].append(project_id_str)
-            
-            # Salva ambos
-            if (file_utils.save_json_file(backup_file, backup_data) and 
-                self._save_sessions(sessions_data)):
-                print(f"✅ Projeto {proximo_id} salvo com sucesso na sessão {current_session_id}")
+            if file_utils.save_json_file(backup_file, backup_data) and success:
+                print(f"✅ Projeto {proximo_id} salvo com sucesso na sessão")
                 handler.send_json_response(novo_projeto)
             else:
                 handler.send_error(500, "Erro ao salvar projeto")
@@ -130,7 +93,7 @@ class RouteHandler:
             handler.send_error(500, f"Erro: {str(e)}")
 
     def handle_put_projeto(self, handler):
-        """Atualiza projeto existente (mantém associação com sessão)"""
+        """Atualiza projeto existente (NÃO altera sessão)"""
         try:
             project_id = handler.path.split('/')[-1]
             
@@ -170,61 +133,93 @@ class RouteHandler:
             print(f"❌ Erro ao atualizar projeto: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
 
-    # MANTENDO endpoints de sessão mas REMOVENDO timeout
-    def handle_post_session_start(self, handler):
-        """Inicia uma nova sessão - SEM LIMPEZA AUTOMÁTICA"""
+    # ENDPOINTS DE SESSÕES SIMPLIFICADOS
+
+    def handle_get_sessions_current(self, handler):
+        """Retorna a sessão atual APENAS com IDs"""
         try:
-            sessions_data = self._load_sessions()
-            current_session_id = self._get_current_session_id()
+            current_session = sessions_manager.get_current_session()
+            current_session_id = sessions_manager.get_current_session_id()
             
-            # REMOVIDA a limpeza de sessões antigas (não causa mais timeout)
+            project_ids = current_session["sessions"][current_session_id]["projects"]
+            print(f"📊 Retornando sessão {current_session_id} com {len(project_ids)} projetos: {project_ids}")
             
-            # Garante que a sessão atual existe
-            if current_session_id not in sessions_data["sessions"]:
-                sessions_data["sessions"][current_session_id] = []
+            handler.send_json_response(current_session)
             
-            if self._save_sessions(sessions_data):
+        except Exception as e:
+            print(f"❌ Erro ao obter sessão atual: {str(e)}")
+            handler.send_json_response({"sessions": {}})
+
+    def handle_delete_sessions_remove_project(self, handler):
+        """Remove um projeto específico da sessão atual (APENAS ID)"""
+        try:
+            project_id = handler.path.split('/')[-1]
+            
+            print(f"🗑️  Removendo projeto {project_id} da sessão")
+            
+            success = sessions_manager.remove_project(project_id)
+            
+            if success:
                 handler.send_json_response({
-                    "status": "session_started",
-                    "session_id": current_session_id,
-                    "projects": sessions_data["sessions"][current_session_id]
+                    "success": True, 
+                    "message": f"Projeto {project_id} removido da sessão"
                 })
             else:
-                handler.send_error(500, "Erro ao iniciar sessão")
+                handler.send_error(500, "Erro ao remover projeto da sessão")
                 
         except Exception as e:
-            print(f"❌ Erro ao iniciar sessão: {str(e)}")
+            print(f"❌ Erro ao remover projeto da sessão: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
 
-    def handle_post_session_end(self, handler):
-        """Encerra a sessão atual (limpa projetos da tela)"""
+    def handle_post_sessions_shutdown(self, handler):
+        """Limpa completamente a sessão atual"""
         try:
-            sessions_data = self._load_sessions()
-            current_session_id = self._get_current_session_id()
+            print(f"🔴 SHUTDOWN: Limpando sessão atual")
             
-            # Remove a sessão atual
-            if current_session_id in sessions_data["sessions"]:
-                del sessions_data["sessions"][current_session_id]
+            success = sessions_manager.clear_session()
             
-            if self._save_sessions(sessions_data):
+            if success:
                 handler.send_json_response({
-                    "status": "session_ended", 
-                    "session_id": current_session_id
+                    "success": True,
+                    "message": "Sessão encerrada e limpa com sucesso",
+                    "session_id": sessions_manager.get_current_session_id()
                 })
             else:
-                handler.send_error(500, "Erro ao encerrar sessão")
+                handler.send_error(500, "Erro ao limpar sessão")
                 
         except Exception as e:
-            print(f"❌ Erro ao encerrar sessão: {str(e)}")
+            print(f"❌ Erro ao limpar sessão: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_post_sessions_ensure_single(self, handler):
+        """Garante que apenas uma sessão esteja ativa por vez"""
+        try:
+            print(f"🔒 Garantindo sessão única")
+            
+            success = sessions_manager.ensure_single_session()
+            current_session_id = sessions_manager.get_current_session_id()
+            project_ids = sessions_manager.get_session_projects()
+            
+            if success:
+                handler.send_json_response({
+                    "success": True,
+                    "message": "Sessão única configurada",
+                    "session_id": current_session_id,
+                    "projects_count": len(project_ids),
+                    "projects": project_ids
+                })
+            else:
+                handler.send_error(500, "Erro ao configurar sessão única")
+                
+        except Exception as e:
+            print(f"❌ Erro ao configurar sessão única: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
 
     def handle_get_session_projects(self, handler):
         """Retorna apenas os IDs dos projetos da sessão atual"""
         try:
-            sessions_data = self._load_sessions()
-            current_session_id = self._get_current_session_id()
-            
-            session_projects = sessions_data.get("sessions", {}).get(current_session_id, [])
+            session_projects = sessions_manager.get_session_projects()
+            current_session_id = sessions_manager.get_current_session_id()
             
             handler.send_json_response({
                 "session_id": current_session_id,
@@ -235,15 +230,12 @@ class RouteHandler:
             print(f"❌ Erro ao obter projetos da sessão: {str(e)}")
             handler.send_json_response({"session_id": "error", "projects": []})
 
-    # REMOVENDO APENAS o heartbeat (causa timeout)
-    # DELETADO: handle_heartbeat
 
     def handle_shutdown(self, handler):
-        """Encerra o servidor IMEDIATAMENTE - AMBOS os métodos"""
+        """Encerra o servidor IMEDIATAMENTE"""
         try:
             print("🔴 SHUTDOWN SOLICITADO VIA BOTÃO - ENCERRANDO SERVIDOR")
             
-            # 1. Envia resposta para o cliente
             handler.send_json_response({
                 "status": "shutting_down",
                 "message": "Servidor encerrado com sucesso via botão"
@@ -251,16 +243,12 @@ class RouteHandler:
             
             print("✅ Resposta enviada ao cliente - servidor será encerrado")
             
-            # 2. Para o servidor HTTP (funciona com Ctrl+C)
             config.servidor_rodando = False
             
-            # 3. Força encerramento para garantir
             def force_shutdown():
                 print("💥 Forçando encerramento do servidor...")
-                # Dá tempo para a resposta ser enviada
                 import time
                 time.sleep(1)
-                # Encerra o servidor
                 if hasattr(handler, 'server'):
                     handler.server.shutdown()
             
@@ -271,7 +259,6 @@ class RouteHandler:
             
         except Exception as e:
             print(f"❌ Erro no shutdown: {str(e)}")
-            # Tenta encerrar mesmo com erro
             config.servidor_rodando = False
             
     def handle_get_constants(self, handler):

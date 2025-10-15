@@ -30,12 +30,7 @@ function buildProjectData(projectIdOrElement) {
     const projectName = projectElement.dataset.projectName || projectElement.id;
     const projectId = projectElement.dataset.projectId;
 
-    const shouldGenerateNewId = !projectId || 
-                               projectId === '' || 
-                               projectId === 'undefined' || 
-                               projectId === 'null' ||
-                               projectId.startsWith('temp-') ||
-                               projectId.startsWith('Projeto');
+    const shouldGenerateNewId = !projectId
 
     const projectData = {
         id: shouldGenerateNewId ? null : projectId,

@@ -211,8 +211,6 @@ codigo/
 - **decrementGeralCount**: | Decrementa o contador global de projetos
 - **getGeralCount**: | Retorna o valor atual do contador global
 - **resetDisplayLogic**: | Reseta a lógica de exibição de projetos
-- **createSingleBaseProject**: | Cria um único projeto base na interface
-- **createProjectBaseHTML**: | Cria o HTML do projeto base
 - **saveFirstProjectIdOfSession**: | Salva o ID do primeiro projeto da sessão
 - **addProjectToRemovedList**: | Adiciona um projeto à lista de removidos
 - **getRemovedProjectsList**: | Retorna a lista de projetos removidos

@@ -10,7 +10,8 @@ console.log(" Variáveis globais inicializadas:", {
 });
 
 // Importar APENAS o necessário para inicialização
-import { normalizeAllProjectsOnServer, loadProjectsFromServer, getGeralCount, createSingleBaseProject } from './data/server.js'
+import { normalizeAllProjectsOnServer, loadProjectsFromServer, getGeralCount } from './data/server.js'
+import { initializeSession } from './data/server.js';
 
 // Carregar módulos dinamicamente
 let modulesLoaded = false;
@@ -239,13 +240,6 @@ async function verifyAndCreateBaseProject() {
   
   console.log(` Estado atual - GeralCount: ${currentCount}, Projetos no DOM: ${projectsInDOM}`);
   
-  // Se não há projetos, criar projeto base
-  if (currentCount === 0 && projectsInDOM === 0) {
-    console.log(" Nenhum projeto encontrado - criando projeto base...");
-    createSingleBaseProject();
-  } else {
-    console.log(` Projetos já existem - GeralCount: ${currentCount}, DOM: ${projectsInDOM}`);
-  }
 }
 
 /**
@@ -288,6 +282,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     // 2. Carregar constantes do sistema
     await loadSystemConstants();
+    await initializeSession();
     
     // 3. Normalizar projetos no servidor
     await normalizeAllProjectsOnServer();
@@ -319,15 +314,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-/**
- * Fallback: Carrega módulos quando qualquer função for chamada (caso não tenham carregado ainda)
- * Garante que o sistema funcione mesmo se o carregamento inicial falhar
- */
-window.addEventListener('click', async (event) => {
-  if (!modulesLoaded) {
-    await loadAllModules();
-  }
-});
+
 
 // Função global para shutdown manual (caso precise ser chamada de outros lugares)
 window.shutdownManual = function() {

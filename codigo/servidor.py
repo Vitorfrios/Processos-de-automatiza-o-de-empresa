@@ -6,7 +6,7 @@ Versão Cliente: Estável e Profissional
 
 import signal
 import sys
-from servidor_modules import server_utils, http_handler, browser_monitor
+from servidor_modules import server_utils, http_handler, browser_monitor,sessions_manager
 
 def main():
     """Função principal - Robusta e profissional"""

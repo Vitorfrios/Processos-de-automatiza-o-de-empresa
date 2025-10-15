@@ -9,6 +9,9 @@ import {
   addProjectToRemovedList,
   saveFirstProjectIdOfSession,
   updateProjectButton,
+  removeProjectFromSession,
+  ensureSingleActiveSession,
+  isSessionActive
 } from "./server.js"
 
 /**
@@ -128,6 +131,13 @@ function normalizeProjectIds(projectData) {
  */
 async function salvarProjeto(projectData) {
   try {
+    // REGRA: Só salvar se sessão estiver ativa
+    if (!isSessionActive()) {
+      console.warn("⚠️ Sessão não está ativa - projeto não será salvo");
+      showSystemStatus("ERRO: Sessão não está ativa. Projeto não salvo.", "error");
+      return null;
+    }
+
     if (!projectData.id) {
       projectData.id = await getNextProjectId()
     }
@@ -173,6 +183,13 @@ async function salvarProjeto(projectData) {
  */
 async function atualizarProjeto(projectId, projectData) {
   try {
+    // REGRA: Só atualizar se sessão estiver ativa
+    if (!isSessionActive()) {
+      console.warn("⚠️ Sessão não está ativa - projeto não será atualizado");
+      showSystemStatus("ERRO: Sessão não está ativa. Projeto não atualizado.", "error");
+      return null;
+    }
+
     projectId = ensureStringId(projectId)
 
     if (!projectId) {
@@ -237,6 +254,13 @@ async function saveProject(projectName, event) {
 
     console.log(`💾 INICIANDO SALVAMENTO do projeto: "${projectName}"`);
 
+    // REGRA: Só salvar se sessão estiver ativa
+    if (!isSessionActive()) {
+        console.warn("⚠️ Sessão não está ativa - projeto não será salvo");
+        showSystemStatus("ERRO: Sessão não está ativa. Projeto não salvo.", "error");
+        return;
+    }
+
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
     if (!projectBlock) {
         console.error('❌ Projeto não encontrado:', projectName);
@@ -274,10 +298,7 @@ async function saveProject(projectName, event) {
 
     // DETERMINAR SE É NOVO PROJETO (CORRIGIDO)
     const projectIdFromDOM = projectBlock.dataset.projectId;
-    const hasValidId = projectData.id && 
-                      projectData.id !== 'null' && 
-                      projectData.id !== 'undefined' && 
-                      !projectData.id.startsWith('temp-');
+    const hasValidId = projectData.id 
     
     const isNewProject = !hasValidId && !projectIdFromDOM;
 
@@ -286,6 +307,17 @@ async function saveProject(projectName, event) {
     console.log('- ID no DOM:', projectIdFromDOM);
     console.log('- Tem ID válido?:', hasValidId);
     console.log('- É novo projeto?:', isNewProject);
+
+    // REGRA: Para novo projeto, garantir sessão única
+    if (isNewProject) {
+        try {
+            console.log('🔄 Garantindo sessão única ativa...');
+            await ensureSingleActiveSession();
+        } catch (error) {
+            console.error('❌ Erro ao garantir sessão única:', error);
+            // Continuar mesmo com erro, mas logar
+        }
+    }
 
     let result = null;
     
@@ -354,8 +386,8 @@ function collapseProjectAfterSave(projectName, projectBlock) {
  * Deleta um projeto da interface
  * @param {string} projectName - Nome do projeto a ser deletado
  */
-function deleteProject(projectName) {
-  const confirmMessage = "Tem certeza que deseja deletar este projeto? Os dados permanecerão no servidor."
+async function deleteProject(projectName) {
+  const confirmMessage = "Tem certeza que deseja remover este projeto? Os dados permanecerão no servidor, mas serão removidos da sessão atual."
 
   if (!confirm(confirmMessage)) return
 
@@ -364,20 +396,30 @@ function deleteProject(projectName) {
 
   const projectId = projectBlock.dataset.projectId ? ensureStringId(projectBlock.dataset.projectId) : null
 
+  // REGRA: Remover projeto da sessão no backend
+  if (projectId) {
+    try {
+      console.log(`🗑️ Removendo projeto ${projectId} da sessão...`);
+      await removeProjectFromSession(projectId);
+    } catch (error) {
+      console.error('❌ Erro ao remover projeto da sessão:', error);
+      // Continuar com a remoção local mesmo se houver erro no backend
+    }
+  }
+
+  // Remover da interface
   projectBlock.remove()
 
+  // Atualizar estado local
   if (projectId) {
     addProjectToRemovedList(projectId)
   } else {
     decrementGeralCount()
   }
 
-  setTimeout(() => {
-    const remainingProjects = document.querySelectorAll(".project-block")
-    if (remainingProjects.length === 0 && getGeralCount() === 0) {
-      // Lógica para quando não há projetos
-    }
-  }, 200)
+  showSystemStatus("Projeto removido da sessão atual", "success");
+
+  
 }
 
 /**

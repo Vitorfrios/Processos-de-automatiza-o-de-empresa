@@ -8,8 +8,7 @@ import { renderProjectFromData, renderRoomFromData, populateRoomInputs } from ".
 const SESSION_PROJECTS = 'session_projects';
 
 /**
- * Verifica se a sessão está ativa (z=1) ou encerrada (z=0)
- * @returns {boolean} true se sessão ativa, false se encerrada
+ * Verifica se a sessão está ativa
  */
 function isSessionActive() {
     return sessionStorage.getItem(SESSION_ACTIVE_KEY) === 'true';
@@ -17,12 +16,10 @@ function isSessionActive() {
 
 /**
  * Define o estado da sessão
- * @param {boolean} active - true para ativa, false para encerrada
  */
 function setSessionActive(active) {
     sessionStorage.setItem(SESSION_ACTIVE_KEY, active.toString());
     
-    // REGRA 3: Quando sessão é encerrada, esvaziar lista y
     if (!active) {
         clearSessionProjects();
         clearRenderedProjects();
@@ -30,8 +27,7 @@ function setSessionActive(active) {
 }
 
 /**
- * Obtém a lista de projetos da sessão atual (lista y)
- * @returns {Array} Lista de IDs de projetos da sessão
+ * Obtém a lista de projetos da sessão atual
  */
 function getSessionProjects() {
     if (!isSessionActive()) return [];
@@ -41,8 +37,7 @@ function getSessionProjects() {
 }
 
 /**
- * Define a lista de projetos da sessão atual (lista y)
- * @param {Array} projectIds - Lista de IDs de projetos
+ * Define a lista de projetos da sessão atual
  */
 function setSessionProjects(projectIds) {
     if (!isSessionActive()) return;
@@ -52,7 +47,6 @@ function setSessionProjects(projectIds) {
 
 /**
  * Adiciona um projeto à lista da sessão
- * @param {string} projectId - ID do projeto
  */
 function addProjectToSession(projectId) {
     if (!isSessionActive()) return;
@@ -66,9 +60,8 @@ function addProjectToSession(projectId) {
 
 /**
  * Remove um projeto da lista da sessão
- * @param {string} projectId - ID do projeto
  */
-function removeProjectFromSession(projectId) {
+function removeProjectFromSessionLocal(projectId) {
     if (!isSessionActive()) return;
     
     const sessionProjects = getSessionProjects();
@@ -77,7 +70,7 @@ function removeProjectFromSession(projectId) {
 }
 
 /**
- * Limpa todos os projetos da sessão
+ * Limpa todos os projetos da sessão local
  */
 function clearSessionProjects() {
     sessionStorage.removeItem(SESSION_PROJECTS);
@@ -99,10 +92,8 @@ function clearRenderedProjects() {
 
 /**
  * Inicializa o contador global de projetos
- * @returns {number} Valor atual do contador
  */
 function initializeGeralCount() {
-    // REGRA 4: Evitar cache de sessões anteriores - resetar se sessão não está ativa
     if (!isSessionActive()) {
         window.GeralCount = 0;
         return 0;
@@ -128,12 +119,11 @@ function removeBaseProjectFromHTML() {
 }
 
 /**
- * Carrega projetos salvos do servidor para a sessão atual
+ * Carrega projetos salvos do servidor para a sessão atual - CORRIGIDO
  */
 async function loadProjectsFromServer() {
     console.log("🔄 Carregando projetos do servidor...");
     
-    // REGRA 3: Se sessão encerrada, não carregar projetos
     if (!isSessionActive()) {
         console.log("📭 Sessão encerrada - nenhum projeto será carregado");
         clearRenderedProjects();
@@ -141,37 +131,57 @@ async function loadProjectsFromServer() {
     }
     
     try {
-        // PRIMEIRO: Buscar apenas projetos da sessão atual do backend
-        const response = await fetch('/projetos');
-        const sessionProjects = await response.json();
+        // 1. Busca sessão atual do backend (APENAS IDs)
+        const sessionResponse = await fetch('/api/sessions/current');
+        if (!sessionResponse.ok) {
+            throw new Error('Falha ao carregar sessão');
+        }
         
-        console.log(`📊 Projetos da sessão atual: ${sessionProjects.length}`);
+        const sessionData = await sessionResponse.json();
+        console.log("📋 Dados da sessão:", sessionData);
 
-        if (sessionProjects.length === 0) {
-            console.log("🔄 Nenhum projeto na sessão - criando projeto base");
-            setTimeout(() => {
-                createSingleBaseProject();
-            }, 100);
-            return;
+        // 2. Extrai IDs da sessão
+        const sessionIds = Object.keys(sessionData.sessions);
+
+
+        const currentSessionId = sessionIds[0];
+        const projectIds = sessionData.sessions[currentSessionId].projects;
+        
+        console.log(`📊 Sessão ${currentSessionId} com ${projectIds.length} projetos:`, projectIds);
+
+
+
+        // 3. Busca projetos completos do backup
+        const projectsResponse = await fetch('/projetos');
+        if (!projectsResponse.ok) {
+            throw new Error('Falha ao carregar projetos');
         }
 
-        window.GeralCount = sessionProjects.length;
+        const allProjects = await projectsResponse.json();
+        
+        // 4. Filtra apenas projetos que estão na sessão
+        const sessionProjects = allProjects.filter(project => 
+            projectIds.includes(String(project.id))
+        );
+
+        console.log(`🎯 Carregando ${sessionProjects.length} projetos da sessão`);
+
+        // 5. Limpa interface e renderiza projetos
         removeBaseProjectFromHTML();
-
-        // Renderizar apenas projetos da sessão atual
+        
+        let loadedCount = 0;
         for (const projectData of sessionProjects) {
-            renderProjectFromData(projectData);
-            // Adicionar à lista de sessão local também
+            await renderProjectFromData(projectData);
             addProjectToSession(projectData.id);
+            loadedCount++;
         }
         
-        console.log("✅ Projetos da sessão carregados com sucesso");
+        window.GeralCount = loadedCount;
+        console.log(`✅ ${loadedCount} projeto(s) da sessão carregados com sucesso`);
+        
     } catch (error) {
-        console.error("❌ Erro ao carregar projetos:", error);
-        // Fallback: criar projeto base em caso de erro
-        setTimeout(() => {
-            createSingleBaseProject();
-        }, 100);
+        console.error("❌ Erro ao carregar projetos da sessão:", error);
+
     }
 }
 
@@ -179,7 +189,6 @@ async function loadProjectsFromServer() {
  * Carrega máquinas salvas para uma sala específica
  */
 async function loadSavedMachinesForRoom(roomBlock, roomData) {
-    // REGRA 1: Só carregar máquinas se sessão estiver ativa
     if (!isSessionActive()) return;
     
     const roomId = roomBlock.id.replace("room-content-", "")
@@ -199,10 +208,8 @@ async function loadSavedMachinesForRoom(roomBlock, roomData) {
 
 /**
  * Incrementa o contador global de projetos
- * @returns {number} Novo valor do contador
  */
 function incrementGeralCount() {
-    // Só incrementar se sessão ativa
     if (!isSessionActive()) return 0;
     
     initializeGeralCount()
@@ -212,10 +219,8 @@ function incrementGeralCount() {
 
 /**
  * Decrementa o contador global de projetos
- * @returns {number} Novo valor do contador
  */
 function decrementGeralCount() {
-    // Só decrementar se sessão ativa
     if (!isSessionActive()) return 0;
     
     initializeGeralCount()
@@ -226,9 +231,7 @@ function decrementGeralCount() {
         const existingProjects = document.querySelectorAll(".project-block")
 
         if (window.GeralCount === 0 && existingProjects.length === 0) {
-            setTimeout(() => {
-                createSingleBaseProject()
-            }, 50)
+            // Não cria projeto base automaticamente
         } else if (window.GeralCount === 0 && existingProjects.length > 0) {
             window.GeralCount = existingProjects.length
         }
@@ -238,7 +241,6 @@ function decrementGeralCount() {
 
 /**
  * Retorna o valor atual do contador global
- * @returns {number} Valor do contador
  */
 function getGeralCount() {
     initializeGeralCount()
@@ -249,7 +251,6 @@ function getGeralCount() {
  * Reseta a lógica de exibição de projetos
  */
 function resetDisplayLogic() {
-    // REGRA 3: Quando sessão é encerrada, limpar tudo
     setSessionActive(false);
     clearSessionProjects();
     clearRenderedProjects();
@@ -263,113 +264,103 @@ function resetDisplayLogic() {
  * Inicia uma nova sessão
  */
 async function startNewSession() {
-    // REGRA 4: Limpar cache de sessões anteriores
     clearSessionProjects();
     clearRenderedProjects();
     
     setSessionActive(true);
     window.GeralCount = 0;
     
-    // Iniciar também no backend
     await startBackendSession();
     
     console.log("🆕 Nova sessão iniciada");
 }
 
 /**
- * Encerra a sessão atual
+ * Encerra a sessão atual - FUNÇÃO PRINCIPAL DO BOTÃO "ENCERRAR SERVIDOR"
  */
-async function endSession() {
-    // REGRA 3: Quando sessão for encerrada (z=0)
-    // - y deve ser esvaziado 
-    // - e nenhum projeto deve permanecer visível na tela
-    setSessionActive(false);
-    clearSessionProjects();
-    clearRenderedProjects();
-    
-    // Encerrar também no backend
-    await endBackendSession();
-    
-    console.log("📭 Sessão encerrada - todos os projetos removidos");
-}
-
-/**
- * Cria um único projeto base na interface
- */
-function createSingleBaseProject() {
-    // REGRA 1: Só criar projeto base se sessão ativa
-    if (!isSessionActive()) return;
-    
-    const projectsContainer = document.getElementById("projects-container")
-    if (!projectsContainer) {
-        setTimeout(() => {
-            const retryContainer = document.getElementById("projects-container")
-            if (retryContainer) {
-                createProjectBaseHTML(retryContainer)
-            }
-        }, 600)
-        return
+async function shutdownManual() {
+    if (!confirm('Tem certeza que deseja encerrar o servidor? Todos os projetos em sessão serão removidos.')) {
+        return;
     }
-
-    const existingProjects = projectsContainer.querySelectorAll('.project-block[data-project-name="Projeto1"]');
-
-    if (existingProjects.length === 0) {
-        createProjectBaseHTML(projectsContainer)
+    
+    try {
+        // Limpa sessão no backend
+        const response = await fetch('/api/sessions/shutdown', {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            // Limpa sessão local
+            setSessionActive(false);
+            clearSessionProjects();
+            clearRenderedProjects();
+            window.GeralCount = 0;
+            
+            console.log("📭 Servidor encerrado - sessão limpa com sucesso");
+            showSystemStatus('Servidor encerrado. Sessão limpa com sucesso.', 'success');
+        } else {
+            throw new Error('Falha ao encerrar servidor no backend');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao encerrar servidor:', error);
+        showSystemStatus('Erro ao encerrar servidor', 'error');
     }
 }
 
 /**
- * Cria o HTML do projeto base
- * @param {HTMLElement} container - Container onde o projeto será inserido
+ * Remove um projeto individual da sessão (BACKEND)
  */
-function createProjectBaseHTML(container) {
-    // REGRA 1: Só criar se sessão ativa
+async function removeProjectFromSession(projectId) {
     if (!isSessionActive()) return;
     
-    const existingBaseProject = container.querySelector('[data-project-name="Projeto1"]');
-    if (existingBaseProject) return;
-
-    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    const projectHTML = `
-        <div class="project-block" data-project-id="${tempId}" data-project-name="Projeto1">
-            <div class="project-header">
-                <button class="minimizer" onclick="toggleProject('Projeto1')">+</button>
-                <h2 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">Projeto1</h2>
-                <div class="project-actions">
-                    <button class="btn btn-delete" onclick="deleteProject('Projeto1')">Remover</button>
-                </div>
-            </div>
-            <div class="project-content collapsed" id="project-content-Projeto1">
-                <p class="empty-message">Nenhuma sala adicionada ainda.</p>
-                <div class="add-room-section">
-                    <button class="btn btn-add-secondary" onclick="addNewRoom('Projeto1')">+ Adicionar Nova Sala</button>
-                </div>
-                <div class="project-actions-footer">
-                    <button class="btn btn-verify" onclick="verifyProjectData('Projeto1')">Verificar Dados</button>
-                    <button class="btn btn-save project-save-btn" onclick="saveProject('Projeto1', event)" data-project-name="Projeto1">Salvar Projeto</button>
-                    <button class="btn btn-download" onclick="downloadPDF('Projeto1')">Baixar PDF</button>
-                    <button class="btn btn-download" onclick="downloadWord('Projeto1')">Baixar Word</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    container.insertAdjacentHTML("beforeend", projectHTML);
-
-    setTimeout(() => {
-        addNewRoom("Projeto1");
-    }, 800);
-
-    window.GeralCount = Math.max(window.GeralCount, 1);
+    try {
+        const response = await fetch(`/api/sessions/remove-project/${projectId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Falha ao remover projeto da sessão no backend');
+        }
+        
+        // Remove também da sessão local
+        removeProjectFromSessionLocal(projectId);
+        
+        console.log(`🗑️ Projeto ${projectId} removido da sessão`);
+        return await response.json();
+    } catch (error) {
+        console.error('❌ Erro ao remover projeto da sessão:', error);
+        throw error;
+    }
 }
+
+/**
+ * Garante que apenas uma sessão esteja ativa por vez
+ */
+async function ensureSingleActiveSession() {
+    try {
+        const response = await fetch('/api/sessions/ensure-single', {
+            method: 'POST'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Falha ao configurar sessão única');
+        }
+        
+        const result = await response.json();
+        console.log("✅ Sessão única configurada:", result);
+        return result;
+    } catch (error) {
+        console.error('❌ Erro ao configurar sessão única:', error);
+        throw error;
+    }
+}
+
+
 
 /**
  * Salva o ID do primeiro projeto da sessão
- * @param {string|number} projectId - ID do projeto
  */
 function saveFirstProjectIdOfSession(projectId) {
-    // Só salvar se sessão ativa
     if (!isSessionActive()) return;
     
     const existingId = sessionStorage.getItem(SESSION_STORAGE_KEY)
@@ -377,7 +368,7 @@ function saveFirstProjectIdOfSession(projectId) {
         const idAsInteger = ensureStringId(projectId)
         if (idAsInteger !== null) {
             sessionStorage.setItem(SESSION_STORAGE_KEY, idAsInteger.toString())
-            addProjectToSession(idAsInteger); // Adicionar à lista y
+            addProjectToSession(idAsInteger);
             incrementGeralCount()
         }
     }
@@ -385,10 +376,8 @@ function saveFirstProjectIdOfSession(projectId) {
 
 /**
  * Adiciona um projeto à lista de removidos
- * @param {string|number} projectId - ID do projeto removido
  */
 function addProjectToRemovedList(projectId) {
-    // Só processar se sessão ativa
     if (!isSessionActive()) return;
     
     projectId = ensureStringId(projectId)
@@ -398,14 +387,13 @@ function addProjectToRemovedList(projectId) {
     if (!removedList.includes(projectId)) {
         removedList.push(projectId)
         sessionStorage.setItem(REMOVED_PROJECTS_KEY, JSON.stringify(removedList))
-        removeProjectFromSession(projectId); // REGRA 2: Remover da lista y
+        removeProjectFromSession(projectId);
         decrementGeralCount()
     }
 }
 
 /**
  * Retorna a lista de projetos removidos
- * @returns {Array} Lista de IDs de projetos removidos
  */
 function getRemovedProjectsList() {
     const stored = sessionStorage.getItem(REMOVED_PROJECTS_KEY)
@@ -414,8 +402,6 @@ function getRemovedProjectsList() {
 
 /**
  * Verifica se um projeto foi removido
- * @param {string|number} projectId - ID do projeto
- * @returns {boolean} True se o projeto foi removido
  */
 function isProjectRemoved(projectId) {
     const removedList = getRemovedProjectsList()
@@ -424,8 +410,6 @@ function isProjectRemoved(projectId) {
 
 /**
  * Atualiza o botão de salvar/atualizar do projeto
- * @param {string} projectName - Nome do projeto
- * @param {boolean} hasId - Se o projeto tem ID
  */
 function updateProjectButton(projectName, hasId) {
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
@@ -451,7 +435,6 @@ function updateProjectButton(projectName, hasId) {
  * Normaliza todos os IDs de projetos no servidor
  */
 async function normalizeAllProjectsOnServer() {
-    // Só normalizar se sessão ativa
     if (!isSessionActive()) return;
     
     const alreadyNormalized = sessionStorage.getItem(NORMALIZATION_DONE_KEY)
@@ -490,7 +473,7 @@ async function normalizeAllProjectsOnServer() {
     }
 }
 
-// NOVAS FUNÇÕES PARA SINCRONIZAÇÃO COM BACKEND
+// FUNÇÕES PARA SINCRONIZAÇÃO COM BACKEND
 
 /**
  * Inicia sessão no backend
@@ -532,7 +515,26 @@ async function endBackendSession() {
     }
 }
 
-// Exportar as funções
+
+/**
+ * Inicializa a sessão automaticamente quando o sistema carrega
+ */
+async function initializeSession() {
+    console.log("🔄 Inicializando sessão...");
+    
+    // Verifica se já existe uma sessão ativa
+    if (!isSessionActive()) {
+        console.log("🆕 Iniciando nova sessão automaticamente");
+        await startNewSession();
+    } else {
+        console.log("✅ Sessão já está ativa");
+    }
+    
+    // Carrega projetos da sessão
+    await loadProjectsFromServer();
+}
+
+// E modifique a exportação para incluir a nova função:
 export {
     loadProjectsFromServer,
     removeBaseProjectFromHTML,
@@ -549,13 +551,13 @@ export {
     incrementGeralCount,
     decrementGeralCount,
     getGeralCount,
-    createSingleBaseProject,
-    // Novas funções de controle de sessão
     isSessionActive,
     setSessionActive,
     startNewSession,
-    endSession,
     getSessionProjects,
     addProjectToSession,
-    removeProjectFromSession
+    removeProjectFromSession,
+    shutdownManual,
+    ensureSingleActiveSession,
+    initializeSession
 }
