@@ -101,12 +101,24 @@ async function loadSavedMachines(roomId, savedMachines) {
             console.log(`✅ Máquina ${index + 1} carregada: ${savedMachine.nome}`);
         });
 
-        // Recalcula preços após carregar todas as máquinas
+        // CORREÇÃO: Aguardar a DOM atualizar e então forçar atualização dos valores
         setTimeout(() => {
-            savedMachines.forEach((_, index) => {
-                calculateMachinePrice(index + 1);
+            savedMachines.forEach((savedMachine, index) => {
+                const machineId = index + 1;
+                console.log(`🔧 Processando máquina ${machineId} com TR: ${savedMachine.potencia} e Tensão: ${savedMachine.tensao}`);
+                
+                // Forçar atualização dos valores baseados na TR salva
+                if (savedMachine.potencia && window.updateOptionValues) {
+                    console.log(`🔄 Atualizando opções para TR ${savedMachine.potencia}`);
+                    window.updateOptionValues(machineId);
+                }
+                
+                // Recalcular preço total
+                if (window.calculateMachinePrice) {
+                    window.calculateMachinePrice(machineId);
+                }
             });
-        }, 100);
+        }, 200);
 
     } catch (error) {
         console.error("❌ Erro ao carregar máquinas salvas:", error);
@@ -163,7 +175,7 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
               potencies,
               machineCount,
               "machine-power-select",
-              `calculateMachinePrice(${machineCount})`,
+              `handlePowerChange(${machineCount})`,
               savedMachine.potencia,
             ),
           )}
@@ -256,30 +268,26 @@ function buildSavedOptionsHTML(options, machineCount, selectedOptions = [], sele
       let optionValue = 0;
       if (selectedPower && option.values && option.values[selectedPower] !== undefined) {
         optionValue = option.values[selectedPower];
-      } else if (option.value) {
-        // Fallback para valor fixo se não houver valores por TR
-        optionValue = option.value;
+        console.log(`💰 Opção ${option.name} para TR ${selectedPower}: R$ ${optionValue}`);
       }
       
-      const optionDisplayValue = selectedPower ? 
-        `+R$ ${optionValue.toLocaleString("pt-BR")} (${selectedPower})` :
-        `+R$ ${optionValue.toLocaleString("pt-BR")}`;
+      const optionDisplayValue = `+R$ ${optionValue.toLocaleString("pt-BR")}`;
 
       return `
-      <div class="option-checkbox-container" onclick="handleOptionClick(event, ${machineCount}, ${option.id})">
-        <input type="checkbox" 
-               value="${optionValue}" 
-               data-option-id="${option.id}"
-               data-option-name="${option.name}"
-               onchange="calculateMachinePrice(${machineCount})"
-               id="option-${machineCount}-${option.id}"
-               ${isChecked ? "checked" : ""}>
-        <label for="option-${machineCount}-${option.id}">
-          <div class="option-text-wrapper">
+      <div class="option-item" onclick="handleOptionClick(${machineCount}, ${option.id})">
+        <div class="option-checkbox">
+          <input type="checkbox" 
+                 value="${optionValue}" 
+                 data-option-id="${option.id}"
+                 data-option-name="${option.name}"
+                 onchange="updateOptionSelection(${machineCount}, ${option.id}); calculateMachinePrice(${machineCount})"
+                 id="option-${machineCount}-${option.id}"
+                 ${isChecked ? "checked" : ""}>
+          <div class="option-content">
             <div class="option-name">${option.name}</div>
             <div class="option-price">${optionDisplayValue}</div>
           </div>
-        </label>
+        </div>
       </div>
     `
     })
@@ -319,9 +327,14 @@ function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
           <h6>Opções Adicionais:</h6>
           <div class="options-grid">
             ${savedMachine.opcoesSelecionadas?.map(opt => `
-              <div class="option-checkbox-container">
-                <input type="checkbox" checked disabled>
-                <label>${opt.name} (+R$ ${opt.value?.toLocaleString("pt-BR")})</label>
+              <div class="option-item">
+                <div class="option-checkbox">
+                  <input type="checkbox" checked disabled>
+                  <div class="option-content">
+                    <div class="option-name">${opt.name}</div>
+                    <div class="option-price">+R$ ${opt.value?.toLocaleString("pt-BR")}</div>
+                  </div>
+                </div>
               </div>
             `).join('') || '<p>Nenhuma opção selecionada</p>'}
           </div>
@@ -343,59 +356,7 @@ function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
 function calculateBasePrice(machineType, potencia) {
   if (!machineType || !machineType.baseValues) return 0
   
-  // Garantir que a potência esteja no formato correto (ex: "7,5TR")
-  const formattedPotency = potencia.includes('TR') ? potencia : `${potencia}TR`
-  
-  return machineType.baseValues[formattedPotency] || 0
-}
-
-/**
- * Atualiza os valores das opções quando a potência é alterada (para máquinas salvas)
- * @param {number} machineId - ID único da máquina
- * @param {string} selectedPower - Potência selecionada (TR)
- */
-function updateSavedMachineOptionValues(machineId, selectedPower) {
-    const machineElement = document.querySelector(`[data-machine-index="${machineId}"]`);
-    if (!machineElement) return;
-    
-    const typeSelect = machineElement.querySelector('.machine-type-select');
-    const selectedType = typeSelect?.value;
-    
-    if (!selectedType || !window.machinesData) return;
-    
-    const machine = window.machinesData.find(m => m.type === selectedType);
-    if (!machine || !machine.options) return;
-    
-    const optionsContainer = document.getElementById(`options-container-${machineId}`);
-    if (!optionsContainer) return;
-    
-    // Atualizar valores e display de todas as opções
-    machine.options.forEach(option => {
-        const checkbox = document.getElementById(`option-${machineId}-${option.id}`);
-        if (checkbox) {
-            let optionValue = 0;
-            if (selectedPower && option.values && option.values[selectedPower] !== undefined) {
-                optionValue = option.values[selectedPower];
-            } else if (option.value) {
-                optionValue = option.value;
-            }
-            
-            // Atualizar valor do checkbox
-            checkbox.value = optionValue;
-            
-            // Atualizar display do preço
-            const priceDisplay = checkbox.closest('.option-checkbox-container')?.querySelector('.option-price');
-            if (priceDisplay) {
-                const optionDisplayValue = selectedPower ? 
-                    `+R$ ${optionValue.toLocaleString("pt-BR")} (${selectedPower})` :
-                    `+R$ ${optionValue.toLocaleString("pt-BR")}`;
-                priceDisplay.textContent = optionDisplayValue;
-            }
-        }
-    });
-    
-    // Recalcular preço
-    calculateMachinePrice(machineId);
+  return machineType.baseValues[potencia] || 0
 }
 
 /**
@@ -403,7 +364,9 @@ function updateSavedMachineOptionValues(machineId, selectedPower) {
  * @param {string} roomId - ID da sala
  */
 function updateCapacityFromThermalGains(roomId) {
-  calculateCapacitySolution(roomId)
+  if (window.calculateCapacitySolution) {
+    window.calculateCapacitySolution(roomId);
+  }
 }
 
 /**
@@ -411,22 +374,22 @@ function updateCapacityFromThermalGains(roomId) {
  * Usa timeouts progressivos para garantir que a DOM esteja pronta
  */
 function initializeCapacityCalculations() {
-  const attempts = [100, 500, 1000, 2000]
+  const attempts = [100, 500, 1000, 2000];
   attempts.forEach((delay) => {
     setTimeout(() => {
       document.querySelectorAll(".room-block").forEach((roomBlock) => {
-        const roomId = roomBlock.id.replace("room-content-", "")
-        const capacityTable = roomBlock.querySelector(".capacity-calculation-table")
+        const roomId = roomBlock.id.replace("room-content-", "");
+        const capacityTable = roomBlock.querySelector(".capacity-calculation-table");
         if (capacityTable) {
-          const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
-          const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`)
-          if (fatorSegurancaInput && capacidadeUnitariaSelect) {
-            calculateCapacitySolution(roomId)
+          const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`);
+          const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`);
+          if (fatorSegurancaInput && capacidadeUnitariaSelect && window.calculateCapacitySolution) {
+            window.calculateCapacitySolution(roomId);
           }
         }
-      })
-    }, delay)
-  })
+      });
+    }, delay);
+  });
 }
 
 /**
@@ -435,9 +398,11 @@ function initializeCapacityCalculations() {
  */
 function refreshAllCapacityCalculations() {
   document.querySelectorAll(".room-block").forEach((roomBlock) => {
-    const roomId = roomBlock.id.replace("room-content-", "")
-    calculateCapacitySolution(roomId)
-  })
+    const roomId = roomBlock.id.replace("room-content-", "");
+    if (window.calculateCapacitySolution) {
+      window.calculateCapacitySolution(roomId);
+    }
+  });
 }
 
 // Exportação das funções do módulo
@@ -447,11 +412,10 @@ export {
   loadSavedMachines,
   updateCapacityFromThermalGains,
   initializeCapacityCalculations,
-  refreshAllCapacityCalculations,
-  updateSavedMachineOptionValues
+  refreshAllCapacityCalculations
 }
 
 // Disponibilização global das funções necessárias
 if (typeof window !== 'undefined') {
-    window.updateSavedMachineOptionValues = updateSavedMachineOptionValues;
+    window.loadSavedMachines = loadSavedMachines;
 }
