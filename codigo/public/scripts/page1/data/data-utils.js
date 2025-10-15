@@ -386,38 +386,47 @@ function extractCapacityData(roomElement) {
 }
 
 /**
- * Obtém o nome do projeto de forma segura 
+ * Obtém o nome do projeto de forma segura - CORRIGIDA
  */
 function getProjectName(projectElement) {
+    // PRIMEIRO: Tentar obter do elemento de título editável
     const titleElement = projectElement.querySelector('.project-title');
     
     if (titleElement) {
+        // Para elementos contenteditable, usar textContent
         const titleText = titleElement.textContent || titleElement.innerText || '';
         const trimmedText = titleText.trim();
         
-        if (trimmedText) {
-            const projectMatch = trimmedText.match(/Projeto\s*(\d*)/i);
-            if (projectMatch) {
-                const number = projectMatch[1] || '1';
-                return `Projeto${number}`; 
-            }
-            return trimmedText; 
+        if (trimmedText && trimmedText !== 'Projeto') {
+            console.log(`📝 Nome do projeto obtido do título: "${trimmedText}"`);
+            return trimmedText;
         }
     }
     
+    // SEGUNDO: Tentar obter do data attribute
     const projectNameFromData = projectElement.dataset.projectName;
-    if (projectNameFromData) {
-        const projectMatch = projectNameFromData.match(/Projeto\s*(\d*)/i);
-        if (projectMatch) {
-            const number = projectMatch[1] || '1';
-            return `Projeto${number}`;
-        }
+    if (projectNameFromData && projectNameFromData !== 'Projeto') {
+        console.log(`📝 Nome do projeto obtido do data attribute: "${projectNameFromData}"`);
         return projectNameFromData;
     }
     
+    // TERCEIRO: Tentar obter do ID do projeto
+    const projectId = projectElement.id;
+    if (projectId && projectId.startsWith('project-')) {
+        const nameFromId = projectId.replace('project-', '');
+        if (nameFromId && nameFromId !== 'Projeto') {
+            console.log(`📝 Nome do projeto obtido do ID: "${nameFromId}"`);
+            return nameFromId;
+        }
+    }
+    
+    // FALLBACK: Usar nome padrão com número sequencial
     const allProjects = document.querySelectorAll('.project-block');
     const projectNumber = allProjects.length > 0 ? allProjects.length : 1;
-    return `Projeto${projectNumber}`;
+    const defaultName = `Projeto${projectNumber}`;
+    console.log(`📝 Nome do projeto usando fallback: "${defaultName}"`);
+    
+    return defaultName;
 }
 
 /**

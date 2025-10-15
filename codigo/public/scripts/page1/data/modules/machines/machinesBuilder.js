@@ -170,7 +170,7 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
             ),
           )}
           ${buildFormGroup(
-            "Potência (TR):",
+            "Capacidade:",
             buildSelectWithSelected(
               potencies,
               machineCount,
@@ -316,7 +316,7 @@ function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
         </div>
         <div class="climatization-form-grid">
           ${buildFormGroup("Tipo de Equipamento:", `<select class="form-input machine-type-select" disabled><option>${savedMachine.tipo} (não disponível)</option></select>`)}
-          ${buildFormGroup("Potência (TR):", `<div class="form-input">${savedMachine.potencia}</div>`)}
+          ${buildFormGroup("Capacidade:", `<div class="form-input">${savedMachine.potencia}</div>`)}
           ${buildFormGroup("Tensão:", `<div class="form-input">${savedMachine.tensao}</div>`)}
           <div class="form-group">
             <label>Preço Base:</label>

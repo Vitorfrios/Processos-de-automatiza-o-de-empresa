@@ -78,8 +78,8 @@ function buildClimatizationMachineHTML(machineId, machines) {
                         buildSelectWithDefault(machineTypes, machineId, "machine-type-select", "updateMachineOptions(this)", "Selecionar Máquina"),
                     )}
                     ${buildFormGroup(
-                        "Potência (TR):",
-                        buildSelectWithDefault([], machineId, "machine-power-select", `handlePowerChange(${machineId})`, "Selecionar TR", true),
+                        "Capacidade:",
+                        buildSelectWithDefault([], machineId, "machine-power-select", `handlePowerChange(${machineId})`, "Selecionar capacidade", true),
                     )}
                     ${buildFormGroup(
                         "Tensão:",

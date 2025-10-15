@@ -137,7 +137,7 @@ function populateRoomInputs(projectName, roomName, roomData) {
       populateCapacityData(roomBlock, roomData.capacidade, roomId);
     }
 
-    // 5. PREENCHER MÁQUINAS
+    // 5. PREENCHER MÁQUINAS - CORREÇÃO: Chamar função específica para máquinas
     if (roomData.maquinas && roomData.maquinas.length > 0) {
       console.log(`🤖 Preenchendo ${roomData.maquinas.length} máquinas`);
       populateMachines(roomBlock, roomData.maquinas, roomId);
@@ -377,9 +377,25 @@ function populateCapacityData(roomBlock, capacityData, roomId) {
 }
 
 /**
- * Preenche máquinas de climatização
+ * Preenche máquinas de climatização - CORREÇÃO COMPLETA
  */
 function populateMachines(roomBlock, machinesData, roomId) {
+  console.log(`🤖 Iniciando carregamento de ${machinesData.length} máquinas para ${roomId}`);
+  
+  // CORREÇÃO: Usar loadSavedMachines em vez de criar máquinas manualmente
+  if (typeof window.loadSavedMachines !== 'undefined') {
+    console.log(`🔄 Chamando loadSavedMachines para ${roomId}`);
+    window.loadSavedMachines(roomId, machinesData);
+  } else {
+    console.error('❌ loadSavedMachines não disponível, usando fallback manual');
+    fallbackPopulateMachines(roomBlock, machinesData, roomId);
+  }
+}
+
+/**
+ * Fallback para preenchimento manual de máquinas (se loadSavedMachines não estiver disponível)
+ */
+function fallbackPopulateMachines(roomBlock, machinesData, roomId) {
   // Limpar máquinas existentes se houver
   const machinesContainer = document.getElementById(`machines-${roomId}`);
   if (machinesContainer) {
@@ -397,6 +413,7 @@ function populateMachines(roomBlock, machinesData, roomId) {
   machinesData.forEach((machineData, index) => {
     setTimeout(() => {
       if (typeof window.addMachine !== 'undefined') {
+        console.log(`➕ Adicionando máquina ${index + 1}: ${machineData.nome}`);
         window.addMachine(roomId);
         
         // Preencher dados da máquina após ser criada
@@ -405,43 +422,77 @@ function populateMachines(roomBlock, machinesData, roomId) {
           const lastMachine = machineElements[machineElements.length - 1];
           
           if (lastMachine) {
+            console.log(`🔧 Preenchendo dados da máquina ${index + 1}`, {
+              tipo: machineData.tipo,
+              potencia: machineData.potencia,
+              tensao: machineData.tensao
+            });
+            
             // Preencher dados básicos da máquina
             const typeSelect = lastMachine.querySelector('.machine-type-select');
             const powerSelect = lastMachine.querySelector('.machine-power-select');
             const voltageSelect = lastMachine.querySelector('.machine-voltage-select');
             const titleInput = lastMachine.querySelector('.machine-title-editable');
             
-            if (typeSelect && machineData.tipo) typeSelect.value = machineData.tipo;
-            if (powerSelect && machineData.potencia) powerSelect.value = machineData.potencia;
-            if (voltageSelect && machineData.tensao) voltageSelect.value = machineData.tensao;
-            if (titleInput && machineData.nome) titleInput.value = machineData.nome;
+            if (typeSelect && machineData.tipo) {
+              typeSelect.value = machineData.tipo;
+              console.log(`✅ Tipo definido: ${machineData.tipo}`);
+            }
+            
+            if (powerSelect && machineData.potencia) {
+              powerSelect.value = machineData.potencia;
+              console.log(`✅ Potência definida: ${machineData.potencia}`);
+            }
+            
+            if (voltageSelect && machineData.tensao) {
+              voltageSelect.value = machineData.tensao;
+              console.log(`✅ Tensão definida: ${machineData.tensao}`);
+            }
+            
+            if (titleInput && machineData.nome) {
+              titleInput.value = machineData.nome;
+            }
             
             // Disparar evento de change para carregar opções
-            if (typeSelect) {
+            if (typeSelect && machineData.tipo) {
+              console.log(`🔄 Disparando change no tipo para carregar opções`);
               typeSelect.dispatchEvent(new Event('change', { bubbles: true }));
             }
             
-            // Preencher opções selecionadas após um delay
+            // CORREÇÃO: Aguardar as opções serem carregadas antes de preencher
             setTimeout(() => {
+              // Forçar atualização dos valores baseados na TR
+              if (machineData.potencia && typeof window.updateOptionValues !== 'undefined') {
+                console.log(`🔄 Atualizando valores das opções para TR ${machineData.potencia}`);
+                window.updateOptionValues(index + 1);
+              }
+              
+              // Preencher opções selecionadas
               if (machineData.opcoesSelecionadas && machineData.opcoesSelecionadas.length > 0) {
+                console.log(`✅ Preenchendo ${machineData.opcoesSelecionadas.length} opções selecionadas`);
                 machineData.opcoesSelecionadas.forEach(opcao => {
                   const optionCheckbox = lastMachine.querySelector(`input[data-option-id="${opcao.id}"]`);
                   if (optionCheckbox) {
                     optionCheckbox.checked = true;
+                    console.log(`✅ Opção marcada: ${opcao.name}`);
+                  } else {
+                    console.warn(`⚠️ Opção não encontrada: ${opcao.id} - ${opcao.name}`);
                   }
                 });
-                
-                // Recalcular preço
-                if (typeof window.calculateMachinePrice !== 'undefined') {
-                  const machineIndex = lastMachine.getAttribute('data-machine-index');
-                  window.calculateMachinePrice(machineIndex);
-                }
               }
-            }, 200);
+              
+              // Recalcular preço
+              if (typeof window.calculateMachinePrice !== 'undefined') {
+                setTimeout(() => {
+                  console.log(`💰 Recalculando preço da máquina ${index + 1}`);
+                  window.calculateMachinePrice(index + 1);
+                }, 100);
+              }
+            }, 500); // Aumentei o timeout para garantir que as opções foram carregadas
           }
-        }, 100);
+        }, 200);
       }
-    }, index * 300); // Delay entre máquinas para evitar conflitos
+    }, index * 500); // Aumentei o delay entre máquinas
   });
 }
 
