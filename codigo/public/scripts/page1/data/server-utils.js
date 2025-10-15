@@ -322,6 +322,10 @@ function populateThermalGains(roomBlock, gainsData) {
  * Preenche dados de capacidade
  */
 function populateCapacityData(roomBlock, capacityData, roomId) {
+  // ✅ CORREÇÃO: Obter projectName do roomBlock
+  const projectBlock = roomBlock.closest('.project-block');
+  const projectName = projectBlock ? projectBlock.getAttribute('data-project-name') : '';
+  
   Object.entries(capacityData).forEach(([field, value]) => {
     if (value === null || value === undefined || value === '') return;
 
@@ -338,7 +342,6 @@ function populateCapacityData(roomBlock, capacityData, roomId) {
       element = roomBlock.querySelector(selector);
       if (element) break;
     }
-    const projectName = roomBlock.closest('.project-block').getAttribute('data-project-name');
 
     if (element) {
       try {
@@ -361,9 +364,11 @@ function populateCapacityData(roomBlock, capacityData, roomId) {
     }
   });
 
-  // Agendar recálculo de capacidade
+  // ✅ CORREÇÃO: Usar roomId em vez de projectName e roomName separados
   setTimeout(() => {
     if (typeof window.loadCapacityData !== 'undefined') {
+      // Extrair roomName do roomId se necessário
+      const roomName = roomId.split('-').slice(1).join('-');
       window.loadCapacityData(projectName, roomName);
     } else if (typeof window.calculateCapacitySolution !== 'undefined') {
       window.calculateCapacitySolution(roomId);

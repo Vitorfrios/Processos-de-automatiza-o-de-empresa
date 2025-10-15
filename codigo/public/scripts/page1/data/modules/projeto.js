@@ -93,7 +93,7 @@ function initializeRoomComponents(projectName, roomName, roomId) {
     if (typeof initializeMachineComponentsForRoom === 'function') {
       initializeMachineComponentsForRoom(fullRoomId);
     } else {
-      console.warn(`⚠️ initializeMachineComponentsForRoom não disponível para ${fullRoomId}`);
+      console.log(`⚠️ initializeMachineComponentsForRoom não disponível para ${fullRoomId}`);
     }
   }, 1200);
   
@@ -102,7 +102,7 @@ function initializeRoomComponents(projectName, roomName, roomId) {
     if (window.machinesData && window.machinesData.length > 0) {
       console.log(`✅ Dados das máquinas disponíveis para ${fullRoomId}: ${window.machinesData.length} máquinas`);
     } else {
-      console.warn(`⚠️ Dados das máquinas não disponíveis para ${fullRoomId}`);
+      console.log(`⚠️ Dados das máquinas não disponíveis para ${fullRoomId}`);
     }
   }, 1500);
 }

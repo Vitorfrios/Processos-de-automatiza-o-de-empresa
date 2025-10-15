@@ -84,7 +84,7 @@ function collectClimatizationInputs(climaSection, roomId) {
     data[field] = value;
   });
 
-  console.log("[DEBUG COLLECT] Dados coletados para cálculo:", data);
+  console.log("⚠️  [DEBUG COLLECT] Dados coletados para cálculo:", data);
   return data;
 }
 
@@ -96,7 +96,7 @@ function updateElementText(elementId, value) {
   if (element) {
     element.textContent = value;
   } else {
-    console.warn(`[DEBUG] Elemento ${elementId} não encontrado`);
+    console.log(`⚠️  [DEBUG] Elemento ${elementId} não encontrado`);
   }
 }
 export {
