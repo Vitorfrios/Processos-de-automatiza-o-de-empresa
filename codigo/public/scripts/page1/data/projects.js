@@ -422,6 +422,8 @@ async function deleteProject(projectName) {
   
 }
 
+
+
 /**
  * Verifica os dados de um projeto e gera relatório
  * @param {string} projectName - Nome do projeto
@@ -485,6 +487,8 @@ function collapseElement(element, minimizerElement) {
   element.classList.add(UI_CONSTANTS.COLLAPSED_CLASS)
   minimizerElement.textContent = UI_CONSTANTS.MINIMIZED_SYMBOL
 }
+
+window.deleteProject = deleteProject;
 
 export {
   fetchProjects,
