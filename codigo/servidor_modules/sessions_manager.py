@@ -156,5 +156,17 @@ class SessionsManager:
         except Exception:
             return False
 
+    def get_current_session(self) -> dict:
+        """Retorna a sessão atual completa - COMPATIBILIDADE COM routes.py"""
+        data = self._load_sessions_data()
+        current_session_id = self.get_current_session_id()
+        
+        # Retorna estrutura compatível com o esperado pelo routes.py
+        return {
+            "sessions": {
+                current_session_id: data["sessions"].get(current_session_id, {"projects": []})
+            }
+        }
+
 # Instância global
 sessions_manager = SessionsManager()

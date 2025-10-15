@@ -338,6 +338,7 @@ function populateCapacityData(roomBlock, capacityData, roomId) {
       element = roomBlock.querySelector(selector);
       if (element) break;
     }
+    const projectName = roomBlock.closest('.project-block').getAttribute('data-project-name');
 
     if (element) {
       try {

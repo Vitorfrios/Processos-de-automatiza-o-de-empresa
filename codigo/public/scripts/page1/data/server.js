@@ -131,7 +131,7 @@ async function loadProjectsFromServer() {
     }
     
     try {
-        // 1. Busca sessão atual do backend (APENAS IDs)
+        // 1. Busca sessão atual do backend
         const sessionResponse = await fetch('/api/sessions/current');
         if (!sessionResponse.ok) {
             throw new Error('Falha ao carregar sessão');
@@ -140,37 +140,54 @@ async function loadProjectsFromServer() {
         const sessionData = await sessionResponse.json();
         console.log("📋 Dados da sessão:", sessionData);
 
-        // 2. Extrai IDs da sessão
-        const sessionIds = Object.keys(sessionData.sessions);
+        // ✅ CORREÇÃO: Extrai dados da sessão atual
+        const sessions = sessionData.sessions || {};
+        const sessionIds = Object.keys(sessions);
+        
+        // Verifica se há sessão ativa
+        if (sessionIds.length === 0) {
+            console.log("📭 Nenhuma sessão ativa encontrada");
+            return;
+        }
 
-
+        // ✅ CORREÇÃO: Usa a primeira sessão (que é a atual)
         const currentSessionId = sessionIds[0];
-        const projectIds = sessionData.sessions[currentSessionId].projects;
+        const projectIds = sessions[currentSessionId].projects || [];
         
         console.log(`📊 Sessão ${currentSessionId} com ${projectIds.length} projetos:`, projectIds);
 
+        // Se não há projetos na sessão, não precisa carregar nada
+        if (projectIds.length === 0) {
+            console.log("📭 Nenhum projeto na sessão atual");
+            return;
+        }
 
-
-        // 3. Busca projetos completos do backup
+        // 2. Busca projetos completos do backup
         const projectsResponse = await fetch('/projetos');
         if (!projectsResponse.ok) {
             throw new Error('Falha ao carregar projetos');
         }
 
         const allProjects = await projectsResponse.json();
+        console.log(`📁 Total de projetos no backup: ${allProjects.length}`);
+        console.log(`📝 IDs no backup: ${allProjects.map(p => p.id)}`);
         
-        // 4. Filtra apenas projetos que estão na sessão
-        const sessionProjects = allProjects.filter(project => 
-            projectIds.includes(String(project.id))
-        );
+        // 3. Filtra apenas projetos que estão na sessão
+        const sessionProjects = allProjects.filter(project => {
+            const projectId = String(project.id);
+            const isInSession = projectIds.includes(projectId);
+            console.log(`🔍 Projeto ${projectId} na sessão? ${isInSession}`);
+            return isInSession;
+        });
 
-        console.log(`🎯 Carregando ${sessionProjects.length} projetos da sessão`);
+        console.log(`🎯 Encontrados ${sessionProjects.length} projetos da sessão para carregar`);
 
-        // 5. Limpa interface e renderiza projetos
+        // 4. Limpa interface e renderiza projetos
         removeBaseProjectFromHTML();
         
         let loadedCount = 0;
         for (const projectData of sessionProjects) {
+            console.log(`🔄 Renderizando projeto: ${projectData.nome} (ID: ${projectData.id})`);
             await renderProjectFromData(projectData);
             addProjectToSession(projectData.id);
             loadedCount++;
@@ -181,7 +198,6 @@ async function loadProjectsFromServer() {
         
     } catch (error) {
         console.error("❌ Erro ao carregar projetos da sessão:", error);
-
     }
 }
 

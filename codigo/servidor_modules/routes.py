@@ -14,31 +14,67 @@ class RouteHandler:
         self.project_root = project_root
     
     def handle_get_projetos(self, handler):
-        """Retorna apenas projetos da sessão atual (BUSCA POR IDs)"""
+        """Versão ULTRA-ROBUSTA - contorna todos os problemas possíveis"""
         try:
-            # 1. Busca IDs da sessão atual
+            print("🎯 [ULTRA-ROBUSTA] handle_get_projetos")
+            
+            # 1. Sessão
             current_session_id = sessions_manager.get_current_session_id()
-            session_projects_ids = current_session_id["sessions"][current_session_id]["projects"]
+            session_data = sessions_manager._load_sessions_data()
+            session_projects_ids = session_data["sessions"].get(current_session_id, {}).get("projects", [])
+            print(f"📋 IDs na sessão: {session_projects_ids}")
             
-            print(f"📋 IDs da sessão {current_session_id}: {session_projects_ids}")
+            # 2. Backup - carregamento direto e seguro
+            backup_path = self.project_root / "json" / "backup.json"
+            print(f"📁 Backup path: {backup_path}")
             
-            # 2. Busca todos os projetos do backup
-            backup_file = file_utils.find_json_file('backup.json', self.project_root)
-            backup_data = file_utils.load_json_file(backup_file, {"projetos": []})
+            if not backup_path.exists():
+                print("❌ Backup file não existe")
+                handler.send_json_response([])
+                return
+                
+            try:
+                with open(backup_path, 'r', encoding='utf-8') as f:
+                    backup_content = f.read()
+                    
+                backup_data = json.loads(backup_content)
+                print(f"✅ Backup carregado: {type(backup_data)}")
+                
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON inválido: {e}")
+                handler.send_json_response([])
+                return
+            except Exception as e:
+                print(f"❌ Erro ao ler arquivo: {e}")
+                handler.send_json_response([])
+                return
+            
+            # 3. Extrai projetos
             all_projects = backup_data.get('projetos', [])
+            if not isinstance(all_projects, list):
+                print(f"❌ 'projetos' não é uma lista: {type(all_projects)}")
+                all_projects = []
+                
+            print(f"📁 Total de projetos: {len(all_projects)}")
             
-            # 3. Filtra apenas projetos que estão na sessão
-            projetos_da_sessao = [
-                projeto for projeto in all_projects 
-                if str(projeto.get('id')) in session_projects_ids
-            ]
+            # 4. Filtragem
+            projetos_da_sessao = []
+            for projeto in all_projects:
+                if not isinstance(projeto, dict):
+                    continue
+                    
+                projeto_id = str(projeto.get('id', ''))
+                if projeto_id in session_projects_ids:
+                    projetos_da_sessao.append(projeto)
+                    print(f"✅ ENCONTRADO: Projeto {projeto_id}")
             
-            print(f"📊 Sessão {current_session_id}: {len(projetos_da_sessao)}/{len(all_projects)} projetos")
+            print(f"🎯 ENVIANDO: {len(projetos_da_sessao)} projetos")
             handler.send_json_response(projetos_da_sessao)
             
         except Exception as e:
-            print(f"❌ Erro ao carregar projetos: {str(e)}")
+            print(f"❌ ERRO FINAL: {str(e)}")
             handler.send_json_response([])
+
 
     def handle_post_projetos(self, handler):
         """Salva novo projeto e associa APENAS ID à sessão atual"""
@@ -250,10 +286,12 @@ class RouteHandler:
             handler.send_error(500, f"Erro: {str(e)}")
 
     def handle_get_session_projects(self, handler):
-        """Retorna apenas os IDs dos projetos da sessão atual"""
+        """Retorna apenas os IDs dos projetos da sessão atual - NOVO ENDPOINT"""
         try:
             session_projects = sessions_manager.get_session_projects()
             current_session_id = sessions_manager.get_current_session_id()
+            
+            print(f"📋 [SESSION-PROJECTS] Sessão {current_session_id} - Projetos: {session_projects}")
             
             handler.send_json_response({
                 "session_id": current_session_id,
@@ -261,9 +299,8 @@ class RouteHandler:
             })
             
         except Exception as e:
-            print(f"❌ Erro ao obter projetos da sessão: {str(e)}")
+            print(f"❌ Erro em handle_get_session_projects: {str(e)}")
             handler.send_json_response({"session_id": "error", "projects": []})
-
 
     def handle_shutdown(self, handler):
         """Encerra o servidor E envia comando para fechar janela"""

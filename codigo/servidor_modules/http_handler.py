@@ -48,12 +48,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_machines(self)
         elif path == '/health-check':
             self.send_json_response({"status": "online", "timestamp": time.time()})
-        elif path == '/api/session/projects':
+        # ✅ ADICIONE ESTA LINHA - ROTA FALTANTE
+        elif path == '/api/session-projects':
             self.route_handler.handle_get_session_projects(self)
         # NOVAS ROTAS DE SESSÕES
         elif path == '/api/sessions/current':
             self.route_handler.handle_get_sessions_current(self)
-
         else:
             try:
                 super().do_GET()
