@@ -1,3 +1,9 @@
 {
-  "sessions": {}
+  "sessions": {
+    "session_1760554800": {
+      "projects": [
+        "1003"
+      ]
+    }
+  }
 }

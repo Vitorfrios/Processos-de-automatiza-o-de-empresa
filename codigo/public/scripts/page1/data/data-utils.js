@@ -1,5 +1,5 @@
 /**
- * Utilitários para extração e construção de dados - CORRIGIDO
+ * Utilitários para extração e construção de dados - CORRIGIDO para valores por TR
  */
 
 /**
@@ -438,19 +438,16 @@ function getRoomName(roomElement) {
 }
 
 /**
- * Extrai dados de uma máquina de climatização individual - CORRIGIDO
- * @param {HTMLElement} machineElement - Elemento da máquina
- * @returns {Object} Dados da máquina
- */
-/**
- * Extrai dados de uma máquina de climatização individual - CORRIGIDO para data-machine-id
+ * Extrai dados de uma máquina de climatização individual - CORRIGIDO para valores por TR
  * @param {HTMLElement} machineElement - Elemento da máquina
  * @returns {Object} Dados da máquina
  */
 function extractClimatizationMachineData(machineElement) {
     // CORREÇÃO: Usar data-machine-id em vez de data-machine-index
-    const machineId = machineElement.getAttribute('data-machine-id') 
-    
+    const machineId = machineElement.getAttribute('data-machine-id') || 
+                     machineElement.getAttribute('data-machine-index') || 
+                     `machine-${Date.now()}`;
+
     const machineData = {
         nome: getMachineName(machineElement, machineId),
         tipo: machineElement.querySelector('.machine-type-select')?.value || '',
@@ -458,7 +455,10 @@ function extractClimatizationMachineData(machineElement) {
         tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
         precoBase: 0,
         opcoesSelecionadas: [],
-        precoTotal: 0
+        precoTotal: 0,
+        // NOVO: Salvar informações específicas para recálculo
+        potenciaSelecionada: machineElement.querySelector('.machine-power-select')?.value || '',
+        tipoSelecionado: machineElement.querySelector('.machine-type-select')?.value || ''
     };
 
     try {
@@ -503,7 +503,7 @@ function extractClimatizationMachineData(machineElement) {
 
         machineData.precoBase = basePrice;
 
-        // 2. OPÇÕES SELECIONADAS - Busca mais abrangente
+        // 2. OPÇÕES SELECIONADAS - Busca mais abrangente com valores específicos por TR
         const selectedOptions = [];
         
         // Busca por checkboxes marcados dentro da máquina
@@ -513,20 +513,25 @@ function extractClimatizationMachineData(machineElement) {
         optionCheckboxes.forEach((checkbox, index) => {
             const optionId = checkbox.getAttribute('data-option-id') || index.toString();
             const optionValue = parseFloat(checkbox.value) || 0;
-            const optionName = checkbox.closest('.option-item')?.querySelector('.option-name')?.textContent || 
+            const optionName = checkbox.getAttribute('data-option-name') ||
+                             checkbox.closest('.option-item')?.querySelector('.option-name')?.textContent || 
                              checkbox.closest('label')?.textContent?.trim() || 
                              `Opção ${optionId}`;
             
             // Remove "R$" e valores do nome se presente
             const cleanName = optionName.replace(/\s*R\$\s*[\d.,]+/, '').trim();
             
+            // NOVO: Salvar informações completas da opção
             selectedOptions.push({
                 id: parseInt(optionId) || index,
                 name: cleanName || `Opção ${index + 1}`,
-                value: optionValue
+                value: optionValue,
+                // Informações para recálculo quando carregar
+                originalName: optionName,
+                potenciaAplicada: machineData.potencia // Salva a TR usada no cálculo
             });
             
-            console.log(`✅ Opção selecionada: ${cleanName} - R$ ${optionValue}`);
+            console.log(`✅ Opção selecionada: ${cleanName} - R$ ${optionValue} (TR: ${machineData.potencia})`);
         });
 
         // Busca por selects com opções selecionadas
@@ -540,10 +545,12 @@ function extractClimatizationMachineData(machineElement) {
                 selectedOptions.push({
                     id: index + 1000, // IDs altos para diferenciar de checkboxes
                     name: cleanName,
-                    value: optionValue
+                    value: optionValue,
+                    originalName: optionName,
+                    potenciaAplicada: machineData.potencia
                 });
                 
-                console.log(`✅ Select opção selecionada: ${cleanName} - R$ ${optionValue}`);
+                console.log(`✅ Select opção selecionada: ${cleanName} - R$ ${optionValue} (TR: ${machineData.potencia})`);
             }
         });
 
@@ -583,10 +590,15 @@ function extractClimatizationMachineData(machineElement) {
         console.log(`🤖 Máquina ${machineId} extraída:`, {
             nome: machineData.nome,
             tipo: machineData.tipo,
+            potencia: machineData.potencia,
             precoBase: machineData.precoBase,
             opcoes: machineData.opcoesSelecionadas.length,
             precoTotal: machineData.precoTotal,
-            detalhesOpcoes: machineData.opcoesSelecionadas
+            detalhesOpcoes: machineData.opcoesSelecionadas.map(opt => ({
+                nome: opt.name,
+                valor: opt.value,
+                tr: opt.potenciaAplicada
+            }))
         });
 
         return machineData;

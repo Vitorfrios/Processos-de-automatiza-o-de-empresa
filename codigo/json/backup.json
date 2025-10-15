@@ -1,3 +1,208 @@
 {
-  "projetos": []
+  "projetos": [
+    {
+      "id": "1001",
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [
+            {
+              "nome": "Equipamento de Climatização 1",
+              "tipo": "Wall Mounted",
+              "potencia": "3TR",
+              "tensao": "220V/3F",
+              "precoBase": 34852.8,
+              "opcoesSelecionadas": [
+                {
+                  "id": 2,
+                  "name": "1 Damper Manual",
+                  "value": 0
+                },
+                {
+                  "id": 4,
+                  "name": "1 Damper com atuador on/off",
+                  "value": 0
+                }
+              ],
+              "precoTotal": 39852.8
+            }
+          ],
+          "capacidade": {
+            "fatoriluminacao-Projeto1-Sala1": 0,
+            "fatorconversao-dissi-Projeto1-Sala1": 0,
+            "fatorseguranca-Projeto1-Sala1": 10,
+            "capacidadeunitaria-Projeto1-Sala1": 1,
+            "solucaobackup-Projeto1-Sala1": 0,
+            "totalcapacidade-Projeto1-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto1-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto1-Sala1": 0,
+            "total-tr-Projeto1-Sala1": 0,
+            "ganho-teto-Projeto1-Sala1": 0,
+            "ganho-parede-oeste-Projeto1-Sala1": 0,
+            "ganho-parede-leste-Projeto1-Sala1": 0,
+            "ganho-parede-norte-Projeto1-Sala1": 0,
+            "ganho-parede-sul-Projeto1-Sala1": 0,
+            "ganho-divi-nc1-Projeto1-Sala1": 0,
+            "ganho-divi-nc2-Projeto1-Sala1": 0,
+            "ganho-divi-c1-Projeto1-Sala1": 0,
+            "ganho-divi-c2-Projeto1-Sala1": 0,
+            "ganho-piso-Projeto1-Sala1": 0,
+            "ganho-iluminacao-Projeto1-Sala1": 0,
+            "ganho-dissi-Projeto1-Sala1": 0,
+            "ganho-pessoas-Projeto1-Sala1": 0,
+            "ganho-ar-sensivel-Projeto1-Sala1": 0,
+            "ganho-ar-latente-Projeto1-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-15T19:34:47.114Z"
+    },
+    {
+      "id": "1002",
+      "nome": "Projeto2",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [
+            {
+              "nome": "Equipamento de Climatização 3",
+              "tipo": "Wall Mounted",
+              "potencia": "15TR",
+              "tensao": "",
+              "precoBase": 85729.62,
+              "opcoesSelecionadas": [],
+              "precoTotal": 85729.62,
+              "potenciaSelecionada": "15TR",
+              "tipoSelecionado": "Wall Mounted"
+            }
+          ],
+          "capacidade": {
+            "fatoriluminacao-Projeto2-Sala1": 0,
+            "fatorconversao-dissi-Projeto2-Sala1": 0,
+            "fatorseguranca-Projeto2-Sala1": 10,
+            "capacidadeunitaria-Projeto2-Sala1": 1,
+            "solucaobackup-Projeto2-Sala1": 0,
+            "totalcapacidade-Projeto2-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto2-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto2-Sala1": 0,
+            "total-tr-Projeto2-Sala1": 0,
+            "ganho-teto-Projeto2-Sala1": 0,
+            "ganho-parede-oeste-Projeto2-Sala1": 0,
+            "ganho-parede-leste-Projeto2-Sala1": 0,
+            "ganho-parede-norte-Projeto2-Sala1": 0,
+            "ganho-parede-sul-Projeto2-Sala1": 0,
+            "ganho-divi-nc1-Projeto2-Sala1": 0,
+            "ganho-divi-nc2-Projeto2-Sala1": 0,
+            "ganho-divi-c1-Projeto2-Sala1": 0,
+            "ganho-divi-c2-Projeto2-Sala1": 0,
+            "ganho-piso-Projeto2-Sala1": 0,
+            "ganho-iluminacao-Projeto2-Sala1": 0,
+            "ganho-dissi-Projeto2-Sala1": 0,
+            "ganho-pessoas-Projeto2-Sala1": 0,
+            "ganho-ar-sensivel-Projeto2-Sala1": 0,
+            "ganho-ar-latente-Projeto2-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-15T19:40:18.287Z"
+    },
+    {
+      "id": "1003",
+      "nome": "Projeto3555555555555555",
+      "salas": [
+        {
+          "id": "1",
+          "nome": "Sala1",
+          "inputs": {},
+          "maquinas": [
+            {
+              "nome": "Equipamento de Climatização 3",
+              "tipo": "Wall Mounted",
+              "potencia": "3TR",
+              "tensao": "220V/3F",
+              "precoBase": 34852.8,
+              "opcoesSelecionadas": [
+                {
+                  "id": 3,
+                  "name": "Umidificação",
+                  "value": 9200,
+                  "originalName": "Umidificação",
+                  "potenciaAplicada": "3TR"
+                },
+                {
+                  "id": 5,
+                  "name": "2 Dampers com atuador on/off",
+                  "value": 11600,
+                  "originalName": "2 Dampers com atuador on/off",
+                  "potenciaAplicada": "3TR"
+                },
+                {
+                  "id": 7,
+                  "name": "Controle de Condensação Proporcional",
+                  "value": 9300,
+                  "originalName": "Controle de Condensação Proporcional",
+                  "potenciaAplicada": "3TR"
+                },
+                {
+                  "id": 9,
+                  "name": "Sensor de Filtro Sujo",
+                  "value": 1100,
+                  "originalName": "Sensor de Filtro Sujo",
+                  "potenciaAplicada": "3TR"
+                }
+              ],
+              "precoTotal": 71052.8
+            }
+          ],
+          "capacidade": {
+            "fatoriluminacao-Projeto3555555555555555-Sala1": 7,
+            "fatorconversao-dissi-Projeto3555555555555555-Sala1": 1,
+            "fatorseguranca-Projeto3555555555555555-Sala1": 10,
+            "capacidadeunitaria-Projeto3555555555555555-Sala1": 1,
+            "solucaobackup-Projeto3555555555555555-Sala1": 0,
+            "totalcapacidade-Projeto3555555555555555-Sala1": 0
+          },
+          "ganhosTermicos": {
+            "subsection-content-Projeto3555555555555555-Sala1-ganhos": 0,
+            "total-ganhos-w-Projeto3555555555555555-Sala1": 0,
+            "total-tr-Projeto3555555555555555-Sala1": 0,
+            "ganho-teto-Projeto3555555555555555-Sala1": 0,
+            "ganho-parede-oeste-Projeto3555555555555555-Sala1": 0,
+            "ganho-parede-leste-Projeto3555555555555555-Sala1": 0,
+            "ganho-parede-norte-Projeto3555555555555555-Sala1": 0,
+            "ganho-parede-sul-Projeto3555555555555555-Sala1": 0,
+            "ganho-divi-nc1-Projeto3555555555555555-Sala1": 0,
+            "ganho-divi-nc2-Projeto3555555555555555-Sala1": 0,
+            "ganho-divi-c1-Projeto3555555555555555-Sala1": 0,
+            "ganho-divi-c2-Projeto3555555555555555-Sala1": 0,
+            "ganho-piso-Projeto3555555555555555-Sala1": 0,
+            "ganho-iluminacao-Projeto3555555555555555-Sala1": 0,
+            "ganho-dissi-Projeto3555555555555555-Sala1": 0,
+            "ganho-pessoas-Projeto3555555555555555-Sala1": 0,
+            "ganho-ar-sensivel-Projeto3555555555555555-Sala1": 0,
+            "ganho-ar-latente-Projeto3555555555555555-Sala1": 0
+          },
+          "configuracao": {
+            "opcoesInstalacao": []
+          }
+        }
+      ],
+      "timestamp": "2025-10-15T19:49:24.026Z"
+    }
+  ]
 }

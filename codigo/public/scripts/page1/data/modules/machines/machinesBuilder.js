@@ -6,6 +6,7 @@ import { removeEmptyMessage, showEmptyMessage } from './utilities.js'
 if (typeof window !== 'undefined' && !window.machinesDataCache) {
     window.machinesDataCache = null;
 }
+
 /**
  * Constrói a seção completa de máquinas para uma sala
  * Inclui tabela de capacidade e container para máquinas
@@ -111,6 +112,7 @@ async function loadSavedMachines(roomId, savedMachines) {
         console.error("❌ Erro ao carregar máquinas salvas:", error);
     }
 }
+
 /**
  * Constrói uma máquina de climatização a partir de dados salvos
  * @param {number} machineCount - Número sequencial da máquina
@@ -126,11 +128,11 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
   }
 
   // Obter potências e tensões disponíveis
-  const potencies = Object.keys(machineType.baseValues)
-  const voltageNames = machineType.voltages.map(v => v.name)
+  const potencies = Object.keys(machineType.baseValues || {})
+  const voltageNames = (machineType.voltages || []).map(v => v.name)
   
-  // Calcular preço base atual
-  const basePrice = machineType.baseValues[savedMachine.potencia] || savedMachine.precoBase || 0
+  // Calcular preço base atual - CORREÇÃO: usar valores específicos por TR
+  const basePrice = calculateBasePrice(machineType, savedMachine.potencia)
 
   return `
     <div class="climatization-machine" data-machine-index="${machineCount}">
@@ -185,7 +187,7 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
         <div class="machine-options-section">
           <h6>Opções Adicionais:</h6>
           <div class="options-grid" id="options-container-${machineCount}">
-            ${buildSavedOptionsHTML(machineType.options, machineCount, savedMachine.opcoesSelecionadas)}
+            ${buildSavedOptionsHTML(machineType.options, machineCount, savedMachine.opcoesSelecionadas, savedMachine.potencia)}
           </div>
         </div>
         <div class="machine-total-price">
@@ -238,9 +240,10 @@ function buildSelectWithSelected(options, machineIndex, className, onchangeHandl
  * @param {Array} options - Lista de opções disponíveis
  * @param {number} machineCount - Número da máquina
  * @param {Array} selectedOptions - Opções que estavam selecionadas
+ * @param {string} selectedPower - Potência selecionada (para calcular valores específicos)
  * @returns {string} HTML das opções com checkboxes marcados
  */
-function buildSavedOptionsHTML(options, machineCount, selectedOptions = []) {
+function buildSavedOptionsHTML(options, machineCount, selectedOptions = [], selectedPower = null) {
   if (!options || options.length === 0) {
     return '<p class="empty-options-message">Nenhuma opção disponível para esta máquina</p>'
   }
@@ -248,18 +251,33 @@ function buildSavedOptionsHTML(options, machineCount, selectedOptions = []) {
   return options
     .map((option) => {
       const isChecked = selectedOptions.some((selected) => selected.id === option.id)
+      
+      // Calcular valor da opção baseado na potência selecionada
+      let optionValue = 0;
+      if (selectedPower && option.values && option.values[selectedPower] !== undefined) {
+        optionValue = option.values[selectedPower];
+      } else if (option.value) {
+        // Fallback para valor fixo se não houver valores por TR
+        optionValue = option.value;
+      }
+      
+      const optionDisplayValue = selectedPower ? 
+        `+R$ ${optionValue.toLocaleString("pt-BR")} (${selectedPower})` :
+        `+R$ ${optionValue.toLocaleString("pt-BR")}`;
+
       return `
       <div class="option-checkbox-container" onclick="handleOptionClick(event, ${machineCount}, ${option.id})">
         <input type="checkbox" 
-               value="${option.value}" 
+               value="${optionValue}" 
                data-option-id="${option.id}"
+               data-option-name="${option.name}"
                onchange="calculateMachinePrice(${machineCount})"
                id="option-${machineCount}-${option.id}"
                ${isChecked ? "checked" : ""}>
         <label for="option-${machineCount}-${option.id}">
           <div class="option-text-wrapper">
             <div class="option-name">${option.name}</div>
-            <div class="option-price">+R$ ${option.value.toLocaleString("pt-BR")}</div>
+            <div class="option-price">${optionDisplayValue}</div>
           </div>
         </label>
       </div>
@@ -331,6 +349,54 @@ function calculateBasePrice(machineType, potencia) {
   return machineType.baseValues[formattedPotency] || 0
 }
 
+/**
+ * Atualiza os valores das opções quando a potência é alterada (para máquinas salvas)
+ * @param {number} machineId - ID único da máquina
+ * @param {string} selectedPower - Potência selecionada (TR)
+ */
+function updateSavedMachineOptionValues(machineId, selectedPower) {
+    const machineElement = document.querySelector(`[data-machine-index="${machineId}"]`);
+    if (!machineElement) return;
+    
+    const typeSelect = machineElement.querySelector('.machine-type-select');
+    const selectedType = typeSelect?.value;
+    
+    if (!selectedType || !window.machinesData) return;
+    
+    const machine = window.machinesData.find(m => m.type === selectedType);
+    if (!machine || !machine.options) return;
+    
+    const optionsContainer = document.getElementById(`options-container-${machineId}`);
+    if (!optionsContainer) return;
+    
+    // Atualizar valores e display de todas as opções
+    machine.options.forEach(option => {
+        const checkbox = document.getElementById(`option-${machineId}-${option.id}`);
+        if (checkbox) {
+            let optionValue = 0;
+            if (selectedPower && option.values && option.values[selectedPower] !== undefined) {
+                optionValue = option.values[selectedPower];
+            } else if (option.value) {
+                optionValue = option.value;
+            }
+            
+            // Atualizar valor do checkbox
+            checkbox.value = optionValue;
+            
+            // Atualizar display do preço
+            const priceDisplay = checkbox.closest('.option-checkbox-container')?.querySelector('.option-price');
+            if (priceDisplay) {
+                const optionDisplayValue = selectedPower ? 
+                    `+R$ ${optionValue.toLocaleString("pt-BR")} (${selectedPower})` :
+                    `+R$ ${optionValue.toLocaleString("pt-BR")}`;
+                priceDisplay.textContent = optionDisplayValue;
+            }
+        }
+    });
+    
+    // Recalcular preço
+    calculateMachinePrice(machineId);
+}
 
 /**
  * Atualiza os cálculos de capacidade quando os ganhos térmicos mudam
@@ -381,5 +447,11 @@ export {
   loadSavedMachines,
   updateCapacityFromThermalGains,
   initializeCapacityCalculations,
-  refreshAllCapacityCalculations
+  refreshAllCapacityCalculations,
+  updateSavedMachineOptionValues
+}
+
+// Disponibilização global das funções necessárias
+if (typeof window !== 'undefined') {
+    window.updateSavedMachineOptionValues = updateSavedMachineOptionValues;
 }

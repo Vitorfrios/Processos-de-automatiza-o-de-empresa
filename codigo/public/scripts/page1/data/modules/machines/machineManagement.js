@@ -46,8 +46,7 @@ async function addMachine(roomId) {
     } catch (error) {
         console.error("❌ Erro ao adicionar máquina:", error);
 
-        const fallbackHTML = buildFallbackMachineHTML(uniqueMachineId);
-        machinesContainer.insertAdjacentHTML("beforeend", fallbackHTML);
+
     }
 }
 
@@ -80,7 +79,7 @@ function buildClimatizationMachineHTML(machineId, machines) {
                     )}
                     ${buildFormGroup(
                         "Potência (TR):",
-                        buildSelectWithDefault([], machineId, "machine-power-select", `calculateMachinePrice(${machineId})`, "Selecionar TR", true),
+                        buildSelectWithDefault([], machineId, "machine-power-select", `handlePowerChange(${machineId})`, "Selecionar TR", true),
                     )}
                     ${buildFormGroup(
                         "Tensão:",
@@ -149,10 +148,11 @@ function buildSelectWithDefault(options, machineId, className, onchangeHandler, 
  * Constrói a interface de opções adicionais da máquina
  * @param {Array} options - Lista de opções disponíveis
  * @param {number} machineId - ID único da máquina
+ * @param {string} selectedPower - Potência selecionada (TR)
  * @param {Array} selectedOptions - Opções pré-selecionadas
  * @returns {string} HTML das opções
  */
-function buildOptionsHTML(options, machineId, selectedOptions = []) {
+function buildOptionsHTML(options, machineId, selectedPower = null, selectedOptions = []) {
   if (!options || options.length === 0) {
     return '<p class="empty-options-message">Nenhuma opção disponível para esta máquina</p>'
   }
@@ -161,25 +161,125 @@ function buildOptionsHTML(options, machineId, selectedOptions = []) {
     .map((option) => {
       const isSelected = selectedOptions.some(selected => selected.id === option.id);
       const selectedClass = isSelected ? 'option-selected' : '';
+      
+      // Calcular valor da opção baseado na potência selecionada
+      let optionValue = 0;
+      if (selectedPower && option.values && option.values[selectedPower] !== undefined) {
+        optionValue = option.values[selectedPower];
+      } else if (option.value) {
+        // Fallback para valor fixo se não houver valores por TR
+        optionValue = option.value;
+      }
+      
+      const optionDisplayValue = selectedPower ? 
+        `+R$ ${optionValue.toLocaleString("pt-BR")}` :
+        `+R$ ${optionValue.toLocaleString("pt-BR")}`;
 
       return `
         <div class="option-item ${selectedClass}" onclick="handleOptionClick(${machineId}, ${option.id})">
           <div class="option-checkbox">
             <input type="checkbox" 
-                  value="${option.value}" 
+                  value="${optionValue}" 
                   data-option-id="${option.id}"
+                  data-option-name="${option.name}"
                   onchange="updateOptionSelection(${machineId}, ${option.id}); calculateMachinePrice(${machineId})"
                   id="option-${machineId}-${option.id}"
                   ${isSelected ? 'checked' : ''}>
             <div class="option-content">
               <div class="option-name">${option.name}</div>
-              <div class="option-price">+R$ ${option.value.toLocaleString("pt-BR")}</div>
+              <div class="option-price">${optionDisplayValue}</div>
             </div>
           </div>
         </div>
       `;
     })
     .join("")
+}
+
+/**
+ * Manipula a mudança de potência (TR) - NOVA FUNÇÃO
+ * @param {number} machineId - ID único da máquina
+ */
+function handlePowerChange(machineId) {
+    console.log(`🔧 Mudança de potência na máquina ${machineId}`);
+    
+    // 1. Atualizar preço base
+    calculateMachinePrice(machineId);
+    
+    // 2. Atualizar valores das opções
+    updateOptionValues(machineId);
+}
+
+/**
+ * Atualiza os valores das opções quando a potência é alterada
+ * @param {number} machineId - ID único da máquina
+ */
+function updateOptionValues(machineId) {
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (!machineElement) {
+        console.error(`❌ Máquina ${machineId} não encontrada`);
+        return;
+    }
+    
+    const typeSelect = machineElement.querySelector('.machine-type-select');
+    const powerSelect = machineElement.querySelector('.machine-power-select');
+    
+    const selectedType = typeSelect?.value;
+    const selectedPower = powerSelect?.value;
+    
+    console.log(`🔧 Atualizando opções para máquina ${machineId}:`, { selectedType, selectedPower });
+    
+    if (!selectedType || !selectedPower || !window.machinesData) {
+        console.log('⚠️ Tipo ou potência não selecionados');
+        return;
+    }
+    
+    const machine = window.machinesData.find(m => m.type === selectedType);
+    if (!machine || !machine.options) {
+        console.error(`❌ Máquina ${selectedType} não encontrada nos dados`);
+        return;
+    }
+    
+    const optionsContainer = document.getElementById(`options-container-${machineId}`);
+    if (!optionsContainer) {
+        console.error(`❌ Container de opções não encontrado para máquina ${machineId}`);
+        return;
+    }
+    
+    console.log(`🔧 Atualizando ${machine.options.length} opções para TR ${selectedPower}`);
+    
+    // Atualizar valores e display de todas as opções
+    machine.options.forEach(option => {
+        const checkbox = document.getElementById(`option-${machineId}-${option.id}`);
+        if (checkbox) {
+            let optionValue = 0;
+            if (selectedPower && option.values && option.values[selectedPower] !== undefined) {
+                optionValue = option.values[selectedPower];
+                console.log(`💰 Opção ${option.name}: R$ ${optionValue} para ${selectedPower}`);
+            } else if (option.value) {
+                // Fallback para valor fixo se não houver valores por TR
+                optionValue = option.value;
+                console.log(`💰 Opção ${option.name}: R$ ${optionValue} (valor fixo)`);
+            }
+            
+            // Atualizar valor do checkbox
+            checkbox.value = optionValue;
+            
+            // Atualizar display do preço
+            const priceDisplay = checkbox.closest('.option-item')?.querySelector('.option-price');
+            if (priceDisplay) {
+                const optionDisplayValue = `+R$ ${optionValue.toLocaleString("pt-BR")}`;
+                priceDisplay.textContent = optionDisplayValue;
+                console.log(`📝 Atualizado display: ${option.name} = ${optionDisplayValue}`);
+            }
+        } else {
+            console.warn(`⚠️ Checkbox não encontrado para opção ${option.id}`);
+        }
+    });
+    
+    // Recalcular preço total
+    calculateMachinePrice(machineId);
+    console.log(`✅ Opções atualizadas para TR ${selectedPower}`);
 }
 
 /**
@@ -328,7 +428,7 @@ function updateMachineUI(machineId, selectedMachine) {
         
         if (options.length > 0) {
             // Usar a função buildOptionsHTML existente
-            const optionsHTML = buildOptionsHTML(options, machineId, []);
+            const optionsHTML = buildOptionsHTML(options, machineId, null, []);
             optionsContainer.innerHTML = optionsHTML;
             console.log(`✅ ${options.length} opções HTML inseridas no container da máquina ${machineId}`);
             
@@ -423,6 +523,7 @@ function calculateMachinePrice(machineId) {
       const machine = window.machinesData.find(m => m.type === selectedType)
       if (machine && machine.baseValues) {
         basePrice = machine.baseValues[selectedPower] || 0
+        console.log(`💰 Preço base para ${selectedType} ${selectedPower}: R$ ${basePrice}`)
       }
     }
 
@@ -432,6 +533,7 @@ function calculateMachinePrice(machineId) {
       if (machine && machine.voltages) {
         const voltageObj = machine.voltages.find(v => v.name === selectedVoltage)
         voltageValue = voltageObj ? voltageObj.value : 0
+        console.log(`⚡ Tensão ${selectedVoltage}: R$ ${voltageValue}`)
       }
     }
 
@@ -444,8 +546,12 @@ function calculateMachinePrice(machineId) {
 
     if (optionsContainer) {
       const selectedOptions = optionsContainer.querySelectorAll('input[type="checkbox"]:checked')
+      console.log(`📋 ${selectedOptions.length} opções selecionadas`)
+      
       selectedOptions.forEach((option) => {
-        optionsTotal += Number.parseFloat(option.value) || 0
+        const optionValue = Number.parseFloat(option.value) || 0
+        optionsTotal += optionValue
+        console.log(`✅ Opção: ${option.getAttribute('data-option-name')} - R$ ${optionValue}`)
       })
     }
 
@@ -454,6 +560,8 @@ function calculateMachinePrice(machineId) {
 
     // Atualizar display do preço total
     updateElementText(`total-price-${machineId}`, `R$ ${totalPrice.toLocaleString("pt-BR")}`)
+
+    console.log(`🧮 Preço total calculado: R$ ${totalPrice} = Base: R$ ${basePrice} + Opções: R$ ${optionsTotal} + Tensão: R$ ${voltageValue}`)
 
   } catch (error) {
     console.error("Erro ao calcular preço:", error)
@@ -478,25 +586,9 @@ function deleteClimatizationMachine(button) {
   }
 }
 
-// Fallback function
-function buildFallbackMachineHTML(machineId) {
-    return `
-        <div class="climatization-machine" data-machine-id="${machineId}">
-            <div class="machine-header">
-                <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
-                <input type="text" class="machine-title-editable" 
-                       value="Equipamento de Climatização ${machineId}"
-                       onchange="updateMachineTitle(this, ${machineId})" onclick="this.select()">
-                <button class="btn btn-delete-small" onclick="deleteClimatizationMachine(this)">Remover</button>
-            </div>
-            <div class="machine-content" id="machine-content-${machineId}">
-                <div style="padding: 1rem; background: #fff3cd; border-radius: 4px; margin: 1rem;">
-                    <strong>Aviso:</strong> Não foi possível carregar os dados das máquinas.
-                </div>
-            </div>
-        </div>
-    `;
-}
+
+
+
 
 // Exportação e disponibilização global
 if (typeof window !== 'undefined') {
@@ -508,6 +600,8 @@ if (typeof window !== 'undefined') {
     window.deleteClimatizationMachine = deleteClimatizationMachine;
     window.handleOptionClick = handleOptionClick;
     window.updateOptionSelection = updateOptionSelection;
+    window.updateOptionValues = updateOptionValues;
+    window.handlePowerChange = handlePowerChange;
 }
 
 export {
@@ -519,5 +613,7 @@ export {
     calculateMachinePrice,
     deleteClimatizationMachine,
     handleOptionClick,
-    updateOptionSelection
+    updateOptionSelection,
+    updateOptionValues,
+    handlePowerChange
 }
