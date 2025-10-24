@@ -3,6 +3,7 @@ Gerenciador de Sessões - ESTRUTURA SIMPLIFICADA
 """
 import json
 import time
+import os
 from pathlib import Path
 
 class SessionsManager:
@@ -17,16 +18,32 @@ class SessionsManager:
     }
     """
     
-    def __init__(self, sessions_dir: str = "codigo/json"):
-        self.sessions_dir = Path(sessions_dir)
+    def __init__(self):
+        # CORREÇÃO: Usa caminho absoluto baseado na localização do arquivo
+        current_file = Path(__file__)  # sessions_manager.py
+        project_root = current_file.parent.parent  # sobe para pasta codigo
+        self.sessions_dir = project_root / "json"  # pasta json dentro de codigo
         self.sessions_file = self.sessions_dir / "sessions.json"
+        
+        print(f"SessionsManager: Inicializando em {self.sessions_dir}")
         self.ensure_sessions_file()
     
     def ensure_sessions_file(self):
         """Garante que o arquivo de sessões existe"""
-        self.sessions_dir.mkdir(exist_ok=True)
-        if not self.sessions_file.exists():
-            self._initialize_sessions_file()
+        try:
+            # CORREÇÃO: parents=True para criar toda a hierarquia se necessário
+            self.sessions_dir.mkdir(parents=True, exist_ok=True)
+            print(f"SessionsManager: Pasta json verificada: {self.sessions_dir.exists()}")
+            
+            if not self.sessions_file.exists():
+                print("SessionsManager: Criando arquivo sessions.json vazio")
+                self._initialize_sessions_file()
+            else:
+                print("SessionsManager: Arquivo sessions.json já existe")
+                
+        except Exception as e:
+            print(f"ERRO em ensure_sessions_file: {e}")
+            raise
     
     def _initialize_sessions_file(self):
         """Inicializa o arquivo de sessões vazio"""
@@ -75,7 +92,7 @@ class SessionsManager:
     
     def clear_session(self) -> bool:
         """Limpa COMPLETAMENTE TODAS as sessões - Deixa apenas {"sessions": {}}"""
-        print("🔴 SHUTDOWN: Deletando TODAS as sessões")
+        print("SHUTDOWN: Deletando TODAS as sessões")
         
         # Estrutura COMPLETAMENTE VAZIA
         empty_data = {"sessions": {}}
@@ -85,10 +102,10 @@ class SessionsManager:
         if success:
             # Confirmação
             final_data = self._load_sessions_data()
-            print(f"✅ sessions.json após limpeza: {final_data}")
+            print(f"sessions.json apos limpeza: {final_data}")
             return True
         else:
-            print("❌ ERRO: Não foi possível salvar sessions.json vazio")
+            print("ERRO: Nao foi possível salvar sessions.json vazio")
             return False
    
     def force_clear_all_sessions(self) -> bool:
@@ -97,16 +114,17 @@ class SessionsManager:
             # Deleta fisicamente o arquivo e recria vazio
             if self.sessions_file.exists():
                 self.sessions_file.unlink()
-                print("🗑️  Arquivo sessions.json deletado fisicamente")
+                print("Arquivo sessions.json deletado fisicamente")
             
             # Recria vazio
             self._initialize_sessions_file()
-            print("📄 Arquivo sessions.json recriado vazio")
+            print("Arquivo sessions.json recriado vazio")
             
             return True
         except Exception as e:
-            print(f"❌ Erro ao forçar limpeza: {e}")
+            print(f"Erro ao forcar limpeza: {e}")
             return False
+
     def ensure_single_session(self) -> bool:
         """Garante que apenas UMA sessão esteja ativa"""
         data = self._load_sessions_data()
@@ -153,7 +171,8 @@ class SessionsManager:
             with open(self.sessions_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             return True
-        except Exception:
+        except Exception as e:
+            print(f"Erro ao salvar sessions: {e}")
             return False
 
     def get_current_session(self) -> dict:
@@ -168,5 +187,29 @@ class SessionsManager:
             }
         }
 
-# Instância global
-sessions_manager = SessionsManager()
+# Instância global com tratamento de erro
+try:
+    sessions_manager = SessionsManager()
+    print("✅ SessionsManager inicializado com sucesso!")
+except Exception as e:
+    print(f"❌ ERRO CRITICO no SessionsManager: {e}")
+    
+    # Fallback de emergência
+    class EmergencySessionsManager:
+        def __init__(self):
+            self.project_root = Path(__file__).parent.parent
+            print(f"⚠️  Usando EmergencySessionsManager: {self.project_root}")
+        
+        def get_current_session_id(self):
+            return f"session_emergency_{int(time.time())}"
+        
+        def add_project_to_session(self, project_id):
+            return True
+            
+        def get_session_projects(self):
+            return []
+            
+        def get_current_session(self):
+            return {"sessions": {self.get_current_session_id(): {"projects": []}}}
+    
+    sessions_manager = EmergencySessionsManager()

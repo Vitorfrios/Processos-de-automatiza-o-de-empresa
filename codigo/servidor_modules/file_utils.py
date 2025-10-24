@@ -1,52 +1,53 @@
 """
-Utilitários para manipulação de arquivos e paths
+Utilitários para manipulação de arquivos e paths - VERSÃO CORRIGIDA
 """
 
 import json
+import os
 from pathlib import Path
 
 def find_project_root():
     """Encontra a raiz do projeto procurando pela estrutura de pastas"""
-    current_dir = Path.cwd()
+    current_dir = Path(__file__).parent.parent  # Pasta servidor_modules -> codigo
     
-    print(f"🔍 Procurando estrutura a partir de: {current_dir}")
+    print(f"Procurando estrutura a partir de: {current_dir}")
     
-    # Cenário 1: Estamos DENTRO da pasta codigo
+    # Verifica se estamos na estrutura correta
     if (current_dir / "public" / "pages" / "01_CreateProjects.html").exists():
-        print("✅ Estrutura encontrada: Dentro da pasta codigo")
+        print("Estrutura encontrada: Diretorio correto")
         return current_dir
     
-    # Cenário 2: A pasta codigo está no diretório atual
-    codigo_dir = current_dir / "codigo"
-    if (codigo_dir / "public" / "pages" / "01_CreateProjects.html").exists():
-        print("✅ Estrutura encontrada: Pasta codigo no diretório atual")
-        return codigo_dir
-    
-    # Cenário 3: Procurar em diretórios pais
-    for parent in current_dir.parents:
-        codigo_dir = parent / "codigo"
-        if (codigo_dir / "public" / "pages" / "01_CreateProjects.html").exists():
-            print(f"✅ Estrutura encontrada: {codigo_dir}")
-            return codigo_dir
-    
-    # Fallback: usa o diretório atual
-    print("⚠️  Estrutura de pastas não encontrada, usando diretório atual")
+    # Fallback: diretório atual do script
+    print("Usando diretorio do script como raiz")
     return current_dir
 
-def find_json_file(filename, project_root):
-    """Encontra arquivos JSON"""
-    possible_locations = [
-        project_root / "json" / filename,
-        Path.cwd() / "json" / filename,
-    ]
+def find_json_file(filename, project_root=None):
+    """Encontra arquivos JSON - VERSÃO CORRIGIDA"""
+    if project_root is None:
+        project_root = find_project_root()
     
-    for location in possible_locations:
-        if location.exists():
-            return location
+    # Garante que a pasta json existe
+    json_dir = project_root / "json"
+    json_dir.mkdir(parents=True, exist_ok=True)
     
-    target_dir = project_root / "json"
-    target_dir.mkdir(parents=True, exist_ok=True)
-    return target_dir / filename
+    target_file = json_dir / filename
+    
+    # Se o arquivo não existe, cria com estrutura básica
+    if not target_file.exists():
+        print(f"Criando arquivo: {target_file}")
+        
+        if filename == "backup.json":
+            default_data = {"projetos": []}
+        elif filename == "dados.json":
+            default_data = {"constants": {}, "machines": []}
+        elif filename == "sessions.json":
+            default_data = {"sessions": {}}
+        else:
+            default_data = {}
+        
+        save_json_file(target_file, default_data)
+    
+    return target_file
 
 def load_json_file(filepath, default_data=None):
     """Carrega arquivo JSON com tratamento de erro"""
@@ -55,22 +56,25 @@ def load_json_file(filepath, default_data=None):
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
         elif default_data is not None:
-
+            # Cria o arquivo com dados padrão
             with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(default_data, f, indent=2)
+                json.dump(default_data, f, indent=2, ensure_ascii=False)
             return default_data
         else:
             return None
     except Exception as e:
-        print(f"❌ Erro ao carregar {filepath}: {e}")
+        print(f"ERRO ao carregar {filepath}: {e}")
         return default_data
 
 def save_json_file(filepath, data):
     """Salva dados em arquivo JSON"""
     try:
+        # Garante que o diretório existe
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         return True
     except Exception as e:
-        print(f"❌ Erro ao salvar {filepath}: {e}")
+        print(f"ERRO ao salvar {filepath}: {e}")
         return False
