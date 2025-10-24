@@ -165,7 +165,6 @@ function buildObraHTML(obraName, obraId) {
         <button class="minimizer" onclick="toggleObra('${obraName}')">+</button>
         <h2 class="obra-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
         <div class="obra-actions">
-          <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraName}')">+ Adicionar Projeto</button>
           <button class="btn btn-delete" onclick="deleteObra('${obraName}')">Remover Obra</button>
         </div>
       </div>
@@ -173,6 +172,9 @@ function buildObraHTML(obraName, obraId) {
         <p class="empty-message">Adicione projetos a esta obra...</p>
         <div class="projects-container" id="projects-${obraName}">
           <!-- Projetos serão inseridos aqui -->
+        </div>
+        <div class="add-project-section">
+          <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraName}')">+ Adicionar Projeto</button>
         </div>
         ${buildObraActionsFooter(obraName, hasId)}
       </div>
