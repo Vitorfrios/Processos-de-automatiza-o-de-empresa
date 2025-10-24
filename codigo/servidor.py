@@ -63,14 +63,16 @@ except ImportError as e:
     print(f"   ❌ ERRO DE IMPORTAÇÃO: {e}")
     print(f"   TRACEBACK:")
     traceback.print_exc()
-    input("\nPressione Enter para sair...")
+    print("\nPressione Enter para sair...")
+    input()
     sys.exit(1)
 
 except Exception as e:
     print(f"   ❌ ERRO INESPERADO: {e}")
     print(f"   TRACEBACK:")
     traceback.print_exc()
-    input("\nPressione Enter para sair...")
+    print("\nPressione Enter para sair...")
+    input()
     sys.exit(1)
 
 def main():
@@ -87,7 +89,8 @@ def main():
         port = server_utils.setup_port(8000)
         if not port:
             print("   ❌ Não foi possível configurar porta")
-            input("Pressione Enter para sair...")
+            print("Pressione Enter para sair...")
+            input()
             return
         
         print(f"   ✅ Porta {port} configurada")
@@ -114,9 +117,9 @@ def main():
         print(f"\n   ❌ ERRO CRÍTICO: {e}")
         print("   TRACEBACK COMPLETO:")
         traceback.print_exc()
-        print("\n   O sistema será reiniciado em 10 segundos...")
+        print("\n   O sistema será finalizado em 10 segundos...")
         time.sleep(10)
-        main()  # Reinicia automaticamente
+        # ⚠️ REMOVIDO: main()  # NÃO reinicia automaticamente
     finally:
         print("\n   ✅ Sistema finalizado!")
 
@@ -127,4 +130,6 @@ if __name__ == "__main__":
         print(f"ERRO FATAL: {e}")
         traceback.print_exc()
     
-    input("\nPressione Enter para fechar...")
+    # Mantém a janela aberta para ver o resultado
+    print("\nPressione Enter para fechar...")
+    input()

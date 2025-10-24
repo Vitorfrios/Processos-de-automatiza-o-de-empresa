@@ -467,7 +467,9 @@ export {
   showEmptyObraMessageIfNeeded,
   removeEmptyProjectMessage,
   showEmptyProjectMessageIfNeeded,
-  addNewProject // Export para compatibilidade
+  addNewProject, // Export para compatibilidade
+  deleteObra,
+  saveObra
 }
 
 // Disponibilização global das novas funções
@@ -476,4 +478,6 @@ if (typeof window !== 'undefined') {
   window.addNewProjectToObra = addNewProjectToObra
   window.toggleObra = toggleObra
   window.getNextObraNumber = getNextObraNumber
+  window.deleteObra = deleteObra
+  window.saveObra = saveObra
 }
