@@ -141,7 +141,7 @@ def print_server_info(port):
     """
     print(f"\n🎉 SERVIDOR INICIADO COM SUCESSO!")
     print("=" * 50)
-    print(f"🌐 URL: http://localhost:{port}/public/pages/index.html")
+    print(f"🌐 URL: http://localhost:{port}/public/pages/01_CreateProjects.html")
     print("=" * 50)
     print("📋 CONTROLES:")
     print("   • Pressione Ctrl+C para PARAR o servidor")
@@ -156,7 +156,7 @@ def open_browser(port=8000):
     """
     time.sleep(2)  # Espera servidor estabilizar
     
-    url = f"http://localhost:{port}/public/pages/index.html"
+    url = f"http://localhost:{port}/public/pages/01_CreateProjects.html"
     print(f"🌐 Abrindo aplicação: {url}")
     
     try:

@@ -12,20 +12,20 @@ def find_project_root():
     print(f"🔍 Procurando estrutura a partir de: {current_dir}")
     
     # Cenário 1: Estamos DENTRO da pasta codigo
-    if (current_dir / "public" / "pages" / "index.html").exists():
+    if (current_dir / "public" / "pages" / "01_CreateProjects.html").exists():
         print("✅ Estrutura encontrada: Dentro da pasta codigo")
         return current_dir
     
     # Cenário 2: A pasta codigo está no diretório atual
     codigo_dir = current_dir / "codigo"
-    if (codigo_dir / "public" / "pages" / "index.html").exists():
+    if (codigo_dir / "public" / "pages" / "01_CreateProjects.html").exists():
         print("✅ Estrutura encontrada: Pasta codigo no diretório atual")
         return codigo_dir
     
     # Cenário 3: Procurar em diretórios pais
     for parent in current_dir.parents:
         codigo_dir = parent / "codigo"
-        if (codigo_dir / "public" / "pages" / "index.html").exists():
+        if (codigo_dir / "public" / "pages" / "01_CreateProjects.html").exists():
             print(f"✅ Estrutura encontrada: {codigo_dir}")
             return codigo_dir
     

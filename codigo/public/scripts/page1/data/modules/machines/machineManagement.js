@@ -408,7 +408,7 @@ function updateMachineUI(machineId, selectedMachine) {
     
     // 1. Atualizar potências
     const potencies = Object.keys(selectedMachine.baseValues || {});
-    updateSelect(`.machine-power-select[data-machine-id="${machineId}"]`, potencies, "Selecionar TR", false);
+    updateSelect(`.machine-power-select[data-machine-id="${machineId}"]`, potencies, "Selecionar Cpacidade", false);
 
     // 2. Atualizar tensões
     const voltageNames = (selectedMachine.voltages || []).map(v => v.name);
@@ -464,7 +464,7 @@ function updateMachineUI(machineId, selectedMachine) {
 function resetMachineFields(machineId) {
     console.log(`🔄 Resetando campos da máquina ${machineId}`);
     
-    updateSelect(`.machine-power-select[data-machine-id="${machineId}"]`, [], "Selecionar TR", true);
+    updateSelect(`.machine-power-select[data-machine-id="${machineId}"]`, [], "Selecionar Cpacidade", true);
     updateSelect(`.machine-voltage-select[data-machine-id="${machineId}"]`, [], "Selecionar Tensão", true);
 
     const optionsContainer = document.getElementById(`options-container-${machineId}`);
