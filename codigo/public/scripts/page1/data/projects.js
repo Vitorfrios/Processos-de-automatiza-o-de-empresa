@@ -243,16 +243,17 @@ async function atualizarProjeto(projectId, projectData) {
 
 /**
  * Salva ou atualiza um projeto (função principal chamada pela interface)
+ * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto
  * @param {Event} event - Evento do clique
  */
-async function saveProject(projectName, event) {
+async function saveProject(obraName, projectName, event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
-    console.log(`💾 INICIANDO SALVAMENTO do projeto: "${projectName}"`);
+    console.log(`💾 INICIANDO SALVAMENTO do projeto: "${projectName}" na obra "${obraName}"`);
 
     // REGRA: Só salvar se sessão estiver ativa
     if (!isSessionActive()) {
@@ -261,9 +262,9 @@ async function saveProject(projectName, event) {
         return;
     }
 
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
+    const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`);
     if (!projectBlock) {
-        console.error('❌ Projeto não encontrado:', projectName);
+        console.error('❌ Projeto não encontrado:', { obraName, projectName });
         showSystemStatus("ERRO: Projeto não encontrado na interface", "error");
         return;
     }
@@ -296,7 +297,7 @@ async function saveProject(projectName, event) {
         });
     }
 
-    // DETERMINAR SE É NOVO PROJETO (CORRIGIDO)
+    // DETERMINAR SE É NOVO PROJETO
     const projectIdFromDOM = projectBlock.dataset.projectId;
     const hasValidId = projectData.id 
     
@@ -368,6 +369,20 @@ async function saveProject(projectName, event) {
     }
 }
 
+// Função de compatibilidade para código existente
+async function saveProjectLegacy(projectName, event) {
+    // Tenta encontrar a obra do projeto
+    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
+    const obraName = projectBlock?.dataset.obraName;
+    
+    if (obraName) {
+        return saveProject(obraName, projectName, event);
+    } else {
+        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
+        showSystemStatus("ERRO: Projeto não está associado a uma obra", "error");
+    }
+}
+
 /**
  * Colapsa o projeto após salvar
  * @param {string} projectName - Nome do projeto
@@ -384,14 +399,15 @@ function collapseProjectAfterSave(projectName, projectBlock) {
 
 /**
  * Deleta um projeto da interface
+ * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto a ser deletado
  */
-async function deleteProject(projectName) {
+async function deleteProject(obraName, projectName) {
   const confirmMessage = "Tem certeza que deseja remover este projeto? Os dados permanecerão no servidor, mas serão removidos da sessão atual."
 
   if (!confirm(confirmMessage)) return
 
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+  const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`)
   if (!projectBlock) return
 
   const projectId = projectBlock.dataset.projectId ? ensureStringId(projectBlock.dataset.projectId) : null
@@ -418,18 +434,29 @@ async function deleteProject(projectName) {
   }
 
   showSystemStatus("Projeto removido da sessão atual", "success");
-
-  
 }
 
-
+// Função de compatibilidade para código existente
+async function deleteProjectLegacy(projectName) {
+    // Tenta encontrar a obra do projeto
+    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
+    const obraName = projectBlock?.dataset.obraName;
+    
+    if (obraName) {
+        return deleteProject(obraName, projectName);
+    } else {
+        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
+        showSystemStatus("ERRO: Projeto não está associado a uma obra", "error");
+    }
+}
 
 /**
  * Verifica os dados de um projeto e gera relatório
+ * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto
  */
-function verifyProjectData(projectName) {
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
+function verifyProjectData(obraName, projectName) {
+  const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`)
   if (!projectBlock) return
 
   const rooms = projectBlock.querySelectorAll(".room-block")
@@ -437,6 +464,19 @@ function verifyProjectData(projectName) {
   const report = generateProjectVerificationReport(rooms)
 
   alert(report)
+}
+
+// Função de compatibilidade para código existente
+function verifyProjectDataLegacy(projectName) {
+    // Tenta encontrar a obra do projeto
+    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
+    const obraName = projectBlock?.dataset.obraName;
+    
+    if (obraName) {
+        return verifyProjectData(obraName, projectName);
+    } else {
+        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
+    }
 }
 
 /**
@@ -488,7 +528,10 @@ function collapseElement(element, minimizerElement) {
   minimizerElement.textContent = UI_CONSTANTS.MINIMIZED_SYMBOL
 }
 
-window.deleteProject = deleteProject;
+// Exportações para compatibilidade
+window.deleteProject = deleteProjectLegacy;
+window.saveProject = saveProjectLegacy;
+window.verifyProjectData = verifyProjectDataLegacy;
 
 export {
   fetchProjects,
@@ -499,9 +542,12 @@ export {
   salvarProjeto,
   atualizarProjeto,
   saveProject,
+  saveProjectLegacy,
   collapseProjectAfterSave,
   deleteProject,
+  deleteProjectLegacy,
   verifyProjectData,
+  verifyProjectDataLegacy,
   generateProjectVerificationReport,
   calculateRoomCompletionStats,
 }

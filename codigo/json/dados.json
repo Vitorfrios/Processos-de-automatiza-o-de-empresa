@@ -29,6 +29,9 @@
   "machines": [
     {
       "type": "Wall Mounted",
+      "impostos":{
+        
+      },
       "baseValues": {
         "1TR": 26890.00,
         "2TR": 28503.40,

@@ -76,6 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initializeAllCapacityInputs, 3000);
 });
 
+
+
+// Exportações atualizadas
 export {
   // Projeto
   createEmptyRoom,

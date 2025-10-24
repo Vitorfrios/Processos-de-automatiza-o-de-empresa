@@ -1,31 +1,27 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Criação de Projetos</title>
+    <title>Sistema de Criação de Obras e Projetos</title>
     <link rel="stylesheet" href="../static/page1/main.css">
 </head>
-
 <body>
     <header class="header">
         <div class="header-left">
             <img src="" alt="Logo Esquerda" class="logo">
         </div>
         <div class="header-center">
-            <h1>Criação de Projetos</h1>
+            <h1>Criação de Obras e Projetos</h1>
         </div>
-
         <button class="shutdown-btn" onclick="shutdownManual()" title="Encerrar Servidor">
             Encerrar Servidor
         </button>
     </header>
 
-    <!-- Barra de Navegação -->
     <nav class="navbar">
         <ul class="nav-list">
-            <li><a href="#01_CreateProjects">Criar Projetos</a></li>
+            <li><a href="#01_CreateProjects">Criar Obras/Projetos</a></li>
             <li><a href="./02_Projetos.html">Gerenciar Projetos</a></li>
             <li><a href="#relatorios">Relatórios</a></li>
             <li><a href="./03_Edit_data.html">Editar dados</a></li>
@@ -33,26 +29,22 @@
         </ul>
     </nav>
 
-    <!-- Main html -->
     <main class="main-content">
         <div class="container">
-            <!-- Botão para adicionar novo projeto - Chama addNewProject() do modules/interface.js -->
+            <!-- Botão para adicionar nova obra -->
             <div class="add-project-section">
-                <button class="btn btn-add" onclick="addNewProject()" id="add-project-btn">+ Adicionar Novo
-                    Projeto</button>
+                <button class="btn btn-add" onclick="addNewObra()" id="add-obra-btn">
+                    + Adicionar Nova Obra
+                </button>
             </div>
 
-            <!-- Container de Projetos - Renderizado dinamicamente pelo JavaScript -->
+            <!-- Container de Obras -->
             <div id="projects-container">
-                <!-- PROJETOS GERADOS DINAMICAMENTE -->
+                <!-- Hierarquia: Obra → Projeto → Sala -->
             </div>
         </div>
     </main>
 
-    <!-- Script principal que inicializa todo o sistema -->
-    <!-- Carrega módulos, constantes e projetos na inicialização -->
     <script type="module" src="../scripts/page1/main.js"></script>
-
 </body>
-
 </html>

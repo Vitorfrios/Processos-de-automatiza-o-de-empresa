@@ -1,5 +1,5 @@
 /**
- * Utilitários para extração e construção de dados - CORRIGIDO para valores por TR
+ * Utilitários para extração e construção de dados - ATUALIZADO para hierarquia Obra→Projeto
  */
 
 /**
@@ -29,19 +29,21 @@ function buildProjectData(projectIdOrElement) {
 
     const projectName = projectElement.dataset.projectName || projectElement.id;
     const projectId = projectElement.dataset.projectId;
+    const obraName = projectElement.dataset.obraName; // NOVO: Obter nome da obra
 
     const shouldGenerateNewId = !projectId
 
     const projectData = {
         id: shouldGenerateNewId ? null : projectId,
         nome: getProjectName(projectElement),
+        obra: obraName || 'Obra Padrão', // NOVO: Incluir informação da obra
         salas: [],
         timestamp: new Date().toISOString()
     };
 
     // IDs sequenciais simples (1, 2, 3...)
     const roomElements = projectElement.querySelectorAll('.room-block');
-    console.log(`🔍 Encontradas ${roomElements.length} salas no projeto`);
+    console.log(`🔍 Encontradas ${roomElements.length} salas no projeto "${projectName}" da obra "${obraName}"`);
     
     roomElements.forEach((roomElement, index) => {
         // Número sequencial começando em 1
@@ -50,7 +52,7 @@ function buildProjectData(projectIdOrElement) {
         const roomData = extractRoomData(roomElement, roomNumber);
         if (roomData) {
             projectData.salas.push(roomData);
-            console.log(`✅ Sala ${roomNumber} adicionada:`, {
+            console.log(`✅ Sala ${roomNumber} adicionada ao projeto "${projectName}":`, {
                 nome: roomData.nome,
                 inputs: Object.keys(roomData.inputs || {}).length,
                 maquinas: roomData.maquinas.length,
@@ -59,11 +61,16 @@ function buildProjectData(projectIdOrElement) {
                 configuracao: Object.keys(roomData.configuracao || {}).length
             });
         } else {
-            console.warn(`⚠️ Sala ${roomNumber} ignorada`);
+            console.warn(`⚠️ Sala ${roomNumber} ignorada no projeto "${projectName}"`);
         }
     });
 
-    console.log('📦 Dados do projeto construídos:', projectData);
+    console.log('📦 Dados do projeto construídos:', {
+        obra: projectData.obra,
+        projeto: projectData.nome,
+        id: projectData.id,
+        salas: projectData.salas.length
+    });
     return projectData;
 }
 
