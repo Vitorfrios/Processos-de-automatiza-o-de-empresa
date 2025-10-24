@@ -95,7 +95,7 @@ function buildClimatizationMachineHTML(machineId, machines) {
                 <div class="machine-options-section">
                     <h6>Opções Adicionais:</h6>
                     <div class="options-grid" id="options-container-${machineId}">
-                        <p class="empty-options-message">Selecione um tipo de máquina para ver as opções</p>
+                        <p class="empty-options-message">Selecione um tipo de máquina e sua capacidade para ver as opções e seus valores</p>
                     </div>
                 </div>
                 <div class="machine-total-price">

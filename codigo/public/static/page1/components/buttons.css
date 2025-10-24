@@ -52,8 +52,9 @@
   text-transform: none; 
 }
 
-.btn-update {
-  background: var(--info-gradient);
+/* ===== BOTÕES ESPECÍFICOS PARA OBRA/PROJETO ===== */
+.btn-verify {
+  background: var(--btn-verify-gradient);
   color: var(--color-white);
 }
 
@@ -62,14 +63,16 @@
   color: var(--color-white);
 }
 
-.btn-verify {
-  background: var(--btn-verify-gradient);
+.btn-update {
+  background: var(--warning-gradient);
   color: var(--color-white);
 }
 
 .btn-download {
   background: var(--btn-download-gradient);
-  color: var(--text-primary);
+  color: var(--color-white);
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 /* Botões Minimizadores */
@@ -85,18 +88,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .minimizer:hover {
   background: var(--minimizer-hover-bg);
+  transform: scale(1.05);
 }
 
-.section-header .minimizer {
+/* Minimizadores para seções específicas */
+.section-header .minimizer,
+.subsection-header .minimizer {
   background: var(--section-minimizer-bg);
   color: var(--section-minimizer-color);
 }
 
-.section-header .minimizer:hover {
+.section-header .minimizer:hover,
+.subsection-header .minimizer:hover {
   background: var(--section-minimizer-hover-bg);
+}
+
+/* Minimizadores para obra e projeto */
+.obra-header .minimizer,
+.project-header .minimizer,
+.room-header .minimizer {
+  background: var(--minimizer-bg);
+  color: var(--color-white);
+}
+
+.obra-header .minimizer:hover,
+.project-header .minimizer:hover,
+.room-header .minimizer:hover {
+  background: var(--minimizer-hover-bg);
 }
