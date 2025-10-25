@@ -165,10 +165,15 @@ function calculateCapacitySolution(roomId) {
   try {
     const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
     const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`)
+    const cargaEstimadaInput = document.querySelector(`carga-estimada-${roomId} input`)
 
     if (!fatorSegurancaInput || !capacidadeUnitariaSelect) return
 
-    const cargaEstimada = getThermalLoadTR(roomId)
+    // USA O VALOR DO INPUT SE EXISTIR, SENÃO USA O CÁLCULO AUTOMÁTICO
+    const cargaEstimada = cargaEstimadaInput ? 
+      (Number.parseInt(cargaEstimadaInput.value) || 0) : 
+      getThermalLoadTR(roomId)
+
     const fatorSeguranca = Number.parseFloat(fatorSegurancaInput.value) / 100
     const capacidadeUnitaria = Number.parseFloat(capacidadeUnitariaSelect.value)
     const backupType = getBackupFromClimatization(roomId)
@@ -422,7 +427,8 @@ function getBackupFromClimaInputs(roomId) {
  * @param {string} backupType - Tipo de backup
  */
 function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup, total, folga, backupType) {
-  updateElementText(`carga-estimada-${roomId}`, cargaEstimada.toFixed(1))
+  // Atualizar o campo de carga estimada com input editável (valor inteiro)
+  updateCargaEstimadaInput(roomId, Math.round(cargaEstimada)) // Arredonda para inteiro
   updateElementText(`solucao-${roomId}`, solucao)
   updateElementText(`solucao-backup-${roomId}`, solucaoComBackup)
   updateElementText(`total-capacidade-${roomId}`, total.toFixed(1))
@@ -432,6 +438,51 @@ function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup,
   if (backupSelect) {
     backupSelect.value = backupType
     backupSelect.disabled = false
+  }
+}
+
+/**
+ * Atualiza ou cria o input para carga estimada (apenas inteiros)
+ * @param {string} roomId - ID da sala
+ * @param {number} value - Valor a ser definido (inteiro)
+ */
+function updateCargaEstimadaInput(roomId, value) {
+  const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`)
+  
+  if (!cargaEstimadaElement) return
+
+  // Verificar se já existe um input
+  let input = cargaEstimadaElement.querySelector('input')
+  
+  if (!input) {
+    // Criar input se não existir
+    input = document.createElement('input')
+    input.type = 'number'
+    input.className = 'capacity-input'
+    input.min = '0'
+    input.step = '1' // Força números inteiros
+    input.value = value
+    
+    // Adicionar evento apenas para salvar, não para recalcular
+    input.addEventListener('change', () => {
+      // Apenas salva o valor manual, não recalcula
+      const roomContent = document.getElementById(`room-content-${roomId}`)
+      if (roomContent) {
+        const projectName = roomContent.getAttribute('data-project-name')
+        const roomName = roomContent.getAttribute('data-room-name')
+        if (projectName && roomName) {
+          saveCapacityData(projectName, roomName)
+        }
+      }
+    })
+    
+    // Limpar conteúdo anterior e adicionar o input
+    cargaEstimadaElement.innerHTML = ''
+    cargaEstimadaElement.appendChild(input)
+  } else {
+    // SEMPRE atualiza com o valor calculado quando a função é chamada
+    // Isso garante que cálculos subsequentes usem o valor correto
+    input.value = Math.round(value)
   }
 }
 
