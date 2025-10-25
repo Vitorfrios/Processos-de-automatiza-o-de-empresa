@@ -1,4 +1,3 @@
-
 import { calculateVazaoArAndThermalGains } from '../../calculos/calculos.js'
 
 /**
@@ -118,24 +117,99 @@ function buildClimatizationTable(roomId) {
     ],
     roomId,
   )}
-      ${buildClimaRow(
-    [
-      { label: "N° Portas Duplas:", field: "numPortasDuplas", type: "number", placeholder: "Ex: 2" },
-      { label: "N° Portas Simples:", field: "numPortasSimples", type: "number", placeholder: "Ex: 3" },
-    ],
-    roomId,
-  )}
-      ${buildClimaRow(
-    [
-      { label: "Pressurização (Pa):", field: "pressurizacao", type: "number", placeholder: "Ex: 50" },
-      { label: "Setpoint (°C):", field: "setpoint", type: "number", placeholder: "Ex: 22" },
-    ],
-    roomId,
-  )}
+      ${buildPressurizationRow(roomId)}
       ${buildResultRow(roomId)}
     </div>
   `
 }
+
+/**
+ * Constrói linha específica para pressurização com lógica Sim/Não
+ */
+function buildPressurizationRow(roomId) {
+  return `
+    <!-- Linha 1: rádios -->
+    <div class="clima-row clima-row-2cols">
+      <div class="clima-cell">
+        <div class="radio-group">
+          <label>Pressurização (TR):</label>
+          <label class="radio-label">
+            <input type="radio" 
+                   name="pressurizacao-${roomId}" 
+                   value="sim"
+                   onchange="togglePressurizationFields('${roomId}', true)">
+            Sim
+          </label>
+          <label class="radio-label">
+            <input type="radio" 
+                   name="pressurizacao-${roomId}" 
+                   value="nao" 
+                   checked
+                   onchange="togglePressurizationFields('${roomId}', false)">
+            Não
+          </label>
+        </div>
+        <input type="number"
+          class="form-input clima-input"
+          data-field="pressurizacao"
+          data-room-id="${roomId}"
+          placeholder="Ex: 25"
+          value="25"
+          step="1"
+          disabled
+          onchange="calculateVazaoArAndThermalGains('${roomId}')">
+      
+
+      </div>
+      <!-- célula vazia p/ grid 2 colunas -->
+      <div class="clima-cell">
+        <label>Setpoint °C:</label>
+
+        <input type="number"
+               class="form-input clima-input"
+               data-field="setpointPressurizacao"
+               data-room-id="${roomId}"
+               placeholder="Ex: 25"
+               value="25"
+               step="0.1"
+               onchange="calculateVazaoArAndThermalGains('${roomId}')">
+      </div>
+    </div>
+
+    <!-- Linha 3: portas (mostra somente se Sim) -->
+    <div class="clima-row clima-row-2cols" id="pressurizacao-portas-${roomId}" style="display:none;">
+      <div class="clima-cell">
+        <label>N° Portas Simples:</label>
+        <input type="number"
+               class="form-input clima-input"
+               data-field="numPortasSimples"
+               data-room-id="${roomId}"
+               placeholder="Ex: 3"
+               min="0"
+               disabled
+               onchange="calculateVazaoArAndThermalGains('${roomId}')">
+      </div>
+      <div class="clima-cell">
+        <label>N° Portas Duplas:</label>
+        <input type="number"
+               class="form-input clima-input"
+               data-field="numPortasDuplas"
+               data-room-id="${roomId}"
+               placeholder="Ex: 2"
+               min="0"
+               disabled
+               onchange="calculateVazaoArAndThermalGains('${roomId}')">
+      </div>
+    </div>
+  `;
+}
+
+
+
+
+
+
+
 
 /**
  * Constrói linha da tabela com campos de input
@@ -188,8 +262,9 @@ function buildSelectInput(field, roomId) {
  * Aplica validações específicas baseadas no tipo de campo
  */
 function buildTextInput(field, roomId) {
-  const step = field.type === "number" ? 'step="0.01"' : ""
+  const step = field.type === "number" ? 'step="1"' : ""
   const min = field.field.includes("num") ? 'min="0"' : "" // Prevenir valores negativos para quantidades
+  const value = field.value ? `value="${field.value}"` : ""
 
   return `
     <input
@@ -199,6 +274,7 @@ function buildTextInput(field, roomId) {
       placeholder="${field.placeholder}"
       ${step}
       ${min}
+      ${value}
       onchange="calculateVazaoArAndThermalGains('${roomId}')"
     >
   `
@@ -229,6 +305,43 @@ function buildResultRow(roomId) {
     </div>
   `
 }
+
+// =============================================================================
+// FUNÇÕES DE CONTROLE DE PRESSURIZAÇÃO
+// =============================================================================
+
+/**
+ * Controla a exibição e estado dos campos de pressurização
+ */
+function togglePressurizationFields(roomId, enabled) {
+  const pressurizacaoInput = document.querySelector(`input[data-field="pressurizacao"][data-room-id="${roomId}"]`);
+  const portasSection = document.getElementById(`pressurizacao-portas-${roomId}`);
+  const portasSimples = document.querySelector(`input[data-field="numPortasSimples"][data-room-id="${roomId}"]`);
+  const portasDuplas = document.querySelector(`input[data-field="numPortasDuplas"][data-room-id="${roomId}"]`);
+  const setpointInput = document.querySelector(`input[data-field="setpointPressurizacao"][data-room-id="${roomId}"]`);
+
+  if (enabled) {
+    pressurizacaoInput.disabled = false;
+    portasSection.style.display = 'grid';
+    portasSimples.disabled = false;
+    portasDuplas.disabled = false;
+  } else {
+    pressurizacaoInput.disabled = true;
+    pressurizacaoInput.value = '25';
+
+    portasSection.style.display = 'none';
+    portasSimples.disabled = true; portasSimples.value = '';
+    portasDuplas.disabled = true; portasDuplas.value = '';
+
+    // mantém o setpoint coerente e o badge formatado
+    if (setpointInput && setpointInput.value === '') setpointInput.value = '25';
+    syncSetpointBadge(roomId, setpointInput ? setpointInput.value : '25');
+  }
+
+  calculateVazaoArAndThermalGains(roomId);
+}
+
+
 
 // =============================================================================
 // SEÇÃO: CONSTRUÇÃO DA INTERFACE DE RESULTADOS TÉRMICOS
@@ -546,6 +659,8 @@ function buildThermalGainsSection(roomId) {
   `
 }
 
+// Exportar a nova função para controle global
+window.togglePressurizationFields = togglePressurizationFields
 
 export {
   buildClimatizationSection,
@@ -555,5 +670,7 @@ export {
   buildSelectInput,
   buildTextInput,
   buildResultRow,
-  buildThermalGainsSection
+  buildThermalGainsSection,
+  buildPressurizationRow,
+  togglePressurizationFields
 }

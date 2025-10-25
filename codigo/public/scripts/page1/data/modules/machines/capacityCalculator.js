@@ -37,9 +37,10 @@ function buildCapacityCalculationTable(roomId) {
           </thead>
           <tbody>
             <tr>
-              <td id="carga-estimada-${roomId}">0</td>
+              // aqui o valor do id deve se tornar um numero editável,(int)mas a funcionalidade de mostrar qual valor do tr calculado deve permanecer
+              <td id="carga-estimada-${roomId}">0</td> 
               <td>
-                <input type="number" id="fator-seguranca-${roomId}" step="0.01" 
+                <input type="number" id="fator-seguranca-${roomId}" step="1" 
                       class="capacity-input" 
                       onchange="calculateCapacitySolution('${roomId}')"
                       oninput="calculateCapacitySolution('${roomId}')">
