@@ -6,17 +6,70 @@ import { ensureStringId } from '../utils/utils.js'
 import { getGeralCount, incrementGeralCount } from './server.js'
 
 /**
- * Renderiza um projeto completo a partir dos dados carregados
- * Cria a estrutura do projeto e todas as suas salas
- * @param {Object} projectData - Dados completos do projeto
+ * Renderiza uma OBRA completa a partir dos dados carregados - NOVA FUNÇÃO
+ * @param {Object} obraData - Dados completos da obra
  */
-function renderProjectFromData(projectData) {
+function renderObraFromData(obraData) {
+  const obraName = obraData.nome
+  const obraId = ensureStringId(obraData.id)
+
+  console.log(`🎯 Renderizando obra: ${obraName} (ID: ${obraId})`)
+
+  // Criar obra vazia
+  createEmptyObra(obraName, obraId)
+
+  // Renderizar projetos da obra
+  if (obraData.projetos && obraData.projetos.length > 0) {
+    const obraContent = document.getElementById(`obra-content-${obraName}`)
+
+    if (obraContent) {
+      const emptyMessage = obraContent.querySelector(".empty-message")
+      if (emptyMessage) {
+        emptyMessage.remove()
+      }
+
+      setTimeout(() => {
+        obraData.projetos.forEach((projectData) => {
+          renderProjectFromData(projectData, obraName) // Passar obraName
+        })
+      }, 100);
+    }
+  }
+
+  console.log(`✅ Obra ${obraName} renderizada com sucesso`)
+}
+
+/**
+ * Renderiza um projeto completo a partir dos dados carregados - ATUALIZADA
+ * @param {Object} projectData - Dados completos do projeto
+ * @param {string} obraName - Nome da obra (opcional)
+ */
+function renderProjectFromData(projectData, obraName = null) {
   const projectName = projectData.nome
   const projectId = ensureStringId(projectData.id)
 
   console.log(`🎯 Renderizando projeto: ${projectName} (ID: ${projectId})`)
 
-  createEmptyProject(projectName, projectId)
+  // Se não foi passada a obra, tentar encontrar pela estrutura do DOM
+  if (!obraName) {
+    // Buscar obra que contém este projeto
+    const existingProject = document.querySelector(`[data-project-name="${projectName}"]`)
+    obraName = existingProject?.dataset.obraName
+  }
+
+  // Se ainda não tem obra, criar projeto na primeira obra ou criar uma nova
+  if (!obraName) {
+    const obras = document.querySelectorAll('.obra-block')
+    if (obras.length > 0) {
+      obraName = obras[0].dataset.obraName
+    } else {
+      // Criar obra padrão
+      obraName = 'Obra1'
+      createEmptyObra(obraName, '1001')
+    }
+  }
+
+  createEmptyProject(obraName, projectName, projectId)
 
   if (projectData.salas && projectData.salas.length > 0) {
     const projectContent = document.getElementById(`project-content-${projectName}`)
@@ -29,7 +82,7 @@ function renderProjectFromData(projectData) {
 
       setTimeout(() => {
         projectData.salas.forEach((roomData) => {
-          renderRoomFromData(projectName, roomData)
+          renderRoomFromData(projectName, roomData, obraName) // Passar obraName
         })
       }, 100);
     }
@@ -57,16 +110,17 @@ function renderProjectFromData(projectData) {
 }
 
 /**
- * Renderiza uma sala individual a partir dos dados carregados
- * Cria a sala e preenche todos os inputs e configurações
+ * Renderiza uma sala individual a partir dos dados carregados - ATUALIZADA
  * @param {string} projectName - Nome do projeto
  * @param {Object} roomData - Dados completos da sala
+ * @param {string} obraName - Nome da obra
  */
-function renderRoomFromData(projectName, roomData) {
+function renderRoomFromData(projectName, roomData, obraName = null) {
   const roomName = roomData.nome
   const roomId = ensureStringId(roomData.id)
 
   console.log(`🎯 Renderizando sala: ${roomName} no projeto ${projectName}`, {
+    obra: obraName,
     inputs: Object.keys(roomData.inputs || {}).length,
     maquinas: roomData.maquinas?.length || 0,
     capacidade: Object.keys(roomData.capacidade || {}).length,
@@ -75,28 +129,36 @@ function renderRoomFromData(projectName, roomData) {
   });
 
   setTimeout(() => {
-    createEmptyRoom(projectName, roomName, roomId)
+    createEmptyRoom(projectName, roomName, roomId, obraName)
 
     // Delay adicional para garantir que a sala foi criada antes de preencher inputs
     setTimeout(() => {
-      populateRoomInputs(projectName, roomName, roomData)
+      populateRoomInputs(projectName, roomName, roomData, obraName)
     }, 100);
     
   }, 100);
 }
 
 /**
- * Preenche todos os inputs e configurações de uma sala com dados carregados
+ * Preenche todos os inputs e configurações de uma sala com dados carregados - ATUALIZADA
  * @param {string} projectName - Nome do projeto
  * @param {string} roomName - Nome da sala
  * @param {Object} roomData - Dados completos da sala
+ * @param {string} obraName - Nome da obra
  */
-function populateRoomInputs(projectName, roomName, roomData) {
+function populateRoomInputs(projectName, roomName, roomData, obraName = null) {
   let attempts = 0;
   const maxAttempts = 10;
   
   const tryPopulate = () => {
-    const roomBlock = document.querySelector(`[data-room-name="${roomName}"]`);
+    // Buscar sala considerando a obra
+    let roomBlock;
+    if (obraName) {
+      roomBlock = document.querySelector(`[data-obra-name="${obraName}"] [data-room-name="${roomName}"]`);
+    } else {
+      roomBlock = document.querySelector(`[data-room-name="${roomName}"]`);
+    }
+    
     const roomId = `${projectName}-${roomName}`;
     
     if (!roomBlock && attempts < maxAttempts) {
@@ -113,7 +175,7 @@ function populateRoomInputs(projectName, roomName, roomData) {
 
     console.log(`✅ Sala ${roomName} encontrada, preenchendo dados...`);
 
-    // 1. PREENCHER INPUTS BÁSICOS
+    // 1. PREENCHER INPUTS BÁSICOS - CORREÇÃO PARA PRESSURIZAÇÃO
     if (roomData.inputs && Object.keys(roomData.inputs).length > 0) {
       console.log(`📝 Preenchendo ${Object.keys(roomData.inputs).length} inputs`);
       populateBasicInputs(roomBlock, roomData.inputs, roomId);
@@ -164,11 +226,28 @@ function populateRoomInputs(projectName, roomName, roomData) {
 }
 
 /**
- * Preenche inputs básicos da sala
+ * Preenche inputs básicos da sala - CORREÇÃO PARA PRESSURIZAÇÃO
  */
 function populateBasicInputs(roomBlock, inputsData, roomId) {
   Object.entries(inputsData).forEach(([field, value]) => {
     if (value === null || value === undefined || value === '') return;
+
+    // CORREÇÃO: Tratamento especial para pressurização
+    if (field === 'pressurizacao') {
+      const pressurizacaoValue = Boolean(value);
+      const radioName = `pressurizacao-${roomId}`;
+      
+      // Encontrar o radio correto (sim/nao)
+      const radioToCheck = roomBlock.querySelector(`input[type="radio"][name="${radioName}"][value="${pressurizacaoValue ? 'sim' : 'nao'}"]`);
+      if (radioToCheck) {
+        radioToCheck.checked = true;
+        console.log(`✅ Pressurização definida como: ${pressurizacaoValue ? 'sim' : 'nao'}`);
+        
+        // Disparar evento para atualizar campos relacionados
+        radioToCheck.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      return; // Já processado, pular para próximo campo
+    }
 
     // Buscar por múltiplos seletores possíveis para inputs de climatização
     const selectors = [
@@ -497,6 +576,7 @@ function fallbackPopulateMachines(roomBlock, machinesData, roomId) {
 }
 
 export {
+  renderObraFromData, // NOVA EXPORTAÇÃO
   renderProjectFromData,
   renderRoomFromData,
   populateRoomInputs,

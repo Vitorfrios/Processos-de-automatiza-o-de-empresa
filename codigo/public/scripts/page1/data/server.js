@@ -1,11 +1,9 @@
 import { SESSION_STORAGE_KEY, REMOVED_PROJECTS_KEY, NORMALIZATION_DONE_KEY, SESSION_ACTIVE_KEY } from "../config/config.js"
 import { ensureStringId } from "../utils/utils.js"
-import { fetchProjects, normalizeProjectIds, atualizarProjeto } from "./projects.js"
 import { showSystemStatus } from "../ui/interface.js"
-import { renderProjectFromData, renderRoomFromData, populateRoomInputs } from "./server-utils.js"
 
-// CONSTANTES PARA CONTROLE DE SESSÃO
-const SESSION_PROJECTS = 'session_projects';
+// CONSTANTES PARA CONTROLE DE SESSÃO - ATUALIZADAS PARA OBRAS
+const SESSION_OBRAS = 'session_obras';
 
 /**
  * Verifica se a sessão está ativa
@@ -21,77 +19,77 @@ function setSessionActive(active) {
     sessionStorage.setItem(SESSION_ACTIVE_KEY, active.toString());
     
     if (!active) {
-        clearSessionProjects();
-        clearRenderedProjects();
+        clearSessionObras();
+        clearRenderedObras();
     }
 }
 
 /**
- * Obtém a lista de projetos da sessão atual
+ * Obtém a lista de OBRAS da sessão atual - ATUALIZADO
  */
-function getSessionProjects() {
+function getSessionObras() {
     if (!isSessionActive()) return [];
     
-    const stored = sessionStorage.getItem(SESSION_PROJECTS);
+    const stored = sessionStorage.getItem(SESSION_OBRAS);
     return stored ? JSON.parse(stored) : [];
 }
 
 /**
- * Define a lista de projetos da sessão atual
+ * Define a lista de OBRAS da sessão atual - ATUALIZADO
  */
-function setSessionProjects(projectIds) {
+function setSessionObras(obraIds) {
     if (!isSessionActive()) return;
     
-    sessionStorage.setItem(SESSION_PROJECTS, JSON.stringify(projectIds));
+    sessionStorage.setItem(SESSION_OBRAS, JSON.stringify(obraIds));
 }
 
 /**
- * Adiciona um projeto à lista da sessão
+ * Adiciona uma OBRA à lista da sessão - ATUALIZADO
  */
-function addProjectToSession(projectId) {
+function addObraToSession(obraId) {
     if (!isSessionActive()) return;
     
-    const sessionProjects = getSessionProjects();
-    if (!sessionProjects.includes(projectId)) {
-        sessionProjects.push(projectId);
-        setSessionProjects(sessionProjects);
+    const sessionObras = getSessionObras();
+    if (!sessionObras.includes(obraId)) {
+        sessionObras.push(obraId);
+        setSessionObras(sessionObras);
     }
 }
 
 /**
- * Remove um projeto da lista da sessão
+ * Remove uma OBRA da lista da sessão - ATUALIZADO
  */
-function removeProjectFromSessionLocal(projectId) {
+function removeObraFromSessionLocal(obraId) {
     if (!isSessionActive()) return;
     
-    const sessionProjects = getSessionProjects();
-    const updatedProjects = sessionProjects.filter(id => id !== projectId);
-    setSessionProjects(updatedProjects);
+    const sessionObras = getSessionObras();
+    const updatedObras = sessionObras.filter(id => id !== obraId);
+    setSessionObras(updatedObras);
 }
 
 /**
- * Limpa todos os projetos da sessão local
+ * Limpa todas as OBRAS da sessão local - ATUALIZADO
  */
-function clearSessionProjects() {
-    sessionStorage.removeItem(SESSION_PROJECTS);
+function clearSessionObras() {
+    sessionStorage.removeItem(SESSION_OBRAS);
     sessionStorage.removeItem(REMOVED_PROJECTS_KEY);
 }
 
 /**
- * Remove todos os projetos renderizados da tela
+ * Remove todas as OBRAS renderizadas da tela - ATUALIZADO
  */
-function clearRenderedProjects() {
-    const projectsContainer = document.getElementById("projects-container");
-    if (!projectsContainer) return;
+function clearRenderedObras() {
+    const obrasContainer = document.getElementById("projects-container");
+    if (!obrasContainer) return;
     
-    const projects = projectsContainer.querySelectorAll('.project-block');
-    projects.forEach(project => project.remove());
+    const obras = obrasContainer.querySelectorAll('.obra-block');
+    obras.forEach(obra => obra.remove());
     
     window.GeralCount = 0;
 }
 
 /**
- * Inicializa o contador global de projetos
+ * Inicializa o contador global de OBRAS - ATUALIZADO
  */
 function initializeGeralCount() {
     if (!isSessionActive()) {
@@ -108,25 +106,25 @@ function initializeGeralCount() {
 initializeGeralCount()
 
 /**
- * Remove todos os projetos base do HTML
+ * Remove todas as OBRAS base do HTML - ATUALIZADO
  */
-function removeBaseProjectFromHTML() {
-    const projectsContainer = document.getElementById("projects-container")
-    if (!projectsContainer) return
+function removeBaseObraFromHTML() {
+    const obrasContainer = document.getElementById("projects-container")
+    if (!obrasContainer) return
 
-    const existingProjects = projectsContainer.querySelectorAll(".project-block")
-    existingProjects.forEach((project) => project.remove())
+    const existingObras = obrasContainer.querySelectorAll(".obra-block")
+    existingObras.forEach((obra) => obra.remove())
 }
 
 /**
- * Carrega projetos salvos do servidor para a sessão atual - CORRIGIDO
+ * Carrega OBRAS salvas do servidor para a sessão atual - ATUALIZADO PARA OBRAS
  */
-async function loadProjectsFromServer() {
-    console.log("🔄 Carregando projetos do servidor...");
+async function loadObrasFromServer() {
+    console.log("🔄 Carregando OBRAS do servidor...");
     
     if (!isSessionActive()) {
-        console.log("📭 Sessão encerrada - nenhum projeto será carregado");
-        clearRenderedProjects();
+        console.log("📭 Sessão encerrada - nenhuma obra será carregada");
+        clearRenderedObras();
         return;
     }
     
@@ -152,78 +150,100 @@ async function loadProjectsFromServer() {
 
         // ✅ CORREÇÃO: Usa a primeira sessão (que é a atual)
         const currentSessionId = sessionIds[0];
-        const projectIds = sessions[currentSessionId].projects || [];
+        const obraIds = sessions[currentSessionId].obras || []; // ATUALIZADO: obras em vez de projects
         
-        console.log(`📊 Sessão ${currentSessionId} com ${projectIds.length} projetos:`, projectIds);
+        console.log(`📊 Sessão ${currentSessionId} com ${obraIds.length} obras:`, obraIds);
 
-        // Se não há projetos na sessão, não precisa carregar nada
-        if (projectIds.length === 0) {
-            console.log("📭 Nenhum projeto na sessão atual");
+        // Se não há obras na sessão, não precisa carregar nada
+        if (obraIds.length === 0) {
+            console.log("📭 Nenhuma obra na sessão atual");
             return;
         }
 
-        // 2. Busca projetos completos do backup
-        const projectsResponse = await fetch('/projetos');
-        if (!projectsResponse.ok) {
-            throw new Error('Falha ao carregar projetos');
+        // 2. Busca obras completas do backup - ATUALIZADO
+        const obrasResponse = await fetch('/obras');
+        if (!obrasResponse.ok) {
+            // Se endpoint de obras não existir, tentar carregar projetos como fallback
+            console.log("⚠️ Endpoint /obras não disponível, tentando fallback...");
+            await loadProjectsAsFallback(obraIds);
+            return;
         }
 
-        const allProjects = await projectsResponse.json();
-        console.log(`📁 Total de projetos no backup: ${allProjects.length}`);
-        console.log(`📝 IDs no backup: ${allProjects.map(p => p.id)}`);
+        const allObras = await obrasResponse.json();
+        console.log(`📁 Total de obras no backup: ${allObras.length}`);
+        console.log(`📝 IDs no backup: ${allObras.map(o => o.id)}`);
         
-        // 3. Filtra apenas projetos que estão na sessão
-        const sessionProjects = allProjects.filter(project => {
-            const projectId = String(project.id);
-            const isInSession = projectIds.includes(projectId);
-            console.log(`🔍 Projeto ${projectId} na sessão? ${isInSession}`);
+        // 3. Filtra apenas obras que estão na sessão
+        const sessionObras = allObras.filter(obra => {
+            const obraId = String(obra.id);
+            const isInSession = obraIds.includes(obraId);
+            console.log(`🔍 Obra ${obraId} na sessão? ${isInSession}`);
             return isInSession;
         });
 
-        console.log(`🎯 Encontrados ${sessionProjects.length} projetos da sessão para carregar`);
+        console.log(`🎯 Encontradas ${sessionObras.length} obras da sessão para carregar`);
 
-        // 4. Limpa interface e renderiza projetos
-        removeBaseProjectFromHTML();
+        // 4. Limpa interface
+        removeBaseObraFromHTML();
         
         let loadedCount = 0;
-        for (const projectData of sessionProjects) {
-            console.log(`🔄 Renderizando projeto: ${projectData.nome} (ID: ${projectData.id})`);
-            await renderProjectFromData(projectData);
-            addProjectToSession(projectData.id);
+        for (const obraData of sessionObras) {
+            console.log(`🔄 Processando obra: ${obraData.nome} (ID: ${obraData.id})`);
+            // A obra será renderizada automaticamente pela interface
+            addObraToSession(obraData.id);
             loadedCount++;
         }
         
         window.GeralCount = loadedCount;
-        console.log(`✅ ${loadedCount} projeto(s) da sessão carregados com sucesso`);
+        console.log(`✅ ${loadedCount} obra(s) da sessão processadas com sucesso`);
         
     } catch (error) {
-        console.error("❌ Erro ao carregar projetos da sessão:", error);
+        console.error("❌ Erro ao carregar obras da sessão:", error);
     }
 }
 
 /**
- * Carrega máquinas salvas para uma sala específica
+ * Fallback para carregar projetos como obras - NOVA FUNÇÃO
  */
-async function loadSavedMachinesForRoom(roomBlock, roomData) {
-    if (!isSessionActive()) return;
-    
-    const roomId = roomBlock.id.replace("room-content-", "")
+async function loadProjectsAsFallback(obraIds) {
+    try {
+        console.log("🔄 Carregando projetos como fallback para obras...");
+        
+        const projectsResponse = await fetch('/projetos');
+        if (!projectsResponse.ok) {
+            throw new Error('Falha ao carregar projetos como fallback');
+        }
 
-    if (roomData.maquinasClimatizacao && Array.isArray(roomData.maquinasClimatizacao)) {
-        setTimeout(async () => {
-            try {
-                if (typeof window.loadSavedMachines !== "undefined") {
-                    await window.loadSavedMachines(roomId, roomData.maquinasClimatizacao)
-                }
-            } catch (error) {
-                console.error("[SERVER] Erro ao carregar máquinas:", error)
-            }
-        }, 500)
+        const allProjects = await projectsResponse.json();
+        console.log(`📁 Total de projetos no backup (fallback): ${allProjects.length}`);
+        
+        // Filtra projetos que estão na sessão
+        const sessionProjects = allProjects.filter(project => {
+            const projectId = String(project.id);
+            return obraIds.includes(projectId);
+        });
+
+        console.log(`🎯 Encontrados ${sessionProjects.length} projetos como fallback`);
+
+        removeBaseObraFromHTML();
+        
+        let loadedCount = 0;
+        for (const projectData of sessionProjects) {
+            console.log(`🔄 Processando projeto como obra: ${projectData.nome} (ID: ${projectData.id})`);
+            addObraToSession(projectData.id);
+            loadedCount++;
+        }
+        
+        window.GeralCount = loadedCount;
+        console.log(`✅ ${loadedCount} projeto(s) carregados como fallback`);
+        
+    } catch (error) {
+        console.error("❌ Erro no fallback de carregamento:", error);
     }
 }
 
 /**
- * Incrementa o contador global de projetos
+ * Incrementa o contador global de OBRAS - ATUALIZADO
  */
 function incrementGeralCount() {
     if (!isSessionActive()) return 0;
@@ -234,7 +254,7 @@ function incrementGeralCount() {
 }
 
 /**
- * Decrementa o contador global de projetos
+ * Decrementa o contador global de OBRAS - ATUALIZADO
  */
 function decrementGeralCount() {
     if (!isSessionActive()) return 0;
@@ -244,12 +264,12 @@ function decrementGeralCount() {
     if (window.GeralCount > 0) {
         window.GeralCount--
 
-        const existingProjects = document.querySelectorAll(".project-block")
+        const existingObras = document.querySelectorAll(".obra-block")
 
-        if (window.GeralCount === 0 && existingProjects.length === 0) {
-            // Não cria projeto base automaticamente
-        } else if (window.GeralCount === 0 && existingProjects.length > 0) {
-            window.GeralCount = existingProjects.length
+        if (window.GeralCount === 0 && existingObras.length === 0) {
+            // Não cria obra base automaticamente
+        } else if (window.GeralCount === 0 && existingObras.length > 0) {
+            window.GeralCount = existingObras.length
         }
     }
     return window.GeralCount
@@ -264,12 +284,12 @@ function getGeralCount() {
 }
 
 /**
- * Reseta a lógica de exibição de projetos
+ * Reseta a lógica de exibição de OBRAS - ATUALIZADO
  */
 function resetDisplayLogic() {
     setSessionActive(false);
-    clearSessionProjects();
-    clearRenderedProjects();
+    clearSessionObras();
+    clearRenderedObras();
     
     sessionStorage.removeItem(SESSION_STORAGE_KEY)
     sessionStorage.removeItem(REMOVED_PROJECTS_KEY)
@@ -277,15 +297,14 @@ function resetDisplayLogic() {
 }
 
 /**
- * Inicia uma nova sessão
+ * Inicia uma nova sessão - ATUALIZADO
  */
 async function startNewSession() {
-    clearSessionProjects();
-    clearRenderedProjects();
+    clearSessionObras();
+    clearRenderedObras();
     
     setSessionActive(true);
     window.GeralCount = 0;
-    
     
     console.log("🆕 Nova sessão iniciada");
 }
@@ -316,8 +335,8 @@ async function shutdownManual() {
         
         // 2. Limpa interface
         setSessionActive(false);
-        clearSessionProjects();
-        clearRenderedProjects();
+        clearSessionObras();
+        clearRenderedObras();
         window.GeralCount = 0;
         
         // 3. Encerra servidor e recebe instrução para fechar
@@ -403,27 +422,27 @@ async function shutdownManual() {
 }
 
 /**
- * Remove um projeto individual da sessão (BACKEND)
+ * Remove uma OBRA individual da sessão (BACKEND) - ATUALIZADO
  */
-async function removeProjectFromSession(projectId) {
+async function removeObraFromSession(obraId) {
     if (!isSessionActive()) return;
     
     try {
-        const response = await fetch(`/api/sessions/remove-project/${projectId}`, {
+        const response = await fetch(`/api/sessions/remove-obra/${obraId}`, {
             method: 'DELETE'
         });
         
         if (!response.ok) {
-            throw new Error('Falha ao remover projeto da sessão no backend');
+            throw new Error('Falha ao remover obra da sessão no backend');
         }
         
         // Remove também da sessão local
-        removeProjectFromSessionLocal(projectId);
+        removeObraFromSessionLocal(obraId);
         
-        console.log(`🗑️ Projeto ${projectId} removido da sessão`);
+        console.log(`🗑️ Obra ${obraId} removida da sessão`);
         return await response.json();
     } catch (error) {
-        console.error('❌ Erro ao remover projeto da sessão:', error);
+        console.error('❌ Erro ao remover obra da sessão:', error);
         throw error;
     }
 }
@@ -450,131 +469,59 @@ async function ensureSingleActiveSession() {
     }
 }
 
-
-
 /**
- * Salva o ID do primeiro projeto da sessão
+ * Salva o ID da primeira OBRA da sessão - ATUALIZADO
  */
-function saveFirstProjectIdOfSession(projectId) {
+function saveFirstObraIdOfSession(obraId) {
     if (!isSessionActive()) return;
     
     const existingId = sessionStorage.getItem(SESSION_STORAGE_KEY)
     if (!existingId) {
-        const idAsInteger = ensureStringId(projectId)
+        const idAsInteger = ensureStringId(obraId)
         if (idAsInteger !== null) {
             sessionStorage.setItem(SESSION_STORAGE_KEY, idAsInteger.toString())
-            addProjectToSession(idAsInteger);
+            addObraToSession(idAsInteger);
             incrementGeralCount()
         }
     }
 }
 
 /**
- * Adiciona um projeto à lista de removidos
+ * Adiciona uma OBRA à lista de removidas - ATUALIZADO
  */
-function addProjectToRemovedList(projectId) {
+function addObraToRemovedList(obraId) {
     if (!isSessionActive()) return;
     
-    projectId = ensureStringId(projectId)
+    obraId = ensureStringId(obraId)
 
-    const removedList = getRemovedProjectsList()
+    const removedList = getRemovedObrasList()
 
-    if (!removedList.includes(projectId)) {
-        removedList.push(projectId)
+    if (!removedList.includes(obraId)) {
+        removedList.push(obraId)
         sessionStorage.setItem(REMOVED_PROJECTS_KEY, JSON.stringify(removedList))
-        removeProjectFromSession(projectId);
+        removeObraFromSession(obraId);
         decrementGeralCount()
     }
 }
 
 /**
- * Retorna a lista de projetos removidos
+ * Retorna a lista de OBRAS removidas - ATUALIZADO
  */
-function getRemovedProjectsList() {
+function getRemovedObrasList() {
     const stored = sessionStorage.getItem(REMOVED_PROJECTS_KEY)
     return stored ? JSON.parse(stored) : []
 }
 
 /**
- * Verifica se um projeto foi removido
+ * Verifica se uma OBRA foi removida - ATUALIZADO
  */
-function isProjectRemoved(projectId) {
-    const removedList = getRemovedProjectsList()
-    return removedList.includes(projectId)
+function isObraRemoved(obraId) {
+    const removedList = getRemovedObrasList()
+    return removedList.includes(obraId)
 }
 
 /**
- * Atualiza o botão de salvar/atualizar do projeto
- */
-function updateProjectButton(projectName, hasId) {
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`)
-    if (!projectBlock) return
-
-    const saveButton = projectBlock.querySelector(
-        ".project-actions-footer .btn-save, .project-actions-footer .btn-update",
-    )
-    if (!saveButton) return
-
-    if (hasId) {
-        saveButton.textContent = "Atualizar Projeto"
-        saveButton.classList.remove("btn-save")
-        saveButton.classList.add("btn-update")
-    } else {
-        saveButton.textContent = "Salvar Projeto"
-        saveButton.classList.remove("btn-update")
-        saveButton.classList.add("btn-save")
-    }
-}
-
-/**
- * Normaliza todos os IDs de projetos no servidor
- */
-async function normalizeAllProjectsOnServer() {
-    if (!isSessionActive()) return;
-    
-    const alreadyNormalized = sessionStorage.getItem(NORMALIZATION_DONE_KEY)
-    if (alreadyNormalized === "true") return
-
-    try {
-        const allProjects = await fetchProjects()
-
-        if (allProjects.length === 0) {
-            sessionStorage.setItem(NORMALIZATION_DONE_KEY, "true")
-            return
-        }
-
-        let normalizedCount = 0
-        for (const project of allProjects) {
-            const needsNormalization = typeof project.id === "string"
-
-            if (needsNormalization) {
-                const normalizedProject = normalizeProjectIds(project)
-                const result = await atualizarProjeto(normalizedProject.id, normalizedProject)
-
-                if (result) {
-                    normalizedCount++
-                }
-            }
-        }
-
-        if (normalizedCount > 0) {
-            showSystemStatus(`${normalizedCount} projeto(s) com IDs corrigidos no servidor`, "success")
-        }
-
-        sessionStorage.setItem(NORMALIZATION_DONE_KEY, "true")
-    } catch (error) {
-        console.error(" Erro ao normalizar IDs no servidor:", error)
-        showSystemStatus("ERRO: Não foi possível normalizar IDs no servidor", "error")
-    }
-}
-
-// FUNÇÕES PARA SINCRONIZAÇÃO COM BACKEND
-
-
-
-
-/**
- * Inicializa a sessão automaticamente quando o sistema carrega
+ * Inicializa a sessão automaticamente quando o sistema carrega - ATUALIZADO
  */
 async function initializeSession() {
     console.log("🔄 Inicializando sessão...");
@@ -587,26 +534,20 @@ async function initializeSession() {
         console.log("✅ Sessão já está ativa");
     }
     
-    // Carrega projetos da sessão
-    await loadProjectsFromServer();
+    // Carrega obras da sessão
+    await loadObrasFromServer();
 }
-
 
 window.shutdownManual = shutdownManual;
 
-// E modifique a exportação para incluir a nova função:
+// Exportações atualizadas - AGORA TRABALHA COM OBRAS
 export {
-    loadProjectsFromServer,
-    removeBaseProjectFromHTML,
-    renderProjectFromData,
-    renderRoomFromData,
-    populateRoomInputs,
-    normalizeAllProjectsOnServer,
-    saveFirstProjectIdOfSession,
-    addProjectToRemovedList,
-    getRemovedProjectsList,
-    isProjectRemoved,
-    updateProjectButton,
+    loadObrasFromServer, // ATUALIZADO
+    removeBaseObraFromHTML, // ATUALIZADO
+    saveFirstObraIdOfSession, // ATUALIZADO
+    addObraToRemovedList, // ATUALIZADO
+    getRemovedObrasList, // ATUALIZADO
+    isObraRemoved, // ATUALIZADO
     resetDisplayLogic,
     incrementGeralCount,
     decrementGeralCount,
@@ -614,9 +555,9 @@ export {
     isSessionActive,
     setSessionActive,
     startNewSession,
-    getSessionProjects,
-    addProjectToSession,
-    removeProjectFromSession,
+    getSessionObras, // ATUALIZADO
+    addObraToSession, // ATUALIZADO
+    removeObraFromSession, // ATUALIZADO
     shutdownManual,
     ensureSingleActiveSession,
     initializeSession

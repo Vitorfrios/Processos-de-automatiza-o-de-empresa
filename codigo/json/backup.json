@@ -1,211 +1,68 @@
 {
-  "obras":[
+  "obras": [
     {
-      "id":"1001",//inicia-se em 1001
-      "nome":"",//nome salvo no campo <h2 class="obra-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">Obra1</h2>
-      "timestamp": "2025-10-15T20:37:07.228Z", //só pode existir um e fica em obras
-
+      "id": "1001",
+      "nome": "Obra1",
+      "timestamp": "2025-10-25T20:07:46.332Z",
       "projetos": [
         {
           "id": "1",
-          "nome": "Projeto 1 tst2",
-          "salas": [
-            {
-              "id": "1",
-              "nome": "sala1",
-              "inputs": {
-                "ambiente": "Sala de paineis",
-                "backup": "n",
-                "area": "100",
-                "tipoConstrucao": "Eletrocentro",
-                "paredeOeste": "10",
-                "paredeLeste": "10",
-                "paredeNorte": "10",
-                "paredeSul": "0",
-                "peDireito": "3",
-                "divisoriaNaoClima1": "10",
-                "dissipacao": "10000",
-                "numPessoas": "1",
-                "pressurizacao": true,//perceba que ao selecionar sim no radio altera entre true e false se for true os campos são liberados como pode ver no codigo, se não são travados e os campos ficam com valores basicos, verá no codigo quaissão os valores correspontentes
-                "pressurizacaoSetpoint": "30",
-                "numPortasDuplas": "1",
-                "numPortasSimples": "1",
-                
-                "setpoint": "24",
-                "combateIncendio": "manual"
-              },
-              "maquinas": [
-                {
-                  "nome": "Equipamento de Climatização 1",
-                  "tipo": "Wall Mounted",
-                  "potencia": "2TR",
-                  "tensao": "380V/3F",
-                  "precoBase": 28503.4,
-                  "opcoesSelecionadas": [
-                    {
-                      "id": 1,
-                      "name": "Automação Embarcada",
-                      "value": 5300,
-                      "originalName": "Automação Embarcada",
-                      "potenciaAplicada": "2TR"
-                    },
-                    {
-                      "id": 2,
-                      "name": "1 Damper Manual",
-                      "value": 200,
-                      "originalName": "1 Damper Manual",
-                      "potenciaAplicada": "2TR"
-                    },
-                    {
-                      "id": 3,
-                      "name": "Umidificação",
-                      "value": 9200,
-                      "originalName": "Umidificação",
-                      "potenciaAplicada": "2TR"
-                    },
-                    {
-                      "id": 8,
-                      "name": "Goldfin",
-                      "value": 1400,
-                      "originalName": "Goldfin",
-                      "potenciaAplicada": "2TR"
-                    },
-                    {
-                      "id": 9,
-                      "name": "Sensor de Filtro Sujo",
-                      "value": 1100,
-                      "originalName": "Sensor de Filtro Sujo",
-                      "potenciaAplicada": "2TR"
-                    },
-                    {
-                      "id": 10,
-                      "name": "Resistencia de Aquecimento",
-                      "value": 2100,
-                      "originalName": "Resistencia de Aquecimento",
-                      "potenciaAplicada": "2TR"
-                    },
-                    {
-                      "id": 11,
-                      "name": "Pintura Especial",
-                      "value": 5500,
-                      "originalName": "Pintura Especial",
-                      "potenciaAplicada": "2TR"
-                    },
-                    {
-                      "id": 12,
-                      "name": "Chaparia em Inox",
-                      "value": 14251.7,
-                      "originalName": "Chaparia em Inox",
-                      "potenciaAplicada": "2TR"
-                    }
-                  ],
-                  "precoTotal": 72555.1,
-                  "potenciaSelecionada": "2TR",
-                  "tipoSelecionado": "Wall Mounted"
-                }
-              ],
-              "capacidade": {
-                "fatoriluminacao-Projeto1-Sala1": 7,
-                "fatorconversao-dissi-Projeto1-Sala1": 1,
-                "fatorseguranca-Projeto1-Sala1": 10,
-                "capacidadeunitaria-Projeto1-Sala1": 5,
-                "solucaobackup-Projeto1-Sala1": 2,
-                "totalcapacidade-Projeto1-Sala1": 10
-              },
-              "ganhosTermicos": {
-                "subsection-content-Projeto1-Sala1-ganhos": 29239,
-                "total-ganhos-w-Projeto1-Sala1": 29239,
-                "total-tr-Projeto1-Sala1": 9,
-                "ganho-teto-Projeto1-Sala1": 2290,
-                "ganho-parede-oeste-Projeto1-Sala1": 437,
-                "ganho-parede-leste-Projeto1-Sala1": 437,
-                "ganho-parede-norte-Projeto1-Sala1": 437,
-                "ganho-parede-sul-Projeto1-Sala1": 0,
-                "ganho-divi-nc1-Projeto1-Sala1": 336,
-                "ganho-divi-nc2-Projeto1-Sala1": 0,
-                "ganho-divi-c1-Projeto1-Sala1": 0,
-                "ganho-divi-c2-Projeto1-Sala1": 0,
-                "ganho-piso-Projeto1-Sala1": 2025,
-                "ganho-iluminacao-Projeto1-Sala1": 700,
-                "ganho-dissi-Projeto1-Sala1": 10000,
-                "ganho-pessoas-Projeto1-Sala1": 220,
-                "ganho-ar-sensivel-Projeto1-Sala1": 3894,
-                "ganho-ar-latente-Projeto1-Sala1": 8465
-              },
-              "configuracao": {
-                "opcoesInstalacao": [
-                  "bocal_insuflamento_protegido",
-                  "condicionadores_externos_se",
-                  "condensadores_externos"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "id": "2",
-          "nome": "Projeto teste",
+          "nome": "Projeto1",
           "salas": [
             {
               "id": "1",
               "nome": "Sala1",
               "inputs": {
-                "ambiente": "Sala de paineis",
-                "backup": "n",
-                "area": "100",
-                "tipoConstrucao": "Eletrocentro",
-                "paredeOeste": "10",
-                "paredeLeste": "10",
-                "paredeNorte": "10",
-                "paredeSul": "0",
-                "peDireito": "3",
-                "divisoriaNaoClima1": "10",
-                "dissipacao": "10000",
-                "numPessoas": "1",
-                "pressurizacao": false,
-                "pressurizacaoSetpoint": "25",//valor padrão caso pressurização seja false
-                "numPortasDuplas": "0", //valor padrão caso pressurização seja false
-                "numPortasSimples": "0",//valor padrão caso pressurização seja false
-                
-                "setpoint": "24",
-                "combateIncendio": "manual"
+                "ambiente": "Sala de Servidores",
+                "backup": "n+1",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 5.5,
+                "paredeLeste": 5.5,
+                "paredeNorte": 8,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacao": true,
+                "setpointPressurizacao": 25,
+                "numPortasSimples": "3",
+                "numPortasDuplas": "2",
+                "combateIncendio": "fm200"
               },
               "maquinas": [],
               "capacidade": {
-                "fatoriluminacao-Projeto1-Sala1": 0,
-                "fatorconversao-dissi-Projeto1-Sala1": 0,
-                "fatorseguranca-Projeto1-Sala1": 10,
-                "capacidadeunitaria-Projeto1-Sala1": 1,
-                "solucaobackup-Projeto1-Sala1": 0,
-                "totalcapacidade-Projeto1-Sala1": 0
+                "backup": "n+1"
               },
-              "ganhosTermicos": {
-                "subsection-content-Projeto1-Sala1-ganhos": 0,
-                "total-ganhos-w-Projeto1-Sala1": 0,
-                "total-tr-Projeto1-Sala1": 0,
-                "ganho-teto-Projeto1-Sala1": 0,
-                "ganho-parede-oeste-Projeto1-Sala1": 0,
-                "ganho-parede-leste-Projeto1-Sala1": 0,
-                "ganho-parede-norte-Projeto1-Sala1": 0,
-                "ganho-parede-sul-Projeto1-Sala1": 0,
-                "ganho-divi-nc1-Projeto1-Sala1": 0,
-                "ganho-divi-nc2-Projeto1-Sala1": 0,
-                "ganho-divi-c1-Projeto1-Sala1": 0,
-                "ganho-divi-c2-Projeto1-Sala1": 0,
-                "ganho-piso-Projeto1-Sala1": 0,
-                "ganho-iluminacao-Projeto1-Sala1": 0,
-                "ganho-dissi-Projeto1-Sala1": 0,
-                "ganho-pessoas-Projeto1-Sala1": 0,
-                "ganho-ar-sensivel-Projeto1-Sala1": 0,
-                "ganho-ar-latente-Projeto1-Sala1": 0
-              },
+              "ganhosTermicos": {},
               "configuracao": {
-                "opcoesInstalacao": []
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
               }
             }
-          ]
+          ],
+          "timestamp": "2025-10-25T20:07:46.333Z"
         }
       ]
+    },
+    {
+      "id": "1002",
+      "nome": "Obra2",
+      "timestamp": "2025-10-25T20:18:44.400Z",
+      "projetos": []
+    },
+    {
+      "id": "1003",
+      "nome": "Obra2",
+      "timestamp": "2025-10-25T20:51:04.001Z",
+      "projetos": []
     }
   ]
 }

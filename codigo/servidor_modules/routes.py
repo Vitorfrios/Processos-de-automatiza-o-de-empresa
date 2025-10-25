@@ -75,7 +75,6 @@ class RouteHandler:
             print(f"❌ ERRO FINAL: {str(e)}")
             handler.send_json_response([])
 
-
     def handle_post_projetos(self, handler):
         """Salva novo projeto e associa APENAS ID à sessão atual"""
         try:
@@ -168,10 +167,206 @@ class RouteHandler:
             print(f"❌ Erro ao atualizar projeto: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
 
+    # NOVOS ENDPOINTS PARA OBRAS
+    def handle_get_obras(self, handler):
+        """Obtém todas as obras do backup.json"""
+        try:
+            print("🎯 [OBRAS] handle_get_obras")
+            
+            # 1. Sessão atual
+            current_session_id = sessions_manager.get_current_session_id()
+            session_data = sessions_manager._load_sessions_data()
+            session_projects_ids = session_data["sessions"].get(current_session_id, {}).get("projects", [])
+            print(f"📋 IDs na sessão: {session_projects_ids}")
+            
+            # 2. Carregar backup
+            backup_path = self.project_root / "json" / "backup.json"
+            print(f"📁 Backup path: {backup_path}")
+            
+            if not backup_path.exists():
+                print("❌ Backup file não existe")
+                handler.send_json_response([])
+                return
+                
+            try:
+                with open(backup_path, 'r', encoding='utf-8') as f:
+                    backup_content = f.read()
+                    
+                backup_data = json.loads(backup_content)
+                print(f"✅ Backup carregado: {type(backup_data)}")
+                
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON inválido: {e}")
+                handler.send_json_response([])
+                return
+            except Exception as e:
+                print(f"❌ Erro ao ler arquivo: {e}")
+                handler.send_json_response([])
+                return
+            
+            # 3. Extrair obras (nova estrutura) ou projetos (estrutura antiga)
+            obras = backup_data.get('obras', [])
+            if not isinstance(obras, list):
+                print(f"❌ 'obras' não é uma lista: {type(obras)}")
+                obras = []
+                
+            print(f"📁 Total de obras: {len(obras)}")
+            
+            # 4. Se não há obras, converter projetos existentes para estrutura de obras
+            if len(obras) == 0:
+                print("🔄 Convertendo projetos para estrutura de obras...")
+                projetos = backup_data.get('projetos', [])
+                if projetos and isinstance(projetos, list):
+                    # Criar obra padrão com todos os projetos
+                    obra_padrao = {
+                        "id": "1001",
+                        "nome": "Obra Padrão",
+                        "timestamp": backup_data.get('timestamp', ''),
+                        "projetos": projetos
+                    }
+                    obras = [obra_padrao]
+                    print(f"✅ Criada obra padrão com {len(projetos)} projetos")
+            
+            # 5. Filtrar obras que contêm projetos da sessão atual
+            obras_da_sessao = []
+            for obra in obras:
+                if not isinstance(obra, dict):
+                    continue
+                    
+                projetos_da_obra = obra.get('projetos', [])
+                if not isinstance(projetos_da_obra, list):
+                    continue
+                
+                # Verificar se algum projeto desta obra está na sessão
+                obra_tem_projetos_na_sessao = any(
+                    str(projeto.get('id', '')) in session_projects_ids 
+                    for projeto in projetos_da_obra
+                )
+                
+                if obra_tem_projetos_na_sessao:
+                    obras_da_sessao.append(obra)
+                    print(f"✅ ENCONTRADA: Obra {obra.get('id')} com projetos na sessão")
+            
+            print(f"🎯 ENVIANDO: {len(obras_da_sessao)} obras")
+            handler.send_json_response(obras_da_sessao)
+            
+        except Exception as e:
+            print(f"❌ ERRO em handle_get_obras: {str(e)}")
+            handler.send_json_response([])
+
+    def handle_post_obras(self, handler):
+        """Salva nova obra"""
+        try:
+            content_length = int(handler.headers['Content-Length'])
+            post_data = handler.rfile.read(content_length)
+            nova_obra = json.loads(post_data.decode('utf-8'))
+            
+            backup_file = file_utils.find_json_file('backup.json', self.project_root)
+            backup_data = file_utils.load_json_file(backup_file, {"obras": [], "projetos": []})
+            
+            # Gera ID único para obra
+            obras = backup_data.get('obras', [])
+            ids_existentes = []
+            for obra in obras:
+                try:
+                    id_str = obra.get('id', '')
+                    if id_str and id_str.isdigit():
+                        ids_existentes.append(int(id_str))
+                except (ValueError, AttributeError):
+                    continue
+            
+            if ids_existentes:
+                proximo_id = max(ids_existentes) + 1
+            else:
+                proximo_id = 1001  # Começa em 1001 como especificado
+            
+            nova_obra['id'] = str(proximo_id)
+            
+            if 'timestamp' not in nova_obra:
+                from datetime import datetime
+                nova_obra['timestamp'] = datetime.now().isoformat()
+            
+            # Adiciona projetos da obra à sessão
+            projetos_da_obra = nova_obra.get('projetos', [])
+            for projeto in projetos_da_obra:
+                projeto_id = projeto.get('id')
+                if projeto_id:
+                    sessions_manager.add_project_to_session(projeto_id)
+            
+            # Adiciona obra ao backup
+            obras.append(nova_obra)
+            backup_data['obras'] = obras
+            
+            print(f"➕ ADICIONANDO nova obra ID: {proximo_id} com {len(projetos_da_obra)} projetos")
+            
+            if file_utils.save_json_file(backup_file, backup_data):
+                print(f"✅ Obra {proximo_id} salva com sucesso")
+                handler.send_json_response(nova_obra)
+            else:
+                handler.send_error(500, "Erro ao salvar obra")
+            
+        except Exception as e:
+            print(f"❌ Erro ao adicionar obra: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_put_obra(self, handler):
+        """Atualiza obra existente"""
+        try:
+            obra_id = handler.path.split('/')[-1]
+            
+            content_length = int(handler.headers['Content-Length'])
+            put_data = handler.rfile.read(content_length)
+            obra_atualizada = json.loads(put_data.decode('utf-8'))
+            
+            backup_file = file_utils.find_json_file('backup.json', self.project_root)
+            backup_data = file_utils.load_json_file(backup_file)
+            
+            if not backup_data:
+                handler.send_error(404, "Arquivo de backup não encontrado")
+                return
+            
+            obras = backup_data.get('obras', [])
+            obra_encontrada = False
+            
+            for i, obra in enumerate(obras):
+                if str(obra.get('id')) == obra_id:
+                    # Atualizar projetos na sessão
+                    projetos_antigos = obra.get('projetos', [])
+                    projetos_novos = obra_atualizada.get('projetos', [])
+                    
+                    # Remover projetos antigos da sessão
+                    for projeto in projetos_antigos:
+                        projeto_id = projeto.get('id')
+                        if projeto_id:
+                            sessions_manager.remove_project(projeto_id)
+                    
+                    # Adicionar novos projetos à sessão
+                    for projeto in projetos_novos:
+                        projeto_id = projeto.get('id')
+                        if projeto_id:
+                            sessions_manager.add_project_to_session(projeto_id)
+                    
+                    obras[i] = obra_atualizada
+                    obra_encontrada = True
+                    print(f"✏️  ATUALIZANDO obra {obra_id} com {len(projetos_novos)} projetos")
+                    break
+            
+            if not obra_encontrada:
+                handler.send_error(404, f"Obra {obra_id} não encontrada")
+                return
+            
+            backup_data['obras'] = obras
+            
+            if file_utils.save_json_file(backup_file, backup_data):
+                handler.send_json_response(obra_atualizada)
+            else:
+                handler.send_error(500, "Erro ao atualizar obra")
+            
+        except Exception as e:
+            print(f"❌ Erro ao atualizar obra: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
     # ENDPOINTS DE SESSÕES SIMPLIFICADOS
-
-
-
     def handle_get_sessions_current(self, handler):
         """Retorna a sessão atual - CORRIGIDA"""
         try:
@@ -195,6 +390,7 @@ class RouteHandler:
         except Exception as e:
             print(f"❌ Erro ao obter sessão atual: {str(e)}")
             handler.send_json_response({"sessions": {}})
+
     def handle_delete_sessions_remove_project(self, handler):
         """Remove um projeto específico da sessão atual (APENAS ID)"""
         try:
@@ -259,7 +455,6 @@ class RouteHandler:
         except Exception as e:
             print(f"❌ Erro no shutdown: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
-
 
     def handle_post_sessions_ensure_single(self, handler):
         """Garante que apenas uma sessão esteja ativa por vez"""
@@ -340,7 +535,6 @@ class RouteHandler:
             config.servidor_rodando = False
             import os
             os._exit(1)
-
 
     def handle_get_constants(self, handler):
         """Constants do DADOS.json"""

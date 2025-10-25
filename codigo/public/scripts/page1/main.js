@@ -1,16 +1,16 @@
 // Inicializar variáveis globais simples
 window.systemConstants = null;
-window.projectCounter = 0;
+window.obraCounter = 0; // ATUALIZADO: projectCounter → obraCounter
 window.GeralCount = 0;
 
 console.log(" Variáveis globais inicializadas:", {
   systemConstants: window.systemConstants,
-  projectCounter: window.projectCounter,
+  obraCounter: window.obraCounter, // ATUALIZADO
   GeralCount: window.GeralCount
 });
 
 // Importar APENAS o necessário para inicialização
-import { normalizeAllProjectsOnServer, loadProjectsFromServer, getGeralCount } from './data/server.js'
+import { loadObrasFromServer, getGeralCount } from './data/server.js' // ATUALIZADO
 import { initializeSession } from './data/server.js';
 
 // Carregar módulos dinamicamente
@@ -117,7 +117,7 @@ async function loadAllModules() {
     const modules = await Promise.all([
       import('./ui/interface.js'),
       import('./ui/edit.js'),
-      import('./data/projects.js'),
+      import('./data/projects.js'), // MANTIDO para funções de projeto dentro de obras
       import('./data/rooms.js'),
       import('./calculos/calculos.js'),
       import('./utils/utils.js')
@@ -132,27 +132,29 @@ async function loadAllModules() {
       utilsModule
     ] = modules;
 
-    // Atribuir TODAS as funções ao window
+    // Atribuir TODAS as funções ao window - ATUALIZADO para obras
     Object.assign(window, {
-      // UI Interface
+      // UI Interface - ATUALIZADO
+      toggleObra: interfaceModule.toggleObra, // NOVA
       toggleProject: interfaceModule.toggleProject,
       toggleRoom: interfaceModule.toggleRoom,
       toggleSection: interfaceModule.toggleSection,
       toggleSubsection: interfaceModule.toggleSubsection,
-      addNewProject: interfaceModule.addNewProject,
+      addNewObra: interfaceModule.addNewObra, // ATUALIZADO: addNewProject → addNewObra
+      addNewProjectToObra: interfaceModule.addNewProjectToObra, // NOVA
       collapseElement: interfaceModule.collapseElement,
       expandElement: interfaceModule.expandElement,
       showSystemStatus: interfaceModule.showSystemStatus,
+      saveOrUpdateObra: interfaceModule.saveOrUpdateObra, // NOVA
+      verifyObraData: interfaceModule.verifyObraData, // NOVA
+      deleteObra: interfaceModule.deleteObra, // NOVA
 
       // Edit
       makeEditable: editModule.makeEditable,
 
-      // Projects
+      // Projects - MANTIDO para operações dentro de obras
       deleteProject: projectsModule.deleteProject,
-      verifyProjectData: projectsModule.verifyProjectData,
-      saveProject: projectsModule.saveProject,
-      getNextProjectNumber: projectsModule.getNextProjectNumber,
-      initializeProjectCounter: projectsModule.initializeProjectCounter,
+      saveOrUpdateObra: projectsModule.saveObra, // ATUALIZADO: saveProject → saveObra
 
       // Rooms
       addNewRoom: roomsModule.addNewRoom,
@@ -216,49 +218,66 @@ async function loadSystemConstants() {
 }
 
 /**
- * Verifica se é necessário criar um projeto base quando não há projetos existentes
- * Garante que o usuário sempre tenha pelo menos um projeto para trabalhar
+ * Verifica se é necessário criar uma obra base quando não há obras existentes
+ * Garante que o usuário sempre tenha pelo menos uma obra para trabalhar
  */
-async function verifyAndCreateBaseProject() {
-  console.log(" Verificando necessidade de criar projeto base...");
+async function verifyAndCreateBaseObra() { // ATUALIZADO
+  console.log(" Verificando necessidade de criar obra base...");
   
   // Aguardar para garantir carregamento
   await new Promise(resolve => setTimeout(resolve, 500));
   
   const currentCount = getGeralCount();
-  const projectsInDOM = document.querySelectorAll('.project-block').length;
+  const obrasInDOM = document.querySelectorAll('.obra-block').length; // ATUALIZADO
   
-  console.log(` Estado atual - GeralCount: ${currentCount}, Projetos no DOM: ${projectsInDOM}`);
+  console.log(` Estado atual - GeralCount: ${currentCount}, Obras no DOM: ${obrasInDOM}`);
   
+  // Se não há obras, cria uma automaticamente
+  if (obrasInDOM === 0 && currentCount === 0) {
+    console.log("🏗️ Criando obra base automaticamente...");
+    if (typeof window.addNewObra === 'function') {
+      await window.addNewObra();
+      console.log("✅ Obra base criada automaticamente");
+    }
+  }
 }
 
 /**
  * Função de debug para verificar o estado final do sistema após inicialização
- * Exibe informações detalhadas sobre projetos, salas e módulos carregados
+ * Exibe informações detalhadas sobre obras, projetos e módulos carregados
  */
 function finalSystemDebug() {
   console.log('=== DEBUG FINAL DO SISTEMA ===');
   console.log('- window.GeralCount:', window.GeralCount);
   console.log('- getGeralCount():', getGeralCount());
+  console.log('- Obras no DOM:', document.querySelectorAll('.obra-block').length); // ATUALIZADO
   console.log('- Projetos no DOM:', document.querySelectorAll('.project-block').length);
   console.log('- Salas no DOM:', document.querySelectorAll('.room-block').length);
   console.log('- Módulos carregados:', modulesLoaded);
   console.log('- Constantes carregadas:', !!window.systemConstants);
   console.log('- Shutdown Manager:', !!shutdownManager);
   
-  // Debug detalhado dos projetos
-  const projects = document.querySelectorAll('.project-block');
-  projects.forEach((project, index) => {
-    const projectName = project.dataset.projectName;
-    const projectId = project.dataset.projectId;
-    const rooms = project.querySelectorAll('.room-block');
-    console.log(`- Projeto ${index + 1}: ${projectName} (ID: ${projectId}) - ${rooms.length} salas`);
+  // Debug detalhado das obras - ATUALIZADO
+  const obras = document.querySelectorAll('.obra-block');
+  obras.forEach((obra, index) => {
+    const obraName = obra.dataset.obraName;
+    const obraId = obra.dataset.obraId;
+    const projects = obra.querySelectorAll('.project-block');
+    console.log(`- Obra ${index + 1}: ${obraName} (ID: ${obraId}) - ${projects.length} projetos`);
+    
+    // Debug dos projetos dentro da obra
+    projects.forEach((project, projIndex) => {
+      const projectName = project.dataset.projectName;
+      const projectId = project.dataset.projectId;
+      const rooms = project.querySelectorAll('.room-block');
+      console.log(`  ↳ Projeto ${projIndex + 1}: ${projectName} (ID: ${projectId}) - ${rooms.length} salas`);
+    });
   });
 }
 
 /**
  * Inicialização principal do sistema quando o DOM estiver carregado
- * Orquestra o carregamento de módulos, constantes e projetos na ordem correta
+ * Orquestra o carregamento de módulos, constantes e obras na ordem correta
  */
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Inicializando sistema...");
@@ -274,19 +293,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     await loadSystemConstants();
     await initializeSession();
     
-    // 3. Normalizar projetos no servidor
-    await normalizeAllProjectsOnServer();
+    // 3. Carregar obras do servidor (AGORA FUNCIONA CORRETAMENTE) - ATUALIZADO
+    await loadObrasFromServer();
     
-    // 4. Carregar projetos do servidor (AGORA FUNCIONA CORRETAMENTE)
-    await loadProjectsFromServer();
-    
-    // 5. Inicializar project counter
-    if (window.initializeProjectCounter) {
-      await window.initializeProjectCounter();
-    }
-    
-    // 6. Verificação de fallback (apenas se realmente necessário)
-    await verifyAndCreateBaseProject();
+    // 4. Verificação de fallback (apenas se realmente necessário) - ATUALIZADO
+    await verifyAndCreateBaseObra();
     
     console.log("✅ Sistema inicializado com sucesso");
     
@@ -296,13 +307,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("❌ ERRO na inicialização do sistema:", error);
     
-    // Fallback robusto
+    // Fallback robusto - ATUALIZADO
     setTimeout(() => {
       console.log("🔄 Executando fallback...");
-      verifyAndCreateBaseProject();
+      verifyAndCreateBaseObra();
     }, 1000);
   }
 });
-
-
-

@@ -1,6 +1,6 @@
 import { UI_CONSTANTS } from '../config/config.js'
 import { createEmptyRoom } from '../data/rooms.js'
-import { getNextProjectNumber } from '../data/projects.js'
+import { generateObraId, generateProjectId, generateRoomId } from '../data/data-utils.js'
 
 /**
  * Exibe um banner de status do sistema (sucesso, erro, etc.)
@@ -140,24 +140,31 @@ function toggleSubsection(subsectionId) {
 }
 
 /**
- * Cria uma obra vazia na interface
+ * Cria uma obra vazia na interface - CORREÇÃO COMPLETA
  * @param {string} obraName - Nome da obra
  * @param {string} obraId - ID da obra (opcional)
  */
 function createEmptyObra(obraName, obraId) {
-  const obraHTML = buildObraHTML(obraName, obraId)
+  // CORREÇÃO: Para obra NOVA, NÃO passar ID ou passar null
+  const finalObraId = null; // SEMPRE null para obra nova
+  
+  const obraHTML = buildObraHTML(obraName, finalObraId)
   insertObraIntoDOM(obraHTML)
-  console.log(`🏗️ Obra ${obraName} criada`)
+  console.log(`🏗️ Obra ${obraName} criada - Botão: SALVAR OBRA`)
 }
 
 /**
- * Constrói o HTML de uma obra
+ * Constrói o HTML de uma obra - CORREÇÃO DEFINITIVA
  * @param {string} obraName - Nome da obra
  * @param {string} obraId - ID da obra
  * @returns {string} HTML da obra
  */
 function buildObraHTML(obraName, obraId) {
-  const hasId = obraId !== null && obraId !== undefined && obraId !== ""
+  // CORREÇÃO CRÍTICA: hasId = true APENAS se a obra JÁ FOI SALVA no servidor
+  // Para obra nova (não salva), hasId deve ser FALSE
+  const hasId = obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined";
+  
+  console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}, HasId: ${hasId}, Botão: ${hasId ? 'ATUALIZAR' : 'SALVAR'}`);
 
   return `
     <div class="obra-block" data-obra-id="${obraId || ""}" data-obra-name="${obraName}">
@@ -179,30 +186,63 @@ function buildObraHTML(obraName, obraId) {
         ${buildObraActionsFooter(obraName, hasId)}
       </div>
     </div>
-  `
+  `;
 }
 
 /**
- * Constrói o rodapé de ações da obra
+ * Constrói o rodapé de ações da obra - CORREÇÃO DEFINITIVA
  * @param {string} obraName - Nome da obra
- * @param {boolean} hasId - Se a obra já tem ID (já foi salva)
+ * @param {boolean} hasId - Se a obra já foi SALVA no servidor
  * @returns {string} HTML do rodapé de ações
  */
-/**
- * Constrói o rodapé de ações da obra - NOVO (botões que estavam no projeto)
- */
 function buildObraActionsFooter(obraName, hasId = false) {
-  const buttonText = hasId ? "Atualizar Obra" : "Salvar Obra"
-  const buttonClass = hasId ? "btn-update" : "btn-save"
+  // LÓGICA CORRETA:
+  // hasId = FALSE (obra NÃO salva) → "Salvar Obra" 
+  // hasId = TRUE (obra JÁ salva) → "Atualizar Obra"
+  const buttonText = hasId ? "Atualizar Obra" : "Salvar Obra";
+  const buttonClass = hasId ? "btn-update" : "btn-save";
+
+  console.log(`🔧 Build Obra Footer: ${obraName}, HasId: ${hasId}, Button: ${buttonText}`);
 
   return `
     <div class="obra-actions-footer">
       <button class="btn btn-verify" onclick="verifyObraData('${obraName}')">Verificar Dados</button>
-      <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveObra('${obraName}', event)">${buttonText}</button>
+      <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraName}')">${buttonText}</button>
       <button class="btn btn-download" onclick="downloadPDF('${obraName}')">Baixar PDF</button>
       <button class="btn btn-download" onclick="downloadWord('${obraName}')">Baixar Word</button>
     </div>
-  `
+  `;
+}
+
+/**
+ * Atualiza o botão de uma obra após salvamento - CORREÇÃO
+ * @param {string} obraName - Nome da obra
+ * @param {string} obraId - ID da obra salva
+ */
+function updateObraButtonAfterSave(obraName, obraId) {
+  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
+  if (!obraBlock) {
+    console.error(`❌ Obra ${obraName} não encontrada para atualizar botão`);
+    return;
+  }
+  
+  // Atualizar o ID no DOM
+  obraBlock.dataset.obraId = obraId;
+  
+  // CORREÇÃO: Agora a obra foi SALVA no servidor, então hasId = TRUE
+  const obraContent = document.getElementById(`obra-content-${obraName}`);
+  if (obraContent) {
+    const oldFooter = obraContent.querySelector('.obra-actions-footer');
+    if (oldFooter) {
+      const newFooter = buildObraActionsFooter(obraName, true); // TRUE = obra SALVA no servidor
+      oldFooter.outerHTML = newFooter;
+      console.log(`🔄 Botão da obra ${obraName} ATUALIZADO para "Atualizar Obra" (ID: ${obraId})`);
+    } else {
+      console.error(`❌ Rodapé não encontrado na obra ${obraName}`);
+    }
+  } else {
+    console.error(`❌ Conteúdo da obra ${obraName} não encontrado`);
+  }
 }
 
 /**
@@ -215,19 +255,26 @@ function insertObraIntoDOM(obraHTML) {
 }
 
 /**
- * Cria um projeto vazio dentro de uma obra
+ * Cria um projeto vazio dentro de uma obra - ATUALIZADO com hierarquia de IDs
  * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto
  * @param {string} projectId - ID do projeto (opcional)
  */
 function createEmptyProject(obraName, projectName, projectId) {
-  const projectHTML = buildProjectHTML(obraName, projectName, projectId)
+  const obraElement = document.querySelector(`[data-obra-name="${obraName}"]`);
+  if (!obraElement) {
+    console.error(`❌ Obra ${obraName} não encontrada`);
+    return;
+  }
+  
+  const finalProjectId = projectId || generateProjectId(obraElement);
+  const projectHTML = buildProjectHTML(obraName, projectName, finalProjectId)
   const obraProjectsContainer = document.getElementById(`projects-${obraName}`)
   
   if (obraProjectsContainer) {
     obraProjectsContainer.insertAdjacentHTML("beforeend", projectHTML)
     removeEmptyObraMessage(obraName)
-    console.log(`📁 Projeto ${projectName} criado na obra ${obraName}`)
+    console.log(`📁 Projeto ${projectName} criado na obra ${obraName} com ID: ${finalProjectId}`)
   } else {
     console.error(`❌ Container de projetos não encontrado para obra ${obraName}`)
   }
@@ -264,33 +311,12 @@ function buildProjectHTML(obraName, projectName, projectId) {
 }
 
 /**
- * Constrói o rodapé de ações do projeto
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
- * @param {boolean} hasId - Se o projeto já tem ID (já foi salvo)
- * @returns {string} HTML do rodapé de ações
- */
-function buildProjectActionsFooter(obraName, projectName, hasId = false) {
-  const buttonText = hasId ? "Atualizar Projeto" : "Salvar Projeto"
-  const buttonClass = hasId ? "btn-update" : "btn-save"
-
-  return `
-    <div class="project-actions-footer">
-      <button class="btn btn-verify" onclick="verifyProjectData('${obraName}', '${projectName}')">Verificar Dados</button>
-      <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveProject('${obraName}', '${projectName}', event)">${buttonText}</button>
-      <button class="btn btn-download" onclick="downloadPDF('${obraName}', '${projectName}')">Baixar PDF</button>
-      <button class="btn btn-download" onclick="downloadWord('${obraName}', '${projectName}')">Baixar Word</button>
-    </div>
-  `
-}
-
-/**
- * Adiciona um novo projeto à obra especificada
+ * Adiciona um novo projeto à obra especificada - ATUALIZADO
  * @param {string} obraName - Nome da obra
  */
 function addNewProjectToObra(obraName) {
   try {
-    const projectNumber = getNextProjectNumber()
+    const projectNumber = getNextProjectNumber(obraName)
     const projectName = `Projeto${projectNumber}`
 
     createEmptyProject(obraName, projectName, null)
@@ -307,10 +333,7 @@ function addNewProjectToObra(obraName) {
 }
 
 /**
- * Adiciona uma nova obra à interface - CORRIGIDA
- */
-/**
- * Adiciona uma nova obra à interface - SIMPLIFICADA
+ * Adiciona uma nova obra à interface - CORREÇÃO COMPLETA
  */
 async function addNewObra() {
   try {
@@ -319,10 +342,10 @@ async function addNewObra() {
 
     console.log(`🏗️ Criando nova obra: ${obraName}`)
     
-    // Cria a obra vazia
+    // CORREÇÃO: Sempre criar obra com ID = null para obra nova
     createEmptyObra(obraName, null)
     
-    console.log(`✅ ${obraName} adicionada`)
+    console.log(`✅ ${obraName} adicionada com botão SALVAR OBRA`)
     
   } catch (error) {
     console.error("❌ Erro ao adicionar nova obra:", error)
@@ -330,7 +353,10 @@ async function addNewObra() {
   }
 }
 
-// CORREÇÃO: Adicionar funções faltantes
+/**
+ * Remove uma obra
+ * @param {string} obraName - Nome da obra
+ */
 function deleteObra(obraName) {
   if (!confirm("Tem certeza que deseja remover esta obra e todos os seus projetos?")) return
   
@@ -342,18 +368,87 @@ function deleteObra(obraName) {
   }
 }
 
-function saveObra(obraName, event) {
+/**
+ * Função única para salvar ou atualizar obra - CORREÇÃO PRINCIPAL
+ * @param {string} obraName - Nome da obra
+ * @param {Event} event - Evento do clique
+ */
+function saveOrUpdateObra(obraName, event) {
   if (event) {
-    event.preventDefault()
-    event.stopPropagation()
+    event.preventDefault();
+    event.stopPropagation();
   }
   
-  console.log(`💾 Salvando obra: ${obraName}`)
-  showSystemStatus("Funcionalidade de salvar obra em desenvolvimento", "success")
+  console.log(`💾 SALVANDO/ATUALIZANDO OBRA: "${obraName}"`);
+  
+  // CORREÇÃO: Chama a função real de salvamento do projects.js
+  if (typeof window.saveObra === 'function') {
+    window.saveObra(obraName, event);
+  } else {
+    showSystemStatus("Funcionalidade de salvar obra em desenvolvimento", "info");
+  }
 }
 
 /**
- * Obtém o próximo número de obra
+ * Verifica os dados de uma obra
+ * @param {string} obraName - Nome da obra
+ */
+function verifyObraData(obraName) {
+  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`)
+  if (!obraBlock) return
+
+  const projects = obraBlock.querySelectorAll(".project-block")
+  let totalRooms = 0
+  let report = `Verificação da Obra "${obraName}":\n\n`
+  report += `Total de projetos: ${projects.length}\n\n`
+
+  projects.forEach((project, index) => {
+    const projectName = project.dataset.projectName
+    const rooms = project.querySelectorAll(".room-block")
+    totalRooms += rooms.length
+    
+    report += `Projeto ${index + 1}: ${projectName}\n`
+    report += `  - Salas: ${rooms.length}\n`
+    
+    rooms.forEach((room, roomIndex) => {
+      const roomName = room.querySelector(".room-title")?.textContent || `Sala ${roomIndex + 1}`
+      const stats = calculateRoomCompletionStats(room)
+      report += `    - ${roomName}: ${stats.filled}/${stats.total} campos (${stats.percentage}%)\n`
+    })
+    report += '\n'
+  })
+
+  report += `RESUMO: ${projects.length} projetos, ${totalRooms} salas`
+
+  alert(report)
+}
+
+/**
+ * Calcula estatísticas de preenchimento de uma sala
+ * @param {HTMLElement} room - Elemento da sala
+ * @returns {Object} Estatísticas de preenchimento
+ */
+function calculateRoomCompletionStats(room) {
+  const inputs = room.querySelectorAll(".form-input, .clima-input")
+  const filledInputs = Array.from(inputs).filter((input) => {
+    if (input.type === 'checkbox' || input.type === 'radio') {
+      return input.checked
+    }
+    return input.value && input.value.trim() !== ""
+  }).length
+  
+  const totalInputs = inputs.length
+  const percentage = totalInputs > 0 ? ((filledInputs / totalInputs) * 100).toFixed(1) : 0
+
+  return {
+    filled: filledInputs,
+    total: totalInputs,
+    percentage: percentage,
+  }
+}
+
+/**
+ * Obtém o próximo número de obra - ATUALIZADO para usar hierarquia
  * @returns {number} Próximo número disponível para obra
  */
 function getNextObraNumber() {
@@ -366,6 +461,26 @@ function getNextObraNumber() {
   
   const maxNumber = Math.max(0, ...obraNumbers)
   return maxNumber + 1
+}
+
+/**
+ * Obtém o próximo número de projeto dentro de uma obra - NOVA FUNÇÃO
+ * @param {string} obraName - Nome da obra
+ * @returns {number} Próximo número disponível para projeto
+ */
+function getNextProjectNumber(obraName) {
+  const obraElement = document.querySelector(`[data-obra-name="${obraName}"]`);
+  if (!obraElement) return 1;
+  
+  const projects = obraElement.querySelectorAll('.project-block');
+  const projectNumbers = Array.from(projects).map(project => {
+    const projectName = project.dataset.projectName;
+    const match = projectName.match(/Projeto(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+  });
+  
+  const maxNumber = Math.max(0, ...projectNumbers);
+  return maxNumber + 1;
 }
 
 /**
@@ -428,6 +543,19 @@ function showEmptyProjectMessageIfNeeded(projectContent) {
   }
 }
 
+// CORREÇÃO: Adicionar funções de download (placeholders)
+function downloadPDF(obraName, projectName = null) {
+  const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`
+  console.log(`📄 Gerando PDF para ${target}`)
+  showSystemStatus(`Gerando PDF para ${target}...`, "info")
+}
+
+function downloadWord(obraName, projectName = null) {
+  const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`
+  console.log(`📝 Gerando Word para ${target}`)
+  showSystemStatus(`Gerando documento Word para ${target}...`, "info")
+}
+
 // Funções de compatibilidade (para manter funcionamento com código existente)
 function addNewProject() {
   // Por padrão, cria uma obra com um projeto dentro
@@ -459,25 +587,34 @@ export {
   insertObraIntoDOM,
   createEmptyProject,
   buildProjectHTML,
-  buildProjectActionsFooter,
   addNewObra,
   addNewProjectToObra,
   getNextObraNumber,
+  getNextProjectNumber,
   removeEmptyObraMessage,
   showEmptyObraMessageIfNeeded,
   removeEmptyProjectMessage,
   showEmptyProjectMessageIfNeeded,
   addNewProject, // Export para compatibilidade
   deleteObra,
-  saveObra
+  saveOrUpdateObra, // CORREÇÃO: função única
+  updateObraButtonAfterSave,
+  verifyObraData,
+  downloadPDF,
+  downloadWord,
+  calculateRoomCompletionStats
 }
 
-// Disponibilização global das novas funções
+// Disponibilização global das funções - ATUALIZADA
 if (typeof window !== 'undefined') {
   window.addNewObra = addNewObra
   window.addNewProjectToObra = addNewProjectToObra
   window.toggleObra = toggleObra
   window.getNextObraNumber = getNextObraNumber
   window.deleteObra = deleteObra
-  window.saveObra = saveObra
+  window.saveOrUpdateObra = saveOrUpdateObra // CORREÇÃO: função única
+  window.verifyObraData = verifyObraData
+  window.downloadPDF = downloadPDF
+  window.downloadWord = downloadWord
+  window.addNewProject = addNewProject // Compatibilidade
 }

@@ -21,7 +21,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         serve_directory = self.project_root
         super().__init__(*args, directory=str(serve_directory), **kwargs)
     
-    
     def do_GET(self):
         """GET robusto com tratamento de erro"""
         parsed_path = urlparse(self.path)
@@ -48,12 +47,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_machines(self)
         elif path == '/health-check':
             self.send_json_response({"status": "online", "timestamp": time.time()})
-        # ✅ ADICIONE ESTA LINHA - ROTA FALTANTE
+        # ✅ ROTAS DE SESSÕES
         elif path == '/api/session-projects':
             self.route_handler.handle_get_session_projects(self)
-        # NOVAS ROTAS DE SESSÕES
         elif path == '/api/sessions/current':
             self.route_handler.handle_get_sessions_current(self)
+        # ✅ NOVAS ROTAS DE OBRAS
+        elif path == '/obras':
+            self.route_handler.handle_get_obras(self)
         else:
             try:
                 super().do_GET()
@@ -74,27 +75,25 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         if path == '/api/sessions/shutdown':
             self.route_handler.handle_post_sessions_shutdown(self)
-
         elif path == '/api/shutdown':
             self.route_handler.handle_shutdown(self)
-
         elif path in ['/projetos', '/projects']:
             self.route_handler.handle_post_projetos(self)
-
         elif path == '/dados':
             self.route_handler.handle_post_dados(self)
-
         elif path == '/backup':
             self.route_handler.handle_post_backup(self)
-
         elif path == '/api/sessions/ensure-single':
             self.route_handler.handle_post_sessions_ensure_single(self)
+        # ✅ NOVA ROTA PARA OBRAS
+        elif path == '/obras':
+            self.route_handler.handle_post_obras(self)
         else:
             print(f"❌ POST não implementado: {path}")
             self.send_error(501, f"Método não suportado: POST {path}")
 
     def do_PUT(self):
-        """PUT para atualizações"""
+        """PUT para atualizações - CORREÇÃO DEFINITIVA"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
@@ -103,7 +102,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"📨 PUT: {path}")
         
-        if path.startswith('/projetos/') or path.startswith('/projects/'):
+        # ✅ CORREÇÃO DEFINITIVA: VERIFICAÇÃO MAIS ESPECÍFICA PRIMEIRO
+        if path.startswith('/obras/'):
+            print(f"🎯 Roteando PUT para obra: {path}")
+            self.route_handler.handle_put_obra(self)
+        elif path.startswith('/projetos/') or path.startswith('/projects/'):
             self.route_handler.handle_put_projeto(self)
         else:
             print(f"❌ PUT não implementado: {path}")
@@ -119,7 +122,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"🗑️  DELETE: {path}")
         
-        # NOVAS ROTAS DE SESSÕES - DELETE
+        # ROTAS DE SESSÕES - DELETE
         if path.startswith('/api/sessions/remove-project/'):
             self.route_handler.handle_delete_sessions_remove_project(self)
         else:

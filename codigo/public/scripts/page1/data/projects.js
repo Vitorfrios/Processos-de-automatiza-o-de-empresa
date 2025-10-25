@@ -1,439 +1,348 @@
 import { UI_CONSTANTS } from "../config/config.js"
 import { ensureStringId } from "../utils/utils.js"
-import { showSystemStatus } from "../ui/interface.js"
-import { buildProjectData } from "./data-utils.js"
-import {
-  incrementGeralCount,
-  decrementGeralCount,
-  getGeralCount,
-  addProjectToRemovedList,
-  saveFirstProjectIdOfSession,
-  updateProjectButton,
-  removeProjectFromSession,
-  ensureSingleActiveSession,
-  isSessionActive
-} from "./server.js"
+import { buildObraData } from "./data-utils.js"
+import { showSystemStatus, updateObraButtonAfterSave } from "../ui/interface.js"
+import { isSessionActive } from "./server.js"
 
 /**
- * Busca todos os projetos do servidor e normaliza os IDs
- * @returns {Promise<Array>} Lista de projetos normalizados
+ * Busca todas as obras do servidor
+ * @returns {Promise<Array>} Lista de obras
  */
-async function fetchProjects() {
+async function fetchObras() {
   try {
-    const response = await fetch('/projetos')
+    const response = await fetch('/obras')
 
     if (!response.ok) {
+      // Se o endpoint não existir, retorna array vazio (para obras novas)
+      if (response.status === 404) {
+        return [];
+      }
       throw new Error(`Erro HTTP: ${response.status}`)
     }
 
-    const projects = await response.json()
-
-    const normalizedProjects = projects.map((project) => {
-      if (project.id !== undefined && project.id !== null) {
-        project.id = ensureStringId(project.id)
-      }
-
-      if (project.salas && Array.isArray(project.salas)) {
-        project.salas = project.salas.map((sala) => {
-          if (sala.id !== undefined && sala.id !== null) {
-            sala.id = ensureStringId(sala.id)
-          }
-          return sala
-        })
-      }
-
-      return project
-    })
-
-    return normalizedProjects
+    const obras = await response.json()
+    return obras || [];
   } catch (error) {
-    console.error("❌ Erro ao buscar projetos:", error)
-    showSystemStatus("ERRO: Não foi possível carregar projetos", "error")
-    return []
+    console.error("❌ Erro ao buscar obras:", error)
+    // Em caso de erro, assumir que não há obras (para desenvolvimento)
+    return [];
   }
 }
 
-/**
- * Obtém o próximo ID disponível para um novo projeto
- * @returns {Promise<number>} Próximo ID de projeto
- */
-async function getNextProjectId() {
-  const projects = await fetchProjects()
-
-  if (projects.length === 0) {
-    return ensureStringId(UI_CONSTANTS.INITIAL_PROJECT_ID)
-  }
-
-  const maxId = Math.max(...projects.map((p) => Number(p.id) || 0))
-  const nextId = maxId >= UI_CONSTANTS.INITIAL_PROJECT_ID ? maxId + 1 : UI_CONSTANTS.INITIAL_PROJECT_ID
-  return ensureStringId(nextId)
-}
 
 /**
- * Inicializa o contador de projetos baseado nos projetos existentes no DOM
+ * Salva uma nova OBRA no servidor - CORREÇÃO PARA EVITAR 404
+ * @param {Object} obraData - Dados da obra a ser salva
+ * @returns {Promise<Object|null>} Obra criada ou null em caso de erro
  */
-async function initializeProjectCounter() {
-  const projects = document.querySelectorAll(".project-block")
-
-  if (projects.length === 0) {
-    window.projectCounter = 0
-    return
-  }
-
-  const projectNumbers = Array.from(projects)
-    .map((project) => {
-      const match = project.dataset.projectName.match(/Projeto(\d+)/)
-      return match ? Number.parseInt(match[1]) : 0
-    })
-    .filter((num) => num > 0)
-
-  const maxProjectNumber = projectNumbers.length > 0 ? Math.max(...projectNumbers) : 0
-  window.projectCounter = maxProjectNumber
-}
-
-/**
- * Retorna o próximo número de projeto disponível
- * @returns {number} Próximo número de projeto
- */
-function getNextProjectNumber() {
-  if (typeof window.projectCounter === "undefined") {
-    window.projectCounter = 0
-  }
-  window.projectCounter++
-  return window.projectCounter
-}
-
-/**
- * Normaliza todos os IDs de um projeto (projeto e salas)
- * @param {Object} projectData - Dados do projeto
- * @returns {Object} Projeto com IDs normalizados
- */
-function normalizeProjectIds(projectData) {
-  if (projectData.id !== undefined && projectData.id !== null) {
-    projectData.id = ensureStringId(projectData.id)
-  }
-
-  if (projectData.salas && Array.isArray(projectData.salas)) {
-    projectData.salas.forEach((sala) => {
-      if (sala.id !== undefined && sala.id !== null) {
-        sala.id = ensureStringId(sala.id)
-      }
-    })
-  }
-
-  return projectData
-}
-
-/**
- * Salva um novo projeto no servidor
- * @param {Object} projectData - Dados do projeto a ser salvo
- * @returns {Promise<Object|null>} Projeto criado ou null em caso de erro
- */
-async function salvarProjeto(projectData) {
+async function salvarObra(obraData) {
   try {
     // REGRA: Só salvar se sessão estiver ativa
     if (!isSessionActive()) {
-      console.warn("⚠️ Sessão não está ativa - projeto não será salvo");
-      showSystemStatus("ERRO: Sessão não está ativa. Projeto não salvo.", "error");
+      console.warn("⚠️ Sessão não está ativa - obra não será salva");
+      showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
       return null;
     }
 
-    if (!projectData.id) {
-      projectData.id = await getNextProjectId()
-    }
-
-    projectData = normalizeProjectIds(projectData)
-
-    console.log('📤 SALVANDO NOVO PROJETO:', {
-      id: projectData.id,
-      nome: projectData.nome,
-      salas: projectData.salas?.length || 0,
-      timestamp: projectData.timestamp
+    console.log('📤 SALVANDO NOVA OBRA:', {
+      id: obraData.id,
+      nome: obraData.nome,
+      projetos: obraData.projetos?.length || 0,
+      timestamp: obraData.timestamp
     });
 
-    const response = await fetch('/projetos', {
+    // CORREÇÃO: Sempre usar POST para nova obra, mesmo que tenha ID
+    const response = await fetch('/obras', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(projectData),
-    })
+      body: JSON.stringify(obraData),
+    });
 
     if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`Erro ao salvar projeto: ${errorText}`)
+      const errorText = await response.text();
+      throw new Error(`Erro ao salvar obra: ${errorText}`);
     }
 
-    const createdProject = await response.json()
-    createdProject.id = ensureStringId(createdProject.id)
-    showSystemStatus("Projeto salvo com sucesso!", "success")
+    const createdObra = await response.json();
+    showSystemStatus("Obra salva com sucesso!", "success");
     
-    console.log('✅ NOVO PROJETO SALVO:', createdProject);
-    return createdProject
+    console.log('✅ NOVA OBRA SALVA:', createdObra);
+    return createdObra;
   } catch (error) {
-    console.error("❌ Erro ao SALVAR projeto:", error)
-    showSystemStatus("ERRO: Não foi possível salvar o projeto", "error")
-    return null
+    console.error("❌ Erro ao SALVAR obra:", error);
+    showSystemStatus("ERRO: Não foi possível salvar a obra", "error");
+    return null;
   }
 }
 
 /**
- * Atualiza um projeto existente no servidor
- * @param {string|number} projectId - ID do projeto
- * @param {Object} projectData - Dados atualizados do projeto
- * @returns {Promise<Object|null>} Projeto atualizado ou null em caso de erro
+ * Atualiza uma obra existente no servidor - CORREÇÃO PARA VERIFICAR EXISTÊNCIA
+ * @param {string|number} obraId - ID da obra
+ * @param {Object} obraData - Dados atualizados da obra
+ * @returns {Promise<Object|null>} Obra atualizada ou null em caso de erro
  */
-async function atualizarProjeto(projectId, projectData) {
+async function atualizarObra(obraId, obraData) {
   try {
     // REGRA: Só atualizar se sessão estiver ativa
     if (!isSessionActive()) {
-      console.warn("⚠️ Sessão não está ativa - projeto não será atualizado");
-      showSystemStatus("ERRO: Sessão não está ativa. Projeto não atualizado.", "error");
+      console.warn("⚠️ Sessão não está ativa - obra não será atualizada");
+      showSystemStatus("ERRO: Sessão não está ativa. Obra não atualizada.", "error");
       return null;
     }
 
-    projectId = ensureStringId(projectId)
+    obraId = ensureStringId(obraId);
 
-    if (!projectId) {
-      console.error("❌ ERRO: ID do projeto inválido para atualização")
-      showSystemStatus("ERRO: ID do projeto inválido para atualização", "error")
-      return null
+    if (!obraId) {
+      console.error("❌ ERRO: ID da obra inválido para atualização");
+      showSystemStatus("ERRO: ID da obra inválido para atualização", "error");
+      return null;
     }
 
-    projectData = normalizeProjectIds(projectData)
-    projectData.id = projectId
+    // CORREÇÃO: Verificar se a obra existe antes de tentar atualizar
+    console.log(`🔍 Verificando se obra ${obraId} existe no servidor...`);
+    const checkResponse = await fetch(`/obras/${obraId}`);
+    
+    if (!checkResponse.ok) {
+      if (checkResponse.status === 404) {
+        console.log(`📝 Obra ${obraId} não encontrada, salvando como nova...`);
+        return await salvarObra(obraData);
+      } else {
+        const errorText = await checkResponse.text();
+        throw new Error(`Erro ao verificar obra: ${errorText}`);
+      }
+    }
 
-    console.log('🔄 ATUALIZANDO PROJETO EXISTENTE:', {
-      id: projectData.id,
-      nome: projectData.nome,
-      salas: projectData.salas?.length || 0,
-      dadosPorSala: projectData.salas?.map(sala => ({
-        nome: sala.nome,
-        inputs: Object.keys(sala.inputs || {}).length,
-        maquinas: sala.maquinas?.length || 0,
-        capacidade: Object.keys(sala.capacidade || {}).length,
-        ganhosTermicos: Object.keys(sala.ganhosTermicos || {}).length,
-        configuracao: Object.keys(sala.configuracao || {}).length
-      }))
+    // Se chegou aqui, a obra existe - pode atualizar
+    obraData.id = obraId;
+
+    console.log('🔄 ATUALIZANDO OBRA EXISTENTE:', {
+      id: obraData.id,
+      nome: obraData.nome,
+      projetos: obraData.projetos?.length || 0
     });
 
-    const url = `/projetos/${projectId}`
-
+    const url = `/obras/${obraId}`;
     const response = await fetch(url, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(projectData),
-    })
+      body: JSON.stringify(obraData),
+    });
 
     if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`Erro ao atualizar projeto: ${errorText}`)
+      const errorText = await response.text();
+      throw new Error(`Erro ao atualizar obra: ${errorText}`);
     }
 
-    const updatedProject = await response.json()
-    updatedProject.id = ensureStringId(updatedProject.id)
-    showSystemStatus("Projeto atualizado com sucesso!", "success")
+    const updatedObra = await response.json();
+    showSystemStatus("Obra atualizada com sucesso!", "success");
     
-    console.log('✅ PROJETO ATUALIZADO:', updatedProject);
-    return updatedProject
+    console.log('✅ OBRA ATUALIZADA:', updatedObra);
+    return updatedObra;
   } catch (error) {
-    console.error("❌ Erro ao ATUALIZAR projeto:", error)
-    showSystemStatus("ERRO: Não foi possível atualizar o projeto", "error")
-    return null
+    console.error("❌ Erro ao ATUALIZAR obra:", error);
+    showSystemStatus("ERRO: Não foi possível atualizar a obra", "error");
+    return null;
   }
 }
 
 /**
- * Salva ou atualiza um projeto (função principal chamada pela interface)
+ * Salva ou atualiza uma OBRA (função principal) - CORREÇÃO FINAL
  * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
  * @param {Event} event - Evento do clique
  */
-async function saveProject(obraName, projectName, event) {
+async function saveObra(obraName, event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
-    console.log(`💾 INICIANDO SALVAMENTO do projeto: "${projectName}" na obra "${obraName}"`);
+    console.log(`💾 SALVANDO OBRA: "${obraName}"`);
 
-    // REGRA: Só salvar se sessão estiver ativa
     if (!isSessionActive()) {
-        console.warn("⚠️ Sessão não está ativa - projeto não será salvo");
-        showSystemStatus("ERRO: Sessão não está ativa. Projeto não salvo.", "error");
+        console.warn("⚠️ Sessão não está ativa - obra não será salva");
+        showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
         return;
     }
 
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`);
-    if (!projectBlock) {
-        console.error('❌ Projeto não encontrado:', { obraName, projectName });
-        showSystemStatus("ERRO: Projeto não encontrado na interface", "error");
+    const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
+    if (!obraBlock) {
+        console.error('❌ Obra não encontrada:', obraName);
+        showSystemStatus("ERRO: Obra não encontrada na interface", "error");
         return;
     }
 
-    // Construir dados do projeto
-    console.log('🔨 Construindo dados do projeto...');
-    const projectData = buildProjectData(projectBlock);
+    // Construir dados da obra (inclui projetos e salas)
+    console.log('🔨 Construindo dados da obra...');
+    const obraData = buildObraData(obraBlock);
 
-    if (!projectData) {
-        console.error('❌ Falha ao construir dados do projeto');
-        showSystemStatus("ERRO: Falha ao construir dados do projeto", "error");
+    if (!obraData) {
+        console.error('❌ Falha ao construir dados da obra');
+        showSystemStatus("ERRO: Falha ao construir dados da obra", "error");
         return;
     }
 
-    // VALIDAÇÃO DOS DADOS CONSTRUÍDOS
-    console.log('📋 VALIDAÇÃO DOS DADOS:');
-    console.log('- Nome do projeto:', projectData.nome);
-    console.log('- ID atual:', projectData.id);
-    console.log('- Número de salas:', projectData.salas?.length || 0);
-    
-    if (projectData.salas && projectData.salas.length > 0) {
-        projectData.salas.forEach((sala, index) => {
-            console.log(`  Sala ${index + 1} "${sala.nome}":`, {
-                inputs: Object.keys(sala.inputs || {}).length,
-                maquinas: sala.maquinas?.length || 0,
-                capacidade: Object.keys(sala.capacidade || {}).length,
-                ganhosTermicos: Object.keys(sala.ganhosTermicos || {}).length,
-                configuracao: Object.keys(sala.configuracao || {}).length
-            });
-        });
-    }
+    // CORREÇÃO: Lógica melhorada para determinar se é nova obra ou atualização
+    const obraIdFromDOM = obraBlock.dataset.obraId;
+    const isNewObra = !obraIdFromDOM || obraIdFromDOM === "" || obraIdFromDOM === "null" || obraIdFromDOM === "undefined";
 
-    // DETERMINAR SE É NOVO PROJETO
-    const projectIdFromDOM = projectBlock.dataset.projectId;
-    const hasValidId = projectData.id 
-    
-    const isNewProject = !hasValidId && !projectIdFromDOM;
-
-    console.log('🔍 VERIFICAÇÃO DE PROJETO NOVO:');
-    console.log('- ID nos dados:', projectData.id);
-    console.log('- ID no DOM:', projectIdFromDOM);
-    console.log('- Tem ID válido?:', hasValidId);
-    console.log('- É novo projeto?:', isNewProject);
-
-    // REGRA: Para novo projeto, garantir sessão única
-    if (isNewProject) {
-        try {
-            console.log('🔄 Garantindo sessão única ativa...');
-            await ensureSingleActiveSession();
-        } catch (error) {
-            console.error('❌ Erro ao garantir sessão única:', error);
-            // Continuar mesmo com erro, mas logar
-        }
-    }
+    console.log('🔍 VERIFICAÇÃO DE OBRA:');
+    console.log('- ID no DOM:', obraIdFromDOM);
+    console.log('- ID nos dados:', obraData.id);
+    console.log('- É nova obra?:', isNewObra);
 
     let result = null;
     
-    if (isNewProject) {
-        console.log('🆕 SALVANDO COMO NOVO PROJETO');
-        result = await salvarProjeto(projectData);
+    if (isNewObra) {
+        console.log('🆕 SALVANDO COMO NOVA OBRA');
+        result = await salvarObra(obraData);
     } else {
-        // Usar ID do DOM se disponível, caso contrário usar ID dos dados
-        const finalId = projectIdFromDOM || projectData.id;
-        console.log('📝 ATUALIZANDO PROJETO EXISTENTE, ID:', finalId);
-        result = await atualizarProjeto(finalId, projectData);
+        const finalId = obraIdFromDOM || obraData.id;
+        console.log('📝 ATUALIZANDO OBRA EXISTENTE, ID:', finalId);
+        result = await atualizarObra(finalId, obraData);
     }
 
     if (result) {
         const finalId = ensureStringId(result.id);
         
-        // ATUALIZAR DOM COM O ID CORRETO
-        projectBlock.dataset.projectId = finalId;
-        projectBlock.dataset.projectName = projectData.nome;
+        // Atualizar DOM com o ID correto
+        obraBlock.dataset.obraId = finalId;
+        obraBlock.dataset.obraName = obraData.nome;
         
         // Atualizar título se necessário
-        const titleElement = projectBlock.querySelector('.project-title');
-        if (titleElement && titleElement.textContent !== projectData.nome) {
-            titleElement.textContent = projectData.nome;
+        const titleElement = obraBlock.querySelector('.obra-title');
+        if (titleElement && titleElement.textContent !== obraData.nome) {
+            titleElement.textContent = obraData.nome;
         }
 
-        updateProjectButton(projectName, true);
-        saveFirstProjectIdOfSession(finalId);
-
-        if (isNewProject) {
-            incrementGeralCount();
+        // CORREÇÃO: Atualizar o botão para "Atualizar Obra"
+        if (typeof updateObraButtonAfterSave === 'function') {
+            updateObraButtonAfterSave(obraName, finalId);
         }
 
-        collapseProjectAfterSave(projectName, projectBlock);
+        console.log(`✅ OBRA SALVA COM SUCESSO! ID: ${finalId}`);
         
-        console.log(`✅ PROJETO SALVO COM SUCESSO! ID: ${finalId}`);
-        
-        // Log final para debug
-        console.log('🎯 ESTADO FINAL DO PROJETO:', {
-            id: finalId,
-            nome: projectData.nome,
-            salas: projectData.salas?.length || 0,
-            timestamp: projectData.timestamp
-        });
+        showSystemStatus("Obra salva com sucesso!", "success");
     } else {
-        console.error('❌ FALHA AO SALVAR PROJETO NO SERVIDOR');
-        showSystemStatus("ERRO: Falha ao salvar projeto no servidor", "error");
+        console.error('❌ FALHA AO SALVAR OBRA NO SERVIDOR');
+        showSystemStatus("ERRO: Falha ao salvar obra no servidor", "error");
     }
 }
 
-// Função de compatibilidade para código existente
-async function saveProjectLegacy(projectName, event) {
-    // Tenta encontrar a obra do projeto
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
-    const obraName = projectBlock?.dataset.obraName;
-    
-    if (obraName) {
-        return saveProject(obraName, projectName, event);
-    } else {
-        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
-        showSystemStatus("ERRO: Projeto não está associado a uma obra", "error");
-    }
-}
 
 /**
- * Colapsa o projeto após salvar
- * @param {string} projectName - Nome do projeto
- * @param {HTMLElement} projectBlock - Elemento do projeto
- */
-function collapseProjectAfterSave(projectName, projectBlock) {
-  const projectContent = document.getElementById(`project-content-${projectName}`)
-  const minimizer = projectBlock.querySelector(".project-header .minimizer")
-
-  if (projectContent && !projectContent.classList.contains(UI_CONSTANTS.COLLAPSED_CLASS)) {
-    collapseElement(projectContent, minimizer)
-  }
-}
-
-/**
- * Deleta um projeto da interface
+ * Deleta um projeto da interface (apenas remoção visual)
  * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto a ser deletado
  */
 async function deleteProject(obraName, projectName) {
-  const confirmMessage = "Tem certeza que deseja remover este projeto? Os dados permanecerão no servidor, mas serão removidos da sessão atual."
+  const confirmMessage = "Tem certeza que deseja remover este projeto da obra?"
 
   if (!confirm(confirmMessage)) return
 
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`)
   if (!projectBlock) return
 
-  const projectId = projectBlock.dataset.projectId ? ensureStringId(projectBlock.dataset.projectId) : null
-
-  // REGRA: Remover projeto da sessão no backend
-  if (projectId) {
-    try {
-      console.log(`🗑️ Removendo projeto ${projectId} da sessão...`);
-      await removeProjectFromSession(projectId);
-    } catch (error) {
-      console.error('❌ Erro ao remover projeto da sessão:', error);
-      // Continuar com a remoção local mesmo se houver erro no backend
-    }
-  }
-
-  // Remover da interface
+  // Apenas remove da interface - o salvamento da obra atualizada vai refletir a remoção
   projectBlock.remove()
 
-  // Atualizar estado local
-  if (projectId) {
-    addProjectToRemovedList(projectId)
-  } else {
-    decrementGeralCount()
-  }
+  console.log(`🗑️ Projeto ${projectName} removido da obra ${obraName}`)
+  showSystemStatus("Projeto removido da obra", "success")
+}
 
-  showSystemStatus("Projeto removido da sessão atual", "success");
+/**
+ * Deleta uma obra do servidor
+ * @param {string} obraName - Nome da obra
+ * @param {string} obraId - ID da obra
+ */
+async function deleteObraFromServer(obraName, obraId) {
+  try {
+    if (!isSessionActive()) {
+      console.warn("⚠️ Sessão não está ativa - obra não será removida do servidor");
+      return;
+    }
+
+    obraId = ensureStringId(obraId);
+
+    if (!obraId) {
+      console.error("❌ ERRO: ID da obra inválido para remoção");
+      return;
+    }
+
+    console.log(`🗑️ Removendo obra ${obraId} do servidor...`);
+
+    const response = await fetch(`/obras/${obraId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erro ao remover obra: ${errorText}`);
+    }
+
+    console.log(`✅ Obra ${obraId} removida do servidor`);
+    showSystemStatus("Obra removida do servidor com sucesso", "success");
+  } catch (error) {
+    console.error("❌ Erro ao remover obra do servidor:", error);
+    showSystemStatus("ERRO: Não foi possível remover a obra do servidor", "error");
+  }
+}
+
+/**
+ * Verifica os dados de uma obra e gera relatório
+ * @param {string} obraName - Nome da obra
+ */
+function verifyObraData(obraName) {
+  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
+  if (!obraBlock) return;
+
+  const projects = obraBlock.querySelectorAll(".project-block");
+  let totalRooms = 0;
+  let report = `Verificação da Obra "${obraName}":\n\n`;
+  report += `Total de projetos: ${projects.length}\n\n`;
+
+  projects.forEach((project, index) => {
+    const projectName = project.dataset.projectName;
+    const rooms = project.querySelectorAll(".room-block");
+    totalRooms += rooms.length;
+    
+    report += `Projeto ${index + 1}: ${projectName}\n`;
+    report += `  - Salas: ${rooms.length}\n`;
+    
+    rooms.forEach((room, roomIndex) => {
+      const roomName = room.querySelector(".room-title")?.textContent || `Sala ${roomIndex + 1}`;
+      const stats = calculateRoomCompletionStats(room);
+      report += `    - ${roomName}: ${stats.filled}/${stats.total} campos (${stats.percentage}%)\n`;
+    });
+    report += '\n';
+  });
+
+  report += `RESUMO: ${projects.length} projetos, ${totalRooms} salas`;
+
+  alert(report);
+}
+
+/**
+ * Calcula estatísticas de preenchimento de uma sala
+ * @param {HTMLElement} room - Elemento da sala
+ * @returns {Object} Estatísticas de preenchimento
+ */
+function calculateRoomCompletionStats(room) {
+  const inputs = room.querySelectorAll(".form-input, .clima-input");
+  const filledInputs = Array.from(inputs).filter((input) => {
+    if (input.type === 'checkbox' || input.type === 'radio') {
+      return input.checked;
+    }
+    return input.value && input.value.trim() !== "";
+  }).length;
+  
+  const totalInputs = inputs.length;
+  const percentage = totalInputs > 0 ? ((filledInputs / totalInputs) * 100).toFixed(1) : 0;
+
+  return {
+    filled: filledInputs,
+    total: totalInputs,
+    percentage: percentage,
+  };
 }
 
 // Função de compatibilidade para código existente
@@ -450,104 +359,19 @@ async function deleteProjectLegacy(projectName) {
     }
 }
 
-/**
- * Verifica os dados de um projeto e gera relatório
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
- */
-function verifyProjectData(obraName, projectName) {
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`)
-  if (!projectBlock) return
-
-  const rooms = projectBlock.querySelectorAll(".room-block")
-
-  const report = generateProjectVerificationReport(rooms)
-
-  alert(report)
-}
-
-// Função de compatibilidade para código existente
-function verifyProjectDataLegacy(projectName) {
-    // Tenta encontrar a obra do projeto
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
-    const obraName = projectBlock?.dataset.obraName;
-    
-    if (obraName) {
-        return verifyProjectData(obraName, projectName);
-    } else {
-        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
-    }
-}
-
-/**
- * Gera relatório de verificação do projeto
- * @param {NodeList} rooms - Lista de salas do projeto
- * @returns {string} Relatório formatado
- */
-function generateProjectVerificationReport(rooms) {
-  let report = `Verificação do Projeto:\n\n`
-  report += `Total de salas: ${rooms.length}\n\n`
-
-  rooms.forEach((room) => {
-    const roomName = room.querySelector(".room-title")?.textContent || "Sala sem nome"
-    const stats = calculateRoomCompletionStats(room)
-
-    report += `${roomName}: ${stats.filled}/${stats.total} campos preenchidos (${stats.percentage}%)\n`
-  })
-
-  return report
-}
-
-/**
- * Calcula estatísticas de preenchimento de uma sala
- * @param {HTMLElement} room - Elemento da sala
- * @returns {Object} Estatísticas de preenchimento
- */
-function calculateRoomCompletionStats(room) {
-  const inputs = room.querySelectorAll(".form-input")
-  const filledInputs = Array.from(inputs).filter((input) => input.value.trim() !== "").length
-  const totalInputs = inputs.length
-  const percentage = totalInputs > 0 ? ((filledInputs / totalInputs) * 100).toFixed(1) : 0
-
-  return {
-    filled: filledInputs,
-    total: totalInputs,
-    percentage: percentage,
-  }
-}
-
-/**
- * Colapsa um elemento na interface
- * @param {HTMLElement} element - Elemento a ser colapsado
- * @param {HTMLElement} minimizerElement - Botão minimizador
- */
-function collapseElement(element, minimizerElement) {
-  if (!element || !minimizerElement) return
-
-  element.classList.add(UI_CONSTANTS.COLLAPSED_CLASS)
-  minimizerElement.textContent = UI_CONSTANTS.MINIMIZED_SYMBOL
-}
-
 // Exportações para compatibilidade
+window.saveObra = saveObra;
+window.verifyObraData = verifyObraData;
 window.deleteProject = deleteProjectLegacy;
-window.saveProject = saveProjectLegacy;
-window.verifyProjectData = verifyProjectDataLegacy;
 
 export {
-  fetchProjects,
-  getNextProjectId,
-  getNextProjectNumber,
-  initializeProjectCounter,
-  normalizeProjectIds,
-  salvarProjeto,
-  atualizarProjeto,
-  saveProject,
-  saveProjectLegacy,
-  collapseProjectAfterSave,
+  fetchObras,
+  salvarObra,
+  atualizarObra,
+  saveObra,
   deleteProject,
   deleteProjectLegacy,
-  verifyProjectData,
-  verifyProjectDataLegacy,
-  generateProjectVerificationReport,
+  deleteObraFromServer,
+  verifyObraData,
   calculateRoomCompletionStats,
 }
