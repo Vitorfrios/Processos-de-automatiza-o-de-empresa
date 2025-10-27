@@ -369,25 +369,41 @@ function deleteObra(obraName) {
 }
 
 /**
- * Função única para salvar ou atualizar obra - CORREÇÃO PRINCIPAL
+ * Função única para salvar ou atualizar obra - CORREÇÃO DEFINITIVA
  * @param {string} obraName - Nome da obra
  * @param {Event} event - Evento do clique
  */
 function saveOrUpdateObra(obraName, event) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  
-  console.log(`💾 SALVANDO/ATUALIZANDO OBRA: "${obraName}"`);
-  
-  // CORREÇÃO: Chama a função real de salvamento do projects.js
-  if (typeof window.saveObra === 'function') {
-    window.saveObra(obraName, event);
-  } else {
-    showSystemStatus("Funcionalidade de salvar obra em desenvolvimento", "info");
-  }
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    console.log(`💾 SALVANDO/ATUALIZANDO OBRA: "${obraName}"`);
+    
+    // ✅ CORREÇÃO: Debug para verificar se a obra existe
+    const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra "${obraName}" não encontrada no DOM para salvar`);
+        console.log('🔍 Obras disponíveis no DOM:');
+        document.querySelectorAll('[data-obra-name]').forEach(obra => {
+            console.log(`  - ${obra.dataset.obraName}`);
+        });
+        showSystemStatus(`ERRO: Obra "${obraName}" não encontrada`, "error");
+        return;
+    }
+    
+    console.log(`✅ Obra encontrada no DOM:`, obraBlock.dataset);
+    
+    // CORREÇÃO: Chama a função real de salvamento do projects.js
+    if (typeof window.saveObra === 'function') {
+        window.saveObra(obraName, event);
+    } else {
+        console.error('❌ Função saveObra não encontrada no window');
+        showSystemStatus("ERRO: Funcionalidade de salvar não disponível", "error");
+    }
 }
+
 
 /**
  * Verifica os dados de uma obra

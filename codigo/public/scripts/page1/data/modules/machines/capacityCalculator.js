@@ -37,7 +37,6 @@ function buildCapacityCalculationTable(roomId) {
           </thead>
           <tbody>
             <tr>
-              // aqui o valor do id deve se tornar um numero editável,(int)mas a funcionalidade de mostrar qual valor do tr calculado deve permanecer
               <td id="carga-estimada-${roomId}">0</td> 
               <td>
                 <input type="number" id="fator-seguranca-${roomId}" step="1" 
@@ -229,7 +228,7 @@ function getCapacityData(roomId) {
 }
 
 /**
- * Salva os dados de capacidade no servidor
+ * Salva os dados de capacidade no servidor - ATUALIZADO PARA OBRAS
  * @param {string} projectName - Nome do projeto
  * @param {string} roomName - Nome da sala
  */
@@ -240,43 +239,67 @@ function saveCapacityData(projectName, roomName) {
     
     if (!capacityData) return
 
-    fetch(`/projetos`)
+    console.log(`[CAPACITY] Salvando dados para projeto: ${projectName}, sala: ${roomName}`)
+
+    // ✅ CORREÇÃO: Buscar obras em vez de projetos
+    fetch(`/obras`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
         return response.json()
       })
-      .then(projetos => {
-        const projetoIndex = projetos.findIndex(p => p.nome === projectName)
-        if (projetoIndex === -1) {
-          console.warn(`[CAPACITY] Projeto ${projectName} não encontrado`)
+      .then(obras => {
+        console.log(`[CAPACITY] Obras carregadas:`, obras.map(o => ({ id: o.id, nome: o.nome })))
+        
+        let obraUpdated = false
+        const obrasAtualizadas = obras.map(obra => {
+          const projetoIndex = obra.projetos?.findIndex(p => p.nome === projectName)
+          if (projetoIndex === -1 || projetoIndex === undefined) return obra
+
+          const salaIndex = obra.projetos[projetoIndex].salas?.findIndex(sala => sala.nome === roomName)
+          if (salaIndex === -1 || salaIndex === undefined) return obra
+
+          // ✅ CORREÇÃO: Atualizar capacidade na estrutura de obra
+          if (!obra.projetos[projetoIndex].salas[salaIndex].capacidade) {
+            obra.projetos[projetoIndex].salas[salaIndex].capacidade = {}
+          }
+          
+          obra.projetos[projetoIndex].salas[salaIndex].capacidade = capacityData
+          obraUpdated = true
+          console.log(`[CAPACITY] Dados atualizados na obra ${obra.nome}`)
+          return obra
+        })
+
+        if (!obraUpdated) {
+          console.warn(`[CAPACITY] Projeto ${projectName} ou sala ${roomName} não encontrados em nenhuma obra`)
           return
         }
 
-        const salaIndex = projetos[projetoIndex].salas.findIndex(sala => sala.nome === roomName)
-        if (salaIndex === -1) {
-          console.warn(`[CAPACITY] Sala ${roomName} não encontrada no projeto ${projectName}`)
+        // ✅ CORREÇÃO: Encontrar a obra específica para atualizar
+        const obraComProjeto = obras.find(obra => 
+          obra.projetos?.some(p => p.nome === projectName)
+        )
+        
+        if (!obraComProjeto) {
+          console.warn(`[CAPACITY] Nenhuma obra encontrada com o projeto ${projectName}`)
           return
         }
 
-        if (!projetos[projetoIndex].salas[salaIndex]['Cálculo_Capacidade_Refrigeração']) {
-          projetos[projetoIndex].salas[salaIndex]['Cálculo_Capacidade_Refrigeração'] = {}
-        }
-        
-        projetos[projetoIndex].salas[salaIndex]['Cálculo_Capacidade_Refrigeração'] = capacityData
-        
-        return fetch(`/projetos`, {
+        // Atualizar apenas a obra específica
+        return fetch(`/obras/${obraComProjeto.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(projetos)
+          body: JSON.stringify(obraComProjeto)
         })
       })
       .then(response => {
         if (response && response.ok) {
-          console.log(`[CAPACITY] Dados de capacidade salvos para ${roomId}`, capacityData)
+          console.log(`[CAPACITY] Dados de capacidade salvos para ${projectName}-${roomName}`)
+        } else if (response) {
+          console.error(`[CAPACITY] Erro ao salvar: ${response.status}`)
         }
       })
       .catch(error => {
@@ -289,7 +312,7 @@ function saveCapacityData(projectName, roomName) {
 }
 
 /**
- * Carrega os dados de capacidade do servidor para uma sala
+ * Carrega os dados de capacidade do servidor para uma sala - ATUALIZADO PARA OBRAS
  * @param {string} projectName - Nome do projeto
  * @param {string} roomName - Nome da sala
  * @returns {boolean} True se os dados foram carregados com sucesso
@@ -300,39 +323,37 @@ function loadCapacityData(projectName, roomName) {
     
     console.log(`[CAPACITY] Tentando carregar dados para ${projectName}-${roomName}`)
     
-    fetch(`/projetos`)
+    // ✅ CORREÇÃO: Buscar obras em vez de projetos
+    fetch(`/obras`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
         return response.json()
       })
-      .then(projetos => {
-        console.log(`[CAPACITY] Projetos carregados:`, projetos)
+      .then(obras => {
+        console.log(`[CAPACITY] Obras carregadas:`, obras.map(o => o.nome))
         
-        const projeto = projetos.find(p => p.nome === projectName)
-        if (!projeto) {
-          console.warn(`[CAPACITY] Projeto ${projectName} não encontrado. Projetos disponíveis:`, projetos.map(p => p.nome))
-          return false
+        // Buscar em todas as obras
+        for (const obra of obras) {
+          const projeto = obra.projetos?.find(p => p.nome === projectName)
+          if (!projeto) continue
+
+          const sala = projeto.salas?.find(s => s.nome === roomName)
+          if (!sala) continue
+
+          if (sala.capacidade) {
+            console.log(`[CAPACITY] Dados encontrados na obra ${obra.nome}`)
+            applyCapacityData(roomId, sala.capacidade)
+            return true
+          }
         }
 
-        const sala = projeto.salas.find(sala => sala.nome === roomName)
-        if (!sala) {
-          console.warn(`[CAPACITY] Sala ${roomName} não encontrada. Salas disponíveis:`, projeto.salas.map(s => s.nome))
-          return false
-        }
-
-        if (!sala['Cálculo_Capacidade_Refrigeração']) {
-          console.log(`[CAPACITY] Nenhum dado de capacidade encontrado para ${roomName}`)
-          return false
-        }
-
-        const capacityData = sala['Cálculo_Capacidade_Refrigeração']
-        applyCapacityData(roomId, capacityData)
-        return true
+        console.log(`[CAPACITY] Nenhum dado de capacidade encontrado para ${projectName}-${roomName}`)
+        return false
       })
       .catch(error => {
-        console.error('[CAPACITY] Erro ao carregar projetos:', error)
+        console.error('[CAPACITY] Erro ao carregar obras:', error)
         return false
       })
       
@@ -341,6 +362,7 @@ function loadCapacityData(projectName, roomName) {
     return false
   }
 }
+
 
 /**
  * Aplica os dados de capacidade carregados aos elementos da interface

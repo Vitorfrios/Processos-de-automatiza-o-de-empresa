@@ -7,17 +7,13 @@ Este projeto é um sistema modular voltado para **gerenciamento e cálculo térm
 ## 📁 Estrutura do Código
 
 ```txt
-codigo/
-├─ servidor.py
-├─ Readme.md
-├─ json
-│   ├─ backup.json   
-│   └─ dados.json    
-└─ public
-    ├─ pages
-    │   └─ 01_CreateProjects.html
-    ├─ pastas.py     
-    ├─ scripts       
+➕ Adicionando máquina 1 (sala: Projeto1-Sala1, local: 1)
+machineManagement.js:33 🔄 Cache não encontrado, carregando dados das máquinas...
+machinesBuilder.js:49 🔄 Carregando dados das máquinas do servidor...
+machinesBuilder.js:62 ✅ Dados das máquinas carregados GLOBALMENTE: 12 máquinas
+machineManagement.js:44 ✅ Máquina 1 adicionada à sala Projeto1-Sala1
+projects.js:159 💾 SALVANDO OBRA: "Obra1"
+projects.js:162 ⚠️ Sessão não está ativa - obra não será salva     
     │   ├─ page1
     │   │   ├─ calculos
     │   │   │   ├─ airFlow

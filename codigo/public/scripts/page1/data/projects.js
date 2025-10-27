@@ -2,8 +2,7 @@ import { UI_CONSTANTS } from "../config/config.js"
 import { ensureStringId } from "../utils/utils.js"
 import { buildObraData } from "./data-utils.js"
 import { showSystemStatus, updateObraButtonAfterSave } from "../ui/interface.js"
-import { isSessionActive } from "./server.js"
-
+import { isSessionActive, startSessionOnFirstSave } from "./server.js";
 /**
  * Busca todas as obras do servidor
  * @returns {Promise<Array>} Lista de obras
@@ -29,54 +28,8 @@ async function fetchObras() {
   }
 }
 
-
 /**
- * Salva uma nova OBRA no servidor - CORREÇÃO PARA EVITAR 404
- * @param {Object} obraData - Dados da obra a ser salva
- * @returns {Promise<Object|null>} Obra criada ou null em caso de erro
- */
-async function salvarObra(obraData) {
-  try {
-    // REGRA: Só salvar se sessão estiver ativa
-    if (!isSessionActive()) {
-      console.warn("⚠️ Sessão não está ativa - obra não será salva");
-      showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
-      return null;
-    }
-
-    console.log('📤 SALVANDO NOVA OBRA:', {
-      id: obraData.id,
-      nome: obraData.nome,
-      projetos: obraData.projetos?.length || 0,
-      timestamp: obraData.timestamp
-    });
-
-    // CORREÇÃO: Sempre usar POST para nova obra, mesmo que tenha ID
-    const response = await fetch('/obras', {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(obraData),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Erro ao salvar obra: ${errorText}`);
-    }
-
-    const createdObra = await response.json();
-    showSystemStatus("Obra salva com sucesso!", "success");
-    
-    console.log('✅ NOVA OBRA SALVA:', createdObra);
-    return createdObra;
-  } catch (error) {
-    console.error("❌ Erro ao SALVAR obra:", error);
-    showSystemStatus("ERRO: Não foi possível salvar a obra", "error");
-    return null;
-  }
-}
-
-/**
- * Atualiza uma obra existente no servidor - CORREÇÃO PARA VERIFICAR EXISTÊNCIA
+ * Atualiza uma obra existente no servidor - CORREÇÃO DEFINITIVA
  * @param {string|number} obraId - ID da obra
  * @param {Object} obraData - Dados atualizados da obra
  * @returns {Promise<Object|null>} Obra atualizada ou null em caso de erro
@@ -98,21 +51,29 @@ async function atualizarObra(obraId, obraData) {
       return null;
     }
 
-    // CORREÇÃO: Verificar se a obra existe antes de tentar atualizar
     console.log(`🔍 Verificando se obra ${obraId} existe no servidor...`);
-    const checkResponse = await fetch(`/obras/${obraId}`);
     
-    if (!checkResponse.ok) {
-      if (checkResponse.status === 404) {
-        console.log(`📝 Obra ${obraId} não encontrada, salvando como nova...`);
-        return await salvarObra(obraData);
-      } else {
-        const errorText = await checkResponse.text();
-        throw new Error(`Erro ao verificar obra: ${errorText}`);
-      }
+    // Buscar TODAS as obras usando o novo endpoint
+    const todasObrasResponse = await fetch('/api/backup-completo');
+    if (!todasObrasResponse.ok) {
+      throw new Error('Falha ao carregar backup para verificação');
+    }
+    
+    const backupData = await todasObrasResponse.json();
+    const todasObras = backupData.obras || [];
+    const obraExistente = todasObras.find(obra => String(obra.id) === String(obraId));
+    
+    console.log(`📊 Verificação: Obra ${obraId} existe? ${!!obraExistente}`);
+    console.log(`📋 TODAS as obras no backup:`, todasObras.map(o => ({ id: o.id, nome: o.nome })));
+
+    if (!obraExistente) {
+      console.log(`❌ Obra ${obraId} não encontrada no backup, criando nova...`);
+      // ✅ CORREÇÃO: Remover o ID para forçar criação como nova obra
+      delete obraData.id;
+      return await salvarObra(obraData);
     }
 
-    // Se chegou aqui, a obra existe - pode atualizar
+    // ✅ CORREÇÃO: Garantir que o ID no dados seja o correto
     obraData.id = obraId;
 
     console.log('🔄 ATUALIZANDO OBRA EXISTENTE:', {
@@ -121,7 +82,10 @@ async function atualizarObra(obraId, obraData) {
       projetos: obraData.projetos?.length || 0
     });
 
+    // ✅ CORREÇÃO: Usar PUT para /obras/{id}
     const url = `/obras/${obraId}`;
+    console.log(`🎯 Fazendo PUT para: ${url}`);
+    
     const response = await fetch(url, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -136,7 +100,11 @@ async function atualizarObra(obraId, obraData) {
     const updatedObra = await response.json();
     showSystemStatus("Obra atualizada com sucesso!", "success");
     
-    console.log('✅ OBRA ATUALIZADA:', updatedObra);
+    console.log('✅ OBRA ATUALIZADA:', {
+      id: updatedObra.id,
+      nome: updatedObra.nome,
+      projetos: updatedObra.projetos?.length || 0
+    });
     return updatedObra;
   } catch (error) {
     console.error("❌ Erro ao ATUALIZAR obra:", error);
@@ -146,7 +114,98 @@ async function atualizarObra(obraId, obraData) {
 }
 
 /**
- * Salva ou atualiza uma OBRA (função principal) - CORREÇÃO FINAL
+ * Salva uma nova OBRA no servidor - CORREÇÃO PARA ADICIONAR À SESSÃO
+ * @param {Object} obraData - Dados da obra a ser salva
+ * @returns {Promise<Object|null>} Obra criada ou null em caso de erro
+ */
+async function salvarObra(obraData) {
+  try {
+    // REGRA: Só salvar se sessão estiver ativa
+    if (!isSessionActive()) {
+      console.warn("⚠️ Sessão não está ativa - obra não será salva");
+      showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
+      return null;
+    }
+
+    console.log('📤 SALVANDO NOVA OBRA:', {
+      id: obraData.id,
+      nome: obraData.nome,
+      projetos: obraData.projetos?.length || 0,
+      timestamp: obraData.timestamp
+    });
+
+    // CORREÇÃO: Sempre usar POST para nova obra
+    const response = await fetch('/obras', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(obraData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erro ao salvar obra: ${errorText}`);
+    }
+
+    const createdObra = await response.json();
+    
+    // ✅ CORREÇÃO CRÍTICA: Adicionar obra à sessão
+    console.log(`📝 Adicionando obra ${createdObra.id} à sessão...`);
+    await fetch('/api/sessions/add-obra', {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ obra_id: createdObra.id })
+    });
+    
+    showSystemStatus("Obra salva com sucesso!", "success");
+    
+    console.log('✅ NOVA OBRA SALVA E ADICIONADA À SESSÃO:', {
+      id: createdObra.id,
+      nome: createdObra.nome,
+      projetos: createdObra.projetos?.length || 0
+    });
+    return createdObra;
+  } catch (error) {
+    console.error("❌ Erro ao SALVAR obra:", error);
+    showSystemStatus("ERRO: Não foi possível salvar a obra", "error");
+    return null;
+  }
+}
+
+function findObraBlock(obraName) {
+    console.log(`🔍 Buscando obra: "${obraName}"`);
+    
+    // 1. Tentar pelo nome exato (mais específico)
+    let obraBlock = document.querySelector(`.obra-block[data-obra-name="${obraName}"]`);
+    if (obraBlock) {
+        console.log(`✅ Obra encontrada por nome exato: "${obraName}"`);
+        return obraBlock;
+    }
+    
+    // 2. Tentar apenas elementos .obra-block (não qualquer elemento)
+    const todasObras = document.querySelectorAll('.obra-block');
+    console.log(`📋 Obras encontradas no DOM: ${todasObras.length}`);
+    
+    todasObras.forEach((obra, index) => {
+        console.log(`  ${index + 1}.`, {
+            dataset: obra.dataset,
+            classes: obra.className
+        });
+    });
+    
+    // 3. Retornar a primeira obra real (não botões)
+    if (todasObras.length > 0) {
+        const primeiraObra = todasObras[0];
+        const actualName = primeiraObra.dataset.obraName;
+        console.log(`✅ Usando primeira obra: "${actualName}" em vez de "${obraName}"`);
+        return primeiraObra;
+    }
+    
+    console.log('❌ Nenhuma obra .obra-block encontrada no DOM');
+    return null;
+}
+
+/**
+ * Salva ou atualiza uma OBRA (função principal) - CORREÇÃO DEFINITIVA
  * @param {string} obraName - Nome da obra
  * @param {Event} event - Evento do clique
  */
@@ -158,20 +217,35 @@ async function saveObra(obraName, event) {
 
     console.log(`💾 SALVANDO OBRA: "${obraName}"`);
 
+    // ✅ CORREÇÃO: Ativa a sessão se não estiver ativa (primeira obra)
+    if (!isSessionActive()) {
+        console.log("🆕 Iniciando sessão para primeira obra...");
+        await startSessionOnFirstSave();
+    }
+
+    // ✅ AGORA a sessão está ativa, pode continuar
     if (!isSessionActive()) {
         console.warn("⚠️ Sessão não está ativa - obra não será salva");
         showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
         return;
     }
 
-    const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
+    // ✅ CORREÇÃO: Método ROBUSTO para encontrar a obra
+    let obraBlock = findObraBlock(obraName);
+    
     if (!obraBlock) {
-        console.error('❌ Obra não encontrada:', obraName);
+        console.error('❌ Obra não encontrada no DOM:', obraName);
         showSystemStatus("ERRO: Obra não encontrada na interface", "error");
         return;
     }
 
-    // Construir dados da obra (inclui projetos e salas)
+    console.log('✅ Obra encontrada:', {
+        element: obraBlock,
+        dataset: obraBlock.dataset,
+        id: obraBlock.dataset.obraId,
+        name: obraBlock.dataset.obraName
+    });
+
     console.log('🔨 Construindo dados da obra...');
     const obraData = buildObraData(obraBlock);
 
@@ -181,7 +255,7 @@ async function saveObra(obraName, event) {
         return;
     }
 
-    // CORREÇÃO: Lógica melhorada para determinar se é nova obra ou atualização
+    // ✅ CORREÇÃO: Lógica MELHORADA para determinar se é nova obra ou atualização
     const obraIdFromDOM = obraBlock.dataset.obraId;
     const isNewObra = !obraIdFromDOM || obraIdFromDOM === "" || obraIdFromDOM === "null" || obraIdFromDOM === "undefined";
 
@@ -219,7 +293,7 @@ async function saveObra(obraName, event) {
             updateObraButtonAfterSave(obraName, finalId);
         }
 
-        console.log(`✅ OBRA SALVA COM SUCESSO! ID: ${finalId}`);
+        console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID: ${finalId}`);
         
         showSystemStatus("Obra salva com sucesso!", "success");
     } else {
@@ -374,4 +448,5 @@ export {
   deleteObraFromServer,
   verifyObraData,
   calculateRoomCompletionStats,
+  findObraBlock,
 }

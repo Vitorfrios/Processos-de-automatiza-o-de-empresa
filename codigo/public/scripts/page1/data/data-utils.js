@@ -68,10 +68,17 @@ function buildObraData(obraIdOrElement) {
     let obraElement;
     
     if (typeof obraIdOrElement === 'string') {
-        obraElement = document.querySelector(`[data-obra-id="${obraIdOrElement}"]`) || 
-                     document.querySelector(`[data-obra-name="${obraIdOrElement}"]`);
+        // ✅ CORREÇÃO: Buscar APENAS elementos .obra-block
+        obraElement = document.querySelector(`.obra-block[data-obra-id="${obraIdOrElement}"]`) || 
+                     document.querySelector(`.obra-block[data-obra-name="${obraIdOrElement}"]`);
     } else if (obraIdOrElement instanceof HTMLElement) {
-        obraElement = obraIdOrElement;
+        // ✅ CORREÇÃO: Verificar se é realmente uma obra
+        if (obraIdOrElement.classList.contains('obra-block')) {
+            obraElement = obraIdOrElement;
+        } else {
+            console.error('❌ Elemento não é uma obra:', obraIdOrElement);
+            return null;
+        }
     } else {
         console.error('❌ Tipo inválido para obraIdOrElement:', typeof obraIdOrElement, obraIdOrElement);
         return null;
@@ -79,11 +86,17 @@ function buildObraData(obraIdOrElement) {
 
     if (!obraElement) {
         console.error('❌ Elemento da obra não encontrado:', obraIdOrElement);
+        console.log('🔍 Obras disponíveis no DOM:');
+        document.querySelectorAll('.obra-block').forEach((obra, index) => {
+            console.log(`  ${index + 1}.`, obra.dataset);
+        });
         return null;
     }
 
-    const obraName = obraElement.dataset.obraName || obraElement.id;
+    const obraName = obraElement.dataset.obraName;
     const obraId = obraElement.dataset.obraId;
+
+    console.log(`📦 Construindo dados da obra: "${obraName}" (ID: ${obraId})`);
 
     const obraData = {
         id: obraId || generateObraId(),
@@ -92,7 +105,7 @@ function buildObraData(obraIdOrElement) {
         projetos: []
     };
 
-    // Extrair projetos da obra
+    // ✅ CORREÇÃO: Buscar projetos DENTRO da obra específica
     const projectElements = obraElement.querySelectorAll('.project-block');
     console.log(`🔍 Encontrados ${projectElements.length} projetos na obra "${obraName}"`);
     
@@ -101,6 +114,8 @@ function buildObraData(obraIdOrElement) {
         if (projectData) {
             obraData.projetos.push(projectData);
             console.log(`✅ Projeto "${projectData.nome}" adicionado à obra "${obraName}"`);
+        } else {
+            console.error(`❌ Falha ao construir projeto ${index} da obra "${obraName}"`);
         }
     });
 
@@ -109,6 +124,7 @@ function buildObraData(obraIdOrElement) {
         id: obraData.id,
         projetos: obraData.projetos.length
     });
+    
     return obraData;
 }
 

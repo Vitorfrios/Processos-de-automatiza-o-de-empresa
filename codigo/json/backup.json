@@ -3,7 +3,7 @@
     {
       "id": "1001",
       "nome": "Obra1",
-      "timestamp": "2025-10-25T20:07:46.332Z",
+      "timestamp": "2025-10-27T20:25:47.657Z",
       "projetos": [
         {
           "id": "1",
@@ -34,7 +34,48 @@
                 "numPortasDuplas": "2",
                 "combateIncendio": "fm200"
               },
-              "maquinas": [],
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Wall Mounted",
+                  "potencia": "3TR",
+                  "tensao": "220V/1F",
+                  "precoBase": 34852.8,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 5300,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 200,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Umidificação",
+                      "value": 9200,
+                      "originalName": "Umidificação",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
+                      "value": 2070,
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "3TR"
+                    }
+                  ],
+                  "precoTotal": 56622.8,
+                  "potenciaSelecionada": "3TR",
+                  "tipoSelecionado": "Wall Mounted"
+                }
+              ],
               "capacidade": {
                 "backup": "n+1"
               },
@@ -48,34 +89,22 @@
               }
             }
           ],
-          "timestamp": "2025-10-25T20:07:46.333Z"
+          "timestamp": "2025-10-27T20:25:47.657Z"
         }
       ]
     },
     {
       "id": "1002",
-      "nome": "Obra2",
-      "timestamp": "2025-10-25T20:18:44.400Z",
-      "projetos": []
-    },
-    {
-      "id": "1003",
-      "nome": "Obra2",
-      "timestamp": "2025-10-25T20:51:04.001Z",
-      "projetos": []
-    },
-    {
-      "id": "1004",
-      "nome": "Obra1teste vvv",
-      "timestamp": "2025-10-25T20:58:02.046Z",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T20:14:31.296Z",
       "projetos": [
         {
           "id": "1",
-          "nome": "Projeto1hkgjfgvmbjk",
+          "nome": "Projeto1",
           "salas": [
             {
               "id": "1",
-              "nome": "Sala1gjgcvbkj",
+              "nome": "Sala1",
               "inputs": {
                 "ambiente": "Sala de Servidores",
                 "backup": "n+1",
@@ -101,29 +130,29 @@
               "maquinas": [
                 {
                   "nome": "Equipamento de Climatização 1",
-                  "tipo": "Tubo Axial",
-                  "potencia": "11500m³/h",
-                  "tensao": "220V/1F",
-                  "precoBase": 1,
+                  "tipo": "Wall Mounted",
+                  "potencia": "3TR",
+                  "tensao": "220V/3F",
+                  "precoBase": 34852.8,
                   "opcoesSelecionadas": [
                     {
-                      "id": 2,
-                      "name": "com 15mmCA",
-                      "value": 3,
-                      "originalName": "com 15mmCA",
-                      "potenciaAplicada": "11500m³/h"
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 5300,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "3TR"
                     },
                     {
-                      "id": 3,
-                      "name": "Grade de Proteção",
-                      "value": 5,
-                      "originalName": "Grade de Proteção",
-                      "potenciaAplicada": "11500m³/h"
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 200,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "3TR"
                     }
                   ],
-                  "precoTotal": 1009,
-                  "potenciaSelecionada": "11500m³/h",
-                  "tipoSelecionado": "Tubo Axial"
+                  "precoTotal": 45352.8,
+                  "potenciaSelecionada": "3TR",
+                  "tipoSelecionado": "Wall Mounted"
                 }
               ],
               "capacidade": {
@@ -139,7 +168,199 @@
               }
             }
           ],
-          "timestamp": "2025-10-25T20:58:02.047Z"
+          "timestamp": "2025-10-27T20:14:31.297Z"
+        }
+      ]
+    },
+    {
+      "id": "1003",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T20:55:12.827Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Self Contained",
+                  "potencia": "1000m³/h",
+                  "tensao": "220V/1F",
+                  "precoBase": 0,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "com 10mmCA",
+                      "value": 0,
+                      "originalName": "com 10mmCA",
+                      "potenciaAplicada": "1000m³/h"
+                    },
+                    {
+                      "id": 2,
+                      "name": "com 15mmCA",
+                      "value": 0,
+                      "originalName": "com 15mmCA",
+                      "potenciaAplicada": "1000m³/h"
+                    },
+                    {
+                      "id": 3,
+                      "name": "com 20mmCA",
+                      "value": 0,
+                      "originalName": "com 20mmCA",
+                      "potenciaAplicada": "1000m³/h"
+                    }
+                  ],
+                  "precoTotal": 5000,
+                  "potenciaSelecionada": "1000m³/h",
+                  "tipoSelecionado": "Self Contained"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {},
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T20:55:12.828Z"
+        }
+      ]
+    },
+    {
+      "id": "1004",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T21:02:44.614Z",
+      "projetos": []
+    },
+    {
+      "id": "1005",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T21:09:47.477Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Split Hi-Wall",
+                  "potencia": "30TR",
+                  "tensao": "380V/3F",
+                  "precoBase": 0,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 5300,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 5,
+                      "name": "2 Dampers com atuador on/off",
+                      "value": 4470,
+                      "originalName": "2 Dampers com atuador on/off",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 7,
+                      "name": "Controle de Condensação Proporcional",
+                      "value": 9300,
+                      "originalName": "Controle de Condensação Proporcional",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 10,
+                      "name": "Resistencia de Aquecimento",
+                      "value": 2100,
+                      "originalName": "Resistencia de Aquecimento",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 11,
+                      "name": "Pintura Especial",
+                      "value": 5500,
+                      "originalName": "Pintura Especial",
+                      "potenciaAplicada": "30TR"
+                    }
+                  ],
+                  "precoTotal": 26670,
+                  "potenciaSelecionada": "30TR",
+                  "tipoSelecionado": "Split Hi-Wall"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {},
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T21:09:47.478Z"
         }
       ]
     }

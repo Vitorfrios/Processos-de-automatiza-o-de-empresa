@@ -12,7 +12,6 @@
  * Persistência/Fonte de dados:
  * - Reuso da camada da página 01: fetch/JSON pelo backend local.
  * - Carrega preferencialmente de `/backup` (backup.json → chave `projetos`).
- * - Fallback para `/projetos` (lista filtrada da sessão atual), exatamente como a 01.
  * - Atualizações usam o mesmo fluxo da página 01 (`saveProject`/`atualizarProjeto`).
  * - Exclusão usa a mesma abordagem da 01: remove o projeto da sessão no backend e da UI.
  *

@@ -1,16 +1,36 @@
-import os
+# tree_permitidos.py
+from pathlib import Path
 
-# Nome da pasta
-folder_name = "templates"
+ALLOW_EXTS = {".js", ".css", ".html", ".py",".json"}   # extensões permitidas
 
-# Cria a pasta se não existir
-os.makedirs(folder_name, exist_ok=True)
+def listar(p: Path, prefixo: str = ""):
+    try:
+        itens = list(p.iterdir())
+    except PermissionError:
+        return
 
-# Cria 10 arquivos numerados
-for i in range(1, 11):
-    filename = f"{i:02}.css"  # Garante 2 dígitos: 01, 02, ..., 10
-    filepath = os.path.join(folder_name, filename)
-    with open(filepath, "w") as f:
-        f.write("")  # Cria arquivo vazio
+    # diretórios primeiro, depois arquivos — ambos ordenados por nome
+    dirs = sorted([x for x in itens if x.is_dir()], key=lambda x: x.name.lower())
+    files = sorted([x for x in itens if x.is_file() and x.suffix.lower() in ALLOW_EXTS],
+                   key=lambda x: x.name.lower())
 
-print(f"Pasta '{folder_name}' criada com 10 arquivos numerados de 01.cs a 10.cs")
+    visiveis = dirs + files  # IMPORTANTe: o "total" é baseado no que será impresso
+
+    total = len(visiveis)
+    for i, x in enumerate(visiveis):
+        ultimo = (i == total - 1)
+        con = "└─ " if ultimo else "├─ "
+        linha = f"{prefixo}{con}{x.name}{'/' if x.is_dir() else ''}"
+        print(linha)
+
+        if x.is_dir():
+            novo_prefixo = prefixo + ("    " if ultimo else "│   ")
+            listar(x, novo_prefixo)
+
+def tree(raiz="codigo"):
+    raiz_path = Path(raiz)
+    print(f"{raiz_path.name}/")
+    listar(raiz_path)
+
+if __name__ == "__main__":
+    tree("codigo")   # troque para "." se quiser o diretório atual

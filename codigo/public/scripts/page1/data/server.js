@@ -122,126 +122,84 @@ function removeBaseObraFromHTML() {
 async function loadObrasFromServer() {
     console.log("🔄 Carregando OBRAS do servidor...");
     
-    // ✅ CORREÇÃO: Só carrega obras se a sessão estiver ativa
     if (!isSessionActive()) {
         console.log("📭 Sessão não está ativa - nenhuma obra será carregada");
-        clearRenderedObras();
         return;
     }
     
     try {
-        // 1. Busca sessão atual do backend
-        const sessionResponse = await fetch('/api/sessions/current');
+        // 1. Buscar obras da sessão
+        const sessionResponse = await fetch('/api/session-obras');
         if (!sessionResponse.ok) {
-            throw new Error('Falha ao carregar sessão');
+            throw new Error('Falha ao carregar sessão de obras');
         }
         
         const sessionData = await sessionResponse.json();
-        console.log("📋 Dados da sessão:", sessionData);
-
-        // ✅ CORREÇÃO: Extrai dados da sessão atual
-        const sessions = sessionData.sessions || {};
-        const sessionIds = Object.keys(sessions);
+        const obraIds = sessionData.obras || [];
         
-        // Verifica se há sessão ativa
-        if (sessionIds.length === 0) {
-            console.log("📭 Nenhuma sessão ativa encontrada");
-            return;
-        }
-
-        // ✅ CORREÇÃO: Usa a primeira sessão (que é a atual)
-        const currentSessionId = sessionIds[0];
-        const obraIds = sessions[currentSessionId].obras || []; // ATUALIZADO: obras em vez de projects
+        console.log(`📊 Sessão com ${obraIds.length} obras:`, obraIds);
         
-        console.log(`📊 Sessão ${currentSessionId} com ${obraIds.length} obras:`, obraIds);
-
-        // Se não há obras na sessão, não precisa carregar nada
         if (obraIds.length === 0) {
             console.log("📭 Nenhuma obra na sessão atual");
             return;
         }
 
-        // 2. Busca obras completas do backup - ATUALIZADO
+        // 2. Buscar obras completas
         const obrasResponse = await fetch('/obras');
         if (!obrasResponse.ok) {
-            // Se endpoint de obras não existir, tentar carregar projetos como fallback
-            console.log("⚠️ Endpoint /obras não disponível, tentando fallback...");
-            await loadProjectsAsFallback(obraIds);
-            return;
+            throw new Error('Falha ao carregar obras');
         }
 
-        const allObras = await obrasResponse.json();
-        console.log(`📁 Total de obras no backup: ${allObras.length}`);
-        console.log(`📝 IDs no backup: ${allObras.map(o => o.id)}`);
+        const todasObras = await obrasResponse.json();
         
-        // 3. Filtra apenas obras que estão na sessão
-        const sessionObras = allObras.filter(obra => {
-            const obraId = String(obra.id);
-            const isInSession = obraIds.includes(obraId);
-            console.log(`🔍 Obra ${obraId} na sessão? ${isInSession}`);
-            return isInSession;
+        // 3. Filtrar obras que estão na sessão
+        const sessionObras = todasObras.filter(obra => {
+            return obraIds.includes(String(obra.id));
         });
 
         console.log(`🎯 Encontradas ${sessionObras.length} obras da sessão para carregar`);
 
-        // 4. Limpa interface
+        // 4. Limpar interface
         removeBaseObraFromHTML();
         
+        // 5. Renderizar cada obra
         let loadedCount = 0;
         for (const obraData of sessionObras) {
-            console.log(`🔄 Processando obra: ${obraData.nome} (ID: ${obraData.id})`);
-            // A obra será renderizada automaticamente pela interface
-            addObraToSession(obraData.id);
-            loadedCount++;
+            console.log(`🔄 Renderizando obra: ${obraData.nome} (ID: ${obraData.id})`);
+            
+            // Criar obra na interface
+            if (typeof createEmptyObra === 'function') {
+                createEmptyObra(obraData.nome, obraData.id);
+                
+                // Adicionar projetos da obra
+                if (obraData.projetos && obraData.projetos.length > 0) {
+                    obraData.projetos.forEach(projeto => {
+                        if (typeof createEmptyProject === 'function') {
+                            createEmptyProject(obraData.nome, projeto.nome, projeto.id);
+                            
+                            // Adicionar salas do projeto
+                            if (projeto.salas && projeto.salas.length > 0) {
+                                projeto.salas.forEach(sala => {
+                                    if (typeof createEmptyRoom === 'function') {
+                                        createEmptyRoom(obraData.nome, projeto.nome, sala.nome, sala.id);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+                
+                loadedCount++;
+            }
         }
         
-        window.GeralCount = loadedCount;
-        console.log(`✅ ${loadedCount} obra(s) da sessão processadas com sucesso`);
+        console.log(`✅ ${loadedCount} obra(s) da sessão carregadas com sucesso`);
         
     } catch (error) {
         console.error("❌ Erro ao carregar obras da sessão:", error);
     }
 }
 
-/**
- * Fallback para carregar projetos como obras - NOVA FUNÇÃO
- */
-async function loadProjectsAsFallback(obraIds) {
-    try {
-        console.log("🔄 Carregando projetos como fallback para obras...");
-        
-        const projectsResponse = await fetch('/projetos');
-        if (!projectsResponse.ok) {
-            throw new Error('Falha ao carregar projetos como fallback');
-        }
-
-        const allProjects = await projectsResponse.json();
-        console.log(`📁 Total de projetos no backup (fallback): ${allProjects.length}`);
-        
-        // Filtra projetos que estão na sessão
-        const sessionProjects = allProjects.filter(project => {
-            const projectId = String(project.id);
-            return obraIds.includes(projectId);
-        });
-
-        console.log(`🎯 Encontrados ${sessionProjects.length} projetos como fallback`);
-
-        removeBaseObraFromHTML();
-        
-        let loadedCount = 0;
-        for (const projectData of sessionProjects) {
-            console.log(`🔄 Processando projeto como obra: ${projectData.nome} (ID: ${projectData.id})`);
-            addObraToSession(projectData.id);
-            loadedCount++;
-        }
-        
-        window.GeralCount = loadedCount;
-        console.log(`✅ ${loadedCount} projeto(s) carregados como fallback`);
-        
-    } catch (error) {
-        console.error("❌ Erro no fallback de carregamento:", error);
-    }
-}
 
 /**
  * Incrementa o contador global de OBRAS - ATUALIZADO
@@ -540,17 +498,13 @@ function isObraRemoved(obraId) {
 async function initializeSession() {
     console.log("🔄 Verificando sessão...");
     
-    // ✅ CORREÇÃO: NÃO INICIA SESSÃO AUTOMATICAMENTE
-    // A sessão só será iniciada quando o usuário salvar a primeira obra
-    
     if (!isSessionActive()) {
         console.log("📭 Sessão não está ativa - aguardando ação do usuário");
-        // ❌ REMOVIDO: await startNewSession();
-        // O sistema agora começa SEM sessão ativa
-    } else {
-        console.log("✅ Sessão já está ativa - carregando obras existentes");
-        await loadObrasFromServer();
+        return;
     }
+    
+    console.log("✅ Sessão está ativa - carregando obras existentes");
+    await loadObrasFromServer();
 }
 
 window.shutdownManual = shutdownManual;

@@ -1,5 +1,5 @@
 """
-HTTP Request Handler - Versão Cliente COM SISTEMA COMPLETO DE SESSÕES
+HTTP Request Handler - ATUALIZADO PARA SISTEMA DE OBRAS
 """
 
 import http.server
@@ -11,7 +11,7 @@ from pathlib import Path
 from servidor_modules import file_utils, routes, config
 
 class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    """Handler robusto e compatível para produção com sistema completo de sessões"""
+    """Handler robusto e compatível para produção com sistema FOCO EM OBRAS"""
     
     def __init__(self, *args, **kwargs):
         self.project_root = file_utils.find_project_root()
@@ -22,11 +22,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(serve_directory), **kwargs)
     
     def do_GET(self):
-        """GET robusto com tratamento de erro"""
+        """GET robusto com tratamento de erro - ATUALIZADO PARA OBRAS"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
-        # Normaliza path
         if path.startswith('/codigo/'):
             path = path[7:]
         
@@ -34,9 +33,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if path not in ['/', '/favicon.ico'] and not path.startswith('/static/'):
             print(f"📥 GET: {path}")
         
-        # Roteamento APIs
-        if path == '/projetos' or path == '/projects':
-            self.route_handler.handle_get_projetos(self)
+        # Roteamento APIs - FOCO EM OBRAS
+        if path == '/obras':
+            self.route_handler.handle_get_obras(self)
         elif path == '/constants' or path == '/system-constants':
             self.route_handler.handle_get_constants(self)
         elif path == '/dados':
@@ -47,14 +46,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_machines(self)
         elif path == '/health-check':
             self.send_json_response({"status": "online", "timestamp": time.time()})
-        # ✅ ROTAS DE SESSÕES
-        elif path == '/api/session-projects':
-            self.route_handler.handle_get_session_projects(self)
+        # ✅ ROTAS DE SESSÕES ATUALIZADAS
+        elif path == '/api/session-obras':
+            self.route_handler.handle_get_session_obras(self)
         elif path == '/api/sessions/current':
             self.route_handler.handle_get_sessions_current(self)
-        # ✅ NOVAS ROTAS DE OBRAS
-        elif path == '/obras':
-            self.route_handler.handle_get_obras(self)
+        # ✅ NOVA ROTA: BACKUP COMPLETO (sem filtro de sessão) - ADICIONAR ESTA LINHA
+        elif path == '/api/backup-completo':
+            self.route_handler.handle_get_backup_completo(self)
+        # ❌ ROTAS LEGACY (COMPATIBILIDADE)
+        elif path == '/projetos' or path == '/projects':
+            self.route_handler.handle_get_projetos(self)
+        elif path == '/api/session-projects':
+            self.route_handler.handle_get_session_projects(self)
         else:
             try:
                 super().do_GET()
@@ -62,9 +66,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if path != '/favicon.ico':
                     print(f"❌ Erro em {path}: {e}")
                 self.send_error(404, f"Recurso não encontrado: {path}")
-
+                
     def do_POST(self):
-        """POST com tratamento completo"""
+        """POST com tratamento completo - ATUALIZADO PARA OBRAS"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
@@ -73,27 +77,31 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"📨 POST: {path}")
         
-        if path == '/api/sessions/shutdown':
+        # ROTAS PRINCIPAIS
+        if path == '/obras':
+            self.route_handler.handle_post_obras(self)
+        elif path == '/api/sessions/shutdown':
             self.route_handler.handle_post_sessions_shutdown(self)
         elif path == '/api/shutdown':
             self.route_handler.handle_shutdown(self)
-        elif path in ['/projetos', '/projects']:
-            self.route_handler.handle_post_projetos(self)
         elif path == '/dados':
             self.route_handler.handle_post_dados(self)
         elif path == '/backup':
             self.route_handler.handle_post_backup(self)
         elif path == '/api/sessions/ensure-single':
             self.route_handler.handle_post_sessions_ensure_single(self)
-        # ✅ NOVA ROTA PARA OBRAS
-        elif path == '/obras':
-            self.route_handler.handle_post_obras(self)
+        # ✅ VERIFICAR SE ESTA LINHA EXISTE:
+        elif path == '/api/sessions/add-obra':
+            self.route_handler.handle_post_sessions_add_obra(self)
+        # ❌ ROTAS LEGACY (COMPATIBILIDADE)
+        elif path in ['/projetos', '/projects']:
+            self.route_handler.handle_post_projetos(self)
         else:
             print(f"❌ POST não implementado: {path}")
             self.send_error(501, f"Método não suportado: POST {path}")
 
     def do_PUT(self):
-        """PUT para atualizações - CORREÇÃO DEFINITIVA"""
+        """PUT para atualizações - ATUALIZADO PARA OBRAS"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
@@ -102,18 +110,16 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"📨 PUT: {path}")
         
-        # ✅ CORREÇÃO DEFINITIVA: VERIFICAÇÃO MAIS ESPECÍFICA PRIMEIRO
+        # ✅ ROTAS PRINCIPAIS - OBRAS
         if path.startswith('/obras/'):
             print(f"🎯 Roteando PUT para obra: {path}")
             self.route_handler.handle_put_obra(self)
-        elif path.startswith('/projetos/') or path.startswith('/projects/'):
-            self.route_handler.handle_put_projeto(self)
         else:
             print(f"❌ PUT não implementado: {path}")
             self.send_error(501, f"Método não suportado: PUT {path}")
 
     def do_DELETE(self):
-        """DELETE para remoção de recursos"""
+        """DELETE para remoção de recursos - ATUALIZADO PARA OBRAS"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
@@ -122,8 +128,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"🗑️  DELETE: {path}")
         
-        # ROTAS DE SESSÕES - DELETE
-        if path.startswith('/api/sessions/remove-project/'):
+        # ✅ ROTAS PRINCIPAIS - OBRAS
+        if path.startswith('/api/sessions/remove-obra/'):
+            self.route_handler.handle_delete_sessions_remove_obra(self)
+        # ❌ ROTAS LEGACY (COMPATIBILIDADE)
+        elif path.startswith('/api/sessions/remove-project/'):
             self.route_handler.handle_delete_sessions_remove_project(self)
         else:
             print(f"❌ DELETE não implementado: {path}")
@@ -152,3 +161,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """Suporte CORS completo"""
         self.send_response(200)
         self.end_headers()
+
+    def log_message(self, format, *args):
+        """Log personalizado para melhor debugging"""
+        # Filtra logs de arquivos estáticos para não poluir o console
+        if not any(static in self.path for static in ['/static/', '/favicon.ico', '.css', '.js', '.png', '.jpg']):
+            print(f"🌐 {self.address_string()} - {format % args}")
