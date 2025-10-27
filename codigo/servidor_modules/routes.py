@@ -1,5 +1,5 @@
 """
-Definição de todas as rotas da API - ESTRUTURA SIMPLIFICADA
+Definição de todas as rotas da API - CORRIGIDO PARA SISTEMA QUE COMEÇA VAZIO
 """
 import json
 import time
@@ -169,15 +169,15 @@ class RouteHandler:
 
     # NOVOS ENDPOINTS PARA OBRAS
     def handle_get_obras(self, handler):
-        """Obtém todas as obras do backup.json"""
+        """Obtém todas as obras do backup.json - CORRIGIDO: SEM CRIAÇÃO AUTOMÁTICA"""
         try:
             print("🎯 [OBRAS] handle_get_obras")
             
             # 1. Sessão atual
             current_session_id = sessions_manager.get_current_session_id()
             session_data = sessions_manager._load_sessions_data()
-            session_projects_ids = session_data["sessions"].get(current_session_id, {}).get("projects", [])
-            print(f"📋 IDs na sessão: {session_projects_ids}")
+            session_obra_ids = session_data["sessions"].get(current_session_id, {}).get("obras", [])
+            print(f"📋 IDs de obras na sessão: {session_obra_ids}")
             
             # 2. Carregar backup
             backup_path = self.project_root / "json" / "backup.json"
@@ -204,50 +204,30 @@ class RouteHandler:
                 handler.send_json_response([])
                 return
             
-            # 3. Extrair obras (nova estrutura) ou projetos (estrutura antiga)
+            # 3. Extrair obras - ✅ CORREÇÃO: NÃO CONVERTE PROJETOS AUTOMATICAMENTE
             obras = backup_data.get('obras', [])
             if not isinstance(obras, list):
                 print(f"❌ 'obras' não é uma lista: {type(obras)}")
                 obras = []
                 
-            print(f"📁 Total de obras: {len(obras)}")
+            print(f"📁 Total de obras no backup: {len(obras)}")
             
-            # 4. Se não há obras, converter projetos existentes para estrutura de obras
-            if len(obras) == 0:
-                print("🔄 Convertendo projetos para estrutura de obras...")
-                projetos = backup_data.get('projetos', [])
-                if projetos and isinstance(projetos, list):
-                    # Criar obra padrão com todos os projetos
-                    obra_padrao = {
-                        "id": "1001",
-                        "nome": "Obra Padrão",
-                        "timestamp": backup_data.get('timestamp', ''),
-                        "projetos": projetos
-                    }
-                    obras = [obra_padrao]
-                    print(f"✅ Criada obra padrão com {len(projetos)} projetos")
+            # ✅ CORREÇÃO: REMOVIDO - Não converte projetos automaticamente para obras
+            # O sistema agora trabalha APENAS com obras explícitas
             
-            # 5. Filtrar obras que contêm projetos da sessão atual
+            # 4. Filtrar obras que estão na sessão atual
             obras_da_sessao = []
             for obra in obras:
                 if not isinstance(obra, dict):
                     continue
                     
-                projetos_da_obra = obra.get('projetos', [])
-                if not isinstance(projetos_da_obra, list):
-                    continue
-                
-                # Verificar se algum projeto desta obra está na sessão
-                obra_tem_projetos_na_sessao = any(
-                    str(projeto.get('id', '')) in session_projects_ids 
-                    for projeto in projetos_da_obra
-                )
-                
-                if obra_tem_projetos_na_sessao:
+                obra_id = str(obra.get('id', ''))
+                # ✅ CORREÇÃO: Verifica se o ID da obra está na sessão
+                if obra_id in session_obra_ids:
                     obras_da_sessao.append(obra)
-                    print(f"✅ ENCONTRADA: Obra {obra.get('id')} com projetos na sessão")
-            
-            print(f"🎯 ENVIANDO: {len(obras_da_sessao)} obras")
+                    print(f"✅ ENCONTRADA: Obra {obra_id} na sessão")
+        
+            print(f"🎯 ENVIANDO: {len(obras_da_sessao)} obras da sessão")
             handler.send_json_response(obras_da_sessao)
             
         except Exception as e:

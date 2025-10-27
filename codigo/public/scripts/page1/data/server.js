@@ -117,13 +117,14 @@ function removeBaseObraFromHTML() {
 }
 
 /**
- * Carrega OBRAS salvas do servidor para a sessão atual - ATUALIZADO PARA OBRAS
+ * Carrega OBRAS salvas do servidor para a sessão atual - CORREÇÃO: SÓ CARREGA SE HOUVER SESSÃO ATIVA
  */
 async function loadObrasFromServer() {
     console.log("🔄 Carregando OBRAS do servidor...");
     
+    // ✅ CORREÇÃO: Só carrega obras se a sessão estiver ativa
     if (!isSessionActive()) {
-        console.log("📭 Sessão encerrada - nenhuma obra será carregada");
+        console.log("📭 Sessão não está ativa - nenhuma obra será carregada");
         clearRenderedObras();
         return;
     }
@@ -297,16 +298,29 @@ function resetDisplayLogic() {
 }
 
 /**
- * Inicia uma nova sessão - ATUALIZADO
+ * Inicia uma nova sessão - CORREÇÃO: AGORA SÓ É CHAMADA MANUALMENTE
  */
 async function startNewSession() {
+    // ✅ CORREÇÃO: Esta função agora só é chamada quando o usuário salva a primeira obra
     clearSessionObras();
     clearRenderedObras();
     
     setSessionActive(true);
     window.GeralCount = 0;
     
-    console.log("🆕 Nova sessão iniciada");
+    console.log("🆕 Nova sessão iniciada pelo usuário");
+}
+
+/**
+ * Função NOVA: Inicia sessão quando usuário salva primeira obra
+ */
+async function startSessionOnFirstSave() {
+    if (!isSessionActive()) {
+        console.log("🆕 Iniciando sessão na primeira obra salva");
+        await startNewSession();
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -428,7 +442,7 @@ async function removeObraFromSession(obraId) {
     if (!isSessionActive()) return;
     
     try {
-        const response = await fetch(`/api/sessions/remove-obra/${obraId}`, {
+        const response = await fetch(`/api/sessions/remove-project/${obraId}`, {
             method: 'DELETE'
         });
         
@@ -521,21 +535,22 @@ function isObraRemoved(obraId) {
 }
 
 /**
- * Inicializa a sessão automaticamente quando o sistema carrega - ATUALIZADO
+ * Inicializa a sessão automaticamente quando o sistema carrega - CORREÇÃO: NÃO INICIA AUTOMATICAMENTE
  */
 async function initializeSession() {
-    console.log("🔄 Inicializando sessão...");
+    console.log("🔄 Verificando sessão...");
     
-    // Verifica se já existe uma sessão ativa
+    // ✅ CORREÇÃO: NÃO INICIA SESSÃO AUTOMATICAMENTE
+    // A sessão só será iniciada quando o usuário salvar a primeira obra
+    
     if (!isSessionActive()) {
-        console.log("🆕 Iniciando nova sessão automaticamente");
-        await startNewSession();
+        console.log("📭 Sessão não está ativa - aguardando ação do usuário");
+        // ❌ REMOVIDO: await startNewSession();
+        // O sistema agora começa SEM sessão ativa
     } else {
-        console.log("✅ Sessão já está ativa");
+        console.log("✅ Sessão já está ativa - carregando obras existentes");
+        await loadObrasFromServer();
     }
-    
-    // Carrega obras da sessão
-    await loadObrasFromServer();
 }
 
 window.shutdownManual = shutdownManual;
@@ -555,6 +570,7 @@ export {
     isSessionActive,
     setSessionActive,
     startNewSession,
+    startSessionOnFirstSave, // ✅ NOVA FUNÇÃO
     getSessionObras, // ATUALIZADO
     addObraToSession, // ATUALIZADO
     removeObraFromSession, // ATUALIZADO

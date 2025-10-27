@@ -63,6 +63,85 @@
       "nome": "Obra2",
       "timestamp": "2025-10-25T20:51:04.001Z",
       "projetos": []
+    },
+    {
+      "id": "1004",
+      "nome": "Obra1teste vvv",
+      "timestamp": "2025-10-25T20:58:02.046Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1hkgjfgvmbjk",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1gjgcvbkj",
+              "inputs": {
+                "ambiente": "Sala de Servidores",
+                "backup": "n+1",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 5.5,
+                "paredeLeste": 5.5,
+                "paredeNorte": 8,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacao": true,
+                "setpointPressurizacao": 25,
+                "numPortasSimples": "3",
+                "numPortasDuplas": "2",
+                "combateIncendio": "fm200"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Tubo Axial",
+                  "potencia": "11500m³/h",
+                  "tensao": "220V/1F",
+                  "precoBase": 1,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 2,
+                      "name": "com 15mmCA",
+                      "value": 3,
+                      "originalName": "com 15mmCA",
+                      "potenciaAplicada": "11500m³/h"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Grade de Proteção",
+                      "value": 5,
+                      "originalName": "Grade de Proteção",
+                      "potenciaAplicada": "11500m³/h"
+                    }
+                  ],
+                  "precoTotal": 1009,
+                  "potenciaSelecionada": "11500m³/h",
+                  "tipoSelecionado": "Tubo Axial"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+1"
+              },
+              "ganhosTermicos": {},
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-25T20:58:02.047Z"
+        }
+      ]
     }
   ]
 }

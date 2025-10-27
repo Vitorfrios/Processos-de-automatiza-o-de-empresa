@@ -1,15 +1,7 @@
 {
   "sessions": {
-    "session_1761418800": {
-      "obras": [
-        "1001"
-      ]
-    },
-    "session_1761422400": {
-      "obras": [
-        "1001",
-        "1002"
-      ]
+    "session_active": {
+      "obras": []
     }
   }
 }

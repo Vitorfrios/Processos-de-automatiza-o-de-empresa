@@ -218,27 +218,26 @@ async function loadSystemConstants() {
 }
 
 /**
- * Verifica se é necessário criar uma obra base quando não há obras existentes
- * Garante que o usuário sempre tenha pelo menos uma obra para trabalhar
+ * Verifica se é necessário criar uma obra base - CORREÇÃO: NÃO CRIA AUTOMATICAMENTE
  */
-async function verifyAndCreateBaseObra() { // ATUALIZADO
-  console.log(" Verificando necessidade de criar obra base...");
+async function verifyAndCreateBaseObra() {
+  console.log("🔍 Verificando obras existentes...");
   
   // Aguardar para garantir carregamento
   await new Promise(resolve => setTimeout(resolve, 500));
   
   const currentCount = getGeralCount();
-  const obrasInDOM = document.querySelectorAll('.obra-block').length; // ATUALIZADO
+  const obrasInDOM = document.querySelectorAll('.obra-block').length;
   
-  console.log(` Estado atual - GeralCount: ${currentCount}, Obras no DOM: ${obrasInDOM}`);
+  console.log(`📊 Estado atual - GeralCount: ${currentCount}, Obras no DOM: ${obrasInDOM}`);
   
-  // Se não há obras, cria uma automaticamente
+  // ✅ CORREÇÃO: NÃO CRIA OBRA AUTOMATICAMENTE
+  // O sistema agora começa completamente vazio
   if (obrasInDOM === 0 && currentCount === 0) {
-    console.log("🏗️ Criando obra base automaticamente...");
-    if (typeof window.addNewObra === 'function') {
-      await window.addNewObra();
-      console.log("✅ Obra base criada automaticamente");
-    }
+    console.log("📭 Sistema iniciado vazio - aguardando ação do usuário");
+    console.log("💡 Dica: Clique em 'Nova Obra' para começar");
+    // ❌ REMOVIDO: window.addNewObra() automático
+    // O usuário deve clicar em "Nova Obra" manualmente
   }
 }
 
@@ -277,7 +276,7 @@ function finalSystemDebug() {
 
 /**
  * Inicialização principal do sistema quando o DOM estiver carregado
- * Orquestra o carregamento de módulos, constantes e obras na ordem correta
+ * CORREÇÃO: NÃO INICIA SESSÃO AUTOMATICAMENTE - SISTEMA COMEÇA VAZIO
  */
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Inicializando sistema...");
@@ -291,15 +290,29 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     // 2. Carregar constantes do sistema
     await loadSystemConstants();
-    await initializeSession();
     
-    // 3. Carregar obras do servidor (AGORA FUNCIONA CORRETAMENTE) - ATUALIZADO
-    await loadObrasFromServer();
+    // ✅ CORREÇÃO: NÃO INICIA SESSÃO AUTOMATICAMENTE
+    // await initializeSession(); // ❌ REMOVIDO
+    console.log("📭 Sessão não iniciada automaticamente - sistema começa vazio");
     
-    // 4. Verificação de fallback (apenas se realmente necessário) - ATUALIZADO
+    // 3. ✅ CORREÇÃO: Só verifica obras existentes, não carrega automaticamente
     await verifyAndCreateBaseObra();
     
-    console.log("✅ Sistema inicializado com sucesso");
+    console.log("✅ Sistema inicializado com sucesso - PRONTO PARA USO");
+    console.log("💡 Dica: Clique em 'Nova Obra' para começar");
+    
+    // Mostrar status do sistema para usuário
+    // Espera 5 segundos antes de mostrar o status
+    setTimeout(() => {
+      if (window.showSystemStatus) {
+        setTimeout(() => {
+          window.showSystemStatus("Sistema carregado. Clique em 'Nova Obra' para começar.", "success");
+        }, 500);
+      }
+    }, 1000);
+
+
+
     
     // Debug final
     setTimeout(finalSystemDebug, 1000);
@@ -307,10 +320,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("❌ ERRO na inicialização do sistema:", error);
     
-    // Fallback robusto - ATUALIZADO
+    // ✅ CORREÇÃO: Fallback também não cria obra automática
     setTimeout(() => {
-      console.log("🔄 Executando fallback...");
-      verifyAndCreateBaseObra();
+      console.log("🔄 Sistema em estado de espera - aguardando ação do usuário");
+      if (window.showSystemStatus) {
+        window.showSystemStatus("Sistema carregado com avisos. Clique em 'Nova Obra' para começar.", "warning");
+      }
     }, 1000);
   }
 });
