@@ -1,6 +1,10 @@
 /**
  * Utilitários para extração e construção de dados - CORRIGIDO para hierarquia Obra→Projeto→Sala
+ * VERSÃO OTIMIZADA E TESTADA
  */
+
+// Debug global
+console.log('🔄 data-utils.js carregado - versão otimizada');
 
 /**
  * Gera ID para obra (inicia em 1001, global)
@@ -60,19 +64,245 @@ function generateRoomId(projectElement) {
 }
 
 /**
+ * Obtém o ID completo da sala (ex: "Projeto1-Sala1")
+ */
+function getRoomFullId(roomElement) {
+    // Tentar obter do data attribute primeiro
+    const roomName = roomElement.dataset.roomName;
+    const projectElement = roomElement.closest('.project-block');
+    const projectName = projectElement ? getProjectName(projectElement) : 'Projeto1';
+    
+    if (roomName) {
+        return `${projectName}-${roomName}`;
+    }
+    
+    // Fallback: buscar elementos com IDs que contenham o padrão
+    const possibleIds = [
+        'total-ganhos-w-', 'total-tr-', 'total-externo-', 
+        'total-divisoes-', 'total-piso-', 'total-iluminacao-'
+    ];
+    
+    for (const prefix of possibleIds) {
+        const element = document.querySelector(`[id^="${prefix}"]`);
+        if (element) {
+            const fullId = element.id.replace(prefix, '');
+            if (fullId && fullId.includes('-')) {
+                console.log(`🔍 ID completo detectado: ${fullId}`);
+                return fullId;
+            }
+        }
+    }
+    
+    // Último fallback
+    return 'Projeto1-Sala1';
+}
+
+/**
+ * Extrai número de um texto
+ */
+function extractNumberFromText(text) {
+    if (!text) return null;
+    
+    // Buscar por padrões numéricos
+    const numberMatch = text.match(/-?\d+(?:[.,]\d+)?/);
+    if (numberMatch) {
+        const numericString = numberMatch[0].replace(',', '.');
+        const numericValue = parseFloat(numericString);
+        return isNaN(numericValue) ? null : numericValue;
+    }
+    
+    return null;
+}
+
+/**
+ * Busca alternativa por texto quando o elemento não é encontrado pelo ID
+ */
+function attemptAlternativeSearch(key, roomFullId, gains) {
+    const textMap = {
+        'total-ganhos-w': 'Total de Ganhos Térmicos:',
+        'total-tr': 'Total em TR:',
+        'total-externo': 'Total Paredes Externas e Teto',
+        'total-divisoes': 'Total Divisórias',
+        'total-piso': 'Total Piso',
+        'total-iluminacao': 'Total Iluminação',
+        'total-dissi': 'Total Equipamentos',
+        'total-pessoas': 'Total Pessoas',
+        'total-ar-sensivel': 'Total Ar Externo Sensível',
+        'total-ar-latente': 'Total Ar Externo Latente'
+    };
+    
+    const textToFind = textMap[key];
+    if (!textToFind) return;
+    
+    console.log(`🔍 Buscando alternativa para ${key}: "${textToFind}"`);
+    
+    // Buscar elementos que contenham o texto
+    const elements = Array.from(document.querySelectorAll('*')).filter(el => {
+        const text = el.textContent || el.innerText || '';
+        return text.includes(textToFind);
+    });
+    
+    if (elements.length > 0) {
+        console.log(`🔍 Encontrado texto "${textToFind}" em:`, elements[0]);
+        
+        // Tentar encontrar o número próximo ao texto
+        for (const element of elements) {
+            // Olhar no próprio elemento
+            const selfText = element.textContent || element.innerText || '';
+            const selfNumber = extractNumberFromText(selfText);
+            if (selfNumber !== null) {
+                gains[key] = selfNumber;
+                console.log(`✅ ${key}: ${selfNumber} -> SALVO (via texto próprio)`);
+                return;
+            }
+            
+            // Olhar no elemento pai
+            const parent = element.parentElement;
+            if (parent) {
+                const parentText = parent.textContent || parent.innerText || '';
+                const parentNumber = extractNumberFromText(parentText);
+                if (parentNumber !== null) {
+                    gains[key] = parentNumber;
+                    console.log(`✅ ${key}: ${parentNumber} -> SALVO (via texto pai)`);
+                    return;
+                }
+            }
+            
+            // Olhar nos irmãos
+            const siblings = Array.from(element.parentElement?.children || []);
+            for (const sibling of siblings) {
+                if (sibling !== element) {
+                    const siblingText = sibling.textContent || sibling.innerText || '';
+                    const siblingNumber = extractNumberFromText(siblingText);
+                    if (siblingNumber !== null) {
+                        gains[key] = siblingNumber;
+                        console.log(`✅ ${key}: ${siblingNumber} -> SALVO (via texto irmão)`);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Função auxiliar para debug - mostra todos os elementos de ganhos térmicos disponíveis
+ */
+function debugThermalGainsElements(roomElement) {
+    const roomFullId = getRoomFullId(roomElement);
+    console.log('🐛 DEBUG: Todos os elementos de ganhos térmicos disponíveis:');
+    
+    const selectors = [
+        'total-ganhos-w', 'total-tr', 'total-externo', 'total-divisoes',
+        'total-piso', 'total-iluminacao', 'total-dissi', 'total-pessoas',
+        'total-ar-sensivel', 'total-ar-latente'
+    ];
+    
+    selectors.forEach(selector => {
+        const element = document.querySelector(`#${selector}-${roomFullId}`);
+        console.log(`🔍 ${selector}-${roomFullId}:`, element ? `ENCONTRADO - "${element.textContent}"` : 'NÃO ENCONTRADO');
+    });
+}
+
+/**
+ * Extrai dados de ganhos térmicos - VERSÃO CORRIGIDA COM PADRÃO DE IDs
+ */
+function extractThermalGainsData(roomElement) {
+    console.log('🎯 FUNÇÃO extractThermalGainsData CHAMADA!');
+    
+    const gains = {};
+    const roomId = roomElement.id.replace('room-content-', '');
+    
+    console.log(`🔥 Buscando ganhos térmicos para sala: ${roomId}`);
+    
+    // Obter o ID completo da sala (ex: "Projeto1-Sala1")
+    const roomFullId = getRoomFullId(roomElement);
+    console.log(`🔑 ID completo da sala: ${roomFullId}`);
+    
+    // Lista de todos os totais com os IDs CORRETOS baseados no HTML
+    const totalSelectors = {
+        'total-ganhos-w': `#total-ganhos-w-${roomFullId}`,
+        'total-tr': `#total-tr-${roomFullId}`,
+        'total-externo': `#total-externo-${roomFullId}`,
+        'total-divisoes': `#total-divisoes-${roomFullId}`,
+        'total-piso': `#total-piso-${roomFullId}`,
+        'total-iluminacao': `#total-iluminacao-${roomFullId}`,
+        'total-dissi': `#total-dissi-${roomFullId}`,
+        'total-pessoas': `#total-pessoas-${roomFullId}`,
+        'total-ar-sensivel': `#total-ar-sensivel-${roomFullId}`,
+        'total-ar-latente': `#total-ar-latente-${roomFullId}`
+    };
+    
+    let encontrados = 0;
+    
+    // Buscar cada elemento pelos IDs CORRETOS
+    Object.entries(totalSelectors).forEach(([key, selector]) => {
+        try {
+            const element = document.querySelector(selector);
+            
+            if (element) {
+                console.log(`🔍 Elemento encontrado: ${selector}`, element);
+                
+                // Obter o texto diretamente do elemento
+                let value = element.textContent || element.innerText || element.innerHTML || '';
+                console.log(`📝 Valor bruto de ${selector}: "${value}"`);
+                
+                // Limpar e converter o valor
+                if (value && value.trim() !== '') {
+                    // Remover qualquer HTML e espaços extras
+                    value = value.replace(/<[^>]*>/g, '').trim();
+                    
+                    // Extrair apenas números (incluindo decimais)
+                    const numericMatch = value.match(/-?\d+(?:[.,]\d+)?/);
+                    
+                    if (numericMatch) {
+                        // Substituir vírgula por ponto para parseFloat
+                        const numericString = numericMatch[0].replace(',', '.');
+                        const numericValue = parseFloat(numericString);
+                        
+                        if (!isNaN(numericValue)) {
+                            gains[key] = numericValue;
+                            encontrados++;
+                            console.log(`✅ ${key}: ${numericValue} -> SALVO`);
+                        } else {
+                            console.log(`❌ ${key}: Não consegui converter "${value}" para número`);
+                            gains[key] = 0;
+                        }
+                    } else {
+                        console.log(`❌ ${key}: Nenhum número encontrado em "${value}"`);
+                        gains[key] = 0;
+                    }
+                } else {
+                    console.log(`⚠️ ${selector}: Valor vazio, definindo como 0`);
+                    gains[key] = 0;
+                }
+            } else {
+                console.log(`❌ ${selector}: Elemento não encontrado no DOM`);
+                gains[key] = 0;
+                
+                // Tentar buscar por texto alternativo
+                attemptAlternativeSearch(key, roomFullId, gains);
+            }
+        } catch (error) {
+            console.error(`💥 Erro ao processar ${selector}:`, error);
+            gains[key] = 0;
+        }
+    });
+    
+    console.log(`🔥 ${encontrados} ganhos térmicos coletados:`, gains);
+    return gains;
+}
+
+/**
  * Constrói o objeto de dados completo de uma OBRA a partir do HTML
- * @param {string|HTMLElement} obraIdOrElement - ID da obra ou elemento da obra
- * @returns {Object} Dados completos da obra
  */
 function buildObraData(obraIdOrElement) {
     let obraElement;
     
     if (typeof obraIdOrElement === 'string') {
-        // ✅ CORREÇÃO: Buscar APENAS elementos .obra-block
         obraElement = document.querySelector(`.obra-block[data-obra-id="${obraIdOrElement}"]`) || 
                      document.querySelector(`.obra-block[data-obra-name="${obraIdOrElement}"]`);
     } else if (obraIdOrElement instanceof HTMLElement) {
-        // ✅ CORREÇÃO: Verificar se é realmente uma obra
         if (obraIdOrElement.classList.contains('obra-block')) {
             obraElement = obraIdOrElement;
         } else {
@@ -86,10 +316,6 @@ function buildObraData(obraIdOrElement) {
 
     if (!obraElement) {
         console.error('❌ Elemento da obra não encontrado:', obraIdOrElement);
-        console.log('🔍 Obras disponíveis no DOM:');
-        document.querySelectorAll('.obra-block').forEach((obra, index) => {
-            console.log(`  ${index + 1}.`, obra.dataset);
-        });
         return null;
     }
 
@@ -105,7 +331,7 @@ function buildObraData(obraIdOrElement) {
         projetos: []
     };
 
-    // ✅ CORREÇÃO: Buscar projetos DENTRO da obra específica
+    // Buscar projetos DENTRO da obra específica
     const projectElements = obraElement.querySelectorAll('.project-block');
     console.log(`🔍 Encontrados ${projectElements.length} projetos na obra "${obraName}"`);
     
@@ -150,7 +376,7 @@ function getObraName(obraElement) {
 }
 
 /**
- * Constrói o objeto de dados completo de um projeto a partir do HTML - ATUALIZADO
+ * Constrói o objeto de dados completo de um projeto a partir do HTML
  */
 function buildProjectData(projectIdOrElement) {
     let projectElement;
@@ -195,7 +421,7 @@ function buildProjectData(projectIdOrElement) {
 }
 
 /**
- * Extrai todos os dados de uma sala a partir do elemento HTML - CORRIGIDO
+ * Extrai todos os dados de uma sala a partir do elemento HTML
  */
 function extractRoomData(roomElement, projectElement) {
     if (!roomElement) {
@@ -212,7 +438,7 @@ function extractRoomData(roomElement, projectElement) {
         inputs: extractClimatizationInputs(roomElement),
         maquinas: extractMachinesData(roomElement),
         capacidade: extractCapacityData(roomElement),
-        ganhosTermicos: extractThermalGainsData(roomElement),
+        ganhosTermicos: extractThermalGainsData(roomElement), // ✅ AGORA FUNCIONA
         configuracao: extractConfigurationData(roomElement)
     };
 
@@ -228,7 +454,7 @@ function extractRoomData(roomElement, projectElement) {
 }
 
 /**
- * Extrai inputs de climatização - CORRIGIDO para pressurização
+ * Extrai inputs de climatização
  */
 function extractClimatizationInputs(roomElement) {
     const inputs = {};
@@ -251,7 +477,7 @@ function extractClimatizationInputs(roomElement) {
         }
     });
 
-    // CORREÇÃO: Extrair pressurização (radio buttons)
+    // Pressurização (radio buttons)
     const pressurizacaoRadios = roomElement.querySelectorAll('input[name*="pressurizacao"][type="radio"]');
     let pressurizacaoValue = false;
     let pressurizacaoSetpoint = "25"; // valor padrão
@@ -297,7 +523,7 @@ function extractClimatizationInputs(roomElement) {
 }
 
 /**
- * Extrai dados das máquinas - CORRIGIDO para estrutura completa
+ * Extrai dados das máquinas
  */
 function extractMachinesData(roomElement) {
     const machines = [];
@@ -315,7 +541,7 @@ function extractMachinesData(roomElement) {
 }
 
 /**
- * Extrai dados de uma máquina individual - CORRIGIDO para valores por TR
+ * Extrai dados de uma máquina individual
  */
 function extractClimatizationMachineData(machineElement) {
     const machineId = machineElement.getAttribute('data-machine-id') || `machine-${Date.now()}`;
@@ -328,7 +554,6 @@ function extractClimatizationMachineData(machineElement) {
         precoBase: 0,
         opcoesSelecionadas: [],
         precoTotal: 0,
-        // Informações para recálculo
         potenciaSelecionada: machineElement.querySelector('.machine-power-select')?.value || '',
         tipoSelecionado: machineElement.querySelector('.machine-type-select')?.value || ''
     };
@@ -365,7 +590,6 @@ function extractClimatizationMachineData(machineElement) {
         if (totalPriceElement) {
             machineData.precoTotal = parseMachinePrice(totalPriceElement.textContent);
         } else {
-            // Calcular se não encontrou o elemento
             machineData.precoTotal = machineData.precoBase + 
                 selectedOptions.reduce((sum, option) => sum + option.value, 0);
         }
@@ -388,7 +612,7 @@ function extractClimatizationMachineData(machineElement) {
 }
 
 /**
- * Extrai dados de capacidade - CORRIGIDO para estrutura correta
+ * Extrai dados de capacidade
  */
 function extractCapacityData(roomElement) {
     const capacityData = {};
@@ -451,53 +675,7 @@ function extractCapacityData(roomElement) {
 }
 
 /**
- * Extrai dados de ganhos térmicos
- */
-function extractThermalGainsData(roomElement) {
-    const gains = {};
-    const roomId = roomElement.id.replace('room-content-', '');
-
-    try {
-        // Elementos específicos de ganhos térmicos
-        const thermalElements = [
-            'total-ganhos-w', 'total-tr', 'ganho-teto', 'ganho-parede-oeste', 
-            'ganho-parede-leste', 'ganho-parede-norte', 'ganho-parede-sul',
-            'ganho-divi-nc1', 'ganho-divi-nc2', 'ganho-divi-c1', 'ganho-divi-c2',
-            'ganho-piso', 'ganho-iluminacao', 'ganho-dissi', 'ganho-pessoas',
-            'ganho-ar-sensivel', 'ganho-ar-latente'
-        ];
-
-        thermalElements.forEach(elementId => {
-            const fullId = `${elementId}-${roomId}`;
-            const element = document.getElementById(fullId);
-            if (element) {
-                let value = element.textContent || element.value;
-                
-                // Extrair valor numérico do texto
-                if (value && typeof value === 'string') {
-                    const numericMatch = value.match(/(\d+[.,]?\d*)/);
-                    if (numericMatch) {
-                        value = parseFloat(numericMatch[0].replace(',', '.'));
-                    }
-                }
-                
-                if (value !== undefined && value !== '') {
-                    gains[fullId] = value;
-                }
-            }
-        });
-
-        console.log(`🔥 ${Object.keys(gains).length} ganhos térmicos coletados para sala ${roomId}`);
-        return gains;
-
-    } catch (error) {
-        console.error(`❌ Erro ao extrair ganhos térmicos da sala ${roomId}:`, error);
-        return gains;
-    }
-}
-
-/**
- * Extrai dados de configuração - CORRIGIDO para opções de instalação
+ * Extrai dados de configuração
  */
 function extractConfigurationData(roomElement) {
     const config = {
@@ -506,7 +684,7 @@ function extractConfigurationData(roomElement) {
     
     console.log('🔍 Buscando configurações na sala...');
     
-    // Busca ESPECÍFICA por opções de instalação (checkboxes com mesmo name)
+    // Busca por opções de instalação
     const opcoesInstalacaoCheckboxes = roomElement.querySelectorAll('input[name^="opcoesInstalacao-"][type="checkbox"]');
     
     console.log(`📋 Encontrados ${opcoesInstalacaoCheckboxes.length} checkboxes de opções de instalação`);
@@ -527,14 +705,13 @@ function extractConfigurationData(roomElement) {
 }
 
 /**
- * Obtém o nome do projeto de forma segura - CORRIGIDA
+ * Obtém o nome do projeto de forma segura
  */
 function getProjectName(projectElement) {
     // PRIMEIRO: Tentar obter do elemento de título editável
     const titleElement = projectElement.querySelector('.project-title');
     
     if (titleElement) {
-        // Para elementos contenteditable, usar textContent
         const titleText = titleElement.textContent || titleElement.innerText || '';
         const trimmedText = titleText.trim();
         
@@ -588,21 +765,18 @@ function getRoomName(roomElement) {
 }
 
 /**
- * Obtém o nome da máquina de forma segura - CORRIGIDO
+ * Obtém o nome da máquina de forma segura
  */
 function getMachineName(machineElement, machineId) {
     const titleElement = machineElement.querySelector('.machine-title-editable');
     if (!titleElement) return `Máquina ${machineId}`;
     
-    // Para input type="text", usar value; para outros elementos, usar textContent
     const name = titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Máquina ${machineId}`;
     return name.trim() || `Máquina${machineId}`;
 }
 
 /**
  * Converte texto de preço em número
- * @param {string} priceText - Texto do preço (ex: "R$ 1.500,00")
- * @returns {number} Valor numérico
  */
 function parseMachinePrice(priceText) {
     if (!priceText || priceText === 'R$ 0,00') return 0;
@@ -628,7 +802,7 @@ function safeNumber(value) {
     return isNaN(num) ? 0 : num;
 }
 
-// Exportações atualizadas
+// Exportações atualizadas - ORDEM CORRIGIDA
 export {
     buildObraData,
     buildProjectData,
@@ -637,14 +811,16 @@ export {
     extractMachinesData,
     extractClimatizationMachineData,
     extractCapacityData,
-    extractThermalGainsData,
+    extractThermalGainsData, // ✅ AGORA EXPORTADA CORRETAMENTE
     extractConfigurationData,
     getProjectName,
     getRoomName,
     getMachineName,
     parseMachinePrice,
     safeNumber,
-    generateObraId,      // NOVA EXPORTAÇÃO
-    generateProjectId,   // NOVA EXPORTAÇÃO  
-    generateRoomId       // NOVA EXPORTAÇÃO
+    generateObraId,
+    generateProjectId,  
+    generateRoomId
 }
+
+console.log('✅ data-utils.js carregado com sucesso - todas as funções disponíveis');

@@ -3,179 +3,7 @@
     {
       "id": "1001",
       "nome": "Obra1",
-      "timestamp": "2025-10-27T20:25:47.657Z",
-      "projetos": [
-        {
-          "id": "1",
-          "nome": "Projeto1",
-          "salas": [
-            {
-              "id": "1",
-              "nome": "Sala1",
-              "inputs": {
-                "ambiente": "Sala de Servidores",
-                "backup": "n+1",
-                "area": 50,
-                "tipoConstrucao": "Alvenaria",
-                "paredeOeste": 5.5,
-                "paredeLeste": 5.5,
-                "paredeNorte": 8,
-                "paredeSul": 8,
-                "peDireito": 3,
-                "divisoriaNaoClima1": 10,
-                "divisoriaNaoClima2": 10,
-                "divisoriaClima1": 15,
-                "divisoriaClima2": 15,
-                "dissipacao": 5000,
-                "numPessoas": 10,
-                "pressurizacao": true,
-                "setpointPressurizacao": 25,
-                "numPortasSimples": "3",
-                "numPortasDuplas": "2",
-                "combateIncendio": "fm200"
-              },
-              "maquinas": [
-                {
-                  "nome": "Equipamento de Climatização 1",
-                  "tipo": "Wall Mounted",
-                  "potencia": "3TR",
-                  "tensao": "220V/1F",
-                  "precoBase": 34852.8,
-                  "opcoesSelecionadas": [
-                    {
-                      "id": 1,
-                      "name": "Automação Embarcada",
-                      "value": 5300,
-                      "originalName": "Automação Embarcada",
-                      "potenciaAplicada": "3TR"
-                    },
-                    {
-                      "id": 2,
-                      "name": "1 Damper Manual",
-                      "value": 200,
-                      "originalName": "1 Damper Manual",
-                      "potenciaAplicada": "3TR"
-                    },
-                    {
-                      "id": 3,
-                      "name": "Umidificação",
-                      "value": 9200,
-                      "originalName": "Umidificação",
-                      "potenciaAplicada": "3TR"
-                    },
-                    {
-                      "id": 4,
-                      "name": "1 Damper com atuador on/off",
-                      "value": 2070,
-                      "originalName": "1 Damper com atuador on/off",
-                      "potenciaAplicada": "3TR"
-                    }
-                  ],
-                  "precoTotal": 56622.8,
-                  "potenciaSelecionada": "3TR",
-                  "tipoSelecionado": "Wall Mounted"
-                }
-              ],
-              "capacidade": {
-                "backup": "n+1"
-              },
-              "ganhosTermicos": {},
-              "configuracao": {
-                "opcoesInstalacao": [
-                  "bocal_insuflamento_protegido",
-                  "bocal_acoplado_dutos",
-                  "condicionadores_externos_se"
-                ]
-              }
-            }
-          ],
-          "timestamp": "2025-10-27T20:25:47.657Z"
-        }
-      ]
-    },
-    {
-      "id": "1002",
-      "nome": "Obra1",
-      "timestamp": "2025-10-27T20:14:31.296Z",
-      "projetos": [
-        {
-          "id": "1",
-          "nome": "Projeto1",
-          "salas": [
-            {
-              "id": "1",
-              "nome": "Sala1",
-              "inputs": {
-                "ambiente": "Sala de Servidores",
-                "backup": "n+1",
-                "area": 50,
-                "tipoConstrucao": "Alvenaria",
-                "paredeOeste": 5.5,
-                "paredeLeste": 5.5,
-                "paredeNorte": 8,
-                "paredeSul": 8,
-                "peDireito": 3,
-                "divisoriaNaoClima1": 10,
-                "divisoriaNaoClima2": 10,
-                "divisoriaClima1": 15,
-                "divisoriaClima2": 15,
-                "dissipacao": 5000,
-                "numPessoas": 10,
-                "pressurizacao": true,
-                "setpointPressurizacao": 25,
-                "numPortasSimples": "3",
-                "numPortasDuplas": "2",
-                "combateIncendio": "fm200"
-              },
-              "maquinas": [
-                {
-                  "nome": "Equipamento de Climatização 1",
-                  "tipo": "Wall Mounted",
-                  "potencia": "3TR",
-                  "tensao": "220V/3F",
-                  "precoBase": 34852.8,
-                  "opcoesSelecionadas": [
-                    {
-                      "id": 1,
-                      "name": "Automação Embarcada",
-                      "value": 5300,
-                      "originalName": "Automação Embarcada",
-                      "potenciaAplicada": "3TR"
-                    },
-                    {
-                      "id": 2,
-                      "name": "1 Damper Manual",
-                      "value": 200,
-                      "originalName": "1 Damper Manual",
-                      "potenciaAplicada": "3TR"
-                    }
-                  ],
-                  "precoTotal": 45352.8,
-                  "potenciaSelecionada": "3TR",
-                  "tipoSelecionado": "Wall Mounted"
-                }
-              ],
-              "capacidade": {
-                "backup": "n+1"
-              },
-              "ganhosTermicos": {},
-              "configuracao": {
-                "opcoesInstalacao": [
-                  "bocal_insuflamento_protegido",
-                  "bocal_acoplado_dutos",
-                  "condicionadores_externos_se"
-                ]
-              }
-            }
-          ],
-          "timestamp": "2025-10-27T20:14:31.297Z"
-        }
-      ]
-    },
-    {
-      "id": "1003",
-      "nome": "Obra1",
-      "timestamp": "2025-10-27T20:55:12.827Z",
+      "timestamp": "2025-10-27T21:22:32.547Z",
       "projetos": [
         {
           "id": "1",
@@ -209,10 +37,10 @@
               "maquinas": [
                 {
                   "nome": "Equipamento de Climatização 1",
-                  "tipo": "Self Contained",
+                  "tipo": "Caixa de Ventilação",
                   "potencia": "1000m³/h",
                   "tensao": "220V/1F",
-                  "precoBase": 0,
+                  "precoBase": 2900,
                   "opcoesSelecionadas": [
                     {
                       "id": 1,
@@ -236,9 +64,106 @@
                       "potenciaAplicada": "1000m³/h"
                     }
                   ],
-                  "precoTotal": 5000,
+                  "precoTotal": 3700,
                   "potenciaSelecionada": "1000m³/h",
-                  "tipoSelecionado": "Self Contained"
+                  "tipoSelecionado": "Caixa de Ventilação"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 100022012.9,
+                "total-tr": 30,
+                "total-ganhos": 86.5133
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T21:22:32.548Z"
+        }
+      ]
+    },
+    {
+      "id": "1002",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T21:24:15.842Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Split Piso-Teto",
+                  "potencia": "36BTU/h",
+                  "tensao": "220V/1F",
+                  "precoBase": 6700,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Inverter",
+                      "value": 8307,
+                      "originalName": "Inverter",
+                      "potenciaAplicada": "36BTU/h"
+                    },
+                    {
+                      "id": 2,
+                      "name": "Quente/Frio",
+                      "value": 1,
+                      "originalName": "Quente/Frio",
+                      "potenciaAplicada": "36BTU/h"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Inverter e Quente/Frio",
+                      "value": 7,
+                      "originalName": "Inverter e Quente/Frio",
+                      "potenciaAplicada": "36BTU/h"
+                    },
+                    {
+                      "id": 4,
+                      "name": "Mão de Obra de Instalação",
+                      "value": 1400,
+                      "originalName": "Mão de Obra de Instalação",
+                      "potenciaAplicada": "36BTU/h"
+                    }
+                  ],
+                  "precoTotal": 19415,
+                  "potenciaSelecionada": "36BTU/h",
+                  "tipoSelecionado": "Split Piso-Teto"
                 }
               ],
               "capacidade": {
@@ -254,20 +179,186 @@
               }
             }
           ],
-          "timestamp": "2025-10-27T20:55:12.828Z"
+          "timestamp": "2025-10-27T21:24:15.842Z"
+        }
+      ]
+    },
+    {
+      "id": "1003",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T21:27:52.355Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Split Piso-Teto",
+                  "potencia": "FH 250 G4+F5 900m³/h",
+                  "tensao": "220V/1F",
+                  "precoBase": 0,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "com 10mmCA",
+                      "value": 0,
+                      "originalName": "com 10mmCA",
+                      "potenciaAplicada": "FH 250 G4+F5 900m³/h"
+                    },
+                    {
+                      "id": 2,
+                      "name": "com 15mmCA",
+                      "value": 0,
+                      "originalName": "com 15mmCA",
+                      "potenciaAplicada": "FH 250 G4+F5 900m³/h"
+                    },
+                    {
+                      "id": 3,
+                      "name": "com 20mmCA",
+                      "value": 0,
+                      "originalName": "com 20mmCA",
+                      "potenciaAplicada": "FH 250 G4+F5 900m³/h"
+                    }
+                  ],
+                  "precoTotal": 3000,
+                  "potenciaSelecionada": "FH 250 G4+F5 900m³/h",
+                  "tipoSelecionado": "Split Piso-Teto"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {},
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T21:27:52.355Z"
         }
       ]
     },
     {
       "id": "1004",
       "nome": "Obra1",
-      "timestamp": "2025-10-27T21:02:44.614Z",
-      "projetos": []
+      "timestamp": "2025-10-27T21:31:49.795Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "ACJ",
+                  "potencia": "2000m³/h",
+                  "tensao": "220V/1F",
+                  "precoBase": 0,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "com 10mmCA",
+                      "value": 7,
+                      "originalName": "com 10mmCA",
+                      "potenciaAplicada": "2000m³/h"
+                    },
+                    {
+                      "id": 2,
+                      "name": "com 15mmCA",
+                      "value": 9,
+                      "originalName": "com 15mmCA",
+                      "potenciaAplicada": "2000m³/h"
+                    },
+                    {
+                      "id": 3,
+                      "name": "com 20mmCA",
+                      "value": 2,
+                      "originalName": "com 20mmCA",
+                      "potenciaAplicada": "2000m³/h"
+                    }
+                  ],
+                  "precoTotal": 1518,
+                  "potenciaSelecionada": "2000m³/h",
+                  "tipoSelecionado": "ACJ"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {},
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T21:31:49.795Z"
+        }
+      ]
     },
     {
       "id": "1005",
       "nome": "Obra1",
-      "timestamp": "2025-10-27T21:09:47.477Z",
+      "timestamp": "2025-10-27T21:33:32.612Z",
       "projetos": [
         {
           "id": "1",
@@ -302,48 +393,41 @@
                 {
                   "nome": "Equipamento de Climatização 1",
                   "tipo": "Split Hi-Wall",
-                  "potencia": "30TR",
-                  "tensao": "380V/3F",
+                  "potencia": "60BTU/h",
+                  "tensao": "220V/1F",
                   "precoBase": 0,
                   "opcoesSelecionadas": [
                     {
                       "id": 1,
-                      "name": "Automação Embarcada",
-                      "value": 5300,
-                      "originalName": "Automação Embarcada",
-                      "potenciaAplicada": "30TR"
+                      "name": "Inverter",
+                      "value": 4,
+                      "originalName": "Inverter",
+                      "potenciaAplicada": "60BTU/h"
                     },
                     {
-                      "id": 5,
-                      "name": "2 Dampers com atuador on/off",
-                      "value": 4470,
-                      "originalName": "2 Dampers com atuador on/off",
-                      "potenciaAplicada": "30TR"
+                      "id": 2,
+                      "name": "Quente/Frio",
+                      "value": 5,
+                      "originalName": "Quente/Frio",
+                      "potenciaAplicada": "60BTU/h"
                     },
                     {
-                      "id": 7,
-                      "name": "Controle de Condensação Proporcional",
-                      "value": 9300,
-                      "originalName": "Controle de Condensação Proporcional",
-                      "potenciaAplicada": "30TR"
+                      "id": 3,
+                      "name": "Inverter e Quente/Frio",
+                      "value": 3,
+                      "originalName": "Inverter e Quente/Frio",
+                      "potenciaAplicada": "60BTU/h"
                     },
                     {
-                      "id": 10,
-                      "name": "Resistencia de Aquecimento",
-                      "value": 2100,
-                      "originalName": "Resistencia de Aquecimento",
-                      "potenciaAplicada": "30TR"
-                    },
-                    {
-                      "id": 11,
-                      "name": "Pintura Especial",
-                      "value": 5500,
-                      "originalName": "Pintura Especial",
-                      "potenciaAplicada": "30TR"
+                      "id": 4,
+                      "name": "Mão de Obra de Instalação",
+                      "value": 1200,
+                      "originalName": "Mão de Obra de Instalação",
+                      "potenciaAplicada": "60BTU/h"
                     }
                   ],
-                  "precoTotal": 26670,
-                  "potenciaSelecionada": "30TR",
+                  "precoTotal": 3212,
+                  "potenciaSelecionada": "60BTU/h",
                   "tipoSelecionado": "Split Hi-Wall"
                 }
               ],
@@ -360,7 +444,491 @@
               }
             }
           ],
-          "timestamp": "2025-10-27T21:09:47.478Z"
+          "timestamp": "2025-10-27T21:33:32.613Z"
+        }
+      ]
+    },
+    {
+      "id": "1006",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T21:39:20.492Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Split Hi-Wall",
+                  "potencia": "9BTU/h",
+                  "tensao": "220V/1F",
+                  "precoBase": 1550,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Quente/Frio",
+                      "value": 1550,
+                      "originalName": "Quente/Frio",
+                      "potenciaAplicada": "9BTU/h"
+                    }
+                  ],
+                  "precoTotal": 5100,
+                  "potenciaSelecionada": "9BTU/h",
+                  "tipoSelecionado": "Split Hi-Wall"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {},
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T21:39:20.493Z"
+        }
+      ]
+    },
+    {
+      "id": "1007",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T21:41:29.773Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Split Hi-Wall",
+                  "potencia": "FH 150 G4 300m³/h",
+                  "tensao": "220V/1F",
+                  "precoBase": 0,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "com 10mmCA",
+                      "value": 0,
+                      "originalName": "com 10mmCA",
+                      "potenciaAplicada": "FH 150 G4 300m³/h"
+                    },
+                    {
+                      "id": 2,
+                      "name": "com 15mmCA",
+                      "value": 0,
+                      "originalName": "com 15mmCA",
+                      "potenciaAplicada": "FH 150 G4 300m³/h"
+                    },
+                    {
+                      "id": 3,
+                      "name": "com 20mmCA",
+                      "value": 0,
+                      "originalName": "com 20mmCA",
+                      "potenciaAplicada": "FH 150 G4 300m³/h"
+                    }
+                  ],
+                  "precoTotal": 2000,
+                  "potenciaSelecionada": "FH 150 G4 300m³/h",
+                  "tipoSelecionado": "Split Hi-Wall"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {},
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T21:41:29.773Z"
+        }
+      ]
+    },
+    {
+      "id": "1008",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T21:46:14.541Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Split Hi-Wall",
+                  "potencia": "25TR",
+                  "tensao": "380V/3F",
+                  "precoBase": 0,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 3,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "25TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 8,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "25TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "2 Dampers Manuais",
+                      "value": 9,
+                      "originalName": "2 Dampers Manuais",
+                      "potenciaAplicada": "25TR"
+                    },
+                    {
+                      "id": 10,
+                      "name": "Resistencia de Aquecimento",
+                      "value": 7,
+                      "originalName": "Resistencia de Aquecimento",
+                      "potenciaAplicada": "25TR"
+                    },
+                    {
+                      "id": 11,
+                      "name": "Pintura Especial",
+                      "value": 8,
+                      "originalName": "Pintura Especial",
+                      "potenciaAplicada": "25TR"
+                    }
+                  ],
+                  "precoTotal": 35,
+                  "potenciaSelecionada": "25TR",
+                  "tipoSelecionado": "Split Hi-Wall"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T21:46:14.542Z"
+        }
+      ]
+    },
+    {
+      "id": "1009",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T21:53:43.625Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Gabinetes Inline",
+                  "potencia": "20TR",
+                  "tensao": "440V/3F",
+                  "precoBase": 0,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 8,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "20TR"
+                    },
+                    {
+                      "id": 5,
+                      "name": "2 Dampers com atuador on/off",
+                      "value": 2,
+                      "originalName": "2 Dampers com atuador on/off",
+                      "potenciaAplicada": "20TR"
+                    },
+                    {
+                      "id": 7,
+                      "name": "Controle de Condensação Proporcional",
+                      "value": 4,
+                      "originalName": "Controle de Condensação Proporcional",
+                      "potenciaAplicada": "20TR"
+                    },
+                    {
+                      "id": 8,
+                      "name": "Goldfin",
+                      "value": 5,
+                      "originalName": "Goldfin",
+                      "potenciaAplicada": "20TR"
+                    },
+                    {
+                      "id": 10,
+                      "name": "Resistencia de Aquecimento",
+                      "value": 7,
+                      "originalName": "Resistencia de Aquecimento",
+                      "potenciaAplicada": "20TR"
+                    }
+                  ],
+                  "precoTotal": 26,
+                  "potenciaSelecionada": "20TR",
+                  "tipoSelecionado": "Gabinetes Inline"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 36164,
+                "total-tr": 26,
+                "total-externo": 12748,
+                "total-divisoes": 1365,
+                "total-piso": 1519,
+                "total-iluminacao": 525,
+                "total-dissi": 7500,
+                "total-pessoas": 3297,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T21:53:43.626Z"
+        }
+      ]
+    },
+    {
+      "id": "1010",
+      "nome": "Obra1",
+      "timestamp": "2025-10-27T22:05:50.982Z",
+      "projetos": [
+        {
+          "id": "1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Data Center",
+                "backup": "n+2",
+                "area": 75,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 6,
+                "paredeLeste": 6,
+                "paredeNorte": 10,
+                "paredeSul": 10,
+                "peDireito": 3.5,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 18,
+                "divisoriaClima2": 18,
+                "dissipacao": 7500,
+                "numPessoas": 15,
+                "pressurizacao": true,
+                "setpointPressurizacao": 22,
+                "numPortasSimples": "2",
+                "numPortasDuplas": "1",
+                "combateIncendio": "novec"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Split System",
+                  "potencia": "12,5TR",
+                  "tensao": "480V/3F",
+                  "precoBase": 22700,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
+                      "value": 2070,
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "12,5TR"
+                    },
+                    {
+                      "id": 6,
+                      "name": "Ventilador Eletrônico",
+                      "value": 4000,
+                      "originalName": "Ventilador Eletrônico",
+                      "potenciaAplicada": "12,5TR"
+                    },
+                    {
+                      "id": 7,
+                      "name": "Controle de Condensação Proporcional",
+                      "value": 9300,
+                      "originalName": "Controle de Condensação Proporcional",
+                      "potenciaAplicada": "12,5TR"
+                    },
+                    {
+                      "id": 12,
+                      "name": "Chaparia em Inox",
+                      "value": 13445,
+                      "originalName": "Chaparia em Inox",
+                      "potenciaAplicada": "12,5TR"
+                    }
+                  ],
+                  "precoTotal": 51515,
+                  "potenciaSelecionada": "12,5TR",
+                  "tipoSelecionado": "Split System"
+                }
+              ],
+              "capacidade": {
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 36164,
+                "total-tr": 11,
+                "total-externo": 3349,
+                "total-divisoes": 1365,
+                "total-piso": 1519,
+                "total-iluminacao": 525,
+                "total-dissi": 7500,
+                "total-pessoas": 3297,
+                "total-ar-sensivel": 5864,
+                "total-ar-latente": 12748
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-27T22:05:50.982Z"
         }
       ]
     }
