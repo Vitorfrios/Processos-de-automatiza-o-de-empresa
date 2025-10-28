@@ -72,35 +72,6 @@ class ShutdownManager {
             }
         }
     }
-  
-
-  showShutdownMessage() {
-    const message = document.createElement('div');
-    message.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.8);
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        font-family: Arial, sans-serif;
-        font-size: 24px;
-    `;
-    message.innerHTML = `
-        <div style="text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 20px;">⏻</div>
-            <div>Servidor encerrado</div>
-            <div style="font-size: 14px; margin-top: 10px; opacity: 0.8;">Esta janela fechará automaticamente</div>
-        </div>
-    `;
-    document.body.appendChild(message);
-  }
 }
 
 // Inicializar shutdown manager
@@ -132,18 +103,20 @@ async function loadAllModules() {
       utilsModule
     ] = modules;
 
-    // Atribuir TODAS as funções ao window - CORRIGIDO
-    Object.assign(window, {
-      // UI Interface - CORRIGIDO
+    // ✅ CORREÇÃO: ATRIBUIR FUNÇÕES DE TOGGLE PRIMEIRO
+    const toggleFunctions = {
+      // UI Interface - FUNÇÕES DE TOGGLE PRIMEIRO
+      toggleSection: interfaceModule.toggleSection,
+      toggleSubsection: interfaceModule.toggleSubsection,
       toggleObra: interfaceModule.toggleObra,
       toggleProject: interfaceModule.toggleProject,
       toggleRoom: interfaceModule.toggleRoom,
-      toggleSection: interfaceModule.toggleSection,
-      toggleSubsection: interfaceModule.toggleSubsection,
-      addNewObra: interfaceModule.addNewObra,
-      addNewProjectToObra: interfaceModule.addNewProjectToObra,
       collapseElement: interfaceModule.collapseElement,
       expandElement: interfaceModule.expandElement,
+
+      // Restante das funções
+      addNewObra: interfaceModule.addNewObra,
+      addNewProjectToObra: interfaceModule.addNewProjectToObra,
       showSystemStatus: interfaceModule.showSystemStatus,
       saveOrUpdateObra: interfaceModule.saveOrUpdateObra,
       verifyObraData: interfaceModule.verifyObraData,
@@ -152,11 +125,11 @@ async function loadAllModules() {
       // Edit
       makeEditable: editModule.makeEditable,
 
-      // Projects - CORRIGIDO
+      // Projects
       deleteProject: projectsModule.deleteProject,
-      saveObra: projectsModule.saveObra, // ✅ CORREÇÃO: função correta
+      saveObra: projectsModule.saveObra,
 
-      // Rooms - CORRIGIDO
+      // Rooms
       addNewRoom: roomsModule.addNewRoom,
       deleteRoom: roomsModule.deleteRoom,
       addMachine: roomsModule.addMachine,
@@ -170,10 +143,20 @@ async function loadAllModules() {
 
       // Utils
       ensureStringId: utilsModule.ensureStringId
-    });
+    };
+
+    // ✅ CORREÇÃO: Atribuir todas as funções ao window de uma vez
+    Object.assign(window, toggleFunctions);
 
     modulesLoaded = true;
     console.log("✅ Todos os módulos foram carregados com sucesso");
+    console.log("✅ Funções de toggle disponíveis:", {
+      toggleSection: typeof window.toggleSection,
+      toggleSubsection: typeof window.toggleSubsection,
+      toggleObra: typeof window.toggleObra,
+      toggleProject: typeof window.toggleProject,
+      toggleRoom: typeof window.toggleRoom
+    });
     
   } catch (error) {
     console.error("❌ Erro ao carregar módulos:", error);
@@ -252,21 +235,13 @@ function finalSystemDebug() {
   console.log('- Constantes carregadas:', !!window.systemConstants);
   console.log('- Shutdown Manager:', !!shutdownManager);
   
-  // Debug detalhado das obras
-  const obras = document.querySelectorAll('.obra-block');
-  obras.forEach((obra, index) => {
-    const obraName = obra.dataset.obraName;
-    const obraId = obra.dataset.obraId;
-    const projects = obra.querySelectorAll('.project-block');
-    console.log(`- Obra ${index + 1}: ${obraName} (ID: ${obraId}) - ${projects.length} projetos`);
-    
-    // Debug dos projetos dentro da obra
-    projects.forEach((project, projIndex) => {
-      const projectName = project.dataset.projectName;
-      const projectId = project.dataset.projectId;
-      const rooms = project.querySelectorAll('.room-block');
-      console.log(`  ↳ Projeto ${projIndex + 1}: ${projectName} (ID: ${projectId}) - ${rooms.length} salas`);
-    });
+  // Debug detalhado das funções de toggle
+  console.log('- Funções de toggle disponíveis:', {
+    toggleSection: typeof window.toggleSection,
+    toggleSubsection: typeof window.toggleSubsection,
+    toggleObra: typeof window.toggleObra,
+    toggleProject: typeof window.toggleProject,
+    toggleRoom: typeof window.toggleRoom
   });
 }
 
@@ -319,7 +294,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     // 0. Inicializar sistema de shutdown primeiro
     shutdownManager = new ShutdownManager();
     
-    // 1. Carregar módulos primeiro
+    // 1. ✅ CORREÇÃO: CARREGAR MÓDULOS PRIMEIRO (INCLUINDO TOGGLE FUNCTIONS)
     await loadAllModules();
     
     // 2. Carregar constantes do sistema
@@ -344,7 +319,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         const message = hasExistingSession 
           ? `Sessão carregada com ${document.querySelectorAll('.obra-block').length} obra(s)!` 
           : "Sistema carregado. Clique em 'Nova Obra' para começar.";
-        const type = hasExistingSession ? "success" : "info";
+        const type = hasExistingSession ? "success":"success";
         window.showSystemStatus(message, type);
       }
     }, 500);
@@ -364,17 +339,3 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-window.addNewRoom = async function(obraName, projectName, projectId) {
-    try {
-        // Usar a função corrigida do rooms.js
-        if (typeof window.addNewRoomWithUniqueId === 'function') {
-            await window.addNewRoomWithUniqueId(obraName, projectName, projectId);
-        } else {
-            console.error('❌ Função addNewRoomWithUniqueId não disponível');
-            // Fallback para função original se necessário
-            await window.originalAddNewRoom(obraName, projectName, projectId);
-        }
-    } catch (error) {
-        console.error('❌ Erro em addNewRoom:', error);
-    }
-};

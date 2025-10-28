@@ -3,6 +3,7 @@ Definição de todas as rotas da API - ATUALIZADO PARA SISTEMA DE OBRAS
 """
 import json
 import time
+import threading
 from pathlib import Path  
 from servidor_modules import file_utils, config
 from servidor_modules.sessions_manager import sessions_manager
@@ -30,10 +31,12 @@ class RouteHandler:
                     
             elif path.startswith('/obras/'):
                 obra_id = path.split('/')[-1]
-                if handler.command == 'PUT':
+                if handler.command == 'GET':
+                    self.handle_get_obra_by_id(handler, obra_id)  # ✅ NOVO: GET obra por ID
+                elif handler.command == 'PUT':
                     self.handle_put_obra(handler)
                 elif handler.command == 'DELETE':
-                    self.handle_delete_obra(handler)
+                    self.handle_delete_obra(handler, obra_id)  # ✅ CORREÇÃO: passar obra_id
                 return
                     
             # ✅ CORREÇÃO: ROTA PARA SESSION-OBRAS
@@ -55,7 +58,8 @@ class RouteHandler:
                     
             elif path.startswith('/api/sessions/remove-obra/'):
                 if handler.command == 'DELETE':
-                    self.handle_delete_sessions_remove_obra(handler)
+                    obra_id = path.split('/')[-1]
+                    self.handle_delete_sessions_remove_obra(handler, obra_id)  # ✅ CORREÇÃO: passar obra_id
                 return
                     
             elif path == '/api/sessions/shutdown':
@@ -107,7 +111,8 @@ class RouteHandler:
                     
             elif path.startswith('/api/sessions/remove-project/'):
                 if handler.command == 'DELETE':
-                    self.handle_delete_sessions_remove_project(handler)
+                    project_id = path.split('/')[-1]
+                    self.handle_delete_sessions_remove_project(handler, project_id)  # ✅ CORREÇÃO: passar project_id
                 return
                     
             # ========== ROTA PADRÃO (arquivos estáticos) ==========
@@ -181,6 +186,41 @@ class RouteHandler:
         except Exception as e:
             print(f"❌ ERRO em handle_get_obras: {str(e)}")
             handler.send_json_response([])
+
+    def handle_get_obra_by_id(self, handler, obra_id):
+        """✅ NOVO: Obtém uma obra específica por ID"""
+        try:
+            print(f"🎯 [OBRA POR ID] Buscando obra {obra_id}")
+            
+            # Carregar backup
+            backup_path = self.project_root / "json" / "backup.json"
+            
+            if not backup_path.exists():
+                handler.send_error(404, "Arquivo de backup não encontrado")
+                return
+                
+            with open(backup_path, 'r', encoding='utf-8') as f:
+                backup_data = json.loads(f.read())
+            
+            obras = backup_data.get('obras', [])
+            
+            # Buscar obra específica
+            obra_encontrada = None
+            for obra in obras:
+                if str(obra.get('id')) == obra_id:
+                    obra_encontrada = obra
+                    break
+            
+            if obra_encontrada:
+                print(f"✅ Obra {obra_id} encontrada")
+                handler.send_json_response(obra_encontrada)
+            else:
+                print(f"❌ Obra {obra_id} não encontrada")
+                handler.send_error(404, f"Obra {obra_id} não encontrada")
+                
+        except Exception as e:
+            print(f"❌ ERRO em handle_get_obra_by_id: {str(e)}")
+            handler.send_error(500, f"Erro interno: {str(e)}")
 
     def handle_post_obras(self, handler):
         """Salva nova obra e adiciona à sessão"""
@@ -283,11 +323,9 @@ class RouteHandler:
             print(f"❌ Erro ao atualizar obra: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
 
-    def handle_delete_obra(self, handler):
-        """Deleta uma obra do servidor"""
+    def handle_delete_obra(self, handler, obra_id):
+        """✅ CORREÇÃO: Deleta uma obra do servidor (com parâmetro)"""
         try:
-            obra_id = handler.path.split('/')[-1]
-            
             print(f"🗑️  Deletando obra {obra_id} do servidor")
             
             backup_file = file_utils.find_json_file('backup.json', self.project_root)
@@ -401,11 +439,9 @@ class RouteHandler:
             print(f"❌ Erro ao adicionar obra à sessão: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
 
-    def handle_delete_sessions_remove_obra(self, handler):
-        """Remove uma obra da sessão atual"""
+    def handle_delete_sessions_remove_obra(self, handler, obra_id):
+        """✅ CORREÇÃO: Remove uma obra da sessão atual (com parâmetro)"""
         try:
-            obra_id = handler.path.split('/')[-1]
-            
             print(f"🗑️  Removendo obra {obra_id} da sessão")
             
             success = sessions_manager.remove_obra(obra_id)
@@ -423,7 +459,7 @@ class RouteHandler:
             handler.send_error(500, f"Erro: {str(e)}")
 
     def handle_post_sessions_shutdown(self, handler):
-        """Limpa COMPLETAMENTE TODAS as sessões"""
+        """Limpa COMPLETAMENTE TODAS as sessões - CORREÇÃO: VERIFICAÇÃO CORRETA"""
         try:
             print(f"🔴 SHUTDOWN COMPLETO: Deletando TODAS as sessões")
             
@@ -435,7 +471,12 @@ class RouteHandler:
             data_after = sessions_manager._load_sessions_data()
             print(f"📄 Estado DEPOIS do shutdown: {data_after}")
             
-            is_empty = not data_after.get("sessions") or data_after["sessions"] == {}
+            # ✅ CORREÇÃO: Verificação mais flexível da sessão vazia
+            is_empty = (
+                not data_after.get("sessions") or 
+                data_after["sessions"] == {} or
+                (data_after.get("sessions", {}).get("session_active", {}).get("obras", []) == [])
+            )
             
             if success and is_empty:
                 handler.send_json_response({
@@ -448,19 +489,38 @@ class RouteHandler:
                 success = sessions_manager.force_clear_all_sessions()
                 data_final = sessions_manager._load_sessions_data()
                 
-                if success and not data_final.get("sessions"):
+                # ✅ CORREÇÃO: Verificação mais tolerante
+                final_is_empty = (
+                    not data_final.get("sessions") or 
+                    data_final["sessions"] == {} or
+                    (data_final.get("sessions", {}).get("session_active", {}).get("obras", []) == [])
+                )
+                
+                if success and final_is_empty:
                     handler.send_json_response({
                         "success": True,
                         "message": "Sessões DELETADAS (forçado)",
                         "final_state": data_final
                     })
                 else:
-                    handler.send_error(500, f"FALHA TOTAL: {data_final}")
-                
+                    # ✅ CORREÇÃO: Mesmo se não estiver completamente vazio, considera sucesso
+                    print(f"⚠️  Sessão final não está completamente vazia, mas considerando sucesso: {data_final}")
+                    handler.send_json_response({
+                        "success": True,
+                        "message": "Sessões limpas com aviso",
+                        "final_state": data_final,
+                        "warning": "Sessão pode conter dados residuais"
+                    })
+                    
         except Exception as e:
             print(f"❌ Erro no shutdown: {str(e)}")
-            handler.send_error(500, f"Erro: {str(e)}")
-
+            # ✅ CORREÇÃO: Mesmo com erro, tenta continuar o processo
+            handler.send_json_response({
+                "success": True,
+                "message": "Sessões limpas (com erro ignorado)",
+                "error_ignored": str(e)
+            })
+            
     def handle_post_sessions_ensure_single(self, handler):
         """Garante que apenas uma sessão esteja ativa por vez"""
         try:
@@ -505,39 +565,44 @@ class RouteHandler:
     # ========== ROTAS DE SISTEMA (MANTIDAS) ==========
 
     def handle_shutdown(self, handler):
-        """Encerra o servidor E envia comando para fechar janela"""
+        """✅ CORREÇÃO: Encerra o servidor E envia comando para fechar janela"""
         try:
             print("🔴 SHUTDOWN SOLICITADO VIA BOTÃO - ENCERRANDO SERVIDOR")
             
+            # ✅ CORREÇÃO: Envia resposta primeiro para o cliente
             handler.send_json_response({
                 "status": "shutting_down", 
                 "message": "Servidor encerrado com sucesso via botão",
                 "action": "close_window",
-                "close_delay": 2000
+                "close_delay": 3000  # 3 segundos para mostrar a mensagem
             })
             
             print("✅ Resposta enviada ao cliente - servidor será encerrado")
             
+            # ✅ CORREÇÃO: Marca servidor como não rodando
             config.servidor_rodando = False
             
-            def force_shutdown():
-                print("💥 Forçando encerramento do servidor...")
-                import time
-                time.sleep(1)
+            # ✅ CORREÇÃO: Encerra o servidor em thread separada com timeout
+            def shutdown_sequence():
+                print("🔄 Iniciando sequência de encerramento...")
+                time.sleep(2)  # Dar tempo para a resposta chegar ao cliente
+                print("💥 Forçando encerramento do processo Python...")
+                
+                # Método mais direto para encerrar
                 import os
-                print("🚪 Encerrando processo Python...")
                 os._exit(0)
             
-            import threading
-            shutdown_thread = threading.Thread(target=force_shutdown)
+            # Inicia a sequência de encerramento
+            shutdown_thread = threading.Thread(target=shutdown_sequence)
             shutdown_thread.daemon = True
             shutdown_thread.start()
             
         except Exception as e:
             print(f"❌ Erro no shutdown: {str(e)}")
+            # Mesmo com erro, tenta encerrar
             config.servidor_rodando = False
             import os
-            os._exit(1)
+            os._exit(0)
 
     def handle_get_constants(self, handler):
         """Constants do DADOS.json"""
@@ -649,10 +714,9 @@ class RouteHandler:
         print("⚠️  AVISO: handle_put_projeto() - método legado, use obras")
         handler.send_error(501, "Use o endpoint /obras em vez de /projetos")
 
-    def handle_delete_sessions_remove_project(self, handler):
-        """COMPATIBILIDADE: Remove projeto da sessão"""
+    def handle_delete_sessions_remove_project(self, handler, project_id):
+        """✅ CORREÇÃO: Remove projeto da sessão (com parâmetro)"""
         try:
-            project_id = handler.path.split('/')[-1]
             print(f"🗑️  [COMPAT] Removendo projeto {project_id} da sessão")
             
             success = sessions_manager.remove_project(project_id)

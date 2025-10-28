@@ -74,10 +74,11 @@ function calculateRoomCompletionStats(room) {
  * @param {string} obraName - Nome da obra
  */
 function removeEmptyObraMessage(obraName) {
-  const obraContent = document.getElementById(`obra-content-${obraName}`)
-  if (obraContent) {
-    const emptyMessage = obraContent.querySelector(".empty-message")
+  const projectsContainer = document.getElementById(`projects-${obraName}`)
+  if (projectsContainer) {
+    const emptyMessage = projectsContainer.querySelector(".empty-message")
     if (emptyMessage) {
+      console.log(`🗑️ Removendo mensagem de obra vazia: ${obraName}`)
       emptyMessage.remove()
     }
   }
@@ -88,22 +89,27 @@ function removeEmptyObraMessage(obraName) {
  * @param {string} obraName - Nome da obra
  */
 function showEmptyObraMessageIfNeeded(obraName) {
-  const obraContent = document.getElementById(`obra-content-${obraName}`)
-  if (obraContent) {
-    const projectsContainer = obraContent.querySelector(`#projects-${obraName}`)
-    const remainingProjects = projectsContainer ? projectsContainer.querySelectorAll(".project-block") : []
-
-    if (remainingProjects.length === 0) {
-      const emptyMessage = document.createElement('p')
-      emptyMessage.className = 'empty-message'
-      emptyMessage.textContent = 'Adicione projetos a esta obra...'
-
-      if (projectsContainer) {
-        projectsContainer.insertAdjacentElement('beforebegin', emptyMessage)
+  const projectsContainer = document.getElementById(`projects-${obraName}`)
+  if (projectsContainer) {
+    const projects = projectsContainer.querySelectorAll(".project-block")
+    
+    if (projects.length === 0) {
+      // Verifica se já existe uma mensagem
+      const existingMessage = projectsContainer.querySelector(".empty-message")
+      if (!existingMessage) {
+        console.log(`📝 Exibindo mensagem de obra vazia: ${obraName}`)
+        const emptyMessage = document.createElement('p')
+        emptyMessage.className = 'empty-message'
+        emptyMessage.textContent = 'Adicione projetos a esta obra...'
+        projectsContainer.appendChild(emptyMessage)
       }
+    } else {
+      // Se há projetos, garante que a mensagem seja removida
+      removeEmptyObraMessage(obraName)
     }
   }
 }
+
 /**
  * Remove a mensagem de "projeto vazio" quando salas são adicionadas
  * @param {HTMLElement} projectContent - Elemento do conteúdo do projeto
@@ -111,6 +117,7 @@ function showEmptyObraMessageIfNeeded(obraName) {
 function removeEmptyProjectMessage(projectContent) {
   const emptyMessage = projectContent.querySelector(".empty-message")
   if (emptyMessage) {
+    console.log(`🗑️ Removendo mensagem de projeto vazio`)
     emptyMessage.remove()
   }
 }
@@ -123,8 +130,17 @@ function showEmptyProjectMessageIfNeeded(projectContent) {
   const remainingRooms = projectContent.querySelectorAll(".room-block")
 
   if (remainingRooms.length === 0) {
-    const addRoomSection = projectContent.querySelector(".add-room-section")
-    addRoomSection.insertAdjacentHTML("beforebegin", '<p class="empty-message">Adicione salas a este projeto...</p>')
+    const existingMessage = projectContent.querySelector(".empty-message")
+    if (!existingMessage) {
+      console.log(`📝 Exibindo mensagem de projeto vazio`)
+      const addRoomSection = projectContent.querySelector(".add-room-section")
+      if (addRoomSection) {
+        addRoomSection.insertAdjacentHTML("beforebegin", '<p class="empty-message">Adicione salas a este projeto...</p>')
+      }
+    }
+  } else {
+    // Se há salas, garante que a mensagem seja removida
+    removeEmptyProjectMessage(projectContent)
   }
 }
 

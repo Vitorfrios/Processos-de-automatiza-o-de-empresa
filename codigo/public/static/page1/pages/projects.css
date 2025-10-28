@@ -116,15 +116,14 @@
 /* ===== RESPONSIVIDADE PARA OBRA/PROJETO ===== */
 @media (max-width: 768px) {
   .obra-header {
-    flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
   }
   
   .obra-actions {
-    width: 100%;
+    display: flex;
+    gap: var(--spacing-md);
     justify-content: flex-end;
-    flex-wrap: wrap;
   }
   
   .obra-actions-footer {
@@ -133,13 +132,11 @@
   }
   
   .project-header {
-    flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
   }
   
   .project-actions {
-    width: 100%;
     justify-content: flex-end;
   }
 }

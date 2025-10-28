@@ -31,7 +31,8 @@
 
 .obra-actions {
   display: flex;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-md);
+  justify-content: flex-end;
 }
 
 .obra-content {

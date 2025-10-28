@@ -1,5 +1,6 @@
 import { createEmptyRoom } from '../../data/rooms.js'
 import { generateProjectId } from '../../data/data-utils.js'
+import { removeEmptyObraMessage } from './ui-helpers.js'
 
 /**
  * Gerenciador de projetos
@@ -25,6 +26,9 @@ function createEmptyProject(obraName, projectName, projectId) {
   if (obraProjectsContainer) {
     obraProjectsContainer.insertAdjacentHTML("beforeend", projectHTML)
     console.log(`📁 Projeto ${projectName} criado na obra ${obraName} com ID: ${finalProjectId}`)
+    
+    // ✅ CORREÇÃO: REMOVER MENSAGEM DE OBRA VAZIA
+    removeEmptyObraMessage(obraName)
   } else {
     console.error(`❌ Container de projetos não encontrado para obra ${obraName}`)
   }
@@ -65,6 +69,8 @@ function addNewProjectToObra(obraName) {
     const projectNumber = getNextProjectNumber(obraName)
     const projectName = `Projeto${projectNumber}`
 
+    console.log(`➕ Adicionando projeto ${projectName} à obra ${obraName}`)
+    
     createEmptyProject(obraName, projectName, null)
 
     const defaultRoomName = "Sala1"

@@ -8,6 +8,7 @@ import os
 import sys
 import time
 import traceback
+import threading
 
 # Adiciona o diretório atual ao path para garantir imports
 diretorio_atual = os.path.dirname(os.path.abspath(__file__))
@@ -75,6 +76,45 @@ except Exception as e:
     input()
     sys.exit(1)
 
+def force_shutdown_after_delay(interval_seconds):
+    """✅ CORREÇÃO: Mostra tempo de execução a cada intervalo especificado em SEGUNDOS"""
+    def monitor():
+        start_time = time.time()
+        last_report = 0
+        
+        while config.servidor_rodando:
+            try:
+                # Calcular tempo decorrido
+                elapsed_time = time.time() - start_time
+                
+                # Verificar se passou um intervalo completo
+                if elapsed_time >= last_report + interval_seconds:
+                    # Calcular horas, minutos e segundos formatados
+                    hours = int(elapsed_time // 3600)
+                    minutes = int((elapsed_time % 3600) // 60)
+                    seconds = int(elapsed_time % 60)
+                    
+                    if hours > 0:
+                        print(f"⏰ Monitoramento: Servidor ativo há {hours}h{minutes:02d}min{seconds:02d}s")
+                    elif minutes > 0:
+                        print(f"⏰ Monitoramento: Servidor ativo há {minutes}min{seconds:02d}s")
+                    else:
+                        print(f"⏰ Monitoramento: Servidor ativo há {seconds}s")
+                    
+                    last_report = elapsed_time
+                
+                # Aguardar próximo check (0.1 segundo para ser responsivo)
+                time.sleep(0.1)
+                
+            except Exception as e:
+                print(f"❌ Erro no monitor: {e}")
+                break
+    
+    monitor_thread = threading.Thread(target=monitor)
+    monitor_thread.daemon = True
+    monitor_thread.start()
+    print(f"🔔 Monitor ativado: mostrando tempo a cada {interval_seconds} segundos")
+
 def main():
     """Função principal com tratamento robusto de erros"""
     try:
@@ -108,28 +148,40 @@ def main():
             print("   ✅ SERVIDOR INICIADO COM SUCESSO!")
             print("   🟢 SISTEMA OPERACIONAL")
             
+            # ✅ CORREÇÃO: Ativar monitor de tempo a cada 0.3 segundos para teste
+            delay = 1200
+            force_shutdown_after_delay(delay)  # Mostra tempo a cada 0.3 segundos
+            
             # Loop principal
             server_utils.run_server_loop(httpd)
             
     except KeyboardInterrupt:
-        print("\n   ⏹️  Encerramento solicitado pelo usuário")
+        print("\n   ⏹️  Encerramento solicitado pelo usuário (Ctrl+C)")
+        config.servidor_rodando = False
     except Exception as e:
         print(f"\n   ❌ ERRO CRÍTICO: {e}")
         print("   TRACEBACK COMPLETO:")
         traceback.print_exc()
         print("\n   O sistema será finalizado em 10 segundos...")
         time.sleep(10)
-        # ⚠️ REMOVIDO: main()  # NÃO reinicia automaticamente
     finally:
-        print("\n   ✅ Sistema finalizado!")
-
+        print("\n   🔴 Servidor finalizado!")
+        config.servidor_rodando = False
+        
+        # ✅ CORREÇÃO: Garantir que o processo termine completamente
+        print("   🚪 Encerrando processo Python...")
+        time.sleep(1)  # Dar tempo para logs serem exibidos
+        
+        # Método mais agressivo para garantir encerramento
+        os._exit(0)     
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         print(f"ERRO FATAL: {e}")
         traceback.print_exc()
+        # Garante encerramento mesmo com erro fatal
+        os._exit(1)
     
-    # Mantém a janela aberta para ver o resultado
-    print("\nPressione Enter para fechar...")
-    input()
+    # ✅ CORREÇÃO: REMOVIDO o input final que mantinha o terminal aberto
+    # O servidor agora fecha completamente quando encerrado via botão

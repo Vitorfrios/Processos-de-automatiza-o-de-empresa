@@ -57,6 +57,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ✅ NOVA ROTA: BACKUP COMPLETO (sem filtro de sessão)
         elif path == '/api/backup-completo':
             self.route_handler.handle_get_backup_completo(self)
+        # ✅✅✅ CORREÇÃO CRÍTICA: ADICIONAR ROTA GET PARA OBRA ESPECÍFICA
+        elif path.startswith('/obras/') and self.command == 'GET':
+            self.route_handler.handle_get_obra_by_id(self, path.split('/')[-1])
         # ❌ ROTAS LEGACY (COMPATIBILIDADE)
         elif path == '/projetos' or path == '/projects':
             self.route_handler.handle_get_projetos(self)
@@ -69,6 +72,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if path != '/favicon.ico':
                     print(f"❌ Erro em {path}: {e}")
                 self.send_error(404, f"Recurso não encontrado: {path}")     
+    
     def do_POST(self):
         """POST com tratamento completo - ATUALIZADO PARA OBRAS"""
         parsed_path = urlparse(self.path)
@@ -130,12 +134,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"🗑️  DELETE: {path}")
         
-        # ✅ ROTAS PRINCIPAIS - OBRAS
-        if path.startswith('/api/sessions/remove-obra/'):
-            self.route_handler.handle_delete_sessions_remove_obra(self)
+        # ✅✅✅ CORREÇÃO CRÍTICA: ADICIONAR ROTA DELETE PARA OBRAS
+        if path.startswith('/obras/'):
+            obra_id = path.split('/')[-1]
+            print(f"🎯 Roteando DELETE para obra: {obra_id}")
+            self.route_handler.handle_delete_obra(self, obra_id)
+        # ✅ ROTAS PRINCIPAIS - SESSÕES OBRAS
+        elif path.startswith('/api/sessions/remove-obra/'):
+            obra_id = path.split('/')[-1]
+            self.route_handler.handle_delete_sessions_remove_obra(self, obra_id)
         # ❌ ROTAS LEGACY (COMPATIBILIDADE)
         elif path.startswith('/api/sessions/remove-project/'):
-            self.route_handler.handle_delete_sessions_remove_project(self)
+            project_id = path.split('/')[-1]
+            self.route_handler.handle_delete_sessions_remove_project(self, project_id)
         else:
             print(f"❌ DELETE não implementado: {path}")
             self.send_error(501, f"Método não suportado: DELETE {path}")

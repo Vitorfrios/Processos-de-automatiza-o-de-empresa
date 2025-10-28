@@ -178,6 +178,22 @@ function toggleSpecificRoom(roomBlock, roomId, event) {
   }
 }
 
+/**
+ * Alterna a visibilidade de uma seção
+ * @param {string} sectionId - ID da seção
+ */
+function toggleSection(sectionId) {
+  toggleElementVisibility(`section-content-${sectionId}`, event.target)
+}
+
+/**
+ * Alterna a visibilidade de uma subseção
+ * @param {string} subsectionId - ID da subseção
+ */
+function toggleSubsection(subsectionId) {
+  toggleElementVisibility(`subsection-content-${subsectionId}`, event.target)
+}
+
 // Funções utilitárias
 function downloadPDF(obraName, projectName = null) {
   const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`
@@ -230,6 +246,8 @@ export {
     downloadPDF,
     downloadWord,
     saveOrUpdateObra,
+    toggleSubsection,
+    toggleSection
 }
 
 // Disponibilização global das funções
@@ -239,6 +257,8 @@ if (typeof window !== 'undefined') {
   window.toggleObra = toggleObra
   window.toggleProject = toggleProject
   window.toggleRoom = toggleRoom
+  window.toggleSubsection=    toggleSubsection
+  window.toggleSection=    toggleSection
   window.getNextObraNumber = getNextObraNumber
   window.deleteObra = deleteObra
   window.saveOrUpdateObra = saveOrUpdateObra

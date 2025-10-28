@@ -19,9 +19,7 @@
   display: flex;
   gap: var(--spacing-md);
   justify-content: flex-end;
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-md);
-  border-top: 2px solid var(--color-gray-light);
+
 }
 
 .project-actions-footer {

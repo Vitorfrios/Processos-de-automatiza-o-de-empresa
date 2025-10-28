@@ -36,9 +36,9 @@ function buildObraHTML(obraName, obraId) {
         </div>
       </div>
       <div class="obra-content collapsed" id="obra-content-${obraName}">
-        <p class="empty-message">Adicione projetos a esta obra...</p>
         <div class="projects-container" id="projects-${obraName}">
           <!-- Projetos serão inseridos aqui -->
+          <p class="empty-message">Adicione projetos a esta obra...</p>
         </div>
         <div class="add-project-section">
           <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraName}')">+ Adicionar Projeto</button>
