@@ -1,36 +1,42 @@
-# tree_permitidos.py
+import re
 from pathlib import Path
 
-ALLOW_EXTS = {".js", ".css", ".html", ".py",".json"}   # extensões permitidas
+# regex cobre function normal, export, arrow e métodos de classe simples
+PADRAO_FUNCAO = re.compile(
+    r"""
+    (?:function\s+(\w+))              # function nome()
+    |(?:export\s+function\s+(\w+))    # export function nome()
+    |(?:const\s+(\w+)\s*=\s*\()       # const nome = (
+    |(?:let\s+(\w+)\s*=\s*\()         # let nome = (
+    |(?:var\s+(\w+)\s*=\s*\()         # var nome = (
+    |(?:(\w+)\s*=\s*\([\w\s,]*\)\s*=>) # nome = (...) =>
+    """,
+    re.VERBOSE
+)
 
-def listar(p: Path, prefixo: str = ""):
+def listar_funcoes_arquivo(caminho: Path):
     try:
-        itens = list(p.iterdir())
-    except PermissionError:
-        return
+        texto = caminho.read_text(encoding="utf-8", errors="ignore")
+    except Exception as e:
+        print(f"Erro ao ler {caminho}: {e}")
+        return []
 
-    # diretórios primeiro, depois arquivos — ambos ordenados por nome
-    dirs = sorted([x for x in itens if x.is_dir()], key=lambda x: x.name.lower())
-    files = sorted([x for x in itens if x.is_file() and x.suffix.lower() in ALLOW_EXTS],
-                   key=lambda x: x.name.lower())
+    nomes = []
+    for match in PADRAO_FUNCAO.finditer(texto):
+        nome = next((n for n in match.groups() if n), None)
+        if nome and nome not in nomes:
+            nomes.append(nome)
+    return nomes
 
-    visiveis = dirs + files  # IMPORTANTe: o "total" é baseado no que será impresso
-
-    total = len(visiveis)
-    for i, x in enumerate(visiveis):
-        ultimo = (i == total - 1)
-        con = "└─ " if ultimo else "├─ "
-        linha = f"{prefixo}{con}{x.name}{'/' if x.is_dir() else ''}"
-        print(linha)
-
-        if x.is_dir():
-            novo_prefixo = prefixo + ("    " if ultimo else "│   ")
-            listar(x, novo_prefixo)
-
-def tree(raiz="codigo"):
-    raiz_path = Path(raiz)
-    print(f"{raiz_path.name}/")
-    listar(raiz_path)
+def listar_funcoes_pasta(pasta: str):
+    pasta_path = Path(pasta)
+    for arquivo in sorted(pasta_path.rglob("*.js")):
+        funcoes = listar_funcoes_arquivo(arquivo)
+        if funcoes:
+            print(f"\n📄 {arquivo.relative_to(pasta_path)}")
+            for nome in funcoes:
+                print(f"   └─ {nome}()")
 
 if __name__ == "__main__":
-    tree("codigo")   # troque para "." se quiser o diretório atual
+    raiz = "codigo/public"  # mude se quiser outro diretório (ex: ".")
+    listar_funcoes_pasta(raiz)

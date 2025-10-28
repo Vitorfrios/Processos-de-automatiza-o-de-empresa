@@ -1,4 +1,3 @@
-import { showEmptyProjectMessageIfNeeded, removeEmptyProjectMessage } from '../ui/interface.js'
 // Importações dos módulos - AGORA DO projeto.js
 import { 
   createEmptyRoom, 

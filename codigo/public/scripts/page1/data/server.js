@@ -2,7 +2,6 @@
 
 import { SESSION_STORAGE_KEY, REMOVED_PROJECTS_KEY, NORMALIZATION_DONE_KEY, SESSION_ACTIVE_KEY } from "../config/config.js"
 import { ensureStringId } from "../utils/utils.js"
-import { showSystemStatus } from "../ui/interface.js"
 
 // ✅ CORREÇÃO: IMPORTAR FUNÇÕES DE CRIAÇÃO DE OBRAS
 import { createEmptyObra, createEmptyProject, createEmptyRoom } from "../ui/interface.js"
