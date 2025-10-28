@@ -65,36 +65,30 @@ function generateRoomId(projectElement) {
 }
 
 /**
- * Obtém o ID completo da sala no formato "ProjetoNome-SalaNome"
+ * Obtém o ID completo da sala no formato correto "obra-projeto-sala"
  * @param {HTMLElement} roomElement - Elemento da sala
  * @returns {string} ID completo da sala
  */
 function getRoomFullId(roomElement) {
-    const roomName = roomElement.dataset.roomName
-    const projectElement = roomElement.closest('.project-block')
-    const projectName = projectElement ? getProjectName(projectElement) : 'Projeto1'
+    // Usar o roomId diretamente do data attribute (já está no formato correto)
+    const roomId = roomElement.dataset.roomId;
     
-    if (roomName) {
-        return `${projectName}-${roomName}`
+    if (roomId && !roomId.includes('undefined')) {
+        console.log(`✅ ID da sala obtido do data attribute: ${roomId}`);
+        return roomId;
     }
     
-    const possibleIds = [
-        'total-ganhos-w-', 'total-tr-', 'total-externo-', 
-        'total-divisoes-', 'total-piso-', 'total-iluminacao-'
-    ]
+    // Fallback: construir ID a partir da hierarquia
+    const roomName = roomElement.dataset.roomName || 'Sala1';
+    const projectElement = roomElement.closest('.project-block');
+    const projectName = projectElement ? getProjectName(projectElement) : 'Projeto1';
+    const obraElement = projectElement ? projectElement.closest('.obra-block') : null;
+    const obraName = obraElement ? getObraName(obraElement) : 'Obra1';
     
-    for (const prefix of possibleIds) {
-        const element = document.querySelector(`[id^="${prefix}"]`)
-        if (element) {
-            const fullId = element.id.replace(prefix, '')
-            if (fullId && fullId.includes('-')) {
-                console.log(`🔍 ID completo detectado: ${fullId}`)
-                return fullId
-            }
-        }
-    }
+    const fallbackId = `${obraName}-${projectName}-${roomName}`.toLowerCase().replace(/\s+/g, '');
+    console.log(`🔄 ID fallback construído: ${fallbackId}`);
     
-    return 'Projeto1-Sala1'
+    return fallbackId;
 }
 
 /**

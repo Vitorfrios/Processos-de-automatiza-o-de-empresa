@@ -11,12 +11,14 @@ if (typeof window !== 'undefined' && !window.machinesDataCache) {
 /**
  * Constrói a seção completa de máquinas para uma sala
  * Inclui tabela de capacidade e container para máquinas
+ * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto
  * @param {string} roomName - Nome da sala
+ * @param {string} finalRoomId - ID único da sala
  * @returns {string} HTML da seção de máquinas
  */
-function buildMachinesSection(projectName, roomName) {
-  const roomId = `${projectName}-${roomName}`
+function buildMachinesSection(obraName, projectName, roomName, finalRoomId) {
+  const roomId = finalRoomId;
 
   return `
     <div class="section-block">

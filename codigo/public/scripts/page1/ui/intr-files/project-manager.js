@@ -46,7 +46,8 @@ function createEmptyProject(obraName, projectName, projectId) {
  */
 function buildProjectHTML(obraName, projectName, projectId) {
   const hasId = projectId !== null && projectId !== undefined && projectId !== ""
-  const uniqueProjectId = `${obraName}-${projectName}`.replace(/\s+/g, '-')
+  // ID único incluindo obra para evitar conflitos
+  const uniqueProjectId = `${obraName}-${projectName}`.replace(/\s+/g, '-').toLowerCase()
 
   return `
     <div class="project-block" data-project-id="${projectId || ""}" data-project-name="${projectName}" data-obra-name="${obraName}">

@@ -4,12 +4,14 @@ import { calculateVazaoArAndThermalGains } from '../../calculos/calculos-manager
 /**
  * Constrói seção completa de climatização para uma sala específica
  * Organiza inputs de dados e resultados de cálculos térmicos de forma hierárquica
+ * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto
  * @param {string} roomName - Nome da sala
+ * @param {string} finalRoomId - ID único da sala
  * @returns {string} HTML completo da seção de climatização
  */
-function buildClimatizationSection(projectName, roomName) {
-  const roomId = `${projectName}-${roomName}`
+function buildClimatizationSection(obraName, projectName, roomName, finalRoomId) {
+  const roomId = finalRoomId;
   return `
     <div class="section-block">
       <div class="section-header">

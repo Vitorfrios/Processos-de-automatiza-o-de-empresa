@@ -1,4 +1,3 @@
-// salas.js
 import { buildClimatizationSection } from './climatizacao.js'
 import { buildMachinesSection } from './maquinas.js'
 import { buildConfigurationSection } from './configuracao.js'
@@ -15,7 +14,6 @@ import { buildConfigurationSection } from './configuracao.js'
 function buildRoomHTML(obraName, projectName, roomName, roomId) {
     console.log(`[BUILD ROOM] Parâmetros:`, { obraName, projectName, roomName, roomId });
     
-    // Usar o roomId fornecido (agora é único)
     const finalRoomId = roomId;
     
     console.log(`[BUILD ROOM] ID ÚNICO: ${finalRoomId}`);
@@ -30,9 +28,9 @@ function buildRoomHTML(obraName, projectName, roomName, roomId) {
           </div>
         </div>
         <div class="room-content collapsed" id="room-content-${finalRoomId}">
-          ${buildClimatizationSection(finalRoomId)}
-          ${buildMachinesSection(finalRoomId)}
-          ${buildConfigurationSection(finalRoomId)}
+          ${buildClimatizationSection(obraName, projectName, roomName, finalRoomId)}
+          ${buildMachinesSection(obraName, projectName, roomName, finalRoomId)}
+          ${buildConfigurationSection(obraName, projectName, roomName, finalRoomId)}
         </div>
       </div>
     `;

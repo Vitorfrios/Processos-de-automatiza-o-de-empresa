@@ -16,22 +16,26 @@ function extractThermalGainsData(roomElement) {
     console.log('🎯 FUNÇÃO extractThermalGainsData CHAMADA!')
     
     const gains = {}
-    const roomId = roomElement.id.replace('room-content-', '')
-    const roomFullId = getRoomFullId(roomElement)
+    const roomId = roomElement.dataset.roomId; // Usar o ID correto do data attribute
     
-    console.log(`🔑 ID completo da sala: ${roomFullId}`)
+    console.log(`🔑 ID da sala: ${roomId}`)
+    
+    if (!roomId || roomId.includes('undefined')) {
+        console.error('❌ ID da sala inválido ou contém undefined:', roomId);
+        return gains;
+    }
     
     const totalSelectors = {
-        'total-ganhos-w': `#total-ganhos-w-${roomFullId}`,
-        'total-tr': `#total-tr-${roomFullId}`,
-        'total-externo': `#total-externo-${roomFullId}`,
-        'total-divisoes': `#total-divisoes-${roomFullId}`,
-        'total-piso': `#total-piso-${roomFullId}`,
-        'total-iluminacao': `#total-iluminacao-${roomFullId}`,
-        'total-dissi': `#total-dissi-${roomFullId}`,
-        'total-pessoas': `#total-pessoas-${roomFullId}`,
-        'total-ar-sensivel': `#total-ar-sensivel-${roomFullId}`,
-        'total-ar-latente': `#total-ar-latente-${roomFullId}`
+        'total-ganhos-w': `#total-ganhos-w-${roomId}`,
+        'total-tr': `#total-tr-${roomId}`,
+        'total-externo': `#total-externo-${roomId}`,
+        'total-divisoes': `#total-divisoes-${roomId}`,
+        'total-piso': `#total-piso-${roomId}`,
+        'total-iluminacao': `#total-iluminacao-${roomId}`,
+        'total-dissi': `#total-dissi-${roomId}`,
+        'total-pessoas': `#total-pessoas-${roomId}`,
+        'total-ar-sensivel': `#total-ar-sensivel-${roomId}`,
+        'total-ar-latente': `#total-ar-latente-${roomId}`
     }
     
     let encontrados = 0
