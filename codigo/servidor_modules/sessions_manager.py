@@ -86,11 +86,14 @@ class SessionsManager:
         Args:
             obra_id (str): ID da obra a ser removida
         Returns:
-            bool: True se a obra foi removida ou não existia
+            bool: True se a obra foi removida, False se não existia
         """
         data = self._load_sessions_data()
         current_session_id = self.get_current_session_id()
         obra_id_str = str(obra_id)
+        
+        print(f"🔍 Tentando remover obra {obra_id_str} da sessão {current_session_id}")
+        print(f"📊 Obras na sessão antes: {data['sessions'][current_session_id]['obras']}")
         
         if (current_session_id in data["sessions"] and 
             obra_id_str in data["sessions"][current_session_id]["obras"]):
@@ -98,10 +101,29 @@ class SessionsManager:
             # Remove o ID da obra
             data["sessions"][current_session_id]["obras"].remove(obra_id_str)
             print(f"🗑️ Obra {obra_id_str} removida da sessão {current_session_id}")
-            return self._save_sessions_data(data)
+            
+            # Salva os dados atualizados
+            success = self._save_sessions_data(data)
+            
+            # Verifica se realmente foi removido
+            if success:
+                updated_data = self._load_sessions_data()
+                still_exists = obra_id_str in updated_data["sessions"][current_session_id]["obras"]
+                if still_exists:
+                    print(f"❌ ERRO: Obra {obra_id_str} ainda está na sessão após remoção!")
+                    return False
+                else:
+                    print(f"✅ Obra {obra_id_str} removida com sucesso")
+                    print(f"📊 Obras na sessão depois: {updated_data['sessions'][current_session_id]['obras']}")
+                    return True
+            else:
+                print(f"❌ ERRO: Falha ao salvar dados após remoção da obra {obra_id_str}")
+                return False
         
-        return True  # Obra não estava na sessão
-
+        print(f"⚠️ Obra {obra_id_str} não encontrada na sessão {current_session_id}")
+        return False  # ✅ CORREÇÃO: Retorna False quando a obra não existe
+    
+    
     def get_session_obras(self) -> list:
         """Retorna lista de IDs de obras da sessão ativa
         Returns:
@@ -254,11 +276,22 @@ class SessionsManager:
             bool: True se o salvamento foi bem sucedido
         """
         try:
+            # ✅ CORREÇÃO: Garante que o diretório existe
+            self.sessions_dir.mkdir(parents=True, exist_ok=True)
+            
             with open(self.sessions_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
-            return True
+            
+            # ✅ CORREÇÃO: Verifica se o arquivo foi realmente criado/atualizado
+            if self.sessions_file.exists():
+                print(f"✅ Arquivo sessions.json salvo com sucesso: {self.sessions_file}")
+                return True
+            else:
+                print(f"❌ ERRO: Arquivo sessions.json não foi criado: {self.sessions_file}")
+                return False
+                
         except Exception as e:
-            print(f"Erro ao salvar sessions: {e}")
+            print(f"❌ ERRO ao salvar sessions: {e}")
             return False
 
     def get_current_session(self) -> dict:

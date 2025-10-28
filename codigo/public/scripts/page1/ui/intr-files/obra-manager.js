@@ -5,6 +5,8 @@
  * =====================
  */
 
+import { removeObraFromSession } from '../../data/server.js'
+
 /**
  * Cria uma obra vazia na interface
  * @param {string} obraName - Nome da obra
@@ -115,13 +117,37 @@ function updateObraButtonAfterSave(obraName, obraId) {
  * Remove uma obra
  * @param {string} obraName - Nome da obra
  */
-function deleteObra(obraName) {
-  if (!confirm("Tem certeza que deseja remover esta obra e todos os seus projetos?")) return
+async function deleteObra(obraName) {
+  if (!confirm("Tem certeza que deseja remover esta obra? Ela não poderá ser mais editada nessa tela! ")) return
 
   const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`)
   if (obraBlock) {
+    // ✅ CORREÇÃO: Obter o ID da obra antes de remover
+    const obraId = obraBlock.dataset.obraId;
+    
+    // Remover do DOM
     obraBlock.remove()
-    console.log(`🗑️ Obra ${obraName} removida`)
+    console.log(`🗑️ Obra ${obraName} removida do DOM`)
+    
+    // ✅✅✅ CORREÇÃO: Usar a rota CORRETA para obras em vez da rota de compatibilidade
+    if (obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
+      try {
+        // Chamar a rota CORRETA para obras
+        const response = await fetch(`/api/sessions/remove-obra/${obraId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          console.log(`🗑️ Obra ${obraName} (ID: ${obraId}) removida da sessão via rota correta`);
+        } else {
+          console.error(`❌ Falha ao remover obra ${obraName} da sessão`);
+        }
+      } catch (error) {
+        console.error(`❌ Erro ao remover obra ${obraName} da sessão:`, error);
+      }
+    } else {
+      console.log(`ℹ️ Obra ${obraName} não tinha ID salvo, apenas removida do DOM`);
+    }
   }
 }
 

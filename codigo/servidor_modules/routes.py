@@ -715,21 +715,59 @@ class RouteHandler:
         print("⚠️  AVISO: handle_put_projeto() - método legado, use obras")
         handler.send_error(501, "Use o endpoint /obras em vez de /projetos")
 
-    def handle_delete_sessions_remove_project(self, handler, project_id):
-        """✅ CORREÇÃO: Remove projeto da sessão (com parâmetro)"""
-        try:
-            print(f"🗑️  [COMPAT] Removendo projeto {project_id} da sessão")
+    def remove_obra(self, obra_id: str) -> bool:
+        """Remove uma obra da sessão ativa
+        Args:
+            obra_id (str): ID da obra a ser removida
+        Returns:
+            bool: True se a obra foi removida ou não existia
+        """
+        data = self._load_sessions_data()
+        current_session_id = self.get_current_session_id()
+        obra_id_str = str(obra_id)
+        
+        print(f"🔍 Tentando remover obra {obra_id_str} da sessão {current_session_id}")
+        print(f"📊 Obras na sessão antes: {data['sessions'][current_session_id]['obras']}")
+        
+        if (current_session_id in data["sessions"] and 
+            obra_id_str in data["sessions"][current_session_id]["obras"]):
             
-            success = sessions_manager.remove_project(project_id)
+            # Remove o ID da obra
+            data["sessions"][current_session_id]["obras"].remove(obra_id_str)
+            print(f"🗑️ Obra {obra_id_str} removida da sessão {current_session_id}")
+            
+            # Salva os dados atualizados
+            success = self._save_sessions_data(data)
+            
+            if success:
+                print(f"✅ Obra {obra_id_str} removida com sucesso")
+                print(f"📊 Obras na sessão depois: {data['sessions'][current_session_id]['obras']}")
+                return True
+            else:
+                print(f"❌ ERRO: Falha ao salvar dados após remoção da obra {obra_id_str}")
+                return False
+        
+        print(f"⚠️ Obra {obra_id_str} não encontrada na sessão {current_session_id}")
+        return True  # ✅ CORREÇÃO: Retorna True mesmo se não existir (compatibilidade)
+    
+    def handle_delete_sessions_remove_project(self, handler, project_id):
+        """✅ CORREÇÃO: Remove projeto/obra da sessão (compatibilidade)"""
+        try:
+            print(f"🗑️  [COMPAT] Removendo projeto/obra {project_id} da sessão")
+            
+            # ✅✅✅ CORREÇÃO CRÍTICA: Usar remove_obra em vez de remove_project
+            success = sessions_manager.remove_obra(project_id)
             
             if success:
                 handler.send_json_response({
                     "success": True, 
-                    "message": f"Projeto {project_id} removido da sessão"
+                    "message": f"Obra {project_id} removida da sessão"
                 })
+                print(f"✅ Obra {project_id} removida da sessão via rota de compatibilidade")
             else:
-                handler.send_error(500, "Erro ao remover projeto da sessão")
+                print(f"❌ Falha ao remover obra {project_id} da sessão")
+                handler.send_error(500, "Erro ao remover obra da sessão")
                 
         except Exception as e:
-            print(f"❌ Erro ao remover projeto da sessão: {str(e)}")
+            print(f"❌ Erro ao remover obra da sessão: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
