@@ -1,4 +1,5 @@
 
+//config.js
 
 const CALCULATION_CONSTANTS = {
   FLOW_COEFFICIENT: 0.827,

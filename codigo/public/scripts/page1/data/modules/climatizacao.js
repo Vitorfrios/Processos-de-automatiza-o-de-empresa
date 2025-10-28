@@ -1,8 +1,12 @@
-import { calculateVazaoArAndThermalGains } from '../../calculos/calculos.js'
+// climatizacao.js
+import { calculateVazaoArAndThermalGains } from '../../calculos/calculos-manager.js'
 
 /**
  * Constrói seção completa de climatização para uma sala específica
  * Organiza inputs de dados e resultados de cálculos térmicos de forma hierárquica
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @returns {string} HTML completo da seção de climatização
  */
 function buildClimatizationSection(projectName, roomName) {
   const roomId = `${projectName}-${roomName}`
@@ -35,6 +39,8 @@ function buildClimatizationSection(projectName, roomName) {
 /**
  * Constrói tabela completa de inputs para dados de climatização
  * Agrupa campos relacionados para melhor organização visual e usabilidade
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML da tabela de inputs de climatização
  */
 function buildClimatizationTable(roomId) {
   return `
@@ -125,6 +131,9 @@ function buildClimatizationTable(roomId) {
 
 /**
  * Constrói linha específica para pressurização com lógica Sim/Não
+ * Inclui campos condicionais que aparecem apenas quando pressurização é ativada
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML da linha de pressurização
  */
 function buildPressurizationRow(roomId) {
   return `
@@ -204,16 +213,12 @@ function buildPressurizationRow(roomId) {
   `;
 }
 
-
-
-
-
-
-
-
 /**
  * Constrói linha da tabela com campos de input
  * Permite células vazias para layout flexível de formulário
+ * @param {Array} fields - Array de definições de campos
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML da linha da tabela
  */
 function buildClimaRow(fields, roomId) {
   const cells = fields
@@ -229,6 +234,9 @@ function buildClimaRow(fields, roomId) {
 /**
  * Constrói célula individual com label e campo de input
  * Define estrutura consistente para diferentes tipos de campos
+ * @param {Object} field - Definição do campo (label, type, placeholder, etc)
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML da célula com campo de input
  */
 function buildClimaCell(field, roomId) {
   const input = field.type === "select" ? buildSelectInput(field, roomId) : buildTextInput(field, roomId)
@@ -243,7 +251,10 @@ function buildClimaCell(field, roomId) {
 
 /**
  * Constrói elemento select com opções pré-definidas
- * Inclua placeholder padrão para indicar seleção obrigatória
+ * Inclui placeholder padrão para indicar seleção obrigatória
+ * @param {Object} field - Definição do campo select
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML do elemento select
  */
 function buildSelectInput(field, roomId) {
   const options = field.options
@@ -260,10 +271,15 @@ function buildSelectInput(field, roomId) {
 /**
  * Constrói campo de input textual ou numérico
  * Aplica validações específicas baseadas no tipo de campo
+ * @param {Object} field - Definição do campo de input
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML do campo de input
  */
 function buildTextInput(field, roomId) {
   const step = field.type === "number" ? 'step="1"' : ""
-  const min = field.field.includes("num") ? 'min="0"' : "" // Prevenir valores negativos para quantidades
+
+  // Prevenir valores negativos para quantidades
+  const min = field.field.includes("num") ? 'min="0"' : "" 
   const value = field.value ? `value="${field.value}"` : ""
 
   return `
@@ -283,6 +299,8 @@ function buildTextInput(field, roomId) {
 /**
  * Constrói linha de exibição de resultado calculado
  * Mostra vazão de ar externo como resultado primário dos cálculos
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML da linha de resultados
  */
 function buildResultRow(roomId) {
   return `
@@ -312,6 +330,10 @@ function buildResultRow(roomId) {
 
 /**
  * Controla a exibição e estado dos campos de pressurização
+ * Habilita/desabilita campos baseado na seleção do usuário
+ * @param {string} roomId - ID único da sala
+ * @param {boolean} enabled - Se a pressurização está habilitada
+ * @returns {void}
  */
 function togglePressurizationFields(roomId, enabled) {
   const pressurizacaoInput = document.querySelector(`input[data-field="pressurizacao"][data-room-id="${roomId}"]`);
@@ -341,15 +363,15 @@ function togglePressurizationFields(roomId, enabled) {
   calculateVazaoArAndThermalGains(roomId);
 }
 
-
-
 // =============================================================================
 // SEÇÃO: CONSTRUÇÃO DA INTERFACE DE RESULTADOS TÉRMICOS
 // =============================================================================
 
 /**
- * Constrúa seção completa de resultados de ganhos térmicos
+ * Constrói seção completa de resultados de ganhos térmicos
  * Organiza dados calculados em tabelas categorizadas para análise detalhada
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML completo da seção de ganhos térmicos
  */
 function buildThermalGainsSection(roomId) {
   return `

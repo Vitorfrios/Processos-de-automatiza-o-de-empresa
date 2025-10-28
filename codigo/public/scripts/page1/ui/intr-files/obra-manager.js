@@ -1,6 +1,8 @@
 
 /**
- * Gerenciador de obras
+ * =====================
+ * Gerenciador de obras - obra-maganer.js
+ * =====================
  */
 
 /**

@@ -1,3 +1,4 @@
+// airFlowCalculations.js
 import { CALCULATION_CONSTANTS } from '../../config/config.js';
 import { 
   waitForSystemConstants, 
@@ -9,7 +10,11 @@ import { updateFlowRateDisplay } from './airFlowDisplay.js';
 import { calculateThermalGains } from '../thermalGains/thermalCalculations.js';
 
 /**
- * Calcula fluxo de ar individual por porta
+ * Calcula fluxo de ar individual por porta baseado em contagem e pressurização
+ * @param {number|string} doorCount - Número de portas
+ * @param {number|string} doorVariable - Variável específica da porta
+ * @param {number|string} pressure - Pressurização em Pa
+ * @returns {number} Fluxo de ar calculado em m³/h
  */
 function calculateDoorFlow(doorCount, doorVariable, pressure) {
   const count = safeNumber(doorCount);
@@ -32,6 +37,8 @@ function calculateDoorFlow(doorCount, doorVariable, pressure) {
 
 /**
  * Calcula vazão total de ar baseada em portas e pressurização
+ * @param {Object} inputData - Dados de entrada contendo contagem de portas e pressurização
+ * @returns {number} Vazão total de ar arredondada em l/s
  */
 function computeAirFlowRate(inputData) {
   const numPortasDuplas = safeNumber(inputData.numPortasDuplas);
@@ -70,15 +77,17 @@ function computeAirFlowRate(inputData) {
 }
 
 /**
- * Encontra o roomContent pelo ID único da sala - NOVA FUNÇÃO
+ * Encontra o elemento roomContent pelo ID único da sala
+ * @param {string} roomId - ID único da sala
+ * @returns {HTMLElement|null} Elemento do conteúdo da sala ou null se não encontrado
  */
 function findRoomContent(roomId) {
-    // ✅ CORREÇÃO: Primeiro limpar o ID de qualquer "undefined"
+    // Limpar o ID de qualquer "undefined"
     const cleanRoomId = roomId.replace(/-undefined/g, '').replace(/undefined-/g, '');
     
     console.log(`🔍 Procurando sala: "${roomId}" -> Limpo: "${cleanRoomId}"`);
     
-    // ✅ CORREÇÃO: Tentar com o ID limpo primeiro
+    // Tentar com o ID limpo primeiro
     let roomContent = document.getElementById(`room-content-${cleanRoomId}`);
     
     if (roomContent) {
@@ -86,14 +95,14 @@ function findRoomContent(roomId) {
         return roomContent;
     }
     
-    // ✅ CORREÇÃO: Se não encontrou com ID limpo, tentar com o original
+    // Se não encontrou com ID limpo, tentar com o original
     roomContent = document.getElementById(`room-content-${roomId}`);
     if (roomContent) {
         console.log(`✅ Sala encontrada pelo ID ORIGINAL: room-content-${roomId}`);
         return roomContent;
     }
     
-    // ✅ CORREÇÃO: Procurar pela sala no DOM usando data attributes
+    // Procurar pela sala no DOM usando data attributes
     const roomBlock = document.querySelector(`[data-room-id="${cleanRoomId}"]`) || 
                      document.querySelector(`[data-room-id="${roomId}"]`);
     
@@ -103,7 +112,7 @@ function findRoomContent(roomId) {
         return document.getElementById(`room-content-${foundId}`);
     }
   
-    // ✅ CORREÇÃO: Debug detalhado
+    // Debug detalhado
     console.error(`❌ Sala não encontrada: ${roomId} (limpo: ${cleanRoomId})`);
     const allRooms = document.querySelectorAll('.room-block');
     console.log('🔍 Todas as salas disponíveis no DOM:');
@@ -115,7 +124,10 @@ function findRoomContent(roomId) {
 }
 
 /**
- * Orquestra cálculo completo de vazão com validações - CORRIGIDO
+ * Orquestra cálculo completo de vazão com validações
+ * @param {string} roomId - ID único da sala
+ * @param {boolean} calculateThermal - Se deve calcular ganhos térmicos após vazão
+ * @returns {Promise<number>} Vazão de ar calculada em l/s
  */
 async function calculateVazaoAr(roomId, calculateThermal = true) {
   try {
@@ -128,7 +140,7 @@ async function calculateVazaoAr(roomId, calculateThermal = true) {
       return 0;
     }
 
-    // ✅ CORREÇÃO: Usar a nova função para encontrar a sala
+    // Usar a nova função para encontrar a sala
     const roomContent = findRoomContent(roomId);
     if (!roomContent) {
       console.error(" Sala não encontrada:", roomId);
@@ -161,6 +173,8 @@ async function calculateVazaoAr(roomId, calculateThermal = true) {
 
 /**
  * Coordena cálculo sequencial de vazão e ganhos térmicos
+ * @param {string} roomId - ID único da sala
+ * @returns {Promise<void>}
  */
 async function calculateVazaoArAndThermalGains(roomId) {
   try {
@@ -176,5 +190,5 @@ export {
   computeAirFlowRate,
   calculateVazaoAr,
   calculateVazaoArAndThermalGains,
-  findRoomContent // ✅ Exportar para uso em outros módulos
+  findRoomContent
 };

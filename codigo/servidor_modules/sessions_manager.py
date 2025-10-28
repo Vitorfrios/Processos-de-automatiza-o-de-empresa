@@ -1,6 +1,7 @@
 """
-Gerenciador de Sessões - CORRIGIDO PARA SISTEMA QUE COMEÇA VAZIO
+sessions_manager.py
 """
+
 import json
 import time
 import os
@@ -8,18 +9,12 @@ from pathlib import Path
 
 class SessionsManager:
     """
-    Gerenciador de sessões CORRIGIDO para sistema que começa VAZIO:
-    {
-        "sessions": {
-            "session_active": {  // ✅ APENAS UMA SESSÃO ATIVA
-                "obras": []      // ✅ COMEÇA VAZIA - SEM OBRA 1001 AUTOMÁTICA
-            }
-        }
-    }
+    Gerenciador de sessões para sistema que começa vazio
+    Gerencia uma única sessão ativa com lista de obras
     """
     
     def __init__(self):
-        # CORREÇÃO: Usa caminho absoluto baseado na localização do arquivo
+        # Usa caminho absoluto baseado na localização do arquivo
         current_file = Path(__file__)  # sessions_manager.py
         project_root = current_file.parent.parent  # sobe para pasta codigo
         self.sessions_dir = project_root / "json"  # pasta json dentro de codigo
@@ -29,9 +24,9 @@ class SessionsManager:
         self.ensure_sessions_file()
     
     def ensure_sessions_file(self):
-        """Garante que o arquivo de sessões existe"""
+        """Garante que o arquivo de sessões existe com estrutura vazia"""
         try:
-            # CORREÇÃO: parents=True para criar toda a hierarquia se necessário
+            # Cria diretório se não existir
             self.sessions_dir.mkdir(parents=True, exist_ok=True)
             print(f"SessionsManager: Pasta json verificada: {self.sessions_dir.exists()}")
             
@@ -46,28 +41,34 @@ class SessionsManager:
             raise
     
     def _initialize_sessions_file(self):
-        """Inicializa o arquivo de sessões vazio - CORREÇÃO: SEM OBRA 1001"""
+        """Inicializa o arquivo de sessões com estrutura vazia"""
         initial_data = {
             "sessions": {
-                "session_active": {  # ✅ APENAS UMA SESSÃO
-                    "obras": []      # ✅ COMEÇA VAZIA - SEM OBRA 1001
+                "session_active": {  
+                    "obras": []      
                 }
             }
         }
         self._save_sessions_data(initial_data)
     
     def get_current_session_id(self) -> str:
-        """✅ CORREÇÃO: SEMPRE retorna 'session_active' para UMA única sessão"""
+        """Retorna o ID da sessão ativa
+        Returns:
+            str: ID da sessão ativa ('session_active')
+        """
         return "session_active"
 
-    # ✅ CORREÇÃO: AGORA TRABALHA COM OBRAS EM UMA ÚNICA SESSÃO
-
     def add_obra_to_session(self, obra_id: str) -> bool:
-        """Adiciona uma obra à sessão ativa (APENAS ID da obra)"""
+        """Adiciona uma obra à sessão ativa
+        Args:
+            obra_id (str): ID da obra a ser adicionada
+        Returns:
+            bool: True se a obra foi adicionada com sucesso
+        """
         data = self._load_sessions_data()
         current_session_id = self.get_current_session_id()
         
-        # ✅ CORREÇÃO: Garante que existe APENAS a sessão ativa
+        # Garante que existe apenas a sessão ativa
         data["sessions"] = {
             current_session_id: data["sessions"].get(current_session_id, {"obras": []})
         }
@@ -81,7 +82,12 @@ class SessionsManager:
         return self._save_sessions_data(data)
 
     def remove_obra(self, obra_id: str) -> bool:
-        """Remove uma obra da sessão ativa (APENAS ID da obra)"""
+        """Remove uma obra da sessão ativa
+        Args:
+            obra_id (str): ID da obra a ser removida
+        Returns:
+            bool: True se a obra foi removida ou não existia
+        """
         data = self._load_sessions_data()
         current_session_id = self.get_current_session_id()
         obra_id_str = str(obra_id)
@@ -97,15 +103,22 @@ class SessionsManager:
         return True  # Obra não estava na sessão
 
     def get_session_obras(self) -> list:
-        """Retorna lista de IDs de obras da sessão ativa"""
+        """Retorna lista de IDs de obras da sessão ativa
+        Returns:
+            list: Lista de IDs de obras na sessão ativa
+        """
         data = self._load_sessions_data()
         current_session_id = self.get_current_session_id()
         
         return data["sessions"].get(current_session_id, {"obras": []})["obras"]
 
-    # ✅ MÉTODOS DE COMPATIBILIDADE - mantidos para não quebrar código existente
     def add_project_to_session(self, project_id: str) -> bool:
-        """MÉTODO DE COMPATIBILIDADE: ainda aceita projetos, mas converte para obras"""
+        """Método de compatibilidade: converte projetos para obras
+        Args:
+            project_id (str): ID do projeto (legado)
+        Returns:
+            bool: True para compatibilidade
+        """
         print(f"⚠️  AVISO: add_project_to_session({project_id}) - método legado, usando obra padrão")
         
         # Para compatibilidade, usa uma obra padrão
@@ -113,26 +126,37 @@ class SessionsManager:
         return self.add_obra_to_session(obra_padrao_id)
 
     def remove_project(self, project_id: str) -> bool:
-        """MÉTODO DE COMPATIBILIDADE: ainda remove projetos, mas converte para obras"""
+        """Método de compatibilidade: remove projetos (legado)
+        Args:
+            project_id (str): ID do projeto (legado)
+        Returns:
+            bool: True para compatibilidade
+        """
         print(f"⚠️  AVISO: remove_project({project_id}) - método legado")
         
-        # Para compatibilidade, não remove nada (deixa a obra intacta)
+        # Para compatibilidade, não remove nada
         return True
 
     def get_session_projects(self) -> list:
-        """MÉTODO DE COMPATIBILIDADE: retorna lista vazia (não usa mais projetos individuais)"""
+        """Método de compatibilidade: retorna lista vazia (legado)
+        Returns:
+            list: Lista vazia para compatibilidade
+        """
         print("⚠️  AVISO: get_session_projects() - método legado, retornando vazia")
         return []
 
     def clear_session(self) -> bool:
-        """Limpa COMPLETAMENTE TODAS as sessões - Deixa apenas sessão ativa vazia"""
+        """Limpa completamente todas as sessões
+        Returns:
+            bool: True se a limpeza foi bem sucedida
+        """
         print("SHUTDOWN: Limpando sessão ativa")
         
-        # ✅ CORREÇÃO: Mantém estrutura mas limpa as obras
+        # Mantém estrutura mas limpa as obras
         data = {
             "sessions": {
                 "session_active": {
-                    "obras": []  # ✅ SEMPRE VOLTA VAZIA
+                    "obras": []  # Sempre volta vazia
                 }
             }
         }
@@ -149,7 +173,10 @@ class SessionsManager:
             return False
    
     def force_clear_all_sessions(self) -> bool:
-        """Força a limpeza TOTAL - método alternativo"""
+        """Força a limpeza total deletando e recriando o arquivo
+        Returns:
+            bool: True se a operação foi bem sucedida
+        """
         try:
             # Deleta fisicamente o arquivo e recria vazio
             if self.sessions_file.exists():
@@ -166,11 +193,14 @@ class SessionsManager:
             return False
 
     def ensure_single_session(self) -> bool:
-        """✅ CORREÇÃO: Garante que apenas UMA sessão ativa exista"""
+        """Garante que apenas uma sessão ativa exista
+        Returns:
+            bool: True se a operação foi bem sucedida
+        """
         data = self._load_sessions_data()
         current_session_id = self.get_current_session_id()
         
-        # ✅ CORREÇÃO: Mantém APENAS a sessão ativa
+        # Mantém apenas a sessão ativa
         current_obras = data["sessions"].get(current_session_id, {"obras": []})["obras"]
         
         # Remove todas as outras sessões
@@ -184,7 +214,10 @@ class SessionsManager:
         return self._save_sessions_data(data)
     
     def _load_sessions_data(self) -> dict:
-        """Carrega os dados das sessões do arquivo - CORREÇÃO: SEM MIGRAÇÃO AUTOMÁTICA"""
+        """Carrega os dados das sessões do arquivo
+        Returns:
+            dict: Dados das sessões carregados
+        """
         try:
             if self.sessions_file.exists():
                 with open(self.sessions_file, 'r', encoding='utf-8') as f:
@@ -194,29 +227,32 @@ class SessionsManager:
                 if "sessions" not in data:
                     data["sessions"] = {}
                 
-                # ✅ CORREÇÃO: NÃO FAZ MIGRAÇÃO AUTOMÁTICA - SEMPRE COMEÇA VAZIO
+                # Cria sessão ativa vazia se não existir
                 if "session_active" not in data["sessions"]:
-                    # ❌ REMOVIDO: Migração de sessões antigas
-                    # ✅ AGORA: Apenas cria sessão ativa vazia
                     data["sessions"] = {
                         "session_active": {"obras": []}
                     }
                     print("✅ Sessão ativa vazia criada")
                 
-                # ✅ CORREÇÃO: Garante que cada sessão tem "obras" 
+                # Garante que cada sessão tem "obras" 
                 for session_id, session_data in data["sessions"].items():
                     if "obras" not in session_data:
-                        session_data["obras"] = []  # ✅ APENAS ARRAY VAZIO, SEM OBRA 1001
+                        session_data["obras"] = []
                 
                 return data
             else:
-                return {"sessions": {"session_active": {"obras": []}}}  # ✅ SEMPRE VAZIO
+                return {"sessions": {"session_active": {"obras": []}}}
                 
         except (FileNotFoundError, json.JSONDecodeError):
-            return {"sessions": {"session_active": {"obras": []}}}  # ✅ SEMPRE VAZIO
+            return {"sessions": {"session_active": {"obras": []}}}
     
     def _save_sessions_data(self, data: dict) -> bool:
-        """Salva os dados das sessões no arquivo"""
+        """Salva os dados das sessões no arquivo
+        Args:
+            data (dict): Dados das sessões a serem salvos
+        Returns:
+            bool: True se o salvamento foi bem sucedido
+        """
         try:
             with open(self.sessions_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
@@ -226,11 +262,14 @@ class SessionsManager:
             return False
 
     def get_current_session(self) -> dict:
-        """Retorna a sessão atual completa - COMPATIBILIDADE COM routes.py"""
+        """Retorna a sessão atual completa
+        Returns:
+            dict: Dados completos da sessão ativa
+        """
         data = self._load_sessions_data()
         current_session_id = self.get_current_session_id()
         
-        # ✅ CORREÇÃO: Retorna APENAS a sessão ativa
+        # Retorna apenas a sessão ativa
         return {
             "sessions": {
                 current_session_id: data["sessions"].get(current_session_id, {"obras": []})
@@ -239,6 +278,7 @@ class SessionsManager:
 
     def debug_sessions(self):
         """Método de debug para verificar o estado das sessões"""
+        
         data = self._load_sessions_data()
         print("=== DEBUG SESSIONS ===")
         print(f"Sessões encontradas: {len(data['sessions'])}")
@@ -251,7 +291,7 @@ try:
     sessions_manager = SessionsManager()
     print("✅ SessionsManager CORRIGIDO inicializado com sucesso!")
     
-    # ✅ FORÇA sessão única na inicialização (mas vazia)
+    # Força sessão única na inicialização
     sessions_manager.ensure_single_session()
     sessions_manager.debug_sessions()
     
@@ -260,6 +300,8 @@ except Exception as e:
     
     # Fallback de emergência
     class EmergencySessionsManager:
+        """Gerenciador de sessões de emergência para falhas críticas"""
+        
         def __init__(self):
             self.project_root = Path(__file__).parent.parent
             print(f"⚠️  Usando EmergencySessionsManager: {self.project_root}")
@@ -272,12 +314,11 @@ except Exception as e:
             return True
 
         def get_session_obras(self):
-            return []  # ✅ SEMPRE RETORNA VAZIO
+            return []
             
         def get_current_session(self):
-            return {"sessions": {"session_active": {"obras": []}}}  # ✅ SEMPRE VAZIO
+            return {"sessions": {"session_active": {"obras": []}}}
         
-        # Métodos de compatibilidade
         def add_project_to_session(self, project_id):
             return self.add_obra_to_session("1001")
             

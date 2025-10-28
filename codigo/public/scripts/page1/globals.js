@@ -1,3 +1,5 @@
+//globals.js
+
 // Importar todas as funções que serão usadas globalmente
 import { 
   toggleProject, 
@@ -24,9 +26,16 @@ import {
   deleteMachine 
 } from './data/rooms.js';
 
-import { calculateVazaoArAndThermalGains } from './calculos/calculos.js';
+import { calculateVazaoArAndThermalGains } from './calculos/calculos-manager.js';
 
-// Função para inicializar todas as funções globais
+/**
+ * Inicializa todas as funções globais no objeto window para acesso universal
+ * Disponibiliza funções de interface, edição, projetos, salas e cálculos
+ * @returns {void}
+ * 
+ * @example
+ * initializeGlobals() // Todas as funções ficam disponíveis em window
+ */
 export function initializeGlobals() {
   // Interface e navegação
   window.toggleProject = toggleProject;
@@ -56,7 +65,7 @@ export function initializeGlobals() {
   // Status do sistema
   window.showSystemStatus = showSystemStatus;
   
-  console.log(" Todas as funções globais foram inicializadas");
+  console.log("✅ Todas as funções globais foram inicializadas");
 }
 
 // Exportar individualmente se necessário

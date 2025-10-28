@@ -1,3 +1,5 @@
+//edit.js
+
 /**
  * Inicia o modo de edição inline para um elemento (projeto ou sala)
  * Permite que o usuário edite o texto diretamente no elemento

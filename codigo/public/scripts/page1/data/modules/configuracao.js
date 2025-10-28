@@ -1,4 +1,12 @@
-//Criação da seção de configuração 
+// configuracao.js
+
+/**
+ * Constrói a seção de configuração de instalação para uma sala
+ * Inclui opções de instalação de climatização em formato de grid com checkboxes
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @returns {string} HTML da seção de configuração
+ */
 function buildConfigurationSection(projectName, roomName) {
   const roomId = `${projectName}-${roomName}`
   return `

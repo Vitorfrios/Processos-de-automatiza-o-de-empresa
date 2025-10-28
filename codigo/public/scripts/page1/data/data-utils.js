@@ -3,10 +3,10 @@
  * Mantém compatibilidade com imports existentes enquanto delega para módulos especializados
  */
 
-// Debug global
+
 console.log('🔄 data-utils.js carregado - versão modularizada')
 
-// Re-exportações com sintaxe de chaves
+
 export {
     buildObraData,
     buildProjectData,

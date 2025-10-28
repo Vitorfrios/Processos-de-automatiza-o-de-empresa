@@ -1,10 +1,10 @@
+// capacityCalculator.js
 import { updateElementText, findRoomId } from './utilities.js'
 
 // Configurações para inicialização do sistema de capacidade
 const capacityConfig = {
   maxInitAttempts: 3,
-  initDelay: 500,
-  fallbackFatorSeguranca: 10,
+  initDelay: 500
 }
 
 // Estado global para controle de inicialização por sala
@@ -77,6 +77,7 @@ function buildCapacityCalculationTable(roomId) {
 
 /**
  * Inicializa a tabela de capacidade estática (para casos específicos)
+ * @returns {void}
  */
 function initializeStaticCapacityTable() {
   const staticTable = document.querySelector(".capacity-calculation-table")
@@ -88,6 +89,7 @@ function initializeStaticCapacityTable() {
 /**
  * Agenda a inicialização do sistema de capacidade para uma sala
  * @param {string} roomId - ID da sala
+ * @returns {void}
  */
 function scheduleCapacityInit(roomId) {
   if (capacityState.has(roomId)) return
@@ -97,8 +99,9 @@ function scheduleCapacityInit(roomId) {
 }
 
 /**
- * Inicializa o sistema de capacidade com tentativas de fallback
+ * Inicializa o sistema de capacidade com tentativas controladas
  * @param {string} roomId - ID da sala
+ * @returns {void}
  */
 function initializeCapacitySystem(roomId) {
   const state = capacityState.get(roomId)
@@ -111,7 +114,7 @@ function initializeCapacitySystem(roomId) {
   if (systemConstantsReady || state.attempts >= capacityConfig.maxInitAttempts) {
     const fatorSeguranca = systemConstantsReady
       ? window.systemConstants.FATOR_SEGURANCA_CAPACIDADE
-      : capacityConfig.fallbackFatorSeguranca
+      : 10 // Valor padrão sem fallback complexo
 
     applyFatorSeguranca(roomId, fatorSeguranca)
     state.initialized = true
@@ -122,6 +125,7 @@ function initializeCapacitySystem(roomId) {
  * Aplica o fator de segurança ao input correspondente
  * @param {string} roomId - ID da sala
  * @param {number} fatorSeguranca - Valor do fator de segurança
+ * @returns {void}
  */
 function applyFatorSeguranca(roomId, fatorSeguranca) {
   const inputFator = document.getElementById(`fator-seguranca-${roomId}`)
@@ -159,6 +163,7 @@ function getThermalLoadTR(roomId) {
 /**
  * Calcula a solução de capacidade de refrigeração baseada nos parâmetros
  * @param {string} roomId - ID da sala
+ * @returns {void}
  */
 function calculateCapacitySolution(roomId) {
   try {
@@ -168,7 +173,7 @@ function calculateCapacitySolution(roomId) {
 
     if (!fatorSegurancaInput || !capacidadeUnitariaSelect) return
 
-    // USA O VALOR DO INPUT SE EXISTIR, SENÃO USA O CÁLCULO AUTOMÁTICO
+    // Usa o valor do input se existir, senão usa o cálculo automático
     const cargaEstimada = cargaEstimadaInput ? 
       (Number.parseInt(cargaEstimadaInput.value) || 0) : 
       getThermalLoadTR(roomId)
@@ -177,19 +182,16 @@ function calculateCapacitySolution(roomId) {
     const capacidadeUnitaria = Number.parseFloat(capacidadeUnitariaSelect.value)
     const backupType = getBackupFromClimatization(roomId)
 
-    const safeFatorSeguranca = isNaN(fatorSeguranca) ? 0.1 : fatorSeguranca
-    const safeCapacidadeUnitaria = isNaN(capacidadeUnitaria) ? 1 : capacidadeUnitaria
-
-    const capacidadeNecessaria = cargaEstimada * (1 + safeFatorSeguranca)
-    const unidadesOperacionais = Math.ceil(capacidadeNecessaria / safeCapacidadeUnitaria)
+    const capacidadeNecessaria = cargaEstimada * (1 + fatorSeguranca)
+    const unidadesOperacionais = Math.ceil(capacidadeNecessaria / capacidadeUnitaria)
     const unidadesTotais = applyBackupConfiguration(unidadesOperacionais, backupType)
 
-    const total = unidadesOperacionais * safeCapacidadeUnitaria
+    const total = unidadesOperacionais * capacidadeUnitaria
     const folga = cargaEstimada > 0 ? (total / cargaEstimada - 1) * 100 : 0
 
     updateCapacityDisplay(roomId, cargaEstimada, unidadesOperacionais, unidadesTotais, total, folga, backupType)
     
-    // SALVAR AUTOMATICAMENTE APÓS CALCULAR
+    // Salvar automaticamente após calcular
     const roomContent = document.getElementById(`room-content-${roomId}`)
     if (roomContent) {
       const projectName = roomContent.getAttribute('data-project-name')
@@ -228,9 +230,10 @@ function getCapacityData(roomId) {
 }
 
 /**
- * Salva os dados de capacidade no servidor - ATUALIZADO PARA OBRAS
+ * Salva os dados de capacidade no servidor
  * @param {string} projectName - Nome do projeto
  * @param {string} roomName - Nome da sala
+ * @returns {void}
  */
 function saveCapacityData(projectName, roomName) {
   try {
@@ -241,7 +244,7 @@ function saveCapacityData(projectName, roomName) {
 
     console.log(`[CAPACITY] Salvando dados para projeto: ${projectName}, sala: ${roomName}`)
 
-    // ✅ CORREÇÃO: Buscar obras em vez de projetos
+    // Buscar obras
     fetch(`/obras`)
       .then(response => {
         if (!response.ok) {
@@ -260,7 +263,7 @@ function saveCapacityData(projectName, roomName) {
           const salaIndex = obra.projetos[projetoIndex].salas?.findIndex(sala => sala.nome === roomName)
           if (salaIndex === -1 || salaIndex === undefined) return obra
 
-          // ✅ CORREÇÃO: Atualizar capacidade na estrutura de obra
+          // Atualizar capacidade na estrutura de obra
           if (!obra.projetos[projetoIndex].salas[salaIndex].capacidade) {
             obra.projetos[projetoIndex].salas[salaIndex].capacidade = {}
           }
@@ -276,7 +279,7 @@ function saveCapacityData(projectName, roomName) {
           return
         }
 
-        // ✅ CORREÇÃO: Encontrar a obra específica para atualizar
+        // Encontrar a obra específica para atualizar
         const obraComProjeto = obras.find(obra => 
           obra.projetos?.some(p => p.nome === projectName)
         )
@@ -312,7 +315,7 @@ function saveCapacityData(projectName, roomName) {
 }
 
 /**
- * Carrega os dados de capacidade do servidor para uma sala - ATUALIZADO PARA OBRAS
+ * Carrega os dados de capacidade do servidor para uma sala
  * @param {string} projectName - Nome do projeto
  * @param {string} roomName - Nome da sala
  * @returns {boolean} True se os dados foram carregados com sucesso
@@ -323,7 +326,7 @@ function loadCapacityData(projectName, roomName) {
     
     console.log(`[CAPACITY] Tentando carregar dados para ${projectName}-${roomName}`)
     
-    // ✅ CORREÇÃO: Buscar obras em vez de projetos
+    // Buscar obras
     fetch(`/obras`)
       .then(response => {
         if (!response.ok) {
@@ -363,11 +366,11 @@ function loadCapacityData(projectName, roomName) {
   }
 }
 
-
 /**
  * Aplica os dados de capacidade carregados aos elementos da interface
  * @param {string} roomId - ID da sala
  * @param {Object} capacityData - Dados de capacidade a serem aplicados
+ * @returns {void}
  */
 function applyCapacityData(roomId, capacityData) {
   const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`)
@@ -447,10 +450,12 @@ function getBackupFromClimaInputs(roomId) {
  * @param {number} total - Capacidade total em TR
  * @param {number} folga - Percentual de folga
  * @param {string} backupType - Tipo de backup
+ * @returns {void}
  */
 function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup, total, folga, backupType) {
+  
   // Atualizar o campo de carga estimada com input editável (valor inteiro)
-  updateCargaEstimadaInput(roomId, Math.round(cargaEstimada)) // Arredonda para inteiro
+  updateCargaEstimadaInput(roomId, Math.round(cargaEstimada))
   updateElementText(`solucao-${roomId}`, solucao)
   updateElementText(`solucao-backup-${roomId}`, solucaoComBackup)
   updateElementText(`total-capacidade-${roomId}`, total.toFixed(1))
@@ -467,6 +472,7 @@ function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup,
  * Atualiza ou cria o input para carga estimada (apenas inteiros)
  * @param {string} roomId - ID da sala
  * @param {number} value - Valor a ser definido (inteiro)
+ * @returns {void}
  */
 function updateCargaEstimadaInput(roomId, value) {
   const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`)
@@ -502,8 +508,8 @@ function updateCargaEstimadaInput(roomId, value) {
     cargaEstimadaElement.innerHTML = ''
     cargaEstimadaElement.appendChild(input)
   } else {
-    // SEMPRE atualiza com o valor calculado quando a função é chamada
-    // Isso garante que cálculos subsequentes usem o valor correto
+
+    // Atualiza com o valor calculado quando a função é chamada
     input.value = Math.round(value)
   }
 }
@@ -511,6 +517,7 @@ function updateCargaEstimadaInput(roomId, value) {
 /**
  * Atualiza a configuração de backup quando alterada pelo usuário
  * @param {HTMLSelectElement} selectElement - Elemento select do backup
+ * @returns {void}
  */
 function updateBackupConfiguration(selectElement) {
   const roomId = findRoomId(selectElement.closest(".capacity-calculation-table"))
@@ -535,6 +542,7 @@ function updateBackupConfiguration(selectElement) {
  * Manipula mudanças no backup provenientes dos inputs de clima
  * @param {string} roomId - ID da sala
  * @param {string} newBackupValue - Novo valor de backup
+ * @returns {void}
  */
 function handleClimaInputBackupChange(roomId, newBackupValue) {
   const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`)
@@ -562,6 +570,7 @@ function handleClimaInputBackupChange(roomId, newBackupValue) {
  * Sincroniza o backup com os inputs de clima da sala
  * @param {string} roomId - ID da sala
  * @param {string} backupValue - Valor de backup a ser sincronizado
+ * @returns {void}
  */
 function syncBackupWithClimaInputs(roomId, backupValue) {
   const roomContent = document.getElementById(`room-content-${roomId}`)
@@ -580,6 +589,7 @@ function syncBackupWithClimaInputs(roomId, backupValue) {
 /**
  * Sincroniza o backup da tabela de capacidade com os valores atuais
  * @param {string} roomId - ID da sala
+ * @returns {void}
  */
 function syncCapacityTableBackup(roomId) {
   setTimeout(() => {

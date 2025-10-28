@@ -1,10 +1,10 @@
-// Importações dos módulos - AGORA DO projeto.js
+// rooms.js
 import { 
   createEmptyRoom, 
   insertRoomIntoProject, 
   addNewRoom, 
   deleteRoom 
-} from './modules/projeto.js'
+} from './modules/room-operations.js'
 
 import { 
   buildRoomHTML, 
@@ -40,7 +40,11 @@ window.calculateCapacitySolution = calculateCapacitySolution;
 window.updateCapacityFromThermalGains = updateCapacityFromThermalGains;
 window.initializeStaticCapacityTable = initializeStaticCapacityTable;
 
-// Inicializando todos os inputs de capacidade
+/**
+ * Inicializa todos os inputs de capacidade com valores padrão do sistema
+ * Aplica o fator de segurança padrão a todos os campos de capacidade vazios
+ * @returns {void}
+ */
 function initializeAllCapacityInputs() {
   console.log('[INIT] Inicializando todos os inputs de capacidade...');
   
@@ -63,24 +67,42 @@ function initializeAllCapacityInputs() {
 
 // Executar quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
+
   // Tentar inicializar após um delay
   setTimeout(initializeAllCapacityInputs, 3000);
 });
 
-// Função para forçar reinicialização quando systemConstants estiver disponível
+/**
+ * Força a reinicialização dos inputs de capacidade quando systemConstants estiver disponível
+ * Útil para quando as constantes do sistema são carregadas de forma assíncrona
+ * @returns {void}
+ */
 window.reinitializeCapacityInputs = function() {
   console.log('[REINIT] Reinicializando inputs de capacidade...');
   initializeAllCapacityInputs();
 };
 
-// ✅ CORREÇÃO: Função para criar ID único de sala (mantida para compatibilidade)
+/**
+ * Gera um ID único para uma sala baseado em obra, projeto e nome da sala
+ * Inclui timestamp para garantir unicidade
+ * @param {string} obraName - Nome da obra
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @returns {string} ID único gerado para a sala
+ */
 function generateUniqueRoomId(obraName, projectName, roomName) {
     const baseId = roomName.toLowerCase().replace(/\s+/g, '-');
     const timestamp = Date.now().toString().slice(-6);
     return `${obraName}-${projectName}-${baseId}-${timestamp}`.replace(/\s+/g, '-');
 }
 
-// ✅ CORREÇÃO: Função para obter próximo número de sala (mantida para compatibilidade)
+/**
+ * Obtém o próximo número disponível para uma nova sala no projeto
+ * Calcula baseado nas salas existentes para manter numeração sequencial
+ * @param {string} obraName - Nome da obra
+ * @param {string} projectName - Nome do projeto
+ * @returns {number} Próximo número disponível para sala
+ */
 function getNextRoomNumber(obraName, projectName) {
     const projectElement = document.querySelector(`[data-obra-name="${obraName}"] [data-project-name="${projectName}"]`);
     if (!projectElement) return 1;
@@ -96,7 +118,12 @@ function getNextRoomNumber(obraName, projectName) {
     return maxNumber + 1;
 }
 
-// ✅ CORREÇÃO: Função para encontrar sala pelo ID único (mantida para compatibilidade)
+/**
+ * Encontra uma sala no DOM pelo seu ID único
+ * Retorna informações completas da sala incluindo obra e projeto
+ * @param {string} roomId - ID único da sala
+ * @returns {Object|null} Objeto com dados da sala ou null se não encontrada
+ */
 function findRoomByUniqueId(roomId) {
     const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
     if (roomElement) {
@@ -110,12 +137,11 @@ function findRoomByUniqueId(roomId) {
     return null;
 }
 
-// ✅ CORREÇÃO: Funções principais AGORA SÃO DO projeto.js
-// Este arquivo serve apenas como ponte e para funções auxiliares
 
-// Exportações atualizadas - FUNÇÕES PRINCIPAIS VÊM DO projeto.js
+
+// Exportações atualizadas - FUNÇÕES PRINCIPAIS VÊM DO room-operations.js
 export {
-  // Projeto - FUNÇÕES DO projeto.js
+  // Projeto - FUNÇÕES DO room-operations.js
   createEmptyRoom,
   insertRoomIntoProject,
   addNewRoom,
@@ -151,12 +177,10 @@ export {
   buildConfigurationSection
 }
 
-// ✅ CORREÇÃO: Disponibilizar funções globalmente (as principais já estão no projeto.js)
+// Disponibilizar funções globalmente
 if (typeof window !== 'undefined') {
-    // Funções auxiliares
+
     window.generateUniqueRoomId = generateUniqueRoomId;
     window.findRoomByUniqueId = findRoomByUniqueId;
-    
-    // As funções principais addNewRoom, deleteRoom, createEmptyRoom 
-    // já estão disponíveis via projeto.js
+
 }

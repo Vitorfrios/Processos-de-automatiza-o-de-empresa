@@ -1,3 +1,4 @@
+// calculos-manager.js
 import { 
   waitForSystemConstants, 
   validateSystemConstants,

@@ -1,4 +1,5 @@
 """
+browser_monitor.py
 Monitoramento do navegador - Versão SIMPLIFICADA
 Apenas para compatibilidade, sem verificações de atividade
 """

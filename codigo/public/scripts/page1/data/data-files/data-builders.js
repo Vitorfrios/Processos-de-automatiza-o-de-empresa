@@ -1,4 +1,5 @@
 /**
+ * data-builders.js
  * Módulo de construção de objetos de dados
  * Responsável por criar estruturas de obras, projetos e salas
  */
@@ -8,7 +9,9 @@ import { generateObraId, generateProjectId, generateRoomId, getObraName, getProj
 import { extractClimatizationInputs, extractMachinesData, extractCapacityData, extractThermalGainsData, extractConfigurationData } from './data-extractors.js'
 
 /**
- * Constrói o objeto de dados completo de uma OBRA a partir do HTML
+ * Constrói o objeto de dados completo de uma obra a partir do HTML
+ * @param {string|HTMLElement} obraIdOrElement - ID da obra ou elemento HTML
+ * @returns {Object|null} Dados completos da obra ou null em caso de erro
  */
 function buildObraData(obraIdOrElement) {
     let obraElement
@@ -69,6 +72,8 @@ function buildObraData(obraIdOrElement) {
 
 /**
  * Constrói o objeto de dados completo de um projeto a partir do HTML
+ * @param {string|HTMLElement} projectIdOrElement - ID do projeto ou elemento HTML
+ * @returns {Object|null} Dados completos do projeto ou null em caso de erro
  */
 function buildProjectData(projectIdOrElement) {
     let projectElement
@@ -113,6 +118,9 @@ function buildProjectData(projectIdOrElement) {
 
 /**
  * Extrai todos os dados de uma sala a partir do elemento HTML
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @param {HTMLElement} projectElement - Elemento HTML do projeto pai
+ * @returns {Object|null} Dados completos da sala ou null em caso de erro
  */
 function extractRoomData(roomElement, projectElement) {
     if (!roomElement) {

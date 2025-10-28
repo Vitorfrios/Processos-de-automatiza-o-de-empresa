@@ -1,3 +1,5 @@
+// status-manager.js
+
 import { UI_CONSTANTS } from '../../config/config.js'
 
 /**

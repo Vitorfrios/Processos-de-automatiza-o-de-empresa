@@ -1,8 +1,9 @@
-import { UI_CONSTANTS } from "../config/config.js"
+// projects.js
 import { ensureStringId } from "../utils/utils.js"
 import { buildObraData } from "./data-utils.js"
 import { showSystemStatus, updateObraButtonAfterSave } from "../ui/interface.js"
 import { isSessionActive, startSessionOnFirstSave } from "./server.js";
+
 /**
  * Busca todas as obras do servidor
  * @returns {Promise<Array>} Lista de obras
@@ -12,6 +13,7 @@ async function fetchObras() {
     const response = await fetch('/obras')
 
     if (!response.ok) {
+
       // Se o endpoint não existir, retorna array vazio (para obras novas)
       if (response.status === 404) {
         return [];
@@ -23,20 +25,22 @@ async function fetchObras() {
     return obras || [];
   } catch (error) {
     console.error("❌ Erro ao buscar obras:", error)
+
     // Em caso de erro, assumir que não há obras (para desenvolvimento)
     return [];
   }
 }
 
 /**
- * Atualiza uma obra existente no servidor - CORREÇÃO DEFINITIVA
+ * Atualiza uma obra existente no servidor
  * @param {string|number} obraId - ID da obra
  * @param {Object} obraData - Dados atualizados da obra
  * @returns {Promise<Object|null>} Obra atualizada ou null em caso de erro
  */
 async function atualizarObra(obraId, obraData) {
   try {
-    // REGRA: Só atualizar se sessão estiver ativa
+
+    // Só atualizar se sessão estiver ativa
     if (!isSessionActive()) {
       console.warn("⚠️ Sessão não está ativa - obra não será atualizada");
       showSystemStatus("ERRO: Sessão não está ativa. Obra não atualizada.", "error");
@@ -68,12 +72,13 @@ async function atualizarObra(obraId, obraData) {
 
     if (!obraExistente) {
       console.log(`❌ Obra ${obraId} não encontrada no backup, criando nova...`);
-      // ✅ CORREÇÃO: Remover o ID para forçar criação como nova obra
+
+      // Remover o ID para forçar criação como nova obra
       delete obraData.id;
       return await salvarObra(obraData);
     }
 
-    // ✅ CORREÇÃO: Garantir que o ID no dados seja o correto
+    // Garantir que o ID no dados seja o correto
     obraData.id = obraId;
 
     console.log('🔄 ATUALIZANDO OBRA EXISTENTE:', {
@@ -82,7 +87,7 @@ async function atualizarObra(obraId, obraData) {
       projetos: obraData.projetos?.length || 0
     });
 
-    // ✅ CORREÇÃO: Usar PUT para /obras/{id}
+    // Usar PUT para /obras/{id}
     const url = `/obras/${obraId}`;
     console.log(`🎯 Fazendo PUT para: ${url}`);
     
@@ -114,13 +119,13 @@ async function atualizarObra(obraId, obraData) {
 }
 
 /**
- * Salva uma nova OBRA no servidor - CORREÇÃO PARA ADICIONAR À SESSÃO
+ * Salva uma nova obra no servidor e adiciona à sessão atual
  * @param {Object} obraData - Dados da obra a ser salva
  * @returns {Promise<Object|null>} Obra criada ou null em caso de erro
  */
 async function salvarObra(obraData) {
   try {
-    // REGRA: Só salvar se sessão estiver ativa
+    // Só salvar se sessão estiver ativa
     if (!isSessionActive()) {
       console.warn("⚠️ Sessão não está ativa - obra não será salva");
       showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
@@ -134,7 +139,7 @@ async function salvarObra(obraData) {
       timestamp: obraData.timestamp
     });
 
-    // CORREÇÃO: Sempre usar POST para nova obra
+    // Sempre usar POST para nova obra
     const response = await fetch('/obras', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -148,7 +153,7 @@ async function salvarObra(obraData) {
 
     const createdObra = await response.json();
     
-    // ✅ CORREÇÃO CRÍTICA: Adicionar obra à sessão
+    // Adicionar obra à sessão
     console.log(`📝 Adicionando obra ${createdObra.id} à sessão...`);
     await fetch('/api/sessions/add-obra', {
       method: 'POST',
@@ -171,6 +176,11 @@ async function salvarObra(obraData) {
   }
 }
 
+/**
+ * Encontra o elemento HTML de uma obra pelo nome
+ * @param {string} obraName - Nome da obra a ser encontrada
+ * @returns {HTMLElement|null} Elemento da obra ou null se não encontrado
+ */
 function findObraBlock(obraName) {
     console.log(`🔍 Buscando obra: "${obraName}"`);
     
@@ -205,9 +215,10 @@ function findObraBlock(obraName) {
 }
 
 /**
- * Salva ou atualiza uma OBRA (função principal) - CORREÇÃO DEFINITIVA
+ * Salva ou atualiza uma obra no servidor (função principal)
  * @param {string} obraName - Nome da obra
  * @param {Event} event - Evento do clique
+ * @returns {Promise<void>}
  */
 async function saveObra(obraName, event) {
     if (event) {
@@ -217,20 +228,20 @@ async function saveObra(obraName, event) {
 
     console.log(`💾 SALVANDO OBRA: "${obraName}"`);
 
-    // ✅ CORREÇÃO: Ativa a sessão se não estiver ativa (primeira obra)
+    // Ativa a sessão se não estiver ativa (primeira obra)
     if (!isSessionActive()) {
         console.log("🆕 Iniciando sessão para primeira obra...");
         await startSessionOnFirstSave();
     }
 
-    // ✅ AGORA a sessão está ativa, pode continuar
+    // Log para sessão ativa
     if (!isSessionActive()) {
         console.warn("⚠️ Sessão não está ativa - obra não será salva");
         showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
         return;
     }
 
-    // ✅ CORREÇÃO: Método ROBUSTO para encontrar a obra
+
     let obraBlock = findObraBlock(obraName);
     
     if (!obraBlock) {
@@ -255,7 +266,7 @@ async function saveObra(obraName, event) {
         return;
     }
 
-    // ✅ CORREÇÃO: Lógica MELHORADA para determinar se é nova obra ou atualização
+    // Lógica para determinar se é nova obra ou atualização
     const obraIdFromDOM = obraBlock.dataset.obraId;
     const isNewObra = !obraIdFromDOM || obraIdFromDOM === "" || obraIdFromDOM === "null" || obraIdFromDOM === "undefined";
 
@@ -288,7 +299,7 @@ async function saveObra(obraName, event) {
             titleElement.textContent = obraData.nome;
         }
 
-        // CORREÇÃO: Atualizar o botão para "Atualizar Obra"
+        // Atualizar o botão para "Atualizar Obra"
         if (typeof updateObraButtonAfterSave === 'function') {
             updateObraButtonAfterSave(obraName, finalId);
         }
@@ -302,11 +313,11 @@ async function saveObra(obraName, event) {
     }
 }
 
-
 /**
  * Deleta um projeto da interface (apenas remoção visual)
  * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto a ser deletado
+ * @returns {Promise<void>}
  */
 async function deleteProject(obraName, projectName) {
   const confirmMessage = "Tem certeza que deseja remover este projeto da obra?"
@@ -327,6 +338,7 @@ async function deleteProject(obraName, projectName) {
  * Deleta uma obra do servidor
  * @param {string} obraName - Nome da obra
  * @param {string} obraId - ID da obra
+ * @returns {Promise<void>}
  */
 async function deleteObraFromServer(obraName, obraId) {
   try {
@@ -362,8 +374,9 @@ async function deleteObraFromServer(obraName, obraId) {
 }
 
 /**
- * Verifica os dados de uma obra e gera relatório
+ * Verifica os dados de uma obra e gera relatório de completude
  * @param {string} obraName - Nome da obra
+ * @returns {void}
  */
 function verifyObraData(obraName) {
   const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
@@ -419,8 +432,13 @@ function calculateRoomCompletionStats(room) {
   };
 }
 
-// Função de compatibilidade para código existente
+/**
+ * Função de compatibilidade para código existente que usa apenas projectName
+ * @param {string} projectName - Nome do projeto a ser deletado
+ * @returns {Promise<void>}
+ */
 async function deleteProjectLegacy(projectName) {
+  
     // Tenta encontrar a obra do projeto
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
     const obraName = projectBlock?.dataset.obraName;

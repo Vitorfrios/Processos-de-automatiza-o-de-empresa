@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+servidor.py
 Sistema de Climatização - Servidor Principal
 Versão com Diagnóstico Completo
 """
@@ -76,7 +77,7 @@ except Exception as e:
     input()
     sys.exit(1)
 
-def force_shutdown_after_delay(interval_seconds):
+def active_session_after_delay(interval_seconds):
     """✅ CORREÇÃO: Mostra tempo de execução a cada intervalo especificado em SEGUNDOS"""
     def monitor():
         start_time = time.time()
@@ -148,9 +149,9 @@ def main():
             print("   ✅ SERVIDOR INICIADO COM SUCESSO!")
             print("   🟢 SISTEMA OPERACIONAL")
             
-            # ✅ CORREÇÃO: Ativar monitor de tempo a cada 0.3 segundos para teste
+            # ✅ CORREÇÃO: Ativar monitor de tempo a cada 1200 segundos para teste
             delay = 1200
-            force_shutdown_after_delay(delay)  # Mostra tempo a cada 0.3 segundos
+            active_session_after_delay(delay)  # Mostra tempo a cada 1200 segundos
             
             # Loop principal
             server_utils.run_server_loop(httpd)

@@ -1,4 +1,5 @@
 /**
+ * data-utils-core.js
  * Utilitários core e funções auxiliares
  * Geração de IDs, helpers numéricos, funções de nomeação
  */
@@ -10,6 +11,7 @@ let roomCounter = 0
 
 /**
  * Gera ID para obra (inicia em 1001, global)
+ * @returns {string} ID único da obra
  */
 function generateObraId() {
     obraCounter++
@@ -17,7 +19,9 @@ function generateObraId() {
 }
 
 /**
- * Gera ID para projeto (reinicia por obra)
+ * Gera ID para projeto baseado nos projetos existentes na obra
+ * @param {HTMLElement} obraElement - Elemento da obra
+ * @returns {string} ID único do projeto
  */
 function generateProjectId(obraElement) {
     if (!obraElement) {
@@ -40,7 +44,9 @@ function generateProjectId(obraElement) {
 }
 
 /**
- * Gera ID para sala (reinicia por projeto) - CORRIGIDO para numérico simples
+ * Gera ID para sala baseado nas salas existentes no projeto
+ * @param {HTMLElement} projectElement - Elemento do projeto
+ * @returns {string} ID único da sala
  */
 function generateRoomId(projectElement) {
     const rooms = projectElement.querySelectorAll('.room-block')
@@ -59,7 +65,9 @@ function generateRoomId(projectElement) {
 }
 
 /**
- * Obtém o ID completo da sala (ex: "Projeto1-Sala1")
+ * Obtém o ID completo da sala no formato "ProjetoNome-SalaNome"
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @returns {string} ID completo da sala
  */
 function getRoomFullId(roomElement) {
     const roomName = roomElement.dataset.roomName
@@ -90,7 +98,9 @@ function getRoomFullId(roomElement) {
 }
 
 /**
- * Extrai número de um texto
+ * Extrai número de um texto, convertendo vírgula para ponto decimal
+ * @param {string} text - Texto contendo número
+ * @returns {number|null} Número extraído ou null se não encontrado
  */
 function extractNumberFromText(text) {
     if (!text) return null
@@ -106,7 +116,9 @@ function extractNumberFromText(text) {
 }
 
 /**
- * Obtém o nome da obra de forma segura
+ * Obtém o nome da obra a partir do elemento
+ * @param {HTMLElement} obraElement - Elemento da obra
+ * @returns {string} Nome da obra
  */
 function getObraName(obraElement) {
     const titleElement = obraElement.querySelector('.obra-title')
@@ -127,7 +139,9 @@ function getObraName(obraElement) {
 }
 
 /**
- * Obtém o nome do projeto de forma segura
+ * Obtém o nome do projeto a partir do elemento
+ * @param {HTMLElement} projectElement - Elemento do projeto
+ * @returns {string} Nome do projeto
  */
 function getProjectName(projectElement) {
     const titleElement = projectElement.querySelector('.project-title')
@@ -166,7 +180,9 @@ function getProjectName(projectElement) {
 }
 
 /**
- * Obtém o nome da sala de forma segura
+ * Obtém o nome da sala a partir do elemento
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @returns {string} Nome da sala
  */
 function getRoomName(roomElement) {
     const titleElement = roomElement.querySelector('.room-title')
@@ -182,7 +198,10 @@ function getRoomName(roomElement) {
 }
 
 /**
- * Obtém o nome da máquina de forma segura
+ * Obtém o nome da máquina a partir do elemento
+ * @param {HTMLElement} machineElement - Elemento da máquina
+ * @param {string} machineId - ID da máquina
+ * @returns {string} Nome da máquina
  */
 function getMachineName(machineElement, machineId) {
     const titleElement = machineElement.querySelector('.machine-title-editable')
@@ -194,6 +213,8 @@ function getMachineName(machineElement, machineId) {
 
 /**
  * Converte texto de preço em número
+ * @param {string} priceText - Texto do preço no formato "R$ X.XXX,XX"
+ * @returns {number} Valor numérico do preço
  */
 function parseMachinePrice(priceText) {
     if (!priceText || priceText === 'R$ 0,00') return 0
@@ -211,7 +232,9 @@ function parseMachinePrice(priceText) {
 }
 
 /**
- * Função auxiliar para converter valores para número com segurança
+ * Converte valores para número com tratamento de segurança
+ * @param {any} value - Valor a ser convertido
+ * @returns {number} Valor numérico
  */
 function safeNumber(value) {
     if (value === null || value === undefined || value === '') return 0
@@ -220,7 +243,9 @@ function safeNumber(value) {
 }
 
 /**
- * Função auxiliar para debug - mostra todos os elementos de ganhos térmicos disponíveis
+ * Função de debug para mostrar todos os elementos de ganhos térmicos disponíveis
+ * @param {HTMLElement} roomElement - Elemento da sala para debug
+ * @returns {void}
  */
 function debugThermalGainsElements(roomElement) {
     const roomFullId = getRoomFullId(roomElement)

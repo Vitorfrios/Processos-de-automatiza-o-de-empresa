@@ -1,4 +1,5 @@
 /**
+ * data-extractors.js
  * Módulo de extração de dados dos elementos HTML
  * Responsável por coletar dados de salas, máquinas, ganhos térmicos, etc.
  */
@@ -7,7 +8,9 @@
 import { getRoomFullId, getMachineName, parseMachinePrice, extractNumberFromText } from './data-utils-core.js'
 
 /**
- * Extrai dados de ganhos térmicos - VERSÃO CORRIGIDA COM PADRÃO DE IDs
+ * Extrai dados de ganhos térmicos de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Object} Dados de ganhos térmicos
  */
 function extractThermalGainsData(roomElement) {
     console.log('🎯 FUNÇÃO extractThermalGainsData CHAMADA!')
@@ -75,7 +78,9 @@ function extractThermalGainsData(roomElement) {
 }
 
 /**
- * Extrai inputs de climatização
+ * Extrai inputs de climatização de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Object} Dados dos inputs de climatização
  */
 function extractClimatizationInputs(roomElement) {
     const inputs = {}
@@ -137,7 +142,9 @@ function extractClimatizationInputs(roomElement) {
 }
 
 /**
- * Extrai dados das máquinas
+ * Extrai dados das máquinas de climatização de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Array} Lista de dados das máquinas
  */
 function extractMachinesData(roomElement) {
     const machines = []
@@ -155,7 +162,9 @@ function extractMachinesData(roomElement) {
 }
 
 /**
- * Extrai dados de uma máquina individual
+ * Extrai dados de uma máquina de climatização individual
+ * @param {HTMLElement} machineElement - Elemento HTML da máquina
+ * @returns {Object} Dados da máquina
  */
 function extractClimatizationMachineData(machineElement) {
     const machineId = machineElement.getAttribute('data-machine-id') || `machine-${Date.now()}`
@@ -223,7 +232,9 @@ function extractClimatizationMachineData(machineElement) {
 }
 
 /**
- * Extrai dados de capacidade
+ * Extrai dados de capacidade de refrigeração de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Object} Dados de capacidade
  */
 function extractCapacityData(roomElement) {
     const capacityData = {}
@@ -281,7 +292,9 @@ function extractCapacityData(roomElement) {
 }
 
 /**
- * Extrai dados de configuração
+ * Extrai dados de configuração de instalação de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Object} Dados de configuração
  */
 function extractConfigurationData(roomElement) {
     const config = {
@@ -311,6 +324,10 @@ function extractConfigurationData(roomElement) {
 
 /**
  * Busca alternativa por texto quando o elemento não é encontrado pelo ID
+ * @param {string} key - Chave do ganho térmico
+ * @param {string} roomFullId - ID completo da sala
+ * @param {Object} gains - Objeto de ganhos térmicos
+ * @returns {void}
  */
 function attemptAlternativeSearch(key, roomFullId, gains) {
     const textMap = {

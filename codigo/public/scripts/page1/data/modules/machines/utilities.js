@@ -1,4 +1,4 @@
-// modules/utilities.js
+// utilities.js
 
 /**
  * Atualiza o texto de um elemento HTML baseado no seu ID

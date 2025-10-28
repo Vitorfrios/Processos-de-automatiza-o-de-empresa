@@ -1,3 +1,5 @@
+// project-manager.js
+
 import { createEmptyRoom } from '../../data/rooms.js'
 import { generateProjectId } from '../../data/data-utils.js'
 import { removeEmptyObraMessage } from './ui-helpers.js'
@@ -27,7 +29,7 @@ function createEmptyProject(obraName, projectName, projectId) {
     obraProjectsContainer.insertAdjacentHTML("beforeend", projectHTML)
     console.log(`📁 Projeto ${projectName} criado na obra ${obraName} com ID: ${finalProjectId}`)
     
-    // ✅ CORREÇÃO: REMOVER MENSAGEM DE OBRA VAZIA
+    // REMOVER MENSAGEM DE OBRA VAZIA
     removeEmptyObraMessage(obraName)
   } else {
     console.error(`❌ Container de projetos não encontrado para obra ${obraName}`)
@@ -35,7 +37,12 @@ function createEmptyProject(obraName, projectName, projectId) {
 }
 
 /**
- * Constrói o HTML de um projeto dentro de uma obra
+ * Constrói o HTML completo de um projeto dentro de uma obra
+ * Cria a estrutura DOM com header, conteúdo recolhível e ações
+ * @param {string} obraName - Nome da obra pai do projeto
+ * @param {string} projectName - Nome do projeto a ser criado
+ * @param {string|number|null} projectId - ID único do projeto (opcional)
+ * @returns {string} HTML completo do bloco do projeto
  */
 function buildProjectHTML(obraName, projectName, projectId) {
   const hasId = projectId !== null && projectId !== undefined && projectId !== ""

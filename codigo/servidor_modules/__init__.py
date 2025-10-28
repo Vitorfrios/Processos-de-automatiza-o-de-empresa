@@ -1,4 +1,5 @@
 """
+__init__.py
 Módulos do Servidor Python
 """
 

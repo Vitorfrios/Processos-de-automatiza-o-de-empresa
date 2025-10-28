@@ -1,23 +1,24 @@
-// server.js - CORREÇÃO: IMPORTAR FUNÇÕES DE UI
+// server.js
 
-import { SESSION_STORAGE_KEY, REMOVED_PROJECTS_KEY, NORMALIZATION_DONE_KEY, SESSION_ACTIVE_KEY } from "../config/config.js"
+import { SESSION_STORAGE_KEY, REMOVED_PROJECTS_KEY, SESSION_ACTIVE_KEY } from "../config/config.js"
 import { ensureStringId } from "../utils/utils.js"
-
-// ✅ CORREÇÃO: IMPORTAR FUNÇÕES DE CRIAÇÃO DE OBRAS
 import { createEmptyObra, createEmptyProject, createEmptyRoom } from "../ui/interface.js"
 
 // CONSTANTES PARA CONTROLE DE SESSÃO - ATUALIZADAS PARA OBRAS
 const SESSION_OBRAS = 'session_obras';
 
 /**
- * Verifica se a sessão está ativa
+ * Verifica se a sessão está ativa no navegador
+ * @returns {boolean} True se a sessão está ativa, false caso contrário
  */
 function isSessionActive() {
     return sessionStorage.getItem(SESSION_ACTIVE_KEY) === 'true';
 }
 
 /**
- * Define o estado da sessão
+ * Define o estado da sessão como ativa ou inativa
+ * @param {boolean} active - Estado desejado para a sessão
+ * @returns {void}
  */
 function setSessionActive(active) {
     sessionStorage.setItem(SESSION_ACTIVE_KEY, active.toString());
@@ -29,7 +30,8 @@ function setSessionActive(active) {
 }
 
 /**
- * Obtém a lista de OBRAS da sessão atual - ATUALIZADO
+ * Obtém a lista de obras da sessão atual do sessionStorage
+ * @returns {string[]} Array com os IDs das obras da sessão
  */
 function getSessionObras() {
     if (!isSessionActive()) return [];
@@ -39,7 +41,9 @@ function getSessionObras() {
 }
 
 /**
- * Define a lista de OBRAS da sessão atual - ATUALIZADO
+ * Define a lista de obras da sessão atual no sessionStorage
+ * @param {string[]} obraIds - Array de IDs das obras a serem armazenadas
+ * @returns {void}
  */
 function setSessionObras(obraIds) {
     if (!isSessionActive()) return;
@@ -48,7 +52,9 @@ function setSessionObras(obraIds) {
 }
 
 /**
- * Adiciona uma OBRA à lista da sessão - ATUALIZADO
+ * Adiciona uma obra à lista da sessão atual
+ * @param {string} obraId - ID da obra a ser adicionada
+ * @returns {void}
  */
 function addObraToSession(obraId) {
     if (!isSessionActive()) return;
@@ -61,7 +67,9 @@ function addObraToSession(obraId) {
 }
 
 /**
- * Remove uma OBRA da lista da sessão - ATUALIZADO
+ * Remove uma obra da lista da sessão local (sessionStorage)
+ * @param {string} obraId - ID da obra a ser removida
+ * @returns {void}
  */
 function removeObraFromSessionLocal(obraId) {
     if (!isSessionActive()) return;
@@ -72,7 +80,8 @@ function removeObraFromSessionLocal(obraId) {
 }
 
 /**
- * Limpa todas as OBRAS da sessão local - ATUALIZADO
+ * Limpa todas as obras da sessão local e dados relacionados
+ * @returns {void}
  */
 function clearSessionObras() {
     sessionStorage.removeItem(SESSION_OBRAS);
@@ -80,7 +89,8 @@ function clearSessionObras() {
 }
 
 /**
- * Remove todas as OBRAS renderizadas da tela - ATUALIZADO
+ * Remove todas as obras renderizadas da interface do usuário
+ * @returns {void}
  */
 function clearRenderedObras() {
     const obrasContainer = document.getElementById("projects-container");
@@ -93,7 +103,8 @@ function clearRenderedObras() {
 }
 
 /**
- * Inicializa o contador global de OBRAS - ATUALIZADO
+ * Inicializa o contador global de obras
+ * @returns {number} Valor inicial do contador
  */
 function initializeGeralCount() {
     if (!isSessionActive()) {
@@ -110,7 +121,8 @@ function initializeGeralCount() {
 initializeGeralCount()
 
 /**
- * Remove todas as OBRAS base do HTML - ATUALIZADO
+ * Remove todas as obras base do container HTML
+ * @returns {void}
  */
 function removeBaseObraFromHTML() {
     const obrasContainer = document.getElementById("projects-container")
@@ -121,7 +133,8 @@ function removeBaseObraFromHTML() {
 }
 
 /**
- * Carrega OBRAS salvas do servidor para a sessão atual - VERSÃO CORRIGIDA COM DEBUG
+ * Carrega obras salvas do servidor para a sessão atual
+ * @returns {Promise<void>}
  */
 async function loadObrasFromServer() {
     console.log("🔄 Carregando OBRAS do servidor...");
@@ -148,7 +161,7 @@ async function loadObrasFromServer() {
             return;
         }
 
-        // ✅ Buscar obras da sessão
+        // Buscar obras da sessão
         const obrasResponse = await fetch('/obras');
         if (!obrasResponse.ok) {
             throw new Error('Falha ao carregar obras');
@@ -158,7 +171,7 @@ async function loadObrasFromServer() {
         
         console.log(`🎯 Encontradas ${obrasDaSessao.length} obras da sessão para carregar`);
 
-        // ✅ DEBUG: Verificar se o container existe
+        // DEBUG: Verificar se o container existe
         const projectsContainer = document.getElementById("projects-container");
         console.log(`🔍 Container de obras:`, projectsContainer ? '✅ ENCONTRADO' : '❌ NÃO ENCONTRADO');
         if (projectsContainer) {
@@ -168,7 +181,7 @@ async function loadObrasFromServer() {
         // Limpar interface
         removeBaseObraFromHTML();
         
-        // ✅ CORREÇÃO: AGORA AS FUNÇÕES ESTÃO DISPONÍVEIS
+        // Debug para funções: createEmptyObra ; createEmptyProject ; createEmptyRoom
         console.log(`🔍 createEmptyObra disponível:`, typeof createEmptyObra === 'function');
         console.log(`🔍 createEmptyProject disponível:`, typeof createEmptyProject === 'function');
         console.log(`🔍 createEmptyRoom disponível:`, typeof createEmptyRoom === 'function');
@@ -179,7 +192,7 @@ async function loadObrasFromServer() {
             console.log(`🔄 Renderizando obra: ${obraData.nome} (ID: ${obraData.id})`);
             
             try {
-                // ✅ CORREÇÃO: AGORA createEmptyObra ESTÁ DISPONÍVEL
+                // Deixando createEmptyObra disponível
                 if (typeof createEmptyObra === 'function') {
                     console.log(`🎯 Chamando createEmptyObra para: ${obraData.nome}`);
                     
@@ -214,7 +227,7 @@ async function loadObrasFromServer() {
             }
         }
         
-        // ✅ DEBUG FINAL: Verificar quantas obras foram realmente criadas
+        // DEBUG: Verificar quantas obras foram realmente criadas
         setTimeout(() => {
             const obrasCriadas = document.querySelectorAll('.obra-block');
             console.log(`📊 DEBUG FINAL: ${obrasCriadas.length} obra(s) criada(s) no DOM`);
@@ -237,7 +250,8 @@ async function loadObrasFromServer() {
 }
 
 /**
- * Incrementa o contador global de OBRAS - ATUALIZADO
+ * Incrementa o contador global de obras
+ * @returns {number} Novo valor do contador
  */
 function incrementGeralCount() {
     if (!isSessionActive()) return 0;
@@ -248,7 +262,8 @@ function incrementGeralCount() {
 }
 
 /**
- * Decrementa o contador global de OBRAS - ATUALIZADO
+ * Decrementa o contador global de obras
+ * @returns {number} Novo valor do contador
  */
 function decrementGeralCount() {
     if (!isSessionActive()) return 0;
@@ -270,7 +285,8 @@ function decrementGeralCount() {
 }
 
 /**
- * Retorna o valor atual do contador global
+ * Retorna o valor atual do contador global de obras
+ * @returns {number} Valor atual do contador
  */
 function getGeralCount() {
     initializeGeralCount()
@@ -278,7 +294,8 @@ function getGeralCount() {
 }
 
 /**
- * Reseta a lógica de exibição de OBRAS - ATUALIZADO
+ * Reseta toda a lógica de exibição de obras e limpa a sessão
+ * @returns {void}
  */
 function resetDisplayLogic() {
     setSessionActive(false);
@@ -291,10 +308,11 @@ function resetDisplayLogic() {
 }
 
 /**
- * Inicia uma nova sessão - CORREÇÃO: AGORA SÓ É CHAMADA MANUALMENTE
+ * Inicia uma nova sessão - chamada apenas manualmente pelo usuário
+ * @returns {Promise<void>}
  */
 async function startNewSession() {
-    // ✅ CORREÇÃO: Esta função agora só é chamada quando o usuário salva a primeira obra
+    // Esta função só é chamada quando o usuário salva a primeira obra
     clearSessionObras();
     clearRenderedObras();
     
@@ -305,7 +323,8 @@ async function startNewSession() {
 }
 
 /**
- * Função NOVA: Inicia sessão quando usuário salva primeira obra
+ * Inicia a sessão automaticamente quando o usuário salva a primeira obra
+ * @returns {Promise<boolean>} True se a sessão foi iniciada, false se já estava ativa
  */
 async function startSessionOnFirstSave() {
     if (!isSessionActive()) {
@@ -316,9 +335,9 @@ async function startSessionOnFirstSave() {
     return false;
 }
 
-
 /**
- * ✅ CORREÇÃO SIMPLIFICADA: Encerra a sessão atual - APENAS 2 MENSAGENS
+ * Encerra o servidor e a sessão atual de forma controlada
+ * @returns {Promise<void>}
  */
 async function shutdownManual() {
     if (!confirm('Tem certeza que deseja encerrar o servidor?')) {
@@ -328,7 +347,7 @@ async function shutdownManual() {
     console.log("🔴 ENCERRANDO SERVIDOR E SESSÕES...");
     
     try {
-        // ✅ APENAS 2 MENSAGENS: Limpeza e Encerramento
+        // 2 MENSAGENS: Limpeza e Encerramento
         showShutdownMessage("🔄 Limpando sessões e encerrando servidor...");
         
         // 1. Limpa sessões no backend (continua mesmo com erro)
@@ -352,7 +371,7 @@ async function shutdownManual() {
         clearRenderedObras();
         window.GeralCount = 0;
         
-        // ✅ APENAS 1 SEGUNDO DE ESPERA ENTRE AS ETAPAS
+        // APENAS 1 SEGUNDO DE ESPERA ENTRE AS ETAPAS
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // 3. Encerra servidor
@@ -366,7 +385,7 @@ async function shutdownManual() {
             const result = await shutdownResponse.json();
             console.log("📭 Comando de shutdown enviado:", result);
             
-            // ✅ MENSAGEM FINAL ÚNICA
+            // MENSAGEM FINAL ÚNICA
             showFinalShutdownMessage();
             
             // Fechar após delay
@@ -400,7 +419,9 @@ async function shutdownManual() {
 }
 
 /**
- * ✅ NOVA FUNÇÃO: Mostra mensagem de encerramento elegante
+ * Mostra mensagem de encerramento elegante na tela
+ * @param {string} message - Mensagem a ser exibida
+ * @returns {void}
  */
 function showShutdownMessage(message) {
     // Remove mensagem anterior se existir
@@ -475,7 +496,8 @@ function showShutdownMessage(message) {
 }
 
 /**
- * ✅ NOVA FUNÇÃO: Mostra mensagem final de encerramento
+ * Mostra mensagem final de encerramento com confirmação
+ * @returns {void}
  */
 function showFinalShutdownMessage() {
     const messageDiv = document.getElementById('shutdown-message');
@@ -522,7 +544,8 @@ function showFinalShutdownMessage() {
 }
 
 /**
- * ✅ NOVA FUNÇÃO: Mostra mensagem final com opção de fechar manualmente
+ * Mostra mensagem final com opção de fechar manualmente a janela
+ * @returns {void}
  */
 function showFinalMessageWithManualClose() {
     const messageDiv = document.getElementById('shutdown-message');
@@ -569,7 +592,9 @@ function showFinalMessageWithManualClose() {
 }
 
 /**
- * Remove uma OBRA individual da sessão (BACKEND) - ATUALIZADO
+ * Remove uma obra individual da sessão no backend
+ * @param {string} obraId - ID da obra a ser removida
+ * @returns {Promise<Object>} Resposta do servidor
  */
 async function removeObraFromSession(obraId) {
     if (!isSessionActive()) return;
@@ -595,7 +620,8 @@ async function removeObraFromSession(obraId) {
 }
 
 /**
- * Garante que apenas uma sessão esteja ativa por vez
+ * Garante que apenas uma sessão esteja ativa por vez no sistema
+ * @returns {Promise<Object>} Resposta do servidor
  */
 async function ensureSingleActiveSession() {
     try {
@@ -617,7 +643,9 @@ async function ensureSingleActiveSession() {
 }
 
 /**
- * Salva o ID da primeira OBRA da sessão - ATUALIZADO
+ * Salva o ID da primeira obra da sessão no sessionStorage
+ * @param {string} obraId - ID da primeira obra
+ * @returns {void}
  */
 function saveFirstObraIdOfSession(obraId) {
     if (!isSessionActive()) return;
@@ -634,7 +662,9 @@ function saveFirstObraIdOfSession(obraId) {
 }
 
 /**
- * Adiciona uma OBRA à lista de removidas - ATUALIZADO
+ * Adiciona uma obra à lista de obras removidas
+ * @param {string} obraId - ID da obra removida
+ * @returns {void}
  */
 function addObraToRemovedList(obraId) {
     if (!isSessionActive()) return;
@@ -652,7 +682,8 @@ function addObraToRemovedList(obraId) {
 }
 
 /**
- * Retorna a lista de OBRAS removidas - ATUALIZADO
+ * Retorna a lista de obras removidas da sessão
+ * @returns {string[]} Array com IDs das obras removidas
  */
 function getRemovedObrasList() {
     const stored = sessionStorage.getItem(REMOVED_PROJECTS_KEY)
@@ -660,7 +691,9 @@ function getRemovedObrasList() {
 }
 
 /**
- * Verifica se uma OBRA foi removida - ATUALIZADO
+ * Verifica se uma obra específica foi removida da sessão
+ * @param {string} obraId - ID da obra a ser verificada
+ * @returns {boolean} True se a obra foi removida, false caso contrário
  */
 function isObraRemoved(obraId) {
     const removedList = getRemovedObrasList()
@@ -668,7 +701,8 @@ function isObraRemoved(obraId) {
 }
 
 /**
- * Inicializa a sessão automaticamente quando o sistema carrega - CORREÇÃO: NÃO INICIA AUTOMATICAMENTE
+ * Inicializa a sessão automaticamente quando o sistema carrega
+ * @returns {Promise<void>}
  */
 async function initializeSession() {
     console.log("🔄 Verificando sessão...");
@@ -684,7 +718,7 @@ async function initializeSession() {
 
 window.shutdownManual = shutdownManual;
 
-// Exportações atualizadas - AGORA TRABALHA COM OBRAS
+
 export {
     loadObrasFromServer,
     removeBaseObraFromHTML,

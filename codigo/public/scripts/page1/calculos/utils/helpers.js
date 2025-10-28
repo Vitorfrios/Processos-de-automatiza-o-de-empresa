@@ -1,7 +1,10 @@
-import { CALCULATION_CONSTANTS } from '../../config/config.js';
+// helpers.js
 
 /**
- * Converte valores de entrada de forma segura para números, tratando casos vazios
+ * Converte valores de entrada de forma segura para números
+ * @param {any} value - Valor a ser convertido
+ * @param {number} defaultValue - Valor padrão caso a conversão falhe
+ * @returns {number} Valor numérico convertido
  */
 function safeNumber(value, defaultValue = 0) {
   return (value !== "" && value !== undefined && value !== null) 
@@ -11,6 +14,8 @@ function safeNumber(value, defaultValue = 0) {
 
 /**
  * Aguarda carregamento assíncrono das constantes do sistema
+ * @returns {Promise<boolean>} True quando as constantes estão disponíveis
+ * @throws {Error} Se as constantes não carregarem dentro do tempo limite
  */
 async function waitForSystemConstants() {
   let attempts = 0;
@@ -33,7 +38,8 @@ async function waitForSystemConstants() {
 }
 
 /**
- * Valida integridade das constantes do sistema
+ * Valida integridade das constantes do sistema necessárias para cálculos
+ * @returns {boolean} True se todas as constantes necessárias estão disponíveis
  */
 function validateSystemConstants() {
   if (!window.systemConstants) {
@@ -65,7 +71,10 @@ function validateSystemConstants() {
 }
 
 /**
- * Coleta dados de entrada da interface para processamento
+ * Coleta dados de entrada da interface para processamento de climatização
+ * @param {HTMLElement} climaSection - Elemento HTML da seção de climatização
+ * @param {string} roomId - ID da sala para debug
+ * @returns {Object} Dados coletados dos inputs
  */
 function collectClimatizationInputs(climaSection, roomId) {
   const inputs = climaSection.querySelectorAll(".clima-input");
@@ -89,7 +98,10 @@ function collectClimatizationInputs(climaSection, roomId) {
 }
 
 /**
- * Atualiza elemento de texto genérico
+ * Atualiza elemento de texto genérico no DOM
+ * @param {string} elementId - ID do elemento a ser atualizado
+ * @param {any} value - Novo valor a ser definido
+ * @returns {void}
  */
 function updateElementText(elementId, value) {
   const element = document.getElementById(elementId);
@@ -99,6 +111,7 @@ function updateElementText(elementId, value) {
     console.log(`⚠️  [DEBUG] Elemento ${elementId} não encontrado`);
   }
 }
+
 export {
   safeNumber,
   waitForSystemConstants,

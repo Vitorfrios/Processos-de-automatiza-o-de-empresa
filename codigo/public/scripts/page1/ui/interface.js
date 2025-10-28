@@ -1,4 +1,4 @@
-import { UI_CONSTANTS } from '../config/config.js'
+// interface.js
 import { 
     showSystemStatus,
     removeExistingStatusBanner,
@@ -36,9 +36,7 @@ import {
     getNextProjectNumber,
 } from './intr-files/project-manager.js'
 
-import { createEmptyRoom } from '../data/modules/projeto.js'
-
-
+import { createEmptyRoom } from '../data/modules/room-operations.js'
 
 // Re-exportações para manter compatibilidade
 export {
@@ -70,7 +68,13 @@ export {
     createEmptyRoom,
 }
 
-// Funções de compatibilidade (para manter funcionamento com código existente)
+/**
+ * Adiciona um novo projeto à obra mais recente
+ * @returns {void}
+ * 
+ * @example
+ * addNewProject() // Cria uma nova obra e adiciona um projeto nela
+ */
 function addNewProject() {
   addNewObra().then(() => {
     const obraNumber = getNextObraNumber() - 1
@@ -79,7 +83,15 @@ function addNewProject() {
   })
 }
 
-// Funções de toggle (mantidas no orquestrador por serem específicas)
+/**
+ * Alterna a visibilidade do conteúdo de uma obra (expandir/recolher)
+ * @param {string} obraName - Nome da obra a ser alternada
+ * @param {Event} event - Evento de clique do usuário
+ * @returns {void}
+ * 
+ * @example
+ * toggleObra('Obra1', event) // Expande ou recolhe a Obra1
+ */
 function toggleObra(obraName, event) {
   const contentId = `obra-content-${obraName}`
   const content = document.getElementById(contentId)
@@ -103,6 +115,15 @@ function toggleObra(obraName, event) {
   }
 }
 
+/**
+ * Alterna a visibilidade do conteúdo de um projeto (expandir/recolher)
+ * @param {string} projectName - Nome do projeto a ser alternado
+ * @param {Event} event - Evento de clique do usuário
+ * @returns {void}
+ * 
+ * @example
+ * toggleProject('Projeto1', event) // Expande ou recolhe o Projeto1
+ */
 function toggleProject(projectName, event) {
   const contentId = `project-content-${projectName}`
   const content = document.getElementById(contentId)
@@ -126,6 +147,15 @@ function toggleProject(projectName, event) {
   }
 }
 
+/**
+ * Alterna a visibilidade do conteúdo de uma sala (expandir/recolher)
+ * @param {string} roomId - ID único da sala
+ * @param {Event} event - Evento de clique do usuário
+ * @returns {void}
+ * 
+ * @example
+ * toggleRoom('sala-123', event) // Expande ou recolhe a sala com ID 'sala-123'
+ */
 function toggleRoom(roomId, event) {
   console.log(`🔧 Toggle Sala chamado: ID ${roomId}`, event)
   
@@ -152,6 +182,16 @@ function toggleRoom(roomId, event) {
   toggleSpecificRoom(roomBlock, roomId, event)
 }
 
+/**
+ * Função interna para alternar uma sala específica
+ * @param {HTMLElement} roomBlock - Elemento HTML da sala
+ * @param {string} roomId - ID único da sala
+ * @param {Event} event - Evento de clique do usuário
+ * @returns {void}
+ * 
+ * @example
+ * toggleSpecificRoom(roomElement, 'sala-123', event) // Alterna sala específica
+ */
 function toggleSpecificRoom(roomBlock, roomId, event) {
   const contentId = `room-content-${roomId}`
   const content = document.getElementById(contentId)
@@ -181,6 +221,10 @@ function toggleSpecificRoom(roomBlock, roomId, event) {
 /**
  * Alterna a visibilidade de uma seção
  * @param {string} sectionId - ID da seção
+ * @returns {void}
+ * 
+ * @example
+ * toggleSection('materiais') // Alterna visibilidade da seção de materiais
  */
 function toggleSection(sectionId) {
   toggleElementVisibility(`section-content-${sectionId}`, event.target)
@@ -189,24 +233,56 @@ function toggleSection(sectionId) {
 /**
  * Alterna a visibilidade de uma subseção
  * @param {string} subsectionId - ID da subseção
+ * @returns {void}
+ * 
+ * @example
+ * toggleSubsection('pintura') // Alterna visibilidade da subseção de pintura
  */
 function toggleSubsection(subsectionId) {
   toggleElementVisibility(`subsection-content-${subsectionId}`, event.target)
 }
 
-// Funções utilitárias
+/**
+ * Gera e inicia o download de um PDF para uma obra ou projeto específico
+ * @param {string} obraName - Nome da obra
+ * @param {string|null} projectName - Nome do projeto (opcional)
+ * @returns {void}
+ * 
+ * @example
+ * downloadPDF('Obra1') // Gera PDF para a Obra1
+ * downloadPDF('Obra1', 'ProjetoA') // Gera PDF para o ProjetoA da Obra1
+ */
 function downloadPDF(obraName, projectName = null) {
   const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`
   console.log(`📄 Gerando PDF para ${target}`)
   showSystemStatus(`Gerando PDF para ${target}...`, "info")
 }
 
+/**
+ * Gera e inicia o download de um documento Word para uma obra ou projeto específico
+ * @param {string} obraName - Nome da obra
+ * @param {string|null} projectName - Nome do projeto (opcional)
+ * @returns {void}
+ * 
+ * @example
+ * downloadWord('Obra1') // Gera Word para a Obra1
+ * downloadWord('Obra1', 'ProjetoA') // Gera Word para o ProjetoA da Obra1
+ */
 function downloadWord(obraName, projectName = null) {
   const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`
   console.log(`📝 Gerando Word para ${target}`)
   showSystemStatus(`Gerando documento Word para ${target}...`, "info")
 }
 
+/**
+ * Salva ou atualiza os dados de uma obra no sistema
+ * @param {string} obraName - Nome da obra a ser salva/atualizada
+ * @param {Event} event - Evento que triggered a ação
+ * @returns {void}
+ * 
+ * @example
+ * saveOrUpdateObra('Obra1', event) // Salva/atualiza a Obra1
+ */
 function saveOrUpdateObra(obraName, event) {
   if (event) {
     event.preventDefault()
@@ -257,8 +333,8 @@ if (typeof window !== 'undefined') {
   window.toggleObra = toggleObra
   window.toggleProject = toggleProject
   window.toggleRoom = toggleRoom
-  window.toggleSubsection=    toggleSubsection
-  window.toggleSection=    toggleSection
+  window.toggleSubsection = toggleSubsection
+  window.toggleSection = toggleSection
   window.getNextObraNumber = getNextObraNumber
   window.deleteObra = deleteObra
   window.saveOrUpdateObra = saveOrUpdateObra

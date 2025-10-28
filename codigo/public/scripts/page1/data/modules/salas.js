@@ -1,14 +1,21 @@
+// salas.js
 import { buildClimatizationSection } from './climatizacao.js'
 import { buildMachinesSection } from './maquinas.js'
 import { buildConfigurationSection } from './configuracao.js'
 
 /**
- * Constrói o HTML completo de uma sala - JÁ CORRETO
+ * Constrói o HTML completo de uma sala com todas as seções
+ * Inclui cabeçalho, climatização, máquinas e configurações
+ * @param {string} obraName - Nome da obra
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML completo da sala
  */
 function buildRoomHTML(obraName, projectName, roomName, roomId) {
     console.log(`[BUILD ROOM] Parâmetros:`, { obraName, projectName, roomName, roomId });
     
-    // ✅ JÁ CORRETO: Usar o roomId fornecido (agora é único)
+    // Usar o roomId fornecido (agora é único)
     const finalRoomId = roomId;
     
     console.log(`[BUILD ROOM] ID ÚNICO: ${finalRoomId}`);
@@ -32,7 +39,12 @@ function buildRoomHTML(obraName, projectName, roomName, roomId) {
 }
 
 /**
- * Constrói o cabeçalho da sala - CORRIGIDO
+ * Constrói apenas o cabeçalho da sala com título e ações
+ * @param {string} obraName - Nome da obra
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML do cabeçalho da sala
  */
 function buildRoomHeader(obraName, projectName, roomName, roomId) {
     return `
@@ -45,7 +57,10 @@ function buildRoomHeader(obraName, projectName, roomName, roomId) {
 }
 
 /**
- * Constrói a seção de ações da sala
+ * Constrói a seção de ações da sala (atualmente vazia)
+ * Reservado para futuras implementações de ações adicionais
+ * @param {string} roomId - ID único da sala
+ * @returns {string} HTML vazio (string vazia)
  */
 function buildRoomActions(roomId) {
     return "";

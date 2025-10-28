@@ -1,7 +1,10 @@
+// thermalDisplay.js
 import { updateElementText, safeNumber } from '../utils/helpers.js';
 
 /**
- * Consolida totais de ganhos térmicos
+ * Calcula totais consolidados de ganhos térmicos a partir dos ganhos individuais
+ * @param {Object} gains - Objeto contendo todos os ganhos térmicos individuais
+ * @returns {Object} Objeto com totais consolidados por categoria
  */
 function calculateTotals(gains) {
   const totalExterno = gains.teto + gains.paredeOeste + gains.paredeLeste + gains.paredeNorte + gains.paredeSul;
@@ -35,7 +38,13 @@ function calculateTotals(gains) {
 }
 
 /**
- * Atualiza interface com resultados detalhados
+ * Atualiza a interface com resultados detalhados de ganhos térmicos
+ * @param {string} roomId - ID da sala para identificação dos elementos DOM
+ * @param {Object} gains - Ganhos térmicos calculados
+ * @param {Object} totals - Totais consolidados por categoria
+ * @param {Object} uValues - Valores de transmitância térmica
+ * @param {Object} inputData - Dados de entrada do usuário
+ * @returns {void}
  */
 function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   updateElementText(`total-ganhos-w-${roomId}`, totals.geralW);
@@ -101,7 +110,15 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
 }
 
 /**
- * Atualiza exibição de dados de parede específica
+ * Atualiza exibição de dados de parede específica na interface
+ * @param {string} roomId - ID da sala para identificação dos elementos DOM
+ * @param {string} direction - Direção da parede (oeste, leste, norte, sul)
+ * @param {number} gain - Ganho térmico calculado para a parede
+ * @param {number} uValue - Valor de transmitância térmica da parede
+ * @param {number} inputWidth - Largura da parede informada pelo usuário
+ * @param {number} peDireito - Altura do pé direito informada pelo usuário
+ * @param {number} deltaT - Diferença de temperatura para cálculo
+ * @returns {void}
  */
 function updateWallDisplay(roomId, direction, gain, uValue, inputWidth, peDireito, deltaT) {
   const area = safeNumber(inputWidth) * safeNumber(peDireito);
@@ -112,7 +129,15 @@ function updateWallDisplay(roomId, direction, gain, uValue, inputWidth, peDireit
 }
 
 /**
- * Atualiza exibição de dados de divisória específica
+ * Atualiza exibição de dados de divisória específica na interface
+ * @param {string} roomId - ID da sala para identificação dos elementos DOM
+ * @param {string} type - Tipo da divisória (nc1, nc2, c1, c2)
+ * @param {number} gain - Ganho térmico calculado para a divisória
+ * @param {number} uValue - Valor de transmitância térmica da divisória
+ * @param {number} inputArea - Área da divisória informada pelo usuário
+ * @param {number} peDireito - Altura do pé direito informada pelo usuário
+ * @param {number} deltaT - Diferença de temperatura para cálculo
+ * @returns {void}
  */
 function updatePartitionDisplay(roomId, type, gain, uValue, inputArea, peDireito, deltaT) {
   const areaCalculada = safeNumber(inputArea) * safeNumber(peDireito);

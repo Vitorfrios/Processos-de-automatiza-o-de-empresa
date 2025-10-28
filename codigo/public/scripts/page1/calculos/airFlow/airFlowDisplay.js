@@ -1,4 +1,5 @@
 /**
+ * airFlowDisplay.js
  * Atualiza exibição do resultado de vazão na interface
  */
 export function updateFlowRateDisplay(roomId, flowRate) {

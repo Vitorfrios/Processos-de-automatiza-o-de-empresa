@@ -1,13 +1,17 @@
+// server-utils.js
+
 import { createEmptyProject } from '../ui/interface.js'
 import { createEmptyRoom } from './rooms.js'
 import { updateProjectButton } from './server.js'
-import { calculateVazaoArAndThermalGains } from '../calculos/calculos.js'
+import { calculateVazaoArAndThermalGains } from '../calculos/calculos-manager.js'
 import { ensureStringId } from '../utils/utils.js'
 import { getGeralCount, incrementGeralCount } from './server.js'
 
 /**
- * Renderiza uma OBRA completa a partir dos dados carregados - NOVA FUNÇÃO
+ * Renderiza uma obra completa a partir dos dados carregados do servidor
+ * Inclui projetos, salas e todas as configurações associadas
  * @param {Object} obraData - Dados completos da obra
+ * @returns {void}
  */
 function renderObraFromData(obraData) {
   const obraName = obraData.nome
@@ -30,7 +34,7 @@ function renderObraFromData(obraData) {
 
       setTimeout(() => {
         obraData.projetos.forEach((projectData) => {
-          renderProjectFromData(projectData, obraName) // Passar obraName
+          renderProjectFromData(projectData, obraName)
         })
       }, 100);
     }
@@ -40,9 +44,11 @@ function renderObraFromData(obraData) {
 }
 
 /**
- * Renderiza um projeto completo a partir dos dados carregados - ATUALIZADA
+ * Renderiza um projeto completo a partir dos dados carregados
+ * Cria o projeto e todas as suas salas com configurações
  * @param {Object} projectData - Dados completos do projeto
- * @param {string} obraName - Nome da obra (opcional)
+ * @param {string} obraName - Nome da obra pai
+ * @returns {void}
  */
 function renderProjectFromData(projectData, obraName = null) {
   const projectName = projectData.nome
@@ -52,6 +58,7 @@ function renderProjectFromData(projectData, obraName = null) {
 
   // Se não foi passada a obra, tentar encontrar pela estrutura do DOM
   if (!obraName) {
+
     // Buscar obra que contém este projeto
     const existingProject = document.querySelector(`[data-project-name="${projectName}"]`)
     obraName = existingProject?.dataset.obraName
@@ -63,6 +70,7 @@ function renderProjectFromData(projectData, obraName = null) {
     if (obras.length > 0) {
       obraName = obras[0].dataset.obraName
     } else {
+
       // Criar obra padrão
       obraName = 'Obra1'
       createEmptyObra(obraName, '1001')
@@ -82,7 +90,7 @@ function renderProjectFromData(projectData, obraName = null) {
 
       setTimeout(() => {
         projectData.salas.forEach((roomData) => {
-          renderRoomFromData(projectName, roomData, obraName) // Passar obraName
+          renderRoomFromData(projectName, roomData, obraName)
         })
       }, 100);
     }
@@ -110,10 +118,12 @@ function renderProjectFromData(projectData, obraName = null) {
 }
 
 /**
- * Renderiza uma sala individual a partir dos dados carregados - ATUALIZADA
- * @param {string} projectName - Nome do projeto
+ * Renderiza uma sala individual a partir dos dados carregados
+ * Preenche todos os inputs, configurações e máquinas da sala
+ * @param {string} projectName - Nome do projeto pai
  * @param {Object} roomData - Dados completos da sala
- * @param {string} obraName - Nome da obra
+ * @param {string} obraName - Nome da obra pai
+ * @returns {void}
  */
 function renderRoomFromData(projectName, roomData, obraName = null) {
   const roomName = roomData.nome
@@ -140,16 +150,22 @@ function renderRoomFromData(projectName, roomData, obraName = null) {
 }
 
 /**
- * Preenche todos os inputs e configurações de uma sala com dados carregados - ATUALIZADA
+ * Preenche todos os inputs e configurações de uma sala com dados carregados
+ * Processa inputs básicos, configurações, ganhos térmicos, capacidade e máquinas
  * @param {string} projectName - Nome do projeto
  * @param {string} roomName - Nome da sala
  * @param {Object} roomData - Dados completos da sala
  * @param {string} obraName - Nome da obra
+ * @returns {void}
  */
 function populateRoomInputs(projectName, roomName, roomData, obraName = null) {
   let attempts = 0;
   const maxAttempts = 10;
   
+  /**
+   * Tenta preencher os dados da sala com retry em caso de elementos não carregados
+   * @returns {void}
+   */
   const tryPopulate = () => {
     // Buscar sala considerando a obra
     let roomBlock;
@@ -175,7 +191,7 @@ function populateRoomInputs(projectName, roomName, roomData, obraName = null) {
 
     console.log(`✅ Sala ${roomName} encontrada, preenchendo dados...`);
 
-    // 1. PREENCHER INPUTS BÁSICOS - CORREÇÃO PARA PRESSURIZAÇÃO
+    // 1. PREENCHER INPUTS BÁSICOS
     if (roomData.inputs && Object.keys(roomData.inputs).length > 0) {
       console.log(`📝 Preenchendo ${Object.keys(roomData.inputs).length} inputs`);
       populateBasicInputs(roomBlock, roomData.inputs, roomId);
@@ -199,7 +215,7 @@ function populateRoomInputs(projectName, roomName, roomData, obraName = null) {
       populateCapacityData(roomBlock, roomData.capacidade, roomId);
     }
 
-    // 5. PREENCHER MÁQUINAS - CORREÇÃO: Chamar função específica para máquinas
+    // 5. PREENCHER MÁQUINAS
     if (roomData.maquinas && roomData.maquinas.length > 0) {
       console.log(`🤖 Preenchendo ${roomData.maquinas.length} máquinas`);
       populateMachines(roomBlock, roomData.maquinas, roomId);
@@ -226,7 +242,11 @@ function populateRoomInputs(projectName, roomName, roomData, obraName = null) {
 }
 
 /**
- * Preenche inputs básicos da sala - CORREÇÃO PARA PRESSURIZAÇÃO
+ * Preenche inputs básicos da sala como temperatura, pressurização, etc.
+ * @param {HTMLElement} roomBlock - Elemento HTML da sala
+ * @param {Object} inputsData - Dados dos inputs básicos
+ * @param {string} roomId - ID único da sala
+ * @returns {void}
  */
 function populateBasicInputs(roomBlock, inputsData, roomId) {
   Object.entries(inputsData).forEach(([field, value]) => {
@@ -246,7 +266,7 @@ function populateBasicInputs(roomBlock, inputsData, roomId) {
         // Disparar evento para atualizar campos relacionados
         radioToCheck.dispatchEvent(new Event('change', { bubbles: true }));
       }
-      return; // Já processado, pular para próximo campo
+      return; 
     }
 
     // Buscar por múltiplos seletores possíveis para inputs de climatização
@@ -289,11 +309,13 @@ function populateBasicInputs(roomBlock, inputsData, roomId) {
             radioToCheck.checked = true;
           }
         } else if (element.tagName === 'SELECT') {
+          
           // Para selects, procurar option com valor correspondente
           const optionToSelect = element.querySelector(`option[value="${value}"]`);
           if (optionToSelect) {
             element.value = value;
           } else {
+
             // Tentar definir diretamente
             element.value = value;
           }
@@ -312,9 +334,14 @@ function populateBasicInputs(roomBlock, inputsData, roomId) {
 }
 
 /**
- * Preenche configurações da sala (CORRIGIDO para opções de instalação)
+ * Preenche configurações da sala como opções de instalação
+ * @param {HTMLElement} roomBlock - Elemento HTML da sala
+ * @param {Object} configData - Dados de configuração
+ * @param {string} roomId - ID único da sala
+ * @returns {void}
  */
 function populateConfiguration(roomBlock, configData, roomId) {
+
     // Preencher opções de instalação (array de checkboxes)
     if (configData.opcoesInstalacao && Array.isArray(configData.opcoesInstalacao)) {
         console.log(`⚙️ Preenchendo ${configData.opcoesInstalacao.length} opções de instalação`);
@@ -332,7 +359,7 @@ function populateConfiguration(roomBlock, configData, roomId) {
     
     // Preencher outras configurações
     Object.entries(configData).forEach(([field, value]) => {
-        if (field === 'opcoesInstalacao') return; // Já processado acima
+        if (field === 'opcoesInstalacao') return; 
         
         if (value === null || value === undefined || value === '') return;
 
@@ -361,7 +388,10 @@ function populateConfiguration(roomBlock, configData, roomId) {
 }
 
 /**
- * Preenche ganhos térmicos
+ * Preenche dados de ganhos térmicos calculados da sala
+ * @param {HTMLElement} roomBlock - Elemento HTML da sala
+ * @param {Object} gainsData - Dados de ganhos térmicos
+ * @returns {void}
  */
 function populateThermalGains(roomBlock, gainsData) {
   Object.entries(gainsData).forEach(([field, value]) => {
@@ -398,10 +428,15 @@ function populateThermalGains(roomBlock, gainsData) {
 }
 
 /**
- * Preenche dados de capacidade
+ * Preenche dados de capacidade de climatização da sala
+ * @param {HTMLElement} roomBlock - Elemento HTML da sala
+ * @param {Object} capacityData - Dados de capacidade
+ * @param {string} roomId - ID único da sala
+ * @returns {void}
  */
 function populateCapacityData(roomBlock, capacityData, roomId) {
-  // ✅ CORREÇÃO: Obter projectName do roomBlock
+
+  // Obter projectName do roomBlock
   const projectBlock = roomBlock.closest('.project-block');
   const projectName = projectBlock ? projectBlock.getAttribute('data-project-name') : '';
   
@@ -434,6 +469,7 @@ function populateCapacityData(roomBlock, capacityData, roomId) {
         } else if (element.tagName === 'INPUT' || element.tagName === 'SELECT') {
           element.value = value;
         } else {
+
           // Elementos de exibição (span, div, etc)
           element.textContent = typeof value === 'number' ? value.toFixed(2) : value;
         }
@@ -443,9 +479,10 @@ function populateCapacityData(roomBlock, capacityData, roomId) {
     }
   });
 
-  // ✅ CORREÇÃO: Usar roomId em vez de projectName e roomName separados
+  // Usar roomId em vez de projectName e roomName separados
   setTimeout(() => {
     if (typeof window.loadCapacityData !== 'undefined') {
+
       // Extrair roomName do roomId se necessário
       const roomName = roomId.split('-').slice(1).join('-');
       window.loadCapacityData(projectName, roomName);
@@ -456,7 +493,11 @@ function populateCapacityData(roomBlock, capacityData, roomId) {
 }
 
 /**
- * Preenche máquinas de climatização - CORREÇÃO COMPLETA
+ * Preenche máquinas de climatização da sala
+ * @param {HTMLElement} roomBlock - Elemento HTML da sala
+ * @param {Array} machinesData - Array de dados das máquinas
+ * @param {string} roomId - ID único da sala
+ * @returns {void}
  */
 function populateMachines(roomBlock, machinesData, roomId) {
   console.log(`🤖 Iniciando carregamento de ${machinesData.length} máquinas para ${roomId}`);
@@ -466,117 +507,13 @@ function populateMachines(roomBlock, machinesData, roomId) {
     console.log(`🔄 Chamando loadSavedMachines para ${roomId}`);
     window.loadSavedMachines(roomId, machinesData);
   } else {
-    console.error('❌ loadSavedMachines não disponível, usando fallback manual');
-    fallbackPopulateMachines(roomBlock, machinesData, roomId);
+    console.error('❌ loadSavedMachines não disponível');
   }
 }
 
-/**
- * Fallback para preenchimento manual de máquinas (se loadSavedMachines não estiver disponível)
- */
-function fallbackPopulateMachines(roomBlock, machinesData, roomId) {
-  // Limpar máquinas existentes se houver
-  const machinesContainer = document.getElementById(`machines-${roomId}`);
-  if (machinesContainer) {
-    const existingMachines = machinesContainer.querySelectorAll('.climatization-machine');
-    existingMachines.forEach(machine => machine.remove());
-    
-    // Remover mensagem de vazio
-    const emptyMessage = machinesContainer.querySelector('.empty-message');
-    if (emptyMessage) {
-      emptyMessage.remove();
-    }
-  }
-
-  // Adicionar máquinas salvas
-  machinesData.forEach((machineData, index) => {
-    setTimeout(() => {
-      if (typeof window.addMachine !== 'undefined') {
-        console.log(`➕ Adicionando máquina ${index + 1}: ${machineData.nome}`);
-        window.addMachine(roomId);
-        
-        // Preencher dados da máquina após ser criada
-        setTimeout(() => {
-          const machineElements = roomBlock.querySelectorAll('.climatization-machine');
-          const lastMachine = machineElements[machineElements.length - 1];
-          
-          if (lastMachine) {
-            console.log(`🔧 Preenchendo dados da máquina ${index + 1}`, {
-              tipo: machineData.tipo,
-              potencia: machineData.potencia,
-              tensao: machineData.tensao
-            });
-            
-            // Preencher dados básicos da máquina
-            const typeSelect = lastMachine.querySelector('.machine-type-select');
-            const powerSelect = lastMachine.querySelector('.machine-power-select');
-            const voltageSelect = lastMachine.querySelector('.machine-voltage-select');
-            const titleInput = lastMachine.querySelector('.machine-title-editable');
-            
-            if (typeSelect && machineData.tipo) {
-              typeSelect.value = machineData.tipo;
-              console.log(`✅ Tipo definido: ${machineData.tipo}`);
-            }
-            
-            if (powerSelect && machineData.potencia) {
-              powerSelect.value = machineData.potencia;
-              console.log(`✅ Potência definida: ${machineData.potencia}`);
-            }
-            
-            if (voltageSelect && machineData.tensao) {
-              voltageSelect.value = machineData.tensao;
-              console.log(`✅ Tensão definida: ${machineData.tensao}`);
-            }
-            
-            if (titleInput && machineData.nome) {
-              titleInput.value = machineData.nome;
-            }
-            
-            // Disparar evento de change para carregar opções
-            if (typeSelect && machineData.tipo) {
-              console.log(`🔄 Disparando change no tipo para carregar opções`);
-              typeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-            
-            // CORREÇÃO: Aguardar as opções serem carregadas antes de preencher
-            setTimeout(() => {
-              // Forçar atualização dos valores baseados na TR
-              if (machineData.potencia && typeof window.updateOptionValues !== 'undefined') {
-                console.log(`🔄 Atualizando valores das opções para TR ${machineData.potencia}`);
-                window.updateOptionValues(index + 1);
-              }
-              
-              // Preencher opções selecionadas
-              if (machineData.opcoesSelecionadas && machineData.opcoesSelecionadas.length > 0) {
-                console.log(`✅ Preenchendo ${machineData.opcoesSelecionadas.length} opções selecionadas`);
-                machineData.opcoesSelecionadas.forEach(opcao => {
-                  const optionCheckbox = lastMachine.querySelector(`input[data-option-id="${opcao.id}"]`);
-                  if (optionCheckbox) {
-                    optionCheckbox.checked = true;
-                    console.log(`✅ Opção marcada: ${opcao.name}`);
-                  } else {
-                    console.warn(`⚠️ Opção não encontrada: ${opcao.id} - ${opcao.name}`);
-                  }
-                });
-              }
-              
-              // Recalcular preço
-              if (typeof window.calculateMachinePrice !== 'undefined') {
-                setTimeout(() => {
-                  console.log(`💰 Recalculando preço da máquina ${index + 1}`);
-                  window.calculateMachinePrice(index + 1);
-                }, 100);
-              }
-            }, 500); // Aumentei o timeout para garantir que as opções foram carregadas
-          }
-        }, 200);
-      }
-    }, index * 500); // Aumentei o delay entre máquinas
-  });
-}
 
 export {
-  renderObraFromData, // NOVA EXPORTAÇÃO
+  renderObraFromData, 
   renderProjectFromData,
   renderRoomFromData,
   populateRoomInputs,

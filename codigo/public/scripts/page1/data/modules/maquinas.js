@@ -1,3 +1,4 @@
+// maquinas.js
 import * as Utilities from './machines/utilities.js';
 import * as MachinesBuilder from './machines/machinesBuilder.js';
 import * as MachineManagement from './machines/machineManagement.js';
@@ -27,13 +28,10 @@ import {
   syncCapacityTableBackup,
   saveCapacityData,
   loadCapacityData,
-  getCapacityData,
-  applyCapacityData,
   initializeStaticCapacityTable
 } from './machines/capacityCalculator.js'  
 
-
-// Configurações globais
+// Configurações globais para cálculos de capacidade
 const capacityConfig = {
   maxInitAttempts: 3,
   initDelay: 500,
@@ -42,7 +40,11 @@ const capacityConfig = {
 
 const capacityState = new Map()
 
-// Inicialização
+/**
+ * Inicializa o módulo completo de máquinas e cálculos de capacidade
+ * Configura listeners e inicia processos em background
+ * @returns {void}
+ */
 function initializeMachinesModule() {
   setTimeout(initializeCapacityCalculations, 1500)
   setTimeout(initializeBackupSync, 2000)
@@ -50,6 +52,11 @@ function initializeMachinesModule() {
   initializeFatorSegurancaListeners()
 }
 
+/**
+ * Inicializa a sincronização de backup em intervalos regulares
+ * Garante que os dados de capacidade sejam salvos periodicamente
+ * @returns {void}
+ */
 function initializeBackupSync() {
   const intervals = [1000, 3000, 5000, 7000, 10000]
   intervals.forEach((delay) => {
@@ -62,6 +69,11 @@ function initializeBackupSync() {
   })
 }
 
+/**
+ * Inicializa o listener para mudanças no campo de backup de climatização
+ * Atualiza automaticamente os cálculos quando o backup é alterado
+ * @returns {void}
+ */
 function initializeClimaInputBackupListener() {
   document.addEventListener("change", (event) => {
     const target = event.target
@@ -76,6 +88,11 @@ function initializeClimaInputBackupListener() {
   })
 }
 
+/**
+ * Inicializa listeners para mudanças no fator de segurança
+ * Recalcula a capacidade sempre que o fator de segurança é alterado
+ * @returns {void}
+ */
 function initializeFatorSegurancaListeners() {
   document.addEventListener('change', (event) => {
     if (event.target.id && event.target.id.startsWith('fator-seguranca-')) {
@@ -85,7 +102,7 @@ function initializeFatorSegurancaListeners() {
   })
 }
 
-// Expor no escopo global para HTML
+// Expor funções no escopo global para acesso via HTML
 window.updateElementText = Utilities.updateElementText;
 window.removeEmptyMessage = Utilities.removeEmptyMessage;
 window.showEmptyMessage = Utilities.showEmptyMessage;
@@ -116,7 +133,8 @@ window.updateBackupConfiguration = CapacityCalculator.updateBackupConfiguration;
 window.handleClimaInputBackupChange = CapacityCalculator.handleClimaInputBackupChange;
 window.syncCapacityTableBackup = CapacityCalculator.syncCapacityTableBackup;
 window.initializeStaticCapacityTable = CapacityCalculator.initializeStaticCapacityTable;
-// Exportações principais
+
+// Exportações principais do módulo
 export {
   buildMachinesSection,
   addMachine,

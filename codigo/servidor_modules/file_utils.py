@@ -1,4 +1,5 @@
 """
+file_utils.py
 Utilitários para manipulação de arquivos e paths - VERSÃO CORRIGIDA
 """
 

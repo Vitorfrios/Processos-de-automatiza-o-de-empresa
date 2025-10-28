@@ -1,23 +1,25 @@
 """
-Configurações do Servidor - Versão ESTÁVEL para Cliente
+config.py
+Configurações do Servidor 
+Configurações globais e constantes do sistema de climatização
 """
 
-# Variáveis globais
+# Variáveis globais de estado do servidor
 servidor_rodando = True
 ultimo_heartbeat = None  
 
-# Configurações do servidor - CORRIGIDO
+# Configurações do servidor
 SERVER_TIMEOUT = 1  # 1 segundo - permite verificação periódica de sinais
 DEFAULT_PORT = 8000
-MAX_PORT_ATTEMPTS = 15  # Aumentado para mais tentativas
+MAX_PORT_ATTEMPTS = 15  # Número máximo de tentativas para encontrar porta disponível
 
-# Configurações de monitoramento - CORRIGIDO
-MONITOR_MAX_ATTEMPTS = 3      # Tentativas antes de encerrar
-MONITOR_CHECK_INTERVAL = 5    # Verifica a cada 5 segundos (reduzido)
-MONITOR_START_DELAY = 5       # Espera 5 segundos antes de começar a monitorar
-HEARTBEAT_TIMEOUT = 30        # Timeout de heartbeat (segundos)
+# # Configurações de monitoramento comentei para caso de precisar 
+# MONITOR_MAX_ATTEMPTS = 3      # Tentativas antes de encerrar
+# MONITOR_CHECK_INTERVAL = 5    # Verifica a cada 5 segundos
+# MONITOR_START_DELAY = 5       # Espera 5 segundos antes de começar a monitorar
+# HEARTBEAT_TIMEOUT = 30        # Timeout de heartbeat em segundos
 
-# Mensagens - CORRIGIDO encoding
+# Mensagens do sistema
 MESSAGES = {
     'server_start': "INICIANDO SISTEMA DE CLIMATIZACAO",
     'server_running': "SISTEMA OPERACIONAL", 
@@ -31,5 +33,5 @@ MESSAGES = {
 }
 
 # Configurações de segurança
-MAX_REQUEST_SIZE = 10 * 1024 * 1024  # 10MB max para requests
-ALLOWED_ORIGINS = ["http://localhost", "http://127.0.0.1"]
+# MAX_REQUEST_SIZE = 10 * 1024 * 1024  # 10MB tamanho máximo para requests
+ALLOWED_ORIGINS = ["http://localhost", "http://127.0.0.1"]  # Origens permitidas para CORS

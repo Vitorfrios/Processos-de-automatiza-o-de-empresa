@@ -1,3 +1,5 @@
+//main.js
+
 // Inicializar variáveis globais simples
 window.systemConstants = null;
 window.obraCounter = 0;
@@ -11,7 +13,6 @@ console.log(" Variáveis globais inicializadas:", {
 
 // Importar APENAS o necessário para inicialização
 import { loadObrasFromServer, getGeralCount } from './data/server.js'
-import { initializeSession } from './data/server.js';
 
 // Carregar módulos dinamicamente
 let modulesLoaded = false;
@@ -90,7 +91,7 @@ async function loadAllModules() {
       import('./ui/edit.js'),
       import('./data/projects.js'),
       import('./data/rooms.js'),
-      import('./calculos/calculos.js'),
+      import('./calculos/calculos-manager.js'),
       import('./utils/utils.js')
     ]);
 
@@ -245,6 +246,11 @@ function finalSystemDebug() {
   });
 }
 
+/**
+ * 
+ * @returns {Promise<void>} - Opera��o conclu�da.
+ * @example checkAndLoadExistingSession() // Opera��o conclu�da.
+ */
 async function checkAndLoadExistingSession() {
   try {
     console.log("🔍 Verificando se há sessão com obras salvas...");

@@ -1,8 +1,9 @@
-import { buildCapacityCalculationTable } from './capacityCalculator.js'
-import { buildClimatizationMachineHTML } from './machineManagement.js'
-import { removeEmptyMessage, showEmptyMessage } from './utilities.js'
+// machineBuilder.js
 
-// Cache para dados das máquinas - AGORA GLOBAL
+import { buildCapacityCalculationTable } from './capacityCalculator.js'
+import { removeEmptyMessage } from './utilities.js'
+
+
 if (typeof window !== 'undefined' && !window.machinesDataCache) {
     window.machinesDataCache = null;
 }
@@ -39,6 +40,7 @@ function buildMachinesSection(projectName, roomName) {
  * @returns {Promise<Object>} Dados das máquinas disponíveis
  */
 async function loadMachinesData() {
+
     // Verificar se o cache é válido (não apenas se existe)
     if (window.machinesDataCache && Array.isArray(window.machinesDataCache.machines) && window.machinesDataCache.machines.length > 0) {
         console.log("📦 Retornando dados das máquinas do cache GLOBAL (válido)");
@@ -64,11 +66,13 @@ async function loadMachinesData() {
         
     } catch (error) {
         console.error("❌ Erro ao carregar dados das máquinas:", error);
+
         // Se houver cache antigo, usar mesmo que incompleto
         if (window.machinesDataCache) {
             console.log("🔄 Usando cache antigo devido ao erro");
             return window.machinesDataCache;
         }
+
         // Retorna dados vazios apenas se não houver cache
         const emptyData = { machines: [] };
         window.machinesDataCache = emptyData;
@@ -101,7 +105,7 @@ async function loadSavedMachines(roomId, savedMachines) {
             console.log(`✅ Máquina ${index + 1} carregada: ${savedMachine.nome}`);
         });
 
-        // CORREÇÃO: Aguardar a DOM atualizar e então forçar atualização dos valores
+        // Aguardar a DOM atualizar e então forçar atualização dos valores
         setTimeout(() => {
             savedMachines.forEach((savedMachine, index) => {
                 const machineId = index + 1;
@@ -136,14 +140,14 @@ function buildClimatizationMachineFromSavedData(machineCount, savedMachine, allM
   const machineType = allMachines.find((m) => m.type === savedMachine.tipo)
 
   if (!machineType) {
-    return buildFallbackMachineFromSavedData(machineCount, savedMachine)
+    console.erro("❌ERRO: Tipo de Máquina não é encontrado",error);
   }
 
   // Obter potências e tensões disponíveis
   const potencies = Object.keys(machineType.baseValues || {})
   const voltageNames = (machineType.voltages || []).map(v => v.name)
   
-  // Calcular preço base atual - CORREÇÃO: usar valores específicos por TR
+  // Calcular preço base atual - usar valores específicos por TR
   const basePrice = calculateBasePrice(machineType, savedMachine.potencia)
 
   return `
@@ -294,58 +298,6 @@ function buildSavedOptionsHTML(options, machineCount, selectedOptions = [], sele
     .join("")
 }
 
-/**
- * Constrói uma máquina fallback quando o tipo não é encontrado
- * @param {number} machineCount - Número sequencial da máquina
- * @param {Object} savedMachine - Dados da máquina salvos
- * @returns {string} HTML da máquina fallback (somente leitura)
- */
-function buildFallbackMachineFromSavedData(machineCount, savedMachine) {
-  return `
-    <div class="climatization-machine" data-machine-index="${machineCount}">
-      <div class="machine-header">
-        <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
-        <input type="text" class="machine-title-editable" 
-               value="${savedMachine.nome || `Equipamento de Climatização ${machineCount}`}"
-               onchange="updateMachineTitle(this, ${machineCount})" onclick="this.select()">
-        <button class="btn btn-delete-small" onclick="deleteClimatizationMachine(this)">Remover</button>
-      </div>
-      <div class="machine-content" id="machine-content-${machineCount}">
-        <div style="padding: 1rem; background: #fff3cd; border-radius: 4px; margin: 1rem;">
-          <strong>Aviso:</strong> Tipo de máquina "${savedMachine.tipo}" não encontrado nos dados atuais.
-        </div>
-        <div class="climatization-form-grid">
-          ${buildFormGroup("Tipo de Equipamento:", `<select class="form-input machine-type-select" disabled><option>${savedMachine.tipo} (não disponível)</option></select>`)}
-          ${buildFormGroup("Capacidade:", `<div class="form-input">${savedMachine.potencia}</div>`)}
-          ${buildFormGroup("Tensão:", `<div class="form-input">${savedMachine.tensao}</div>`)}
-          <div class="form-group">
-            <label>Preço Base:</label>
-            <div class="price-display">R$ ${savedMachine.precoBase.toLocaleString("pt-BR")}</div>
-          </div>
-        </div>
-        <div class="machine-options-section">
-          <h6>Opções Adicionais:</h6>
-          <div class="options-grid">
-            ${savedMachine.opcoesSelecionadas?.map(opt => `
-              <div class="option-item">
-                <div class="option-checkbox">
-                  <input type="checkbox" checked disabled>
-                  <div class="option-content">
-                    <div class="option-name">${opt.name}</div>
-                    <div class="option-price">+R$ ${opt.value?.toLocaleString("pt-BR")}</div>
-                  </div>
-                </div>
-              </div>
-            `).join('') || '<p>Nenhuma opção selecionada</p>'}
-          </div>
-        </div>
-        <div class="machine-total-price">
-          <strong>Preço Total: <span>R$ ${savedMachine.precoTotal.toLocaleString("pt-BR")}</span></strong>
-        </div>
-      </div>
-    </div>
-  `
-}
 
 /**
  * Calcula o preço base baseado no tipo de máquina e potência selecionada

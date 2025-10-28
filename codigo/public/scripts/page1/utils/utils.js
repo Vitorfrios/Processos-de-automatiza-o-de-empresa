@@ -1,5 +1,5 @@
 // ============================================
-// FUNÇÕES UTILITÁRIAS
+// FUNÇÕES UTILITÁRIAS - utils.js
 // ============================================
 
 function ensureStringId(id) {

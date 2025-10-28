@@ -1,3 +1,5 @@
+// room-operations.js
+
 import { showEmptyProjectMessageIfNeeded, removeEmptyProjectMessage } from '../../ui/interface.js'
 import { buildRoomHTML } from './salas.js' 
 
@@ -5,7 +7,8 @@ import { buildRoomHTML } from './salas.js'
 let machinesPreloadModule = null;
 
 /**
- * Carrega o módulo de máquinas para pré-carregamento
+ * Carrega o módulo de máquinas para pré-carregamento assíncrono
+ * @returns {Promise<Object|null>} Módulo de máquinas carregado
  */
 async function loadMachinesPreloadModule() {
     if (!machinesPreloadModule) {
@@ -20,12 +23,17 @@ async function loadMachinesPreloadModule() {
 }
 
 /**
- * Cria uma nova sala vazia no projeto especificado - CORREÇÃO DEFINITIVA
+ * Cria uma nova sala vazia no projeto especificado
+ * @param {string} obraName - Nome da obra
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @param {string} roomId - ID único da sala (opcional)
+ * @returns {Promise<boolean>} True se a sala foi criada com sucesso
  */
 async function createEmptyRoom(obraName, projectName, roomName, roomId) {
     console.log(`🔄 Criando sala: ${roomName} na obra "${obraName}", projeto "${projectName}"`);
     
-    // ✅ CORREÇÃO: Buscar o projectElement corretamente
+    // Buscar o projectElement corretamente
     const projectElement = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"]`);
     
     if (!projectElement) {
@@ -33,17 +41,18 @@ async function createEmptyRoom(obraName, projectName, roomName, roomId) {
         return false;
     }
     
-    // ✅ CORREÇÃO DEFINITIVA: Gerar ID ÚNICO SEM "undefined"
+    // Gerar ID ÚNICO SEM "undefined"
     let finalRoomId;
     
     if (roomId && roomId !== 'undefined' && roomId !== 'null' && !roomId.includes('undefined')) {
+        
         // Se roomId foi fornecido e é válido, limpar qualquer "undefined"
         finalRoomId = roomId.toString()
             .replace(/-undefined/g, '')
             .replace(/-null/g, '')
             .trim();
     } else {
-        // ✅ CORREÇÃO CRÍTICA: Gerar ID ÚNICO SEM "undefined"
+        // Gerar ID ÚNICO SEM "undefined"
         const obraId = projectElement.closest('.obra-block')?.dataset.obraId || obraName.replace(/\s+/g, '-');
         const projectId = projectElement.dataset.projectId || projectName.replace(/\s+/g, '-');
         const roomNumber = getRoomCountInProject(obraName, projectName) + 1;
@@ -51,7 +60,7 @@ async function createEmptyRoom(obraName, projectName, roomName, roomId) {
         // ID único limpo: obra1-projeto1-sala1, obra2-projeto1-sala1, etc.
         finalRoomId = `${obraId}-${projectId}-sala${roomNumber}`.toLowerCase();
         
-        // ✅ GARANTIR que não tenha "undefined"
+        // GARANTIR que não tenha "undefined"
         finalRoomId = finalRoomId.replace(/-undefined/g, '').replace(/undefined-/g, '');
     }
     
@@ -67,10 +76,10 @@ async function createEmptyRoom(obraName, projectName, roomName, roomId) {
         console.error("⚠️  Aviso: Não foi possível pré-carregar dados das máquinas:", error);
     }
 
-    // ✅ CORREÇÃO: Passar o ID LIMPO para buildRoomHTML
+    // Passar o ID LIMPO para buildRoomHTML
     const roomHTML = buildRoomHTML(obraName, projectName, roomName, finalRoomId);
     
-    // ✅ CORREÇÃO: Encontrar o projectContent
+    // Encontrar o projectContent
     const projectContent = projectElement.querySelector('.project-content');
     
     if (!projectContent) {
@@ -89,7 +98,7 @@ async function createEmptyRoom(obraName, projectName, roomName, roomId) {
 
     console.log(`✅ Sala ${roomName} criada (ID LIMPO: ${finalRoomId}) na obra "${obraName}", projeto "${projectName}"`);
     
-    // ✅ CORREÇÃO: Inicializar com ID LIMPO
+    // Inicializar com ID LIMPO
     initializeRoomComponents(obraName, projectName, roomName, finalRoomId);
     
     return true;
@@ -97,6 +106,9 @@ async function createEmptyRoom(obraName, projectName, roomName, roomId) {
 
 /**
  * Conta quantas salas já existem no projeto específico
+ * @param {string} obraName - Nome da obra
+ * @param {string} projectName - Nome do projeto
+ * @returns {number} Quantidade de salas no projeto
  */
 function getRoomCountInProject(obraName, projectName) {
     const projectElement = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"]`);
@@ -107,7 +119,12 @@ function getRoomCountInProject(obraName, projectName) {
 }
 
 /**
- * Inicializa todos os componentes da sala após criação - CORRIGIDO
+ * Inicializa todos os componentes da sala após criação
+ * @param {string} obraName - Nome da obra
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @param {string} roomId - ID único da sala
+ * @returns {void}
  */
 function initializeRoomComponents(obraName, projectName, roomName, roomId) {
     console.log(`🔧 Inicializando componentes da sala: ${roomName} (ID: ${roomId})`);
@@ -151,9 +168,13 @@ function initializeRoomComponents(obraName, projectName, roomName, roomId) {
     }, 1500);
 }
 
-
-
-// Função de compatibilidade para código existente
+/**
+ * Função de compatibilidade para código existente que usa apenas projectName
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @param {string} roomId - ID da sala
+ * @returns {Promise<boolean>} True se a sala foi criada com sucesso
+ */
 async function createEmptyRoomLegacy(projectName, roomName, roomId) {
     // Tenta encontrar a obra do projeto
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
@@ -173,9 +194,10 @@ async function createEmptyRoomLegacy(projectName, roomName, roomId) {
  * @param {string} projectName - Nome do projeto
  * @param {string} roomHTML - HTML da sala a ser inserida
  * @param {string} uniqueRoomId - ID único da sala
+ * @returns {void}
  */
 function insertRoomIntoProject(obraName, projectName, roomHTML, uniqueRoomId) {
-    // ✅ CORREÇÃO: Buscar projeto pela hierarquia
+    // Buscar projeto pela hierarquia
     const projectElement = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"]`);
     if (!projectElement) {
         console.error(`❌ Projeto ${projectName} não encontrado na obra ${obraName}`);
@@ -200,15 +222,16 @@ function insertRoomIntoProject(obraName, projectName, roomHTML, uniqueRoomId) {
 }
 
 /**
- * Adiciona uma nova sala ao projeto com contagem INDEPENDENTE por projeto - CORRIGIDO
+ * Adiciona uma nova sala ao projeto com contagem INDEPENDENTE por projeto
  * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto
  * @param {string} uniqueProjectId - ID único do projeto (opcional)
+ * @returns {Promise<void>}
  */
 async function addNewRoom(obraName, projectName, uniqueProjectId = null) {
     console.log(`➕ Adicionando nova sala à obra "${obraName}", projeto "${projectName}"`);
     
-    // ✅ CORREÇÃO: Buscar projeto pela hierarquia
+    // Buscar projeto pela hierarquia
     const projectElement = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"]`);
     
     if (!projectElement) {
@@ -216,16 +239,20 @@ async function addNewRoom(obraName, projectName, uniqueProjectId = null) {
         return;
     }
     
-    // ✅ CORREÇÃO: Contar APENAS salas DESTE projeto específico
+    // Contar APENAS salas DESTE projeto específico
     const roomCount = getRoomCountInProject(obraName, projectName);
     const roomName = `Sala${roomCount + 1}`;
 
-    // ✅ CORREÇÃO: Gerar ID DEFINITIVO automaticamente
+    // Gerar ID DEFINITIVO automaticamente
     await createEmptyRoom(obraName, projectName, roomName, null);
     console.log(`✅ ${roomName} adicionada à obra "${obraName}", projeto "${projectName}"`);
 }
 
-// Função de compatibilidade para código existente
+/**
+ * Função de compatibilidade para código existente que usa apenas projectName
+ * @param {string} projectName - Nome do projeto
+ * @returns {Promise<void>}
+ */
 async function addNewRoomLegacy(projectName) {
     // Tenta encontrar a obra do projeto
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
@@ -241,6 +268,7 @@ async function addNewRoomLegacy(projectName) {
 /**
  * Corrige inputs de fator de segurança que estejam vazios
  * Aplica valores padrão baseados nas constantes do sistema
+ * @returns {void}
  */
 function fixExistingCapacityInputs() {
     console.log('🔄 Verificando inputs de capacidade existentes...');
@@ -273,17 +301,18 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Remove uma sala do projeto após confirmação do usuário - CORREÇÃO DEFINITIVA com ID único
+ * Remove uma sala do projeto após confirmação do usuário
  * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto
  * @param {string} uniqueRoomId - ID único da sala a ser removida
+ * @returns {void}
  */
 function deleteRoom(obraName, projectName, uniqueRoomId) {
     const confirmMessage = "Tem certeza que deseja deletar esta sala? Os dados permanecerão no servidor.";
 
     if (!confirm(confirmMessage)) return;
 
-    // ✅ CORREÇÃO: Encontrar sala pelo ID único E hierarquia
+    // Encontrar sala pelo ID único E hierarquia
     const roomBlock = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"][data-room-id="${uniqueRoomId}"]`);
     
     if (!roomBlock) {
@@ -309,14 +338,19 @@ function deleteRoom(obraName, projectName, uniqueRoomId) {
     console.log(`🗑️  Sala ${roomName} (ID único: ${uniqueRoomId}) removida da obra "${obraName}", projeto "${projectName}"`);
 }
 
-// Função de compatibilidade para código existente
+/**
+ * Função de compatibilidade para código existente que usa apenas projectName e roomName
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @returns {void}
+ */
 function deleteRoomLegacy(projectName, roomName) {
     // Tenta encontrar a obra do projeto
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
     const obraName = projectBlock?.dataset.obraName;
     
     if (obraName) {
-        // ✅ CORREÇÃO: Encontrar sala pela hierarquia completa
+        // Encontrar sala pela hierarquia completa
         const roomBlock = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"][data-room-name="${roomName}"]`);
         const roomId = roomBlock?.dataset.roomId;
         
@@ -330,7 +364,7 @@ function deleteRoomLegacy(projectName, roomName) {
     }
 }
 
-// ✅ CORREÇÃO: Exportações simplificadas
+// Exportações simplificadas
 export {
     createEmptyRoom,
     createEmptyRoomLegacy,
@@ -341,7 +375,7 @@ export {
     deleteRoomLegacy
 }
 
-// ✅ CORREÇÃO: Disponibilização global correta
+// Disponibilização global correta
 if (typeof window !== 'undefined') {
     window.addNewRoom = addNewRoom;
     window.deleteRoom = deleteRoom;

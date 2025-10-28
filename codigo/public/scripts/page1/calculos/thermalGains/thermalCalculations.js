@@ -1,3 +1,4 @@
+// thermalCalculations.js
 import { 
   waitForSystemConstants, 
   validateSystemConstants, 
@@ -21,15 +22,17 @@ import { calculateTotals } from './thermalDisplay.js';
 import { updateThermalGainsDisplay } from './thermalDisplay.js';
 
 /**
- * Encontra o roomContent pelo ID único da sala - FUNÇÃO LOCAL
+ * Encontra o elemento roomContent pelo ID único da sala
+ * @param {string} roomId - ID único da sala
+ * @returns {HTMLElement|null} Elemento do conteúdo da sala ou null se não encontrado
  */
 function findRoomContentThermal(roomId) {
-    // ✅ CORREÇÃO: Primeiro limpar o ID de qualquer "undefined"
+    // Limpar o ID de qualquer "undefined"
     const cleanRoomId = roomId.replace(/-undefined/g, '').replace(/undefined-/g, '');
     
     console.log(`🔍 [THERMAL] Procurando sala: "${roomId}" -> Limpo: "${cleanRoomId}"`);
     
-    // ✅ CORREÇÃO: Tentar com o ID limpo primeiro
+    // Tentar com o ID limpo primeiro
     let roomContent = document.getElementById(`room-content-${cleanRoomId}`);
     
     if (roomContent) {
@@ -37,14 +40,14 @@ function findRoomContentThermal(roomId) {
         return roomContent;
     }
     
-    // ✅ CORREÇÃO: Se não encontrou com ID limpo, tentar com o original
+    // Se não encontrou com ID limpo, tentar com o original
     roomContent = document.getElementById(`room-content-${roomId}`);
     if (roomContent) {
         console.log(`✅ [THERMAL] Sala encontrada pelo ID ORIGINAL: room-content-${roomId}`);
         return roomContent;
     }
     
-    // ✅ CORREÇÃO: Procurar pela sala no DOM usando data attributes
+    // Procurar pela sala no DOM usando data attributes
     const roomBlock = document.querySelector(`[data-room-id="${cleanRoomId}"]`) || 
                      document.querySelector(`[data-room-id="${roomId}"]`);
     
@@ -54,7 +57,7 @@ function findRoomContentThermal(roomId) {
         return document.getElementById(`room-content-${foundId}`);
     }
   
-    // ✅ CORREÇÃO: Debug detalhado
+    // Debug detalhado
     console.error(`❌ [THERMAL] Sala não encontrada: ${roomId} (limpo: ${cleanRoomId})`);
     const allRooms = document.querySelectorAll('.room-block');
     console.log('🔍 [THERMAL] Todas as salas disponíveis no DOM:');
@@ -66,7 +69,10 @@ function findRoomContentThermal(roomId) {
 }
 
 /**
- * Calcula ganhos térmicos totais do ambiente - CORRIGIDO
+ * Calcula ganhos térmicos totais do ambiente
+ * @param {string} roomId - ID único da sala
+ * @param {number} vazaoArExterno - Vazão de ar externo em l/s
+ * @returns {Promise<void>}
  */
 async function calculateThermalGains(roomId, vazaoArExterno = 0) {
   try {
@@ -77,7 +83,7 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
       return;
     }
 
-    // ✅ CORREÇÃO: Usar a nova função para encontrar a sala
+    // Usar a nova função para encontrar a sala
     const roomContent = findRoomContentThermal(roomId);
     if (!roomContent) {
       console.error(`[DEBUG] room-content-${roomId} NÃO ENCONTRADO`);
@@ -171,7 +177,9 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
 }
 
 /**
- * Determina coeficientes de transferência térmica
+ * Determina coeficientes de transferência térmica baseados no tipo de construção
+ * @param {string} tipoConstrucao - Tipo de construção ("Alvenaria" ou "Eletrocentro")
+ * @returns {Object} Valores U para parede, teto e piso
  */
 function calculateUValues(tipoConstrucao) {
   const U_VALUE_ALVENARIA_TETO = 3.961;
@@ -208,6 +216,8 @@ function calculateUValues(tipoConstrucao) {
 
 /**
  * Calcula variáveis auxiliares para cálculos de ar externo
+ * @param {Object} inputData - Dados de entrada incluindo vazão de ar externo
+ * @returns {Object} Variáveis auxiliares calculadas
  */
 function calculateAuxiliaryVariables(inputData) {
   const vazaoArExterno = safeNumber(inputData.vazaoArExterno);

@@ -1,4 +1,4 @@
-# Documentação dos Arquivos e Funções do Sistema
+﻿# Documentação dos Arquivos e Funções do Sistema
 
 Este documento lista os principais arquivos do projeto, o que cada um faz e as funções/handlers que expõem. A organização segue por camadas: Backend (Python), Frontend (HTML/JS/CSS) e Dados (JSON).
 
@@ -182,7 +182,7 @@ Este documento lista os principais arquivos do projeto, o que cada um faz e as f
   - O que faz: integra módulos de construção de sala, máquinas e configuração; inicializa inputs de capacidade com base em `systemConstants`.
   - Funções:
     - `initializeAllCapacityInputs()`: preenche valores padrão (ex.: `FATOR_SEGURANCA_CAPACIDADE`).
-    - Reexporta: criação/remoção de salas e seções (vindo de `modules/projeto.js`, `modules/salas.js`, `modules/maquinas.js`, `modules/configuracao.js`).
+    - Reexporta: criação/remoção de salas e seções (vindo de `modules/room-operations.js`, `modules/salas.js`, `modules/maquinas.js`, `modules/configuracao.js`).
 
 - `codigo/public/scripts/page1/data/data-utils.js`
   - O que faz: extrai do DOM os dados completos de obra/projeto/sala/máquinas para salvar no backend; gera IDs hierárquicos.
