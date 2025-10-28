@@ -192,12 +192,19 @@ async function loadObrasFromServer() {
             console.log(`🔄 Renderizando obra: ${obraData.nome} (ID: ${obraData.id})`);
             
             try {
+                // ✅ CORREÇÃO: Verificar se o obraData.id existe e é válido
+                const obraId = obraData.id && obraData.id !== "" && obraData.id !== "null" && obraData.id !== "undefined" 
+                    ? obraData.id 
+                    : null;
+                
+                console.log(`🔍 ID da obra ${obraData.nome}:`, obraId);
+                
                 // Deixando createEmptyObra disponível
                 if (typeof createEmptyObra === 'function') {
-                    console.log(`🎯 Chamando createEmptyObra para: ${obraData.nome}`);
+                    console.log(`🎯 Chamando createEmptyObra para: ${obraData.nome} com ID: ${obraId}`);
                     
-                    // Criar obra na interface
-                    createEmptyObra(obraData.nome, obraData.id);
+                    // ✅ CORREÇÃO: Passar o obraId corretamente
+                    createEmptyObra(obraData.nome, obraId);
                     
                     // Adicionar projetos da obra
                     if (obraData.projetos && obraData.projetos.length > 0) {

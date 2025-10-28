@@ -3,7 +3,7 @@
     {
       "id": "1001",
       "nome": "Obra1",
-      "timestamp": "2025-10-28T22:47:02.120Z",
+      "timestamp": "2025-10-28T23:03:22.972Z",
       "projetos": [
         {
           "id": "1",
@@ -37,36 +37,43 @@
               "maquinas": [
                 {
                   "nome": "Equipamento de Climatização 1",
-                  "tipo": "Tubo Axial",
-                  "potencia": "9100m³/h",
+                  "tipo": "Split System",
+                  "potencia": "12,5TR",
                   "tensao": "220V/1F",
-                  "precoBase": 5750,
+                  "precoBase": 22700,
                   "opcoesSelecionadas": [
                     {
-                      "id": 1,
-                      "name": "com 10mmCA",
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
                       "value": 8,
-                      "originalName": "com 10mmCA",
-                      "potenciaAplicada": "9100m³/h"
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "12,5TR"
                     },
                     {
-                      "id": 2,
-                      "name": "com 15mmCA",
-                      "value": 9,
-                      "originalName": "com 15mmCA",
-                      "potenciaAplicada": "9100m³/h"
+                      "id": 8,
+                      "name": "Goldfin",
+                      "value": 3,
+                      "originalName": "Goldfin",
+                      "potenciaAplicada": "12,5TR"
                     },
                     {
-                      "id": 3,
-                      "name": "Grade de Proteção",
-                      "value": 8,
-                      "originalName": "Grade de Proteção",
-                      "potenciaAplicada": "9100m³/h"
+                      "id": 9,
+                      "name": "Sensor de Filtro Sujo",
+                      "value": 4,
+                      "originalName": "Sensor de Filtro Sujo",
+                      "potenciaAplicada": "12,5TR"
+                    },
+                    {
+                      "id": 12,
+                      "name": "Chaparia em Inox",
+                      "value": 7,
+                      "originalName": "Chaparia em Inox",
+                      "potenciaAplicada": "12,5TR"
                     }
                   ],
-                  "precoTotal": 6775,
-                  "potenciaSelecionada": "9100m³/h",
-                  "tipoSelecionado": "Tubo Axial"
+                  "precoTotal": 27722,
+                  "potenciaSelecionada": "12,5TR",
+                  "tipoSelecionado": "Split System"
                 }
               ],
               "capacidade": {
@@ -96,14 +103,14 @@
               }
             }
           ],
-          "timestamp": "2025-10-28T22:47:02.121Z"
+          "timestamp": "2025-10-28T23:03:22.972Z"
         }
       ]
     },
     {
       "id": "1002",
       "nome": "Obra2",
-      "timestamp": "2025-10-28T22:46:43.083Z",
+      "timestamp": "2025-10-28T23:03:51.158Z",
       "projetos": [
         {
           "id": "1",
@@ -128,23 +135,60 @@
                 "divisoriaClima2": 18,
                 "dissipacao": 7500,
                 "numPessoas": 15,
-                "pressurizacao": true,
+                "pressurizacao": false,
                 "setpointPressurizacao": 22,
-                "numPortasSimples": "2",
-                "numPortasDuplas": "1",
-                "combateIncendio": "novec"
+                "numPortasSimples": "0",
+                "numPortasDuplas": "0",
+                "combateIncendio": "novec",
+                "pressurizacaoSetpoint": "25"
               },
               "maquinas": [
                 {
                   "nome": "Equipamento de Climatização 2",
-                  "tipo": "Filtro Cartucho",
-                  "potencia": "",
-                  "tensao": "",
+                  "tipo": "Split Hi-Wall",
+                  "potencia": "20TR",
+                  "tensao": "220V/3F",
                   "precoBase": 0,
-                  "opcoesSelecionadas": [],
-                  "precoTotal": 0,
-                  "potenciaSelecionada": "",
-                  "tipoSelecionado": "Filtro Cartucho"
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
+                      "value": 2070,
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "20TR"
+                    },
+                    {
+                      "id": 5,
+                      "name": "2 Dampers com atuador on/off",
+                      "value": 4470,
+                      "originalName": "2 Dampers com atuador on/off",
+                      "potenciaAplicada": "20TR"
+                    },
+                    {
+                      "id": 6,
+                      "name": "Ventilador Eletrônico",
+                      "value": 4000,
+                      "originalName": "Ventilador Eletrônico",
+                      "potenciaAplicada": "20TR"
+                    },
+                    {
+                      "id": 8,
+                      "name": "Goldfin",
+                      "value": 1400,
+                      "originalName": "Goldfin",
+                      "potenciaAplicada": "20TR"
+                    },
+                    {
+                      "id": 12,
+                      "name": "Chaparia em Inox",
+                      "value": 17426.4,
+                      "originalName": "Chaparia em Inox",
+                      "potenciaAplicada": "20TR"
+                    }
+                  ],
+                  "precoTotal": 29366.4,
+                  "potenciaSelecionada": "20TR",
+                  "tipoSelecionado": "Split Hi-Wall"
                 }
               ],
               "capacidade": {
@@ -174,7 +218,7 @@
               }
             }
           ],
-          "timestamp": "2025-10-28T22:46:43.084Z"
+          "timestamp": "2025-10-28T23:03:51.159Z"
         }
       ]
     }

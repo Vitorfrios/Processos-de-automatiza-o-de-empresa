@@ -359,7 +359,6 @@ function togglePressurizationFields(roomId, enabled) {
 
     // mantém o setpoint coerente e o badge formatado
     if (setpointInput && setpointInput.value === '') setpointInput.value = '25';
-    syncSetpointBadge(roomId, setpointInput ? setpointInput.value : '25');
   }
 
   calculateVazaoArAndThermalGains(roomId);

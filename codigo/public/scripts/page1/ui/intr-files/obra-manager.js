@@ -11,10 +11,10 @@
  * @param {string} obraId - ID da obra (opcional)
  */
 function createEmptyObra(obraName, obraId) {
-  const finalObraId = null
-  const obraHTML = buildObraHTML(obraName, finalObraId)
-  insertObraIntoDOM(obraHTML)
-  console.log(`🏗️ Obra ${obraName} criada - Botão: SALVAR OBRA`)
+  const finalObraId = obraId; 
+  const obraHTML = buildObraHTML(obraName, finalObraId);
+  insertObraIntoDOM(obraHTML);
+  console.log(`🏗️ Obra ${obraName} criada - Botão: ${finalObraId ? 'ATUALIZAR OBRA' : 'SALVAR OBRA'}`);
 }
 
 /**
@@ -24,9 +24,9 @@ function createEmptyObra(obraName, obraId) {
  * @returns {string} HTML da obra
  */
 function buildObraHTML(obraName, obraId) {
-  const hasId = obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined"
+  const hasId = obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined";
 
-  console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}, HasId: ${hasId}, Botão: ${hasId ? 'ATUALIZAR' : 'SALVAR'}`)
+  console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}, HasId: ${hasId}, Botão: ${hasId ? 'ATUALIZAR' : 'SALVAR'}`);
 
   return `
     <div class="obra-block" data-obra-id="${obraId || ""}" data-obra-name="${obraName}">
@@ -48,7 +48,7 @@ function buildObraHTML(obraName, obraId) {
         ${buildObraActionsFooter(obraName, hasId)}
       </div>
     </div>
-  `
+  `;
 }
 
 /**
