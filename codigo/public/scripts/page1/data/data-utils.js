@@ -1,65 +1,66 @@
 /**
- * Utilitários para extração e construção de dados - CORRIGIDO para hierarquia Obra→Projeto→Sala
- * VERSÃO OTIMIZADA E TESTADA
+ * Utilitários para extração e construção de dados - CORRIGIDO para IDs numéricos sequenciais
  */
 
 // Debug global
-console.log('🔄 data-utils.js carregado - versão otimizada');
+console.log('🔄 data-utils.js carregado - versão com IDs numéricos');
+
+// Contadores globais para IDs sequenciais
+let obraCounter = 1000; // Obras começam em 1001
+let projectCounter = 0; // Projetos começam em 1 por obra
+let roomCounter = 0;    // Salas começam em 1 por projeto
 
 /**
  * Gera ID para obra (inicia em 1001, global)
  */
 function generateObraId() {
-    // Buscar todas as obras existentes no DOM
-    const obras = document.querySelectorAll('.obra-block');
-    const obraIds = Array.from(obras).map(obra => {
-        const id = obra.dataset.obraId;
-        return id ? parseInt(id) : 0;
-    }).filter(id => id > 0);
-    
-    if (obraIds.length === 0) {
-        return "1001"; // Primeira obra
-    }
-    
-    const maxId = Math.max(...obraIds);
-    return (maxId + 1).toString();
+    obraCounter++;
+    return obraCounter.toString();
 }
 
 /**
  * Gera ID para projeto (reinicia por obra)
  */
 function generateProjectId(obraElement) {
-    // Buscar projetos dentro da obra específica
-    const projects = obraElement.querySelectorAll('.project-block');
-    const projectIds = Array.from(projects).map(project => {
-        const id = project.dataset.projectId;
-        return id ? parseInt(id) : 0;
-    }).filter(id => id > 0);
-    
-    if (projectIds.length === 0) {
-        return "1"; // Primeiro projeto na obra
+    // Se não tem obraElement, usar contador global
+    if (!obraElement) {
+        projectCounter++;
+        return projectCounter.toString();
     }
     
-    const maxId = Math.max(...projectIds);
+    // Buscar projetos dentro da obra específica e encontrar o maior ID
+    const projects = obraElement.querySelectorAll('.project-block');
+    let maxId = 0;
+    
+    projects.forEach(project => {
+        const id = project.dataset.projectId;
+        if (id) {
+            const numId = parseInt(id);
+            if (numId > maxId) maxId = numId;
+        }
+    });
+    
     return (maxId + 1).toString();
 }
 
 /**
- * Gera ID para sala (reinicia por projeto)
+ * Gera ID para sala (reinicia por projeto) - CORRIGIDO para numérico simples
  */
 function generateRoomId(projectElement) {
-    // Buscar salas dentro do projeto específico
+    // Buscar salas dentro do projeto específico e encontrar o maior ID
     const rooms = projectElement.querySelectorAll('.room-block');
-    const roomIds = Array.from(rooms).map(room => {
+    let maxId = 0;
+    
+    rooms.forEach(room => {
         const id = room.dataset.roomId;
-        return id ? parseInt(id) : 0;
-    }).filter(id => id > 0);
+        if (id) {
+            // CORREÇÃO: Extrair apenas números se houver prefixos
+            const numMatch = id.match(/\d+/);
+            const numId = numMatch ? parseInt(numMatch[0]) : 0;
+            if (numId > maxId) maxId = numId;
+        }
+    });
     
-    if (roomIds.length === 0) {
-        return "1"; // Primeira sala no projeto
-    }
-    
-    const maxId = Math.max(...roomIds);
     return (maxId + 1).toString();
 }
 

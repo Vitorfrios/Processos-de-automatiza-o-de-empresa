@@ -21,7 +21,52 @@ import { calculateTotals } from './thermalDisplay.js';
 import { updateThermalGainsDisplay } from './thermalDisplay.js';
 
 /**
- * Calcula ganhos térmicos totais do ambiente
+ * Encontra o roomContent pelo ID único da sala - FUNÇÃO LOCAL
+ */
+function findRoomContentThermal(roomId) {
+    // ✅ CORREÇÃO: Primeiro limpar o ID de qualquer "undefined"
+    const cleanRoomId = roomId.replace(/-undefined/g, '').replace(/undefined-/g, '');
+    
+    console.log(`🔍 [THERMAL] Procurando sala: "${roomId}" -> Limpo: "${cleanRoomId}"`);
+    
+    // ✅ CORREÇÃO: Tentar com o ID limpo primeiro
+    let roomContent = document.getElementById(`room-content-${cleanRoomId}`);
+    
+    if (roomContent) {
+        console.log(`✅ [THERMAL] Sala encontrada pelo ID LIMPO: room-content-${cleanRoomId}`);
+        return roomContent;
+    }
+    
+    // ✅ CORREÇÃO: Se não encontrou com ID limpo, tentar com o original
+    roomContent = document.getElementById(`room-content-${roomId}`);
+    if (roomContent) {
+        console.log(`✅ [THERMAL] Sala encontrada pelo ID ORIGINAL: room-content-${roomId}`);
+        return roomContent;
+    }
+    
+    // ✅ CORREÇÃO: Procurar pela sala no DOM usando data attributes
+    const roomBlock = document.querySelector(`[data-room-id="${cleanRoomId}"]`) || 
+                     document.querySelector(`[data-room-id="${roomId}"]`);
+    
+    if (roomBlock) {
+        const foundId = roomBlock.dataset.roomId;
+        console.log(`✅ [THERMAL] Sala encontrada pelo data-room-id: ${foundId}`);
+        return document.getElementById(`room-content-${foundId}`);
+    }
+  
+    // ✅ CORREÇÃO: Debug detalhado
+    console.error(`❌ [THERMAL] Sala não encontrada: ${roomId} (limpo: ${cleanRoomId})`);
+    const allRooms = document.querySelectorAll('.room-block');
+    console.log('🔍 [THERMAL] Todas as salas disponíveis no DOM:');
+    allRooms.forEach(room => {
+        console.log(`  - ID: "${room.dataset.roomId}", Nome: ${room.dataset.roomName}, Projeto: ${room.dataset.projectName}, Obra: ${room.dataset.obraName}`);
+    });
+    
+    return null;
+}
+
+/**
+ * Calcula ganhos térmicos totais do ambiente - CORRIGIDO
  */
 async function calculateThermalGains(roomId, vazaoArExterno = 0) {
   try {
@@ -32,7 +77,8 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
       return;
     }
 
-    const roomContent = document.getElementById(`room-content-${roomId}`);
+    // ✅ CORREÇÃO: Usar a nova função para encontrar a sala
+    const roomContent = findRoomContentThermal(roomId);
     if (!roomContent) {
       console.error(`[DEBUG] room-content-${roomId} NÃO ENCONTRADO`);
       return;

@@ -3,54 +3,56 @@ import { buildMachinesSection } from './maquinas.js'
 import { buildConfigurationSection } from './configuracao.js'
 
 /**
- * Constrói o HTML completo de uma sala com todas as seções
- * @param {string} projectName - Nome do projeto
- * @param {string} roomName - Nome da sala
- * @param {string} roomId - ID único da sala (opcional)
- * @returns {string} HTML completo da sala
+ * Constrói o HTML completo de uma sala - JÁ CORRETO
  */
-function buildRoomHTML(projectName, roomName, roomId) {
-  return `
-    <div class="room-block" data-room-id="${roomId || ""}" data-room-name="${roomName}">
-      ${buildRoomHeader(projectName, roomName)}
-      <div class="room-content collapsed" id="room-content-${projectName}-${roomName}">
-        ${buildClimatizationSection(projectName, roomName)}
-        ${buildMachinesSection(projectName, roomName)}
-        ${buildConfigurationSection(projectName, roomName)}
-        ${buildRoomActions(projectName, roomName)}
+function buildRoomHTML(obraName, projectName, roomName, roomId) {
+    console.log(`[BUILD ROOM] Parâmetros:`, { obraName, projectName, roomName, roomId });
+    
+    // ✅ JÁ CORRETO: Usar o roomId fornecido (agora é único)
+    const finalRoomId = roomId;
+    
+    console.log(`[BUILD ROOM] ID ÚNICO: ${finalRoomId}`);
+    
+    return `
+      <div class="room-block" data-room-id="${finalRoomId}" data-room-name="${roomName}" data-project-name="${projectName}" data-obra-name="${obraName}">
+        <div class="room-header">
+          <button class="minimizer" onclick="toggleRoom('${finalRoomId}', event)">+</button>
+          <h4 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">${roomName}</h4>
+          <div class="room-actions">
+            <button class="btn btn-delete" onclick="deleteRoom('${obraName}', '${projectName}', '${finalRoomId}')">Remover</button>
+          </div>
+        </div>
+        <div class="room-content collapsed" id="room-content-${finalRoomId}">
+          ${buildClimatizationSection(finalRoomId)}
+          ${buildMachinesSection(finalRoomId)}
+          ${buildConfigurationSection(finalRoomId)}
+        </div>
       </div>
-    </div>
-  `
+    `;
 }
 
 /**
- * Constrói o cabeçalho da sala com título editável e botões de ação
- * @param {string} projectName - Nome do projeto
- * @param {string} roomName - Nome da sala
- * @returns {string} HTML do cabeçalho da sala
+ * Constrói o cabeçalho da sala - CORRIGIDO
  */
-function buildRoomHeader(projectName, roomName) {
-  return `
+function buildRoomHeader(obraName, projectName, roomName, roomId) {
+    return `
     <div class="room-header">
-      <button class="minimizer" onclick="toggleRoom('${projectName}-${roomName}')">+</button>
+      <button class="minimizer" onclick="toggleRoom('${roomId}', event)">+</button>
       <h3 class="room-title editable-title" data-editable="true" onclick="makeEditable(this, 'room')">${roomName}</h3>
-      <button class="btn btn-delete-small" onclick="deleteRoom('${projectName}', '${roomName}')">Deletar</button>
+      <button class="btn btn-delete-small" onclick="deleteRoom('${obraName}', '${projectName}', '${roomId}')">Remover</button>
     </div>
-  `
+  `;
 }
 
 /**
- * Constrói a seção de ações da sala (atualmente vazia)
- * @param {string} projectName - Nome do projeto
- * @param {string} roomName - Nome da sala
- * @returns {string} HTML das ações da sala
+ * Constrói a seção de ações da sala
  */
-function buildRoomActions(projectName, roomName) {
-  return ""
+function buildRoomActions(roomId) {
+    return "";
 }
 
 export {
-  buildRoomHTML,
-  buildRoomHeader,
-  buildRoomActions
+    buildRoomHTML,
+    buildRoomHeader,
+    buildRoomActions
 }

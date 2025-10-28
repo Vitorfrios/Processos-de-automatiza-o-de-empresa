@@ -68,7 +68,10 @@ function scheduleStatusBannerRemoval(banner) {
  */
 function toggleElementVisibility(contentId, minimizerElement) {
   const content = document.getElementById(contentId)
-  if (!content) return
+  if (!content) {
+    console.error(`❌ Elemento ${contentId} não encontrado para toggle`);
+    return;
+  }
 
   const isCollapsed = content.classList.contains(UI_CONSTANTS.COLLAPSED_CLASS)
 
@@ -100,27 +103,125 @@ function collapseElement(element, minimizerElement) {
 }
 
 /**
- * Alterna a visibilidade de uma obra
- * @param {string} obraName - Nome da obra
+ * Alterna a visibilidade de uma obra - CORRIGIDO
  */
-function toggleObra(obraName) {
-  toggleElementVisibility(`obra-content-${obraName}`, event.target)
+function toggleObra(obraName, event) {
+  const contentId = `obra-content-${obraName}`;
+  const content = document.getElementById(contentId);
+  
+  if (!content) {
+    console.error(`❌ Conteúdo da obra ${obraName} não encontrado`);
+    return;
+  }
+
+  const isCollapsed = content.classList.contains("collapsed");
+  const minimizer = event.target;
+
+  if (isCollapsed) {
+    // EXPANDIR
+    content.classList.remove("collapsed");
+    minimizer.textContent = "−";
+    console.log(`📂 Obra ${obraName} expandida`);
+  } else {
+    // RECOLHER
+    content.classList.add("collapsed");
+    minimizer.textContent = "+";
+    console.log(`📁 Obra ${obraName} recolhida`);
+  }
 }
 
 /**
- * Alterna a visibilidade de um projeto
- * @param {string} projectName - Nome do projeto
+ * Alterna a visibilidade de um projeto - CORRIGIDO
  */
-function toggleProject(projectName) {
-  toggleElementVisibility(`project-content-${projectName}`, event.target)
+function toggleProject(projectName, event) {
+  const contentId = `project-content-${projectName}`;
+  const content = document.getElementById(contentId);
+  
+  if (!content) {
+    console.error(`❌ Conteúdo do projeto ${projectName} não encontrado`);
+    return;
+  }
+
+  const isCollapsed = content.classList.contains("collapsed");
+  const minimizer = event.target;
+
+  if (isCollapsed) {
+    // EXPANDIR
+    content.classList.remove("collapsed");
+    minimizer.textContent = "−";
+    console.log(`📂 Projeto ${projectName} expandido`);
+  } else {
+    // RECOLHER
+    content.classList.add("collapsed");
+    minimizer.textContent = "+";
+    console.log(`📁 Projeto ${projectName} recolhido`);
+  }
 }
 
 /**
- * Alterna a visibilidade de uma sala
- * @param {string} roomId - ID da sala
+ * Alterna a visibilidade de uma sala - CORREÇÃO DEFINITIVA COM BUSCA HIERÁRQUICA
  */
-function toggleRoom(roomId) {
-  toggleElementVisibility(`room-content-${roomId}`, event.target)
+function toggleRoom(roomId, event) {
+    console.log(`🔧 Toggle Sala chamado: ID ${roomId}`, event);
+    
+    // ✅ CORREÇÃO CRÍTICA: Buscar a sala específica pelo ID MAS garantindo que é a correta
+    // Primeiro encontrar TODAS as salas com esse ID
+    const allRoomsWithId = document.querySelectorAll(`[data-room-id="${roomId}"]`);
+    
+    if (allRoomsWithId.length === 0) {
+        console.error(`❌ Nenhuma sala encontrada com ID: ${roomId}`);
+        return;
+    }
+    
+    if (allRoomsWithId.length > 1) {
+        console.warn(`⚠️  Múltiplas salas encontradas com ID: ${roomId} (${allRoomsWithId.length} salas)`);
+        
+        // ✅ CORREÇÃO: Encontrar a sala CORRETA baseada no contexto do clique
+        const clickedElement = event.target;
+        const roomBlock = clickedElement.closest('.room-block');
+        
+        if (roomBlock && roomBlock.dataset.roomId === roomId) {
+            // Usar a sala onde o clique ocorreu
+            console.log(`✅ Usando sala do contexto do clique: ${roomId}`);
+            toggleSpecificRoom(roomBlock, roomId, event);
+            return;
+        }
+    }
+    
+    // Se há apenas uma sala ou não encontrou pelo contexto, usar a primeira
+    const roomBlock = allRoomsWithId[0];
+    toggleSpecificRoom(roomBlock, roomId, event);
+}
+
+/**
+ * Alterna uma sala específica - FUNÇÃO AUXILIAR
+ */
+function toggleSpecificRoom(roomBlock, roomId, event) {
+    const contentId = `room-content-${roomId}`;
+    const content = document.getElementById(contentId);
+    
+    if (!content) {
+        console.error(`❌ Conteúdo da sala ${roomId} não encontrado`);
+        console.log(`🔍 Procurando por: ${contentId}`);
+        return;
+    }
+
+    const isCollapsed = content.classList.contains("collapsed");
+    const minimizer = event.target;
+
+    console.log(`📂 Estado da sala ${roomId}: ${isCollapsed ? 'recolhida' : 'expandida'} (Obra: ${roomBlock.dataset.obraName}, Projeto: ${roomBlock.dataset.projectName})`);
+
+    if (isCollapsed) {
+        // EXPANDIR
+        content.classList.remove("collapsed");
+        minimizer.textContent = "−";
+        console.log(`📂 Sala ${roomId} EXPANDIDA`);
+    } else {
+        // RECOLHER
+        content.classList.add("collapsed");
+        minimizer.textContent = "+";
+        console.log(`📁 Sala ${roomId} RECOLHIDA`);
+    }
 }
 
 /**
@@ -147,7 +248,7 @@ function toggleSubsection(subsectionId) {
 function createEmptyObra(obraName, obraId) {
   // CORREÇÃO: Para obra NOVA, NÃO passar ID ou passar null
   const finalObraId = null; // SEMPRE null para obra nova
-  
+
   const obraHTML = buildObraHTML(obraName, finalObraId)
   insertObraIntoDOM(obraHTML)
   console.log(`🏗️ Obra ${obraName} criada - Botão: SALVAR OBRA`)
@@ -160,16 +261,14 @@ function createEmptyObra(obraName, obraId) {
  * @returns {string} HTML da obra
  */
 function buildObraHTML(obraName, obraId) {
-  // CORREÇÃO CRÍTICA: hasId = true APENAS se a obra JÁ FOI SALVA no servidor
-  // Para obra nova (não salva), hasId deve ser FALSE
   const hasId = obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined";
-  
+
   console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}, HasId: ${hasId}, Botão: ${hasId ? 'ATUALIZAR' : 'SALVAR'}`);
 
   return `
     <div class="obra-block" data-obra-id="${obraId || ""}" data-obra-name="${obraName}">
       <div class="obra-header">
-        <button class="minimizer" onclick="toggleObra('${obraName}')">+</button>
+        <button class="minimizer" onclick="toggleObra('${obraName}', event)">+</button>
         <h2 class="obra-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
         <div class="obra-actions">
           <button class="btn btn-delete" onclick="deleteObra('${obraName}')">Remover Obra</button>
@@ -225,10 +324,10 @@ function updateObraButtonAfterSave(obraName, obraId) {
     console.error(`❌ Obra ${obraName} não encontrada para atualizar botão`);
     return;
   }
-  
+
   // Atualizar o ID no DOM
   obraBlock.dataset.obraId = obraId;
-  
+
   // CORREÇÃO: Agora a obra foi SALVA no servidor, então hasId = TRUE
   const obraContent = document.getElementById(`obra-content-${obraName}`);
   if (obraContent) {
@@ -266,11 +365,11 @@ function createEmptyProject(obraName, projectName, projectId) {
     console.error(`❌ Obra ${obraName} não encontrada`);
     return;
   }
-  
+
   const finalProjectId = projectId || generateProjectId(obraElement);
   const projectHTML = buildProjectHTML(obraName, projectName, finalProjectId)
   const obraProjectsContainer = document.getElementById(`projects-${obraName}`)
-  
+
   if (obraProjectsContainer) {
     obraProjectsContainer.insertAdjacentHTML("beforeend", projectHTML)
     removeEmptyObraMessage(obraName)
@@ -281,35 +380,32 @@ function createEmptyProject(obraName, projectName, projectId) {
 }
 
 /**
- * Constrói o HTML de um projeto dentro de uma obra
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
- * @param {string} projectId - ID do projeto
- * @returns {string} HTML do projeto
+ * Constrói o HTML de um projeto dentro de uma obra - CORRIGIDO com IDs únicos
  */
 function buildProjectHTML(obraName, projectName, projectId) {
-  const hasId = projectId !== null && projectId !== undefined && projectId !== ""
+    const hasId = projectId !== null && projectId !== undefined && projectId !== "";
 
-  return `
+    // ✅ CORREÇÃO: IDs únicos para projetos
+    const uniqueProjectId = `${obraName}-${projectName}`.replace(/\s+/g, '-');
+
+    return `
     <div class="project-block" data-project-id="${projectId || ""}" data-project-name="${projectName}" data-obra-name="${obraName}">
       <div class="project-header">
-        <button class="minimizer" onclick="toggleProject('${projectName}')">+</button>
+        <button class="minimizer" onclick="toggleProject('${uniqueProjectId}', event)">+</button>
         <h3 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">${projectName}</h3>
         <div class="project-actions">
           <button class="btn btn-delete" onclick="deleteProject('${obraName}', '${projectName}')">Remover</button>
         </div>
       </div>
-      <div class="project-content collapsed" id="project-content-${projectName}">
+      <div class="project-content collapsed" id="project-content-${uniqueProjectId}">
         <p class="empty-message">Adicione salas a este projeto...</p>
         <div class="add-room-section">
-          <button class="btn btn-add-secondary" onclick="addNewRoom('${obraName}', '${projectName}')">+ Adicionar Nova Sala</button>
+          <button class="btn btn-add-secondary" onclick="addNewRoom('${obraName}', '${projectName}', '${uniqueProjectId}')">+ Adicionar Nova Sala</button>
         </div>
-        <!-- BOTÕES REMOVIDOS DO PROJETO - AGORA FICAM NO FINAL DA OBRA -->
       </div>
     </div>
-  `
+  `;
 }
-
 /**
  * Adiciona um novo projeto à obra especificada - ATUALIZADO
  * @param {string} obraName - Nome da obra
@@ -320,12 +416,12 @@ function addNewProjectToObra(obraName) {
     const projectName = `Projeto${projectNumber}`
 
     createEmptyProject(obraName, projectName, null)
- 
+
     const defaultRoomName = "Sala1"
     createEmptyRoom(obraName, projectName, defaultRoomName, null)
-    
+
     console.log(`📁 ${projectName} adicionado à obra ${obraName} com sala padrão: ${defaultRoomName}`)
-    
+
   } catch (error) {
     console.error("❌ Erro ao adicionar novo projeto:", error)
     alert("Erro ao criar novo projeto. Verifique o console para detalhes.")
@@ -341,12 +437,12 @@ async function addNewObra() {
     const obraName = `Obra${obraNumber}`
 
     console.log(`🏗️ Criando nova obra: ${obraName}`)
-    
+
     // CORREÇÃO: Sempre criar obra com ID = null para obra nova
     createEmptyObra(obraName, null)
-    
+
     console.log(`✅ ${obraName} adicionada com botão SALVAR OBRA`)
-    
+
   } catch (error) {
     console.error("❌ Erro ao adicionar nova obra:", error)
     alert("Erro ao criar nova obra. Verifique o console para detalhes.")
@@ -359,7 +455,7 @@ async function addNewObra() {
  */
 function deleteObra(obraName) {
   if (!confirm("Tem certeza que deseja remover esta obra e todos os seus projetos?")) return
-  
+
   const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`)
   if (obraBlock) {
     obraBlock.remove()
@@ -374,34 +470,34 @@ function deleteObra(obraName) {
  * @param {Event} event - Evento do clique
  */
 function saveOrUpdateObra(obraName, event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-    
-    console.log(`💾 SALVANDO/ATUALIZANDO OBRA: "${obraName}"`);
-    
-    // ✅ CORREÇÃO: Debug para verificar se a obra existe
-    const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
-    if (!obraBlock) {
-        console.error(`❌ Obra "${obraName}" não encontrada no DOM para salvar`);
-        console.log('🔍 Obras disponíveis no DOM:');
-        document.querySelectorAll('[data-obra-name]').forEach(obra => {
-            console.log(`  - ${obra.dataset.obraName}`);
-        });
-        showSystemStatus(`ERRO: Obra "${obraName}" não encontrada`, "error");
-        return;
-    }
-    
-    console.log(`✅ Obra encontrada no DOM:`, obraBlock.dataset);
-    
-    // CORREÇÃO: Chama a função real de salvamento do projects.js
-    if (typeof window.saveObra === 'function') {
-        window.saveObra(obraName, event);
-    } else {
-        console.error('❌ Função saveObra não encontrada no window');
-        showSystemStatus("ERRO: Funcionalidade de salvar não disponível", "error");
-    }
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  console.log(`💾 SALVANDO/ATUALIZANDO OBRA: "${obraName}"`);
+
+  // ✅ CORREÇÃO: Debug para verificar se a obra existe
+  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
+  if (!obraBlock) {
+    console.error(`❌ Obra "${obraName}" não encontrada no DOM para salvar`);
+    console.log('🔍 Obras disponíveis no DOM:');
+    document.querySelectorAll('[data-obra-name]').forEach(obra => {
+      console.log(`  - ${obra.dataset.obraName}`);
+    });
+    showSystemStatus(`ERRO: Obra "${obraName}" não encontrada`, "error");
+    return;
+  }
+
+  console.log(`✅ Obra encontrada no DOM:`, obraBlock.dataset);
+
+  // CORREÇÃO: Chama a função real de salvamento do projects.js
+  if (typeof window.saveObra === 'function') {
+    window.saveObra(obraName, event);
+  } else {
+    console.error('❌ Função saveObra não encontrada no window');
+    showSystemStatus("ERRO: Funcionalidade de salvar não disponível", "error");
+  }
 }
 
 
@@ -422,10 +518,10 @@ function verifyObraData(obraName) {
     const projectName = project.dataset.projectName
     const rooms = project.querySelectorAll(".room-block")
     totalRooms += rooms.length
-    
+
     report += `Projeto ${index + 1}: ${projectName}\n`
     report += `  - Salas: ${rooms.length}\n`
-    
+
     rooms.forEach((room, roomIndex) => {
       const roomName = room.querySelector(".room-title")?.textContent || `Sala ${roomIndex + 1}`
       const stats = calculateRoomCompletionStats(room)
@@ -452,7 +548,7 @@ function calculateRoomCompletionStats(room) {
     }
     return input.value && input.value.trim() !== ""
   }).length
-  
+
   const totalInputs = inputs.length
   const percentage = totalInputs > 0 ? ((filledInputs / totalInputs) * 100).toFixed(1) : 0
 
@@ -474,7 +570,7 @@ function getNextObraNumber() {
     const match = obraName.match(/Obra(\d+)/)
     return match ? parseInt(match[1]) : 0
   })
-  
+
   const maxNumber = Math.max(0, ...obraNumbers)
   return maxNumber + 1
 }
@@ -487,14 +583,14 @@ function getNextObraNumber() {
 function getNextProjectNumber(obraName) {
   const obraElement = document.querySelector(`[data-obra-name="${obraName}"]`);
   if (!obraElement) return 1;
-  
+
   const projects = obraElement.querySelectorAll('.project-block');
   const projectNumbers = Array.from(projects).map(project => {
     const projectName = project.dataset.projectName;
     const match = projectName.match(/Projeto(\d+)/);
     return match ? parseInt(match[1]) : 0;
   });
-  
+
   const maxNumber = Math.max(0, ...projectNumbers);
   return maxNumber + 1;
 }
@@ -527,7 +623,7 @@ function showEmptyObraMessageIfNeeded(obraName) {
       const emptyMessage = document.createElement('p')
       emptyMessage.className = 'empty-message'
       emptyMessage.textContent = 'Adicione projetos a esta obra...'
-      
+
       if (projectsContainer) {
         projectsContainer.insertAdjacentElement('beforebegin', emptyMessage)
       }
@@ -618,7 +714,8 @@ export {
   verifyObraData,
   downloadPDF,
   downloadWord,
-  calculateRoomCompletionStats
+  calculateRoomCompletionStats,
+  createEmptyRoom,
 }
 
 // Disponibilização global das funções - ATUALIZADA
@@ -626,6 +723,8 @@ if (typeof window !== 'undefined') {
   window.addNewObra = addNewObra
   window.addNewProjectToObra = addNewProjectToObra
   window.toggleObra = toggleObra
+  window.toggleProject = toggleProject
+  window.toggleRoom = toggleRoom
   window.getNextObraNumber = getNextObraNumber
   window.deleteObra = deleteObra
   window.saveOrUpdateObra = saveOrUpdateObra // CORREÇÃO: função única

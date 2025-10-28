@@ -70,7 +70,52 @@ function computeAirFlowRate(inputData) {
 }
 
 /**
- * Orquestra cálculo completo de vazão com validações
+ * Encontra o roomContent pelo ID único da sala - NOVA FUNÇÃO
+ */
+function findRoomContent(roomId) {
+    // ✅ CORREÇÃO: Primeiro limpar o ID de qualquer "undefined"
+    const cleanRoomId = roomId.replace(/-undefined/g, '').replace(/undefined-/g, '');
+    
+    console.log(`🔍 Procurando sala: "${roomId}" -> Limpo: "${cleanRoomId}"`);
+    
+    // ✅ CORREÇÃO: Tentar com o ID limpo primeiro
+    let roomContent = document.getElementById(`room-content-${cleanRoomId}`);
+    
+    if (roomContent) {
+        console.log(`✅ Sala encontrada pelo ID LIMPO: room-content-${cleanRoomId}`);
+        return roomContent;
+    }
+    
+    // ✅ CORREÇÃO: Se não encontrou com ID limpo, tentar com o original
+    roomContent = document.getElementById(`room-content-${roomId}`);
+    if (roomContent) {
+        console.log(`✅ Sala encontrada pelo ID ORIGINAL: room-content-${roomId}`);
+        return roomContent;
+    }
+    
+    // ✅ CORREÇÃO: Procurar pela sala no DOM usando data attributes
+    const roomBlock = document.querySelector(`[data-room-id="${cleanRoomId}"]`) || 
+                     document.querySelector(`[data-room-id="${roomId}"]`);
+    
+    if (roomBlock) {
+        const foundId = roomBlock.dataset.roomId;
+        console.log(`✅ Sala encontrada pelo data-room-id: ${foundId}`);
+        return document.getElementById(`room-content-${foundId}`);
+    }
+  
+    // ✅ CORREÇÃO: Debug detalhado
+    console.error(`❌ Sala não encontrada: ${roomId} (limpo: ${cleanRoomId})`);
+    const allRooms = document.querySelectorAll('.room-block');
+    console.log('🔍 Todas as salas disponíveis no DOM:');
+    allRooms.forEach(room => {
+        console.log(`  - ID: "${room.dataset.roomId}", Nome: ${room.dataset.roomName}, Projeto: ${room.dataset.projectName}, Obra: ${room.dataset.obraName}`);
+    });
+    
+    return null;
+}
+
+/**
+ * Orquestra cálculo completo de vazão com validações - CORRIGIDO
  */
 async function calculateVazaoAr(roomId, calculateThermal = true) {
   try {
@@ -83,7 +128,8 @@ async function calculateVazaoAr(roomId, calculateThermal = true) {
       return 0;
     }
 
-    const roomContent = document.getElementById(`room-content-${roomId}`);
+    // ✅ CORREÇÃO: Usar a nova função para encontrar a sala
+    const roomContent = findRoomContent(roomId);
     if (!roomContent) {
       console.error(" Sala não encontrada:", roomId);
       return 0;
@@ -129,5 +175,6 @@ export {
   calculateDoorFlow,
   computeAirFlowRate,
   calculateVazaoAr,
-  calculateVazaoArAndThermalGains
+  calculateVazaoArAndThermalGains,
+  findRoomContent // ✅ Exportar para uso em outros módulos
 };

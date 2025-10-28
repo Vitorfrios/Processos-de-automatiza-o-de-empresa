@@ -46,12 +46,15 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_machines(self)
         elif path == '/health-check':
             self.send_json_response({"status": "online", "timestamp": time.time()})
+        # ✅✅✅ CORREÇÃO CRÍTICA: ADICIONAR ESTA LINHA EXATAMENTE AQUI
+        elif path == '/session-obras':
+            self.route_handler.handle_get_session_obras(self)
         # ✅ ROTAS DE SESSÕES ATUALIZADAS
         elif path == '/api/session-obras':
             self.route_handler.handle_get_session_obras(self)
         elif path == '/api/sessions/current':
             self.route_handler.handle_get_sessions_current(self)
-        # ✅ NOVA ROTA: BACKUP COMPLETO (sem filtro de sessão) - ADICIONAR ESTA LINHA
+        # ✅ NOVA ROTA: BACKUP COMPLETO (sem filtro de sessão)
         elif path == '/api/backup-completo':
             self.route_handler.handle_get_backup_completo(self)
         # ❌ ROTAS LEGACY (COMPATIBILIDADE)
@@ -65,8 +68,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 if path != '/favicon.ico':
                     print(f"❌ Erro em {path}: {e}")
-                self.send_error(404, f"Recurso não encontrado: {path}")
-                
+                self.send_error(404, f"Recurso não encontrado: {path}")     
     def do_POST(self):
         """POST com tratamento completo - ATUALIZADO PARA OBRAS"""
         parsed_path = urlparse(self.path)
@@ -93,7 +95,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ✅ VERIFICAR SE ESTA LINHA EXISTE:
         elif path == '/api/sessions/add-obra':
             self.route_handler.handle_post_sessions_add_obra(self)
-        # ❌ ROTAS LEGACY (COMPATIBILIDADE)
+        # ❌ ROTAS LEGACY (COMPATIBILIDADE)// possivel delete posteriormente
         elif path in ['/projetos', '/projects']:
             self.route_handler.handle_post_projetos(self)
         else:

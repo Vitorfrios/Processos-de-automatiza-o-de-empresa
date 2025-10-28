@@ -13,6 +13,111 @@ class RouteHandler:
     def __init__(self, project_root):
         self.project_root = project_root
 
+    def handle_request(self, handler):
+        """Processa todas as requisições HTTP - CORREÇÃO COMPLETA DAS ROTAS"""
+        try:
+            path = handler.path
+            
+            print(f"🌐 ROTA SOLICITADA: {path} - MÉTODO: {handler.command}")
+            
+            # ========== ROTAS PRINCIPAIS DE OBRAS ==========
+            if path == '/obras':
+                if handler.command == 'GET':
+                    self.handle_get_obras(handler)
+                elif handler.command == 'POST':
+                    self.handle_post_obras(handler)
+                return
+                    
+            elif path.startswith('/obras/'):
+                obra_id = path.split('/')[-1]
+                if handler.command == 'PUT':
+                    self.handle_put_obra(handler)
+                elif handler.command == 'DELETE':
+                    self.handle_delete_obra(handler)
+                return
+                    
+            # ✅ CORREÇÃO: ROTA PARA SESSION-OBRAS
+            elif path == '/session-obras':
+                if handler.command == 'GET':
+                    self.handle_get_session_obras(handler)
+                return
+                    
+            # ========== ROTAS DE SESSÃO ==========
+            elif path == '/api/sessions/current':
+                if handler.command == 'GET':
+                    self.handle_get_sessions_current(handler)
+                return
+                    
+            elif path == '/api/sessions/add-obra':
+                if handler.command == 'POST':
+                    self.handle_post_sessions_add_obra(handler)
+                return
+                    
+            elif path.startswith('/api/sessions/remove-obra/'):
+                if handler.command == 'DELETE':
+                    self.handle_delete_sessions_remove_obra(handler)
+                return
+                    
+            elif path == '/api/sessions/shutdown':
+                if handler.command == 'POST':
+                    self.handle_post_sessions_shutdown(handler)
+                return
+                    
+            elif path == '/api/sessions/ensure-single':
+                if handler.command == 'POST':
+                    self.handle_post_sessions_ensure_single(handler)
+                return
+                    
+            # ========== ROTAS DE SISTEMA ==========
+            elif path == '/constants':
+                if handler.command == 'GET':
+                    self.handle_get_constants(handler)
+                return
+                    
+            elif path == '/machines':
+                if handler.command == 'GET':
+                    self.handle_get_machines(handler)
+                return
+                    
+            elif path == '/dados':
+                if handler.command == 'GET':
+                    self.handle_get_dados(handler)
+                return
+                    
+            elif path == '/backup':
+                if handler.command == 'GET':
+                    self.handle_get_backup(handler)
+                return
+                    
+            elif path == '/api/backup-completo':
+                if handler.command == 'GET':
+                    self.handle_get_backup_completo(handler)
+                return
+                    
+            elif path == '/api/shutdown':
+                if handler.command == 'POST':
+                    self.handle_shutdown(handler)
+                return
+                    
+            # ========== ROTAS DE COMPATIBILIDADE ==========
+            elif path == '/projetos':
+                if handler.command == 'GET':
+                    self.handle_get_projetos(handler)
+                return
+                    
+            elif path.startswith('/api/sessions/remove-project/'):
+                if handler.command == 'DELETE':
+                    self.handle_delete_sessions_remove_project(handler)
+                return
+                    
+            # ========== ROTA PADRÃO (arquivos estáticos) ==========
+            else:
+                handler.handle_static_file()
+                
+        except Exception as e:
+            print(f"❌ ERRO em handle_request: {str(e)}")
+            handler.send_error(500, f"Erro interno: {str(e)}")
+
     # ========== ROTAS PRINCIPAIS DE OBRAS ==========
 
     def handle_get_obras(self, handler):
@@ -176,6 +281,49 @@ class RouteHandler:
             
         except Exception as e:
             print(f"❌ Erro ao atualizar obra: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_delete_obra(self, handler):
+        """Deleta uma obra do servidor"""
+        try:
+            obra_id = handler.path.split('/')[-1]
+            
+            print(f"🗑️  Deletando obra {obra_id} do servidor")
+            
+            backup_file = file_utils.find_json_file('backup.json', self.project_root)
+            backup_data = file_utils.load_json_file(backup_file, {"obras": []})
+            
+            obras = backup_data.get('obras', [])
+            obra_encontrada = False
+            
+            # Filtrar a obra a ser removida
+            obras_atualizadas = []
+            for obra in obras:
+                if str(obra.get('id')) != obra_id:
+                    obras_atualizadas.append(obra)
+                else:
+                    obra_encontrada = True
+                    print(f"✅ Obra {obra_id} encontrada para remoção")
+            
+            if not obra_encontrada:
+                handler.send_error(404, f"Obra {obra_id} não encontrada")
+                return
+            
+            backup_data['obras'] = obras_atualizadas
+            
+            if file_utils.save_json_file(backup_file, backup_data):
+                # Também remove da sessão
+                sessions_manager.remove_obra(obra_id)
+                
+                handler.send_json_response({
+                    "success": True,
+                    "message": f"Obra {obra_id} deletada com sucesso"
+                })
+            else:
+                handler.send_error(500, "Erro ao deletar obra")
+                
+        except Exception as e:
+            print(f"❌ Erro ao deletar obra: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
 
     def handle_get_backup_completo(self, handler):

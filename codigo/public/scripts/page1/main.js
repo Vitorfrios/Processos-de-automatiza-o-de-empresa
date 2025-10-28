@@ -1,16 +1,16 @@
 // Inicializar variáveis globais simples
 window.systemConstants = null;
-window.obraCounter = 0; // ATUALIZADO: projectCounter → obraCounter
+window.obraCounter = 0;
 window.GeralCount = 0;
 
 console.log(" Variáveis globais inicializadas:", {
   systemConstants: window.systemConstants,
-  obraCounter: window.obraCounter, // ATUALIZADO
+  obraCounter: window.obraCounter,
   GeralCount: window.GeralCount
 });
 
 // Importar APENAS o necessário para inicialização
-import { loadObrasFromServer, getGeralCount } from './data/server.js' // ATUALIZADO
+import { loadObrasFromServer, getGeralCount } from './data/server.js'
 import { initializeSession } from './data/server.js';
 
 // Carregar módulos dinamicamente
@@ -117,7 +117,7 @@ async function loadAllModules() {
     const modules = await Promise.all([
       import('./ui/interface.js'),
       import('./ui/edit.js'),
-      import('./data/projects.js'), // MANTIDO para funções de projeto dentro de obras
+      import('./data/projects.js'),
       import('./data/rooms.js'),
       import('./calculos/calculos.js'),
       import('./utils/utils.js')
@@ -132,31 +132,31 @@ async function loadAllModules() {
       utilsModule
     ] = modules;
 
-    // Atribuir TODAS as funções ao window - ATUALIZADO para obras
+    // Atribuir TODAS as funções ao window - CORRIGIDO
     Object.assign(window, {
-      // UI Interface - ATUALIZADO
-      toggleObra: interfaceModule.toggleObra, // NOVA
+      // UI Interface - CORRIGIDO
+      toggleObra: interfaceModule.toggleObra,
       toggleProject: interfaceModule.toggleProject,
       toggleRoom: interfaceModule.toggleRoom,
       toggleSection: interfaceModule.toggleSection,
       toggleSubsection: interfaceModule.toggleSubsection,
-      addNewObra: interfaceModule.addNewObra, // ATUALIZADO: addNewProject → addNewObra
-      addNewProjectToObra: interfaceModule.addNewProjectToObra, // NOVA
+      addNewObra: interfaceModule.addNewObra,
+      addNewProjectToObra: interfaceModule.addNewProjectToObra,
       collapseElement: interfaceModule.collapseElement,
       expandElement: interfaceModule.expandElement,
       showSystemStatus: interfaceModule.showSystemStatus,
-      saveOrUpdateObra: interfaceModule.saveOrUpdateObra, // NOVA
-      verifyObraData: interfaceModule.verifyObraData, // NOVA
-      deleteObra: interfaceModule.deleteObra, // NOVA
+      saveOrUpdateObra: interfaceModule.saveOrUpdateObra,
+      verifyObraData: interfaceModule.verifyObraData,
+      deleteObra: interfaceModule.deleteObra,
 
       // Edit
       makeEditable: editModule.makeEditable,
 
-      // Projects - MANTIDO para operações dentro de obras
+      // Projects - CORRIGIDO
       deleteProject: projectsModule.deleteProject,
-      saveOrUpdateObra: projectsModule.saveObra, // ATUALIZADO: saveProject → saveObra
+      saveObra: projectsModule.saveObra, // ✅ CORREÇÃO: função correta
 
-      // Rooms
+      // Rooms - CORRIGIDO
       addNewRoom: roomsModule.addNewRoom,
       deleteRoom: roomsModule.deleteRoom,
       addMachine: roomsModule.addMachine,
@@ -173,10 +173,10 @@ async function loadAllModules() {
     });
 
     modulesLoaded = true;
-    console.log(" Todos os módulos foram carregados com sucesso");
+    console.log("✅ Todos os módulos foram carregados com sucesso");
     
   } catch (error) {
-    console.error(" Erro ao carregar módulos:", error);
+    console.error("❌ Erro ao carregar módulos:", error);
   }
 }
 
@@ -186,7 +186,7 @@ async function loadAllModules() {
  */
 async function loadSystemConstants() {
   try {
-    console.log(" Carregando constantes do sistema...")
+    console.log("🔍 Carregando constantes do sistema...")
     const response = await fetch(`/constants`)
 
     if (!response.ok) {
@@ -195,10 +195,10 @@ async function loadSystemConstants() {
 
     const constantsData = await response.json();
     window.systemConstants = constantsData;
-    console.log(" Constantes carregadas do JSON:", window.systemConstants);
+    console.log("✅ Constantes carregadas do JSON:", window.systemConstants);
     
     if (!window.systemConstants.VARIAVEL_PD || !window.systemConstants.VARIAVEL_PS) {
-      console.error(" ERRO: Constantes essenciais não encontradas no JSON:", {
+      console.error("❌ ERRO: Constantes essenciais não encontradas no JSON:", {
         VARIAVEL_PD: window.systemConstants.VARIAVEL_PD,
         VARIAVEL_PS: window.systemConstants.VARIAVEL_PS
       });
@@ -209,7 +209,7 @@ async function loadSystemConstants() {
       window.showSystemStatus("Constantes do sistema carregadas com sucesso", "success")
     }
   } catch (error) {
-    console.error(" ERRO CRÍTICO ao carregar constantes:", error)
+    console.error("❌ ERRO CRÍTICO ao carregar constantes:", error)
     if (window.showSystemStatus) {
       window.showSystemStatus("ERRO CRÍTICO: Não foi possível carregar as constantes do sistema. Verifique o servidor.", "error")
     }
@@ -232,31 +232,27 @@ async function verifyAndCreateBaseObra() {
   console.log(`📊 Estado atual - GeralCount: ${currentCount}, Obras no DOM: ${obrasInDOM}`);
   
   // ✅ CORREÇÃO: NÃO CRIA OBRA AUTOMATICAMENTE
-  // O sistema agora começa completamente vazio
   if (obrasInDOM === 0 && currentCount === 0) {
     console.log("📭 Sistema iniciado vazio - aguardando ação do usuário");
     console.log("💡 Dica: Clique em 'Nova Obra' para começar");
-    // ❌ REMOVIDO: window.addNewObra() automático
-    // O usuário deve clicar em "Nova Obra" manualmente
   }
 }
 
 /**
  * Função de debug para verificar o estado final do sistema após inicialização
- * Exibe informações detalhadas sobre obras, projetos e módulos carregados
  */
 function finalSystemDebug() {
   console.log('=== DEBUG FINAL DO SISTEMA ===');
   console.log('- window.GeralCount:', window.GeralCount);
   console.log('- getGeralCount():', getGeralCount());
-  console.log('- Obras no DOM:', document.querySelectorAll('.obra-block').length); // ATUALIZADO
+  console.log('- Obras no DOM:', document.querySelectorAll('.obra-block').length);
   console.log('- Projetos no DOM:', document.querySelectorAll('.project-block').length);
   console.log('- Salas no DOM:', document.querySelectorAll('.room-block').length);
   console.log('- Módulos carregados:', modulesLoaded);
   console.log('- Constantes carregadas:', !!window.systemConstants);
   console.log('- Shutdown Manager:', !!shutdownManager);
   
-  // Debug detalhado das obras - ATUALIZADO
+  // Debug detalhado das obras
   const obras = document.querySelectorAll('.obra-block');
   obras.forEach((obra, index) => {
     const obraName = obra.dataset.obraName;
@@ -274,9 +270,47 @@ function finalSystemDebug() {
   });
 }
 
+async function checkAndLoadExistingSession() {
+  try {
+    console.log("🔍 Verificando se há sessão com obras salvas...");
+    
+    const sessionResponse = await fetch('/api/session-obras');
+    if (sessionResponse.ok) {
+      const sessionData = await sessionResponse.json();
+      const obraIds = sessionData.obras || [];
+      
+      console.log(`📊 Sessão encontrada com ${obraIds.length} obras:`, obraIds);
+      
+      if (obraIds.length > 0) {
+        console.log("🔄 Carregando obras existentes da sessão...");
+        
+        // ✅ Ativar sessão via sessionStorage diretamente
+        try {
+          sessionStorage.setItem('session_active', 'true');
+          console.log("✅ Sessão ativada via sessionStorage");
+        } catch (error) {
+          console.error("❌ Erro ao ativar sessão:", error);
+        }
+        
+        // ✅ CARREGA as obras
+        await loadObrasFromServer();
+        
+        console.log("✅ Sessão existente carregada automaticamente");
+        return true;
+      }
+    }
+    
+    console.log("📭 Nenhuma sessão com obras encontrada - sistema inicia vazio");
+    return false;
+    
+  } catch (error) {
+    console.log("📭 Nenhuma sessão ativa ou erro ao verificar:", error);
+    return false;
+  }
+}
+
 /**
  * Inicialização principal do sistema quando o DOM estiver carregado
- * CORREÇÃO: NÃO INICIA SESSÃO AUTOMATICAMENTE - SISTEMA COMEÇA VAZIO
  */
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Inicializando sistema...");
@@ -291,28 +325,29 @@ window.addEventListener("DOMContentLoaded", async () => {
     // 2. Carregar constantes do sistema
     await loadSystemConstants();
     
-    // ✅ CORREÇÃO: NÃO INICIA SESSÃO AUTOMATICAMENTE
-    // await initializeSession(); // ❌ REMOVIDO
-    console.log("📭 Sessão não iniciada automaticamente - sistema começa vazio");
+    // ✅ VERIFICAR E CARREGAR SESSÃO EXISTENTE
+    const hasExistingSession = await checkAndLoadExistingSession();
     
-    // 3. ✅ CORREÇÃO: Só verifica obras existentes, não carrega automaticamente
+    if (!hasExistingSession) {
+      console.log("📭 Nenhuma sessão existente - sistema começa vazio");
+      console.log("💡 Dica: Clique em 'Nova Obra' para começar");
+    }
+    
+    // 3. Verificar obras existentes (agora só para obras locais)
     await verifyAndCreateBaseObra();
     
     console.log("✅ Sistema inicializado com sucesso - PRONTO PARA USO");
-    console.log("💡 Dica: Clique em 'Nova Obra' para começar");
     
     // Mostrar status do sistema para usuário
-    // Espera 5 segundos antes de mostrar o status
     setTimeout(() => {
       if (window.showSystemStatus) {
-        setTimeout(() => {
-          window.showSystemStatus("Sistema carregado. Clique em 'Nova Obra' para começar.", "success");
-        }, 500);
+        const message = hasExistingSession 
+          ? `Sessão carregada com ${document.querySelectorAll('.obra-block').length} obra(s)!` 
+          : "Sistema carregado. Clique em 'Nova Obra' para começar.";
+        const type = hasExistingSession ? "success" : "info";
+        window.showSystemStatus(message, type);
       }
-    }, 1000);
-
-
-
+    }, 500);
     
     // Debug final
     setTimeout(finalSystemDebug, 1000);
@@ -320,12 +355,26 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("❌ ERRO na inicialização do sistema:", error);
     
-    // ✅ CORREÇÃO: Fallback também não cria obra automática
     setTimeout(() => {
-      console.log("🔄 Sistema em estado de espera - aguardando ação do usuário");
+      console.log("🔄 Sistema em estado de espera");
       if (window.showSystemStatus) {
-        window.showSystemStatus("Sistema carregado com avisos. Clique em 'Nova Obra' para começar.", "warning");
+        window.showSystemStatus("Sistema carregado com avisos", "warning");
       }
     }, 1000);
   }
 });
+
+window.addNewRoom = async function(obraName, projectName, projectId) {
+    try {
+        // Usar a função corrigida do rooms.js
+        if (typeof window.addNewRoomWithUniqueId === 'function') {
+            await window.addNewRoomWithUniqueId(obraName, projectName, projectId);
+        } else {
+            console.error('❌ Função addNewRoomWithUniqueId não disponível');
+            // Fallback para função original se necessário
+            await window.originalAddNewRoom(obraName, projectName, projectId);
+        }
+    } catch (error) {
+        console.error('❌ Erro em addNewRoom:', error);
+    }
+};

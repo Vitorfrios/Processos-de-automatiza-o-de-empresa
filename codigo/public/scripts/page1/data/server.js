@@ -1,6 +1,11 @@
+// server.js - CORREÇÃO: IMPORTAR FUNÇÕES DE UI
+
 import { SESSION_STORAGE_KEY, REMOVED_PROJECTS_KEY, NORMALIZATION_DONE_KEY, SESSION_ACTIVE_KEY } from "../config/config.js"
 import { ensureStringId } from "../utils/utils.js"
 import { showSystemStatus } from "../ui/interface.js"
+
+// ✅ CORREÇÃO: IMPORTAR FUNÇÕES DE CRIAÇÃO DE OBRAS
+import { createEmptyObra, createEmptyProject, createEmptyRoom } from "../ui/interface.js"
 
 // CONSTANTES PARA CONTROLE DE SESSÃO - ATUALIZADAS PARA OBRAS
 const SESSION_OBRAS = 'session_obras';
@@ -117,18 +122,18 @@ function removeBaseObraFromHTML() {
 }
 
 /**
- * Carrega OBRAS salvas do servidor para a sessão atual - CORREÇÃO: SÓ CARREGA SE HOUVER SESSÃO ATIVA
+ * Carrega OBRAS salvas do servidor para a sessão atual - VERSÃO CORRIGIDA COM DEBUG
  */
 async function loadObrasFromServer() {
     console.log("🔄 Carregando OBRAS do servidor...");
     
     if (!isSessionActive()) {
         console.log("📭 Sessão não está ativa - nenhuma obra será carregada");
+        console.log("🔍 Debug: isSessionActive() =", isSessionActive());
         return;
     }
     
     try {
-        // 1. Buscar obras da sessão
         const sessionResponse = await fetch('/api/session-obras');
         if (!sessionResponse.ok) {
             throw new Error('Falha ao carregar sessão de obras');
@@ -144,62 +149,93 @@ async function loadObrasFromServer() {
             return;
         }
 
-        // 2. Buscar obras completas
+        // ✅ Buscar obras da sessão
         const obrasResponse = await fetch('/obras');
         if (!obrasResponse.ok) {
             throw new Error('Falha ao carregar obras');
         }
 
-        const todasObras = await obrasResponse.json();
+        const obrasDaSessao = await obrasResponse.json();
         
-        // 3. Filtrar obras que estão na sessão
-        const sessionObras = todasObras.filter(obra => {
-            return obraIds.includes(String(obra.id));
-        });
+        console.log(`🎯 Encontradas ${obrasDaSessao.length} obras da sessão para carregar`);
 
-        console.log(`🎯 Encontradas ${sessionObras.length} obras da sessão para carregar`);
+        // ✅ DEBUG: Verificar se o container existe
+        const projectsContainer = document.getElementById("projects-container");
+        console.log(`🔍 Container de obras:`, projectsContainer ? '✅ ENCONTRADO' : '❌ NÃO ENCONTRADO');
+        if (projectsContainer) {
+            console.log(`📊 Obras no container antes:`, projectsContainer.querySelectorAll('.obra-block').length);
+        }
 
-        // 4. Limpar interface
+        // Limpar interface
         removeBaseObraFromHTML();
         
-        // 5. Renderizar cada obra
+        // ✅ CORREÇÃO: AGORA AS FUNÇÕES ESTÃO DISPONÍVEIS
+        console.log(`🔍 createEmptyObra disponível:`, typeof createEmptyObra === 'function');
+        console.log(`🔍 createEmptyProject disponível:`, typeof createEmptyProject === 'function');
+        console.log(`🔍 createEmptyRoom disponível:`, typeof createEmptyRoom === 'function');
+        
+        // Renderizar cada obra
         let loadedCount = 0;
-        for (const obraData of sessionObras) {
+        for (const obraData of obrasDaSessao) {
             console.log(`🔄 Renderizando obra: ${obraData.nome} (ID: ${obraData.id})`);
             
-            // Criar obra na interface
-            if (typeof createEmptyObra === 'function') {
-                createEmptyObra(obraData.nome, obraData.id);
-                
-                // Adicionar projetos da obra
-                if (obraData.projetos && obraData.projetos.length > 0) {
-                    obraData.projetos.forEach(projeto => {
-                        if (typeof createEmptyProject === 'function') {
-                            createEmptyProject(obraData.nome, projeto.nome, projeto.id);
-                            
-                            // Adicionar salas do projeto
-                            if (projeto.salas && projeto.salas.length > 0) {
-                                projeto.salas.forEach(sala => {
-                                    if (typeof createEmptyRoom === 'function') {
-                                        createEmptyRoom(obraData.nome, projeto.nome, sala.nome, sala.id);
-                                    }
-                                });
+            try {
+                // ✅ CORREÇÃO: AGORA createEmptyObra ESTÁ DISPONÍVEL
+                if (typeof createEmptyObra === 'function') {
+                    console.log(`🎯 Chamando createEmptyObra para: ${obraData.nome}`);
+                    
+                    // Criar obra na interface
+                    createEmptyObra(obraData.nome, obraData.id);
+                    
+                    // Adicionar projetos da obra
+                    if (obraData.projetos && obraData.projetos.length > 0) {
+                        obraData.projetos.forEach(projeto => {
+                            if (typeof createEmptyProject === 'function') {
+                                createEmptyProject(obraData.nome, projeto.nome, projeto.id);
+                                
+                                // Adicionar salas do projeto
+                                if (projeto.salas && projeto.salas.length > 0) {
+                                    projeto.salas.forEach(sala => {
+                                        if (typeof createEmptyRoom === 'function') {
+                                            createEmptyRoom(obraData.nome, projeto.nome, sala.nome, sala.id);
+                                        }
+                                    });
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
+                    
+                    loadedCount++;
+                    console.log(`✅ Obra ${obraData.nome} processada com sucesso`);
+                } else {
+                    console.error(`❌ createEmptyObra não é uma função`);
                 }
-                
-                loadedCount++;
+            } catch (error) {
+                console.error(`💥 ERRO ao criar obra ${obraData.nome}:`, error);
             }
         }
         
-        console.log(`✅ ${loadedCount} obra(s) da sessão carregadas com sucesso`);
+        // ✅ DEBUG FINAL: Verificar quantas obras foram realmente criadas
+        setTimeout(() => {
+            const obrasCriadas = document.querySelectorAll('.obra-block');
+            console.log(`📊 DEBUG FINAL: ${obrasCriadas.length} obra(s) criada(s) no DOM`);
+            obrasCriadas.forEach((obra, index) => {
+                console.log(`  ${index + 1}. ${obra.dataset.obraName} (ID: ${obra.dataset.obraId})`);
+            });
+            
+            if (obrasCriadas.length > 0) {
+                console.log("🎉 OBRAS CARREGADAS COM SUCESSO NA INTERFACE!");
+            } else {
+                console.log("❌ NENHUMA OBRA FOI CRIADA NA INTERFACE");
+            }
+        }, 500);
+        
+        console.log(`✅ ${loadedCount} obra(s) da sessão processadas`);
         
     } catch (error) {
         console.error("❌ Erro ao carregar obras da sessão:", error);
     }
 }
-
 
 /**
  * Incrementa o contador global de OBRAS - ATUALIZADO
@@ -511,12 +547,12 @@ window.shutdownManual = shutdownManual;
 
 // Exportações atualizadas - AGORA TRABALHA COM OBRAS
 export {
-    loadObrasFromServer, // ATUALIZADO
-    removeBaseObraFromHTML, // ATUALIZADO
-    saveFirstObraIdOfSession, // ATUALIZADO
-    addObraToRemovedList, // ATUALIZADO
-    getRemovedObrasList, // ATUALIZADO
-    isObraRemoved, // ATUALIZADO
+    loadObrasFromServer,
+    removeBaseObraFromHTML,
+    saveFirstObraIdOfSession,
+    addObraToRemovedList,
+    getRemovedObrasList,
+    isObraRemoved,
     resetDisplayLogic,
     incrementGeralCount,
     decrementGeralCount,
@@ -524,10 +560,10 @@ export {
     isSessionActive,
     setSessionActive,
     startNewSession,
-    startSessionOnFirstSave, // ✅ NOVA FUNÇÃO
-    getSessionObras, // ATUALIZADO
-    addObraToSession, // ATUALIZADO
-    removeObraFromSession, // ATUALIZADO
+    startSessionOnFirstSave,
+    getSessionObras,
+    addObraToSession,
+    removeObraFromSession,
     shutdownManual,
     ensureSingleActiveSession,
     initializeSession
