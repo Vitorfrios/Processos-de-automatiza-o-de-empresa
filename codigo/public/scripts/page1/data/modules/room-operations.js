@@ -303,9 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
  * @returns {void}
  */
 function deleteRoom(obraName, projectName, uniqueRoomId) {
-    const confirmMessage = "Tem certeza que deseja deletar esta sala? Os dados permanecerão no servidor.";
 
-    if (!confirm(confirmMessage)) return;
 
     // Encontrar sala pelo ID único E hierarquia
     const roomBlock = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"][data-room-id="${uniqueRoomId}"]`);

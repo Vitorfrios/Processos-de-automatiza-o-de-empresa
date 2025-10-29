@@ -320,9 +320,7 @@ async function saveObra(obraName, event) {
  * @returns {Promise<void>}
  */
 async function deleteProject(obraName, projectName) {
-  const confirmMessage = "Tem certeza que deseja remover este projeto da obra?"
 
-  if (!confirm(confirmMessage)) return
 
   const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`)
   if (!projectBlock) return
@@ -438,7 +436,7 @@ function calculateRoomCompletionStats(room) {
  * @returns {Promise<void>}
  */
 async function deleteProjectLegacy(projectName) {
-  
+
     // Tenta encontrar a obra do projeto
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
     const obraName = projectBlock?.dataset.obraName;

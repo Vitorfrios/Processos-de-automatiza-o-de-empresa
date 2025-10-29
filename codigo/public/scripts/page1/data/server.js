@@ -362,7 +362,13 @@ async function startSessionOnFirstSave() {
  * @returns {Promise<void>}
  */
 async function shutdownManual() {
-    if (!confirm('Tem certeza que deseja encerrar o servidor?')) {
+    // Importa o modal de confirmação
+    const { showShutdownConfirmationModal } = await import('./modle/exit-modal.js');
+    
+    // Usa o modal customizado em vez do confirm nativo
+    const confirmed = await showShutdownConfirmationModal();
+    
+    if (!confirmed) {
         return;
     }
     

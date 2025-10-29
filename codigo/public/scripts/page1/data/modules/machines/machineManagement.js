@@ -571,7 +571,6 @@ function calculateMachinePrice(machineId) {
  * @returns {void}
  */
 function deleteClimatizationMachine(button) {
-  if (!confirm("Deseja remover este equipamento de climatização?")) return
 
   const machineItem = button.closest(".climatization-machine")
   const machinesContainer = machineItem.closest(".machines-container")
