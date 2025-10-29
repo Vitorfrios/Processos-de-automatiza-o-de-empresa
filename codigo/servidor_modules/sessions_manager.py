@@ -121,8 +121,92 @@ class SessionsManager:
                 return False
         
         print(f"⚠️ Obra {obra_id_str} não encontrada na sessão {current_session_id}")
-        return False  # ✅ CORREÇÃO: Retorna False quando a obra não existe
-    
+        return False
+
+    def remove_obra_from_session(self, obra_id: str) -> dict:
+        """✅ NOVO: Remove uma obra da sessão ativa - para uso com modal
+        Args:
+            obra_id (str): ID da obra a ser removida
+        Returns:
+            dict: Resultado da operação com flag de reload
+        """
+        try:
+            obra_id_str = str(obra_id)
+            print(f"🗑️ [MODAL] Tentando remover obra {obra_id_str} da sessão")
+            
+            # Carrega dados atuais
+            data = self._load_sessions_data()
+            current_session_id = self.get_current_session_id()
+            
+            # Verifica se a obra existe na sessão
+            if (current_session_id in data["sessions"] and 
+                obra_id_str in data["sessions"][current_session_id]["obras"]):
+                
+                # Remove a obra
+                data["sessions"][current_session_id]["obras"].remove(obra_id_str)
+                print(f"✅ Obra {obra_id_str} removida da sessão")
+                
+                # Salva os dados
+                if self._save_sessions_data(data):
+                    # Verifica se realmente foi removido
+                    updated_data = self._load_sessions_data()
+                    still_exists = obra_id_str in updated_data["sessions"][current_session_id]["obras"]
+                    
+                    if not still_exists:
+                        return {
+                            'success': True, 
+                            'message': 'Obra removida da sessão',
+                            'reload_required': True
+                        }
+                    else:
+                        return {
+                            'success': False, 
+                            'error': 'Obra ainda está na sessão após remoção',
+                            'reload_required': True
+                        }
+                else:
+                    return {
+                        'success': False, 
+                        'error': 'Falha ao salvar sessão',
+                        'reload_required': True
+                    }
+            else:
+                print(f"⚠️ Obra {obra_id_str} não encontrada na sessão")
+                return {
+                    'success': True, 
+                    'message': 'Obra não estava na sessão', 
+                    'reload_required': True
+                }
+                
+        except Exception as e:
+            print(f"❌ Erro ao remover obra {obra_id} da sessão: {e}")
+            return {
+                'success': False, 
+                'error': str(e),
+                'reload_required': True
+            }
+
+    def check_obra_in_session(self, obra_id: str) -> dict:
+        """✅ NOVO: Verifica se uma obra está na sessão ativa
+        Args:
+            obra_id (str): ID da obra a ser verificada
+        Returns:
+            dict: Status da verificação
+        """
+        try:
+            data = self._load_sessions_data()
+            current_session_id = self.get_current_session_id()
+            
+            exists = (current_session_id in data["sessions"] and 
+                     str(obra_id) in data["sessions"][current_session_id]["obras"])
+            
+            return {
+                'exists': exists,
+                'obra_id': obra_id
+            }
+        except Exception as e:
+            print(f"❌ Erro ao verificar obra {obra_id} na sessão: {e}")
+            return {'exists': False, 'error': str(e)}
     
     def get_session_obras(self) -> list:
         """Retorna lista de IDs de obras da sessão ativa
@@ -345,6 +429,18 @@ except Exception as e:
         def add_obra_to_session(self, obra_id):
             print(f"✅ [EMERGENCY] Obra {obra_id} adicionada à sessão ativa")
             return True
+
+        def remove_obra(self, obra_id):
+            print(f"✅ [EMERGENCY] Obra {obra_id} removida da sessão ativa")
+            return True
+
+        def remove_obra_from_session(self, obra_id):
+            print(f"✅ [EMERGENCY] Obra {obra_id} removida da sessão ativa (modal)")
+            return {'success': True, 'message': 'Obra removida', 'reload_required': True}
+
+        def check_obra_in_session(self, obra_id):
+            print(f"✅ [EMERGENCY] Verificando obra {obra_id} na sessão")
+            return {'exists': False, 'obra_id': obra_id}
 
         def get_session_obras(self):
             return []

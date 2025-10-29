@@ -1,6 +1,6 @@
 /**
  * =====================
- * Gerenciador de Modal e Toast
+ * Gerenciador de Modal e Toast - CORRIGIDO
  * =====================
  */
 
@@ -32,6 +32,9 @@ export function showConfirmationModal(obraName, obraId, obraBlock) {
         obraHTML: obraBlock.outerHTML,
         originalPosition: originalIndex
     };
+
+    // ✅ CORREÇÃO: Salva backup no sessionStorage
+    sessionStorage.setItem('lastPendingDeletion', JSON.stringify(pendingDeletion));
 
     const modal = document.getElementById('confirmationModal');
     const modalMessage = document.getElementById('modalMessage');
@@ -68,10 +71,21 @@ export function closeConfirmationModal() {
         obraHTML: null,
         originalPosition: null 
     };
+    sessionStorage.removeItem('lastPendingDeletion');
 }
 
 /**
- * Mostra toast notification
+ * ✅ NOVA: Fecha modal sem limpar pendingDeletion
+ */
+function closeConfirmationModalWithoutClearing() {
+    const modal = document.getElementById('confirmationModal');
+    modal.classList.remove('active');
+    modal.classList.add('hidden');
+    // ✅ CORREÇÃO CRÍTICA: NÃO limpa pendingDeletion aqui
+}
+
+/**
+ * Mostra toast notification - CORRIGIDA
  */
 function showToast(obraName, type = 'undo') {
     // Remove toast anterior se existir
@@ -97,7 +111,15 @@ function showToast(obraName, type = 'undo') {
                 <div class="countdown-bar"></div>
             </div>
         `;
-    } else {
+        
+        // Inicia animação da barra de contagem regressiva
+        setTimeout(() => {
+            const countdownBar = toast.querySelector('.countdown-bar');
+            if (countdownBar) {
+                countdownBar.style.animation = 'countdown 8s linear forwards';
+            }
+        }, 100);
+    } else if (type === 'success') {
         toast.innerHTML = `
             <div class="toast-icon">✅</div>
             <div class="toast-content">
@@ -106,16 +128,37 @@ function showToast(obraName, type = 'undo') {
                 <button class="toast-btn toast-close" onclick="window.hideToast()">Fechar</button>
             </div>
         `;
+    } else {
+        toast.innerHTML = `
+            <div class="toast-icon">❌</div>
+            <div class="toast-content">
+                <div class="toast-title">Erro ao remover "${obraName}"</div>
+                <div class="toast-message">Ocorreu um erro durante a remoção</div>
+                <button class="toast-btn toast-close" onclick="window.hideToast()">Fechar</button>
+            </div>
+        `;
     }
     
     toastContainer.appendChild(toast);
     currentToast = toast;
     
-    // Auto-remove após 8 segundos apenas para undo
+    // ✅ CORREÇÃO: Auto-remove após 8 segundos apenas para undo
     if (type === 'undo') {
+        // Limpa timeout anterior se existir
+        if (undoTimeout) {
+            clearTimeout(undoTimeout);
+        }
+        
         undoTimeout = setTimeout(() => {
-            if (toast.parentNode && !toast.classList.contains('hiding')) {
+            console.log("⏰ Timeout de 8 segundos completado - removendo obra");
+            console.log("📊 Estado atual do pendingDeletion:", pendingDeletion);
+            
+            // ✅ CORREÇÃO: Verifica se ainda temos dados antes de processar
+            if (pendingDeletion.obraName) {
                 completeDeletion();
+            } else {
+                console.error("❌ Dados perdidos - não é possível completar a remoção");
+                hideToast();
             }
         }, 8000);
     } else {
@@ -137,7 +180,7 @@ function createToastContainer() {
 }
 
 /**
- * Esconde o toast atual
+ * Esconde o toast atual - CORRIGIDA
  */
 export function hideToast() {
     if (currentToast) {
@@ -149,46 +192,60 @@ export function hideToast() {
             }
         }, 300);
     }
-}
-
-/**
- * Desfaz a exclusão
- */
-export function undoDeletion() {
+    // ✅ CORREÇÃO: Limpa o timeout quando o toast é escondido manualmente
     if (undoTimeout) {
         clearTimeout(undoTimeout);
         undoTimeout = null;
     }
+}
+
+/**
+ * Desfaz a exclusão - CORRIGIDA
+ */
+export function undoDeletion() {
+    console.log("↩️ Usuário clicou em Desfazer");
+    
+    if (undoTimeout) {
+        clearTimeout(undoTimeout);
+        undoTimeout = null;
+        console.log("⏹️ Timeout de remoção cancelado");
+    }
     
     hideToast();
     
-    // Restaura a obra no DOM na posição original
-    const { obraHTML, originalPosition, obraName } = pendingDeletion;
+    const { obraName, obraId, obraHTML, originalPosition } = pendingDeletion;
     
-    if (obraHTML && obraName) {
-        const projectsContainer = document.getElementById("projects-container");
+    if (obraName && obraHTML) {
+        console.log(`🔒 Obra "${obraName}" (ID: ${obraId}) - ação desfeita, NÃO removendo da sessão`);
         
-        // Se temos a posição original, insere na posição correta
-        if (originalPosition !== null && originalPosition >= 0) {
-            const referenceNode = projectsContainer.children[originalPosition];
-            if (referenceNode) {
-                referenceNode.insertAdjacentHTML('beforebegin', obraHTML);
+        // Restaura a obra no DOM
+        const projectsContainer = document.getElementById("projects-container");
+        if (projectsContainer) {
+            // Se temos a posição original, insere na posição correta
+            if (originalPosition !== null && originalPosition >= 0) {
+                const referenceNode = projectsContainer.children[originalPosition];
+                if (referenceNode) {
+                    referenceNode.insertAdjacentHTML('beforebegin', obraHTML);
+                    console.log(`✅ Obra "${obraName}" restaurada na posição original ${originalPosition}`);
+                } else {
+                    projectsContainer.insertAdjacentHTML('beforeend', obraHTML);
+                    console.log(`✅ Obra "${obraName}" restaurada no final`);
+                }
             } else {
                 projectsContainer.insertAdjacentHTML('beforeend', obraHTML);
+                console.log(`✅ Obra "${obraName}" restaurada no final`);
             }
-        } else {
-            projectsContainer.insertAdjacentHTML('beforeend', obraHTML);
         }
-        
-        console.log(`↩️ Obra "${obraName}" restaurada na posição ${originalPosition}`);
-        
-        // Força a atualização da interface
-        forceInterfaceUpdate();
         
         // Mostra toast de sucesso
         showToast(obraName, 'success');
+        
+    } else {
+        console.error("❌ Dados insuficientes para restaurar obra");
+        showToast(obraName || 'Obra', 'error');
     }
     
+    // Limpa estado pendente
     pendingDeletion = { 
         obraName: null, 
         obraId: null, 
@@ -196,61 +253,97 @@ export function undoDeletion() {
         obraHTML: null,
         originalPosition: null 
     };
+    sessionStorage.removeItem('lastPendingDeletion');
 }
 
 /**
- * Força a atualização da interface após restaurar obra
- */
-function forceInterfaceUpdate() {
-    // Dispara um evento customizado para notificar outros componentes
-    const event = new CustomEvent('obraRestored', {
-        detail: { obraName: pendingDeletion.obraName }
-    });
-    document.dispatchEvent(event);
-    
-    // Força reflow para garantir que a interface seja atualizada
-    document.body.offsetHeight;
-}
-
-/**
- * Completa a exclusão após timeout (remove do servidor)
+ * Completa a exclusão após timeout (remove do servidor) - CORRIGIDA
  */
 async function completeDeletion() {
+    console.log("⏰ completeDeletion() chamado - removendo obra da sessão");
+    // ✅ CORREÇÃO: Garante que o toast some antes de processar a remoção
     hideToast();
     await completeDeletionImmediate();
 }
 
 /**
- * Remove a obra do servidor imediatamente
+ * Remove a obra do servidor imediatamente - CORRIGIDA
  */
 async function completeDeletionImmediate() {
+    // ✅ CORREÇÃO: Verificação mais robusta dos dados
+    if (!pendingDeletion.obraName) {
+        console.error("❌ ERRO CRÍTICO: pendingDeletion está vazio quando deveria ter dados");
+        console.log("📊 Estado atual:", pendingDeletion);
+        
+        // Tenta recuperar da sessionStorage como fallback
+        const fallbackData = sessionStorage.getItem('lastPendingDeletion');
+        if (fallbackData) {
+            try {
+                const parsed = JSON.parse(fallbackData);
+                pendingDeletion = parsed;
+                console.log("🔄 Dados recuperados do sessionStorage:", pendingDeletion);
+            } catch (e) {
+                console.error("❌ Não foi possível recuperar dados de fallback");
+            }
+        }
+    }
+    
     const { obraName, obraId } = pendingDeletion;
     
-    if (!obraName) return;
+    if (!obraName) {
+        console.log("❌ Nenhuma obra pendente para remoção após tentativas de recuperação");
+        // Limpa estado pendente
+        pendingDeletion = { 
+            obraName: null, 
+            obraId: null, 
+            obraBlock: null, 
+            obraHTML: null,
+            originalPosition: null 
+        };
+        sessionStorage.removeItem('lastPendingDeletion');
+        return;
+    }
+    
+    console.log(`🔍 Iniciando remoção completa da obra: ${obraName} (ID: ${obraId})`);
     
     // Remove do servidor se tiver ID
     if (obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
         try {
+            console.log(`🗑️ Enviando requisição para remover obra ${obraId} da sessão...`);
+            
             const response = await fetch(`/api/sessions/remove-obra/${obraId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
             });
             
+            console.log(`📡 Resposta do servidor: ${response.status}`);
+            
             if (response.ok) {
-                console.log(`🗑️ Obra ${obraName} (ID: ${obraId}) removida da sessão`);
+                const result = await response.json();
+                console.log(`✅ Obra removida da sessão:`, result);
+                
+                // ✅ CORREÇÃO: NÃO recarrega a página, apenas mostra toast de sucesso
                 showToast(obraName, 'success');
+                
             } else {
-                console.error(`❌ Falha ao remover obra ${obraName} da sessão`);
-                showToast(`Erro ao remover ${obraName}`, 'success');
+                const errorText = await response.text();
+                console.error(`❌ Falha HTTP ao remover obra: ${response.status}`, errorText);
+                showToast(obraName, 'error');
             }
         } catch (error) {
-            console.error(`❌ Erro ao remover obra ${obraName} da sessão:`, error);
-            showToast(`Erro ao remover ${obraName}`, 'success');
+            console.error(`❌ Erro de rede ao remover obra:`, error);
+            showToast(obraName, 'error');
         }
     } else {
-        console.log(`ℹ️ Obra ${obraName} não tinha ID salvo`);
+        console.log(`ℹ️ Obra ${obraName} não tinha ID salvo, apenas removendo da interface`);
+        // ✅ CORREÇÃO: Mostra toast de sucesso mesmo sem ID
         showToast(obraName, 'success');
     }
     
+    // ✅ CORREÇÃO: Limpa estado pendente APÓS processar tudo
+    console.log("🧹 Limpando estado pendente após processamento");
     pendingDeletion = { 
         obraName: null, 
         obraId: null, 
@@ -258,17 +351,19 @@ async function completeDeletionImmediate() {
         obraHTML: null,
         originalPosition: null 
     };
+    sessionStorage.removeItem('lastPendingDeletion');
 }
 
 /**
- * Confirma e executa a exclusão com sistema de undo
+ * Confirma e executa a exclusão com sistema de undo - CORRIGIDA
  */
 export async function confirmDeletion() {
     const { obraName, obraId, obraBlock } = pendingDeletion;
     
     if (!obraName) return;
     
-    closeConfirmationModal();
+    // ✅ CORREÇÃO: NÃO limpa o pendingDeletion aqui - só fecha o modal
+    closeConfirmationModalWithoutClearing();
     
     // Efeito visual de remoção
     if (obraBlock) {
@@ -327,3 +422,9 @@ document.addEventListener('keydown', (e) => {
         closeConfirmationModal();
     }
 });
+
+// ===== EXPORTAÇÕES PARA HTML =====
+
+// Torne as funções globais para o HTML poder acessar
+window.undoDeletion = undoDeletion;
+window.hideToast = hideToast;

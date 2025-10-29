@@ -33,11 +33,11 @@ class RouteHandler:
             elif path.startswith('/obras/'):
                 obra_id = path.split('/')[-1]
                 if handler.command == 'GET':
-                    self.handle_get_obra_by_id(handler, obra_id)  # ✅ NOVO: GET obra por ID
+                    self.handle_get_obra_by_id(handler, obra_id)
                 elif handler.command == 'PUT':
                     self.handle_put_obra(handler)
                 elif handler.command == 'DELETE':
-                    self.handle_delete_obra(handler, obra_id)  # ✅ CORREÇÃO: passar obra_id
+                    self.handle_delete_obra(handler, obra_id)
                 return
                     
             # ✅ CORREÇÃO: ROTA PARA SESSION-OBRAS
@@ -57,10 +57,23 @@ class RouteHandler:
                     self.handle_post_sessions_add_obra(handler)
                 return
                     
+            # ✅✅✅ NOVAS ROTAS PARA O MODAL - ADICIONADAS
             elif path.startswith('/api/sessions/remove-obra/'):
                 if handler.command == 'DELETE':
                     obra_id = path.split('/')[-1]
-                    self.handle_delete_sessions_remove_obra(handler, obra_id)  # ✅ CORREÇÃO: passar obra_id
+                    self.handle_delete_sessions_remove_obra_modal(handler, obra_id)
+                return
+                    
+            elif path.startswith('/api/sessions/check-obra/'):
+                if handler.command == 'GET':
+                    obra_id = path.split('/')[-1]
+                    self.handle_get_sessions_check_obra(handler, obra_id)
+                return
+
+            # ✅✅✅ NOVA ROTA PARA RECARREGAMENTO DA PÁGINA - ADICIONADA
+            elif path == '/api/reload-page':
+                if handler.command == 'POST':
+                    self.handle_post_reload_page(handler)  # ✅ NOVA ROTA
                 return
                     
             elif path == '/api/sessions/shutdown':
@@ -113,7 +126,7 @@ class RouteHandler:
             elif path.startswith('/api/sessions/remove-project/'):
                 if handler.command == 'DELETE':
                     project_id = path.split('/')[-1]
-                    self.handle_delete_sessions_remove_project(handler, project_id)  # ✅ CORREÇÃO: passar project_id
+                    self.handle_delete_sessions_remove_project(handler, project_id)
                 return
                     
             # ========== ROTA PADRÃO (arquivos estáticos) ==========
@@ -123,7 +136,8 @@ class RouteHandler:
         except Exception as e:
             print(f"❌ ERRO em handle_request: {str(e)}")
             handler.send_error(500, f"Erro interno: {str(e)}")
-
+            
+            
     # ========== ROTAS PRINCIPAIS DE OBRAS ==========
 
     def handle_get_obras(self, handler):
@@ -771,3 +785,48 @@ class RouteHandler:
         except Exception as e:
             print(f"❌ Erro ao remover obra da sessão: {str(e)}")
             handler.send_error(500, f"Erro: {str(e)}")
+            
+            
+    # ========== ROTA PARA RECARREGAMENTO DA PÁGINA ==========
+
+    def handle_post_reload_page(self, handler):
+        """✅ NOVA: Força recarregamento da página via Python"""
+        try:
+            content_length = int(handler.headers['Content-Length'])
+            post_data = handler.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+            
+            action = data.get('action', 'unknown')
+            obra_id = data.get('obraId')
+            obra_name = data.get('obraName')
+            
+            print(f"🔄 [RECARREGAMENTO] Ação: {action}, Obra: {obra_name} (ID: {obra_id})")
+            
+            # Log baseado na ação
+            if action == 'undo':
+                print(f"↩️ Usuário desfez exclusão da obra {obra_name} - mantendo na sessão")
+            elif action == 'undo_no_data':
+                print(f"↩️ Usuário desfez exclusão (dados insuficientes) - recarregando página")
+            elif action.startswith('timeout'):
+                print(f"⏰ Timeout completo - obra {obra_name} removida da sessão")
+            
+            # ✅ ENVIA RESPOSTA QUE FORÇA O RECARREGAMENTO NO FRONTEND
+            handler.send_json_response({
+                "reload_required": True,
+                "action": action,
+                "obra_id": obra_id,
+                "obra_name": obra_name,
+                "message": "Página será recarregada",
+                "reload_delay": 500  # ms antes de recarregar
+            })
+            
+            print(f"✅ Comando de recarregamento enviado para o frontend")
+                
+        except Exception as e:
+            print(f"❌ Erro no recarregamento: {str(e)}")
+            # Mesmo com erro, envia comando de recarregamento
+            handler.send_json_response({
+                "reload_required": True,
+                "error": str(e),
+                "message": "Recarregamento forçado devido a erro"
+            })

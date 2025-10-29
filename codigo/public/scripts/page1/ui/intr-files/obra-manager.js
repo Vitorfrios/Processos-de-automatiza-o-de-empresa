@@ -1,11 +1,17 @@
-
 /**
  * =====================
- * Gerenciador de obras - obra-maganer.js
+ * Gerenciador de obras - obra-manager.js
  * =====================
  */
 
 import { removeObraFromSession } from '../../data/server.js'
+import { 
+    showConfirmationModal, 
+    closeConfirmationModal, 
+    confirmDeletion,
+    undoDeletion,
+    hideToast 
+} from './modal/modal.js'
 
 /**
  * Cria uma obra vazia na interface
@@ -36,7 +42,7 @@ function buildObraHTML(obraName, obraId) {
         <button class="minimizer" onclick="toggleObra('${obraName}', event)">+</button>
         <h2 class="obra-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
         <div class="obra-actions">
-          <button class="btn btn-delete" onclick="deleteObra('${obraName}')">Remover Obra</button>
+          <button class="btn btn-delete" onclick="window.deleteObra('${obraName}')">Remover Obra</button>
         </div>
       </div>
       <div class="obra-content collapsed" id="obra-content-${obraName}">
@@ -114,41 +120,16 @@ function updateObraButtonAfterSave(obraName, obraId) {
 }
 
 /**
- * Remove uma obra
- * @param {string} obraName - Nome da obra
+ * Função principal de deletar obra (ATUALIZADA)
  */
 async function deleteObra(obraName) {
-  if (!confirm("Tem certeza que deseja remover esta obra? Ela não poderá ser mais editada nessa tela! ")) return
+  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
+  if (!obraBlock) return;
 
-  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`)
-  if (obraBlock) {
-    // ✅ CORREÇÃO: Obter o ID da obra antes de remover
-    const obraId = obraBlock.dataset.obraId;
-    
-    // Remover do DOM
-    obraBlock.remove()
-    console.log(`🗑️ Obra ${obraName} removida do DOM`)
-    
-    // ✅✅✅ CORREÇÃO: Usar a rota CORRETA para obras em vez da rota de compatibilidade
-    if (obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
-      try {
-        // Chamar a rota CORRETA para obras
-        const response = await fetch(`/api/sessions/remove-obra/${obraId}`, {
-          method: 'DELETE'
-        });
-        
-        if (response.ok) {
-          console.log(`🗑️ Obra ${obraName} (ID: ${obraId}) removida da sessão via rota correta`);
-        } else {
-          console.error(`❌ Falha ao remover obra ${obraName} da sessão`);
-        }
-      } catch (error) {
-        console.error(`❌ Erro ao remover obra ${obraName} da sessão:`, error);
-      }
-    } else {
-      console.log(`ℹ️ Obra ${obraName} não tinha ID salvo, apenas removida do DOM`);
-    }
-  }
+  const obraId = obraBlock.dataset.obraId;
+  
+  // Mostra o modal personalizado em vez do confirm básico
+  showConfirmationModal(obraName, obraId, obraBlock);
 }
 
 /**
@@ -185,6 +166,15 @@ async function addNewObra() {
   }
 }
 
+// ===== EXPORTAÇÕES E CONFIGURAÇÃO GLOBAL =====
+
+// Torne as funções globais para o HTML poder acessar
+window.deleteObra = deleteObra;
+window.addNewObra = addNewObra;
+window.undoDeletion = undoDeletion;
+window.hideToast = hideToast;
+
+// Exportações para módulos
 export {
     createEmptyObra,
     buildObraHTML,
@@ -193,5 +183,5 @@ export {
     updateObraButtonAfterSave,
     deleteObra,
     getNextObraNumber,
-    addNewObra,
+    addNewObra
 }
