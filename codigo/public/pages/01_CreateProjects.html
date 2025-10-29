@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Criação de Obras e Projetos</title>
     <link rel="stylesheet" href="../static/page1/main.css">
+    
+
 </head>
 <body>
     <header class="header">
@@ -44,7 +46,26 @@
             </div>
         </div>
     </main>
-
+    
+    <!-- Modal de Confirmação para Exclusão -->
+    <div id="confirmationModal" class="confirmation-modal hidden">
+        <div class="modal-content">
+            <div class="modal-icon">❓</div>
+            <h2 class="modal-title">Remover da Visualização</h2>
+            <p class="modal-message" id="modalMessage">
+                <!-- O conteúdo será inserido pelo JavaScript -->
+            </p>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" data-action="cancel">
+                    Manter
+                </button>
+                <button class="modal-btn btn-confirm" data-action="confirm">
+                    Remover
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <script type="module" src="../scripts/page1/main.js"></script>
 </body>
 </html>
