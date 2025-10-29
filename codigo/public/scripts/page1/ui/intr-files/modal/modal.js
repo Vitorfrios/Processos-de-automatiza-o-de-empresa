@@ -185,7 +185,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
         toastData.timeout = setTimeout(() => {
             console.log(`⏰ Removendo toast de ${type} para obra ${obraName}`);
             hideSpecificToast(toastId);
-        }, 5000);
+        }, 3500);
     }
 }
 

@@ -2,7 +2,7 @@
 """
 servidor.py
 Sistema de Climatização - Servidor Principal
-Versão com Diagnóstico Completo
+Versão com Diagnóstico Completo E LIMPEZA DE CACHE
 """
 
 import os
@@ -38,6 +38,7 @@ def diagnostico_completo():
         'servidor_modules/sessions_manager.py',
         'servidor_modules/file_utils.py',
         'servidor_modules/browser_monitor.py',
+        'servidor_modules/cache_cleaner.py',  # 🆕 NOVO ARQUIVO
         'json/backup.json',
         'json/dados.json',
         'json/sessions.json'
@@ -57,7 +58,7 @@ diagnostico_completo()
 # Agora tenta importar os módulos
 try:
     print("\n4. IMPORTANDO MÓDULOS...")
-    from servidor_modules import server_utils, http_handler, browser_monitor, sessions_manager
+    from servidor_modules import server_utils, http_handler, browser_monitor, sessions_manager, cache_cleaner
     from servidor_modules import config
     print("   ✅ Módulos importados com sucesso!")
     
@@ -85,12 +86,9 @@ def active_session_after_delay(interval_seconds):
         
         while config.servidor_rodando:
             try:
-                # Calcular tempo decorrido
                 elapsed_time = time.time() - start_time
                 
-                # Verificar se passou um intervalo completo
                 if elapsed_time >= last_report + interval_seconds:
-                    # Calcular horas, minutos e segundos formatados
                     hours = int(elapsed_time // 3600)
                     minutes = int((elapsed_time % 3600) // 60)
                     seconds = int(elapsed_time % 60)
@@ -104,7 +102,6 @@ def active_session_after_delay(interval_seconds):
                     
                     last_report = elapsed_time
                 
-                # Aguardar próximo check (0.1 segundo para ser responsivo)
                 time.sleep(0.1)
                 
             except Exception as e:
@@ -151,7 +148,7 @@ def main():
             
             # ✅ CORREÇÃO: Ativar monitor de tempo a cada 1200 segundos para teste
             delay = 1200
-            active_session_after_delay(delay)  # Mostra tempo a cada 1200 segundos
+            active_session_after_delay(delay)
             
             # Loop principal
             server_utils.run_server_loop(httpd)
@@ -169,20 +166,25 @@ def main():
         print("\n   🔴 Servidor finalizado!")
         config.servidor_rodando = False
         
-        # ✅ CORREÇÃO: Garantir que o processo termine completamente
-        print("   🚪 Encerrando processo Python...")
-        time.sleep(1)  # Dar tempo para logs serem exibidos
+        # ✅ MELHORIA: Garantir que o shutdown seja chamado
+        try:
+            if 'httpd' in locals():
+                print("   🔄 Executando shutdown assíncrono...")
+                server_utils.shutdown_server_async(httpd)
+        except Exception as e:
+            print(f"   ⚠️  Erro no shutdown: {e}")
         
-        # Método mais agressivo para garantir encerramento
+        # ✅ CORREÇÃO: Dar tempo para a limpeza de cache
+        print("   ⏳ Aguardando finalização dos processos...")
+        time.sleep(2)
+        
+        print("   🚪 Encerrando processo Python...")
         os._exit(0)     
+        
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         print(f"ERRO FATAL: {e}")
         traceback.print_exc()
-        # Garante encerramento mesmo com erro fatal
         os._exit(1)
-    
-    # ✅ CORREÇÃO: REMOVIDO o input final que mantinha o terminal aberto
-    # O servidor agora fecha completamente quando encerrado via botão

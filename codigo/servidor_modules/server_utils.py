@@ -1,6 +1,7 @@
 """
 server_utils.py
 Utilitários do servidor - Versão Estável para Cliente
+COM INTEGRAÇÃO DE LIMPEZA DE CACHE
 """
 
 import socket
@@ -14,12 +15,11 @@ import os
 from pathlib import Path
 
 from servidor_modules import config
+from servidor_modules.cache_cleaner import clean_on_shutdown
 
 def is_port_in_use(port):
     """
     Verifica se uma porta específica está em uso no localhost
-    @param {int} port - Número da porta a ser verificada
-    @returns {bool} - True se a porta estiver em uso, False se estiver disponível
     """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(1)
@@ -32,12 +32,9 @@ def is_port_in_use(port):
 def kill_process_on_port(port):
     """
     Tenta finalizar processos que estão utilizando uma porta específica
-    @param {int} port - Número da porta a ser liberada
-    @returns {bool} - True se conseguiu liberar a porta, False caso contrário
     """
     try:
         if sys.platform == "win32":
-            # Método melhorado para Windows
             result = subprocess.run(
                 ['netstat', '-ano'], 
                 capture_output=True, 
@@ -51,7 +48,6 @@ def kill_process_on_port(port):
                     parts = line.split()
                     if len(parts) >= 5:
                         pid = parts[-1]
-                        # Verifica se é um PID válido
                         if pid.isdigit():
                             print(f"🔄 Liberando porta {port} (PID: {pid})...")
                             try:
@@ -61,7 +57,6 @@ def kill_process_on_port(port):
                                     timeout=5
                                 )
                                 time.sleep(1)
-                                # Verifica se a porta foi liberada
                                 if not is_port_in_use(port):
                                     return True
                             except subprocess.TimeoutExpired:
@@ -76,18 +71,13 @@ def kill_process_on_port(port):
 def find_available_port(start_port=config.DEFAULT_PORT, max_attempts=config.MAX_PORT_ATTEMPTS):
     """
     Encontra uma porta disponível para uso pelo servidor
-    @param {int} start_port - Porta inicial para busca (padrão: config.DEFAULT_PORT)
-    @param {int} max_attempts - Número máximo de tentativas (padrão: config.MAX_PORT_ATTEMPTS)
-    @returns {int|None} - Número da porta disponível ou None se não encontrou
     """
-    # Primeiro, tenta as portas sequenciais
     for port in range(start_port, start_port + max_attempts):
         if not is_port_in_use(port):
             return port
     
-    # Tenta portas aleatórias como fallback
     import random
-    for attempt in range(10):  # Aumenta para 10 tentativas
+    for attempt in range(10):
         port = random.randint(8000, 9000)
         if not is_port_in_use(port):
             print(f"🎯 Usando porta alternativa: {port}")
@@ -99,26 +89,21 @@ def find_available_port(start_port=config.DEFAULT_PORT, max_attempts=config.MAX_
 def setup_port(default_port):
     """
     Configura a porta do servidor, tentando liberar portas ocupadas se necessário
-    @param {int} default_port - Porta padrão desejada
-    @returns {int|None} - Porta configurada ou None em caso de falha
     """
     print(f"🔧 Configurando porta do servidor...")
     
-    # Verifica se a porta padrão está disponível
     if not is_port_in_use(default_port):
         print(f"✅ Porta {default_port} disponível")
         return default_port
     
     print(f"⚠️  Porta {default_port} ocupada. Tentando liberar...")
     
-    # Tenta liberar a porta
     if kill_process_on_port(default_port):
-        time.sleep(2)  # Espera o processo ser finalizado
+        time.sleep(2)
         if not is_port_in_use(default_port):
             print(f"✅ Porta {default_port} liberada com sucesso!")
             return default_port
     
-    # Se não conseguiu liberar, busca porta alternativa
     print("🔄 Buscando porta alternativa...")
     available_port = find_available_port(default_port)
     
@@ -132,8 +117,6 @@ def setup_port(default_port):
 def signal_handler(signum, frame):
     """
     Manipulador de sinais do sistema para encerramento graceful do servidor
-    @param {int} signum - Número do sinal recebido
-    @param {frame} frame - Frame de execução atual
     """
     print(f"\n🔄 Recebido sinal {signum}. Encerrando graceful...")
     config.servidor_rodando = False
@@ -141,7 +124,6 @@ def signal_handler(signum, frame):
 def setup_signal_handlers():
     """
     Configura os handlers para sinais de interrupção e término
-    Permite encerramento graceful com Ctrl+C
     """
     try:
         signal.signal(signal.SIGINT, signal_handler)
@@ -153,9 +135,6 @@ def setup_signal_handlers():
 def create_server(port, handler_class):
     """
     Cria e configura uma instância do servidor TCP
-    @param {int} port - Porta onde o servidor irá escutar
-    @param {class} handler_class - Classe handler para processar requisições
-    @returns {socketserver.TCPServer} - Instância do servidor configurado
     """
     try:
         server = socketserver.TCPServer(("", port), handler_class)
@@ -170,7 +149,6 @@ def create_server(port, handler_class):
 def print_server_info(port):
     """
     Exibe informações formatadas sobre o servidor iniciado
-    @param {int} port - Porta em que o servidor está rodando
     """
     print(f"\n🎉 SERVIDOR INICIADO COM SUCESSO!")
     print("=" * 50)
@@ -185,16 +163,14 @@ def print_server_info(port):
 def open_browser(port=8000):
     """
     Abre o navegador padrão automaticamente apontando para a aplicação
-    @param {int} port - Porta do servidor (padrão: 8000)
     """
-    time.sleep(2)  # Espera servidor estabilizar
+    time.sleep(2)
     
     url = f"http://localhost:{port}/public/pages/01_CreateProjects.html"
     print(f"🌐 Abrindo aplicação: {url}")
     
     try:
         import webbrowser
-        # Tenta abrir no navegador padrão
         webbrowser.open(url)
         print("✅ Navegador iniciado com sucesso!")
     except Exception as e:
@@ -204,16 +180,11 @@ def open_browser(port=8000):
 def start_server_threads(port, httpd, monitor_function):
     """
     Inicia as threads auxiliares do servidor (browser e monitor)
-    @param {int} port - Porta do servidor
-    @param {socketserver.TCPServer} httpd - Instância do servidor
-    @param {function} monitor_function - Função de monitoramento a ser executada
     """
     try:
-        # Thread para abrir navegador
         browser_thread = threading.Thread(target=open_browser, args=(port,), daemon=True)
         browser_thread.start()
         
-        # Thread para monitoramento
         monitor_thread = threading.Thread(target=monitor_function, args=(port, httpd), daemon=True)
         monitor_thread.start()
         
@@ -228,7 +199,6 @@ def start_server_threads(port, httpd, monitor_function):
 def run_server_loop(httpd):
     """
     Loop principal de execução do servidor com tratamento de exceções
-    @param {socketserver.TCPServer} httpd - Instância do servidor
     """
     print("🔄 Servidor em execução...")
     
@@ -244,7 +214,7 @@ def run_server_loop(httpd):
         except Exception as e:
             if config.servidor_rodando:
                 print(f"⚠️  Erro não crítico no servidor: {e}")
-                time.sleep(1)  # Previne loop infinito em caso de erro contínuo
+                time.sleep(1)
                 continue
             else:
                 break
@@ -254,24 +224,30 @@ def run_server_loop(httpd):
 def shutdown_server_async(httpd):
     """
     Executa o desligamento graceful do servidor em thread separada
-    @param {socketserver.TCPServer} httpd - Instância do servidor a ser encerrada
+    INCLUINDO LIMPEZA DE CACHE
     """
     def shutdown_task():
         try:
-            print("🔄 Finalizando conexões...")
+            print("🔄 Finalizando conexões do servidor...")
             httpd.shutdown()
             httpd.server_close()
-            print("✅ Servidor finalizado com sucesso")
+            print("✅ Conexões do servidor finalizadas")
+            
+            # 🆕 NOVO: Limpeza de cache após encerramento
+            print("🔄 Iniciando limpeza de cache...")
+            clean_on_shutdown()
+            
         except Exception as e:
             print(f"⚠️  Aviso no encerramento: {e}")
     
     shutdown_thread = threading.Thread(target=shutdown_task, daemon=True)
     shutdown_thread.start()
-    shutdown_thread.join(timeout=5.0)
+    
+    # Aguarda um pouco mais para garantir a limpeza
+    shutdown_thread.join(timeout=8.0)
     
     if shutdown_thread.is_alive():
         print("⏰ Timeout no encerramento - finalizando forçadamente...")
-        # Força a saída se necessário
         try:
             httpd.server_close()
         except:

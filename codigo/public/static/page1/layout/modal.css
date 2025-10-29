@@ -152,17 +152,17 @@
 }
 
 @keyframes iconPulse {
-    0%, 100% { 
-        transform: scale(1) rotate(0deg);
-        color: #4299e1;
+    0% {
+    transform: scale(1);
+    opacity: 1;
     }
-    25% { 
-        transform: scale(1.1) rotate(-5deg);
-        color: #63b3ed;
+    50% {
+    transform: scale(1.1);
+    opacity: 1;
     }
-    75% { 
-        transform: scale(1.1) rotate(5deg);
-        color: #3182ce;
+    100% {
+    transform: scale(1);
+    opacity: 1;
     }
 }
 

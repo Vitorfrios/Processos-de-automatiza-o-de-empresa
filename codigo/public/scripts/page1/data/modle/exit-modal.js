@@ -28,9 +28,9 @@ export function showShutdownConfirmationModal() {
                     <strong>Tem certeza que deseja encerrar o servidor?</strong>
                     
                     <div class="warning-list">
-                        Esta ação irá:
+                        <span style="font-size: 1.2rem;">Esta ação irá:</span>
                         <ul>
-                            <li>Desligar o servidor</li>
+                            <li style="margin-top: 15px">Desligar o servidor</li>
                             <li>Limpar todas as sessões ativas</li>
                             <li>Fechar esta aplicação</li>
                         </ul>
@@ -106,7 +106,7 @@ export function showShutdownConfirmationModal() {
                 text-align: left;
                 margin: 0;
                 padding-left: 1.5rem;
-                color: rgba(255, 255, 255, 0.8);
+                color: rgba(255, 255, 255);
             }
             
             .toast-style .warning-list ul li {
@@ -129,8 +129,8 @@ export function showShutdownConfirmationModal() {
             }
             
             .toast-style .warning-note small {
-                color: rgba(255, 255, 255, 0.8) !important;
-                font-size: 0.9rem !important;
+                color: rgb(255 255 255) !important;
+                font-size: 1rem !important;
                 line-height: 1.4;
                 display: block;
             }
@@ -173,17 +173,17 @@ export function showShutdownConfirmationModal() {
             
             /* Animações específicas */
             @keyframes iconPulse {
-                0%, 100% { 
-                    transform: scale(1) rotate(0deg);
-                    color: #4299e1;
+                0% {
+                    transform: scale(1);
+                    opacity: 1;
                 }
-                25% { 
-                    transform: scale(1.1) rotate(-5deg);
-                    color: #63b3ed;
+                50% {
+                    transform: scale(1.1);
+                    opacity: 1;
                 }
-                75% { 
-                    transform: scale(1.1) rotate(5deg);
-                    color: #3182ce;
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
                 }
             }
 

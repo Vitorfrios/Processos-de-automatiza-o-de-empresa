@@ -1,7 +1,7 @@
 # tree_permitidos.py
 from pathlib import Path
 
-ALLOW_EXTS = {".js",".py",".html",".css"}# extensões permitidas
+ALLOW_EXTS = {".js",".py"}# extensões permitidas
 
 def listar(p: Path, prefixo: str = ""):
     try:

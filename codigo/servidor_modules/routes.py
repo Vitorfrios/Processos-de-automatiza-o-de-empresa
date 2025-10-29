@@ -580,7 +580,7 @@ class RouteHandler:
     # ========== ROTAS DE SISTEMA (MANTIDAS) ==========
 
     def handle_shutdown(self, handler):
-        """✅ CORREÇÃO: Encerra o servidor E envia comando para fechar janela"""
+        """✅ CORREÇÃO: Encerra o servidor E envia comando para fechar janela COM LIMPEZA DE CACHE"""
         try:
             print("🔴 SHUTDOWN SOLICITADO VIA BOTÃO - ENCERRANDO SERVIDOR")
             
@@ -597,10 +597,19 @@ class RouteHandler:
             # ✅ CORREÇÃO: Marca servidor como não rodando
             config.servidor_rodando = False
             
-            # ✅ CORREÇÃO: Encerra o servidor em thread separada com timeout
+            # ✅ NOVO: Executa limpeza de cache antes de encerrar
             def shutdown_sequence():
                 print("🔄 Iniciando sequência de encerramento...")
-                time.sleep(2)  # Dar tempo para a resposta chegar ao cliente
+                
+                # 🆕 EXECUTA LIMPEZA DE CACHE
+                try:
+                    from servidor_modules.cache_cleaner import clean_on_shutdown
+                    print("🧹 Executando limpeza de cache...")
+                    clean_on_shutdown()
+                except Exception as cache_error:
+                    print(f"⚠️  Erro na limpeza de cache: {cache_error}")
+                
+                time.sleep(2)  # Dar tempo para a resposta chegar ao cliente e cache ser limpo
                 print("💥 Forçando encerramento do processo Python...")
                 
                 # Método mais direto para encerrar
@@ -616,9 +625,16 @@ class RouteHandler:
             print(f"❌ Erro no shutdown: {str(e)}")
             # Mesmo com erro, tenta encerrar
             config.servidor_rodando = False
+            
+            # 🆕 Tenta limpar cache mesmo com erro
+            try:
+                from servidor_modules.cache_cleaner import clean_on_shutdown
+                clean_on_shutdown()
+            except:
+                pass
+                
             import os
             os._exit(0)
-
     def handle_get_constants(self, handler):
         """Constants do DADOS.json"""
         try:

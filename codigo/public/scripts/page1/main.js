@@ -1,4 +1,4 @@
-//main.js
+// main.js
 
 // Inicializar variáveis globais simples
 window.systemConstants = null;
@@ -194,6 +194,15 @@ async function loadSystemConstants() {
     }
   } catch (error) {
     console.error("❌ ERRO CRÍTICO ao carregar constantes:", error)
+    
+    // ✅ DETECTA ERRO DE CONEXÃO E MOSTRA MENSAGEM AMIGÁVEL
+    if (error.message.includes('Failed to fetch') || 
+        error.message.includes('ERR_CONNECTION_REFUSED') ||
+        error.message.includes('404') ||
+        error.message.includes('Not Found')) {
+      throw error; // Para cair no catch principal
+    }
+    
     if (window.showSystemStatus) {
       window.showSystemStatus("ERRO CRÍTICO: Não foi possível carregar as constantes do sistema. Verifique o servidor.", "error")
     }
@@ -291,6 +300,211 @@ async function checkAndLoadExistingSession() {
 }
 
 /**
+ * Mostra mensagem amigável quando o servidor está offline
+ * @returns {void}
+ */
+function showServerOfflineMessage() {
+    console.log("🔄 Mostrando mensagem de servidor offline...");
+    
+    // Remove qualquer mensagem anterior
+    const existingMessage = document.getElementById('server-offline-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Cria a div de mensagem
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'server-offline-message';
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0,0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+        font-family: Arial, sans-serif;
+    `;
+    
+    messageDiv.innerHTML = `
+        <div class="modal-content toast-style" style="
+            background: #2d3748 !important;
+            color: white !important;
+            border-left: 4px solid #4299e1 !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding: 2rem !important;
+            max-width: 500px !important;
+            border-radius: 15px;
+            text-align: center;
+        ">
+            <div class="modal-icon" style="
+                color: #4299e1 !important;
+                animation: iconPulse 2s infinite ease-in-out;
+                font-size: 3.5rem !important;
+                margin-bottom: 1rem !important;
+            ">🔌</div>
+            
+            <h2 class="modal-title" style="
+                color: white !important;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                font-size: 1.6rem !important;
+                margin-bottom: 1rem !important;
+            ">Servidor Offline</h2>
+            
+            <p class="modal-message" style="
+                color: rgba(255, 255, 255, 0.9) !important;
+                text-align: left !important;
+                margin-bottom: 1.5rem !important;
+            ">
+                <strong style="
+                    color: #ff6b6b !important;
+                    display: block;
+                    margin-bottom: 1rem !important;
+                    font-size: 1.1rem !important;
+                    text-align: center !important;
+                ">O servidor foi encerrado</strong>
+                
+                <div class="warning-list" style="
+                    background: rgba(255, 255, 255, 0.05);
+                    padding: 1.2rem;
+                    border-radius: 8px;
+                    margin: 1rem 0;
+                    border-left: 3px solid #4299e1;
+                ">
+                    Para continuar usando o sistema:
+                    <ul style="
+                        text-align: left;
+                        margin: 0.5rem 0 0 0;
+                        padding-left: 1.5rem;
+                        color: rgba(255, 255, 255, 0.8);
+                    ">
+                      <li style="margin-top: 15px; margin-bottom: 0.5rem; padding-left: 0.5rem;">Inicie novamente o servidor</li>
+                      <li style="padding-left: 0.5rem;">Esta página será fechada automaticamente</li>
+
+                    </ul>
+                </div>
+                
+                <div class="warning-note" style="
+                    background: rgba(255, 107, 107, 0.1);
+                    padding: 1rem;
+                    border-radius: 6px;
+                    border-left: 3px solid #ff6b6b;
+                    margin-top: 1rem;
+                ">
+                    <small style="
+                        color: rgba(255, 255, 255, 0.8) !important;
+                        font-size: 0.9rem !important;
+                        line-height: 1.4;
+                        display: block;
+                    ">
+                        ⏳ Esta janela será fechada automaticamente em <strong id="countdown">10</strong> segundos...
+                    </small>
+                </div>
+            </p>
+            
+            <div class="modal-actions" style="
+                margin-top: 1.5rem !important;
+                gap: 1rem !important;
+                display: flex;
+                justify-content: center;
+            ">
+                <button onclick="window.close()" class="modal-btn btn-confirm" style="
+                    padding: 0.8rem 1.5rem !important;
+                    min-width: 120px !important;
+                    font-size: 0.95rem !important;
+                    background: #e53e3e !important;
+                    color: white !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    border-radius: 6px;
+                    cursor: pointer;
+                ">
+                    Fechar Agora
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Adiciona ao body
+    document.body.appendChild(messageDiv);
+    
+    // Adiciona animação de bounce
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes iconPulse {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.1);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-20px);}
+            60% {transform: translateY(-10px);}
+        }
+
+        @media (max-width: 480px) {
+            .toast-style {
+                padding: 1.5rem !important;
+                margin: 1rem !important;
+                width: 90vw !important;
+            }
+            
+            .modal-actions {
+                flex-direction: column !important;
+            }
+            
+            .modal-btn {
+                width: 100% !important;
+                min-width: auto !important;
+            }
+            
+            .modal-icon {
+                font-size: 3rem !important;
+            }
+            
+            .modal-title {
+                font-size: 1.4rem !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Contador regressivo
+    let countdown = 10;
+    const countdownElement = document.getElementById('countdown');
+    const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdownElement) {
+            countdownElement.textContent = countdown;
+        }
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            // ===== Aqui fecha a window ===== //
+            window.close();
+        }
+    }, 1000);
+    
+    // ===== Aqui fecha a window ===== //
+    setTimeout(() => {
+        window.close();
+    }, 10000);
+}
+
+/**
  * Inicialização principal do sistema quando o DOM estiver carregado
  */
 window.addEventListener("DOMContentLoaded", async () => {
@@ -325,7 +539,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         const message = hasExistingSession 
           ? `Sessão carregada com ${document.querySelectorAll('.obra-block').length} obra(s)!` 
           : "Sistema carregado. Clique em 'Nova Obra' para começar.";
-        const type = hasExistingSession ? "success":"success";
+        const type = hasExistingSession ? "success" : "success";
         window.showSystemStatus(message, type);
       }
     }, 500);
@@ -336,12 +550,21 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("❌ ERRO na inicialização do sistema:", error);
     
-    setTimeout(() => {
-      console.log("🔄 Sistema em estado de espera");
-      if (window.showSystemStatus) {
-        window.showSystemStatus("Sistema carregado com avisos", "warning");
-      }
-    }, 1000);
+    // ✅ DETECTA ERRO DE CONEXÃO E MOSTRA MENSAGEM AMIGÁVEL
+    if (error.message.includes('Failed to fetch') || 
+        error.message.includes('ERR_CONNECTION_REFUSED') ||
+        error.message.includes('404') ||
+        error.message.includes('Not Found') ||
+        error.name === 'TypeError') {
+      console.log("🔌 Servidor offline detectado - mostrando mensagem...");
+      showServerOfflineMessage();
+    } else {
+      setTimeout(() => {
+        console.log("🔄 Sistema em estado de espera");
+        if (window.showSystemStatus) {
+          window.showSystemStatus("Sistema carregado com avisos", "error");
+        }
+      }, 1000);
+    }
   }
 });
-

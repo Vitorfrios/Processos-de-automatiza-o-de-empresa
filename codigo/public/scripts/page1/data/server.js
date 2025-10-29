@@ -437,9 +437,9 @@ async function shutdownManual() {
         
     } catch (error) {
         console.error('❌ Erro no shutdown:', error);
-        showShutdownMessage("❌ Erro ao encerrar servidor");
-        
-        // Fecha após 3 segundos mesmo com erro
+        showShutdownMessage("🔌 Conexão com servidor perdida");
+        showShutdownMessage("📋 Status: Servidor encerrado no console");
+        showShutdownMessage("🔄 Ação: Reexecute o servidor para continuar");
         setTimeout(() => {
             window.close();
         }, 3000);
