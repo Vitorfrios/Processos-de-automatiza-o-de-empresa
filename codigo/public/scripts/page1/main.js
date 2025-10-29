@@ -504,6 +504,29 @@ function showServerOfflineMessage() {
     }, 10000);
 }
 
+function verifyCriticalFunctions() {
+  if (typeof window.addMachine !== 'function') {
+    console.error('❌ CRÍTICO: addMachine não está disponível globalmente');
+    // Recarregar o módulo se necessário
+    import('./data/modules/machines/machineManagement.js')
+      .then(module => {
+        window.addMachine = module.addMachine;
+        console.log('✅ addMachine recarregado globalmente');
+      })
+      .catch(error => {
+        console.error('❌ Falha ao recarregar addMachine:', error);
+      });
+  } else {
+    console.log('✅ addMachine disponível globalmente');
+  }
+}
+
+// Executar após carregamento da página
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(verifyCriticalFunctions, 1000);
+});
+
+
 /**
  * Inicialização principal do sistema quando o DOM estiver carregado
  */

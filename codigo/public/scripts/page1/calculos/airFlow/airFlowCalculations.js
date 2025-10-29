@@ -43,12 +43,14 @@ function calculateDoorFlow(doorCount, doorVariable, pressure) {
 function computeAirFlowRate(inputData) {
   const numPortasDuplas = safeNumber(inputData.numPortasDuplas);
   const numPortasSimples = safeNumber(inputData.numPortasSimples);
-  const pressurizacao = safeNumber(inputData.pressurizacao);
+  
+  // ✅ CORREÇÃO: Usar pressure em vez de pressurizacao
+  const pressure = inputData.pressurizacao ? safeNumber(inputData.setpointPressurizacao) : 0;
 
   console.log(" ===== CÁLCULO DE VAZÃO =====");
   console.log(" Portas Duplas:", numPortasDuplas);
   console.log(" Portas Simples:", numPortasSimples);
-  console.log(" Pressurização (Pa):", pressurizacao);
+  console.log(" Pressurização (Pa):", pressure);
 
   if (!window.systemConstants || !window.systemConstants.VARIAVEL_PD || !window.systemConstants.VARIAVEL_PS) {
     console.error(" ERRO: Constantes do sistema não disponíveis para cálculo");
@@ -56,8 +58,9 @@ function computeAirFlowRate(inputData) {
     return 0;
   }
 
-  const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD, pressurizacao);
-  const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS, pressurizacao);
+  // ✅ CORREÇÃO CRÍTICA: pressure em vez de pressurizacao
+  const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD, pressure);
+  const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS, pressure);
 
   console.log(" Fluxo Portas Duplas:", doubleDoorFlow);
   console.log(" Fluxo Portas Simples:", singleDoorFlow);

@@ -77,23 +77,39 @@ function validateSystemConstants() {
  * @returns {Object} Dados coletados dos inputs
  */
 function collectClimatizationInputs(climaSection, roomId) {
-  const inputs = climaSection.querySelectorAll(".clima-input");
+  const inputs = climaSection.querySelectorAll(".clima-input, input[data-field], select[data-field]");
   const data = {};
 
   inputs.forEach((input) => {
     const field = input.dataset.field;
-    let value = input.value;
+    let value;
     
-    if (input.type === 'number') {
-      value = value !== "" ? Number.parseFloat(value) : "";
-    } else if (input.tagName === 'SELECT' || input.type === 'text') {
-      value = value !== "" ? value : "";
+    // ✅ CORREÇÃO: Tratar diferentes tipos de input
+    if (input.type === 'checkbox') {
+      value = input.checked;
+    } else if (input.type === 'number' || input.type === 'text') {
+      value = input.value !== "" ? (input.type === 'number' ? Number.parseFloat(input.value) : input.value) : "";
+    } else if (input.tagName === 'SELECT') {
+      value = input.value !== "" ? input.value : "";
     }
     
-    data[field] = value;
+    if (field) {
+      data[field] = value;
+    }
   });
 
-  console.log("⚠️  [DEBUG COLLECT] Dados coletados para cálculo:", data);
+  // ✅ CORREÇÃO: Garantir que pressurizacao e setpointPressurizacao estejam presentes
+  if (data.pressurizacao === undefined) {
+    const pressurizacaoCheckbox = climaSection.querySelector('input[data-field="pressurizacao"]');
+    data.pressurizacao = pressurizacaoCheckbox ? pressurizacaoCheckbox.checked : false;
+  }
+  
+  if (data.setpointPressurizacao === undefined) {
+    const setpointInput = climaSection.querySelector('input[data-field="setpointPressurizacao"]');
+    data.setpointPressurizacao = setpointInput ? safeNumber(setpointInput.value) : 0;
+  }
+
+  console.log("✅ [DEBUG COLLECT] Dados coletados para cálculo:", data);
   return data;
 }
 

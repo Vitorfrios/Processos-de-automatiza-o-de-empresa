@@ -92,26 +92,37 @@ function addNewProject() {
  * @example
  * toggleObra('Obra1', event) // Expande ou recolhe a Obra1
  */
-function toggleObra(obraName, event) {
-  const contentId = `obra-content-${obraName}`
-  const content = document.getElementById(contentId)
+
+function toggleObra(obraIdentifier, event) {
+  // ✅ CORREÇÃO: Buscar por ID único primeiro, depois por nome
+  let content = document.getElementById(`obra-content-${obraIdentifier}`);
+  let obraBlock = document.querySelector(`[data-obra-id="${obraIdentifier}"]`);
+  
+  // Se não encontrou pelo ID, tentar pelo nome
+  if (!content || !obraBlock) {
+    obraBlock = document.querySelector(`[data-obra-name="${obraIdentifier}"]`);
+    if (obraBlock) {
+      const obraId = obraBlock.dataset.obraId;
+      content = document.getElementById(`obra-content-${obraId || obraIdentifier}`);
+    }
+  }
   
   if (!content) {
-    console.error(`❌ Conteúdo da obra ${obraName} não encontrado`)
-    return
+    console.error(`❌ Conteúdo da obra ${obraIdentifier} não encontrado`);
+    return;
   }
 
-  const isCollapsed = content.classList.contains("collapsed")
-  const minimizer = event.target
+  const isCollapsed = content.classList.contains("collapsed");
+  const minimizer = event.target;
 
   if (isCollapsed) {
-    content.classList.remove("collapsed")
-    minimizer.textContent = "−"
-    console.log(`📂 Obra ${obraName} expandida`)
+    content.classList.remove("collapsed");
+    minimizer.textContent = "−";
+    console.log(`📂 Obra ${obraIdentifier} expandida`);
   } else {
-    content.classList.add("collapsed")
-    minimizer.textContent = "+"
-    console.log(`📁 Obra ${obraName} recolhida`)
+    content.classList.add("collapsed");
+    minimizer.textContent = "+";
+    console.log(`📁 Obra ${obraIdentifier} recolhida`);
   }
 }
 

@@ -31,23 +31,28 @@ function createEmptyObra(obraName, obraId) {
  * @param {string} obraId - ID da obra
  * @returns {string} HTML da obra
  */
+
 function buildObraHTML(obraName, obraId) {
   const hasId = obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined";
+  
+  // ✅ CORREÇÃO: Usar ID único para o toggle, fallback para nome se ID não existir
+  const toggleIdentifier = obraId || obraName;
 
-  console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}, HasId: ${hasId}, Botão: ${hasId ? 'ATUALIZAR' : 'SALVAR'}`);
+  console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}, Toggle: ${toggleIdentifier}`);
 
   return `
     <div class="obra-block" data-obra-id="${obraId || ""}" data-obra-name="${obraName}">
       <div class="obra-header">
-        <button class="minimizer" onclick="toggleObra('${obraName}', event)">+</button>
+        <!-- ✅ CORREÇÃO: usar toggleIdentifier em vez de apenas obraName -->
+        <button class="minimizer" onclick="toggleObra('${toggleIdentifier}', event)">+</button>
         <h2 class="obra-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
         <div class="obra-actions">
           <button class="btn btn-delete" onclick="window.deleteObra('${obraName}')">Remover Obra</button>
         </div>
       </div>
-      <div class="obra-content collapsed" id="obra-content-${obraName}">
+      <!-- ✅ CORREÇÃO: usar toggleIdentifier no ID do conteúdo -->
+      <div class="obra-content collapsed" id="obra-content-${toggleIdentifier}">
         <div class="projects-container" id="projects-${obraName}">
-          <!-- Projetos serão inseridos aqui -->
           <p class="empty-message">Adicione projetos a esta obra...</p>
         </div>
         <div class="add-project-section">
