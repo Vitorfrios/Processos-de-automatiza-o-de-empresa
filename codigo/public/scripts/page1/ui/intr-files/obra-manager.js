@@ -1,17 +1,11 @@
+
 /**
  * =====================
- * Gerenciador de obras - obra-manager.js
+ * Gerenciador de obras - obra-maganer.js
  * =====================
  */
 
 import { removeObraFromSession } from '../../data/server.js'
-
-// Variáveis globais para controle do modal
-let pendingDeletion = {
-    obraName: null,
-    obraId: null,
-    obraBlock: null
-};
 
 /**
  * Cria uma obra vazia na interface
@@ -42,7 +36,7 @@ function buildObraHTML(obraName, obraId) {
         <button class="minimizer" onclick="toggleObra('${obraName}', event)">+</button>
         <h2 class="obra-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
         <div class="obra-actions">
-          <button class="btn btn-delete" onclick="window.deleteObra('${obraName}')">Remover Obra</button>
+          <button class="btn btn-delete" onclick="deleteObra('${obraName}')">Remover Obra</button>
         </div>
       </div>
       <div class="obra-content collapsed" id="obra-content-${obraName}">
@@ -120,100 +114,41 @@ function updateObraButtonAfterSave(obraName, obraId) {
 }
 
 /**
- * Mostra o modal de confirmação
- */
-function showConfirmationModal(obraName, obraId, obraBlock) {
-    pendingDeletion = {
-        obraName,
-        obraId,
-        obraBlock
-    };
-
-    const modal = document.getElementById('confirmationModal');
-    const modalMessage = document.getElementById('modalMessage');
-    
-    // Mensagem atualizada
-    modalMessage.innerHTML = `
-        <strong>"${obraName}"</strong> será removida <span style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">apenas da tela</span>.<br><br>
-        
-        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem; border-radius: 8px;">
-            <span style="color: #51f956ff; font-size: 1.2rem;">✓</span>
-            <small style="color: #ffffffff;">A obra permanece salva no servidor e pode ser recuperada a qualquer momento.</small>
-        </div>
-    `;
-    
-    modal.classList.remove('hidden');
-    modal.classList.add('active');
-    
-    setTimeout(() => {
-        document.querySelector('.btn-cancel').focus();
-    }, 100);
-}
-
-/**
- * Fecha o modal de confirmação
- */
-function closeConfirmationModal() {
-    const modal = document.getElementById('confirmationModal');
-    modal.classList.remove('active');
-    modal.classList.add('hidden');
-    pendingDeletion = { obraName: null, obraId: null, obraBlock: null };
-}
-
-/**
- * Confirma e executa a exclusão
- */
-async function confirmDeletion() {
-    const { obraName, obraId, obraBlock } = pendingDeletion;
-    
-    if (!obraName) return;
-    
-    closeConfirmationModal();
-    
-    // Efeito visual de remoção
-    if (obraBlock) {
-        // Adiciona animação de saída
-        obraBlock.style.transition = 'all 0.5s ease';
-        obraBlock.style.transform = 'translateX(-100%)';
-        obraBlock.style.opacity = '0';
-        
-        setTimeout(() => {
-            obraBlock.remove();
-            console.log(`🗑️ Obra ${obraName} removida do DOM`);
-        }, 500);
-    }
-    
-    // Remove do servidor se tiver ID
-    if (obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
-        try {
-            const response = await fetch(`/api/sessions/remove-obra/${obraId}`, {
-                method: 'DELETE'
-            });
-            
-            if (response.ok) {
-                console.log(`🗑️ Obra ${obraName} (ID: ${obraId}) removida da sessão`);
-            } else {
-                console.error(`❌ Falha ao remover obra ${obraName} da sessão`);
-            }
-        } catch (error) {
-            console.error(`❌ Erro ao remover obra ${obraName} da sessão:`, error);
-        }
-    } else {
-        console.log(`ℹ️ Obra ${obraName} não tinha ID salvo, apenas removida do DOM`);
-    }
-}
-
-/**
- * Função principal de deletar obra (ATUALIZADA)
+ * Remove uma obra
+ * @param {string} obraName - Nome da obra
  */
 async function deleteObra(obraName) {
-    const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
-    if (!obraBlock) return;
+  if (!confirm("Tem certeza que deseja remover esta obra? Ela não poderá ser mais editada nessa tela! ")) return
 
+  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`)
+  if (obraBlock) {
+    // ✅ CORREÇÃO: Obter o ID da obra antes de remover
     const obraId = obraBlock.dataset.obraId;
     
-    // Mostra o modal personalizado em vez do confirm básico
-    showConfirmationModal(obraName, obraId, obraBlock);
+    // Remover do DOM
+    obraBlock.remove()
+    console.log(`🗑️ Obra ${obraName} removida do DOM`)
+    
+    // ✅✅✅ CORREÇÃO: Usar a rota CORRETA para obras em vez da rota de compatibilidade
+    if (obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
+      try {
+        // Chamar a rota CORRETA para obras
+        const response = await fetch(`/api/sessions/remove-obra/${obraId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          console.log(`🗑️ Obra ${obraName} (ID: ${obraId}) removida da sessão via rota correta`);
+        } else {
+          console.error(`❌ Falha ao remover obra ${obraName} da sessão`);
+        }
+      } catch (error) {
+        console.error(`❌ Erro ao remover obra ${obraName} da sessão:`, error);
+      }
+    } else {
+      console.log(`ℹ️ Obra ${obraName} não tinha ID salvo, apenas removida do DOM`);
+    }
+  }
 }
 
 /**
@@ -250,48 +185,6 @@ async function addNewObra() {
   }
 }
 
-// ===== EVENT LISTENERS E CONFIGURAÇÃO GLOBAL =====
-
-// Event listeners para os botões do modal
-document.addEventListener('DOMContentLoaded', () => {
-    // Botões do modal
-    document.addEventListener('click', (e) => {
-        if (e.target.matches('[data-action="cancel"]')) {
-            closeConfirmationModal();
-        }
-        if (e.target.matches('[data-action="confirm"]')) {
-            confirmDeletion();
-        }
-    });
-    
-    // Fecha modal clicando fora
-    const modal = document.getElementById('confirmationModal');
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target.id === 'confirmationModal') {
-                closeConfirmationModal();
-            }
-        });
-    }
-});
-
-// Fecha modal com ESC
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeConfirmationModal();
-    }
-});
-
-// ===== EXPORTAÇÕES E CONFIGURAÇÃO GLOBAL =====
-
-// Torne as funções globais para o HTML poder acessar
-window.closeConfirmationModal = closeConfirmationModal;
-window.confirmDeletion = confirmDeletion;
-window.showConfirmationModal = showConfirmationModal;
-window.deleteObra = deleteObra;
-window.addNewObra = addNewObra;
-
-// Exportações para módulos
 export {
     createEmptyObra,
     buildObraHTML,
@@ -301,7 +194,4 @@ export {
     deleteObra,
     getNextObraNumber,
     addNewObra,
-    showConfirmationModal,
-    closeConfirmationModal,
-    confirmDeletion
 }

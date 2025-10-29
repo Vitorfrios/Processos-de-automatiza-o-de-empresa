@@ -187,42 +187,57 @@ async function loadObrasFromServer() {
         console.log(`🔍 createEmptyRoom disponível:`, typeof createEmptyRoom === 'function');
         
         // Renderizar cada obra
+        // Renderizar cada obra
         let loadedCount = 0;
         for (const obraData of obrasDaSessao) {
             console.log(`🔄 Renderizando obra: ${obraData.nome} (ID: ${obraData.id})`);
             
             try {
-                // ✅ CORREÇÃO: Verificar se o obraData.id existe e é válido
                 const obraId = obraData.id && obraData.id !== "" && obraData.id !== "null" && obraData.id !== "undefined" 
                     ? obraData.id 
                     : null;
                 
                 console.log(`🔍 ID da obra ${obraData.nome}:`, obraId);
                 
-                // Deixando createEmptyObra disponível
                 if (typeof createEmptyObra === 'function') {
                     console.log(`🎯 Chamando createEmptyObra para: ${obraData.nome} com ID: ${obraId}`);
                     
-                    // ✅ CORREÇÃO: Passar o obraId corretamente
+                    // Criar obra vazia
                     createEmptyObra(obraData.nome, obraId);
                     
-                    // Adicionar projetos da obra
-                    if (obraData.projetos && obraData.projetos.length > 0) {
-                        obraData.projetos.forEach(projeto => {
-                            if (typeof createEmptyProject === 'function') {
-                                createEmptyProject(obraData.nome, projeto.nome, projeto.id);
+                    // ✅ CORREÇÃO: Aguardar a criação da obra e então preencher com dados
+                    // ✅ CORREÇÃO: Aguardar a criação da obra e então preencher com dados
+                    // ✅ CORREÇÃO: Aguardar a criação da obra e então preencher com dados
+                    setTimeout(async () => {
+                        const obraElement = document.querySelector(`[data-obra-name="${obraData.nome}"]`);
+                        if (obraElement) {
+                            console.log(`🎨 Preenchendo dados da obra "${obraData.nome}"...`);
+                            
+                            try {
+                                // ✅ CORREÇÃO: IMPORTAR AS FUNÇÕES DE CRIAÇÃO PRIMEIRO
+                                const populateModule = await import('./data-files/data-populate.js');
+                                const projectManagerModule = await import('../ui/intr-files/project-manager.js');
+                                const roomOperationsModule = await import('../data/modules/room-operations.js');
                                 
-                                // Adicionar salas do projeto
-                                if (projeto.salas && projeto.salas.length > 0) {
-                                    projeto.salas.forEach(sala => {
-                                        if (typeof createEmptyRoom === 'function') {
-                                            createEmptyRoom(obraData.nome, projeto.nome, sala.nome, sala.id);
-                                        }
-                                    });
+                                // ✅ CORREÇÃO: PASSAR AS FUNÇÕES COMO PARÂMETRO
+                                if (populateModule.populateObraData) {
+                                    await populateModule.populateObraData(
+                                        obraElement, 
+                                        obraData,
+                                        projectManagerModule.createEmptyProject,
+                                        roomOperationsModule.createEmptyRoom
+                                    );
+                                    console.log(`🎉 Obra "${obraData.nome}" preenchida completamente`);
+                                } else {
+                                    console.error('❌ Função populateObraData não encontrada');
                                 }
+                            } catch (error) {
+                                console.error('❌ Erro ao importar/preencher módulo:', error);
                             }
-                        });
-                    }
+                        } else {
+                            console.error(`❌ Elemento da obra "${obraData.nome}" não encontrado para preenchimento`);
+                        }
+                    }, 200);
                     
                     loadedCount++;
                     console.log(`✅ Obra ${obraData.nome} processada com sucesso`);

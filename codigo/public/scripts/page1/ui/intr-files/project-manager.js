@@ -8,6 +8,7 @@ import { removeEmptyObraMessage } from './ui-helpers.js'
  * Gerenciador de projetos
  */
 
+
 /**
  * Cria um projeto vazio dentro de uma obra
  * @param {string} obraName - Nome da obra
@@ -15,25 +16,50 @@ import { removeEmptyObraMessage } from './ui-helpers.js'
  * @param {string} projectId - ID do projeto (opcional)
  */
 function createEmptyProject(obraName, projectName, projectId) {
-  const obraElement = document.querySelector(`[data-obra-name="${obraName}"]`)
-  if (!obraElement) {
-    console.error(`❌ Obra ${obraName} não encontrada`)
-    return
-  }
-
-  const finalProjectId = projectId || generateProjectId(obraElement)
-  const projectHTML = buildProjectHTML(obraName, projectName, finalProjectId)
-  const obraProjectsContainer = document.getElementById(`projects-${obraName}`)
-
-  if (obraProjectsContainer) {
-    obraProjectsContainer.insertAdjacentHTML("beforeend", projectHTML)
-    console.log(`📁 Projeto ${projectName} criado na obra ${obraName} com ID: ${finalProjectId}`)
+    console.log(`📁 [CREATE PROJECT] Buscando obra: "${obraName}" para criar projeto: "${projectName}"`);
     
-    // REMOVER MENSAGEM DE OBRA VAZIA
-    removeEmptyObraMessage(obraName)
-  } else {
-    console.error(`❌ Container de projetos não encontrado para obra ${obraName}`)
-  }
+    // ✅ CORREÇÃO: Buscar obra com seletor mais específico
+    const obraElement = document.querySelector(`.obra-block[data-obra-name="${obraName}"]`);
+    
+    if (!obraElement) {
+        console.error(`❌ Obra "${obraName}" não encontrada no DOM`);
+        console.log(`🔍 Obras disponíveis:`, Array.from(document.querySelectorAll('.obra-block')).map(o => o.dataset.obraName));
+        return;
+    }
+
+    console.log(`✅ Obra encontrada:`, obraElement.dataset);
+
+    const finalProjectId = projectId || generateProjectId(obraElement);
+    const projectHTML = buildProjectHTML(obraName, projectName, finalProjectId);
+    const obraProjectsContainer = document.getElementById(`projects-${obraName}`);
+
+    if (obraProjectsContainer) {
+        console.log(`✅ Container de projetos encontrado: projects-${obraName}`);
+        
+        // ✅ CORREÇÃO: Remover mensagem de obra vazia antes de inserir
+        const emptyMessage = obraProjectsContainer.querySelector('.empty-message');
+        if (emptyMessage) {
+            emptyMessage.remove();
+            console.log(`✅ Mensagem de obra vazia removida`);
+        }
+        
+        // ✅ CORREÇÃO: Inserir projeto no container
+        obraProjectsContainer.insertAdjacentHTML("beforeend", projectHTML);
+        console.log(`✅ Projeto ${projectName} criado na obra ${obraName} com ID: ${finalProjectId}`);
+        
+        // ✅ CORREÇÃO: Verificar se o projeto foi realmente criado
+        setTimeout(() => {
+            const createdProject = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`);
+            if (createdProject) {
+                console.log(`✅ PROJETO CONFIRMADO NO DOM: ${projectName}`, createdProject);
+            } else {
+                console.error(`❌ PROJETO NÃO CRIADO: ${projectName} não encontrado no DOM após criação`);
+            }
+        }, 100);
+    } else {
+        console.error(`❌ Container de projetos não encontrado para obra ${obraName}`);
+        console.log(`🔍 Containers disponíveis:`, Array.from(document.querySelectorAll('[id^="projects-"]')).map(c => c.id));
+    }
 }
 
 /**
@@ -45,11 +71,13 @@ function createEmptyProject(obraName, projectName, projectId) {
  * @returns {string} HTML completo do bloco do projeto
  */
 function buildProjectHTML(obraName, projectName, projectId) {
-  const hasId = projectId !== null && projectId !== undefined && projectId !== ""
-  // ID único incluindo obra para evitar conflitos
-  const uniqueProjectId = `${obraName}-${projectName}`.replace(/\s+/g, '-').toLowerCase()
+    const hasId = projectId !== null && projectId !== undefined && projectId !== ""
+    // ID único incluindo obra para evitar conflitos
+    const uniqueProjectId = `${obraName}-${projectName}`.replace(/\s+/g, '-').toLowerCase()
 
-  return `
+    console.log(`🔨 [BUILD PROJECT HTML] Obra: ${obraName}, Projeto: ${projectName}, ID: ${projectId}, UniqueID: ${uniqueProjectId}`);
+
+    return `
     <div class="project-block" data-project-id="${projectId || ""}" data-project-name="${projectName}" data-obra-name="${obraName}">
       <div class="project-header">
         <button class="minimizer" onclick="toggleProject('${uniqueProjectId}', event)">+</button>

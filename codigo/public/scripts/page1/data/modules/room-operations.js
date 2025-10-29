@@ -149,23 +149,18 @@ function initializeRoomComponents(obraName, projectName, roomName, roomId) {
         }
     }, 800);
     
-    // 3. Inicializar componentes das máquinas
-    setTimeout(() => {
-        if (typeof initializeMachineComponentsForRoom === 'function') {
-            initializeMachineComponentsForRoom(roomId);
-        } else {
-            console.log(`⚠️ initializeMachineComponentsForRoom não disponível para ${roomId}`);
+    // 3. ✅ CORREÇÃO: Pré-carregar dados das máquinas para evitar o warning
+    setTimeout(async () => {
+        try {
+            const machinesModule = await import('./machines/machinesBuilder.js');
+            if (machinesModule.preloadMachinesDataForRoom) {
+                await machinesModule.preloadMachinesDataForRoom(roomId);
+                console.log(`✅ Dados das máquinas pré-carregados para ${roomId}`);
+            }
+        } catch (error) {
+            console.log(`⚠️ Não foi possível pré-carregar dados das máquinas para ${roomId}:`, error);
         }
-    }, 1200);
-    
-    // 4. Verificar dados das máquinas
-    setTimeout(() => {
-        if (window.machinesData && window.machinesData.length > 0) {
-            console.log(`✅ Dados das máquinas disponíveis para ${roomId}: ${window.machinesData.length} máquinas`);
-        } else {
-            console.log(`⚠️ Dados das máquinas não disponíveis para ${roomId}`);
-        }
-    }, 1500);
+    }, 1000);
 }
 
 /**
