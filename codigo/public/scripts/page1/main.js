@@ -223,27 +223,27 @@ async function loadAllModules() {
       makeEditable: editModule.makeEditable,
 
       // Projects - ✅ CORREÇÃO: AGORA COM TODAS AS FUNÇÕES
-      deleteProject: projectsModule.deleteProject,
       saveObra: projectsModule.saveObra,
       fetchObras: projectsModule.fetchObras,
       salvarObra: projectsModule.salvarObra,
       atualizarObra: projectsModule.atualizarObra,
-
+      
       // Rooms
       addNewRoom: roomsModule.addNewRoom,
       deleteRoom: roomsModule.deleteRoom,
       addMachine: roomsModule.addMachine,
       createEmptyRoom: roomsModule.createEmptyRoom,
-
+      
       // Cálculos
       calculateVazaoArAndThermalGains: calculosModule.calculateVazaoArAndThermalGains,
       calculateVazaoAr: calculosModule.calculateVazaoAr,
       calculateThermalGains: calculosModule.calculateThermalGains,
-
+      
       // Utils
-      ensureStringId: utilsModule.ensureStringId
+      ensureStringId: utilsModule.ensureStringId,
+      deleteProject: projectManagerModule.deleteProject
     };
-
+    
     // ✅ CORREÇÃO: Verificar cada função antes de atribuir
     Object.keys(allFunctions).forEach(funcName => {
       if (typeof allFunctions[funcName] === 'function') {

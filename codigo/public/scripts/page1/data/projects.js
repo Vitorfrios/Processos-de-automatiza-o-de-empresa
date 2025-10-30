@@ -342,26 +342,6 @@ async function saveObra(obraId, event) {
     }
 }
 
-/**
- * Deleta um projeto da interface (apenas remoção visual)
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto a ser deletado
- * @returns {Promise<void>}
- */
-async function deleteProject(obraName, projectName) {
-    // ✅ CORREÇÃO: Buscar por IDs únicos
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`)
-    if (!projectBlock) {
-        console.error(`❌ Projeto ${projectName} não encontrado na obra ${obraName}`);
-        return;
-    }
-
-    // Apenas remove da interface - o salvamento da obra atualizada vai refletir a remoção
-    projectBlock.remove()
-
-    console.log(`🗑️ Projeto ${projectName} removido da obra ${obraName}`)
-    showSystemStatus("Projeto removido da obra", "success")
-}
 
 /**
  * Deleta uma obra do servidor
@@ -470,36 +450,17 @@ function calculateRoomCompletionStats(room) {
   };
 }
 
-/**
- * Função de compatibilidade para código existente que usa apenas projectName
- * @param {string} projectName - Nome do projeto a ser deletado
- * @returns {Promise<void>}
- */
-async function deleteProjectLegacy(projectName) {
-    // Tenta encontrar a obra do projeto
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
-    const obraName = projectBlock?.dataset.obraName;
-    
-    if (obraName) {
-        return deleteProject(obraName, projectName);
-    } else {
-        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
-        showSystemStatus("ERRO: Projeto não está associado a uma obra", "error");
-    }
-}
 
 // Exportações para compatibilidade
 window.saveObra = saveObra;
 window.verifyObraData = verifyObraData;
-window.deleteProject = deleteProjectLegacy;
 
 export {
   fetchObras,
   salvarObra,
   atualizarObra,
   saveObra,
-  deleteProject,
-  deleteProjectLegacy,
+
   deleteObraFromServer,
   verifyObraData,
   calculateRoomCompletionStats,
