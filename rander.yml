@@ -1,13 +1,10 @@
-# render.yaml
 services:
   - type: web
-    name: meu-app
-    env: python  # ou node, ou static
+    name: obra-system
+    env: python
     plan: free
-    buildCommand: pip install -r requirements.txt  # para Python
-    startCommand: gunicorn app:app  # para Python
-    # buildCommand: npm install  # para Node.js
-    # startCommand: npm start  # para Node.js
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
