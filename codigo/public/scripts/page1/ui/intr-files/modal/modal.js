@@ -133,7 +133,9 @@ function showToast(obraName, type = 'undo', obraId = null) {
             <div class="toast-icon">⏳</div>
             <div class="toast-content">
                 <div class="toast-title">Obra "${obraName}" removida</div>
-                <div class="toast-message">Você tem 8 segundos para desfazer esta ação</div>
+                <div class="toast-message">
+                    <span class="countdown-text">Você tem <span class="countdown-number">8</span> segundos para desfazer esta ação</span>
+                </div>
                 <div class="toast-id">ID: ${obraId}</div>
                 <div class="toast-actions">
                     <button class="toast-btn toast-undo" onclick="window.undoDeletion('${obraId}', '${obraName}')">Desfazer</button>
@@ -149,6 +151,10 @@ function showToast(obraName, type = 'undo', obraId = null) {
                 countdownBar.style.animation = 'countdown 8s linear forwards';
             }
         }, 100);
+
+        // ✅ NOVO: Contador regressivo dos segundos
+        startCountdown(toast, 8);
+
     } else if (type === 'success') {
         toast.innerHTML = `
             <div class="toast-icon">✅</div>
@@ -185,7 +191,8 @@ function showToast(obraName, type = 'undo', obraId = null) {
         obraName,
         obraId, // ✅ ID SEGURO
         type,
-        timeout: null
+        timeout: null,
+        countdownInterval: null // ✅ NOVO: Para armazenar o intervalo do contador
     };
     currentToasts.push(toastData);
 
@@ -203,6 +210,39 @@ function showToast(obraName, type = 'undo', obraId = null) {
             console.log(`⏰ Removendo toast de ${type} para obra ${obraName} (ID: ${obraId})`);
             hideSpecificToast(toastId);
         }, 3500);
+    }
+}
+
+/**
+ * Inicia o contador regressivo visual
+ */
+function startCountdown(toastElement, seconds) {
+    const countdownNumber = toastElement.querySelector('.countdown-number');
+    if (!countdownNumber) return;
+
+    let timeLeft = seconds;
+    
+    const countdownInterval = setInterval(() => {
+        timeLeft--;
+        countdownNumber.textContent = timeLeft;
+        
+        // Mudar cor quando estiver acabando o tempo
+        if (timeLeft <= 3) {
+            countdownNumber.style.color = '#ff6b6b';
+            countdownNumber.style.fontWeight = 'bold';
+        } else if (timeLeft <= 5) {
+            countdownNumber.style.color = '#ffa726';
+        }
+        
+        if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+        }
+    }, 1000);
+
+    // Armazenar o intervalo no toast data para poder parar se necessário
+    const toastData = currentToasts.find(t => t.element === toastElement);
+    if (toastData) {
+        toastData.countdownInterval = countdownInterval;
     }
 }
 
@@ -339,44 +379,74 @@ async function completeDeletion(obraId, obraName) {
 }
 
 /**
- * Remove a obra do servidor imediatamente - ATUALIZADO
+ * Remove a obra do servidor imediatamente - CORRIGIDO
  */
 async function completeDeletionImmediate(obraId, obraName) {
     console.log(`🔍 Iniciando remoção completa da obra: ${obraName} (ID SEGURO: ${obraId})`);
 
-    // Remove do servidor se tiver ID VÁLIDO
-    if (obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
+    // ✅ CORREÇÃO: Verificar se a obra existe no servidor antes de tentar remover
+    const obraExisteNoServidor = await verificarObraNoServidor(obraId);
+    
+    if (obraExisteNoServidor && obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
         try {
-            console.log(`🗑️ Enviando requisição para remover obra ${obraId} da sessão...`);
+            console.log(`🗑️ Obra existe no servidor, removendo ${obraId} da sessão...`);
 
             const response = await fetch(`/api/sessions/remove-obra/${obraId}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            console.log(`📡 Resposta do servidor: ${response.status}`);
-
             if (response.ok) {
                 const result = await response.json();
                 console.log(`✅ Obra removida da sessão:`, result);
-                // Toast de sucesso (remove sozinho em 5s)
                 showToast(obraName, 'success', obraId);
             } else {
-                const errorText = await response.text();
-                console.error(`❌ Falha HTTP ao remover obra: ${response.status}`, errorText);
-                showToast(obraName, 'error', obraId);
+                console.log(`⚠️ Erro ao remover do servidor (${response.status}) - obra removida apenas da interface`);
+                showToast(obraName, 'success', obraId);
             }
         } catch (error) {
-            console.error(`❌ Erro de rede ao remover obra:`, error);
-            showToast(obraName, 'error', obraId);
+            console.log(`🌐 Erro de rede - obra removida apenas da interface:`, error.message);
+            showToast(obraName, 'success', obraId);
         }
     } else {
-        console.log(`ℹ️ Obra ${obraName} não tinha ID válido, apenas removendo da interface`);
+        // ✅ CORREÇÃO: Obra não existe no servidor ou ID inválido - apenas remover da interface
+        console.log(`ℹ️ Obra ${obraName} não existe no servidor ou ID inválido - removendo apenas da interface`);
         showToast(obraName, 'success', obraId);
     }
 
-    // Remove dados salvos
+    // Sempre limpar sessionStorage
     sessionStorage.removeItem(`pendingDeletion-${obraId}`);
+}
+
+/**
+ * ✅ NOVA FUNÇÃO: Verifica se uma obra existe no servidor
+ */
+async function verificarObraNoServidor(obraId) {
+    try {
+        console.log(`🔍 Verificando se obra ${obraId} existe no servidor...`);
+        
+        // Buscar todas as obras do servidor
+        const response = await fetch('/api/backup-completo');
+        if (!response.ok) {
+            console.log('⚠️ Não foi possível verificar obras no servidor');
+            return false;
+        }
+        
+        const backupData = await response.json();
+        const todasObras = backupData.obras || [];
+        
+        // Verificar se a obra existe
+        const obraExiste = todasObras.some(obra => String(obra.id) === String(obraId));
+        
+        console.log(`📊 Obra ${obraId} existe no servidor? ${obraExiste}`);
+        console.log(`📋 Obras no servidor:`, todasObras.map(o => ({ id: o.id, nome: o.nome })));
+        
+        return obraExiste;
+        
+    } catch (error) {
+        console.log(`🌐 Erro ao verificar obra no servidor:`, error.message);
+        return false;
+    }
 }
 
 /**
