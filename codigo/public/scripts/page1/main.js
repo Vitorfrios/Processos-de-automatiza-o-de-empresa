@@ -185,7 +185,9 @@ async function loadAllModules() {
       import('./data/rooms.js'),
       import('./features/calculos/calculos-manager.js'),
       import('./utils/utils.js'),
-      import('./ui/intr-files/project-manager.js')
+      import('./ui/intr-files/project-manager.js'),
+      import('./ui/intr-files/status-manager.js')
+
     ]);
     
 
@@ -195,7 +197,9 @@ async function loadAllModules() {
       projectsModule,
       roomsModule,
       calculosModule,
-      utilsModule
+      utilsModule,
+      projectManagerModule,  // ✅ NOVO
+      statusManagerModule     // ✅ NOVO
     ] = modules;
 
     // ✅ CORREÇÃO: Atribuir TODAS as funções ao window - VERSÃO COMPLETA
@@ -210,7 +214,7 @@ async function loadAllModules() {
       expandElement: interfaceModule.expandElement,
       addNewObra: interfaceModule.addNewObra,
       addNewProjectToObra: interfaceModule.addNewProjectToObra,
-      showSystemStatus: interfaceModule.showSystemStatus,
+      showSystemStatus: statusManagerModule.showSystemStatus,
       saveOrUpdateObra: interfaceModule.saveOrUpdateObra,
       verifyObraData: projectsModule.verifyObraData,
       deleteObra: interfaceModule.deleteObra,

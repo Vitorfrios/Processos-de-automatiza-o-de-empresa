@@ -147,27 +147,33 @@ function getRoomCountInProject(obraId, projectId) {
 function initializeRoomComponents(obraId, projectId, roomName, roomId) {
     console.log(`🔧 Inicializando componentes da sala: ${roomName} (ID: ${roomId})`);
     
-    // 1. Inicializar fator de segurança
-    setTimeout(() => {
-        if (typeof initializeFatorSeguranca === 'function') {
-            initializeFatorSeguranca(roomId);
-            console.log(`✅ Fator de segurança inicializado para ${roomId}`);
-        } else {
-            console.log(`⚠️ initializeFatorSeguranca não disponível para ${roomId}`);
-        }
-    }, 500);
+    // ✅ CORREÇÃO: Verificar se as funções existem antes de chamar
+    const initializeWithRetry = (functionName, delay, maxAttempts = 5) => {
+        let attempts = 0;
+        
+        const tryInitialize = () => {
+            if (typeof window[functionName] === 'function') {
+                window[functionName](roomId);
+                console.log(`✅ ${functionName} inicializado para ${roomId}`);
+            } else if (attempts < maxAttempts) {
+                attempts++;
+                console.log(`⏳ Tentativa ${attempts}/${maxAttempts} - ${functionName} não disponível, tentando novamente...`);
+                setTimeout(tryInitialize, delay);
+            } else {
+                console.log(`ℹ️ ${functionName} não disponível após ${maxAttempts} tentativas - pode ser normal`);
+            }
+        };
+        
+        setTimeout(tryInitialize, delay);
+    };
     
-    // 2. Sincronizar backup
-    setTimeout(() => {
-        if (typeof window.syncCapacityTableBackup !== 'undefined') {
-            window.syncCapacityTableBackup(roomId);
-            console.log(`✅ Backup sincronizado para ${roomId}`);
-        } else {
-            console.log(`⚠️ syncCapacityTableBackup não disponível para ${roomId}`);
-        }
-    }, 800);
+    // 1. Inicializar fator de segurança com retry
+    initializeWithRetry('initializeFatorSeguranca', 300, 5);
     
-    // 3. ✅ CORREÇÃO: Pré-carregar dados das máquinas para evitar o warning
+    // 2. Sincronizar backup com retry
+    initializeWithRetry('syncCapacityTableBackup', 500, 3);
+    
+    // 3. ✅ CORREÇÃO: Pré-carregar dados das máquinas
     setTimeout(async () => {
         try {
             const machinesModule = await import('./machines/machinesBuilder.js');
@@ -176,9 +182,27 @@ function initializeRoomComponents(obraId, projectId, roomName, roomId) {
                 console.log(`✅ Dados das máquinas pré-carregados para ${roomId}`);
             }
         } catch (error) {
-            console.log(`⚠️ Não foi possível pré-carregar dados das máquinas para ${roomId}:`, error);
+            console.log(`ℹ️ Não foi possível pré-carregar dados das máquinas para ${roomId} - pode ser normal`);
         }
-    }, 1000);
+    }, 800);
+}
+
+/**
+ * Função auxiliar para inicializar fator de segurança de forma segura
+ * @param {string} roomId - ID único da sala
+ * @returns {void}
+ */
+function safeInitializeFatorSeguranca(roomId) {
+    if (typeof window.initializeFatorSeguranca === 'function') {
+        try {
+            window.initializeFatorSeguranca(roomId);
+            console.log(`✅ Fator de segurança inicializado para ${roomId}`);
+        } catch (error) {
+            console.log(`ℹ️ Erro ao inicializar fator de segurança para ${roomId}:`, error.message);
+        }
+    } else {
+        console.log(`ℹ️ initializeFatorSeguranca não disponível - aguardando carregamento`);
+    }
 }
 
 /**
@@ -240,23 +264,6 @@ async function addNewRoom(obraId, projectId) {
     console.log(`✅ ${roomName} adicionada à obra "${obraId}", projeto "${projectId}"`);
 }
 
-/**
- * Função de compatibilidade para código existente que usa apenas projectName
- * @param {string} projectName - Nome do projeto
- * @returns {Promise<void>}
- */
-async function addNewRoomLegacy(projectName) {
-    // Tenta encontrar a obra do projeto
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
-    const obraId = projectBlock?.dataset.obraId;
-    const projectId = projectBlock?.dataset.projectId;
-    
-    if (obraId && projectId) {
-        return addNewRoom(obraId, projectId);
-    } else {
-        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
-    }
-}
 
 /**
  * Remove uma sala do projeto após confirmação do usuário - CORREÇÃO COMPLETA
@@ -279,8 +286,8 @@ function deleteRoom(obraId, projectId, roomId) {
 
     roomBlock.remove();
     
-    if (projectContent) {
-        showEmptyProjectMessageIfNeeded(projectContent);
+    if (projectContent && typeof window.showEmptyProjectMessageIfNeeded === 'function') {
+        window.showEmptyProjectMessageIfNeeded(projectContent);
     }
 
     console.log(`🗑️ Sala ${roomName} (ID: ${roomId}) removida da obra "${obraId}", projeto "${projectId}"`);
@@ -353,9 +360,9 @@ export {
     createEmptyRoom,
     insertRoomIntoProject,
     addNewRoom,
-    addNewRoomLegacy,
     deleteRoom,
-    deleteRoomLegacy
+    deleteRoomLegacy,
+    safeInitializeFatorSeguranca
 }
 
 // Disponibilização global correta
@@ -363,4 +370,5 @@ if (typeof window !== 'undefined') {
     window.addNewRoom = addNewRoom;
     window.deleteRoom = deleteRoom;
     window.createEmptyRoom = createEmptyRoom;
+    window.safeInitializeFatorSeguranca = safeInitializeFatorSeguranca;
 }

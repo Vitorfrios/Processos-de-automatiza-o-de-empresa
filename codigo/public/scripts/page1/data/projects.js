@@ -1,7 +1,8 @@
 // projects.js
 import { ensureStringId } from "../utils/utils.js"
 import { buildObraData } from "./data-utils.js"
-// REMOVIDO NA REFACTOR: import { showSystemStatus, updateObraButtonAfterSave } from "../ui/interface.js"
+import { showSystemStatus} from '../ui/intr-files/status-manager.js'
+import{ updateObraButtonAfterSave } from "../ui/intr-files/obra-manager.js"
 import { isSessionActive, startSessionOnFirstSave } from "./server.js";
 
 /**
@@ -326,9 +327,10 @@ async function saveObra(obraId, event) {
             titleElement.textContent = obraData.nome;
         }
 
-        // Atualizar o botão para "Atualizar Obra"
+        // ✅✅✅ CORREÇÃO: Usar obraData.nome em vez de obraName
         if (typeof updateObraButtonAfterSave === 'function') {
-            updateObraButtonAfterSave(obraName, finalId);
+            console.info("Setpoint informação chegando até aqui")
+            updateObraButtonAfterSave(obraData.nome, finalId);
         }
 
         console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${finalId}`);

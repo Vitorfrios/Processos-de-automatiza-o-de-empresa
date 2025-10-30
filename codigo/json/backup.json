@@ -12,11 +12,102 @@
       "timestamp": "2025-10-30T16:13:01.712Z",
       "projetos": []
     },
-        {
+    {
       "id": "obra_g82",
       "nome": "Obra2",
       "timestamp": "2025-10-30T16:13:01.712Z",
       "projetos": []
+    },
+    {
+      "id": "obra_b75",
+      "nome": "Obra3",
+      "timestamp": "2025-10-30T17:28:18.811Z",
+      "projetos": [
+        {
+          "id": "obra_b75_proj_n35_1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_b75_proj_n35_1_sala_b73_1",
+              "nome": "Sala1",
+              "inputs": {
+                "setpointPressurizacao": 25,
+                "numPortasSimples": "0",
+                "numPortasDuplas": "0",
+                "pressurizacao": true
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Split System",
+                  "potencia": "3TR",
+                  "tensao": "220V/1F",
+                  "precoBase": 8945,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 3,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 4,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "2 Dampers Manuais",
+                      "value": 5,
+                      "originalName": "2 Dampers Manuais",
+                      "potenciaAplicada": "3TR"
+                    }
+                  ],
+                  "precoTotal": 13957,
+                  "potenciaSelecionada": "3TR",
+                  "tipoSelecionado": "Split System"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 1.2,
+                "capacidadeUnitaria": 10,
+                "backup": "n",
+                "cargaEstimada": 14,
+                "solucao": "2",
+                "solucaoBackup": "2",
+                "totalCapacidade": "20.0",
+                "folga": "42.9%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se",
+                  "evaporadoras_internas",
+                  "evaporadoras_casa_maquinas",
+                  "condensadores_externos"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-30T17:28:18.811Z"
+        }
+      ]
     }
   ]
 }

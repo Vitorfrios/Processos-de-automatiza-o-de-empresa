@@ -238,6 +238,13 @@ function saveCapacityData(roomId) {
 
     console.log(`[CAPACITY] Salvando dados para sala: ${roomId}`)
 
+    // ✅ CORREÇÃO: Verificar primeiro se a sala existe localmente (recém-criada)
+    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (!roomElement) {
+      console.log(`[CAPACITY] Sala ${roomId} não encontrada localmente - ignorando save`)
+      return;
+    }
+
     // Buscar todas as obras
     fetch(`/obras`)
       .then(response => {
@@ -252,7 +259,7 @@ function saveCapacityData(roomId) {
         let obraUpdated = false
         let obraParaAtualizar = null
         
-        // ✅ CORREÇÃO: Buscar pela sala usando roomId
+        // Buscar pela sala usando roomId
         for (const obra of obras) {
           for (const projeto of obra.projetos || []) {
             for (const sala of projeto.salas || []) {
@@ -275,7 +282,7 @@ function saveCapacityData(roomId) {
         }
 
         if (!obraUpdated) {
-          console.warn(`[CAPACITY] Sala com ID ${roomId} não encontrada em nenhuma obra`)
+          console.log(`[CAPACITY] Sala ${roomId} ainda não salva no servidor - dados mantidos localmente`)
           return
         }
 
@@ -292,15 +299,15 @@ function saveCapacityData(roomId) {
         if (response && response.ok) {
           console.log(`[CAPACITY] Dados de capacidade salvos para sala ${roomId}`)
         } else if (response) {
-          console.error(`[CAPACITY] Erro ao salvar: ${response.status}`)
+          console.log(`[CAPACITY] Erro HTTP ${response.status} ao salvar`)
         }
       })
       .catch(error => {
-        console.error('[CAPACITY] Erro ao salvar dados de capacidade:', error)
+        console.log(`[CAPACITY] Erro ao buscar obras: ${error.message}`)
       })
       
   } catch (error) {
-    console.error('[CAPACITY] Erro ao salvar dados de capacidade:', error)
+    console.log(`[CAPACITY] Erro inesperado: ${error.message}`)
   }
 }
 

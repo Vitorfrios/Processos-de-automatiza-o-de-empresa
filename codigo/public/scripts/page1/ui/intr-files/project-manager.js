@@ -48,6 +48,8 @@ function buildProjectHTML(obraId, obraName, projectId, projectName) {
             </div>
             <!-- ✅ CORREÇÃO: usar APENAS projectId no conteúdo -->
             <div class="project-content collapsed" id="project-content-${finalProjectId}">
+
+            
                 <div class="rooms-container">
                     <p class="empty-message">Adicione salas a este projeto...</p>
                 </div>

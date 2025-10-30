@@ -60,7 +60,7 @@ function buildObraHTML(obraName, obraId) {
           <!-- ✅ CORREÇÃO: Passar obraId para a função -->
           <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraId}')">+ Adicionar Projeto</button>
         </div>
-        ${buildObraActionsFooter(obraName, !!obraId)}
+        ${buildObraActionsFooter(obraId, obraName, false)} 
       </div>
     </div>
   `;
@@ -121,7 +121,7 @@ function updateObraButtonAfterSave(obraName, obraId) {
   if (obraContent) {
     const oldFooter = obraContent.querySelector('.obra-actions-footer')
     if (oldFooter) {
-      const newFooter = buildObraActionsFooter(obraName, true)
+      const newFooter = buildObraActionsFooter(obraId, obraName, true)
       oldFooter.outerHTML = newFooter
       console.log(`🔄 Botão da obra ${obraName} ATUALIZADO para "Atualizar Obra" (ID: ${obraId})`)
     } else {
