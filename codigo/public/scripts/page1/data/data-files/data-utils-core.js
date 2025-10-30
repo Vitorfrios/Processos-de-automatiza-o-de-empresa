@@ -31,25 +31,39 @@ function generateObraId() {
 }
 
 /**
- * Gera ID hierárquico seguro para projeto - SEGURO E ÚNICO
+ * Gera ID hierárquico seguro para projeto - SEGURO E ÚNICO (VERSÃO CORRIGIDA)
  * @param {HTMLElement} obraElement - Elemento da obra pai
  * @param {number} projectNumber - Número sequencial do projeto
  * @returns {string} ID único do projeto
  */
 function generateProjectId(obraElement, projectNumber) {
     if (!obraElement) {
-        console.error(`ERRO FALBACK (generateProjectId) data-utils-core.js [Elemento da obra não fornecido]`);
+        console.error(`ERRO FALBACK (generateProjectId) [Elemento da obra não fornecido]`);
         return generateSecureId('proj');
     }
     
     const obraId = obraElement.dataset?.obraId;
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
-        console.error(`ERRO FALBACK (generateProjectId) data-utils-core.js [Obra ID inválido no dataset: ${obraId}]`);
+        console.error(`ERRO FALBACK (generateProjectId) [Obra ID inválido no dataset: ${obraId}]`);
         return generateSecureId('proj');
     }
     
+    // ✅ CORREÇÃO: Se projectNumber for undefined, calcular automaticamente
+    let finalProjectNumber = projectNumber;
+    if (finalProjectNumber === undefined || finalProjectNumber === null) {
+        console.warn(`⚠️  projectNumber é ${projectNumber}, calculando automaticamente...`);
+        
+        // Calcula contando projetos existentes
+        const existingProjects = obraElement.querySelectorAll('[data-project-id]');
+        finalProjectNumber = existingProjects.length + 1;
+        console.log(`📊 Calculado: ${existingProjects.length} projetos + 1 = ${finalProjectNumber}`);
+    }
+    
     const projectPrefix = generateSecureId('proj').replace('proj_', '');
-    return `${obraId}_proj_${projectPrefix}_${projectNumber}`;
+    const projectId = `${obraId}_proj_${projectPrefix}_${finalProjectNumber}`;
+    
+    console.log(`🆕 ID do projeto gerado: ${projectId}`);
+    return projectId;
 }
 
 /**
@@ -60,18 +74,139 @@ function generateProjectId(obraElement, projectNumber) {
  */
 function generateRoomId(projectElement, roomNumber) {
     if (!projectElement) {
-        console.error(`ERRO FALBACK (generateRoomId) data-utils-core.js [Elemento do projeto não fornecido]`);
+        console.error(`ERRO FALBACK (generateRoomId) [Elemento do projeto não fornecido]`);
         return generateSecureId('sala');
     }
     
     const projectId = projectElement.dataset?.projectId;
     if (!projectId || projectId === 'undefined' || projectId === 'null') {
-        console.error(`ERRO FALBACK (generateRoomId) data-utils-core.js [Project ID inválido no dataset: ${projectId}]`);
+        console.error(`ERRO FALBACK (generateRoomId) [Project ID inválido no dataset: ${projectId}]`);
         return generateSecureId('sala');
     }
     
+    // ✅ CORREÇÃO: Se roomNumber for undefined, calcular automaticamente
+    let finalRoomNumber = roomNumber;
+    if (finalRoomNumber === undefined || finalRoomNumber === null) {
+        console.warn(`⚠️  roomNumber é ${roomNumber}, calculando automaticamente...`);
+        
+        // Calcula contando salas existentes
+        const existingRooms = projectElement.querySelectorAll('[data-room-id]');
+        finalRoomNumber = existingRooms.length + 1;
+        console.log(`📊 Calculado: ${existingRooms.length} salas + 1 = ${finalRoomNumber}`);
+    }
+    
     const roomPrefix = generateSecureId('sala').replace('sala_', '');
-    return `${projectId}_sala_${roomPrefix}_${roomNumber}`;
+    const roomId = `${projectId}_sala_${roomPrefix}_${finalRoomNumber}`;
+    
+    console.log(`🆕 ID da sala gerado: ${roomId}`);
+    return roomId;
+}
+
+// =============================================================================
+// FUNÇÕES DE NUMERAÇÃO - NOVAS FUNÇÕES ADICIONADAS
+// =============================================================================
+
+/**
+ * Obtém o próximo número de projeto disponível - CORRIGIDO
+ * @returns {number} Próximo número disponível para projeto
+ */
+function getNextProjectNumber() {
+  try {
+    const projectBlocks = document.querySelectorAll('.project-block');
+    let maxNumber = 0;
+
+    projectBlocks.forEach(project => {
+      const projectName = project.dataset.projectName || 
+                         project.querySelector('.project-title')?.textContent || '';
+      
+      if (projectName) {
+        // Suporta: "Projeto1", "Projeto 2", "Projeto-3", etc.
+        const match = projectName.match(/Projeto\s*[-_]?\s*(\d+)/i);
+        if (match) {
+          const num = parseInt(match[1]);
+          if (num > maxNumber) maxNumber = num;
+        }
+      }
+    });
+
+    console.log(`🔢 Next project number: ${maxNumber + 1} (max found: ${maxNumber})`);
+    return maxNumber + 1;
+
+  } catch (error) {
+    console.error('❌ Erro em getNextProjectNumber:', error);
+    return 1; // Fallback seguro
+  }
+}
+
+/**
+ * Obtém o próximo número de sala - CORRIGIDO
+ * @param {string} projectId - ID do projeto
+ * @returns {number} Próximo número disponível para sala
+ */
+function getNextRoomNumber(projectId) {
+  try {
+    const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`);
+    if (!projectBlock) {
+      console.warn(`⚠️ Projeto ${projectId} não encontrado, usando sala 1`);
+      return 1;
+    }
+
+    const roomBlocks = projectBlock.querySelectorAll('.room-block');
+    let maxNumber = 0;
+
+    roomBlocks.forEach(room => {
+      const roomName = room.dataset.roomName || 
+                      room.querySelector('.room-title')?.textContent || '';
+
+      if (roomName) {
+        // Suporta: "Sala1", "Sala 2", "Sala-3", etc.
+        const match = roomName.match(/Sala\s*[-_]?\s*(\d+)/i);
+        if (match) {
+          const num = parseInt(match[1]);
+          if (num > maxNumber) maxNumber = num;
+        }
+      }
+    });
+
+    console.log(`🔢 Next room number for project ${projectId}: ${maxNumber + 1}`);
+    return maxNumber + 1;
+
+  } catch (error) {
+    console.error('❌ Erro em getNextRoomNumber:', error);
+    return 1; // Fallback seguro
+  }
+}
+
+/**
+ * Obtém o próximo número de obra disponível
+ * @returns {number} Próximo número disponível para obra
+ */
+function getNextObraNumber() {
+  try {
+    const obraBlocks = document.querySelectorAll('.obra-block');
+    let maxNumber = 0;
+
+    obraBlocks.forEach(obra => {
+      const obraName = obra.dataset.obraName || 
+                      obra.querySelector('.obra-title')?.textContent || '';
+      
+      if (obraName) {
+        // Suporta: "Obra1", "Obra 2", "Obra-3", etc.
+        const match = obraName.match(/Obra\s*[-_]?\s*(\d+)/i);
+        if (match) {
+          const num = parseInt(match[1]);
+          if (num > maxNumber) maxNumber = num;
+        }
+      }
+    });
+
+    console.log(`🔢 Next obra number: ${maxNumber + 1} (max found: ${maxNumber})`);
+    return maxNumber + 1;
+
+  } catch (error) {
+    console.error('❌ Erro em getNextObraNumber:', error);
+    return 1; // Fallback seguro
+  }
 }
 
 // =============================================================================
@@ -285,6 +420,11 @@ export {
     generateObraId,
     generateProjectId,
     generateRoomId,
+    
+    // SISTEMA DE NUMERAÇÃO - NOVAS FUNÇÕES
+    getNextProjectNumber,
+    getNextRoomNumber,
+    getNextObraNumber,
     
     // FUNÇÕES DE NOMEAÇÃO CORRIGIDAS
     getRoomFullId,

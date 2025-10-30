@@ -104,27 +104,7 @@ function generateUniqueRoomId(obraName, projectName, roomName) {
     return `${obraName}-${projectName}-${baseId}-${timestamp}`.replace(/\s+/g, '-');
 }
 
-/**
- * Obtém o próximo número disponível para uma nova sala no projeto
- * Calcula baseado nas salas existentes para manter numeração sequencial - FUNÇÃO LEGACY
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
- * @returns {number} Próximo número disponível para sala
- */
-function getNextRoomNumber(obraName, projectName) {
-    const projectElement = document.querySelector(`[data-obra-name="${obraName}"] [data-project-name="${projectName}"]`);
-    if (!projectElement) return 1;
 
-    const rooms = projectElement.querySelectorAll('.room-block');
-    const roomNumbers = Array.from(rooms).map(room => {
-        const roomName = room.dataset.roomName;
-        const match = roomName.match(/Sala(\d+)/);
-        return match ? parseInt(match[1]) : 0;
-    });
-
-    const maxNumber = Math.max(0, ...roomNumbers);
-    return maxNumber + 1;
-}
 
 /**
  * Encontra uma sala no DOM pelo seu ID único
@@ -190,7 +170,6 @@ export {
   
   // Funções auxiliares de IDs únicos
   generateUniqueRoomId,
-  getNextRoomNumber,
   findRoomByUniqueId,
   findRoomsByProject,
   getRoomInfo,

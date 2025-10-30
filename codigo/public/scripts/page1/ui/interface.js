@@ -36,9 +36,10 @@ import {
 import { 
     createEmptyProject,
     buildProjectHTML,
-    addNewProjectToObra,
-    getNextProjectNumber,
+    addNewProjectToObra
 } from './intr-files/project-manager.js'
+
+import{getNextProjectNumber} from '../data/data-files/data-utils-core.js'
 
 import { createEmptyRoom } from '../data/modules/room-operations.js'
 

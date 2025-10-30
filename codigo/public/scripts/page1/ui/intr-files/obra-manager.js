@@ -11,6 +11,8 @@ import {
     hideToast 
 } from './modal/modal.js'
 
+import { generateObraId } from '../../data/data-files/data-utils-core.js'
+
 /**
  * Cria uma obra vazia na interface
  * @param {string} obraName - Nome da obra
@@ -182,20 +184,8 @@ async function addNewObra() {
   }
 }
 
-// =============================================================================
-// SISTEMA DE IDs ÚNICOS PARA OBRAS
-// =============================================================================
 
-/**
- * Gera ID único para obra - CURTO E ÚNICO
- * @returns {string} ID único da obra
- */
-function generateObraId() {
-    const letters = 'abcdefghjkmnpqrstwxyz'
-    const randomLetter = letters[Math.floor(Math.random() * letters.length)]
-    const randomNum = Math.floor(Math.random() * 90) + 10
-    return `obra_${randomLetter}${randomNum}`
-}
+
 
 // ===== EXPORTAÇÕES E CONFIGURAÇÃO GLOBAL =====
 

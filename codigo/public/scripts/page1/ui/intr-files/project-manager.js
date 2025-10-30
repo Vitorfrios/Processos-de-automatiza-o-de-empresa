@@ -4,7 +4,7 @@
  */
 
 import { createEmptyRoom } from '../../data/rooms.js'
-import { generateProjectId } from '../../data/data-utils.js'
+import { generateProjectId,getNextProjectNumber } from '../../data/data-files/data-utils-core.js'
 import { removeEmptyObraMessage } from './ui-helpers.js'
 
 /**
@@ -155,16 +155,8 @@ async function addNewProjectToObra(obraId) {
     console.log(`✅ ${projectName} adicionado à obra ${obraName} (ID: ${obraId})`)
 }
 
-/**
- * Conta projetos na obra específica - CORREÇÃO COMPLETA
- * @param {string} obraId - ID único da obra
- * @returns {number} Número do próximo projeto
- */
-function getNextProjectNumber(obraId) {
-    // ✅ CORREÇÃO: Buscar projetos APENAS por obra ID
-    const projects = document.querySelectorAll(`[data-obra-id="${obraId}"] .project-block`)
-    return projects.length + 1
-}
+
+
 
 /**
  * Remove um projeto da obra
@@ -199,6 +191,5 @@ export {
     createEmptyProject,
     buildProjectHTML,
     addNewProjectToObra,
-    getNextProjectNumber,
     deleteProject
 }
