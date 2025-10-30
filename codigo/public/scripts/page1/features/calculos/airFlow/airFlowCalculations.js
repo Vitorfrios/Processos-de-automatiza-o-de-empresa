@@ -7,7 +7,7 @@
  * @description Implementa cálculos de vazão de ar considerando portas e pressurização
  */
 
-import { CALCULATION_CONSTANTS } from "../../config/config.js"
+import { CALCULATION_CONSTANTS } from "../../../config/config.js"
 import {
   waitForSystemConstants,
   validateSystemConstants,

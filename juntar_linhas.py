@@ -10,7 +10,7 @@ from tkinter import ttk, filedialog, messagebox
 # Configurações
 # =========================
 PASTA_CODIGO_DEFAULT = Path("codigo")
-EXTENSOES_PERMITIDAS = {".js", ".py"}
+EXTENSOES_PERMITIDAS = {".js", ".py",".json"}
 SKIP_DIRS = {"node_modules", "dist", "build", "__pycache__", ".git", ".next", ".vercel", ".cache"}
 
 # =========================

@@ -1,13 +1,13 @@
 // server-modules/shutdown-manager.js - GERENCIAMENTO DE SHUTDOWN
 
-import { setSessionActive, clearSessionObras, clearRenderedObras } from "./session-manager.js"
+import { setSessionActive, clearSessionObras, clearRenderedObras } from "../adapters/session-manager.js"
 
 /**
  * Encerra o servidor e a sessão atual de forma controlada
  */
 async function shutdownManual() {
     // Importa o modal de confirmação
-    const { showShutdownConfirmationModal } = await import('../modle/exit-modal.js');
+    const { showShutdownConfirmationModal } = await import('../../ui/intr-files/modal/exit-modal.js');
     
     // Usa o modal customizado em vez do confirm nativo
     const confirmed = await showShutdownConfirmationModal();
@@ -118,8 +118,8 @@ async function ensureSingleActiveSession() {
 async function initializeSession() {
     console.log("🔄 Verificando sessão...");
     
-    const { isSessionActive } = await import('./session-manager.js');
-    const { loadObrasFromServer } = await import('./obra-loader.js');
+    const { isSessionActive } = await import('../adapters/session-manager.js');
+    const { loadObrasFromServer } = await import('../adapters/obra-loader.js');
     
     if (!isSessionActive()) {
         console.log("📭 Sessão não está ativa - aguardando ação do usuário");

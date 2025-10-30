@@ -1,6 +1,6 @@
 // server-modules/obra-loader.js - CORREÇÃO COMPLETA:
 
-import { isSessionActive } from "./session-manager.js"
+import { isSessionActive } from "../server-modules/session-manager.js"
 
 /**
  * Remove todas as obras base do container HTML
