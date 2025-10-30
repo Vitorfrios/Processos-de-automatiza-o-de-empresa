@@ -107,12 +107,20 @@ function generateRoomId(projectElement, roomNumber) {
 // =============================================================================
 
 /**
- * Obtém o próximo número de projeto disponível - CORRIGIDO
- * @returns {number} Próximo número disponível para projeto
+ * Obtém o próximo número de projeto disponível PARA UMA OBRA ESPECÍFICA - CORRIGIDO
+ * @param {string} obraId - ID único da obra
+ * @returns {number} Próximo número disponível para projeto na obra específica
  */
-function getNextProjectNumber() {
+function getNextProjectNumber(obraId) {
   try {
-    const projectBlocks = document.querySelectorAll('.project-block');
+    // ✅ CORREÇÃO: Buscar apenas projetos DESTA obra específica
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+      console.warn(`⚠️ Obra ${obraId} não encontrada, usando projeto 1`);
+      return 1;
+    }
+
+    const projectBlocks = obraBlock.querySelectorAll('.project-block');
     let maxNumber = 0;
 
     projectBlocks.forEach(project => {
@@ -129,7 +137,7 @@ function getNextProjectNumber() {
       }
     });
 
-    console.log(`🔢 Next project number: ${maxNumber + 1} (max found: ${maxNumber})`);
+    console.log(`🔢 Next project number for obra ${obraId}: ${maxNumber + 1} (max found: ${maxNumber})`);
     return maxNumber + 1;
 
   } catch (error) {
@@ -137,6 +145,8 @@ function getNextProjectNumber() {
     return 1; // Fallback seguro
   }
 }
+
+
 
 /**
  * Obtém o próximo número de sala - CORRIGIDO
