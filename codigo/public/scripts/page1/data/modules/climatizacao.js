@@ -1,18 +1,26 @@
-// climatizacao.js
+// climatizacao.js - VERSÃO ATUALIZADA COM VALIDAÇÕES
 import { calculateVazaoArAndThermalGains } from '../../calculos/calculos-manager.js'
 
 /**
  * Constrói seção completa de climatização para uma sala específica
  * Organiza inputs de dados e resultados de cálculos térmicos de forma hierárquica
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
  * @param {string} roomName - Nome da sala
  * @param {string} finalRoomId - ID único da sala
  * @returns {string} HTML completo da seção de climatização
  */
-function buildClimatizationSection(obraName, projectName, roomName, finalRoomId) {
-  const roomId = finalRoomId;
-  return `
+function buildClimatizationSection(obraId, projectId, roomName, finalRoomId) {
+    // ✅ CORREÇÃO: Validar ID único da sala
+    if (!finalRoomId || finalRoomId === 'undefined' || finalRoomId === 'null') {
+        console.error(`ERRO FALBACK (buildClimatizationSection) climatizacao.js [Room ID inválido: ${finalRoomId}]`);
+        return '';
+    }
+    
+    const roomId = finalRoomId;
+    console.log(`🔧 Construindo seção de climatização para sala: ${roomName} (ID: ${roomId})`);
+    
+    return `
     <div class="section-block">
       <div class="section-header">
         <button class="minimizer" onclick="toggleSection('${roomId}-clima')">+</button>
@@ -45,7 +53,15 @@ function buildClimatizationSection(obraName, projectName, roomName, finalRoomId)
  * @returns {string} HTML da tabela de inputs de climatização
  */
 function buildClimatizationTable(roomId) {
-  return `
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildClimatizationTable) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return '';
+    }
+    
+    console.log(`🔧 Construindo tabela de climatização para sala ID: ${roomId}`);
+    
+    return `
     <div class="clima-table">
       ${buildClimaRow(
     [
@@ -138,7 +154,13 @@ function buildClimatizationTable(roomId) {
  * @returns {string} HTML da linha de pressurização
  */
 function buildPressurizationRow(roomId) {
-  return `
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildPressurizationRow) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return '';
+    }
+    
+    return `
     <!-- Linha 1: rádios -->
     <div class="clima-row clima-row-2cols">
       <div class="clima-cell">
@@ -223,14 +245,20 @@ function buildPressurizationRow(roomId) {
  * @returns {string} HTML da linha da tabela
  */
 function buildClimaRow(fields, roomId) {
-  const cells = fields
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildClimaRow) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return '<div class="clima-row"><div class="clima-cell">Erro: ID inválido</div></div>';
+    }
+    
+    const cells = fields
     .map((field) => {
-      if (!field) return '<div class="clima-cell clima-cell-empty"></div>'
-      return buildClimaCell(field, roomId)
+        if (!field) return '<div class="clima-cell clima-cell-empty"></div>'
+        return buildClimaCell(field, roomId)
     })
     .join("")
 
-  return `<div class="clima-row">${cells}</div>`
+    return `<div class="clima-row">${cells}</div>`
 }
 
 /**
@@ -241,9 +269,15 @@ function buildClimaRow(fields, roomId) {
  * @returns {string} HTML da célula com campo de input
  */
 function buildClimaCell(field, roomId) {
-  const input = field.type === "select" ? buildSelectInput(field, roomId) : buildTextInput(field, roomId)
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildClimaCell) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return '<div class="clima-cell">Erro: ID inválido</div>';
+    }
+    
+    const input = field.type === "select" ? buildSelectInput(field, roomId) : buildTextInput(field, roomId)
 
-  return `
+    return `
     <div class="clima-cell">
       <label>${field.label}</label>
       ${input}
@@ -259,11 +293,17 @@ function buildClimaCell(field, roomId) {
  * @returns {string} HTML do elemento select
  */
 function buildSelectInput(field, roomId) {
-  const options = field.options
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildSelectInput) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return '<select class="form-input clima-input" disabled><option>Erro: ID inválido</option></select>';
+    }
+    
+    const options = field.options
     .map((opt) => `<option value="${opt}">${opt === "" ? "Selecione" : opt}</option>`)
     .join("")
 
-  return `
+    return `
     <select class="form-input clima-input" data-field="${field.field}" onchange="calculateVazaoArAndThermalGains('${roomId}')">
       ${options}
     </select>
@@ -278,13 +318,19 @@ function buildSelectInput(field, roomId) {
  * @returns {string} HTML do campo de input
  */
 function buildTextInput(field, roomId) {
-  const step = field.type === "number" ? 'step="1"' : ""
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildTextInput) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return '<input type="text" class="form-input clima-input" disabled placeholder="Erro: ID inválido">';
+    }
+    
+    const step = field.type === "number" ? 'step="1"' : ""
 
-  // Prevenir valores negativos para quantidades
-  const min = field.field.includes("num") ? 'min="0"' : "" 
-  const value = field.value ? `value="${field.value}"` : ""
+    // Prevenir valores negativos para quantidades
+    const min = field.field.includes("num") ? 'min="0"' : "" 
+    const value = field.value ? `value="${field.value}"` : ""
 
-  return `
+    return `
     <input
       type="${field.type}"
       class="form-input clima-input"
@@ -305,7 +351,13 @@ function buildTextInput(field, roomId) {
  * @returns {string} HTML da linha de resultados
  */
 function buildResultRow(roomId) {
-  return `
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildResultRow) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return '<div class="clima-row"><div class="clima-cell">Erro: ID inválido</div></div>';
+    }
+    
+    return `
     <div class="clima-row">
       <div class="clima-cell clima-cell-result">
         <label>Vazão de Ar Externo (l/s):</label>
@@ -338,30 +390,36 @@ function buildResultRow(roomId) {
  * @returns {void}
  */
 function togglePressurizationFields(roomId, enabled) {
-  const pressurizacaoInput = document.querySelector(`input[data-field="pressurizacao"][data-room-id="${roomId}"]`);
-  const portasSection = document.getElementById(`pressurizacao-portas-${roomId}`);
-  const portasSimples = document.querySelector(`input[data-field="numPortasSimples"][data-room-id="${roomId}"]`);
-  const portasDuplas = document.querySelector(`input[data-field="numPortasDuplas"][data-room-id="${roomId}"]`);
-  const setpointInput = document.querySelector(`input[data-field="setpointPressurizacao"][data-room-id="${roomId}"]`);
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (togglePressurizationFields) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return;
+    }
+    
+    const pressurizacaoInput = document.querySelector(`input[data-field="pressurizacao"][data-room-id="${roomId}"]`);
+    const portasSection = document.getElementById(`pressurizacao-portas-${roomId}`);
+    const portasSimples = document.querySelector(`input[data-field="numPortasSimples"][data-room-id="${roomId}"]`);
+    const portasDuplas = document.querySelector(`input[data-field="numPortasDuplas"][data-room-id="${roomId}"]`);
+    const setpointInput = document.querySelector(`input[data-field="setpointPressurizacao"][data-room-id="${roomId}"]`);
 
-  if (enabled) {
-    pressurizacaoInput.disabled = false;
-    portasSection.style.display = 'grid';
-    portasSimples.disabled = false;
-    portasDuplas.disabled = false;
-  } else {
-    pressurizacaoInput.disabled = true;
-    pressurizacaoInput.value = '25';
+    if (enabled) {
+        pressurizacaoInput.disabled = false;
+        portasSection.style.display = 'grid';
+        portasSimples.disabled = false;
+        portasDuplas.disabled = false;
+    } else {
+        pressurizacaoInput.disabled = true;
+        pressurizacaoInput.value = '25';
 
-    portasSection.style.display = 'none';
-    portasSimples.disabled = true; portasSimples.value = '';
-    portasDuplas.disabled = true; portasDuplas.value = '';
+        portasSection.style.display = 'none';
+        portasSimples.disabled = true; portasSimples.value = '';
+        portasDuplas.disabled = true; portasDuplas.value = '';
 
-    // mantém o setpoint coerente e o badge formatado
-    if (setpointInput && setpointInput.value === '') setpointInput.value = '25';
-  }
+        // mantém o setpoint coerente e o badge formatado
+        if (setpointInput && setpointInput.value === '') setpointInput.value = '25';
+    }
 
-  calculateVazaoArAndThermalGains(roomId);
+    calculateVazaoArAndThermalGains(roomId);
 }
 
 // =============================================================================
@@ -375,7 +433,15 @@ function togglePressurizationFields(roomId, enabled) {
  * @returns {string} HTML completo da seção de ganhos térmicos
  */
 function buildThermalGainsSection(roomId) {
-  return `
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildThermalGainsSection) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return '';
+    }
+    
+    console.log(`🔧 Construindo seção de ganhos térmicos para sala ID: ${roomId}`);
+    
+    return `
     <div class="subsection-block">
       <div class="subsection-header">
         <button class="minimizer" onclick="toggleSubsection('${roomId}-ganhos')">+</button>

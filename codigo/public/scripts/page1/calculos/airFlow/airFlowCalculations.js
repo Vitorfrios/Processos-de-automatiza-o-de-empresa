@@ -1,13 +1,21 @@
-// airFlowCalculations.js
-import { CALCULATION_CONSTANTS } from '../../config/config.js';
-import { 
-  waitForSystemConstants, 
-  validateSystemConstants, 
+/**
+ * airFlowCalculations.js
+ * Cálculos de vazão de ar e fluxo baseados em pressurização
+ * SISTEMA CORRIGIDO COM IDs ÚNICOS
+ *
+ * @module airFlowCalculations
+ * @description Implementa cálculos de vazão de ar considerando portas e pressurização
+ */
+
+import { CALCULATION_CONSTANTS } from "../../config/config.js"
+import {
+  waitForSystemConstants,
+  validateSystemConstants,
   collectClimatizationInputs,
-  safeNumber 
-} from '../utils/helpers.js';
-import { updateFlowRateDisplay } from './airFlowDisplay.js';
-import { calculateThermalGains } from '../thermalGains/thermalCalculations.js';
+  safeNumber,
+} from "../utils/helpers.js"
+import { updateFlowRateDisplay } from "./airFlowDisplay.js"
+import { calculateThermalGains } from "../thermalGains/thermalCalculations.js"
 
 /**
  * Calcula fluxo de ar individual por porta baseado em contagem e pressurização
@@ -17,22 +25,23 @@ import { calculateThermalGains } from '../thermalGains/thermalCalculations.js';
  * @returns {number} Fluxo de ar calculado em m³/h
  */
 function calculateDoorFlow(doorCount, doorVariable, pressure) {
-  const count = safeNumber(doorCount);
-  const variable = safeNumber(doorVariable);
-  const press = safeNumber(pressure);
-  
-  console.log(` calculateDoorFlow: count=${count}, variable=${variable}, pressure=${press}`);
-  
-  const pressureExponent = press > 0 ? Math.pow(press, CALCULATION_CONSTANTS.PRESSURE_EXPONENT) : 0;
-  
-  const flow = CALCULATION_CONSTANTS.FLOW_COEFFICIENT *
+  const count = safeNumber(doorCount)
+  const variable = safeNumber(doorVariable)
+  const press = safeNumber(pressure)
+
+  console.log(`[v0] calculateDoorFlow: count=${count}, variable=${variable}, pressure=${press}`)
+
+  const pressureExponent = press > 0 ? Math.pow(press, CALCULATION_CONSTANTS.PRESSURE_EXPONENT) : 0
+
+  const flow =
+    CALCULATION_CONSTANTS.FLOW_COEFFICIENT *
     count *
     variable *
     pressureExponent *
-    CALCULATION_CONSTANTS.SECONDS_PER_HOUR;
-    
-  console.log(` Fluxo calculado: ${flow}`);
-  return flow;
+    CALCULATION_CONSTANTS.SECONDS_PER_HOUR
+
+  console.log(`[v0] Fluxo calculado: ${flow}`)
+  return flow
 }
 
 /**
@@ -41,118 +50,126 @@ function calculateDoorFlow(doorCount, doorVariable, pressure) {
  * @returns {number} Vazão total de ar arredondada em l/s
  */
 function computeAirFlowRate(inputData) {
-  const numPortasDuplas = safeNumber(inputData.numPortasDuplas);
-  const numPortasSimples = safeNumber(inputData.numPortasSimples);
-  
-  // ✅ CORREÇÃO: Usar pressure em vez de pressurizacao
-  const pressure = inputData.pressurizacao ? safeNumber(inputData.setpointPressurizacao) : 0;
+  const numPortasDuplas = safeNumber(inputData.numPortasDuplas)
+  const numPortasSimples = safeNumber(inputData.numPortasSimples)
 
-  console.log(" ===== CÁLCULO DE VAZÃO =====");
-  console.log(" Portas Duplas:", numPortasDuplas);
-  console.log(" Portas Simples:", numPortasSimples);
-  console.log(" Pressurização (Pa):", pressure);
+  const pressure = inputData.pressurizacao ? safeNumber(inputData.setpointPressurizacao) : 0
+
+  console.log("[v0] ===== CÁLCULO DE VAZÃO =====")
+  console.log("[v0] Portas Duplas:", numPortasDuplas)
+  console.log("[v0] Portas Simples:", numPortasSimples)
+  console.log("[v0] Pressurização (Pa):", pressure)
 
   if (!window.systemConstants || !window.systemConstants.VARIAVEL_PD || !window.systemConstants.VARIAVEL_PS) {
-    console.error(" ERRO: Constantes do sistema não disponíveis para cálculo");
-    alert("ERRO: Constantes do sistema não carregadas. Verifique o servidor.");
-    return 0;
+    console.error(
+      "[v0] ERRO FALBACK (computeAirFlowRate) {airFlowCalculations.js} [Constantes do sistema não disponíveis]",
+    )
+    return 0
   }
 
-  // ✅ CORREÇÃO CRÍTICA: pressure em vez de pressurizacao
-  const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD, pressure);
-  const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS, pressure);
+  const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD, pressure)
+  const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS, pressure)
 
-  console.log(" Fluxo Portas Duplas:", doubleDoorFlow);
-  console.log(" Fluxo Portas Simples:", singleDoorFlow);
+  console.log("[v0] Fluxo Portas Duplas:", doubleDoorFlow)
+  console.log("[v0] Fluxo Portas Simples:", singleDoorFlow)
 
-  const totalFlow = doubleDoorFlow + singleDoorFlow;
-  const adjustedFlow = totalFlow / CALCULATION_CONSTANTS.FLOW_DIVISOR;
-  const finalFlow = adjustedFlow * CALCULATION_CONSTANTS.SAFETY_FACTOR;
-  const roundedFlow = Math.ceil(finalFlow);
+  const totalFlow = doubleDoorFlow + singleDoorFlow
+  const adjustedFlow = totalFlow / CALCULATION_CONSTANTS.FLOW_DIVISOR
+  const finalFlow = adjustedFlow * CALCULATION_CONSTANTS.SAFETY_FACTOR
+  const roundedFlow = Math.ceil(finalFlow)
 
-  console.log(" Fluxo Total:", totalFlow);
-  console.log(" Fluxo Ajustado:", adjustedFlow);
-  console.log(" Fluxo Final:", finalFlow);
-  console.log(" Vazão Arredondada:", roundedFlow);
-  console.log(" ===== FIM DO CÁLCULO =====");
+  console.log("[v0] Fluxo Total:", totalFlow)
+  console.log("[v0] Fluxo Ajustado:", adjustedFlow)
+  console.log("[v0] Fluxo Final:", finalFlow)
+  console.log("[v0] Vazão Arredondada:", roundedFlow)
+  console.log("[v0] ===== FIM DO CÁLCULO =====")
 
-  return roundedFlow;
+  return roundedFlow
 }
 
 /**
- * Encontra o elemento roomContent pelo ID único da sala
+ * Encontra o elemento roomContent pelo ID único da sala - CORREÇÃO COMPLETA
  * @param {string} roomId - ID único da sala
  * @returns {HTMLElement|null} Elemento do conteúdo da sala ou null se não encontrado
  */
 function findRoomContent(roomId) {
-    // Limpar o ID de qualquer "undefined"
-    const cleanRoomId = roomId.replace(/-undefined/g, '').replace(/undefined-/g, '');
-    
-    console.log(`🔍 Procurando sala: "${roomId}" -> Limpo: "${cleanRoomId}"`);
-    
-    // Tentar com o ID limpo primeiro
-    let roomContent = document.getElementById(`room-content-${cleanRoomId}`);
-    
-    if (roomContent) {
-        console.log(`✅ Sala encontrada pelo ID LIMPO: room-content-${cleanRoomId}`);
-        return roomContent;
-    }
-    
-    // Se não encontrou com ID limpo, tentar com o original
-    roomContent = document.getElementById(`room-content-${roomId}`);
-    if (roomContent) {
-        console.log(`✅ Sala encontrada pelo ID ORIGINAL: room-content-${roomId}`);
-        return roomContent;
-    }
-    
-    // Procurar pela sala no DOM usando data attributes
-    const roomBlock = document.querySelector(`[data-room-id="${cleanRoomId}"]`) || 
-                     document.querySelector(`[data-room-id="${roomId}"]`);
-    
-    if (roomBlock) {
-        const foundId = roomBlock.dataset.roomId;
-        console.log(`✅ Sala encontrada pelo data-room-id: ${foundId}`);
-        return document.getElementById(`room-content-${foundId}`);
-    }
-  
-    // Debug detalhado
-    console.error(`❌ Sala não encontrada: ${roomId} (limpo: ${cleanRoomId})`);
-    const allRooms = document.querySelectorAll('.room-block');
-    console.log('🔍 Todas as salas disponíveis no DOM:');
-    allRooms.forEach(room => {
-        console.log(`  - ID: "${room.dataset.roomId}", Nome: ${room.dataset.roomName}, Projeto: ${room.dataset.projectName}, Obra: ${room.dataset.obraName}`);
-    });
-    
+  // ✅ CORREÇÃO: Validar ID único
+  if (!roomId || roomId === 'undefined' || roomId === 'null') {
+    console.error(`ERRO FALBACK (findRoomContent) airFlowCalculations.js [ID de sala inválido: ${roomId}]`);
     return null;
+  }
+
+  console.log(`[v0] Procurando sala: "${roomId}"`);
+
+  // ✅ CORREÇÃO: Buscar APENAS por ID único SEM limpeza complexa
+  let roomContent = document.getElementById(`room-content-${roomId}`);
+
+  if (roomContent) {
+    console.log(`[v0] Sala encontrada pelo ID ÚNICO: room-content-${roomId}`);
+    return roomContent;
+  }
+
+  // ✅ CORREÇÃO: Buscar pelo data attribute com ID exato
+  const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+
+  if (roomBlock) {
+    const foundId = roomBlock.dataset.roomId;
+    console.log(`[v0] Sala encontrada pelo data-room-id: ${foundId}`);
+    
+    // ✅ CORREÇÃO: Tentar encontrar o conteúdo com o ID encontrado
+    const foundContent = document.getElementById(`room-content-${foundId}`);
+    if (foundContent) {
+      return foundContent;
+    }
+  }
+
+  // ✅ CORREÇÃO: Debug detalhado com IDs reais
+  console.error(`[v0] ERRO FALBACK (findRoomContent) airFlowCalculations.js [Sala não encontrada: ${roomId}]`);
+  const allRooms = document.querySelectorAll(".room-block");
+  console.log("[v0] Todas as salas disponíveis no DOM:");
+  allRooms.forEach((room) => {
+    console.log(`[v0]   - ID: "${room.dataset.roomId}", Nome: "${room.dataset.roomName}"`);
+  });
+
+  return null;
 }
 
 /**
- * Orquestra cálculo completo de vazão com validações
+ * Orquestra cálculo completo de vazão com validações - CORREÇÃO COMPLETA
  * @param {string} roomId - ID único da sala
  * @param {boolean} calculateThermal - Se deve calcular ganhos térmicos após vazão
  * @returns {Promise<number>} Vazão de ar calculada em l/s
  */
 async function calculateVazaoAr(roomId, calculateThermal = true) {
   try {
-    console.log(` Iniciando cálculo de vazão para ${roomId}`);
-    
-    await waitForSystemConstants();
-    
-    if (!validateSystemConstants()) {
-      console.error(" Constantes do sistema inválidas");
+    // ✅ CORREÇÃO: Validar ID único antes de processar
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+      console.error(`ERRO FALBACK (calculateVazaoAr) airFlowCalculations.js [ID de sala inválido: ${roomId}]`);
       return 0;
     }
 
-    // Usar a nova função para encontrar a sala
+    console.log(`[v0] Iniciando cálculo de vazão para ${roomId}`);
+
+    await waitForSystemConstants();
+
+    if (!validateSystemConstants()) {
+      console.error("[v0] ERRO FALBACK (calculateVazaoAr) airFlowCalculations.js [Constantes do sistema inválidas]");
+      return 0;
+    }
+
     const roomContent = findRoomContent(roomId);
     if (!roomContent) {
-      console.error(" Sala não encontrada:", roomId);
+      console.error(`[v0] ERRO FALBACK (calculateVazaoAr) airFlowCalculations.js [Sala não encontrada: ${roomId}]`);
       return 0;
     }
 
-    const climaSection = roomContent.querySelector('[id*="-clima"]');
+    // ✅ CORREÇÃO: Buscar seção de climatização usando ID único
+    const climaSection = roomContent.querySelector(`#section-content-${roomId}-clima`);
+    
     if (!climaSection) {
-      console.error(" Seção de climatização não encontrada");
+      console.error(
+        `[v0] ERRO FALBACK (calculateVazaoAr) airFlowCalculations.js [Seção de climatização não encontrada para sala ${roomId}]`,
+      );
       return 0;
     }
 
@@ -162,36 +179,35 @@ async function calculateVazaoAr(roomId, calculateThermal = true) {
     updateFlowRateDisplay(roomId, flowRate);
 
     if (calculateThermal) {
-      console.log(` Chamando cálculo de ganhos térmicos para ${roomId}`);
+      console.log(`[v0] Chamando cálculo de ganhos térmicos para ${roomId}`);
       await calculateThermalGains(roomId, flowRate);
     }
 
     return flowRate;
   } catch (error) {
-    console.error(" Erro no cálculo de vazão:", error);
-    alert("Erro ao calcular vazão. Verifique se as constantes do sistema foram carregadas.");
+    console.error(`[v0] ERRO FALBACK (calculateVazaoAr) airFlowCalculations.js [${error.message}]`);
     return 0;
   }
 }
 
 /**
- * Coordena cálculo sequencial de vazão e ganhos térmicos
+ * Coordena cálculo sequencial de vazão e ganhos térmicos - CORREÇÃO COMPLETA
  * @param {string} roomId - ID único da sala
  * @returns {Promise<void>}
  */
 async function calculateVazaoArAndThermalGains(roomId) {
   try {
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+      console.error(`ERRO FALBACK (calculateVazaoArAndThermalGains) airFlowCalculations.js [ID de sala inválido: ${roomId}]`);
+      return;
+    }
+    
     const flowRate = await calculateVazaoAr(roomId, false);
     await calculateThermalGains(roomId, flowRate);
   } catch (error) {
-    console.error(`[DEBUG] Erro em calculateVazaoArAndThermalGains:`, error);
+    console.error(`[v0] ERRO FALBACK (calculateVazaoArAndThermalGains) airFlowCalculations.js [${error.message}]`);
   }
 }
 
-export {
-  calculateDoorFlow,
-  computeAirFlowRate,
-  calculateVazaoAr,
-  calculateVazaoArAndThermalGains,
-  findRoomContent
-};
+export { calculateDoorFlow, computeAirFlowRate, calculateVazaoAr, calculateVazaoArAndThermalGains, findRoomContent }

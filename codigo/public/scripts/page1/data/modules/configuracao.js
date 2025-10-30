@@ -1,15 +1,28 @@
 /**
+ * configuracao.js - ATUALIZADO COM IDs SEGUROS
+ * Constrói a seção de configuração de instalação para uma sala
+ */
+
+/**
  * Constrói a seção de configuração de instalação para uma sala
  * Inclui opções de instalação de climatização em formato de grid com checkboxes
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
  * @param {string} roomName - Nome da sala
  * @param {string} finalRoomId - ID único da sala
  * @returns {string} HTML da seção de configuração
  */
-function buildConfigurationSection(obraName, projectName, roomName, finalRoomId) {
-  const roomId = finalRoomId;
-  return `
+function buildConfigurationSection(obraId, projectId, roomName, finalRoomId) {
+    // ✅ CORREÇÃO: Validar ID único
+    if (!finalRoomId || finalRoomId === 'undefined' || finalRoomId === 'null') {
+        console.error(`ERRO FALBACK (buildConfigurationSection) configuracao.js [Room ID inválido: ${finalRoomId}]`);
+        return '';
+    }
+    
+    const roomId = finalRoomId;
+    console.log(`🔧 Construindo seção de configuração para sala: ${roomName} (ID: ${roomId})`);
+    
+    return `
     <div class="section-block">
       <div class="section-header">
         <button class="minimizer" onclick="toggleSection('${roomId}-config')">+</button>

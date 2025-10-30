@@ -2,6 +2,7 @@
  * data-extractors.js
  * Módulo de extração de dados dos elementos HTML
  * Responsável por coletar dados de salas, máquinas, ganhos térmicos, etc.
+ * SISTEMA CORRIGIDO COM IDs ÚNICOS
  */
 
 // Importações necessárias
@@ -16,14 +17,16 @@ function extractThermalGainsData(roomElement) {
     console.log('🎯 FUNÇÃO extractThermalGainsData CHAMADA!')
     
     const gains = {}
-    const roomId = roomElement.dataset.roomId; // Usar o ID correto do data attribute
     
-    console.log(`🔑 ID da sala: ${roomId}`)
+    // ✅ CORREÇÃO: Usar APENAS roomId do data attribute
+    const roomId = roomElement.dataset.roomId;
     
-    if (!roomId || roomId.includes('undefined')) {
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
         console.error('❌ ID da sala inválido ou contém undefined:', roomId);
         return gains;
     }
+    
+    console.log(`🔑 ID da sala para extração: ${roomId}`)
     
     const totalSelectors = {
         'total-ganhos-w': `#total-ganhos-w-${roomId}`,
@@ -69,7 +72,7 @@ function extractThermalGainsData(roomElement) {
                 }
             } else {
                 gains[key] = 0
-                attemptAlternativeSearch(key, roomFullId, gains)
+                attemptAlternativeSearch(key, roomId, gains)
             }
         } catch (error) {
             console.error(`💥 Erro ao processar ${selector}:`, error)
@@ -88,6 +91,12 @@ function extractThermalGainsData(roomElement) {
  */
 function extractClimatizationInputs(roomElement) {
     const inputs = {}
+    
+    // ✅ CORREÇÃO: Validar elemento da sala
+    if (!roomElement || !roomElement.dataset.roomId) {
+        console.error('❌ Elemento da sala inválido para extração de inputs')
+        return inputs
+    }
     
     const textInputs = roomElement.querySelectorAll('.clima-input[type="text"], .clima-input[type="number"], .clima-input[data-field]')
     textInputs.forEach(input => {
@@ -152,6 +161,13 @@ function extractClimatizationInputs(roomElement) {
  */
 function extractMachinesData(roomElement) {
     const machines = []
+    
+    // ✅ CORREÇÃO: Validar elemento da sala
+    if (!roomElement || !roomElement.dataset.roomId) {
+        console.error('❌ Elemento da sala inválido para extração de máquinas')
+        return machines
+    }
+    
     const machineElements = roomElement.querySelectorAll('.climatization-machine')
     
     machineElements.forEach(machineElement => {
@@ -161,7 +177,7 @@ function extractMachinesData(roomElement) {
         }
     })
     
-    console.log(`🤖 ${machines.length} máquina(s) extraída(s) da sala`)
+    console.log(`🤖 ${machines.length} máquina(s) extraída(s) da sala ${roomElement.dataset.roomId}`)
     return machines
 }
 
@@ -171,7 +187,16 @@ function extractMachinesData(roomElement) {
  * @returns {Object} Dados da máquina
  */
 function extractClimatizationMachineData(machineElement) {
+    // ✅ CORREÇÃO: Validar elemento da máquina
+    if (!machineElement) {
+        console.error('❌ Elemento da máquina é nulo')
+        return null
+    }
+
     const machineId = machineElement.getAttribute('data-machine-id') || `machine-${Date.now()}`
+    const roomId = machineElement.getAttribute('data-room-id')
+
+    console.log(`🔧 Extraindo dados da máquina ${machineId} na sala ${roomId}`)
 
     const machineData = {
         nome: getMachineName(machineElement, machineId),
@@ -242,7 +267,14 @@ function extractClimatizationMachineData(machineElement) {
  */
 function extractCapacityData(roomElement) {
     const capacityData = {}
-    const roomId = roomElement.id.replace('room-content-', '')
+    
+    // ✅ CORREÇÃO: Usar roomId do data attribute
+    const roomId = roomElement.dataset.roomId
+
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error('❌ ID da sala inválido para extração de capacidade')
+        return capacityData
+    }
 
     try {
         const specificSelectors = {
@@ -305,6 +337,12 @@ function extractConfigurationData(roomElement) {
         opcoesInstalacao: []
     }
     
+    // ✅ CORREÇÃO: Validar elemento da sala
+    if (!roomElement || !roomElement.dataset.roomId) {
+        console.error('❌ Elemento da sala inválido para extração de configuração')
+        return config
+    }
+    
     console.log('🔍 Buscando configurações na sala...')
     
     const opcoesInstalacaoCheckboxes = roomElement.querySelectorAll('input[name^="opcoesInstalacao-"][type="checkbox"]')
@@ -329,11 +367,11 @@ function extractConfigurationData(roomElement) {
 /**
  * Busca alternativa por texto quando o elemento não é encontrado pelo ID
  * @param {string} key - Chave do ganho térmico
- * @param {string} roomFullId - ID completo da sala
+ * @param {string} roomId - ID único da sala
  * @param {Object} gains - Objeto de ganhos térmicos
  * @returns {void}
  */
-function attemptAlternativeSearch(key, roomFullId, gains) {
+function attemptAlternativeSearch(key, roomId, gains) {
     const textMap = {
         'total-ganhos-w': 'Total de Ganhos Térmicos:',
         'total-tr': 'Total em TR:',

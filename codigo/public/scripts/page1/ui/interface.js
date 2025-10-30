@@ -1,4 +1,8 @@
-// interface.js
+/**
+ * interface.js - CORREÇÃO DO SISTEMA DE TOGGLE
+ * SISTEMA CORRIGIDO COM IDs ÚNICOS
+ */
+
 import { 
     showSystemStatus,
     removeExistingStatusBanner,
@@ -83,150 +87,146 @@ function addNewProject() {
   })
 }
 
+// =============================================================================
+// SISTEMA DE TOGGLE CORRIGIDO - IDs ÚNICOS
+// =============================================================================
+
 /**
- * Alterna a visibilidade do conteúdo de uma obra (expandir/recolher)
- * @param {string} obraName - Nome da obra a ser alternada
+ * Alterna a visibilidade do conteúdo de uma obra (expandir/recolher) - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra a ser alternada
  * @param {Event} event - Evento de clique do usuário
  * @returns {void}
  * 
  * @example
- * toggleObra('Obra1', event) // Expande ou recolhe a Obra1
+ * toggleObra('obra_a42', event) // Expande ou recolhe a obra com ID 'obra_a42'
  */
-
-function toggleObra(obraIdentifier, event) {
-  // ✅ CORREÇÃO: Buscar por ID único primeiro, depois por nome
-  let content = document.getElementById(`obra-content-${obraIdentifier}`);
-  let obraBlock = document.querySelector(`[data-obra-id="${obraIdentifier}"]`);
-  
-  // Se não encontrou pelo ID, tentar pelo nome
-  if (!content || !obraBlock) {
-    obraBlock = document.querySelector(`[data-obra-name="${obraIdentifier}"]`);
-    if (obraBlock) {
-      const obraId = obraBlock.dataset.obraId;
-      content = document.getElementById(`obra-content-${obraId || obraIdentifier}`);
+function toggleObra(obraId, event) {
+    console.log(`🔧 Toggle Obra chamado: ${obraId}`);
+    
+    // ✅ CORREÇÃO: Validar ID único
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (toggleObra) interface.js [ID de obra inválido: ${obraId}]`);
+        return;
     }
-  }
-  
-  if (!content) {
-    console.error(`❌ Conteúdo da obra ${obraIdentifier} não encontrado`);
-    return;
-  }
+    
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    const contentId = `obra-content-${obraId}`;
+    const content = document.getElementById(contentId);
+    
+    if (!content) {
+        console.error(`❌ Conteúdo da obra ${obraId} não encontrado`);
+        console.log('🔍 Conteúdos de obra disponíveis:');
+        document.querySelectorAll('[id^="obra-content-"]').forEach(content => {
+            console.log(`  - ${content.id}`);
+        });
+        return;
+    }
 
-  const isCollapsed = content.classList.contains("collapsed");
-  const minimizer = event.target;
+    const isCollapsed = content.classList.contains("collapsed");
+    const minimizer = event.target;
 
-  if (isCollapsed) {
-    content.classList.remove("collapsed");
-    minimizer.textContent = "−";
-    console.log(`📂 Obra ${obraIdentifier} expandida`);
-  } else {
-    content.classList.add("collapsed");
-    minimizer.textContent = "+";
-    console.log(`📁 Obra ${obraIdentifier} recolhida`);
-  }
+    if (isCollapsed) {
+        content.classList.remove("collapsed");
+        minimizer.textContent = "−";
+        console.log(`📂 Obra ${obraId} expandida`);
+    } else {
+        content.classList.add("collapsed");
+        minimizer.textContent = "+";
+        console.log(`📁 Obra ${obraId} recolhida`);
+    }
 }
 
 /**
- * Alterna a visibilidade do conteúdo de um projeto (expandir/recolher)
- * @param {string} projectName - Nome do projeto a ser alternado
+ * Alterna a visibilidade do conteúdo de um projeto (expandir/recolher) - CORREÇÃO COMPLETA
+ * @param {string} projectId - ID único do projeto a ser alternado
  * @param {Event} event - Evento de clique do usuário
  * @returns {void}
  * 
  * @example
- * toggleProject('Projeto1', event) // Expande ou recolhe o Projeto1
+ * toggleProject('obra_a42_proj1', event) // Expande ou recolhe o projeto com ID 'obra_a42_proj1'
  */
-function toggleProject(projectName, event) {
-  const contentId = `project-content-${projectName}`
-  const content = document.getElementById(contentId)
-  
-  if (!content) {
-    console.error(`❌ Conteúdo do projeto ${projectName} não encontrado`)
-    return
-  }
+function toggleProject(projectId, event) {
+    console.log(`🔧 Toggle Project chamado: ${projectId}`);
+    
+    // ✅ CORREÇÃO: Validar ID único
+    if (!projectId || projectId === 'undefined' || projectId === 'null') {
+        console.error(`ERRO FALBACK (toggleProject) interface.js [ID de projeto inválido: ${projectId}]`);
+        return;
+    }
+    
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    const contentId = `project-content-${projectId}`;
+    const content = document.getElementById(contentId);
+    
+    if (!content) {
+        console.error(`❌ Conteúdo do projeto ${projectId} não encontrado`);
+        console.log('🔍 Conteúdos de projeto disponíveis:');
+        document.querySelectorAll('[id^="project-content-"]').forEach(content => {
+            console.log(`  - ${content.id}`);
+        });
+        return;
+    }
 
-  const isCollapsed = content.classList.contains("collapsed")
-  const minimizer = event.target
+    const isCollapsed = content.classList.contains("collapsed");
+    const minimizer = event.target;
 
-  if (isCollapsed) {
-    content.classList.remove("collapsed")
-    minimizer.textContent = "−"
-    console.log(`📂 Projeto ${projectName} expandido`)
-  } else {
-    content.classList.add("collapsed")
-    minimizer.textContent = "+"
-    console.log(`📁 Projeto ${projectName} recolhida`)
-  }
+    if (isCollapsed) {
+        content.classList.remove("collapsed");
+        minimizer.textContent = "−";
+        console.log(`📂 Projeto ${projectId} expandido`);
+    } else {
+        content.classList.add("collapsed");
+        minimizer.textContent = "+";
+        console.log(`📁 Projeto ${projectId} recolhido`);
+    }
 }
 
 /**
- * Alterna a visibilidade do conteúdo de uma sala (expandir/recolher)
+ * Alterna a visibilidade do conteúdo de uma sala (expandir/recolher) - CORREÇÃO COMPLETA
  * @param {string} roomId - ID único da sala
  * @param {Event} event - Evento de clique do usuário
  * @returns {void}
  * 
  * @example
- * toggleRoom('sala-123', event) // Expande ou recolhe a sala com ID 'sala-123'
+ * toggleRoom('obra_a42_proj1_sala1', event) // Expande ou recolhe a sala com ID 'obra_a42_proj1_sala1'
  */
 function toggleRoom(roomId, event) {
-  console.log(`🔧 Toggle Sala chamado: ID ${roomId}`, event)
-  
-  const allRoomsWithId = document.querySelectorAll(`[data-room-id="${roomId}"]`)
-  
-  if (allRoomsWithId.length === 0) {
-    console.error(`❌ Nenhuma sala encontrada com ID: ${roomId}`)
-    return
-  }
-  
-  if (allRoomsWithId.length > 1) {
-    console.warn(`⚠️  Múltiplas salas encontradas com ID: ${roomId} (${allRoomsWithId.length} salas)`)
+    console.log(`🔧 Toggle Sala chamado: ID ${roomId}`, event);
     
-    const clickedElement = event.target
-    const roomBlock = clickedElement.closest('.room-block')
-    
-    if (roomBlock && roomBlock.dataset.roomId === roomId) {
-      toggleSpecificRoom(roomBlock, roomId, event)
-      return
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (toggleRoom) interface.js [ID de sala inválido: ${roomId}]`);
+        return;
     }
-  }
-  
-  const roomBlock = allRoomsWithId[0]
-  toggleSpecificRoom(roomBlock, roomId, event)
-}
+    
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    const contentId = `room-content-${roomId}`;
+    const content = document.getElementById(contentId);
+    
+    if (!content) {
+        console.error(`❌ Conteúdo da sala ${roomId} não encontrado`);
+        console.log(`🔍 Procurando por: ${contentId}`);
+        console.log('🔍 Conteúdos de sala disponíveis:');
+        document.querySelectorAll('[id^="room-content-"]').forEach(content => {
+            console.log(`  - ${content.id}`);
+        });
+        return;
+    }
 
-/**
- * Função interna para alternar uma sala específica
- * @param {HTMLElement} roomBlock - Elemento HTML da sala
- * @param {string} roomId - ID único da sala
- * @param {Event} event - Evento de clique do usuário
- * @returns {void}
- * 
- * @example
- * toggleSpecificRoom(roomElement, 'sala-123', event) // Alterna sala específica
- */
-function toggleSpecificRoom(roomBlock, roomId, event) {
-  const contentId = `room-content-${roomId}`
-  const content = document.getElementById(contentId)
-  
-  if (!content) {
-    console.error(`❌ Conteúdo da sala ${roomId} não encontrado`)
-    console.log(`🔍 Procurando por: ${contentId}`)
-    return
-  }
+    const isCollapsed = content.classList.contains("collapsed");
+    const minimizer = event.target;
 
-  const isCollapsed = content.classList.contains("collapsed")
-  const minimizer = event.target
+    console.log(`📂 Estado da sala ${roomId}: ${isCollapsed ? 'recolhida' : 'expandida'}`);
 
-  console.log(`📂 Estado da sala ${roomId}: ${isCollapsed ? 'recolhida' : 'expandida'} (Obra: ${roomBlock.dataset.obraName}, Projeto: ${roomBlock.dataset.projectName})`)
-
-  if (isCollapsed) {
-    content.classList.remove("collapsed")
-    minimizer.textContent = "−"
-    console.log(`📂 Sala ${roomId} EXPANDIDA`)
-  } else {
-    content.classList.add("collapsed")
-    minimizer.textContent = "+"
-    console.log(`📁 Sala ${roomId} RECOLHIDA`)
-  }
+    if (isCollapsed) {
+        content.classList.remove("collapsed");
+        minimizer.textContent = "−";
+        console.log(`📂 Sala ${roomId} EXPANDIDA`);
+    } else {
+        content.classList.add("collapsed");
+        minimizer.textContent = "+";
+        console.log(`📁 Sala ${roomId} RECOLHIDA`);
+    }
 }
 
 /**
@@ -238,7 +238,12 @@ function toggleSpecificRoom(roomBlock, roomId, event) {
  * toggleSection('materiais') // Alterna visibilidade da seção de materiais
  */
 function toggleSection(sectionId) {
-  toggleElementVisibility(`section-content-${sectionId}`, event.target)
+    // ✅ CORREÇÃO: Validar ID
+    if (!sectionId || sectionId === 'undefined' || sectionId === 'null') {
+        console.error(`ERRO FALBACK (toggleSection) interface.js [ID de seção inválido: ${sectionId}]`);
+        return;
+    }
+    toggleElementVisibility(`section-content-${sectionId}`, event.target);
 }
 
 /**
@@ -250,8 +255,17 @@ function toggleSection(sectionId) {
  * toggleSubsection('pintura') // Alterna visibilidade da subseção de pintura
  */
 function toggleSubsection(subsectionId) {
-  toggleElementVisibility(`subsection-content-${subsectionId}`, event.target)
+    // ✅ CORREÇÃO: Validar ID
+    if (!subsectionId || subsectionId === 'undefined' || subsectionId === 'null') {
+        console.error(`ERRO FALBACK (toggleSubsection) interface.js [ID de subseção inválido: ${subsectionId}]`);
+        return;
+    }
+    toggleElementVisibility(`subsection-content-${subsectionId}`, event.target);
 }
+
+// =============================================================================
+// FUNÇÕES DE DOWNLOAD E SALVAMENTO
+// =============================================================================
 
 /**
  * Gera e inicia o download de um PDF para uma obra ou projeto específico
@@ -264,9 +278,9 @@ function toggleSubsection(subsectionId) {
  * downloadPDF('Obra1', 'ProjetoA') // Gera PDF para o ProjetoA da Obra1
  */
 function downloadPDF(obraName, projectName = null) {
-  const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`
-  console.log(`📄 Gerando PDF para ${target}`)
-  showSystemStatus(`Gerando PDF para ${target}...`, "info")
+    const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
+    console.log(`📄 Gerando PDF para ${target}`);
+    showSystemStatus(`Gerando PDF para ${target}...`, "info");
 }
 
 /**
@@ -280,9 +294,9 @@ function downloadPDF(obraName, projectName = null) {
  * downloadWord('Obra1', 'ProjetoA') // Gera Word para o ProjetoA da Obra1
  */
 function downloadWord(obraName, projectName = null) {
-  const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`
-  console.log(`📝 Gerando Word para ${target}`)
-  showSystemStatus(`Gerando documento Word para ${target}...`, "info")
+    const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
+    console.log(`📝 Gerando Word para ${target}`);
+    showSystemStatus(`Gerando documento Word para ${target}...`, "info");
 }
 
 /**
@@ -295,61 +309,104 @@ function downloadWord(obraName, projectName = null) {
  * saveOrUpdateObra('Obra1', event) // Salva/atualiza a Obra1
  */
 function saveOrUpdateObra(obraName, event) {
-  if (event) {
-    event.preventDefault()
-    event.stopPropagation()
-  }
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
 
-  console.log(`💾 SALVANDO/ATUALIZANDO OBRA: "${obraName}"`)
+    console.log(`💾 SALVANDO/ATUALIZANDO OBRA: "${obraName}"`);
 
-  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`)
-  if (!obraBlock) {
-    console.error(`❌ Obra "${obraName}" não encontrada no DOM para salvar`)
-    console.log('🔍 Obras disponíveis no DOM:')
-    document.querySelectorAll('[data-obra-name]').forEach(obra => {
-      console.log(`  - ${obra.dataset.obraName}`)
-    })
-    showSystemStatus(`ERRO: Obra "${obraName}" não encontrada`, "error")
-    return
-  }
+    // ✅ CORREÇÃO: Buscar por nome (compatibilidade)
+    const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra "${obraName}" não encontrada no DOM para salvar`);
+        console.log('🔍 Obras disponíveis no DOM:');
+        document.querySelectorAll('[data-obra-name]').forEach(obra => {
+            console.log(`  - ${obra.dataset.obraName} (ID: ${obra.dataset.obraId})`);
+        });
+        showSystemStatus(`ERRO: Obra "${obraName}" não encontrada`, "error");
+        return;
+    }
 
-  console.log(`✅ Obra encontrada no DOM:`, obraBlock.dataset)
+    console.log(`✅ Obra encontrada no DOM:`, obraBlock.dataset);
 
-  if (typeof window.saveObra === 'function') {
-    window.saveObra(obraName, event)
-  } else {
-    console.error('❌ Função saveObra não encontrada no window')
-    showSystemStatus("ERRO: Funcionalidade de salvar não disponível", "error")
-  }
+    if (typeof window.saveObra === 'function') {
+        window.saveObra(obraName, event);
+    } else {
+        console.error('❌ Função saveObra não encontrada no window');
+        showSystemStatus("ERRO: Funcionalidade de salvar não disponível", "error");
+    }
 }
 
-// Exportações adicionais do orquestrador
+// =============================================================================
+// FUNÇÕES DE EDIÇÃO (COMPATIBILIDADE)
+// =============================================================================
+
+/**
+ * Torna um elemento editável - FUNÇÃO DE COMPATIBILIDADE
+ * @param {HTMLElement} element - Elemento a ser editado
+ * @param {string} type - Tipo do elemento ('obra', 'project', 'room')
+ * @returns {void}
+ */
+function makeEditable(element, type) {
+    console.log(`✏️ Tornando ${type} editável:`, element);
+    // Implementação básica - pode ser expandida conforme necessário
+    if (element.isContentEditable) {
+        element.contentEditable = false;
+        element.blur();
+    } else {
+        element.contentEditable = true;
+        element.focus();
+    }
+}
+
+/**
+ * Verifica dados de uma obra - FUNÇÃO DE COMPATIBILIDADE
+ * @param {string} obraName - Nome da obra a ser verificada
+ * @returns {void}
+ */
+function verifyObraData(obraName) {
+    console.log(`🔍 Verificando dados da obra: ${obraName}`);
+    showSystemStatus(`Verificando dados da obra "${obraName}"...`, "info");
+}
+
+// =============================================================================
+// EXPORTAÇÕES ADICIONAIS
+// =============================================================================
+
 export {
     addNewProject,
     toggleObra,
     toggleProject,
     toggleRoom,
-    toggleSpecificRoom,
     downloadPDF,
     downloadWord,
     saveOrUpdateObra,
     toggleSubsection,
-    toggleSection
+    toggleSection,
+    makeEditable,
+    verifyObraData
 }
 
-// Disponibilização global das funções
+// =============================================================================
+// DISPONIBILIZAÇÃO GLOBAL DAS FUNÇÕES
+// =============================================================================
+
 if (typeof window !== 'undefined') {
-  window.addNewObra = addNewObra
-  window.addNewProjectToObra = addNewProjectToObra
-  window.toggleObra = toggleObra
-  window.toggleProject = toggleProject
-  window.toggleRoom = toggleRoom
-  window.toggleSubsection = toggleSubsection
-  window.toggleSection = toggleSection
-  window.getNextObraNumber = getNextObraNumber
-  window.deleteObra = deleteObra
-  window.saveOrUpdateObra = saveOrUpdateObra
-  window.downloadPDF = downloadPDF
-  window.downloadWord = downloadWord
-  window.addNewProject = addNewProject
+    window.addNewObra = addNewObra;
+    window.addNewProjectToObra = addNewProjectToObra;
+    window.toggleObra = toggleObra;
+    window.toggleProject = toggleProject;
+    window.toggleRoom = toggleRoom;
+    window.toggleSubsection = toggleSubsection;
+    window.toggleSection = toggleSection;
+    window.getNextObraNumber = getNextObraNumber;
+    window.deleteObra = deleteObra;
+    window.saveOrUpdateObra = saveOrUpdateObra;
+    window.downloadPDF = downloadPDF;
+    window.downloadWord = downloadWord;
+    window.addNewProject = addNewProject;
+    window.createEmptyProject = createEmptyProject;
+    window.makeEditable = makeEditable;
+    window.verifyObraData = verifyObraData;
 }

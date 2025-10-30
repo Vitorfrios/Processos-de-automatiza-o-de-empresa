@@ -1,14 +1,12 @@
 /**
  * =====================
  * Gerenciador de obras - obra-manager.js
+ * SISTEMA CORRIGIDO COM IDs ÚNICOS
  * =====================
  */
 
-import { removeObraFromSession } from '../../data/server.js'
 import { 
     showConfirmationModal, 
-    closeConfirmationModal, 
-    confirmDeletion,
     undoDeletion,
     hideToast 
 } from './modal/modal.js'
@@ -19,46 +17,48 @@ import {
  * @param {string} obraId - ID da obra (opcional)
  */
 function createEmptyObra(obraName, obraId) {
-  const finalObraId = obraId; 
-  const obraHTML = buildObraHTML(obraName, finalObraId);
-  insertObraIntoDOM(obraHTML);
-  console.log(`🏗️ Obra ${obraName} criada - Botão: ${finalObraId ? 'ATUALIZAR OBRA' : 'SALVAR OBRA'}`);
+    // ✅ CORREÇÃO: SEMPRE usar ID único, mesmo se fornecido (para consistência)
+    const finalObraId = obraId || generateObraId();
+    const obraHTML = buildObraHTML(obraName, finalObraId);
+    insertObraIntoDOM(obraHTML);
+    console.log(`🏗️ Obra ${obraName} criada - ID: ${finalObraId}`);
 }
 
 /**
  * Constrói o HTML de uma obra
  * @param {string} obraName - Nome da obra
- * @param {string} obraId - ID da obra
+ * @param {string} obraId - ID único da obra
  * @returns {string} HTML da obra
  */
-
 function buildObraHTML(obraName, obraId) {
-  const hasId = obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined";
-  
-  // ✅ CORREÇÃO: Usar ID único para o toggle, fallback para nome se ID não existir
-  const toggleIdentifier = obraId || obraName;
+    // ✅ CORREÇÃO: Validar ID único
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (buildObraHTML) obra-manager.js [ID de obra inválido: ${obraId}]`);
+        obraId = generateObraId();
+    }
+    
+    console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}`);
 
-  console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}, Toggle: ${toggleIdentifier}`);
-
-  return `
-    <div class="obra-block" data-obra-id="${obraId || ""}" data-obra-name="${obraName}">
+    return `
+    <div class="obra-block" data-obra-id="${obraId}" data-obra-name="${obraName}">
       <div class="obra-header">
-        <!-- ✅ CORREÇÃO: usar toggleIdentifier em vez de apenas obraName -->
-        <button class="minimizer" onclick="toggleObra('${toggleIdentifier}', event)">+</button>
+        <!-- ✅ CORREÇÃO: usar APENAS obraId para toggle -->
+        <button class="minimizer" onclick="toggleObra('${obraId}', event)">+</button>
         <h2 class="obra-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
         <div class="obra-actions">
-          <button class="btn btn-delete" onclick="window.deleteObra('${obraName}')">Remover Obra</button>
+          <button class="btn btn-delete" onclick="window.deleteObra('${obraName}', '${obraId}')">Remover Obra</button>
         </div>
       </div>
-      <!-- ✅ CORREÇÃO: usar toggleIdentifier no ID do conteúdo -->
-      <div class="obra-content collapsed" id="obra-content-${toggleIdentifier}">
-        <div class="projects-container" id="projects-${obraName}">
+      <!-- ✅ CORREÇÃO: usar APENAS obraId no conteúdo -->
+      <div class="obra-content collapsed" id="obra-content-${obraId}">
+        <div class="projects-container" id="projects-${obraId}">
           <p class="empty-message">Adicione projetos a esta obra...</p>
         </div>
         <div class="add-project-section">
-          <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraName}')">+ Adicionar Projeto</button>
+          <!-- ✅ CORREÇÃO: Passar obraId para a função -->
+          <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraId}')">+ Adicionar Projeto</button>
         </div>
-        ${buildObraActionsFooter(obraName, hasId)}
+        ${buildObraActionsFooter(obraName, !!obraId)}
       </div>
     </div>
   `;
@@ -92,6 +92,10 @@ function buildObraActionsFooter(obraName, hasId = false) {
  */
 function insertObraIntoDOM(obraHTML) {
   const projectsContainer = document.getElementById("projects-container")
+  if (!projectsContainer) {
+    console.error('❌ Container de projetos não encontrado')
+    return
+  }
   projectsContainer.insertAdjacentHTML("beforeend", obraHTML)
 }
 
@@ -101,15 +105,16 @@ function insertObraIntoDOM(obraHTML) {
  * @param {string} obraId - ID da obra salva
  */
 function updateObraButtonAfterSave(obraName, obraId) {
-  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`)
+  // ✅ CORREÇÃO: Buscar APENAS por ID único
+  const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`)
   if (!obraBlock) {
-    console.error(`❌ Obra ${obraName} não encontrada para atualizar botão`)
+    console.error(`❌ Obra com ID ${obraId} não encontrada para atualizar botão`)
     return
   }
 
   obraBlock.dataset.obraId = obraId
 
-  const obraContent = document.getElementById(`obra-content-${obraName}`)
+  const obraContent = document.getElementById(`obra-content-${obraId}`)
   if (obraContent) {
     const oldFooter = obraContent.querySelector('.obra-actions-footer')
     if (oldFooter) {
@@ -120,21 +125,23 @@ function updateObraButtonAfterSave(obraName, obraId) {
       console.error(`❌ Rodapé não encontrado na obra ${obraName}`)
     }
   } else {
-    console.error(`❌ Conteúdo da obra ${obraName} não encontrado`)
+    console.error(`❌ Conteúdo da obra ${obraId} não encontrado`)
   }
 }
 
 /**
  * Função principal de deletar obra (ATUALIZADA)
  */
-async function deleteObra(obraName) {
-  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
-  if (!obraBlock) return;
+async function deleteObra(obraName, obraId) {
+  // ✅ CORREÇÃO: Buscar APENAS por ID único
+  const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`)
+  if (!obraBlock) {
+    console.error(`❌ Obra com ID ${obraId} não encontrada`)
+    return
+  }
 
-  const obraId = obraBlock.dataset.obraId;
-  
   // Mostra o modal personalizado em vez do confirm básico
-  showConfirmationModal(obraName, obraId, obraBlock);
+  showConfirmationModal(obraName, obraId, obraBlock)
 }
 
 /**
@@ -160,10 +167,13 @@ async function addNewObra() {
   try {
     const obraNumber = getNextObraNumber()
     const obraName = `Obra${obraNumber}`
+    
+    // ✅ CORREÇÃO: Gerar ID único para nova obra
+    const obraId = generateObraId()
 
-    console.log(`🏗️ Criando nova obra: ${obraName}`)
-    createEmptyObra(obraName, null)
-    console.log(`✅ ${obraName} adicionada com botão SALVAR OBRA`)
+    console.log(`🏗️ Criando nova obra: ${obraName} com ID: ${obraId}`)
+    createEmptyObra(obraName, obraId)
+    console.log(`✅ ${obraName} adicionada com ID único: ${obraId}`)
 
   } catch (error) {
     console.error("❌ Erro ao adicionar nova obra:", error)
@@ -171,13 +181,28 @@ async function addNewObra() {
   }
 }
 
+// =============================================================================
+// SISTEMA DE IDs ÚNICOS PARA OBRAS
+// =============================================================================
+
+/**
+ * Gera ID único para obra - CURTO E ÚNICO
+ * @returns {string} ID único da obra
+ */
+function generateObraId() {
+    const letters = 'abcdefghjkmnpqrstwxyz'
+    const randomLetter = letters[Math.floor(Math.random() * letters.length)]
+    const randomNum = Math.floor(Math.random() * 90) + 10
+    return `obra_${randomLetter}${randomNum}`
+}
+
 // ===== EXPORTAÇÕES E CONFIGURAÇÃO GLOBAL =====
 
 // Torne as funções globais para o HTML poder acessar
-window.deleteObra = deleteObra;
-window.addNewObra = addNewObra;
-window.undoDeletion = undoDeletion;
-window.hideToast = hideToast;
+window.deleteObra = deleteObra
+window.addNewObra = addNewObra
+window.undoDeletion = undoDeletion
+window.hideToast = hideToast
 
 // Exportações para módulos
 export {
@@ -188,5 +213,6 @@ export {
     updateObraButtonAfterSave,
     deleteObra,
     getNextObraNumber,
-    addNewObra
+    addNewObra,
+    generateObraId
 }

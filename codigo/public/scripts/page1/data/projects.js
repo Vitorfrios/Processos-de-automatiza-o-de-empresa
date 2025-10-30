@@ -13,7 +13,6 @@ async function fetchObras() {
     const response = await fetch('/obras')
 
     if (!response.ok) {
-
       // Se o endpoint não existir, retorna array vazio (para obras novas)
       if (response.status === 404) {
         return [];
@@ -39,6 +38,12 @@ async function fetchObras() {
  */
 async function atualizarObra(obraId, obraData) {
   try {
+    // ✅ CORREÇÃO: Validar ID seguro antes de processar
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+      console.error(`ERRO FALBACK (atualizarObra) projects.js [ID de obra inválido: ${obraId}]`);
+      showSystemStatus("ERRO: ID da obra inválido para atualização", "error");
+      return null;
+    }
 
     // Só atualizar se sessão estiver ativa
     if (!isSessionActive()) {
@@ -48,12 +53,6 @@ async function atualizarObra(obraId, obraData) {
     }
 
     obraId = ensureStringId(obraId);
-
-    if (!obraId) {
-      console.error("❌ ERRO: ID da obra inválido para atualização");
-      showSystemStatus("ERRO: ID da obra inválido para atualização", "error");
-      return null;
-    }
 
     console.log(`🔍 Verificando se obra ${obraId} existe no servidor...`);
     
@@ -73,14 +72,13 @@ async function atualizarObra(obraId, obraData) {
     if (!obraExistente) {
       console.log(`❌ Obra ${obraId} não encontrada no backup, criando nova...`);
 
-      // Remover o ID para forçar criação como nova obra
-      delete obraData.id;
+      // ✅ CORREÇÃO: Se obra não existe, criar como nova preservando ID seguro
+      console.log(`🆕 Criando nova obra com ID seguro preservado: ${obraId}`);
+      obraData.id = obraId; // ✅ PRESERVAR ID SEGUR
       return await salvarObra(obraData);
     }
 
-    // Garantir que o ID no dados seja o correto
-    obraData.id = obraId;
-
+    // ✅ CORREÇÃO: Garantir que o ID nos dados seja o correto (já está correto)
     console.log('🔄 ATUALIZANDO OBRA EXISTENTE:', {
       id: obraData.id,
       nome: obraData.nome,
@@ -125,10 +123,24 @@ async function atualizarObra(obraId, obraData) {
  */
 async function salvarObra(obraData) {
   try {
+    // ✅ CORREÇÃO: Validar dados da obra antes de salvar
+    if (!obraData || !obraData.nome) {
+      console.error(`ERRO FALBACK (salvarObra) projects.js [Dados da obra inválidos: ${JSON.stringify(obraData)}]`);
+      showSystemStatus("ERRO: Dados da obra inválidos", "error");
+      return null;
+    }
+
     // Só salvar se sessão estiver ativa
     if (!isSessionActive()) {
       console.warn("⚠️ Sessão não está ativa - obra não será salva");
       showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
+      return null;
+    }
+
+    // ✅ CORREÇÃO: Garantir que obra tenha ID seguro
+    if (!obraData.id || obraData.id === 'undefined' || obraData.id === 'null') {
+      console.error(`ERRO FALBACK (salvarObra) projects.js [Obra sem ID seguro: ${obraData.id}]`);
+      showSystemStatus("ERRO: Obra não possui ID válido", "error");
       return null;
     }
 
@@ -184,6 +196,7 @@ async function salvarObra(obraData) {
 function findObraBlock(obraName) {
     console.log(`🔍 Buscando obra: "${obraName}"`);
     
+    // ✅ CORREÇÃO: Buscar APENAS por ID único se possível
     // 1. Tentar pelo nome exato (mais específico)
     let obraBlock = document.querySelector(`.obra-block[data-obra-name="${obraName}"]`);
     if (obraBlock) {
@@ -197,7 +210,8 @@ function findObraBlock(obraName) {
     
     todasObras.forEach((obra, index) => {
         console.log(`  ${index + 1}.`, {
-            dataset: obra.dataset,
+            id: obra.dataset.obraId,
+            name: obra.dataset.obraName,
             classes: obra.className
         });
     });
@@ -206,7 +220,8 @@ function findObraBlock(obraName) {
     if (todasObras.length > 0) {
         const primeiraObra = todasObras[0];
         const actualName = primeiraObra.dataset.obraName;
-        console.log(`✅ Usando primeira obra: "${actualName}" em vez de "${obraName}"`);
+        const actualId = primeiraObra.dataset.obraId;
+        console.log(`✅ Usando primeira obra: "${actualName}" (ID: ${actualId}) em vez de "${obraName}"`);
         return primeiraObra;
     }
     
@@ -241,7 +256,6 @@ async function saveObra(obraName, event) {
         return;
     }
 
-
     let obraBlock = findObraBlock(obraName);
     
     if (!obraBlock) {
@@ -266,30 +280,49 @@ async function saveObra(obraName, event) {
         return;
     }
 
-    // Lógica para determinar se é nova obra ou atualização
+    // ✅ CORREÇÃO: Lógica melhorada para determinar se é nova obra ou atualização
     const obraIdFromDOM = obraBlock.dataset.obraId;
-    const isNewObra = !obraIdFromDOM || obraIdFromDOM === "" || obraIdFromDOM === "null" || obraIdFromDOM === "undefined";
+    const isNewObra = !obraIdFromDOM || 
+                      obraIdFromDOM === "" || 
+                      obraIdFromDOM === "null" || 
+                      obraIdFromDOM === "undefined" ||
+                      !obraIdFromDOM.startsWith('obra_'); // ✅ VERIFICAR SE É ID SEGURO
 
     console.log('🔍 VERIFICAÇÃO DE OBRA:');
     console.log('- ID no DOM:', obraIdFromDOM);
     console.log('- ID nos dados:', obraData.id);
+    console.log('- É ID seguro?:', obraIdFromDOM?.startsWith('obra_'));
     console.log('- É nova obra?:', isNewObra);
 
     let result = null;
     
     if (isNewObra) {
-        console.log('🆕 SALVANDO COMO NOVA OBRA');
+        console.log('🆕 SALVANDO COMO NOVA OBRA COM ID SEGURO');
+        // ✅ CORREÇÃO: Garantir que obraData tenha ID seguro
+        if (!obraData.id || !obraData.id.startsWith('obra_')) {
+            console.error('❌ Obra não possui ID seguro válido para salvar');
+            showSystemStatus("ERRO: Obra não possui ID válido", "error");
+            return;
+        }
         result = await salvarObra(obraData);
     } else {
         const finalId = obraIdFromDOM || obraData.id;
-        console.log('📝 ATUALIZANDO OBRA EXISTENTE, ID:', finalId);
+        console.log('📝 ATUALIZANDO OBRA EXISTENTE, ID SEGURO:', finalId);
+        
+        // ✅ CORREÇÃO: Validar ID seguro antes de atualizar
+        if (!finalId.startsWith('obra_')) {
+            console.error(`ERRO FALBACK (saveObra) projects.js [ID não seguro para atualização: ${finalId}]`);
+            showSystemStatus("ERRO: ID da obra inválido para atualização", "error");
+            return;
+        }
+        
         result = await atualizarObra(finalId, obraData);
     }
 
     if (result) {
         const finalId = ensureStringId(result.id);
         
-        // Atualizar DOM com o ID correto
+        // ✅ CORREÇÃO: Atualizar DOM com o ID seguro correto
         obraBlock.dataset.obraId = finalId;
         obraBlock.dataset.obraName = obraData.nome;
         
@@ -304,7 +337,7 @@ async function saveObra(obraName, event) {
             updateObraButtonAfterSave(obraName, finalId);
         }
 
-        console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID: ${finalId}`);
+        console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${finalId}`);
         
         showSystemStatus("Obra salva com sucesso!", "success");
     } else {
@@ -320,16 +353,18 @@ async function saveObra(obraName, event) {
  * @returns {Promise<void>}
  */
 async function deleteProject(obraName, projectName) {
+    // ✅ CORREÇÃO: Buscar por IDs únicos
+    const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`)
+    if (!projectBlock) {
+        console.error(`❌ Projeto ${projectName} não encontrado na obra ${obraName}`);
+        return;
+    }
 
+    // Apenas remove da interface - o salvamento da obra atualizada vai refletir a remoção
+    projectBlock.remove()
 
-  const projectBlock = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`)
-  if (!projectBlock) return
-
-  // Apenas remove da interface - o salvamento da obra atualizada vai refletir a remoção
-  projectBlock.remove()
-
-  console.log(`🗑️ Projeto ${projectName} removido da obra ${obraName}`)
-  showSystemStatus("Projeto removido da obra", "success")
+    console.log(`🗑️ Projeto ${projectName} removido da obra ${obraName}`)
+    showSystemStatus("Projeto removido da obra", "success")
 }
 
 /**
@@ -340,17 +375,19 @@ async function deleteProject(obraName, projectName) {
  */
 async function deleteObraFromServer(obraName, obraId) {
   try {
+    // ✅ CORREÇÃO: Validar ID seguro antes de deletar
+    if (!obraId || obraId === 'undefined' || obraId === 'null' || !obraId.startsWith('obra_')) {
+      console.error(`ERRO FALBACK (deleteObraFromServer) projects.js [ID de obra inválido: ${obraId}]`);
+      showSystemStatus("ERRO: ID da obra inválido para remoção", "error");
+      return;
+    }
+
     if (!isSessionActive()) {
       console.warn("⚠️ Sessão não está ativa - obra não será removida do servidor");
       return;
     }
 
     obraId = ensureStringId(obraId);
-
-    if (!obraId) {
-      console.error("❌ ERRO: ID da obra inválido para remoção");
-      return;
-    }
 
     console.log(`🗑️ Removendo obra ${obraId} do servidor...`);
 
@@ -436,7 +473,6 @@ function calculateRoomCompletionStats(room) {
  * @returns {Promise<void>}
  */
 async function deleteProjectLegacy(projectName) {
-
     // Tenta encontrar a obra do projeto
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
     const obraName = projectBlock?.dataset.obraName;

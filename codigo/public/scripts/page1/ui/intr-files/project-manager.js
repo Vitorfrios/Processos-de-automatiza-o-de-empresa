@@ -1,143 +1,198 @@
-// project-manager.js
+/**
+ * project-manager.js
+ * Gerenciador de projetos - SISTEMA CORRIGIDO COM IDs ÚNICOS
+ */
 
 import { createEmptyRoom } from '../../data/rooms.js'
 import { generateProjectId } from '../../data/data-utils.js'
 import { removeEmptyObraMessage } from './ui-helpers.js'
 
 /**
- * Gerenciador de projetos
- */
-
-
-/**
- * Cria um projeto vazio dentro de uma obra
+ * Constrói o HTML de um projeto - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra
  * @param {string} obraName - Nome da obra
+ * @param {string} projectId - ID único do projeto
  * @param {string} projectName - Nome do projeto
- * @param {string} projectId - ID do projeto (opcional)
+ * @returns {string} HTML do projeto
  */
-function createEmptyProject(obraName, projectName, projectId) {
-    console.log(`📁 [CREATE PROJECT] Buscando obra: "${obraName}" para criar projeto: "${projectName}"`);
-    
-    // ✅ CORREÇÃO: Buscar obra com seletor mais específico
-    const obraElement = document.querySelector(`.obra-block[data-obra-name="${obraName}"]`);
-    
-    if (!obraElement) {
-        console.error(`❌ Obra "${obraName}" não encontrada no DOM`);
-        console.log(`🔍 Obras disponíveis:`, Array.from(document.querySelectorAll('.obra-block')).map(o => o.dataset.obraName));
-        return;
+function buildProjectHTML(obraId, obraName, projectId, projectName) {
+    // ✅ CORREÇÃO: Validar IDs únicos
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (buildProjectHTML) project-manager.js [Obra ID inválido: ${obraId}]`)
+        return ''
     }
-
-    console.log(`✅ Obra encontrada:`, obraElement.dataset);
-
-    const finalProjectId = projectId || generateProjectId(obraElement);
-    const projectHTML = buildProjectHTML(obraName, projectName, finalProjectId);
-    const obraProjectsContainer = document.getElementById(`projects-${obraName}`);
-
-    if (obraProjectsContainer) {
-        console.log(`✅ Container de projetos encontrado: projects-${obraName}`);
-        
-        // ✅ CORREÇÃO: Remover mensagem de obra vazia antes de inserir
-        const emptyMessage = obraProjectsContainer.querySelector('.empty-message');
-        if (emptyMessage) {
-            emptyMessage.remove();
-            console.log(`✅ Mensagem de obra vazia removida`);
-        }
-        
-        // ✅ CORREÇÃO: Inserir projeto no container
-        obraProjectsContainer.insertAdjacentHTML("beforeend", projectHTML);
-        console.log(`✅ Projeto ${projectName} criado na obra ${obraName} com ID: ${finalProjectId}`);
-        
-        // ✅ CORREÇÃO: Verificar se o projeto foi realmente criado
-        setTimeout(() => {
-            const createdProject = document.querySelector(`[data-project-name="${projectName}"][data-obra-name="${obraName}"]`);
-            if (createdProject) {
-                console.log(`✅ PROJETO CONFIRMADO NO DOM: ${projectName}`, createdProject);
-            } else {
-                console.error(`❌ PROJETO NÃO CRIADO: ${projectName} não encontrado no DOM após criação`);
-            }
-        }, 100);
-    } else {
-        console.error(`❌ Container de projetos não encontrado para obra ${obraName}`);
-        console.log(`🔍 Containers disponíveis:`, Array.from(document.querySelectorAll('[id^="projects-"]')).map(c => c.id));
+    
+    const finalProjectId = projectId || generateProjectId(document.querySelector(`[data-obra-id="${obraId}"]`))
+    
+    if (!finalProjectId || finalProjectId === 'undefined' || finalProjectId === 'null') {
+        console.error(`ERRO FALBACK (buildProjectHTML) project-manager.js [Project ID inválido: ${finalProjectId}]`)
+        return ''
     }
-}
-
-/**
- * Constrói o HTML completo de um projeto dentro de uma obra
- * Cria a estrutura DOM com header, conteúdo recolhível e ações
- * @param {string} obraName - Nome da obra pai do projeto
- * @param {string} projectName - Nome do projeto a ser criado
- * @param {string|number|null} projectId - ID único do projeto (opcional)
- * @returns {string} HTML completo do bloco do projeto
- */
-function buildProjectHTML(obraName, projectName, projectId) {
-    const hasId = projectId !== null && projectId !== undefined && projectId !== ""
-    // ID único incluindo obra para evitar conflitos
-    const uniqueProjectId = `${obraName}-${projectName}`.replace(/\s+/g, '-').toLowerCase()
-
-    console.log(`🔨 [BUILD PROJECT HTML] Obra: ${obraName}, Projeto: ${projectName}, ID: ${projectId}, UniqueID: ${uniqueProjectId}`);
+    
+    console.log(`🔨 [BUILD PROJECT HTML] Obra: ${obraName}, Projeto: ${projectName}, ObraID: ${obraId}, ProjectID: ${finalProjectId}`)
 
     return `
-    <div class="project-block" data-project-id="${projectId || ""}" data-project-name="${projectName}" data-obra-name="${obraName}">
-      <div class="project-header">
-        <button class="minimizer" onclick="toggleProject('${uniqueProjectId}', event)">+</button>
-        <h3 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">${projectName}</h3>
-        <div class="project-actions">
-          <button class="btn btn-delete" onclick="deleteProject('${obraName}', '${projectName}')">Remover</button>
+        <div class="project-block" 
+             data-project-id="${finalProjectId}" 
+             data-project-name="${projectName}" 
+             data-obra-id="${obraId}" 
+             data-obra-name="${obraName}">
+            <div class="project-header">
+                <!-- ✅ CORREÇÃO: usar APENAS projectId para toggle -->
+                <button class="minimizer" onclick="toggleProject('${finalProjectId}', event)">+</button>
+                <h3 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">${projectName}</h3>
+                <div class="project-actions">
+                    <!-- ✅ CORREÇÃO: passar IDs únicos para delete -->
+                    <button class="btn btn-delete" onclick="deleteProject('${obraId}', '${finalProjectId}')">Remover Projeto</button>
+                </div>
+            </div>
+            <!-- ✅ CORREÇÃO: usar APENAS projectId no conteúdo -->
+            <div class="project-content collapsed" id="project-content-${finalProjectId}">
+                <div class="rooms-container">
+                    <p class="empty-message">Adicione salas a este projeto...</p>
+                </div>
+                <div class="add-room-section">
+                    <!-- ✅ CORREÇÃO: passar IDs únicos para add room -->
+                    <button class="btn btn-add-secondary" onclick="addNewRoom('${obraId}', '${finalProjectId}')">+ Adicionar Sala</button>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="project-content collapsed" id="project-content-${uniqueProjectId}">
-        <p class="empty-message">Adicione salas a este projeto...</p>
-        <div class="add-room-section">
-          <button class="btn btn-add-secondary" onclick="addNewRoom('${obraName}', '${projectName}', '${uniqueProjectId}')">+ Adicionar Nova Sala</button>
-        </div>
-      </div>
-    </div>
-  `
+    `
 }
 
 /**
- * Adiciona um novo projeto à obra especificada
+ * Cria um projeto vazio na obra especificada - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra
  * @param {string} obraName - Nome da obra
+ * @param {string} projectId - ID único do projeto
+ * @param {string} projectName - Nome do projeto
+ * @returns {Promise<boolean>} True se o projeto foi criado com sucesso
  */
-function addNewProjectToObra(obraName) {
-  try {
-    const projectNumber = getNextProjectNumber(obraName)
-    const projectName = `Projeto${projectNumber}`
-
-    console.log(`➕ Adicionando projeto ${projectName} à obra ${obraName}`)
+async function createEmptyProject(obraId, obraName, projectId, projectName) {
+    console.log(`📁 [CREATE PROJECT] Buscando obra: "${obraName}" (ID: ${obraId}) para criar projeto: "${projectName}" (ID: ${projectId})`)
     
-    createEmptyProject(obraName, projectName, null)
+    // ✅ CORREÇÃO: Buscar APENAS por ID único da obra
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`)
+    
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID ${obraId} não encontrada`)
+        
+        // Debug: listar obras disponíveis
+        console.log('🔍 Obras disponíveis no DOM:')
+        document.querySelectorAll('.obra-block').forEach(obra => {
+            console.log(`  - Obra: "${obra.dataset.obraName}", ID: "${obra.dataset.obraId}"`)
+        })
+        return false
+    }
 
-    const defaultRoomName = "Sala1"
-    createEmptyRoom(obraName, projectName, defaultRoomName, null)
+    console.log(`✅ Obra encontrada:`, obraBlock.dataset)
 
-    console.log(`📁 ${projectName} adicionado à obra ${obraName} com sala padrão: ${defaultRoomName}`)
+    const projectsContainer = document.getElementById(`projects-${obraId}`)
+    if (!projectsContainer) {
+        console.error(`❌ Container de projetos não encontrado para obra: ${obraId}`)
+        return false
+    }
 
-  } catch (error) {
-    console.error("❌ Erro ao adicionar novo projeto:", error)
-    alert("Erro ao criar novo projeto. Verifique o console para detalhes.")
-  }
+    removeEmptyObraMessage(obraName)
+
+    // ✅ CORREÇÃO: Gerar ID SEGURO hierárquico se não fornecido
+    const projectNumber = getNextProjectNumber(obraId)
+    const finalProjectId = projectId || generateProjectId(obraBlock, projectNumber)
+    
+    if (!finalProjectId) {
+        console.error(`❌ Falha ao gerar ID para projeto ${projectName}`)
+        return false
+    }
+
+    const projectHTML = buildProjectHTML(obraId, obraName, finalProjectId, projectName)
+    projectsContainer.insertAdjacentHTML('beforeend', projectHTML)
+
+    console.log(`✅ Projeto ${projectName} criado na obra ${obraName} com ID SEGURO: ${finalProjectId}`)
+    
+    // Aguardar e confirmar que o projeto foi criado no DOM
+    setTimeout(() => {
+        const createdProject = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${finalProjectId}"]`)
+        if (createdProject) {
+            console.log(`✅ PROJETO CONFIRMADO NO DOM: ${projectName}`, createdProject.dataset)
+        } else {
+            console.error(`❌ PROJETO NÃO ENCONTRADO NO DOM: ${projectName}`)
+        }
+    }, 100)
+
+    return true
 }
 
 /**
- * Obtém o próximo número de projeto dentro de uma obra
- * @param {string} obraName - Nome da obra
- * @returns {number} Próximo número disponível para projeto
+ * Adiciona um novo projeto à obra especificada - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra
+ * @returns {Promise<void>}
  */
-function getNextProjectNumber(obraName) {
-  const obraElement = document.querySelector(`[data-obra-name="${obraName}"]`)
-  if (!obraElement) return 1
+async function addNewProjectToObra(obraId) {
+    console.log(`➕ Adicionando novo projeto à obra: ${obraId}`)
+    
+    // ✅ CORREÇÃO: Buscar obra por ID único
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`)
+    
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID ${obraId} não encontrada`)
+        
+        // Debug: listar obras disponíveis com seus IDs
+        console.log('🔍 Obras disponíveis no DOM:')
+        document.querySelectorAll('.obra-block').forEach(obra => {
+            console.log(`  - Obra: "${obra.dataset.obraName}", ID: "${obra.dataset.obraId}"`)
+        })
+        return
+    }
+    
+    const obraName = obraBlock.dataset.obraName
+    const projectNumber = getNextProjectNumber(obraId)
+    const projectName = `Projeto${projectNumber}`
+    
+    // ✅ CORREÇÃO: Gerar ID hierárquico único para projeto
+    const projectId = generateProjectId(obraBlock)
 
-  const projects = obraElement.querySelectorAll('.project-block')
-  const projectNumbers = Array.from(projects).map(project => {
-    const projectName = project.dataset.projectName
-    const match = projectName.match(/Projeto(\d+)/)
-    return match ? parseInt(match[1]) : 0
-  })
+    await createEmptyProject(obraId, obraName, projectId, projectName)
+    console.log(`✅ ${projectName} adicionado à obra ${obraName} (ID: ${obraId})`)
+}
 
-  const maxNumber = Math.max(0, ...projectNumbers)
-  return maxNumber + 1
+/**
+ * Conta projetos na obra específica - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra
+ * @returns {number} Número do próximo projeto
+ */
+function getNextProjectNumber(obraId) {
+    // ✅ CORREÇÃO: Buscar projetos APENAS por obra ID
+    const projects = document.querySelectorAll(`[data-obra-id="${obraId}"] .project-block`)
+    return projects.length + 1
+}
+
+/**
+ * Remove um projeto da obra
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
+ * @returns {void}
+ */
+function deleteProject(obraId, projectId) {
+    // ✅ CORREÇÃO: Buscar APENAS por IDs únicos
+    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`)
+    
+    if (!projectElement) {
+        console.error(`❌ Projeto com ID ${projectId} não encontrado na obra ${obraId}`)
+        return
+    }
+
+    const projectName = projectElement.dataset.projectName
+    projectElement.remove()
+    
+    console.log(`🗑️ Projeto ${projectName} (ID: ${projectId}) removido da obra ${obraId}`)
+}
+
+if (typeof window !== 'undefined') {
+    window.addNewProjectToObra = addNewProjectToObra
+    window.getNextProjectNumber = getNextProjectNumber
+    window.deleteProject = deleteProject
+    window.createEmptyProject = createEmptyProject // ✅ LINHA CRÍTICA FALTANTE
+    window.buildProjectHTML = buildProjectHTML // ✅ Adicionar também para consistência
 }
 
 export {
@@ -145,4 +200,5 @@ export {
     buildProjectHTML,
     addNewProjectToObra,
     getNextProjectNumber,
+    deleteProject
 }

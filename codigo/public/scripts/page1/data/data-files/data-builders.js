@@ -1,7 +1,7 @@
 /**
  * data-builders.js
  * Módulo de construção de objetos de dados
- * Responsável por criar estruturas de obras, projetos e salas
+ * Responsável por criar estruturas de obras, projetos e salas COM IDs ÚNICOS
  */
 
 // Importações necessárias
@@ -41,8 +41,11 @@ function buildObraData(obraIdOrElement) {
 
     console.log(`📦 Construindo dados da obra: "${obraName}" (ID: ${obraId})`)
 
+    // ✅ CORREÇÃO: SEMPRE usar ID único, mesmo se já existir (para consistência)
+    const finalObraId = obraId || generateObraId()
+    
     const obraData = {
-        id: obraId || generateObraId(),
+        id: finalObraId, // ✅ ID ÚNICO CURTO
         nome: getObraName(obraElement),
         timestamp: new Date().toISOString(),
         projetos: []
@@ -96,8 +99,16 @@ function buildProjectData(projectIdOrElement) {
     const projectId = projectElement.dataset.projectId
     const obraElement = projectElement.closest('.obra-block')
 
+    if (!obraElement) {
+        console.error('❌ Elemento da obra pai não encontrado para projeto:', projectName)
+        return null
+    }
+
+    // ✅ CORREÇÃO: SEMPRE usar ID hierárquico único
+    const finalProjectId = projectId || generateProjectId(obraElement)
+
     const projectData = {
-        id: projectId || (obraElement ? generateProjectId(obraElement) : "1"),
+        id: finalProjectId, // ✅ ID HIERÁRQUICO ÚNICO
         nome: getProjectName(projectElement),
         salas: [],
         timestamp: new Date().toISOString()
@@ -128,11 +139,19 @@ function extractRoomData(roomElement, projectElement) {
         return null
     }
 
-    const roomId = roomElement.dataset.roomId || (projectElement ? generateRoomId(projectElement) : "1")
+    if (!projectElement) {
+        console.error('❌ Elemento do projeto pai é nulo')
+        return null
+    }
+
+    // ✅ CORREÇÃO: SEMPRE usar ID hierárquico único
+    const roomId = roomElement.dataset.roomId || generateRoomId(projectElement)
     const roomName = getRoomName(roomElement) || `Sala ${roomId}`
 
+    console.log(`🔍 Extraindo dados da sala: "${roomName}" (ID: ${roomId})`)
+
     const roomData = {
-        id: roomId,
+        id: roomId, // ✅ ID HIERÁRQUICO ÚNICO
         nome: roomName,
         inputs: extractClimatizationInputs(roomElement),
         maquinas: extractMachinesData(roomElement),

@@ -73,10 +73,12 @@ function validateSystemConstants() {
 /**
  * Coleta dados de entrada da interface para processamento de climatização
  * @param {HTMLElement} climaSection - Elemento HTML da seção de climatização
- * @param {string} roomId - ID da sala para debug
+ * @param {string} roomId - ID único da sala (formato: obra_w12_proj_t34_1_sala_r21_1)
  * @returns {Object} Dados coletados dos inputs
  */
 function collectClimatizationInputs(climaSection, roomId) {
+  console.log(`📝 [COLLECT] Coletando inputs para sala: ${roomId}`);
+  
   const inputs = climaSection.querySelectorAll(".clima-input, input[data-field], select[data-field]");
   const data = {};
 
@@ -109,8 +111,31 @@ function collectClimatizationInputs(climaSection, roomId) {
     data.setpointPressurizacao = setpointInput ? safeNumber(setpointInput.value) : 0;
   }
 
-  console.log("✅ [DEBUG COLLECT] Dados coletados para cálculo:", data);
+  console.log(`✅ [COLLECT] ${Object.keys(data).length} dados coletados para ${roomId}:`, data);
   return data;
+}
+
+/**
+ * Encontra a seção de climatização de uma sala pelo ID único
+ * @param {string} roomId - ID único da sala
+ * @returns {HTMLElement|null} Elemento da seção de climatização
+ */
+function findClimatizationSection(roomId) {
+  // ✅ CORREÇÃO: Buscar APENAS por ID único
+  const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+  if (!roomElement) {
+    console.error(`❌ [FIND] Sala não encontrada: ${roomId}`);
+    return null;
+  }
+  
+  const climaSection = roomElement.querySelector('#section-content-' + roomId + '-clima');
+  if (!climaSection) {
+    console.error(`❌ [FIND] Seção de climatização não encontrada para: ${roomId}`);
+    return null;
+  }
+  
+  console.log(`✅ [FIND] Seção encontrada para: ${roomId}`);
+  return climaSection;
 }
 
 /**
@@ -128,10 +153,62 @@ function updateElementText(elementId, value) {
   }
 }
 
+/**
+ * Atualiza display de vazão de ar para sala específica
+ * @param {string} roomId - ID único da sala
+ * @param {number} flowRate - Valor da vazão calculada
+ * @returns {void}
+ */
+function updateAirFlowDisplay(roomId, flowRate) {
+  const flowElement = document.getElementById(`vazao-ar-${roomId}`);
+  if (flowElement) {
+    flowElement.textContent = Math.round(flowRate);
+    console.log(`✅ [AIR FLOW] Vazão atualizada para ${roomId}: ${Math.round(flowRate)} l/s`);
+  } else {
+    console.error(`❌ [AIR FLOW] Elemento de vazão não encontrado para: ${roomId}`);
+  }
+}
+
+/**
+ * Atualiza display de ganhos térmicos para sala específica
+ * @param {string} roomId - ID único da sala
+ * @param {Object} thermalData - Dados de ganhos térmicos
+ * @returns {void}
+ */
+function updateThermalGainsDisplay(roomId, thermalData) {
+  console.log(`🔥 [THERMAL] Atualizando ganhos para: ${roomId}`, thermalData);
+  
+  // Mapeamento de campos para elementos
+  const thermalElements = {
+    'total-ganhos-w': `total-ganhos-w-${roomId}`,
+    'total-tr': `total-tr-${roomId}`,
+    'total-externo': `total-externo-${roomId}`,
+    'total-divisoes': `total-divisoes-${roomId}`,
+    'total-piso': `total-piso-${roomId}`,
+    'total-iluminacao': `total-iluminacao-${roomId}`,
+    'total-dissi': `total-dissi-${roomId}`,
+    'total-pessoas': `total-pessoas-${roomId}`,
+    'total-ar-sensivel': `total-ar-sensivel-${roomId}`,
+    'total-ar-latente': `total-ar-latente-${roomId}`
+  };
+  
+  Object.entries(thermalElements).forEach(([key, elementId]) => {
+    const element = document.getElementById(elementId);
+    if (element && thermalData[key] !== undefined) {
+      element.textContent = Math.round(thermalData[key]);
+    }
+  });
+  
+  console.log(`✅ [THERMAL] Ganhos atualizados para: ${roomId}`);
+}
+
 export {
   safeNumber,
   waitForSystemConstants,
   validateSystemConstants,
   collectClimatizationInputs,
-  updateElementText
+  findClimatizationSection,
+  updateElementText,
+  updateAirFlowDisplay,
+  updateThermalGainsDisplay
 };

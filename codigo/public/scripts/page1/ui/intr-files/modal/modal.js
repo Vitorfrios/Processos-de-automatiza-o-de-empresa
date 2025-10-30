@@ -7,7 +7,7 @@
 // Variáveis globais para controle do modal e undo
 let pendingDeletion = {
     obraName: null,
-    obraId: null,
+    obraId: null, // ✅ AGORA USA IDs SEGUROS (ex: obra_w12)
     obraBlock: null,
     obraHTML: null,
     originalPosition: null
@@ -24,6 +24,12 @@ let currentToasts = []; // armazena toasts ativos (inclusive seus timeouts)
  * Mostra o modal de confirmação
  */
 export function showConfirmationModal(obraName, obraId, obraBlock) {
+    // ✅ CORREÇÃO: Validar ID seguro
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (showConfirmationModal) modal.js [ID de obra inválido: ${obraId}]`);
+        return;
+    }
+    
     // Salva a posição original da obra no DOM
     const projectsContainer = document.getElementById("projects-container");
     const obraBlocks = projectsContainer ? Array.from(projectsContainer.children) : [];
@@ -31,7 +37,7 @@ export function showConfirmationModal(obraName, obraId, obraBlock) {
 
     pendingDeletion = {
         obraName,
-        obraId,
+        obraId, // ✅ ID SEGURO (ex: obra_w12)
         obraBlock,
         obraHTML: obraBlock ? obraBlock.outerHTML : null,
         originalPosition: originalIndex
@@ -47,6 +53,9 @@ export function showConfirmationModal(obraName, obraId, obraBlock) {
         <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem; border-radius: 8px;">
             <span style="color: #51f956ff; font-size: 2rem;">✓</span>
             <small style="color: #ffffffff;">A obra permanece salva no servidor e pode ser recuperada a qualquer momento.</small>
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #cccccc;">
+            ID: ${obraId}
         </div>
     `;
 
@@ -112,7 +121,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
     toast.className = `toast ${type}`;
     const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     toast.id = toastId;
-    toast.dataset.obraId = obraId || '';
+    toast.dataset.obraId = obraId || ''; // ✅ ID SEGURO
 
     if (type === 'undo') {
         toast.innerHTML = `
@@ -120,6 +129,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
             <div class="toast-content">
                 <div class="toast-title">Obra "${obraName}" removida</div>
                 <div class="toast-message">Você tem 8 segundos para desfazer esta ação</div>
+                <div class="toast-id">ID: ${obraId}</div>
                 <div class="toast-actions">
                     <button class="toast-btn toast-undo" onclick="window.undoDeletion('${obraId}', '${obraName}')">Desfazer</button>
                 </div>
@@ -140,6 +150,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
             <div class="toast-content">
                 <div class="toast-title">Obra "${obraName}" removida</div>
                 <div class="toast-message">Removida com sucesso</div>
+                <div class="toast-id">ID: ${obraId}</div>
                 <button class="toast-btn toast-close" onclick="window.hideSpecificToast('${toastId}')">Fechar</button>
             </div>
         `;
@@ -149,6 +160,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
             <div class="toast-content">
                 <div class="toast-title">Erro ao remover "${obraName}"</div>
                 <div class="toast-message">Ocorreu um erro durante a remoção</div>
+                <div class="toast-id">ID: ${obraId}</div>
                 <button class="toast-btn toast-close" onclick="window.hideSpecificToast('${toastId}')">Fechar</button>
             </div>
         `;
@@ -166,7 +178,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
         id: toastId,
         element: toast,
         obraName,
-        obraId,
+        obraId, // ✅ ID SEGURO
         type,
         timeout: null
     };
@@ -175,7 +187,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
     // Timeouts por tipo
     if (type === 'undo') {
         toastData.timeout = setTimeout(() => {
-            console.log(`⏰ Timeout de 8 segundos completado para obra ${obraName}`);
+            console.log(`⏰ Timeout de 8 segundos completado para obra ${obraName} (ID: ${obraId})`);
             // Remove o toast de undo primeiro
             hideSpecificToast(toastId);
             // Em seguida processa remoção definitiva
@@ -183,7 +195,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
         }, 8000);
     } else {
         toastData.timeout = setTimeout(() => {
-            console.log(`⏰ Removendo toast de ${type} para obra ${obraName}`);
+            console.log(`⏰ Removendo toast de ${type} para obra ${obraName} (ID: ${obraId})`);
             hideSpecificToast(toastId);
         }, 3500);
     }
@@ -261,7 +273,7 @@ export function hideToast() {
  * Desfaz a exclusão (restaura obra e mostra success)
  */
 export function undoDeletion(obraId, obraName) {
-    console.log(`↩️ Usuário clicou em Desfazer para obra ${obraName} (ID: ${obraId})`);
+    console.log(`↩️ Usuário clicou em Desfazer para obra ${obraName} (ID SEGURO: ${obraId})`);
 
     // Encontra e remove o toast correspondente
     const toastIndex = currentToasts.findIndex(t => t.obraId === obraId && t.type === 'undo');
@@ -286,14 +298,14 @@ export function undoDeletion(obraId, obraName) {
                         const referenceNode = projectsContainer.children[originalPosition];
                         if (referenceNode) {
                             referenceNode.insertAdjacentHTML('beforebegin', obraHTML);
-                            console.log(`✅ Obra "${obraName}" restaurada na posição original ${originalPosition}`);
+                            console.log(`✅ Obra "${obraName}" (ID: ${obraId}) restaurada na posição original ${originalPosition}`);
                         } else {
                             projectsContainer.insertAdjacentHTML('beforeend', obraHTML);
-                            console.log(`✅ Obra "${obraName}" restaurada no final`);
+                            console.log(`✅ Obra "${obraName}" (ID: ${obraId}) restaurada no final`);
                         }
                     } else {
                         projectsContainer.insertAdjacentHTML('beforeend', obraHTML);
-                        console.log(`✅ Obra "${obraName}" restaurada no final`);
+                        console.log(`✅ Obra "${obraName}" (ID: ${obraId}) restaurada no final`);
                     }
                 }
 
@@ -322,12 +334,12 @@ async function completeDeletion(obraId, obraName) {
 }
 
 /**
- * Remove a obra do servidor imediatamente
+ * Remove a obra do servidor imediatamente - ATUALIZADO
  */
 async function completeDeletionImmediate(obraId, obraName) {
-    console.log(`🔍 Iniciando remoção completa da obra: ${obraName} (ID: ${obraId})`);
+    console.log(`🔍 Iniciando remoção completa da obra: ${obraName} (ID SEGURO: ${obraId})`);
 
-    // Remove do servidor se tiver ID
+    // Remove do servidor se tiver ID VÁLIDO
     if (obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
         try {
             console.log(`🗑️ Enviando requisição para remover obra ${obraId} da sessão...`);
@@ -354,7 +366,7 @@ async function completeDeletionImmediate(obraId, obraName) {
             showToast(obraName, 'error', obraId);
         }
     } else {
-        console.log(`ℹ️ Obra ${obraName} não tinha ID salvo, apenas removendo da interface`);
+        console.log(`ℹ️ Obra ${obraName} não tinha ID válido, apenas removendo da interface`);
         showToast(obraName, 'success', obraId);
     }
 
@@ -363,16 +375,22 @@ async function completeDeletionImmediate(obraId, obraName) {
 }
 
 /**
- * Confirma e executa a exclusão com sistema de undo
+ * Confirma e executa a exclusão com sistema de undo - ATUALIZADO
  */
 export async function confirmDeletion() {
     const { obraName, obraId, obraBlock, obraHTML, originalPosition } = pendingDeletion;
-    if (!obraName) return;
+    if (!obraName || !obraId) return;
+
+    // ✅ CORREÇÃO: Validar ID seguro antes de salvar
+    if (obraId === 'undefined' || obraId === 'null') {
+        console.error(`❌ ID de obra inválido para deleção: ${obraId}`);
+        return;
+    }
 
     // Salva dados específicos para esta obra (para permitir undo independente)
     sessionStorage.setItem(`pendingDeletion-${obraId}`, JSON.stringify({
         obraName,
-        obraId,
+        obraId, // ✅ ID SEGURO
         obraHTML,
         originalPosition
     }));
@@ -389,7 +407,7 @@ export async function confirmDeletion() {
         setTimeout(() => {
             if (obraBlock.parentNode) {
                 obraBlock.remove();
-                console.log(`🗑️ Obra ${obraName} removida do DOM (aguardando undo)`);
+                console.log(`🗑️ Obra ${obraName} (ID: ${obraId}) removida do DOM (aguardando undo)`);
             }
         }, 500);
     }
@@ -447,3 +465,6 @@ document.addEventListener('keydown', (e) => {
 window.undoDeletion = undoDeletion;
 window.hideToast = hideToast;
 window.hideSpecificToast = hideSpecificToast;
+
+
+

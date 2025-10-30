@@ -1,4 +1,8 @@
-// thermalCalculations.js
+/**
+ * thermalCalculations.js
+ * Cálculos de ganhos térmicos - SISTEMA CORRIGIDO COM IDs ÚNICOS
+ */
+
 import { 
   waitForSystemConstants, 
   validateSystemConstants, 
@@ -22,77 +26,85 @@ import { calculateTotals } from './thermalDisplay.js';
 import { updateThermalGainsDisplay } from './thermalDisplay.js';
 
 /**
- * Encontra o elemento roomContent pelo ID único da sala
+ * Encontra o elemento roomContent pelo ID único da sala - CORREÇÃO COMPLETA
  * @param {string} roomId - ID único da sala
  * @returns {HTMLElement|null} Elemento do conteúdo da sala ou null se não encontrado
  */
 function findRoomContentThermal(roomId) {
-    // Limpar o ID de qualquer "undefined"
-    const cleanRoomId = roomId.replace(/-undefined/g, '').replace(/undefined-/g, '');
+    // ✅ CORREÇÃO: Validar ID único primeiro
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (findRoomContentThermal) thermalCalculations.js [ID de sala inválido: ${roomId}]`);
+        return null;
+    }
     
-    console.log(`🔍 [THERMAL] Procurando sala: "${roomId}" -> Limpo: "${cleanRoomId}"`);
+    console.log(`🔍 [THERMAL] Procurando sala: "${roomId}"`);
     
-    // Tentar com o ID limpo primeiro
-    let roomContent = document.getElementById(`room-content-${cleanRoomId}`);
+    // ✅ CORREÇÃO: Buscar APENAS por ID único (sem fallbacks complexos)
+    let roomContent = document.getElementById(`room-content-${roomId}`);
     
     if (roomContent) {
-        console.log(`✅ [THERMAL] Sala encontrada pelo ID LIMPO: room-content-${cleanRoomId}`);
+        console.log(`✅ [THERMAL] Sala encontrada pelo ID: room-content-${roomId}`);
         return roomContent;
     }
     
-    // Se não encontrou com ID limpo, tentar com o original
-    roomContent = document.getElementById(`room-content-${roomId}`);
-    if (roomContent) {
-        console.log(`✅ [THERMAL] Sala encontrada pelo ID ORIGINAL: room-content-${roomId}`);
-        return roomContent;
-    }
-    
-    // Procurar pela sala no DOM usando data attributes
-    const roomBlock = document.querySelector(`[data-room-id="${cleanRoomId}"]`) || 
-                     document.querySelector(`[data-room-id="${roomId}"]`);
+    // ✅ CORREÇÃO: Buscar alternativa por data attribute (mais confiável)
+    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
     
     if (roomBlock) {
         const foundId = roomBlock.dataset.roomId;
         console.log(`✅ [THERMAL] Sala encontrada pelo data-room-id: ${foundId}`);
-        return document.getElementById(`room-content-${foundId}`);
+        
+        // Tentar novamente com o ID do data attribute
+        const finalRoomContent = document.getElementById(`room-content-${foundId}`);
+        if (finalRoomContent) {
+            return finalRoomContent;
+        }
     }
   
-    // Debug detalhado
-    console.error(`❌ [THERMAL] Sala não encontrada: ${roomId} (limpo: ${cleanRoomId})`);
+    // ✅ CORREÇÃO: Debug detalhado com IDs seguros
+    console.error(`❌ [THERMAL] Sala não encontrada: ${roomId}`);
     const allRooms = document.querySelectorAll('.room-block');
     console.log('🔍 [THERMAL] Todas as salas disponíveis no DOM:');
     allRooms.forEach(room => {
-        console.log(`  - ID: "${room.dataset.roomId}", Nome: ${room.dataset.roomName}, Projeto: ${room.dataset.projectName}, Obra: ${room.dataset.obraName}`);
+        console.log(`  - ID: "${room.dataset.roomId}", Nome: "${room.dataset.roomName}", Projeto: "${room.dataset.projectId}", Obra: "${room.dataset.obraId}"`);
     });
     
     return null;
 }
 
 /**
- * Calcula ganhos térmicos totais do ambiente
+ * Calcula ganhos térmicos totais do ambiente - CORREÇÃO COMPLETA
  * @param {string} roomId - ID único da sala
  * @param {number} vazaoArExterno - Vazão de ar externo em l/s
  * @returns {Promise<void>}
  */
 async function calculateThermalGains(roomId, vazaoArExterno = 0) {
   try {
+    // ✅ CORREÇÃO: Validar ID único antes de qualquer processamento
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (calculateThermalGains) thermalCalculations.js [ID de sala inválido: ${roomId}]`);
+        return;
+    }
+    
+    console.log(`🔥 [THERMAL] Iniciando cálculos para sala: ${roomId}`);
+    
     await waitForSystemConstants();
 
     if (!validateSystemConstants()) {
-      console.error(`[DEBUG] validateSystemConstants FALHOU para ${roomId}`);
+      console.error(`[THERMAL] validateSystemConstants FALHOU para ${roomId}`);
       return;
     }
 
-    // Usar a nova função para encontrar a sala
+    // ✅ CORREÇÃO: Usar a função corrigida para encontrar a sala
     const roomContent = findRoomContentThermal(roomId);
     if (!roomContent) {
-      console.error(`[DEBUG] room-content-${roomId} NÃO ENCONTRADO`);
+      console.error(`[THERMAL] room-content-${roomId} NÃO ENCONTRADO`);
       return;
     }
 
     const climaSection = roomContent.querySelector('[id*="-clima"]');
     if (!climaSection) {
-      console.error(`[DEBUG] Seção clima NÃO ENCONTRADA para ${roomId}`);
+      console.error(`[THERMAL] Seção clima NÃO ENCONTRADA para ${roomId}`);
       return;
     }
 
@@ -138,13 +150,14 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
 
     const totals = calculateTotals(gains);
 
-    console.log(" Ganhos calculados:", gains);
-    console.log(" Totais:", totals);
-    console.log(" ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====");
+    console.log(`🔥 [THERMAL] Ganhos calculados para ${roomId}:`, gains);
+    console.log(`🔥 [THERMAL] Totais para ${roomId}:`, totals);
+    console.log("🔥 [THERMAL] ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====");
 
     updateThermalGainsDisplay(roomId, gains, totals, uValues, {...inputData, vazaoArExterno});
 
-    console.log(`[THERMAL] Tentando atualizar tabela de capacidade para ${roomId}`);
+    // ✅ CORREÇÃO: Atualizar capacidade com IDs seguros
+    console.log(`🔥 [THERMAL] Tentando atualizar tabela de capacidade para ${roomId}`);
     setTimeout(() => {
       if (typeof calculateCapacitySolution === 'function') {
         calculateCapacitySolution(roomId);
@@ -156,7 +169,9 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
         window.updateCapacityFromThermalGains(roomId);
       } else {
         console.error(`[THERMAL] Nenhuma função de capacidade encontrada para ${roomId}`);
-        const capacityTable = document.querySelector('.capacity-calculation-table');
+        
+        // ✅ CORREÇÃO: Fallback manual com ID seguro
+        const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
         if (capacityTable) {
           console.log(`[THERMAL] Tabela de capacidade encontrada, tentando inicialização manual`);
           const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`);
@@ -172,7 +187,7 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
     }, 300);
     
   } catch (error) {
-    console.error(`[DEBUG] Erro em calculateThermalGains:`, error);
+    console.error(`[THERMAL] Erro em calculateThermalGains para ${roomId}:`, error);
   }
 }
 
@@ -187,7 +202,7 @@ function calculateUValues(tipoConstrucao) {
   const U_VALUE_LA_ROCHA_TETO = 1.145;
   const U_VALUE_LA_ROCHA_PAREDE = 1.12;
 
-  console.log(`[DEBUG UVALUES] tipoConstrucao recebido: "${tipoConstrucao}"`);
+  console.log(`[THERMAL UVALUES] tipoConstrucao recebido: "${tipoConstrucao}"`);
 
   let uValueParede, uValueTeto;
 
@@ -210,7 +225,7 @@ function calculateUValues(tipoConstrucao) {
     piso: window.systemConstants?.AUX_U_Value_Piso || 2.7,
   };
 
-  console.log("[DEBUG UVALUES] UValues calculados:", result);
+  console.log("[THERMAL UVALUES] UValues calculados:", result);
   return result;
 }
 
@@ -234,5 +249,6 @@ function calculateAuxiliaryVariables(inputData) {
 export {
   calculateThermalGains,
   calculateUValues,
-  calculateAuxiliaryVariables
-};
+  calculateAuxiliaryVariables,
+  findRoomContentThermal
+}

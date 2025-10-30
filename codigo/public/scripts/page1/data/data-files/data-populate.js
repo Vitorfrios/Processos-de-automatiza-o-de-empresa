@@ -2,11 +2,12 @@
  * data-populate.js
  * Módulo unificado para preenchimento de dados nos formulários
  * Contém todas as funções necessárias para preencher obras, projetos e salas com dados do JSON
+ * SISTEMA CORRIGIDO COM IDs ÚNICOS
  */
 
-
-
-
+// =============================================================================
+// FUNÇÕES DE PREENCHIMENTO ESPECÍFICAS POR SEÇÃO
+// =============================================================================
 
 /**
  * Preenche os campos de climatização de uma sala com dados do JSON
@@ -184,6 +185,9 @@ function fillConfigurationData(roomElement, configData) {
     console.log(`✅ Configurações preenchidas para sala ${roomId}`);
 }
 
+// =============================================================================
+// FUNÇÕES DE PREENCHIMENTO DE MÁQUINAS
+// =============================================================================
 
 /**
  * Preenche os dados das máquinas de climatização de uma sala
@@ -376,162 +380,325 @@ async function populateMachineData(roomElement, machineData) {
     }
 }
 
+// =============================================================================
+// FUNÇÕES DE PREENCHIMENTO HIERÁRQUICO (OBRA → PROJETO → SALA)
+// =============================================================================
 
 /**
- * Preenche uma obra completa com dados do JSON incluindo projetos e salas
- * @param {HTMLElement} obraElement - Elemento HTML da obra
- * @param {Object} obraData - Dados completos da obra do JSON
- * @param {Function} createEmptyProjectFn - Função para criar projetos
- * @param {Function} createEmptyRoomFn - Função para criar salas
+ * Preenche os dados de uma obra a partir do JSON - VERSÃO COMPLETA CORRIGIDA
+ * @param {Object} obraData - Dados da obra do JSON
+ * @returns {Promise<void>}
+ */
+async function populateObraData(obraData) {
+    // ✅ CORREÇÃO: Verificação mais robusta dos dados
+    if (!obraData || typeof obraData !== 'object') {
+        console.error('❌ Dados inválidos recebidos para populateObraData:', obraData);
+        return;
+    }
+    
+    // Verificar se temos pelo menos nome ou ID
+    const hasValidId = obraData.id && obraData.id !== "" && obraData.id !== "null" && obraData.id !== "undefined";
+    const hasValidName = obraData.nome && obraData.nome !== "" && obraData.nome !== "null" && obraData.nome !== "undefined";
+    
+    if (!hasValidId && !hasValidName) {
+        console.error('❌ Dados da obra sem ID ou nome válido:', obraData);
+        return;
+    }
+
+    const obraName = obraData.nome || `Obra-${obraData.id}`;
+    const obraId = obraData.id;
+    
+    console.log(`🔄 Preenchendo obra "${obraName}" com dados do JSON`, { 
+        id: obraId, 
+        nome: obraName, 
+        projetos: obraData.projetos?.length || 0 
+    });
+
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    let obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+    
+    if (!obraElement) {
+        console.error(`❌ Elemento da obra não encontrado no DOM pelo ID: ${obraId}`);
+        
+        // Debug: listar obras disponíveis no DOM
+        console.log('🔍 Obras disponíveis no DOM:');
+        document.querySelectorAll('.obra-block').forEach((obra, index) => {
+            console.log(`  ${index + 1}. Nome: "${obra.dataset.obraName}", ID: "${obra.dataset.obraId}"`);
+        });
+        return;
+    }
+
+    console.log(`✅ Elemento da obra encontrado:`, {
+        element: obraElement,
+        dataset: obraElement.dataset
+    });
+
+    // ✅ CORREÇÃO: Verificar funções de forma mais robusta
+    if (typeof window.createEmptyProject !== 'function' || typeof window.createEmptyRoom !== 'function') {
+        console.error('❌ Funções necessárias não disponíveis:', {
+            createEmptyProject: typeof window.createEmptyProject,
+            createEmptyRoom: typeof window.createEmptyRoom
+        });
+        
+        // Tentar recarregar as funções
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (typeof window.createEmptyProject !== 'function' || typeof window.createEmptyRoom !== 'function') {
+            console.error('❌ Funções ainda não disponíveis após espera');
+            return;
+        }
+    }
+
+    console.log(`🔧 Funções disponíveis: createEmptyProject: function, createEmptyRoom: function`);
+
+    // ✅ CORREÇÃO: Limpar projetos existentes antes de preencher (evitar duplicação)
+    const projectsContainer = obraElement.querySelector('.projects-container');
+    if (projectsContainer) {
+        const existingProjects = projectsContainer.querySelectorAll('.project-block');
+        if (existingProjects.length > 0) {
+            console.log(`🗑️ Removendo ${existingProjects.length} projetos existentes antes do preenchimento`);
+            existingProjects.forEach(project => project.remove());
+        }
+    }
+
+    // Para cada projeto na obra
+    const projetos = obraData.projetos || [];
+    console.log(`📁 Processando ${projetos.length} projeto(s) para a obra "${obraName}"`);
+    
+    for (let i = 0; i < projetos.length; i++) {
+        const projectData = projetos[i];
+        if (!projectData || !projectData.nome) {
+            console.warn(`⚠️ Projeto ${i} inválido ou sem nome:`, projectData);
+            continue;
+        }
+        
+        const projectName = projectData.nome;
+        const projectId = projectData.id;
+        
+        console.log(`📁 [${i + 1}/${projetos.length}] Criando projeto: ${projectName} (ID: ${projectId})`);
+
+        try {
+            // ✅ CORREÇÃO: Passar obraId e projectId corretamente
+            console.log(`🎯 Chamando createEmptyProject para obra "${obraName}" (${obraId}), projeto "${projectName}" (${projectId})`);
+            
+            const projectCreated = await window.createEmptyProject(obraId, obraName, projectId, projectName);
+            
+            if (!projectCreated) {
+                console.error(`❌ Falha ao criar projeto ${projectName}`);
+                continue;
+            }
+
+            // ✅ CORREÇÃO: Aguardar o projeto ser criado no DOM com timeout
+            const projectElement = await waitForElement(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`, 5000);
+            
+            if (!projectElement) {
+                console.error(`❌ Projeto ${projectName} não encontrado no DOM após criação`);
+                
+                // Debug: listar projetos criados
+                const allProjects = document.querySelectorAll('.project-block');
+                console.log(`🔍 Projetos no DOM: ${allProjects.length}`);
+                allProjects.forEach((proj, idx) => {
+                    console.log(`  ${idx + 1}. Projeto: "${proj.dataset.projectName}", ID: "${proj.dataset.projectId}", Obra: "${proj.dataset.obraId}"`);
+                });
+                continue;
+            }
+
+            console.log(`✅ Projeto criado e encontrado: ${projectName}`, {
+                element: projectElement,
+                dataset: projectElement.dataset
+            });
+
+            // Preencher dados do projeto
+            await populateProjectData(projectElement, projectData, obraId, obraName);
+
+        } catch (error) {
+            console.error(`❌ Erro ao criar projeto ${projectName}:`, error);
+        }
+        
+        // ✅ CORREÇÃO: Pequeno delay entre projetos para evitar sobrecarga
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    console.log(`✅ Obra "${obraName}" preenchida com sucesso - ${projetos.length} projeto(s) processado(s)`);
+}
+
+/**
+ * Preenche os dados de um projeto a partir do JSON - CORREÇÃO
+ * @param {HTMLElement} projectElement - Elemento do projeto
+ * @param {Object} projectData - Dados do projeto do JSON
+ * @param {string} obraId - ID único da obra
+ * @param {string} obraName - Nome da obra
+ * @returns {Promise<void>}
+ */
+async function populateProjectData(projectElement, projectData, obraId, obraName) {
+    const projectName = projectData.nome;
+    const projectId = projectData.id;
+    
+    console.log(`🎯 Preenchendo projeto: ${projectName}`, { 
+        salas: projectData.salas?.length,
+        obraId: obraId,
+        projectId: projectId
+    });
+
+    console.log(`✅ Projeto encontrado:`, projectElement.dataset);
+
+    // ✅ CORREÇÃO: Limpar salas existentes antes de preencher
+    const roomsContainer = projectElement.querySelector('.rooms-container');
+    if (roomsContainer) {
+        const existingRooms = roomsContainer.querySelectorAll('.room-block');
+        if (existingRooms.length > 0) {
+            console.log(`🗑️ Removendo ${existingRooms.length} salas existentes antes do preenchimento`);
+            existingRooms.forEach(room => room.remove());
+        }
+    }
+
+    // Para cada sala no projeto
+    const salas = projectData.salas || [];
+    console.log(`🚪 Processando ${salas.length} sala(s) para o projeto "${projectName}"`);
+    
+    for (let i = 0; i < salas.length; i++) {
+        const roomData = salas[i];
+        const roomName = roomData.nome;
+        const roomId = roomData.id; // ✅ ID da sala do JSON
+        
+        if (!roomName || !roomId) {
+            console.warn(`⚠️ Sala ${i} inválida ou sem nome/ID:`, roomData);
+            continue;
+        }
+
+        console.log(`🚪 [${i + 1}/${salas.length}] Criando sala: ${roomName} (ID: ${roomId})`);
+
+        try {
+            // ✅ CORREÇÃO: Verificar se createEmptyRoom está disponível
+            if (typeof window.createEmptyRoom !== 'function') {
+                console.error('❌ createEmptyRoom não disponível');
+                continue;
+            }
+
+            // ✅ CORREÇÃO: Passar obraId e projectId corretamente
+            const roomCreated = await window.createEmptyRoom(obraId, projectId, roomName, roomId);
+            
+            if (!roomCreated) {
+                console.error(`❌ Falha ao criar sala ${roomName}`);
+                continue;
+            }
+
+            // ✅ CORREÇÃO: Aguardar a sala ser criada no DOM
+            const roomElement = await waitForElement(`[data-room-id="${roomId}"]`, 3000);
+            
+            if (!roomElement) {
+                console.error(`❌ Sala ${roomName} não encontrada no DOM após criação`);
+                
+                // Debug: listar salas criadas
+                const allRooms = document.querySelectorAll('.room-block');
+                console.log(`🔍 Salas no DOM: ${allRooms.length}`);
+                allRooms.forEach((room, idx) => {
+                    console.log(`  ${idx + 1}. Sala: "${room.dataset.roomName}", ID: "${room.dataset.roomId}", Projeto: "${room.dataset.projectId}"`);
+                });
+                continue;
+            }
+
+            console.log(`✅ Sala criada e encontrada: ${roomName}`, {
+                element: roomElement,
+                dataset: roomElement.dataset
+            });
+
+            // Preencher dados da sala
+            await populateRoomData(roomElement, roomData);
+
+        } catch (error) {
+            console.error(`❌ Falha ao criar sala ${roomName}:`, error);
+        }
+        
+        // ✅ CORREÇÃO: Pequeno delay entre salas para evitar sobrecarga
+        await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
+    console.log(`✅ Projeto "${projectName}" preenchido com sucesso - ${salas.length} sala(s) processada(s)`);
+}
+
+/**
+ * Preenche uma sala específica dentro de um projeto
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @param {Object} roomData - Dados da sala do JSON
  * @returns {Promise<boolean>} True se o preenchimento foi bem-sucedido
  */
-async function populateObraData(obraElement, obraData, createEmptyProjectFn, createEmptyRoomFn) {
-    if (!obraElement || !obraData) {
-        console.error('❌ Elemento da obra ou dados inválidos para preenchimento');
+async function populateRoomData(roomElement, roomData) {
+    if (!roomElement || !roomData) {
+        console.error('❌ Elemento da sala ou dados inválidos');
         return false;
     }
 
-    console.log(`🔄 Preenchendo obra "${obraData.nome}" com dados do JSON`, obraData);
-    console.log(`🔧 Funções disponíveis: createEmptyProject: ${typeof createEmptyProjectFn}, createEmptyRoom: ${typeof createEmptyRoomFn}`);
+    const roomId = roomElement.dataset.roomId;
+    const roomName = roomElement.dataset.roomName;
+    
+    console.log(`🔄 Preenchendo sala "${roomName}" (ID: ${roomId})`, roomData);
 
     try {
-        // Preencher nome da obra
-        const obraTitle = obraElement.querySelector('.obra-title');
-        if (obraTitle && obraData.nome) {
-            obraTitle.textContent = obraData.nome;
+        // Preencher nome da sala
+        const roomTitle = roomElement.querySelector('.room-title');
+        if (roomTitle && roomData.nome) {
+            roomTitle.textContent = roomData.nome;
+            console.log(`✅ Título da sala atualizado: ${roomData.nome}`);
         }
 
-        // Preencher projetos - CRIAR projetos primeiro e AGUARDAR criação
-        if (obraData.projetos && Array.isArray(obraData.projetos)) {
-            for (const projetoData of obraData.projetos) {
-                // ✅ CORREÇÃO: Verificar se projeto já existe ANTES de criar
-                let projectElement = obraElement.querySelector(`.project-block[data-project-name="${projetoData.nome}"]`);
-                
-                if (!projectElement) {
-                    console.log(`📁 Criando projeto: ${projetoData.nome}`);
-                    if (typeof createEmptyProjectFn === 'function') {
-                        // ✅ CORREÇÃO: USAR A FUNÇÃO PASSADA COMO PARÂMETRO
-                        createEmptyProjectFn(obraData.nome, projetoData.nome, projetoData.id);
-                        
-                        // Aguardar a criação do projeto no DOM
-                        try {
-                            projectElement = await waitForElement(`.project-block[data-obra-name="${obraData.nome}"][data-project-name="${projetoData.nome}"]`, 2000);
-                            console.log(`✅ Projeto criado e encontrado: ${projetoData.nome}`, projectElement);
-                        } catch (error) {
-                            console.error(`❌ Falha ao criar projeto ${projetoData.nome}:`, error);
-                            continue; // Pular para o próximo projeto se este falhar
-                        }
+        // Preencher inputs de climatização
+        if (roomData.inputs) {
+            console.log(`🌡️ Preenchendo inputs de climatização para sala ${roomName}`);
+            fillClimatizationInputs(roomElement, roomData.inputs);
+        }
+
+        // Preencher ganhos térmicos
+        if (roomData.ganhosTermicos) {
+            console.log(`📊 Preenchendo ganhos térmicos para sala ${roomName}`);
+            fillThermalGainsData(roomElement, roomData.ganhosTermicos);
+        }
+
+        // Preencher capacidade
+        if (roomData.capacidade) {
+            console.log(`⚡ Preenchendo dados de capacidade para sala ${roomName}`);
+            fillCapacityData(roomElement, roomData.capacidade);
+        }
+
+        // Preencher configurações
+        if (roomData.configuracao) {
+            console.log(`⚙️ Preenchendo configurações para sala ${roomName}`);
+            fillConfigurationData(roomElement, roomData.configuracao);
+        }
+
+        // ✅ CORREÇÃO: Preencher máquinas com timing melhorado
+        if (roomData.maquinas && Array.isArray(roomData.maquinas)) {
+            console.log(`🤖 Agendando preenchimento de ${roomData.maquinas.length} máquina(s) para sala ${roomName}`);
+            
+            // Aguardar um pouco mais para garantir que a seção esteja completamente carregada
+            setTimeout(async () => {
+                try {
+                    console.log(`🚀 Iniciando preenchimento de máquinas para sala ${roomName}`);
+                    const success = await fillMachinesData(roomElement, roomData.maquinas);
+                    
+                    if (success) {
+                        console.log(`🎉 Todas as máquinas preenchidas com sucesso para sala ${roomName}`);
                     } else {
-                        console.error(`❌ createEmptyProjectFn não é uma função`);
-                        continue;
+                        console.error(`❌ Falha ao preencher máquinas para sala ${roomName}`);
                     }
-                } else {
-                    console.log(`✅ Projeto já existe: ${projetoData.nome}`);
+                } catch (error) {
+                    console.error(`💥 Erro ao preencher máquinas para sala ${roomName}:`, error);
                 }
-                
-                // Preencher dados do projeto após criação
-                console.log(`🎯 Preenchendo projeto: ${projetoData.nome}`);
-                const success = await populateProjectData(obraElement, projetoData, createEmptyRoomFn);
-                if (!success) {
-                    console.error(`❌ Falha ao preencher projeto ${projetoData.nome}`);
-                }
-            }
+            }, 2000); // ✅ Aumentar delay para garantir carregamento completo
         }
 
-        console.log(`✅ Obra "${obraData.nome}" preenchida com sucesso`);
+        console.log(`✅ Sala "${roomName}" preenchida com sucesso`);
         return true;
 
     } catch (error) {
-        console.error(`❌ Erro ao preencher obra "${obraData.nome}":`, error);
+        console.error(`❌ Erro ao preencher sala "${roomName}":`, error);
         return false;
     }
 }
 
-/**
- * Preenche um projeto específico dentro de uma obra
- * @param {HTMLElement} obraElement - Elemento HTML da obra
- * @param {Object} projetoData - Dados do projeto do JSON
- * @param {Function} createEmptyRoomFn - Função para criar salas
- * @returns {Promise<boolean>} True se o preenchimento foi bem-sucedido
- */
-async function populateProjectData(obraElement, projetoData, createEmptyRoomFn) {
-    if (!obraElement || !projetoData) {
-        console.error('❌ Elemento da obra ou dados do projeto inválidos');
-        return false;
-    }
-
-    // Buscar projeto com múltiplos seletores
-    let projectElement = obraElement.querySelector(`.project-block[data-project-name="${projetoData.nome}"]`);
-    
-    if (!projectElement) {
-        // Tentar seletor alternativo
-        projectElement = document.querySelector(`[data-project-name="${projetoData.nome}"][data-obra-name="${obraElement.dataset.obraName}"]`);
-    }
-    
-    if (!projectElement) {
-        console.error(`❌ Projeto "${projetoData.nome}" não encontrado na obra ${obraElement.dataset.obraName}`);
-        console.log(`🔍 Todos os projetos no DOM:`, Array.from(document.querySelectorAll('.project-block')).map(p => ({
-            name: p.dataset.projectName,
-            obra: p.dataset.obraName,
-            element: p
-        })));
-        return false;
-    }
-
-    console.log(`✅ Projeto encontrado:`, projectElement);
-    console.log(`🔄 Preenchendo projeto "${projetoData.nome}"`, projetoData);
-
-    try {
-        // Preencher nome do projeto
-        const projectTitle = projectElement.querySelector('.project-title');
-        if (projectTitle && projetoData.nome) {
-            projectTitle.textContent = projetoData.nome;
-        }
-
-        // Preencher salas - CRIAR salas primeiro e AGUARDAR criação
-        if (projetoData.salas && Array.isArray(projetoData.salas)) {
-            for (const salaData of projetoData.salas) {
-                // Criar sala se não existir
-                const existingRoom = projectElement.querySelector(`[data-room-id="${salaData.id}"]`);
-                if (!existingRoom) {
-                    console.log(`🚪 Criando sala: ${salaData.nome} (ID: ${salaData.id})`);
-                    if (typeof createEmptyRoomFn === 'function') {
-                        // ✅ CORREÇÃO: USAR A FUNÇÃO PASSADA COMO PARÂMETRO
-                        createEmptyRoomFn(obraElement.dataset.obraName, projetoData.nome, salaData.nome, salaData.id);
-                        
-                        // Aguardar a criação da sala no DOM
-                        try {
-                            await waitForElement(`[data-room-id="${salaData.id}"]`, 2000);
-                            console.log(`✅ Sala criada e encontrada: ${salaData.nome}`);
-                        } catch (error) {
-                            console.error(`❌ Falha ao criar sala ${salaData.nome}:`, error);
-                            continue;
-                        }
-                    } else {
-                        console.error(`❌ createEmptyRoomFn não é uma função`);
-                        continue;
-                    }
-                } else {
-                    console.log(`✅ Sala já existe: ${salaData.nome}`);
-                }
-                
-                // Preencher dados da sala após criação
-                console.log(`🎯 Preenchendo sala: ${salaData.nome}`);
-                const success = await populateRoomData(projectElement, salaData);
-                if (!success) {
-                    console.error(`❌ Falha ao preencher sala ${salaData.nome}`);
-                }
-            }
-        }
-
-        console.log(`✅ Projeto "${projetoData.nome}" preenchido com sucesso`);
-        return true;
-
-    } catch (error) {
-        console.error(`❌ Erro ao preencher projeto "${projetoData.nome}":`, error);
-        return false;
-    }
-}
+// =============================================================================
+// FUNÇÕES UTILITÁRIAS
+// =============================================================================
 
 /**
  * Aguarda até que um elemento esteja disponível no DOM
@@ -561,102 +728,28 @@ function waitForElement(selector, timeout = 5000) {
     });
 }
 
-/**
- * Preenche uma sala específica dentro de um projeto
- * @param {HTMLElement} projectElement - Elemento HTML do projeto
- * @param {Object} roomData - Dados da sala do JSON
- * @returns {Promise<boolean>} True se o preenchimento foi bem-sucedido
- */
-async function populateRoomData(projectElement, roomData) {
-    if (!projectElement || !roomData) {
-        console.error('❌ Elemento do projeto ou dados da sala inválidos');
-        return false;
-    }
+// =============================================================================
+// EXPORTAÇÕES ORDENADAS
+// =============================================================================
 
-    const roomElement = projectElement.querySelector(`[data-room-id="${roomData.id}"]`);
-    if (!roomElement) {
-        console.error(`❌ Sala "${roomData.nome}" (ID: ${roomData.id}) não encontrada no projeto`);
-        return false;
-    }
-
-    console.log(`🔄 Preenchendo sala "${roomData.nome}" (ID: ${roomData.id})`, roomData);
-
-    try {
-        // Preencher nome da sala
-        const roomTitle = roomElement.querySelector('.room-title');
-        if (roomTitle && roomData.nome) {
-            roomTitle.textContent = roomData.nome;
-        }
-
-        // Preencher inputs de climatização
-        if (roomData.inputs) {
-            fillClimatizationInputs(roomElement, roomData.inputs);
-        }
-
-        // Preencher ganhos térmicos
-        if (roomData.ganhosTermicos) {
-            fillThermalGainsData(roomElement, roomData.ganhosTermicos);
-        }
-
-        // Preencher capacidade
-        if (roomData.capacidade) {
-            fillCapacityData(roomElement, roomData.capacidade);
-        }
-
-        // Preencher configurações
-        if (roomData.configuracao) {
-            fillConfigurationData(roomElement, roomData.configuracao);
-        }
-
-        // ✅ NOVO: Preencher máquinas (aguardar um pouco para garantir que a seção esteja carregada)
-        // ✅ NOVO: Preencher máquinas (com timing melhorado)
-        if (roomData.maquinas && Array.isArray(roomData.maquinas)) {
-            setTimeout(async () => {
-                console.log(`🤖 Iniciando preenchimento de ${roomData.maquinas.length} máquina(s) para sala ${roomData.nome}`);
-                const success = await fillMachinesData(roomElement, roomData.maquinas);
-                if (success) {
-                    console.log(`🎉 Todas as máquinas preenchidas com sucesso para sala ${roomData.nome}`);
-                    
-                    // ✅ CORREÇÃO: VERIFICAR SE AS MÁQUINAS ESTÃO VISÍVEIS
-                    setTimeout(() => {
-                        const machinesContainer = document.getElementById(`machines-${roomData.id}`);
-                        if (machinesContainer) {
-                            const visibleMachines = machinesContainer.querySelectorAll('.climatization-machine');
-                            console.log(`📊 Máquinas visíveis no DOM: ${visibleMachines.length}`);
-                            visibleMachines.forEach((machine, index) => {
-                                console.log(`  Máquina ${index + 1}:`, {
-                                    name: machine.querySelector('.machine-name-input')?.value,
-                                    type: machine.querySelector('.machine-type-select')?.value,
-                                    power: machine.querySelector('.machine-power-select')?.value
-                                });
-                            });
-                        }
-                    }, 2000);
-                } else {
-                    console.error(`❌ Falha ao preencher máquinas para sala ${roomData.nome}`);
-                }
-            }, 1500); // ✅ Aumentar delay para garantir que a seção esteja completamente carregada
-        }
-
-        console.log(`✅ Sala "${roomData.nome}" preenchida com sucesso`);
-        return true;
-
-    } catch (error) {
-        console.error(`❌ Erro ao preencher sala "${roomData.nome}":`, error);
-        return false;
-    }
-}
-
-// Exportar todas as funções de preenchimento
+// Funções de preenchimento específicas por seção
 export {
-    populateObraData,
-    populateProjectData,
-    populateRoomData,
     fillClimatizationInputs,
     fillThermalGainsData,
     fillCapacityData,
     fillConfigurationData,
     fillMachinesData,
-    populateMachineData,
+    populateMachineData
+}
+
+// Funções de preenchimento hierárquico
+export {
+    populateObraData,
+    populateProjectData,
+    populateRoomData
+}
+
+// Funções utilitárias
+export {
     waitForElement
 }
