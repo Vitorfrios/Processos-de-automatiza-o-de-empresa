@@ -5,8 +5,8 @@
 
 import { createEmptyRoom } from '../../data/rooms.js'
 import { generateProjectId,getNextProjectNumber } from '../../data/data-files/data-utils-core.js'
-import { removeEmptyObraMessage } from './ui-helpers.js'
-
+import { removeEmptyObraMessage } from '../../ui/intr-files/ui-helpers.js'
+import { addNewRoomToProject } from '../../data/modules/room-operations.js';
 /**
  * Constrói o HTML de um projeto - CORREÇÃO COMPLETA
  * @param {string} obraId - ID único da obra
@@ -130,31 +130,40 @@ async function createEmptyProject(obraId, obraName, projectId, projectName) {
  * @returns {Promise<void>}
  */
 async function addNewProjectToObra(obraId) {
-    console.log(`➕ Adicionando novo projeto à obra: ${obraId}`)
+    console.log(`➕ Adicionando novo projeto à obra: ${obraId}`);
     
     // ✅ CORREÇÃO: Buscar obra por ID único
-    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`)
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
     
     if (!obraBlock) {
-        console.error(`❌ Obra com ID ${obraId} não encontrada`)
+        console.error(`❌ Obra com ID ${obraId} não encontrada`);
         
         // Debug: listar obras disponíveis com seus IDs
-        console.log('🔍 Obras disponíveis no DOM:')
+        console.log('🔍 Obras disponíveis no DOM:');
         document.querySelectorAll('.obra-block').forEach(obra => {
-            console.log(`  - Obra: "${obra.dataset.obraName}", ID: "${obra.dataset.obraId}"`)
-        })
-        return
+            console.log(`  - Obra: "${obra.dataset.obraName}", ID: "${obra.dataset.obraId}"`);
+        });
+        return;
     }
     
-    const obraName = obraBlock.dataset.obraName
-    const projectNumber = getNextProjectNumber(obraId)
-    const projectName = `Projeto${projectNumber}`
+    const obraName = obraBlock.dataset.obraName;
+    const projectNumber = getNextProjectNumber(obraId);
+    const projectName = `Projeto${projectNumber}`;
     
     // ✅ CORREÇÃO: Gerar ID hierárquico único para projeto
-    const projectId = generateProjectId(obraBlock)
+    const projectId = generateProjectId(obraBlock);
 
-    await createEmptyProject(obraId, obraName, projectId, projectName)
-    console.log(`✅ ${projectName} adicionado à obra ${obraName} (ID: ${obraId})`)
+    await createEmptyProject(obraId, obraName, projectId, projectName);
+    console.log(`✅ ${projectName} adicionado à obra ${obraName} (ID: ${obraId})`);
+    
+    // ✅✅✅ NOVO: Criar sala automaticamente após criar o projeto
+    console.log(`🔄 Criando sala automática no projeto ${projectName}`);
+    if (typeof window.addNewRoomToProject === 'function') {
+        await window.addNewRoomToProject(obraId, projectId);
+        console.log(`✅ Sala automática criada no projeto ${projectName}`);
+    } else {
+        console.error('❌ addNewRoomToProject não disponível');
+    }
 }
 
 
@@ -187,6 +196,8 @@ if (typeof window !== 'undefined') {
     window.deleteProject = deleteProject
     window.createEmptyProject = createEmptyProject // ✅ LINHA CRÍTICA FALTANTE
     window.buildProjectHTML = buildProjectHTML // ✅ Adicionar também para consistência
+    window.addNewRoomToProject = addNewRoomToProject || window.addNewRoomToProject;
+
 }
 
 export {

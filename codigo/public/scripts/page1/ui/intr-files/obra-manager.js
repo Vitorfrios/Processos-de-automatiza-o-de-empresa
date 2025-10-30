@@ -11,7 +11,9 @@ import {
     hideToast 
 } from './modal/modal.js'
 
-import { generateObraId } from '../../data/data-files/data-utils-core.js'
+import { generateObraId } from '../../data/data-files/data-utils-core.js';
+import {addNewProjectToObra} from './project-manager.js'
+
 
 /**
  * Cria uma obra vazia na interface
@@ -54,7 +56,7 @@ function buildObraHTML(obraName, obraId) {
       <!-- ✅ CORREÇÃO: usar APENAS obraId no conteúdo -->
       <div class="obra-content collapsed" id="obra-content-${obraId}">
         <div class="projects-container" id="projects-${obraId}">
-          <p class="empty-message">Adicione projetos a esta obra...</p>
+
         </div>
         <div class="add-project-section">
           <!-- ✅ CORREÇÃO: Passar obraId para a função -->
@@ -168,19 +170,30 @@ function getNextObraNumber() {
  */
 async function addNewObra() {
   try {
-    const obraNumber = getNextObraNumber()
-    const obraName = `Obra${obraNumber}`
+    const obraNumber = getNextObraNumber();
+    const obraName = `Obra${obraNumber}`;
     
     // ✅ CORREÇÃO: Gerar ID único para nova obra
-    const obraId = generateObraId()
+    const obraId = generateObraId();
 
-    console.log(`🏗️ Criando nova obra: ${obraName} com ID: ${obraId}`)
-    createEmptyObra(obraName, obraId)
-    console.log(`✅ ${obraName} adicionada com ID único: ${obraId}`)
+    console.log(`🏗️ Criando nova obra: ${obraName} com ID: ${obraId}`);
+    createEmptyObra(obraName, obraId);
+    console.log(`✅ ${obraName} adicionada com ID único: ${obraId}`);
+
+    // ✅✅✅ AGUARDAR um pouco para o DOM ser atualizado antes de criar projeto
+    setTimeout(async () => {
+        console.log(`🔄 Criando projeto e sala automáticos para ${obraName}`);
+        if (typeof window.addNewProjectToObra === 'function') {
+            await window.addNewProjectToObra(obraId);
+            console.log(`✅ Projeto e sala automáticos criados para ${obraName}`);
+        } else {
+            console.error('❌ addNewProjectToObra não disponível');
+        }
+    }, 500);
 
   } catch (error) {
-    console.error("❌ Erro ao adicionar nova obra:", error)
-    alert("Erro ao criar nova obra. Verifique o console para detalhes.")
+    console.error("❌ Erro ao adicionar nova obra:", error);
+    alert("Erro ao criar nova obra. Verifique o console para detalhes.");
   }
 }
 

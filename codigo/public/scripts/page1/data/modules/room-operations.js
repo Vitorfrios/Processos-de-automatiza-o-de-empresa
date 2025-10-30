@@ -266,6 +266,51 @@ async function addNewRoom(obraId, projectId) {
 
 
 /**
+ * Adiciona uma nova sala ao projeto - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
+ * @returns {Promise<void>}
+ */
+async function addNewRoomToProject(obraId, projectId) {
+    console.log(`➕ Adicionando nova sala à obra "${obraId}", projeto "${projectId}"`);
+    
+    // ✅ CORREÇÃO: Buscar por IDs únicos
+    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`);
+    
+    if (!projectElement) {
+        console.error(`❌ Projeto ${projectId} não encontrado na obra ${obraId}`);
+        return;
+    }
+    
+    // Contar APENAS salas DESTE projeto específico
+    const roomCount = getRoomCountInProject(obraId, projectId);
+    const roomName = `Sala${roomCount + 1}`;
+
+    // Gerar ID DEFINITIVO automaticamente
+    await createEmptyRoom(obraId, projectId, roomName, null);
+    console.log(`✅ ${roomName} adicionada à obra "${obraId}", projeto "${projectId}"`);
+}
+
+/**
+ * Função de compatibilidade para código existente que usa apenas projectName
+ * @param {string} projectName - Nome do projeto
+ * @returns {Promise<void>}
+ */
+async function addNewRoomLegacy(projectName) {
+    // Tenta encontrar a obra do projeto
+    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
+    const obraId = projectBlock?.dataset.obraId;
+    const projectId = projectBlock?.dataset.projectId;
+    
+    if (obraId && projectId) {
+        return addNewRoomToProject(obraId, projectId);
+    } else {
+        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
+    }
+}
+
+
+/**
  * Remove uma sala do projeto após confirmação do usuário - CORREÇÃO COMPLETA
  * @param {string} obraId - ID único da obra
  * @param {string} projectId - ID único do projeto
@@ -362,13 +407,15 @@ export {
     addNewRoom,
     deleteRoom,
     deleteRoomLegacy,
-    safeInitializeFatorSeguranca
+    safeInitializeFatorSeguranca,
+    addNewRoomToProject
 }
 
 // Disponibilização global correta
 if (typeof window !== 'undefined') {
     window.addNewRoom = addNewRoom;
     window.deleteRoom = deleteRoom;
+     window.addNewRoomToProject = addNewRoomToProject; 
     window.createEmptyRoom = createEmptyRoom;
     window.safeInitializeFatorSeguranca = safeInitializeFatorSeguranca;
 }
