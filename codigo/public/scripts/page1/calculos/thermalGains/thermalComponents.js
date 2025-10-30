@@ -139,6 +139,19 @@ function calculateExternalAirLatentGain(vazaoArExterno, constants) {
   return ganho;
 }
 
+// ✅ CORREÇÃO: Disponibilização global para compatibilidade
+if (typeof window !== 'undefined') {
+  window.calculateCeilingGain = calculateCeilingGain;
+  window.calculateWallGain = calculateWallGain;
+  window.calculatePartitionGain = calculatePartitionGain;
+  window.calculateFloorGain = calculateFloorGain;
+  window.calculateLightingGain = calculateLightingGain;
+  window.calculateDissipationGain = calculateDissipationGain;
+  window.calculatePeopleGain = calculatePeopleGain;
+  window.calculateExternalAirSensibleGain = calculateExternalAirSensibleGain;
+  window.calculateExternalAirLatentGain = calculateExternalAirLatentGain;
+}
+
 export {
   calculateCeilingGain,
   calculateWallGain,

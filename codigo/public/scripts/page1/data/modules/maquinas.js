@@ -1,4 +1,8 @@
-// maquinas.js
+/**
+ * maquinas.js
+ * Módulo principal de máquinas - SISTEMA CORRIGIDO COM IDs ÚNICOS
+ */
+
 import * as Utilities from './machines/utilities.js';
 import * as MachinesBuilder from './machines/machinesBuilder.js';
 import * as MachineManagement from './machines/machineManagement.js';
@@ -61,9 +65,12 @@ function initializeBackupSync() {
   const intervals = [1000, 3000, 5000, 7000, 10000]
   intervals.forEach((delay) => {
     setTimeout(() => {
+      // ✅ CORREÇÃO: Buscar salas por data attributes em vez de ID
       document.querySelectorAll(".room-block").forEach((roomBlock) => {
-        const roomId = roomBlock.id.replace("room-content-", "")
-        syncCapacityTableBackup(roomId)
+        const roomId = roomBlock.dataset.roomId
+        if (roomId && roomId !== 'undefined' && roomId !== 'null') {
+          syncCapacityTableBackup(roomId)
+        }
       })
     }, delay)
   })
@@ -78,11 +85,14 @@ function initializeClimaInputBackupListener() {
   document.addEventListener("change", (event) => {
     const target = event.target
     if (target.classList.contains("clima-input") && target.dataset.field === "backup") {
-      const roomContent = target.closest('[id^="room-content-"]')
-      if (roomContent) {
-        const roomId = roomContent.id.replace("room-content-", "")
+      // ✅ CORREÇÃO: Buscar sala pelo elemento pai em vez de ID
+      const roomBlock = target.closest('.room-block')
+      if (roomBlock) {
+        const roomId = roomBlock.dataset.roomId
         const newBackupValue = target.value
-        handleClimaInputBackupChange(roomId, newBackupValue)
+        if (roomId && roomId !== 'undefined' && roomId !== 'null') {
+          handleClimaInputBackupChange(roomId, newBackupValue)
+        }
       }
     }
   })
@@ -97,7 +107,10 @@ function initializeFatorSegurancaListeners() {
   document.addEventListener('change', (event) => {
     if (event.target.id && event.target.id.startsWith('fator-seguranca-')) {
       const roomId = event.target.id.replace('fator-seguranca-', '')
-      calculateCapacitySolution(roomId)
+      // ✅ CORREÇÃO: Validar roomId antes de calcular
+      if (roomId && roomId !== 'undefined' && roomId !== 'null') {
+        calculateCapacitySolution(roomId)
+      }
     }
   })
 }

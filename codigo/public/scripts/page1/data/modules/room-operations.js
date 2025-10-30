@@ -1,4 +1,7 @@
-// room-operations.js
+/**
+ * room-operations.js
+ * Operações com salas - SISTEMA CORRIGIDO COM IDs ÚNICOS
+ */
 
 import { showEmptyProjectMessageIfNeeded, removeEmptyProjectMessage } from '../../ui/interface.js'
 import { buildRoomHTML } from './salas.js' 
@@ -23,67 +26,80 @@ async function loadMachinesPreloadModule() {
 }
 
 /**
- * Cria uma nova sala vazia no projeto especificado
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
+ * Cria uma nova sala vazia no projeto especificado - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto  
  * @param {string} roomName - Nome da sala
  * @param {string} roomId - ID único da sala (opcional)
  * @returns {Promise<boolean>} True se a sala foi criada com sucesso
  */
-async function createEmptyRoom(obraName, projectName, roomName, roomId) {
-    console.log(`🔄 Criando sala: ${roomName} na obra "${obraName}", projeto "${projectName}"`);
+async function createEmptyRoom(obraId, projectId, roomName, roomId) {
+    console.log(`🔄 Criando sala: ${roomName} na obra "${obraId}", projeto "${projectId}"`);
     
-    // Buscar o projectElement corretamente
-    const projectElement = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"]`);
-    
-    if (!projectElement) {
-        console.error(`❌ Projeto ${projectName} não encontrado na obra ${obraName}`);
+    // ✅ CORREÇÃO: Validar IDs únicos
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (createEmptyRoom) room-operations.js [Obra ID inválido: ${obraId}]`);
         return false;
     }
     
-    // Gerar ID ÚNICO SEM "undefined"
+    if (!projectId || projectId === 'undefined' || projectId === 'null') {
+        console.error(`ERRO FALBACK (createEmptyRoom) room-operations.js [Project ID inválido: ${projectId}]`);
+        return false;
+    }
+    
+    // ✅ CORREÇÃO: Buscar por IDs únicos
+    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`);
+    
+    if (!projectElement) {
+        console.error(`❌ Projeto ${projectId} não encontrado na obra ${obraId}`);
+        
+        // Debug detalhado: listar projetos disponíveis com seus dados
+        console.log('🔍 Projetos disponíveis no DOM:');
+        document.querySelectorAll('.project-block').forEach(proj => {
+            console.log(`  - Projeto: ${proj.dataset.projectName}, 
+                         ProjectID: ${proj.dataset.projectId}, 
+                         ObraID: ${proj.dataset.obraId}, 
+                         ObraName: ${proj.dataset.obraName}`);
+        });
+        return false;
+    }
+    
+    console.log(`✅ Projeto encontrado:`, projectElement.dataset);
+
+    // ✅ CORREÇÃO: Gerar ID SEGURO hierárquico único para sala
     let finalRoomId;
     
     if (roomId && roomId !== 'undefined' && roomId !== 'null' && !roomId.includes('undefined')) {
-        
-        // Se roomId foi fornecido e é válido, limpar qualquer "undefined"
-        finalRoomId = roomId.toString()
-            .replace(/-undefined/g, '')
-            .replace(/-null/g, '')
-            .trim();
+        finalRoomId = roomId;
     } else {
-        // Gerar ID ÚNICO SEM "undefined"
-        const obraId = projectElement.closest('.obra-block')?.dataset.obraId || obraName.replace(/\s+/g, '-');
-        const projectId = projectElement.dataset.projectId || projectName.replace(/\s+/g, '-');
-        const roomNumber = getRoomCountInProject(obraName, projectName) + 1;
-        
-        // ID único limpo: obra1-projeto1-sala1, obra2-projeto1-sala1, etc.
-        finalRoomId = `${obraId}-${projectId}-sala${roomNumber}`.toLowerCase();
-        
-        // GARANTIR que não tenha "undefined"
-        finalRoomId = finalRoomId.replace(/-undefined/g, '').replace(/undefined-/g, '');
+        const roomCount = getRoomCountInProject(obraId, projectId);
+        finalRoomId = generateRoomId(projectElement, roomCount + 1);
     }
     
-    console.log(`📝 ID DEFINITIVO LIMPO: "${finalRoomId}"`);
+    // ✅ CORREÇÃO: Limpar ID de possíveis problemas
+    finalRoomId = finalRoomId.toString()
+        .replace(/-undefined/g, '')
+        .replace(/-null/g, '')
+        .trim();
+    
+    console.log(`📝 ID SEGURO DEFINITIVO DA SALA: "${finalRoomId}"`);
     
     try {
-        // PRÉ-CARREGA dados das máquinas ANTES de criar a sala
         const machinesModule = await loadMachinesPreloadModule();
         if (machinesModule && machinesModule.preloadMachinesDataForRoom) {
             await machinesModule.preloadMachinesDataForRoom(finalRoomId);
         }
     } catch (error) {
-        console.error("⚠️  Aviso: Não foi possível pré-carregar dados das máquinas:", error);
+        console.error("⚠️ Aviso: Não foi possível pré-carregar dados das máquinas:", error);
     }
 
-    // Passar o ID LIMPO para buildRoomHTML
-    const roomHTML = buildRoomHTML(obraName, projectName, roomName, finalRoomId);
+    // ✅ CORREÇÃO: Passar IDs únicos corretamente
+    const roomHTML = buildRoomHTML(obraId, projectId, roomName, finalRoomId);
     
-    // Encontrar o projectContent
     const projectContent = projectElement.querySelector('.project-content');
     
     if (!projectContent) {
-        console.error(`❌ Conteúdo do projeto não encontrado em ${projectName}`);
+        console.error(`❌ Conteúdo do projeto não encontrado em ${projectId}`);
         return false;
     }
 
@@ -96,22 +112,22 @@ async function createEmptyRoom(obraName, projectName, roomName, roomId) {
         projectContent.insertAdjacentHTML('beforeend', roomHTML);
     }
 
-    console.log(`✅ Sala ${roomName} criada (ID LIMPO: ${finalRoomId}) na obra "${obraName}", projeto "${projectName}"`);
+    console.log(`✅ Sala ${roomName} criada (ID: ${finalRoomId}) na obra "${obraId}", projeto "${projectId}"`);
     
-    // Inicializar com ID LIMPO
-    initializeRoomComponents(obraName, projectName, roomName, finalRoomId);
+    initializeRoomComponents(obraId, projectId, roomName, finalRoomId);
     
     return true;
 }
 
 /**
- * Conta quantas salas já existem no projeto específico
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
+ * Conta quantas salas já existem no projeto específico - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
  * @returns {number} Quantidade de salas no projeto
  */
-function getRoomCountInProject(obraName, projectName) {
-    const projectElement = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"]`);
+function getRoomCountInProject(obraId, projectId) {
+    // ✅ CORREÇÃO: Buscar por IDs únicos
+    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`);
     if (!projectElement) return 0;
     
     const rooms = projectElement.querySelectorAll('.room-block');
@@ -120,13 +136,13 @@ function getRoomCountInProject(obraName, projectName) {
 
 /**
  * Inicializa todos os componentes da sala após criação
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
  * @param {string} roomName - Nome da sala
  * @param {string} roomId - ID único da sala
  * @returns {void}
  */
-function initializeRoomComponents(obraName, projectName, roomName, roomId) {
+function initializeRoomComponents(obraId, projectId, roomName, roomId) {
     console.log(`🔧 Inicializando componentes da sala: ${roomName} (ID: ${roomId})`);
     
     // 1. Inicializar fator de segurança
@@ -164,44 +180,24 @@ function initializeRoomComponents(obraName, projectName, roomName, roomId) {
 }
 
 /**
- * Função de compatibilidade para código existente que usa apenas projectName
- * @param {string} projectName - Nome do projeto
- * @param {string} roomName - Nome da sala
- * @param {string} roomId - ID da sala
- * @returns {Promise<boolean>} True se a sala foi criada com sucesso
- */
-async function createEmptyRoomLegacy(projectName, roomName, roomId) {
-    // Tenta encontrar a obra do projeto
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
-    const obraName = projectBlock?.dataset.obraName;
-    
-    if (obraName) {
-        return createEmptyRoom(obraName, projectName, roomName, roomId);
-    } else {
-        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
-        return false;
-    }
-}
-
-/**
  * Insere o HTML de uma sala no conteúdo do projeto
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
  * @param {string} roomHTML - HTML da sala a ser inserida
- * @param {string} uniqueRoomId - ID único da sala
+ * @param {string} roomId - ID único da sala
  * @returns {void}
  */
-function insertRoomIntoProject(obraName, projectName, roomHTML, uniqueRoomId) {
-    // Buscar projeto pela hierarquia
-    const projectElement = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"]`);
+function insertRoomIntoProject(obraId, projectId, roomHTML, roomId) {
+    // ✅ CORREÇÃO: Buscar projeto por IDs únicos
+    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`);
     if (!projectElement) {
-        console.error(`❌ Projeto ${projectName} não encontrado na obra ${obraName}`);
+        console.error(`❌ Projeto ${projectId} não encontrado na obra ${obraId}`);
         return;
     }
 
     const projectContent = projectElement.querySelector('.project-content');
     if (!projectContent) {
-        console.error(`❌ Conteúdo do projeto ${projectName} não encontrado`);
+        console.error(`❌ Conteúdo do projeto ${projectId} não encontrado`);
         return;
     }
 
@@ -213,34 +209,33 @@ function insertRoomIntoProject(obraName, projectName, roomHTML, uniqueRoomId) {
     }
 
     removeEmptyProjectMessage(projectContent);
-    console.log(`✅ Sala inserida no projeto ${projectName} (ID único: ${uniqueRoomId})`);
+    console.log(`✅ Sala inserida no projeto ${projectId} (ID único: ${roomId})`);
 }
 
 /**
- * Adiciona uma nova sala ao projeto com contagem INDEPENDENTE por projeto
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
- * @param {string} uniqueProjectId - ID único do projeto (opcional)
+ * Adiciona uma nova sala ao projeto - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
  * @returns {Promise<void>}
  */
-async function addNewRoom(obraName, projectName, uniqueProjectId = null) {
-    console.log(`➕ Adicionando nova sala à obra "${obraName}", projeto "${projectName}"`);
+async function addNewRoom(obraId, projectId) {
+    console.log(`➕ Adicionando nova sala à obra "${obraId}", projeto "${projectId}"`);
     
-    // Buscar projeto pela hierarquia
-    const projectElement = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"]`);
+    // ✅ CORREÇÃO: Buscar por IDs únicos
+    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`);
     
     if (!projectElement) {
-        console.error(`❌ Projeto ${projectName} não encontrado na obra ${obraName}`);
+        console.error(`❌ Projeto ${projectId} não encontrado na obra ${obraId}`);
         return;
     }
     
     // Contar APENAS salas DESTE projeto específico
-    const roomCount = getRoomCountInProject(obraName, projectName);
+    const roomCount = getRoomCountInProject(obraId, projectId);
     const roomName = `Sala${roomCount + 1}`;
 
     // Gerar ID DEFINITIVO automaticamente
-    await createEmptyRoom(obraName, projectName, roomName, null);
-    console.log(`✅ ${roomName} adicionada à obra "${obraName}", projeto "${projectName}"`);
+    await createEmptyRoom(obraId, projectId, roomName, null);
+    console.log(`✅ ${roomName} adicionada à obra "${obraId}", projeto "${projectId}"`);
 }
 
 /**
@@ -251,10 +246,66 @@ async function addNewRoom(obraName, projectName, uniqueProjectId = null) {
 async function addNewRoomLegacy(projectName) {
     // Tenta encontrar a obra do projeto
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
-    const obraName = projectBlock?.dataset.obraName;
+    const obraId = projectBlock?.dataset.obraId;
+    const projectId = projectBlock?.dataset.projectId;
     
-    if (obraName) {
-        return addNewRoom(obraName, projectName);
+    if (obraId && projectId) {
+        return addNewRoom(obraId, projectId);
+    } else {
+        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
+    }
+}
+
+/**
+ * Remove uma sala do projeto após confirmação do usuário - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
+ * @param {string} roomId - ID único da sala a ser removida
+ * @returns {void}
+ */
+function deleteRoom(obraId, projectId, roomId) {
+    // ✅ CORREÇÃO: Buscar por IDs únicos
+    const roomBlock = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"][data-room-id="${roomId}"]`);
+    
+    if (!roomBlock) {
+        console.error(`❌ Sala com ID ${roomId} não encontrada no projeto ${projectId}, obra ${obraId}`);
+        return;
+    }
+
+    const roomName = roomBlock.dataset.roomName;
+    const projectContent = roomBlock.closest(".project-content");
+
+    roomBlock.remove();
+    
+    if (projectContent) {
+        showEmptyProjectMessageIfNeeded(projectContent);
+    }
+
+    console.log(`🗑️ Sala ${roomName} (ID: ${roomId}) removida da obra "${obraId}", projeto "${projectId}"`);
+}
+
+/**
+ * Função de compatibilidade para código existente que usa apenas projectName e roomName
+ * @param {string} projectName - Nome do projeto
+ * @param {string} roomName - Nome da sala
+ * @returns {void}
+ */
+function deleteRoomLegacy(projectName, roomName) {
+    // Tenta encontrar a obra do projeto
+    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
+    const obraId = projectBlock?.dataset.obraId;
+    const projectId = projectBlock?.dataset.projectId;
+    
+    if (obraId && projectId) {
+        // Encontrar sala pela hierarquia completa
+        const roomBlock = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"][data-room-name="${roomName}"]`);
+        const roomId = roomBlock?.dataset.roomId;
+        
+        if (roomId) {
+            return deleteRoom(obraId, projectId, roomId);
+        } else {
+            console.error(`❌ ID da sala ${roomName} não encontrado`);
+        }
     } else {
         console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
     }
@@ -275,8 +326,8 @@ function fixExistingCapacityInputs() {
         const roomId = roomBlock.dataset.roomId;
         const roomName = roomBlock.dataset.roomName;
         const projectBlock = roomBlock.closest('.project-block');
-        const projectName = projectBlock?.dataset.projectName;
-        const obraName = projectBlock?.dataset.obraName;
+        const projectId = projectBlock?.dataset.projectId;
+        const obraId = projectBlock?.dataset.obraId;
         
         if (roomId) {
             const input = document.getElementById(`fator-seguranca-${roomId}`);
@@ -284,7 +335,7 @@ function fixExistingCapacityInputs() {
             if (input && input.value === '') {
                 const valor = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE || 10;
                 input.value = valor;
-                console.log(`✅ Input ${roomId} corrigido: ${valor}% (Obra: ${obraName}, Projeto: ${projectName})`);
+                console.log(`✅ Input ${roomId} corrigido: ${valor}% (Obra: ${obraId}, Projeto: ${projectId})`);
             }
         }
     });
@@ -295,72 +346,9 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(fixExistingCapacityInputs, 2000);
 });
 
-/**
- * Remove uma sala do projeto após confirmação do usuário
- * @param {string} obraName - Nome da obra
- * @param {string} projectName - Nome do projeto
- * @param {string} uniqueRoomId - ID único da sala a ser removida
- * @returns {void}
- */
-function deleteRoom(obraName, projectName, uniqueRoomId) {
-
-
-    // Encontrar sala pelo ID único E hierarquia
-    const roomBlock = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"][data-room-id="${uniqueRoomId}"]`);
-    
-    if (!roomBlock) {
-        console.error(`❌ Sala com ID ${uniqueRoomId} não encontrada no projeto ${projectName}, obra ${obraName}`);
-        
-        // Debug: listar salas disponíveis
-        console.log('🔍 Salas disponíveis:');
-        document.querySelectorAll('.room-block').forEach(room => {
-            console.log(`  - Sala: ${room.dataset.roomName}, ID: ${room.dataset.roomId}, Projeto: ${room.dataset.projectName}, Obra: ${room.dataset.obraName}`);
-        });
-        return;
-    }
-
-    const roomName = roomBlock.dataset.roomName;
-    const projectContent = roomBlock.closest(".project-content");
-
-    roomBlock.remove();
-    
-    if (projectContent) {
-        showEmptyProjectMessageIfNeeded(projectContent);
-    }
-
-    console.log(`🗑️  Sala ${roomName} (ID único: ${uniqueRoomId}) removida da obra "${obraName}", projeto "${projectName}"`);
-}
-
-/**
- * Função de compatibilidade para código existente que usa apenas projectName e roomName
- * @param {string} projectName - Nome do projeto
- * @param {string} roomName - Nome da sala
- * @returns {void}
- */
-function deleteRoomLegacy(projectName, roomName) {
-    // Tenta encontrar a obra do projeto
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
-    const obraName = projectBlock?.dataset.obraName;
-    
-    if (obraName) {
-        // Encontrar sala pela hierarquia completa
-        const roomBlock = document.querySelector(`[data-obra-name="${obraName}"][data-project-name="${projectName}"][data-room-name="${roomName}"]`);
-        const roomId = roomBlock?.dataset.roomId;
-        
-        if (roomId) {
-            return deleteRoom(obraName, projectName, roomId);
-        } else {
-            console.error(`❌ ID da sala ${roomName} não encontrado`);
-        }
-    } else {
-        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
-    }
-}
-
 // Exportações simplificadas
 export {
     createEmptyRoom,
-    createEmptyRoomLegacy,
     insertRoomIntoProject,
     addNewRoom,
     addNewRoomLegacy,

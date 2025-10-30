@@ -19,12 +19,13 @@ function renderObraFromData(obraData) {
 
   console.log(`🎯 Renderizando obra: ${obraName} (ID: ${obraId})`)
 
-  // Criar obra vazia
+  // ✅ CORREÇÃO: Usar ID seguro na criação
   createEmptyObra(obraName, obraId)
 
   // Renderizar projetos da obra
   if (obraData.projetos && obraData.projetos.length > 0) {
-    const obraContent = document.getElementById(`obra-content-${obraName}`)
+    // ✅ CORREÇÃO: Buscar por ID único em vez de nome
+    const obraContent = document.getElementById(`obra-content-${obraId}`)
 
     if (obraContent) {
       const emptyMessage = obraContent.querySelector(".empty-message")
@@ -34,53 +35,58 @@ function renderObraFromData(obraData) {
 
       setTimeout(() => {
         obraData.projetos.forEach((projectData) => {
-          renderProjectFromData(projectData, obraName)
+          renderProjectFromData(projectData, obraId, obraName)
         })
       }, 100);
     }
   }
 
-  console.log(`✅ Obra ${obraName} renderizada com sucesso`)
+  console.log(`✅ Obra ${obraName} renderizada com sucesso (ID: ${obraId})`)
 }
 
 /**
  * Renderiza um projeto completo a partir dos dados carregados
  * Cria o projeto e todas as suas salas com configurações
  * @param {Object} projectData - Dados completos do projeto
+ * @param {string} obraId - ID único da obra pai
  * @param {string} obraName - Nome da obra pai
  * @returns {void}
  */
-function renderProjectFromData(projectData, obraName = null) {
+function renderProjectFromData(projectData, obraId = null, obraName = null) {
   const projectName = projectData.nome
   const projectId = ensureStringId(projectData.id)
 
   console.log(`🎯 Renderizando projeto: ${projectName} (ID: ${projectId})`)
 
-  // Se não foi passada a obra, tentar encontrar pela estrutura do DOM
-  if (!obraName) {
-
+  // ✅ CORREÇÃO: Se não foi passada a obra, tentar encontrar pela estrutura do DOM usando ID
+  if (!obraId) {
     // Buscar obra que contém este projeto
-    const existingProject = document.querySelector(`[data-project-name="${projectName}"]`)
+    const existingProject = document.querySelector(`[data-project-id="${projectId}"]`)
+    obraId = existingProject?.dataset.obraId
     obraName = existingProject?.dataset.obraName
   }
 
   // Se ainda não tem obra, criar projeto na primeira obra ou criar uma nova
-  if (!obraName) {
+  if (!obraId) {
     const obras = document.querySelectorAll('.obra-block')
     if (obras.length > 0) {
-      obraName = obras[0].dataset.obraName
+      const primeiraObra = obras[0]
+      obraId = primeiraObra.dataset.obraId
+      obraName = primeiraObra.dataset.obraName
     } else {
-
-      // Criar obra padrão
+      // ✅ CORREÇÃO: Criar obra com ID seguro
       obraName = 'Obra1'
-      createEmptyObra(obraName, '1001')
+      obraId = generateObraId() // Usar a função do sistema
+      createEmptyObra(obraName, obraId)
     }
   }
 
-  createEmptyProject(obraName, projectName, projectId)
+  // ✅ CORREÇÃO: Passar IDs únicos corretamente
+  createEmptyProject(obraId, obraName, projectId, projectName)
 
   if (projectData.salas && projectData.salas.length > 0) {
-    const projectContent = document.getElementById(`project-content-${projectName}`)
+    // ✅ CORREÇÃO: Buscar por ID único do projeto
+    const projectContent = document.getElementById(`project-content-${projectId}`)
 
     if (projectContent) {
       const emptyMessage = projectContent.querySelector(".empty-message")
@@ -90,7 +96,7 @@ function renderProjectFromData(projectData, obraName = null) {
 
       setTimeout(() => {
         projectData.salas.forEach((roomData) => {
-          renderRoomFromData(projectName, roomData, obraName)
+          renderRoomFromData(projectId, projectName, roomData, obraId, obraName)
         })
       }, 100);
     }
@@ -120,17 +126,21 @@ function renderProjectFromData(projectData, obraName = null) {
 /**
  * Renderiza uma sala individual a partir dos dados carregados
  * Preenche todos os inputs, configurações e máquinas da sala
+ * @param {string} projectId - ID único do projeto pai
  * @param {string} projectName - Nome do projeto pai
  * @param {Object} roomData - Dados completos da sala
+ * @param {string} obraId - ID único da obra pai
  * @param {string} obraName - Nome da obra pai
  * @returns {void}
  */
-function renderRoomFromData(projectName, roomData, obraName = null) {
+function renderRoomFromData(projectId, projectName, roomData, obraId = null, obraName = null) {
   const roomName = roomData.nome
   const roomId = ensureStringId(roomData.id)
 
   console.log(`🎯 Renderizando sala: ${roomName} no projeto ${projectName}`, {
     obra: obraName,
+    projectId: projectId,
+    roomId: roomId,
     inputs: Object.keys(roomData.inputs || {}).length,
     maquinas: roomData.maquinas?.length || 0,
     capacidade: Object.keys(roomData.capacidade || {}).length,
@@ -139,11 +149,12 @@ function renderRoomFromData(projectName, roomData, obraName = null) {
   });
 
   setTimeout(() => {
-    createEmptyRoom(projectName, roomName, roomId, obraName)
+    // ✅ CORREÇÃO: Passar todos os IDs únicos
+    createEmptyRoom(obraId, projectId, roomName, roomId)
 
     // Delay adicional para garantir que a sala foi criada antes de preencher inputs
     setTimeout(() => {
-      populateRoomInputs(projectName, roomName, roomData, obraName)
+      populateRoomInputs(projectId, projectName, roomId, roomName, roomData, obraId, obraName)
     }, 100);
     
   }, 100);
@@ -152,13 +163,16 @@ function renderRoomFromData(projectName, roomData, obraName = null) {
 /**
  * Preenche todos os inputs e configurações de uma sala com dados carregados
  * Processa inputs básicos, configurações, ganhos térmicos, capacidade e máquinas
+ * @param {string} projectId - ID único do projeto
  * @param {string} projectName - Nome do projeto
+ * @param {string} roomId - ID único da sala
  * @param {string} roomName - Nome da sala
  * @param {Object} roomData - Dados completos da sala
+ * @param {string} obraId - ID único da obra
  * @param {string} obraName - Nome da obra
  * @returns {void}
  */
-function populateRoomInputs(projectName, roomName, roomData, obraName = null) {
+function populateRoomInputs(projectId, projectName, roomId, roomName, roomData, obraId = null, obraName = null) {
   let attempts = 0;
   const maxAttempts = 10;
   
@@ -167,29 +181,34 @@ function populateRoomInputs(projectName, roomName, roomData, obraName = null) {
    * @returns {void}
    */
   const tryPopulate = () => {
-    // Buscar sala considerando a obra
+    // ✅ CORREÇÃO: Buscar sala usando ID único
     let roomBlock;
-    if (obraName) {
-      roomBlock = document.querySelector(`[data-obra-name="${obraName}"] [data-room-name="${roomName}"]`);
+    if (obraId && projectId) {
+      roomBlock = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"][data-room-id="${roomId}"]`);
+    } else if (roomId) {
+      roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
     } else {
-      roomBlock = document.querySelector(`[data-room-name="${roomName}"]`);
+      // Fallback para busca por nome (compatibilidade)
+      if (obraName) {
+        roomBlock = document.querySelector(`[data-obra-name="${obraName}"] [data-room-name="${roomName}"]`);
+      } else {
+        roomBlock = document.querySelector(`[data-room-name="${roomName}"]`);
+      }
     }
-    
-    const roomId = `${projectName}-${roomName}`;
     
     if (!roomBlock && attempts < maxAttempts) {
       attempts++;
-      console.log(`⏳ Tentativa ${attempts} - Sala ${roomName} não encontrada, tentando novamente...`);
+      console.log(`⏳ Tentativa ${attempts} - Sala ${roomName} (ID: ${roomId}) não encontrada, tentando novamente...`);
       setTimeout(tryPopulate, 100);
       return;
     }
     
     if (!roomBlock) {
-      console.error(`❌ Sala ${roomName} não encontrada após ${maxAttempts} tentativas`);
+      console.error(`❌ Sala ${roomName} (ID: ${roomId}) não encontrada após ${maxAttempts} tentativas`);
       return;
     }
 
-    console.log(`✅ Sala ${roomName} encontrada, preenchendo dados...`);
+    console.log(`✅ Sala ${roomName} encontrada (ID: ${roomId}), preenchendo dados...`);
 
     // 1. PREENCHER INPUTS BÁSICOS
     if (roomData.inputs && Object.keys(roomData.inputs).length > 0) {
@@ -200,13 +219,13 @@ function populateRoomInputs(projectName, roomName, roomData, obraName = null) {
     // 2. PREENCHER CONFIGURAÇÕES
     if (roomData.configuracao && Object.keys(roomData.configuracao).length > 0) {
       console.log(`⚙️ Preenchendo ${Object.keys(roomData.configuracao).length} configurações`);
-      populateConfiguration(roomBlock, roomData.configuracao);
+      populateConfiguration(roomBlock, roomData.configuracao, roomId);
     }
 
     // 3. PREENCHER GANHOS TÉRMICOS
     if (roomData.ganhosTermicos && Object.keys(roomData.ganhosTermicos).length > 0) {
       console.log(`🔥 Preenchendo ${Object.keys(roomData.ganhosTermicos).length} ganhos térmicos`);
-      populateThermalGains(roomBlock, roomData.ganhosTermicos);
+      populateThermalGains(roomBlock, roomData.ganhosTermicos, roomId);
     }
 
     // 4. PREENCHER CAPACIDADE
@@ -235,7 +254,7 @@ function populateRoomInputs(projectName, roomName, roomData, obraName = null) {
       }, 300);
     }, 500);
 
-    console.log(`✅ Todos os dados da sala ${roomName} preenchidos com sucesso`);
+    console.log(`✅ Todos os dados da sala ${roomName} (ID: ${roomId}) preenchidos com sucesso`);
   };
   
   tryPopulate();
@@ -285,7 +304,7 @@ function populateBasicInputs(roomBlock, inputsData, roomId) {
       if (element) break;
     }
 
-    // Se não encontrou pelo nome limpo, tentar com sufixo da sala
+    // ✅ CORREÇÃO: Se não encontrou pelo nome limpo, tentar com sufixo do roomId
     if (!element) {
       const selectorsWithSuffix = [
         `[data-field="${field}-${roomId}"]`,
@@ -347,7 +366,9 @@ function populateConfiguration(roomBlock, configData, roomId) {
         console.log(`⚙️ Preenchendo ${configData.opcoesInstalacao.length} opções de instalação`);
         
         configData.opcoesInstalacao.forEach(opcaoValue => {
-            const checkbox = roomBlock.querySelector(`input[name^="opcoesInstalacao-"][value="${opcaoValue}"]`);
+            // ✅ CORREÇÃO: Buscar por name que inclui roomId
+            const checkbox = roomBlock.querySelector(`input[name^="opcoesInstalacao-${roomId}"][value="${opcaoValue}"]`) ||
+                            roomBlock.querySelector(`input[name^="opcoesInstalacao-"][value="${opcaoValue}"]`);
             if (checkbox) {
                 checkbox.checked = true;
                 console.log(`✅ Opção de instalação marcada: ${opcaoValue}`);
@@ -391,14 +412,16 @@ function populateConfiguration(roomBlock, configData, roomId) {
  * Preenche dados de ganhos térmicos calculados da sala
  * @param {HTMLElement} roomBlock - Elemento HTML da sala
  * @param {Object} gainsData - Dados de ganhos térmicos
+ * @param {string} roomId - ID único da sala
  * @returns {void}
  */
-function populateThermalGains(roomBlock, gainsData) {
+function populateThermalGains(roomBlock, gainsData, roomId) {
   Object.entries(gainsData).forEach(([field, value]) => {
     if (value === null || value === undefined || value === '') return;
 
-    // Buscar por elementos de resultado térmico
+    // ✅ CORREÇÃO: Buscar por elementos com sufixo do roomId
     const selectors = [
+      `[id="${field}-${roomId}"]`,
       `[id="${field}"]`,
       `.thermal-result[id="${field}"]`,
       `.result-value[id="${field}"]`,
@@ -436,14 +459,15 @@ function populateThermalGains(roomBlock, gainsData) {
  */
 function populateCapacityData(roomBlock, capacityData, roomId) {
 
-  // Obter projectName do roomBlock
+  // ✅ CORREÇÃO: Obter projectId do roomBlock
   const projectBlock = roomBlock.closest('.project-block');
+  const projectId = projectBlock ? projectBlock.getAttribute('data-project-id') : '';
   const projectName = projectBlock ? projectBlock.getAttribute('data-project-name') : '';
   
   Object.entries(capacityData).forEach(([field, value]) => {
     if (value === null || value === undefined || value === '') return;
 
-    // Buscar elementos de capacidade
+    // ✅ CORREÇÃO: Buscar elementos de capacidade com roomId
     const selectors = [
       `[id="${field}-${roomId}"]`,
       `[id="${field}"]`,
@@ -479,13 +503,10 @@ function populateCapacityData(roomBlock, capacityData, roomId) {
     }
   });
 
-  // Usar roomId em vez de projectName e roomName separados
+  // ✅ CORREÇÃO: Usar roomId para carregar capacidade
   setTimeout(() => {
     if (typeof window.loadCapacityData !== 'undefined') {
-
-      // Extrair roomName do roomId se necessário
-      const roomName = roomId.split('-').slice(1).join('-');
-      window.loadCapacityData(projectName, roomName);
+      window.loadCapacityData(projectName, roomId);
     } else if (typeof window.calculateCapacitySolution !== 'undefined') {
       window.calculateCapacitySolution(roomId);
     }
@@ -502,7 +523,7 @@ function populateCapacityData(roomBlock, capacityData, roomId) {
 function populateMachines(roomBlock, machinesData, roomId) {
   console.log(`🤖 Iniciando carregamento de ${machinesData.length} máquinas para ${roomId}`);
   
-  // CORREÇÃO: Usar loadSavedMachines em vez de criar máquinas manualmente
+  // ✅ CORREÇÃO: Usar loadSavedMachines com roomId
   if (typeof window.loadSavedMachines !== 'undefined') {
     console.log(`🔄 Chamando loadSavedMachines para ${roomId}`);
     window.loadSavedMachines(roomId, machinesData);
@@ -511,6 +532,13 @@ function populateMachines(roomBlock, machinesData, roomId) {
   }
 }
 
+// ✅ CORREÇÃO: Adicionar função auxiliar para compatibilidade
+function generateObraId() {
+    const letters = 'abcdefghjkmnpqrstwxyz';
+    const randomLetter = letters[Math.floor(Math.random() * letters.length)];
+    const randomNum = Math.floor(Math.random() * 90) + 10;
+    return `obra_${randomLetter}${randomNum}`;
+}
 
 export {
   renderObraFromData, 

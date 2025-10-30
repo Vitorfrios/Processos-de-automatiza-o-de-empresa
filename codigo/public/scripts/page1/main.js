@@ -1,4 +1,4 @@
-// main.js
+// main.js - VERSÃO CORRIGIDA COM ORDEM CORRETA
 
 // Inicializar variáveis globais simples
 window.systemConstants = null;
@@ -32,17 +32,14 @@ class ShutdownManager {
   }
 
   disableAutoShutdown() {
-      // Remove event listeners de shutdown automático se existirem
       window.removeEventListener('beforeunload', this.autoShutdown);
       window.removeEventListener('unload', this.autoShutdown);
       window.removeEventListener('pagehide', this.autoShutdown);
   }
 
   createShutdownButton() {
-    // Verifica se o botão já existe
     if (document.querySelector('.shutdown-btn')) return;
     
-    // Cria botão no header
     const headerRight = document.querySelector('.header-right');
     if (headerRight) {
         const shutdownBtn = document.createElement('button');
@@ -61,7 +58,6 @@ class ShutdownManager {
             try {
                 console.log('🔄 Executando shutdown COMPLETO...');
                 
-                // ✅ USA a função CORRETA do server.js
                 if (typeof window.shutdownManual === 'function') {
                     await window.shutdownManual();
                 } else {
@@ -78,95 +74,76 @@ class ShutdownManager {
 // Inicializar shutdown manager
 let shutdownManager = null;
 
-/**
- * Carrega todos os módulos do sistema dinamicamente e os atribui ao escopo global
- * Garante que todas as funções estejam disponíveis no objeto window
- */
-async function loadAllModules() {
-  if (modulesLoaded) return;
-  
-  try {
-    const modules = await Promise.all([
-      import('./ui/interface.js'),
-      import('./ui/edit.js'),
-      import('./data/projects.js'),
-      import('./data/rooms.js'),
-      import('./calculos/calculos-manager.js'),
-      import('./utils/utils.js')
-    ]);
+// ✅ CORREÇÃO CRÍTICA: DEFINIR FUNÇÕES GLOBAIS PRIMEIRO - ANTES DE QUALQUER OUTRA COISA
+window.createEmptyObra = async function(obraName, obraId) {
+    try {
+        if (typeof window._createEmptyObra === 'function') {
+            return window._createEmptyObra(obraName, obraId);
+        }
+        
+        const obraManager = await import('./ui/intr-files/obra-manager.js');
+        if (obraManager && obraManager.createEmptyObra) {
+            window._createEmptyObra = obraManager.createEmptyObra;
+            return obraManager.createEmptyObra(obraName, obraId);
+        }
+        
+        throw new Error('createEmptyObra não encontrada');
+    } catch (error) {
+        console.error('❌ Erro em createEmptyObra:', error);
+        return false;
+    }
+};
 
-    const [
-      interfaceModule,
-      editModule,
-      projectsModule,
-      roomsModule,
-      calculosModule,
-      utilsModule
-    ] = modules;
+// ✅ CORREÇÃO: Garantir que createEmptyProject esteja disponível globalmente ANTES do carregamento
+window.createEmptyProject = async function(obraId, obraName, projectId, projectName) {
+    try {
+        // Se já temos a função carregada, usar ela
+        if (typeof window._createEmptyProject === 'function') {
+            return await window._createEmptyProject(obraId, obraName, projectId, projectName);
+        }
+        
+        // Se não, tentar carregar o módulo
+        const projectManager = await import('./ui/intr-files/project-manager.js');
+        if (projectManager && projectManager.createEmptyProject) {
+            window._createEmptyProject = projectManager.createEmptyProject;
+            return await projectManager.createEmptyProject(obraId, obraName, projectId, projectName);
+        }
+        
+        throw new Error('createEmptyProject não encontrada');
+    } catch (error) {
+        console.error('❌ Erro em createEmptyProject:', error);
+        return false;
+    }
+};
 
-    // ✅ CORREÇÃO: ATRIBUIR FUNÇÕES DE TOGGLE PRIMEIRO
-    const toggleFunctions = {
-      // UI Interface - FUNÇÕES DE TOGGLE PRIMEIRO
-      toggleSection: interfaceModule.toggleSection,
-      toggleSubsection: interfaceModule.toggleSubsection,
-      toggleObra: interfaceModule.toggleObra,
-      toggleProject: interfaceModule.toggleProject,
-      toggleRoom: interfaceModule.toggleRoom,
-      collapseElement: interfaceModule.collapseElement,
-      expandElement: interfaceModule.expandElement,
-
-      // Restante das funções
-      addNewObra: interfaceModule.addNewObra,
-      addNewProjectToObra: interfaceModule.addNewProjectToObra,
-      showSystemStatus: interfaceModule.showSystemStatus,
-      saveOrUpdateObra: interfaceModule.saveOrUpdateObra,
-      verifyObraData: interfaceModule.verifyObraData,
-      deleteObra: interfaceModule.deleteObra,
-
-      // Edit
-      makeEditable: editModule.makeEditable,
-
-      // Projects
-      deleteProject: projectsModule.deleteProject,
-      saveObra: projectsModule.saveObra,
-
-      // Rooms
-      addNewRoom: roomsModule.addNewRoom,
-      deleteRoom: roomsModule.deleteRoom,
-      addMachine: roomsModule.addMachine,
-      deleteMachine: roomsModule.deleteMachine,
-      createEmptyRoom: roomsModule.createEmptyRoom,
-
-      // Cálculos
-      calculateVazaoArAndThermalGains: calculosModule.calculateVazaoArAndThermalGains,
-      calculateVazaoAr: calculosModule.calculateVazaoAr,
-      calculateThermalGains: calculosModule.calculateThermalGains,
-
-      // Utils
-      ensureStringId: utilsModule.ensureStringId
-    };
-
-    // ✅ CORREÇÃO: Atribuir todas as funções ao window de uma vez
-    Object.assign(window, toggleFunctions);
-
-    modulesLoaded = true;
-    console.log("✅ Todos os módulos foram carregados com sucesso");
-    console.log("✅ Funções de toggle disponíveis:", {
-      toggleSection: typeof window.toggleSection,
-      toggleSubsection: typeof window.toggleSubsection,
-      toggleObra: typeof window.toggleObra,
-      toggleProject: typeof window.toggleProject,
-      toggleRoom: typeof window.toggleRoom
-    });
-    
-  } catch (error) {
-    console.error("❌ Erro ao carregar módulos:", error);
-  }
-}
+// ✅ CORREÇÃO: Garantir que populateObraData esteja disponível globalmente
+window.populateObraData = async function(obraData) {
+    try {
+        // Tentar carregar o módulo diretamente
+        const populateModule = await import('./data/data-populate.js');
+        if (populateModule && populateModule.populateObraData) {
+            return await populateModule.populateObraData(obraData);
+        }
+        throw new Error('populateObraData não encontrada');
+    } catch (error) {
+        console.error('❌ Erro ao carregar populateObraData:', error);
+        
+        // ✅ CORREÇÃO: Fallback - tentar carregar via caminho alternativo
+        try {
+            const populateModule = await import('./data/data-files/data-populate.js');
+            if (populateModule && populateModule.populateObraData) {
+                return await populateModule.populateObraData(obraData);
+            }
+        } catch (fallbackError) {
+            console.error('❌ Erro no fallback de populateObraData:', fallbackError);
+        }
+        
+        return null;
+    }
+};
 
 /**
- * Carrega as constantes do sistema do servidor
- * Essenciais para todos os cálculos do sistema
+ * Carrega as constantes do sistema do servidor - DEVE VIR ANTES DOS MÓDULOS
  */
 async function loadSystemConstants() {
   try {
@@ -182,83 +159,118 @@ async function loadSystemConstants() {
     console.log("✅ Constantes carregadas do JSON:", window.systemConstants);
     
     if (!window.systemConstants.VARIAVEL_PD || !window.systemConstants.VARIAVEL_PS) {
-      console.error("❌ ERRO: Constantes essenciais não encontradas no JSON:", {
-        VARIAVEL_PD: window.systemConstants.VARIAVEL_PD,
-        VARIAVEL_PS: window.systemConstants.VARIAVEL_PS
-      });
+      console.error("❌ ERRO: Constantes essenciais não encontradas no JSON");
       throw new Error("Constantes essenciais não encontradas no JSON");
     }
     
-    if (window.showSystemStatus) {
-      window.showSystemStatus("Constantes do sistema carregadas com sucesso", "success")
-    }
+    return true;
   } catch (error) {
     console.error("❌ ERRO CRÍTICO ao carregar constantes:", error)
     
-    // ✅ DETECTA ERRO DE CONEXÃO E MOSTRA MENSAGEM AMIGÁVEL
     if (error.message.includes('Failed to fetch') || 
         error.message.includes('ERR_CONNECTION_REFUSED') ||
         error.message.includes('404') ||
         error.message.includes('Not Found')) {
-      throw error; // Para cair no catch principal
+      throw error;
     }
     
-    if (window.showSystemStatus) {
-      window.showSystemStatus("ERRO CRÍTICO: Não foi possível carregar as constantes do sistema. Verifique o servidor.", "error")
-    }
-    throw error;
+    return false;
   }
 }
 
 /**
- * Verifica se é necessário criar uma obra base - CORREÇÃO: NÃO CRIA AUTOMATICAMENTE
+ * Carrega todos os módulos do sistema dinamicamente - VERSÃO CORRIGIDA
  */
-async function verifyAndCreateBaseObra() {
-  console.log("🔍 Verificando obras existentes...");
+async function loadAllModules() {
+  if (modulesLoaded) return;
   
-  // Aguardar para garantir carregamento
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const currentCount = getGeralCount();
-  const obrasInDOM = document.querySelectorAll('.obra-block').length;
-  
-  console.log(`📊 Estado atual - GeralCount: ${currentCount}, Obras no DOM: ${obrasInDOM}`);
-  
-  // ✅ CORREÇÃO: NÃO CRIA OBRA AUTOMATICAMENTE
-  if (obrasInDOM === 0 && currentCount === 0) {
-    console.log("📭 Sistema iniciado vazio - aguardando ação do usuário");
-    console.log("💡 Dica: Clique em 'Nova Obra' para começar");
+  try {
+    console.log("📦 Iniciando carregamento de módulos...");
+    
+    const modules = await Promise.all([
+      import('./ui/interface.js'),
+      import('./ui/edit.js'),
+      import('./data/projects.js'),
+      import('./data/rooms.js'),
+      import('./calculos/calculos-manager.js'),
+      import('./utils/utils.js'),
+      import('./ui/intr-files/project-manager.js')
+    ]);
+    
+
+    const [
+      interfaceModule,
+      editModule,
+      projectsModule,
+      roomsModule,
+      calculosModule,
+      utilsModule
+    ] = modules;
+
+    // ✅ CORREÇÃO: Atribuir TODAS as funções ao window - VERSÃO COMPLETA
+    const allFunctions = {
+      // UI Interface
+      toggleSection: interfaceModule.toggleSection,
+      toggleSubsection: interfaceModule.toggleSubsection,
+      toggleObra: interfaceModule.toggleObra,
+      toggleProject: interfaceModule.toggleProject,
+      toggleRoom: interfaceModule.toggleRoom,
+      collapseElement: interfaceModule.collapseElement,
+      expandElement: interfaceModule.expandElement,
+      addNewObra: interfaceModule.addNewObra,
+      addNewProjectToObra: interfaceModule.addNewProjectToObra,
+      showSystemStatus: interfaceModule.showSystemStatus,
+      saveOrUpdateObra: interfaceModule.saveOrUpdateObra,
+      verifyObraData: interfaceModule.verifyObraData,
+      deleteObra: interfaceModule.deleteObra,
+
+      // Edit
+      makeEditable: editModule.makeEditable,
+
+      // Projects - ✅ CORREÇÃO: AGORA COM TODAS AS FUNÇÕES
+      deleteProject: projectsModule.deleteProject,
+      saveObra: projectsModule.saveObra,
+      fetchObras: projectsModule.fetchObras,
+      salvarObra: projectsModule.salvarObra,
+      atualizarObra: projectsModule.atualizarObra,
+
+      // Rooms
+      addNewRoom: roomsModule.addNewRoom,
+      deleteRoom: roomsModule.deleteRoom,
+      addMachine: roomsModule.addMachine,
+      createEmptyRoom: roomsModule.createEmptyRoom,
+
+      // Cálculos
+      calculateVazaoArAndThermalGains: calculosModule.calculateVazaoArAndThermalGains,
+      calculateVazaoAr: calculosModule.calculateVazaoAr,
+      calculateThermalGains: calculosModule.calculateThermalGains,
+
+      // Utils
+      ensureStringId: utilsModule.ensureStringId
+    };
+
+    // ✅ CORREÇÃO: Verificar cada função antes de atribuir
+    Object.keys(allFunctions).forEach(funcName => {
+      if (typeof allFunctions[funcName] === 'function') {
+        window[funcName] = allFunctions[funcName];
+        console.log(`✅ ${funcName} atribuída ao window`);
+      } else {
+        console.error(`❌ ${funcName} não é uma função:`, typeof allFunctions[funcName]);
+      }
+    });
+
+    modulesLoaded = true;
+    console.log("✅ Todos os módulos foram carregados com sucesso");
+    return true;
+    
+  } catch (error) {
+    console.error("❌ Erro ao carregar módulos:", error);
+    return false;
   }
 }
 
 /**
- * Função de debug para verificar o estado final do sistema após inicialização
- */
-function finalSystemDebug() {
-  console.log('=== DEBUG FINAL DO SISTEMA ===');
-  console.log('- window.GeralCount:', window.GeralCount);
-  console.log('- getGeralCount():', getGeralCount());
-  console.log('- Obras no DOM:', document.querySelectorAll('.obra-block').length);
-  console.log('- Projetos no DOM:', document.querySelectorAll('.project-block').length);
-  console.log('- Salas no DOM:', document.querySelectorAll('.room-block').length);
-  console.log('- Módulos carregados:', modulesLoaded);
-  console.log('- Constantes carregadas:', !!window.systemConstants);
-  console.log('- Shutdown Manager:', !!shutdownManager);
-  
-  // Debug detalhado das funções de toggle
-  console.log('- Funções de toggle disponíveis:', {
-    toggleSection: typeof window.toggleSection,
-    toggleSubsection: typeof window.toggleSubsection,
-    toggleObra: typeof window.toggleObra,
-    toggleProject: typeof window.toggleProject,
-    toggleRoom: typeof window.toggleRoom
-  });
-}
-
-/**
- * 
- * @returns {Promise<void>} - Opera��o conclu�da.
- * @example checkAndLoadExistingSession() // Opera��o conclu�da.
+ * Verifica e carrega sessão existente - CORREÇÃO PARA NOVA ESTRUTURA DA API
  */
 async function checkAndLoadExistingSession() {
   try {
@@ -267,14 +279,21 @@ async function checkAndLoadExistingSession() {
     const sessionResponse = await fetch('/api/session-obras');
     if (sessionResponse.ok) {
       const sessionData = await sessionResponse.json();
-      const obraIds = sessionData.obras || [];
+      
+      // ✅ CORREÇÃO: Processar nova estrutura da API {session_id: 'session_active', obras: Array(5)}
+      let obraIds = [];
+      
+      if (sessionData.obras && Array.isArray(sessionData.obras)) {
+        obraIds = sessionData.obras;
+      } else if (sessionData.sessions && sessionData.sessions.session_active && sessionData.sessions.session_active.obras) {
+        obraIds = sessionData.sessions.session_active.obras;
+      }
       
       console.log(`📊 Sessão encontrada com ${obraIds.length} obras:`, obraIds);
       
       if (obraIds.length > 0) {
         console.log("🔄 Carregando obras existentes da sessão...");
         
-        // ✅ Ativar sessão via sessionStorage diretamente
         try {
           sessionStorage.setItem('session_active', 'true');
           console.log("✅ Sessão ativada via sessionStorage");
@@ -282,9 +301,7 @@ async function checkAndLoadExistingSession() {
           console.error("❌ Erro ao ativar sessão:", error);
         }
         
-        // ✅ CARREGA as obras
         await loadObrasFromServer();
-        
         console.log("✅ Sessão existente carregada automaticamente");
         return true;
       }
@@ -300,19 +317,58 @@ async function checkAndLoadExistingSession() {
 }
 
 /**
+ * Verifica se é necessário criar uma obra base
+ */
+async function verifyAndCreateBaseObra() {
+  console.log("🔍 Verificando obras existentes...");
+  
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const currentCount = getGeralCount();
+  const obrasInDOM = document.querySelectorAll('.obra-block').length;
+  
+  console.log(`📊 Estado atual - GeralCount: ${currentCount}, Obras no DOM: ${obrasInDOM}`);
+  
+  if (obrasInDOM === 0 && currentCount === 0) {
+    console.log("📭 Sistema iniciado vazio - aguardando ação do usuário");
+    console.log("💡 Dica: Clique em 'Nova Obra' para começar");
+  }
+}
+
+/**
+ * Função de debug para verificar o estado final do sistema
+ */
+function finalSystemDebug() {
+  console.log('=== DEBUG FINAL DO SISTEMA ===');
+  console.log('- window.GeralCount:', window.GeralCount);
+  console.log('- getGeralCount():', getGeralCount());
+  console.log('- Obras no DOM:', document.querySelectorAll('.obra-block').length);
+  console.log('- Projetos no DOM:', document.querySelectorAll('.project-block').length);
+  console.log('- Salas no DOM:', document.querySelectorAll('.room-block').length);
+  console.log('- Módulos carregados:', modulesLoaded);
+  console.log('- Constantes carregadas:', !!window.systemConstants);
+  console.log('- Shutdown Manager:', !!shutdownManager);
+  
+  console.log('- Funções de toggle disponíveis:', {
+    toggleSection: typeof window.toggleSection,
+    toggleSubsection: typeof window.toggleSubsection,
+    toggleObra: typeof window.toggleObra,
+    toggleProject: typeof window.toggleProject,
+    toggleRoom: typeof window.toggleRoom
+  });
+}
+
+/**
  * Mostra mensagem amigável quando o servidor está offline
- * @returns {void}
  */
 function showServerOfflineMessage() {
     console.log("🔄 Mostrando mensagem de servidor offline...");
     
-    // Remove qualquer mensagem anterior
     const existingMessage = document.getElementById('server-offline-message');
     if (existingMessage) {
         existingMessage.remove();
     }
     
-    // Cria a div de mensagem
     const messageDiv = document.createElement('div');
     messageDiv.id = 'server-offline-message';
     messageDiv.style.cssText = `
@@ -384,7 +440,6 @@ function showServerOfflineMessage() {
                     ">
                       <li style="margin-top: 15px; margin-bottom: 0.5rem; padding-left: 0.5rem;">Inicie novamente o servidor</li>
                       <li style="padding-left: 0.5rem;">Esta página será fechada automaticamente</li>
-
                     </ul>
                 </div>
                 
@@ -428,62 +483,18 @@ function showServerOfflineMessage() {
         </div>
     `;
     
-    // Adiciona ao body
     document.body.appendChild(messageDiv);
     
-    // Adiciona animação de bounce
     const style = document.createElement('style');
     style.textContent = `
         @keyframes iconPulse {
-          0% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.1);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-        
-        
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-            40% {transform: translateY(-20px);}
-            60% {transform: translateY(-10px);}
-        }
-
-        @media (max-width: 480px) {
-            .toast-style {
-                padding: 1.5rem !important;
-                margin: 1rem !important;
-                width: 90vw !important;
-            }
-            
-            .modal-actions {
-                flex-direction: column !important;
-            }
-            
-            .modal-btn {
-                width: 100% !important;
-                min-width: auto !important;
-            }
-            
-            .modal-icon {
-                font-size: 3rem !important;
-            }
-            
-            .modal-title {
-                font-size: 1.4rem !important;
-            }
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
         }
     `;
     document.head.appendChild(style);
     
-    // Contador regressivo
     let countdown = 10;
     const countdownElement = document.getElementById('countdown');
     const countdownInterval = setInterval(() => {
@@ -493,34 +504,69 @@ function showServerOfflineMessage() {
         }
         if (countdown <= 0) {
             clearInterval(countdownInterval);
-            // ===== Aqui fecha a window ===== //
             window.close();
         }
     }, 1000);
     
-    // ===== Aqui fecha a window ===== //
     setTimeout(() => {
         window.close();
     }, 10000);
 }
 
 /**
- * Inicialização principal do sistema quando o DOM estiver carregado
+ * Verifica funções críticas do sistema
+ */
+function verifyCriticalFunctions() {
+    const criticalFunctions = [
+        'createEmptyObra',
+        'createEmptyProject', 
+        'createEmptyRoom',
+        'populateObraData',
+        'addMachine'
+    ];
+    
+    console.log('🔍 Verificando funções críticas...');
+    criticalFunctions.forEach(funcName => {
+        if (typeof window[funcName] !== 'function') {
+            console.error(`❌ CRÍTICO: ${funcName} não está disponível globalmente`);
+        } else {
+            console.log(`✅ ${funcName} disponível globalmente`);
+        }
+    });
+}
+
+/**
+ * Inicialização principal do sistema - ORDEM CORRIGIDA
  */
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Inicializando sistema...");
   
   try {
-    // 0. Inicializar sistema de shutdown primeiro
+    // ✅ ORDEM CORRETA DE INICIALIZAÇÃO:
+    
+    // 1. Inicializar sistema de shutdown primeiro (não crítico)
     shutdownManager = new ShutdownManager();
     
-    // 1. ✅ CORREÇÃO: CARREGAR MÓDULOS PRIMEIRO (INCLUINDO TOGGLE FUNCTIONS)
-    await loadAllModules();
+    // 2. ✅ CORREÇÃO CRÍTICA: DEFINIR FUNÇÕES GLOBAIS PRIMEIRO
+    console.log("🔧 Definindo funções globais críticas...");
+    // Já definidas no topo do arquivo - createEmptyObra, createEmptyProject, populateObraData
     
-    // 2. Carregar constantes do sistema
-    await loadSystemConstants();
+    // 3. Carregar constantes do sistema (crítico para cálculos)
+    console.log("📊 Carregando constantes do sistema...");
+    const constantsLoaded = await loadSystemConstants();
+    if (!constantsLoaded) {
+      throw new Error("Não foi possível carregar constantes do sistema");
+    }
     
-    // ✅ VERIFICAR E CARREGAR SESSÃO EXISTENTE
+    // 4. Carregar todos os módulos do sistema
+    console.log("📦 Carregando módulos do sistema...");
+    const modulesLoadedSuccess = await loadAllModules();
+    if (!modulesLoadedSuccess) {
+      console.warn("⚠️ Alguns módulos não carregaram completamente");
+    }
+    
+    // 5. ✅ VERIFICAR E CARREGAR SESSÃO EXISTENTE (agora com funções disponíveis)
+    console.log("🔍 Verificando sessão existente...");
     const hasExistingSession = await checkAndLoadExistingSession();
     
     if (!hasExistingSession) {
@@ -528,7 +574,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       console.log("💡 Dica: Clique em 'Nova Obra' para começar");
     }
     
-    // 3. Verificar obras existentes (agora só para obras locais)
+    // 6. Verificar obras existentes
     await verifyAndCreateBaseObra();
     
     console.log("✅ Sistema inicializado com sucesso - PRONTO PARA USO");
@@ -539,18 +585,19 @@ window.addEventListener("DOMContentLoaded", async () => {
         const message = hasExistingSession 
           ? `Sessão carregada com ${document.querySelectorAll('.obra-block').length} obra(s)!` 
           : "Sistema carregado. Clique em 'Nova Obra' para começar.";
-        const type = hasExistingSession ? "success" : "success";
-        window.showSystemStatus(message, type);
+        window.showSystemStatus(message, "success");
       }
     }, 500);
     
     // Debug final
     setTimeout(finalSystemDebug, 1000);
     
+    // ✅ CORREÇÃO: Verificar funções críticas após inicialização completa
+    setTimeout(verifyCriticalFunctions, 2000);
+    
   } catch (error) {
     console.error("❌ ERRO na inicialização do sistema:", error);
     
-    // ✅ DETECTA ERRO DE CONEXÃO E MOSTRA MENSAGEM AMIGÁVEL
     if (error.message.includes('Failed to fetch') || 
         error.message.includes('ERR_CONNECTION_REFUSED') ||
         error.message.includes('404') ||

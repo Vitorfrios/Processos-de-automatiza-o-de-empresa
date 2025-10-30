@@ -3,34 +3,40 @@
 import { loadMachinesData } from './machinesBuilder.js'
 import { updateElementText, removeEmptyMessage, showEmptyMessage } from './utilities.js'
 
-// Contador global único para máquinas
-let globalMachineCounter = 0;
 
 /**
- * Gera um ID único para máquina baseado em timestamp e random
+ * Gera um ID único para máquina baseado na sala e timestamp
+ * @param {string} roomId - ID da sala
  * @returns {string} ID único da máquina
  */
-function generateUniqueMachineId() {
-    return `machine-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+function generateUniqueMachineId(roomId) {
+    return `machine-${roomId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
- * Adiciona uma nova máquina de climatização à sala especificada
- * Carrega dados das máquinas e constrói a interface HTML
+ * Adiciona uma nova máquina de climatização à sala especificada - CORREÇÃO
  * @param {string} roomId - ID da sala onde a máquina será adicionada
  * @returns {Promise<void>}
  */
 async function addMachine(roomId) {
-    const machinesContainer = document.getElementById(`machines-${roomId}`);
-    const roomMachineCount = machinesContainer.querySelectorAll(".climatization-machine").length + 1;
+    console.log(`➕ [ADD MACHINE] Iniciando para sala: ${roomId}`);
     
-    // Usar contador global único
-    globalMachineCounter++;
-    const uniqueMachineId = globalMachineCounter;
+    const machinesContainer = document.getElementById(`machines-${roomId}`);
+    if (!machinesContainer) {
+        console.error(`❌ Container de máquinas não encontrado para sala: ${roomId}`);
+        return;
+    }
+
+    // ✅ CORREÇÃO: Contar máquinas APENAS desta sala específica
+    const roomMachineCount = machinesContainer.querySelectorAll(".climatization-machine").length;
+    
+    // ✅ CORREÇÃO: Usar ID único baseado na sala
+    const uniqueMachineId = generateUniqueMachineId(roomId);
+    const machineDisplayNumber = roomMachineCount + 1;
 
     removeEmptyMessage(machinesContainer);
 
-    console.log(`➕ Adicionando máquina ${uniqueMachineId} (sala: ${roomId}, local: ${roomMachineCount})`);
+    console.log(`➕ Adicionando máquina ${machineDisplayNumber} (sala: ${roomId}, ID único: ${uniqueMachineId})`);
 
     try {
         if (!window.machinesData || window.machinesData.length === 0) {
@@ -42,10 +48,11 @@ async function addMachine(roomId) {
             throw new Error("Nenhum dado de máquina disponível após carregamento");
         }
 
-        const machineHTML = buildClimatizationMachineHTML(uniqueMachineId, window.machinesData);
+        // ✅ CORREÇÃO: Passar roomId e ID único para a construção
+        const machineHTML = buildClimatizationMachineHTML(uniqueMachineId, machineDisplayNumber, window.machinesData, roomId);
         machinesContainer.insertAdjacentHTML("beforeend", machineHTML);
         
-        console.log(`✅ Máquina ${uniqueMachineId} adicionada à sala ${roomId}`);
+        console.log(`✅ Máquina ${machineDisplayNumber} adicionada à sala ${roomId} (ID: ${uniqueMachineId})`);
 
     } catch (error) {
         console.error("❌ Erro ao adicionar máquina:", error);
@@ -54,23 +61,24 @@ async function addMachine(roomId) {
 }
 
 /**
- * Constrói o HTML completo para uma máquina de climatização
- * Inclui cabeçalho, formulário de configuração e seção de opções
- * @param {number} machineId - ID único da máquina
+ * Constrói o HTML completo para uma máquina de climatização - CORREÇÃO
+ * @param {string} machineId - ID único da máquina
+ * @param {number} displayNumber - Número de exibição (1, 2, 3...)
  * @param {Array} machines - Lista de máquinas disponíveis
+ * @param {string} roomId - ID da sala (para referência)
  * @returns {string} HTML da máquina de climatização
  */
-function buildClimatizationMachineHTML(machineId, machines) {
+function buildClimatizationMachineHTML(machineId, displayNumber, machines, roomId) {
     const machineTypes = machines.map((m) => m.type);
 
     return `
-        <div class="climatization-machine" data-machine-id="${machineId}">
+        <div class="climatization-machine" data-machine-id="${machineId}" data-room-id="${roomId}">
             <div class="machine-header">
                 <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
                 <input type="text" 
                        class="machine-title-editable" 
-                       value="Equipamento de Climatização ${machineId}"
-                       onchange="updateMachineTitle(this, ${machineId})"
+                       value="Equipamento de Climatização ${displayNumber}"
+                       onchange="updateMachineTitle(this, '${machineId}')"
                        onclick="this.select()">
                 <button class="btn btn-delete-small" onclick="deleteClimatizationMachine(this)">Remover</button>
             </div>
@@ -82,11 +90,11 @@ function buildClimatizationMachineHTML(machineId, machines) {
                     )}
                     ${buildFormGroup(
                         "Capacidade:",
-                        buildSelectWithDefault([], machineId, "machine-power-select", `handlePowerChange(${machineId})`, "Selecionar capacidade", true),
+                        buildSelectWithDefault([], machineId, "machine-power-select", `handlePowerChange('${machineId}')`, "Selecionar capacidade", true),
                     )}
                     ${buildFormGroup(
                         "Tensão:",
-                        buildSelectWithDefault([], machineId, "machine-voltage-select", `calculateMachinePrice(${machineId})`, "Selecionar Tensão", true),
+                        buildSelectWithDefault([], machineId, "machine-voltage-select", `calculateMachinePrice('${machineId}')`, "Selecionar Tensão", true),
                     )}
                     <div class="form-group">
                         <label>Preço Base:</label>
@@ -583,7 +591,7 @@ function deleteClimatizationMachine(button) {
   }
 }
 
-// Exportação e disponibilização global
+// Exportação e disponibilização global - CORREÇÃO COMPLETA
 if (typeof window !== 'undefined') {
     window.addMachine = addMachine;
     window.toggleMachineSection = toggleMachineSection;
@@ -591,6 +599,7 @@ if (typeof window !== 'undefined') {
     window.updateMachineOptions = updateMachineOptions;
     window.calculateMachinePrice = calculateMachinePrice;
     window.deleteClimatizationMachine = deleteClimatizationMachine;
+    window.deleteMachine = deleteClimatizationMachine; 
     window.handleOptionClick = handleOptionClick;
     window.updateOptionSelection = updateOptionSelection;
     window.updateOptionValues = updateOptionValues;

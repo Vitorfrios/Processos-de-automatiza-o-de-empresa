@@ -1,4 +1,5 @@
 // utilities.js
+// SISTEMA CORRIGIDO COM IDs ÚNICOS
 
 /**
  * Atualiza o texto de um elemento HTML baseado no seu ID
@@ -7,8 +8,14 @@
  * @param {string} value - Novo valor de texto para o elemento
  */
 function updateElementText(elementId, value) {
-  const element = document.getElementById(elementId)
-  if (element) element.textContent = value
+    // ✅ CORREÇÃO: Validar elementId
+    if (!elementId || elementId === 'undefined' || elementId === 'null') {
+        console.error(`ERRO FALBACK (updateElementText) utilities.js [Element ID inválido: ${elementId}]`);
+        return;
+    }
+    
+    const element = document.getElementById(elementId);
+    if (element) element.textContent = value;
 }
 
 /**
@@ -18,8 +25,14 @@ function updateElementText(elementId, value) {
  * @param {string} selector - Seletor CSS para encontrar a mensagem (padrão: ".empty-message")
  */
 function removeEmptyMessage(container, selector = ".empty-message") {
-  const message = container.querySelector(selector)
-  if (message) message.remove()
+    // ✅ CORREÇÃO: Validar container
+    if (!container || !(container instanceof HTMLElement)) {
+        console.error(`ERRO FALBACK (removeEmptyMessage) utilities.js [Container inválido: ${container}]`);
+        return;
+    }
+    
+    const message = container.querySelector(selector);
+    if (message) message.remove();
 }
 
 /**
@@ -29,21 +42,41 @@ function removeEmptyMessage(container, selector = ".empty-message") {
  * @param {string} message - Texto da mensagem a ser exibida
  */
 function showEmptyMessage(container, message) {
-  if (container.children.length === 0) {
-    container.innerHTML = `<p class="empty-message">${message}</p>`
-  }
+    // ✅ CORREÇÃO: Validar container
+    if (!container || !(container instanceof HTMLElement)) {
+        console.error(`ERRO FALBACK (showEmptyMessage) utilities.js [Container inválido: ${container}]`);
+        return;
+    }
+    
+    if (container.children.length === 0) {
+        container.innerHTML = `<p class="empty-message">${message}</p>`;
+    }
 }
 
 /**
- * Encontra o ID da sala a partir de um elemento dentro dela
+ * Encontra o ID da sala a partir de um elemento dentro dela - CORREÇÃO COMPLETA
  * Navega pela árvore DOM para encontrar o container da sala
  * @param {HTMLElement} element - Elemento de partida para a busca
- * @param {string} prefix - Prefixo usado nos IDs das salas (padrão: "room-content-")
  * @returns {string|null} ID da sala ou null se não encontrado
  */
-function findRoomId(element, prefix = "room-content-") {
-  const roomContent = element.closest(`[id^="${prefix}"]`)
-  return roomContent ? roomContent.id.replace(prefix, "") : null
+function findRoomId(element) {
+    // ✅ CORREÇÃO: Validar elemento
+    if (!element || !(element instanceof HTMLElement)) {
+        console.error(`ERRO FALBACK (findRoomId) utilities.js [Element inválido: ${element}]`);
+        return null;
+    }
+    
+    // ✅ CORREÇÃO: Buscar por data attribute em vez de ID
+    const roomBlock = element.closest('.room-block');
+    if (roomBlock) {
+        const roomId = roomBlock.dataset.roomId;
+        if (roomId && roomId !== 'undefined' && roomId !== 'null') {
+            return roomId;
+        }
+    }
+    
+    console.warn('⚠️ Room ID não encontrado para elemento:', element);
+    return null;
 }
 
 // Exportação das funções utilitárias

@@ -1,4 +1,8 @@
-// rooms.js
+/**
+ * rooms.js
+ * Módulo de salas - SISTEMA CORRIGIDO COM IDs ÚNICOS
+ */
+
 import { 
   createEmptyRoom, 
   insertRoomIntoProject, 
@@ -54,20 +58,24 @@ function initializeAllCapacityInputs() {
     return;
   }
   
+  // ✅ CORREÇÃO: Buscar inputs por data attributes em vez de apenas ID
   const inputs = document.querySelectorAll('input[id^="fator-seguranca-"]');
   const valor = window.systemConstants.FATOR_SEGURANCA_CAPACIDADE;
   
   inputs.forEach(input => {
-    if (input.value === '') {
+    // ✅ CORREÇÃO: Validar que o input pertence a uma sala válida
+    const roomId = input.id.replace('fator-seguranca-', '');
+    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+    
+    if (roomElement && input.value === '') {
       input.value = valor;
-      console.log(`[INIT] ✅ ${input.id} inicializado: ${valor}%`);
+      console.log(`[INIT] ✅ ${input.id} inicializado: ${valor}% (Sala: ${roomId})`);
     }
   });
 }
 
 // Executar quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
-
   // Tentar inicializar após um delay
   setTimeout(initializeAllCapacityInputs, 3000);
 });
@@ -84,7 +92,7 @@ window.reinitializeCapacityInputs = function() {
 
 /**
  * Gera um ID único para uma sala baseado em obra, projeto e nome da sala
- * Inclui timestamp para garantir unicidade
+ * Inclui timestamp para garantir unicidade - FUNÇÃO LEGACY
  * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto
  * @param {string} roomName - Nome da sala
@@ -98,7 +106,7 @@ function generateUniqueRoomId(obraName, projectName, roomName) {
 
 /**
  * Obtém o próximo número disponível para uma nova sala no projeto
- * Calcula baseado nas salas existentes para manter numeração sequencial
+ * Calcula baseado nas salas existentes para manter numeração sequencial - FUNÇÃO LEGACY
  * @param {string} obraName - Nome da obra
  * @param {string} projectName - Nome do projeto
  * @returns {number} Próximo número disponível para sala
@@ -125,11 +133,14 @@ function getNextRoomNumber(obraName, projectName) {
  * @returns {Object|null} Objeto com dados da sala ou null se não encontrada
  */
 function findRoomByUniqueId(roomId) {
+    // ✅ CORREÇÃO: Buscar APENAS por data-room-id
     const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
     if (roomElement) {
         return {
             element: roomElement,
+            obraId: roomElement.dataset.obraId,
             obraName: roomElement.dataset.obraName,
+            projectId: roomElement.dataset.projectId,
             projectName: roomElement.dataset.projectName,
             roomName: roomElement.dataset.roomName
         };
@@ -137,7 +148,32 @@ function findRoomByUniqueId(roomId) {
     return null;
 }
 
+/**
+ * Encontra todas as salas de um projeto específico
+ * @param {string} obraId - ID único da obra
+ * @param {string} projectId - ID único do projeto
+ * @returns {Array} Lista de elementos de sala
+ */
+function findRoomsByProject(obraId, projectId) {
+    // ✅ CORREÇÃO: Buscar por IDs únicos
+    return Array.from(document.querySelectorAll(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`));
+}
 
+/**
+ * Obtém informações completas de uma sala pelo ID
+ * @param {string} roomId - ID único da sala
+ * @returns {Object|null} Informações da sala
+ */
+function getRoomInfo(roomId) {
+    const roomData = findRoomByUniqueId(roomId);
+    if (!roomData) return null;
+    
+    return {
+        ...roomData,
+        fullId: roomId,
+        isSecureId: roomId.includes('_proj_') && roomId.includes('_sala_')
+    };
+}
 
 // Exportações atualizadas - FUNÇÕES PRINCIPAIS VÊM DO room-operations.js
 export {
@@ -156,6 +192,8 @@ export {
   generateUniqueRoomId,
   getNextRoomNumber,
   findRoomByUniqueId,
+  findRoomsByProject,
+  getRoomInfo,
   
   // Climatização
   buildClimatizationSection,
@@ -179,8 +217,8 @@ export {
 
 // Disponibilizar funções globalmente
 if (typeof window !== 'undefined') {
-
     window.generateUniqueRoomId = generateUniqueRoomId;
     window.findRoomByUniqueId = findRoomByUniqueId;
-
+    window.findRoomsByProject = findRoomsByProject;
+    window.getRoomInfo = getRoomInfo;
 }

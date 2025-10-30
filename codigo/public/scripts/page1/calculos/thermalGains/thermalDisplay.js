@@ -39,7 +39,7 @@ function calculateTotals(gains) {
 
 /**
  * Atualiza a interface com resultados detalhados de ganhos térmicos
- * @param {string} roomId - ID da sala para identificação dos elementos DOM
+ * @param {string} roomId - ID SEGURO da sala para identificação dos elementos DOM
  * @param {Object} gains - Ganhos térmicos calculados
  * @param {Object} totals - Totais consolidados por categoria
  * @param {Object} uValues - Valores de transmitância térmica
@@ -47,6 +47,10 @@ function calculateTotals(gains) {
  * @returns {void}
  */
 function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
+  // ✅ CORREÇÃO: Log para debug de IDs seguros
+  console.log(`🔥 Atualizando display térmico para sala: ${roomId}`);
+  
+  // ✅ CORREÇÃO: Usar roomId seguro diretamente (ex: obra_w12_proj_t34_1_sala_r21_1)
   updateElementText(`total-ganhos-w-${roomId}`, totals.geralW);
   updateElementText(`total-tr-${roomId}`, totals.geralTR);
 
@@ -107,11 +111,13 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
 
   updateElementText(`total-externo-${roomId}`, totals.externo);
   updateElementText(`total-divisoes-${roomId}`, totals.divisoes);
+  
+  console.log(`✅ Display térmico atualizado para sala: ${roomId}`);
 }
 
 /**
  * Atualiza exibição de dados de parede específica na interface
- * @param {string} roomId - ID da sala para identificação dos elementos DOM
+ * @param {string} roomId - ID SEGURO da sala para identificação dos elementos DOM
  * @param {string} direction - Direção da parede (oeste, leste, norte, sul)
  * @param {number} gain - Ganho térmico calculado para a parede
  * @param {number} uValue - Valor de transmitância térmica da parede
@@ -130,7 +136,7 @@ function updateWallDisplay(roomId, direction, gain, uValue, inputWidth, peDireit
 
 /**
  * Atualiza exibição de dados de divisória específica na interface
- * @param {string} roomId - ID da sala para identificação dos elementos DOM
+ * @param {string} roomId - ID SEGURO da sala para identificação dos elementos DOM
  * @param {string} type - Tipo da divisória (nc1, nc2, c1, c2)
  * @param {number} gain - Ganho térmico calculado para a divisória
  * @param {number} uValue - Valor de transmitância térmica da divisória
@@ -145,6 +151,14 @@ function updatePartitionDisplay(roomId, type, gain, uValue, inputArea, peDireito
   updateElementText(`uvalue-divi-${type}-${roomId}`, uValue.toFixed(3));
   updateElementText(`deltat-divi-${type}-${roomId}`, deltaT || 0);
   updateElementText(`ganho-divi-${type}-${roomId}`, Math.ceil(gain));
+}
+
+// ✅ CORREÇÃO: Disponibilização global para compatibilidade
+if (typeof window !== 'undefined') {
+  window.calculateTotals = calculateTotals;
+  window.updateThermalGainsDisplay = updateThermalGainsDisplay;
+  window.updateWallDisplay = updateWallDisplay;
+  window.updatePartitionDisplay = updatePartitionDisplay;
 }
 
 export {

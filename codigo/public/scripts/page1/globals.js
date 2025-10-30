@@ -1,4 +1,4 @@
-//globals.js
+//globals.js - ATUALIZADO PARA SISTEMA DE IDs SEGUROS
 
 // Importar todas as funções que serão usadas globalmente
 import { 
@@ -7,23 +7,24 @@ import {
   toggleSection, 
   toggleSubsection,
   addNewProject,
-  showSystemStatus 
+  showSystemStatus,
+  addNewObra,
+  deleteObra,
+  saveOrUpdateObra,
+  createEmptyProject,
+  addNewProjectToObra
 } from './ui/interface.js';
 
 import { makeEditable } from './ui/edit.js';
 
 import { 
-  deleteProject, 
-  verifyProjectData, 
-  saveProject,
-  getNextProjectNumber 
-} from './data/projects.js';
+  deleteProject} from './data/projects.js';
 
 import { 
   addNewRoom, 
   deleteRoom, 
   addMachine, 
-  deleteMachine 
+  createEmptyRoom
 } from './data/rooms.js';
 
 import { calculateVazaoArAndThermalGains } from './calculos/calculos-manager.js';
@@ -31,6 +32,7 @@ import { calculateVazaoArAndThermalGains } from './calculos/calculos-manager.js'
 /**
  * Inicializa todas as funções globais no objeto window para acesso universal
  * Disponibiliza funções de interface, edição, projetos, salas e cálculos
+ * SISTEMA ATUALIZADO COM IDs SEGUROS
  * @returns {void}
  * 
  * @example
@@ -46,18 +48,22 @@ export function initializeGlobals() {
   // Edição
   window.makeEditable = makeEditable;
   
-  // Projetos
-  window.deleteProject = deleteProject;
-  window.verifyProjectData = verifyProjectData;
-  window.saveProject = saveProject;
-  window.addNewProject = addNewProject;
-  window.getNextProjectNumber = getNextProjectNumber;
+  // Obras (NOVO - Sistema de IDs Seguros)
+  window.addNewObra = addNewObra;
+  window.deleteObra = deleteObra;
+  window.saveOrUpdateObra = saveOrUpdateObra;
   
-  // Salas
+  // Projetos (ATUALIZADO - IDs Hierárquicos Seguros)
+  window.deleteProject = deleteProject;
+  window.addNewProject = addNewProject;
+  window.addNewProjectToObra = addNewProjectToObra;
+  window.createEmptyProject = createEmptyProject;
+  
+  // Salas (ATUALIZADO - IDs Hierárquicos Seguros)
   window.addNewRoom = addNewRoom;
   window.deleteRoom = deleteRoom;
   window.addMachine = addMachine;
-  window.deleteMachine = deleteMachine;
+  window.createEmptyRoom = createEmptyRoom;
   
   // Cálculos
   window.calculateVazaoArAndThermalGains = calculateVazaoArAndThermalGains;
@@ -65,7 +71,7 @@ export function initializeGlobals() {
   // Status do sistema
   window.showSystemStatus = showSystemStatus;
   
-  console.log("✅ Todas as funções globais foram inicializadas");
+  console.log("✅ Todas as funções globais foram inicializadas (Sistema de IDs Seguros)");
 }
 
 // Exportar individualmente se necessário
@@ -76,12 +82,16 @@ export {
   toggleSubsection,
   makeEditable,
   deleteProject,
-  verifyProjectData,
-  saveProject,
   addNewProject,
+  addNewProjectToObra,
   addNewRoom,
   deleteRoom,
   addMachine,
   calculateVazaoArAndThermalGains,
-  showSystemStatus
+  showSystemStatus,
+  addNewObra,
+  deleteObra,
+  saveOrUpdateObra,
+  createEmptyProject,
+  createEmptyRoom
 };

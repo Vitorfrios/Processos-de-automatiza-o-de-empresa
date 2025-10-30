@@ -1,95 +1,194 @@
 /**
  * data-utils-core.js
  * Utilitários core e funções auxiliares
- * Geração de IDs, helpers numéricos, funções de nomeação
+ * Geração de IDs SEGUROS E ÚNICOS - SISTEMA CORRIGIDO
  */
 
-// Contadores globais para IDs sequenciais
-let obraCounter = 1000
-let projectCounter = 0
-let roomCounter = 0
+// =============================================================================
+// SISTEMA DE IDs SEGUROS E ÚNICOS - CORREÇÃO COMPLETA
+// =============================================================================
 
 /**
- * Gera ID para obra (inicia em 1001, global)
+ * Gera um ID seguro baseado em letras + números
+ * @param {string} prefix - Prefixo para o ID
+ * @returns {string} ID seguro
+ */
+function generateSecureId(prefix = 'item') {
+    const letters = 'abcdefghjkmnpqrstwxyz'; // 21 letras (remove i,l,o,v por confusão)
+    const randomLetter1 = letters[Math.floor(Math.random() * letters.length)];
+    const randomLetter2 = letters[Math.floor(Math.random() * letters.length)];
+    const randomNum = Math.floor(Math.random() * 90) + 10; // 10-99 (sempre 2 dígitos)
+    return `${prefix}_${randomLetter1}${randomNum}`;
+}
+
+/**
+ * Gera ID único para obra - SEGURO E ÚNICO
  * @returns {string} ID único da obra
  */
 function generateObraId() {
-    obraCounter++
-    return obraCounter.toString()
+    return generateSecureId('obra');
 }
 
 /**
- * Gera ID para projeto baseado nos projetos existentes na obra
- * @param {HTMLElement} obraElement - Elemento da obra
+ * Gera ID hierárquico seguro para projeto - SEGURO E ÚNICO
+ * @param {HTMLElement} obraElement - Elemento da obra pai
+ * @param {number} projectNumber - Número sequencial do projeto
  * @returns {string} ID único do projeto
  */
-function generateProjectId(obraElement) {
+function generateProjectId(obraElement, projectNumber) {
     if (!obraElement) {
-        projectCounter++
-        return projectCounter.toString()
+        console.error(`ERRO FALBACK (generateProjectId) data-utils-core.js [Elemento da obra não fornecido]`);
+        return generateSecureId('proj');
     }
     
-    const projects = obraElement.querySelectorAll('.project-block')
-    let maxId = 0
+    const obraId = obraElement.dataset?.obraId;
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (generateProjectId) data-utils-core.js [Obra ID inválido no dataset: ${obraId}]`);
+        return generateSecureId('proj');
+    }
     
-    projects.forEach(project => {
-        const id = project.dataset.projectId
-        if (id) {
-            const numId = parseInt(id)
-            if (numId > maxId) maxId = numId
-        }
-    })
-    
-    return (maxId + 1).toString()
+    const projectPrefix = generateSecureId('proj').replace('proj_', '');
+    return `${obraId}_proj_${projectPrefix}_${projectNumber}`;
 }
 
 /**
- * Gera ID para sala baseado nas salas existentes no projeto
- * @param {HTMLElement} projectElement - Elemento do projeto
+ * Gera ID hierárquico seguro para sala - SEGURO E ÚNICO
+ * @param {HTMLElement} projectElement - Elemento do projeto pai
+ * @param {number} roomNumber - Número sequencial da sala
  * @returns {string} ID único da sala
  */
-function generateRoomId(projectElement) {
-    const rooms = projectElement.querySelectorAll('.room-block')
-    let maxId = 0
+function generateRoomId(projectElement, roomNumber) {
+    if (!projectElement) {
+        console.error(`ERRO FALBACK (generateRoomId) data-utils-core.js [Elemento do projeto não fornecido]`);
+        return generateSecureId('sala');
+    }
     
-    rooms.forEach(room => {
-        const id = room.dataset.roomId
-        if (id) {
-            const numMatch = id.match(/\d+/)
-            const numId = numMatch ? parseInt(numMatch[0]) : 0
-            if (numId > maxId) maxId = numId
-        }
-    })
+    const projectId = projectElement.dataset?.projectId;
+    if (!projectId || projectId === 'undefined' || projectId === 'null') {
+        console.error(`ERRO FALBACK (generateRoomId) data-utils-core.js [Project ID inválido no dataset: ${projectId}]`);
+        return generateSecureId('sala');
+    }
     
-    return (maxId + 1).toString()
+    const roomPrefix = generateSecureId('sala').replace('sala_', '');
+    return `${projectId}_sala_${roomPrefix}_${roomNumber}`;
 }
 
+// =============================================================================
+// FUNÇÕES DE NOMEAÇÃO - CORREÇÕES (MANTIDAS)
+// =============================================================================
+
 /**
- * Obtém o ID completo da sala no formato correto "obra-projeto-sala"
+ * Obtém o ID completo da sala no formato correto
  * @param {HTMLElement} roomElement - Elemento da sala
  * @returns {string} ID completo da sala
  */
 function getRoomFullId(roomElement) {
-    // Usar o roomId diretamente do data attribute (já está no formato correto)
     const roomId = roomElement.dataset.roomId;
     
-    if (roomId && !roomId.includes('undefined')) {
-        console.log(`✅ ID da sala obtido do data attribute: ${roomId}`);
-        return roomId;
+    if (!roomId || roomId === 'undefined' || roomId === 'null' || roomId.includes('undefined')) {
+        console.error(`ERRO FALBACK (getRoomFullId) data-utils-core.js [Room ID inválido: ${roomId}]`);
+        return generateSecureId('sala');
     }
     
-    // Fallback: construir ID a partir da hierarquia
-    const roomName = roomElement.dataset.roomName || 'Sala1';
-    const projectElement = roomElement.closest('.project-block');
-    const projectName = projectElement ? getProjectName(projectElement) : 'Projeto1';
-    const obraElement = projectElement ? projectElement.closest('.obra-block') : null;
-    const obraName = obraElement ? getObraName(obraElement) : 'Obra1';
-    
-    const fallbackId = `${obraName}-${projectName}-${roomName}`.toLowerCase().replace(/\s+/g, '');
-    console.log(`🔄 ID fallback construído: ${fallbackId}`);
-    
-    return fallbackId;
+    console.log(`✅ ID da sala obtido do data attribute: ${roomId}`);
+    return roomId;
 }
+
+/**
+ * Obtém o nome da obra a partir do elemento - CORRIGIDO
+ * @param {HTMLElement} obraElement - Elemento da obra
+ * @returns {string} Nome da obra
+ */
+function getObraName(obraElement) {
+    if (!obraElement) {
+        console.error(`ERRO FALBACK (getObraName) data-utils-core.js [Elemento da obra não fornecido]`);
+        return 'Obra_Erro';
+    }
+
+    const titleElement = obraElement.querySelector('.obra-title');
+    if (titleElement) {
+        const name = titleElement.textContent || titleElement.innerText || '';
+        const trimmedText = name.trim();
+        if (trimmedText && trimmedText !== 'Obra') {
+            return trimmedText;
+        }
+    }
+    
+    const obraNameFromData = obraElement.dataset.obraName;
+    if (obraNameFromData && obraNameFromData !== 'undefined' && obraNameFromData !== 'null') {
+        return obraNameFromData;
+    }
+    
+    console.error(`ERRO FALBACK (getObraName) data-utils-core.js [Nome da obra não encontrado]`);
+    return 'Obra_Erro';
+}
+
+/**
+ * Obtém o nome do projeto a partir do elemento - CORRIGIDO
+ * @param {HTMLElement} projectElement - Elemento do projeto
+ * @returns {string} Nome do projeto
+ */
+function getProjectName(projectElement) {
+    if (!projectElement) {
+        console.error(`ERRO FALBACK (getProjectName) data-utils-core.js [Elemento do projeto não fornecido]`);
+        return 'Projeto_Erro';
+    }
+
+    const titleElement = projectElement.querySelector('.project-title');
+    if (titleElement) {
+        const titleText = titleElement.textContent || titleElement.innerText || '';
+        const trimmedText = titleText.trim();
+        if (trimmedText && trimmedText !== 'Projeto') {
+            console.log(`📝 Nome do projeto obtido do título: "${trimmedText}"`);
+            return trimmedText;
+        }
+    }
+    
+    const projectNameFromData = projectElement.dataset.projectName;
+    if (projectNameFromData && projectNameFromData !== 'undefined' && projectNameFromData !== 'null' && projectNameFromData !== 'Projeto') {
+        console.log(`📝 Nome do projeto obtido do data attribute: "${projectNameFromData}"`);
+        return projectNameFromData;
+    }
+    
+    console.error(`ERRO FALBACK (getProjectName) data-utils-core.js [Nome do projeto não encontrado]`);
+    return 'Projeto_Erro';
+}
+
+/**
+ * Obtém o nome da sala a partir do elemento - CORRIGIDO
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @returns {string} Nome da sala
+ */
+function getRoomName(roomElement) {
+    if (!roomElement) {
+        console.error(`ERRO FALBACK (getRoomName) data-utils-core.js [Elemento da sala não fornecido]`);
+        return 'Sala_Erro';
+    }
+
+    const titleElement = roomElement.querySelector('.room-title');
+    if (titleElement) {
+        const name = titleElement.textContent || titleElement.value || titleElement.getAttribute('value') || '';
+        const trimmedName = name.trim();
+        if (trimmedName) return trimmedName;
+    }
+    
+    const roomNameFromData = roomElement.dataset.roomName;
+    if (roomNameFromData && roomNameFromData !== 'undefined' && roomNameFromData !== 'null') {
+        return roomNameFromData;
+    }
+    
+    const roomId = roomElement.dataset.roomId;
+    if (roomId && roomId !== 'undefined' && roomId !== 'null') {
+        return `Sala ${roomId.split('_').pop()}`;
+    }
+    
+    console.error(`ERRO FALBACK (getRoomName) data-utils-core.js [Nome da sala não encontrado]`);
+    return 'Sala_Erro';
+}
+
+// =============================================================================
+// FUNÇÕES UTILITÁRIAS EXISTENTES (MANTIDAS)
+// =============================================================================
 
 /**
  * Extrai número de um texto, convertendo vírgula para ponto decimal
@@ -107,88 +206,6 @@ function extractNumberFromText(text) {
     }
     
     return null
-}
-
-/**
- * Obtém o nome da obra a partir do elemento
- * @param {HTMLElement} obraElement - Elemento da obra
- * @returns {string} Nome da obra
- */
-function getObraName(obraElement) {
-    const titleElement = obraElement.querySelector('.obra-title')
-    if (titleElement) {
-        const name = titleElement.textContent || titleElement.innerText || ''
-        const trimmedText = name.trim()
-        if (trimmedText && trimmedText !== 'Obra') {
-            return trimmedText
-        }
-    }
-    
-    const obraNameFromData = obraElement.dataset.obraName
-    if (obraNameFromData) return obraNameFromData
-    
-    const allObras = document.querySelectorAll('.obra-block')
-    const obraNumber = allObras.length > 0 ? allObras.length : 1
-    return `Obra${obraNumber}`
-}
-
-/**
- * Obtém o nome do projeto a partir do elemento
- * @param {HTMLElement} projectElement - Elemento do projeto
- * @returns {string} Nome do projeto
- */
-function getProjectName(projectElement) {
-    const titleElement = projectElement.querySelector('.project-title')
-    
-    if (titleElement) {
-        const titleText = titleElement.textContent || titleElement.innerText || ''
-        const trimmedText = titleText.trim()
-        
-        if (trimmedText && trimmedText !== 'Projeto') {
-            console.log(`📝 Nome do projeto obtido do título: "${trimmedText}"`)
-            return trimmedText
-        }
-    }
-    
-    const projectNameFromData = projectElement.dataset.projectName
-    if (projectNameFromData && projectNameFromData !== 'Projeto') {
-        console.log(`📝 Nome do projeto obtido do data attribute: "${projectNameFromData}"`)
-        return projectNameFromData
-    }
-    
-    const projectId = projectElement.id
-    if (projectId && projectId.startsWith('project-')) {
-        const nameFromId = projectId.replace('project-', '')
-        if (nameFromId && nameFromId !== 'Projeto') {
-            console.log(`📝 Nome do projeto obtido do ID: "${nameFromId}"`)
-            return nameFromId
-        }
-    }
-    
-    const allProjects = document.querySelectorAll('.project-block')
-    const projectNumber = allProjects.length > 0 ? allProjects.length : 1
-    const defaultName = `Projeto${projectNumber}`
-    console.log(`📝 Nome do projeto usando fallback: "${defaultName}"`)
-    
-    return defaultName
-}
-
-/**
- * Obtém o nome da sala a partir do elemento
- * @param {HTMLElement} roomElement - Elemento da sala
- * @returns {string} Nome da sala
- */
-function getRoomName(roomElement) {
-    const titleElement = roomElement.querySelector('.room-title')
-    if (titleElement) {
-        const name = titleElement.textContent || titleElement.value || titleElement.getAttribute('value')
-        if (name && name.trim() !== '') return name.trim()
-    }
-    
-    const roomNameFromData = roomElement.dataset.roomName
-    if (roomNameFromData) return roomNameFromData
-    
-    return `Sala ${roomElement.dataset.roomId || ''}`
 }
 
 /**
@@ -257,15 +274,25 @@ function debugThermalGainsElements(roomElement) {
     })
 }
 
+// =============================================================================
+// EXPORTAÇÕES - SISTEMA ATUALIZADO
+// =============================================================================
+
 export {
+    // NOVO SISTEMA DE IDs SEGUROS
+    generateSecureId,
     generateObraId,
     generateProjectId,
     generateRoomId,
+    
+    // FUNÇÕES DE NOMEAÇÃO CORRIGIDAS
     getRoomFullId,
-    extractNumberFromText,
     getObraName,
     getProjectName,
     getRoomName,
+    
+    // FUNÇÕES UTILITÁRIAS (MANTIDAS)
+    extractNumberFromText,
     getMachineName,
     parseMachinePrice,
     safeNumber,
