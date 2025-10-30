@@ -14,14 +14,6 @@
   box-shadow: 0 6px 12px var(--card-hover-shadow);
 }
 
-.obra-header {
-  background: var(--primary-gradient);
-  color: white;
-  padding: var(--spacing-lg);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
 
 .obra-title {
   flex: 1;

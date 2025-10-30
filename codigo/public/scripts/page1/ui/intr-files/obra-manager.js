@@ -35,36 +35,39 @@ function createEmptyObra(obraName, obraId) {
  * @returns {string} HTML da obra
  */
 function buildObraHTML(obraName, obraId) {
-    // ✅ CORREÇÃO: Validar ID único
-    if (!obraId || obraId === 'undefined' || obraId === 'null') {
-        console.error(`ERRO FALBACK (buildObraHTML) obra-manager.js [ID de obra inválido: ${obraId}]`);
-        obraId = generateObraId();
-    }
-    
-    console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}`);
+  // ✅ CORREÇÃO: Validar ID único
+  if (!obraId || obraId === 'undefined' || obraId === 'null') {
+      console.error(`ERRO FALBACK (buildObraHTML) obra-manager.js [ID de obra inválido: ${obraId}]`);
+      obraId = generateObraId();
+  }
+  
+  console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}`);
 
-    return `
-    <div class="obra-block" data-obra-id="${obraId}" data-obra-name="${obraName}">
-      <div class="obra-header">
-        <!-- ✅ CORREÇÃO: usar APENAS obraId para toggle -->
-        <button class="minimizer" onclick="toggleObra('${obraId}', event)">+</button>
-        <h2 class="obra-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
-        <div class="obra-actions">
-          <button class="btn btn-delete" onclick="window.deleteObra('${obraName}', '${obraId}')">Remover Obra</button>
-        </div>
-      </div>
-      <!-- ✅ CORREÇÃO: usar APENAS obraId no conteúdo -->
-      <div class="obra-content collapsed" id="obra-content-${obraId}">
-        <div class="projects-container" id="projects-${obraId}">
-
-        </div>
-        <div class="add-project-section">
-          <!-- ✅ CORREÇÃO: Passar obraId para a função -->
-          <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraId}')">+ Adicionar Projeto</button>
-        </div>
-        ${buildObraActionsFooter(obraId, obraName, false)} 
+  return `
+  <div class="obra-block" data-obra-id="${obraId}" data-obra-name="${obraName}">
+    <div class="obra-header">
+      <button class="minimizer" onclick="toggleObra('${obraId}', event)">+</button>
+      <h2 class="obra-title compact-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
+      <div class="obra-header-spacer"><span>Adicionar campos de cadastro de empresas</span></div>
+      <div class="obra-actions">
+        <button class="btn btn-delete" onclick="window.deleteObra('${obraName}', '${obraId}')">Remover Obra</button>
       </div>
     </div>
+
+    
+    <div class="obra-content collapsed" id="obra-content-${obraId}">
+      <div class="projetc-header-record very-dark">
+          <span>Adicionar campos de cadastro de empresas</span>
+      </div>
+      <div class="projects-container" id="projects-${obraId}">
+
+      </div>
+      <div class="add-project-section">
+        <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraId}')">+ Adicionar Projeto</button>
+      </div>
+      ${buildObraActionsFooter(obraId, obraName, false)} 
+    </div>
+  </div>
   `;
 }
 

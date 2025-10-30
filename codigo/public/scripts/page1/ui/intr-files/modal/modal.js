@@ -7,14 +7,14 @@
 // Variáveis globais para controle do modal e undo
 let pendingDeletion = {
     obraName: null,
-    obraId: null, // ✅ AGORA USA IDs SEGUROS (ex: obra_w12)
+    obraId: null, 
     obraBlock: null,
     obraHTML: null,
     originalPosition: null
 };
 
 let undoTimeout = null;
-let currentToasts = []; // armazena toasts ativos (inclusive seus timeouts)
+let currentToasts = []; 
 
 /* =========================
  * MODAL: abrir / fechar
@@ -46,7 +46,10 @@ export function showConfirmationModal(obraName, obraId, obraBlock) {
     const modal = document.getElementById('confirmationModal');
     const modalMessage = document.getElementById('modalMessage');
 
-    if (!modal || !modalMessage) return;
+    if (!modal || !modalMessage) {
+        console.error('❌ Modal ou modalMessage não encontrado no DOM');
+        return;
+    }
 
     modalMessage.innerHTML = `
         <strong>"${obraName}"</strong> será removida <span style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">apenas da tela</span>.<br><br>
@@ -55,7 +58,7 @@ export function showConfirmationModal(obraName, obraId, obraBlock) {
             <small style="color: #ffffffff;">A obra permanece salva no servidor e pode ser recuperada a qualquer momento.</small>
         </div>
         <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #cccccc;">
-            ID: ${obraId}
+            ID: ${obraId} - Nome: ${obraName}
         </div>
     `;
 
@@ -72,6 +75,7 @@ export function showConfirmationModal(obraName, obraId, obraBlock) {
  * Fecha o modal de confirmação (limpa estado)
  */
 export function closeConfirmationModal() {
+    console.log('🔒 Fechando modal de confirmação');
     const modal = document.getElementById('confirmationModal');
     if (modal) {
         modal.classList.remove('active');
@@ -90,6 +94,7 @@ export function closeConfirmationModal() {
  * Fecha modal sem limpar pendingDeletion (usado no fluxo de confirmação)
  */
 function closeConfirmationModalWithoutClearing() {
+    console.log('🔒 Fechando modal sem limpar dados');
     const modal = document.getElementById('confirmationModal');
     if (!modal) return;
     modal.classList.remove('active');
@@ -243,7 +248,7 @@ export function hideSpecificToast(toastId) {
         return;
     }
 
-    // 2) Fallback: remove direto do DOM (toast “órfão” não registrado em currentToasts)
+    // 2) Fallback: remove direto do DOM (toast "órfão" não registrado em currentToasts)
     const orphan = document.getElementById(toastId);
     if (orphan) {
         animateAndRemove(orphan);
@@ -378,14 +383,22 @@ async function completeDeletionImmediate(obraId, obraName) {
  * Confirma e executa a exclusão com sistema de undo - ATUALIZADO
  */
 export async function confirmDeletion() {
+    console.log('🎯 confirmDeletion() CHAMADO - Iniciando processo de deleção');
+    
     const { obraName, obraId, obraBlock, obraHTML, originalPosition } = pendingDeletion;
-    if (!obraName || !obraId) return;
+    
+    if (!obraName || !obraId) {
+        console.error('❌ Dados incompletos para deleção');
+        return;
+    }
 
     // ✅ CORREÇÃO: Validar ID seguro antes de salvar
     if (obraId === 'undefined' || obraId === 'null') {
         console.error(`❌ ID de obra inválido para deleção: ${obraId}`);
         return;
     }
+
+    console.log(`🗑️ Confirmando deleção da obra: ${obraName} (ID: ${obraId})`);
 
     // Salva dados específicos para esta obra (para permitir undo independente)
     sessionStorage.setItem(`pendingDeletion-${obraId}`, JSON.stringify({
@@ -414,6 +427,8 @@ export async function confirmDeletion() {
 
     // Mostra toast com opção de desfazer
     showToast(obraName, 'undo', obraId);
+    
+    console.log('✅ Deleção confirmada e processo iniciado');
 }
 
 /**
@@ -424,22 +439,13 @@ export function getPendingDeletion() {
 }
 
 /* =========================
- * EVENT LISTENERS
+ * EVENT LISTENERS - SIMPLIFICADOS
  * ========================= */
 
-// Listeners gerais
+// Fecha modal clicando fora (mantido pois funciona bem)
 document.addEventListener('DOMContentLoaded', () => {
-    // Botões do modal (delegação)
-    document.addEventListener('click', (e) => {
-        if (e.target.matches('[data-action="cancel"]')) {
-            closeConfirmationModal();
-        }
-        if (e.target.matches('[data-action="confirm"]')) {
-            confirmDeletion();
-        }
-    });
-
-    // Fecha modal clicando fora
+    console.log('🔧 Modal system inicializado');
+    
     const modal = document.getElementById('confirmationModal');
     if (modal) {
         modal.addEventListener('click', (e) => {
@@ -447,6 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeConfirmationModal();
             }
         });
+        console.log('✅ Listener de clique fora do modal adicionado');
     }
 });
 
@@ -461,10 +468,11 @@ document.addEventListener('keydown', (e) => {
  * EXPORTAÇÕES P/ HTML
  * ========================= */
 
-// Disponibiliza globais para HTML inline
+// Disponibiliza funções GLOBAIS para o HTML
+window.closeConfirmationModal = closeConfirmationModal;
+window.confirmDeletion = confirmDeletion;
 window.undoDeletion = undoDeletion;
 window.hideToast = hideToast;
 window.hideSpecificToast = hideSpecificToast;
 
-
-
+console.log('✅ Modal system carregado e funções globais disponíveis');

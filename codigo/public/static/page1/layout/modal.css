@@ -124,9 +124,7 @@
     box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
 }
 
-.btn-confirm:active {
-    animation: confirmShake 0.5s ease;
-}
+
 
 /* Animações */
 @keyframes modalFadeIn {
