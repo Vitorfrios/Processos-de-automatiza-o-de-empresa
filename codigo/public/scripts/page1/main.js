@@ -120,23 +120,14 @@ window.createEmptyProject = async function(obraId, obraName, projectId, projectN
 window.populateObraData = async function(obraData) {
     try {
         // Tentar carregar o módulo diretamente
-        const populateModule = await import('./data/data-populate.js');
+        const populateModule = await import('./data/data-files/data-populate.js');
         if (populateModule && populateModule.populateObraData) {
             return await populateModule.populateObraData(obraData);
         }
         throw new Error('populateObraData não encontrada');
     } catch (error) {
         console.error('❌ Erro ao carregar populateObraData:', error);
-        
-        // ✅ CORREÇÃO: Fallback - tentar carregar via caminho alternativo
-        try {
-            const populateModule = await import('./data/data-files/data-populate.js');
-            if (populateModule && populateModule.populateObraData) {
-                return await populateModule.populateObraData(obraData);
-            }
-        } catch (fallbackError) {
-            console.error('❌ Erro no fallback de populateObraData:', fallbackError);
-        }
+      
         
         return null;
     }
@@ -192,7 +183,7 @@ async function loadAllModules() {
       import('./ui/edit.js'),
       import('./data/projects.js'),
       import('./data/rooms.js'),
-      import('./calculos/calculos-manager.js'),
+      import('./features/calculos/calculos-manager.js'),
       import('./utils/utils.js'),
       import('./ui/intr-files/project-manager.js')
     ]);
@@ -221,7 +212,7 @@ async function loadAllModules() {
       addNewProjectToObra: interfaceModule.addNewProjectToObra,
       showSystemStatus: interfaceModule.showSystemStatus,
       saveOrUpdateObra: interfaceModule.saveOrUpdateObra,
-      verifyObraData: interfaceModule.verifyObraData,
+      verifyObraData: projectsModule.verifyObraData,
       deleteObra: interfaceModule.deleteObra,
 
       // Edit

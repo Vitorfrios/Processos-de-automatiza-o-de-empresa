@@ -70,20 +70,21 @@ function buildObraHTML(obraName, obraId) {
  * @param {boolean} hasId - Se a obra já foi SALVA no servidor
  * @returns {string} HTML do rodapé de ações
  */
-function buildObraActionsFooter(obraName, hasId = false) {
-  const buttonText = hasId ? "Atualizar Obra" : "Salvar Obra"
-  const buttonClass = hasId ? "btn-update" : "btn-save"
+function buildObraActionsFooter(obraId, obraName, hasId = false) {
+  const buttonText = hasId ? "Atualizar Obra" : "Salvar Obra";
+  const buttonClass = hasId ? "btn-update" : "btn-save";
 
-  console.log(`🔧 Build Obra Footer: ${obraName}, HasId: ${hasId}, Button: ${buttonText}`)
+  console.log(`🔧 Build Obra Footer: ${obraName}, ID: ${obraId}, HasId: ${hasId}, Button: ${buttonText}`);
 
+  // ✅ CORREÇÃO: Usar obraId em TODAS as chamadas
   return `
     <div class="obra-actions-footer">
-      <button class="btn btn-verify" onclick="verifyObraData('${obraName}')">Verificar Dados</button>
-      <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraName}')">${buttonText}</button>
-      <button class="btn btn-download" onclick="downloadPDF('${obraName}')">Baixar PDF</button>
-      <button class="btn btn-download" onclick="downloadWord('${obraName}')">Baixar Word</button>
+      <button class="btn btn-verify" onclick="verifyObraData('${obraId}')">Verificar Dados</button>
+      <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraId}')">${buttonText}</button>      
+      <button class="btn btn-download" onclick="downloadPDF('${obraId}')">Baixar PDF</button>
+      <button class="btn btn-download" onclick="downloadWord('${obraId}')">Baixar Word</button>
     </div>
-  `
+  `;
 }
 
 /**

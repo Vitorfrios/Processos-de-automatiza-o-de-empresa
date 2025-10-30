@@ -219,17 +219,25 @@ class SessionsManager:
         return data["sessions"].get(current_session_id, {"obras": []})["obras"]
 
     def add_project_to_session(self, project_id: str) -> bool:
-        """Método de compatibilidade: converte projetos para obras
+        """Método de compatibilidade: converte projetos para obras - CORREÇÃO
         Args:
-            project_id (str): ID do projeto (legado)
+            project_id (str): ID do projeto/obra (em sistemas novos, project_id = obra_id)
         Returns:
-            bool: True para compatibilidade
+            bool: True se a obra foi adicionada com sucesso
         """
-        print(f"⚠️  AVISO: add_project_to_session({project_id}) - método legado, usando obra padrão")
+        print(f"🔄 [COMPAT] Convertendo projeto {project_id} para obra")
         
-        # Para compatibilidade, usa uma obra padrão
-        obra_padrao_id = "1001"  # Obra padrão para projetos antigos
-        return self.add_obra_to_session(obra_padrao_id)
+        # ✅ CORREÇÃO: Em sistemas atualizados, project_id JÁ É o obra_id
+        # Não força mais "1001", usa o ID que veio do sistema
+        obra_id = str(project_id)
+        
+        # Se for um ID numérico antigo, mantém para compatibilidade
+        if obra_id.isdigit():
+            print(f"📝 [COMPAT] ID numérico legado: {obra_id}")
+        else:
+            print(f"📝 [COMPAT] ID seguro moderno: {obra_id}")
+        
+        return self.add_obra_to_session(obra_id)
 
     def remove_project(self, project_id: str) -> bool:
         """Método de compatibilidade: remove projetos (legado)
@@ -415,13 +423,13 @@ try:
 except Exception as e:
     print(f"❌ ERRO CRÍTICO no SessionsManager: {e}")
     
-    # Fallback de emergência
+    # ✅ CORREÇÃO COMPLETA DO EMERGENCY SESSIONS MANAGER
     class EmergencySessionsManager:
-        """Gerenciador de sessões de emergência para falhas críticas"""
+        """Gerenciador de sessões de emergência CORRIGIDO"""
         
         def __init__(self):
             self.project_root = Path(__file__).parent.parent
-            print(f"⚠️  Usando EmergencySessionsManager: {self.project_root}")
+            print(f"⚠️  Usando EmergencySessionsManager CORRIGIDO: {self.project_root}")
         
         def get_current_session_id(self):
             return "session_active"
@@ -448,8 +456,10 @@ except Exception as e:
         def get_current_session(self):
             return {"sessions": {"session_active": {"obras": []}}}
         
+        # ✅✅✅ CORREÇÃO CRÍTICA: NÃO FORÇA MAIS "1001"
         def add_project_to_session(self, project_id):
-            return self.add_obra_to_session("1001")
+            print(f"🔄 [EMERGENCY] Convertendo projeto {project_id} para obra")
+            return self.add_obra_to_session(project_id)  # ⬅️ USA O ID RECEBIDO
             
         def remove_project(self, project_id):
             return True
@@ -470,5 +480,4 @@ except Exception as e:
             print("=== DEBUG EMERGENCY SESSIONS ===")
             print("session_active: 0 obras")
             print("================================")
-    
     sessions_manager = EmergencySessionsManager()

@@ -307,6 +307,56 @@ def save_results_to_file(results: List[Dict[str, Any]], output_file: str = 'anal
     except Exception as e:
         print(f"❌ Erro ao salvar arquivo: {e}")
 
+def generate_function_usage_report(results: List[Dict[str, Any]]) -> None:
+    """Gera um relatório completo do uso de cada função em cada arquivo"""
+    print(f"\n{'#'*80}")
+    print(f"📊 RELATÓRIO DE USO DE FUNÇÕES POR ARQUIVO")
+    print(f"{'#'*80}")
+    
+    # Estrutura para armazenar o uso de funções
+    function_usage_map: Dict[str, Dict[str, List[str]]] = defaultdict(lambda: defaultdict(list))
+    
+    for result in results:
+        if 'error' not in result:
+            current_file = Path(result['file_path']).name
+            
+            # Funções declaradas neste arquivo
+            for func_name in result['function_declarations']:
+                function_usage_map[func_name]['declared_in'].append(current_file)
+            
+            # Funções usadas neste arquivo
+            for func_usage in result['function_usage']:
+                caller = func_usage['function_name']
+                for called_function in func_usage['calls']:
+                    function_usage_map[called_function]['used_by'].append(f"{current_file}::{caller}")
+            
+            # Funções importadas e usadas
+            for imp in result['imported_functions']:
+                imported_function = imp['function']
+                function_usage_map[imported_function]['imported_by'].append(current_file)
+    
+    print(f"\n🔍 USO DETALHADO DE CADA FUNÇÃO:")
+    
+    for function_name, usage_data in sorted(function_usage_map.items()):
+        print(f"\n🎯 FUNÇÃO: {function_name}")
+        
+        # Onde é declarada
+        if 'declared_in' in usage_data and usage_data['declared_in']:
+            declared_files = ', '.join(sorted(set(usage_data['declared_in'])))
+            print(f"   📝 Declarada em: {declared_files}")
+        
+        # Quem importa
+        if 'imported_by' in usage_data and usage_data['imported_by']:
+            importers = ', '.join(sorted(set(usage_data['imported_by'])))
+            print(f"   📥 Importada por: {importers}")
+        
+        # Quem usa
+        if 'used_by' in usage_data and usage_data['used_by']:
+            users = sorted(set(usage_data['used_by']))
+            print(f"   🔄 Usada por ({len(users)} usos):")
+            for user in users:
+                print(f"      • {user}")
+
 def generate_function_dependency_graph(results: List[Dict[str, Any]]) -> None:
     """Gera um gráfico de dependências entre funções"""
     print(f"\n{'#'*80}")
@@ -332,7 +382,7 @@ def generate_function_dependency_graph(results: List[Dict[str, Any]]) -> None:
 def generate_import_summary(results: List[Dict[str, Any]]) -> None:
     """Gera um resumo de todas as importações do projeto"""
     print(f"\n{'#'*80}")
-    print(f"📊 RESUMO DE IMPORTAÇÕES DO PROJETO")
+    print(f"📦 RESUMO DE IMPORTAÇÕES DO PROJETO")
     print(f"{'#'*80}")
     
     # Agrupa importações por fonte
@@ -354,7 +404,7 @@ def generate_import_summary(results: List[Dict[str, Any]]) -> None:
                 })
     
     # Mostra importações agrupadas por fonte
-    print(f"\n📦 IMPORTAÇÕES AGRUPADAS POR FONTE:")
+    print(f"\n📁 IMPORTAÇÕES AGRUPADAS POR FONTE:")
     for source, imports in sorted(imports_by_source.items()):
         print(f"\n  📁 {source}:")
         functions = set(imp['function'] for imp in imports)
@@ -410,8 +460,11 @@ def generate_statistics(results: List[Dict[str, Any]]) -> None:
     
     # Conta uso de funções
     total_function_calls = 0
+    unique_functions = set()
+    
     for result in results:
         if 'error' not in result:
+            unique_functions.update(result['function_declarations'])
             for func_usage in result['function_usage']:
                 total_function_calls += len(func_usage['calls'])
     
@@ -421,7 +474,7 @@ def generate_statistics(results: List[Dict[str, Any]]) -> None:
     print(f"   📂 Arquivos analisados: {total_arquivos}")
     print(f"   ❌ Arquivos com erro: {arquivos_com_erro}")
     print(f"   📥 Total de imports: {total_imports}")
-    print(f"   📝 Total de funções declaradas: {total_funcoes}")
+    print(f"   📝 Total de funções únicas: {len(unique_functions)}")
     print(f"   🔄 Total de chamadas de função: {total_function_calls}")
     print(f"   📤 Total de exports: {total_exports}")
     
@@ -457,6 +510,7 @@ if __name__ == "__main__":
         generate_import_summary(resultados)
         generate_dependency_graph(resultados)
         generate_function_dependency_graph(resultados)
+        generate_function_usage_report(resultados)  # NOVO: Relatório de uso de funções
         generate_statistics(resultados)
         
         # Salva em arquivo

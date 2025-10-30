@@ -27,7 +27,7 @@ import {
   createEmptyRoom
 } from './data/rooms.js';
 
-import { calculateVazaoArAndThermalGains } from './calculos/calculos-manager.js';
+import { calculateVazaoArAndThermalGains } from './features/calculos/calculos-manager.js';
 
 /**
  * Inicializa todas as funções globais no objeto window para acesso universal
@@ -74,24 +74,3 @@ export function initializeGlobals() {
   console.log("✅ Todas as funções globais foram inicializadas (Sistema de IDs Seguros)");
 }
 
-// Exportar individualmente se necessário
-export {
-  toggleProject,
-  toggleRoom, 
-  toggleSection,
-  toggleSubsection,
-  makeEditable,
-  deleteProject,
-  addNewProject,
-  addNewProjectToObra,
-  addNewRoom,
-  deleteRoom,
-  addMachine,
-  calculateVazaoArAndThermalGains,
-  showSystemStatus,
-  addNewObra,
-  deleteObra,
-  saveOrUpdateObra,
-  createEmptyProject,
-  createEmptyRoom
-};

@@ -12,6 +12,7 @@
  * Gera um ID seguro baseado em letras + números
  * @param {string} prefix - Prefixo para o ID
  * @returns {string} ID seguro
+ * @generator @example obra_x87
  */
 function generateSecureId(prefix = 'item') {
     const letters = 'abcdefghjkmnpqrstwxyz'; // 21 letras (remove i,l,o,v por confusão)

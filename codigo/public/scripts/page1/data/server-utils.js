@@ -1,9 +1,9 @@
 // server-utils.js
 
-import { createEmptyProject } from '../ui/interface.js'
+// REMOVIDO NA REFACTOR: import { createEmptyProject } from '../ui/interface.js'
 import { createEmptyRoom } from './rooms.js'
 import { updateProjectButton } from './server.js'
-import { calculateVazaoArAndThermalGains } from '../calculos/calculos-manager.js'
+import { calculateVazaoArAndThermalGains } from '../features/calculos/calculos-manager.js'
 import { ensureStringId } from '../utils/utils.js'
 import { getGeralCount, incrementGeralCount } from './server.js'
 

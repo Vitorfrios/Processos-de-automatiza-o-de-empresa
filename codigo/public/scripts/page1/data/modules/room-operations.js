@@ -3,8 +3,10 @@
  * Operações com salas - SISTEMA CORRIGIDO COM IDs ÚNICOS
  */
 
-import { showEmptyProjectMessageIfNeeded, removeEmptyProjectMessage } from '../../ui/interface.js'
+// REMOVIDO NA REFACTOR: import { showEmptyProjectMessageIfNeeded, removeEmptyProjectMessage } from '../../ui/interface.js'
 import { buildRoomHTML } from './salas.js' 
+import { generateRoomId } from '../data-files/data-utils-core.js'
+import { removeEmptyProjectMessage } from '../../ui/intr-files/ui-helpers.js'
 
 // Importar a função de pré-carregamento
 let machinesPreloadModule = null;

@@ -317,7 +317,6 @@ function buildSavedOptionsHTML(options, machineId, selectedOptions = [], selecte
     .map((option) => {
       const isChecked = selectedOptions.some((selected) => selected.id === option.id);
       
-      // Calcular valor da opção baseado na potência selecionada
       let optionValue = 0;
       if (selectedPower && option.values && option.values[selectedPower] !== undefined) {
         optionValue = option.values[selectedPower];
@@ -333,7 +332,7 @@ function buildSavedOptionsHTML(options, machineId, selectedOptions = [], selecte
                  value="${optionValue}" 
                  data-option-id="${option.id}"
                  data-option-name="${option.name}"
-                 onchange="updateOptionSelection('${machineId}', ${option.id}); calculateMachinePrice('${machineId}')"
+                 onchange="updateOptionSelection('${machineId}', '${option.id}'); calculateMachinePrice('${machineId}')"
                  id="option-${machineId}-${option.id}"
                  ${isChecked ? "checked" : ""}>
           <div class="option-content">

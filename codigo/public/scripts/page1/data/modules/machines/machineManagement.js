@@ -173,7 +173,6 @@ function buildOptionsHTML(options, machineId, selectedPower = null, selectedOpti
       const isSelected = selectedOptions.some(selected => selected.id === option.id);
       const selectedClass = isSelected ? 'option-selected' : '';
       
-      // Calcular valor da opção baseado na potência selecionada
       let optionValue = 0;
       if (selectedPower && option.values && option.values[selectedPower] !== undefined) {
         optionValue = option.values[selectedPower];
@@ -182,13 +181,13 @@ function buildOptionsHTML(options, machineId, selectedPower = null, selectedOpti
       const optionDisplayValue = `+R$ ${optionValue.toLocaleString("pt-BR")}`;
 
       return `
-        <div class="option-item ${selectedClass}" onclick="handleOptionClick(${machineId}, ${option.id})">
+        <div class="option-item ${selectedClass}" onclick="handleOptionClick('${machineId}', ${option.id})">
           <div class="option-checkbox">
             <input type="checkbox" 
                   value="${optionValue}" 
                   data-option-id="${option.id}"
                   data-option-name="${option.name}"
-                  onchange="updateOptionSelection(${machineId}, ${option.id}); calculateMachinePrice(${machineId})"
+                  onchange="updateOptionSelection('${machineId}', '${option.id}'); calculateMachinePrice('${machineId}')"
                   id="option-${machineId}-${option.id}"
                   ${isSelected ? 'checked' : ''}>
             <div class="option-content">

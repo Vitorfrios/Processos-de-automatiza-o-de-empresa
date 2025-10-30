@@ -269,34 +269,60 @@ function toggleSubsection(subsectionId) {
 
 /**
  * Gera e inicia o download de um PDF para uma obra ou projeto específico
- * @param {string} obraName - Nome da obra
+ * @param {string} obraId - ID da obra
  * @param {string|null} projectName - Nome do projeto (opcional)
  * @returns {void}
  * 
  * @example
- * downloadPDF('Obra1') // Gera PDF para a Obra1
- * downloadPDF('Obra1', 'ProjetoA') // Gera PDF para o ProjetoA da Obra1
+ * downloadPDF('obra_a64') // Gera PDF para a obra com ID obra_a64
+ * downloadPDF('obra_a64', 'ProjetoA') // Gera PDF para o ProjetoA da obra
  */
-function downloadPDF(obraName, projectName = null) {
+function downloadPDF(obraId, projectName = null) {
+    // ✅ CORREÇÃO: Buscar obra por ID em vez de nome
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID "${obraId}" não encontrada para PDF`);
+        showSystemStatus(`ERRO: Obra não encontrada`, "error");
+        return;
+    }
+
+    const obraName = obraBlock.dataset.obraName;
     const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
-    console.log(`📄 Gerando PDF para ${target}`);
+    
+    console.log(`📄 Gerando PDF para ${target} (ID: ${obraId})`);
     showSystemStatus(`Gerando PDF para ${target}...`, "info");
+    
+    // ✅ Aqui você implementaria a geração real do PDF
+    // generatePDF(obraId, projectName);
 }
 
 /**
  * Gera e inicia o download de um documento Word para uma obra ou projeto específico
- * @param {string} obraName - Nome da obra
+ * @param {string} obraId - ID da obra
  * @param {string|null} projectName - Nome do projeto (opcional)
  * @returns {void}
  * 
  * @example
- * downloadWord('Obra1') // Gera Word para a Obra1
- * downloadWord('Obra1', 'ProjetoA') // Gera Word para o ProjetoA da Obra1
+ * downloadWord('obra_a64') // Gera Word para a obra com ID obra_a64
+ * downloadWord('obra_a64', 'ProjetoA') // Gera Word para o ProjetoA da obra
  */
-function downloadWord(obraName, projectName = null) {
+function downloadWord(obraId, projectName = null) {
+    // ✅ CORREÇÃO: Buscar obra por ID em vez de nome
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID "${obraId}" não encontrada para Word`);
+        showSystemStatus(`ERRO: Obra não encontrada`, "error");
+        return;
+    }
+
+    const obraName = obraBlock.dataset.obraName;
     const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
-    console.log(`📝 Gerando Word para ${target}`);
+    
+    console.log(`📝 Gerando Word para ${target} (ID: ${obraId})`);
     showSystemStatus(`Gerando documento Word para ${target}...`, "info");
+    
+    // ✅ Aqui você implementaria a geração real do Word
+    // generateWord(obraId, projectName);
 }
 
 /**
@@ -308,32 +334,62 @@ function downloadWord(obraName, projectName = null) {
  * @example
  * saveOrUpdateObra('Obra1', event) // Salva/atualiza a Obra1
  */
-function saveOrUpdateObra(obraName, event) {
+function saveOrUpdateObra(obraParam, event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
-    console.log(`💾 SALVANDO/ATUALIZANDO OBRA: "${obraName}"`);
+    console.log(`💾 SALVANDO/ATUALIZANDO OBRA pelo parâmetro: "${obraParam}"`);
 
-    // ✅ CORREÇÃO: Buscar por nome (compatibilidade)
-    const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
+    // ✅ CORREÇÃO: Converter automaticamente nome para ID
+    let obraId = obraParam;
+    
+    // Se for nome (não começa com "obra_" e não é numérico)
+    if (!obraParam.startsWith('obra_') && !/^\d+$/.test(obraParam)) {
+        console.warn(`⚠️  Parâmetro "${obraParam}" parece ser um nome, convertendo para ID...`);
+        
+        // Busca ALL obras com este nome
+        const obrasComEsteNome = Array.from(document.querySelectorAll('[data-obra-id]'))
+            .filter(obra => obra.dataset.obraName === obraParam);
+            
+        if (obrasComEsteNome.length === 1) {
+            obraId = obrasComEsteNome[0].dataset.obraId;
+            console.log(`✅ Convertido nome "${obraParam}" → ID "${obraId}"`);
+        } else if (obrasComEsteNome.length > 1) {
+            console.error(`❌ Múltiplas obras com nome "${obraParam}", usando a primeira`);
+            obraId = obrasComEsteNome[0].dataset.obraId;
+        } else {
+            console.error(`❌ Nenhuma obra encontrada com nome "${obraParam}"`);
+            showSystemStatus(`ERRO: Obra "${obraParam}" não encontrada`, "error");
+            return;
+        }
+    }
+
+    // Agora busca pelo ID corrigido
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    
     if (!obraBlock) {
-        console.error(`❌ Obra "${obraName}" não encontrada no DOM para salvar`);
-        console.log('🔍 Obras disponíveis no DOM:');
-        document.querySelectorAll('[data-obra-name]').forEach(obra => {
-            console.log(`  - ${obra.dataset.obraName} (ID: ${obra.dataset.obraId})`);
+        console.error(`❌ ERRO: Obra com ID "${obraId}" não encontrada no DOM`);
+        
+        // Debug detalhado
+        const availableObras = document.querySelectorAll('[data-obra-id]');
+        console.log(`🔍 Obras disponíveis: ${availableObras.length}`);
+        availableObras.forEach((obra, idx) => {
+            console.log(`   ${idx + 1}. ID: "${obra.dataset.obraId}", Nome: "${obra.dataset.obraName}"`);
         });
-        showSystemStatus(`ERRO: Obra "${obraName}" não encontrada`, "error");
+        
+        showSystemStatus(`ERRO: Obra não encontrada`, "error");
         return;
     }
 
-    console.log(`✅ Obra encontrada no DOM:`, obraBlock.dataset);
+    console.log(`✅ Obra encontrada:`, obraBlock.dataset);
 
     if (typeof window.saveObra === 'function') {
-        window.saveObra(obraName, event);
+        // ✅ Agora passa o ID correto para a função interna
+        window.saveObra(obraId, event);
     } else {
-        console.error('❌ Função saveObra não encontrada no window');
+        console.error('❌ Função saveObra não encontrada');
         showSystemStatus("ERRO: Funcionalidade de salvar não disponível", "error");
     }
 }
@@ -360,15 +416,7 @@ function makeEditable(element, type) {
     }
 }
 
-/**
- * Verifica dados de uma obra - FUNÇÃO DE COMPATIBILIDADE
- * @param {string} obraName - Nome da obra a ser verificada
- * @returns {void}
- */
-function verifyObraData(obraName) {
-    console.log(`🔍 Verificando dados da obra: ${obraName}`);
-    showSystemStatus(`Verificando dados da obra "${obraName}"...`, "info");
-}
+
 
 // =============================================================================
 // EXPORTAÇÕES ADICIONAIS
@@ -385,7 +433,6 @@ export {
     toggleSubsection,
     toggleSection,
     makeEditable,
-    verifyObraData
 }
 
 // =============================================================================
@@ -408,5 +455,4 @@ if (typeof window !== 'undefined') {
     window.addNewProject = addNewProject;
     window.createEmptyProject = createEmptyProject;
     window.makeEditable = makeEditable;
-    window.verifyObraData = verifyObraData;
 }

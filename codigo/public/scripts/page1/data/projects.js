@@ -1,7 +1,7 @@
 // projects.js
 import { ensureStringId } from "../utils/utils.js"
 import { buildObraData } from "./data-utils.js"
-import { showSystemStatus, updateObraButtonAfterSave } from "../ui/interface.js"
+// REMOVIDO NA REFACTOR: import { showSystemStatus, updateObraButtonAfterSave } from "../ui/interface.js"
 import { isSessionActive, startSessionOnFirstSave } from "./server.js";
 
 /**
@@ -188,24 +188,26 @@ async function salvarObra(obraData) {
   }
 }
 
+
 /**
- * Encontra o elemento HTML de uma obra pelo nome
- * @param {string} obraName - Nome da obra a ser encontrada
+ * Encontra o elemento HTML de uma obra pelo ID
+ * @param {string} obraId - ID da obra a ser encontrada
  * @returns {HTMLElement|null} Elemento da obra ou null se não encontrado
  */
-function findObraBlock(obraName) {
-    console.log(`🔍 Buscando obra: "${obraName}"`);
+function findObraBlock(obraId) {
+    console.log(`🔍 Buscando obra pelo ID: "${obraId}"`);
     
-    // ✅ CORREÇÃO: Buscar APENAS por ID único se possível
-    // 1. Tentar pelo nome exato (mais específico)
-    let obraBlock = document.querySelector(`.obra-block[data-obra-name="${obraName}"]`);
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    // 1. Tentar pelo ID exato (mais específico)
+    let obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
     if (obraBlock) {
-        console.log(`✅ Obra encontrada por nome exato: "${obraName}"`);
+        console.log(`✅ Obra encontrada por ID exato: "${obraId}"`);
         return obraBlock;
     }
     
-    // 2. Tentar apenas elementos .obra-block (não qualquer elemento)
-    const todasObras = document.querySelectorAll('.obra-block');
+    
+    // 3. Listar todas as obras disponíveis para debug
+    const todasObras = document.querySelectorAll('[data-obra-id]');
     console.log(`📋 Obras encontradas no DOM: ${todasObras.length}`);
     
     todasObras.forEach((obra, index) => {
@@ -216,32 +218,24 @@ function findObraBlock(obraName) {
         });
     });
     
-    // 3. Retornar a primeira obra real (não botões)
-    if (todasObras.length > 0) {
-        const primeiraObra = todasObras[0];
-        const actualName = primeiraObra.dataset.obraName;
-        const actualId = primeiraObra.dataset.obraId;
-        console.log(`✅ Usando primeira obra: "${actualName}" (ID: ${actualId}) em vez de "${obraName}"`);
-        return primeiraObra;
-    }
-    
-    console.log('❌ Nenhuma obra .obra-block encontrada no DOM');
+    // ❌ REMOVIDO: NUNCA retornar obra errada como fallback
+    console.log(`❌ Obra com ID "${obraId}" não encontrada no DOM`);
     return null;
 }
 
 /**
  * Salva ou atualiza uma obra no servidor (função principal)
- * @param {string} obraName - Nome da obra
+ * @param {string} obraId - ID da obra
  * @param {Event} event - Evento do clique
  * @returns {Promise<void>}
  */
-async function saveObra(obraName, event) {
+async function saveObra(obraId, event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
-    console.log(`💾 SALVANDO OBRA: "${obraName}"`);
+    console.log(`💾 SALVANDO OBRA pelo ID: "${obraId}"`);
 
     // Ativa a sessão se não estiver ativa (primeira obra)
     if (!isSessionActive()) {
@@ -256,10 +250,10 @@ async function saveObra(obraName, event) {
         return;
     }
 
-    let obraBlock = findObraBlock(obraName);
+    let obraBlock = findObraBlock(obraId);
     
     if (!obraBlock) {
-        console.error('❌ Obra não encontrada no DOM:', obraName);
+        console.error('❌ Obra não encontrada no DOM pelo ID:', obraId);
         showSystemStatus("ERRO: Obra não encontrada na interface", "error");
         return;
     }
@@ -410,16 +404,22 @@ async function deleteObraFromServer(obraName, obraId) {
 
 /**
  * Verifica os dados de uma obra e gera relatório de completude
- * @param {string} obraName - Nome da obra
+ * @param {string} obraId - ID da obra
  * @returns {void}
  */
-function verifyObraData(obraName) {
-  const obraBlock = document.querySelector(`[data-obra-name="${obraName}"]`);
-  if (!obraBlock) return;
+function verifyObraData(obraId) {
+  const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+  if (!obraBlock) {
+    console.error(`❌ Obra com ID "${obraId}" não encontrada para verificação`);
+    alert(`ERRO: Obra com ID "${obraId}" não encontrada`);
+    return;
+  }
 
+  const obraName = obraBlock.dataset.obraName;
   const projects = obraBlock.querySelectorAll(".project-block");
   let totalRooms = 0;
-  let report = `Verificação da Obra "${obraName}":\n\n`;
+  
+  let report = `Verificação da Obra "${obraName}" (ID: ${obraId}):\n\n`;
   report += `Total de projetos: ${projects.length}\n\n`;
 
   projects.forEach((project, index) => {
@@ -440,6 +440,7 @@ function verifyObraData(obraName) {
 
   report += `RESUMO: ${projects.length} projetos, ${totalRooms} salas`;
 
+  console.log(`🔍 Relatório gerado para obra: ${obraName} (ID: ${obraId})`);
   alert(report);
 }
 

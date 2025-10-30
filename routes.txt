@@ -238,7 +238,7 @@ class RouteHandler:
             handler.send_error(500, f"Erro interno: {str(e)}")
 
     def handle_post_obras(self, handler):
-        """Salva nova obra e adiciona à sessão - CORREÇÃO: USA ID DO FRONTEND"""
+        """Salva nova obra e adiciona à sessão"""
         try:
             content_length = int(handler.headers['Content-Length'])
             post_data = handler.rfile.read(content_length)
@@ -247,54 +247,54 @@ class RouteHandler:
             backup_file = file_utils.find_json_file('backup.json', self.project_root)
             backup_data = file_utils.load_json_file(backup_file, {"obras": [], "projetos": []})
             
-            # ✅✅✅ CORREÇÃO CRÍTICA: USA ID DO FRONTEND OU GERA UM SEGURO
-            obra_id = nova_obra.get('id')
+            # Gera ID único para obra
+            obras = backup_data.get('obras', [])
+            ids_existentes = []
+            for obra in obras:
+                try:
+                    id_str = obra.get('id', '')
+                    if id_str and id_str.isdigit():
+                        ids_existentes.append(int(id_str))
+                except (ValueError, AttributeError):
+                    continue
             
-            if not obra_id or obra_id.isdigit():  # Se não tem ID ou é numérico
-                # Gera ID seguro no backend também
-                import random
-                import string
-                letters = 'abcdefghjkmnpqrstwxyz'  # 21 letras (remove i,l,o,v)
-                random_letter1 = random.choice(letters)
-                random_letter2 = random.choice(letters)
-                random_num = random.randint(10, 99)  # 10-99 (sempre 2 dígitos)
-                obra_id = f"obra_{random_letter1}{random_num}"
-                
-                print(f"🆕 Backend gerou ID seguro: {obra_id}")
+            if ids_existentes:
+                proximo_id = max(ids_existentes) + 1
+            else:
+                proximo_id = 1001  # Começa em 1001 como especificado
             
-            nova_obra['id'] = obra_id  # ✅ USA O ID SEGURO
+            nova_obra['id'] = str(proximo_id)
             
             if 'timestamp' not in nova_obra:
                 from datetime import datetime
                 nova_obra['timestamp'] = datetime.now().isoformat()
             
             # ✅ CORREÇÃO CRÍTICA: Adiciona obra à sessão ANTES de salvar no backup
-            print(f"📝 Tentando adicionar obra {obra_id} à sessão...")
-            success = sessions_manager.add_obra_to_session(obra_id)  # ← USA obra_id, não proximo_id
+            print(f"📝 Tentando adicionar obra {proximo_id} à sessão...")
+            success = sessions_manager.add_obra_to_session(str(proximo_id))
             
             if not success:
-                print(f"❌ FALHA ao adicionar obra {obra_id} à sessão")
+                print(f"❌ FALHA ao adicionar obra {proximo_id} à sessão")
                 handler.send_error(500, "Erro ao adicionar obra à sessão")
                 return
             else:
-                print(f"✅ Obra {obra_id} adicionada à sessão com sucesso")
+                print(f"✅ Obra {proximo_id} adicionada à sessão com sucesso")
             
             # Adiciona obra ao backup
-            obras = backup_data.get('obras', [])
             obras.append(nova_obra)
             backup_data['obras'] = obras
             
-            print(f"➕ ADICIONANDO nova obra ID: {obra_id} com {len(nova_obra.get('projetos', []))} projetos")
+            print(f"➕ ADICIONANDO nova obra ID: {proximo_id} com {len(nova_obra.get('projetos', []))} projetos")
             
             if file_utils.save_json_file(backup_file, backup_data):
-                print(f"✅ Obra {obra_id} salva com sucesso e adicionada à sessão")
+                print(f"✅ Obra {proximo_id} salva com sucesso e adicionada à sessão")
                 handler.send_json_response(nova_obra)
             else:
                 handler.send_error(500, "Erro ao salvar obra")
             
         except Exception as e:
             print(f"❌ Erro ao adicionar obra: {str(e)}")
-            handler.send_error(500, f"Erro: {str(e)}")  
+            handler.send_error(500, f"Erro: {str(e)}")
             
     def handle_put_obra(self, handler):
         """Atualiza obra existente"""

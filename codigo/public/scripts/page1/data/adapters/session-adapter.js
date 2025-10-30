@@ -1,4 +1,4 @@
-// server-modules/session-manager.js - GERENCIAMENTO DE SESSÃO
+// adapters/session-adapter.js - GERENCIAMENTO DE SESSÃO
 
 import { SESSION_STORAGE_KEY, REMOVED_PROJECTS_KEY, SESSION_ACTIVE_KEY } from "../../config/config.js"
 import { ensureStringId } from "../../utils/utils.js"

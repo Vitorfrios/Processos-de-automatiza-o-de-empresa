@@ -1,0 +1,1950 @@
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\globals.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (18):
+  • toggleProject ← ./ui/interface.js
+  • toggleRoom ← ./ui/interface.js
+  • toggleSection ← ./ui/interface.js
+  • toggleSubsection ← ./ui/interface.js
+  • addNewProject ← ./ui/interface.js
+  • showSystemStatus ← ./ui/interface.js
+  • addNewObra ← ./ui/interface.js
+  • deleteObra ← ./ui/interface.js
+  • saveOrUpdateObra ← ./ui/interface.js
+  • createEmptyProject ← ./ui/interface.js
+  • addNewProjectToObra ← ./ui/interface.js
+  • makeEditable ← ./ui/edit.js
+  • deleteProject ← ./data/projects.js
+  • addNewRoom ← ./data/rooms.js
+  • deleteRoom ← ./data/rooms.js
+  • addMachine ← ./data/rooms.js
+  • createEmptyRoom ← ./data/rooms.js
+  • calculateVazaoArAndThermalGains ← ./calculos/calculos-manager.js
+
+📝 FUNÇÕES DECLARADAS (1):
+  • initializeGlobals
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • initializeGlobals → [Salas, Projetos, Obras]
+
+📤 EXPORTS (19):
+  • initializeGlobals
+  • showSystemStatus
+  • createEmptyProject
+  • makeEditable
+  • createEmptyRoom
+  • deleteProject
+  • saveOrUpdateObra
+  • toggleProject
+  • toggleRoom
+  • toggleSubsection
+  • addNewProjectToObra
+  • addNewRoom
+  • deleteObra
+  • addNewProject
+  • addNewObra
+  • toggleSection
+  • addMachine
+  • calculateVazaoArAndThermalGains
+  • deleteRoom
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\main.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (2):
+  • loadObrasFromServer ← ./data/server.js
+  • getGeralCount ← ./data/server.js
+
+📝 FUNÇÕES DECLARADAS (7):
+  • loadSystemConstants
+  • loadAllModules
+  • checkAndLoadExistingSession
+  • verifyAndCreateBaseObra
+  • finalSystemDebug
+  • showServerOfflineMessage
+  • verifyCriticalFunctions
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • loadSystemConstants → [fetch]
+  • loadAllModules → [all]
+  • checkAndLoadExistingSession → [json, Array, fetch]
+  • verifyAndCreateBaseObra → [querySelectorAll, Promise, getGeralCount]
+  • finalSystemDebug → [getGeralCount]
+  • showServerOfflineMessage → [getElementById, remove]
+  • verifyCriticalFunctions → [forEach]
+
+📤 EXPORTS (0):
+  Nenhum export
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\config\config.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (6):
+  • UI_CONSTANTS
+  • NORMALIZATION_DONE_KEY
+  • SESSION_STORAGE_KEY
+  • CALCULATION_CONSTANTS
+  • SESSION_ACTIVE_KEY
+  • REMOVED_PROJECTS_KEY
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\core\bootstrap.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (3):
+  • initializeEventBus ← ./event-bus.js
+  • initializeState ← ./state.js
+  • initializeInterface ← ../ui/interface.js
+
+📝 FUNÇÕES DECLARADAS (2):
+  • bootstrapApplication
+  • if
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • bootstrapApplication → [initializeInterface, initializeEventBus, initializeState]
+  • if → [addEventListener]
+
+📤 EXPORTS (1):
+  • bootstrapApplication
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\core\event-bus.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (1):
+  • initializeEventBus
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • initializeEventBus → [nenhuma função chamada]
+
+📤 EXPORTS (2):
+  • initializeEventBus
+  • eventBus
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\core\state.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (1):
+  • initializeState
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • initializeState → [nenhuma função chamada]
+
+📤 EXPORTS (2):
+  • appState
+  • initializeState
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\data-utils.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (21):
+  • extractClimatizationInputs
+  • buildProjectData
+  • generateRoomId
+  • extractThermalGainsData
+  • getObraName
+  • extractMachinesData
+  • getRoomName
+  • generateObraId
+  • safeNumber
+  • getProjectName
+  • extractConfigurationData
+  • extractNumberFromText
+  • extractRoomData
+  • getRoomFullId
+  • getMachineName
+  • extractClimatizationMachineData
+  • parseMachinePrice
+  • debugThermalGainsElements
+  • extractCapacityData
+  • generateProjectId
+  • buildObraData
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\projects.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (6):
+  • ensureStringId ← ../utils/utils.js
+  • buildObraData ← ./data-utils.js
+  • showSystemStatus ← ../ui/interface.js
+  • updateObraButtonAfterSave ← ../ui/interface.js
+  • isSessionActive ← ./server.js
+  • startSessionOnFirstSave ← ./server.js
+
+📝 FUNÇÕES DECLARADAS (10):
+  • fetchObras
+  • atualizarObra
+  • salvarObra
+  • findObraBlock
+  • saveObra
+  • deleteProject
+  • deleteObraFromServer
+  • verifyObraData
+  • calculateRoomCompletionStats
+  • deleteProjectLegacy
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • fetchObras → [vazio, fetch]
+  • atualizarObra → [nenhuma função chamada]
+  • salvarObra → [stringify]
+  • findObraBlock → [nenhuma função chamada]
+  • saveObra → [preventDefault, stopPropagation]
+  • deleteProject → [nenhuma função chamada]
+  • deleteObraFromServer → [startsWith]
+  • verifyObraData → [nenhuma função chamada]
+  • calculateRoomCompletionStats → [querySelectorAll, filter]
+  • deleteProjectLegacy → [nenhuma função chamada]
+
+📤 EXPORTS (10):
+  • deleteProjectLegacy
+  • verifyObraData
+  • findObraBlock
+  • saveObra
+  • deleteObraFromServer
+  • calculateRoomCompletionStats
+  • atualizarObra
+  • fetchObras
+  • salvarObra
+  • deleteProject
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\rooms.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (22):
+  • createEmptyRoom ← ./modules/room-operations.js
+  • insertRoomIntoProject ← ./modules/room-operations.js
+  • addNewRoom ← ./modules/room-operations.js
+  • deleteRoom ← ./modules/room-operations.js
+  • buildRoomHTML ← ./modules/salas.js
+  • buildRoomHeader ← ./modules/salas.js
+  • buildRoomActions ← ./modules/salas.js
+  • buildClimatizationSection ← ./modules/climatizacao.js
+  • buildClimatizationTable ← ./modules/climatizacao.js
+  • buildClimaRow ← ./modules/climatizacao.js
+  • buildClimaCell ← ./modules/climatizacao.js
+  • buildSelectInput ← ./modules/climatizacao.js
+  • buildTextInput ← ./modules/climatizacao.js
+  • buildResultRow ← ./modules/climatizacao.js
+  • buildThermalGainsSection ← ./modules/climatizacao.js
+  • buildMachinesSection ← ./modules/maquinas.js
+  • addMachine ← ./modules/maquinas.js
+  • deleteClimatizationMachine ← ./modules/maquinas.js
+  • calculateCapacitySolution ← ./modules/maquinas.js
+  • updateCapacityFromThermalGains ← ./modules/maquinas.js
+  • initializeStaticCapacityTable ← ./modules/maquinas.js
+  • buildConfigurationSection ← ./modules/configuracao.js
+
+📝 FUNÇÕES DECLARADAS (7):
+  • initializeAllCapacityInputs
+  • generateUniqueRoomId
+  • getNextRoomNumber
+  • findRoomByUniqueId
+  • findRoomsByProject
+  • getRoomInfo
+  • if
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • initializeAllCapacityInputs → [nenhuma função chamada]
+  • generateUniqueRoomId → [replace, slice, now, toString, toLowerCase]
+  • getNextRoomNumber → [nenhuma função chamada]
+  • findRoomByUniqueId → [nenhuma função chamada]
+  • findRoomsByProject → [nenhuma função chamada]
+  • getRoomInfo → [findRoomByUniqueId, includes]
+  • if → [nenhuma função chamada]
+
+📤 EXPORTS (25):
+  • // Climatização
+  buildClimatizationSection
+  • deleteClimatizationMachine
+  • // Funções auxiliares de IDs únicos
+  generateUniqueRoomId
+  • buildRoomHeader
+  • buildClimatizationTable
+  • buildRoomActions
+  • buildTextInput
+  • // Salas
+  buildRoomHTML
+  • buildThermalGainsSection
+  • // Projeto - FUNÇÕES DO room-operations.js
+  createEmptyRoom
+  • addNewRoom
+  • buildClimaCell
+  • buildResultRow
+  • buildSelectInput
+  • // Máquinas
+  buildMachinesSection
+  • getNextRoomNumber
+  • // Configuração
+  buildConfigurationSection
+  • addMachine
+  • getRoomInfo
+  • insertRoomIntoProject
+  • buildClimaRow
+  • deleteRoom
+  • findRoomsByProject
+  • initializeAllCapacityInputs
+  • findRoomByUniqueId
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\server-utils.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (7):
+  • createEmptyProject ← ../ui/interface.js
+  • createEmptyRoom ← ./rooms.js
+  • updateProjectButton ← ./server.js
+  • calculateVazaoArAndThermalGains ← ../calculos/calculos-manager.js
+  • ensureStringId ← ../utils/utils.js
+  • getGeralCount ← ./server.js
+  • incrementGeralCount ← ./server.js
+
+📝 FUNÇÕES DECLARADAS (11):
+  • renderObraFromData
+  • renderProjectFromData
+  • renderRoomFromData
+  • populateRoomInputs
+  • populateBasicInputs
+  • populateConfiguration
+  • populateThermalGains
+  • populateCapacityData
+  • populateMachines
+  • generateObraId
+  • tryPopulate
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • renderObraFromData → [ensureStringId]
+  • renderProjectFromData → [ensureStringId]
+  • renderRoomFromData → [ensureStringId]
+  • populateRoomInputs → [nenhuma função chamada]
+  • populateBasicInputs → [Boolean, entries, forEach]
+  • populateConfiguration → [isArray, instalação]
+  • populateThermalGains → [entries, forEach]
+  • populateCapacityData → [forEach, closest, entries, getAttribute]
+  • populateMachines → [nenhuma função chamada]
+  • generateObraId → [floor]
+  • tryPopulate → [nenhuma função chamada]
+
+📤 EXPORTS (4):
+  • populateRoomInputs
+  • renderObraFromData
+  • renderProjectFromData
+  • renderRoomFromData
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\server.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (23):
+  • isSessionActive ← ./server-modules/session-manager.js
+  • setSessionActive ← ./server-modules/session-manager.js
+  • getSessionObras ← ./server-modules/session-manager.js
+  • addObraToSession ← ./server-modules/session-manager.js
+  • removeObraFromSessionLocal ← ./server-modules/session-manager.js
+  • clearSessionObras ← ./server-modules/session-manager.js
+  • clearRenderedObras ← ./server-modules/session-manager.js
+  • initializeGeralCount ← ./server-modules/session-manager.js
+  • incrementGeralCount ← ./server-modules/session-manager.js
+  • decrementGeralCount ← ./server-modules/session-manager.js
+  • getGeralCount ← ./server-modules/session-manager.js
+  • saveFirstObraIdOfSession ← ./server-modules/session-manager.js
+  • addObraToRemovedList ← ./server-modules/session-manager.js
+  • getRemovedObrasList ← ./server-modules/session-manager.js
+  • isObraRemoved ← ./server-modules/session-manager.js
+  • resetDisplayLogic ← ./server-modules/session-manager.js
+  • startNewSession ← ./server-modules/session-manager.js
+  • startSessionOnFirstSave ← ./server-modules/session-manager.js
+  • loadObrasFromServer ← ./server-modules/obra-loader.js
+  • removeBaseObraFromHTML ← ./server-modules/obra-loader.js
+  • shutdownManual ← ./server-modules/shutdown-manager.js
+  • ensureSingleActiveSession ← ./server-modules/shutdown-manager.js
+  • initializeSession ← ./server-modules/shutdown-manager.js
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (23):
+  • ensureSingleActiveSession
+  • addObraToSession
+  • // Session Manager
+    isSessionActive
+  • // Obra Loader
+    loadObrasFromServer
+  • decrementGeralCount
+  • removeObraFromSessionLocal
+  • initializeGeralCount
+  • getSessionObras
+  • startNewSession
+  • saveFirstObraIdOfSession
+  • resetDisplayLogic
+  • initializeSession
+  • clearSessionObras
+  • // Shutdown Manager
+    shutdownManual
+  • getGeralCount
+  • clearRenderedObras
+  • removeBaseObraFromHTML
+  • isObraRemoved
+  • incrementGeralCount
+  • getRemovedObrasList
+  • setSessionActive
+  • addObraToRemovedList
+  • startSessionOnFirstSave
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\adapters\obra-adapter.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (1):
+  • isSessionActive ← ../server-modules/session-manager.js
+
+📝 FUNÇÕES DECLARADAS (5):
+  • removeBaseObraFromHTML
+  • loadObrasFromServer
+  • migrateSessionToNewIds
+  • loadSingleObra
+  • debugLoadObras
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • removeBaseObraFromHTML → [querySelectorAll, remove, getElementById, forEach]
+  • loadObrasFromServer → [fetch]
+  • migrateSessionToNewIds → [map]
+  • loadSingleObra → [nenhuma função chamada]
+  • debugLoadObras → [nenhuma função chamada]
+
+📤 EXPORTS (4):
+  • loadSingleObra
+  • loadObrasFromServer
+  • removeBaseObraFromHTML
+  • debugLoadObras // ✅ Exportar função de debug
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\adapters\session-adapter.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (4):
+  • SESSION_STORAGE_KEY ← ../../config/config.js
+  • REMOVED_PROJECTS_KEY ← ../../config/config.js
+  • SESSION_ACTIVE_KEY ← ../../config/config.js
+  • ensureStringId ← ../../utils/utils.js
+
+📝 FUNÇÕES DECLARADAS (19):
+  • isSessionActive
+  • setSessionActive
+  • getSessionObras
+  • setSessionObras
+  • addObraToSession
+  • removeObraFromSessionLocal
+  • clearSessionObras
+  • clearRenderedObras
+  • initializeGeralCount
+  • incrementGeralCount
+  • decrementGeralCount
+  • getGeralCount
+  • resetDisplayLogic
+  • startNewSession
+  • startSessionOnFirstSave
+  • saveFirstObraIdOfSession
+  • addObraToRemovedList
+  • getRemovedObrasList
+  • isObraRemoved
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • isSessionActive → [getItem]
+  • setSessionActive → [clearSessionObras, clearRenderedObras, setItem]
+  • getSessionObras → [parse, getItem]
+  • setSessionObras → [setItem]
+  • addObraToSession → [getSessionObras, push, setSessionObras, includes]
+  • removeObraFromSessionLocal → [getSessionObras, setSessionObras, filter]
+  • clearSessionObras → [removeItem]
+  • clearRenderedObras → [querySelectorAll, getElementById, forEach]
+  • initializeGeralCount → [nenhuma função chamada]
+  • incrementGeralCount → [initializeGeralCount]
+  • decrementGeralCount → [initializeGeralCount, querySelectorAll]
+  • getGeralCount → [initializeGeralCount]
+  • resetDisplayLogic → [clearSessionObras, clearRenderedObras, setSessionActive, removeItem]
+  • startNewSession → [clearSessionObras, clearRenderedObras, setSessionActive]
+  • startSessionOnFirstSave → [startNewSession]
+  • saveFirstObraIdOfSession → [addObraToSession, setItem, ensureStringId, getItem, incrementGeralCount]
+  • addObraToRemovedList → [includes, setItem, getRemovedObrasList, ensureStringId, decrementGeralCount, push]
+  • getRemovedObrasList → [parse, getItem]
+  • isObraRemoved → [includes, getRemovedObrasList]
+
+📤 EXPORTS (18):
+  • addObraToSession
+  • getRemovedObrasList
+  • saveFirstObraIdOfSession
+  • isObraRemoved
+  • decrementGeralCount
+  • setSessionActive
+  • removeObraFromSessionLocal
+  • resetDisplayLogic
+  • clearSessionObras
+  • initializeGeralCount
+  • addObraToRemovedList
+  • startNewSession
+  • isSessionActive
+  • getSessionObras
+  • getGeralCount
+  • clearRenderedObras
+  • startSessionOnFirstSave
+  • incrementGeralCount
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\adapters\shutdown-adapter.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (3):
+  • setSessionActive ← ../adapters/session-manager.js
+  • clearSessionObras ← ../adapters/session-manager.js
+  • clearRenderedObras ← ../adapters/session-manager.js
+
+📝 FUNÇÕES DECLARADAS (6):
+  • shutdownManual
+  • ensureSingleActiveSession
+  • initializeSession
+  • showShutdownMessage
+  • showFinalShutdownMessage
+  • showFinalMessageWithManualClose
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • shutdownManual → [nenhuma função chamada]
+  • ensureSingleActiveSession → [nenhuma função chamada]
+  • initializeSession → [nenhuma função chamada]
+  • showShutdownMessage → [getElementById, remove]
+  • showFinalShutdownMessage → [translateY, getElementById, createElement, blur, rgba]
+  • showFinalMessageWithManualClose → [blur, close, getElementById, rgba]
+
+📤 EXPORTS (3):
+  • initializeSession
+  • shutdownManual
+  • ensureSingleActiveSession
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\data-files\data-builders.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (11):
+  • generateObraId ← ./data-utils-core.js
+  • generateProjectId ← ./data-utils-core.js
+  • generateRoomId ← ./data-utils-core.js
+  • getObraName ← ./data-utils-core.js
+  • getProjectName ← ./data-utils-core.js
+  • getRoomName ← ./data-utils-core.js
+  • extractClimatizationInputs ← ./data-extractors.js
+  • extractMachinesData ← ./data-extractors.js
+  • extractCapacityData ← ./data-extractors.js
+  • extractThermalGainsData ← ./data-extractors.js
+  • extractConfigurationData ← ./data-extractors.js
+
+📝 FUNÇÕES DECLARADAS (3):
+  • buildObraData
+  • buildProjectData
+  • extractRoomData
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • buildObraData → [nenhuma função chamada]
+  • buildProjectData → [nenhuma função chamada]
+  • extractRoomData → [nenhuma função chamada]
+
+📤 EXPORTS (3):
+  • buildProjectData
+  • extractRoomData
+  • buildObraData
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\data-files\data-extractors.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (4):
+  • getRoomFullId ← ./data-utils-core.js
+  • getMachineName ← ./data-utils-core.js
+  • parseMachinePrice ← ./data-utils-core.js
+  • extractNumberFromText ← ./data-utils-core.js
+
+📝 FUNÇÕES DECLARADAS (7):
+  • extractThermalGainsData
+  • extractClimatizationInputs
+  • extractMachinesData
+  • extractClimatizationMachineData
+  • extractCapacityData
+  • extractConfigurationData
+  • attemptAlternativeSearch
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • extractThermalGainsData → [nenhuma função chamada]
+  • extractClimatizationInputs → [nenhuma função chamada]
+  • extractMachinesData → [nenhuma função chamada]
+  • extractClimatizationMachineData → [nenhuma função chamada]
+  • extractCapacityData → [nenhuma função chamada]
+  • extractConfigurationData → [nenhuma função chamada]
+  • attemptAlternativeSearch → [nenhuma função chamada]
+
+📤 EXPORTS (6):
+  • extractConfigurationData
+  • extractClimatizationInputs
+  • extractThermalGainsData
+  • extractClimatizationMachineData
+  • extractCapacityData
+  • extractMachinesData
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\data-files\data-populate.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (10):
+  • fillClimatizationInputs
+  • fillThermalGainsData
+  • fillCapacityData
+  • fillConfigurationData
+  • fillMachinesData
+  • populateMachineData
+  • populateObraData
+  • populateProjectData
+  • populateRoomData
+  • waitForElement
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • fillClimatizationInputs → [nenhuma função chamada]
+  • fillThermalGainsData → [nenhuma função chamada]
+  • fillCapacityData → [nenhuma função chamada]
+  • fillConfigurationData → [nenhuma função chamada]
+  • fillMachinesData → [isArray]
+  • populateMachineData → [nenhuma função chamada]
+  • populateObraData → [nenhuma função chamada]
+  • populateProjectData → [nenhuma função chamada]
+  • populateRoomData → [nenhuma função chamada]
+  • waitForElement → [Promise, checkElement, now, querySelector]
+
+📤 EXPORTS (10):
+  • fillCapacityData
+  • fillClimatizationInputs
+  • fillConfigurationData
+  • fillThermalGainsData
+  • fillMachinesData
+  • populateObraData
+  • populateProjectData
+  • populateMachineData
+  • waitForElement
+
+  • populateRoomData
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\data-files\data-utils-core.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (13):
+  • generateSecureId
+  • generateObraId
+  • generateProjectId
+  • generateRoomId
+  • getRoomFullId
+  • getObraName
+  • getProjectName
+  • getRoomName
+  • extractNumberFromText
+  • getMachineName
+  • parseMachinePrice
+  • safeNumber
+  • debugThermalGainsElements
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • generateSecureId → [letras, 99, floor]
+  • generateObraId → [generateSecureId]
+  • generateProjectId → [generateSecureId]
+  • generateRoomId → [generateSecureId]
+  • getRoomFullId → [includes]
+  • getObraName → [nenhuma função chamada]
+  • getProjectName → [nenhuma função chamada]
+  • getRoomName → [nenhuma função chamada]
+  • extractNumberFromText → [match, isNaN, replace, parseFloat]
+  • getMachineName → [querySelector]
+  • parseMachinePrice → [replace, trim, parseFloat]
+  • safeNumber → [toString, parseFloat, isNaN, replace]
+  • debugThermalGainsElements → [getRoomFullId]
+
+📤 EXPORTS (13):
+  • // NOVO SISTEMA DE IDs SEGUROS
+    generateSecureId
+  • getRoomName
+  • getProjectName
+  • // FUNÇÕES DE NOMEAÇÃO CORRIGIDAS
+    getRoomFullId
+  • generateObraId
+  • generateRoomId
+  • safeNumber
+  • getMachineName
+  • // FUNÇÕES UTILITÁRIAS (MANTIDAS)
+    extractNumberFromText
+  • parseMachinePrice
+  • debugThermalGainsElements
+  • getObraName
+  • generateProjectId
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\modules\climatizacao.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (1):
+  • calculateVazaoArAndThermalGains ← ../../calculos/calculos-manager.js
+
+📝 FUNÇÕES DECLARADAS (10):
+  • buildClimatizationSection
+  • buildClimatizationTable
+  • buildPressurizationRow
+  • buildClimaRow
+  • buildClimaCell
+  • buildSelectInput
+  • buildTextInput
+  • buildResultRow
+  • togglePressurizationFields
+  • buildThermalGainsSection
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • buildClimatizationSection → [nenhuma função chamada]
+  • buildClimatizationTable → [nenhuma função chamada]
+  • buildPressurizationRow → [nenhuma função chamada]
+  • buildClimaRow → [nenhuma função chamada]
+  • buildClimaCell → [nenhuma função chamada]
+  • buildSelectInput → [nenhuma função chamada]
+  • buildTextInput → [nenhuma função chamada]
+  • buildResultRow → [nenhuma função chamada]
+  • togglePressurizationFields → [nenhuma função chamada]
+  • buildThermalGainsSection → [nenhuma função chamada]
+
+📤 EXPORTS (10):
+  • buildClimaCell
+  • buildResultRow
+  • buildClimatizationTable
+  • togglePressurizationFields
+  • buildTextInput
+  • buildThermalGainsSection
+  • buildSelectInput
+  • buildPressurizationRow
+  • buildClimatizationSection
+  • buildClimaRow
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\modules\configuracao.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (1):
+  • buildConfigurationSection
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • buildConfigurationSection → [nenhuma função chamada]
+
+📤 EXPORTS (1):
+  • buildConfigurationSection
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\modules\maquinas.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (22):
+  • buildMachinesSection ← ./machines/machinesBuilder.js
+  • loadSavedMachines ← ./machines/machinesBuilder.js
+  • updateCapacityFromThermalGains ← ./machines/machinesBuilder.js
+  • initializeCapacityCalculations ← ./machines/machinesBuilder.js
+  • refreshAllCapacityCalculations ← ./machines/machinesBuilder.js
+  • addMachine ← ./machines/machineManagement.js
+  • calculateMachinePrice ← ./machines/machineManagement.js
+  • updateMachineOptions ← ./machines/machineManagement.js
+  • deleteClimatizationMachine ← ./machines/machineManagement.js
+  • toggleMachineSection ← ./machines/machineManagement.js
+  • updateMachineTitle ← ./machines/machineManagement.js
+  • calculateCapacitySolution ← ./machines/capacityCalculator.js
+  • updateBackupConfiguration ← ./machines/capacityCalculator.js
+  • handleClimaInputBackupChange ← ./machines/capacityCalculator.js
+  • syncCapacityTableBackup ← ./machines/capacityCalculator.js
+  • saveCapacityData ← ./machines/capacityCalculator.js
+  • loadCapacityData ← ./machines/capacityCalculator.js
+  • initializeStaticCapacityTable ← ./machines/capacityCalculator.js
+  • * as Utilities ← ./machines/utilities.js
+  • * as MachinesBuilder ← ./machines/machinesBuilder.js
+  • * as MachineManagement ← ./machines/machineManagement.js
+  • * as CapacityCalculator ← ./machines/capacityCalculator.js
+
+📝 FUNÇÕES DECLARADAS (4):
+  • initializeMachinesModule
+  • initializeBackupSync
+  • initializeClimaInputBackupListener
+  • initializeFatorSegurancaListeners
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • initializeMachinesModule → [initializeFatorSegurancaListeners, initializeClimaInputBackupListener, setTimeout]
+  • initializeBackupSync → [querySelectorAll, syncCapacityTableBackup, setTimeout, forEach]
+  • initializeClimaInputBackupListener → [addEventListener, handleClimaInputBackupChange, closest, contains]
+  • initializeFatorSegurancaListeners → [addEventListener, replace, startsWith, calculateCapacitySolution]
+
+📤 EXPORTS (17):
+  • buildMachinesSection
+  • addMachine
+  • updateMachineTitle
+  • refreshAllCapacityCalculations
+  • loadCapacityData
+  • updateCapacityFromThermalGains
+  • toggleMachineSection
+  • loadSavedMachines
+  • initializeMachinesModule
+  • initializeCapacityCalculations
+  • deleteClimatizationMachine
+  • saveCapacityData
+  • updateMachineOptions
+  • calculateMachinePrice
+  • updateBackupConfiguration
+  • calculateCapacitySolution
+  • initializeStaticCapacityTable
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\modules\room-operations.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (3):
+  • showEmptyProjectMessageIfNeeded ← ../../ui/interface.js
+  • removeEmptyProjectMessage ← ../../ui/interface.js
+  • buildRoomHTML ← ./salas.js
+
+📝 FUNÇÕES DECLARADAS (11):
+  • loadMachinesPreloadModule
+  • createEmptyRoom
+  • getRoomCountInProject
+  • initializeRoomComponents
+  • insertRoomIntoProject
+  • addNewRoom
+  • addNewRoomLegacy
+  • deleteRoom
+  • deleteRoomLegacy
+  • fixExistingCapacityInputs
+  • if
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • loadMachinesPreloadModule → [nenhuma função chamada]
+  • createEmptyRoom → [nenhuma função chamada]
+  • getRoomCountInProject → [nenhuma função chamada]
+  • initializeRoomComponents → [nenhuma função chamada]
+  • insertRoomIntoProject → [nenhuma função chamada]
+  • addNewRoom → [nenhuma função chamada]
+  • addNewRoomLegacy → [nenhuma função chamada]
+  • deleteRoom → [nenhuma função chamada]
+  • deleteRoomLegacy → [nenhuma função chamada]
+  • fixExistingCapacityInputs → [querySelectorAll, forEach]
+  • if → [nenhuma função chamada]
+
+📤 EXPORTS (6):
+  • deleteRoomLegacy
+  • addNewRoom
+  • addNewRoomLegacy
+  • insertRoomIntoProject
+  • deleteRoom
+  • createEmptyRoom
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\modules\salas.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (3):
+  • buildClimatizationSection ← ./climatizacao.js
+  • buildMachinesSection ← ./maquinas.js
+  • buildConfigurationSection ← ./configuracao.js
+
+📝 FUNÇÕES DECLARADAS (3):
+  • buildRoomHTML
+  • buildRoomHeader
+  • buildRoomActions
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • buildRoomHTML → [nenhuma função chamada]
+  • buildRoomHeader → [nenhuma função chamada]
+  • buildRoomActions → [nenhuma função chamada]
+
+📤 EXPORTS (3):
+  • buildRoomHTML
+  • buildRoomHeader
+  • buildRoomActions
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\modules\machines\capacityCalculator.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (2):
+  • updateElementText ← ./utilities.js
+  • findRoomId ← ./utilities.js
+
+📝 FUNÇÕES DECLARADAS (20):
+  • buildCapacityCalculationTable
+  • initializeStaticCapacityTable
+  • scheduleCapacityInit
+  • initializeCapacitySystem
+  • applyFatorSeguranca
+  • getThermalLoadTR
+  • calculateCapacitySolution
+  • getCapacityData
+  • saveCapacityData
+  • loadCapacityData
+  • applyCapacityData
+  • applyBackupConfiguration
+  • getBackupFromClimatization
+  • getBackupFromClimaInputs
+  • updateCapacityDisplay
+  • updateCargaEstimadaInput
+  • updateBackupConfiguration
+  • handleClimaInputBackupChange
+  • syncBackupWithClimaInputs
+  • syncCapacityTableBackup
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • buildCapacityCalculationTable → [getBackupFromClimaInputs, scheduleCapacityInit, FOLGA, Estimada, TOTAL]
+  • initializeStaticCapacityTable → [scheduleCapacityInit, querySelector]
+  • scheduleCapacityInit → [has]
+  • initializeCapacitySystem → [applyFatorSeguranca, get]
+  • applyFatorSeguranca → [nenhuma função chamada]
+  • getThermalLoadTR → [nenhuma função chamada]
+  • calculateCapacitySolution → [nenhuma função chamada]
+  • getCapacityData → [nenhuma função chamada]
+  • saveCapacityData → [getCapacityData]
+  • loadCapacityData → [nenhuma função chamada]
+  • applyCapacityData → [nenhuma função chamada]
+  • applyBackupConfiguration → [nenhuma função chamada]
+  • getBackupFromClimatization → [nenhuma função chamada]
+  • getBackupFromClimaInputs → [nenhuma função chamada]
+  • updateCapacityDisplay → [round, editável, updateCargaEstimadaInput]
+  • updateCargaEstimadaInput → [nenhuma função chamada]
+  • updateBackupConfiguration → [closest, saveCapacityData, findRoomId, calculateCapacitySolution, syncBackupWithClimaInputs]
+  • handleClimaInputBackupChange → [nenhuma função chamada]
+  • syncBackupWithClimaInputs → [nenhuma função chamada]
+  • syncCapacityTableBackup → [getBackupFromClimaInputs, setTimeout]
+
+📤 EXPORTS (10):
+  • buildCapacityCalculationTable
+  • getCapacityData
+  • loadCapacityData
+  • saveCapacityData
+  • applyCapacityData
+  • initializeStaticCapacityTable
+  • updateBackupConfiguration
+  • calculateCapacitySolution
+  • syncCapacityTableBackup
+  • handleClimaInputBackupChange
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\modules\machines\machineManagement.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (4):
+  • loadMachinesData ← ./machinesBuilder.js
+  • updateElementText ← ./utilities.js
+  • removeEmptyMessage ← ./utilities.js
+  • showEmptyMessage ← ./utilities.js
+
+📝 FUNÇÕES DECLARADAS (19):
+  • generateUniqueMachineId
+  • addMachine
+  • buildClimatizationMachineHTML
+  • buildFormGroup
+  • buildSelectWithDefault
+  • buildOptionsHTML
+  • handlePowerChange
+  • updateOptionValues
+  • handleOptionClick
+  • updateOptionSelection
+  • toggleMachineSection
+  • updateMachineTitle
+  • updateMachineOptions
+  • updateMachineUI
+  • resetMachineFields
+  • updateSelect
+  • calculateMachinePrice
+  • deleteClimatizationMachine
+  • if
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • generateUniqueMachineId → [nenhuma função chamada]
+  • addMachine → [nenhuma função chamada]
+  • buildClimatizationMachineHTML → [map]
+  • buildFormGroup → [nenhuma função chamada]
+  • buildSelectWithDefault → [nenhuma função chamada]
+  • buildOptionsHTML → [nenhuma função chamada]
+  • handlePowerChange → [nenhuma função chamada]
+  • updateOptionValues → [nenhuma função chamada]
+  • handleOptionClick → [nenhuma função chamada]
+  • updateOptionSelection → [nenhuma função chamada]
+  • toggleMachineSection → [closest, toggle, querySelector]
+  • updateMachineTitle → [trim]
+  • updateMachineOptions → [getAttribute]
+  • updateMachineUI → [nenhuma função chamada]
+  • resetMachineFields → [nenhuma função chamada]
+  • updateSelect → [querySelector]
+  • calculateMachinePrice → [nenhuma função chamada]
+  • deleteClimatizationMachine → [querySelectorAll, showEmptyMessage, closest, remove]
+  • if → [nenhuma função chamada]
+
+📤 EXPORTS (11):
+  • addMachine
+  • updateMachineTitle
+  • handlePowerChange
+  • toggleMachineSection
+  • deleteClimatizationMachine
+  • updateMachineOptions
+  • calculateMachinePrice
+  • handleOptionClick
+  • updateOptionSelection
+  • updateOptionValues
+  • buildClimatizationMachineHTML
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\modules\machines\machinesBuilder.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (3):
+  • buildCapacityCalculationTable ← ./capacityCalculator.js
+  • removeEmptyMessage ← ./utilities.js
+  • generateSecureId ← ../../data-files/data-utils-core.js
+
+📝 FUNÇÕES DECLARADAS (14):
+  • buildMachinesSection
+  • loadMachinesData
+  • generateMachineId
+  • loadSavedMachines
+  • buildClimatizationMachineFromSavedData
+  • buildFormGroup
+  • buildSelectWithSelected
+  • buildSavedOptionsHTML
+  • calculateBasePrice
+  • updateCapacityFromThermalGains
+  • initializeCapacityCalculations
+  • refreshAllCapacityCalculations
+  • if
+  • if
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • buildMachinesSection → [nenhuma função chamada]
+  • loadMachinesData → [isArray, válido]
+  • generateMachineId → [nenhuma função chamada]
+  • loadSavedMachines → [nenhuma função chamada]
+  • buildClimatizationMachineFromSavedData → [nenhuma função chamada]
+  • buildFormGroup → [nenhuma função chamada]
+  • buildSelectWithSelected → [nenhuma função chamada]
+  • buildSavedOptionsHTML → [nenhuma função chamada]
+  • calculateBasePrice → [nenhuma função chamada]
+  • updateCapacityFromThermalGains → [calculateCapacitySolution]
+  • initializeCapacityCalculations → [querySelectorAll, setTimeout, querySelector, forEach]
+  • refreshAllCapacityCalculations → [querySelectorAll, calculateCapacitySolution, forEach]
+  • if → [nenhuma função chamada]
+  • if → [nenhuma função chamada]
+
+📤 EXPORTS (7):
+  • loadMachinesData
+  • buildMachinesSection
+  • refreshAllCapacityCalculations
+  • updateCapacityFromThermalGains
+  • loadSavedMachines
+  • initializeCapacityCalculations
+  • generateMachineId // ✅ NOVA EXPORT
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\data\modules\machines\utilities.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (4):
+  • updateElementText
+  • removeEmptyMessage
+  • showEmptyMessage
+  • findRoomId
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • updateElementText → [nenhuma função chamada]
+  • removeEmptyMessage → [nenhuma função chamada]
+  • showEmptyMessage → [nenhuma função chamada]
+  • findRoomId → [nenhuma função chamada]
+
+📤 EXPORTS (4):
+  • findRoomId
+  • showEmptyMessage
+  • removeEmptyMessage
+  • updateElementText
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\calculos\calculos-manager.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (11):
+  • waitForSystemConstants ← ./utils/helpers.js
+  • validateSystemConstants ← ./utils/helpers.js
+  • safeNumber ← ./utils/helpers.js
+  • calculateVazaoAr ← ./airFlow/airFlowCalculations.js
+  • calculateVazaoArAndThermalGains ← ./airFlow/airFlowCalculations.js
+  • computeAirFlowRate ← ./airFlow/airFlowCalculations.js
+  • updateFlowRateDisplay ← ./airFlow/airFlowDisplay.js
+  • calculateThermalGains ← ./thermalGains/thermalCalculations.js
+  • calculateUValues ← ./thermalGains/thermalCalculations.js
+  • calculateAuxiliaryVariables ← ./thermalGains/thermalCalculations.js
+  • updateThermalGainsDisplay ← ./thermalGains/thermalDisplay.js
+
+📝 FUNÇÕES DECLARADAS (2):
+  • debouncedCalculation
+  • calculateVazaoArAndThermalGainsDebounced
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • debouncedCalculation → [has, clearTimeout, get]
+  • calculateVazaoArAndThermalGainsDebounced → [debouncedCalculation]
+
+📤 EXPORTS (13):
+  • // Thermal Gains
+  calculateThermalGains
+  • updateFlowRateDisplay
+  • // Air Flow
+  calculateVazaoAr
+  • validateSystemConstants
+  • calculateAuxiliaryVariables
+  • // Debounce functions
+  debouncedCalculation
+  • computeAirFlowRate
+  • calculateVazaoArAndThermalGains
+  • // System
+  waitForSystemConstants
+  • calculateVazaoArAndThermalGainsDebounced
+  • updateThermalGainsDisplay
+  • calculateUValues
+  • safeNumber
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\calculos\calculos-view.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (0):
+  Nenhum export
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\calculos\airFlow\airFlowCalculations.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (7):
+  • CALCULATION_CONSTANTS ← ../../../config/config.js
+  • waitForSystemConstants ← ../utils/helpers.js
+  • validateSystemConstants ← ../utils/helpers.js
+  • collectClimatizationInputs ← ../utils/helpers.js
+  • safeNumber ← ../utils/helpers.js
+  • updateFlowRateDisplay ← ./airFlowDisplay.js
+  • calculateThermalGains ← ../thermalGains/thermalCalculations.js
+
+📝 FUNÇÕES DECLARADAS (5):
+  • calculateDoorFlow
+  • computeAirFlowRate
+  • findRoomContent
+  • calculateVazaoAr
+  • calculateVazaoArAndThermalGains
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • calculateDoorFlow → [safeNumber]
+  • computeAirFlowRate → [safeNumber]
+  • findRoomContent → [nenhuma função chamada]
+  • calculateVazaoAr → [nenhuma função chamada]
+  • calculateVazaoArAndThermalGains → [nenhuma função chamada]
+
+📤 EXPORTS (5):
+  • findRoomContent
+  • calculateVazaoAr
+  • computeAirFlowRate
+  • calculateVazaoArAndThermalGains
+  • calculateDoorFlow
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\calculos\airFlow\airFlowDisplay.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (1):
+  • updateFlowRateDisplay
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • updateFlowRateDisplay → [nenhuma função chamada]
+
+📤 EXPORTS (1):
+  • updateFlowRateDisplay
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\calculos\thermalGains\thermalCalculations.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (15):
+  • waitForSystemConstants ← ../utils/helpers.js
+  • validateSystemConstants ← ../utils/helpers.js
+  • collectClimatizationInputs ← ../utils/helpers.js
+  • safeNumber ← ../utils/helpers.js
+  • calculateCeilingGain ← ./thermalComponents.js
+  • calculateWallGain ← ./thermalComponents.js
+  • calculatePartitionGain ← ./thermalComponents.js
+  • calculateFloorGain ← ./thermalComponents.js
+  • calculateLightingGain ← ./thermalComponents.js
+  • calculateDissipationGain ← ./thermalComponents.js
+  • calculatePeopleGain ← ./thermalComponents.js
+  • calculateExternalAirSensibleGain ← ./thermalComponents.js
+  • calculateExternalAirLatentGain ← ./thermalComponents.js
+  • calculateTotals ← ./thermalDisplay.js
+  • updateThermalGainsDisplay ← ./thermalDisplay.js
+
+📝 FUNÇÕES DECLARADAS (4):
+  • findRoomContentThermal
+  • calculateThermalGains
+  • calculateUValues
+  • calculateAuxiliaryVariables
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • findRoomContentThermal → [nenhuma função chamada]
+  • calculateThermalGains → [nenhuma função chamada]
+  • calculateUValues → [nenhuma função chamada]
+  • calculateAuxiliaryVariables → [safeNumber]
+
+📤 EXPORTS (4):
+  • calculateThermalGains
+  • calculateUValues
+  • findRoomContentThermal
+  • calculateAuxiliaryVariables
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\calculos\thermalGains\thermalComponents.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (1):
+  • safeNumber ← ../utils/helpers.js
+
+📝 FUNÇÕES DECLARADAS (10):
+  • calculateCeilingGain
+  • calculateWallGain
+  • calculatePartitionGain
+  • calculateFloorGain
+  • calculateLightingGain
+  • calculateDissipationGain
+  • calculatePeopleGain
+  • calculateExternalAirSensibleGain
+  • calculateExternalAirLatentGain
+  • if
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • calculateCeilingGain → [safeNumber]
+  • calculateWallGain → [safeNumber]
+  • calculatePartitionGain → [safeNumber]
+  • calculateFloorGain → [safeNumber]
+  • calculateLightingGain → [safeNumber]
+  • calculateDissipationGain → [safeNumber]
+  • calculatePeopleGain → [safeNumber]
+  • calculateExternalAirSensibleGain → [nenhuma função chamada]
+  • calculateExternalAirLatentGain → [safeNumber]
+  • if → [nenhuma função chamada]
+
+📤 EXPORTS (9):
+  • calculatePeopleGain
+  • calculateLightingGain
+  • calculateExternalAirLatentGain
+  • calculateDissipationGain
+  • calculateCeilingGain
+  • calculateFloorGain
+  • calculateWallGain
+  • calculatePartitionGain
+  • calculateExternalAirSensibleGain
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\calculos\thermalGains\thermalDisplay.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (2):
+  • updateElementText ← ../utils/helpers.js
+  • safeNumber ← ../utils/helpers.js
+
+📝 FUNÇÕES DECLARADAS (5):
+  • calculateTotals
+  • updateThermalGainsDisplay
+  • updateWallDisplay
+  • updatePartitionDisplay
+  • if
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • calculateTotals → [ceil]
+  • updateThermalGainsDisplay → [nenhuma função chamada]
+  • updateWallDisplay → [safeNumber]
+  • updatePartitionDisplay → [safeNumber]
+  • if → [nenhuma função chamada]
+
+📤 EXPORTS (4):
+  • updateWallDisplay
+  • updatePartitionDisplay
+  • calculateTotals
+  • updateThermalGainsDisplay
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\calculos\utils\helpers.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (8):
+  • safeNumber
+  • waitForSystemConstants
+  • validateSystemConstants
+  • collectClimatizationInputs
+  • findClimatizationSection
+  • updateElementText
+  • updateAirFlowDisplay
+  • updateThermalGainsDisplay
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • safeNumber → [Number]
+  • waitForSystemConstants → [Promise, setTimeout]
+  • validateSystemConstants → [nenhuma função chamada]
+  • collectClimatizationInputs → [nenhuma função chamada]
+  • findClimatizationSection → [nenhuma função chamada]
+  • updateElementText → [getElementById]
+  • updateAirFlowDisplay → [nenhuma função chamada]
+  • updateThermalGainsDisplay → [nenhuma função chamada]
+
+📤 EXPORTS (8):
+  • validateSystemConstants
+  • findClimatizationSection
+  • collectClimatizationInputs
+  • updateAirFlowDisplay
+  • updateElementText
+  • updateThermalGainsDisplay
+  • waitForSystemConstants
+  • safeNumber
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\obras\obras-controller.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (0):
+  Nenhum export
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\obras\obras-view.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (0):
+  Nenhum export
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\projetos\projetos-controller.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (0):
+  Nenhum export
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\projetos\projetos-view.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (0):
+  Nenhum export
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\salas\salas-controller.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (0):
+  Nenhum export
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\features\salas\salas-view.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (0):
+  Nenhuma função declarada
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  Nenhuma função com uso analisado
+
+📤 EXPORTS (0):
+  Nenhum export
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\ui\edit.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (9):
+  • makeEditable
+  • enableEditing
+  • selectElementContent
+  • attachEditingEventListeners
+  • handleBlur
+  • saveInlineEdit
+  • disableEditing
+  • validateEditedText
+  • cancelInlineEdit
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • makeEditable → [attachEditingEventListeners, contains, enableEditing, selectElementContent, trim]
+  • enableEditing → [add]
+  • selectElementContent → [selectNodeContents, createRange, focus, addRange, getSelection, removeAllRanges]
+  • attachEditingEventListeners → [addEventListener, saveInlineEdit, preventDefault, removeEventListener]
+  • handleBlur → [saveInlineEdit, removeEventListener]
+  • saveInlineEdit → [trim, disableEditing]
+  • disableEditing → [remove]
+  • validateEditedText → [nenhuma função chamada]
+  • cancelInlineEdit → [disableEditing]
+
+📤 EXPORTS (8):
+  • attachEditingEventListeners
+  • validateEditedText
+  • cancelInlineEdit
+  • saveInlineEdit
+  • enableEditing
+  • selectElementContent
+  • makeEditable
+  • disableEditing
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\ui\interface.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (26):
+  • showSystemStatus ← ./intr-files/status-manager.js
+  • removeExistingStatusBanner ← ./intr-files/status-manager.js
+  • createStatusBanner ← ./intr-files/status-manager.js
+  • insertStatusBanner ← ./intr-files/status-manager.js
+  • scheduleStatusBannerRemoval ← ./intr-files/status-manager.js
+  • toggleElementVisibility ← ./intr-files/ui-helpers.js
+  • expandElement ← ./intr-files/ui-helpers.js
+  • collapseElement ← ./intr-files/ui-helpers.js
+  • calculateRoomCompletionStats ← ./intr-files/ui-helpers.js
+  • removeEmptyObraMessage ← ./intr-files/ui-helpers.js
+  • showEmptyObraMessageIfNeeded ← ./intr-files/ui-helpers.js
+  • removeEmptyProjectMessage ← ./intr-files/ui-helpers.js
+  • showEmptyProjectMessageIfNeeded ← ./intr-files/ui-helpers.js
+  • createEmptyObra ← ./intr-files/obra-manager.js
+  • buildObraHTML ← ./intr-files/obra-manager.js
+  • buildObraActionsFooter ← ./intr-files/obra-manager.js
+  • insertObraIntoDOM ← ./intr-files/obra-manager.js
+  • updateObraButtonAfterSave ← ./intr-files/obra-manager.js
+  • deleteObra ← ./intr-files/obra-manager.js
+  • getNextObraNumber ← ./intr-files/obra-manager.js
+  • addNewObra ← ./intr-files/obra-manager.js
+  • createEmptyProject ← ./intr-files/project-manager.js
+  • buildProjectHTML ← ./intr-files/project-manager.js
+  • addNewProjectToObra ← ./intr-files/project-manager.js
+  • getNextProjectNumber ← ./intr-files/project-manager.js
+  • createEmptyRoom ← ../data/modules/room-operations.js
+
+📝 FUNÇÕES DECLARADAS (12):
+  • addNewProject
+  • toggleObra
+  • toggleProject
+  • toggleRoom
+  • toggleSection
+  • toggleSubsection
+  • downloadPDF
+  • downloadWord
+  • saveOrUpdateObra
+  • makeEditable
+  • verifyObraData
+  • if
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • addNewProject → [addNewObra, getNextObraNumber, then]
+  • toggleObra → [nenhuma função chamada]
+  • toggleProject → [nenhuma função chamada]
+  • toggleRoom → [nenhuma função chamada]
+  • toggleSection → [nenhuma função chamada]
+  • toggleSubsection → [nenhuma função chamada]
+  • downloadPDF → [nenhuma função chamada]
+  • downloadWord → [nenhuma função chamada]
+  • saveOrUpdateObra → [preventDefault, stopPropagation]
+  • makeEditable → [nenhuma função chamada]
+  • verifyObraData → [nenhuma função chamada]
+  • if → [nenhuma função chamada]
+
+📤 EXPORTS (37):
+  • removeExistingStatusBanner
+  • removeEmptyObraMessage
+  • showSystemStatus
+  • createEmptyProject
+  • downloadPDF
+  • toggleObra
+  • makeEditable
+  • getNextObraNumber
+  • createEmptyRoom
+  • saveOrUpdateObra
+  • toggleProject
+  • buildProjectHTML
+  • getNextProjectNumber
+  • buildObraActionsFooter
+  • showEmptyObraMessageIfNeeded
+  • toggleRoom
+  • toggleSubsection
+  • insertObraIntoDOM
+  • createStatusBanner
+  • addNewProjectToObra
+  • createEmptyObra
+  • verifyObraData
+  • insertStatusBanner
+  • calculateRoomCompletionStats
+  • removeEmptyProjectMessage
+  • deleteObra
+  • addNewProject
+  • addNewObra
+  • showEmptyProjectMessageIfNeeded
+  • downloadWord
+  • toggleElementVisibility
+  • toggleSection
+  • updateObraButtonAfterSave
+  • collapseElement
+  • buildObraHTML
+  • scheduleStatusBannerRemoval
+  • expandElement
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\ui\intr-files\obra-manager.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (3):
+  • showConfirmationModal ← ./modal/modal.js
+  • undoDeletion ← ./modal/modal.js
+  • hideToast ← ./modal/modal.js
+
+📝 FUNÇÕES DECLARADAS (9):
+  • createEmptyObra
+  • buildObraHTML
+  • buildObraActionsFooter
+  • insertObraIntoDOM
+  • updateObraButtonAfterSave
+  • deleteObra
+  • getNextObraNumber
+  • addNewObra
+  • generateObraId
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • createEmptyObra → [fornecido, buildObraHTML, insertObraIntoDOM, generateObraId]
+  • buildObraHTML → [nenhuma função chamada]
+  • buildObraActionsFooter → [nenhuma função chamada]
+  • insertObraIntoDOM → [getElementById]
+  • updateObraButtonAfterSave → [nenhuma função chamada]
+  • deleteObra → [nenhuma função chamada]
+  • getNextObraNumber → [querySelectorAll, map, parseInt]
+  • addNewObra → [getNextObraNumber]
+  • generateObraId → [floor]
+
+📤 EXPORTS (9):
+  • createEmptyObra
+  • generateObraId
+  • updateObraButtonAfterSave
+  • buildObraHTML
+  • buildObraActionsFooter
+  • deleteObra
+  • insertObraIntoDOM
+  • addNewObra
+  • getNextObraNumber
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\ui\intr-files\project-manager.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (3):
+  • createEmptyRoom ← ../../data/rooms.js
+  • generateProjectId ← ../../data/data-utils.js
+  • removeEmptyObraMessage ← ./ui-helpers.js
+
+📝 FUNÇÕES DECLARADAS (6):
+  • buildProjectHTML
+  • createEmptyProject
+  • addNewProjectToObra
+  • getNextProjectNumber
+  • deleteProject
+  • if
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • buildProjectHTML → [nenhuma função chamada]
+  • createEmptyProject → [nenhuma função chamada]
+  • addNewProjectToObra → [nenhuma função chamada]
+  • getNextProjectNumber → [nenhuma função chamada]
+  • deleteProject → [nenhuma função chamada]
+  • if → [nenhuma função chamada]
+
+📤 EXPORTS (5):
+  • buildProjectHTML
+  • createEmptyProject
+  • getNextProjectNumber
+  • addNewProjectToObra
+  • deleteProject
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\ui\intr-files\status-manager.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (1):
+  • UI_CONSTANTS ← ../../config/config.js
+
+📝 FUNÇÕES DECLARADAS (5):
+  • showSystemStatus
+  • removeExistingStatusBanner
+  • createStatusBanner
+  • insertStatusBanner
+  • scheduleStatusBannerRemoval
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • showSystemStatus → [insertStatusBanner, createStatusBanner, removeExistingStatusBanner, scheduleStatusBannerRemoval]
+  • removeExistingStatusBanner → [getElementById, remove]
+  • createStatusBanner → [createElement]
+  • insertStatusBanner → [insertBefore, querySelector]
+  • scheduleStatusBannerRemoval → [remove, setTimeout]
+
+📤 EXPORTS (5):
+  • removeExistingStatusBanner
+  • insertStatusBanner
+  • scheduleStatusBannerRemoval
+  • showSystemStatus
+  • createStatusBanner
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\ui\intr-files\ui-helpers.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (1):
+  • UI_CONSTANTS ← ../../config/config.js
+
+📝 FUNÇÕES DECLARADAS (8):
+  • toggleElementVisibility
+  • expandElement
+  • collapseElement
+  • calculateRoomCompletionStats
+  • removeEmptyObraMessage
+  • showEmptyObraMessageIfNeeded
+  • removeEmptyProjectMessage
+  • showEmptyProjectMessageIfNeeded
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • toggleElementVisibility → [getElementById]
+  • expandElement → [remove]
+  • collapseElement → [add]
+  • calculateRoomCompletionStats → [querySelectorAll, filter]
+  • removeEmptyObraMessage → [nenhuma função chamada]
+  • showEmptyObraMessageIfNeeded → [nenhuma função chamada]
+  • removeEmptyProjectMessage → [remove, querySelector]
+  • showEmptyProjectMessageIfNeeded → [querySelectorAll, insertAdjacentHTML, querySelector]
+
+📤 EXPORTS (8):
+  • toggleElementVisibility
+  • removeEmptyObraMessage
+  • collapseElement
+  • calculateRoomCompletionStats
+  • expandElement
+  • showEmptyObraMessageIfNeeded
+  • removeEmptyProjectMessage
+  • showEmptyProjectMessageIfNeeded
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\ui\intr-files\modal\exit-modal.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (12):
+  • showShutdownConfirmationModal
+  • showCustomShutdownModal
+  • cleanup
+  • onConfirm
+  • onCancel
+  • onBackdropClick
+  • onKeyDown
+  • cleanup
+  • onConfirm
+  • onCancel
+  • onBackdropClick
+  • onKeyDown
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • showShutdownConfirmationModal → [Promise, getElementById, remove]
+  • showCustomShutdownModal → [nenhuma função chamada]
+  • cleanup → [removeEventListener, setTimeout, remove]
+  • onConfirm → [cleanup, resolve]
+  • onCancel → [cleanup, resolve]
+  • onBackdropClick → [onCancel]
+  • onKeyDown → [onCancel]
+  • cleanup → [removeEventListener, setTimeout, remove]
+  • onConfirm → [cleanup, resolve]
+  • onCancel → [cleanup, resolve]
+  • onBackdropClick → [onCancel]
+  • onKeyDown → [onCancel]
+
+📤 EXPORTS (2):
+  • showCustomShutdownModal
+  • showShutdownConfirmationModal
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\ui\intr-files\modal\modal.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (14):
+  • showConfirmationModal
+  • closeConfirmationModal
+  • closeConfirmationModalWithoutClearing
+  • createToastContainer
+  • showToast
+  • animateAndRemove
+  • sweepDanglingToasts
+  • hideSpecificToast
+  • hideToast
+  • undoDeletion
+  • completeDeletion
+  • completeDeletionImmediate
+  • confirmDeletion
+  • getPendingDeletion
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • showConfirmationModal → [nenhuma função chamada]
+  • closeConfirmationModal → [add, getElementById, remove]
+  • closeConfirmationModalWithoutClearing → [add, getElementById, remove]
+  • createToastContainer → [createElement, appendChild]
+  • showToast → [createElement, createToastContainer, getElementById]
+  • animateAndRemove → [add, remove, setTimeout]
+  • sweepDanglingToasts → [clearTimeout, contains, splice]
+  • hideSpecificToast → [findIndex, estado]
+  • hideToast → [hideSpecificToast]
+  • undoDeletion → [nenhuma função chamada]
+  • completeDeletion → [nenhuma função chamada]
+  • completeDeletionImmediate → [nenhuma função chamada]
+  • confirmDeletion → [nenhuma função chamada]
+  • getPendingDeletion → [nenhuma função chamada]
+
+📤 EXPORTS (7):
+  • getPendingDeletion
+  • showConfirmationModal
+  • closeConfirmationModal
+  • undoDeletion
+  • hideSpecificToast
+  • confirmDeletion
+  • hideToast
+
+────────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+ARQUIVO: codigo\public\scripts\page1\utils\utils.js
+================================================================================
+
+📥 FUNÇÕES IMPORTADAS (0):
+  Nenhuma função importada
+
+📝 FUNÇÕES DECLARADAS (3):
+  • ensureStringId
+  • isValidSecureId
+  • extractSequenceNumber
+
+🔄 USO DE FUNÇÕES INTERNAS:
+  • ensureStringId → [includes, String]
+  • isValidSecureId → [nenhuma função chamada]
+  • extractSequenceNumber → [nenhuma função chamada]
+
+📤 EXPORTS (3):
+  • ensureStringId
+  • isValidSecureId
+  • extractSequenceNumber
+
+────────────────────────────────────────────────────────────────────────────────

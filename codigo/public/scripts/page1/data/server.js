@@ -20,18 +20,18 @@ import {
     resetDisplayLogic,
     startNewSession,
     startSessionOnFirstSave
-} from './server-modules/session-manager.js';
+} from './adapters/session-adapter.js';
 
 import { 
     loadObrasFromServer,
     removeBaseObraFromHTML
-} from './server-modules/obra-loader.js';
+} from './adapters/obra-adapter.js';
 
 import { 
     shutdownManual,
     ensureSingleActiveSession,
     initializeSession
-} from './server-modules/shutdown-manager.js';
+} from './adapters/shutdown-adapter.js';
 
 // Re-exportar todas as funções
 export {
