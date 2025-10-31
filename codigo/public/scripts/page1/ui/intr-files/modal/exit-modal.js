@@ -28,9 +28,9 @@ export function showShutdownConfirmationModal() {
                     <strong>Tem certeza que deseja encerrar o servidor?</strong>
                     
                     <div class="warning-list">
-                        <span style="font-size: 1.2rem;">Esta ação irá:</span>
+                        <span>Esta ação irá:</span>
                         <ul>
-                            <li style="margin-top: 15px">Desligar o servidor</li>
+                            <li>Desligar o servidor</li>
                             <li>Limpar todas as sessões ativas</li>
                             <li>Fechar esta aplicação</li>
                         </ul>
@@ -51,170 +51,6 @@ export function showShutdownConfirmationModal() {
             </div>
         `;
 
-        // Adiciona estilos específicos para combinar com o toast
-        const style = document.createElement('style');
-        style.textContent = `
-            /* ESTILO TOAST PARA O MODAL DE SHUTDOWN */
-            .toast-style {
-                background: #2d3748 !important;
-                color: white !important;
-                border-left: 4px solid #4299e1 !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-                border: 1px solid rgba(255, 255, 255, 0.1) !important;
-                padding: 2rem !important;
-                max-width: 500px !important;
-            }
-            
-            .toast-style .modal-icon {
-                color: #4299e1 !important;
-                animation: iconPulse 2s infinite ease-in-out;
-                font-size: 3.5rem !important;
-                margin-bottom: 1rem !important;
-            }
-            
-            .toast-style .modal-title {
-                color: white !important;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-                font-size: 1.6rem !important;
-                margin-bottom: 1.5rem !important;
-            }
-            
-            .toast-style .modal-message {
-                color: rgba(255, 255, 255, 0.9) !important;
-                text-align: left !important;
-                margin-bottom: 2rem !important;
-            }
-            
-            .toast-style .modal-message strong {
-                color: #ff6b6b !important;
-                display: block;
-                margin-bottom: 1.5rem !important;
-                font-size: 1.1rem !important;
-                text-align: center !important;
-            }
-            
-            /* Lista de avisos */
-            .toast-style .warning-list {
-                background: rgba(255, 255, 255, 0.05);
-                padding: 1.2rem;
-                border-radius: 8px;
-                margin: 1.5rem 0;
-                border-left: 3px solid #4299e1;
-            }
-            
-            .toast-style .warning-list ul {
-                text-align: left;
-                margin: 0;
-                padding-left: 1.5rem;
-                color: rgba(255, 255, 255);
-            }
-            
-            .toast-style .warning-list ul li {
-                margin-bottom: 0.5rem;
-                padding-left: 0.5rem;
-                line-height: 2;
-            }
-            
-            .toast-style .warning-list ul li:last-child {
-                margin-bottom: 0;
-            }
-            
-            /* Nota de aviso */
-            .toast-style .warning-note {
-                background: rgba(255, 107, 107, 0.1);
-                padding: 1rem;
-                border-radius: 6px;
-                border-left: 3px solid #ff6b6b;
-                margin-top: 1.5rem;
-            }
-            
-            .toast-style .warning-note small {
-                color: rgb(255 255 255) !important;
-                font-size: 1rem !important;
-                line-height: 1.4;
-                display: block;
-            }
-            
-            /* Botões menores */
-            .toast-style .modal-actions {
-                margin-top: 1.5rem !important;
-                gap: 1rem !important;
-            }
-            
-            .toast-style .modal-btn {
-                padding: 0.8rem 1.5rem !important;
-                min-width: 120px !important;
-                font-size: 0.95rem !important;
-            }
-            
-            .toast-style .btn-cancel {
-                background: #6c757d !important;
-                color: white !important;
-                border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            }
-            
-            .toast-style .btn-cancel:hover {
-                background: #5a6268 !important;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            }
-            
-            .toast-style .btn-confirm {
-                background: #e53e3e !important;
-                color: white !important;
-                border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            }
-            
-            .toast-style .btn-confirm:hover {
-                background: #c53030 !important;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
-            }
-            
-            /* Animações específicas */
-            @keyframes iconPulse {
-                0% {
-                    transform: scale(1);
-                    opacity: 1;
-                }
-                50% {
-                    transform: scale(1.1);
-                    opacity: 1;
-                }
-                100% {
-                    transform: scale(1);
-                    opacity: 1;
-                }
-            }
-
-            /* Responsividade */
-            @media (max-width: 480px) {
-                .toast-style {
-                    padding: 1.5rem !important;
-                    margin: 1rem !important;
-                    width: 90vw !important;
-                }
-                
-                .toast-style .modal-actions {
-                    flex-direction: column !important;
-                }
-                
-                .toast-style .modal-btn {
-                    width: 100% !important;
-                    min-width: auto !important;
-                }
-                
-                .toast-style .modal-icon {
-                    font-size: 3rem !important;
-                }
-                
-                .toast-style .modal-title {
-                    font-size: 1.4rem !important;
-                }
-            }
-        `;
-        
-        document.head.appendChild(style);
         document.body.appendChild(modal);
 
         // Configura os event listeners
@@ -233,9 +69,6 @@ export function showShutdownConfirmationModal() {
                 setTimeout(() => {
                     if (modalElement.parentNode) {
                         modalElement.remove();
-                    }
-                    if (style.parentNode) {
-                        style.remove();
                     }
                 }, 300);
             }
@@ -308,7 +141,7 @@ export function showCustomShutdownModal(options = {}) {
         modal.className = 'confirmation-modal active';
         
         modal.innerHTML = `
-            <div class="modal-content toast-style">
+            <div class="modal-content toast-style custom-border" style="--custom-border-color: ${borderColor}">
                 <div class="modal-icon">${icon}</div>
                 <h2 class="modal-title">${title}</h2>
                 <p class="modal-message">${message}</p>
@@ -323,87 +156,9 @@ export function showCustomShutdownModal(options = {}) {
             </div>
         `;
 
-        // Estilos dinâmicos baseados na cor da borda
-        const style = document.createElement('style');
-        style.textContent = `
-            .toast-style {
-                background: #2d3748 !important;
-                color: white !important;
-                border-left: 4px solid ${borderColor} !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-                border: 1px solid rgba(255, 255, 255, 0.1) !important;
-                padding: 2rem !important;
-                max-width: 500px !important;
-            }
-            
-            .toast-style .modal-icon {
-                color: ${borderColor} !important;
-                animation: iconPulse 2s infinite ease-in-out;
-                font-size: 3.5rem !important;
-            }
-            
-            .toast-style .modal-title {
-                color: white !important;
-            }
-            
-            .toast-style .modal-message {
-                color: rgba(255, 255, 255, 0.9) !important;
-                text-align: left !important;
-            }
-            
-            .toast-style .modal-actions {
-                gap: 1rem !important;
-            }
-            
-            .toast-style .modal-btn {
-                padding: 0.8rem 1.5rem !important;
-                min-width: 120px !important;
-                font-size: 0.95rem !important;
-            }
-            
-            .toast-style .btn-cancel {
-                background: #6c757d !important;
-                color: white !important;
-            }
-            
-            .toast-style .btn-cancel:hover {
-                background: #5a6268 !important;
-            }
-            
-            .toast-style .btn-confirm {
-                background: #e53e3e !important;
-                color: white !important;
-            }
-            
-            .toast-style .btn-confirm:hover {
-                background: #c53030 !important;
-            }
-            
-            @keyframes iconPulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.1); }
-            }
-
-            @media (max-width: 480px) {
-                .toast-style {
-                    padding: 1.5rem !important;
-                    margin: 1rem !important;
-                }
-                
-                .toast-style .modal-actions {
-                    flex-direction: column !important;
-                }
-                
-                .toast-style .modal-btn {
-                    width: 100% !important;
-                }
-            }
-        `;
-
-        document.head.appendChild(style);
         document.body.appendChild(modal);
 
-        // Configura event listeners (similar à função principal)
+        // Configura event listeners
         const cancelBtn = document.getElementById('shutdown-cancel-btn');
         const confirmBtn = document.getElementById('shutdown-confirm-btn');
         const modalElement = document.getElementById('shutdown-confirmation-modal');
@@ -419,9 +174,6 @@ export function showCustomShutdownModal(options = {}) {
                 setTimeout(() => {
                     if (modalElement.parentNode) {
                         modalElement.remove();
-                    }
-                    if (style.parentNode) {
-                        style.remove();
                     }
                 }, 300);
             }
