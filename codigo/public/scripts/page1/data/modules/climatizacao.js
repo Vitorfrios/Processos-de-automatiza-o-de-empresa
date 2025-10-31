@@ -222,6 +222,7 @@ function buildPressurizationRow(roomId) {
               disabled
               onchange="calculateVazaoArAndThermalGains('${roomId}')">
       </div>
+      
       <div class="clima-cell">
         <label>N° Portas Simples:</label>
         <input type="number"
