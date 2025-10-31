@@ -99,15 +99,19 @@
 
 /* Minimizadores para seções específicas */
 .section-header .minimizer,
+.section-header-machine .minimizer,
 .subsection-header .minimizer {
   background: var(--section-minimizer-bg);
   color: var(--section-minimizer-color);
 }
 
 .section-header .minimizer:hover,
+.section-header-machine .minimizer:hover,
 .subsection-header .minimizer:hover {
   background: var(--section-minimizer-hover-bg);
 }
+
+
 
 /* Minimizadores para obra e projeto */
 .obra-header .minimizer,

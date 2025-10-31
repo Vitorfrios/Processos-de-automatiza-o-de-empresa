@@ -1,0 +1,50 @@
+<div class="climatization-machine" data-machine-id="${machineId}" data-room-id="${roomId}">
+    <div class="machine-header">
+        <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
+        <input type="text" class="machine-title-editable" value="Maquina${displayNumber}"
+            onchange="updateMachineTitle(this, '${machineId}')" onclick="this.select()">
+        <button class="btn btn-delete-small" onclick="deleteClimatizationMachine(this)">Remover</button>
+    </div>
+    <div class="machine-content" id="machine-content-${machineId}">
+        <div class="climatization-form-grid">
+            ${buildFormGroup(
+            "Tipo de Equipamento:",
+            buildSelectWithDefault(machineTypes, machineId, "machine-type-select", "updateMachineOptions(this)",
+            "Selecionar Máquina"),
+            )}
+            ${buildFormGroup(
+            "Capacidade:",
+            buildSelectWithDefault([], machineId, "machine-power-select", `handlePowerChange('${machineId}')`,
+            "Selecionar capacidade", true),
+            )}
+            ${buildFormGroup(
+            "Tensão:",
+            buildSelectWithDefault([], machineId, "machine-voltage-select", `calculateMachinePrice('${machineId}')`,
+            "Selecionar Tensão", true),
+            )}
+            <div class="form-group">
+                <label>Preço Base:</label>
+                <div class="price-display" id="base-price-${machineId}">
+                    R$ 0,00
+                </div>
+                <div class="machine-total-price"> <!-- Preço final desta máquina -->
+                    <strong>Preço Total desta Máquina: <span id="total-price-${machineId}">R$ 0,00</span></strong>
+                </div>
+            </div>
+        </div>
+        <div class="machine-options-section">
+            <h6>Opções Adicionais:</h6>
+            <div class="options-grid" id="options-container-${machineId}">
+                <p class="empty-options-message">Selecione um tipo de máquina e sua capacidade para ver as opções e seus
+                    valores</p>
+            </div>
+        </div>
+
+        <!-- ✅ NOVO: Preço total de TODAS as máquinas da sala -->
+    </div>
+    <div class="all-machines-total-price">
+        <strong>Total Geral de Todas as Máquinas da Sala: <span id="total-all-machines-price-${roomId}">R$
+                0,00</span></strong>
+    </div>
+</div>
+`;

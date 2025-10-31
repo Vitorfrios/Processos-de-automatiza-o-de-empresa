@@ -21,7 +21,6 @@ if (typeof window !== 'undefined' && !window.machinesDataCache) {
 function buildMachinesSection(obraId, projectId, roomName, finalRoomId) {
   const roomId = finalRoomId;
 
-  // ✅ CORREÇÃO: Validar ID único
   if (!roomId || roomId === 'undefined' || roomId === 'null') {
       console.error(`ERRO FALBACK (buildMachinesSection) machineBuilder.js [Room ID inválido: ${roomId}]`);
       return '';
@@ -29,19 +28,27 @@ function buildMachinesSection(obraId, projectId, roomName, finalRoomId) {
 
   return `
     <div class="section-block">
-      <div class="section-header">
+      <div class="section-header-machine">
         <button class="minimizer" onclick="toggleSection('${roomId}-maquinas')">+</button>
         <h4 class="section-title">Máquinas</h4>
-        <button class="btn btn-add-small" onclick="addMachine('${roomId}')">+ Adicionar Máquina</button>
+        <button class="btn btn-add-small" onclick="addMachine('${roomId}')">+ Adicionar </button>
       </div>
       <div class="section-content collapsed" id="section-content-${roomId}-maquinas">
         ${buildCapacityCalculationTable(roomId)}
+        
         <div class="machines-container" id="machines-${roomId}">
           <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
         </div>
+        
+        <!-- ✅ TOTAL GERAL: FORA do machines-container, DENTRO da section-content -->
+        <div class="all-machines-total-price">
+          <strong>Total Geral de Todas as Máquinas da Sala: 
+            <span id="total-all-machines-price-${roomId}">R$ 0,00</span>
+          </strong>
+        </div>
       </div>
     </div>
-  `
+  `;
 }
 
 /**
@@ -164,6 +171,12 @@ async function loadSavedMachines(roomId, savedMachines) {
                     }
                 }
             });
+
+            // ✅ NOVO: Calcular TOTAL GERAL após carregar todas as máquinas
+            if (window.updateAllMachinesTotalDisplay) {
+                window.updateAllMachinesTotalDisplay(roomId);
+            }
+
         }, 200);
 
     } catch (error) {
@@ -205,7 +218,7 @@ function buildClimatizationMachineFromSavedData(machineId, savedMachine, allMach
         <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
         <input type="text" 
                class="machine-title-editable" 
-               value="${savedMachine.nome || `Equipamento de Climatização`}"
+               value="${savedMachine.nome || `Maquina`}"
                onchange="updateMachineTitle(this, '${machineId}')"
                onclick="this.select()">
         <button class="btn btn-delete-small" onclick="deleteClimatizationMachine(this)">Remover</button>
@@ -243,10 +256,18 @@ function buildClimatizationMachineFromSavedData(machineId, savedMachine, allMach
             ),
           )}
           <div class="form-group">
-            <label>Preço Base:</label>
-            <div class="price-display" id="base-price-${machineId}">
-              R$ ${basePrice.toLocaleString("pt-BR")}
-            </div>
+              <label>Preço Base:</label>
+              <div class="price-display" id="base-price-${machineId}">
+                  R$ 0,00
+              </div>
+          </div>
+          <div class="form-group"> <!-- Preço final desta máquina -->
+              <label>Preço Total desta Máquina: </label>
+                <div class="price-display" id="total-price-${machineId}"">
+                  R$ ${savedMachine.precoTotal.toLocaleString("pt-BR")}
+                </div>
+          </div>
+
           </div>
         </div>
         <div class="machine-options-section">
@@ -255,9 +276,7 @@ function buildClimatizationMachineFromSavedData(machineId, savedMachine, allMach
             ${buildSavedOptionsHTML(machineType.options, machineId, savedMachine.opcoesSelecionadas, savedMachine.potencia)}
           </div>
         </div>
-        <div class="machine-total-price">
-          <strong>Preço Total: <span id="total-price-${machineId}">R$ ${savedMachine.precoTotal.toLocaleString("pt-BR")}</span></strong>
-        </div>
+        <!-- ❌ REMOVIDO: total-all-machines-price NÃO deve estar aqui dentro -->
       </div>
     </div>
   `;

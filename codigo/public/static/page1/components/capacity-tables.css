@@ -405,3 +405,172 @@
     display: none;
   }
 }
+
+/* ========== AJUSTES RESPONSIVOS PARA TABELA DE CAPACIDADE ========== */
+
+/* Ajustes para telas menores - QUEBRA DE TEXTO */
+@media (max-width: 1024px) {
+  .thermal-capacity-table th {
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.2;
+    padding: 8px 4px;
+  }
+  
+  .thermal-capacity-table th:nth-child(1) { /* Carga Estimada */
+    min-width: 100px;
+  }
+  
+  .thermal-capacity-table th:nth-child(2) { /* Fator de Seg. */
+    min-width: 80px;
+  }
+  
+  .thermal-capacity-table th:nth-child(3) { /* Cap. Unit. */
+    min-width: 100px;
+  }
+  
+  .thermal-capacity-table th:nth-child(4) { /* Solução */
+    min-width: 70px;
+  }
+  
+  .thermal-capacity-table th:nth-child(5) { /* Com back-up */
+    min-width: 100px;
+  }
+  
+  .thermal-capacity-table th:nth-child(6) { /* TOTAL */
+    min-width: 80px;
+  }
+  
+  .thermal-capacity-table th:nth-child(7) { /* FOLGA */
+    min-width: 80px;
+  }
+}
+
+/* Tableta */
+@media (max-width: 768px) {
+  .thermal-capacity-table {
+    min-width: 700px;
+    font-size: 0.8rem;
+  }
+  
+  .thermal-capacity-table th {
+    font-size: 0.75rem;
+    padding: 6px 3px;
+    line-height: 1.1;
+  }
+  
+  .thermal-capacity-table td {
+    font-size: 0.8rem;
+    padding: 6px 3px;
+  }
+  
+  /* Ajuste específico para cabeçalhos longos */
+  .thermal-capacity-table th:nth-child(1) { /* Carga Estimada */
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  .thermal-capacity-table th:nth-child(5) { /* Com back-up */
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+/* Mobile Grande */
+@media (max-width: 480px) {
+  .thermal-capacity-table {
+    min-width: 600px;
+  }
+  
+  .thermal-capacity-table th {
+    font-size: 0.7rem;
+    padding: 4px 2px;
+  }
+  
+  .thermal-capacity-table td {
+    font-size: 0.75rem;
+    padding: 4px 2px;
+  }
+  
+  .capacity-input,
+  .capacity-select,
+  .backup-select {
+    font-size: 0.75rem;
+    padding: 3px 4px;
+  }
+  
+  /* Ajustes específicos para inputs em mobile */
+  .capacity-input {
+    max-width: 55px;
+  }
+  
+  .capacity-select {
+    max-width: 70px;
+  }
+  
+  .backup-select {
+    max-width: 70px;
+  }
+}
+
+/* Mobile Pequeno - QUEBRA CONTROLADA */
+@media (max-width: 375px) {
+  .thermal-capacity-table th {
+    font-size: 0.65rem;
+    line-height: 1;
+  }
+  
+  /* Quebra estratégica de textos longos */
+  .thermal-capacity-table th:nth-child(1)::before { /* Carga Estimada */
+    content: "Carga Est. (TR)";
+  }
+  .thermal-capacity-table th:nth-child(1) span {
+    display: none;
+  }
+  
+  .thermal-capacity-table th:nth-child(3)::before { /* Cap. Unit. */
+    content: "Cap. Unit. (TR)";
+  }
+  .thermal-capacity-table th:nth-child(3) span {
+    display: none;
+  }
+  
+  .thermal-capacity-table th:nth-child(5)::before { /* Com back-up */
+    content: "Back-up";
+  }
+  .thermal-capacity-table th:nth-child(5) span {
+    display: none;
+  }
+}
+
+/* Ajuste para garantir que o scroll horizontal funcione bem */
+.table-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Melhoria na legibilidade dos textos quebrados */
+.thermal-capacity-table th {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+}
+
+/* Garantir que células com conteúdo longo não quebrem layout */
+.thermal-capacity-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ajuste específico para a célula de backup em telas pequenas */
+@media (max-width: 480px) {
+  .backup-cell {
+    min-width: 90px;
+  }
+  
+  .backup-selection,
+  .backup-solution {
+    height: 22px;
+    font-size: 0.75rem;
+  }
+}

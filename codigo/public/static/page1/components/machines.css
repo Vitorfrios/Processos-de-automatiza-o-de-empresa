@@ -17,15 +17,14 @@
 
 /* Header da máquina */
 .climatization-machine .machine-header {
-  background: var(--machine-header-bg);
-  color: var(--color-white);
-  padding: var(--machine-header-padding);
+  background: var(--primary-gradient);
+  color: white;
+  padding: var(--spacing-lg);
   display: flex;
   align-items: center;
-  gap: var(--machine-header-gap);
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
-  flex-wrap: nowrap;
+  gap: var(--spacing-md);
 }
+
 
 /* Input editável */
 .machine-title-editable {
@@ -200,12 +199,12 @@
   white-space: normal;
 }
 
-.option-checkbox input[type="checkbox"]:checked + .option-content .option-name {
+.option-checkbox input[type="checkbox"]:checked+.option-content .option-name {
   font-weight: 600;
   color: var(--option-checked-name);
 }
 
-.option-checkbox input[type="checkbox"]:checked + .option-content .option-price {
+.option-checkbox input[type="checkbox"]:checked+.option-content .option-price {
   color: var(--option-checked-price);
 }
 
@@ -226,42 +225,26 @@
   font-size: 1rem;
 }
 
-.machine-total-price {
-  background: var(--machine-total-bg);
-  padding: var(--machine-total-padding);
+/* Preço total de TODAS as máquinas da sala - VERSÃO DISCRETA */
+.all-machines-total-price {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--table-cell-bg);
   border-radius: var(--border-radius);
-  text-align: center;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  box-shadow: var(--machine-total-shadow);
-}
-
-.machine-total-price strong {
-  color: var(--color-white);
-  font-size: 1.1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  flex-wrap: wrap;
+  border: 1px solid var(--capacity-table-border);
   text-align: center;
 }
 
-.machine-total-price span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--machine-total-span-bg);
-  color: var(--machine-total-span-color);
-  padding: var(--machine-total-span-padding);
-  border-radius: var(--border-radius);
+.all-machines-total-price strong {
+  color: var(--table-cell-first-color);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.all-machines-total-price span {
+  color: var(--table-cell-solution-color);
+  font-size: 1rem;
   font-weight: 700;
-  margin-left: 0;
-  box-shadow: var(--machine-total-span-shadow);
-  min-width: 120px;
-  max-width: 100%;
 }
 
 /* Selects específicos */
@@ -291,6 +274,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -301,70 +285,41 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/* ===== MACHINE HEADER RESPONSIVO - CORRIGIDO ===== */
 @media (max-width: 768px) {
+
+
+  .machine-title-editable {
+    order: 2;
+    flex: 1;
+    min-width: 0;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    margin: 0;
+  }
+
+
+
+
+  /* Mantendo o restante do CSS original */
   .options-grid {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--spacing-sm);
   }
-
-  .climatization-machine .machine-header {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--spacing-sm);
-  }
-
-  .climatization-machine .minimizer,
-  .climatization-machine .btn-delete-small {
-    flex: 0 0 auto;
-  }
-
-  .climatization-machine .machine-header .machine-title-editable {
-    flex: 1 1 200px;
-    min-width: 200px;
-  }
-
-  .machine-total-price {
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-xs);
-    text-align: left;
-  }
-
-  .machine-total-price strong {
-    font-size: 1rem;
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .machine-total-price span {
-    width: 100%;
-    text-align: center;
-  }
 }
 
 @media (max-width: 480px) {
+  .machine-title-editable {
+    font-size: 0.95rem;
+  }
+
+  .machine-title-editable {
+    min-width: 120px;
+  }
+
+  /* Mantendo o restante do CSS original */
   .options-grid {
     grid-template-columns: 1fr;
-  }
-
-  .climatization-machine .machine-header .machine-title-editable {
-    min-width: 160px;
-  }
-
-  .climatization-machine .minimizer,
-  .climatization-machine .btn-delete-small {
-    width: 100%;
-    max-width: 220px;
-  }
-
-  .machine-total-price {
-    align-items: center;
-    text-align: center;
-  }
-
-  .machine-total-price span {
-    width: 100%;
-    min-width: 0;
   }
 }

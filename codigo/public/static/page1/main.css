@@ -40,8 +40,125 @@
     transform: scale(0.95);
 }
 
-/* Estilos de responsividade */
+/* ===== HEADERS RESPONSIVOS - AJUSTES ESPECÍFICOS ===== */
+
+/* Mobile Grande - Apenas reorganizar os elementos */
 @media (max-width: 768px) {
+
+  .obra-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .obra-header .minimizer {
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  .obra-header .obra-title {
+    order: 2;
+    flex: 1;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+
+  .obra-header .obra-actions {
+    order: 3;
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+  }
+
+  .obra-header .obra-header-spacer {
+    order: 4;
+    flex-basis: 100%;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid var(--machine-border);
+    margin-top: var(--spacing-xs);
+  }
+
+  /* ===== HEADERS UNIFICADOS ===== */
+  .project-header,
+  .room-header,
+  .climatization-machine .machine-header {
+    display: flex; /* ✅ corrige o erro: força flex, não block */
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .project-header .minimizer,
+  .room-header .minimizer,
+  .climatization-machine .machine-header .minimizer {
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  /* ✅ agora o seletor mira o título, não o header inteiro */
+  .project-header .project-title,
+  .room-header .room-title,
+  .climatization-machine .machine-header .machine-title,
+  .climatization-machine .machine-header .machine-title-editable {
+    order: 2;
+    flex: 1;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+
+  .project-header .project-actions,
+  .room-header .room-actions,
+  .climatization-machine .machine-header .machine-actions {
+    order: 3;
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+  }
+
+  .btn-delete,
+  .btn-add-small,
+  .btn-delete-small {
+    font-size: 0.85rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    text-align: center;
+    height: auto;
+    min-height: 32px;
+    line-height: 1.2;
+    flex-shrink: 0;
+  }
+
+  /* Ajustes específicos para containers de ações */
+  .project-actions,
+  .room-actions,
+  .project-actions-footer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .project-actions .btn,
+  .room-actions .btn,
+  .project-actions-footer .btn {
+    width: auto;
+    flex: 1;
+    min-width: min-content;
+  }
+
+  /* Mantendo o restante do layout original */
   .header {
     flex-direction: column;
     gap: var(--spacing-md);
@@ -59,16 +176,6 @@
 
   .form-grid {
     grid-template-columns: 1fr;
-  }
-
-  .project-actions,
-  .room-actions,
-  .project-actions-footer {
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
   }
 
   .clima-row {
@@ -99,24 +206,6 @@
   .nav-list li a {
     flex-shrink: 0;
     white-space: nowrap;
-  }
-
-  .obra-header,
-  .project-header,
-  .room-header {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-    gap: var(--spacing-sm);
-  }
-
-  .obra-actions,
-  .project-actions,
-  .room-actions {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: var(--spacing-sm);
   }
 
   .obra-content,
@@ -161,20 +250,74 @@
     flex-direction: column;
     align-items: flex-start;
   }
-
 }
 
+/* Mobile Pequeno - Ajustes finos */
 @media (max-width: 480px) {
+
+  .obra-header .obra-title {
+    font-size: 0.95rem;
+  }
+
+  .project-header .project-title,
+  .room-header .room-title,
+  .climatization-machine .machine-header .machine-title,
+  .climatization-machine .machine-header .machine-title-editable {
+    font-size: 0.9rem;
+  }
+
+  .section-header-machine {
+    font-size: 0.85rem;
+  }
+
+  .btn-delete,
+  .btn-add-small,
+  .btn-delete-small {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.1;
+    min-height: 30px;
+    flex: 1 1 auto;
+    min-width: 80px;
+  }
+
+  /* Ajustes para telas muito pequenas */
+  .project-actions,
+  .room-actions,
+  .obra-actions,
+  .climatization-machine .machine-header .machine-actions {
+    gap: 4px;
+  }
+
+  .project-actions .btn,
+  .room-actions .btn,
+  .obra-actions .btn,
+  .climatization-machine .machine-header .machine-actions .btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
+
+  .obra-header .obra-header-spacer {
+    font-size: 0.8rem;
+  }
+
   .main-content {
     padding: var(--spacing-md);
   }
 
   .project-header,
-  .room-header {
+  .room-header,
+  .climatization-machine .machine-header {
     padding: var(--spacing-md);
   }
 
-
+  .section-header-machine {
+    padding: var(--spacing-sm);
+  }
 
   .header-center h1 {
     font-size: 1.1rem;
@@ -198,5 +341,3 @@
     padding: var(--spacing-sm);
   }
 }
-
-
