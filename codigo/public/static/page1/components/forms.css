@@ -15,6 +15,7 @@
   font-weight: 600;
   color: var(--color-gray-dark);
   font-size: 0.9rem;
+  padding-bottom: 6px;
 }
 
 .form-input {
@@ -121,6 +122,7 @@ textarea.form-input {
   font-weight: 600;
   margin-bottom: 10px;
   display: block;
+  border-bottom: 1px solid #0d151e;
 }
 
 .form-group.full-width {

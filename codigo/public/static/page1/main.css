@@ -10,34 +10,99 @@
 @import url('layout/grid.css');
 @import url('pages/thermal-calculation.css');
 @import url('pages/projects.css');
-@import url('components/machines.css'); 
-@import url('components/capacity-tables.css'); 
+@import url('components/machines.css');
+@import url('components/capacity-tables.css');
 @import url('layout/modal.css');
 @import url('layout/exit-modal.css');
 
 /* Botão de Shutdown */
 .shutdown-btn {
-    background: transparent;
-    border: 1px solid #ddd;
-    color: #b0b0b0;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    cursor: pointer;
-    margin-left: 15px;
-    transition: all 0.3s ease;
-    font-family: inherit;
+  background: transparent;
+  border: 1px solid #ddd;
+  color: #b0b0b0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 15px;
+  transition: all 0.3s ease;
+  font-family: inherit;
 }
 
 .shutdown-btn:hover {
-    background: #ff4444;
-    color: white;
-    border-color: #ff4444;
-    transform: scale(1.05);
+  background: #ff4444;
+  color: white;
+  border-color: #ff4444;
+  transform: scale(1.05);
 }
 
 .shutdown-btn:active {
-    transform: scale(0.95);
+  transform: scale(0.95);
+}
+
+/* ===== ESTILOS GERAIS PARA HEADERS ===== */
+
+/* Estilos gerais para inputs editáveis em headers */
+.editable-title {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.editable-title:hover {
+  background-color: var(--color-gray-light);
+}
+
+.machine-title-editable {
+  cursor: text;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+}
+
+.machine-title-editable:hover {
+  background-color: var(--color-gray-light);
+}
+
+.machine-title-editable:focus {
+  border-color: var(--color-primary);
+  background: white;
+  outline: none;
+}
+
+/* Garantir que os headers mantenham alinhamento consistente */
+.project-header,
+.room-header,
+.machine-header {
+  align-items: center;
+  min-height: 40px;
+}
+
+/* Ajustes para quando o conteúdo está minimizado */
+.project-header.minimized~.project-content,
+.room-header.minimized~.room-content,
+.machine-header.minimized~.machine-content {
+  display: none;
+}
+
+/* Indicador visual para headers minimizados */
+.minimizer {
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.minimizer.minimized {
+  transform: rotate(-90deg);
 }
 
 /* ===== HEADERS RESPONSIVOS - AJUSTES ESPECÍFICOS ===== */
@@ -63,6 +128,7 @@
     flex: 1;
     font-size: 0.95rem;
     white-space: nowrap;
+    min-width: 0;
   }
 
   .obra-header .obra-actions {
@@ -88,8 +154,9 @@
   /* ===== HEADERS UNIFICADOS ===== */
   .project-header,
   .room-header,
-  .climatization-machine .machine-header {
-    display: flex; /* ✅ corrige o erro: força flex, não block */
+  .machine-header {
+    display: flex !important;
+    /* ✅ força flex em todos os casos */
     flex-wrap: wrap;
     align-items: center;
     gap: var(--spacing-sm);
@@ -98,25 +165,47 @@
 
   .project-header .minimizer,
   .room-header .minimizer,
-  .climatization-machine .machine-header .minimizer {
+  .machine-header .minimizer {
     order: 1;
     flex-shrink: 0;
   }
 
-  /* ✅ agora o seletor mira o título, não o header inteiro */
+  /* ✅ Títulos para todos os headers */
   .project-header .project-title,
   .room-header .room-title,
-  .climatization-machine .machine-header .machine-title,
-  .climatization-machine .machine-header .machine-title-editable {
+  .machine-header .machine-title,
+  .machine-header .machine-title-editable {
     order: 2;
     flex: 1;
     font-size: 0.95rem;
     white-space: nowrap;
+    min-width: 0;
+    /* ✅ permite que quebre corretamente */
+  }
+
+  /* Input do título da máquina - ajustes específicos mobile */
+  .machine-header .machine-title-editable {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .machine-header .machine-title-editable:focus {
+    border-color: var(--color-primary);
+    background: white;
+    outline: none;
   }
 
   .project-header .project-actions,
   .room-header .room-actions,
-  .climatization-machine .machine-header .machine-actions {
+  .machine-header .machine-actions {
     order: 3;
     flex-shrink: 0;
     display: flex;
@@ -144,7 +233,8 @@
   /* Ajustes específicos para containers de ações */
   .project-actions,
   .room-actions,
-  .project-actions-footer {
+  .project-actions-footer,
+  .machine-actions {
     flex-direction: row;
     flex-wrap: wrap;
     gap: var(--spacing-xs);
@@ -152,7 +242,8 @@
 
   .project-actions .btn,
   .room-actions .btn,
-  .project-actions-footer .btn {
+  .project-actions-footer .btn,
+  .machine-actions .btn {
     width: auto;
     flex: 1;
     min-width: min-content;
@@ -212,13 +303,15 @@
   .project-content,
   .room-content,
   .section-content,
-  .subsection-content {
+  .subsection-content,
+  .machine-content {
     padding: var(--spacing-md);
   }
 
   .obra-block,
   .project-block,
-  .room-block {
+  .room-block,
+  .machine-block {
     margin-bottom: var(--spacing-lg);
   }
 
@@ -261,8 +354,15 @@
 
   .project-header .project-title,
   .room-header .room-title,
-  .climatization-machine .machine-header .machine-title,
-  .climatization-machine .machine-header .machine-title-editable {
+  .machine-header .machine-title,
+  .machine-header .machine-title-editable {
+    font-size: 0.9rem;
+    min-width: 0;
+  }
+
+  /* Input do título da máquina - ajustes mobile pequeno */
+  .machine-header .machine-title-editable {
+    padding: 1px 4px;
     font-size: 0.9rem;
   }
 
@@ -285,18 +385,30 @@
     min-width: 80px;
   }
 
+  /* Garantir que os botões fiquem responsivos */
+  .machine-header .machine-actions {
+    gap: 4px;
+  }
+
+  .machine-header .btn-delete-small {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    white-space: nowrap;
+    min-width: 80px;
+  }
+
   /* Ajustes para telas muito pequenas */
   .project-actions,
   .room-actions,
   .obra-actions,
-  .climatization-machine .machine-header .machine-actions {
+  .machine-header .machine-actions {
     gap: 4px;
   }
 
   .project-actions .btn,
   .room-actions .btn,
   .obra-actions .btn,
-  .climatization-machine .machine-header .machine-actions .btn {
+  .machine-header .machine-actions .btn {
     flex: 1 1 calc(50% - 4px);
     min-width: 0;
   }
@@ -311,7 +423,7 @@
 
   .project-header,
   .room-header,
-  .climatization-machine .machine-header {
+  .machine-header {
     padding: var(--spacing-md);
   }
 
@@ -337,7 +449,75 @@
   .project-content,
   .room-content,
   .section-content,
-  .subsection-content {
+  .subsection-content,
+  .machine-content {
     padding: var(--spacing-sm);
+  }
+}
+
+/* Utilitários para estados de edição */
+.editing {
+  background-color: var(--color-warning-light) !important;
+  border-color: var(--color-warning) !important;
+}
+
+/* Animações suaves para transições de layout */
+.project-header,
+.room-header,
+.machine-header,
+.obra-header {
+  transition: all 0.3s ease;
+}
+
+/* Garantir que os botões nos headers tenham tamanho consistente */
+.minimizer {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: white;
+  font-weight: bold;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* High contrast support */
+@media (prefers-contrast: high) {
+  .machine-title-editable:focus {
+    border-width: 2px;
+    outline: 2px solid currentColor;
+  }
+
+  .minimizer {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+  .shutdown-btn,
+  .minimizer,
+  .editable-title,
+  .machine-title-editable,
+  .project-header,
+  .room-header,
+  .machine-header,
+  .obra-header {
+    transition: none;
+  }
+
+  .shutdown-btn:hover,
+  .shutdown-btn:active {
+    transform: none;
   }
 }

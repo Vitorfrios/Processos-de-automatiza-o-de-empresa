@@ -45,14 +45,7 @@
   padding: var(--spacing-md);
 }
 
-.machine-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-xs);
-  border-bottom: 2px solid var(--color-gray-light);
-}
+
 
 .machine-title {
   font-weight: 600;

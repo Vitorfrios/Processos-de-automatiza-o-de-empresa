@@ -76,13 +76,13 @@ function buildClimatizationMachineHTML(machineId, displayNumber, machines, roomI
     return `
         <div class="climatization-machine" data-machine-id="${machineId}" data-room-id="${roomId}">
             <div class="machine-header">
-                <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
-                <input type="text" 
-                       class="machine-title-editable" 
-                       value="Maquina${displayNumber}"
-                       onchange="updateMachineTitle(this, '${machineId}')"
-                       onclick="this.select()">
+              <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
+              <input type="text" class="machine-title-editable" value="Maquina${displayNumber}" 
+                    onchange="updateMachineTitle(this, '${machineId}')" 
+                    onclick="this.select()">
+              <div class="machine-actions">
                 <button class="btn btn-delete-small" onclick="deleteClimatizationMachine(this)">Remover</button>
+              </div>
             </div>
             <div class="machine-content" id="machine-content-${machineId}">
                 <div class="climatization-form-grid">

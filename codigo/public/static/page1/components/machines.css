@@ -129,9 +129,10 @@
   font-weight: 600;
   color: var(--color-gray-dark);
   margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-xs);
-  border-bottom: 1px solid var(--options-section-border);
+  padding: var(--spacing-xs);
+  border-top: 1px solid #0d151e;
 }
+
 
 .options-grid {
   display: grid;
