@@ -201,6 +201,301 @@
           "timestamp": "2025-10-30T21:40:20.765Z"
         }
       ]
+    },
+    {
+      "id": "obra_b57",
+      "nome": "Obra1",
+      "timestamp": "2025-10-30T23:32:35.560Z",
+      "projetos": [
+        {
+          "id": "obra_b57_proj_g91_1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_b57_proj_g91_1_sala_d43_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacao": false,
+                "setpointPressurizacao": 25,
+                "pressurizacaoSetpoint": "25",
+                "numPortasDuplas": "0",
+                "numPortasSimples": "0"
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 0,
+                "solucaoBackup": 0,
+                "totalCapacidade": 0,
+                "folga": 0,
+                "backup": "n",
+                "cargaEstimada": 0
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ],
+          "timestamp": "2025-10-30T23:32:35.562Z"
+        }
+      ]
+    },
+    {
+      "id": "obra_d73",
+      "nome": "Obra2",
+      "timestamp": "2025-10-30T23:33:15.536Z",
+      "projetos": [
+        {
+          "id": "obra_d73_proj_j91_1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_d73_proj_j91_1_sala_b12_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala de Servidores",
+                "backup": "n+1",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 5.5,
+                "paredeLeste": 5.5,
+                "paredeNorte": 8,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacao": true,
+                "setpointPressurizacao": 25,
+                "numPortasSimples": "3",
+                "numPortasDuplas": "2",
+                "combateIncendio": "fm200"
+              },
+              "maquinas": [
+                {
+                  "nome": "Equipamento de Climatização 1",
+                  "tipo": "Self Contained",
+                  "potencia": "15TR",
+                  "tensao": "220V/1F",
+                  "precoBase": 37800,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 2,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "15TR"
+                    },
+                    {
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
+                      "value": 4,
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "15TR"
+                    },
+                    {
+                      "id": 12,
+                      "name": "Chaparia em Inox",
+                      "value": 3,
+                      "originalName": "Chaparia em Inox",
+                      "potenciaAplicada": "15TR"
+                    }
+                  ],
+                  "precoTotal": 42809,
+                  "potenciaSelecionada": "15TR",
+                  "tipoSelecionado": "Self Contained"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 1.2,
+                "capacidadeUnitaria": 10,
+                "backup": "n+1",
+                "cargaEstimada": 5,
+                "solucao": "1",
+                "solucaoBackup": "2",
+                "totalCapacidade": "10.0",
+                "folga": "100.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 46748,
+                "total-tr": 14,
+                "total-externo": 6642,
+                "total-divisoes": 2216,
+                "total-piso": 1013,
+                "total-iluminacao": 350,
+                "total-dissi": 5000,
+                "total-pessoas": 2198,
+                "total-ar-sensivel": 9241,
+                "total-ar-latente": 20090
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-30T23:33:15.536Z"
+        }
+      ]
+    },
+    {
+      "id": "obra_e42",
+      "nome": "Obra3",
+      "timestamp": "2025-10-30T23:34:19.198Z",
+      "projetos": [
+        {
+          "id": "obra_e42_proj_f50_1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_e42_proj_f50_1_sala_a53_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala de Servidores",
+                "backup": "n+1",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 5.5,
+                "paredeLeste": 5.5,
+                "paredeNorte": 8,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacao": true,
+                "setpointPressurizacao": 25,
+                "numPortasSimples": "3",
+                "numPortasDuplas": "2",
+                "combateIncendio": "fm200"
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 1.2,
+                "capacidadeUnitaria": 10,
+                "backup": "n+1",
+                "cargaEstimada": 14,
+                "solucao": "2",
+                "solucaoBackup": "3",
+                "totalCapacidade": "20.0",
+                "folga": "42.9%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 46748,
+                "total-tr": 14,
+                "total-externo": 6642,
+                "total-divisoes": 2216,
+                "total-piso": 1013,
+                "total-iluminacao": 350,
+                "total-dissi": 5000,
+                "total-pessoas": 2198,
+                "total-ar-sensivel": 9241,
+                "total-ar-latente": 20090
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-30T23:34:19.199Z"
+        }
+      ]
+    },
+    {
+      "id": "obra_r85",
+      "nome": "Obra4",
+      "timestamp": "2025-10-30T23:37:02.249Z",
+      "projetos": [
+        {
+          "id": "obra_r85_proj_e89_1",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_r85_proj_e89_1_sala_r22_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala de Servidores",
+                "backup": "n+1",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 5.5,
+                "paredeLeste": 5.5,
+                "paredeNorte": 8,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacao": true,
+                "setpointPressurizacao": 25,
+                "numPortasSimples": "3",
+                "numPortasDuplas": "2",
+                "combateIncendio": "fm200"
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 1.2,
+                "capacidadeUnitaria": 10,
+                "backup": "n",
+                "cargaEstimada": 14,
+                "solucao": "2",
+                "solucaoBackup": "2",
+                "totalCapacidade": "20.0",
+                "folga": "42.9%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 46748,
+                "total-tr": 14,
+                "total-externo": 6642,
+                "total-divisoes": 2216,
+                "total-piso": 1013,
+                "total-iluminacao": 350,
+                "total-dissi": 5000,
+                "total-pessoas": 2198,
+                "total-ar-sensivel": 9241,
+                "total-ar-latente": 20090
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ],
+          "timestamp": "2025-10-30T23:37:02.250Z"
+        }
+      ]
     }
   ]
 }

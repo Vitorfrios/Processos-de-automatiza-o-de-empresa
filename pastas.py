@@ -1,7 +1,7 @@
 # tree_permitidos.py
 from pathlib import Path
 
-ALLOW_EXTS = {".js",".py",".json",".css",".txt",".md",".yml"}# extensões permitidas
+ALLOW_EXTS = {".css"}# extensões permitidas
 
 def listar(p: Path, prefixo: str = ""):
     try:
@@ -33,4 +33,4 @@ def tree(raiz="C:/Users/vitor/OneDrive/Repositórios/Processos-de-automatiza-o-d
     listar(raiz_path)
 
 if __name__ == "__main__":
-    tree("C:/Users/vitor/OneDrive/Repositórios/Processos-de-automatiza-o-de-empresa")   # troque para "." se quiser o diretório atual
+    tree("codigo")   # troque para "." se quiser o diretório atual
