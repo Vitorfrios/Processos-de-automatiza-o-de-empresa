@@ -154,8 +154,10 @@
   .obra-header-spacer span {
       font-size: 0.85rem;
       padding: 4px 8px;
-      max-width: 180px;
+      max-width: 100%;
       text-align: left;
+      white-space: normal;
+      word-break: break-word;
   }
 
   .projetc-header-record {
@@ -198,6 +200,10 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--border-radius);
     transition: all 0.2s ease;
+    white-space: normal;
+    word-break: break-word;
+    display: inline-block;
+    max-width: 100%;
     
     /* Previne quebra de linha */
     white-space: nowrap;
