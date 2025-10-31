@@ -2,6 +2,7 @@
 .navbar {
   background: var(--navbar-bg);
   box-shadow: 0 2px 4px var(--navbar-shadow);
+  overflow-x: auto;
 }
 
 .nav-list {
@@ -10,6 +11,24 @@
   justify-content: center;
   gap: var(--nav-gap);
   padding: var(--spacing-md) 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.navbar::-webkit-scrollbar,
+.nav-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.navbar::-webkit-scrollbar-track,
+.nav-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.navbar::-webkit-scrollbar-thumb,
+.nav-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
 }
 
 .nav-list li a {
@@ -23,4 +42,27 @@
 
 .nav-list li a:hover {
   background: var(--nav-link-hover-bg);
+}
+
+@media (max-width: 768px) {
+  .nav-list {
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    flex-wrap: nowrap;
+    scrollbar-width: thin;
+  }
+
+  .navbar::-webkit-scrollbar,
+  .nav-list::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .nav-list li {
+    flex: 0 0 auto;
+  }
+
+  .nav-list li a {
+    white-space: nowrap;
+  }
 }

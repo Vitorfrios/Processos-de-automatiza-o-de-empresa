@@ -24,6 +24,7 @@
   align-items: center;
   gap: var(--machine-header-gap);
   border-radius: var(--border-radius) var(--border-radius) 0 0;
+  flex-wrap: nowrap;
 }
 
 /* Input editável */
@@ -224,22 +225,37 @@
   padding: var(--machine-total-padding);
   border-radius: var(--border-radius);
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
   box-shadow: var(--machine-total-shadow);
 }
 
 .machine-total-price strong {
   color: var(--color-white);
   font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+  text-align: center;
 }
 
 .machine-total-price span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--machine-total-span-bg);
   color: var(--machine-total-span-color);
   padding: var(--machine-total-span-padding);
   border-radius: var(--border-radius);
   font-weight: 700;
-  margin-left: var(--spacing-xs);
+  margin-left: 0;
   box-shadow: var(--machine-total-span-shadow);
+  min-width: 120px;
+  max-width: 100%;
 }
 
 /* Selects específicos */
@@ -277,4 +293,63 @@
 
 .climatization-machine {
   animation: fadeIn 0.3s ease-out;
+}
+
+@media (max-width: 768px) {
+  .climatization-machine .machine-header {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+  }
+
+  .climatization-machine .minimizer,
+  .climatization-machine .btn-delete-small {
+    flex: 0 0 auto;
+  }
+
+  .climatization-machine .machine-header .machine-title-editable {
+    flex: 1 1 200px;
+    min-width: 200px;
+  }
+
+  .machine-total-price {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+    text-align: left;
+  }
+
+  .machine-total-price strong {
+    font-size: 1rem;
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .machine-total-price span {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .climatization-machine .machine-header .machine-title-editable {
+    min-width: 160px;
+  }
+
+  .climatization-machine .minimizer,
+  .climatization-machine .btn-delete-small {
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .machine-total-price {
+    align-items: center;
+    text-align: center;
+  }
+
+  .machine-total-price span {
+    width: 100%;
+    min-width: 0;
+  }
 }

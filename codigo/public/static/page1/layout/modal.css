@@ -1,4 +1,14 @@
 /* ===== MODAL DE CONFIRMAÇÃO - ESTILO TOAST ===== */
+:root {
+    --modal-lock-height: 100vh;
+}
+
+body:has(.confirmation-modal.active) {
+    overflow: hidden;
+    height: var(--modal-lock-height);
+    touch-action: none;
+}
+
 .confirmation-modal {
     position: fixed;
     top: 0;

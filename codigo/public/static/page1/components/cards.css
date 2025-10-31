@@ -58,7 +58,7 @@
 
 .project-title {
   flex: 1;
-  font-size: 1.5rem;
+  font-size: clamp(1.4rem, 2vw + 1rem, 1.7rem);
   font-weight: 600;
 }
 
@@ -98,7 +98,7 @@
 
 .room-title {
   flex: 1;
-  font-size: 1.2rem;
+  font-size: clamp(1.1rem, 1.8vw + 0.9rem, 1.3rem);
   font-weight: 600;
 }
 

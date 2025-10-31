@@ -126,3 +126,19 @@ textarea.form-input {
 .form-group.full-width {
   grid-column: 1 / -1;
 }
+
+@media (max-width: 600px) {
+  .checkbox-options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-option {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .checkbox-option label {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+}
