@@ -55,7 +55,7 @@ async function createEmptyObra(obraName, obraId) {
  * @param {string} obraId - ID único da obra
  * @returns {string} HTML da obra
  */
-function buildObraHTML(obraName, obraId) {
+function buildObraHTML(obraName, obraId, hasId = false) {
   // ✅ CORREÇÃO: Validar ID único
   if (!obraId || obraId === 'undefined' || obraId === 'null') {
       console.error(`ERRO FALBACK (buildObraHTML) obra-manager.js [ID de obra inválido: ${obraId}]`);
@@ -86,7 +86,8 @@ function buildObraHTML(obraName, obraId) {
       <div class="add-project-section">
         <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraId}')">+ Adicionar Projeto</button>
       </div>
-      ${buildObraActionsFooter(obraId, obraName, false)} 
+      ${buildObraActionsFooter(obraId, obraName, hasId)} 
+ 
     </div>
   </div>
   `;

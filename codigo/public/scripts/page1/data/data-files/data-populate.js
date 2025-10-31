@@ -5,6 +5,8 @@
  * SISTEMA CORRIGIDO COM IDs ÚNICOS
  */
 
+import{updateObraButtonAfterSave } from '../../ui/intr-files/obra-manager.js'
+
 // =============================================================================
 // FUNÇÕES DE PREENCHIMENTO ESPECÍFICAS POR SEÇÃO
 // =============================================================================
@@ -418,17 +420,37 @@ async function populateObraData(obraData) {
     let obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
     
     if (!obraElement) {
-        console.error(`❌ Elemento da obra não encontrado no DOM pelo ID: ${obraId}`);
+        console.log(`🔨 Criando nova obra: "${obraName}"`);
         
-        // Debug: listar obras disponíveis no DOM
-        console.log('🔍 Obras disponíveis no DOM:');
-        document.querySelectorAll('.obra-block').forEach((obra, index) => {
-            console.log(`  ${index + 1}. Nome: "${obra.dataset.obraName}", ID: "${obra.dataset.obraId}"`);
-        });
+        // ✅✅✅ CORREÇÃO CRÍTICA: Passar hasId=true para obras carregadas da sessão
+        const obraHTML = buildObraHTML(obraName, obraId, true); // ← hasId=true para obras da sessão
+        
+        const container = document.getElementById("projects-container");
+        if (container) {
+            container.insertAdjacentHTML("beforeend", obraHTML);
+            
+            // Aguardar um pouco para o DOM atualizar
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+            console.log(`✅ Obra criada no DOM: ${obraName} com botão "Atualizar Obra"`);
+        } else {
+            console.error('❌ Container de projetos não encontrado');
+            return;
+        }
+    } else {
+        console.log(`✅ Obra já existe no DOM: ${obraName}`, obraElement);
+        
+        // ✅ CORREÇÃO: Se a obra já existe, garantir que o botão está correto
+        updateObraButtonAfterSave(obraName, obraId);
+    }
+
+    if (!obraElement) {
+        console.error(`❌ Elemento da obra não encontrado no DOM após criação: ${obraId}`);
         return;
     }
 
-    console.log(`✅ Elemento da obra encontrado:`, {
+    console.log(`✅ Elemento da obra confirmado:`, {
         element: obraElement,
         dataset: obraElement.dataset
     });

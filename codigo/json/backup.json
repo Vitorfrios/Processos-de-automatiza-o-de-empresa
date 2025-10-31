@@ -516,7 +516,7 @@
     {
       "id": "obra_zmna",
       "nome": "Obra1",
-      "timestamp": "2025-10-31T11:32:55.780Z",
+      "timestamp": "2025-10-31T11:49:23.894Z",
       "projetos": [
         {
           "id": "obra_zmna_proj_fk5G_1",
@@ -560,14 +560,14 @@
               }
             }
           ],
-          "timestamp": "2025-10-31T11:32:55.781Z"
+          "timestamp": "2025-10-31T11:49:23.894Z"
         }
       ]
     },
     {
       "id": "obra_e3Nc",
       "nome": "Obra2",
-      "timestamp": "2025-10-31T11:33:31.862Z",
+      "timestamp": "2025-10-31T11:49:28.246Z",
       "projetos": [
         {
           "id": "obra_e3Nc_proj_S9-9_1",
@@ -586,13 +586,13 @@
               "maquinas": [],
               "capacidade": {
                 "fatorSeguranca": 10,
-                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": 0,
-                "solucaoBackup": 0,
-                "totalCapacidade": 0,
-                "folga": 0,
+                "capacidadeUnitaria": 1,
                 "backup": "n",
-                "cargaEstimada": 0
+                "cargaEstimada": 0,
+                "solucao": "NaN",
+                "solucaoBackup": "NaN",
+                "totalCapacidade": "NaN",
+                "folga": "0.0%"
               },
               "ganhosTermicos": {
                 "total-ganhos-w": 0,
@@ -611,7 +611,7 @@
               }
             }
           ],
-          "timestamp": "2025-10-31T11:33:31.862Z"
+          "timestamp": "2025-10-31T11:49:28.247Z"
         }
       ]
     }

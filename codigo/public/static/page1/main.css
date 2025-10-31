@@ -13,6 +13,8 @@
 @import url('components/machines.css'); 
 @import url('components/capacity-tables.css'); 
 @import url('layout/modal.css');
+@import url('layout/exit-modal.css');
+
 /* Botão de Shutdown */
 .shutdown-btn {
     background: transparent;
