@@ -212,23 +212,23 @@ function buildPressurizationRow(roomId) {
     <!-- Linha 3: portas (mostra somente se Sim) -->
     <div class="clima-row clima-row-2cols" id="pressurizacao-portas-${roomId}" style="display:none;">
       <div class="clima-cell">
+        <label>N° Portas Duplas:</label>
+        <input type="number"
+              class="form-input clima-input"
+              data-field="numPortasDuplas"
+              data-room-id="${roomId}"
+              placeholder="Ex: 2"
+              min="0"
+              disabled
+              onchange="calculateVazaoArAndThermalGains('${roomId}')">
+      </div>
+      <div class="clima-cell">
         <label>N° Portas Simples:</label>
         <input type="number"
                class="form-input clima-input"
                data-field="numPortasSimples"
                data-room-id="${roomId}"
                placeholder="Ex: 3"
-               min="0"
-               disabled
-               onchange="calculateVazaoArAndThermalGains('${roomId}')">
-      </div>
-      <div class="clima-cell">
-        <label>N° Portas Duplas:</label>
-        <input type="number"
-               class="form-input clima-input"
-               data-field="numPortasDuplas"
-               data-room-id="${roomId}"
-               placeholder="Ex: 2"
                min="0"
                disabled
                onchange="calculateVazaoArAndThermalGains('${roomId}')">
