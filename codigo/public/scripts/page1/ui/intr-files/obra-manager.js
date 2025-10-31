@@ -16,18 +16,39 @@ import {addNewProjectToObra} from './project-manager.js'
 
 
 /**
- * Cria uma obra vazia na interface
+ * Cria uma obra vazia na interface - CORRIGIDA
  * @param {string} obraName - Nome da obra
  * @param {string} obraId - ID da obra (opcional)
  */
-function createEmptyObra(obraName, obraId) {
+async function createEmptyObra(obraName, obraId) {
     // ✅ CORREÇÃO: SEMPRE usar ID único, mesmo se fornecido (para consistência)
     const finalObraId = obraId || generateObraId();
     const obraHTML = buildObraHTML(obraName, finalObraId);
-    insertObraIntoDOM(obraHTML);
-    console.log(`🏗️ Obra ${obraName} criada - ID: ${finalObraId}`);
+    
+    console.log(`🏗️ Criando obra: ${obraName} com ID: ${finalObraId}`);
+    console.log(`📝 HTML gerado:`, obraHTML.substring(0, 200) + '...');
+    
+    // ✅✅✅ CORREÇÃO CRÍTICA: Inserir no DOM e CONFIRMAR
+    const inserted = await insertObraIntoDOM(obraHTML, finalObraId);
+    
+    if (inserted) {
+        console.log(`✅ Obra ${obraName} criada e INSERIDA NO DOM - ID: ${finalObraId}`);
+        
+        // ✅ CONFIRMAÇÃO: Verificar se realmente está no DOM
+        setTimeout(() => {
+            const obraNoDOM = document.querySelector(`[data-obra-id="${finalObraId}"]`);
+            if (obraNoDOM) {
+                console.log(`✅ CONFIRMADO: Obra ${finalObraId} encontrada no DOM`);
+            } else {
+                console.error(`❌ FALHA CRÍTICA: Obra ${finalObraId} NÃO está no DOM após criação`);
+            }
+        }, 100);
+    } else {
+        console.error(`❌ FALHA: Obra ${obraName} NÃO FOI INSERIDA NO DOM`);
+    }
+    
+    return inserted;
 }
-
 /**
  * Constrói o HTML de uma obra
  * @param {string} obraName - Nome da obra
@@ -95,46 +116,106 @@ function buildObraActionsFooter(obraId, obraName, hasId = false) {
 }
 
 /**
- * Insere o HTML da obra no DOM
+ * Insere o HTML da obra no DOM - CORRIGIDA
  * @param {string} obraHTML - HTML da obra a ser inserida
+ * @param {string} obraId - ID da obra para debug
+ * @returns {boolean} True se inserido com sucesso
  */
-function insertObraIntoDOM(obraHTML) {
-  const projectsContainer = document.getElementById("projects-container")
-  if (!projectsContainer) {
-    console.error('❌ Container de projetos não encontrado')
-    return
-  }
-  projectsContainer.insertAdjacentHTML("beforeend", obraHTML)
+async function insertObraIntoDOM(obraHTML, obraId) {
+    console.log(`📤 Inserindo obra no DOM: ${obraId}`);
+    
+    const projectsContainer = document.getElementById("projects-container");
+    
+    if (!projectsContainer) {
+        console.error('❌ Container de projetos não encontrado');
+        
+        // ✅ FALLBACK: Tentar criar o container
+        console.log('🔄 Tentando criar projects-container...');
+        const mainContent = document.querySelector('main, body');
+        if (mainContent) {
+            const newContainer = document.createElement('div');
+            newContainer.id = 'projects-container';
+            newContainer.innerHTML = '<!-- Hierarquia: Obra → Projeto → Sala -->';
+            mainContent.appendChild(newContainer);
+            console.log('✅ projects-container criado');
+            return insertObraIntoDOM(obraHTML, obraId); // Tentar novamente
+        }
+        
+        return false;
+    }
+    
+    console.log(`✅ Container encontrado, inserindo obra ${obraId}...`);
+    console.log(`📦 Container antes:`, projectsContainer.children.length, 'elementos');
+    
+    try {
+        projectsContainer.insertAdjacentHTML("beforeend", obraHTML);
+        
+        // ✅ CONFIRMAR inserção
+        setTimeout(() => {
+            const obraInserida = document.querySelector(`[data-obra-id="${obraId}"]`);
+            if (obraInserida) {
+                console.log(`✅ Obra ${obraId} INSERIDA COM SUCESSO no container`);
+                console.log(`📦 Container depois:`, projectsContainer.children.length, 'elementos');
+            } else {
+                console.error(`❌ FALHA: Obra ${obraId} NÃO FOI INSERIDA no container`);
+            }
+        }, 50);
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao inserir obra no DOM:', error);
+        return false;
+    }
 }
 
 /**
- * Atualiza o botão de uma obra após salvamento
+ * Atualiza o botão de uma obra após salvamento - CORRIGIDA (APENAS ID)
  * @param {string} obraName - Nome da obra
  * @param {string} obraId - ID da obra salva
  */
 function updateObraButtonAfterSave(obraName, obraId) {
-  // ✅ CORREÇÃO: Buscar APENAS por ID único
-  const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`)
-  if (!obraBlock) {
-    console.error(`❌ Obra com ID ${obraId} não encontrada para atualizar botão`)
-    return
-  }
-
-  obraBlock.dataset.obraId = obraId
-
-  const obraContent = document.getElementById(`obra-content-${obraId}`)
-  if (obraContent) {
-    const oldFooter = obraContent.querySelector('.obra-actions-footer')
-    if (oldFooter) {
-      const newFooter = buildObraActionsFooter(obraId, obraName, true)
-      oldFooter.outerHTML = newFooter
-      console.log(`🔄 Botão da obra ${obraName} ATUALIZADO para "Atualizar Obra" (ID: ${obraId})`)
-    } else {
-      console.error(`❌ Rodapé não encontrado na obra ${obraName}`)
+    console.log(`🔄 Atualizando botão da obra: ${obraName} (${obraId})`);
+    
+    // ✅ BUSCAR APENAS POR ID ÚNICO
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID ${obraId} não encontrada para atualizar botão`);
+        return; // ❌ NUNCA tentar buscar por nome
     }
-  } else {
-    console.error(`❌ Conteúdo da obra ${obraId} não encontrado`)
-  }
+
+    // ✅ ATUALIZAR ID NO DATASET (para garantir consistência)
+    obraBlock.dataset.obraId = obraId;
+
+    // ✅ BUSCAR CONTEÚDO DA OBRA APENAS POR ID
+    const obraContent = document.getElementById(`obra-content-${obraId}`);
+    if (!obraContent) {
+        console.error(`❌ Conteúdo da obra ${obraId} não encontrado`);
+        return;
+    }
+
+    // ✅ BUSCAR RODAPÉ APENAS DENTRO DA OBRA ESPECÍFICA
+    const oldFooter = obraContent.querySelector('.obra-actions-footer');
+    if (!oldFooter) {
+        console.error(`❌ Rodapé não encontrado na obra ${obraId}`);
+        return;
+    }
+
+    // ✅ CORREÇÃO CRÍTICA: Atualizar APENAS o botão, preservando o container de projetos
+    const saveButton = oldFooter.querySelector('.btn-save, .btn-update');
+    if (saveButton) {
+        saveButton.textContent = "Atualizar Obra";
+        saveButton.className = "btn btn-update";
+        saveButton.setAttribute('onclick', `event.preventDefault(); saveOrUpdateObra('${obraId}')`);
+        console.log(`✅ Botão atualizado para: "Atualizar Obra" (ID: ${obraId})`);
+    } else {
+        console.error(`❌ Botão de salvar não encontrado na obra ${obraId}`);
+    }
+
+    // ✅ VERIFICAR se o container de projetos ainda existe (apenas por ID)
+    const projectsContainer = document.getElementById(`projects-${obraId}`);
+    if (!projectsContainer) {
+        console.error(`❌ CRÍTICO: Container de projetos PERDIDO na obra ${obraId}!`);
+    }
 }
 
 /**

@@ -78,14 +78,75 @@ function clearSessionObras() {
 /**
  * Remove todas as obras renderizadas da interface do usuário
  */
+/**
+ * Remove todas as obras renderizadas da interface do usuário - VERSÃO CORRIGIDA
+ * AGORA: Preserva obras que já foram salvas no servidor/sessão
+ */
 function clearRenderedObras() {
     const obrasContainer = document.getElementById("projects-container");
     if (!obrasContainer) return;
     
-    const obras = obrasContainer.querySelectorAll('.obra-block');
-    obras.forEach(obra => obra.remove());
+    console.log('🔍 clearRenderedObras: Analisando obras no DOM...');
     
-    window.GeralCount = 0;
+    const obras = obrasContainer.querySelectorAll('.obra-block');
+    console.log(`📊 Total de obras encontradas: ${obras.length}`);
+    
+    let obrasRemovidas = 0;
+    let obrasPreservadas = 0;
+    
+    obras.forEach((obra, index) => {
+        const obraId = obra.dataset.obraId;
+        const obraName = obra.dataset.obraName;
+        
+        // ✅ CORREÇÃO CRÍTICA: Verificar se a obra JÁ FOI SALVA
+        const hasSaveButton = obra.querySelector('.btn-save'); // Botão "Salvar" = obra NÃO salva
+        const hasUpdateButton = obra.querySelector('.btn-update'); // Botão "Atualizar" = obra JÁ salva
+        const hasProjects = obra.querySelector('.project-block'); // Tem projetos = conteúdo válido
+        
+        console.log(`🔍 Obra ${index + 1}: ${obraName} (${obraId})`, {
+            hasSaveButton: !!hasSaveButton,
+            hasUpdateButton: !!hasUpdateButton,
+            hasProjects: !!hasProjects
+        });
+        
+        // ✅ PRESERVAR obras que:
+        // 1. Já foram salvas (tem botão "Atualizar") OU
+        // 2. Têm projetos (conteúdo válido) OU  
+        // 3. Estão na sessão atual
+        if (hasUpdateButton || hasProjects || isObraInSession(obraId)) {
+            console.log(`✅ PRESERVANDO: ${obraName} - Já salva ou tem conteúdo`);
+            obrasPreservadas++;
+            return; // NÃO remove
+        }
+        
+        // ❌ REMOVER apenas obras que:
+        // 1. Não foram salvas (só tem botão "Salvar") E
+        // 2. Não têm projetos (vazias) E
+        // 3. Não estão na sessão
+        if (hasSaveButton && !hasProjects && !isObraInSession(obraId)) {
+            console.log(`🗑️ REMOVENDO: ${obraName} - Obra não salva e vazia`);
+            obra.remove();
+            obrasRemovidas++;
+        } else {
+            console.log(`✅ PRESERVANDO: ${obraName} - Tem conteúdo ou está na sessão`);
+            obrasPreservadas++;
+        }
+    });
+    
+    // ✅ Atualizar contador APENAS se obras foram removidas
+    if (obrasRemovidas > 0) {
+        window.GeralCount = Math.max(0, window.GeralCount - obrasRemovidas);
+    }
+    
+    console.log(`📊 clearRenderedObras finalizado: ${obrasPreservadas} preservadas, ${obrasRemovidas} removidas`);
+}
+
+/**
+ * Verifica se uma obra está na sessão atual - FUNÇÃO AUXILIAR
+ */
+function isObraInSession(obraId) {
+    const sessionObras = getSessionObras();
+    return sessionObras.includes(obraId);
 }
 
 /**

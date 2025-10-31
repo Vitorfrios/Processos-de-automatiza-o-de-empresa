@@ -224,6 +224,70 @@ function findObraBlock(obraId) {
     return null;
 }
 
+
+/**
+ * Aguarda até que um elemento esteja disponível no DOM
+ * @param {string} selector - Seletor do elemento
+ * @param {number} timeout - Timeout em milissegundos
+ * @returns {Promise<HTMLElement>}
+ */
+function waitForElement(selector, timeout = 3000) {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        
+        function check() {
+            const element = document.querySelector(selector);
+            if (element) {
+                console.log(`✅ Elemento encontrado: ${selector}`);
+                resolve(element);
+                return;
+            }
+            
+            if (Date.now() - startTime > timeout) {
+                reject(new Error(`Timeout: Elemento não encontrado - ${selector}`));
+                return;
+            }
+            
+            setTimeout(check, 100);
+        }
+        
+        check();
+    });
+}
+
+/**
+ * Verifica se uma obra existe no DOM com retry
+ * @param {string} obraId - ID da obra
+ * @param {number} maxAttempts - Número máximo de tentativas
+ * @returns {Promise<HTMLElement|null>}
+ */
+async function findObraBlockWithRetry(obraId, maxAttempts = 10) {
+    console.log(`🔍 Buscando obra com retry: "${obraId}"`);
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+        
+        if (obraBlock) {
+            console.log(`✅ Obra encontrada na tentativa ${attempt}/${maxAttempts}`);
+            return obraBlock;
+        }
+        
+        console.log(`⏳ Tentativa ${attempt}/${maxAttempts} - obra não encontrada, aguardando...`);
+        
+        if (attempt < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+    }
+    
+    console.log(`❌ Obra não encontrada após ${maxAttempts} tentativas`);
+    return null;
+}
+
+
+
+
+
+
 /**
  * Salva ou atualiza uma obra no servidor (função principal)
  * @param {string} obraId - ID da obra
@@ -238,7 +302,36 @@ async function saveObra(obraId, event) {
 
     console.log(`💾 SALVANDO OBRA pelo ID: "${obraId}"`);
 
-    // Ativa a sessão se não estiver ativa (primeira obra)
+    // ✅ CORREÇÃO 1: AGUARDAR obra estar no DOM antes de qualquer operação
+    console.log(`⏳ Aguardando obra "${obraId}" estar no DOM...`);
+    
+    let obraBlock = await findObraBlockWithRetry(obraId, 15);
+    
+    if (!obraBlock) {
+        console.error('❌ Obra não encontrada no DOM após múltiplas tentativas:', obraId);
+        
+        // Debug detalhado
+        const todasObras = document.querySelectorAll('[data-obra-id]');
+        console.log('📋 Obras disponíveis no DOM:', Array.from(todasObras).map(o => ({
+            id: o.dataset.obraId,
+            name: o.dataset.obraName
+        })));
+        
+        showSystemStatus("ERRO: Obra não encontrada na interface", "error");
+        return;
+    }
+
+    // ✅ CORREÇÃO CRÍTICA: SALVAR REFERÊNCIA ANTES de buildObraData
+    const obraOriginalReference = obraBlock;
+    const obraContainer = obraBlock.parentElement;
+    
+    console.log('🔒 REFERÊNCIA SALVA:', {
+        obra: obraOriginalReference,
+        container: obraContainer,
+        obraNoContainer: obraContainer.contains(obraOriginalReference)
+    });
+
+    // ✅ CORREÇÃO 2: Verificar se a sessão está ativa APÓS confirmar que a obra existe
     if (!isSessionActive()) {
         console.log("🆕 Iniciando sessão para primeira obra...");
         await startSessionOnFirstSave();
@@ -251,15 +344,7 @@ async function saveObra(obraId, event) {
         return;
     }
 
-    let obraBlock = findObraBlock(obraId);
-    
-    if (!obraBlock) {
-        console.error('❌ Obra não encontrada no DOM pelo ID:', obraId);
-        showSystemStatus("ERRO: Obra não encontrada na interface", "error");
-        return;
-    }
-
-    console.log('✅ Obra encontrada:', {
+    console.log('✅ Obra confirmada no DOM:', {
         element: obraBlock,
         dataset: obraBlock.dataset,
         id: obraBlock.dataset.obraId,
@@ -275,62 +360,114 @@ async function saveObra(obraId, event) {
         return;
     }
 
-    // ✅ CORREÇÃO: Lógica melhorada para determinar se é nova obra ou atualização
+    // ✅ CORREÇÃO 3: Lógica MELHORADA para determinar se é nova obra
     const obraIdFromDOM = obraBlock.dataset.obraId;
-    const isNewObra = !obraIdFromDOM || 
-                      obraIdFromDOM === "" || 
-                      obraIdFromDOM === "null" || 
-                      obraIdFromDOM === "undefined" ||
-                      !obraIdFromDOM.startsWith('obra_'); // ✅ VERIFICAR SE É ID SEGURO
-
-    console.log('🔍 VERIFICAÇÃO DE OBRA:');
+    const obraIdFromData = obraData.id;
+    
+    // ✅ VERIFICAÇÃO MAIS ROBUSTA - usar o ID que veio do DOM como fonte da verdade
+    const finalObraId = obraIdFromDOM || obraIdFromData;
+    
+    console.log('🔍 VERIFICAÇÃO DE OBRA MELHORADA:');
     console.log('- ID no DOM:', obraIdFromDOM);
-    console.log('- ID nos dados:', obraData.id);
-    console.log('- É ID seguro?:', obraIdFromDOM?.startsWith('obra_'));
+    console.log('- ID nos dados:', obraIdFromData);
+    console.log('- ID final para uso:', finalObraId);
+    console.log('- É ID seguro?:', finalObraId?.startsWith('obra_'));
+    
+    // ✅ CORREÇÃO: Determinar se é nova obra baseado na presença no servidor
+    let isNewObra = true; // Assume que é nova por padrão
+    
+    try {
+        // Verificar se a obra já existe no servidor
+        const todasObrasResponse = await fetch('/api/backup-completo');
+        if (todasObrasResponse.ok) {
+            const backupData = await todasObrasResponse.json();
+            const todasObras = backupData.obras || [];
+            const obraExistente = todasObras.find(obra => String(obra.id) === String(finalObraId));
+            
+            isNewObra = !obraExistente;
+            console.log(`- Já existe no servidor?: ${!isNewObra}`);
+        }
+    } catch (error) {
+        console.log('- Não foi possível verificar servidor, assumindo como nova obra');
+    }
+
     console.log('- É nova obra?:', isNewObra);
 
     let result = null;
     
     if (isNewObra) {
-        console.log('🆕 SALVANDO COMO NOVA OBRA COM ID SEGURO');
-        // ✅ CORREÇÃO: Garantir que obraData tenha ID seguro
+        console.log('🆕 SALVANDO COMO NOVA OBRA COM ID SEGURO:', finalObraId);
+        
+        // ✅ CORREÇÃO: Garantir que obraData tenha o ID correto
+        obraData.id = finalObraId;
+        
         if (!obraData.id || !obraData.id.startsWith('obra_')) {
             console.error('❌ Obra não possui ID seguro válido para salvar');
             showSystemStatus("ERRO: Obra não possui ID válido", "error");
             return;
         }
+        
         result = await salvarObra(obraData);
     } else {
-        const finalId = obraIdFromDOM || obraData.id;
-        console.log('📝 ATUALIZANDO OBRA EXISTENTE, ID SEGURO:', finalId);
+        console.log('📝 ATUALIZANDO OBRA EXISTENTE, ID SEGURO:', finalObraId);
         
         // ✅ CORREÇÃO: Validar ID seguro antes de atualizar
-        if (!finalId.startsWith('obra_')) {
-            console.error(`ERRO FALBACK (saveObra) projects.js [ID não seguro para atualização: ${finalId}]`);
+        if (!finalObraId.startsWith('obra_')) {
+            console.error(`ERRO: ID não seguro para atualização: ${finalObraId}`);
             showSystemStatus("ERRO: ID da obra inválido para atualização", "error");
             return;
         }
         
-        result = await atualizarObra(finalId, obraData);
+        result = await atualizarObra(finalObraId, obraData);
     }
 
     if (result) {
         const finalId = ensureStringId(result.id);
         
-        // ✅ CORREÇÃO: Atualizar DOM com o ID seguro correto
-        obraBlock.dataset.obraId = finalId;
-        obraBlock.dataset.obraName = obraData.nome;
+        // ✅ CORREÇÃO CRÍTICA: VERIFICAR SE OBRA AINDA EXISTE NO DOM
+        let obraBlockAtual = document.querySelector(`[data-obra-id="${finalId}"]`);
+        
+        if (!obraBlockAtual) {
+            console.error('❌ CRÍTICO: Obra desapareceu do DOM durante salvamento!');
+            console.log('🔍 Tentando recuperar da referência original...');
+            
+            // Tentar recuperar do container original
+            if (obraContainer && document.body.contains(obraContainer)) {
+                const obrasNoContainer = obraContainer.querySelectorAll('[data-obra-id]');
+                console.log(`📦 Obras no container original: ${obrasNoContainer.length}`);
+                
+                // Se a obra original ainda existe no container
+                if (obraContainer.contains(obraOriginalReference)) {
+                    obraBlockAtual = obraOriginalReference;
+                    console.log('✅ Obra recuperada da referência original');
+                } else {
+                    console.error('❌ Obra não está mais no container original');
+                    showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
+                    return;
+                }
+            } else {
+                console.error('❌ Container original não encontrado');
+                showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
+                return;
+            }
+        }
+
+        // ✅ ATUALIZAR DOM com o ID seguro correto
+        obraBlockAtual.dataset.obraId = finalId;
+        obraBlockAtual.dataset.obraName = obraData.nome;
         
         // Atualizar título se necessário
-        const titleElement = obraBlock.querySelector('.obra-title');
+        const titleElement = obraBlockAtual.querySelector('.obra-title');
         if (titleElement && titleElement.textContent !== obraData.nome) {
             titleElement.textContent = obraData.nome;
         }
 
-        // ✅✅✅ CORREÇÃO: Usar obraData.nome em vez de obraName
-        if (typeof updateObraButtonAfterSave === 'function') {
-            console.info("Setpoint informação chegando até aqui")
+        // ✅ CORREÇÃO: VERIFICAR NOVAMENTE antes de atualizar botão
+        if (typeof updateObraButtonAfterSave === 'function' && document.body.contains(obraBlockAtual)) {
+            console.log("✅ Obra confirmada no DOM, atualizando botão...");
             updateObraButtonAfterSave(obraData.nome, finalId);
+        } else {
+            console.error('❌ Obra não está no DOM para atualizar botão');
         }
 
         console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${finalId}`);

@@ -15,11 +15,21 @@
  * @generator @example obra_x87
  */
 function generateSecureId(prefix = 'item') {
-    const letters = 'abcdefghjkmnpqrstwxyz'; // 21 letras (remove i,l,o,v por confusão)
-    const randomLetter1 = letters[Math.floor(Math.random() * letters.length)];
-    const randomLetter2 = letters[Math.floor(Math.random() * letters.length)];
-    const randomNum = Math.floor(Math.random() * 90) + 10; // 10-99 (sempre 2 dígitos)
-    return `${prefix}_${randomLetter1}${randomNum}`;
+    // CARACTERES ASCII SEGUROS DO TECLADO (59 caracteres)
+    const safeChars = 'abcdefghjkmnpqrstwxyzABCDEFGHJKMNPQRSTWXYZ0123456789-'; 
+    
+    // Gerar 8 caracteres aleatórios usando Crypto API
+    const randomValues = new Uint32Array(8);
+    crypto.getRandomValues(randomValues);
+    
+    let id = prefix + '_';
+    
+    for (let i = 0; i < 4; i++) {
+        const randomIndex = randomValues[i] % safeChars.length;
+        id += safeChars[randomIndex];
+    }
+    
+    return id;
 }
 
 /**
