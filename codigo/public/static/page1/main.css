@@ -55,11 +55,6 @@
     font-size: 1.3rem;
   }
 
-  .nav-list {
-    flex-direction: column;
-    gap: var(--spacing-xs);
-  }
-
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -81,6 +76,90 @@
   .clima-cell-empty {
     display: none;
   }
+
+  .navbar {
+    overflow-x: auto;
+  }
+
+  .nav-list {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-list li a {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .obra-header,
+  .project-header,
+  .room-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
+
+  .obra-actions,
+  .project-actions,
+  .room-actions {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .obra-content,
+  .project-content,
+  .room-content,
+  .section-content,
+  .subsection-content {
+    padding: var(--spacing-md);
+  }
+
+  .obra-block,
+  .project-block,
+  .room-block {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .thermal-table-container {
+    padding: var(--spacing-md);
+    overflow-x: auto;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .thermal-table,
+  .thermal-capacity-table {
+    min-width: 600px;
+  }
+
+  .climatization-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .machine-options-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .machine-options-section .option-checkbox {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
 }
 
 @media (max-width: 480px) {
@@ -99,6 +178,28 @@
 
   .room-title {
     font-size: 1rem;
+  }
+
+  .header-center h1 {
+    font-size: 1.1rem;
+  }
+
+  .nav-list {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .nav-list li a {
+    font-size: 0.85rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .obra-content,
+  .project-content,
+  .room-content,
+  .section-content,
+  .subsection-content {
+    padding: var(--spacing-sm);
   }
 }
 
