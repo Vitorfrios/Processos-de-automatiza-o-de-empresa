@@ -1,0 +1,576 @@
+/* ========== ESTILOS PARA TABELAS DE CAPACIDADE ========== */
+
+.capacity-calculation-table {
+  margin-bottom: var(--capacity-table-margin);
+  background: var(--capacity-table-bg);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--capacity-table-border);
+}
+
+.capacity-calculation-table .table-title {
+  margin: 0;
+  padding: var(--table-title-padding);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--capacity-title-color);
+  background: var(--capacity-title-bg);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  border-bottom: 1px solid var(--capacity-title-border);
+}
+
+/* CONTAINER DA TABELA COM SCROLL - SOMENTE A TABELA */
+.table-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+  background: var(--table-container-bg);
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== TABELA PRINCIPAL ===== */
+.thermal-capacity-table {
+  width: 100%;
+  border-collapse: separate; /* permite bordas arredondadas */
+  border-spacing: 0; /* remove espaços entre células */
+  border-radius: var(--border-radius-lg);
+  overflow: hidden; /* respeita o border-radius */
+  background: var(--table-container-bg);
+  min-width: 800px;
+  table-layout: fixed;
+  margin: 0;
+  font-size: 0.85rem; /* Tamanho fixo para desktop */
+}
+
+/* CANTOS ARREDONDADOS DO CABEÇALHO E RODAPÉ */
+.thermal-capacity-table thead tr:first-child th:first-child {
+  border-top-left-radius: var(--border-radius-lg);
+}
+.thermal-capacity-table thead tr:first-child th:last-child {
+  border-top-right-radius: var(--border-radius-lg);
+}
+.thermal-capacity-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--border-radius-lg);
+}
+.thermal-capacity-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--border-radius-lg);
+}
+
+.thermal-capacity-table th {
+  background: var(--table-header-bg);
+  color: var(--table-header-color);
+  padding: var(--table-header-padding);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  border: 1px solid var(--table-header-border);
+  white-space: nowrap;
+}
+
+.thermal-capacity-table td {
+  padding: var(--table-cell-padding);
+  text-align: center;
+  border: 1px solid var(--table-cell-border);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  background: var(--table-cell-bg);
+}
+
+/* Defina larguras específicas para as colunas */
+.thermal-capacity-table th:nth-child(1),
+.thermal-capacity-table td:nth-child(1) {
+  width: 130px; /* Carga Estimada */
+}
+
+.thermal-capacity-table th:nth-child(2),
+.thermal-capacity-table td:nth-child(2) {
+  width: 110px; /* Fator de Seg. */
+}
+
+.thermal-capacity-table th:nth-child(3),
+.thermal-capacity-table td:nth-child(3) {
+  width: 130px; /* Cap. Unit. */
+}
+
+.thermal-capacity-table th:nth-child(4),
+.thermal-capacity-table td:nth-child(4) {
+  width: 90px; /* Solução */
+}
+
+.thermal-capacity-table th:nth-child(5),
+.thermal-capacity-table td:nth-child(5) {
+  width: 130px; /* Com back-up */
+}
+
+.thermal-capacity-table th:nth-child(6),
+.thermal-capacity-table td:nth-child(6) {
+  width: 110px; /* TOTAL */
+}
+
+.thermal-capacity-table th:nth-child(7),
+.thermal-capacity-table td:nth-child(7) {
+  width: 110px; /* FOLGA */
+}
+
+/* Cores das células */
+.thermal-capacity-table td:first-child {
+  background: var(--table-cell-bg);
+  font-weight: 700;
+  color: var(--table-cell-first-color);
+}
+
+.thermal-capacity-table td:nth-child(4) {
+  background: var(--table-cell-bg);
+  font-weight: 600;
+  color: var(--table-cell-solution-color);
+}
+
+.thermal-capacity-table td:nth-child(6) {
+  background: var(--table-cell-bg);
+  font-weight: 700;
+  color: var(--table-cell-total-color);
+}
+
+.thermal-capacity-table td:nth-child(7) {
+  background: var(--table-cell-bg);
+  font-weight: 600;
+  color: var(--table-cell-folga-color);
+}
+
+/* Inputs da tabela de capacidade */
+.capacity-input {
+  width: 100%;
+  max-width: 80px;
+  padding: var(--capacity-input-padding);
+  border: 1px solid var(--capacity-input-border);
+  border-radius: var(--border-radius);
+  text-align: center;
+  font-size: 0.85rem;
+  background: var(--color-white);
+  transition: all 0.2s ease;
+}
+
+.capacity-input:focus {
+  outline: none;
+  border-color: var(--capacity-input-focus-border);
+  box-shadow: var(--capacity-input-focus-shadow);
+}
+
+.capacity-select {
+  width: 100%;
+  max-width: 95px;
+  padding: var(--capacity-select-padding);
+  border: 1px solid var(--capacity-input-border);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.85rem;
+  background: var(--color-white);
+  transition: all 0.2s ease;
+}
+
+.capacity-select:focus {
+  outline: none;
+  border-color: var(--capacity-input-focus-border);
+  box-shadow: var(--capacity-input-focus-shadow);
+}
+
+/* BACKUP CELLS */
+.backup-cell {
+  padding: 0 !important;
+  vertical-align: top;
+  background: var(--backup-cell-bg);
+}
+
+.backup-selection {
+  height: var(--backup-selection-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--backup-selection-border);
+  margin: var(--backup-select-margin);
+  background: var(--backup-selection-bg);
+  font-size: 0.85rem;
+}
+
+.backup-solution {
+  height: var(--backup-solution-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--backup-solution-bg);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color:var(--table-cell-first-color);
+}
+
+.backup-select {
+  width: 100%;
+  max-width: 95px;
+  padding: var(--backup-select-padding);
+  border: 1px solid var(--capacity-input-border);
+  border-radius: 3px;
+  font-size: 0.85rem;
+  background: var(--backup-select-bg);
+  text-align: center;
+  margin-bottom: var(--backup-select-margin);
+  transition: all 0.2s ease;
+}
+
+.backup-select:focus {
+  outline: none;
+  border-color: var(--capacity-input-focus-border);
+  box-shadow: var(--capacity-input-focus-shadow);
+}
+
+/* Scrollbar Melhorada */
+.table-container::-webkit-scrollbar {
+  height: 14px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  border-radius: 0 0 10px 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 10px;
+  border: 3px solid var(--scrollbar-track-bg);
+  transition: all 0.3s ease;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover-bg);
+  transform: scale(1.05);
+}
+
+.table-container::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track-bg);
+  border-radius: 0 0 10px 0;
+}
+
+.table-container {
+  scrollbar-width: thin;
+}
+
+/* ========== LAYOUT RESPONSIVO AVANÇADO ========== */
+
+/* Tableta */
+@media (max-width: 1024px) {
+  .thermal-capacity-table th,
+  .thermal-capacity-table td {
+    padding: 10px 6px;
+  }
+
+  .capacity-input {
+    max-width: 70px;
+    padding: 5px 6px;
+  }
+
+  .capacity-select {
+    max-width: 85px;
+    padding: 5px 6px;
+  }
+
+  .backup-select {
+    max-width: 85px;
+    padding: 3px 5px;
+  }
+}
+
+/* Mobile Grande */
+@media (max-width: 768px) {
+  .capacity-calculation-table {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .capacity-calculation-table .table-title {
+    font-size: 1.1rem;
+    padding: 12px 15px;
+  }
+
+  .thermal-capacity-table th,
+  .thermal-capacity-table td {
+    padding: 8px 4px;
+  }
+
+  .capacity-input {
+    max-width: 65px;
+    padding: 4px 5px;
+  }
+
+  .capacity-select {
+    max-width: 80px;
+    padding: 4px 5px;
+  }
+
+  .backup-select {
+    max-width: 80px;
+    padding: 3px 4px;
+  }
+
+  .backup-selection,
+  .backup-solution {
+    height: 26px;
+  }
+}
+
+/* Mobile Pequeno */
+@media (max-width: 480px) {
+  .thermal-capacity-table th,
+  .thermal-capacity-table td {
+    padding: 6px 3px;
+  }
+
+  .capacity-input {
+    max-width: 60px;
+    padding: 4px 4px;
+  }
+
+  .capacity-select {
+    max-width: 75px;
+    padding: 4px 4px;
+  }
+
+  .backup-select {
+    max-width: 75px;
+    padding: 2px 3px;
+  }
+
+  .table-container::-webkit-scrollbar {
+    height: 8px;
+  }
+}
+
+/* Mobile Muito Pequeno */
+@media (max-width: 360px) {
+  .thermal-capacity-table th,
+  .thermal-capacity-table td {
+    padding: 5px 2px;
+    font-size: 0.8rem;
+  }
+
+  .capacity-input,
+  .capacity-select,
+  .backup-select {
+    font-size: 0.8rem;
+  }
+
+  .backup-selection,
+  .backup-solution {
+    height: 24px;
+    font-size: 0.8rem;
+  }
+}
+
+/* MODO CARDS PARA TELAS MUITO PEQUENAS */
+@media (max-width: 320px) {
+  .table-container {
+    overflow-x: visible;
+  }
+
+  .thermal-capacity-table {
+    display: block;
+    min-width: auto;
+    font-size: 0.85rem;
+  }
+
+  .thermal-capacity-table thead {
+    display: none;
+  }
+
+  .thermal-capacity-table tbody,
+  .thermal-capacity-table tr {
+    display: block;
+  }
+
+  .thermal-capacity-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--table-cell-border);
+    text-align: left;
+    font-size: 0.85rem;
+  }
+
+  .thermal-capacity-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--capacity-title-color);
+    margin-right: var(--spacing-md);
+    flex-shrink: 0;
+  }
+
+  .thermal-capacity-table td:empty {
+    display: none;
+  }
+}
+
+/* ========== AJUSTES RESPONSIVOS PARA TABELA DE CAPACIDADE ========== */
+
+/* Ajustes para telas menores - QUEBRA DE TEXTO */
+@media (max-width: 1024px) {
+  .thermal-capacity-table th {
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.2;
+    padding: 8px 4px;
+  }
+  
+  .thermal-capacity-table th:nth-child(1) { /* Carga Estimada */
+    min-width: 100px;
+  }
+  
+  .thermal-capacity-table th:nth-child(2) { /* Fator de Seg. */
+    min-width: 80px;
+  }
+  
+  .thermal-capacity-table th:nth-child(3) { /* Cap. Unit. */
+    min-width: 100px;
+  }
+  
+  .thermal-capacity-table th:nth-child(4) { /* Solução */
+    min-width: 70px;
+  }
+  
+  .thermal-capacity-table th:nth-child(5) { /* Com back-up */
+    min-width: 100px;
+  }
+  
+  .thermal-capacity-table th:nth-child(6) { /* TOTAL */
+    min-width: 80px;
+  }
+  
+  .thermal-capacity-table th:nth-child(7) { /* FOLGA */
+    min-width: 80px;
+  }
+}
+
+/* Tableta */
+@media (max-width: 768px) {
+  .thermal-capacity-table {
+    min-width: 700px;
+    font-size: 0.8rem;
+  }
+  
+  .thermal-capacity-table th {
+    font-size: 0.75rem;
+    padding: 6px 3px;
+    line-height: 1.1;
+  }
+  
+  .thermal-capacity-table td {
+    font-size: 0.8rem;
+    padding: 6px 3px;
+  }
+  
+  /* Ajuste específico para cabeçalhos longos */
+  .thermal-capacity-table th:nth-child(1) { /* Carga Estimada */
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  .thermal-capacity-table th:nth-child(5) { /* Com back-up */
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+/* Mobile Grande */
+@media (max-width: 480px) {
+  .thermal-capacity-table {
+    min-width: 600px;
+  }
+  
+  .thermal-capacity-table th {
+    font-size: 0.7rem;
+    padding: 4px 2px;
+  }
+  
+  .thermal-capacity-table td {
+    font-size: 0.75rem;
+    padding: 4px 2px;
+  }
+  
+  .capacity-input,
+  .capacity-select,
+  .backup-select {
+    font-size: 0.75rem;
+    padding: 3px 4px;
+  }
+  
+  /* Ajustes específicos para inputs em mobile */
+  .capacity-input {
+    max-width: 55px;
+  }
+  
+  .capacity-select {
+    max-width: 70px;
+  }
+  
+  .backup-select {
+    max-width: 70px;
+  }
+}
+
+/* Mobile Pequeno - QUEBRA CONTROLADA */
+@media (max-width: 375px) {
+  .thermal-capacity-table th {
+    font-size: 0.65rem;
+    line-height: 1;
+  }
+  
+  /* Quebra estratégica de textos longos */
+  .thermal-capacity-table th:nth-child(1)::before { /* Carga Estimada */
+    content: "Carga Est. (TR)";
+  }
+  .thermal-capacity-table th:nth-child(1) span {
+    display: none;
+  }
+  
+  .thermal-capacity-table th:nth-child(3)::before { /* Cap. Unit. */
+    content: "Cap. Unit. (TR)";
+  }
+  .thermal-capacity-table th:nth-child(3) span {
+    display: none;
+  }
+  
+  .thermal-capacity-table th:nth-child(5)::before { /* Com back-up */
+    content: "Back-up";
+  }
+  .thermal-capacity-table th:nth-child(5) span {
+    display: none;
+  }
+}
+
+/* Ajuste para garantir que o scroll horizontal funcione bem */
+.table-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Melhoria na legibilidade dos textos quebrados */
+.thermal-capacity-table th {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+}
+
+/* Garantir que células com conteúdo longo não quebrem layout */
+.thermal-capacity-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ajuste específico para a célula de backup em telas pequenas */
+@media (max-width: 480px) {
+  .backup-cell {
+    min-width: 90px;
+  }
+  
+  .backup-selection,
+  .backup-solution {
+    height: 22px;
+    font-size: 0.75rem;
+  }
+}

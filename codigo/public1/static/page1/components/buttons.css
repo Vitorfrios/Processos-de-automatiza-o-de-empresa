@@ -1,0 +1,128 @@
+/* Botões */
+.btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--btn-shadow);
+}
+
+.btn-add {
+  background: var(--success-gradient);
+  color: var(--color-white);
+}
+
+.btn-add-secondary {
+  background: var(--primary-gradient);
+  color: var(--color-white);
+}
+
+.btn-add-small {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 0.85rem;
+  background: var(--btn-add-small-bg);
+  color: var(--color-white);
+}
+
+.btn-edit {
+  background: var(--warning-gradient);
+  color: var(--color-white);
+}
+
+.btn-delete {
+  background: var(--danger-gradient);
+  color: var(--color-white);
+}
+
+.btn-delete-small {
+  background: var(--btn-delete-small-bg);
+  color: var(--color-white);
+  padding: var(--btn-delete-small-padding);
+  font-size: 1.2rem;
+  border-radius: var(--btn-delete-small-radius);
+  text-transform: none; 
+}
+
+/* ===== BOTÕES ESPECÍFICOS PARA OBRA/PROJETO ===== */
+.btn-verify {
+  background: var(--btn-verify-gradient);
+  color: var(--color-white);
+}
+
+.btn-save {
+  background: var(--btn-save-gradient);
+  color: var(--color-white);
+}
+
+.btn-update {
+  background: var(--warning-gradient);
+  color: var(--color-white);
+}
+
+.btn-download {
+  background: var(--btn-download-gradient);
+  color: var(--color-white);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Botões Minimizadores */
+.minimizer {
+  background: var(--minimizer-bg);
+  color: var(--color-white);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius);
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.minimizer:hover {
+  background: var(--minimizer-hover-bg);
+  transform: scale(1.05);
+}
+
+/* Minimizadores para seções específicas */
+.section-header .minimizer,
+.section-header-machine .minimizer,
+.subsection-header .minimizer {
+  background: var(--section-minimizer-bg);
+  color: var(--section-minimizer-color);
+}
+
+.section-header .minimizer:hover,
+.section-header-machine .minimizer:hover,
+.subsection-header .minimizer:hover {
+  background: var(--section-minimizer-hover-bg);
+}
+
+
+
+/* Minimizadores para obra e projeto */
+.obra-header .minimizer,
+.project-header .minimizer,
+.room-header .minimizer {
+  background: var(--minimizer-bg);
+  color: var(--color-white);
+}
+
+.obra-header .minimizer:hover,
+.project-header .minimizer:hover,
+.room-header .minimizer:hover {
+  background: var(--minimizer-hover-bg);
+}

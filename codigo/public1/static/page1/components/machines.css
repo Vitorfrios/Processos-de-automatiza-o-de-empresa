@@ -16,16 +16,15 @@
 }
 
 /* Header da máquina */
-.machine-header {
-    display: flex;              /* garante que é flex container */
-    flex-direction: row;        /* força a ordem normal (esquerda → direita) */
-    align-items: center;
-    min-height: 40px;
-    background: var(--primary-gradient);
-    color: white;
-    gap: var(--spacing-sm);     /* opcional: espaço entre os itens */
-    padding: var(--spacing-sm); /* opcional: para dar respiro */
+.climatization-machine .machine-header {
+  background: var(--primary-gradient);
+  color: white;
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
 }
+
 
 /* Input editável */
 .machine-title-editable {
@@ -90,7 +89,6 @@
   border-radius: var(--machine-minimizer-radius);
   transition: all 0.3s ease;
   flex-shrink: 0;
-  order:3;
 }
 
 .climatization-machine .btn-delete-small:hover {

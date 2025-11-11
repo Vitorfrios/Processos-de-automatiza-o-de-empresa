@@ -1,7 +1,7 @@
 // adapters/session-adapter.js - GERENCIAMENTO DE SESSÃO
 
-import { SESSION_STORAGE_KEY, REMOVED_PROJECTS_KEY, SESSION_ACTIVE_KEY } from "../../core/constants.js"
-import { ensureStringId } from '../utils/id-generator.js';
+import { SESSION_STORAGE_KEY, REMOVED_PROJECTS_KEY, SESSION_ACTIVE_KEY } from "../../config/config.js"
+import { ensureStringId } from "../../utils/utils.js"
 
 // CONSTANTES PARA CONTROLE DE SESSÃO
 const SESSION_OBRAS = 'session_obras';

@@ -1,5 +1,5 @@
 // climatizacao.js - VERSÃO ATUALIZADA COM VALIDAÇÕES
-import { calculateVazaoArAndThermalGains } from '../../features/calculations/air-flow.js';
+import { calculateVazaoArAndThermalGains } from '../../features/calculos/calculos-manager.js'
 
 /**
  * Constrói seção completa de climatização para uma sala específica

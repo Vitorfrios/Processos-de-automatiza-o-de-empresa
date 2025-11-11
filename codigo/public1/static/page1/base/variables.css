@@ -1,0 +1,213 @@
+/* ===== VARIÁVEIS CSS - SISTEMA DE GERENCIAMENTO DE PROJETOS ===== */
+
+:root {
+  /* ===== CORES PRIMÁRIAS E GRADIENTES ===== */
+  --primary-gradient: linear-gradient(135deg, #4A5568 0%, #718096 100%); /* buttons.css, machines.css, capacity-tables.css */
+
+  /* buttons.css */
+  --success-gradient: linear-gradient(135deg, #2D774E 0%, #48BB78 100%); 
+  --danger-gradient: linear-gradient(135deg, #C53030 0%, #FC8181 100%); 
+  --warning-gradient: linear-gradient(135deg, #DD6B20 0%, #F6AD55 100%); 
+  --info-gradient: linear-gradient(135deg, #3182CE 0%, #63B3ED 100%);
+  
+  /* Gradientes específicos */
+  --body-bg-gradient: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%); /* reset.css */
+
+  /* buttons.css */
+  --btn-save-gradient: linear-gradient(135deg, #2D774E 0%, #48BB78 100%); 
+  --btn-verify-gradient: linear-gradient(135deg, #5f71ca 0%, #5065a2 100%); 
+  --btn-download-gradient: linear-gradient(135deg, #4A90E2 0%, #1C3F94 100%);
+
+
+  /* projects.css */
+  --status-banner-success-bg: linear-gradient(135deg, #2D774E 0%, #48BB78 100%); 
+  --status-banner-error-bg: linear-gradient(135deg, #C53030 0%, #FC8181 100%); 
+
+  /* ===== PALETA DE CORES SÓLIDAS ===== */
+  /* All */
+  --color-white: #ffffff; 
+  --color-dark: #2D3748; 
+
+  /* Specific */
+  --color-gray-dark: #4A5568; /* machines.css, capacity-tables.css, navigation.css */
+  --color-gray-lightest: #F8FAFC; /* machines.css, capacity-tables.css, cards.css */
+  --color-gray: #050506; /* reset.css, cards.css */
+
+  /* machines.css, capacity-tables.css */
+  --color-gray-light: #aaadb1; 
+  --color-gray-lighter: #EDF2F7; 
+
+  /* ===== CORES DE TEXTO E FUNDO ===== */
+
+  --text-primary: var(--color-white); /* reset.css, forms.css, tables.css */
+  --text-secondary: var(--color-gray); /* reset.css, forms.css */
+  --bg-primary: var(--color-white); /* cards.css, forms.css */
+  --bg-secondary: var(--color-gray-lightest); /* cards.css, sections.css */
+
+  
+  /* ===== CORES DE COMPONENTES ===== */
+  
+  /* Botões - buttons.css */
+  --btn-add-small-bg: #48BB78;
+  --btn-delete-small-bg: #C53030;
+  --btn-shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Minimizadores - buttons.css, machines.css */
+  --minimizer-bg: rgba(255, 255, 255, 0.2);
+  --minimizer-hover-bg: rgba(255, 255, 255, 0.3);
+  --section-minimizer-bg: #adb5bd;;
+  --section-minimizer-color: #495057;;
+  --section-minimizer-hover-bg: #CBD5E0;
+
+  /* Cards - cards.css */
+  --card-bg: var(--color-white);
+  --card-shadow: rgba(0, 0, 0, 0.06);
+  --card-hover-shadow: rgba(0, 0, 0, 0.1);
+  --editable-title-hover-bg: rgba(255, 255, 255, 0.15);
+
+  /* Header e Navegação - header.css, navigation.css */
+  --header-shadow: rgba(0, 0, 0, 0.08);
+  --navbar-bg: #2D3748;
+  --navbar-shadow: rgba(0, 0, 0, 0.1);
+  --nav-link-color: var(--color-white);
+  --nav-link-hover-bg: rgba(255, 255, 255, 0.1);
+
+  /* Projetos e Status - projects.css */
+  --status-banner-shadow: rgba(0, 0, 0, 0.1);
+  --status-banner-error-border: #C53030;
+  --status-banner-text-color: var(--color-white);
+
+  /* ===== MÁQUINAS DE CLIMATIZAÇÃO - machines.css ===== */
+  --machine-bg: var(--color-white);
+  --machine-border: #EDF2F7;
+  --machine-shadow: rgba(0, 0, 0, 0.03);
+  --machine-hover-border: #4A5568;
+  --machine-hover-shadow: rgba(74, 85, 104, 0.08);
+  --machine-header-bg: var(--primary-gradient);
+  --machine-title-placeholder: rgba(255, 255, 255, 0.7);
+  --machine-title-focus-bg: var(--color-white);
+  --machine-title-focus-color: var(--color-dark);
+  --machine-delete-border: rgba(255, 255, 255, 0.3);
+  --machine-form-border: #F8FAFC;
+
+  /* Opções de Máquinas - machines.css */
+  --option-bg: #dfdfdf;
+  --option-border: #a2a5aa;
+  --option-hover-bg: #EDF2F7;
+  --option-hover-border: #CBD5E0;
+  --option-name-color: #4A5568;
+  --option-price-color: #2D774E;
+  --option-checked-bg: #cad6f1;
+  --option-checked-border: #4A5568;
+  --option-checked-name: #4A5568;
+  --option-checked-price: #2D774E;
+
+  /* Preços e Seletores - machines.css */
+  --price-display-bg: #F8FAFC;
+  --price-display-border: #aaadb1;
+  --price-display-color: #2D774E;
+  --machine-total-bg: var(--primary-gradient);
+  --machine-total-shadow: rgba(0, 0, 0, 0.1);
+  --machine-total-span-bg: var(--color-white);
+  --machine-total-span-color: #4A5568;
+  --machine-total-span-shadow: rgba(0, 0, 0, 0.1);
+  --select-border: #aaadb1;
+  --select-focus-border: #4A5568;
+  --select-focus-shadow: rgba(74, 85, 104, 0.1);
+
+  /* ===== TABELAS DE CAPACIDADE - REVISADO PARA MELHOR IDENTIFICAÇÃO ===== */
+  --capacity-table-bg: #F8FAFC; /* mantém o fundo claro do tema */
+  --capacity-table-border: #CBD5E0; /* um cinza levemente mais escuro p/ separar melhor as células */
+
+  --capacity-title-bg: #E2E8F0; /* cria um contraste suave com o fundo geral */
+  --capacity-title-color: #2D3748; /* reforça o texto, mais escuro para leitura */
+  --capacity-title-border: #CBD5E0; /* borda visível mas discreta */
+
+  --table-container-bg: var(--color-white); /* mantém a leveza */
+  --table-header-bg: linear-gradient(135deg, #4A5568 0%, #2D3748 100%); /* cabeçalho com gradiente primário */
+  --table-header-color: #FFFFFF; /* texto branco para contraste máximo */
+  --table-header-border: #2D3748; /* borda escura dá firmeza visual */
+
+  --table-cell-bg: #F1F5F9; /* ligeiramente mais escuro que o fundo */
+  --table-cell-border: #CBD5E0; /* mantém leveza */
+  --table-cell-first-color: #2D3748; /* células de rótulo com texto mais forte */
+  --table-cell-solution-color: #2D774E; /* verde institucional para valores calculados */
+  --table-cell-total-color: #2D3748; /* preto-cinza para totais */
+  --table-cell-folga-color: #2D774E; /* destaque em verde sólido */
+
+  --table-row-hover-bg: #EDF2F7; /* leve realce ao passar o mouse */
+  --table-row-selected-bg: #E6FFFA; /* realce em verde-claro sutil */
+
+
+  /* Inputs de Tabela - capacity-tables.css */
+  --capacity-input-border: #E2E8F0;
+  --capacity-input-focus-border: #151618;
+  --capacity-input-focus-shadow: rgba(74, 85, 104, 0.1);
+
+  /* Backup e Scroll - capacity-tables.css */
+  --backup-cell-bg: var(--color-white);
+  --backup-selection-bg: #EDF2F7;
+  --backup-selection-border: #718096;
+  --backup-solution-bg: #EDF2F7;
+  --backup-select-bg: #F8FAFC;
+  --scrollbar-track-bg: #F8FAFC;
+  --scrollbar-thumb-bg: var(--primary-gradient);
+  --scrollbar-thumb-hover-bg: linear-gradient(135deg, #2D3748 0%, #718096 100%);
+
+  /* ===== SISTEMA DE ESPAÇAMENTOS ===== */
+  /* Utilizado em: 
+  reset.css, buttons.css, cards.css, navigation.css, 
+  projects.css, machines.css, capacity-tables.css, 
+  forms.css, sections.css, grid.css */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* ===== SISTEMA DE BORDAS ===== */
+  /* Utilizado em: buttons.css, cards.css, machines.css, capacity-tables.css, forms.css */
+  --border-radius: 6px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+
+  /* ===== ESPAÇAMENTOS ESPECÍFICOS ===== */
+  
+  /* Botões - buttons.css */
+  --btn-delete-small-padding: 0.25rem 0.5rem;
+  --btn-delete-small-radius: 4px;
+
+  /* Navegação - navigation.css */
+  --nav-gap: 2rem;
+
+  /* Máquinas - machines.css */
+  --machine-margin-bottom: 1.5rem;
+  --machine-header-padding: 1rem 1.5rem;
+  --machine-header-gap: 0.75rem;
+  --machine-title-padding: 0.25rem 0.5rem;
+  --machine-minimizer-size: 28px;
+  --machine-minimizer-radius: 4px;
+  --machine-delete-padding: 0.4rem 0.8rem;
+  --machine-content-padding: 1.5rem;
+  --machine-form-gap: 1rem;
+  --machine-form-padding: 1.5rem;
+  --options-grid-gap: 0.75rem;
+  --option-padding: 0.75rem;
+  --option-gap: 0.5rem;
+  --price-display-padding: 0.75rem;
+  --machine-total-padding: 1rem 1.5rem;
+  --machine-total-span-padding: 0.5rem 1rem;
+  --select-padding: 0.75rem;
+
+  /* Tabelas de Capacidade - capacity-tables.css */
+  --capacity-table-margin: 30px;
+  --table-title-padding: 15px;
+  --table-header-padding: 12px 8px;
+  --table-cell-padding: 10px 8px;
+  --capacity-input-padding: 6px 8px;
+  --capacity-select-padding: 6px 8px;
+  --backup-select-padding: 4px 6px;
+  --backup-selection-height: 28px;
+  --backup-solution-height: 28px;
+  --backup-select-margin: 5px;
+}

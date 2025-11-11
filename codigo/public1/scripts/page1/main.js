@@ -1,29 +1,24 @@
-/**
- * main.js - VERSÃO ATUALIZADA PARA NOVA ESTRUTURA DE MÓDULOS
- * 🎯 Compatível com a reorganização completa do sistema
- */
+// main.js - VERSÃO CORRIGIDA COM ORDEM CORRETA
 
 // Inicializar variáveis globais simples
 window.systemConstants = null;
 window.obraCounter = 0;
 window.GeralCount = 0;
 
-console.log("🚀 Variáveis globais inicializadas:", {
+console.log(" Variáveis globais inicializadas:", {
   systemConstants: window.systemConstants,
   obraCounter: window.obraCounter,
   GeralCount: window.GeralCount
 });
 
-// ✅ IMPORTAR DOS NOVOS MÓDULOS
-import { loadObrasFromServer } from './data/adapters/obra-adapter.js';
-import { getGeralCount } from './data/adapters/session-adapter.js';
-import { shutdownManual } from './data/adapters/shutdown-adapter.js';
+// Importar APENAS o necessário para inicialização
+import { loadObrasFromServer, getGeralCount } from './data/server.js'
 
 // Carregar módulos dinamicamente
 let modulesLoaded = false;
 
 /**
- * Sistema de Shutdown Manual - ATUALIZADO
+ * Sistema de Shutdown Manual
  */
 class ShutdownManager {
   constructor() {
@@ -63,9 +58,8 @@ class ShutdownManager {
             try {
                 console.log('🔄 Executando shutdown COMPLETO...');
                 
-                // ✅ USAR função do novo módulo
-                if (typeof shutdownManual === 'function') {
-                    await shutdownManual();
+                if (typeof window.shutdownManual === 'function') {
+                    await window.shutdownManual();
                 } else {
                     console.error('❌ Função shutdownManual não encontrada');
                 }
@@ -80,12 +74,16 @@ class ShutdownManager {
 // Inicializar shutdown manager
 let shutdownManager = null;
 
-// ✅ CORREÇÃO: FUNÇÕES GLOBAIS ATUALIZADAS PARA NOVA ESTRUTURA
+// ✅ CORREÇÃO CRÍTICA: DEFINIR FUNÇÕES GLOBAIS PRIMEIRO - ANTES DE QUALQUER OUTRA COISA
 window.createEmptyObra = async function(obraName, obraId) {
     try {
-        // ✅ CARREGAR DO NOVO MÓDULO
-        const obraManager = await import('./features/managers/obra-manager.js');
+        if (typeof window._createEmptyObra === 'function') {
+            return window._createEmptyObra(obraName, obraId);
+        }
+        
+        const obraManager = await import('./ui/intr-files/obra-manager.js');
         if (obraManager && obraManager.createEmptyObra) {
+            window._createEmptyObra = obraManager.createEmptyObra;
             return obraManager.createEmptyObra(obraName, obraId);
         }
         
@@ -96,11 +94,18 @@ window.createEmptyObra = async function(obraName, obraId) {
     }
 };
 
+// ✅ CORREÇÃO: Garantir que createEmptyProject esteja disponível globalmente ANTES do carregamento
 window.createEmptyProject = async function(obraId, obraName, projectId, projectName) {
     try {
-        // ✅ CARREGAR DO NOVO MÓDULO
-        const projectManager = await import('./features/managers/project-manager.js');
+        // Se já temos a função carregada, usar ela
+        if (typeof window._createEmptyProject === 'function') {
+            return await window._createEmptyProject(obraId, obraName, projectId, projectName);
+        }
+        
+        // Se não, tentar carregar o módulo
+        const projectManager = await import('./ui/intr-files/project-manager.js');
         if (projectManager && projectManager.createEmptyProject) {
+            window._createEmptyProject = projectManager.createEmptyProject;
             return await projectManager.createEmptyProject(obraId, obraName, projectId, projectName);
         }
         
@@ -111,36 +116,25 @@ window.createEmptyProject = async function(obraId, obraName, projectId, projectN
     }
 };
 
+// ✅ CORREÇÃO: Garantir que populateObraData esteja disponível globalmente
 window.populateObraData = async function(obraData) {
     try {
-        // ✅ CARREGAR DO NOVO MÓDULO
-        const uiBuilders = await import('./data/builders/ui-builders.js');
-        if (uiBuilders && uiBuilders.populateObraData) {
-            return await uiBuilders.populateObraData(obraData);
+        // Tentar carregar o módulo diretamente
+        const populateModule = await import('./data/data-files/data-populate.js');
+        if (populateModule && populateModule.populateObraData) {
+            return await populateModule.populateObraData(obraData);
         }
         throw new Error('populateObraData não encontrada');
     } catch (error) {
         console.error('❌ Erro ao carregar populateObraData:', error);
+      
+        
         return null;
     }
 };
 
-window.createEmptyRoom = async function(obraId, projectId, roomName, roomId) {
-    try {
-        // ✅ CARREGAR DO NOVO MÓDULO
-        const roomsModule = await import('./data/modules/rooms.js');
-        if (roomsModule && roomsModule.createEmptyRoom) {
-            return await roomsModule.createEmptyRoom(obraId, projectId, roomName, roomId);
-        }
-        throw new Error('createEmptyRoom não encontrada');
-    } catch (error) {
-        console.error('❌ Erro em createEmptyRoom:', error);
-        return false;
-    }
-};
-
 /**
- * Carrega as constantes do sistema do servidor
+ * Carrega as constantes do sistema do servidor - DEVE VIR ANTES DOS MÓDULOS
  */
 async function loadSystemConstants() {
   try {
@@ -176,194 +170,102 @@ async function loadSystemConstants() {
 }
 
 /**
- * Carrega todos os módulos do sistema dinamicamente - VERSÃO ATUALIZADA
+ * Carrega todos os módulos do sistema dinamicamente - VERSÃO CORRIGIDA
  */
 async function loadAllModules() {
   if (modulesLoaded) return;
+  
   try {
-      console.log("📦 Iniciando carregamento de módulos...");
-      
-      // ✅ CARREGAR NOVOS MÓDULOS - ORDEM CORRIGIDA
-      const modules = await Promise.all([
-          // UI Components
-          import('./ui/interface.js'),                    // interfaceModule
-          import('./ui/components/edit.js'),              // editModule
-          import('./ui/components/status.js'),            // statusModule
-          import('./ui/components/modal.js'),             // modalModule
-          import('./ui/helpers.js'),                      // helpersModule
-          
-          // Features Managers
-          import('./features/managers/obra-manager.js'),  // obraManagerModule
-          import('./features/managers/project-manager.js'), // projectManagerModule
-          
-          // Data Modules - ORDEM CORRIGIDA
-          import('./data/modules/rooms.js'),              // roomsModule
-          import('./data/modules/climatizacao.js'),       // climatizationModule
-          import('./data/modules/configuracao.js'),       // configuracaoModule
-          import('./data/modules/machines/machines-core.js'), // machinesCoreModule
-          import('./data/modules/machines/capacity-calculator.js'), // capacityCalculatorModule
-          
-          // Calculations
-          import('./features/calculations/air-flow.js'),  // airFlowModule
-          import('./features/calculations/calculations-core.js'), // calculationsCoreModule
-          
-          // Data Utils
-          import('./data/utils/id-generator.js'),         // idGeneratorModule
-          import('./data/utils/data-utils.js'),           // dataUtilsModule
-          
-          // Data Builders
-          import('./data/builders/ui-builders.js'),       // uiBuildersModule
-          import('./data/builders/data-builders.js')      // dataBuildersModule
-      ]);
+    console.log("📦 Iniciando carregamento de módulos...");
+    
+    const modules = await Promise.all([
+      import('./ui/interface.js'),
+      import('./ui/edit.js'),
+      import('./data/projects.js'),
+      import('./data/rooms.js'),
+      import('./features/calculos/calculos-manager.js'),
+      import('./utils/utils.js'),
+      import('./ui/intr-files/project-manager.js'),
+      import('./ui/intr-files/status-manager.js')
 
-      const [
-          // UI Components
-          interfaceModule,
-          editModule,
-          statusModule,
-          modalModule,
-          helpersModule,
-          
-          // Features Managers
-          obraManagerModule,
-          projectManagerModule,
-          
-          // Data Modules - ORDEM CORRIGIDA
-          roomsModule,
-          climatizationModule,
-          configuracaoModule,
-          machinesCoreModule,
-          capacityCalculatorModule,
-          
-          // Calculations
-          airFlowModule,
-          calculationsCoreModule,
-          
-          // Data Utils
-          idGeneratorModule,
-          dataUtilsModule,
-          
-          // Data Builders
-          uiBuildersModule,
-          dataBuildersModule
-      ] = modules;
+    ]);
+    
 
-      // ✅ ATRIBUIR FUNÇÕES DOS NOVOS MÓDULOS
-      const allFunctions = {
-          // ========== UI INTERFACE ==========
-          toggleSection: interfaceModule.toggleSection,
-          toggleSubsection: interfaceModule.toggleSubsection,
-          toggleObra: interfaceModule.toggleObra,
-          toggleProject: interfaceModule.toggleProject,
-          toggleRoom: interfaceModule.toggleRoom,
-          collapseElement: helpersModule.collapseElement,
-          expandElement: helpersModule.expandElement,
-          showSystemStatus: statusModule.showSystemStatus,
-          
-          // ========== OBRA MANAGEMENT ==========
-          addNewObra: obraManagerModule.addNewObra,
-          saveOrUpdateObra: obraManagerModule.saveObra,
-          verifyObraData: obraManagerModule.verifyObraData,
-          deleteObra: obraManagerModule.deleteObra,
-          saveObra: obraManagerModule.saveObra,
-          fetchObras: obraManagerModule.fetchObras,
-          salvarObra: obraManagerModule.salvarObra,
-          atualizarObra: obraManagerModule.atualizarObra,
-          
-          // ========== PROJECT MANAGEMENT ==========
-          addNewProjectToObra: projectManagerModule.addNewProjectToObra,
-          deleteProject: projectManagerModule.deleteProject,
-          
-          // ========== ROOM MANAGEMENT ==========
-          addNewRoom: roomsModule.addNewRoom,
-          deleteRoom: roomsModule.deleteRoom,
-          createEmptyRoom: roomsModule.createEmptyRoom,
-          
-          // ========== CONSTRUCTION SECTIONS - CRÍTICO ==========
-          buildClimatizationSection: climatizationModule.buildClimatizationSection, 
-          buildMachinesSection: machinesCoreModule.buildMachinesSection,           
-          buildConfigurationSection: configuracaoModule.buildConfigurationSection, 
-          
-          // ========== CALCULATIONS ==========
-          calculateVazaoArAndThermalGains: airFlowModule.calculateVazaoArAndThermalGains,
-          calculateVazaoArAndThermalGainsDebounced: calculationsCoreModule.calculateVazaoArAndThermalGainsDebounced,
-          
-          // ========== CAPACITY & MACHINES ==========
-          calculateCapacitySolution: capacityCalculatorModule.calculateCapacitySolution,
-          updateBackupConfiguration: capacityCalculatorModule.updateBackupConfiguration,
-          toggleOption: machinesCoreModule.toggleOption,
-          addMachine: machinesCoreModule.addMachine,
-          deleteMachine: machinesCoreModule.deleteMachine,
-          
-          // ========== EDIT FUNCTIONS ==========
-          makeEditable: editModule.makeEditable,
-          
-          // ========== UTILS ==========
-          ensureStringId: idGeneratorModule.ensureStringId,
-          getNextObraNumber: dataUtilsModule.getNextObraNumber,
-          getNextProjectNumber: dataUtilsModule.getNextProjectNumber,
-          getNextRoomNumber: dataUtilsModule.getNextRoomNumber,
-          
-          // ========== MODAL FUNCTIONS ==========
-          showConfirmationModal: modalModule.showConfirmationModal,
-          closeConfirmationModal: modalModule.closeConfirmationModal,
-          undoDeletion: modalModule.undoDeletion,
-          
-          // ========== HELPER FUNCTIONS ==========
-          removeEmptyObraMessage: helpersModule.removeEmptyObraMessage,
-          showEmptyObraMessageIfNeeded: helpersModule.showEmptyObraMessageIfNeeded,
-          removeEmptyProjectMessage: helpersModule.removeEmptyProjectMessage,
-          showEmptyProjectMessageIfNeeded: helpersModule.showEmptyProjectMessageIfNeeded,
-          
-          // ========== UI BUILDERS (PARA CORRIGIR OS ERROS) ==========
-          populateObraData: uiBuildersModule.populateObraData,
-          renderObraFromData: uiBuildersModule.renderObraFromData,
-          renderProjectFromData: uiBuildersModule.renderProjectFromData,
-          renderRoomFromData: uiBuildersModule.renderRoomFromData,
-          fillMachinesData: uiBuildersModule.fillMachinesData, 
-          fillClimatizationInputs: uiBuildersModule.fillClimatizationInputs,
-          fillThermalGainsData: uiBuildersModule.fillThermalGainsData,
-          fillCapacityData: uiBuildersModule.fillCapacityData,
-          fillConfigurationData: uiBuildersModule.fillConfigurationData,
-          ensureAllRoomSections: uiBuildersModule.ensureAllRoomSections,
-          ensureMachinesSection: uiBuildersModule.ensureMachinesSection,
-          populateMachineData: uiBuildersModule.populateMachineData,
-          
-          // ========== DATA BUILDERS ==========
-          buildObraData: dataBuildersModule.buildObraData,
-          buildProjectData: dataBuildersModule.buildProjectData,
-          extractRoomData: dataBuildersModule.extractRoomData,
-          extractMachinesData: dataBuildersModule.extractMachinesData,
-          extractThermalGainsData: dataBuildersModule.extractThermalGainsData,
-          extractClimatizationInputs: dataBuildersModule.extractClimatizationInputs,
-          extractCapacityData: dataBuildersModule.extractCapacityData,
-          extractConfigurationData: dataBuildersModule.extractConfigurationData
-      };
-      
-      // ✅ ATRIBUIR FUNÇÕES AO WINDOW
-      Object.keys(allFunctions).forEach(funcName => {
-          if (typeof allFunctions[funcName] === 'function') {
-              window[funcName] = allFunctions[funcName];
-              console.log(`✅ ${funcName} atribuída ao window`);
-          } else if (allFunctions[funcName] !== undefined) {
-              console.warn(`⚠️ ${funcName} não é uma função:`, typeof allFunctions[funcName]);
-          } else {
-              console.error(`❌ ${funcName} não encontrado nos módulos`);
-          }
-      });
+    const [
+      interfaceModule,
+      editModule,
+      projectsModule,
+      roomsModule,
+      calculosModule,
+      utilsModule,
+      projectManagerModule,  // ✅ NOVO
+      statusManagerModule     // ✅ NOVO
+    ] = modules;
 
-      modulesLoaded = true;
-      console.log("✅ Todos os módulos foram carregados com sucesso");
-      return true;
+    // ✅ CORREÇÃO: Atribuir TODAS as funções ao window - VERSÃO COMPLETA
+    const allFunctions = {
+      // UI Interface
+      toggleSection: interfaceModule.toggleSection,
+      toggleSubsection: interfaceModule.toggleSubsection,
+      toggleObra: interfaceModule.toggleObra,
+      toggleProject: interfaceModule.toggleProject,
+      toggleRoom: interfaceModule.toggleRoom,
+      collapseElement: interfaceModule.collapseElement,
+      expandElement: interfaceModule.expandElement,
+      addNewObra: interfaceModule.addNewObra,
+      addNewProjectToObra: interfaceModule.addNewProjectToObra,
+      showSystemStatus: statusManagerModule.showSystemStatus,
+      saveOrUpdateObra: interfaceModule.saveOrUpdateObra,
+      verifyObraData: projectsModule.verifyObraData,
+      deleteObra: interfaceModule.deleteObra,
+
+      // Edit
+      makeEditable: editModule.makeEditable,
+
+      // Projects - ✅ CORREÇÃO: AGORA COM TODAS AS FUNÇÕES
+      saveObra: projectsModule.saveObra,
+      fetchObras: projectsModule.fetchObras,
+      salvarObra: projectsModule.salvarObra,
+      atualizarObra: projectsModule.atualizarObra,
       
+      // Rooms
+      addNewRoom: roomsModule.addNewRoom,
+      deleteRoom: roomsModule.deleteRoom,
+      addMachine: roomsModule.addMachine,
+      createEmptyRoom: roomsModule.createEmptyRoom,
+      
+      // Cálculos
+      calculateVazaoArAndThermalGains: calculosModule.calculateVazaoArAndThermalGains,
+      calculateVazaoAr: calculosModule.calculateVazaoAr,
+      calculateThermalGains: calculosModule.calculateThermalGains,
+      
+      // Utils
+      ensureStringId: utilsModule.ensureStringId,
+      deleteProject: projectManagerModule.deleteProject
+    };
+    
+    // ✅ CORREÇÃO: Verificar cada função antes de atribuir
+    Object.keys(allFunctions).forEach(funcName => {
+      if (typeof allFunctions[funcName] === 'function') {
+        window[funcName] = allFunctions[funcName];
+        console.log(`✅ ${funcName} atribuída ao window`);
+      } else {
+        console.error(`❌ ${funcName} não é uma função:`, typeof allFunctions[funcName]);
+      }
+    });
+
+    modulesLoaded = true;
+    console.log("✅ Todos os módulos foram carregados com sucesso");
+    return true;
+    
   } catch (error) {
-      console.error("❌ Erro ao carregar módulos:", error);
-      return false;
+    console.error("❌ Erro ao carregar módulos:", error);
+    return false;
   }
 }
 
 /**
- * Verifica e carrega sessão existente
+ * Verifica e carrega sessão existente - CORREÇÃO PARA NOVA ESTRUTURA DA API
  */
 async function checkAndLoadExistingSession() {
   try {
@@ -373,6 +275,7 @@ async function checkAndLoadExistingSession() {
     if (sessionResponse.ok) {
       const sessionData = await sessionResponse.json();
       
+      // ✅ CORREÇÃO: Processar nova estrutura da API {session_id: 'session_active', obras: Array(5)}
       let obraIds = [];
       
       if (sessionData.obras && Array.isArray(sessionData.obras)) {
@@ -614,13 +517,7 @@ function verifyCriticalFunctions() {
         'createEmptyProject', 
         'createEmptyRoom',
         'populateObraData',
-        'addNewObra',
-        'addNewProjectToObra',
-        'addNewRoom',
-        'deleteObra',
-        'deleteRoom',
-        'calculateVazaoArAndThermalGains',
-        'makeEditable'
+        'addMachine'
     ];
     
     console.log('🔍 Verificando funções críticas...');
@@ -642,10 +539,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     // ✅ ORDEM CORRETA DE INICIALIZAÇÃO:
     
-    // 1. Inicializar sistema de shutdown primeiro
+    // 1. Inicializar sistema de shutdown primeiro (não crítico)
     shutdownManager = new ShutdownManager();
     
-    // 2. ✅ FUNÇÕES GLOBAIS JÁ DEFINIDAS NO TOPO
+    // 2. ✅ CORREÇÃO CRÍTICA: DEFINIR FUNÇÕES GLOBAIS PRIMEIRO
+    console.log("🔧 Definindo funções globais críticas...");
+    // Já definidas no topo do arquivo - createEmptyObra, createEmptyProject, populateObraData
     
     // 3. Carregar constantes do sistema (crítico para cálculos)
     console.log("📊 Carregando constantes do sistema...");
@@ -661,7 +560,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       console.warn("⚠️ Alguns módulos não carregaram completamente");
     }
     
-    // 5. Verificar e carregar sessão existente
+    // 5. ✅ VERIFICAR E CARREGAR SESSÃO EXISTENTE (agora com funções disponíveis)
     console.log("🔍 Verificando sessão existente...");
     const hasExistingSession = await checkAndLoadExistingSession();
     
@@ -688,7 +587,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     // Debug final
     setTimeout(finalSystemDebug, 1000);
     
-    // ✅ Verificar funções críticas após inicialização completa
+    // ✅ CORREÇÃO: Verificar funções críticas após inicialização completa
     setTimeout(verifyCriticalFunctions, 2000);
     
   } catch (error) {

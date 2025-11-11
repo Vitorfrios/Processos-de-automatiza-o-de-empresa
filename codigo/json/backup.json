@@ -1,3 +1,251 @@
 {
-  "obras": []
+  "obras": [
+    {
+      "id": "obra_a68",
+      "nome": "Obra1",
+      "timestamp": "2025-11-10T23:28:24.654Z",
+      "projetos": [
+        {
+          "id": "obra_a68_proj_r73_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_a68_proj_r73_2_sala_d73_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "dhf",
+                "backup": "n",
+                "area": 34,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 12,
+                "paredeLeste": 12,
+                "paredeNorte": 12,
+                "paredeSul": 12,
+                "peDireito": 12,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 12,
+                "divisoriaClima2": 12,
+                "dissipacao": 12,
+                "numPessoas": 12,
+                "pressurizacao": true,
+                "setpointPressurizacao": 2512,
+                "numPortasDuplas": "12",
+                "numPortasSimples": "12",
+                "combateIncendio": "fm200"
+              },
+              "maquinas": [
+                {
+                  "nome": "Maquina1",
+                  "tipo": "Tubo Axial",
+                  "potencia": "2200m³/h",
+                  "tensao": "380V/3F",
+                  "precoBase": 2300,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "com 10mmCA",
+                      "value": 0,
+                      "originalName": "com 10mmCA",
+                      "potenciaAplicada": "2200m³/h"
+                    },
+                    {
+                      "id": 2,
+                      "name": "com 15mmCA",
+                      "value": 0,
+                      "originalName": "com 15mmCA",
+                      "potenciaAplicada": "2200m³/h"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Grade de Proteção",
+                      "value": 130,
+                      "originalName": "Grade de Proteção",
+                      "potenciaAplicada": "2200m³/h"
+                    },
+                    {
+                      "id": 4,
+                      "name": "Proteção de Chuva",
+                      "value": 250,
+                      "originalName": "Proteção de Chuva",
+                      "potenciaAplicada": "2200m³/h"
+                    }
+                  ],
+                  "precoTotal": 3680,
+                  "potenciaSelecionada": "2200m³/h",
+                  "tipoSelecionado": "Tubo Axial"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 428,
+                "solucao": "471",
+                "solucaoBackup": "471",
+                "totalCapacidade": "471.0",
+                "folga": "10.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 1502645,
+                "total-tr": 428,
+                "total-externo": 9166,
+                "total-divisoes": 4194,
+                "total-piso": 689,
+                "total-iluminacao": 238,
+                "total-dissi": 12,
+                "total-pessoas": 2638,
+                "total-ar-sensivel": 468064,
+                "total-ar-latente": 1017647
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "evaporadoras_internas"
+                ]
+              },
+              "somavaloresmaquinatotal": 2300
+            },
+            {
+              "id": "obra_a68_proj_r73_2_sala_v25_2",
+              "nome": "Sala2",
+              "inputs": {
+                "pressurizacao": false,
+                "setpointPressurizacao": 25,
+                "pressurizacaoSetpoint": "25",
+                "numPortasDuplas": "0",
+                "numPortasSimples": "0"
+              },
+              "maquinas": [
+                {
+                  "nome": "Maquina1",
+                  "tipo": "Split System",
+                  "potencia": "40TR",
+                  "tensao": "220V/1F",
+                  "precoBase": 73200,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 1,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 5,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "2 Dampers Manuais",
+                      "value": 6,
+                      "originalName": "2 Dampers Manuais",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
+                      "value": 7,
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 5,
+                      "name": "2 Dampers com atuador on/off",
+                      "value": 8,
+                      "originalName": "2 Dampers com atuador on/off",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 6,
+                      "name": "Ventilador Eletrônico",
+                      "value": 9,
+                      "originalName": "Ventilador Eletrônico",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 7,
+                      "name": "Controle de Condensação Proporcional",
+                      "value": 1,
+                      "originalName": "Controle de Condensação Proporcional",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 8,
+                      "name": "Goldfin",
+                      "value": 2,
+                      "originalName": "Goldfin",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 9,
+                      "name": "Sensor de Filtro Sujo",
+                      "value": 3,
+                      "originalName": "Sensor de Filtro Sujo",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 10,
+                      "name": "Resistencia de Aquecimento",
+                      "value": 4,
+                      "originalName": "Resistencia de Aquecimento",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 11,
+                      "name": "Pintura Especial",
+                      "value": 5,
+                      "originalName": "Pintura Especial",
+                      "potenciaAplicada": "40TR"
+                    },
+                    {
+                      "id": 12,
+                      "name": "Chaparia em Inox",
+                      "value": 6,
+                      "originalName": "Chaparia em Inox",
+                      "potenciaAplicada": "40TR"
+                    }
+                  ],
+                  "precoTotal": 78257,
+                  "potenciaSelecionada": "40TR",
+                  "tipoSelecionado": "Split System"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "0",
+                "solucaoBackup": "0",
+                "totalCapacidade": "0.0",
+                "folga": "0.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              },
+              "somavaloresmaquinatotal": 78257
+            }
+          ],
+          "timestamp": "2025-11-10T23:28:24.654Z"
+        }
+      ]
+    }
+  ]
 }

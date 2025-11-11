@@ -84,7 +84,6 @@
 .project-header,
 .room-header,
 .machine-header {
-  display:flex;
   align-items: center;
   min-height: 40px;
 }
@@ -156,6 +155,8 @@
   .project-header,
   .room-header,
   .machine-header {
+    display: flex !important;
+    /* ✅ força flex em todos os casos */
     flex-wrap: wrap;
     align-items: center;
     gap: var(--spacing-sm);
@@ -172,6 +173,7 @@
   /* ✅ Títulos para todos os headers */
   .project-header .project-title,
   .room-header .room-title,
+  .machine-header .machine-title,
   .machine-header .machine-title-editable {
     order: 2;
     flex: 1;

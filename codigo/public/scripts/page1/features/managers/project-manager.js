@@ -3,10 +3,11 @@
  * Gerenciador de projetos - SISTEMA CORRIGIDO COM IDs ÚNICOS
  */
 
-import { createEmptyRoom } from '../../data/rooms.js'
-import { generateProjectId,getNextProjectNumber } from '../../data/data-files/data-utils-core.js'
-import { removeEmptyObraMessage } from '../../ui/intr-files/ui-helpers.js'
-import { addNewRoomToProject } from '../../data/modules/room-operations.js';
+import { createEmptyRoom } from '../../data/modules/rooms.js';
+import { generateProjectId } from '../../data/utils/id-generator.js';
+import { getNextProjectNumber } from '../../data/utils/data-utils.js'
+import { removeEmptyObraMessage } from '../../ui/helpers.js';
+import { addNewRoomToProject } from '../../data/modules/rooms.js';
 /**
  * Constrói o HTML de um projeto - CORREÇÃO COMPLETA
  * @param {string} obraId - ID único da obra

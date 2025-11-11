@@ -3,14 +3,13 @@
  * SISTEMA CORRIGIDO COM IDs ÚNICOS
  */
 
-// ✅ IMPORTS CORRIGIDOS - CAMINHOS ATUALIZADOS
 import { 
     showSystemStatus,
     removeExistingStatusBanner,
     createStatusBanner,
     insertStatusBanner,
     scheduleStatusBannerRemoval,
-} from './components/status.js'  // ✅ CAMINHO CORRETO
+} from './intr-files/status-manager.js'
 
 import { 
     toggleElementVisibility,
@@ -21,7 +20,7 @@ import {
     showEmptyObraMessageIfNeeded,
     removeEmptyProjectMessage,
     showEmptyProjectMessageIfNeeded,
-} from './helpers.js'  // ✅ CAMINHO CORRETO
+} from './intr-files/ui-helpers.js'
 
 import { 
     createEmptyObra,
@@ -30,23 +29,19 @@ import {
     insertObraIntoDOM,
     updateObraButtonAfterSave,
     deleteObra,
+    getNextObraNumber,
     addNewObra,
-} from '../features/managers/obra-manager.js'  // ✅ CAMINHO CORRETO
+} from './intr-files/obra-manager.js'
 
 import { 
     createEmptyProject,
     buildProjectHTML,
     addNewProjectToObra
-} from '../features/managers/project-manager.js'  // ✅ CAMINHO CORRETO
+} from './intr-files/project-manager.js'
 
-import { 
-    getNextProjectNumber,
-    getNextObraNumber 
-} from '../data/utils/data-utils.js'  // ✅ CAMINHO CORRETO
+import{getNextProjectNumber} from '../data/data-files/data-utils-core.js'
 
-import { 
-    createEmptyRoom 
-} from '../data/modules/rooms.js'  // ✅ CAMINHO CORRETO
+import { createEmptyRoom } from '../data/modules/room-operations.js'
 
 // Re-exportações para manter compatibilidade
 export {
@@ -400,8 +395,27 @@ function saveOrUpdateObra(obraParam, event) {
     }
 }
 
+// =============================================================================
+// FUNÇÕES DE EDIÇÃO (COMPATIBILIDADE)
+// =============================================================================
 
-
+/**
+ * Torna um elemento editável - FUNÇÃO DE COMPATIBILIDADE
+ * @param {HTMLElement} element - Elemento a ser editado
+ * @param {string} type - Tipo do elemento ('obra', 'project', 'room')
+ * @returns {void}
+ */
+function makeEditable(element, type) {
+    console.log(`✏️ Tornando ${type} editável:`, element);
+    // Implementação básica - pode ser expandida conforme necessário
+    if (element.isContentEditable) {
+        element.contentEditable = false;
+        element.blur();
+    } else {
+        element.contentEditable = true;
+        element.focus();
+    }
+}
 
 
 
@@ -419,7 +433,7 @@ export {
     saveOrUpdateObra,
     toggleSubsection,
     toggleSection,
-
+    makeEditable,
 }
 
 // =============================================================================
@@ -441,4 +455,5 @@ if (typeof window !== 'undefined') {
     window.downloadWord = downloadWord;
     window.addNewProject = addNewProject;
     window.createEmptyProject = createEmptyProject;
+    window.makeEditable = makeEditable;
 }
