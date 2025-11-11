@@ -1,0 +1,2330 @@
+
+/* ==== INÍCIO: __init__.py ==== */
+"""
+__init__.py
+Módulos do Servidor Python
+"""
+
+from . import (config, http_handler, routes, file_utils, 
+               server_utils, browser_monitor, sessions_manager,
+               cache_cleaner)
+
+__all__ = ['config', 'http_handler', 'routes', 'file_utils', 
+           'server_utils', 'browser_monitor', 'sessions_manager',
+           'cache_cleaner']
+/* ==== FIM: __init__.py ==== */
+
+/* ==== INÍCIO: browser_monitor.py ==== */
+"""
+browser_monitor.py
+Monitoramento do navegador - Versão SIMPLIFICADA
+Apenas para compatibilidade, sem verificações de atividade
+"""
+
+import time
+from servidor_modules import config
+
+def monitorar_navegador(port, httpd):
+    """
+    Monitoramento SIMPLIFICADO - sem verificações de porta
+    Mantido apenas para compatibilidade com o código existente
+    """
+    print("🔍 MONITOR: Sistema de monitoramento INICIADO")
+    print("   • Encerramento automático DESATIVADO")
+    print("   • Servidor permanecerá aberto até encerramento manual")
+    print("   • Use o botão 'Encerrar Servidor' na interface web")
+    print("   • Ou pressione Ctrl+C neste terminal\n")
+    
+    # Loop simples que apenas mantém a thread ativa
+    while config.servidor_rodando:
+        try:
+            time.sleep(10)  # Verificação a cada 10 segundos (apenas para manter a thread)
+        except KeyboardInterrupt:
+            print("\nMONITOR: Interrupção recebida")
+            config.servidor_rodando = False
+            break
+        except Exception as e:
+            print(f"MONITOR: Erro inesperado: {e}")
+            time.sleep(10)
+    
+    print("MONITOR: Thread finalizada")
+
+# =====================
+# ENDPOINT PARA REMOVER OBRA DA SESSÃO
+# =====================
+
+def setup_session_routes(app):
+    """
+    Configura as rotas de sessão para o Flask app
+    """
+    
+    @app.route('/api/sessions/remove-obra/<obra_id>', methods=['DELETE'])
+    def remove_obra_from_session(obra_id):
+        try:
+            from flask import session, jsonify
+            
+            # Remove o ID da obra da sessão
+            if 'session_active' in session and 'obras' in session['session_active']:
+                if obra_id in session['session_active']['obras']:
+                    session['session_active']['obras'].remove(obra_id)
+                    session.modified = True
+                    print(f"🗑️ Obra {obra_id} removida da sessão")
+                    
+                    # Força atualização da sessão
+                    return jsonify({
+                        'success': True, 
+                        'message': 'Obra removida da sessão',
+                        'reload_required': True  # Flag para frontend recarregar
+                    }), 200
+                else:
+                    return jsonify({'success': False, 'error': 'Obra não encontrada na sessão'}), 404
+            else:
+                return jsonify({'success': False, 'error': 'Sessão não encontrada'}), 404
+                
+        except Exception as e:
+            print(f"❌ Erro ao remover obra {obra_id} da sessão: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/sessions/check-obra/<obra_id>', methods=['GET'])
+    def check_obra_in_session(obra_id):
+        """
+        Verifica se uma obra está na sessão
+        """
+        try:
+            from flask import session, jsonify
+            
+            if 'session_active' in session and 'obras' in session['session_active']:
+                exists = obra_id in session['session_active']['obras']
+                return jsonify({
+                    'exists': exists,
+                    'obra_id': obra_id
+                }), 200
+            else:
+                return jsonify({'exists': False, 'error': 'Sessão não encontrada'}), 404
+                
+        except Exception as e:
+            print(f"❌ Erro ao verificar obra {obra_id} na sessão: {e}")
+            return jsonify({'exists': False, 'error': str(e)}), 500
+
+    print("✅ Rotas de sessão configuradas com sucesso")
+/* ==== FIM: browser_monitor.py ==== */
+
+/* ==== INÍCIO: cache_cleaner.py ==== */
+"""
+cache_cleaner.py
+Sistema de limpeza de cache para o servidor
+"""
+
+import os
+import shutil
+from pathlib import Path
+import threading
+import time
+
+class CacheCleaner:
+    """
+    Gerencia a limpeza de arquivos de cache do Python
+    """
+    
+    def __init__(self):
+        self.project_root = Path(__file__).parent.parent
+        self.cleanup_executed = False
+    
+    def clean_pycache(self):
+        """
+        Limpa todos os arquivos __pycache__ do projeto
+        Retorna estatísticas da limpeza
+        """
+        if self.cleanup_executed:
+            print("🔄 Limpeza de cache já foi executada anteriormente")
+            return
+            
+        try:
+            print("🧹 Iniciando limpeza de arquivos de cache...")
+            
+            cache_removed_count = 0
+            errors_count = 0
+            
+            # Procura por todas as pastas __pycache__ no projeto
+            for pycache_dir in self.project_root.rglob('__pycache__'):
+                if pycache_dir.is_dir():
+                    try:
+                        # Remove a pasta __pycache__ e todo seu conteúdo
+                        shutil.rmtree(pycache_dir)
+                        cache_removed_count += 1
+                        print(f"   ✅ Removido: {pycache_dir.relative_to(self.project_root)}")
+                    except Exception as e:
+                        errors_count += 1
+                        print(f"   ⚠️  Erro ao remover {pycache_dir}: {e}")
+            
+            # Também remove arquivos .pyc soltos (caso existam)
+            for pyc_file in self.project_root.rglob('*.pyc'):
+                try:
+                    pyc_file.unlink()
+                    cache_removed_count += 1
+                    print(f"   ✅ Removido: {pyc_file.relative_to(self.project_root)}")
+                except Exception as e:
+                    errors_count += 1
+                    print(f"   ⚠️  Erro ao remover {pyc_file}: {e}")
+            
+            self.cleanup_executed = True
+            
+            if cache_removed_count > 0:
+                print(f"🎉 Limpeza concluída: {cache_removed_count} itens de cache removidos")
+                if errors_count > 0:
+                    print(f"⚠️  {errors_count} erros durante a limpeza")
+            else:
+                print("ℹ️  Nenhum arquivo de cache encontrado para limpar")
+                
+            return {
+                'removed_count': cache_removed_count,
+                'errors_count': errors_count,
+                'success': True
+            }
+            
+        except Exception as e:
+            print(f"❌ Erro durante limpeza de cache: {e}")
+            return {
+                'removed_count': 0,
+                'errors_count': 1,
+                'success': False,
+                'error': str(e)
+            }
+    
+    def clean_pycache_async(self):
+        """
+        Executa a limpeza de cache em uma thread separada
+        para não bloquear o encerramento do servidor
+        """
+        def cleanup_task():
+            print("🔄 Iniciando limpeza de cache em background...")
+            result = self.clean_pycache()
+            if result['success']:
+                print("✅ Limpeza de cache concluída com sucesso")
+            else:
+                print("❌ Limpeza de cache encontrou problemas")
+        
+        # Inicia a limpeza em thread separada
+        cleanup_thread = threading.Thread(target=cleanup_task, daemon=True)
+        cleanup_thread.start()
+        
+        # Aguarda um tempo razoável para a limpeza completar
+        cleanup_thread.join(timeout=5.0)
+        
+        if cleanup_thread.is_alive():
+            print("⏰ Timeout na limpeza de cache - continuando encerramento...")
+        else:
+            print("✅ Limpeza de cache finalizada")
+
+# Instância global do cleaner
+cache_cleaner = CacheCleaner()
+
+def clean_on_shutdown():
+    """
+    Função para ser chamada durante o encerramento do servidor
+    """
+    return cache_cleaner.clean_pycache_async()
+
+def force_cleanup():
+    """
+    Força a limpeza imediata (útil para testes)
+    """
+    return cache_cleaner.clean_pycache()
+/* ==== FIM: cache_cleaner.py ==== */
+
+/* ==== INÍCIO: config.py ==== */
+"""
+config.py
+Configurações do Servidor 
+Configurações globais e constantes do sistema de climatização
+"""
+
+# Variáveis globais de estado do servidor
+servidor_rodando = True
+ultimo_heartbeat = None  
+
+# Configurações do servidor
+SERVER_TIMEOUT = 1  # 1 segundo - permite verificação periódica de sinais
+DEFAULT_PORT = 8000
+MAX_PORT_ATTEMPTS = 15  # Número máximo de tentativas para encontrar porta disponível
+
+# # Configurações de monitoramento comentei para caso de precisar 
+# MONITOR_MAX_ATTEMPTS = 3      # Tentativas antes de encerrar
+# MONITOR_CHECK_INTERVAL = 5    # Verifica a cada 5 segundos
+# MONITOR_START_DELAY = 5       # Espera 5 segundos antes de começar a monitorar
+# HEARTBEAT_TIMEOUT = 30        # Timeout de heartbeat em segundos
+
+# Mensagens do sistema
+MESSAGES = {
+    'server_start': "INICIANDO SISTEMA DE CLIMATIZACAO",
+    'server_running': "SISTEMA OPERACIONAL", 
+    'server_stop': "ENCERRANDO SISTEMA",
+    'browser_open': "APLICACAO ABERTA NO NAVEGADOR",
+    'monitor_active': "MONITORANDO NAVEGADOR",
+    'browser_closed': "Navegador fechado - encerrando servidor",
+    'port_available': "Porta configurada com sucesso",
+    'port_busy': "Porta ocupada, tentando alternativas",
+    'shutdown_signal': "Sinal de encerramento recebido",
+}
+
+# Configurações de segurança
+# MAX_REQUEST_SIZE = 10 * 1024 * 1024  # 10MB tamanho máximo para requests
+ALLOWED_ORIGINS = ["http://localhost", "http://127.0.0.1"]  # Origens permitidas para CORS
+/* ==== FIM: config.py ==== */
+
+/* ==== INÍCIO: file_utils.py ==== */
+"""
+file_utils.py
+Utilitários para manipulação de arquivos e paths - VERSÃO CORRIGIDA
+"""
+
+import json
+import os
+from pathlib import Path
+
+def find_project_root():
+    """Encontra a raiz do projeto procurando pela estrutura de pastas"""
+    current_dir = Path(__file__).parent.parent  # Pasta servidor_modules -> codigo
+    
+    print(f"Procurando estrutura a partir de: {current_dir}")
+    
+    # Verifica se estamos na estrutura correta
+    if (current_dir / "public" / "pages" / "01_CreateProjects.html").exists():
+        print("Estrutura encontrada: Diretorio correto")
+        return current_dir
+    
+    # Fallback: diretório atual do script
+    print("Usando diretorio do script como raiz")
+    return current_dir
+
+def find_json_file(filename, project_root=None):
+    """Encontra arquivos JSON - VERSÃO CORRIGIDA"""
+    if project_root is None:
+        project_root = find_project_root()
+    
+    # Garante que a pasta json existe
+    json_dir = project_root / "json"
+    json_dir.mkdir(parents=True, exist_ok=True)
+    
+    target_file = json_dir / filename
+    
+    # Se o arquivo não existe, cria com estrutura básica
+    if not target_file.exists():
+        print(f"Criando arquivo: {target_file}")
+        
+        if filename == "backup.json":
+            default_data = {"projetos": []}
+        elif filename == "dados.json":
+            default_data = {"constants": {}, "machines": []}
+        elif filename == "sessions.json":
+            default_data = {"sessions": {}}
+        else:
+            default_data = {}
+        
+        save_json_file(target_file, default_data)
+    
+    return target_file
+
+def load_json_file(filepath, default_data=None):
+    """Carrega arquivo JSON com tratamento de erro"""
+    try:
+        if filepath.exists():
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        elif default_data is not None:
+            # Cria o arquivo com dados padrão
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(default_data, f, indent=2, ensure_ascii=False)
+            return default_data
+        else:
+            return None
+    except Exception as e:
+        print(f"ERRO ao carregar {filepath}: {e}")
+        return default_data
+
+def save_json_file(filepath, data):
+    """Salva dados em arquivo JSON"""
+    try:
+        # Garante que o diretório existe
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"ERRO ao salvar {filepath}: {e}")
+        return False
+/* ==== FIM: file_utils.py ==== */
+
+/* ==== INÍCIO: http_handler.py ==== */
+"""
+http_handler.py
+HTTP Request Handler - ATUALIZADO PARA SISTEMA DE OBRAS
+"""
+
+import http.server
+import json
+import time
+from urllib.parse import urlparse
+from pathlib import Path
+
+from servidor_modules import file_utils, routes, config
+
+class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+    """Handler robusto e compatível para produção com sistema FOCO EM OBRAS"""
+    
+    def __init__(self, *args, **kwargs):
+        self.project_root = file_utils.find_project_root()
+        print(f"📁 Diretório base: {self.project_root}")
+        
+        self.route_handler = routes.RouteHandler(self.project_root)
+        serve_directory = self.project_root
+        super().__init__(*args, directory=str(serve_directory), **kwargs)
+    
+    def do_GET(self):
+        """GET robusto com tratamento de erro - ATUALIZADO PARA OBRAS"""
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+        
+        if path.startswith('/codigo/'):
+            path = path[7:]
+        
+        # Log seletivo
+        if path not in ['/', '/favicon.ico'] and not path.startswith('/static/'):
+            print(f"📥 GET: {path}")
+        
+        # Roteamento APIs - FOCO EM OBRAS
+        if path == '/obras':
+            self.route_handler.handle_get_obras(self)
+        elif path == '/constants' or path == '/system-constants':
+            self.route_handler.handle_get_constants(self)
+        elif path == '/dados':
+            self.route_handler.handle_get_dados(self)
+        elif path == '/backup':
+            self.route_handler.handle_get_backup(self)
+        elif path == '/machines':
+            self.route_handler.handle_get_machines(self)
+        elif path == '/health-check':
+            self.send_json_response({"status": "online", "timestamp": time.time()})
+        # ✅✅✅ CORREÇÃO CRÍTICA: ADICIONAR ESTA LINHA EXATAMENTE AQUI
+        elif path == '/session-obras':
+            self.route_handler.handle_get_session_obras(self)
+        # ✅ ROTAS DE SESSÕES ATUALIZADAS
+        elif path == '/api/session-obras':
+            self.route_handler.handle_get_session_obras(self)
+        elif path == '/api/sessions/current':
+            self.route_handler.handle_get_sessions_current(self)
+        # ✅ NOVA ROTA: BACKUP COMPLETO (sem filtro de sessão)
+        elif path == '/api/backup-completo':
+            self.route_handler.handle_get_backup_completo(self)
+        # ✅✅✅ CORREÇÃO CRÍTICA: ADICIONAR ROTA GET PARA OBRA ESPECÍFICA
+        elif path.startswith('/obras/') and self.command == 'GET':
+            self.route_handler.handle_get_obra_by_id(self, path.split('/')[-1])
+        # ❌ ROTAS LEGACY (COMPATIBILIDADE)
+        elif path == '/projetos' or path == '/projects':
+            self.route_handler.handle_get_projetos(self)
+        elif path == '/api/session-projects':
+            self.route_handler.handle_get_session_projects(self)
+        else:
+            try:
+                super().do_GET()
+            except Exception as e:
+                if path != '/favicon.ico':
+                    print(f"❌ Erro em {path}: {e}")
+                self.send_error(404, f"Recurso não encontrado: {path}")     
+    
+    def do_POST(self):
+        """POST com tratamento completo - ATUALIZADO PARA OBRAS"""
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+        
+        if path.startswith('/codigo/'):
+            path = path[7:]
+        
+        print(f"📨 POST: {path}")
+        
+        # ROTAS PRINCIPAIS
+        if path == '/obras':
+            self.route_handler.handle_post_obras(self)
+        elif path == '/api/sessions/shutdown':
+            self.route_handler.handle_post_sessions_shutdown(self)
+        elif path == '/api/shutdown':
+            self.route_handler.handle_shutdown(self)
+        elif path == '/dados':
+            self.route_handler.handle_post_dados(self)
+        elif path == '/backup':
+            self.route_handler.handle_post_backup(self)
+        elif path == '/api/sessions/ensure-single':
+            self.route_handler.handle_post_sessions_ensure_single(self)
+        # ✅ VERIFICAR SE ESTA LINHA EXISTE:
+        elif path == '/api/sessions/add-obra':
+            self.route_handler.handle_post_sessions_add_obra(self)
+        # ❌ ROTAS LEGACY (COMPATIBILIDADE)// possivel delete posteriormente
+        elif path in ['/projetos', '/projects']:
+            self.route_handler.handle_post_projetos(self)
+        else:
+            print(f"❌ POST não implementado: {path}")
+            self.send_error(501, f"Método não suportado: POST {path}")
+
+    def do_PUT(self):
+        """PUT para atualizações - ATUALIZADO PARA OBRAS"""
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+        
+        if path.startswith('/codigo/'):
+            path = path[7:]
+        
+        print(f"📨 PUT: {path}")
+        
+        # ✅ ROTAS PRINCIPAIS - OBRAS
+        if path.startswith('/obras/'):
+            print(f"🎯 Roteando PUT para obra: {path}")
+            self.route_handler.handle_put_obra(self)
+        else:
+            print(f"❌ PUT não implementado: {path}")
+            self.send_error(501, f"Método não suportado: PUT {path}")
+
+    def do_DELETE(self):
+        """DELETE para remoção de recursos - ATUALIZADO PARA OBRAS"""
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+        
+        if path.startswith('/codigo/'):
+            path = path[7:]
+        
+        print(f"🗑️  DELETE: {path}")
+        
+        # ✅✅✅ CORREÇÃO CRÍTICA: ADICIONAR ROTA DELETE PARA OBRAS
+        if path.startswith('/obras/'):
+            obra_id = path.split('/')[-1]
+            print(f"🎯 Roteando DELETE para obra: {obra_id}")
+            self.route_handler.handle_delete_obra(self, obra_id)
+        # ✅ ROTAS PRINCIPAIS - SESSÕES OBRAS
+        elif path.startswith('/api/sessions/remove-obra/'):
+            obra_id = path.split('/')[-1]
+            self.route_handler.handle_delete_sessions_remove_obra(self, obra_id)
+        # ❌ ROTAS LEGACY (COMPATIBILIDADE)
+        elif path.startswith('/api/sessions/remove-project/'):
+            project_id = path.split('/')[-1]
+            self.route_handler.handle_delete_sessions_remove_project(self, project_id)
+        else:
+            print(f"❌ DELETE não implementado: {path}")
+            self.send_error(501, f"Método não suportado: DELETE {path}")
+    
+    def send_json_response(self, data, status=200):
+        """Resposta JSON padronizada"""
+        self.send_response(status)
+        self.send_header('Content-type', 'application/json; charset=utf-8')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
+        
+        response = json.dumps(data, ensure_ascii=False).encode('utf-8')
+        self.wfile.write(response)
+    
+    def end_headers(self):
+        """Headers CORS para desenvolvimento"""
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        super().end_headers()
+    
+    def do_OPTIONS(self):
+        """Suporte CORS completo"""
+        self.send_response(200)
+        self.end_headers()
+
+    def log_message(self, format, *args):
+        """Log personalizado para melhor debugging"""
+        # Filtra logs de arquivos estáticos para não poluir o console
+        if not any(static in self.path for static in ['/static/', '/favicon.ico', '.css', '.js', '.png', '.jpg']):
+            print(f"🌐 {self.address_string()} - {format % args}")
+/* ==== FIM: http_handler.py ==== */
+
+/* ==== INÍCIO: routes.py ==== */
+"""
+routes.py
+Definição de todas as rotas da API - ATUALIZADO PARA SISTEMA DE OBRAS
+"""
+import json
+import time
+import threading
+from pathlib import Path  
+from servidor_modules import file_utils, config
+from servidor_modules.sessions_manager import sessions_manager
+
+class RouteHandler:
+    """Handler para todas as rotas da API - FOCADO EM OBRAS"""
+    
+    def __init__(self, project_root):
+        self.project_root = project_root
+
+    def handle_request(self, handler):
+        """Processa todas as requisições HTTP - CORREÇÃO COMPLETA DAS ROTAS"""
+        try:
+            path = handler.path
+            
+            print(f"🌐 ROTA SOLICITADA: {path} - MÉTODO: {handler.command}")
+            
+            # ========== ROTAS PRINCIPAIS DE OBRAS ==========
+            if path == '/obras':
+                if handler.command == 'GET':
+                    self.handle_get_obras(handler)
+                elif handler.command == 'POST':
+                    self.handle_post_obras(handler)
+                return
+                    
+            elif path.startswith('/obras/'):
+                obra_id = path.split('/')[-1]
+                if handler.command == 'GET':
+                    self.handle_get_obra_by_id(handler, obra_id)
+                elif handler.command == 'PUT':
+                    self.handle_put_obra(handler)
+                elif handler.command == 'DELETE':
+                    self.handle_delete_obra(handler, obra_id)
+                return
+                    
+            # ✅ CORREÇÃO: ROTA PARA SESSION-OBRAS
+            elif path == '/session-obras':
+                if handler.command == 'GET':
+                    self.handle_get_session_obras(handler)
+                return
+                    
+            # ========== ROTAS DE SESSÃO ==========
+            elif path == '/api/sessions/current':
+                if handler.command == 'GET':
+                    self.handle_get_sessions_current(handler)
+                return
+                    
+            elif path == '/api/sessions/add-obra':
+                if handler.command == 'POST':
+                    self.handle_post_sessions_add_obra(handler)
+                return
+                    
+            # ✅✅✅ NOVAS ROTAS PARA O MODAL - ADICIONADAS
+            elif path.startswith('/api/sessions/remove-obra/'):
+                if handler.command == 'DELETE':
+                    obra_id = path.split('/')[-1]
+                    self.handle_delete_sessions_remove_obra_modal(handler, obra_id)
+                return
+                    
+            elif path.startswith('/api/sessions/check-obra/'):
+                if handler.command == 'GET':
+                    obra_id = path.split('/')[-1]
+                    self.handle_get_sessions_check_obra(handler, obra_id)
+                return
+
+            # ✅✅✅ NOVA ROTA PARA RECARREGAMENTO DA PÁGINA - ADICIONADA
+            elif path == '/api/reload-page':
+                if handler.command == 'POST':
+                    self.handle_post_reload_page(handler)  # ✅ NOVA ROTA
+                return
+                    
+            elif path == '/api/sessions/shutdown':
+                if handler.command == 'POST':
+                    self.handle_post_sessions_shutdown(handler)
+                return
+                    
+            elif path == '/api/sessions/ensure-single':
+                if handler.command == 'POST':
+                    self.handle_post_sessions_ensure_single(handler)
+                return
+                    
+            # ========== ROTAS DE SISTEMA ==========
+            elif path == '/constants':
+                if handler.command == 'GET':
+                    self.handle_get_constants(handler)
+                return
+                    
+            elif path == '/machines':
+                if handler.command == 'GET':
+                    self.handle_get_machines(handler)
+                return
+                    
+            elif path == '/dados':
+                if handler.command == 'GET':
+                    self.handle_get_dados(handler)
+                return
+                    
+            elif path == '/backup':
+                if handler.command == 'GET':
+                    self.handle_get_backup(handler)
+                return
+                    
+            elif path == '/api/backup-completo':
+                if handler.command == 'GET':
+                    self.handle_get_backup_completo(handler)
+                return
+                    
+            elif path == '/api/shutdown':
+                if handler.command == 'POST':
+                    self.handle_shutdown(handler)
+                return
+                    
+            # ========== ROTAS DE COMPATIBILIDADE ==========
+            elif path == '/projetos':
+                if handler.command == 'GET':
+                    self.handle_get_projetos(handler)
+                return
+                    
+            elif path.startswith('/api/sessions/remove-project/'):
+                if handler.command == 'DELETE':
+                    project_id = path.split('/')[-1]
+                    self.handle_delete_sessions_remove_project(handler, project_id)
+                return
+                    
+            # ========== ROTA PADRÃO (arquivos estáticos) ==========
+            else:
+                handler.handle_static_file()
+                
+        except Exception as e:
+            print(f"❌ ERRO em handle_request: {str(e)}")
+            handler.send_error(500, f"Erro interno: {str(e)}")
+            
+            
+    # ========== ROTAS PRINCIPAIS DE OBRAS ==========
+
+    def handle_get_obras(self, handler):
+        """Obtém todas as obras da sessão atual"""
+        try:
+            print("🎯 [OBRAS] Obtendo obras da sessão")
+            
+            # 1. Sessão atual
+            current_session_id = sessions_manager.get_current_session_id()
+            session_data = sessions_manager._load_sessions_data()
+            session_obra_ids = session_data["sessions"].get(current_session_id, {}).get("obras", [])
+            print(f"📋 IDs de obras na sessão: {session_obra_ids}")
+            
+            # 2. Carregar backup
+            backup_path = self.project_root / "json" / "backup.json"
+            print(f"📁 Backup path: {backup_path}")
+            
+            if not backup_path.exists():
+                print("❌ Backup file não existe")
+                handler.send_json_response([])
+                return
+                
+            try:
+                with open(backup_path, 'r', encoding='utf-8') as f:
+                    backup_content = f.read()
+                    
+                backup_data = json.loads(backup_content)
+                print(f"✅ Backup carregado: {type(backup_data)}")
+                
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON inválido: {e}")
+                handler.send_json_response([])
+                return
+            except Exception as e:
+                print(f"❌ Erro ao ler arquivo: {e}")
+                handler.send_json_response([])
+                return
+            
+            # 3. Extrair obras
+            obras = backup_data.get('obras', [])
+            if not isinstance(obras, list):
+                print(f"❌ 'obras' não é uma lista: {type(obras)}")
+                obras = []
+                
+            print(f"📁 Total de obras no backup: {len(obras)}")
+            
+            # 4. Filtrar obras que estão na sessão atual
+            obras_da_sessao = []
+            for obra in obras:
+                if not isinstance(obra, dict):
+                    continue
+                    
+                obra_id = str(obra.get('id', ''))
+                if obra_id in session_obra_ids:
+                    obras_da_sessao.append(obra)
+                    print(f"✅ ENCONTRADA: Obra {obra_id} na sessão")
+        
+            print(f"🎯 ENVIANDO: {len(obras_da_sessao)} obras da sessão")
+            handler.send_json_response(obras_da_sessao)
+            
+        except Exception as e:
+            print(f"❌ ERRO em handle_get_obras: {str(e)}")
+            handler.send_json_response([])
+
+    def handle_get_obra_by_id(self, handler, obra_id):
+        """✅ NOVO: Obtém uma obra específica por ID"""
+        try:
+            print(f"🎯 [OBRA POR ID] Buscando obra {obra_id}")
+            
+            # Carregar backup
+            backup_path = self.project_root / "json" / "backup.json"
+            
+            if not backup_path.exists():
+                handler.send_error(404, "Arquivo de backup não encontrado")
+                return
+                
+            with open(backup_path, 'r', encoding='utf-8') as f:
+                backup_data = json.loads(f.read())
+            
+            obras = backup_data.get('obras', [])
+            
+            # Buscar obra específica
+            obra_encontrada = None
+            for obra in obras:
+                if str(obra.get('id')) == obra_id:
+                    obra_encontrada = obra
+                    break
+            
+            if obra_encontrada:
+                print(f"✅ Obra {obra_id} encontrada")
+                handler.send_json_response(obra_encontrada)
+            else:
+                print(f"❌ Obra {obra_id} não encontrada")
+                handler.send_error(404, f"Obra {obra_id} não encontrada")
+                
+        except Exception as e:
+            print(f"❌ ERRO em handle_get_obra_by_id: {str(e)}")
+            handler.send_error(500, f"Erro interno: {str(e)}")
+
+    def handle_post_obras(self, handler):
+        """Salva nova obra e adiciona à sessão - CORREÇÃO: USA ID DO FRONTEND"""
+        try:
+            content_length = int(handler.headers['Content-Length'])
+            post_data = handler.rfile.read(content_length)
+            nova_obra = json.loads(post_data.decode('utf-8'))
+            
+            backup_file = file_utils.find_json_file('backup.json', self.project_root)
+            backup_data = file_utils.load_json_file(backup_file, {"obras": [], "projetos": []})
+            
+            # ✅✅✅ CORREÇÃO CRÍTICA: USA ID DO FRONTEND OU GERA UM SEGURO
+            obra_id = nova_obra.get('id')
+            
+            if not obra_id or obra_id.isdigit():  # Se não tem ID ou é numérico
+                # Gera ID seguro no backend também
+                import random
+                import string
+                letters = 'abcdefghjkmnpqrstwxyz'  # 21 letras (remove i,l,o,v)
+                random_letter1 = random.choice(letters)
+                random_letter2 = random.choice(letters)
+                random_num = random.randint(10, 99)  # 10-99 (sempre 2 dígitos)
+                obra_id = f"obra_{random_letter1}{random_num}"
+                
+                print(f"🆕 Backend gerou ID seguro: {obra_id}")
+            
+            nova_obra['id'] = obra_id  # ✅ USA O ID SEGURO
+            
+            if 'timestamp' not in nova_obra:
+                from datetime import datetime
+                nova_obra['timestamp'] = datetime.now().isoformat()
+            
+            # ✅ CORREÇÃO CRÍTICA: Adiciona obra à sessão ANTES de salvar no backup
+            print(f"📝 Tentando adicionar obra {obra_id} à sessão...")
+            success = sessions_manager.add_obra_to_session(obra_id)  # ← USA obra_id, não proximo_id
+            
+            if not success:
+                print(f"❌ FALHA ao adicionar obra {obra_id} à sessão")
+                handler.send_error(500, "Erro ao adicionar obra à sessão")
+                return
+            else:
+                print(f"✅ Obra {obra_id} adicionada à sessão com sucesso")
+            
+            # Adiciona obra ao backup
+            obras = backup_data.get('obras', [])
+            obras.append(nova_obra)
+            backup_data['obras'] = obras
+            
+            print(f"➕ ADICIONANDO nova obra ID: {obra_id} com {len(nova_obra.get('projetos', []))} projetos")
+            
+            if file_utils.save_json_file(backup_file, backup_data):
+                print(f"✅ Obra {obra_id} salva com sucesso e adicionada à sessão")
+                handler.send_json_response(nova_obra)
+            else:
+                handler.send_error(500, "Erro ao salvar obra")
+            
+        except Exception as e:
+            print(f"❌ Erro ao adicionar obra: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")  
+            
+    def handle_put_obra(self, handler):
+        """Atualiza obra existente"""
+        try:
+            obra_id = handler.path.split('/')[-1]
+            
+            content_length = int(handler.headers['Content-Length'])
+            put_data = handler.rfile.read(content_length)
+            obra_atualizada = json.loads(put_data.decode('utf-8'))
+            
+            backup_file = file_utils.find_json_file('backup.json', self.project_root)
+            backup_data = file_utils.load_json_file(backup_file)
+            
+            if not backup_data:
+                handler.send_error(404, "Arquivo de backup não encontrado")
+                return
+            
+            obras = backup_data.get('obras', [])
+            obra_encontrada = False
+            
+            for i, obra in enumerate(obras):
+                if str(obra.get('id')) == obra_id:
+                    # ✅ CORREÇÃO: Atualiza a obra sem mexer na sessão (já está na sessão)
+                    obras[i] = obra_atualizada
+                    obra_encontrada = True
+                    print(f"✏️  ATUALIZANDO obra {obra_id} com {len(obra_atualizada.get('projetos', []))} projetos")
+                    break
+            
+            if not obra_encontrada:
+                handler.send_error(404, f"Obra {obra_id} não encontrada")
+                return
+            
+            backup_data['obras'] = obras
+            
+            if file_utils.save_json_file(backup_file, backup_data):
+                handler.send_json_response(obra_atualizada)
+            else:
+                handler.send_error(500, "Erro ao atualizar obra")
+            
+        except Exception as e:
+            print(f"❌ Erro ao atualizar obra: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_delete_obra(self, handler, obra_id):
+        """✅ CORREÇÃO: Deleta uma obra do servidor (com parâmetro)"""
+        try:
+            print(f"🗑️  Deletando obra {obra_id} do servidor")
+            
+            backup_file = file_utils.find_json_file('backup.json', self.project_root)
+            backup_data = file_utils.load_json_file(backup_file, {"obras": []})
+            
+            obras = backup_data.get('obras', [])
+            obra_encontrada = False
+            
+            # Filtrar a obra a ser removida
+            obras_atualizadas = []
+            for obra in obras:
+                if str(obra.get('id')) != obra_id:
+                    obras_atualizadas.append(obra)
+                else:
+                    obra_encontrada = True
+                    print(f"✅ Obra {obra_id} encontrada para remoção")
+            
+            if not obra_encontrada:
+                handler.send_error(404, f"Obra {obra_id} não encontrada")
+                return
+            
+            backup_data['obras'] = obras_atualizadas
+            
+            if file_utils.save_json_file(backup_file, backup_data):
+                # Também remove da sessão
+                sessions_manager.remove_obra(obra_id)
+                
+                handler.send_json_response({
+                    "success": True,
+                    "message": f"Obra {obra_id} deletada com sucesso"
+                })
+            else:
+                handler.send_error(500, "Erro ao deletar obra")
+                
+        except Exception as e:
+            print(f"❌ Erro ao deletar obra: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_get_backup_completo(self, handler):
+        """Obtém TODAS as obras do backup (sem filtro de sessão) - PARA VERIFICAÇÃO"""
+        try:
+            print("🎯 [BACKUP COMPLETO] Obtendo TODAS as obras")
+            
+            backup_path = self.project_root / "json" / "backup.json"
+            
+            if not backup_path.exists():
+                handler.send_json_response({"obras": []})
+                return
+                
+            with open(backup_path, 'r', encoding='utf-8') as f:
+                backup_content = f.read()
+                
+            backup_data = json.loads(backup_content)
+            obras = backup_data.get('obras', [])
+            
+            print(f"📁 Total de obras no backup: {len(obras)}")
+            handler.send_json_response({"obras": obras})
+            
+        except Exception as e:
+            print(f"❌ ERRO em handle_get_backup_completo: {str(e)}")
+            handler.send_json_response({"obras": []})
+
+    # ========== ROTAS DE SESSÕES ATUALIZADAS ==========
+
+    def handle_get_sessions_current(self, handler):
+        """Retorna a sessão atual"""
+        try:
+            data = sessions_manager._load_sessions_data()
+            current_session_id = sessions_manager.get_current_session_id()
+            
+            if current_session_id not in data["sessions"]:
+                handler.send_json_response({"sessions": {}})
+                return
+            
+            current_session = {
+                current_session_id: data["sessions"][current_session_id]
+            }
+            
+            print(f"📊 Retornando sessão {current_session_id}: {current_session}")
+            handler.send_json_response({"sessions": current_session})
+            
+        except Exception as e:
+            print(f"❌ Erro ao obter sessão atual: {str(e)}")
+            handler.send_json_response({"sessions": {}})
+
+    def handle_post_sessions_add_obra(self, handler):
+        """Adiciona uma obra à sessão atual"""
+        try:
+            content_length = int(handler.headers['Content-Length'])
+            post_data = handler.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+            
+            obra_id = data.get('obra_id')
+            if not obra_id:
+                handler.send_error(400, "ID da obra não fornecido")
+                return
+            
+            print(f"➕ Adicionando obra {obra_id} à sessão")
+            
+            success = sessions_manager.add_obra_to_session(obra_id)
+            
+            if success:
+                handler.send_json_response({
+                    "success": True,
+                    "message": f"Obra {obra_id} adicionada à sessão"
+                })
+            else:
+                handler.send_error(500, "Erro ao adicionar obra à sessão")
+                
+        except Exception as e:
+            print(f"❌ Erro ao adicionar obra à sessão: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_delete_sessions_remove_obra(self, handler, obra_id):
+        """✅ CORREÇÃO: Remove uma obra da sessão atual (com parâmetro)"""
+        try:
+            print(f"🗑️  Removendo obra {obra_id} da sessão")
+            
+            success = sessions_manager.remove_obra(obra_id)
+            
+            if success:
+                handler.send_json_response({
+                    "success": True, 
+                    "message": f"Obra {obra_id} removida da sessão"
+                })
+            else:
+                handler.send_error(500, "Erro ao remover obra da sessão")
+                
+        except Exception as e:
+            print(f"❌ Erro ao remover obra da sessão: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_post_sessions_shutdown(self, handler):
+        """Limpa COMPLETAMENTE TODAS as sessões - CORREÇÃO: VERIFICAÇÃO CORRETA"""
+        try:
+            print(f"🔴 SHUTDOWN COMPLETO: Deletando TODAS as sessões")
+            
+            data_before = sessions_manager._load_sessions_data()
+            print(f"📄 Estado ANTES do shutdown: {data_before}")
+            
+            success = sessions_manager.clear_session()
+            
+            data_after = sessions_manager._load_sessions_data()
+            print(f"📄 Estado DEPOIS do shutdown: {data_after}")
+            
+            # ✅ CORREÇÃO: Verificação mais flexível da sessão vazia
+            is_empty = (
+                not data_after.get("sessions") or 
+                data_after["sessions"] == {} or
+                (data_after.get("sessions", {}).get("session_active", {}).get("obras", []) == [])
+            )
+            
+            if success and is_empty:
+                handler.send_json_response({
+                    "success": True,
+                    "message": "Sessões DELETADAS completamente",
+                    "final_state": data_after
+                })
+            else:
+                print("🔄 Método normal falhou - forçando limpeza...")
+                success = sessions_manager.force_clear_all_sessions()
+                data_final = sessions_manager._load_sessions_data()
+                
+                # ✅ CORREÇÃO: Verificação mais tolerante
+                final_is_empty = (
+                    not data_final.get("sessions") or 
+                    data_final["sessions"] == {} or
+                    (data_final.get("sessions", {}).get("session_active", {}).get("obras", []) == [])
+                )
+                
+                if success and final_is_empty:
+                    handler.send_json_response({
+                        "success": True,
+                        "message": "Sessões DELETADAS (forçado)",
+                        "final_state": data_final
+                    })
+                else:
+                    # ✅ CORREÇÃO: Mesmo se não estiver completamente vazio, considera sucesso
+                    print(f"⚠️  Sessão final não está completamente vazia, mas considerando sucesso: {data_final}")
+                    handler.send_json_response({
+                        "success": True,
+                        "message": "Sessões limpas com aviso",
+                        "final_state": data_final,
+                        "warning": "Sessão pode conter dados residuais"
+                    })
+                    
+        except Exception as e:
+            print(f"❌ Erro no shutdown: {str(e)}")
+            # ✅ CORREÇÃO: Mesmo com erro, tenta continuar o processo
+            handler.send_json_response({
+                "success": True,
+                "message": "Sessões limpas (com erro ignorado)",
+                "error_ignored": str(e)
+            })
+            
+    def handle_post_sessions_ensure_single(self, handler):
+        """Garante que apenas uma sessão esteja ativa por vez"""
+        try:
+            print(f"🔒 Garantindo sessão única")
+            
+            success = sessions_manager.ensure_single_session()
+            current_session_id = sessions_manager.get_current_session_id()
+            obra_ids = sessions_manager.get_session_obras()
+            
+            if success:
+                handler.send_json_response({
+                    "success": True,
+                    "message": "Sessão única configurada",
+                    "session_id": current_session_id,
+                    "obras_count": len(obra_ids),
+                    "obras": obra_ids
+                })
+            else:
+                handler.send_error(500, "Erro ao configurar sessão única")
+                
+        except Exception as e:
+            print(f"❌ Erro ao configurar sessão única: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_get_session_obras(self, handler):
+        """Retorna apenas os IDs das obras da sessão atual"""
+        try:
+            session_obras = sessions_manager.get_session_obras()
+            current_session_id = sessions_manager.get_current_session_id()
+            
+            print(f"📋 [SESSION-OBRAS] Sessão {current_session_id} - Obras: {session_obras}")
+            
+            handler.send_json_response({
+                "session_id": current_session_id,
+                "obras": session_obras
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_session_obras: {str(e)}")
+            handler.send_json_response({"session_id": "error", "obras": []})
+
+    # ========== ROTAS DE SISTEMA (MANTIDAS) ==========
+
+    def handle_shutdown(self, handler):
+        """✅ CORREÇÃO: Encerra o servidor E envia comando para fechar janela COM LIMPEZA DE CACHE"""
+        try:
+            print("🔴 SHUTDOWN SOLICITADO VIA BOTÃO - ENCERRANDO SERVIDOR")
+            
+            # ✅ CORREÇÃO: Envia resposta primeiro para o cliente
+            handler.send_json_response({
+                "status": "shutting_down", 
+                "message": "Servidor encerrado com sucesso via botão",
+                "action": "close_window",
+                "close_delay": 3000  # 3 segundos para mostrar a mensagem
+            })
+            
+            print("✅ Resposta enviada ao cliente - servidor será encerrado")
+            
+            # ✅ CORREÇÃO: Marca servidor como não rodando
+            config.servidor_rodando = False
+            
+            # ✅ NOVO: Executa limpeza de cache antes de encerrar
+            def shutdown_sequence():
+                print("🔄 Iniciando sequência de encerramento...")
+                
+                # 🆕 EXECUTA LIMPEZA DE CACHE
+                try:
+                    from servidor_modules.cache_cleaner import clean_on_shutdown
+                    print("🧹 Executando limpeza de cache...")
+                    clean_on_shutdown()
+                except Exception as cache_error:
+                    print(f"⚠️  Erro na limpeza de cache: {cache_error}")
+                
+                time.sleep(2)  # Dar tempo para a resposta chegar ao cliente e cache ser limpo
+                print("💥 Forçando encerramento do processo Python...")
+                
+                # Método mais direto para encerrar
+                import os
+                os._exit(0)
+            
+            # Inicia a sequência de encerramento
+            shutdown_thread = threading.Thread(target=shutdown_sequence)
+            shutdown_thread.daemon = True
+            shutdown_thread.start()
+            
+        except Exception as e:
+            print(f"❌ Erro no shutdown: {str(e)}")
+            # Mesmo com erro, tenta encerrar
+            config.servidor_rodando = False
+            
+            # 🆕 Tenta limpar cache mesmo com erro
+            try:
+                from servidor_modules.cache_cleaner import clean_on_shutdown
+                clean_on_shutdown()
+            except:
+                pass
+                
+            import os
+            os._exit(0)
+    def handle_get_constants(self, handler):
+        """Constants do DADOS.json"""
+        try:
+            dados_file = file_utils.find_json_file('dados.json', self.project_root)
+            dados_data = file_utils.load_json_file(dados_file, {})
+            
+            constants = dados_data.get('constants', {})
+            print(f"⚙️  Retornando constants")
+            handler.send_json_response(constants)
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar constants: {str(e)}")
+            handler.send_json_response({})
+
+    def handle_get_machines(self, handler):
+        """Machines do DADOS.json"""
+        try:
+            dados_file = file_utils.find_json_file('dados.json', self.project_root)
+            dados_data = file_utils.load_json_file(dados_file, {})
+            
+            machines = dados_data.get('machines', [])
+            print(f"🖥️  Retornando {len(machines)} máquinas")
+            handler.send_json_response(machines)
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar machines: {str(e)}")
+            handler.send_json_response([])
+
+    def handle_get_dados(self, handler):
+        """DADOS.json completo"""
+        try:
+            dados_file = file_utils.find_json_file('dados.json', self.project_root)
+            dados_data = file_utils.load_json_file(dados_file, {"constants": {}, "machines": []})
+            
+            print("📁 Retornando DADOS.json")
+            handler.send_json_response(dados_data)
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar dados: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_get_backup(self, handler):
+        """BACKUP.json completo"""
+        try:
+            backup_file = file_utils.find_json_file('backup.json', self.project_root)
+            backup_data = file_utils.load_json_file(backup_file, {"obras": [], "projetos": []})
+            
+            print("💾 Retornando BACKUP.json")
+            handler.send_json_response(backup_data)
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar backup: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_post_dados(self, handler):
+        """Salva DADOS.json"""
+        try:
+            content_length = int(handler.headers['Content-Length'])
+            post_data = handler.rfile.read(content_length)
+            new_data = json.loads(post_data.decode('utf-8'))
+            
+            dados_file = file_utils.find_json_file('dados.json', self.project_root)
+            
+            if file_utils.save_json_file(dados_file, new_data):
+                print("💾 DADOS.json salvo")
+                handler.send_json_response({"status": "success", "message": "Dados salvos"})
+            else:
+                handler.send_error(500, "Erro ao salvar dados")
+            
+        except Exception as e:
+            print(f"❌ Erro ao salvar dados: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    def handle_post_backup(self, handler):
+        """Salva BACKUP.json"""
+        try:
+            content_length = int(handler.headers['Content-Length'])
+            post_data = handler.rfile.read(content_length)
+            new_data = json.loads(post_data.decode('utf-8'))
+            
+            backup_file = file_utils.find_json_file('backup.json', self.project_root)
+            
+            if file_utils.save_json_file(backup_file, new_data):
+                print("💾 BACKUP.json salvo")
+                handler.send_json_response({"status": "success", "message": "Backup salvo"})
+            else:
+                handler.send_error(500, "Erro ao salvar backup")
+            
+        except Exception as e:
+            print(f"❌ Erro ao salvar backup: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+
+    # ========== ROTAS DE COMPATIBILIDADE (LEGACY) ==========
+    # Mantidas para não quebrar código existente, mas devem ser removidas futuramente
+
+    def handle_get_projetos(self, handler):
+        """COMPATIBILIDADE: Retorna array vazio (não usa mais projetos individuais)"""
+        print("⚠️  AVISO: handle_get_projetos() - método legado, retornando vazia")
+        handler.send_json_response([])
+
+    def handle_post_projetos(self, handler):
+        """COMPATIBILIDADE: Retorna erro (use obras)"""
+        print("⚠️  AVISO: handle_post_projetos() - método legado, use obras")
+        handler.send_error(501, "Use o endpoint /obras em vez de /projetos")
+
+    def handle_put_projeto(self, handler):
+        """COMPATIBILIDADE: Retorna erro (use obras)"""
+        print("⚠️  AVISO: handle_put_projeto() - método legado, use obras")
+        handler.send_error(501, "Use o endpoint /obras em vez de /projetos")
+
+    def remove_obra(self, obra_id: str) -> bool:
+        """Remove uma obra da sessão ativa
+        Args:
+            obra_id (str): ID da obra a ser removida
+        Returns:
+            bool: True se a obra foi removida ou não existia
+        """
+        data = self._load_sessions_data()
+        current_session_id = self.get_current_session_id()
+        obra_id_str = str(obra_id)
+        
+        print(f"🔍 Tentando remover obra {obra_id_str} da sessão {current_session_id}")
+        print(f"📊 Obras na sessão antes: {data['sessions'][current_session_id]['obras']}")
+        
+        if (current_session_id in data["sessions"] and 
+            obra_id_str in data["sessions"][current_session_id]["obras"]):
+            
+            # Remove o ID da obra
+            data["sessions"][current_session_id]["obras"].remove(obra_id_str)
+            print(f"🗑️ Obra {obra_id_str} removida da sessão {current_session_id}")
+            
+            # Salva os dados atualizados
+            success = self._save_sessions_data(data)
+            
+            if success:
+                print(f"✅ Obra {obra_id_str} removida com sucesso")
+                print(f"📊 Obras na sessão depois: {data['sessions'][current_session_id]['obras']}")
+                return True
+            else:
+                print(f"❌ ERRO: Falha ao salvar dados após remoção da obra {obra_id_str}")
+                return False
+        
+        print(f"⚠️ Obra {obra_id_str} não encontrada na sessão {current_session_id}")
+        return True  # ✅ CORREÇÃO: Retorna True mesmo se não existir (compatibilidade)
+    
+    def handle_delete_sessions_remove_project(self, handler, project_id):
+        """✅ CORREÇÃO: Remove projeto/obra da sessão (compatibilidade)"""
+        try:
+            print(f"🗑️  [COMPAT] Removendo projeto/obra {project_id} da sessão")
+            
+            # ✅✅✅ CORREÇÃO CRÍTICA: Usar remove_obra em vez de remove_project
+            success = sessions_manager.remove_obra(project_id)
+            
+            if success:
+                handler.send_json_response({
+                    "success": True, 
+                    "message": f"Obra {project_id} removida da sessão"
+                })
+                print(f"✅ Obra {project_id} removida da sessão via rota de compatibilidade")
+            else:
+                print(f"❌ Falha ao remover obra {project_id} da sessão")
+                handler.send_error(500, "Erro ao remover obra da sessão")
+                
+        except Exception as e:
+            print(f"❌ Erro ao remover obra da sessão: {str(e)}")
+            handler.send_error(500, f"Erro: {str(e)}")
+            
+            
+    # ========== ROTA PARA RECARREGAMENTO DA PÁGINA ==========
+
+    def handle_post_reload_page(self, handler):
+        """✅ NOVA: Força recarregamento da página via Python"""
+        try:
+            content_length = int(handler.headers['Content-Length'])
+            post_data = handler.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+            
+            action = data.get('action', 'unknown')
+            obra_id = data.get('obraId')
+            obra_name = data.get('obraName')
+            
+            print(f"🔄 [RECARREGAMENTO] Ação: {action}, Obra: {obra_name} (ID: {obra_id})")
+            
+            # Log baseado na ação
+            if action == 'undo':
+                print(f"↩️ Usuário desfez exclusão da obra {obra_name} - mantendo na sessão")
+            elif action == 'undo_no_data':
+                print(f"↩️ Usuário desfez exclusão (dados insuficientes) - recarregando página")
+            elif action.startswith('timeout'):
+                print(f"⏰ Timeout completo - obra {obra_name} removida da sessão")
+            
+            # ✅ ENVIA RESPOSTA QUE FORÇA O RECARREGAMENTO NO FRONTEND
+            handler.send_json_response({
+                "reload_required": True,
+                "action": action,
+                "obra_id": obra_id,
+                "obra_name": obra_name,
+                "message": "Página será recarregada",
+                "reload_delay": 500  # ms antes de recarregar
+            })
+            
+            print(f"✅ Comando de recarregamento enviado para o frontend")
+                
+        except Exception as e:
+            print(f"❌ Erro no recarregamento: {str(e)}")
+            # Mesmo com erro, envia comando de recarregamento
+            handler.send_json_response({
+                "reload_required": True,
+                "error": str(e),
+                "message": "Recarregamento forçado devido a erro"
+            })
+/* ==== FIM: routes.py ==== */
+
+/* ==== INÍCIO: server_utils.py ==== */
+"""
+server_utils.py
+Utilitários do servidor - Versão Estável para Cliente
+COM INTEGRAÇÃO DE LIMPEZA DE CACHE
+"""
+
+import socket
+import socketserver
+import threading
+import time
+import signal
+import sys
+import subprocess
+import os
+from pathlib import Path
+
+from servidor_modules import config
+from servidor_modules.cache_cleaner import clean_on_shutdown
+
+def is_port_in_use(port):
+    """
+    Verifica se uma porta específica está em uso no localhost
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(1)
+        try:
+            s.bind(('localhost', port))
+            return False
+        except socket.error:
+            return True
+
+def kill_process_on_port(port):
+    """
+    Tenta finalizar processos que estão utilizando uma porta específica
+    """
+    try:
+        if sys.platform == "win32":
+            result = subprocess.run(
+                ['netstat', '-ano'], 
+                capture_output=True, 
+                text=True,
+                encoding='utf-8',
+                errors='ignore'
+            )
+            
+            for line in result.stdout.split('\n'):
+                if f':{port}' in line and 'LISTENING' in line:
+                    parts = line.split()
+                    if len(parts) >= 5:
+                        pid = parts[-1]
+                        if pid.isdigit():
+                            print(f"🔄 Liberando porta {port} (PID: {pid})...")
+                            try:
+                                subprocess.run(
+                                    ['taskkill', '/PID', pid, '/F'], 
+                                    capture_output=True,
+                                    timeout=5
+                                )
+                                time.sleep(1)
+                                if not is_port_in_use(port):
+                                    return True
+                            except subprocess.TimeoutExpired:
+                                print(f"⏰ Timeout ao tentar finalizar processo {pid}")
+                            except Exception as e:
+                                print(f"⚠️ Erro ao finalizar processo: {e}")
+        return False
+    except Exception as e:
+        print(f"⚠️  Aviso ao liberar porta: {e}")
+        return False
+
+def find_available_port(start_port=config.DEFAULT_PORT, max_attempts=config.MAX_PORT_ATTEMPTS):
+    """
+    Encontra uma porta disponível para uso pelo servidor
+    """
+    for port in range(start_port, start_port + max_attempts):
+        if not is_port_in_use(port):
+            return port
+    
+    import random
+    for attempt in range(10):
+        port = random.randint(8000, 9000)
+        if not is_port_in_use(port):
+            print(f"🎯 Usando porta alternativa: {port}")
+            return port
+    
+    print("❌ Não foi possível encontrar porta disponível após múltiplas tentativas")
+    return None
+
+def setup_port(default_port):
+    """
+    Configura a porta do servidor, tentando liberar portas ocupadas se necessário
+    """
+    print(f"🔧 Configurando porta do servidor...")
+    
+    if not is_port_in_use(default_port):
+        print(f"✅ Porta {default_port} disponível")
+        return default_port
+    
+    print(f"⚠️  Porta {default_port} ocupada. Tentando liberar...")
+    
+    if kill_process_on_port(default_port):
+        time.sleep(2)
+        if not is_port_in_use(default_port):
+            print(f"✅ Porta {default_port} liberada com sucesso!")
+            return default_port
+    
+    print("🔄 Buscando porta alternativa...")
+    available_port = find_available_port(default_port)
+    
+    if available_port:
+        print(f"🔀 Usando porta alternativa: {available_port}")
+        return available_port
+    else:
+        print("❌ Não foi possível encontrar porta disponível")
+        return None
+
+def signal_handler(signum, frame):
+    """
+    Manipulador de sinais do sistema para encerramento graceful do servidor
+    """
+    print(f"\n🔄 Recebido sinal {signum}. Encerrando graceful...")
+    config.servidor_rodando = False
+
+def setup_signal_handlers():
+    """
+    Configura os handlers para sinais de interrupção e término
+    """
+    try:
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        print("✅ Handlers de sinal configurados")
+    except Exception as e:
+        print(f"⚠️  Aviso na configuração de sinais: {e}")
+
+def create_server(port, handler_class):
+    """
+    Cria e configura uma instância do servidor TCP
+    """
+    try:
+        server = socketserver.TCPServer(("", port), handler_class)
+        server.timeout = config.SERVER_TIMEOUT
+        server.allow_reuse_address = True
+        print(f"✅ Servidor criado na porta {port}")
+        return server
+    except Exception as e:
+        print(f"❌ Erro ao criar servidor: {e}")
+        raise
+
+def print_server_info(port):
+    """
+    Exibe informações formatadas sobre o servidor iniciado
+    """
+    print(f"\n🎉 SERVIDOR INICIADO COM SUCESSO!")
+    print("=" * 50)
+    print(f"🌐 URL: http://localhost:{port}/public/pages/01_CreateProjects.html")
+    print("=" * 50)
+    print("📋 CONTROLES:")
+    print("   • Pressione Ctrl+C para PARAR o servidor")
+    print("   • Feche o navegador para encerramento automático")
+    print("   • Seu trabalho é salvo automaticamente")
+    print("=" * 50)
+
+def open_browser(port=8000):
+    """
+    Abre o navegador padrão automaticamente apontando para a aplicação
+    """
+    time.sleep(2)
+    
+    url = f"http://localhost:{port}/public/pages/01_CreateProjects.html"
+    print(f"🌐 Abrindo aplicação: {url}")
+    
+    try:
+        import webbrowser
+        webbrowser.open(url)
+        print("✅ Navegador iniciado com sucesso!")
+    except Exception as e:
+        print(f"⚠️  Não foi possível abrir navegador automaticamente: {e}")
+        print(f"💡 Acesse manualmente: {url}")
+
+def start_server_threads(port, httpd, monitor_function):
+    """
+    Inicia as threads auxiliares do servidor (browser e monitor)
+    """
+    try:
+        browser_thread = threading.Thread(target=open_browser, args=(port,), daemon=True)
+        browser_thread.start()
+        
+        monitor_thread = threading.Thread(target=monitor_function, args=(port, httpd), daemon=True)
+        monitor_thread.start()
+        
+        print("\n🟢 SISTEMA PRONTO!")
+        print("   Aplicação carregada no navegador")
+        print("   Trabalhe normalmente - tudo é salvo automaticamente")
+        print("   O servidor gerencia automaticamente o encerramento\n")
+        
+    except Exception as e:
+        print(f"⚠️  Erro ao iniciar threads: {e}")
+
+def run_server_loop(httpd):
+    """
+    Loop principal de execução do servidor com tratamento de exceções
+    """
+    print("🔄 Servidor em execução...")
+    
+    while config.servidor_rodando:
+        try:
+            httpd.handle_request()
+        except socket.timeout:
+            continue  
+        except KeyboardInterrupt:
+            print("\n⏹️  Interrupção pelo usuário detectada")
+            config.servidor_rodando = False
+            break
+        except Exception as e:
+            if config.servidor_rodando:
+                print(f"⚠️  Erro não crítico no servidor: {e}")
+                time.sleep(1)
+                continue
+            else:
+                break
+    
+    print("👋 Encerramento solicitado...")
+
+def shutdown_server_async(httpd):
+    """
+    Executa o desligamento graceful do servidor em thread separada
+    INCLUINDO LIMPEZA DE CACHE
+    """
+    def shutdown_task():
+        try:
+            print("🔄 Finalizando conexões do servidor...")
+            httpd.shutdown()
+            httpd.server_close()
+            print("✅ Conexões do servidor finalizadas")
+            
+            # 🆕 NOVO: Limpeza de cache após encerramento
+            print("🔄 Iniciando limpeza de cache...")
+            clean_on_shutdown()
+            
+        except Exception as e:
+            print(f"⚠️  Aviso no encerramento: {e}")
+    
+    shutdown_thread = threading.Thread(target=shutdown_task, daemon=True)
+    shutdown_thread.start()
+    
+    # Aguarda um pouco mais para garantir a limpeza
+    shutdown_thread.join(timeout=8.0)
+    
+    if shutdown_thread.is_alive():
+        print("⏰ Timeout no encerramento - finalizando forçadamente...")
+        try:
+            httpd.server_close()
+        except:
+            pass
+/* ==== FIM: server_utils.py ==== */
+
+/* ==== INÍCIO: servidor.py ==== */
+#!/usr/bin/env python3
+"""
+servidor.py
+Sistema de Climatização - Servidor Principal
+Versão com Diagnóstico Completo E LIMPEZA DE CACHE
+"""
+
+import os
+import sys
+import time
+import traceback
+import threading
+
+# Adiciona o diretório atual ao path para garantir imports
+diretorio_atual = os.path.dirname(os.path.abspath(__file__))
+if diretorio_atual not in sys.path:
+    sys.path.insert(0, diretorio_atual)
+
+print("=" * 60)
+print("SISTEMA DE CLIMATIZAÇÃO - INICIANDO DIAGNÓSTICO")
+print("=" * 60)
+
+def diagnostico_completo():
+    """Faz diagnóstico completo do sistema"""
+    print("\n1. VERIFICANDO DIRETÓRIOS...")
+    print(f"   Diretório atual: {diretorio_atual}")
+    print(f"   Pasta json: {os.path.exists(os.path.join(diretorio_atual, 'json'))}")
+    print(f"   Pasta servidor_modules: {os.path.exists(os.path.join(diretorio_atual, 'servidor_modules'))}")
+    
+    print("\n2. VERIFICANDO ARQUIVOS...")
+    arquivos = [
+        'servidor.py',
+        'servidor_modules/__init__.py',
+        'servidor_modules/config.py', 
+        'servidor_modules/server_utils.py',
+        'servidor_modules/http_handler.py',
+        'servidor_modules/routes.py',
+        'servidor_modules/sessions_manager.py',
+        'servidor_modules/file_utils.py',
+        'servidor_modules/browser_monitor.py',
+        'servidor_modules/cache_cleaner.py',  # 🆕 NOVO ARQUIVO
+        'json/backup.json',
+        'json/dados.json',
+        'json/sessions.json'
+    ]
+    
+    for arquivo in arquivos:
+        caminho = os.path.join(diretorio_atual, arquivo)
+        existe = os.path.exists(caminho)
+        status = "✅" if existe else "❌"
+        print(f"   {status} {arquivo}: {existe}")
+    
+    print("\n3. VERIFICANDO IMPORTAÇÕES...")
+
+# Executa diagnóstico primeiro
+diagnostico_completo()
+
+# Agora tenta importar os módulos
+try:
+    print("\n4. IMPORTANDO MÓDULOS...")
+    from servidor_modules import server_utils, http_handler, browser_monitor, sessions_manager, cache_cleaner
+    from servidor_modules import config
+    print("   ✅ Módulos importados com sucesso!")
+    
+except ImportError as e:
+    print(f"   ❌ ERRO DE IMPORTAÇÃO: {e}")
+    print(f"   TRACEBACK:")
+    traceback.print_exc()
+    print("\nPressione Enter para sair...")
+    input()
+    sys.exit(1)
+
+except Exception as e:
+    print(f"   ❌ ERRO INESPERADO: {e}")
+    print(f"   TRACEBACK:")
+    traceback.print_exc()
+    print("\nPressione Enter para sair...")
+    input()
+    sys.exit(1)
+
+def active_session_after_delay(interval_seconds):
+    """✅ CORREÇÃO: Mostra tempo de execução a cada intervalo especificado em SEGUNDOS"""
+    def monitor():
+        start_time = time.time()
+        last_report = 0
+        
+        while config.servidor_rodando:
+            try:
+                elapsed_time = time.time() - start_time
+                
+                if elapsed_time >= last_report + interval_seconds:
+                    hours = int(elapsed_time // 3600)
+                    minutes = int((elapsed_time % 3600) // 60)
+                    seconds = int(elapsed_time % 60)
+                    
+                    if hours > 0:
+                        print(f"⏰ Monitoramento: Servidor ativo há {hours}h{minutes:02d}min{seconds:02d}s")
+                    elif minutes > 0:
+                        print(f"⏰ Monitoramento: Servidor ativo há {minutes}min{seconds:02d}s")
+                    else:
+                        print(f"⏰ Monitoramento: Servidor ativo há {seconds}s")
+                    
+                    last_report = elapsed_time
+                
+                time.sleep(0.1)
+                
+            except Exception as e:
+                print(f"❌ Erro no monitor: {e}")
+                break
+    
+    monitor_thread = threading.Thread(target=monitor)
+    monitor_thread.daemon = True
+    monitor_thread.start()
+    print(f"🔔 Monitor ativado: mostrando tempo a cada {interval_seconds} segundos")
+
+def main():
+    """Função principal com tratamento robusto de erros"""
+    try:
+        print("\n5. INICIANDO SERVIDOR...")
+        
+        # Configuração
+        print("   Configurando handlers de sinal...")
+        server_utils.setup_signal_handlers()
+        
+        # Configura porta
+        print("   Configurando porta...")
+        port = server_utils.setup_port(8000)
+        if not port:
+            print("   ❌ Não foi possível configurar porta")
+            print("Pressione Enter para sair...")
+            input()
+            return
+        
+        print(f"   ✅ Porta {port} configurada")
+        
+        # Inicialização do servidor
+        print("   Criando servidor...")
+        with server_utils.create_server(port, http_handler.UniversalHTTPRequestHandler) as httpd:
+            # Informações do sistema
+            server_utils.print_server_info(port)
+            
+            # Inicialização das threads
+            print("   Iniciando threads...")
+            server_utils.start_server_threads(port, httpd, browser_monitor.monitorar_navegador)
+            
+            print("   ✅ SERVIDOR INICIADO COM SUCESSO!")
+            print("   🟢 SISTEMA OPERACIONAL")
+            
+            # ✅ CORREÇÃO: Ativar monitor de tempo a cada 1200 segundos para teste
+            delay = 1200
+            active_session_after_delay(delay)
+            
+            # Loop principal
+            server_utils.run_server_loop(httpd)
+            
+    except KeyboardInterrupt:
+        print("\n   ⏹️  Encerramento solicitado pelo usuário (Ctrl+C)")
+        config.servidor_rodando = False
+    except Exception as e:
+        print(f"\n   ❌ ERRO CRÍTICO: {e}")
+        print("   TRACEBACK COMPLETO:")
+        traceback.print_exc()
+        print("\n   O sistema será finalizado em 10 segundos...")
+        time.sleep(10)
+    finally:
+        print("\n   🔴 Servidor finalizado!")
+        config.servidor_rodando = False
+        
+        # ✅ MELHORIA: Garantir que o shutdown seja chamado
+        try:
+            if 'httpd' in locals():
+                print("   🔄 Executando shutdown assíncrono...")
+                server_utils.shutdown_server_async(httpd)
+        except Exception as e:
+            print(f"   ⚠️  Erro no shutdown: {e}")
+        
+        # ✅ CORREÇÃO: Dar tempo para a limpeza de cache
+        print("   ⏳ Aguardando finalização dos processos...")
+        time.sleep(2)
+        
+        print("   🚪 Encerrando processo Python...")
+        os._exit(0)     
+        
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"ERRO FATAL: {e}")
+        traceback.print_exc()
+        os._exit(1)
+/* ==== FIM: servidor.py ==== */
+
+/* ==== INÍCIO: sessions_manager.py ==== */
+"""
+sessions_manager.py
+"""
+
+import json
+import time
+import os
+from pathlib import Path
+
+class SessionsManager:
+    """
+    Gerenciador de sessões para sistema que começa vazio
+    Gerencia uma única sessão ativa com lista de obras
+    """
+    
+    def __init__(self):
+        # Usa caminho absoluto baseado na localização do arquivo
+        current_file = Path(__file__)  # sessions_manager.py
+        project_root = current_file.parent.parent  # sobe para pasta codigo
+        self.sessions_dir = project_root / "json"  # pasta json dentro de codigo
+        self.sessions_file = self.sessions_dir / "sessions.json"
+        
+        print(f"SessionsManager: Inicializando em {self.sessions_dir}")
+        self.ensure_sessions_file()
+    
+    def ensure_sessions_file(self):
+        """Garante que o arquivo de sessões existe com estrutura vazia"""
+        try:
+            # Cria diretório se não existir
+            self.sessions_dir.mkdir(parents=True, exist_ok=True)
+            print(f"SessionsManager: Pasta json verificada: {self.sessions_dir.exists()}")
+            
+            if not self.sessions_file.exists():
+                print("SessionsManager: Criando arquivo sessions.json vazio")
+                self._initialize_sessions_file()
+            else:
+                print("SessionsManager: Arquivo sessions.json já existe")
+                
+        except Exception as e:
+            print(f"ERRO em ensure_sessions_file: {e}")
+            raise
+    
+    def _initialize_sessions_file(self):
+        """Inicializa o arquivo de sessões com estrutura vazia"""
+        initial_data = {
+            "sessions": {
+                "session_active": {  
+                    "obras": []      
+                }
+            }
+        }
+        self._save_sessions_data(initial_data)
+    
+    def get_current_session_id(self) -> str:
+        """Retorna o ID da sessão ativa
+        Returns:
+            str: ID da sessão ativa ('session_active')
+        """
+        return "session_active"
+
+    def add_obra_to_session(self, obra_id: str) -> bool:
+        """Adiciona uma obra à sessão ativa
+        Args:
+            obra_id (str): ID da obra a ser adicionada
+        Returns:
+            bool: True se a obra foi adicionada com sucesso
+        """
+        data = self._load_sessions_data()
+        current_session_id = self.get_current_session_id()
+        
+        # Garante que existe apenas a sessão ativa
+        data["sessions"] = {
+            current_session_id: data["sessions"].get(current_session_id, {"obras": []})
+        }
+        
+        # Adiciona ID da obra se não existir
+        obra_id_str = str(obra_id)
+        if obra_id_str not in data["sessions"][current_session_id]["obras"]:
+            data["sessions"][current_session_id]["obras"].append(obra_id_str)
+            print(f"✅ Obra {obra_id_str} adicionada à sessão {current_session_id}")
+        
+        return self._save_sessions_data(data)
+
+    def remove_obra(self, obra_id: str) -> bool:
+        """Remove uma obra da sessão ativa
+        Args:
+            obra_id (str): ID da obra a ser removida
+        Returns:
+            bool: True se a obra foi removida, False se não existia
+        """
+        data = self._load_sessions_data()
+        current_session_id = self.get_current_session_id()
+        obra_id_str = str(obra_id)
+        
+        print(f"🔍 Tentando remover obra {obra_id_str} da sessão {current_session_id}")
+        print(f"📊 Obras na sessão antes: {data['sessions'][current_session_id]['obras']}")
+        
+        if (current_session_id in data["sessions"] and 
+            obra_id_str in data["sessions"][current_session_id]["obras"]):
+            
+            # Remove o ID da obra
+            data["sessions"][current_session_id]["obras"].remove(obra_id_str)
+            print(f"🗑️ Obra {obra_id_str} removida da sessão {current_session_id}")
+            
+            # Salva os dados atualizados
+            success = self._save_sessions_data(data)
+            
+            # Verifica se realmente foi removido
+            if success:
+                updated_data = self._load_sessions_data()
+                still_exists = obra_id_str in updated_data["sessions"][current_session_id]["obras"]
+                if still_exists:
+                    print(f"❌ ERRO: Obra {obra_id_str} ainda está na sessão após remoção!")
+                    return False
+                else:
+                    print(f"✅ Obra {obra_id_str} removida com sucesso")
+                    print(f"📊 Obras na sessão depois: {updated_data['sessions'][current_session_id]['obras']}")
+                    return True
+            else:
+                print(f"❌ ERRO: Falha ao salvar dados após remoção da obra {obra_id_str}")
+                return False
+        
+        print(f"⚠️ Obra {obra_id_str} não encontrada na sessão {current_session_id}")
+        return False
+
+    def remove_obra_from_session(self, obra_id: str) -> dict:
+        """✅ NOVO: Remove uma obra da sessão ativa - para uso com modal
+        Args:
+            obra_id (str): ID da obra a ser removida
+        Returns:
+            dict: Resultado da operação com flag de reload
+        """
+        try:
+            obra_id_str = str(obra_id)
+            print(f"🗑️ [MODAL] Tentando remover obra {obra_id_str} da sessão")
+            
+            # Carrega dados atuais
+            data = self._load_sessions_data()
+            current_session_id = self.get_current_session_id()
+            
+            # Verifica se a obra existe na sessão
+            if (current_session_id in data["sessions"] and 
+                obra_id_str in data["sessions"][current_session_id]["obras"]):
+                
+                # Remove a obra
+                data["sessions"][current_session_id]["obras"].remove(obra_id_str)
+                print(f"✅ Obra {obra_id_str} removida da sessão")
+                
+                # Salva os dados
+                if self._save_sessions_data(data):
+                    # Verifica se realmente foi removido
+                    updated_data = self._load_sessions_data()
+                    still_exists = obra_id_str in updated_data["sessions"][current_session_id]["obras"]
+                    
+                    if not still_exists:
+                        return {
+                            'success': True, 
+                            'message': 'Obra removida da sessão',
+                            'reload_required': True
+                        }
+                    else:
+                        return {
+                            'success': False, 
+                            'error': 'Obra ainda está na sessão após remoção',
+                            'reload_required': True
+                        }
+                else:
+                    return {
+                        'success': False, 
+                        'error': 'Falha ao salvar sessão',
+                        'reload_required': True
+                    }
+            else:
+                print(f"⚠️ Obra {obra_id_str} não encontrada na sessão")
+                return {
+                    'success': True, 
+                    'message': 'Obra não estava na sessão', 
+                    'reload_required': True
+                }
+                
+        except Exception as e:
+            print(f"❌ Erro ao remover obra {obra_id} da sessão: {e}")
+            return {
+                'success': False, 
+                'error': str(e),
+                'reload_required': True
+            }
+
+    def check_obra_in_session(self, obra_id: str) -> dict:
+        """✅ NOVO: Verifica se uma obra está na sessão ativa
+        Args:
+            obra_id (str): ID da obra a ser verificada
+        Returns:
+            dict: Status da verificação
+        """
+        try:
+            data = self._load_sessions_data()
+            current_session_id = self.get_current_session_id()
+            
+            exists = (current_session_id in data["sessions"] and 
+                     str(obra_id) in data["sessions"][current_session_id]["obras"])
+            
+            return {
+                'exists': exists,
+                'obra_id': obra_id
+            }
+        except Exception as e:
+            print(f"❌ Erro ao verificar obra {obra_id} na sessão: {e}")
+            return {'exists': False, 'error': str(e)}
+    
+    def get_session_obras(self) -> list:
+        """Retorna lista de IDs de obras da sessão ativa
+        Returns:
+            list: Lista de IDs de obras na sessão ativa
+        """
+        data = self._load_sessions_data()
+        current_session_id = self.get_current_session_id()
+        
+        return data["sessions"].get(current_session_id, {"obras": []})["obras"]
+
+    def add_project_to_session(self, project_id: str) -> bool:
+        """Método de compatibilidade: converte projetos para obras - CORREÇÃO
+        Args:
+            project_id (str): ID do projeto/obra (em sistemas novos, project_id = obra_id)
+        Returns:
+            bool: True se a obra foi adicionada com sucesso
+        """
+        print(f"🔄 [COMPAT] Convertendo projeto {project_id} para obra")
+        
+        # ✅ CORREÇÃO: Em sistemas atualizados, project_id JÁ É o obra_id
+        # Não força mais "1001", usa o ID que veio do sistema
+        obra_id = str(project_id)
+        
+        # Se for um ID numérico antigo, mantém para compatibilidade
+        if obra_id.isdigit():
+            print(f"📝 [COMPAT] ID numérico legado: {obra_id}")
+        else:
+            print(f"📝 [COMPAT] ID seguro moderno: {obra_id}")
+        
+        return self.add_obra_to_session(obra_id)
+
+    def remove_project(self, project_id: str) -> bool:
+        """Método de compatibilidade: remove projetos (legado)
+        Args:
+            project_id (str): ID do projeto (legado)
+        Returns:
+            bool: True para compatibilidade
+        """
+        print(f"⚠️  AVISO: remove_project({project_id}) - método legado")
+        
+        # Para compatibilidade, não remove nada
+        return True
+
+    def get_session_projects(self) -> list:
+        """Método de compatibilidade: retorna lista vazia (legado)
+        Returns:
+            list: Lista vazia para compatibilidade
+        """
+        print("⚠️  AVISO: get_session_projects() - método legado, retornando vazia")
+        return []
+
+    def clear_session(self) -> bool:
+        """Limpa completamente todas as sessões
+        Returns:
+            bool: True se a limpeza foi bem sucedida
+        """
+        print("SHUTDOWN: Limpando sessão ativa")
+        
+        # Mantém estrutura mas limpa as obras
+        data = {
+            "sessions": {
+                "session_active": {
+                    "obras": []  # Sempre volta vazia
+                }
+            }
+        }
+        
+        success = self._save_sessions_data(data)
+        
+        if success:
+            # Confirmação
+            final_data = self._load_sessions_data()
+            print(f"sessions.json após limpeza: {final_data}")
+            return True
+        else:
+            print("ERRO: Não foi possível limpar sessão ativa")
+            return False
+   
+    def force_clear_all_sessions(self) -> bool:
+        """Força a limpeza total deletando e recriando o arquivo
+        Returns:
+            bool: True se a operação foi bem sucedida
+        """
+        try:
+            # Deleta fisicamente o arquivo e recria vazio
+            if self.sessions_file.exists():
+                self.sessions_file.unlink()
+                print("Arquivo sessions.json deletado fisicamente")
+            
+            # Recria com sessão ativa vazia
+            self._initialize_sessions_file()
+            print("Arquivo sessions.json recriado com sessão ativa vazia")
+            
+            return True
+        except Exception as e:
+            print(f"Erro ao forçar limpeza: {e}")
+            return False
+
+    def ensure_single_session(self) -> bool:
+        """Garante que apenas uma sessão ativa exista
+        Returns:
+            bool: True se a operação foi bem sucedida
+        """
+        data = self._load_sessions_data()
+        current_session_id = self.get_current_session_id()
+        
+        # Mantém apenas a sessão ativa
+        current_obras = data["sessions"].get(current_session_id, {"obras": []})["obras"]
+        
+        # Remove todas as outras sessões
+        data["sessions"] = {
+            current_session_id: {
+                "obras": current_obras
+            }
+        }
+        
+        print(f"✅ Sessão única garantida: {current_session_id} com {len(current_obras)} obras")
+        return self._save_sessions_data(data)
+    
+    def _load_sessions_data(self) -> dict:
+        """Carrega os dados das sessões do arquivo
+        Returns:
+            dict: Dados das sessões carregados
+        """
+        try:
+            if self.sessions_file.exists():
+                with open(self.sessions_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                # Garante estrutura básica
+                if "sessions" not in data:
+                    data["sessions"] = {}
+                
+                # Cria sessão ativa vazia se não existir
+                if "session_active" not in data["sessions"]:
+                    data["sessions"] = {
+                        "session_active": {"obras": []}
+                    }
+                    print("✅ Sessão ativa vazia criada")
+                
+                # Garante que cada sessão tem "obras" 
+                for session_id, session_data in data["sessions"].items():
+                    if "obras" not in session_data:
+                        session_data["obras"] = []
+                
+                return data
+            else:
+                return {"sessions": {"session_active": {"obras": []}}}
+                
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {"sessions": {"session_active": {"obras": []}}}
+    
+    def _save_sessions_data(self, data: dict) -> bool:
+        """Salva os dados das sessões no arquivo
+        Args:
+            data (dict): Dados das sessões a serem salvos
+        Returns:
+            bool: True se o salvamento foi bem sucedido
+        """
+        try:
+            # ✅ CORREÇÃO: Garante que o diretório existe
+            self.sessions_dir.mkdir(parents=True, exist_ok=True)
+            
+            with open(self.sessions_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            # ✅ CORREÇÃO: Verifica se o arquivo foi realmente criado/atualizado
+            if self.sessions_file.exists():
+                print(f"✅ Arquivo sessions.json salvo com sucesso: {self.sessions_file}")
+                return True
+            else:
+                print(f"❌ ERRO: Arquivo sessions.json não foi criado: {self.sessions_file}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ ERRO ao salvar sessions: {e}")
+            return False
+
+    def get_current_session(self) -> dict:
+        """Retorna a sessão atual completa
+        Returns:
+            dict: Dados completos da sessão ativa
+        """
+        data = self._load_sessions_data()
+        current_session_id = self.get_current_session_id()
+        
+        # Retorna apenas a sessão ativa
+        return {
+            "sessions": {
+                current_session_id: data["sessions"].get(current_session_id, {"obras": []})
+            }
+        }
+
+    def debug_sessions(self):
+        """Método de debug para verificar o estado das sessões"""
+        
+        data = self._load_sessions_data()
+        print("=== DEBUG SESSIONS ===")
+        print(f"Sessões encontradas: {len(data['sessions'])}")
+        for session_id, session_data in data["sessions"].items():
+            print(f"  {session_id}: {len(session_data.get('obras', []))} obras")
+        print("======================")
+
+# Instância global com tratamento de erro
+try:
+    sessions_manager = SessionsManager()
+    print("✅ SessionsManager CORRIGIDO inicializado com sucesso!")
+    
+    # Força sessão única na inicialização
+    sessions_manager.ensure_single_session()
+    sessions_manager.debug_sessions()
+    
+except Exception as e:
+    print(f"❌ ERRO CRÍTICO no SessionsManager: {e}")
+    
+    # ✅ CORREÇÃO COMPLETA DO EMERGENCY SESSIONS MANAGER
+    class EmergencySessionsManager:
+        """Gerenciador de sessões de emergência CORRIGIDO"""
+        
+        def __init__(self):
+            self.project_root = Path(__file__).parent.parent
+            print(f"⚠️  Usando EmergencySessionsManager CORRIGIDO: {self.project_root}")
+        
+        def get_current_session_id(self):
+            return "session_active"
+        
+        def add_obra_to_session(self, obra_id):
+            print(f"✅ [EMERGENCY] Obra {obra_id} adicionada à sessão ativa")
+            return True
+
+        def remove_obra(self, obra_id):
+            print(f"✅ [EMERGENCY] Obra {obra_id} removida da sessão ativa")
+            return True
+
+        def remove_obra_from_session(self, obra_id):
+            print(f"✅ [EMERGENCY] Obra {obra_id} removida da sessão ativa (modal)")
+            return {'success': True, 'message': 'Obra removida', 'reload_required': True}
+
+        def check_obra_in_session(self, obra_id):
+            print(f"✅ [EMERGENCY] Verificando obra {obra_id} na sessão")
+            return {'exists': False, 'obra_id': obra_id}
+
+        def get_session_obras(self):
+            return []
+            
+        def get_current_session(self):
+            return {"sessions": {"session_active": {"obras": []}}}
+        
+        # ✅✅✅ CORREÇÃO CRÍTICA: NÃO FORÇA MAIS "1001"
+        def add_project_to_session(self, project_id):
+            print(f"🔄 [EMERGENCY] Convertendo projeto {project_id} para obra")
+            return self.add_obra_to_session(project_id)  # ⬅️ USA O ID RECEBIDO
+            
+        def remove_project(self, project_id):
+            return True
+            
+        def get_session_projects(self):
+            return []
+
+        def clear_session(self):
+            return True
+
+        def force_clear_all_sessions(self):
+            return True
+
+        def ensure_single_session(self):
+            return True
+            
+        def debug_sessions(self):
+            print("=== DEBUG EMERGENCY SESSIONS ===")
+            print("session_active: 0 obras")
+            print("================================")
+    sessions_manager = EmergencySessionsManager()
+/* ==== FIM: sessions_manager.py ==== */

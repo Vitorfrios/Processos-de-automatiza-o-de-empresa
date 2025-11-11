@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 servidor.py
-Sistema de Climatização - Servidor Principal
-Versão com Diagnóstico Completo E LIMPEZA DE CACHE
+Sistema de Climatização - Servidor Principal REORGANIZADO
 """
 
 import os
@@ -32,13 +31,18 @@ def diagnostico_completo():
         'servidor.py',
         'servidor_modules/__init__.py',
         'servidor_modules/config.py', 
-        'servidor_modules/server_utils.py',
-        'servidor_modules/http_handler.py',
-        'servidor_modules/routes.py',
-        'servidor_modules/sessions_manager.py',
-        'servidor_modules/file_utils.py',
-        'servidor_modules/browser_monitor.py',
-        'servidor_modules/cache_cleaner.py',  # 🆕 NOVO ARQUIVO
+        'servidor_modules/core/__init__.py',
+        'servidor_modules/core/server_core.py',
+        'servidor_modules/core/routes_core.py',
+        'servidor_modules/core/sessions_core.py',
+        'servidor_modules/handlers/__init__.py',
+        'servidor_modules/handlers/http_handler.py',
+        'servidor_modules/handlers/route_handler.py',
+        'servidor_modules/utils/__init__.py',
+        'servidor_modules/utils/file_utils.py',
+        'servidor_modules/utils/server_utils.py',
+        'servidor_modules/utils/cache_cleaner.py',
+        'servidor_modules/utils/browser_monitor.py',
         'json/backup.json',
         'json/dados.json',
         'json/sessions.json'
@@ -49,8 +53,6 @@ def diagnostico_completo():
         existe = os.path.exists(caminho)
         status = "✅" if existe else "❌"
         print(f"   {status} {arquivo}: {existe}")
-    
-    print("\n3. VERIFICANDO IMPORTAÇÕES...")
 
 # Executa diagnóstico primeiro
 diagnostico_completo()
@@ -58,8 +60,13 @@ diagnostico_completo()
 # Agora tenta importar os módulos
 try:
     print("\n4. IMPORTANDO MÓDULOS...")
-    from servidor_modules import server_utils, http_handler, browser_monitor, sessions_manager, cache_cleaner
-    from servidor_modules import config
+    from servidor_modules.core.server_core import ServerCore
+    from servidor_modules.handlers.http_handler import UniversalHTTPRequestHandler
+    from servidor_modules.utils.browser_monitor import monitorar_navegador
+    from servidor_modules.core.sessions_core import SessionsManager
+    from servidor_modules.utils.cache_cleaner import CacheCleaner
+    from servidor_modules.utils.file_utils import FileUtils
+    
     print("   ✅ Módulos importados com sucesso!")
     
 except ImportError as e:
@@ -70,21 +77,13 @@ except ImportError as e:
     input()
     sys.exit(1)
 
-except Exception as e:
-    print(f"   ❌ ERRO INESPERADO: {e}")
-    print(f"   TRACEBACK:")
-    traceback.print_exc()
-    print("\nPressione Enter para sair...")
-    input()
-    sys.exit(1)
-
-def active_session_after_delay(interval_seconds):
-    """✅ CORREÇÃO: Mostra tempo de execução a cada intervalo especificado em SEGUNDOS"""
+def active_session_after_delay(interval_seconds, server_core):
+    """Mostra tempo de execução a cada intervalo"""
     def monitor():
         start_time = time.time()
         last_report = 0
         
-        while config.servidor_rodando:
+        while server_core.servidor_rodando:
             try:
                 elapsed_time = time.time() - start_time
                 
@@ -114,17 +113,23 @@ def active_session_after_delay(interval_seconds):
     print(f"🔔 Monitor ativado: mostrando tempo a cada {interval_seconds} segundos")
 
 def main():
-    """Função principal com tratamento robusto de erros"""
+    """Função principal com nova estrutura"""
     try:
         print("\n5. INICIANDO SERVIDOR...")
         
+        # Inicializa componentes
+        server_core = ServerCore()
+        cache_cleaner = CacheCleaner()
+        file_utils = FileUtils()
+        sessions_manager = SessionsManager()
+        
         # Configuração
         print("   Configurando handlers de sinal...")
-        server_utils.setup_signal_handlers()
+        server_core.setup_signal_handlers()
         
         # Configura porta
         print("   Configurando porta...")
-        port = server_utils.setup_port(8000)
+        port = server_core.setup_port(8000)
         if not port:
             print("   ❌ Não foi possível configurar porta")
             print("Pressione Enter para sair...")
@@ -135,27 +140,26 @@ def main():
         
         # Inicialização do servidor
         print("   Criando servidor...")
-        with server_utils.create_server(port, http_handler.UniversalHTTPRequestHandler) as httpd:
+        with server_core.create_server(port, UniversalHTTPRequestHandler) as httpd:
             # Informações do sistema
-            server_utils.print_server_info(port)
+            server_core.print_server_info(port)
             
             # Inicialização das threads
             print("   Iniciando threads...")
-            server_utils.start_server_threads(port, httpd, browser_monitor.monitorar_navegador)
+            server_core.start_server_threads(port, httpd, monitorar_navegador)
             
             print("   ✅ SERVIDOR INICIADO COM SUCESSO!")
             print("   🟢 SISTEMA OPERACIONAL")
             
-            # ✅ CORREÇÃO: Ativar monitor de tempo a cada 1200 segundos para teste
-            delay = 1200
-            active_session_after_delay(delay)
+            # Ativar monitor de tempo
+            active_session_after_delay(1200, server_core)
             
             # Loop principal
-            server_utils.run_server_loop(httpd)
+            server_core.run_server_loop(httpd)
             
     except KeyboardInterrupt:
         print("\n   ⏹️  Encerramento solicitado pelo usuário (Ctrl+C)")
-        config.servidor_rodando = False
+        server_core.servidor_rodando = False
     except Exception as e:
         print(f"\n   ❌ ERRO CRÍTICO: {e}")
         print("   TRACEBACK COMPLETO:")
@@ -164,17 +168,15 @@ def main():
         time.sleep(10)
     finally:
         print("\n   🔴 Servidor finalizado!")
-        config.servidor_rodando = False
         
-        # ✅ MELHORIA: Garantir que o shutdown seja chamado
+        # Garantir shutdown
         try:
-            if 'httpd' in locals():
+            if 'httpd' in locals() and 'server_core' in locals():
                 print("   🔄 Executando shutdown assíncrono...")
-                server_utils.shutdown_server_async(httpd)
+                server_core.shutdown_server_async(httpd, cache_cleaner)
         except Exception as e:
             print(f"   ⚠️  Erro no shutdown: {e}")
         
-        # ✅ CORREÇÃO: Dar tempo para a limpeza de cache
         print("   ⏳ Aguardando finalização dos processos...")
         time.sleep(2)
         

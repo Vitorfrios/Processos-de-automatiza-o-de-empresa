@@ -15,7 +15,7 @@ class CacheCleaner:
     """
     
     def __init__(self):
-        self.project_root = Path(__file__).parent.parent
+        self.project_root = Path(__file__).parent.parent.parent
         self.cleanup_executed = False
     
     def clean_pycache(self):

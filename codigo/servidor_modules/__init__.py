@@ -1,12 +1,15 @@
 """
-__init__.py
-Módulos do Servidor Python
+Módulos do Servidor Python - ESTRUTURA REORGANIZADA
 """
 
-from . import (config, http_handler, routes, file_utils, 
-               server_utils, browser_monitor, sessions_manager,
-               cache_cleaner)
+from . import config
+from .core import ServerCore, RoutesCore, SessionsManager
+from .handlers import UniversalHTTPRequestHandler, RouteHandler
+from .utils import FileUtils, ServerUtils, CacheCleaner, monitorar_navegador
 
-__all__ = ['config', 'http_handler', 'routes', 'file_utils', 
-           'server_utils', 'browser_monitor', 'sessions_manager',
-           'cache_cleaner']
+__all__ = [
+    'config', 
+    'ServerCore', 'RoutesCore', 'SessionsManager',
+    'UniversalHTTPRequestHandler', 'RouteHandler',
+    'FileUtils', 'ServerUtils', 'CacheCleaner', 'monitorar_navegador'
+]

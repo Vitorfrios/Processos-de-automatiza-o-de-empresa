@@ -1,0 +1,300 @@
+================================================================================
+RELATÓRIO COMPLETO DE ANÁLISE PYTHON (SERVIDOR)
+================================================================================
+
+DETALHAMENTO POR ARQUIVO:
+================================================================================
+
+📁 ARQUIVO: codigo\servidor_modules\__init__.py
+   📏 Linhas de código: 12
+   📥 IMPORTS:
+      • from . import (config, http_handler, routes, file_utils,
+------------------------------------------------------------
+
+📁 ARQUIVO: codigo\servidor_modules\browser_monitor.py
+   📏 Linhas de código: 92
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • monitorar_navegador() (usada em 1 arquivos)
+      • setup_session_routes() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • import time
+      • from servidor_modules import config
+------------------------------------------------------------
+
+📁 ARQUIVO: codigo\servidor_modules\cache_cleaner.py
+   📏 Linhas de código: 120
+   🏛️  Classes encontradas: 1
+   📋 Lista de classes:
+      • CacheCleaner (usada em 1 arquivos)
+          └── __init__() (usada em 0 arquivos)
+          └── clean_pycache() (usada em 0 arquivos)
+          └── clean_pycache_async() (usada em 0 arquivos)
+          └── cleanup_task() (usada em 0 arquivos)
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • clean_on_shutdown() (usada em 3 arquivos)
+      • force_cleanup() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • import os
+      • import shutil
+      • from pathlib import Path
+      • import threading
+      • import time
+------------------------------------------------------------
+
+📁 ARQUIVO: codigo\servidor_modules\config.py
+   📏 Linhas de código: 37
+------------------------------------------------------------
+
+📁 ARQUIVO: codigo\servidor_modules\file_utils.py
+   📏 Linhas de código: 81
+   🔧 Funções encontradas: 4
+   📋 Lista de funções:
+      • find_json_file() (usada em 2 arquivos)
+      • find_project_root() (usada em 2 arquivos)
+      • load_json_file() (usada em 2 arquivos)
+      • save_json_file() (usada em 2 arquivos)
+   📥 IMPORTS:
+      • import json
+      • import os
+      • from pathlib import Path
+------------------------------------------------------------
+
+📁 ARQUIVO: codigo\servidor_modules\http_handler.py
+   📏 Linhas de código: 183
+   🏛️  Classes encontradas: 1
+   📋 Lista de classes:
+      • UniversalHTTPRequestHandler (usada em 2 arquivos)
+          └── __init__() (usada em 0 arquivos)
+          └── do_DELETE() (usada em 0 arquivos)
+          └── do_GET() (usada em 0 arquivos)
+          └── do_OPTIONS() (usada em 0 arquivos)
+          └── do_POST() (usada em 0 arquivos)
+          └── do_PUT() (usada em 0 arquivos)
+          └── end_headers() (usada em 0 arquivos)
+          └── log_message() (usada em 0 arquivos)
+          └── send_json_response() (usada em 0 arquivos)
+   📥 IMPORTS:
+      • import http.server
+      • import json
+      • import time
+      • from urllib.parse import urlparse
+      • from pathlib import Path
+      • from servidor_modules import file_utils, routes, config
+------------------------------------------------------------
+
+📁 ARQUIVO: codigo\servidor_modules\routes.py
+   📏 Linhas de código: 848
+   🏛️  Classes encontradas: 1
+   📋 Lista de classes:
+      • RouteHandler (usada em 2 arquivos)
+          └── __init__() (usada em 0 arquivos)
+          └── handle_delete_obra() (usada em 0 arquivos)
+          └── handle_delete_sessions_remove_obra() (usada em 0 arquivos)
+          └── handle_delete_sessions_remove_project() (usada em 0 arquivos)
+          └── handle_get_backup() (usada em 0 arquivos)
+          └── handle_get_backup_completo() (usada em 0 arquivos)
+          └── handle_get_constants() (usada em 0 arquivos)
+          └── handle_get_dados() (usada em 0 arquivos)
+          └── handle_get_machines() (usada em 0 arquivos)
+          └── handle_get_obra_by_id() (usada em 0 arquivos)
+          └── handle_get_obras() (usada em 0 arquivos)
+          └── handle_get_projetos() (usada em 0 arquivos)
+          └── handle_get_session_obras() (usada em 0 arquivos)
+          └── handle_get_sessions_current() (usada em 0 arquivos)
+          └── handle_post_backup() (usada em 0 arquivos)
+          └── handle_post_dados() (usada em 0 arquivos)
+          └── handle_post_obras() (usada em 0 arquivos)
+          └── handle_post_projetos() (usada em 0 arquivos)
+          └── handle_post_reload_page() (usada em 0 arquivos)
+          └── handle_post_sessions_add_obra() (usada em 0 arquivos)
+          └── handle_post_sessions_ensure_single() (usada em 0 arquivos)
+          └── handle_post_sessions_shutdown() (usada em 0 arquivos)
+          └── handle_put_obra() (usada em 0 arquivos)
+          └── handle_put_projeto() (usada em 0 arquivos)
+          └── handle_request() (usada em 0 arquivos)
+          └── handle_shutdown() (usada em 0 arquivos)
+          └── remove_obra() (usada em 0 arquivos)
+          └── shutdown_sequence() (usada em 0 arquivos)
+   📥 IMPORTS:
+      • import json
+      • import time
+      • import threading
+      • from pathlib import Path
+      • from servidor_modules import file_utils, config
+      • from servidor_modules.sessions_manager import sessions_manager
+------------------------------------------------------------
+
+📁 ARQUIVO: codigo\servidor_modules\server_utils.py
+   📏 Linhas de código: 254
+   🔧 Funções encontradas: 12
+   📋 Lista de funções:
+      • create_server() (usada em 2 arquivos)
+      • find_available_port() (usada em 1 arquivos)
+      • is_port_in_use() (usada em 1 arquivos)
+      • kill_process_on_port() (usada em 1 arquivos)
+      • open_browser() (usada em 1 arquivos)
+      • print_server_info() (usada em 2 arquivos)
+      • run_server_loop() (usada em 2 arquivos)
+      • setup_port() (usada em 2 arquivos)
+      • setup_signal_handlers() (usada em 2 arquivos)
+      • shutdown_server_async() (usada em 2 arquivos)
+      • signal_handler() (usada em 1 arquivos)
+      • start_server_threads() (usada em 2 arquivos)
+   📥 IMPORTS:
+      • import socket
+      • import socketserver
+      • import threading
+      • import time
+      • import signal
+      • import sys
+      • import subprocess
+      • import os
+      • from pathlib import Path
+      • from servidor_modules import config
+      • from servidor_modules.cache_cleaner import clean_on_shutdown
+------------------------------------------------------------
+
+📁 ARQUIVO: codigo\servidor_modules\sessions_manager.py
+   📏 Linhas de código: 483
+   🏛️  Classes encontradas: 1
+   📋 Lista de classes:
+      • SessionsManager (usada em 1 arquivos)
+          └── __init__() (usada em 0 arquivos)
+          └── _initialize_sessions_file() (usada em 0 arquivos)
+          └── _load_sessions_data() (usada em 0 arquivos)
+          └── _save_sessions_data() (usada em 0 arquivos)
+          └── add_obra_to_session() (usada em 0 arquivos)
+          └── add_project_to_session() (usada em 0 arquivos)
+          └── check_obra_in_session() (usada em 0 arquivos)
+          └── clear_session() (usada em 0 arquivos)
+          └── debug_sessions() (usada em 0 arquivos)
+          └── ensure_sessions_file() (usada em 0 arquivos)
+          └── ensure_single_session() (usada em 0 arquivos)
+          └── force_clear_all_sessions() (usada em 0 arquivos)
+          └── get_current_session() (usada em 0 arquivos)
+          └── get_current_session_id() (usada em 0 arquivos)
+          └── get_session_obras() (usada em 0 arquivos)
+          └── get_session_projects() (usada em 0 arquivos)
+          └── remove_obra() (usada em 0 arquivos)
+          └── remove_obra_from_session() (usada em 0 arquivos)
+          └── remove_project() (usada em 0 arquivos)
+   📥 IMPORTS:
+      • import json
+      • import time
+      • import os
+      • from pathlib import Path
+------------------------------------------------------------
+
+📁 ARQUIVO: servidor.py
+   📏 Linhas de código: 190
+   🔧 Funções encontradas: 3
+   📋 Lista de funções:
+      • active_session_after_delay() (usada em 1 arquivos)
+      • diagnostico_completo() (usada em 1 arquivos)
+      • main() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • import os
+      • import sys
+      • import time
+      • import traceback
+      • import threading
+------------------------------------------------------------
+
+
+================================================================================
+ANÁLISE DE FUNÇÕES E CLASSES DUPLICADAS
+================================================================================
+
+🚨 FUNÇÕES DUPLICADAS ENCONTRADAS: 12
+
+🔧 def clean_on_shutdown() - aparece em 3 arquivos:
+   📁 codigo\servidor_modules\server_utils.py (1x) - 🔵 USADA
+   📁 codigo\servidor_modules\routes.py (1x) - 🔵 USADA
+   📁 codigo\servidor_modules\cache_cleaner.py (1x) - 🔴 DEFINIDA
+
+🔧 def find_project_root() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\file_utils.py (1x) - 🔴 DEFINIDA
+   📁 codigo\servidor_modules\http_handler.py (1x) - 🔵 USADA
+
+🔧 def find_json_file() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\file_utils.py (1x) - 🔴 DEFINIDA
+   📁 codigo\servidor_modules\routes.py (1x) - 🔵 USADA
+
+🔧 def load_json_file() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\file_utils.py (1x) - 🔴 DEFINIDA
+   📁 codigo\servidor_modules\routes.py (1x) - 🔵 USADA
+
+🔧 def save_json_file() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\file_utils.py (1x) - 🔴 DEFINIDA
+   📁 codigo\servidor_modules\routes.py (1x) - 🔵 USADA
+
+🔧 def setup_port() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\server_utils.py (1x) - 🔴 DEFINIDA
+   📁 servidor.py (1x) - 🔵 USADA
+
+🔧 def setup_signal_handlers() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\server_utils.py (1x) - 🔴 DEFINIDA
+   📁 servidor.py (1x) - 🔵 USADA
+
+🔧 def create_server() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\server_utils.py (1x) - 🔴 DEFINIDA
+   📁 servidor.py (1x) - 🔵 USADA
+
+🔧 def print_server_info() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\server_utils.py (1x) - 🔴 DEFINIDA
+   📁 servidor.py (1x) - 🔵 USADA
+
+🔧 def start_server_threads() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\server_utils.py (1x) - 🔴 DEFINIDA
+   📁 servidor.py (1x) - 🔵 USADA
+
+🔧 def run_server_loop() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\server_utils.py (1x) - 🔴 DEFINIDA
+   📁 servidor.py (1x) - 🔵 USADA
+
+🔧 def shutdown_server_async() - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\server_utils.py (1x) - 🔴 DEFINIDA
+   📁 servidor.py (1x) - 🔵 USADA
+
+🚨 CLASSES DUPLICADAS ENCONTRADAS: 2
+
+🏛️  class UniversalHTTPRequestHandler - aparece em 2 arquivos:
+   📁 servidor.py (1x) - 🔵 USADA
+   📁 codigo\servidor_modules\http_handler.py (1x) - 🔴 DEFINIDA
+
+🏛️  class RouteHandler - aparece em 2 arquivos:
+   📁 codigo\servidor_modules\routes.py (1x) - 🔴 DEFINIDA
+   📁 codigo\servidor_modules\http_handler.py (1x) - 🔵 USADA
+
+
+================================================================================
+ESTATÍSTICAS GERAIS
+================================================================================
+
+📊 ESTATÍSTICAS:
+   • Total de arquivos .py: 10
+   • Total de linhas de código: 2300
+   • Total de funções: 23
+   • Total de classes: 4
+   • Total de métodos: 75
+   • Total de imports: 43
+   • Funções duplicadas: 12
+   • Classes duplicadas: 2
+
+🏆 TOP 10 ARQUIVOS COM MAIS FUNÇÕES:
+    1. codigo\servidor_modules\server_utils.py: 12 funções, 0 classes, 254 linhas
+    2. codigo\servidor_modules\file_utils.py: 4 funções, 0 classes, 81 linhas
+    3. servidor.py: 3 funções, 0 classes, 190 linhas
+    4. codigo\servidor_modules\browser_monitor.py: 2 funções, 0 classes, 92 linhas
+    5. codigo\servidor_modules\cache_cleaner.py: 2 funções, 1 classes, 120 linhas
+    6. codigo\servidor_modules\config.py: 0 funções, 0 classes, 37 linhas
+    7. codigo\servidor_modules\http_handler.py: 0 funções, 1 classes, 183 linhas
+    8. codigo\servidor_modules\routes.py: 0 funções, 1 classes, 848 linhas
+    9. codigo\servidor_modules\sessions_manager.py: 0 funções, 1 classes, 483 linhas
+   10. codigo\servidor_modules\__init__.py: 0 funções, 0 classes, 12 linhas
+
+📁 DISTRIBUIÇÃO DE ARQUIVOS:
+   • Arquivos principais: 10
+   • Módulos (servidor_modules): 0
