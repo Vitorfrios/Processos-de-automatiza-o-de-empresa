@@ -180,13 +180,19 @@ DETALHAMENTO POR ARQUIVO:
 ------------------------------------------------------------
 
 📁 ARQUIVO: data\builders\ui-builders.js
-   📏 Linhas de código: 656
-   🔧 Funções encontradas: 10
+   📏 Linhas de código: 1258
+   🔧 Funções encontradas: 16
    📋 Lista de funções:
+      • ensureAllRoomSections() (usada em 1 arquivos)
+      • ensureMachinesSection() (usada em 1 arquivos)
       • fillCapacityData() (usada em 1 arquivos)
       • fillClimatizationInputs() (usada em 1 arquivos)
       • fillConfigurationData() (usada em 1 arquivos)
+      • fillMachinesData() (usada em 1 arquivos)
       • fillThermalGainsData() (usada em 1 arquivos)
+      • findMachinesSection() (usada em 1 arquivos)
+      • findSectionByTitle() (usada em 1 arquivos)
+      • populateMachineData() (usada em 1 arquivos)
       • populateObraData() (usada em 1 arquivos)
       • populateProjectData() (usada em 1 arquivos)
       • populateRoomData() (usada em 1 arquivos)
@@ -194,9 +200,10 @@ DETALHAMENTO POR ARQUIVO:
       • renderProjectFromData() (usada em 1 arquivos)
       • renderRoomFromData() (usada em 1 arquivos)
    📥 IMPORTS:
+      • {  buildMachinesSection, addMachine  } from '../modules/machines/machines-core.js'
       • {  updateObraButtonAfterSave  } from '../../features/managers/obra-manager.js'
       • {  createEmptyRoom  } from '../modules/rooms.js'
-      • {  calculateVazaoArAndThermalGains  } from '../../features/calculations/calculations-core.js'
+      • {  calculateVazaoArAndThermalGains  } from '../../features/calculations/air-flow.js'
       • {  ensureStringId, generateObraId  } from '../utils/id-generator.js'
       • { waitForElement } from '../../utils/core-utils.js'
    📤 EXPORTS:
@@ -209,10 +216,14 @@ DETALHAMENTO POR ARQUIVO:
       • fillThermalGainsData
       • fillCapacityData
       • fillConfigurationData
+      • ensureAllRoomSections
+      • ensureMachinesSection
+      • fillMachinesData
       • // Preenchimento hierárquico
     populateObraData
       • populateProjectData
       • populateRoomData
+      • populateMachineData
       • 
 ------------------------------------------------------------
 
@@ -295,7 +306,7 @@ DETALHAMENTO POR ARQUIVO:
 ------------------------------------------------------------
 
 📁 ARQUIVO: data\modules\machines\machines-core.js
-   📏 Linhas de código: 603
+   📏 Linhas de código: 602
    🔧 Funções encontradas: 26
    📋 Lista de funções:
       • addMachine() (usada em 1 arquivos)
@@ -557,7 +568,7 @@ DETALHAMENTO POR ARQUIVO:
 ------------------------------------------------------------
 
 📁 ARQUIVO: features\calculations\thermal-gains.js
-   📏 Linhas de código: 458
+   📏 Linhas de código: 459
    🔧 Funções encontradas: 17
    📋 Lista de funções:
       • calculateAuxiliaryVariables() (usada em 1 arquivos)
@@ -578,11 +589,11 @@ DETALHAMENTO POR ARQUIVO:
       • updateThermalGainsDisplay() (usada em 1 arquivos)
       • updateWallDisplay() (usada em 1 arquivos)
    📥 IMPORTS:
-      • {   
+      • {  
     waitForSystemConstants, 
-    validateSystemConstants, 
-    collectClimatizationInputs 
- } from '../../data/utils/data-utils.js'
+    validateSystemConstants,
+    collectClimatizationInputs,
+ } from './calculations-core.js'
       • {  safeNumber, updateElementText  } from '../../utils/core-utils.js'
    📤 EXPORTS:
       • calculateThermalGains
@@ -677,7 +688,7 @@ DETALHAMENTO POR ARQUIVO:
 ------------------------------------------------------------
 
 📁 ARQUIVO: main.js
-   📏 Linhas de código: 634
+   📏 Linhas de código: 713
    🔧 Funções encontradas: 7
    📋 Lista de funções:
       • checkAndLoadExistingSession() (usada em 1 arquivos)
@@ -708,7 +719,7 @@ DETALHAMENTO POR ARQUIVO:
       • handleKeydown() (usada em 1 arquivos)
       • hasPendingEdits() (usada em 1 arquivos)
       • makeAllEditable() (usada em 1 arquivos)
-      • makeEditable() (usada em 2 arquivos)
+      • makeEditable() (usada em 1 arquivos)
       • makeEditableCompatibility() (usada em 1 arquivos)
       • saveAllPendingEdits() (usada em 1 arquivos)
       • saveInlineEdit() (usada em 1 arquivos)
@@ -841,13 +852,12 @@ DETALHAMENTO POR ARQUIVO:
 ------------------------------------------------------------
 
 📁 ARQUIVO: ui\interface.js
-   📏 Linhas de código: 464
-   🔧 Funções encontradas: 10
+   📏 Linhas de código: 444
+   🔧 Funções encontradas: 9
    📋 Lista de funções:
       • addNewProject() (usada em 1 arquivos)
       • downloadPDF() (usada em 1 arquivos)
       • downloadWord() (usada em 1 arquivos)
-      • makeEditable() (usada em 2 arquivos)
       • saveOrUpdateObra() (usada em 1 arquivos)
       • toggleObra() (usada em 1 arquivos)
       • toggleProject() (usada em 1 arquivos)
@@ -930,7 +940,6 @@ DETALHAMENTO POR ARQUIVO:
       • saveOrUpdateObra
       • toggleSubsection
       • toggleSection
-      • makeEditable
       • 
 ------------------------------------------------------------
 
@@ -961,7 +970,7 @@ DETALHAMENTO POR ARQUIVO:
 ANÁLISE DE FUNÇÕES DUPLICADAS
 ================================================================================
 
-NENHUMA
+✅ Nenhuma função duplicada encontrada!
 
 
 ================================================================================
@@ -970,23 +979,23 @@ ESTATÍSTICAS GERAIS
 
 📊 ESTATÍSTICAS:
    • Total de arquivos .js: 26
-   • Total de linhas de código: 10868
-   • Total de funções: 307
-   • Total de imports: 51
-   • Total de exports: 302
-   • Funções duplicadas: 1
+   • Total de linhas de código: 11529
+   • Total de funções: 312
+   • Total de imports: 52
+   • Total de exports: 305
+   • Funções duplicadas: 0
 
 🏆 TOP 10 ARQUIVOS COM MAIS FUNÇÕES:
-    1. data\modules\machines\machines-core.js: 26 funções, 603 linhas
+    1. data\modules\machines\machines-core.js: 26 funções, 602 linhas
     2. ui\components\modal.js: 24 funções, 693 linhas
     3. data\modules\machines\capacity-calculator.js: 21 funções, 624 linhas
     4. data\adapters\session-adapter.js: 20 funções, 312 linhas
     5. ui\components\edit.js: 18 funções, 487 linhas
     6. data\modules\rooms.js: 17 funções, 499 linhas
-    7. features\calculations\thermal-gains.js: 17 funções, 458 linhas
-    8. data\utils\id-generator.js: 16 funções, 283 linhas
-    9. features\managers\obra-manager.js: 15 funções, 719 linhas
-   10. data\utils\data-utils.js: 13 funções, 438 linhas
+    7. features\calculations\thermal-gains.js: 17 funções, 459 linhas
+    8. data\builders\ui-builders.js: 16 funções, 1258 linhas
+    9. data\utils\id-generator.js: 16 funções, 283 linhas
+   10. features\managers\obra-manager.js: 15 funções, 719 linhas
 
 ⚠️  ARQUIVOS SEM EXPORTS (1):
    • main.js

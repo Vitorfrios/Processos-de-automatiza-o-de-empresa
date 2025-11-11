@@ -189,7 +189,8 @@ async function loadAllModules() {
           import('./ui/interface.js'),                    // interfaceModule
           import('./ui/components/edit.js'),              // editModule
           import('./ui/components/status.js'),            // statusModule
-          import('./ui/components/modal.js'),             // modalModule
+          import('./ui/components/modal/modal.js'),             // modalModule
+          import('./ui/components/modal/exit-modal.js'),             // modalModule
           import('./ui/helpers.js'),                      // helpersModule
           
           // Features Managers
@@ -222,6 +223,7 @@ async function loadAllModules() {
           editModule,
           statusModule,
           modalModule,
+          modalExitModule,
           helpersModule,
           
           // Features Managers

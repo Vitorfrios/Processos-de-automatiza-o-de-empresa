@@ -1,12 +1,6 @@
 /**
- * ui/components/modal.js
- * 🎯 VERSÃO CORRIGIDA - REMOÇÃO DE FUNÇÕES DUPLICADAS
- * ⚡ ELIMINAÇÃO: 5 funções duplicadas internamente
- */
-
-/**
  * =====================
- * SISTEMA UNIFICADO DE MODAIS E TOASTS - CORRIGIDO
+ * Gerenciador de Modal e Toast - CORRIGIDO (Notificações Acumulativas)
  * =====================
  */
 
@@ -20,219 +14,30 @@ let pendingDeletion = {
 };
 
 let undoTimeout = null;
-let currentToasts = [];
+let currentToasts = []; 
+
+/* =========================
+ * MODAL: abrir / fechar
+ * ========================= */
 
 /**
- * 🔧 FUNÇÃO ÚNICA DE CLEANUP PARA MODAIS
+ * Mostra o modal de confirmação
  */
-function createModalCleanup(modalElement, cancelBtn, confirmBtn, resolve, shouldResolve = true) {
-    return () => {
-        cancelBtn.removeEventListener('click', onCancel);
-        confirmBtn.removeEventListener('click', onConfirm);
-        modalElement.removeEventListener('click', onBackdropClick);
-        document.removeEventListener('keydown', onKeyDown);
-        
-        if (modalElement) {
-            modalElement.classList.remove('active');
-            setTimeout(() => {
-                if (modalElement.parentNode) {
-                    modalElement.remove();
-                }
-            }, 300);
-        }
-        
-        if (shouldResolve) {
-            resolve(false); // Cancel por padrão
-        }
-    };
-}
-
-/**
- * 🔧 FUNÇÕES ÚNICAS DE EVENT HANDLERS
- */
-function createModalEventHandlers(modalElement, cleanup, resolve, confirmValue = true) {
-    const onConfirm = () => {
-        cleanup();
-        resolve(confirmValue);
-    };
-
-    const onCancel = () => {
-        cleanup();
-        resolve(!confirmValue);
-    };
-
-    const onBackdropClick = (e) => {
-        if (e.target === modalElement) {
-            onCancel();
-        }
-    };
-
-    const onKeyDown = (e) => {
-        if (e.key === 'Escape') {
-            onCancel();
-        } else if (e.key === 'Enter') {
-            onConfirm();
-        }
-    };
-
-    return { onConfirm, onCancel, onBackdropClick, onKeyDown };
-}
-
-/**
- * 🔴 MODAL DE ENCERRAMENTO DO SERVIDOR
- */
-
-/**
- * Cria e exibe o modal de confirmação para encerramento do servidor
- * @returns {Promise<boolean>} Promise que resolve com true se confirmado, false se cancelado
- */
-function showShutdownConfirmationModal() {
-    return new Promise((resolve) => {
-        const existingModal = document.getElementById('shutdown-confirmation-modal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-
-        const modal = document.createElement('div');
-        modal.id = 'shutdown-confirmation-modal';
-        modal.className = 'confirmation-modal active';
-        
-        modal.innerHTML = `
-            <div class="modal-content toast-style">
-                <div class="modal-icon">⚠️</div>
-                <h2 class="modal-title">Encerrar Servidor</h2>
-                <p class="modal-message">
-                    <strong>Tem certeza que deseja encerrar o servidor?</strong>
-                    
-                    <div class="warning-list">
-                        <span>Esta ação irá:</span>
-                        <ul>
-                            <li>Desligar o servidor</li>
-                            <li>Limpar todas as sessões ativas</li>
-                            <li>Fechar esta aplicação</li>
-                        </ul>
-                    </div>
-
-                    <div class="warning-note">
-                        <small>⚠️ Todas as conexões ativas serão finalizadas e o servidor será desligado completamente.</small>
-                    </div>
-                </p>
-                <div class="modal-actions">
-                    <button class="modal-btn btn-cancel" id="shutdown-cancel-btn">
-                        Cancelar
-                    </button>
-                    <button class="modal-btn btn-confirm" id="shutdown-confirm-btn">
-                        Encerrar Servidor
-                    </button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        const cancelBtn = document.getElementById('shutdown-cancel-btn');
-        const confirmBtn = document.getElementById('shutdown-confirm-btn');
-        const modalElement = document.getElementById('shutdown-confirmation-modal');
-
-        // ✅ USAR FUNÇÃO ÚNICA DE CLEANUP
-        const cleanup = createModalCleanup(modalElement, cancelBtn, confirmBtn, resolve);
-        
-        // ✅ USAR FUNÇÕES ÚNICAS DE EVENT HANDLERS
-        const { onConfirm, onCancel, onBackdropClick, onKeyDown } = 
-            createModalEventHandlers(modalElement, cleanup, resolve, true);
-
-        cancelBtn.addEventListener('click', onCancel);
-        confirmBtn.addEventListener('click', onConfirm);
-        modalElement.addEventListener('click', onBackdropClick);
-        document.addEventListener('keydown', onKeyDown);
-
-        cancelBtn.focus();
-    });
-}
-
-/**
- * Versão alternativa do modal com opções customizáveis
- * @param {Object} options - Opções de customização
- * @returns {Promise<boolean>}
- */
-function showCustomShutdownModal(options = {}) {
-    const {
-        title = 'Encerrar Servidor',
-        message = 'Tem certeza que deseja encerrar o servidor?',
-        confirmText = 'Encerrar Servidor',
-        cancelText = 'Cancelar',
-        icon = '⚠️',
-        borderColor = '#4299e1'
-    } = options;
-
-    return new Promise((resolve) => {
-        const existingModal = document.getElementById('shutdown-confirmation-modal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-
-        const modal = document.createElement('div');
-        modal.id = 'shutdown-confirmation-modal';
-        modal.className = 'confirmation-modal active';
-        
-        modal.innerHTML = `
-            <div class="modal-content toast-style custom-border" style="--custom-border-color: ${borderColor}">
-                <div class="modal-icon">${icon}</div>
-                <h2 class="modal-title">${title}</h2>
-                <p class="modal-message">${message}</p>
-                <div class="modal-actions">
-                    <button class="modal-btn btn-cancel" id="shutdown-cancel-btn">
-                        ${cancelText}
-                    </button>
-                    <button class="modal-btn btn-confirm" id="shutdown-confirm-btn">
-                        ${confirmText}
-                    </button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        const cancelBtn = document.getElementById('shutdown-cancel-btn');
-        const confirmBtn = document.getElementById('shutdown-confirm-btn');
-        const modalElement = document.getElementById('shutdown-confirmation-modal');
-
-        // ✅ USAR FUNÇÃO ÚNICA DE CLEANUP
-        const cleanup = createModalCleanup(modalElement, cancelBtn, confirmBtn, resolve);
-        
-        // ✅ USAR FUNÇÕES ÚNICAS DE EVENT HANDLERS
-        const { onConfirm, onCancel, onBackdropClick, onKeyDown } = 
-            createModalEventHandlers(modalElement, cleanup, resolve, true);
-
-        cancelBtn.addEventListener('click', onCancel);
-        confirmBtn.addEventListener('click', onConfirm);
-        modalElement.addEventListener('click', onBackdropClick);
-        document.addEventListener('keydown', onKeyDown);
-
-        cancelBtn.focus();
-    });
-}
-
-/**
- * 🎭 MODAL DE CONFIRMAÇÃO DE EXCLUSÃO
- */
-
-/**
- * Mostra o modal de confirmação para exclusão de obra
- */
-function showConfirmationModal(obraName, obraId, obraBlock) {
+export function showConfirmationModal(obraName, obraId, obraBlock) {
+    // ✅ CORREÇÃO: Validar ID seguro
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
-        console.error(`ERRO FALBACK (showConfirmationModal) [ID de obra inválido: ${obraId}]`);
+        console.error(`ERRO FALBACK (showConfirmationModal) modal.js [ID de obra inválido: ${obraId}]`);
         return;
     }
     
+    // Salva a posição original da obra no DOM
     const projectsContainer = document.getElementById("projects-container");
     const obraBlocks = projectsContainer ? Array.from(projectsContainer.children) : [];
     const originalIndex = obraBlocks.indexOf(obraBlock);
 
     pendingDeletion = {
         obraName,
-        obraId,
+        obraId, // ✅ ID SEGURO (ex: obra_w12)
         obraBlock,
         obraHTML: obraBlock ? obraBlock.outerHTML : null,
         originalPosition: originalIndex
@@ -267,9 +72,9 @@ function showConfirmationModal(obraName, obraId, obraBlock) {
 }
 
 /**
- * Fecha o modal de confirmação
+ * Fecha o modal de confirmação (limpa estado)
  */
-function closeConfirmationModal() {
+export function closeConfirmationModal() {
     console.log('🔒 Fechando modal de confirmação');
     const modal = document.getElementById('confirmationModal');
     if (modal) {
@@ -296,10 +101,13 @@ function closeConfirmationModalWithoutClearing() {
     modal.classList.add('hidden');
 }
 
-/**
- * 📢 SISTEMA DE TOASTS
- */
+/* =========================
+ * TOASTS
+ * ========================= */
 
+/**
+ * Cria container de toast se não existir
+ */
 function createToastContainer() {
     const container = document.createElement('div');
     container.id = 'toastContainer';
@@ -308,6 +116,9 @@ function createToastContainer() {
     return container;
 }
 
+/**
+ * Mostra toast notification (undo/success/error) - acumulativa
+ */
 function showToast(obraName, type = 'undo', obraId = null) {
     const toastContainer = document.getElementById('toastContainer') || createToastContainer();
 
@@ -315,7 +126,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
     toast.className = `toast ${type}`;
     const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     toast.id = toastId;
-    toast.dataset.obraId = obraId || '';
+    toast.dataset.obraId = obraId || ''; // ✅ ID SEGURO
 
     if (type === 'undo') {
         toast.innerHTML = `
@@ -333,6 +144,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
             </div>
         `;
 
+        // Inicia animação da barra de contagem regressiva
         setTimeout(() => {
             const countdownBar = toast.querySelector('.countdown-bar');
             if (countdownBar) {
@@ -340,6 +152,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
             }
         }, 100);
 
+        // ✅ NOVO: Contador regressivo dos segundos
         startCountdown(toast, 8);
 
     } else if (type === 'success') {
@@ -364,27 +177,32 @@ function showToast(obraName, type = 'undo', obraId = null) {
         `;
     }
 
+    // Insere no topo
     if (toastContainer.firstChild) {
         toastContainer.insertBefore(toast, toastContainer.firstChild);
     } else {
         toastContainer.appendChild(toast);
     }
 
+    // Estado interno
     const toastData = {
         id: toastId,
         element: toast,
         obraName,
-        obraId,
+        obraId, // ✅ ID SEGURO
         type,
         timeout: null,
-        countdownInterval: null
+        countdownInterval: null // ✅ NOVO: Para armazenar o intervalo do contador
     };
     currentToasts.push(toastData);
 
+    // Timeouts por tipo
     if (type === 'undo') {
         toastData.timeout = setTimeout(() => {
             console.log(`⏰ Timeout de 8 segundos completado para obra ${obraName} (ID: ${obraId})`);
+            // Remove o toast de undo primeiro
             hideSpecificToast(toastId);
+            // Em seguida processa remoção definitiva
             completeDeletion(obraId, obraName);
         }, 8000);
     } else {
@@ -395,6 +213,9 @@ function showToast(obraName, type = 'undo', obraId = null) {
     }
 }
 
+/**
+ * Inicia o contador regressivo visual
+ */
 function startCountdown(toastElement, seconds) {
     const countdownNumber = toastElement.querySelector('.countdown-number');
     if (!countdownNumber) return;
@@ -405,6 +226,7 @@ function startCountdown(toastElement, seconds) {
         timeLeft--;
         countdownNumber.textContent = timeLeft;
         
+        // Mudar cor quando estiver acabando o tempo
         if (timeLeft <= 3) {
             countdownNumber.style.color = '#ff6b6b';
             countdownNumber.style.fontWeight = 'bold';
@@ -417,21 +239,28 @@ function startCountdown(toastElement, seconds) {
         }
     }, 1000);
 
+    // Armazenar o intervalo no toast data para poder parar se necessário
     const toastData = currentToasts.find(t => t.element === toastElement);
     if (toastData) {
         toastData.countdownInterval = countdownInterval;
     }
 }
 
+/**
+ * Remove (com animação) um elemento de toast
+ */
 function animateAndRemove(el) {
     try {
-        el.classList.add('hiding');
+        el.classList.add('hiding'); // se existir CSS de transição
         setTimeout(() => { if (el && el.parentNode) el.remove(); }, 300);
     } catch (_) {
         if (el && el.parentNode) el.parentNode.removeChild(el);
     }
 }
 
+/**
+ * Limpa do array toasts cujo elemento já não está no DOM
+ */
 function sweepDanglingToasts() {
     for (let i = currentToasts.length - 1; i >= 0; i--) {
         const t = currentToasts[i];
@@ -442,7 +271,11 @@ function sweepDanglingToasts() {
     }
 }
 
-function hideSpecificToast(toastId) {
+/**
+ * Esconde um toast específico (robusta com fallback DOM)
+ */
+export function hideSpecificToast(toastId) {
+    // 1) tenta remover pelo estado (currentToasts)
     const idx = currentToasts.findIndex(t => t.id === toastId);
     if (idx !== -1) {
         const t = currentToasts[idx];
@@ -455,10 +288,12 @@ function hideSpecificToast(toastId) {
         return;
     }
 
+    // 2) Fallback: remove direto do DOM (toast "órfão" não registrado em currentToasts)
     const orphan = document.getElementById(toastId);
     if (orphan) {
         animateAndRemove(orphan);
         console.log(`✅ Toast ${toastId} removido (fallback DOM).`);
+        // saneia array de possíveis zumbis
         sweepDanglingToasts();
         return;
     }
@@ -466,19 +301,26 @@ function hideSpecificToast(toastId) {
     console.log(`⚠️ Toast ${toastId} não encontrado em estado nem DOM.`);
 }
 
-function hideToast() {
+/**
+ * Esconde o primeiro toast (compatibilidade)
+ */
+export function hideToast() {
     if (currentToasts.length > 0) {
         hideSpecificToast(currentToasts[0].id);
     }
 }
 
+/* =========================
+ * UNDO / DELETE
+ * ========================= */
+
 /**
- * 🔄 SISTEMA DE UNDO E EXCLUSÃO
+ * Desfaz a exclusão (restaura obra e mostra success)
  */
+export function undoDeletion(obraId, obraName) {
+    console.log(`↩️ Usuário clicou em Desfazer para obra ${obraName} (ID SEGURO: ${obraId})`);
 
-function undoDeletion(obraId, obraName) {
-    console.log(`↩️ Usuário clicou em Desfazer para obra ${obraName} (ID: ${obraId})`);
-
+    // Encontra e remove o toast correspondente
     const toastIndex = currentToasts.findIndex(t => t.obraId === obraId && t.type === 'undo');
     if (toastIndex !== -1) {
         hideSpecificToast(currentToasts[toastIndex].id);
@@ -487,6 +329,7 @@ function undoDeletion(obraId, obraName) {
         if (fallbackToast) hideSpecificToast(fallbackToast.id);
     }
 
+    // Restaura a obra no DOM a partir do sessionStorage
     const savedDeletion = sessionStorage.getItem(`pendingDeletion-${obraId}`);
     if (savedDeletion) {
         try {
@@ -511,6 +354,7 @@ function undoDeletion(obraId, obraName) {
                     }
                 }
 
+                // Toast de sucesso
                 showToast(obraName, 'success', obraId);
             }
         } catch (e) {
@@ -522,17 +366,25 @@ function undoDeletion(obraId, obraName) {
         showToast(obraName, 'error', obraId);
     }
 
+    // Limpa chave da deleção
     sessionStorage.removeItem(`pendingDeletion-${obraId}`);
 }
 
+/**
+ * Completa a exclusão após timeout (remove do servidor)
+ */
 async function completeDeletion(obraId, obraName) {
     console.log(`⏰ completeDeletion() chamado para obra ${obraName} (ID: ${obraId})`);
     await completeDeletionImmediate(obraId, obraName);
 }
 
+/**
+ * Remove a obra do servidor imediatamente - CORRIGIDO
+ */
 async function completeDeletionImmediate(obraId, obraName) {
-    console.log(`🔍 Iniciando remoção completa da obra: ${obraName} (ID: ${obraId})`);
+    console.log(`🔍 Iniciando remoção completa da obra: ${obraName} (ID SEGURO: ${obraId})`);
 
+    // ✅ CORREÇÃO: Verificar se a obra existe no servidor antes de tentar remover
     const obraExisteNoServidor = await verificarObraNoServidor(obraId);
     
     if (obraExisteNoServidor && obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
@@ -557,17 +409,23 @@ async function completeDeletionImmediate(obraId, obraName) {
             showToast(obraName, 'success', obraId);
         }
     } else {
+        // ✅ CORREÇÃO: Obra não existe no servidor ou ID inválido - apenas remover da interface
         console.log(`ℹ️ Obra ${obraName} não existe no servidor ou ID inválido - removendo apenas da interface`);
         showToast(obraName, 'success', obraId);
     }
 
+    // Sempre limpar sessionStorage
     sessionStorage.removeItem(`pendingDeletion-${obraId}`);
 }
 
+/**
+ * ✅ NOVA FUNÇÃO: Verifica se uma obra existe no servidor
+ */
 async function verificarObraNoServidor(obraId) {
     try {
         console.log(`🔍 Verificando se obra ${obraId} existe no servidor...`);
         
+        // Buscar todas as obras do servidor
         const response = await fetch('/api/backup-completo');
         if (!response.ok) {
             console.log('⚠️ Não foi possível verificar obras no servidor');
@@ -577,6 +435,7 @@ async function verificarObraNoServidor(obraId) {
         const backupData = await response.json();
         const todasObras = backupData.obras || [];
         
+        // Verificar se a obra existe
         const obraExiste = todasObras.some(obra => String(obra.id) === String(obraId));
         
         console.log(`📊 Obra ${obraId} existe no servidor? ${obraExiste}`);
@@ -590,7 +449,10 @@ async function verificarObraNoServidor(obraId) {
     }
 }
 
-async function confirmDeletion() {
+/**
+ * Confirma e executa a exclusão com sistema de undo - ATUALIZADO
+ */
+export async function confirmDeletion() {
     console.log('🎯 confirmDeletion() CHAMADO - Iniciando processo de deleção');
     
     const { obraName, obraId, obraBlock, obraHTML, originalPosition } = pendingDeletion;
@@ -600,6 +462,7 @@ async function confirmDeletion() {
         return;
     }
 
+    // ✅ CORREÇÃO: Validar ID seguro antes de salvar
     if (obraId === 'undefined' || obraId === 'null') {
         console.error(`❌ ID de obra inválido para deleção: ${obraId}`);
         return;
@@ -607,15 +470,18 @@ async function confirmDeletion() {
 
     console.log(`🗑️ Confirmando deleção da obra: ${obraName} (ID: ${obraId})`);
 
+    // Salva dados específicos para esta obra (para permitir undo independente)
     sessionStorage.setItem(`pendingDeletion-${obraId}`, JSON.stringify({
         obraName,
-        obraId,
+        obraId, // ✅ ID SEGURO
         obraHTML,
         originalPosition
     }));
 
+    // Fecha modal sem limpar o pendingDeletion (fluxo pede isso)
     closeConfirmationModalWithoutClearing();
 
+    // Efeito visual de remoção do bloco
     if (obraBlock) {
         obraBlock.style.transition = 'all 0.5s ease';
         obraBlock.style.transform = 'translateX(-100%)';
@@ -629,19 +495,24 @@ async function confirmDeletion() {
         }, 500);
     }
 
+    // Mostra toast com opção de desfazer
     showToast(obraName, 'undo', obraId);
     
     console.log('✅ Deleção confirmada e processo iniciado');
 }
 
-function getPendingDeletion() {
+/**
+ * Acessa dados pendentes de deleção (se necessário em outro módulo)
+ */
+export function getPendingDeletion() {
     return pendingDeletion;
 }
 
-/**
- * 🔧 INICIALIZAÇÃO E EVENT LISTENERS
- */
+/* =========================
+ * EVENT LISTENERS - SIMPLIFICADOS
+ * ========================= */
 
+// Fecha modal clicando fora (mantido pois funciona bem)
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🔧 Modal system inicializado');
     
@@ -656,38 +527,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// ESC fecha modal
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closeConfirmationModal();
     }
 });
 
-/**
- * 🌐 EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
- */
+/* =========================
+ * EXPORTAÇÕES P/ HTML
+ * ========================= */
 
-// Exportações para módulos ES6
-export {
-    showShutdownConfirmationModal,
-    showCustomShutdownModal,
-    showConfirmationModal,
-    closeConfirmationModal,
-    hideSpecificToast,
-    hideToast,
-    undoDeletion,
-    confirmDeletion,
-    getPendingDeletion
-};
+// Disponibiliza funções GLOBAIS para o HTML
+window.closeConfirmationModal = closeConfirmationModal;
+window.confirmDeletion = confirmDeletion;
+window.undoDeletion = undoDeletion;
+window.hideToast = hideToast;
+window.hideSpecificToast = hideSpecificToast;
 
-// Compatibilidade global para scripts legados
-if (typeof window !== 'undefined') {
-    window.closeConfirmationModal = closeConfirmationModal;
-    window.confirmDeletion = confirmDeletion;
-    window.undoDeletion = undoDeletion;
-    window.hideToast = hideToast;
-    window.hideSpecificToast = hideSpecificToast;
-    window.showShutdownConfirmationModal = showShutdownConfirmationModal;
-    window.showCustomShutdownModal = showCustomShutdownModal;
-}
-
-console.log('✅ Modal system corrigido - funções duplicadas removidas');
+console.log('✅ Modal system carregado e funções globais disponíveis');

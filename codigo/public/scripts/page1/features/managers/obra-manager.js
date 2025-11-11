@@ -7,7 +7,7 @@ import{getNextObraNumber} from '../../data/utils/data-utils.js'
 import { ensureStringId, generateObraId } from '../../data/utils/id-generator.js';
 import { buildObraData } from '../../data/builders/data-builders.js';
 import { showSystemStatus } from '../../ui/components/status.js';
-import { showConfirmationModal } from '../../ui/components/modal.js';
+import { showConfirmationModal } from '../../ui/components/modal/modal.js';
 import { addNewProjectToObra } from './project-manager.js';
 import { isSessionActive, startSessionOnFirstSave } from '../../data/adapters/session-adapter.js';
 import { calculateRoomCompletionStats } from '../../ui/helpers.js';

@@ -249,7 +249,6 @@
 
   /* Mantendo o restante do layout original */
   .header {
-    flex-direction: column;
     gap: var(--spacing-md);
     text-align: center;
   }
@@ -345,7 +344,12 @@
 
 /* Mobile Pequeno - Ajustes finos */
 @media (max-width: 480px) {
-
+  .header {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    text-align: center;
+  }
+  
   .obra-header .obra-title {
     font-size: 0.95rem;
   }

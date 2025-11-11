@@ -212,7 +212,7 @@
 }
 .editable-title.editing {
   background-color: white;
-  color: #333;
+  color: #ffffff;
   outline: 2px solid #667eea;
   cursor: text;
   user-select: text;

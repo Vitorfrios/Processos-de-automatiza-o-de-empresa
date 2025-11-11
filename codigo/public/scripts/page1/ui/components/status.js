@@ -79,7 +79,6 @@ function createStatusBanner(message, type) {
         <div class="status-banner-content">
             <span class="status-icon">${icon}</span>
             <span class="status-message">${message}</span>
-            <button class="status-close-btn" onclick="window.removeExistingStatusBanner()">×</button>
         </div>
     `;
     

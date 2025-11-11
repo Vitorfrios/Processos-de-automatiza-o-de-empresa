@@ -7,7 +7,7 @@ import { setSessionActive, clearSessionObras, clearRenderedObras } from "../adap
  */
 async function shutdownManual() {
     // Importa o modal de confirmação
-    const { showShutdownConfirmationModal } = await import('../../ui/intr-files/modal/exit-modal.js');
+    const { showShutdownConfirmationModal } = await import('../../ui/components/modal/exit-modal.js');
     
     // Usa o modal customizado em vez do confirm nativo
     const confirmed = await showShutdownConfirmationModal();
