@@ -294,12 +294,15 @@ class FileJoinerApp(tk.Tk):
             with open(fp, "w", encoding="utf-8", errors="ignore") as out:
                 for p in selecionados:
                     if usar_sep:
-                        out.write(f"\n/* ==== INÍCIO: {p.name} ==== */\n")
+                        rel_path = p.relative_to(Path(self.base_dir.get()))
+                        out.write(f"\n/* ==== INÍCIO: {rel_path.as_posix()} ==== */\n")
                     for L in ler_linhas(p):
                         out.write(normalize_eol(L))
                         total_linhas += 1
                     if usar_sep:
-                        out.write(f"/* ==== FIM: {p.name} ==== */\n")
+                        rel_path = p.relative_to(Path(self.base_dir.get()))
+                        out.write(f"/* ==== FIM: {rel_path.as_posix()} ==== */\n")
+
             messagebox.showinfo("Concluído", f"Gerado com sucesso!\n{total_linhas} linhas escritas em:\n{fp}")
         except Exception as e:
             messagebox.showerror("Erro ao salvar", str(e))

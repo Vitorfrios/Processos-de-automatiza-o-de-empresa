@@ -100,15 +100,15 @@ function collectClimatizationInputs(climaSection, roomId) {
     }
   });
 
-  // ✅ CORREÇÃO: Garantir que pressurizacao e setpointPressurizacao estejam presentes
+  // ✅ CORREÇÃO: Garantir que pressurizacao e setpointTemp estejam presentes
   if (data.pressurizacao === undefined) {
-    const pressurizacaoCheckbox = climaSection.querySelector('input[data-field="pressurizacao"]');
+    const pressurizacaoCheckbox = climaSection.querySelector('input[data-field="pressurizacaoSetpoint"]');
     data.pressurizacao = pressurizacaoCheckbox ? pressurizacaoCheckbox.checked : false;
   }
   
-  if (data.setpointPressurizacao === undefined) {
-    const setpointInput = climaSection.querySelector('input[data-field="setpointPressurizacao"]');
-    data.setpointPressurizacao = setpointInput ? safeNumber(setpointInput.value) : 0;
+  if (data.setpointTemp === undefined) {
+    const setpointInput = climaSection.querySelector('input[data-field="setpointTemp"]');
+    data.setpointTemp = setpointInput ? safeNumber(setpointInput.value) : 0;
   }
 
   console.log(`✅ [COLLECT] ${Object.keys(data).length} dados coletados para ${roomId}:`, data);

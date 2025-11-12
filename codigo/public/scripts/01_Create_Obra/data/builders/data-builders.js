@@ -347,20 +347,19 @@ function extractClimatizationInputs(roomElement) {
     // Terceiro: se pressurização for SIM, buscar os campos específicos
     // Se for NÃO, definir valores padrão ou zerados
     if (pressurizacaoValue) {
-        // Quando SIM, buscar os valores reais dos inputs
-        const setpointInput = roomElement.querySelector('.clima-input[data-field="pressurizacao"]');
+        const pressurizacaoInput = roomElement.querySelector('.clima-input[data-field="pressurizacaoSetpoint"]');
         const portasDuplasInput = roomElement.querySelector('.clima-input[data-field="numPortasDuplas"]');
         const portasSimplesInput = roomElement.querySelector('.clima-input[data-field="numPortasSimples"]');
         
-        // Usar valores existentes ou manter os que já foram extraídos
-        if (setpointInput) inputs.pressurizacaoSetpoint = setpointInput.value || "25";
-        if (portasDuplasInput) inputs.numPortasDuplas = portasDuplasInput.value || "0";
-        if (portasSimplesInput) inputs.numPortasSimples = portasSimplesInput.value || "0";
+        // ✅ CORREÇÃO: Converter para número
+        if (pressurizacaoInput) inputs.pressurizacaoSetpoint = parseFloat(pressurizacaoInput.value) || 25;
+        if (portasDuplasInput) inputs.numPortasDuplas = parseFloat(portasDuplasInput.value) || 0;
+        if (portasSimplesInput) inputs.numPortasSimples = parseFloat(portasSimplesInput.value) || 0;
     } else {
-        // Quando NÃO, definir valores zerados ou padrão
-        inputs.pressurizacaoSetpoint = "25"; 
-        inputs.numPortasDuplas = "0";
-        inputs.numPortasSimples = "0";
+        // ✅ CORREÇÃO: Zerar como números
+        inputs.pressurizacaoSetpoint = 0;
+        inputs.numPortasDuplas = 0;
+        inputs.numPortasSimples = 0;
     }
 
     // Quarto: extrair selects (se houver)

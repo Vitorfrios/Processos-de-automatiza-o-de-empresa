@@ -53,7 +53,7 @@ function computeAirFlowRate(inputData) {
   const numPortasDuplas = safeNumber(inputData.numPortasDuplas)
   const numPortasSimples = safeNumber(inputData.numPortasSimples)
 
-  const pressure = inputData.pressurizacao ? safeNumber(inputData.setpointPressurizacao) : 0
+  const pressure = inputData.pressurizacao ? safeNumber(inputData.setpointTemp) : 0
 
   console.log("[v0] ===== CÁLCULO DE VAZÃO =====")
   console.log("[v0] Portas Duplas:", numPortasDuplas)

@@ -1,0 +1,1763 @@
+
+/* ==== INÍCIO: air-flow.js ==== */
+/**
+ * features/calculations/air-flow.js
+ * Sistema unificado de cálculos de vazão de ar - FUSÃO: airFlowCalculations.js + airFlowDisplay.js
+ * Cálculos de fluxo de ar baseados em pressurização e portas
+ */
+
+import { CALCULATION_CONSTANTS } from '../../core/constants.js';
+import {  
+    waitForSystemConstants, 
+    validateSystemConstants, 
+    collectClimatizationInputs,
+    findClimatizationSection,
+    safeNumber 
+} from './calculations-core.js';
+
+// =============================================================================
+// CÁLCULOS DE FLUXO DE AR
+// =============================================================================
+
+/**
+ * Calcula fluxo de ar individual por porta
+ * @param {number} doorCount - Número de portas
+ * @param {number} doorVariable - Variável específica da porta
+ * @param {number} pressure - Pressurização em Pa
+ * @returns {number} Fluxo de ar em m³/h
+ */
+function calculateDoorFlow(doorCount, doorVariable, pressure) {
+    const count = safeNumber(doorCount);
+    const variable = safeNumber(doorVariable);
+    const press = safeNumber(pressure);
+
+    const pressureExponent = press > 0 ? Math.pow(press, CALCULATION_CONSTANTS.PRESSURE_EXPONENT) : 0;
+
+    return CALCULATION_CONSTANTS.FLOW_COEFFICIENT *
+           count *
+           variable *
+           pressureExponent *
+           CALCULATION_CONSTANTS.SECONDS_PER_HOUR;
+}
+
+/**
+ * Calcula vazão total de ar baseada em portas e pressurização
+ * @param {Object} inputData - Dados de entrada
+ * @returns {number} Vazão total em l/s
+ */
+function computeAirFlowRate(inputData) {
+    const numPortasDuplas = safeNumber(inputData.numPortasDuplas);
+    const numPortasSimples = safeNumber(inputData.numPortasSimples);
+    const pressure = inputData.pressurizacao ? safeNumber(inputData.setpointTemp) : 0;
+
+    // Validação de constantes
+    if (!window.systemConstants?.VARIAVEL_PD || !window.systemConstants?.VARIAVEL_PS) {
+        console.error("Constantes do sistema não disponíveis");
+        return 0;
+    }
+
+    const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD, pressure);
+    const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS, pressure);
+
+    const totalFlow = doubleDoorFlow + singleDoorFlow;
+    const adjustedFlow = totalFlow / CALCULATION_CONSTANTS.FLOW_DIVISOR;
+    const finalFlow = adjustedFlow * CALCULATION_CONSTANTS.SAFETY_FACTOR;
+
+    return Math.ceil(finalFlow);
+}
+
+// =============================================================================
+// ORQUESTRAÇÃO DE CÁLCULOS
+// =============================================================================
+
+/**
+ * Executa cálculo completo de vazão de ar
+ * @param {string} roomId - ID único da sala
+ * @param {boolean} calculateThermal - Calcular ganhos térmicos após
+ * @returns {Promise<number>} Vazão calculada em l/s
+ */
+async function calculateVazaoAr(roomId, calculateThermal = true) {
+    try {
+        if (!roomId) {
+            console.error("ID de sala inválido");
+            return 0;
+        }
+
+        await waitForSystemConstants();
+
+        if (!validateSystemConstants()) {
+            console.error("Constantes do sistema inválidas");
+            return 0;
+        }
+
+        const climaSection = findClimatizationSection(roomId);
+        if (!climaSection) {
+            console.error(`Seção de climatização não encontrada: ${roomId}`);
+            return 0;
+        }
+
+        const inputData = collectClimatizationInputs(climaSection, roomId);
+        const flowRate = computeAirFlowRate(inputData);
+
+        updateFlowRateDisplay(roomId, flowRate);
+
+        // Cálculo de ganhos térmicos se solicitado
+        if (calculateThermal) {
+            const { calculateThermalGains } = await import('./thermal-gains.js');
+            await calculateThermalGains(roomId, flowRate);
+        }
+
+        return flowRate;
+
+    } catch (error) {
+        console.error(`Erro no cálculo de vazão para ${roomId}:`, error);
+        return 0;
+    }
+}
+
+/**
+ * Coordena cálculo sequencial de vazão e ganhos térmicos
+ * @param {string} roomId - ID único da sala
+ * @returns {Promise<void>}
+ */
+async function calculateVazaoArAndThermalGains(roomId) {
+    try {
+        if (!roomId) {
+            console.error("ID de sala inválido");
+            return;
+        }
+        
+        const flowRate = await calculateVazaoAr(roomId, false);
+        
+        const { calculateThermalGains } = await import('./thermal-gains.js');
+        await calculateThermalGains(roomId, flowRate);
+        
+    } catch (error) {
+        console.error(`Erro no cálculo coordenado para ${roomId}:`, error);
+    }
+}
+
+// =============================================================================
+// ATUALIZAÇÃO DE DISPLAY
+// =============================================================================
+
+/**
+ * Atualiza exibição do resultado de vazão na interface
+ * @param {string} roomId - ID da sala
+ * @param {number} flowRate - Vazão calculada
+ */
+function updateFlowRateDisplay(roomId, flowRate) {
+    const resultElement = document.getElementById(`vazao-ar-${roomId}`);
+    if (resultElement) {
+        resultElement.textContent = flowRate;
+        console.log(`✅ Vazão atualizada para ${roomId}: ${flowRate} l/s`);
+    } else {
+        console.error(`Elemento de vazão não encontrado: vazao-ar-${roomId}`);
+    }
+}
+
+// =============================================================================
+// VALIDAÇÕES E UTILITÁRIOS
+// =============================================================================
+
+/**
+ * Valida dados de entrada para cálculo de vazão
+ * @param {Object} inputData - Dados de entrada
+ * @returns {boolean} True se dados são válidos
+ */
+function validateAirFlowInputs(inputData) {
+    const required = ['numPortasDuplas', 'numPortasSimples'];
+    const missing = required.filter(field => 
+        inputData[field] === undefined || inputData[field] === null || inputData[field] === ''
+    );
+    
+    if (missing.length > 0) {
+        console.warn(`Campos obrigatórios faltando: ${missing.join(', ')}`);
+        return false;
+    }
+    
+    // Validações numéricas
+    if (safeNumber(inputData.numPortasDuplas) < 0 || safeNumber(inputData.numPortasSimples) < 0) {
+        console.warn("Quantidade de portas não pode ser negativa");
+        return false;
+    }
+    
+    if (inputData.pressurizacao && safeNumber(inputData.setpointTemp) < 0) {
+        console.warn("Pressurização não pode ser negativa");
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Prepara dados para cálculo de vazão
+ * @param {Object} rawData - Dados brutos
+ * @returns {Object} Dados preparados
+ */
+function prepareAirFlowData(rawData) {
+    const prepared = { ...rawData };
+    
+    // Converter campos numéricos
+    const numericFields = ['numPortasDuplas', 'numPortasSimples', 'setpointTemp'];
+    numericFields.forEach(field => {
+        if (prepared[field] !== undefined) {
+            prepared[field] = safeNumber(prepared[field]);
+        }
+    });
+    
+    // Garantir valores padrão
+    if (prepared.numPortasDuplas === undefined) prepared.numPortasDuplas = 0;
+    if (prepared.numPortasSimples === undefined) prepared.numPortasSimples = 0;
+    if (prepared.pressurizacao === undefined) prepared.pressurizacao = false;
+    if (prepared.setpointTemp === undefined) prepared.setpointTemp = 0;
+    
+    return prepared;
+}
+
+/**
+ * Obtém estatísticas do cálculo de vazão
+ * @param {Object} inputData - Dados de entrada
+ * @param {number} result - Resultado do cálculo
+ * @returns {Object} Estatísticas
+ */
+function getAirFlowStats(inputData, result) {
+    const numPortasDuplas = safeNumber(inputData.numPortasDuplas);
+    const numPortasSimples = safeNumber(inputData.numPortasSimples);
+    const pressure = inputData.pressurizacao ? safeNumber(inputData.setpointTemp) : 0;
+    
+    return {
+        totalPortas: numPortasDuplas + numPortasSimples,
+        portasDuplas: numPortasDuplas,
+        portasSimples: numPortasSimples,
+        pressurizacaoAtiva: inputData.pressurizacao,
+        pressurizacaoValue: pressure,
+        vazaoResultante: result,
+        timestamp: new Date().toISOString()
+    };
+}
+
+// =============================================================================
+// EXPORTAÇÕES
+// =============================================================================
+
+export {
+    // Cálculos principais
+    calculateDoorFlow,
+    computeAirFlowRate,
+    calculateVazaoAr,
+    calculateVazaoArAndThermalGains,
+    
+    // Display
+    updateFlowRateDisplay,
+    
+    // Validações e utilitários
+    validateAirFlowInputs,
+    prepareAirFlowData,
+    getAirFlowStats
+};
+
+// =============================================================================
+// DISPONIBILIZAÇÃO GLOBAL
+// =============================================================================
+
+if (typeof window !== 'undefined') {
+    window.airFlowCalculations = {
+        calculateVazaoAr,
+        calculateVazaoArAndThermalGains,
+        updateFlowRateDisplay,
+        computeAirFlowRate
+    };
+}
+/* ==== FIM: air-flow.js ==== */
+
+/* ==== INÍCIO: app.js ==== */
+/**
+ * core/app.js
+ * Bootstrap e inicialização da Página 2
+ */
+
+import { initializeManagerInterface } from '../ui/interface.js';
+import { showSystemStatus } from '../../01_Create_Obra/ui/components/status.js';
+import { loadSystemConstantsFromJSON } from '../data/adapters/constants-adapter.js';
+
+
+
+/**
+ * Bootstrap da aplicação da Página 2
+ */
+export async function bootstrapManagerApplication() {
+    console.log('🎯 Iniciando bootstrap da Página 2 (Gerenciamento)...');
+    
+    // Verificar se já está inicializado
+    if (window.managerInitialized) {
+        console.log('⚠️ Gerenciador já inicializado');
+        return;
+    }
+    
+    try {
+        // 1. PRIMEIRO: Carregar constantes do sistema
+        console.log('📥 Carregando constantes do sistema...');
+        await loadSystemConstantsFromJSON();
+        
+        // 2. Configurar contexto global
+        window.managerContext = {
+            page: 'manager',
+            version: '2.0.0',
+            timestamp: new Date().toISOString()
+        };
+        
+        // 3. Inicializar interface
+        initializeManagerInterface();
+        
+        // 4. Marcar como inicializado
+        window.managerInitialized = true;
+        
+        console.log('✅ Bootstrap da Página 2 concluído');
+        showSystemStatus('Gerenciamento de obras carregado', 'success');
+        
+    } catch (error) {
+        console.error('❌ Erro no bootstrap da Página 2:', error);
+        showSystemStatus('Erro ao carregar gerenciamento', 'error');
+    }
+}
+
+/**
+ * Reinicializa o gerenciador
+ */
+export function reinitializeManager() {
+    console.log('🔄 Reinicializando gerenciador...');
+    
+    window.managerInitialized = false;
+    
+    // Limpar interface
+    if (typeof clearManagerInterface === 'function') {
+        clearManagerInterface();
+    }
+    
+    // Recarregar
+    setTimeout(bootstrapManagerApplication, 500);
+}
+
+/**
+ * Status do gerenciador
+ */
+export function getManagerStatus() {
+    return {
+        initialized: !!window.managerInitialized,
+        context: window.managerContext || {},
+        obrasCount: document.querySelectorAll('.obra-block').length,
+        timestamp: new Date().toISOString()
+    };
+}
+/* ==== FIM: app.js ==== */
+
+/* ==== INÍCIO: calculations-core.js ==== */
+/**
+ * features/calculations/calculations-core.js
+ * Núcleo de cálculos unificado - FUSÃO OTIMIZADA: calculos-manager.js + helpers.js
+ * Sistema centralizado para cálculos de climatização
+ */
+
+
+import { 
+    safeNumber as coreSafeNumber, 
+    updateElementText as coreUpdateElementText,
+    waitForElement as coreWaitForElement,
+    debounce as coreDebounce
+} from '../../utils/core-utils.js';
+
+import {
+    collectClimatizationInputs as dataCollectClimatizationInputs,
+    findClimatizationSection as dataFindClimatizationSection
+} from '../../data/utils/data-utils.js';
+
+// ✅ RE-EXPORTAR funções de data-utils para compatibilidade
+export const collectClimatizationInputs = dataCollectClimatizationInputs;
+export const findClimatizationSection = dataFindClimatizationSection;
+
+// ✅ RE-EXPORTAR funções de core-utils para compatibilidade  
+export const safeNumber = coreSafeNumber;
+export const updateElementText = coreUpdateElementText;
+
+
+// =============================================================================
+// SISTEMA DE DEBOUNCE E PERFORMANCE
+// =============================================================================
+
+const calculationTimeouts = new Map();
+
+/**
+ * Sistema de debounce para otimizar cálculos
+ * @param {string} roomId - ID da sala
+ * @param {Function} calculationFunction - Função a executar
+ * @param {number} delay - Delay em ms (padrão: 300ms)
+ */
+function debouncedCalculation(roomId, calculationFunction, delay = 300) {
+    if (calculationTimeouts.has(roomId)) {
+        clearTimeout(calculationTimeouts.get(roomId));
+    }
+    
+    const timeoutId = setTimeout(() => {
+        calculationFunction(roomId);
+        calculationTimeouts.delete(roomId);
+    }, delay);
+    
+    calculationTimeouts.set(roomId, timeoutId);
+}
+
+/**
+ * Limpa todos os timeouts de cálculo
+ */
+function clearAllCalculationTimeouts() {
+    calculationTimeouts.forEach((timeoutId, roomId) => {
+        clearTimeout(timeoutId);
+        calculationTimeouts.delete(roomId);
+    });
+}
+
+// =============================================================================
+// SISTEMA DE CONSTANTES
+// =============================================================================
+
+/**
+ * Aguarda carregamento das constantes do sistema
+ */
+async function waitForSystemConstants() {
+    let attempts = 0;
+    const maxAttempts = 100;
+    
+    while ((!window.systemConstants || !window.systemConstants.VARIAVEL_PD) && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        attempts++;
+    }
+    
+    if (attempts >= maxAttempts) {
+        throw new Error("Constantes do sistema não carregadas");
+    }
+    
+    return true;
+}
+
+/**
+ * Valida integridade das constantes necessárias
+ */
+function validateSystemConstants() {
+    if (!window.systemConstants) {
+        console.error("systemConstants não disponível");
+        return false;
+    }
+    
+    const required = [
+        'VARIAVEL_PD', 'VARIAVEL_PS', 'AUX_U_Value_Piso', 'AUX_Fator_Iluminacao',
+        'AUX_Fs_Iluminacao', 'AUX_Fator_Conver_Painel', 'AUX_Fs_Paineis',
+        'AUX_OCp_Csp', 'AUX_OCp_Clp', 'Densi_ar', 'AUX_c_ArExterno',
+        'AUX_deltaT_ArExterno', 'AUX_f_ArExterno', 'AUX_deltaUa_ArExterno',
+        'deltaT_piso', 'deltaT_teto', 'deltaT_parede_Oes', 'deltaT_parede_Les',
+        'deltaT_parede_Nor', 'deltaT_parede_Sul', 'deltaT_divi_N_clim1',
+        'deltaT_divi_N_clim2', 'deltaT_divi_clim1', 'deltaT_divi_clim2'
+    ];
+    
+    const missing = required.filter(constant => 
+        window.systemConstants[constant] === undefined || window.systemConstants[constant] === null
+    );
+    
+    if (missing.length > 0) {
+        console.error("Constantes faltando:", missing);
+        return false;
+    }
+    
+    return true;
+}
+
+// =============================================================================
+// COLETA E PROCESSAMENTO DE DADOS
+// =============================================================================
+
+
+
+
+
+
+// =============================================================================
+// SISTEMA DE CÁLCULOS COORDENADOS
+// =============================================================================
+
+/**
+ * Executa cálculo coordenado de vazão e ganhos térmicos com debounce
+ */
+async function calculateVazaoArAndThermalGainsDebounced(roomId) {
+    debouncedCalculation(roomId, async (id) => {
+        try {
+            // Importação dinâmica para evitar dependência circular
+            const { calculateVazaoAr } = await import('./air-flow.js');
+            const { calculateThermalGains } = await import('./thermal-gains.js');
+            
+            const flowRate = await calculateVazaoAr(id, false);
+            await calculateThermalGains(id, flowRate);
+            
+        } catch (error) {
+            console.error(`Erro em cálculo para ${id}:`, error);
+        }
+    }, 300);
+}
+
+/**
+ * Executa cálculo imediato (sem debounce)
+ */
+async function calculateVazaoArAndThermalGainsImmediate(roomId) {
+    try {
+        const { calculateVazaoAr } = await import('./air-flow.js');
+        const { calculateThermalGains } = await import('./thermal-gains.js');
+        
+        const flowRate = await calculateVazaoAr(roomId, false);
+        await calculateThermalGains(roomId, flowRate);
+        
+    } catch (error) {
+        console.error(`Erro em cálculo imediato para ${roomId}:`, error);
+    }
+}
+
+// =============================================================================
+// FUNÇÕES DE COMPATIBILIDADE
+// =============================================================================
+
+
+
+
+// =============================================================================
+// UTILITÁRIOS DE VALIDAÇÃO
+// =============================================================================
+
+/**
+ * Valida se os dados coletados são suficientes para cálculos
+ */
+function validateCalculationData(inputData) {
+    const requiredFields = ['area', 'altura', 'qtdPessoas', 'qtdEquipamentos'];
+    const missingFields = requiredFields.filter(field => 
+        !inputData[field] || inputData[field] === ''
+    );
+    
+    if (missingFields.length > 0) {
+        console.warn(`Campos obrigatórios faltando: ${missingFields.join(', ')}`);
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Prepara dados para cálculo (conversões e formatações)
+ */
+function prepareCalculationData(rawData) {
+    const prepared = { ...rawData };
+    
+    // Converter números
+    const numericFields = ['area', 'altura', 'qtdPessoas', 'qtdEquipamentos', 'potenciaIluminacao'];
+    numericFields.forEach(field => {
+        if (prepared[field]) {
+            prepared[field] = coreSafeNumber(prepared[field]);
+        }
+    });
+    
+    // Aplicar fatores de segurança
+    if (prepared.fatorSeguranca) {
+        const factor = coreSafeNumber(prepared.fatorSeguranca);
+        if (factor > 1) {
+            prepared.area = prepared.area * factor;
+        }
+    }
+    
+    return prepared;
+}
+
+// =============================================================================
+// EXPORTAÇÕES
+// =============================================================================
+
+export {
+    // Sistema de Performance
+    debouncedCalculation,
+    clearAllCalculationTimeouts,
+    
+    // Sistema de Constantes
+    waitForSystemConstants,
+    validateSystemConstants,
+
+    
+    // Sistema de Cálculos
+    calculateVazaoArAndThermalGainsDebounced,
+    calculateVazaoArAndThermalGainsImmediate,
+    
+    // Validação e Preparação
+    validateCalculationData,
+    prepareCalculationData,
+    
+
+
+};
+
+// =============================================================================
+// INICIALIZAÇÃO E CONFIGURAÇÃO
+// =============================================================================
+
+// Configuração padrão do sistema de cálculos
+const CALCULATION_CONFIG = {
+    debounceDelay: 300,
+    maxRetryAttempts: 3,
+    validationStrict: false,
+    enableLogging: window.location.hostname === 'localhost'
+};
+
+
+// Disponibilização global para compatibilidade
+if (typeof window !== 'undefined') {
+    window.calculationCore = {
+        debouncedCalculation,
+        waitForSystemConstants,
+        collectClimatizationInputs,
+
+        calculateVazaoArAndThermalGainsDebounced
+    };
+}
+
+// Limpeza de timeouts ao descarregar a página
+if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', clearAllCalculationTimeouts);
+}
+/* ==== FIM: calculations-core.js ==== */
+
+/* ==== INÍCIO: constants-adapter.js ==== */
+/**
+ * data/adapters/constants-adapter.js
+ * Carrega constantes do sistema do arquivo JSON
+ */
+
+export async function loadSystemConstantsFromJSON() {
+    try {
+        console.log('📦 Carregando constantes do sistema do JSON...');
+        
+        const response = await fetch('/json/dados.json');
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
+        const constants = await response.json();
+        
+        // Disponibilizar globalmente (como na Página 1)
+        window.systemConstants = constants;
+        
+        console.log('✅ Constantes do sistema carregadas do JSON:', Object.keys(constants).length, 'constantes');
+        return constants;
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar constantes do JSON:', error);
+        throw error;
+    }
+}
+/* ==== FIM: constants-adapter.js ==== */
+
+/* ==== INÍCIO: global-stubs.js ==== */
+/**
+ * utils/global-stubs.js
+ * Stubs para funções globais que podem não estar disponíveis
+ */
+
+
+console.log('🚀 global-stubs.js CARREGANDO...');
+
+// Verificar se toggleSection já existe ANTES de definir o stub
+console.log(`🔍 toggleSection existe antes do stub? ${typeof window.toggleSection}`);
+console.log(`🔍 toggleSubsection existe antes do stub? ${typeof window.toggleSubsection}`);
+
+
+// Stub para calculateVazaoArAndThermalGains
+if (typeof window.calculateVazaoArAndThermalGains !== 'function') {
+    window.calculateVazaoArAndThermalGains = function(roomId) {
+        console.log(`🔧 calculateVazaoArAndThermalGains stub chamado para sala: ${roomId}`);
+        // Esta função será substituída quando o módulo real for carregado
+    };
+}
+
+// Stub para toggleObra
+if (typeof window.toggleObra !== 'function') {
+    window.toggleObra = function(obraId, event) {
+        if (event) event.stopPropagation();
+        console.log(`🔧 toggleObra stub chamado para obra: ${obraId}`);
+        
+        const obraContent = document.getElementById(`obra-content-${obraId}`);
+        const minimizer = event?.target;
+        
+        if (obraContent && minimizer) {
+            const isCollapsed = obraContent.classList.contains('collapsed');
+            obraContent.classList.toggle('collapsed', !isCollapsed);
+            minimizer.textContent = isCollapsed ? '−' : '+';
+        }
+    };
+}
+
+// Stub para toggleRoom
+if (typeof window.toggleRoom !== 'function') {
+    window.toggleRoom = function(roomId, event) {
+        if (event) event.stopPropagation();
+        console.log(`🔧 toggleRoom stub chamado para sala: ${roomId}`);
+        
+        const roomContent = document.getElementById(`room-content-${roomId}`);
+        const minimizer = event?.target;
+        
+        if (roomContent && minimizer) {
+            const isCollapsed = roomContent.classList.contains('collapsed');
+            roomContent.classList.toggle('collapsed', !isCollapsed);
+            minimizer.textContent = isCollapsed ? '−' : '+';
+        }
+    };
+}
+
+// Stub para toggleProject
+if (typeof window.toggleProject  !== 'function') {
+    window.toggleProject  = function(projectId, event) {
+        if (event) event.stopPropagation();
+        console.log(`🔧 toggleProject  stub chamado para sala: ${projectId}`);
+        
+        const projectContent = document.getElementById(`project-content-${projectId}`);
+        const minimizer = event?.target;
+        
+        if (projectContent && minimizer) {
+            const isCollapsed = projectContent.classList.contains('collapsed');
+            projectContent.classList.toggle('collapsed', !isCollapsed);
+            minimizer.textContent = isCollapsed ? '−' : '+';
+        }
+    };
+}
+
+// Stub para toggleSubsection - VERSÃO DEFINITIVA
+if (typeof window.toggleSubsection !== 'function') {
+    window.toggleSubsection = function(subsectionId, event) {
+        if (event) event.stopPropagation();
+        console.log(`🔧 toggleSubsection stub chamado para subseção: ${subsectionId}`);
+        
+        // ✅ USAR O ID EXATO QUE ESTÁ NO DOM
+        const contentId = `subsection-content-${subsectionId}`;
+        const content = document.getElementById(contentId);
+        const minimizer = event?.target;
+        
+        if (content && minimizer) {
+            const isCollapsed = content.classList.contains('collapsed');
+            content.classList.toggle('collapsed', !isCollapsed);
+            minimizer.textContent = isCollapsed ? '−' : '+';
+            
+            // Também alternar a classe no bloco pai para estilização
+            const subsectionBlock = content.closest('.subsection-block');
+            if (subsectionBlock) {
+                subsectionBlock.classList.toggle('collapsed', !isCollapsed);
+            }
+            
+            console.log(`✅ Subseção ${subsectionId} ${isCollapsed ? 'expandida' : 'recolhida'}`);
+        } else {
+            console.error(`❌ Conteúdo da subseção não encontrado: ${contentId}`);
+            
+            // ✅ MÉTODO ALTERNATIVO
+            if (minimizer) {
+                const subsectionBlock = minimizer.closest('.subsection-block');
+                if (subsectionBlock) {
+                    const altContent = subsectionBlock.querySelector('.subsection-content');
+                    if (altContent) {
+                        const isCollapsed = altContent.classList.contains('collapsed');
+                        altContent.classList.toggle('collapsed', !isCollapsed);
+                        minimizer.textContent = isCollapsed ? '−' : '+';
+                        subsectionBlock.classList.toggle('collapsed', !isCollapsed);
+                        console.log(`✅ Subseção encontrada via método alternativo: ${isCollapsed ? 'expandida' : 'recolhida'}`);
+                    }
+                }
+            }
+        }
+    };
+}
+
+// Stub para toggleMachineSection - VERSÃO DEFINITIVA
+if (typeof window.toggleMachineSection !== 'function') {
+    window.toggleMachineSection = function(machineId, event) {
+        if (event) event.stopPropagation();
+        console.log(`🔧 toggleMachineSection stub chamado para máquina: ${machineId}`);
+        
+        // ✅ USAR O ID EXATO QUE ESTÁ NO DOM
+        const contentId = `machine-content-${machineId}`;
+        const content = document.getElementById(contentId);
+        const minimizer = event?.target;
+        
+        if (content && minimizer) {
+            const isCollapsed = content.classList.contains('collapsed');
+            content.classList.toggle('collapsed', !isCollapsed);
+            minimizer.textContent = isCollapsed ? '−' : '+';
+            
+            console.log(`✅ Máquina ${machineId} ${isCollapsed ? 'expandida' : 'recolhida'}`);
+        } else {
+            console.error(`❌ Conteúdo da máquina não encontrado: ${contentId}`);
+            
+            // ✅ MÉTODO ALTERNATIVO
+            if (minimizer) {
+                const machineElement = minimizer.closest('.climatization-machine, .machine-block');
+                if (machineElement) {
+                    const altContent = machineElement.querySelector('.machine-content');
+                    if (altContent) {
+                        const isCollapsed = altContent.classList.contains('collapsed');
+                        altContent.classList.toggle('collapsed', !isCollapsed);
+                        minimizer.textContent = isCollapsed ? '−' : '+';
+                        console.log(`✅ Máquina encontrada via método alternativo: ${isCollapsed ? 'expandida' : 'recolhida'}`);
+                    }
+                }
+            }
+        }
+    };
+}
+
+// Stub para makeEditable
+if (typeof window.makeEditable !== 'function') {
+    window.makeEditable = function(element, type) {
+        console.log(`🔧 makeEditable stub chamado para: ${type}`);
+        
+        if (element.getAttribute('contenteditable') === 'true') return;
+        
+        element.setAttribute('contenteditable', 'true');
+        element.classList.add('editing');
+        element.focus();
+        
+        const originalText = element.textContent;
+        
+        function saveChanges() {
+            element.setAttribute('contenteditable', 'false');
+            element.classList.remove('editing');
+            console.log(`✅ ${type} atualizado: ${element.textContent}`);
+        }
+        
+        element.addEventListener('blur', saveChanges, { once: true });
+        element.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveChanges();
+            } else if (e.key === 'Escape') {
+                element.textContent = originalText;
+                saveChanges();
+            }
+        });
+    };
+}
+
+// Stub para outras funções comuns
+const stubFunctions = [
+    'toggleMachineSection',
+    'updateMachineTitle', 
+    'deleteMachine',
+    'updateMachineOptions',
+    'handlePowerChange',
+    'calculateMachinePrice',
+    'updateBackupConfiguration',
+    'initializeFatorSeguranca',
+    'syncCapacityTableBackup'
+];
+
+stubFunctions.forEach(funcName => {
+    if (typeof window[funcName] !== 'function') {
+        window[funcName] = function(...args) {
+            console.log(`🔧 ${funcName} stub chamado com:`, args);
+            // Stub vazio - será substituído quando o módulo real for carregado
+        };
+    }
+});
+
+console.log('✅ Stubs globais carregados');
+/* ==== FIM: global-stubs.js ==== */
+
+/* ==== INÍCIO: interface.js ==== */
+/**
+ * ui/interface.js
+ * Interface e gerenciamento de eventos da Página 2
+ */
+
+import { loadAndRenderObras } from '../features/managers/obras-manager.js';
+import { showShutdownConfirmationModal } from '../../01_Create_Obra/ui/components/modal/exit-modal.js';
+import { MESSAGES, SELECTORS } from '../core/constants.js';
+
+/**
+ * Inicializa a interface da Página 2
+ */
+export function initializeManagerInterface() {
+    console.log('🎯 Inicializando interface do gerenciador...');
+    
+    try {
+        // 1. Configurar contexto da Página 2
+        document.body.dataset.page = 'manager';
+        
+        // 2. Adicionar header específico
+        addManagerHeader();
+        
+        // 3. Configurar container de projetos
+        setupProjectsContainer();
+        
+        // 4. Configurar botão de shutdown
+        setupShutdownButton();
+        
+        // 5. Carregar e renderizar obras
+        loadAndRenderObras();
+        
+        console.log('✅ Interface do gerenciador inicializada');
+        
+    } catch (error) {
+        console.error('❌ Erro na inicialização da interface:', error);
+    }
+}
+
+/**
+ * Adiciona header específico da Página 2
+ */
+function addManagerHeader() {
+    const mainContent = document.querySelector('main, .main-content') || document.body;
+    
+    const managerHeader = document.createElement('div');
+    managerHeader.className = 'manager-header';
+    managerHeader.innerHTML = `
+        <h1>Gerenciamento de Obras <span class="manager-badge">Todos os Registros</span></h1>
+        <div class="subtitle">Visualize, atualize e gerencie todas as obras do sistema</div>
+    `;
+    
+    // Inserir no início do conteúdo principal
+    if (mainContent.firstChild) {
+        mainContent.insertBefore(managerHeader, mainContent.firstChild);
+    } else {
+        mainContent.appendChild(managerHeader);
+    }
+}
+
+/**
+ * Configura o container de projetos para a Página 2
+ */
+function setupProjectsContainer() {
+    let container = document.getElementById('projects-container');
+    
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'projects-container';
+        
+        const mainContent = document.querySelector('main, .main-content') || document.body;
+        mainContent.appendChild(container);
+    }
+    
+    // Limpar conteúdo existente (se houver)
+    container.innerHTML = '<!-- Obras carregadas do backup.json -->';
+    
+    console.log('✅ Container de projetos configurado');
+}
+
+/**
+ * Configura botão de shutdown (se existir)
+ */
+function setupShutdownButton() {
+    const shutdownBtn = document.querySelector('.shutdown-btn');
+    
+    if (shutdownBtn) {
+        shutdownBtn.addEventListener('click', async () => {
+            console.log('🔄 Botão de shutdown clicado na Página 2');
+            
+            const confirmed = await showShutdownConfirmationModal();
+            
+            if (confirmed) {
+                console.log('✅ Confirmação de shutdown recebida');
+                // O modal já cuida do shutdown, apenas log
+                showSystemStatus('Servidor sendo encerrado...', 'warning');
+            } else {
+                console.log('❌ Shutdown cancelado pelo usuário');
+            }
+        });
+        
+        console.log('✅ Botão de shutdown configurado');
+    }
+}
+
+/**
+ * Limpa a interface (para futuros recarregamentos)
+ */
+export function clearManagerInterface() {
+    const container = document.getElementById('projects-container');
+    if (container) {
+        container.innerHTML = '';
+    }
+    
+    const managerHeader = document.querySelector('.manager-header');
+    if (managerHeader) {
+        managerHeader.remove();
+    }
+    
+    console.log('✅ Interface do gerenciador limpa');
+}
+/* ==== FIM: interface.js ==== */
+
+/* ==== INÍCIO: obras-manager.js ==== */
+/**
+ * features/managers/obras-manager.js
+ * Gerenciador principal da Página 2 - Coordena carregamento e renderização
+ */
+
+import { loadBackupObras, removeObraFromBackup } from '../../data/adapters/obras-adapter.js';
+import { getObraStats, formatObraStats, applyFilters as applyObraFilters } from '../../data/builders/obras-builder.js';
+import { showSystemStatus } from '../../../01_Create_Obra/ui/components/status.js';
+import { showConfirmationModal } from '../../../01_Create_Obra/ui/components/modal/modal.js';
+import { loadSystemConstantsFromJSON } from '../../data/adapters/constants-adapter.js';
+
+// Cache para funções da Página 1
+let page1Functions = null;
+let globalFunctionsLoaded = false;
+
+
+
+/**
+ * Carrega TODAS as funções globais da Página 1
+ */
+async function loadAllPage1Functions() {
+    if (globalFunctionsLoaded) return;
+    
+    try {
+        console.log('📦 Carregando TODAS as funções da Página 1...');
+        
+        // 1. Primeiro carregar constantes do JSON
+        await loadSystemConstantsFromJSON();
+        
+        // 2. Carregar funções essenciais da Página 1
+        const obraManager = await import('../../../01_Create_Obra/features/managers/obra-manager.js');
+        const uiBuilders = await import('../../../01_Create_Obra/data/builders/ui-builders.js');
+        const interfaceModule = await import('../../../01_Create_Obra/ui/interface.js');
+        
+        // 3. Carregar módulos que definem funções globais
+        await import('../../../01_Create_Obra/features/calculations/air-flow.js');
+        await import('../../../01_Create_Obra/features/calculations/thermal-gains.js');
+        await import('../../../01_Create_Obra/ui/helpers.js');
+        await import('../../../01_Create_Obra/data/modules/climatizacao.js');
+        await import('../../../01_Create_Obra/data/modules/machines/machines-core.js');
+        await import('../../../01_Create_Obra/data/modules/rooms.js');
+        
+        page1Functions = {
+            createEmptyObra: obraManager.createEmptyObra,
+            insertObraIntoDOM: obraManager.insertObraIntoDOM,
+            populateObraData: uiBuilders.populateObraData,
+            updateObraButtonAfterSave: obraManager.updateObraButtonAfterSave,
+        };
+        
+        console.log('✅ TODAS as funções da Página 1 carregadas');
+        
+        // Verificar se as funções principais foram carregadas
+        const requiredFunctions = [
+            'toggleObra', 'toggleRoom', 'toggleProject', 'toggleSection', 'toggleSubsection',
+            'toggleMachineSection', 'calculateVazaoArAndThermalGains', 'makeEditable'
+        ];
+        
+        let loadedFunctions = [];
+        let missingFunctions = [];
+        
+        requiredFunctions.forEach(funcName => {
+            if (typeof window[funcName] === 'function') {
+                loadedFunctions.push(funcName);
+            } else {
+                missingFunctions.push(funcName);
+            }
+        });
+        
+        console.log(`📊 Funções carregadas: ${loadedFunctions.length}/${requiredFunctions.length}`);
+        console.log('✅ Carregadas:', loadedFunctions);
+        if (missingFunctions.length > 0) {
+            console.warn('⚠️ Faltando:', missingFunctions);
+        }
+        
+        globalFunctionsLoaded = true;
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar funções da Página 1:', error);
+        throw error;
+    }
+}
+
+/**
+ * Renderiza uma obra usando as funções da Página 1
+ */
+async function renderObra(obraData) {
+    try {
+        // ✅ CARREGAR TODAS AS FUNÇÕES E CONSTANTES PRIMEIRO
+        await loadAllPage1Functions();
+        
+        const { createEmptyObra, populateObraData } = page1Functions;
+        
+        console.log(`🎨 Renderizando obra: ${obraData.nome} (ID: ${obraData.id})`);
+        
+        // Criar obra vazia usando função da Página 1
+        const obraCreated = await createEmptyObra(obraData.nome, obraData.id);
+        
+        if (!obraCreated) {
+            console.error(`❌ Falha ao criar obra: ${obraData.nome}`);
+            return false;
+        }
+        
+        // Aguardar a obra ser inserida no DOM
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Popular dados completos usando função da Página 1
+        await populateObraData(obraData);
+        
+        console.log(`✅ Obra renderizada: ${obraData.nome}`);
+        return true;
+        
+    } catch (error) {
+        console.error(`❌ Erro ao renderizar obra ${obraData.nome}:`, error);
+        return false;
+    }
+}
+
+/**
+ * Aplica pós-processamento específico da Página 2
+ */
+function applyPage2PostProcessing() {
+    console.log('🔧 Aplicando pós-processamento da Página 2...');
+    
+    // 1. Esconder botões de Salvar
+    const saveButtons = document.querySelectorAll('.btn-salvar');
+    saveButtons.forEach(btn => {
+        btn.style.display = 'none';
+    });
+    
+    // 2. Esconder seções de adicionar projeto/sala
+    const addSections = document.querySelectorAll('.add-project-section, .add-room-section');
+    addSections.forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // 3. Atualizar textos e adicionar badge
+    const obraHeaders = document.querySelectorAll('.obra-header');
+    obraHeaders.forEach(header => {
+
+        
+        // Atualizar ação de deletar para usar adapter da Página 2
+        const deleteBtn = header.querySelector('.btn-delete');
+        if (deleteBtn) {
+            const obraId = deleteBtn.closest('.obra-block').dataset.obraId;
+            const obraName = deleteBtn.closest('.obra-block').dataset.obraName;
+            
+            deleteBtn.textContent = 'Excluir do Backup';
+            deleteBtn.className = 'btn btn-manager-delete';
+            deleteBtn.onclick = () => handleObraDeletion(obraId, obraName);
+        }
+    });
+    
+    // 4. Adicionar estatísticas às obras
+    const obraBlocks = document.querySelectorAll('.obra-block');
+    obraBlocks.forEach(obraBlock => {
+        const obraId = obraBlock.dataset.obraId;
+        addObraStatsToHeader(obraBlock, obraId);
+    });
+    
+    console.log('✅ Pós-processamento aplicado');
+}
+
+/**
+ * Adiciona estatísticas ao header da obra
+ */
+function addObraStatsToHeader(obraBlock, obraId) {
+    const obraHeader = obraBlock.querySelector('.obra-header');
+    const spacer = obraBlock.querySelector('.obra-header-spacer');
+    
+    if (spacer) {
+        // Buscar dados da obra para calcular estatísticas
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (obraElement) {
+            const projetos = obraElement.querySelectorAll('.project-block');
+            let totalSalas = 0;
+            let totalMaquinas = 0;
+            
+            projetos.forEach(projeto => {
+                const salas = projeto.querySelectorAll('.room-block');
+                totalSalas += salas.length;
+                
+                salas.forEach(sala => {
+                    const maquinas = sala.querySelectorAll('.climatization-machine, .machine-block');
+                    totalMaquinas += maquinas.length;
+                });
+            });
+            
+            const statsText = formatObraStats({
+                projetos: projetos.length,
+                salas: totalSalas,
+                maquinas: totalMaquinas
+            });
+            
+            spacer.innerHTML = `<span>${statsText}</span>`;
+        }
+    }
+}
+
+/**
+ * Manipula a exclusão de obra (Página 2)
+ */
+async function handleObraDeletion(obraId, obraName) {
+    console.log(`🗑️ Iniciando exclusão da obra: ${obraName} (ID: ${obraId})`);
+    
+    // Usar modal de confirmação da Página 1, mas com comportamento da Página 2
+    showConfirmationModal(obraName, obraId, document.querySelector(`[data-obra-id="${obraId}"]`));
+    
+    // Sobrescrever o comportamento padrão do modal
+    window.confirmDeletion = async () => {
+        console.log(`✅ Confirmada exclusão da obra: ${obraName}`);
+        
+        try {
+            // Remover do backup usando adapter da Página 2
+            const success = await removeObraFromBackup(obraId);
+            
+            if (success) {
+                // Remover do DOM
+                const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+                if (obraBlock) {
+                    obraBlock.remove();
+                    console.log(`✅ Obra ${obraName} removida do DOM`);
+                }
+                
+                showSystemStatus(`Obra "${obraName}" removida do backup`, 'success');
+            } else {
+                // Fallback: remover apenas do DOM se o servidor não suportar
+                console.log('🔄 Fallback: removendo apenas do DOM');
+                const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+                if (obraBlock) {
+                    obraBlock.remove();
+                    showSystemStatus(`Obra "${obraName}" removida da visualização`, 'warning');
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro na exclusão:', error);
+            showSystemStatus('Erro ao remover obra', 'error');
+        }
+    };
+}
+
+/**
+ * Carrega e renderiza todas as obras do backup
+ */
+export async function loadAndRenderObras() {
+    try {
+        console.log('🚀 Iniciando carregamento e renderização de obras...');
+        showSystemStatus('Carregando obras...', 'info');
+        
+        // Carregar obras do backup
+        const obras = await loadBackupObras();
+        
+        if (obras.length === 0) {
+            showSystemStatus('Nenhuma obra encontrada no backup', 'warning');
+            return;
+        }
+        
+        console.log(`📊 ${obras.length} obra(s) para renderizar`);
+        
+        // Renderizar cada obra
+        let successCount = 0;
+        for (const obra of obras) {
+            const success = await renderObra(obra);
+            if (success) successCount++;
+            
+            // Pequena pausa entre renderizações
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        // Aplicar pós-processamento da Página 2
+        applyPage2PostProcessing();
+        
+        console.log(`🎉 Renderização concluída: ${successCount}/${obras.length} obra(s)`);
+        showSystemStatus(`${successCount} obra(s) carregada(s)`, 'success');
+        
+    } catch (error) {
+        console.error('❌ Erro no carregamento e renderização:', error);
+        showSystemStatus('Erro ao carregar obras', 'error');
+    }
+}
+
+/**
+ * Stub para filtros futuros
+ */
+export function applyFilters(criteria = {}) {
+    console.log('🔍 Aplicando filtros (stub):', criteria);
+    
+    // Usar a função do builder com alias para evitar conflito
+    const filteredObras = applyObraFilters([], criteria); // Array vazio por enquanto
+    
+    // Esta função será conectada ao UI de busca quando implementado
+    return {
+        criteria,
+        filteredCount: filteredObras.length,
+        message: 'Sistema de filtros será implementado futuramente',
+        timestamp: new Date().toISOString()
+    };
+}
+
+// Exportações
+export {
+    renderObra,
+    applyPage2PostProcessing,
+    handleObraDeletion
+};
+/* ==== FIM: obras-manager.js ==== */
+
+/* ==== INÍCIO: thermal-gains.js ==== */
+/**
+ * thermal-gains.js
+ * 🎯 FUSÃO COMPLETA: thermalCalculations + thermalComponents + thermalDisplay
+ * ⚡ REDUÇÃO: 3 arquivos → 1 arquivo (~600 → ~350 linhas)
+ */
+
+
+import { 
+    waitForSystemConstants, 
+    validateSystemConstants,
+    collectClimatizationInputs,
+} from './calculations-core.js'  
+
+import { safeNumber, updateElementText } from '../../utils/core-utils.js';
+
+/**
+ * 🔥 CÁLCULOS DE COMPONENTES TÉRMICOS (thermalComponents.js)
+ */
+
+function calculateCeilingGain(area, uValue, deltaT) {
+  const areaNum = safeNumber(area);
+  const uValueNum = safeNumber(uValue);
+  const deltaTNum = safeNumber(deltaT);
+  const result = areaNum * uValueNum * deltaTNum;
+  console.log(`[DEBUG DETAIL] calculateCeilingGain: ${areaNum} * ${uValueNum} * ${deltaTNum} = ${result}`);
+  return result;
+}
+
+function calculateWallGain(comprimento, peDireito, uValue, deltaT) {
+  const compNum = safeNumber(comprimento);
+  const peDireitoNum = safeNumber(peDireito);
+  const uValueNum = safeNumber(uValue);
+  const deltaTNum = safeNumber(deltaT);
+  const area = compNum * peDireitoNum;
+  const result = area * uValueNum * deltaTNum;
+  console.log(`[DEBUG DETAIL] calculateWallGain: (${compNum} * ${peDireitoNum}) = ${area}m² * ${uValueNum} * ${deltaTNum} = ${result}`);
+  return result;
+}
+
+function calculatePartitionGain(inputArea, peDireito, uValue, deltaT) {
+  const area = safeNumber(inputArea) * safeNumber(peDireito);
+  const result = area * uValue * deltaT;
+  return result;
+}
+
+function calculateFloorGain(area, constants) {
+  const uValue = window.systemConstants?.AUX_U_Value_Piso || 2.7;
+  const deltaT = window.systemConstants?.deltaT_piso || 7.5;
+  const result = safeNumber(area) * uValue * deltaT;
+  return result;
+}
+
+function calculateLightingGain(area, constants) {
+  const fatorIluminacao = window.systemConstants?.AUX_Fator_Iluminacao || 7;
+  const fsIluminacao = window.systemConstants?.AUX_Fs_Iluminacao || 1;
+  const result = safeNumber(area) * fatorIluminacao * fsIluminacao;
+  return result;
+}
+
+function calculateDissipationGain(dissipacao, constants) {
+  const fatorConversao = window.systemConstants?.AUX_Fator_Conver_Painel || 1;
+  const fsPaineis = window.systemConstants?.AUX_Fs_Paineis || 100;
+  const result = (fatorConversao * safeNumber(dissipacao) * fsPaineis) / 100;
+  return result;
+}
+
+function calculatePeopleGain(numPessoas, constants) {
+  const csp = window.systemConstants?.AUX_OCp_Csp || 86.5;
+  const clp = window.systemConstants?.AUX_OCp_Clp || 133.3;
+  const fsPessoas = 100;
+  const pessoas = safeNumber(numPessoas);
+  const ganhoSensivel = (csp * pessoas * fsPessoas) / 100;
+  const ganhoLatente = (clp * pessoas * fsPessoas) / 100;
+  const result = ganhoSensivel + ganhoLatente;
+  return result;
+}
+
+function calculateExternalAirSensibleGain(vazaoArExterno, auxVars, constants) {
+  const c_ArExterno = window.systemConstants?.AUX_c_ArExterno || 0.24;
+  const deltaT_ArExterno = window.systemConstants?.AUX_deltaT_ArExterno || 10;
+  
+  const calc_Gsens_ArE = auxVars.m_ArExterno * c_ArExterno * deltaT_ArExterno;
+  const resultado = (calc_Gsens_ArE / 1000) * 1.16;
+  
+  return resultado;
+}
+
+function calculateExternalAirLatentGain(vazaoArExterno, constants) {
+  const f_ArExterno = window.systemConstants?.AUX_f_ArExterno || 3.01;
+  const deltaUa_ArExterno = window.systemConstants?.AUX_deltaUa_ArExterno || 8.47;
+  
+  const vazao = safeNumber(vazaoArExterno);
+  const ganho = vazao * f_ArExterno * deltaUa_ArExterno;
+  
+  return ganho;
+}
+
+/**
+ * 📊 CÁLCULOS DE TOTAIS E DISPLAY (thermalDisplay.js)
+ */
+
+function calculateTotals(gains) {
+  const totalExterno = gains.teto + gains.paredeOeste + gains.paredeLeste + gains.paredeNorte + gains.paredeSul;
+  const totalDivisoes = gains.divisoriaNaoClima1 + gains.divisoriaNaoClima2 + gains.divisoriaClima1 + gains.divisoriaClima2;
+  const totalPiso = gains.piso;
+  const totalIluminacao = gains.iluminacao;
+  const totalEquipamentos = gains.dissipacao;
+  const totalPessoas = gains.pessoas;
+  const totalArSensivel = gains.arSensivel;
+  const totalArLatente = gains.arLatente;
+  const totalArExterno = totalArSensivel + totalArLatente;
+
+  const totalGeralW = totalExterno + totalDivisoes + totalPiso + totalIluminacao + totalEquipamentos + totalPessoas + totalArExterno;
+  const totalGeralTR = totalGeralW / 3517;
+
+  const totals = {
+    externo: Math.ceil(totalExterno),
+    divisoes: Math.ceil(totalDivisoes),
+    piso: Math.ceil(totalPiso),
+    iluminacao: Math.ceil(totalIluminacao),
+    equipamentos: Math.ceil(totalEquipamentos),
+    pessoas: Math.ceil(totalPessoas),
+    arSensivel: Math.ceil(totalArSensivel),
+    arLatente: Math.ceil(totalArLatente),
+    arExterno: Math.ceil(totalArExterno),
+    geralW: Math.ceil(totalGeralW),
+    geralTR: Math.ceil(totalGeralTR),
+  };
+
+  return totals;
+}
+
+function updateWallDisplay(roomId, direction, gain, uValue, inputWidth, peDireito, deltaT) {
+  const area = safeNumber(inputWidth) * safeNumber(peDireito);
+  updateElementText(`area-parede-${direction}-${roomId}`, Math.ceil(area));
+  updateElementText(`uvalue-parede-${direction}-${roomId}`, uValue.toFixed(3));
+  updateElementText(`deltat-parede-${direction}-${roomId}`, deltaT || 0);
+  updateElementText(`ganho-parede-${direction}-${roomId}`, Math.ceil(gain));
+}
+
+function updatePartitionDisplay(roomId, type, gain, uValue, inputArea, peDireito, deltaT) {
+  const areaCalculada = safeNumber(inputArea) * safeNumber(peDireito);
+  updateElementText(`area-divi-${type}-${roomId}`, Math.ceil(areaCalculada));
+  updateElementText(`uvalue-divi-${type}-${roomId}`, uValue.toFixed(3));
+  updateElementText(`deltat-divi-${type}-${roomId}`, deltaT || 0);
+  updateElementText(`ganho-divi-${type}-${roomId}`, Math.ceil(gain));
+}
+
+function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
+  console.log(`🔥 Atualizando display térmico para sala: ${roomId}`);
+  
+  updateElementText(`total-ganhos-w-${roomId}`, totals.geralW);
+  updateElementText(`total-tr-${roomId}`, totals.geralTR);
+
+  updateElementText(`area-teto-${roomId}`, Math.ceil(inputData.area || 0));
+  updateElementText(`uvalue-teto-${roomId}`, uValues.teto.toFixed(3));
+  updateElementText(`deltat-teto-${roomId}`, window.systemConstants?.deltaT_teto || 20);
+  updateElementText(`ganho-teto-${roomId}`, Math.ceil(gains.teto));
+
+  updateWallDisplay(roomId, "oeste", gains.paredeOeste, uValues.parede, inputData.paredeOeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Oes || 0);
+  updateWallDisplay(roomId, "leste", gains.paredeLeste, uValues.parede, inputData.paredeLeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Les || 0);
+  updateWallDisplay(roomId, "norte", gains.paredeNorte, uValues.parede, inputData.paredeNorte, inputData.peDireito, window.systemConstants?.deltaT_parede_Nor || 0);
+  updateWallDisplay(roomId, "sul", gains.paredeSul, uValues.parede, inputData.paredeSul, inputData.peDireito, window.systemConstants?.deltaT_parede_Sul || 0);
+
+  updatePartitionDisplay(roomId, "nc1", gains.divisoriaNaoClima1, uValues.parede, inputData.divisoriaNaoClima1, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim1 || 0);
+  updatePartitionDisplay(roomId, "nc2", gains.divisoriaNaoClima2, uValues.parede, inputData.divisoriaNaoClima2, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim2 || 0);
+  updatePartitionDisplay(roomId, "c1", gains.divisoriaClima1, uValues.parede, inputData.divisoriaClima1, inputData.peDireito, window.systemConstants?.deltaT_divi_clim1 || 0);
+  updatePartitionDisplay(roomId, "c2", gains.divisoriaClima2, uValues.parede, inputData.divisoriaClima2, inputData.peDireito, window.systemConstants?.deltaT_divi_clim2 || 0);
+
+  updateElementText(`area-piso-${roomId}`, Math.ceil(inputData.area || 0));
+  updateElementText(`uvalue-piso-${roomId}`, uValues.piso.toFixed(3));
+  updateElementText(`deltat-piso-${roomId}`, window.systemConstants?.deltaT_piso || 5);
+  updateElementText(`ganho-piso-${roomId}`, Math.ceil(gains.piso));
+  updateElementText(`total-piso-${roomId}`, totals.piso);
+
+  updateElementText(`area-iluminacao-${roomId}`, Math.ceil(inputData.area || 0));
+  updateElementText(`fator-iluminacao-${roomId}`, window.systemConstants?.AUX_Fator_Iluminacao || 7);
+  updateElementText(`fs-iluminacao-${roomId}`, window.systemConstants?.AUX_Fs_Iluminacao || 1);
+  updateElementText(`ganho-iluminacao-${roomId}`, Math.ceil(gains.iluminacao));
+  updateElementText(`total-iluminacao-${roomId}`, totals.iluminacao);
+
+  updateElementText(`fator-conversao-dissi-${roomId}`, window.systemConstants?.AUX_Fator_Conver_Painel || 1);
+  updateElementText(`pe-dissi-${roomId}`, inputData.dissipacao || 0);
+  updateElementText(`fs-dissi-${roomId}`, window.systemConstants?.AUX_Fs_Paineis || 100);
+  updateElementText(`ganho-dissi-${roomId}`, Math.ceil(gains.dissipacao));
+  updateElementText(`total-dissi-${roomId}`, totals.equipamentos);
+
+  updateElementText(`csp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Csp || 86.5);
+  updateElementText(`clp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Clp || 133.3);
+  updateElementText(`o-pessoas-${roomId}`, inputData.numPessoas || 0);
+  updateElementText(`fs-pessoas-${roomId}`, 100);
+  updateElementText(`ganho-pessoas-${roomId}`, Math.ceil(gains.pessoas));
+  updateElementText(`total-pessoas-${roomId}`, totals.pessoas);
+
+  const densiAr = window.systemConstants?.Densi_ar || 1.17;
+  const m_ArExterno = (inputData.vazaoArExterno || 0) * 3.6 * densiAr * 1000;
+
+  updateElementText(`m-ar-sensivel-${roomId}`, Math.ceil(m_ArExterno));
+  updateElementText(`c-ar-sensivel-${roomId}`, window.systemConstants?.AUX_c_ArExterno || 0.24);
+  updateElementText(`deltat-ar-sensivel-${roomId}`, window.systemConstants?.AUX_deltaT_ArExterno || 10);
+  updateElementText(`ganho-ar-sensivel-${roomId}`, Math.ceil(gains.arSensivel));
+  updateElementText(`total-ar-sensivel-${roomId}`, totals.arSensivel);
+
+  updateElementText(`var-ar-latente-${roomId}`, inputData.vazaoArExterno || 0);
+  updateElementText(`f-ar-latente-${roomId}`, window.systemConstants?.AUX_f_ArExterno || 3.01);
+  updateElementText(`deltaua-ar-latente-${roomId}`, window.systemConstants?.AUX_deltaUa_ArExterno || 8.47);
+  updateElementText(`ganho-ar-latente-${roomId}`, Math.ceil(gains.arLatente));
+  updateElementText(`total-ar-latente-${roomId}`, totals.arLatente);
+
+  updateElementText(`total-externo-${roomId}`, totals.externo);
+  updateElementText(`total-divisoes-${roomId}`, totals.divisoes);
+  
+  console.log(`✅ Display térmico atualizado para sala: ${roomId}`);
+}
+
+/**
+ * 🔍 FUNÇÕES AUXILIARES DE BUSCA (thermalCalculations.js)
+ */
+
+function findRoomContentThermal(roomId) {
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (findRoomContentThermal) thermalCalculations.js [ID de sala inválido: ${roomId}]`);
+        return null;
+    }
+    
+    console.log(`🔍 [THERMAL] Procurando sala: "${roomId}"`);
+    
+    let roomContent = document.getElementById(`room-content-${roomId}`);
+    
+    if (roomContent) {
+        console.log(`✅ [THERMAL] Sala encontrada pelo ID: room-content-${roomId}`);
+        return roomContent;
+    }
+    
+    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+    
+    if (roomBlock) {
+        const foundId = roomBlock.dataset.roomId;
+        console.log(`✅ [THERMAL] Sala encontrada pelo data-room-id: ${foundId}`);
+        
+        const finalRoomContent = document.getElementById(`room-content-${foundId}`);
+        if (finalRoomContent) {
+            return finalRoomContent;
+        }
+    }
+  
+    console.error(`❌ [THERMAL] Sala não encontrada: ${roomId}`);
+    const allRooms = document.querySelectorAll('.room-block');
+    console.log('🔍 [THERMAL] Todas as salas disponíveis no DOM:');
+    allRooms.forEach(room => {
+        console.log(`  - ID: "${room.dataset.roomId}", Nome: "${room.dataset.roomName}", Projeto: "${room.dataset.projectId}", Obra: "${room.dataset.obraId}"`);
+    });
+    
+    return null;
+}
+
+function calculateUValues(tipoConstrucao) {
+  const U_VALUE_ALVENARIA_TETO = 3.961;
+  const U_VALUE_ALVENARIA_PAREDE = 2.546;
+  const U_VALUE_LA_ROCHA_TETO = 1.145;
+  const U_VALUE_LA_ROCHA_PAREDE = 1.12;
+
+  console.log(`[THERMAL UVALUES] tipoConstrucao recebido: "${tipoConstrucao}"`);
+
+  let uValueParede, uValueTeto;
+
+  const tipoLower = tipoConstrucao ? tipoConstrucao.toLowerCase() : "";
+  
+  if (tipoLower === "eletrocentro") {
+    uValueParede = U_VALUE_LA_ROCHA_PAREDE;
+    uValueTeto = U_VALUE_LA_ROCHA_TETO;
+  } else if (tipoLower === "alvenaria") {
+    uValueParede = U_VALUE_ALVENARIA_PAREDE;
+    uValueTeto = U_VALUE_ALVENARIA_TETO;
+  } else {
+    uValueParede = 0;
+    uValueTeto = 0;
+  }
+
+  const result = {
+    parede: uValueParede,
+    teto: uValueTeto,
+    piso: window.systemConstants?.AUX_U_Value_Piso || 2.7,
+  };
+
+  console.log("[THERMAL UVALUES] UValues calculados:", result);
+  return result;
+}
+
+function calculateAuxiliaryVariables(inputData) {
+  const vazaoArExterno = safeNumber(inputData.vazaoArExterno);
+  const densiAr = window.systemConstants?.Densi_ar || 1.17;
+
+  const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000;
+
+  return {
+    m_ArExterno: m_ArExterno,
+    vazaoArExterno: vazaoArExterno
+  };
+}
+
+/**
+ * 🎯 FUNÇÃO PRINCIPAL DE CÁLCULO (thermalCalculations.js)
+ */
+
+async function calculateThermalGains(roomId, vazaoArExterno = 0) {
+  try {
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (calculateThermalGains) thermalCalculations.js [ID de sala inválido: ${roomId}]`);
+        return;
+    }
+    
+    console.log(`🔥 [THERMAL] Iniciando cálculos para sala: ${roomId}`);
+    
+    await waitForSystemConstants();
+
+    if (!validateSystemConstants()) {
+      console.error(`[THERMAL] validateSystemConstants FALHOU para ${roomId}`);
+      return;
+    }
+
+    const roomContent = findRoomContentThermal(roomId);
+    if (!roomContent) {
+      console.error(`[THERMAL] room-content-${roomId} NÃO ENCONTRADO`);
+      return;
+    }
+
+    const climaSection = roomContent.querySelector('[id*="-clima"]');
+    if (!climaSection) {
+      console.error(`[THERMAL] Seção clima NÃO ENCONTRADA para ${roomId}`);
+      return;
+    }
+
+    const inputData = collectClimatizationInputs(climaSection, roomId);
+
+    const calcData = {
+      ...inputData,
+      area: safeNumber(inputData.area),
+      paredeOeste: safeNumber(inputData.paredeOeste),
+      paredeLeste: safeNumber(inputData.paredeLeste),
+      paredeNorte: safeNumber(inputData.paredeNorte),
+      paredeSul: safeNumber(inputData.paredeSul),
+      peDireito: safeNumber(inputData.peDireito),
+      divisoriaNaoClima1: safeNumber(inputData.divisoriaNaoClima1),
+      divisoriaNaoClima2: safeNumber(inputData.divisoriaNaoClima2),
+      divisoriaClima1: safeNumber(inputData.divisoriaClima1),
+      divisoriaClima2: safeNumber(inputData.divisoriaClima2),
+      dissipacao: safeNumber(inputData.dissipacao),
+      numPessoas: safeNumber(inputData.numPessoas),
+      vazaoArExterno: vazaoArExterno
+    };
+
+    const uValues = calculateUValues(calcData.tipoConstrucao);
+    const auxVars = calculateAuxiliaryVariables({...calcData, vazaoArExterno});
+
+    const gains = {
+      teto: calculateCeilingGain(calcData.area, uValues.teto, window.systemConstants.deltaT_teto),
+      paredeOeste: calculateWallGain(calcData.paredeOeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Oes),
+      paredeLeste: calculateWallGain(calcData.paredeLeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Les),
+      paredeNorte: calculateWallGain(calcData.paredeNorte, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Nor),
+      paredeSul: calculateWallGain(calcData.paredeSul, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Sul),
+      divisoriaNaoClima1: calculatePartitionGain(calcData.divisoriaNaoClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim1),
+      divisoriaNaoClima2: calculatePartitionGain(calcData.divisoriaNaoClima2, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim2),
+      divisoriaClima1: calculatePartitionGain(calcData.divisoriaClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_clim1),
+      divisoriaClima2: calculatePartitionGain(calcData.divisoriaClima2, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_clim2),
+      piso: calculateFloorGain(calcData.area, window.systemConstants),
+      iluminacao: calculateLightingGain(calcData.area, window.systemConstants),
+      dissipacao: calculateDissipationGain(calcData.dissipacao, window.systemConstants),
+      pessoas: calculatePeopleGain(calcData.numPessoas, window.systemConstants),
+      arSensivel: calculateExternalAirSensibleGain(vazaoArExterno, auxVars, window.systemConstants),
+      arLatente: calculateExternalAirLatentGain(vazaoArExterno, window.systemConstants),
+    };
+
+    const totals = calculateTotals(gains);
+
+    console.log(`🔥 [THERMAL] Ganhos calculados para ${roomId}:`, gains);
+    console.log(`🔥 [THERMAL] Totais para ${roomId}:`, totals);
+    console.log("🔥 [THERMAL] ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====");
+
+    updateThermalGainsDisplay(roomId, gains, totals, uValues, {...inputData, vazaoArExterno});
+
+    console.log(`🔥 [THERMAL] Tentando atualizar tabela de capacidade para ${roomId}`);
+    setTimeout(() => {
+      if (typeof calculateCapacitySolution === 'function') {
+        calculateCapacitySolution(roomId);
+      } else if (typeof window.calculateCapacitySolution === 'function') {
+        window.calculateCapacitySolution(roomId);
+      } else if (typeof updateCapacityFromThermalGains === 'function') {
+        updateCapacityFromThermalGains(roomId);
+      } else if (typeof window.updateCapacityFromThermalGains === 'function') {
+        window.updateCapacityFromThermalGains(roomId);
+      } else {
+        console.error(`[THERMAL] Nenhuma função de capacidade encontrada para ${roomId}`);
+        
+        const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+        if (capacityTable) {
+          console.log(`[THERMAL] Tabela de capacidade encontrada, tentando inicialização manual`);
+          const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`);
+          const totalTRElement = document.getElementById(`total-tr-${roomId}`);
+          
+          if (totalTRElement && cargaEstimadaElement) {
+            const totalTR = parseFloat(totalTRElement.textContent) || 0;
+            cargaEstimadaElement.textContent = totalTR.toFixed(1);
+            console.log(`[THERMAL] Carga estimada atualizada manualmente: ${totalTR}`);
+          }
+        }
+      }
+    }, 300);
+    
+  } catch (error) {
+    console.error(`[THERMAL] Erro em calculateThermalGains para ${roomId}:`, error);
+  }
+}
+
+/**
+ * 🌐 EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
+ */
+
+// Exportações para módulos ES6
+export {
+  calculateThermalGains,
+  calculateUValues,
+  calculateAuxiliaryVariables,
+  findRoomContentThermal,
+  calculateCeilingGain,
+  calculateWallGain,
+  calculatePartitionGain,
+  calculateFloorGain,
+  calculateLightingGain,
+  calculateDissipationGain,
+  calculatePeopleGain,
+  calculateExternalAirSensibleGain,
+  calculateExternalAirLatentGain,
+  calculateTotals,
+  updateThermalGainsDisplay,
+  updateWallDisplay,
+  updatePartitionDisplay
+};
+
+// Compatibilidade global para scripts legados
+if (typeof window !== 'undefined') {
+  window.calculateThermalGains = calculateThermalGains;
+  window.calculateUValues = calculateUValues;
+  window.calculateAuxiliaryVariables = calculateAuxiliaryVariables;
+  window.findRoomContentThermal = findRoomContentThermal;
+  window.calculateCeilingGain = calculateCeilingGain;
+  window.calculateWallGain = calculateWallGain;
+  window.calculatePartitionGain = calculatePartitionGain;
+  window.calculateFloorGain = calculateFloorGain;
+  window.calculateLightingGain = calculateLightingGain;
+  window.calculateDissipationGain = calculateDissipationGain;
+  window.calculatePeopleGain = calculatePeopleGain;
+  window.calculateExternalAirSensibleGain = calculateExternalAirSensibleGain;
+  window.calculateExternalAirLatentGain = calculateExternalAirLatentGain;
+  window.calculateTotals = calculateTotals;
+  window.updateThermalGainsDisplay = updateThermalGainsDisplay;
+  window.updateWallDisplay = updateWallDisplay;
+  window.updatePartitionDisplay = updatePartitionDisplay;
+}
+/* ==== FIM: thermal-gains.js ==== */

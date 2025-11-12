@@ -353,15 +353,36 @@ function collectClimatizationInputs(climaSection, roomId) {
         }
     });
 
-    // ✅ CORREÇÃO: Garantir que pressurizacao e setpointPressurizacao estejam presentes
+    // ✅ CORREÇÃO: Coletar estado da pressurização dos RADIO BUTTONS
     if (data.pressurizacao === undefined) {
-        const pressurizacaoCheckbox = climaSection.querySelector('input[data-field="pressurizacao"]');
-        data.pressurizacao = pressurizacaoCheckbox ? pressurizacaoCheckbox.checked : false;
+        const radioSim = climaSection.querySelector('input[type="radio"][value="sim"]');
+        const radioNao = climaSection.querySelector('input[type="radio"][value="nao"]');
+        
+        // Se o radio "sim" estiver marcado, pressurização está ativa
+        data.pressurizacao = radioSim ? radioSim.checked : false;
+        
+        console.log(`🎯 [COLLECT] Estado da pressurização:`, {
+            radioSimChecked: radioSim?.checked,
+            radioNaoChecked: radioNao?.checked,
+            pressurizacao: data.pressurizacao
+        });
     }
     
-    if (data.setpointPressurizacao === undefined) {
-        const setpointInput = climaSection.querySelector('input[data-field="setpointPressurizacao"]');
-        data.setpointPressurizacao = setpointInput ? coreSafeNumber(setpointInput.value) : 0;
+    // ✅ CORREÇÃO: Garantir que setpointTemp esteja presente
+    if (data.setpointTemp === undefined) {
+        const setpointInput = climaSection.querySelector('input[data-field="setpointTemp"]');
+        data.setpointTemp = setpointInput ? safeNumber(setpointInput.value) : 0;
+    }
+
+    // ✅ CORREÇÃO: Garantir que pressurizacaoSetpoint esteja presente
+    if (data.pressurizacaoSetpoint === undefined) {
+        const pressurizacaoInput = climaSection.querySelector('input[data-field="pressurizacaoSetpoint"]');
+        data.pressurizacaoSetpoint = pressurizacaoInput ? safeNumber(pressurizacaoInput.value) : 0;
+        
+        console.log(`🎯 [COLLECT] Valor da pressurização:`, {
+            pressurizacaoSetpoint: data.pressurizacaoSetpoint,
+            inputValue: pressurizacaoInput?.value
+        });
     }
 
     console.log(`✅ [COLLECT] ${Object.keys(data).length} dados coletados para ${roomId}:`, data);

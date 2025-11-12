@@ -184,7 +184,7 @@ function buildPressurizationRow(roomId) {
         </div>
         <input type="number"
           class="form-input clima-input"
-          data-field="pressurizacao"
+          data-field="pressurizacaoSetpoint"
           data-room-id="${roomId}"
           placeholder="Ex: 25"
           value="25"
@@ -200,7 +200,7 @@ function buildPressurizationRow(roomId) {
 
         <input type="number"
                class="form-input clima-input"
-               data-field="setpointPressurizacao"
+               data-field="setpointTemp"
                data-room-id="${roomId}"
                placeholder="Ex: 25"
                value="25"
@@ -397,11 +397,11 @@ function togglePressurizationFields(roomId, enabled) {
         return;
     }
     
-    const pressurizacaoInput = document.querySelector(`input[data-field="pressurizacao"][data-room-id="${roomId}"]`);
+    const pressurizacaoInput = document.querySelector(`input[data-field="pressurizacaoSetpoint"][data-room-id="${roomId}"]`);
     const portasSection = document.getElementById(`pressurizacao-portas-${roomId}`);
     const portasSimples = document.querySelector(`input[data-field="numPortasSimples"][data-room-id="${roomId}"]`);
     const portasDuplas = document.querySelector(`input[data-field="numPortasDuplas"][data-room-id="${roomId}"]`);
-    const setpointInput = document.querySelector(`input[data-field="setpointPressurizacao"][data-room-id="${roomId}"]`);
+    const setpointInput = document.querySelector(`input[data-field="setpointTemp"][data-room-id="${roomId}"]`);
 
     if (enabled) {
         pressurizacaoInput.disabled = false;

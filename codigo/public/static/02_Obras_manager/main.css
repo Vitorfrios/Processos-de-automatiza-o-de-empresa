@@ -29,7 +29,6 @@ body[data-page="manager"] .add-room-section {
 /* Grid de obras para melhor visualização */
 body[data-page="manager"] #projects-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: var(--spacing-lg);
     padding: var(--spacing-md);
 }

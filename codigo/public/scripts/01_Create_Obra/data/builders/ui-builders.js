@@ -156,69 +156,202 @@ function fillClimatizationInputs(roomElement, inputsData) {
 
     console.log(`🔄 Preenchendo inputs de climatização:`, inputsData);
 
-    const textInputs = roomElement.querySelectorAll('.clima-input[type="text"], .clima-input[type="number"], .clima-input[data-field]');
-    textInputs.forEach(input => {
-        const field = input.getAttribute('data-field');
-        if (!field || inputsData[field] === undefined) return;
-
-        let value = inputsData[field];
-        
-        // ✅ CORREÇÃO: Converter boolean e valores inválidos para número
-        if (input.type === 'number') {
-            if (value === false || value === 'false' || value === null || value === '') {
-                value = 0;
-            }
-            if (value === true || value === 'true') {
-                value = 1;
-            }
-            
-            // Garantir que é um número válido
-            const numericValue = parseFloat(value);
-            value = isNaN(numericValue) ? 0 : numericValue;
-        }
-        
-        input.value = value;
-        console.log(`✅ Campo ${field} preenchido: ${value}`);
-
-        setTimeout(() => {
-            const event = new Event('change', { bubbles: true });
-            input.dispatchEvent(event);
-        }, 50);
-    });
-
-    const selectInputs = roomElement.querySelectorAll('select.clima-input[data-field]');
-    selectInputs.forEach(select => {
-        const field = select.getAttribute('data-field');
-        if (!field || inputsData[field] === undefined) return;
-
-        const value = inputsData[field];
-        select.value = value;
-        console.log(`✅ Select ${field} preenchido: ${value}`);
-
-        setTimeout(() => {
-            const event = new Event('change', { bubbles: true });
-            select.dispatchEvent(event);
-        }, 50);
-    });
-
+    const roomId = roomElement.dataset.roomId;
+    
+    // PRIMEIRO: Processar pressurização (radio buttons) - CRÍTICO
     if (inputsData.pressurizacao !== undefined) {
-        const pressurizacaoValue = inputsData.pressurizacao ? 'sim' : 'nao';
-        const roomId = roomElement.dataset.roomId;
-        const radioName = `pressurizacao-${roomId}`;
-        const radioToCheck = roomElement.querySelector(`input[name="${radioName}"][value="${pressurizacaoValue}"]`);
+        console.log(`🎯 Processando pressurização para sala ${roomId}:`, inputsData.pressurizacao);
         
+        // ✅ CORREÇÃO: Garantir que pressurizacao seja boolean
+        const isPressurizacaoAtiva = typeof inputsData.pressurizacao === 'boolean' 
+            ? inputsData.pressurizacao 
+            : inputsData.pressurizacao === 'true' || inputsData.pressurizacao === true || inputsData.pressurizacao === 1;
+        
+        const pressurizacaoValue = isPressurizacaoAtiva ? 'sim' : 'nao';
+        
+        console.log(`🔍 Buscando radio buttons para sala ${roomId}, valor: ${pressurizacaoValue}`);
+        
+        // Buscar todos os radios de pressurização na sala
+        const pressurizacaoRadios = roomElement.querySelectorAll(`input[type="radio"][name*="pressurizacao"]`);
+        
+        console.log(`📻 Encontrados ${pressurizacaoRadios.length} radios de pressurização`);
+        
+        let radioToCheck = null;
+        pressurizacaoRadios.forEach(radio => {
+            console.log(`🔘 Radio: value="${radio.value}", checked=${radio.checked}`);
+            if (radio.value === pressurizacaoValue) {
+                radioToCheck = radio;
+            }
+        });
+
         if (radioToCheck) {
-            radioToCheck.checked = true;
-            console.log(`✅ Pressurização definida: ${pressurizacaoValue}`);
+            // Desselecionar todos primeiro
+            pressurizacaoRadios.forEach(radio => {
+                radio.checked = false;
+            });
             
+            // Selecionar o correto
+            radioToCheck.checked = true;
+            console.log(`✅ Pressurização definida: ${pressurizacaoValue} para sala ${roomId}`);
+            
+            // Disparar evento change para atualizar campos dependentes
             setTimeout(() => {
+                console.log(`🎬 Disparando evento change para pressurização`);
                 const event = new Event('change', { bubbles: true });
                 radioToCheck.dispatchEvent(event);
-            }, 50);
+            }, 100);
+        } else {
+            console.error(`❌ Radio button de pressurização não encontrado para valor: ${pressurizacaoValue}`);
         }
     }
 
-    console.log(`✅ Inputs de climatização preenchidos para sala ${roomElement.dataset.roomId}`);
+    // SEGUNDO: Preencher inputs específicos da pressurização primeiro
+    setTimeout(() => {
+        console.log(`🔧 Preenchendo campos específicos de pressurização para ${roomId}`);
+        
+        // ✅ CORREÇÃO: Preencher pressurizacaoSetpoint como número
+        if (inputsData.pressurizacaoSetpoint !== undefined) {
+            const pressurizacaoInput = roomElement.querySelector(`.clima-input[data-field="pressurizacaoSetpoint"]`);
+            if (pressurizacaoInput) {
+                // Converter para número garantido
+                const numericValue = parseFloat(inputsData.pressurizacaoSetpoint) || 25;
+                pressurizacaoInput.value = numericValue;
+                console.log(`✅ Campo pressurizacaoSetpoint definido: ${numericValue}`);
+                
+                setTimeout(() => {
+                    const event = new Event('change', { bubbles: true });
+                    pressurizacaoInput.dispatchEvent(event);
+                }, 50);
+            } else {
+                console.warn(`⚠️ Campo pressurizacaoSetpoint não encontrado na sala ${roomId}`);
+            }
+        }
+
+        // ✅ CORREÇÃO: Preencher numPortasDuplas como número
+        if (inputsData.numPortasDuplas !== undefined) {
+            const portasDuplasInput = roomElement.querySelector(`.clima-input[data-field="numPortasDuplas"]`);
+            if (portasDuplasInput) {
+                const numericValue = parseFloat(inputsData.numPortasDuplas) || 0;
+                portasDuplasInput.value = numericValue;
+                console.log(`✅ Campo numPortasDuplas definido: ${numericValue}`);
+            }
+        }
+
+        // ✅ CORREÇÃO: Preencher numPortasSimples como número
+        if (inputsData.numPortasSimples !== undefined) {
+            const portasSimplesInput = roomElement.querySelector(`.clima-input[data-field="numPortasSimples"]`);
+            if (portasSimplesInput) {
+                const numericValue = parseFloat(inputsData.numPortasSimples) || 0;
+                portasSimplesInput.value = numericValue;
+                console.log(`✅ Campo numPortasSimples definido: ${numericValue}`);
+            }
+        }
+
+    }, 200);
+
+    // TERCEIRO: Preencher outros inputs gerais
+    setTimeout(() => {
+        const textInputs = roomElement.querySelectorAll('.clima-input[type="text"], .clima-input[type="number"], .clima-input[data-field]');
+        console.log(`📋 Encontrados ${textInputs.length} inputs para processar`);
+        
+        textInputs.forEach(input => {
+            const field = input.getAttribute('data-field');
+            if (!field || inputsData[field] === undefined) {
+                console.log(`⏭️  Campo ${field} não encontrado nos dados, pulando`);
+                return;
+            }
+
+            // Pular campos já preenchidos específicos da pressurização
+            if (field === 'pressurizacaoSetpoint' || field === 'numPortasDuplas' || field === 'numPortasSimples') {
+                console.log(`⏭️  Campo ${field} já preenchido, pulando`);
+                return;
+            }
+            
+            let value = inputsData[field];
+            
+            // ✅ CORREÇÃO: Converter boolean e valores inválidos para número
+            if (input.type === 'number') {
+                if (value === false || value === 'false' || value === null || value === '') {
+                    value = 0;
+                }
+                if (value === true || value === 'true') {
+                    value = 1;
+                }
+                
+                // Garantir que é um número válido
+                const numericValue = parseFloat(value);
+                value = isNaN(numericValue) ? 0 : numericValue;
+            }
+            
+            input.value = value;
+            console.log(`✅ Campo ${field} preenchido: ${value}`);
+
+            setTimeout(() => {
+                const event = new Event('change', { bubbles: true });
+                input.dispatchEvent(event);
+            }, 50);
+        });
+
+        // QUARTO: Preencher selects
+        const selectInputs = roomElement.querySelectorAll('select.clima-input[data-field]');
+        selectInputs.forEach(select => {
+            const field = select.getAttribute('data-field');
+            if (!field || inputsData[field] === undefined) return;
+
+            const value = inputsData[field];
+            select.value = value;
+            console.log(`✅ Select ${field} preenchido: ${value}`);
+
+            setTimeout(() => {
+                const event = new Event('change', { bubbles: true });
+                select.dispatchEvent(event);
+            }, 50);
+        });
+
+        // QUINTO: Verificação final do estado
+        setTimeout(() => {
+            console.log(`🔍 Verificação final do estado para sala ${roomId}`);
+            
+            // Verificar estado dos campos de pressurização
+            const pressurizacaoInput = roomElement.querySelector('.clima-input[data-field="pressurizacaoSetpoint"]');
+            const portasDuplasInput = roomElement.querySelector('.clima-input[data-field="numPortasDuplas"]');
+            const portasSimplesInput = roomElement.querySelector('.clima-input[data-field="numPortasSimples"]');
+            
+            console.log(`📊 Estado final dos campos:`);
+            console.log(`- Pressurização Setpoint:`, pressurizacaoInput?.value);
+            console.log(`- Portas Duplas:`, portasDuplasInput?.value);
+            console.log(`- Portas Simples:`, portasSimplesInput?.value);
+            console.log(`- Pressurização ativa:`, inputsData.pressurizacao);
+            
+            // Se pressurização for false, garantir que campos relacionados estejam zerados
+            if (inputsData.pressurizacao === false) {
+                console.log(`🔒 Pressurização desativada - verificando campos`);
+                if (pressurizacaoInput && (!inputsData.pressurizacaoSetpoint || inputsData.pressurizacaoSetpoint === "0" || inputsData.pressurizacaoSetpoint === 0)) {
+                    pressurizacaoInput.value = "0";
+                    console.log(`✅ Pressurização desativada - setpoint zerado`);
+                }
+                if (portasDuplasInput && (!inputsData.numPortasDuplas || inputsData.numPortasDuplas === "0" || inputsData.numPortasDuplas === 0)) {
+                    portasDuplasInput.value = "0";
+                    console.log(`✅ Pressurização desativada - portas duplas zeradas`);
+                }
+                if (portasSimplesInput && (!inputsData.numPortasSimples || inputsData.numPortasSimples === "0" || inputsData.numPortasSimples === 0)) {
+                    portasSimplesInput.value = "0";
+                    console.log(`✅ Pressurização desativada - portas simples zeradas`);
+                }
+            }
+            
+            // Disparar cálculo final após todos os campos estarem preenchidos
+            if (roomId && typeof calculateVazaoArAndThermalGains === 'function') {
+                setTimeout(() => {
+                    console.log(`🧮 Disparando cálculo final para sala ${roomId}`);
+                    calculateVazaoArAndThermalGains(roomId);
+                }, 300);
+            }
+        }, 150);
+
+    }, 400); // Delay maior para garantir que a pressurização foi processada primeiro
+
+    console.log(`✅ Processo de preenchimento iniciado para sala ${roomId}`);
 }
 
 /**
