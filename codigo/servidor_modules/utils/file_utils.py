@@ -17,7 +17,7 @@ class FileUtils:
         print(f"Procurando estrutura a partir de: {current_dir}")
         
         # Verifica se estamos na estrutura correta
-        if (current_dir / "public" / "pages" / "01_CreateProjects.html").exists():
+        if (current_dir / "public" / "pages" / "01_Create_Obras.html").exists():
             print("Estrutura encontrada: Diretorio correto")
             return current_dir
         

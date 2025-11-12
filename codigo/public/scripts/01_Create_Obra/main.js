@@ -1,5 +1,5 @@
 /**
- * main.js - VERSÃO ATUALIZADA PARA NOVA ESTRUTURA DE MÓDULOS
+ * main.js -  PARA NOVA ESTRUTURA DE MÓDULOS
  * 🎯 Compatível com a reorganização completa do sistema
  */
 
@@ -23,7 +23,7 @@ import { shutdownManual } from './data/adapters/shutdown-adapter.js';
 let modulesLoaded = false;
 
 /**
- * Sistema de Shutdown Manual - ATUALIZADO
+ * Sistema de Shutdown Manual - 
  */
 class ShutdownManager {
   constructor() {
@@ -80,7 +80,7 @@ class ShutdownManager {
 // Inicializar shutdown manager
 let shutdownManager = null;
 
-// ✅ CORREÇÃO: FUNÇÕES GLOBAIS ATUALIZADAS PARA NOVA ESTRUTURA
+// FUNÇÕES GLOBAIS ATUALIZADAS PARA NOVA ESTRUTURA
 window.createEmptyObra = async function(obraName, obraId) {
     try {
         // ✅ CARREGAR DO NOVO MÓDULO
@@ -176,14 +176,14 @@ async function loadSystemConstants() {
 }
 
 /**
- * Carrega todos os módulos do sistema dinamicamente - VERSÃO ATUALIZADA
+ * Carrega todos os módulos do sistema dinamicamente - 
  */
 async function loadAllModules() {
   if (modulesLoaded) return;
   try {
       console.log("📦 Iniciando carregamento de módulos...");
       
-      // ✅ CARREGAR NOVOS MÓDULOS - ORDEM CORRIGIDA
+      // ✅ CARREGAR MÓDULOS - 
       const modules = await Promise.all([
           // UI Components
           import('./ui/interface.js'),                    // interfaceModule
@@ -197,7 +197,7 @@ async function loadAllModules() {
           import('./features/managers/obra-manager.js'),  // obraManagerModule
           import('./features/managers/project-manager.js'), // projectManagerModule
           
-          // Data Modules - ORDEM CORRIGIDA
+          // Data Modules - 
           import('./data/modules/rooms.js'),              // roomsModule
           import('./data/modules/climatizacao.js'),       // climatizationModule
           import('./data/modules/configuracao.js'),       // configuracaoModule
@@ -230,7 +230,7 @@ async function loadAllModules() {
           obraManagerModule,
           projectManagerModule,
           
-          // Data Modules - ORDEM CORRIGIDA
+          // Data Modules - 
           roomsModule,
           climatizationModule,
           configuracaoModule,
@@ -281,7 +281,7 @@ async function loadAllModules() {
           deleteRoom: roomsModule.deleteRoom,
           createEmptyRoom: roomsModule.createEmptyRoom,
           
-          // ========== CONSTRUCTION SECTIONS - CRÍTICO ==========
+          // ========== CONSTRUCTION SECTIONS -  ==========
           buildClimatizationSection: climatizationModule.buildClimatizationSection, 
           buildMachinesSection: machinesCoreModule.buildMachinesSection,           
           buildConfigurationSection: configuracaoModule.buildConfigurationSection, 
@@ -636,7 +636,7 @@ function verifyCriticalFunctions() {
 }
 
 /**
- * Inicialização principal do sistema - ORDEM CORRIGIDA
+ * Inicialização principal do sistema - 
  */
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Inicializando sistema...");

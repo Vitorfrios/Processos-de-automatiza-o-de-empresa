@@ -315,6 +315,7 @@ function extractClimatizationInputs(roomElement) {
         return inputs;
     }
     
+    // Primeiro: extrair todos os inputs de texto/number
     const textInputs = roomElement.querySelectorAll('.clima-input[type="text"], .clima-input[type="number"], .clima-input[data-field]');
     textInputs.forEach(input => {
         const field = input.getAttribute('data-field');
@@ -331,6 +332,7 @@ function extractClimatizationInputs(roomElement) {
         }
     });
 
+    // Segundo: extrair o valor da pressurização (radio buttons)
     const pressurizacaoRadios = roomElement.querySelectorAll('input[name*="pressurizacao"][type="radio"]');
     let pressurizacaoValue = false;
     
@@ -342,21 +344,27 @@ function extractClimatizationInputs(roomElement) {
     
     inputs.pressurizacao = pressurizacaoValue;
     
-    if (!pressurizacaoValue) {
-        inputs.pressurizacaoSetpoint = "25";
-        inputs.numPortasDuplas = "0";
-        inputs.numPortasSimples = "0";
-    } else {
-        const setpointInput = roomElement.querySelector('.clima-input[data-field="pressurizacaoSetpoint"]');
+    // Terceiro: se pressurização for SIM, buscar os campos específicos
+    // Se for NÃO, definir valores padrão ou zerados
+    if (pressurizacaoValue) {
+        // Quando SIM, buscar os valores reais dos inputs
+        const setpointInput = roomElement.querySelector('.clima-input[data-field="pressurizacao"]');
         const portasDuplasInput = roomElement.querySelector('.clima-input[data-field="numPortasDuplas"]');
         const portasSimplesInput = roomElement.querySelector('.clima-input[data-field="numPortasSimples"]');
         
+        // Usar valores existentes ou manter os que já foram extraídos
         if (setpointInput) inputs.pressurizacaoSetpoint = setpointInput.value || "25";
         if (portasDuplasInput) inputs.numPortasDuplas = portasDuplasInput.value || "0";
         if (portasSimplesInput) inputs.numPortasSimples = portasSimplesInput.value || "0";
+    } else {
+        // Quando NÃO, definir valores zerados ou padrão
+        inputs.pressurizacaoSetpoint = "25"; 
+        inputs.numPortasDuplas = "0";
+        inputs.numPortasSimples = "0";
     }
 
-    const selectInputs = roomElement.querySelectorAll('.clima-input[data-field]');
+    // Quarto: extrair selects (se houver)
+    const selectInputs = roomElement.querySelectorAll('select.clima-input[data-field]');
     selectInputs.forEach(select => {
         const field = select.getAttribute('data-field');
         if (!field || inputs[field] !== undefined) return;

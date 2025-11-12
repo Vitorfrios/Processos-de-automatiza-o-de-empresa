@@ -31,7 +31,7 @@ class ServerUtils:
         """Exibe informações do servidor"""
         print(f"\n🎉 SERVIDOR INICIADO COM SUCESSO!")
         print("=" * 50)
-        print(f"🌐 URL: http://localhost:{port}/public/pages/01_CreateProjects.html")
+        print(f"🌐 URL: http://localhost:{port}/public/pages/01_Create_Obras.html")
         print("=" * 50)
 
     @staticmethod
@@ -39,7 +39,7 @@ class ServerUtils:
         """Abre o navegador automaticamente"""
         time.sleep(2)
         
-        url = f"http://localhost:{port}/public/pages/01_CreateProjects.html"
+        url = f"http://localhost:{port}/public/pages/01_Create_Obras.html"
         print(f"🌐 Abrindo aplicação: {url}")
         
         try:

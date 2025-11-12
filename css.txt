@@ -1,0 +1,1985 @@
+
+/* ==== INÍCIO: buttons.css ==== */
+/* Botões */
+.btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--btn-shadow);
+}
+
+.btn-add {
+  background: var(--success-gradient);
+  color: var(--color-white);
+}
+
+.btn-add-secondary {
+  background: var(--primary-gradient);
+  color: var(--color-white);
+}
+
+.btn-add-small {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 0.85rem;
+  background: var(--btn-add-small-bg);
+  color: var(--color-white);
+}
+
+.btn-edit {
+  background: var(--warning-gradient);
+  color: var(--color-white);
+}
+
+.btn-delete {
+  background: var(--danger-gradient);
+  color: var(--color-white);
+}
+
+.btn-delete-small {
+  background: var(--btn-delete-small-bg);
+  color: var(--color-white);
+  padding: var(--btn-delete-small-padding);
+  font-size: 1.2rem;
+  border-radius: var(--btn-delete-small-radius);
+  text-transform: none; 
+}
+
+/* ===== BOTÕES ESPECÍFICOS PARA OBRA/PROJETO ===== */
+.btn-verify {
+  background: var(--btn-verify-gradient);
+  color: var(--color-white);
+}
+
+.btn-save {
+  background: var(--btn-save-gradient);
+  color: var(--color-white);
+}
+
+.btn-update {
+  background: var(--warning-gradient);
+  color: var(--color-white);
+}
+
+.btn-download {
+  background: var(--btn-download-gradient);
+  color: var(--color-white);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Botões Minimizadores */
+.minimizer {
+  background: var(--minimizer-bg);
+  color: var(--color-white);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius);
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.minimizer:hover {
+  background: var(--minimizer-hover-bg);
+  transform: scale(1.05);
+}
+
+/* Minimizadores para seções específicas */
+.section-header .minimizer,
+.section-header-machine .minimizer,
+.subsection-header .minimizer {
+  background: var(--section-minimizer-bg);
+  color: var(--section-minimizer-color);
+}
+
+.section-header .minimizer:hover,
+.section-header-machine .minimizer:hover,
+.subsection-header .minimizer:hover {
+  background: var(--section-minimizer-hover-bg);
+}
+
+
+
+/* Minimizadores para obra e projeto */
+.obra-header .minimizer,
+.project-header .minimizer,
+.room-header .minimizer {
+  background: var(--minimizer-bg);
+  color: var(--color-white);
+}
+
+.obra-header .minimizer:hover,
+.project-header .minimizer:hover,
+.room-header .minimizer:hover {
+  background: var(--minimizer-hover-bg);
+}
+/* ==== FIM: buttons.css ==== */
+
+/* ==== INÍCIO: cards.css ==== */
+/* Cards */
+.obra-block {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-xl);
+  box-shadow: 0 4px 6px var(--card-shadow);
+  margin-bottom: var(--spacing-xl);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+  border: 1px solid var(--color-gray-light);
+}
+
+.obra-block:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px var(--card-hover-shadow);
+}
+
+
+.obra-title {
+  flex: 1;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.obra-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+.obra-content {
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+}
+
+.project-block {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-xl);
+  box-shadow: 0 4px 6px var(--card-shadow);
+  margin-bottom: var(--spacing-xl);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+  border: 1px solid var(--color-gray-light);
+}
+
+.project-block:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px var(--card-hover-shadow);
+}
+
+.project-header {
+  background: var(--primary-gradient);
+  color: white;
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.project-title {
+  flex: 1;
+  font-size: clamp(1.4rem, 2vw + 1rem, 1.7rem);
+  font-weight: 600;
+}
+
+.project-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.project-content {
+  padding: var(--spacing-lg);
+}
+
+/* Blocos de Sala */
+.room-block {
+  background: var(--color-gray-lightest);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--color-gray-light);
+  overflow: hidden; /* importante para border-radius funcionar */
+}
+
+.room-header {
+  background: #4a5568;
+  color: white;
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  /* Remover border-radius fixo do header */
+  border-radius: 0;
+}
+
+/* Estado quando a sala está minimizada */
+.room-block.collapsed .room-header {
+  border-radius: var(--border-radius-lg); /* Aplica borda redonda apenas quando minimizada */
+}
+
+.room-title {
+  flex: 1;
+  font-size: clamp(1.1rem, 1.8vw + 0.9rem, 1.3rem);
+  font-weight: 600;
+}
+
+.room-content {
+  padding: var(--spacing-lg);
+}
+
+/* Para quando a sala está expandida */
+.room-block:not(.collapsed) .room-header {
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+/* Seções */
+.section-block {
+  background: white;
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--color-gray-light);
+  overflow: hidden; /* importante para border-radius funcionar */
+}
+
+.section-header, .section-header-machine {
+  background: var(--color-gray-lighter);
+  padding: 0.75rem var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0; /* Remover border-radius fixo */
+}
+
+/* Estado quando a seção está minimizada */
+.section-block.collapsed .section-header, .section-block.collapsed .section-header-machine {
+  border-radius: var(--border-radius); /* Aplica borda redonda apenas quando minimizada */
+}
+
+.section-title {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-gray-dark);
+}
+
+.section-content {
+  padding: var(--spacing-lg);
+}
+
+/* Para quando a seção está expandida */
+.section-block:not(.collapsed) .section-header, .section-block:not(.collapsed) .section-header-machine {
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+/* Subseções */
+.subsection-block {
+  background: var(--color-gray-lightest);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--color-gray-light);
+  overflow: hidden; /* importante para border-radius funcionar */
+}
+
+.subsection-header, .section-header, .section-header-machine {
+  background: #d6d8db;
+  padding: 0.6rem var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0; /* Remover border-radius fixo */
+}
+
+/* Estado quando a subseção está minimizada */
+.subsection-block.collapsed .subsection-header {
+  border-radius: var(--border-radius); /* Aplica borda redonda apenas quando minimizada */
+}
+
+.subsection-title {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-gray-dark);
+}
+
+.subsection-content {
+  padding: var(--spacing-lg);
+}
+
+/* Para quando a subseção está expandida */
+.subsection-block:not(.collapsed) .subsection-header {
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.subsection-header .minimizer {
+  background: #adb5bd;
+  color: #495057;
+}
+
+.subsection-header .minimizer:hover {
+  background: #868e96;
+}
+
+/* Títulos editáveis */
+.editable-title {
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.editable-title:hover {
+  background-color: var(--editable-title-hover-bg);
+}
+.editable-title.editing {
+  background-color: white;
+  color: #ffffff;
+  outline: 2px solid #667eea;
+  cursor: text;
+  user-select: text;
+}
+
+.editable-title.editing:focus {
+  outline: 2px solid #667eea;
+}
+
+
+/* ==== FIM: cards.css ==== */
+
+/* ==== INÍCIO: exit-modal.css ==== */
+/* ESTILO TOAST PARA O MODAL DE SHUTDOWN */
+.confirmation-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.confirmation-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.confirmation-modal .modal-content.toast-style {
+    background: #2d3748 !important;
+    color: white !important;
+    border-left: 4px solid #4299e1 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 2rem !important;
+    max-width: 500px !important;
+    border-radius: 12px !important;
+    position: relative;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.confirmation-modal.active .modal-content.toast-style {
+    transform: translateY(0);
+}
+
+.toast-style .modal-icon {
+    color: #4299e1 !important;
+    animation: iconPulse 2s infinite ease-in-out;
+    font-size: 3.5rem !important;
+    margin-bottom: 1rem !important;
+    text-align: center;
+    display: block;
+}
+
+.toast-style .modal-title {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    font-size: 1.6rem !important;
+    margin-bottom: 1.5rem !important;
+    text-align: center;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.toast-style .modal-message {
+    color: rgba(255, 255, 255, 0.9) !important;
+    text-align: left !important;
+    margin-bottom: 2rem !important;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.toast-style .modal-message strong {
+    color: #ff6b6b !important;
+    display: block;
+    margin-bottom: 1.5rem !important;
+    font-size: 1.1rem !important;
+    text-align: center !important;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+/* Lista de avisos */
+.toast-style .warning-list {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.2rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    border-left: 3px solid #4299e1;
+}
+
+.toast-style .warning-list span {
+    font-size: 1.2rem !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    display: block;
+    margin-bottom: 0.8rem;
+    font-weight: 500;
+}
+
+.toast-style .warning-list ul {
+    text-align: left;
+    margin: 0;
+    padding-left: 1.5rem;
+    color: rgba(255, 255, 255);
+}
+
+.toast-style .warning-list ul li {
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.toast-style .warning-list ul li:last-child {
+    margin-bottom: 0;
+}
+
+/* Nota de aviso */
+.toast-style .warning-note {
+    background: rgba(255, 107, 107, 0.1);
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 3px solid #ff6b6b;
+    margin-top: 1.5rem;
+}
+
+.toast-style .warning-note small {
+    color: rgb(255 255 255) !important;
+    font-size: 1rem !important;
+    line-height: 1.4;
+    display: block;
+}
+
+/* Botões */
+.toast-style .modal-actions {
+    margin-top: 1.5rem !important;
+    gap: 1rem !important;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.toast-style .modal-btn {
+    padding: 0.8rem 1.5rem !important;
+    min-width: 120px !important;
+    font-size: 0.95rem !important;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px; /* Tamanho mínimo para touch */
+}
+
+.toast-style .btn-cancel {
+    background: #6c757d !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.toast-style .btn-cancel:hover {
+    background: #5a6268 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.toast-style .btn-confirm {
+    background: #e53e3e !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.toast-style .btn-confirm:hover {
+    background: #c53030 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
+}
+
+/* Animações específicas */
+@keyframes iconPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* RESPONSIVIDADE PARA TELAS PEQUENAS */
+@media (max-width: 480px) {
+    .confirmation-modal {
+        padding: 0.5rem;
+        align-items: flex-start;
+        padding-top: 2rem;
+    }
+    
+    .confirmation-modal .modal-content.toast-style {
+        padding: 1.5rem !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        border-radius: 10px !important;
+    }
+    
+    .toast-style .modal-actions {
+        flex-direction: column !important;
+        gap: 0.8rem !important;
+        margin-top: 1rem !important;
+    }
+    
+    .toast-style .modal-btn {
+        width: 100% !important;
+        min-width: auto !important;
+        padding: 1rem 1.5rem !important;
+        font-size: 1rem !important;
+        min-height: 50px; /* Botões maiores para mobile */
+    }
+    
+    .toast-style .modal-icon {
+        font-size: 2.5rem !important;
+        margin-bottom: 0.8rem !important;
+    }
+    
+    .toast-style .modal-title {
+        font-size: 1.3rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .toast-style .modal-message {
+        font-size: 0.95rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .toast-style .modal-message strong {
+        font-size: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .toast-style .warning-list {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .toast-style .warning-list span {
+        font-size: 1.1rem !important;
+    }
+    
+    .toast-style .warning-list ul {
+        padding-left: 1rem;
+    }
+    
+    .toast-style .warning-list ul li {
+        font-size: 0.9rem !important;
+        margin-bottom: 0.4rem;
+    }
+    
+    .toast-style .warning-note {
+        padding: 0.8rem;
+        margin-top: 1rem;
+    }
+    
+    .toast-style .warning-note small {
+        font-size: 0.9rem !important;
+    }
+}
+
+/* RESPONSIVIDADE EXTREMA PARA TELAS MUITO PEQUENAS (iPhone 12 Pro e similares) */
+@media (max-width: 390px) and (max-height: 850px) {
+    .confirmation-modal {
+        padding: 0.5rem;
+        padding-top: 1rem;
+        align-items: flex-start;
+    }
+    
+    .confirmation-modal .modal-content.toast-style {
+        padding: 1.2rem !important;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .toast-style .modal-icon {
+        font-size: 2.2rem !important;
+        margin-bottom: 0.6rem !important;
+    }
+    
+    .toast-style .modal-title {
+        font-size: 1.2rem !important;
+        margin-bottom: 0.8rem !important;
+    }
+    
+    .toast-style .modal-message {
+        font-size: 0.9rem !important;
+        margin-bottom: 1.2rem !important;
+    }
+    
+    .toast-style .modal-message strong {
+        font-size: 0.95rem !important;
+        margin-bottom: 0.8rem !important;
+    }
+    
+    .toast-style .warning-list {
+        padding: 0.8rem;
+        margin: 0.8rem 0;
+    }
+    
+    .toast-style .warning-list span {
+        font-size: 1rem !important;
+        margin-bottom: 0.6rem;
+    }
+    
+    .toast-style .warning-list ul {
+        padding-left: 0.8rem;
+    }
+    
+    .toast-style .warning-list ul li {
+        font-size: 0.85rem !important;
+        margin-bottom: 0.3rem;
+        line-height: 1.4;
+    }
+    
+    .toast-style .warning-note {
+        padding: 0.7rem;
+        margin-top: 0.8rem;
+    }
+    
+    .toast-style .warning-note small {
+        font-size: 0.85rem !important;
+        line-height: 1.3;
+    }
+    
+    .toast-style .modal-actions {
+        margin-top: 1rem !important;
+        gap: 0.6rem !important;
+    }
+    
+    .toast-style .modal-btn {
+        padding: 0.9rem 1.2rem !important;
+        min-height: 48px;
+        font-size: 0.95rem !important;
+    }
+}
+
+/* Para dispositivos com altura muito pequena */
+@media (max-height: 600px) {
+    .confirmation-modal {
+        align-items: flex-start;
+        padding-top: 1rem;
+    }
+    
+    .confirmation-modal .modal-content.toast-style {
+        max-height: 95vh;
+        overflow-y: auto;
+        margin-top: 1rem;
+    }
+    
+    .toast-style .modal-icon {
+        font-size: 2rem !important;
+    }
+    
+    .toast-style .modal-title {
+        font-size: 1.2rem !important;
+        margin-bottom: 0.8rem !important;
+    }
+}
+
+/* Para a versão customizável */
+.toast-style.custom-border {
+    border-left-color: var(--custom-border-color, #4299e1) !important;
+}
+
+.toast-style.custom-border .modal-icon {
+    color: var(--custom-border-color, #4299e1) !important;
+}
+
+/* Melhorias de acessibilidade para touch */
+@media (hover: none) and (pointer: coarse) {
+    .toast-style .modal-btn:hover {
+        transform: none;
+    }
+    
+    .toast-style .modal-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .toast-style .modal-btn {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+/* ==== FIM: exit-modal.css ==== */
+
+/* ==== INÍCIO: main.css ==== */
+/* Arquivo principal - imports todos os módulos */
+@import url('base/variables.css');
+@import url('base/reset.css');
+@import url('components/header.css');
+@import url('components/navigation.css');
+@import url('components/buttons.css');
+@import url('components/forms.css');
+@import url('components/cards.css');
+@import url('components/tables.css');
+@import url('layout/grid.css');
+@import url('pages/thermal-calculation.css');
+@import url('pages/projects.css');
+@import url('components/machines.css');
+@import url('components/capacity-tables.css');
+@import url('layout/modal.css');
+@import url('layout/exit-modal.css');
+
+/* Botão de Shutdown */
+.shutdown-btn {
+  background: transparent;
+  border: 1px solid #ddd;
+  color: #b0b0b0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 15px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.shutdown-btn:hover {
+  background: #ff4444;
+  color: white;
+  border-color: #ff4444;
+  transform: scale(1.05);
+}
+
+.shutdown-btn:active {
+  transform: scale(0.95);
+}
+
+/* ===== ESTILOS GERAIS PARA HEADERS ===== */
+
+/* Estilos gerais para inputs editáveis em headers */
+.editable-title {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.editable-title:hover {
+  background-color: var(--color-gray-light);
+}
+
+.machine-title-editable {
+  cursor: text;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+}
+
+.machine-title-editable:hover {
+  background-color: var(--color-gray-light);
+}
+
+.machine-title-editable:focus {
+  border-color: var(--color-primary);
+  background: white;
+  outline: none;
+}
+
+/* Garantir que os headers mantenham alinhamento consistente */
+.project-header,
+.room-header,
+.machine-header {
+  display:flex;
+  align-items: center;
+  min-height: 40px;
+}
+
+/* Ajustes para quando o conteúdo está minimizado */
+.project-header.minimized~.project-content,
+.room-header.minimized~.room-content,
+.machine-header.minimized~.machine-content {
+  display: none;
+}
+
+/* Indicador visual para headers minimizados */
+.minimizer {
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.minimizer.minimized {
+  transform: rotate(-90deg);
+}
+
+/* ===== HEADERS RESPONSIVOS - AJUSTES ESPECÍFICOS ===== */
+
+/* Mobile Grande - Apenas reorganizar os elementos */
+@media (max-width: 768px) {
+
+  .obra-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .obra-header .minimizer {
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  .obra-header .obra-title {
+    order: 2;
+    flex: 1;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .obra-header .obra-actions {
+    order: 3;
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+  }
+
+  .obra-header .obra-header-spacer {
+    order: 4;
+    flex-basis: 100%;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid var(--machine-border);
+    margin-top: var(--spacing-xs);
+  }
+
+  /* ===== HEADERS UNIFICADOS ===== */
+  .project-header,
+  .room-header,
+  .machine-header {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .project-header .minimizer,
+  .room-header .minimizer,
+  .machine-header .minimizer {
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  /* ✅ Títulos para todos os headers */
+  .project-header .project-title,
+  .room-header .room-title,
+  .machine-header .machine-title-editable {
+    order: 2;
+    flex: 1;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    min-width: 0;
+    /* ✅ permite que quebre corretamente */
+  }
+
+  /* Input do título da máquina - ajustes específicos mobile */
+  .machine-header .machine-title-editable {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .machine-header .machine-title-editable:focus {
+    border-color: var(--color-primary);
+    background: white;
+    outline: none;
+  }
+
+  .project-header .project-actions,
+  .room-header .room-actions,
+  .machine-header .machine-actions {
+    order: 3;
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+  }
+
+  .btn-delete,
+  .btn-add-small,
+  .btn-delete-small {
+    font-size: 0.85rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    text-align: center;
+    height: auto;
+    min-height: 32px;
+    line-height: 1.2;
+    flex-shrink: 0;
+  }
+
+  /* Ajustes específicos para containers de ações */
+  .project-actions,
+  .room-actions,
+  .project-actions-footer,
+  .machine-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .project-actions .btn,
+  .room-actions .btn,
+  .project-actions-footer .btn,
+  .machine-actions .btn {
+    width: auto;
+    flex: 1;
+    min-width: min-content;
+  }
+
+  /* Mantendo o restante do layout original */
+  .header {
+    gap: var(--spacing-md);
+    text-align: center;
+  }
+
+  .header-left,
+  .header-right {
+    flex: 0 0 auto;
+  }
+
+  .header-center h1 {
+    font-size: 1.3rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clima-row {
+    grid-template-columns: 1fr;
+  }
+
+  .clima-cell-empty {
+    display: none;
+  }
+
+  .navbar {
+    overflow-x: auto;
+  }
+
+  .nav-list {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) var(--color-gray-100);  }
+
+  .nav-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-list li a {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .obra-content,
+  .project-content,
+  .room-content,
+  .section-content,
+  .subsection-content,
+  .machine-content {
+    padding: var(--spacing-md);
+  }
+
+  .obra-block,
+  .project-block,
+  .room-block,
+  .machine-block {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .thermal-table-container {
+    padding: var(--spacing-md);
+    overflow-x: auto;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .thermal-table,
+  .thermal-capacity-table {
+    min-width: 600px;
+  }
+
+  .climatization-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .machine-options-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .machine-options-section .option-checkbox {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Mobile Pequeno - Ajustes finos */
+@media (max-width: 480px) {
+  .header {
+    gap: var(--spacing-md);
+    text-align: center;
+  }
+  
+  .obra-header .obra-title {
+    font-size: 0.95rem;
+  }
+
+  .project-header .project-title,
+  .room-header .room-title,
+  .machine-header .machine-title,
+  .machine-header .machine-title-editable {
+    font-size: 0.9rem;
+    min-width: 0;
+  }
+
+  /* Input do título da máquina - ajustes mobile pequeno */
+  .machine-header .machine-title-editable {
+    padding: 1px 4px;
+    font-size: 0.9rem;
+  }
+
+  .section-header-machine {
+    font-size: 0.85rem;
+  }
+
+  .btn-delete,
+  .btn-add-small,
+  .btn-delete-small {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.1;
+    min-height: 30px;
+    flex: 1 1 auto;
+    min-width: 80px;
+  }
+
+  /* Garantir que os botões fiquem responsivos */
+  .machine-header .machine-actions {
+    gap: 4px;
+  }
+
+  .machine-header .btn-delete-small {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    white-space: nowrap;
+    min-width: 80px;
+  }
+
+  /* Ajustes para telas muito pequenas */
+  .project-actions,
+  .room-actions,
+  .obra-actions,
+  .machine-header .machine-actions {
+    gap: 4px;
+  }
+
+  .project-actions .btn,
+  .room-actions .btn,
+  .obra-actions .btn,
+  .machine-header .machine-actions .btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
+
+  .obra-header .obra-header-spacer {
+    font-size: 0.8rem;
+  }
+
+  .main-content {
+    padding: var(--spacing-md);
+  }
+
+  .project-header,
+  .room-header,
+  .machine-header {
+    padding: var(--spacing-md);
+  }
+
+  .section-header-machine {
+    padding: var(--spacing-sm);
+  }
+
+  .header-center h1 {
+    font-size: 1.1rem;
+  }
+
+  .nav-list {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .nav-list li a {
+    font-size: 0.85rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .obra-content,
+  .project-content,
+  .room-content,
+  .section-content,
+  .subsection-content,
+  .machine-content {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Utilitários para estados de edição */
+.editing {
+  background-color: var(--color-warning-light) !important;
+  border-color: var(--color-warning) !important;
+}
+
+/* Animações suaves para transições de layout */
+.project-header,
+.room-header,
+.machine-header,
+.obra-header {
+  transition: all 0.3s ease;
+}
+
+/* Garantir que os botões nos headers tenham tamanho consistente */
+.minimizer {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: white;
+  font-weight: bold;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* High contrast support */
+@media (prefers-contrast: high) {
+  .machine-title-editable:focus {
+    border-width: 2px;
+    outline: 2px solid currentColor;
+  }
+
+  .minimizer {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+  .shutdown-btn,
+  .minimizer,
+  .editable-title,
+  .machine-title-editable,
+  .project-header,
+  .room-header,
+  .machine-header,
+  .obra-header {
+    transition: none;
+  }
+
+  .shutdown-btn:hover,
+  .shutdown-btn:active {
+    transform: none;
+  }
+}
+/* ==== FIM: main.css ==== */
+
+/* ==== INÍCIO: modal.css ==== */
+/* ===== MODAL DE CONFIRMAÇÃO - ESTILO TOAST ===== */
+:root {
+    --modal-lock-height: 100vh;
+}
+
+body:has(.confirmation-modal.active) {
+    overflow: hidden;
+    height: var(--modal-lock-height);
+    touch-action: none;
+}
+
+.confirmation-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.confirmation-modal.active {
+    display: flex;
+    animation: modalFadeIn 0.3s ease;
+}
+
+.confirmation-modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: #2d3748;
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-width: 500px;
+    width: 85vw;
+    text-align: center;
+    border-left: 4px solid #4299e1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    display: block;
+    animation: iconPulse 2s infinite ease-in-out;
+    color: #4299e1;
+}
+
+.modal-title {
+    color: white;
+    font-size: 1.6rem;
+    margin-bottom: 1.75rem;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.modal-message {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+    font-size: 1.05rem;
+    text-align: center;
+}
+
+.modal-message strong {
+    color: #ff6b6b;
+    font-weight: 700;
+}
+
+.modal-message small {
+    display: block;
+    margin-top: 1.01rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.8rem;
+    border-radius: 8px;
+    border-left: 4px solid #ff6b6b;
+    line-height: 1.4;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.modal-btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+    min-width: 120px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-confirm {
+    background: #e53e3e;
+    color: white;
+}
+
+.btn-confirm:hover {
+    background: #c53030;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
+}
+
+
+
+/* Animações */
+@keyframes modalFadeIn {
+    from { 
+        opacity: 0; 
+        backdrop-filter: blur(0px);
+    }
+    to { 
+        opacity: 1; 
+        backdrop-filter: blur(8px);
+    }
+}
+
+@keyframes modalSlideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes iconPulse {
+    0% {
+    transform: scale(1);
+    opacity: 1;
+    }
+    50% {
+    transform: scale(1.1);
+    opacity: 1;
+    }
+    100% {
+    transform: scale(1);
+    opacity: 1;
+    }
+}
+
+@keyframes confirmShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 1.5rem;
+        width: 90vw;
+        margin: 1rem;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .modal-btn {
+        width: 100%;
+        min-width: auto;
+        padding: 0.7rem 1.2rem;
+    }
+    
+    .modal-icon {
+        font-size: 3rem;
+    }
+    
+    .modal-title {
+        font-size: 1.4rem;
+    }
+}
+
+/* ===== TOAST NOTIFICATION ===== */
+/* Container de toasts acumulativos */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+/* Toast individual */
+.toast {
+    background: #2d3748;
+    color: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-left: 4px solid #4299e1;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 400px;
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+
+.toast.success {
+    border-left-color: #48bb78;
+    background: #2d5a3a;
+}
+
+.toast.error {
+    border-left-color: #f56565;
+    background: #5a2d2d;
+}
+
+.toast.undo {
+    border-left-color: #ffeb3b;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast.hiding {
+    animation: slideOut 0.3s ease-in forwards;
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.toast-icon {
+    font-size: 1.5rem;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+    font-size: 1rem;
+}
+
+.toast-message {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.toast-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.toast-btn {
+    padding: 0.3rem 0.8rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.toast-undo {
+    background: #ffeb3b;
+    color: #333;
+}
+
+.toast-undo:hover {
+    background: #fdd835;
+    transform: translateY(-1px);
+}
+
+.toast-close {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.toast-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.countdown-bar {
+    height: 3px;
+    background: #ff6b6b;
+    width: 100%;
+    margin-top: 0.5rem;
+    border-radius: 2px;
+    animation: countdown 10s linear;
+}
+
+.toast.success .countdown-bar {
+    background: #51f956;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toastSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+@keyframes countdown {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+@media (max-width: 768px) {
+    .confirmation-modal {
+        padding: var(--spacing-md, 1.5rem);
+        align-items: flex-start;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 520px;
+        max-height: calc(100vh - 2 * var(--spacing-md, 1.5rem));
+        overflow-y: auto;
+        margin: auto;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .modal-btn {
+        width: 100%;
+    }
+
+    .toast-container {
+        top: auto;
+        right: var(--spacing-md, 1.5rem);
+        left: var(--spacing-md, 1.5rem);
+        bottom: var(--spacing-lg, 2rem);
+        max-width: none;
+    }
+
+    .toast {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 1.25rem;
+    }
+
+    .modal-title {
+        font-size: 1.4rem;
+    }
+
+    .modal-message {
+        font-size: 0.95rem;
+    }
+
+    .toast {
+        padding: 0.75rem;
+    }
+}
+/* ==== FIM: modal.css ==== */
+
+/* ==== INÍCIO: variables.css ==== */
+/* ===== VARIÁVEIS CSS - SISTEMA DE GERENCIAMENTO DE PROJETOS ===== */
+
+:root {
+  /* =========================================================================
+   *  PALETA BASE
+   * =======================================================================*/
+
+  /* Cores sólidas principais */
+  --color-white: #ffffff;
+  --color-dark: #2D3748;
+
+  /* Cinzas nomeados (legados / específicos) */
+  --color-gray: #050506;               /* reset.css, cards.css */
+  --color-gray-dark: #4A5568;          /* machines.css, capacity-tables.css, navigation.css */
+  --color-gray-light: #aaadb1;         /* machines.css, capacity-tables.css */
+  --color-gray-lighter: #EDF2F7;       /* machines.css, capacity-tables.css */
+  --color-gray-lightest: #F8FAFC;      /* machines.css, capacity-tables.css, cards.css */
+
+  /* Escala de cinzas (utilização genérica) */
+  --color-gray-50:  #F8FAFC;
+  --color-gray-100: #F1F5F9;
+  --color-gray-200: #E2E8F0;
+  --color-gray-300: #CBD5E0;
+  --color-gray-400: #94A3B8;
+  --color-gray-500: #64748B;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1E293B;
+  --color-gray-900: #0F172A;
+
+  /* Cor semântica principal */
+  --color-primary: #4A5568;
+
+  /* =========================================================================
+   *  GRADIENTES
+   * =======================================================================*/
+
+  /* Gradiente principal (botões, máquinas, tabelas, etc.) */
+  --primary-gradient: linear-gradient(135deg, #4A5568 0%, #718096 100%);
+
+  /* Gradientes semânticos (sucesso/erro/aviso/info) – buttons.css */
+  --success-gradient: linear-gradient(135deg, #2D774E 0%, #48BB78 100%);
+  --danger-gradient:  linear-gradient(135deg, #C53030 0%, #FC8181 100%);
+  --warning-gradient: linear-gradient(135deg, #139090 0%);
+
+
+  --info-gradient:    linear-gradient(135deg, #3182CE 0%, #63B3ED 100%);
+
+  /* Gradiente do body – reset.css */
+  --body-bg-gradient: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%);
+
+  /* Gradientes de botões – buttons.css */
+  --btn-save-gradient:     var(--success-gradient);
+  --btn-verify-gradient:   linear-gradient(135deg, #5f71ca 0%, #5065a2 100%);
+  --btn-download-gradient: linear-gradient(135deg, #4A90E2 0%, #1C3F94 100%);
+
+  /* Gradientes de status – projects.css */
+  --status-banner-success-bg: var(--success-gradient);
+  --status-banner-error-bg:   var(--danger-gradient);
+
+  /* =========================================================================
+   *  TEXTO E FUNDOS GERAIS
+   * =======================================================================*/
+
+  --text-primary:   var(--color-white);        /* reset.css, forms.css, tables.css */
+  --text-secondary: var(--color-gray);        /* reset.css, forms.css */
+  --bg-primary:     var(--color-white);       /* cards.css, forms.css */
+  --bg-secondary:   var(--color-gray-lightest); /* cards.css, sections.css */
+
+  /* =========================================================================
+   *  BOTÕES E MINIMIZADORES
+   * =======================================================================*/
+
+  /* Botões (buttons.css) */
+  --btn-add-small-bg:    #48BB78;
+  --btn-delete-small-bg: #C53030;
+  --btn-shadow:          rgba(0, 0, 0, 0.1);
+
+  /* Minimizadores (buttons.css, machines.css) */
+  --minimizer-bg:            rgba(255, 255, 255, 0.2);
+  --minimizer-hover-bg:      rgba(255, 255, 255, 0.3);
+  --section-minimizer-bg:    #adb5bd;
+  --section-minimizer-color: #495057;
+  --section-minimizer-hover-bg: #CBD5E0;
+
+  /* =========================================================================
+   *  CARDS
+   * =======================================================================*/
+
+  /* cards.css */
+  --card-bg:              var(--color-white);
+  --card-shadow:          rgba(0, 0, 0, 0.06);
+  --card-hover-shadow:    rgba(0, 0, 0, 0.1);
+  --editable-title-hover-bg: rgba(255, 255, 255, 0.15);
+
+  /* =========================================================================
+   *  HEADER E NAVEGAÇÃO
+   * =======================================================================*/
+
+  /* header.css, navigation.css */
+  --header-shadow:     rgba(0, 0, 0, 0.08);
+  --navbar-bg:         #2D3748;
+  --navbar-shadow:     rgba(0, 0, 0, 0.1);
+  --nav-link-color:    var(--color-white);
+  --nav-link-hover-bg: rgba(255, 255, 255, 0.1);
+
+  /* =========================================================================
+   *  PROJETOS E STATUS
+   * =======================================================================*/
+
+  /* projects.css */
+  --status-banner-shadow:      rgba(0, 0, 0, 0.1);
+  --status-banner-error-border: #C53030;
+  --status-banner-text-color:  var(--color-white);
+
+  /* =========================================================================
+   *  MÁQUINAS DE CLIMATIZAÇÃO
+   * =======================================================================*/
+
+  /* machines.css */
+  --machine-bg:                var(--color-white);
+  --machine-border:            #EDF2F7;
+  --machine-shadow:            rgba(0, 0, 0, 0.03);
+  --machine-hover-border:      #4A5568;
+  --machine-hover-shadow:      rgba(74, 85, 104, 0.08);
+  --machine-header-bg:         var(--primary-gradient);
+  --machine-title-placeholder: rgba(255, 255, 255, 0.7);
+  --machine-title-focus-bg:    var(--color-white);
+  --machine-title-focus-color: var(--color-dark);
+  --machine-delete-border:     rgba(255, 255, 255, 0.3);
+  --machine-form-border:       #F8FAFC;
+
+  /* Opções de máquinas – machines.css */
+  --option-bg:             #dfdfdf;
+  --option-border:         #a2a5aa;
+  --option-hover-bg:       #EDF2F7;
+  --option-hover-border:   #CBD5E0;
+  --option-name-color:     #4A5568;
+  --option-price-color:    #2D774E;
+  --option-checked-bg:     #cad6f1;
+  --option-checked-border: #4A5568;
+  --option-checked-name:   #4A5568;
+  --option-checked-price:  #2D774E;
+
+  /* Preços e selects – machines.css */
+  --price-display-bg:         #F8FAFC;
+  --price-display-border:     #aaadb1;
+  --price-display-color:      #2D774E;
+  --machine-total-bg:         var(--primary-gradient);
+  --machine-total-shadow:     rgba(0, 0, 0, 0.1);
+  --machine-total-span-bg:    var(--color-white);
+  --machine-total-span-color: #4A5568;
+  --machine-total-span-shadow: rgba(0, 0, 0, 0.1);
+  --select-border:            #aaadb1;
+  --select-focus-border:      #4A5568;
+  --select-focus-shadow:      rgba(74, 85, 104, 0.1);
+
+  /* =========================================================================
+   *  TABELAS DE CAPACIDADE
+   * =======================================================================*/
+
+  /* capacity-tables.css */
+  --capacity-table-bg:     #F8FAFC;
+  --capacity-table-border: #CBD5E0;
+
+  --capacity-title-bg:     #E2E8F0;
+  --capacity-title-color:  #2D3748;
+  --capacity-title-border: #CBD5E0;
+
+  --table-container-bg:    var(--color-white);
+  --table-header-bg:       linear-gradient(135deg, #4A5568 0%, #2D3748 100%);
+  --table-header-color:    #FFFFFF;
+  --table-header-border:   #2D3748;
+
+  --table-cell-bg:             #F1F5F9;
+  --table-cell-border:         #CBD5E0;
+  --table-cell-first-color:    #2D3748;
+  --table-cell-solution-color: #2D774E;
+  --table-cell-total-color:    #2D3748;
+  --table-cell-folga-color:    #2D774E;
+
+  --table-row-hover-bg:     #EDF2F7;
+  --table-row-selected-bg:  #E6FFFA;
+
+  /* Inputs de tabela – capacity-tables.css */
+  --capacity-input-border:       #E2E8F0;
+  --capacity-input-focus-border: #151618;
+  --capacity-input-focus-shadow: rgba(74, 85, 104, 0.1);
+
+  /* Backup e scroll – capacity-tables.css */
+  --backup-cell-bg:        var(--color-white);
+  --backup-selection-bg:   #EDF2F7;
+  --backup-selection-border:#718096;
+  --backup-solution-bg:    #EDF2F7;
+  --backup-select-bg:      #F8FAFC;
+
+  --scrollbar-track-bg:        #F8FAFC;
+  --scrollbar-thumb-bg:        var(--primary-gradient);
+  --scrollbar-thumb-hover-bg:  linear-gradient(135deg, #2D3748 0%, #718096 100%);
+
+  /* =========================================================================
+   *  SISTEMA DE ESPAÇAMENTOS
+   * =======================================================================*/
+
+  /* Espaçamentos genéricos – reset.css, buttons.css, cards.css, navigation.css,
+     projects.css, machines.css, capacity-tables.css, forms.css, sections.css, grid.css */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Raio de borda – buttons.css, cards.css, machines.css,
+     capacity-tables.css, forms.css */
+  --border-radius:    6px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+
+  /* =========================================================================
+   *  ESPAÇAMENTOS ESPECÍFICOS POR COMPONENTE
+   * =======================================================================*/
+
+  /* Botões – buttons.css */
+  --btn-delete-small-padding: 0.25rem 0.5rem;
+  --btn-delete-small-radius:  4px;
+
+  /* Navegação – navigation.css */
+  --nav-gap: 2rem;
+
+  /* Máquinas – machines.css */
+  --machine-margin-bottom:   1.5rem;
+  --machine-header-padding:  1rem 1.5rem;
+  --machine-header-gap:      0.75rem;
+  --machine-title-padding:   0.25rem 0.5rem;
+  --machine-minimizer-size:  28px;
+  --machine-minimizer-radius: 4px;
+  --machine-delete-padding:  0.4rem 0.8rem;
+  --machine-content-padding: 1.5rem;
+  --machine-form-gap:        1rem;
+  --machine-form-padding:    1.5rem;
+  --options-grid-gap:        0.75rem;
+  --option-padding:          0.75rem;
+  --option-gap:              0.5rem;
+  --price-display-padding:   0.75rem;
+  --machine-total-padding:   1rem 1.5rem;
+  --machine-total-span-padding: 0.5rem 1rem;
+  --select-padding:          0.75rem;
+
+  /* Tabelas de capacidade – capacity-tables.css */
+  --capacity-table-margin:  30px;
+  --table-title-padding:    15px;
+  --table-header-padding:   12px 8px;
+  --table-cell-padding:     10px 8px;
+  --capacity-input-padding: 6px 8px;
+  --capacity-select-padding: 6px 8px;
+  --backup-select-padding:  4px 6px;
+  --backup-selection-height: 28px;
+  --backup-solution-height:  28px;
+  --backup-select-margin:    5px;
+}
+/* ==== FIM: variables.css ==== */

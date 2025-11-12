@@ -3,7 +3,7 @@ from collections import defaultdict, Counter
 import re
 
 ROOT = Path(".").resolve()
-CSS_DIR = ROOT / "codigo" / "public" / "static" / "page1"
+CSS_DIR = ROOT / "codigo" / "public" / "static" / "01_Create_Obra"
 REPORT_FILE = ROOT / "relatorio_css_detalhado.txt"
 
 def analyze_css_comprehensive():
@@ -23,7 +23,7 @@ def analyze_css_comprehensive():
     # Padrões regex para CSS - CORRIGIDOS
     selector_pattern = r'^([^{]+)\{'
     class_pattern = r'\.([a-zA-Z][\w-]*)'
-    id_pattern = r'#([a-zA-Z_][\w-]*)'  # CORREÇÃO: IDs começam com letra ou _
+    id_pattern = r'#([a-zA-Z_][\w-]*)'  # IDs começam com letra ou _
     property_pattern = r'([a-zA-Z-]+)\s*:\s*([^;]+);'
     media_query_pattern = r'@media[^{]+\{'
     import_pattern = r'@import[^;]+;'
@@ -63,7 +63,7 @@ def analyze_css_comprehensive():
                 classes = re.findall(class_pattern, content)
                 unique_classes = list(set(classes))
                 
-                # Encontra IDs - CORREÇÃO: Só IDs válidos (começam com letra)
+                # Encontra IDs - Só IDs válidos (começam com letra)
                 ids = re.findall(id_pattern, content)
                 # Filtra para garantir que são IDs válidos, não cores
                 valid_ids = [id_name for id_name in ids if not id_name.isdigit() and not re.match(r'^[0-9a-fA-F]{3,6}$', id_name)]

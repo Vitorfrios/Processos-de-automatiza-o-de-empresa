@@ -1,6 +1,6 @@
 // adapters/shutdown-adapter.js - GERENCIAMENTO DE SHUTDOWN
 
-import { setSessionActive, clearSessionObras, clearRenderedObras } from "../adapters/session-adapter.js"
+import { setSessionActive, clearSessionObras, clearRenderedObras } from "./session-adapter.js"
 
 /**
  * Encerra o servidor e a sessão atual de forma controlada
@@ -118,8 +118,8 @@ async function ensureSingleActiveSession() {
 async function initializeSession() {
     console.log("🔄 Verificando sessão...");
     
-    const { isSessionActive } = await import('../adapters/session-adapter.js');
-    const { loadObrasFromServer } = await import('../adapters/obra-adapter.js');
+    const { isSessionActive } = await import('./session-adapter.js');
+    const { loadObrasFromServer } = await import('./obra-adapter.js');
     
     if (!isSessionActive()) {
         console.log("📭 Sessão não está ativa - aguardando ação do usuário");

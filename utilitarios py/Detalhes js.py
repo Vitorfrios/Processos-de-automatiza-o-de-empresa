@@ -3,7 +3,7 @@ from collections import defaultdict, Counter
 import re
 
 ROOT = Path(".").resolve()
-JS_DIR = ROOT / "codigo" / "public" / "scripts" / "page1"
+JS_DIR = ROOT / "codigo" / "public" / "scripts" / "01_Create_Obra"
 REPORT_FILE = ROOT / "relatorio_js_detalhado.txt"
 
 def analyze_js_comprehensive():

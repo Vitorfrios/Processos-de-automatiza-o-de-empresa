@@ -4,7 +4,7 @@
  * Versão reduzida de ~1100 para ~400 linhas
  */
 
-import { buildCapacityCalculationTable } from '../machines/capacity-calculator.js';
+import { buildCapacityCalculationTable } from './capacity-calculator.js';
 import { updateElementText, safeNumber } from '../../../utils/core-utils.js';
 import { generateMachineId } from '../../utils/id-generator.js';
 

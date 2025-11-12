@@ -1,6 +1,5 @@
 // adapters/obra-adapter.js - CORREÇÃO COMPLETA:
 
-import { isSessionActive } from "../adapters/session-adapter.js"
 
 /**
  * Remove todas as obras base do container HTML
@@ -14,7 +13,7 @@ function removeBaseObraFromHTML() {
 }
 
 /**
- * Carrega obras salvas do servidor para a sessão atual - VERSÃO CORRIGIDA
+ * Carrega obras salvas do servidor para a sessão atual - 
  */
 async function loadObrasFromServer() {
     console.log("🔄 [LOAD OBRAS] Carregando OBRAS do servidor...");
@@ -36,7 +35,7 @@ async function loadObrasFromServer() {
             return;
         }
 
-        // ✅ CORREÇÃO CRÍTICA: Buscar TODAS as obras do servidor
+        // Buscar TODAS as obras do servidor
         const obrasResponse = await fetch('/obras');
         if (!obrasResponse.ok) {
             console.error("❌ [LOAD OBRAS] Erro ao buscar dados das obras");
@@ -46,14 +45,14 @@ async function loadObrasFromServer() {
         const todasObras = await obrasResponse.json();
         console.log(`📦 [LOAD OBRAS] ${todasObras.length} obras disponíveis no servidor`);
         
-        // ✅ CORREÇÃO CRÍTICA: Converter IDs da sessão para string e encontrar correspondências
+        // Converter IDs da sessão para string e encontrar correspondências
         const obrasDaSessao = todasObras.filter(obra => {
             // Tentar encontrar por ID exato (novo formato)
             if (obraIds.includes(obra.id)) {
                 return true;
             }
             
-            // ✅ CORREÇÃO: Tentar encontrar por ID numérico (compatibilidade com sessão antiga)
+            // Tentar encontrar por ID numérico (compatibilidade com sessão antiga)
             const obraIdNumero = obra.id.toString();
             if (obraIds.includes(obraIdNumero)) {
                 return true;
@@ -68,16 +67,16 @@ async function loadObrasFromServer() {
         if (obrasDaSessao.length === 0) {
             console.log("📭 [LOAD OBRAS] Nenhuma obra correspondente encontrada");
             
-            // ✅ CORREÇÃO: Limpar sessão se não encontrar obras correspondentes
+            // Limpar sessão se não encontrar obras correspondentes
             console.log("🔄 [LOAD OBRAS] Tentando migrar sessão para novos IDs...");
-            await migrateSessionToNewIds(obraIds, todasObras);
+            //await migrateSessionToNewIds(obraIds, todasObras);
             return;
         }
 
-        // ✅ CORREÇÃO: Limpar interface antes de carregar
+        // Limpar interface antes de carregar
         removeBaseObraFromHTML();
         
-        // ✅ CORREÇÃO: Carregar cada obra individualmente com await
+        // Carregar cada obra individualmente com await
         let loadedCount = 0;
         for (const obraData of obrasDaSessao) {
             const success = await loadSingleObra(obraData);
@@ -91,39 +90,9 @@ async function loadObrasFromServer() {
     }
 }
 
-/**
- * ✅ NOVA FUNÇÃO: Migra sessão de IDs antigos para novos
- */
-async function migrateSessionToNewIds(oldObraIds, todasObras) {
-    try {
-        console.log("🔄 [MIGRATION] Iniciando migração de sessão...");
-        
-        // Buscar TODAS as obras disponíveis
-        const novasObraIds = todasObras.map(obra => obra.id);
-        
-        if (novasObraIds.length > 0) {
-            // Atualizar sessão com novos IDs
-            await fetch('/api/session-obras', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ obras: novasObraIds })
-            });
-            
-            console.log(`✅ [MIGRATION] Sessão migrada: ${oldObraIds.length} IDs antigos → ${novasObraIds.length} IDs novos`);
-            console.log("🔄 [MIGRATION] Recarregando obras com novos IDs...");
-            
-            // Recarregar com novos IDs
-            await loadObrasFromServer();
-        } else {
-            console.log("📭 [MIGRATION] Nenhuma obra disponível para migração");
-        }
-    } catch (error) {
-        console.error("❌ [MIGRATION] Erro na migração:", error);
-    }
-}
 
 /**
- * ✅ CORREÇÃO: Função para carregar uma obra individual
+ * Função para carregar uma obra individual
  */
 async function loadSingleObra(obraData) {
     if (!obraData || !obraData.id) {
@@ -134,7 +103,7 @@ async function loadSingleObra(obraData) {
     console.log(`🔄 [LOAD OBRAS] Carregando obra: "${obraData.nome}" (ID: ${obraData.id})`);
     
     try {
-        // ✅ CORREÇÃO: Verificar se a obra já existe no DOM
+        // Verificar se a obra já existe no DOM
         const obraExistente = document.querySelector(`[data-obra-id="${obraData.id}"]`);
         if (obraExistente) {
             console.log(`⚠️ [LOAD OBRAS] Obra "${obraData.nome}" já existe no DOM, atualizando...`);
@@ -146,14 +115,14 @@ async function loadSingleObra(obraData) {
             }
         }
         
-        // ✅ CORREÇÃO: Se não existe, criar nova obra
+        // Se não existe, criar nova obra
         if (typeof window.createEmptyObra === 'function') {
             console.log(`🔨 [LOAD OBRAS] Criando nova obra: "${obraData.nome}"`);
             
             // Criar obra vazia com ID específico
             await window.createEmptyObra(obraData.nome, obraData.id);
             
-            // ✅ CORREÇÃO: Aguardar criação no DOM
+            // Aguardar criação no DOM
             await new Promise(resolve => setTimeout(resolve, 200));
             
             // Verificar se foi criada
@@ -177,7 +146,7 @@ async function loadSingleObra(obraData) {
     }
 }
 
-// ✅ CORREÇÃO: Função alternativa para debug
+// Função alternativa para debug
 async function debugLoadObras() {
     console.log("🐛 [DEBUG] Iniciando debug do carregamento...");
     

@@ -1,6 +1,6 @@
 """
 sessions_core.py
-Gerenciador de sessões - Versão Corrigida e Otimizada
+Gerenciador de sessões -  e Otimizada
 """
 
 import json
