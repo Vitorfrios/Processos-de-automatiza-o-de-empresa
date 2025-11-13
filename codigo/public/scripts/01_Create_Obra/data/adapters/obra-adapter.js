@@ -215,7 +215,7 @@ async function atualizarInterfaceComEmpresa(obraElement, obraData) {
 }
 
 /**
- * 🆕 ATUALIZA CAMPOS DO FORMULÁRIO DE EMPRESA EXISTENTE
+ * 🆕 ATUALIZA CAMPOS DO FORMULÁRIO DE EMPRESA EXISTENTE - COM DATA FORMATADA
  */
 function atualizarCamposEmpresaForm(obraData, formElement) {
     const camposMapping = {
@@ -230,7 +230,12 @@ function atualizarCamposEmpresaForm(obraData, formElement) {
     Object.entries(camposMapping).forEach(([dataField, inputId]) => {
         const input = formElement.querySelector(`#${inputId}`);
         if (input && obraData[dataField]) {
-            input.value = obraData[dataField];
+            // 🆕 FORMATAR DATA SE FOR O CAMPO dataCadastro
+            if (dataField === 'dataCadastro') {
+                input.value = formatarData(obraData[dataField]);
+            } else {
+                input.value = obraData[dataField];
+            }
             
             // Configurar dados adicionais para empresa
             if (dataField === 'empresaSigla' && obraData.empresaNome) {
@@ -250,7 +255,7 @@ function atualizarCamposEmpresaForm(obraData, formElement) {
 }
 
 /**
- * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES
+ * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES - COM DATA FORMATADA
  */
 function criarVisualizacaoEmpresa(obraData, container) {
     // Ocultar botão se existir
@@ -258,6 +263,9 @@ function criarVisualizacaoEmpresa(obraData, container) {
     if (botao) {
         botao.style.display = 'none';
     }
+    
+    // 🆕 FORMATAR DATA
+    const dataFormatada = formatarData(obraData.dataCadastro);
     
     // Criar formulário
     const formularioHTML = `
@@ -294,7 +302,7 @@ function criarVisualizacaoEmpresa(obraData, container) {
             <div class="form-group-horizontal">
                 <label>Data</label>
                 <input type="text" class="data-cadastro-readonly" 
-                    value="${obraData.dataCadastro || ''}" readonly>
+                    value="${dataFormatada}" readonly>
             </div>
 
             <div class="form-group-horizontal">
@@ -322,6 +330,7 @@ function criarVisualizacaoEmpresa(obraData, container) {
     `;
     
     container.insertAdjacentHTML('beforeend', formularioHTML);
+    console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id} com data: ${dataFormatada}`);
 }
 
 /**
@@ -437,15 +446,40 @@ async function debugLoadObras() {
     }
 }
 
-export {
-    loadObrasFromServer,
-    removeBaseObraFromHTML,
-    loadSingleObra,
-    debugLoadObras, // ✅ Exportar função de debug
-    obterDadosEmpresaDaObra, // 🆕 Exportar função de empresa
-    prepararDadosEmpresaNaObra // 🆕 Exportar função de preparação
-};
 
+/**
+ * 🆕 FORMATA DATA PARA dd/mm/aaaa
+ */
+function formatarData(dataString) {
+    if (!dataString) return '';
+    
+    try {
+        // Se já estiver no formato dd/mm/aaaa, retornar como está
+        if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            return dataString;
+        }
+        
+        // Tentar parse como Date
+        const data = new Date(dataString);
+        
+        // Verificar se é uma data válida
+        if (isNaN(data.getTime())) {
+            console.warn(`⚠️ [EMPRESA] Data inválida: ${dataString}`);
+            return dataString; // Retorna original se não conseguir formatar
+        }
+        
+        // Formatar para dd/mm/aaaa
+        const dia = String(data.getDate()).padStart(2, '0');
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const ano = data.getFullYear();
+        
+        return `${dia}/${mes}/${ano}`;
+        
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao formatar data ${dataString}:`, error);
+        return dataString; // Retorna original em caso de erro
+    }
+}
 
 
 /**
@@ -525,11 +559,14 @@ window.ocultarFormularioEmpresa = function(button, obraId) {
         console.error('❌ [EMPRESA] Erro ao ocultar formulário:', error);
     }
 };
+
 /**
- * 🆕 FUNÇÃO GLOBAL PARA ATIVAR CADASTRO DE EMPRESA
+ * 🆕 FUNÇÃO GLOBAL PARA ATIVAR CADASTRO DE EMPRESA - CORRIGIDA
  */
 window.ativarCadastroEmpresa = function(obraId) {
     try {
+        console.log(`🎯 [EMPRESA] Ativando cadastro para obra: ${obraId}`);
+        
         const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
         if (!obraElement) {
             console.error(`❌ [EMPRESA] Obra ${obraId} não encontrada`);
@@ -543,17 +580,17 @@ window.ativarCadastroEmpresa = function(obraId) {
             return;
         }
         
+        // ✅ CORREÇÃO: Verificar se já existe formulário ativo
+        const formularioExistente = empresaContainer.querySelector('.empresa-formulario-ativo');
+        if (formularioExistente) {
+            console.log(`✅ [EMPRESA] Formulário já está ativo para obra ${obraId}`);
+            return; // ✅ IMPEDE EXECUÇÃO DUPLICADA
+        }
+        
         // Ocultar botão
         const botao = empresaContainer.querySelector('.btn-empresa-cadastro');
         if (botao) {
             botao.style.display = 'none';
-        }
-        
-        // Verificar se já existe formulário
-        const formularioExistente = empresaContainer.querySelector('.empresa-formulario-ativo');
-        if (formularioExistente) {
-            console.log(`✅ [EMPRESA] Formulário já existe para obra ${obraId}`);
-            return;
         }
         
         // Verificar se há dados de empresa existentes
@@ -561,22 +598,449 @@ window.ativarCadastroEmpresa = function(obraId) {
         
         if (dadosEmpresa) {
             // Se já tem dados, criar formulário com dados existentes
+            console.log(`📊 [EMPRESA] Criando formulário com dados existentes para obra ${obraId}`);
             criarVisualizacaoEmpresa({...dadosEmpresa, id: obraId}, empresaContainer);
-            console.log(`✅ [EMPRESA] Formulário com dados existentes criado para obra ${obraId}`);
         } else {
-            // Se não tem dados, criar formulário vazio usando empresaCadastro
-            if (window.empresaCadastro && typeof window.empresaCadastro.ativarCadastro === 'function') {
-                // Simular clique no botão para ativar o cadastro completo
-                const event = new Event('click');
-                if (botao) {
-                    botao.dispatchEvent(event);
-                }
-            } else {
-                console.error('❌ [EMPRESA] Sistema de cadastro de empresas não disponível');
-            }
+            // Se não tem dados, criar formulário vazio para cadastro
+            console.log(`🆕 [EMPRESA] Criando novo formulário para obra ${obraId}`);
+            criarFormularioVazioEmpresa(obraId, empresaContainer);
         }
         
     } catch (error) {
         console.error(`❌ [EMPRESA] Erro ao ativar cadastro para obra ${obraId}:`, error);
     }
+};
+
+/**
+ * 🆕 CRIA FORMULÁRIO VAZIO PARA NOVO CADASTRO COM INPUT HÍBRIDO
+ */
+function criarFormularioVazioEmpresa(obraId, container) {
+    const formularioHTML = `
+    <div class="empresa-formulario-ativo">
+        <h4>Cadastro de Empresa</h4>
+
+        <div class="empresa-form-grid-horizontal">
+            <div class="form-group-horizontal">
+                <label>Empresa *</label>
+                <div class="empresa-input-container">
+                    <input type="text" 
+                           class="empresa-input-cadastro" 
+                           id="empresa-input-${obraId}"
+                           placeholder="Digite sigla ou nome ou selecione..."
+                           autocomplete="off">
+                    <div class="empresa-dropdown" id="empresa-dropdown-${obraId}">
+                        <div class="dropdown-options" id="empresa-options-${obraId}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Nº Cliente</label>
+                <input type="text" class="numero-cliente-final-cadastro" readonly
+                    placeholder="Será gerado automaticamente">
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Cliente Final</label>
+                <input type="text" class="cliente-final-cadastro" 
+                    placeholder="Nome do cliente final">
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Código</label>
+                <input type="text" class="codigo-cliente-cadastro" 
+                    placeholder="Código do cliente">
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Data</label>
+                <input type="text" class="data-cadastro-cadastro" 
+                    value="${new Date().toLocaleDateString('pt-BR')}" readonly>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Orçamentista</label>
+                <input type="text" class="orcamentista-responsavel-cadastro" 
+                    placeholder="Nome do orçamentista">
+            </div>
+        </div>
+
+        <div class="empresa-form-actions">
+            <button type="button" class="btn-cancel" 
+                    onclick="window.ocultarFormularioEmpresa(this, '${obraId}')">
+                Cancelar
+            </button>
+        </div>
+    </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', formularioHTML);
+    
+    // Inicializar o input híbrido
+    setTimeout(() => {
+        inicializarInputEmpresaHibrido(obraId);
+    }, 100);
+}
+
+/**
+ * 🆕 INICIALIZA INPUT HÍBRIDO DE EMPRESA - CORRIGIDO
+ */
+async function inicializarInputEmpresaHibrido(obraId) {
+    console.log(`🔧 [INPUT HÍBRIDO] Inicializando para obra: ${obraId}`);
+    
+    const input = document.getElementById(`empresa-input-${obraId}`);
+    const dropdown = document.getElementById(`empresa-dropdown-${obraId}`);
+    const optionsContainer = document.getElementById(`empresa-options-${obraId}`);
+    
+    if (!input) {
+        console.error(`❌ [INPUT HÍBRIDO] Input não encontrado para obra ${obraId}`);
+        return;
+    }
+    
+    let empresas = [];
+    let empresasCarregadas = false;
+    
+    // Carregar empresas do banco de dados
+    try {
+        console.log(`📡 [INPUT HÍBRIDO] Buscando empresas da API...`);
+        const response = await fetch('/api/dados/empresas');
+        
+        if (response.ok) {
+            const dados = await response.json();
+            
+            if (dados.success && Array.isArray(dados.empresas)) {
+                empresas = dados.empresas;
+                empresasCarregadas = true;
+                console.log(`📊 [INPUT HÍBRIDO] ${empresas.length} empresas carregadas com sucesso`);
+            } else {
+                console.error(`❌ [INPUT HÍBRIDO] Resposta da API inválida:`, dados);
+            }
+        } else {
+            console.error(`❌ [INPUT HÍBRIDO] Erro HTTP na API: ${response.status} ${response.statusText}`);
+        }
+    } catch (error) {
+        console.error('❌ [INPUT HÍBRIDO] Erro de rede ao carregar empresas:', error);
+    }
+    
+    // Se não conseguiu carregar empresas, mostrar mensagem
+    if (!empresasCarregadas) {
+        console.warn('⚠️ [INPUT HÍBRIDO] Não foi possível carregar empresas do servidor');
+        
+        // Mostrar mensagem no dropdown quando o usuário tentar usar
+        input.addEventListener('focus', function() {
+            optionsContainer.innerHTML = `
+                <div class="dropdown-no-results">
+                    ❌ Erro ao carregar empresas<br>
+                    <small>Tente recarregar a página</small>
+                </div>
+            `;
+            dropdown.style.display = 'block';
+        });
+        
+        return; // Não inicializa o resto da funcionalidade
+    }
+    
+    // Verificar se encontrou empresas
+    if (empresas.length === 0) {
+        console.warn('⚠️ [INPUT HÍBRIDO] Nenhuma empresa cadastrada no sistema');
+        
+        input.addEventListener('focus', function() {
+            optionsContainer.innerHTML = `
+                <div class="dropdown-no-results">
+                    📝 Nenhuma empresa cadastrada<br>
+                    <small>Cadastre empresas primeiro</small>
+                </div>
+            `;
+            dropdown.style.display = 'block';
+        });
+        
+        return;
+    }
+    
+    // ✅ EMPRESAS CARREGADAS COM SUCESSO - INICIALIZAR FUNCIONALIDADE COMPLETA
+    
+    // Evento de input para busca em tempo real
+    input.addEventListener('input', function(e) {
+        const termo = e.target.value.trim();
+        console.log(`🔍 [INPUT HÍBRIDO] Buscando: "${termo}"`);
+        
+        if (termo.length < 1) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        const sugestoes = filtrarEmpresas(termo, empresas);
+        console.log(`🎯 [INPUT HÍBRIDO] ${sugestoes.length} sugestões encontradas`);
+        
+        exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+    });
+    
+    // Evento de foco - mostrar todas as opções
+    input.addEventListener('focus', function() {
+        if (this.value.trim().length === 0) {
+            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        }
+    });
+    
+    // Evento de teclado para navegação
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            navegarDropdown('down', optionsContainer, input);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            navegarDropdown('up', optionsContainer, input);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    console.log(`✅ [INPUT HÍBRIDO] Inicializado com sucesso para obra ${obraId}`);
+}
+
+/**
+ * 🆕 FILTRAR EMPRESAS POR TERMO - CORRIGIDA
+ */
+function filtrarEmpresas(termo, empresas) {
+    if (!termo || termo.length < 1) return [];
+    
+    const termoNormalizado = termo.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    
+    return empresas.filter(empresaObj => {
+        // Cada empresaObj é um objeto como { "ACT": "AeroCool Technologies" }
+        const [sigla, nome] = Object.entries(empresaObj)[0];
+        const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        
+        // Buscar por sigla exata ou parcial no nome
+        return sigla === termoNormalizado || 
+               sigla.includes(termoNormalizado) ||
+               nomeNormalizado.includes(termoNormalizado);
+    });
+}
+
+/**
+ * 🆕 EXIBIR SUGESTÕES NO DROPDOWN - CORRIGIDA
+ */
+function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
+    if (!sugestoes || sugestoes.length === 0) {
+        container.innerHTML = '<div class="dropdown-no-results">Nenhuma empresa encontrada</div>';
+        dropdown.style.display = 'block';
+        return;
+    }
+    
+    const html = sugestoes.map(empresaObj => {
+        const [sigla, nome] = Object.entries(empresaObj)[0];
+        return `
+            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
+                <strong>${sigla}</strong> - ${nome}
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+    dropdown.style.display = 'block';
+    
+    // Vincular eventos de clique
+    container.querySelectorAll('.dropdown-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const sigla = this.dataset.sigla;
+            const nome = this.dataset.nome;
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+        });
+    });
+}
+
+/**
+ * 🆕 EXIBIR TODAS AS EMPRESAS - CORRIGIDA
+ */
+function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
+    if (!empresas || empresas.length === 0) {
+        container.innerHTML = '<div class="dropdown-no-results">Nenhuma empresa cadastrada</div>';
+        dropdown.style.display = 'block';
+        return;
+    }
+    
+    const html = empresas.map(empresaObj => {
+        const [sigla, nome] = Object.entries(empresaObj)[0];
+        return `
+            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
+                <strong>${sigla}</strong> - ${nome}
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+    dropdown.style.display = 'block';
+    
+    // Vincular eventos de clique
+    container.querySelectorAll('.dropdown-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const sigla = this.dataset.sigla;
+            const nome = this.dataset.nome;
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+        });
+    });
+}
+
+/**
+ * 🆕 NAVEGAR NO DROPDOWN COM TECLADO
+ */
+function navegarDropdown(direcao, container, input) {
+    const options = container.querySelectorAll('.dropdown-option');
+    if (options.length === 0) return;
+    
+    const activeOption = container.querySelector('.dropdown-option.active');
+    let nextIndex = 0;
+    
+    if (activeOption) {
+        const currentIndex = Array.from(options).indexOf(activeOption);
+        nextIndex = direcao === 'down' 
+            ? Math.min(currentIndex + 1, options.length - 1)
+            : Math.max(currentIndex - 1, 0);
+    }
+    
+    options.forEach(opt => opt.classList.remove('active'));
+    options[nextIndex].classList.add('active');
+    
+    // Scroll para a opção ativa
+    options[nextIndex].scrollIntoView({ block: 'nearest' });
+}
+
+/**
+ * 🆕 SELECIONAR OPÇÃO ATIVA COM ENTER
+ */
+function selecionarOpcaoAtiva(container, input, dropdown, obraId) {
+    const activeOption = container.querySelector('.dropdown-option.active');
+    if (activeOption) {
+        const sigla = activeOption.dataset.sigla;
+        const nome = activeOption.dataset.nome;
+        selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+    }
+}
+
+/**
+ * 🆕 SELECIONAR EMPRESA
+ */
+function selecionarEmpresa(sigla, nome, input, dropdown, obraId) {
+    input.value = `${sigla} - ${nome}`;
+    input.dataset.siglaSelecionada = sigla;
+    input.dataset.nomeSelecionado = nome;
+    dropdown.style.display = 'none';
+    
+    // Calcular número do cliente automaticamente
+    calcularNumeroClienteFinal(sigla, obraId);
+    
+    console.log(`✅ [EMPRESA] Empresa selecionada: ${sigla} - ${nome}`);
+}
+
+/**
+ * 🆕 CALCULAR NÚMERO DO CLIENTE FINAL - CORRIGIDO E MAIS ROBUSTO
+ */
+async function calcularNumeroClienteFinal(sigla, obraId) {
+    try {
+        console.log(`🔢 [EMPRESA] Calculando número para: ${sigla}`);
+        
+        // Tentar a API primeiro
+        const response = await fetch(`/api/dados/empresas/numero/${encodeURIComponent(sigla)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const dados = await response.json();
+        
+        if (dados.success) {
+            const novoNumero = dados.numero;
+            atualizarNumeroClienteInput(novoNumero, obraId);
+            console.log(`✅ [EMPRESA] Número da API: ${novoNumero} para ${sigla}`);
+        } else {
+            console.warn('⚠️ [EMPRESA] API retornou erro, usando cálculo local:', dados.error);
+            calcularNumeroLocal(sigla, obraId);
+        }
+        
+    } catch (error) {
+        console.warn('⚠️ [EMPRESA] Erro na API, usando cálculo local:', error.message);
+        calcularNumeroLocal(sigla, obraId);
+    }
+}
+
+/**
+ * 🆕 CALCULAR NÚMERO LOCALMENTE COMO FALLBACK
+ */
+async function calcularNumeroLocal(sigla, obraId) {
+    try {
+        // Buscar todas as obras para calcular localmente
+        const response = await fetch('/api/backup-completo');
+        if (!response.ok) {
+            throw new Error('Não foi possível carregar obras');
+        }
+        
+        const backup = await response.json();
+        const obrasExistentes = backup.obras || [];
+        
+        // Filtrar obras da mesma empresa
+        const obrasDaEmpresa = obrasExistentes.filter(obra => 
+            obra.empresaSigla === sigla || 
+            (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`))
+        );
+        
+        // Encontrar maior número
+        let maiorNumero = 0;
+        obrasDaEmpresa.forEach(obra => {
+            if (obra.numeroClienteFinal && obra.numeroClienteFinal > maiorNumero) {
+                maiorNumero = obra.numeroClienteFinal;
+            }
+            
+            if (obra.idGerado) {
+                const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
+                if (match) {
+                    const numero = parseInt(match[1]);
+                    if (numero > maiorNumero) maiorNumero = numero;
+                }
+            }
+        });
+        
+        const novoNumero = maiorNumero + 1;
+        atualizarNumeroClienteInput(novoNumero, obraId);
+        console.log(`🔢 [EMPRESA] Número local: ${novoNumero} para ${sigla}`);
+        
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro no cálculo local:', error);
+        // Fallback final: número aleatório
+        const numeroFallback = Math.floor(Math.random() * 100) + 1;
+        atualizarNumeroClienteInput(numeroFallback, obraId);
+        console.log(`🔄 [EMPRESA] Número fallback: ${numeroFallback} para ${sigla}`);
+    }
+}
+
+/**
+ * 🆕 ATUALIZAR INPUT DO NÚMERO DO CLIENTE
+ */
+function atualizarNumeroClienteInput(numero, obraId) {
+    const numeroInput = document.querySelector(`[data-obra-id="${obraId}"] .numero-cliente-final-cadastro`);
+    if (numeroInput) {
+        numeroInput.value = numero;
+    }
+}
+
+
+
+export {
+    formatarData,
+    loadObrasFromServer,
+    removeBaseObraFromHTML,
+    loadSingleObra,
+    debugLoadObras,
+    obterDadosEmpresaDaObra,
+    prepararDadosEmpresaNaObra
 };

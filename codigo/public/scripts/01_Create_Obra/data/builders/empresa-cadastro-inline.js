@@ -572,7 +572,11 @@ class EmpresaCadastroInline {
             obraBlock.dataset.numeroClienteFinal = dados.numeroClienteFinal;
             obraBlock.dataset.clienteFinal = dados.clienteFinal;
             obraBlock.dataset.codigoCliente = dados.codigoCliente;
-            obraBlock.dataset.dataCadastro = dados.dataCadastro;
+            
+            // 🆕 USAR DATA FORMATADA
+            const dataFormatada = this.formatarData(dados.dataCadastro);
+            obraBlock.dataset.dataCadastro = dataFormatada;
+            
             obraBlock.dataset.orcamentistaResponsavel = dados.orcamentistaResponsavel;
             obraBlock.dataset.idGerado = `obra_${dados.sigla}_${dados.numeroClienteFinal}`;
             
@@ -583,7 +587,7 @@ class EmpresaCadastroInline {
                 numeroClienteFinal: dados.numeroClienteFinal,
                 clienteFinal: dados.clienteFinal,
                 codigoCliente: dados.codigoCliente,
-                dataCadastro: dados.dataCadastro,
+                dataCadastro: dataFormatada, // 🆕 DATA FORMATADA
                 orcamentistaResponsavel: dados.orcamentistaResponsavel
             });
             
@@ -635,6 +639,36 @@ class EmpresaCadastroInline {
             orcamentistaResponsavel: obraBlock.dataset.orcamentistaResponsavel,
             idGerado: obraBlock.dataset.idGerado
         };
+    }
+    /**
+     * Formata data para dd/mm/aaaa
+     */
+    formatarData(dataString) {
+        if (!dataString) return '';
+        
+        try {
+            // Se já estiver no formato dd/mm/aaaa, retornar como está
+            if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                return dataString;
+            }
+            
+            const data = new Date(dataString);
+            
+            if (isNaN(data.getTime())) {
+                console.warn(`⚠️ Data inválida: ${dataString}`);
+                return dataString;
+            }
+            
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            
+            return `${dia}/${mes}/${ano}`;
+            
+        } catch (error) {
+            console.error(`❌ Erro ao formatar data ${dataString}:`, error);
+            return dataString;
+        }
     }
 }
 

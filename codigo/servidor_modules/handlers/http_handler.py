@@ -82,7 +82,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_sessions_current(self)
         elif path == '/api/backup-completo':
             self.route_handler.handle_get_backup_completo(self)
-        # 🆕 ROTAS DE EMPRESAS
+            
+        # 🆕 ROTAS DE EMPRESAS - VERIFIQUE SE ESTÃO AQUI
         elif path == '/api/dados/empresas':
             self.route_handler.handle_get_empresas(self)
         elif path.startswith('/api/dados/empresas/buscar/'):

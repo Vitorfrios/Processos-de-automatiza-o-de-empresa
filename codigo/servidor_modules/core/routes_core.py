@@ -282,7 +282,6 @@ class RoutesCore:
                 "numero": 1
             }
 
-
     # ========== ROTAS DE SESSÃO ==========
     
     def handle_get_sessions_current(self):

@@ -80,20 +80,7 @@ class RouteHandler:
         """GET /api/dados/empresas"""
         empresas = self.routes_core.handle_get_empresas()
         handler.send_json_response(empresas)
-
-    def handle_post_empresas(self, handler):
-        """POST /api/dados/empresas"""
-        content_length = int(handler.headers['Content-Length'])
-        post_data = handler.rfile.read(content_length).decode('utf-8')
         
-        result = self.routes_core.handle_post_empresas(post_data)
-        handler.send_json_response(result)
-
-    def handle_buscar_empresas(self, handler, termo):
-        """GET /api/dados/empresas/buscar/{termo}"""
-        empresas = self.routes_core.handle_buscar_empresas(termo)
-        handler.send_json_response(empresas)
-
     def handle_get_proximo_numero(self, handler, sigla):
         """GET /api/dados/empresas/numero/{sigla}"""
         numero = self.routes_core.handle_get_proximo_numero(sigla)

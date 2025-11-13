@@ -1,13 +1,10 @@
 
 /* ==== INÍCIO: servidor_modules/__init__.py ==== */
+# servidor_modules/__init__.py
+
 """
 Módulos do Servidor Python - ESTRUTURA REORGANIZADA
 """
-
-from . import config
-from .core import ServerCore, RoutesCore, SessionsManager
-from .handlers import UniversalHTTPRequestHandler, RouteHandler
-from .utils import FileUtils, ServerUtils, CacheCleaner, monitorar_navegador
 
 __all__ = [
     'config', 
@@ -22,9 +19,6 @@ __all__ = [
 Core modules - Núcleo do sistema
 """
 
-from .server_core import ServerCore
-from .routes_core import RoutesCore
-from .sessions_core import SessionsManager
 
 __all__ = ['ServerCore', 'RoutesCore', 'SessionsManager']
 /* ==== FIM: servidor_modules/core/__init__.py ==== */
@@ -243,6 +237,8 @@ ALLOWED_ORIGINS = ["http://localhost", "http://127.0.0.1"]  # Origens permitidas
 /* ==== FIM: servidor_modules/config.py ==== */
 
 /* ==== INÍCIO: servidor_modules/handlers/empresa_handler.py ==== */
+# servidor_modules/handlers/empresa_handler.py
+
 """
 empresa_handler.py
 Manipulação de empresas no dados.json
@@ -250,12 +246,19 @@ Manipulação de empresas no dados.json
 
 import json
 import os
-from servidor_modules.utils.file_utils import FileUtils
+# REMOVA esta importação - causa ciclo
+# from servidor_modules.utils.file_utils import FileUtils
 
 class EmpresaHandler:
-    def __init__(self):
-        self.file_utils = FileUtils()
+    def __init__(self, file_utils=None):
+        # Recebe file_utils por injeção de dependência
+        self.file_utils = file_utils
         self.dados_path = os.path.join('json', 'dados.json')
+        
+        # Se file_utils não foi fornecido, cria uma instância local
+        if self.file_utils is None:
+            from servidor_modules.utils.file_utils import FileUtils
+            self.file_utils = FileUtils()
 
     def obter_empresas(self):
         """Obtém lista de empresas do dados.json"""
@@ -452,6 +455,8 @@ class FileUtils:
 /* ==== FIM: servidor_modules/utils/file_utils.py ==== */
 
 /* ==== INÍCIO: servidor_modules/handlers/http_handler.py ==== */
+# servidor_modules/handlers/http_handler.py
+
 """
 http_handler.py
 HTTP Request Handler - Interface HTTP Principal
@@ -478,12 +483,25 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"📁 Diretório base: {self.project_root}")
         
+        # Inicializa RoutesCore primeiro
+        from servidor_modules.core.routes_core import RoutesCore
+        self.routes_core = RoutesCore(
+            self.project_root,
+            sessions_manager,
+            self.file_utils,
+            self.cache_cleaner
+        )
+        
+        # Agora inicializa RouteHandler
         self.route_handler = RouteHandler(
             self.project_root, 
             sessions_manager, 
             self.file_utils, 
             self.cache_cleaner
         )
+        
+        # Injeta o RoutesCore no RouteHandler
+        self.route_handler.set_routes_core(self.routes_core)
         
         serve_directory = self.project_root
         super().__init__(*args, directory=str(serve_directory), **kwargs)
@@ -885,6 +903,8 @@ class RouteHandler:
 /* ==== FIM: servidor_modules/handlers/route_handler.py ==== */
 
 /* ==== INÍCIO: servidor_modules/core/routes_core.py ==== */
+# servidor_modules/core/routes_core.py
+
 """
 routes_core.py
 Núcleo das rotas - Divisão lógica das funcionalidades
@@ -894,8 +914,7 @@ import json
 import time
 import threading
 from pathlib import Path
-from servidor_modules.handlers.empresa_handler import EmpresaHandler
-
+# from servidor_modules.handlers.empresa_handler import EmpresaHandler  # REMOVA esta linha
 
 class RoutesCore:
     """Núcleo das funcionalidades de rotas organizadas por categoria"""
@@ -905,7 +924,10 @@ class RoutesCore:
         self.sessions_manager = sessions_manager
         self.file_utils = file_utils
         self.cache_cleaner = cache_cleaner
-        self.empresa_handler = EmpresaHandler()
+        
+        # Inicializa EmpresaHandler com file_utils injetado
+        from servidor_modules.handlers.empresa_handler import EmpresaHandler
+        self.empresa_handler = EmpresaHandler(file_utils=self.file_utils)
 
 
     # ========== ROTAS DE OBRAS ==========
@@ -1989,7 +2011,9 @@ def main():
         server_core = ServerCore()
         cache_cleaner = CacheCleaner()
         file_utils = FileUtils()
-        sessions_manager = SessionsManager()
+        
+        # SessionsManager é importado globalmente, não precisa instanciar aqui
+        from servidor_modules.core.sessions_core import sessions_manager
         
         # Configuração
         print("   Configurando handlers de sinal...")

@@ -7,8 +7,6 @@ Manipulação de empresas no dados.json
 
 import json
 import os
-# REMOVA esta importação - causa ciclo
-# from servidor_modules.utils.file_utils import FileUtils
 
 class EmpresaHandler:
     def __init__(self, file_utils=None):
@@ -24,7 +22,9 @@ class EmpresaHandler:
     def obter_empresas(self):
         """Obtém lista de empresas do dados.json"""
         try:
-            dados = self.file_utils.carregar_json(self.dados_path)
+            # Usa find_json_file para garantir que o arquivo existe
+            dados_file = self.file_utils.find_json_file('dados.json')
+            dados = self.file_utils.load_json_file(dados_file, {"empresas": []})
             return dados.get('empresas', [])
         except Exception as e:
             print(f"❌ Erro ao obter empresas: {e}")
@@ -33,10 +33,9 @@ class EmpresaHandler:
     def adicionar_empresa(self, nova_empresa):
         """Adiciona nova empresa ao dados.json"""
         try:
-            # Carregar dados existentes
-            dados = self.file_utils.carregar_json(self.dados_path)
-            if not dados:
-                dados = {"empresas": []}
+            # Carregar dados existentes usando find_json_file
+            dados_file = self.file_utils.find_json_file('dados.json')
+            dados = self.file_utils.load_json_file(dados_file, {"empresas": []})
 
             # Verificar se empresa já existe
             sigla = list(nova_empresa.keys())[0]
@@ -51,7 +50,7 @@ class EmpresaHandler:
             dados['empresas'] = empresas_existentes
 
             # Salvar
-            sucesso = self.file_utils.salvar_json(self.dados_path, dados)
+            sucesso = self.file_utils.save_json_file(dados_file, dados)
             if sucesso:
                 return True, f"Empresa {sigla} adicionada com sucesso"
             else:
@@ -94,8 +93,8 @@ class EmpresaHandler:
         """Obtém próximo número de cliente para uma sigla"""
         try:
             # Carregar backup para ver obras existentes
-            backup_path = os.path.join('json', 'backup.json')
-            backup_data = self.file_utils.carregar_json(backup_path)
+            backup_file = self.file_utils.find_json_file('backup.json')
+            backup_data = self.file_utils.load_json_file(backup_file, {"obras": []})
             
             if not backup_data or 'obras' not in backup_data:
                 return 1
