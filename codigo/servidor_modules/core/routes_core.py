@@ -1,3 +1,5 @@
+# servidor_modules/core/routes_core.py
+
 """
 routes_core.py
 Núcleo das rotas - Divisão lógica das funcionalidades
@@ -7,6 +9,7 @@ import json
 import time
 import threading
 from pathlib import Path
+# from servidor_modules.handlers.empresa_handler import EmpresaHandler  # REMOVA esta linha
 
 class RoutesCore:
     """Núcleo das funcionalidades de rotas organizadas por categoria"""
@@ -16,6 +19,11 @@ class RoutesCore:
         self.sessions_manager = sessions_manager
         self.file_utils = file_utils
         self.cache_cleaner = cache_cleaner
+        
+        # Inicializa EmpresaHandler com file_utils injetado
+        from servidor_modules.handlers.empresa_handler import EmpresaHandler
+        self.empresa_handler = EmpresaHandler(file_utils=self.file_utils)
+
 
     # ========== ROTAS DE OBRAS ==========
     
@@ -201,6 +209,79 @@ class RoutesCore:
         except Exception as e:
             print(f"❌ Erro ao deletar obra: {str(e)}")
             return False
+
+
+    # ========= Metodos para empresas ========
+    def handle_get_empresas(self):
+        """Obtém todas as empresas"""
+        try:
+            empresas = self.empresa_handler.obter_empresas()
+            return {
+                "success": True,
+                "empresas": empresas
+            }
+        except Exception as e:
+            print(f"❌ Erro ao obter empresas: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def handle_post_empresas(self, post_data):
+        """Adiciona nova empresa"""
+        try:
+            empresa_data = json.loads(post_data)
+            sucesso, mensagem = self.empresa_handler.adicionar_empresa(empresa_data)
+            
+            return {
+                "success": sucesso,
+                "message": mensagem
+            }
+        except Exception as e:
+            print(f"❌ Erro ao adicionar empresa: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def handle_buscar_empresas(self, termo):
+        """Busca empresas por termo"""
+        try:
+            from urllib.parse import unquote
+            termo_decodificado = unquote(termo)
+            resultados = self.empresa_handler.buscar_empresa_por_termo(termo_decodificado)
+            
+            return {
+                "success": True,
+                "resultados": resultados
+            }
+        except Exception as e:
+            print(f"❌ Erro ao buscar empresas: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "resultados": []
+            }
+
+    def handle_get_proximo_numero(self, sigla):
+        """Obtém próximo número para sigla"""
+        try:
+            from urllib.parse import unquote
+            sigla_decodificada = unquote(sigla)
+            numero = self.empresa_handler.obter_proximo_numero_cliente(sigla_decodificada)
+            
+            return {
+                "success": True,
+                "numero": numero
+            }
+        except Exception as e:
+            print(f"❌ Erro ao obter próximo número: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "numero": 1
+            }
+
 
     # ========== ROTAS DE SESSÃO ==========
     

@@ -1,0 +1,3318 @@
+
+/* ==== INÍCIO: data/builders/data-builders.js ==== */
+/**
+ * data/builders/data-builders.js
+ * 🎯 FUSÃO COMPLETA: data-builders.js + data-extractors.js
+ * ⚡ REDUÇÃO: 2 arquivos → 1 arquivo (~500 → ~350 linhas)
+ */
+
+import { 
+    generateObraId, 
+    generateProjectId, 
+    generateRoomId,
+     
+} from '../utils/id-generator.js';
+
+import{extractNumberFromText,getMachineName,parseMachinePrice } from '../utils/data-utils.js'
+
+/**
+ * 🏗️ FUNÇÕES DE CONSTRUÇÃO DE DADOS (data-builders.js)
+ */
+
+/**
+ * Constrói o objeto de dados completo de uma obra a partir do HTML - VERSÃO CORRIGIDA
+ * @param {string|HTMLElement} obraIdOrElement - ID da obra ou elemento HTML
+ * @returns {Object|null} Dados completos da obra ou null em caso de erro
+ */
+function buildObraData(obraIdOrElement) {
+    console.log('🚨 buildObraData INICIADA - buscando elemento...');
+    
+    let obraElement;
+    
+    if (typeof obraIdOrElement === 'string') {
+        obraElement = document.querySelector(`[data-obra-id="${obraIdOrElement}"]`);
+        
+        if (!obraElement) {
+            console.error('❌ Obra não encontrada pelo ID:', obraIdOrElement);
+            
+            const todasObras = document.querySelectorAll('[data-obra-id]');
+            console.log('📋 Obras disponíveis no DOM:', 
+                Array.from(todasObras).map(o => ({
+                    id: o.dataset.obraId,
+                    name: o.dataset.obraName
+                }))
+            );
+            return null;
+        }
+    } else if (obraIdOrElement instanceof HTMLElement) {
+        if (obraIdOrElement.classList.contains('obra-block')) {
+            obraElement = obraIdOrElement;
+        } else {
+            console.error('❌ Elemento não é uma obra:', obraIdOrElement);
+            return null;
+        }
+    } else {
+        console.error('❌ Tipo inválido para obraIdOrElement:', typeof obraIdOrElement, obraIdOrElement);
+        return null;
+    }
+
+    if (!document.body.contains(obraElement)) {
+        console.error('❌ CRÍTICO: Elemento da obra NÃO ESTÁ MAIS NO DOM!');
+        return null;
+    }
+
+    const obraName = obraElement.dataset.obraName;
+    const obraId = obraElement.dataset.obraId;
+
+    console.log(`📦 Construindo dados da obra: "${obraName}" (ID: ${obraId}) - ELEMENTO NO DOM: ${document.body.contains(obraElement)}`);
+
+    const finalObraId = obraId || generateObraId();
+    
+    const obraData = {
+        id: finalObraId,
+        nome: obraName,
+        timestamp: new Date().toISOString(),
+        projetos: []
+    };
+
+    const projectElements = obraElement.querySelectorAll('.project-block');
+    console.log(`🔍 Encontrados ${projectElements.length} projetos na obra "${obraName}"`);
+    
+    let projetosProcessados = 0;
+    
+    projectElements.forEach((projectElement, index) => {
+        console.log(`📝 Processando projeto ${index + 1}/${projectElements.length}`);
+        
+        if (!document.body.contains(projectElement)) {
+            console.error(`❌ Projeto ${index} foi removido do DOM durante o processamento!`);
+            return;
+        }
+        
+        const projectData = buildProjectData(projectElement);
+        if (projectData) {
+            obraData.projetos.push(projectData);
+            projetosProcessados++;
+            console.log(`✅ Projeto "${projectData.nome}" adicionado à obra "${obraName}"`);
+        } else {
+            console.error(`❌ Falha ao construir projeto ${index} da obra "${obraName}"`);
+        }
+    });
+
+    console.log('📦 Dados da obra construídos:', {
+        obra: obraData.nome,
+        id: obraData.id,
+        projetos: `${projetosProcessados}/${projectElements.length} processados`
+    });
+    
+    console.log('🔍 VERIFICAÇÃO FINAL - Obra ainda no DOM?:', 
+        document.body.contains(obraElement) ? '✅ SIM' : '❌ NÃO');
+    
+    return obraData;
+}
+
+/**
+ * Constrói o objeto de dados completo de um projeto a partir do HTML
+ * @param {string|HTMLElement} projectIdOrElement - ID do projeto ou elemento HTML
+ * @returns {Object|null} Dados completos do projeto ou null em caso de erro
+ */
+function buildProjectData(projectIdOrElement) {
+    let projectElement;
+    
+    if (typeof projectIdOrElement === 'string') {
+        projectElement = document.querySelector(`[data-project-name="${projectIdOrElement}"]`);
+    } else if (projectIdOrElement instanceof HTMLElement) {
+        projectElement = projectIdOrElement;
+    } else {
+        console.error('❌ Tipo inválido para projectIdOrElement:', projectIdOrElement);
+        return null;
+    }
+
+    if (!projectElement) {
+        console.error('❌ Elemento do projeto não encontrado:', projectIdOrElement);
+        return null;
+    }
+
+    if (!document.body.contains(projectElement)) {
+        console.error('❌ CRÍTICO: Elemento do projeto NÃO ESTÁ MAIS NO DOM!');
+        return null;
+    }
+
+    const projectName = projectElement.dataset.projectName || projectElement.id;
+    const projectId = projectElement.dataset.projectId;
+    const obraElement = projectElement.closest('.obra-block');
+
+    if (!obraElement) {
+        console.error('❌ Elemento da obra pai não encontrado para projeto:', projectName);
+        return null;
+    }
+
+    const finalProjectId = projectId || generateProjectId(obraElement);
+
+    const projectData = {
+        id: finalProjectId,
+        nome: projectName,
+        salas: [],
+        timestamp: new Date().toISOString()
+    };
+
+    const roomElements = projectElement.querySelectorAll('.room-block');
+    console.log(`🔍 Encontradas ${roomElements.length} salas no projeto "${projectName}"`);
+    
+    let salasProcessadas = 0;
+    
+    roomElements.forEach((roomElement, index) => {
+        if (!document.body.contains(roomElement)) {
+            console.error(`❌ Sala ${index} foi removida do DOM durante o processamento!`);
+            return;
+        }
+        
+        const roomData = extractRoomData(roomElement, projectElement);
+        if (roomData) {
+            projectData.salas.push(roomData);
+            salasProcessadas++;
+        }
+    });
+
+    console.log(`✅ Projeto "${projectName}" processado: ${salasProcessadas}/${roomElements.length} salas`);
+    return projectData;
+}
+
+/**
+ * Extrai todos os dados de uma sala a partir do elemento HTML
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @param {HTMLElement} projectElement - Elemento HTML do projeto pai
+ * @returns {Object|null} Dados completos da sala ou null em caso de erro
+ */
+function extractRoomData(roomElement, projectElement) {
+    if (!roomElement) {
+        console.error('❌ Elemento da sala é nulo');
+        return null;
+    }
+
+    if (!projectElement) {
+        console.error('❌ Elemento do projeto pai é nulo');
+        return null;
+    }
+
+    if (!document.body.contains(roomElement) || !document.body.contains(projectElement)) {
+        console.error('❌ CRÍTICO: Elemento da sala ou projeto NÃO ESTÁ MAIS NO DOM!');
+        return null;
+    }
+
+    const roomId = roomElement.dataset.roomId || generateRoomId(projectElement);
+    const roomName = roomElement.dataset.roomName || `Sala ${roomId}`;
+
+    console.log(`🔍 Extraindo dados da sala: "${roomName}" (ID: ${roomId}) - NO DOM: ${document.body.contains(roomElement)}`);
+
+    const roomData = {
+        id: roomId,
+        nome: roomName,
+        inputs: extractClimatizationInputs(roomElement),
+        maquinas: extractMachinesData(roomElement),
+        capacidade: extractCapacityData(roomElement),
+        ganhosTermicos: extractThermalGainsData(roomElement),
+        configuracao: extractConfigurationData(roomElement)
+    };
+
+    console.log(`📊 Dados extraídos da sala ${roomId} "${roomData.nome}":`, {
+        inputs: Object.keys(roomData.inputs).length,
+        maquinas: roomData.maquinas.length,
+        capacidade: Object.keys(roomData.capacidade).length,
+        ganhosTermicos: Object.keys(roomData.ganhosTermicos).length,
+        configuracao: Object.keys(roomData.configuracao).length
+    });
+    
+    return roomData;
+}
+
+/**
+ * 🔍 FUNÇÕES DE EXTRAÇÃO DE DADOS (data-extractors.js)
+ */
+
+/**
+ * Extrai dados de ganhos térmicos de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Object} Dados de ganhos térmicos
+ */
+function extractThermalGainsData(roomElement) {
+    console.log('🎯 FUNÇÃO extractThermalGainsData CHAMADA!');
+    
+    const gains = {};
+    
+    const roomId = roomElement.dataset.roomId;
+    
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error('❌ ID da sala inválido ou contém undefined:', roomId);
+        return gains;
+    }
+    
+    console.log(`🔑 ID da sala para extração: ${roomId}`);
+    
+    const totalSelectors = {
+        'total-ganhos-w': `#total-ganhos-w-${roomId}`,
+        'total-tr': `#total-tr-${roomId}`,
+        'total-externo': `#total-externo-${roomId}`,
+        'total-divisoes': `#total-divisoes-${roomId}`,
+        'total-piso': `#total-piso-${roomId}`,
+        'total-iluminacao': `#total-iluminacao-${roomId}`,
+        'total-dissi': `#total-dissi-${roomId}`,
+        'total-pessoas': `#total-pessoas-${roomId}`,
+        'total-ar-sensivel': `#total-ar-sensivel-${roomId}`,
+        'total-ar-latente': `#total-ar-latente-${roomId}`
+    };
+    
+    let encontrados = 0;
+    
+    Object.entries(totalSelectors).forEach(([key, selector]) => {
+        try {
+            const element = document.querySelector(selector);
+            
+            if (element) {
+                let value = element.textContent || element.innerText || element.innerHTML || '';
+                
+                if (value && value.trim() !== '') {
+                    value = value.replace(/<[^>]*>/g, '').trim();
+                    const numericMatch = value.match(/-?\d+(?:[.,]\d+)?/);
+                    
+                    if (numericMatch) {
+                        const numericString = numericMatch[0].replace(',', '.');
+                        const numericValue = parseFloat(numericString);
+                        
+                        if (!isNaN(numericValue)) {
+                            gains[key] = numericValue;
+                            encontrados++;
+                        } else {
+                            gains[key] = 0;
+                        }
+                    } else {
+                        gains[key] = 0;
+                    }
+                } else {
+                    gains[key] = 0;
+                }
+            } else {
+                gains[key] = 0;
+                attemptAlternativeSearch(key, roomId, gains);
+            }
+        } catch (error) {
+            console.error(`💥 Erro ao processar ${selector}:`, error);
+            gains[key] = 0;
+        }
+    });
+    
+    console.log(`🔥 ${encontrados} ganhos térmicos coletados:`, gains);
+    return gains;
+}
+
+/**
+ * Extrai inputs de climatização de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Object} Dados dos inputs de climatização
+ */
+function extractClimatizationInputs(roomElement) {
+    const inputs = {};
+    
+    if (!roomElement || !roomElement.dataset.roomId) {
+        console.error('❌ Elemento da sala inválido para extração de inputs');
+        return inputs;
+    }
+    
+    // Primeiro: extrair todos os inputs de texto/number
+    const textInputs = roomElement.querySelectorAll('.clima-input[type="text"], .clima-input[type="number"], .clima-input[data-field]');
+    textInputs.forEach(input => {
+        const field = input.getAttribute('data-field');
+        if (!field) return;
+        
+        let value = input.value;
+        
+        if (input.type === 'number' && value !== '') {
+            value = parseFloat(value) || 0;
+        }
+        
+        if (value !== undefined && value !== '' && value !== null) {
+            inputs[field] = value;
+        }
+    });
+
+    // Segundo: extrair o valor da pressurização (radio buttons)
+    const pressurizacaoRadios = roomElement.querySelectorAll('input[name*="pressurizacao"][type="radio"]');
+    let pressurizacaoValue = false;
+    
+    pressurizacaoRadios.forEach(radio => {
+        if (radio.checked) {
+            pressurizacaoValue = radio.value === 'sim';
+        }
+    });
+    
+    inputs.pressurizacao = pressurizacaoValue;
+    
+    // Terceiro: se pressurização for SIM, buscar os campos específicos
+    // Se for NÃO, definir valores padrão ou zerados
+    if (pressurizacaoValue) {
+        const pressurizacaoInput = roomElement.querySelector('.clima-input[data-field="pressurizacaoSetpoint"]');
+        const portasDuplasInput = roomElement.querySelector('.clima-input[data-field="numPortasDuplas"]');
+        const portasSimplesInput = roomElement.querySelector('.clima-input[data-field="numPortasSimples"]');
+        
+        // ✅ CORREÇÃO: Converter para número
+        if (pressurizacaoInput) inputs.pressurizacaoSetpoint = parseFloat(pressurizacaoInput.value) || 25;
+        if (portasDuplasInput) inputs.numPortasDuplas = parseFloat(portasDuplasInput.value) || 0;
+        if (portasSimplesInput) inputs.numPortasSimples = parseFloat(portasSimplesInput.value) || 0;
+    } else {
+        // ✅ CORREÇÃO: Zerar como números
+        inputs.pressurizacaoSetpoint = 0;
+        inputs.numPortasDuplas = 0;
+        inputs.numPortasSimples = 0;
+    }
+
+    // Quarto: extrair selects (se houver)
+    const selectInputs = roomElement.querySelectorAll('select.clima-input[data-field]');
+    selectInputs.forEach(select => {
+        const field = select.getAttribute('data-field');
+        if (!field || inputs[field] !== undefined) return;
+        
+        const value = select.value;
+        if (value !== undefined && value !== '' && value !== null) {
+            inputs[field] = value;
+        }
+    });
+
+    console.log(`📝 Inputs de climatização coletados: ${Object.keys(inputs).length}`, inputs);
+    return inputs;
+}
+
+/**
+ * Extrai dados das máquinas de climatização de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Array} Lista de dados das máquinas
+ */
+function extractMachinesData(roomElement) {
+    const machines = [];
+    
+    if (!roomElement || !roomElement.dataset.roomId) {
+        console.error('❌ Elemento da sala inválido para extração de máquinas');
+        return machines;
+    }
+    
+    const machineElements = roomElement.querySelectorAll('.climatization-machine');
+    
+    machineElements.forEach(machineElement => {
+        const machineData = extractClimatizationMachineData(machineElement);
+        if (machineData) {
+            machines.push(machineData);
+        }
+    });
+    
+    console.log(`🤖 ${machines.length} máquina(s) extraída(s) da sala ${roomElement.dataset.roomId}`);
+    return machines;
+}
+
+/**
+ * Extrai dados de uma máquina de climatização individual
+ * @param {HTMLElement} machineElement - Elemento HTML da máquina
+ * @returns {Object} Dados da máquina
+ */
+function extractClimatizationMachineData(machineElement) {
+    if (!machineElement) {
+        console.error('❌ Elemento da máquina é nulo');
+        return null;
+    }
+
+    const machineId = machineElement.getAttribute('data-machine-id') || `machine-${Date.now()}`;
+    const roomId = machineElement.getAttribute('data-room-id');
+
+    console.log(`🔧 Extraindo dados da máquina ${machineId} na sala ${roomId}`);
+
+    const machineData = {
+        nome: getMachineName(machineElement, machineId),
+        tipo: machineElement.querySelector('.machine-type-select')?.value || '',
+        potencia: machineElement.querySelector('.machine-power-select')?.value || '',
+        tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
+        precoBase: 0,
+        opcoesSelecionadas: [],
+        precoTotal: 0,
+        potenciaSelecionada: machineElement.querySelector('.machine-power-select')?.value || '',
+        tipoSelecionado: machineElement.querySelector('.machine-type-select')?.value || ''
+    };
+
+    try {
+        const basePriceElement = document.getElementById(`base-price-${machineId}`);
+        if (basePriceElement) {
+            machineData.precoBase = parseMachinePrice(basePriceElement.textContent);
+        }
+
+        const selectedOptions = [];
+        const optionCheckboxes = machineElement.querySelectorAll('input[type="checkbox"]:checked');
+        
+        optionCheckboxes.forEach((checkbox, index) => {
+            const optionId = checkbox.getAttribute('data-option-id') || (index + 1).toString();
+            const optionValue = parseFloat(checkbox.value) || 0;
+            const optionName = checkbox.getAttribute('data-option-name') || `Opção ${optionId}`;
+            
+            selectedOptions.push({
+                id: parseInt(optionId) || (index + 1),
+                name: optionName.replace(/\s*R\$\s*[\d.,]+/, '').trim(),
+                value: optionValue,
+                originalName: optionName,
+                potenciaAplicada: machineData.potencia
+            });
+        });
+
+        machineData.opcoesSelecionadas = selectedOptions;
+
+        const totalPriceElement = document.getElementById(`total-price-${machineId}`);
+        if (totalPriceElement) {
+            machineData.precoTotal = parseMachinePrice(totalPriceElement.textContent);
+        } else {
+            machineData.precoTotal = machineData.precoBase + 
+                selectedOptions.reduce((sum, option) => sum + option.value, 0);
+        }
+
+        console.log(`✅ Máquina ${machineId} extraída:`, {
+            nome: machineData.nome,
+            tipo: machineData.tipo,
+            potencia: machineData.potencia,
+            precoBase: machineData.precoBase,
+            opcoes: machineData.opcoesSelecionadas.length,
+            precoTotal: machineData.precoTotal
+        });
+
+        return machineData;
+
+    } catch (error) {
+        console.error(`❌ Erro ao extrair dados da máquina ${machineId}:`, error);
+        return machineData;
+    }
+}
+
+/**
+ * Extrai dados de capacidade de refrigeração de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Object} Dados de capacidade
+ */
+function extractCapacityData(roomElement) {
+    const capacityData = {};
+    
+    const roomId = roomElement.dataset.roomId;
+
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error('❌ ID da sala inválido para extração de capacidade');
+        return capacityData;
+    }
+
+    try {
+        const specificSelectors = {
+            fatorSeguranca: `#fator-seguranca-${roomId}`,
+            capacidadeUnitaria: `#capacidade-unitaria-${roomId}`,
+            solucao: `#solucao-${roomId}`,
+            solucaoBackup: `#solucao-backup-${roomId}`,
+            totalCapacidade: `#total-capacidade-${roomId}`,
+            folga: `#folga-${roomId}`
+        };
+
+        Object.entries(specificSelectors).forEach(([key, selector]) => {
+            const element = roomElement.querySelector(selector);
+            if (element) {
+                let value = element.textContent || element.value;
+                
+                if (key === 'folga' && typeof value === 'string') {
+                    value = value.replace('%', '');
+                }
+                
+                if (value && !isNaN(value.replace(',', '.'))) {
+                    value = parseFloat(value.replace(',', '.'));
+                }
+                
+                capacityData[key] = value;
+            }
+        });
+
+        const backupSelect = roomElement.querySelector('.backup-select');
+        if (backupSelect) {
+            capacityData.backup = backupSelect.value;
+        }
+
+        const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`);
+        if (cargaEstimadaElement) {
+            const input = cargaEstimadaElement.querySelector('input');
+            if (input) {
+                capacityData.cargaEstimada = parseInt(input.value) || 0;
+            } else {
+                capacityData.cargaEstimada = parseInt(cargaEstimadaElement.textContent) || 0;
+            }
+        }
+
+        console.log(`❄️ Dados de capacidade coletados: ${Object.keys(capacityData).length}`, capacityData);
+        return capacityData;
+
+    } catch (error) {
+        console.error(`❌ Erro ao extrair dados de capacidade da sala ${roomId}:`, error);
+        return capacityData;
+    }
+}
+
+/**
+ * Extrai dados de configuração de instalação de uma sala
+ * @param {HTMLElement} roomElement - Elemento HTML da sala
+ * @returns {Object} Dados de configuração
+ */
+function extractConfigurationData(roomElement) {
+    const config = {
+        opcoesInstalacao: []
+    };
+    
+    if (!roomElement || !roomElement.dataset.roomId) {
+        console.error('❌ Elemento da sala inválido para extração de configuração');
+        return config;
+    }
+    
+    console.log('🔍 Buscando configurações na sala...');
+    
+    const opcoesInstalacaoCheckboxes = roomElement.querySelectorAll('input[name^="opcoesInstalacao-"][type="checkbox"]');
+    
+    console.log(`📋 Encontrados ${opcoesInstalacaoCheckboxes.length} checkboxes de opções de instalação`);
+    
+    opcoesInstalacaoCheckboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            const value = checkbox.value;
+            config.opcoesInstalacao.push(value);
+            console.log(`✅ Opção de instalação selecionada: ${value}`);
+        }
+    });
+    
+    console.log(`⚙️ Configurações coletadas:`, {
+        opcoesInstalacao: config.opcoesInstalacao.length
+    }, config);
+    
+    return config;
+}
+
+/**
+ * Busca alternativa por texto quando o elemento não é encontrado pelo ID
+ * @param {string} key - Chave do ganho térmico
+ * @param {string} roomId - ID único da sala
+ * @param {Object} gains - Objeto de ganhos térmicos
+ * @returns {void}
+ */
+function attemptAlternativeSearch(key, roomId, gains) {
+    const textMap = {
+        'total-ganhos-w': 'Total de Ganhos Térmicos:',
+        'total-tr': 'Total em TR:',
+        'total-externo': 'Total Paredes Externas e Teto',
+        'total-divisoes': 'Total Divisórias',
+        'total-piso': 'Total Piso',
+        'total-iluminacao': 'Total Iluminação',
+        'total-dissi': 'Total Equipamentos',
+        'total-pessoas': 'Total Pessoas',
+        'total-ar-sensivel': 'Total Ar Externo Sensível',
+        'total-ar-latente': 'Total Ar Externo Latente'
+    };
+    
+    const textToFind = textMap[key];
+    if (!textToFind) return;
+    
+    console.log(`🔍 Buscando alternativa para ${key}: "${textToFind}"`);
+    
+    const elements = Array.from(document.querySelectorAll('*')).filter(el => {
+        const text = el.textContent || el.innerText || '';
+        return text.includes(textToFind);
+    });
+    
+    if (elements.length > 0) {
+        for (const element of elements) {
+            const selfText = element.textContent || el.innerText || '';
+            const selfNumber = extractNumberFromText(selfText);
+            if (selfNumber !== null) {
+                gains[key] = selfNumber;
+                console.log(`✅ ${key}: ${selfNumber} -> SALVO (via texto próprio)`);
+                return;
+            }
+            
+            const parent = element.parentElement;
+            if (parent) {
+                const parentText = parent.textContent || parent.innerText || '';
+                const parentNumber = extractNumberFromText(parentText);
+                if (parentNumber !== null) {
+                    gains[key] = parentNumber;
+                    console.log(`✅ ${key}: ${parentNumber} -> SALVO (via texto pai)`);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 🌐 EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
+ */
+
+// Exportações para módulos ES6
+export {
+    // Construção
+    buildObraData,
+    buildProjectData,
+    extractRoomData,
+    
+    // Extração
+    extractThermalGainsData,
+    extractClimatizationInputs,
+    extractMachinesData,
+    extractClimatizationMachineData,
+    extractCapacityData,
+    extractConfigurationData,
+    
+    // Utilitários
+    attemptAlternativeSearch
+};
+
+// Compatibilidade global para scripts legados
+if (typeof window !== 'undefined') {
+    window.buildObraData = buildObraData;
+    window.buildProjectData = buildProjectData;
+    window.extractRoomData = extractRoomData;
+    window.extractThermalGainsData = extractThermalGainsData;
+    window.extractClimatizationInputs = extractClimatizationInputs;
+    window.extractMachinesData = extractMachinesData;
+    window.extractClimatizationMachineData = extractClimatizationMachineData;
+    window.extractCapacityData = extractCapacityData;
+    window.extractConfigurationData = extractConfigurationData;
+}
+/* ==== FIM: data/builders/data-builders.js ==== */
+
+/* ==== INÍCIO: data/utils/data-utils.js ==== */
+/**
+ * data/utils/data-utils.js
+ * Utilitários de dados unificados - FUSÃO: data-utils-core.js + helpers.js
+ * Sistema completo de IDs, numeração, nomeação e utilitários
+ */
+
+import { 
+    safeNumber as coreSafeNumber, 
+    updateElementText as coreUpdateElementText,
+    waitForElement as coreWaitForElement
+} from '../../utils/core-utils.js';
+
+
+// =============================================================================
+// FUNÇÕES DE NUMERAÇÃO (De data-utils-core.js)
+// =============================================================================
+
+/**
+ * Obtém o próximo número de projeto disponível PARA UMA OBRA ESPECÍFICA - CORRIGIDO
+ * @param {string} obraId - ID único da obra
+ * @returns {number} Próximo número disponível para projeto na obra específica
+ */
+function getNextProjectNumber(obraId) {
+    try {
+        // ✅ CORREÇÃO: Buscar apenas projetos DESTA obra específica
+        const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraBlock) {
+            console.warn(`⚠️ Obra ${obraId} não encontrada, usando projeto 1`);
+            return 1;
+        }
+
+        const projectBlocks = obraBlock.querySelectorAll('.project-block');
+        let maxNumber = 0;
+
+        projectBlocks.forEach(project => {
+            const projectName = project.dataset.projectName || 
+                             project.querySelector('.project-title')?.textContent || '';
+            
+            if (projectName) {
+                // Suporta: "Projeto1", "Projeto 2", "Projeto-3", etc.
+                const match = projectName.match(/Projeto\s*[-_]?\s*(\d+)/i);
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (num > maxNumber) maxNumber = num;
+                }
+            }
+        });
+
+        console.log(`🔢 Next project number for obra ${obraId}: ${maxNumber + 1} (max found: ${maxNumber})`);
+        return maxNumber + 1;
+
+    } catch (error) {
+        console.error('❌ Erro em getNextProjectNumber:', error);
+        return 1; // Fallback seguro
+    }
+}
+
+/**
+ * Obtém o próximo número de sala - CORRIGIDO
+ * @param {string} projectId - ID do projeto
+ * @returns {number} Próximo número disponível para sala
+ */
+function getNextRoomNumber(projectId) {
+    try {
+        const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`);
+        if (!projectBlock) {
+            console.warn(`⚠️ Projeto ${projectId} não encontrado, usando sala 1`);
+            return 1;
+        }
+
+        const roomBlocks = projectBlock.querySelectorAll('.room-block');
+        let maxNumber = 0;
+
+        roomBlocks.forEach(room => {
+            const roomName = room.dataset.roomName || 
+                          room.querySelector('.room-title')?.textContent || '';
+
+            if (roomName) {
+                // Suporta: "Sala1", "Sala 2", "Sala-3", etc.
+                const match = roomName.match(/Sala\s*[-_]?\s*(\d+)/i);
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (num > maxNumber) maxNumber = num;
+                }
+            }
+        });
+
+        console.log(`🔢 Next room number for project ${projectId}: ${maxNumber + 1}`);
+        return maxNumber + 1;
+
+    } catch (error) {
+        console.error('❌ Erro em getNextRoomNumber:', error);
+        return 1; // Fallback seguro
+    }
+}
+
+/**
+ * Obtém o próximo número de obra disponível
+ * @returns {number} Próximo número disponível para obra
+ */
+function getNextObraNumber() {
+    try {
+        const obraBlocks = document.querySelectorAll('.obra-block');
+        let maxNumber = 0;
+
+        obraBlocks.forEach(obra => {
+            const obraName = obra.dataset.obraName || 
+                          obra.querySelector('.obra-title')?.textContent || '';
+            
+            if (obraName) {
+                // Suporta: "Obra1", "Obra 2", "Obra-3", etc.
+                const match = obraName.match(/Obra\s*[-_]?\s*(\d+)/i);
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (num > maxNumber) maxNumber = num;
+                }
+            }
+        });
+
+        console.log(`🔢 Next obra number: ${maxNumber + 1} (max found: ${maxNumber})`);
+        return maxNumber + 1;
+
+    } catch (error) {
+        console.error('❌ Erro em getNextObraNumber:', error);
+        return 1; // Fallback seguro
+    }
+}
+
+// =============================================================================
+// FUNÇÕES DE NOMEAÇÃO (De data-utils-core.js)
+// =============================================================================
+
+/**
+ * Obtém o ID completo da sala no formato correto
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @returns {string} ID completo da sala
+ */
+function getRoomFullId(roomElement) {
+    const roomId = roomElement.dataset.roomId;
+    
+    if (!roomId || roomId === 'undefined' || roomId === 'null' || roomId.includes('undefined')) {
+        console.error(`ERRO FALBACK (getRoomFullId) [Room ID inválido: ${roomId}]`);
+        return generateSecureId('sala');
+    }
+    
+    console.log(`✅ ID da sala obtido do data attribute: ${roomId}`);
+    return roomId;
+}
+
+/**
+ * Obtém o nome da obra a partir do elemento - CORRIGIDO
+ * @param {HTMLElement} obraElement - Elemento da obra
+ * @returns {string} Nome da obra
+ */
+function getObraName(obraElement) {
+    if (!obraElement) {
+        console.error(`ERRO FALBACK (getObraName) [Elemento da obra não fornecido]`);
+        return 'Obra_Erro';
+    }
+
+    const titleElement = obraElement.querySelector('.obra-title');
+    if (titleElement) {
+        const name = titleElement.textContent || titleElement.innerText || '';
+        const trimmedText = name.trim();
+        if (trimmedText && trimmedText !== 'Obra') {
+            return trimmedText;
+        }
+    }
+    
+    const obraNameFromData = obraElement.dataset.obraName;
+    if (obraNameFromData && obraNameFromData !== 'undefined' && obraNameFromData !== 'null') {
+        return obraNameFromData;
+    }
+    
+    console.error(`ERRO FALBACK (getObraName) [Nome da obra não encontrado]`);
+    return 'Obra_Erro';
+}
+
+/**
+ * Obtém o nome do projeto a partir do elemento - CORRIGIDO
+ * @param {HTMLElement} projectElement - Elemento do projeto
+ * @returns {string} Nome do projeto
+ */
+function getProjectName(projectElement) {
+    if (!projectElement) {
+        console.error(`ERRO FALBACK (getProjectName) [Elemento do projeto não fornecido]`);
+        return 'Projeto_Erro';
+    }
+
+    const titleElement = projectElement.querySelector('.project-title');
+    if (titleElement) {
+        const titleText = titleElement.textContent || titleElement.innerText || '';
+        const trimmedText = titleText.trim();
+        if (trimmedText && trimmedText !== 'Projeto') {
+            console.log(`📝 Nome do projeto obtido do título: "${trimmedText}"`);
+            return trimmedText;
+        }
+    }
+    
+    const projectNameFromData = projectElement.dataset.projectName;
+    if (projectNameFromData && projectNameFromData !== 'undefined' && projectNameFromData !== 'null' && projectNameFromData !== 'Projeto') {
+        console.log(`📝 Nome do projeto obtido do data attribute: "${projectNameFromData}"`);
+        return projectNameFromData;
+    }
+    
+    console.error(`ERRO FALBACK (getProjectName) [Nome do projeto não encontrado]`);
+    return 'Projeto_Erro';
+}
+
+/**
+ * Obtém o nome da sala a partir do elemento - CORRIGIDO
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @returns {string} Nome da sala
+ */
+function getRoomName(roomElement) {
+    if (!roomElement) {
+        console.error(`ERRO FALBACK (getRoomName) [Elemento da sala não fornecido]`);
+        return 'Sala_Erro';
+    }
+
+    const titleElement = roomElement.querySelector('.room-title');
+    if (titleElement) {
+        const name = titleElement.textContent || titleElement.value || titleElement.getAttribute('value') || '';
+        const trimmedName = name.trim();
+        if (trimmedName) return trimmedName;
+    }
+    
+    const roomNameFromData = roomElement.dataset.roomName;
+    if (roomNameFromData && roomNameFromData !== 'undefined' && roomNameFromData !== 'null') {
+        return roomNameFromData;
+    }
+    
+    const roomId = roomElement.dataset.roomId;
+    if (roomId && roomId !== 'undefined' && roomId !== 'null') {
+        return `Sala ${roomId.split('_').pop()}`;
+    }
+    
+    console.error(`ERRO FALBACK (getRoomName) [Nome da sala não encontrado]`);
+    return 'Sala_Erro';
+}
+
+// =============================================================================
+// FUNÇÕES UTILITÁRIAS (De data-utils-core.js)
+// =============================================================================
+
+/**
+ * Extrai número de um texto, convertendo vírgula para ponto decimal
+ * @param {string} text - Texto contendo número
+ * @returns {number|null} Número extraído ou null se não encontrado
+ */
+function extractNumberFromText(text) {
+    if (!text) return null;
+    
+    const numberMatch = text.match(/-?\d+(?:[.,]\d+)?/);
+    if (numberMatch) {
+        const numericString = numberMatch[0].replace(',', '.');
+        const numericValue = parseFloat(numericString);
+        return isNaN(numericValue) ? null : numericValue;
+    }
+    
+    return null;
+}
+
+/**
+ * Obtém o nome da máquina a partir do elemento
+ * @param {HTMLElement} machineElement - Elemento da máquina
+ * @param {string} machineId - ID da máquina
+ * @returns {string} Nome da máquina
+ */
+function getMachineName(machineElement, machineId) {
+    const titleElement = machineElement.querySelector('.machine-title-editable');
+    if (!titleElement) return `Máquina ${machineId}`;
+    
+    const name = titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Máquina ${machineId}`;
+    return name.trim() || `Máquina${machineId}`;
+}
+
+/**
+ * Converte texto de preço em número
+ * @param {string} priceText - Texto do preço no formato "R$ X.XXX,XX"
+ * @returns {number} Valor numérico do preço
+ */
+function parseMachinePrice(priceText) {
+    if (!priceText || priceText === 'R$ 0,00') return 0;
+    
+    try {
+        const cleaned = priceText.replace('R$', '')
+                                .replace(/\./g, '')
+                                .replace(',', '.')
+                                .trim();
+        return parseFloat(cleaned) || 0;
+    } catch (error) {
+        console.error('❌ Erro ao converter preço:', priceText, error);
+        return 0;
+    }
+}
+
+/**
+ * Função de debug para mostrar todos os elementos de ganhos térmicos disponíveis
+ * @param {HTMLElement} roomElement - Elemento da sala para debug
+ * @returns {void}
+ */
+function debugThermalGainsElements(roomElement) {
+    const roomFullId = getRoomFullId(roomElement);
+    console.log('🐛 DEBUG: Todos os elementos de ganhos térmicos disponíveis:');
+    
+    const selectors = [
+        'total-ganhos-w', 'total-tr', 'total-externo', 'total-divisoes',
+        'total-piso', 'total-iluminacao', 'total-dissi', 'total-pessoas',
+        'total-ar-sensivel', 'total-ar-latente'
+    ];
+    
+    selectors.forEach(selector => {
+        const element = document.querySelector(`#${selector}-${roomFullId}`);
+        console.log(`🔍 ${selector}-${roomFullId}:`, element ? `ENCONTRADO - "${element.textContent}"` : 'NÃO ENCONTRADO');
+    });
+}
+
+
+
+
+// =============================================================================
+// FUNÇÕES DE COLETA DE DADOS (De helpers.js)
+// =============================================================================
+
+/**
+ * Coleta dados de entrada da interface para processamento de climatização
+ * @param {HTMLElement} climaSection - Elemento HTML da seção de climatização
+ * @param {string} roomId - ID único da sala (formato: obra_w12_proj_t34_1_sala_r21_1)
+ * @returns {Object} Dados coletados dos inputs
+ */
+function collectClimatizationInputs(climaSection, roomId) {
+    console.log(`📝 [COLLECT] Coletando inputs para sala: ${roomId}`);
+    
+    const inputs = climaSection.querySelectorAll(".clima-input, input[data-field], select[data-field]");
+    const data = {};
+
+    inputs.forEach((input) => {
+        const field = input.dataset.field;
+        let value;
+        
+        // ✅ CORREÇÃO: Tratar diferentes tipos de input
+        if (input.type === 'checkbox') {
+            value = input.checked;
+        } else if (input.type === 'number' || input.type === 'text') {
+            value = input.value !== "" ? (input.type === 'number' ? Number.parseFloat(input.value) : input.value) : "";
+        } else if (input.tagName === 'SELECT') {
+            value = input.value !== "" ? input.value : "";
+        }
+        
+        if (field) {
+            data[field] = value;
+        }
+    });
+
+    // ✅ CORREÇÃO: Coletar estado da pressurização dos RADIO BUTTONS
+    if (data.pressurizacao === undefined) {
+        const radioSim = climaSection.querySelector('input[type="radio"][value="sim"]');
+        const radioNao = climaSection.querySelector('input[type="radio"][value="nao"]');
+        
+        // Se o radio "sim" estiver marcado, pressurização está ativa
+        data.pressurizacao = radioSim ? radioSim.checked : false;
+        
+        console.log(`🎯 [COLLECT] Estado da pressurização:`, {
+            radioSimChecked: radioSim?.checked,
+            radioNaoChecked: radioNao?.checked,
+            pressurizacao: data.pressurizacao
+        });
+    }
+    
+    // ✅ CORREÇÃO: Garantir que setpointTemp esteja presente
+    if (data.setpointTemp === undefined) {
+        const setpointInput = climaSection.querySelector('input[data-field="setpointTemp"]');
+        data.setpointTemp = setpointInput ? safeNumber(setpointInput.value) : 0;
+    }
+
+    // ✅ CORREÇÃO: Garantir que pressurizacaoSetpoint esteja presente
+    if (data.pressurizacaoSetpoint === undefined) {
+        const pressurizacaoInput = climaSection.querySelector('input[data-field="pressurizacaoSetpoint"]');
+        data.pressurizacaoSetpoint = pressurizacaoInput ? safeNumber(pressurizacaoInput.value) : 0;
+        
+        console.log(`🎯 [COLLECT] Valor da pressurização:`, {
+            pressurizacaoSetpoint: data.pressurizacaoSetpoint,
+            inputValue: pressurizacaoInput?.value
+        });
+    }
+
+    console.log(`✅ [COLLECT] ${Object.keys(data).length} dados coletados para ${roomId}:`, data);
+    return data;
+}
+
+/**
+ * Encontra a seção de climatização de uma sala pelo ID único
+ * @param {string} roomId - ID único da sala
+ * @returns {HTMLElement|null} Elemento da seção de climatização
+ */
+function findClimatizationSection(roomId) {
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (!roomElement) {
+        console.error(`❌ [FIND] Sala não encontrada: ${roomId}`);
+        return null;
+    }
+    
+    const climaSection = roomElement.querySelector('#section-content-' + roomId + '-clima');
+    if (!climaSection) {
+        console.error(`❌ [FIND] Seção de climatização não encontrada para: ${roomId}`);
+        return null;
+    }
+    
+    console.log(`✅ [FIND] Seção encontrada para: ${roomId}`);
+    return climaSection;
+}
+
+
+
+
+// =============================================================================
+// EXPORTAÇÕES
+// =============================================================================
+
+export {
+  
+    // Sistema de Numeração
+    getNextProjectNumber,
+    getNextRoomNumber,
+    getNextObraNumber,
+    
+    // Funções de Nomeação
+    getRoomFullId,
+    getObraName,
+    getProjectName,
+    getRoomName,
+    
+    // Utilitários Gerais
+    extractNumberFromText,
+    getMachineName,
+    parseMachinePrice,
+    debugThermalGainsElements,
+    
+
+    
+    // Coleta de Dados
+    collectClimatizationInputs,
+    findClimatizationSection,
+};
+
+// Disponibilização global para compatibilidade
+if (typeof window !== 'undefined') {
+   
+    // Sistema de numeração
+    window.getNextProjectNumber = getNextProjectNumber;
+    window.getNextRoomNumber = getNextRoomNumber;
+    window.getNextObraNumber = getNextObraNumber;
+    
+    // Utilitários
+    window.getRoomFullId = getRoomFullId;
+    window.debugThermalGainsElements = debugThermalGainsElements;
+}
+/* ==== FIM: data/utils/data-utils.js ==== */
+
+/* ==== INÍCIO: ui/components/edit.js ==== */
+/**
+ * ui/components/edit.js
+ * Sistema de edição inline unificado - FUSÃO: edit.js + interface.js (makeEditable)
+ * Gerencia edição inline de obras, projetos e salas
+ */
+
+import { isValidElement } from '../../utils/core-utils.js';
+
+// =============================================================================
+// SISTEMA DE EDIÇÃO INLINE (De edit.js)
+// =============================================================================
+
+/**
+ * Inicia o modo de edição inline para um elemento (obra, projeto ou sala)
+ * Permite que o usuário edite o texto diretamente no elemento
+ * @param {HTMLElement} element - Elemento a ser editado
+ * @param {string} type - Tipo do elemento ('obra', 'project', 'room')
+ * @returns {void}
+ * 
+ * @example
+ * makeEditable(titleElement, 'project') // Torna título do projeto editável
+ * makeEditable(roomElement, 'room')     // Torna título da sala editável
+ */
+function makeEditable(element, type) {
+    // Validações de segurança
+    if (!isValidElement(element)) {
+        console.error('❌ Elemento inválido para edição');
+        return;
+    }
+    
+    if (element.classList.contains("editing")) {
+        console.log('⚠️ Elemento já está em modo de edição');
+        return;
+    }
+
+    const originalText = element.textContent.trim();
+    element.dataset.originalText = originalText;
+    element.dataset.editType = type;
+
+    enableEditing(element);
+    selectElementContent(element);
+    attachEditingEventListeners(element, type);
+    
+    console.log(`✏️ Modo edição ativado para ${type}: "${originalText}"`);
+}
+
+/**
+ * Habilita a edição do elemento configurando contentEditable
+ * @param {HTMLElement} element - Elemento a ser habilitado para edição
+ * @returns {void}
+ */
+function enableEditing(element) {
+    if (!isValidElement(element)) return;
+    
+    element.contentEditable = true;
+    element.classList.add("editing");
+    
+    // Estilo visual para indicar modo de edição
+    element.style.backgroundColor = '#fff3cd';
+    element.style.border = '1px solid #ffc107';
+    element.style.borderRadius = '3px';
+    element.style.padding = '2px 4px';
+    element.style.minWidth = '50px';
+}
+
+/**
+ * Seleciona todo o conteúdo do elemento para facilitar a edição
+ * @param {HTMLElement} element - Elemento cujo conteúdo será selecionado
+ * @returns {void}
+ */
+function selectElementContent(element) {
+    if (!isValidElement(element)) return;
+    
+    // Aguarda um frame para garantir que o elemento está focado
+    setTimeout(() => {
+        const range = document.createRange();
+        const selection = window.getSelection();
+        
+        // Limpa seleções anteriores
+        selection.removeAllRanges();
+        
+        // Seleciona todo o conteúdo
+        range.selectNodeContents(element);
+        selection.addRange(range);
+        
+        element.focus();
+    }, 10);
+}
+
+/**
+ * Anexa event listeners para tratar teclas e perda de foco durante edição
+ * @param {HTMLElement} element - Elemento em edição
+ * @param {string} type - Tipo do elemento ('obra', 'project', 'room')
+ * @returns {void}
+ */
+function attachEditingEventListeners(element, type) {
+    if (!isValidElement(element)) return;
+    
+    /**
+     * Handler para eventos de teclado
+     */
+    function handleKeydown(e) {
+        switch (e.key) {
+            case "Enter":
+                e.preventDefault();
+                saveInlineEdit(element, type);
+                element.removeEventListener("keydown", handleKeydown);
+                break;
+                
+            case "Escape":
+                e.preventDefault();
+                cancelInlineEdit(element);
+                element.removeEventListener("keydown", handleKeydown);
+                break;
+                
+            case "Tab":
+                e.preventDefault();
+                saveInlineEdit(element, type);
+                // Poderia navegar para próximo elemento editável aqui
+                break;
+        }
+    }
+    
+    /**
+     * Handler para perda de foco
+     */
+    function handleBlur() {
+        saveInlineEdit(element, type);
+        element.removeEventListener("blur", handleBlur);
+    }
+    
+    // Adiciona listeners
+    element.addEventListener("keydown", handleKeydown);
+    element.addEventListener("blur", handleBlur, { once: true });
+}
+
+/**
+ * Salva as alterações feitas durante a edição inline
+ * @param {HTMLElement} element - Elemento sendo editado
+ * @param {string} type - Tipo do elemento ('obra', 'project', 'room')
+ * @returns {void}
+ */
+function saveInlineEdit(element, type) {
+    if (!isValidElement(element)) return;
+    
+    const newText = element.textContent.trim();
+    const originalText = element.dataset.originalText;
+
+    disableEditing(element);
+
+    // Valida o texto editado
+    if (!validateEditedText(newText, originalText, element)) {
+        return;
+    }
+
+    // Aplica mudanças se houver diferença
+    if (newText !== originalText) {
+        applyNameChange(element, newText, type, originalText);
+    }
+
+    // Limpa dados temporários
+    delete element.dataset.originalText;
+    delete element.dataset.editType;
+}
+
+/**
+ * Aplica a mudança de nome ao elemento e atualiza dados relacionados
+ * @param {HTMLElement} element - Elemento sendo editado
+ * @param {string} newText - Novo texto
+ * @param {string} type - Tipo do elemento
+ * @param {string} originalText - Texto original
+ * @returns {void}
+ */
+function applyNameChange(element, newText, type, originalText) {
+    element.textContent = newText;
+    
+    // Atualiza data attributes se existirem
+    const entityMap = {
+        'obra': 'obraName',
+        'project': 'projectName', 
+        'room': 'roomName'
+    };
+    
+    const dataAttribute = entityMap[type];
+    if (dataAttribute && element.closest(`[data-${dataAttribute}]`)) {
+        const parentElement = element.closest(`[data-${dataAttribute}]`);
+        parentElement.dataset[dataAttribute] = newText;
+    }
+    
+    // Log apropriado para o tipo
+    const entityNames = {
+        'obra': 'Obra',
+        'project': 'Projeto',
+        'room': 'Sala'
+    };
+    
+    const entityName = entityNames[type] || 'Elemento';
+    console.log(`✅ ${entityName} renomeado: "${originalText}" → "${newText}"`);
+    
+    // Dispara evento customizado para notificar outros sistemas
+    const changeEvent = new CustomEvent('entity:name-changed', {
+        detail: {
+            type: type,
+            element: element,
+            oldName: originalText,
+            newName: newText,
+            timestamp: new Date().toISOString()
+        }
+    });
+    element.dispatchEvent(changeEvent);
+}
+
+/**
+ * Desabilita o modo de edição do elemento
+ * @param {HTMLElement} element - Elemento a ser desabilitado
+ * @returns {void}
+ */
+function disableEditing(element) {
+    if (!isValidElement(element)) return;
+    
+    element.contentEditable = false;
+    element.classList.remove("editing");
+    
+    // Remove estilos de edição
+    element.style.backgroundColor = '';
+    element.style.border = '';
+    element.style.borderRadius = '';
+    element.style.padding = '';
+    element.style.minWidth = '';
+}
+
+/**
+ * Valida o texto editado pelo usuário
+ * @param {string} newText - Novo texto inserido
+ * @param {string} originalText - Texto original
+ * @param {HTMLElement} element - Elemento sendo validado
+ * @returns {boolean} True se o texto é válido
+ */
+function validateEditedText(newText, originalText, element) {
+    // Texto vazio
+    if (newText === "") {
+        element.textContent = originalText;
+        showEditError("O nome não pode estar vazio.");
+        return false;
+    }
+    
+    // Texto muito longo
+    if (newText.length > 100) {
+        element.textContent = originalText;
+        showEditError("O nome é muito longo (máximo 100 caracteres).");
+        return false;
+    }
+    
+    // Caracteres inválidos
+    const invalidChars = /[<>"/\\&]/;
+    if (invalidChars.test(newText)) {
+        element.textContent = originalText;
+        showEditError("O nome contém caracteres inválidos.");
+        return false;
+    }
+    
+    // Nome não alterado
+    if (newText === originalText) {
+        console.log('ℹ️  Nome não alterado');
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Exibe mensagem de erro durante edição
+ * @param {string} message - Mensagem de erro
+ * @returns {void}
+ */
+function showEditError(message) {
+    // Poderia usar um sistema de notificação mais sofisticado
+    console.error(`❌ Erro na edição: ${message}`);
+    
+    // Feedback visual simples
+    if (typeof window.showSystemStatus === 'function') {
+        window.showSystemStatus(message, "error");
+    } else {
+        alert(message);
+    }
+}
+
+/**
+ * Cancela a edição e restaura o texto original
+ * @param {HTMLElement} element - Elemento cuja edição será cancelada
+ * @returns {void}
+ */
+function cancelInlineEdit(element) {
+    if (!isValidElement(element)) return;
+    
+    const originalText = element.dataset.originalText;
+    const editType = element.dataset.editType;
+
+    disableEditing(element);
+    element.textContent = originalText;
+    
+    // Limpa dados temporários
+    delete element.dataset.originalText;
+    delete element.dataset.editType;
+
+    console.log(`❌ Edição de ${editType} cancelada: "${originalText}"`);
+}
+
+// =============================================================================
+// FUNÇÕES AVANÇADAS DE EDIÇÃO
+// =============================================================================
+
+/**
+ * Torna editável todos os elementos de um tipo específico
+ * @param {string} selector - Seletor CSS dos elementos
+ * @param {string} type - Tipo dos elementos
+ * @returns {void}
+ */
+function makeAllEditable(selector, type) {
+    const elements = document.querySelectorAll(selector);
+    console.log(`🔧 Tornando ${elements.length} elementos editáveis: ${selector}`);
+    
+    elements.forEach((element, index) => {
+        // Adiciona pequeno delay para evitar conflitos
+        setTimeout(() => {
+            makeEditable(element, type);
+        }, index * 50);
+    });
+}
+
+/**
+ * Desabilita edição em todos os elementos editáveis
+ * @returns {void}
+ */
+function disableAllEditing() {
+    const editingElements = document.querySelectorAll('.editing');
+    console.log(`🔒 Desativando edição em ${editingElements.length} elementos`);
+    
+    editingElements.forEach(element => {
+        disableEditing(element);
+    });
+}
+
+/**
+ * Salva todas as edições pendentes
+ * @returns {void}
+ */
+function saveAllPendingEdits() {
+    const editingElements = document.querySelectorAll('.editing');
+    console.log(`💾 Salvando ${editingElements.length} edições pendentes`);
+    
+    editingElements.forEach(element => {
+        const type = element.dataset.editType || 'unknown';
+        saveInlineEdit(element, type);
+    });
+}
+
+/**
+ * Verifica se há edições pendentes
+ * @returns {boolean} True se há elementos em edição
+ */
+function hasPendingEdits() {
+    return document.querySelectorAll('.editing').length > 0;
+}
+
+/**
+ * Obtém estatísticas de edição
+ * @returns {Object} Estatísticas de edição
+ */
+function getEditStats() {
+    const editingElements = document.querySelectorAll('.editing');
+    const stats = {
+        totalEditing: editingElements.length,
+        byType: {}
+    };
+    
+    editingElements.forEach(element => {
+        const type = element.dataset.editType || 'unknown';
+        stats.byType[type] = (stats.byType[type] || 0) + 1;
+    });
+    
+    return stats;
+}
+
+// =============================================================================
+// FUNÇÕES DE COMPATIBILIDADE (Para migração gradual)
+// =============================================================================
+
+/**
+ * Função de compatibilidade para interface.js
+ * @param {HTMLElement} element - Elemento a ser editado
+ * @param {string} type - Tipo do elemento
+ * @returns {void}
+ */
+function makeEditableCompatibility(element, type) {
+    console.log(`✏️ [COMPAT] Tornando ${type} editável:`, element);
+    
+    // Implementação simplificada para compatibilidade
+    if (element.isContentEditable) {
+        element.contentEditable = false;
+        element.blur();
+    } else {
+        element.contentEditable = true;
+        element.focus();
+    }
+}
+
+// =============================================================================
+// EXPORTAÇÕES
+// =============================================================================
+
+export {
+    // Sistema principal de edição
+    makeEditable,
+    enableEditing,
+    selectElementContent,
+    attachEditingEventListeners,
+    saveInlineEdit,
+    disableEditing,
+    validateEditedText,
+    cancelInlineEdit,
+    
+    // Funções avançadas
+    makeAllEditable,
+    disableAllEditing,
+    saveAllPendingEdits,
+    hasPendingEdits,
+    getEditStats,
+    
+    // Funções de aplicação
+    applyNameChange,
+    showEditError,
+    
+    // Compatibilidade
+    makeEditableCompatibility
+};
+
+// =============================================================================
+// DISPONIBILIZAÇÃO GLOBAL
+// =============================================================================
+
+if (typeof window !== 'undefined') {
+    // Sistema principal
+    window.makeEditable = makeEditable;
+    window.enableEditing = enableEditing;
+    window.disableEditing = disableEditing;
+    window.cancelInlineEdit = cancelInlineEdit;
+    window.saveInlineEdit = saveInlineEdit;
+    
+    // Funções avançadas
+    window.makeAllEditable = makeAllEditable;
+    window.disableAllEditing = disableAllEditing;
+    window.saveAllPendingEdits = saveAllPendingEdits;
+    window.hasPendingEdits = hasPendingEdits;
+    window.getEditStats = getEditStats;
+    
+    // Compatibilidade
+    window.makeEditableCompatibility = makeEditableCompatibility;
+}
+
+// =============================================================================
+// EVENT LISTENERS GLOBAIS
+// =============================================================================
+
+// Previne edição acidental com Ctrl+A, Ctrl+C, etc em elementos não editáveis
+document.addEventListener('keydown', function(e) {
+    const activeElement = document.activeElement;
+    
+    if (activeElement.classList.contains('editing')) {
+        // Permite comandos de edição apenas em elementos em modo de edição
+        return;
+    }
+    
+    // Bloqueia comandos de edição em elementos não editáveis
+    if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'x', 'v'].includes(e.key)) {
+        e.stopPropagation();
+    }
+});
+
+// Salva edições pendentes antes de sair da página
+window.addEventListener('beforeunload', function(e) {
+    if (hasPendingEdits()) {
+        const message = 'Há edições não salvas. Tem certeza que deseja sair?';
+        e.returnValue = message;
+        return message;
+    }
+});
+/* ==== FIM: ui/components/edit.js ==== */
+
+/* ==== INÍCIO: data/utils/id-generator.js ==== */
+/**
+ * data/utils/id-generator.js
+ * 🎯 SISTEMA UNIFICADO DE GERENÇÃO E VALIDAÇÃO DE IDs ÚNICOS
+ * ⚡ IDs SEGUROS: obra_w12, obra_w12_proj_t34_1, obra_w12_proj_t34_1_sala_r21_1
+ */
+
+/**
+ * Gera um ID único para obra baseado no timestamp
+ * @returns {string} ID único no formato "obra_w12"
+ */
+function generateObraId() {
+    const timestamp = Date.now().toString();
+    const randomChar = String.fromCharCode(97 + Math.floor(Math.random() * 26)); // a-z
+    const randomNum = Math.floor(Math.random() * 90 + 10); // 10-99
+    
+    return `obra_${randomChar}${randomNum}`;
+}
+
+/**
+ * Gera um ID único para projeto baseado na obra pai
+ * @param {HTMLElement} obraElement - Elemento da obra pai
+ * @param {number} projectNumber - Número sequencial do projeto
+ * @returns {string} ID único no formato "obra_w12_proj_t34_1"
+ */
+function generateProjectId(obraElement, projectNumber = null) {
+    const obraId = obraElement?.dataset?.obraId;
+    
+    if (!obraId || !isValidSecureId(obraId)) {
+        console.error('❌ Obra ID inválido para gerar projeto ID:', obraId);
+        return generateObraId() + '_proj_t' + (Math.floor(Math.random() * 90) + 10) + '_1';
+    }
+    
+    // Extrair base da obra (ex: "obra_w12")
+    const obraBase = obraId.split('_').slice(0, 2).join('_');
+    const randomChar = String.fromCharCode(97 + Math.floor(Math.random() * 26)); // a-z
+    const randomNum = Math.floor(Math.random() * 90 + 10); // 10-99
+    const sequence = projectNumber || (getProjectCountInObra(obraId) + 1);
+    
+    return `${obraBase}_proj_${randomChar}${randomNum}_${sequence}`;
+}
+
+/**
+ * Gera um ID único para sala baseado no projeto pai
+ * @param {HTMLElement} projectElement - Elemento do projeto pai
+ * @param {number} roomNumber - Número sequencial da sala
+ * @returns {string} ID único no formato "obra_w12_proj_t34_1_sala_r21_1"
+ */
+function generateRoomId(projectElement, roomNumber = null) {
+    const projectId = projectElement?.dataset?.projectId;
+    const obraId = projectElement?.dataset?.obraId;
+    
+    if (!projectId || !isValidSecureId(projectId)) {
+        console.error('❌ Project ID inválido para gerar room ID:', projectId);
+        const obraBase = obraId && isValidSecureId(obraId) 
+            ? obraId.split('_').slice(0, 2).join('_')
+            : 'obra_w' + (Math.floor(Math.random() * 90) + 10);
+        
+        const randomChar = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+        const randomNum = Math.floor(Math.random() * 90 + 10);
+        const sequence = roomNumber || 1;
+        
+        return `${obraBase}_proj_t${randomNum}_1_sala_${randomChar}${randomNum}_${sequence}`;
+    }
+    
+    const randomChar = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+    const randomNum = Math.floor(Math.random() * 90 + 10);
+    const sequence = roomNumber || (getRoomCountInProjectFromId(projectId) + 1);
+    
+    return `${projectId}_sala_${randomChar}${randomNum}_${sequence}`;
+}
+
+/**
+ * Conta quantos projetos existem em uma obra específica
+ * @param {string} obraId - ID único da obra
+ * @returns {number} Quantidade de projetos na obra
+ */
+function getProjectCountInObra(obraId) {
+    if (!obraId || !isValidSecureId(obraId)) return 0;
+    
+    const projectElements = document.querySelectorAll(`[data-obra-id="${obraId}"]`);
+    return projectElements.length;
+}
+
+/**
+ * Conta quantas salas existem em um projeto específico
+ * @param {string} projectId - ID único do projeto
+ * @returns {number} Quantidade de salas no projeto
+ */
+function getRoomCountInProjectFromId(projectId) {
+    if (!projectId || !isValidSecureId(projectId)) return 0;
+    
+    const roomElements = document.querySelectorAll(`[data-project-id="${projectId}"]`);
+    return roomElements.length;
+}
+
+/**
+ * Garante que um ID seja uma string válida
+ * @param {any} id - ID a ser validado
+ * @returns {string|null} ID como string ou null se inválido
+ */
+function ensureStringId(id) {
+    if (id === null || id === undefined || id === "") return null;
+    
+    const stringId = String(id);
+    
+    if (stringId === 'undefined' || stringId === 'null' || stringId.includes('undefined')) {
+        console.error(`❌ ID inválido detectado: ${stringId}`);
+        return null;
+    }
+    
+    return stringId;
+}
+
+/**
+ * Valida se um ID segue o formato seguro
+ * @param {string} id - ID a ser validado
+ * @returns {boolean} True se o ID é válido
+ */
+function isValidSecureId(id) {
+    if (!id || typeof id !== 'string') return false;
+    
+    // Padrões para IDs seguros
+    const secureIdPatterns = [
+        /^obra_[a-z][0-9]{2}$/, // obra_w12
+        /^obra_[a-z][0-9]{2}_proj_[a-z][0-9]{2}_[0-9]+$/, // obra_w12_proj_t34_1
+        /^obra_[a-z][0-9]{2}_proj_[a-z][0-9]{2}_[0-9]+_sala_[a-z][0-9]{2}_[0-9]+$/ // obra_w12_proj_t34_1_sala_r21_1
+    ];
+    
+    return secureIdPatterns.some(pattern => pattern.test(id));
+}
+
+/**
+ * Extrai o número sequencial de um ID seguro
+ * @param {string} id - ID seguro
+ * @param {string} type - Tipo ('proj' ou 'sala')
+ * @returns {number|null} Número sequencial ou null
+ */
+function extractSequenceNumber(id, type) {
+    if (!id || !type) return null;
+    
+    const pattern = type === 'proj' 
+        ? /_proj_[a-z][0-9]{2}_([0-9]+)/
+        : /_sala_[a-z][0-9]{2}_([0-9]+)/;
+    
+    const match = id.match(pattern);
+    return match ? parseInt(match[1]) : null;
+}
+
+/**
+ * Extrai a base do ID da obra de qualquer ID hierárquico
+ * @param {string} id - ID completo (obra, projeto ou sala)
+ * @returns {string|null} Base da obra (ex: "obra_w12") ou null
+ */
+function extractObraBaseFromId(id) {
+    if (!id || !isValidSecureId(id)) return null;
+    
+    const match = id.match(/^(obra_[a-z][0-9]{2})/);
+    return match ? match[1] : null;
+}
+
+/**
+ * Valida se dois IDs pertencem à mesma obra
+ * @param {string} id1 - Primeiro ID
+ * @param {string} id2 - Segundo ID
+ * @returns {boolean} True se pertencem à mesma obra
+ */
+function areIdsFromSameObra(id1, id2) {
+    const obraBase1 = extractObraBaseFromId(id1);
+    const obraBase2 = extractObraBaseFromId(id2);
+    
+    return obraBase1 !== null && obraBase2 !== null && obraBase1 === obraBase2;
+}
+
+/**
+ * Gera um ID único para máquina baseado na sala pai
+ * @param {string} roomId - ID único da sala pai
+ * @returns {string} ID único no formato "machine_123456789"
+ */
+function generateMachineId(roomId) {
+    const timestamp = Date.now().toString();
+    const randomSuffix = Math.floor(Math.random() * 1000);
+    return `machine_${timestamp}_${randomSuffix}`;
+}
+
+/**
+ * Sanitiza um ID removendo caracteres inválidos
+ * @param {string} id - ID a ser sanitizado
+ * @returns {string} ID sanitizado
+ */
+function sanitizeId(id) {
+    if (!id) return '';
+    
+    return id.toString()
+        .replace(/-undefined/g, '')
+        .replace(/-null/g, '')
+        .replace(/[^a-zA-Z0-9_]/g, '_')
+        .trim();
+}
+
+/**
+ * Verifica se um elemento DOM possui um ID seguro válido
+ * @param {HTMLElement} element - Elemento DOM a ser verificado
+ * @param {string} expectedType - Tipo esperado ('obra', 'project', 'room')
+ * @returns {boolean} True se o elemento tem ID seguro válido
+ */
+function hasValidSecureId(element, expectedType) {
+    if (!element || !expectedType) return false;
+    
+    const idAttribute = expectedType === 'obra' ? 'data-obra-id' :
+                       expectedType === 'project' ? 'data-project-id' :
+                       'data-room-id';
+    
+    const id = element.getAttribute(idAttribute);
+    return id && isValidSecureId(id);
+}
+
+// 🆕 FUNÇÃO: Gera um ID de sessão único
+function generateSessionId() {
+    const timestamp = Date.now().toString(36);
+    const randomPart = Math.random().toString(36).substr(2, 9);
+    return `session_${timestamp}_${randomPart}`;
+}
+
+// 🆕 FUNÇÃO: Valida a hierarquia completa de IDs
+function validateIdHierarchy(obraId, projectId = null, roomId = null) {
+    if (!isValidSecureId(obraId)) return false;
+    if (projectId && !areIdsFromSameObra(obraId, projectId)) return false;
+    if (roomId && projectId && !areIdsFromSameObra(projectId, roomId)) return false;
+    
+    return true;
+}
+
+// 🆕 FUNÇÃO: Obtém o próximo número sequencial disponível
+function getNextSequenceNumber(parentId, childType) {
+    if (!parentId || !childType) return 1;
+    
+    const existingElements = document.querySelectorAll(
+        childType === 'project' ? `[data-obra-id="${parentId}"]` :
+        childType === 'room' ? `[data-project-id="${parentId}"]` : []
+    );
+    
+    const existingSequences = Array.from(existingElements).map(element => {
+        const id = childType === 'project' ? element.dataset.projectId : element.dataset.roomId;
+        return extractSequenceNumber(id, childType === 'project' ? 'proj' : 'sala');
+    }).filter(seq => seq !== null);
+    
+    return existingSequences.length > 0 ? Math.max(...existingSequences) + 1 : 1;
+}
+
+/**
+ * 🌐 EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
+ */
+
+// Exportações para módulos ES6
+export {
+    generateObraId,
+    generateProjectId, 
+    generateRoomId,
+    generateMachineId,
+    generateSessionId,
+    ensureStringId,
+    isValidSecureId,
+    extractSequenceNumber,
+    extractObraBaseFromId,
+    areIdsFromSameObra,
+    validateIdHierarchy,
+    hasValidSecureId,
+    getProjectCountInObra,
+    getRoomCountInProjectFromId,
+    getNextSequenceNumber,
+    sanitizeId
+};
+
+// Compatibilidade global para scripts legados
+if (typeof window !== 'undefined') {
+    window.generateObraId = generateObraId;
+    window.generateProjectId = generateProjectId;
+    window.generateRoomId = generateRoomId;
+    window.generateMachineId = generateMachineId;
+    window.ensureStringId = ensureStringId;
+    window.isValidSecureId = isValidSecureId;
+    window.sanitizeId = sanitizeId;
+}
+/* ==== FIM: data/utils/id-generator.js ==== */
+
+/* ==== INÍCIO: ui/interface.js ==== */
+/**
+ * interface.js - CORREÇÃO DO SISTEMA DE TOGGLE
+ * SISTEMA CORRIGIDO COM IDs ÚNICOS
+ */
+
+// ✅ IMPORTS CORRIGIDOS - CAMINHOS ATUALIZADOS
+import { 
+    showSystemStatus,
+    removeExistingStatusBanner,
+    createStatusBanner,
+    insertStatusBanner,
+    scheduleStatusBannerRemoval,
+} from './components/status.js'  // ✅ CAMINHO CORRETO
+
+import { 
+    toggleElementVisibility,
+    expandElement,
+    collapseElement,
+    calculateRoomCompletionStats,
+    removeEmptyObraMessage,
+    showEmptyObraMessageIfNeeded,
+    removeEmptyProjectMessage,
+    showEmptyProjectMessageIfNeeded,
+} from './helpers.js'  // ✅ CAMINHO CORRETO
+
+import { 
+    createEmptyObra,
+    buildObraHTML,
+    buildObraActionsFooter,
+    insertObraIntoDOM,
+    updateObraButtonAfterSave,
+    deleteObra,
+    addNewObra,
+} from '../features/managers/obra-manager.js'  // ✅ CAMINHO CORRETO
+
+import { 
+    createEmptyProject,
+    buildProjectHTML,
+    addNewProjectToObra
+} from '../features/managers/project-manager.js'  // ✅ CAMINHO CORRETO
+
+import { 
+    getNextProjectNumber,
+    getNextObraNumber 
+} from '../data/utils/data-utils.js'  // ✅ CAMINHO CORRETO
+
+import { 
+    createEmptyRoom 
+} from '../data/modules/rooms.js'  // ✅ CAMINHO CORRETO
+
+// Re-exportações para manter compatibilidade
+export {
+    showSystemStatus,
+    removeExistingStatusBanner,
+    createStatusBanner,
+    insertStatusBanner,
+    scheduleStatusBannerRemoval,
+    toggleElementVisibility,
+    expandElement,
+    collapseElement,
+    calculateRoomCompletionStats,
+    removeEmptyObraMessage,
+    showEmptyObraMessageIfNeeded,
+    removeEmptyProjectMessage,
+    showEmptyProjectMessageIfNeeded,
+    createEmptyObra,
+    buildObraHTML,
+    buildObraActionsFooter,
+    insertObraIntoDOM,
+    updateObraButtonAfterSave,
+    deleteObra,
+    getNextObraNumber,
+    addNewObra,
+    createEmptyProject,
+    buildProjectHTML,
+    addNewProjectToObra,
+    getNextProjectNumber,
+    createEmptyRoom,
+}
+
+/**
+ * Adiciona um novo projeto à obra mais recente
+ * @returns {void}
+ * 
+ * @example
+ * addNewProject() // Cria uma nova obra e adiciona um projeto nela
+ */
+function addNewProject() {
+  addNewObra().then(() => {
+    const obraNumber = getNextObraNumber() - 1
+    const obraName = `Obra${obraNumber}`
+    addNewProjectToObra(obraName)
+  })
+}
+
+// =============================================================================
+// SISTEMA DE TOGGLE CORRIGIDO - IDs ÚNICOS
+// =============================================================================
+
+/**
+ * Alterna a visibilidade do conteúdo de uma obra (expandir/recolher) - CORREÇÃO COMPLETA
+ * @param {string} obraId - ID único da obra a ser alternada
+ * @param {Event} event - Evento de clique do usuário
+ * @returns {void}
+ * 
+ * @example
+ * toggleObra('obra_a42', event) // Expande ou recolhe a obra com ID 'obra_a42'
+ */
+function toggleObra(obraId, event) {
+    console.log(`🔧 Toggle Obra chamado: ${obraId}`);
+    
+    // ✅ CORREÇÃO: Validar ID único
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (toggleObra) interface.js [ID de obra inválido: ${obraId}]`);
+        return;
+    }
+    
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    const contentId = `obra-content-${obraId}`;
+    const content = document.getElementById(contentId);
+    
+    if (!content) {
+        console.error(`❌ Conteúdo da obra ${obraId} não encontrado`);
+        console.log('🔍 Conteúdos de obra disponíveis:');
+        document.querySelectorAll('[id^="obra-content-"]').forEach(content => {
+            console.log(`  - ${content.id}`);
+        });
+        return;
+    }
+
+    const isCollapsed = content.classList.contains("collapsed");
+    const minimizer = event.target;
+
+    if (isCollapsed) {
+        content.classList.remove("collapsed");
+        minimizer.textContent = "−";
+        console.log(`📂 Obra ${obraId} expandida`);
+    } else {
+        content.classList.add("collapsed");
+        minimizer.textContent = "+";
+        console.log(`📁 Obra ${obraId} recolhida`);
+    }
+}
+
+/**
+ * Alterna a visibilidade do conteúdo de um projeto (expandir/recolher) - CORREÇÃO COMPLETA
+ * @param {string} projectId - ID único do projeto a ser alternado
+ * @param {Event} event - Evento de clique do usuário
+ * @returns {void}
+ * 
+ * @example
+ * toggleProject('obra_a42_proj1', event) // Expande ou recolhe o projeto com ID 'obra_a42_proj1'
+ */
+function toggleProject(projectId, event) {
+    console.log(`🔧 Toggle Project chamado: ${projectId}`);
+    
+    // ✅ CORREÇÃO: Validar ID único
+    if (!projectId || projectId === 'undefined' || projectId === 'null') {
+        console.error(`ERRO FALBACK (toggleProject) interface.js [ID de projeto inválido: ${projectId}]`);
+        return;
+    }
+    
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    const contentId = `project-content-${projectId}`;
+    const content = document.getElementById(contentId);
+    
+    if (!content) {
+        console.error(`❌ Conteúdo do projeto ${projectId} não encontrado`);
+        console.log('🔍 Conteúdos de projeto disponíveis:');
+        document.querySelectorAll('[id^="project-content-"]').forEach(content => {
+            console.log(`  - ${content.id}`);
+        });
+        return;
+    }
+
+    const isCollapsed = content.classList.contains("collapsed");
+    const minimizer = event.target;
+
+    if (isCollapsed) {
+        content.classList.remove("collapsed");
+        minimizer.textContent = "−";
+        console.log(`📂 Projeto ${projectId} expandido`);
+    } else {
+        content.classList.add("collapsed");
+        minimizer.textContent = "+";
+        console.log(`📁 Projeto ${projectId} recolhido`);
+    }
+}
+
+/**
+ * Alterna a visibilidade do conteúdo de uma sala (expandir/recolher) - CORREÇÃO COMPLETA
+ * @param {string} roomId - ID único da sala
+ * @param {Event} event - Evento de clique do usuário
+ * @returns {void}
+ * 
+ * @example
+ * toggleRoom('obra_a42_proj1_sala1', event) // Expande ou recolhe a sala com ID 'obra_a42_proj1_sala1'
+ */
+function toggleRoom(roomId, event) {
+    console.log(`🔧 Toggle Sala chamado: ID ${roomId}`, event);
+    
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (toggleRoom) interface.js [ID de sala inválido: ${roomId}]`);
+        return;
+    }
+    
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    const contentId = `room-content-${roomId}`;
+    const content = document.getElementById(contentId);
+    
+    if (!content) {
+        console.error(`❌ Conteúdo da sala ${roomId} não encontrado`);
+        console.log(`🔍 Procurando por: ${contentId}`);
+        console.log('🔍 Conteúdos de sala disponíveis:');
+        document.querySelectorAll('[id^="room-content-"]').forEach(content => {
+            console.log(`  - ${content.id}`);
+        });
+        return;
+    }
+
+    const isCollapsed = content.classList.contains("collapsed");
+    const minimizer = event.target;
+
+    console.log(`📂 Estado da sala ${roomId}: ${isCollapsed ? 'recolhida' : 'expandida'}`);
+
+    if (isCollapsed) {
+        content.classList.remove("collapsed");
+        minimizer.textContent = "−";
+        console.log(`📂 Sala ${roomId} EXPANDIDA`);
+    } else {
+        content.classList.add("collapsed");
+        minimizer.textContent = "+";
+        console.log(`📁 Sala ${roomId} RECOLHIDA`);
+    }
+}
+
+/**
+ * Alterna a visibilidade de uma seção
+ * @param {string} sectionId - ID da seção
+ * @returns {void}
+ * 
+ * @example
+ * toggleSection('materiais') // Alterna visibilidade da seção de materiais
+ */
+function toggleSection(sectionId) {
+    // ✅ CORREÇÃO: Validar ID
+    if (!sectionId || sectionId === 'undefined' || sectionId === 'null') {
+        console.error(`ERRO FALBACK (toggleSection) interface.js [ID de seção inválido: ${sectionId}]`);
+        return;
+    }
+    toggleElementVisibility(`section-content-${sectionId}`, event.target);
+}
+
+/**
+ * Alterna a visibilidade de uma subseção
+ * @param {string} subsectionId - ID da subseção
+ * @returns {void}
+ * 
+ * @example
+ * toggleSubsection('pintura') // Alterna visibilidade da subseção de pintura
+ */
+function toggleSubsection(subsectionId) {
+    // ✅ CORREÇÃO: Validar ID
+    if (!subsectionId || subsectionId === 'undefined' || subsectionId === 'null') {
+        console.error(`ERRO FALBACK (toggleSubsection) interface.js [ID de subseção inválido: ${subsectionId}]`);
+        return;
+    }
+    toggleElementVisibility(`subsection-content-${subsectionId}`, event.target);
+}
+
+// =============================================================================
+// FUNÇÕES DE DOWNLOAD E SALVAMENTO
+// =============================================================================
+
+/**
+ * Gera e inicia o download de um PDF para uma obra ou projeto específico
+ * @param {string} obraId - ID da obra
+ * @param {string|null} projectName - Nome do projeto (opcional)
+ * @returns {void}
+ * 
+ * @example
+ * downloadPDF('obra_a64') // Gera PDF para a obra com ID obra_a64
+ * downloadPDF('obra_a64', 'ProjetoA') // Gera PDF para o ProjetoA da obra
+ */
+function downloadPDF(obraId, projectName = null) {
+    // ✅ CORREÇÃO: Buscar obra por ID em vez de nome
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID "${obraId}" não encontrada para PDF`);
+        showSystemStatus(`ERRO: Obra não encontrada`, "error");
+        return;
+    }
+
+    const obraName = obraBlock.dataset.obraName;
+    const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
+    
+    console.log(`📄 Gerando PDF para ${target} (ID: ${obraId})`);
+    showSystemStatus(`Gerando PDF para ${target}...`, "info");
+    
+    // ✅ Aqui você implementaria a geração real do PDF
+    // generatePDF(obraId, projectName);
+}
+
+/**
+ * Gera e inicia o download de um documento Word para uma obra ou projeto específico
+ * @param {string} obraId - ID da obra
+ * @param {string|null} projectName - Nome do projeto (opcional)
+ * @returns {void}
+ * 
+ * @example
+ * downloadWord('obra_a64') // Gera Word para a obra com ID obra_a64
+ * downloadWord('obra_a64', 'ProjetoA') // Gera Word para o ProjetoA da obra
+ */
+function downloadWord(obraId, projectName = null) {
+    // ✅ CORREÇÃO: Buscar obra por ID em vez de nome
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID "${obraId}" não encontrada para Word`);
+        showSystemStatus(`ERRO: Obra não encontrada`, "error");
+        return;
+    }
+
+    const obraName = obraBlock.dataset.obraName;
+    const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
+    
+    console.log(`📝 Gerando Word para ${target} (ID: ${obraId})`);
+    showSystemStatus(`Gerando documento Word para ${target}...`, "info");
+    
+    // ✅ Aqui você implementaria a geração real do Word
+    // generateWord(obraId, projectName);
+}
+
+/**
+ * Salva ou atualiza os dados de uma obra no sistema
+ * @param {string} obraName - Nome da obra a ser salva/atualizada
+ * @param {Event} event - Evento que triggered a ação
+ * @returns {void}
+ * 
+ * @example
+ * saveOrUpdateObra('Obra1', event) // Salva/atualiza a Obra1
+ */
+function saveOrUpdateObra(obraParam, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    console.log(`💾 SALVANDO/ATUALIZANDO OBRA pelo parâmetro: "${obraParam}"`);
+
+    // ✅ CORREÇÃO: Converter automaticamente nome para ID
+    let obraId = obraParam;
+    
+    // Se for nome (não começa com "obra_" e não é numérico)
+    if (!obraParam.startsWith('obra_') && !/^\d+$/.test(obraParam)) {
+        console.warn(`⚠️  Parâmetro "${obraParam}" parece ser um nome, convertendo para ID...`);
+        
+        // Busca ALL obras com este nome
+        const obrasComEsteNome = Array.from(document.querySelectorAll('[data-obra-id]'))
+            .filter(obra => obra.dataset.obraName === obraParam);
+            
+        if (obrasComEsteNome.length === 1) {
+            obraId = obrasComEsteNome[0].dataset.obraId;
+            console.log(`✅ Convertido nome "${obraParam}" → ID "${obraId}"`);
+        } else if (obrasComEsteNome.length > 1) {
+            console.error(`❌ Múltiplas obras com nome "${obraParam}", usando a primeira`);
+            obraId = obrasComEsteNome[0].dataset.obraId;
+        } else {
+            console.error(`❌ Nenhuma obra encontrada com nome "${obraParam}"`);
+            showSystemStatus(`ERRO: Obra "${obraParam}" não encontrada`, "error");
+            return;
+        }
+    }
+
+    // Agora busca pelo ID corrigido
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    
+    if (!obraBlock) {
+        console.error(`❌ ERRO: Obra com ID "${obraId}" não encontrada no DOM`);
+        
+        // Debug detalhado
+        const availableObras = document.querySelectorAll('[data-obra-id]');
+        console.log(`🔍 Obras disponíveis: ${availableObras.length}`);
+        availableObras.forEach((obra, idx) => {
+            console.log(`   ${idx + 1}. ID: "${obra.dataset.obraId}", Nome: "${obra.dataset.obraName}"`);
+        });
+        
+        showSystemStatus(`ERRO: Obra não encontrada`, "error");
+        return;
+    }
+
+    console.log(`✅ Obra encontrada:`, obraBlock.dataset);
+
+    if (typeof window.saveObra === 'function') {
+        // ✅ Agora passa o ID correto para a função interna
+        window.saveObra(obraId, event);
+    } else {
+        console.error('❌ Função saveObra não encontrada');
+        showSystemStatus("ERRO: Funcionalidade de salvar não disponível", "error");
+    }
+}
+
+
+
+
+
+
+// =============================================================================
+// EXPORTAÇÕES ADICIONAIS
+// =============================================================================
+
+export {
+    addNewProject,
+    toggleObra,
+    toggleProject,
+    toggleRoom,
+    downloadPDF,
+    downloadWord,
+    saveOrUpdateObra,
+    toggleSubsection,
+    toggleSection,
+
+}
+
+// =============================================================================
+// DISPONIBILIZAÇÃO GLOBAL DAS FUNÇÕES
+// =============================================================================
+
+if (typeof window !== 'undefined') {
+    window.addNewObra = addNewObra;
+    window.addNewProjectToObra = addNewProjectToObra;
+    window.toggleObra = toggleObra;
+    window.toggleProject = toggleProject;
+    window.toggleRoom = toggleRoom;
+    window.toggleSubsection = toggleSubsection;
+    window.toggleSection = toggleSection;
+    window.getNextObraNumber = getNextObraNumber;
+    window.deleteObra = deleteObra;
+    window.saveOrUpdateObra = saveOrUpdateObra;
+    window.downloadPDF = downloadPDF;
+    window.downloadWord = downloadWord;
+    window.addNewProject = addNewProject;
+    window.createEmptyProject = createEmptyProject;
+}
+/* ==== FIM: ui/interface.js ==== */
+
+/* ==== INÍCIO: features/managers/obra-manager.js ==== */
+/**
+ * features/managers/obra-manager.js
+ * 🎯 FUSÃO COMPLETA: projects.js + obra-manager.js
+ * ⚡ REDUÇÃO: 2 arquivos → 1 arquivo (~700 → ~450 linhas)
+ */
+import{getNextObraNumber} from '../../data/utils/data-utils.js'
+import { ensureStringId, generateObraId } from '../../data/utils/id-generator.js';
+import { buildObraData } from '../../data/builders/data-builders.js';
+import { showSystemStatus } from '../../ui/components/status.js';
+import { showConfirmationModal } from '../../ui/components/modal/modal.js';
+import { addNewProjectToObra } from './project-manager.js';
+import { isSessionActive, startSessionOnFirstSave } from '../../data/adapters/session-adapter.js';
+import { calculateRoomCompletionStats } from '../../ui/helpers.js';
+
+/**
+ * 🏗️ FUNÇÕES DE CONSTRUÇÃO DE INTERFACE (obra-manager.js)
+ */
+
+function buildObraHTML(obraName, obraId, hasId = false) {
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (buildObraHTML) [ID de obra inválido: ${obraId}]`);
+        obraId = generateObraId();
+    }
+    
+    console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}`);
+
+    return `
+    <div class="obra-block" data-obra-id="${obraId}" data-obra-name="${obraName}">
+        <div class="obra-header">
+            <button class="minimizer" onclick="toggleObra('${obraId}', event)">+</button>
+            <h2 class="obra-title compact-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
+            <div class="obra-header-spacer"><span>Adicionar campos de cadastro de empresas</span></div>
+            <div class="obra-actions">
+                <button class="btn btn-delete" onclick="window.deleteObra('${obraName}', '${obraId}')">Remover Obra</button>
+            </div>
+        </div>
+
+        <div class="obra-content collapsed" id="obra-content-${obraId}">
+            <div class="projetc-header-record very-dark">
+                <span>Adicionar campos de cadastro de empresas</span>
+            </div>
+            <div class="projects-container" id="projects-${obraId}"></div>
+            <div class="add-project-section">
+                <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraId}')">+ Adicionar Projeto</button>
+            </div>
+            ${buildObraActionsFooter(obraId, obraName, hasId)} 
+        </div>
+    </div>
+    `;
+}
+
+function buildObraActionsFooter(obraId, obraName, hasId = false) {
+    const buttonText = hasId ? "Atualizar Obra" : "Salvar Obra";
+    const buttonClass = hasId ? "btn-update" : "btn-save";
+
+    console.log(`🔧 Build Obra Footer: ${obraName}, ID: ${obraId}, HasId: ${hasId}, Button: ${buttonText}`);
+
+    return `
+    <div class="obra-actions-footer">
+        <button class="btn btn-verify" onclick="verifyObraData('${obraId}')">Verificar Dados</button>
+        <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraId}')">${buttonText}</button>      
+        <button class="btn btn-download" onclick="downloadPDF('${obraId}')">Baixar PDF</button>
+        <button class="btn btn-download" onclick="downloadWord('${obraId}')">Baixar Word</button>
+    </div>
+    `;
+}
+
+async function insertObraIntoDOM(obraHTML, obraId) {
+    console.log(`📤 Inserindo obra no DOM: ${obraId}`);
+    
+    const projectsContainer = document.getElementById("projects-container");
+    
+    if (!projectsContainer) {
+        console.error('❌ Container de projetos não encontrado');
+        
+        const mainContent = document.querySelector('main, body');
+        if (mainContent) {
+            const newContainer = document.createElement('div');
+            newContainer.id = 'projects-container';
+            newContainer.innerHTML = '<!-- Hierarquia: Obra → Projeto → Sala -->';
+            mainContent.appendChild(newContainer);
+            console.log('✅ projects-container criado');
+            return insertObraIntoDOM(obraHTML, obraId);
+        }
+        
+        return false;
+    }
+    
+    console.log(`✅ Container encontrado, inserindo obra ${obraId}...`);
+    console.log(`📦 Container antes:`, projectsContainer.children.length, 'elementos');
+    
+    try {
+        projectsContainer.insertAdjacentHTML("beforeend", obraHTML);
+        
+        setTimeout(() => {
+            const obraInserida = document.querySelector(`[data-obra-id="${obraId}"]`);
+            if (obraInserida) {
+                console.log(`✅ Obra ${obraId} INSERIDA COM SUCESSO no container`);
+                console.log(`📦 Container depois:`, projectsContainer.children.length, 'elementos');
+            } else {
+                console.error(`❌ FALHA: Obra ${obraId} NÃO FOI INSERIDA no container`);
+            }
+        }, 50);
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao inserir obra no DOM:', error);
+        return false;
+    }
+}
+
+async function createEmptyObra(obraName, obraId) {
+    const finalObraId = obraId || generateObraId();
+    const obraHTML = buildObraHTML(obraName, finalObraId);
+    
+    console.log(`🏗️ Criando obra: ${obraName} com ID: ${finalObraId}`);
+    console.log(`📝 HTML gerado:`, obraHTML.substring(0, 200) + '...');
+    
+    const inserted = await insertObraIntoDOM(obraHTML, finalObraId);
+    
+    if (inserted) {
+        console.log(`✅ Obra ${obraName} criada e INSERIDA NO DOM - ID: ${finalObraId}`);
+        
+        setTimeout(() => {
+            const obraNoDOM = document.querySelector(`[data-obra-id="${finalObraId}"]`);
+            if (obraNoDOM) {
+                console.log(`✅ CONFIRMADO: Obra ${finalObraId} encontrada no DOM`);
+            } else {
+                console.error(`❌ FALHA CRÍTICA: Obra ${finalObraId} NÃO está no DOM após criação`);
+            }
+        }, 100);
+    } else {
+        console.error(`❌ FALHA: Obra ${obraName} NÃO FOI INSERIDA NO DOM`);
+    }
+    
+    return inserted;
+}
+
+/**
+ * 🔄 FUNÇÕES DE ATUALIZAÇÃO DE INTERFACE
+ */
+
+function updateObraButtonAfterSave(obraName, obraId) {
+    console.log(`🔄 Atualizando botão da obra: ${obraName} (${obraId})`);
+    
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID ${obraId} não encontrada para atualizar botão`);
+        return;
+    }
+
+    obraBlock.dataset.obraId = obraId;
+
+    const obraContent = document.getElementById(`obra-content-${obraId}`);
+    if (!obraContent) {
+        console.error(`❌ Conteúdo da obra ${obraId} não encontrado`);
+        return;
+    }
+
+    const oldFooter = obraContent.querySelector('.obra-actions-footer');
+    if (!oldFooter) {
+        console.error(`❌ Rodapé não encontrado na obra ${obraId}`);
+        return;
+    }
+
+    const saveButton = oldFooter.querySelector('.btn-save, .btn-update');
+    if (saveButton) {
+        saveButton.textContent = "Atualizar Obra";
+        saveButton.className = "btn btn-update";
+        saveButton.setAttribute('onclick', `event.preventDefault(); saveOrUpdateObra('${obraId}')`);
+        console.log(`✅ Botão atualizado para: "Atualizar Obra" (ID: ${obraId})`);
+    } else {
+        console.error(`❌ Botão de salvar não encontrado na obra ${obraId}`);
+    }
+
+    const projectsContainer = document.getElementById(`projects-${obraId}`);
+    if (!projectsContainer) {
+        console.error(`❌ CRÍTICO: Container de projetos PERDIDO na obra ${obraId}!`);
+    }
+}
+
+
+
+/**
+ * 🚀 FUNÇÕES PRINCIPAIS DE GERENCIAMENTO
+ */
+
+async function addNewObra() {
+    try {
+        const obraNumber = getNextObraNumber();
+        const obraName = `Obra${obraNumber}`;
+        const obraId = generateObraId();
+
+        console.log(`🏗️ Criando nova obra: ${obraName} com ID: ${obraId}`);
+        await createEmptyObra(obraName, obraId);
+        console.log(`✅ ${obraName} adicionada com ID único: ${obraId}`);
+
+        setTimeout(async () => {
+            console.log(`🔄 Criando projeto e sala automáticos para ${obraName}`);
+            if (typeof window.addNewProjectToObra === 'function') {
+                await window.addNewProjectToObra(obraId);
+                console.log(`✅ Projeto e sala automáticos criados para ${obraName}`);
+            } else {
+                console.error('❌ addNewProjectToObra não disponível');
+            }
+        }, 500);
+
+    } catch (error) {
+        console.error("❌ Erro ao adicionar nova obra:", error);
+        alert("Erro ao criar nova obra. Verifique o console para detalhes.");
+    }
+}
+
+async function deleteObra(obraName, obraId) {
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID ${obraId} não encontrada`);
+        return;
+    }
+
+    showConfirmationModal(obraName, obraId, obraBlock);
+}
+
+/**
+ * 💾 FUNÇÕES DE PERSISTÊNCIA (projects.js)
+ */
+
+async function fetchObras() {
+    try {
+        const response = await fetch('/obras');
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                return [];
+            }
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+
+        const obras = await response.json();
+        return obras || [];
+    } catch (error) {
+        console.error("❌ Erro ao buscar obras:", error);
+        return [];
+    }
+}
+
+async function atualizarObra(obraId, obraData) {
+    try {
+        if (!obraId || obraId === 'undefined' || obraId === 'null') {
+            console.error(`ERRO FALBACK (atualizarObra) [ID de obra inválido: ${obraId}]`);
+            showSystemStatus("ERRO: ID da obra inválido para atualização", "error");
+            return null;
+        }
+
+        if (!isSessionActive()) {
+            console.warn("⚠️ Sessão não está ativa - obra não será atualizada");
+            showSystemStatus("ERRO: Sessão não está ativa. Obra não atualizada.", "error");
+            return null;
+        }
+
+        obraId = ensureStringId(obraId);
+
+        console.log(`🔍 Verificando se obra ${obraId} existe no servidor...`);
+        
+        const todasObrasResponse = await fetch('/api/backup-completo');
+        if (!todasObrasResponse.ok) {
+            throw new Error('Falha ao carregar backup para verificação');
+        }
+        
+        const backupData = await todasObrasResponse.json();
+        const todasObras = backupData.obras || [];
+        const obraExistente = todasObras.find(obra => String(obra.id) === String(obraId));
+        
+        console.log(`📊 Verificação: Obra ${obraId} existe? ${!!obraExistente}`);
+        console.log(`📋 TODAS as obras no backup:`, todasObras.map(o => ({ id: o.id, nome: o.nome })));
+
+        if (!obraExistente) {
+            console.log(`❌ Obra ${obraId} não encontrada no backup, criando nova...`);
+            console.log(`🆕 Criando nova obra com ID seguro preservado: ${obraId}`);
+            obraData.id = obraId;
+            return await salvarObra(obraData);
+        }
+
+        console.log('🔄 ATUALIZANDO OBRA EXISTENTE:', {
+            id: obraData.id,
+            nome: obraData.nome,
+            projetos: obraData.projetos?.length || 0
+        });
+
+        const url = `/obras/${obraId}`;
+        console.log(`🎯 Fazendo PUT para: ${url}`);
+        
+        const response = await fetch(url, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(obraData),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro ao atualizar obra: ${errorText}`);
+        }
+
+        const updatedObra = await response.json();
+        showSystemStatus("Obra atualizada com sucesso!", "success");
+        
+        console.log('✅ OBRA ATUALIZADA:', {
+            id: updatedObra.id,
+            nome: updatedObra.nome,
+            projetos: updatedObra.projetos?.length || 0
+        });
+        return updatedObra;
+    } catch (error) {
+        console.error("❌ Erro ao ATUALIZAR obra:", error);
+        showSystemStatus("ERRO: Não foi possível atualizar a obra", "error");
+        return null;
+    }
+}
+
+async function salvarObra(obraData) {
+    try {
+        if (!obraData || !obraData.nome) {
+            console.error(`ERRO FALBACK (salvarObra) [Dados da obra inválidos: ${JSON.stringify(obraData)}]`);
+            showSystemStatus("ERRO: Dados da obra inválidos", "error");
+            return null;
+        }
+
+        if (!isSessionActive()) {
+            console.warn("⚠️ Sessão não está ativa - obra não será salva");
+            showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
+            return null;
+        }
+
+        if (!obraData.id || obraData.id === 'undefined' || obraData.id === 'null') {
+            console.error(`ERRO FALBACK (salvarObra) [Obra sem ID seguro: ${obraData.id}]`);
+            showSystemStatus("ERRO: Obra não possui ID válido", "error");
+            return null;
+        }
+
+        console.log('📤 SALVANDO NOVA OBRA:', {
+            id: obraData.id,
+            nome: obraData.nome,
+            projetos: obraData.projetos?.length || 0,
+            timestamp: obraData.timestamp
+        });
+
+        const response = await fetch('/obras', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(obraData),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro ao salvar obra: ${errorText}`);
+        }
+
+        const createdObra = await response.json();
+        
+        console.log(`📝 Adicionando obra ${createdObra.id} à sessão...`);
+        await fetch('/api/sessions/add-obra', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ obra_id: createdObra.id })
+        });
+        
+        showSystemStatus("Obra salva com sucesso!", "success");
+        
+        console.log('✅ NOVA OBRA SALVA E ADICIONADA À SESSÃO:', {
+            id: createdObra.id,
+            nome: createdObra.nome,
+            projetos: createdObra.projetos?.length || 0
+        });
+        return createdObra;
+    } catch (error) {
+        console.error("❌ Erro ao SALVAR obra:", error);
+        showSystemStatus("ERRO: Não foi possível salvar a obra", "error");
+        return null;
+    }
+}
+
+/**
+ * 🔍 FUNÇÕES AUXILIARES DE BUSCA E VERIFICAÇÃO
+ */
+
+function findObraBlock(obraId) {
+    console.log(`🔍 Buscando obra pelo ID: "${obraId}"`);
+    
+    let obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (obraBlock) {
+        console.log(`✅ Obra encontrada por ID exato: "${obraId}"`);
+        return obraBlock;
+    }
+    
+    const todasObras = document.querySelectorAll('[data-obra-id]');
+    console.log(`📋 Obras encontradas no DOM: ${todasObras.length}`);
+    
+    todasObras.forEach((obra, index) => {
+        console.log(`  ${index + 1}.`, {
+            id: obra.dataset.obraId,
+            name: obra.dataset.obraName,
+            classes: obra.className
+        });
+    });
+    
+    console.log(`❌ Obra com ID "${obraId}" não encontrada no DOM`);
+    return null;
+}
+
+async function findObraBlockWithRetry(obraId, maxAttempts = 10) {
+    console.log(`🔍 Buscando obra com retry: "${obraId}"`);
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+        
+        if (obraBlock) {
+            console.log(`✅ Obra encontrada na tentativa ${attempt}/${maxAttempts}`);
+            return obraBlock;
+        }
+        
+        console.log(`⏳ Tentativa ${attempt}/${maxAttempts} - obra não encontrada, aguardando...`);
+        
+        if (attempt < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+    }
+    
+    console.log(`❌ Obra não encontrada após ${maxAttempts} tentativas`);
+    return null;
+}
+
+
+
+/**
+ * 💾 FUNÇÃO PRINCIPAL DE SALVAMENTO
+ */
+
+async function saveObra(obraId, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    console.log(`💾 SALVANDO OBRA pelo ID: "${obraId}"`);
+
+    let obraBlock = await findObraBlockWithRetry(obraId, 15);
+    
+    if (!obraBlock) {
+        console.error('❌ Obra não encontrada no DOM após múltiplas tentativas:', obraId);
+        
+        const todasObras = document.querySelectorAll('[data-obra-id]');
+        console.log('📋 Obras disponíveis no DOM:', Array.from(todasObras).map(o => ({
+            id: o.dataset.obraId,
+            name: o.dataset.obraName
+        })));
+        
+        showSystemStatus("ERRO: Obra não encontrada na interface", "error");
+        return;
+    }
+
+    const obraOriginalReference = obraBlock;
+    const obraContainer = obraBlock.parentElement;
+    
+    console.log('🔒 REFERÊNCIA SALVA:', {
+        obra: obraOriginalReference,
+        container: obraContainer,
+        obraNoContainer: obraContainer.contains(obraOriginalReference)
+    });
+
+    if (!isSessionActive()) {
+        console.log("🆕 Iniciando sessão para primeira obra...");
+        await startSessionOnFirstSave();
+    }
+
+    if (!isSessionActive()) {
+        console.warn("⚠️ Sessão não está ativa - obra não será salva");
+        showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
+        return;
+    }
+
+    console.log('✅ Obra confirmada no DOM:', {
+        element: obraBlock,
+        dataset: obraBlock.dataset,
+        id: obraBlock.dataset.obraId,
+        name: obraBlock.dataset.obraName
+    });
+
+    console.log('🔨 Construindo dados da obra...');
+    const obraData = buildObraData(obraBlock);
+
+    if (!obraData) {
+        console.error('❌ Falha ao construir dados da obra');
+        showSystemStatus("ERRO: Falha ao construir dados da obra", "error");
+        return;
+    }
+
+    const obraIdFromDOM = obraBlock.dataset.obraId;
+    const obraIdFromData = obraData.id;
+    const finalObraId = obraIdFromDOM || obraIdFromData;
+    
+    console.log('🔍 VERIFICAÇÃO DE OBRA MELHORADA:');
+    console.log('- ID no DOM:', obraIdFromDOM);
+    console.log('- ID nos dados:', obraIdFromData);
+    console.log('- ID final para uso:', finalObraId);
+    console.log('- É ID seguro?:', finalObraId?.startsWith('obra_'));
+    
+    let isNewObra = true;
+    
+    try {
+        const todasObrasResponse = await fetch('/api/backup-completo');
+        if (todasObrasResponse.ok) {
+            const backupData = await todasObrasResponse.json();
+            const todasObras = backupData.obras || [];
+            const obraExistente = todasObras.find(obra => String(obra.id) === String(finalObraId));
+            
+            isNewObra = !obraExistente;
+            console.log(`- Já existe no servidor?: ${!isNewObra}`);
+        }
+    } catch (error) {
+        console.log('- Não foi possível verificar servidor, assumindo como nova obra');
+    }
+
+    console.log('- É nova obra?:', isNewObra);
+
+    let result = null;
+    
+    if (isNewObra) {
+        console.log('🆕 SALVANDO COMO NOVA OBRA COM ID SEGURO:', finalObraId);
+        
+        obraData.id = finalObraId;
+        
+        if (!obraData.id || !obraData.id.startsWith('obra_')) {
+            console.error('❌ Obra não possui ID seguro válido para salvar');
+            showSystemStatus("ERRO: Obra não possui ID válido", "error");
+            return;
+        }
+        
+        result = await salvarObra(obraData);
+    } else {
+        console.log('📝 ATUALIZANDO OBRA EXISTENTE, ID SEGURO:', finalObraId);
+        
+        if (!finalObraId.startsWith('obra_')) {
+            console.error(`ERRO: ID não seguro para atualização: ${finalObraId}`);
+            showSystemStatus("ERRO: ID da obra inválido para atualização", "error");
+            return;
+        }
+        
+        result = await atualizarObra(finalObraId, obraData);
+    }
+
+    if (result) {
+        const finalId = ensureStringId(result.id);
+        
+        let obraBlockAtual = document.querySelector(`[data-obra-id="${finalId}"]`);
+        
+        if (!obraBlockAtual) {
+            console.error('❌ CRÍTICO: Obra desapareceu do DOM durante salvamento!');
+            console.log('🔍 Tentando recuperar da referência original...');
+            
+            if (obraContainer && document.body.contains(obraContainer)) {
+                const obrasNoContainer = obraContainer.querySelectorAll('[data-obra-id]');
+                console.log(`📦 Obras no container original: ${obrasNoContainer.length}`);
+                
+                if (obraContainer.contains(obraOriginalReference)) {
+                    obraBlockAtual = obraOriginalReference;
+                    console.log('✅ Obra recuperada da referência original');
+                } else {
+                    console.error('❌ Obra não está mais no container original');
+                    showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
+                    return;
+                }
+            } else {
+                console.error('❌ Container original não encontrado');
+                showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
+                return;
+            }
+        }
+
+        obraBlockAtual.dataset.obraId = finalId;
+        obraBlockAtual.dataset.obraName = obraData.nome;
+        
+        const titleElement = obraBlockAtual.querySelector('.obra-title');
+        if (titleElement && titleElement.textContent !== obraData.nome) {
+            titleElement.textContent = obraData.nome;
+        }
+
+        if (typeof updateObraButtonAfterSave === 'function' && document.body.contains(obraBlockAtual)) {
+            console.log("✅ Obra confirmada no DOM, atualizando botão...");
+            updateObraButtonAfterSave(obraData.nome, finalId);
+        } else {
+            console.error('❌ Obra não está no DOM para atualizar botão');
+        }
+
+        console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${finalId}`);
+        
+        showSystemStatus("Obra salva com sucesso!", "success");
+    } else {
+        console.error('❌ FALHA AO SALVAR OBRA NO SERVIDOR');
+        showSystemStatus("ERRO: Falha ao salvar obra no servidor", "error");
+    }
+}
+
+/**
+ * 🗑️ FUNÇÕES DE REMOÇÃO E VERIFICAÇÃO
+ */
+
+async function deleteObraFromServer(obraName, obraId) {
+    try {
+        if (!obraId || obraId === 'undefined' || obraId === 'null' || !obraId.startsWith('obra_')) {
+            console.error(`ERRO FALBACK (deleteObraFromServer) [ID de obra inválido: ${obraId}]`);
+            showSystemStatus("ERRO: ID da obra inválido para remoção", "error");
+            return;
+        }
+
+        if (!isSessionActive()) {
+            console.warn("⚠️ Sessão não está ativa - obra não será removida do servidor");
+            return;
+        }
+
+        obraId = ensureStringId(obraId);
+
+        console.log(`🗑️ Removendo obra ${obraId} do servidor...`);
+
+        const response = await fetch(`/obras/${obraId}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro ao remover obra: ${errorText}`);
+        }
+
+        console.log(`✅ Obra ${obraId} removida do servidor`);
+        showSystemStatus("Obra removida do servidor com sucesso", "success");
+    } catch (error) {
+        console.error("❌ Erro ao remover obra do servidor:", error);
+        showSystemStatus("ERRO: Não foi possível remover a obra do servidor", "error");
+    }
+}
+
+function verifyObraData(obraId) {
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID "${obraId}" não encontrada para verificação`);
+        alert(`ERRO: Obra com ID "${obraId}" não encontrada`);
+        return;
+    }
+
+    const obraName = obraBlock.dataset.obraName;
+    const projects = obraBlock.querySelectorAll(".project-block");
+    let totalRooms = 0;
+    
+    let report = `Verificação da Obra "${obraName}" (ID: ${obraId}):\n\n`;
+    report += `Total de projetos: ${projects.length}\n\n`;
+
+    projects.forEach((project, index) => {
+        const projectName = project.dataset.projectName;
+        const rooms = project.querySelectorAll(".room-block");
+        totalRooms += rooms.length;
+        
+        report += `Projeto ${index + 1}: ${projectName}\n`;
+        report += `  - Salas: ${rooms.length}\n`;
+        
+        rooms.forEach((room, roomIndex) => {
+            const roomName = room.querySelector(".room-title")?.textContent || `Sala ${roomIndex + 1}`;
+            const stats = calculateRoomCompletionStats(room);
+            report += `    - ${roomName}: ${stats.filled}/${stats.total} campos (${stats.percentage}%)\n`;
+        });
+        report += '\n';
+    });
+
+    report += `RESUMO: ${projects.length} projetos, ${totalRooms} salas`;
+
+    console.log(`🔍 Relatório gerado para obra: ${obraName} (ID: ${obraId})`);
+    alert(report);
+}
+
+/**
+ * 🌐 EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
+ */
+
+// Exportações para módulos ES6
+export {
+    // Interface
+    createEmptyObra,
+    buildObraHTML,
+    buildObraActionsFooter,
+    insertObraIntoDOM,
+    updateObraButtonAfterSave,
+    addNewObra,
+    deleteObra,
+    
+    // Persistência
+    fetchObras,
+    salvarObra,
+    atualizarObra,
+    saveObra,
+    deleteObraFromServer,
+    
+    // Utilitários
+    verifyObraData,
+    findObraBlock,
+    findObraBlockWithRetry,
+
+    // IDs
+    generateObraId,
+    ensureStringId
+};
+
+// Compatibilidade global para scripts legados
+if (typeof window !== 'undefined') {
+    window.deleteObra = deleteObra;
+    window.addNewObra = addNewObra;
+    window.saveObra = saveObra;
+    window.verifyObraData = verifyObraData;
+    window.findObraBlock = findObraBlock;
+    window.generateObraId = generateObraId;
+    window.ensureStringId = ensureStringId;
+}
+/* ==== FIM: features/managers/obra-manager.js ==== */
+
+/* ==== INÍCIO: ui/components/status.js ==== */
+/**
+ * ui/components/status.js
+ * 🎯 FUSÃO: status-manager.js → status.js
+ * ⚡ REFATORAÇÃO: Import atualizado + funcionalidades estendidas
+ */
+
+import { UI_CONSTANTS } from '../../core/constants.js';
+
+/**
+ * Gerenciador de status do sistema (banners de sucesso, erro, etc.) - SISTEMA UNIFICADO
+ */
+
+// Cache para controle de banners ativos
+let activeBanners = new Set();
+
+/**
+ * Exibe um banner de status do sistema
+ * @param {string} message - Mensagem a ser exibida
+ * @param {string} type - Tipo de status ('success', 'error', 'warning', 'info')
+ * @param {number} duration - Duração em ms (opcional, padrão baseado no tipo)
+ */
+function showSystemStatus(message, type = 'info', duration = null) {
+    removeExistingStatusBanner();
+
+    const banner = createStatusBanner(message, type);
+    insertStatusBanner(banner);
+    
+    // Adicionar ao controle de banners ativos
+    activeBanners.add(banner);
+
+    // Configurar remoção automática baseada no tipo
+    if (type === "success" || duration !== null) {
+        const removalTime = duration || getDefaultDuration(type);
+        scheduleStatusBannerRemoval(banner, removalTime);
+    }
+    
+    // Log para debug
+    console.log(`📢 Status [${type.toUpperCase()}]: ${message}`);
+}
+
+/**
+ * Remove qualquer banner de status existente
+ */
+function removeExistingStatusBanner() {
+    const existingBanner = document.getElementById("system-status-banner");
+    if (existingBanner) {
+        existingBanner.remove();
+        activeBanners.delete(existingBanner);
+    }
+}
+
+/**
+ * Remove todos os banners de status (limpeza completa)
+ */
+function removeAllStatusBanners() {
+    const allBanners = document.querySelectorAll('#system-status-banner, .system-status-banner');
+    allBanners.forEach(banner => {
+        banner.remove();
+        activeBanners.delete(banner);
+    });
+    activeBanners.clear();
+}
+
+/**
+ * Cria um elemento de banner de status
+ * @param {string} message - Mensagem do banner
+ * @param {string} type - Tipo de banner
+ * @returns {HTMLElement} Elemento do banner criado
+ */
+function createStatusBanner(message, type) {
+    const banner = document.createElement("div");
+    banner.id = "system-status-banner";
+    banner.className = `system-status-banner ${type}`;
+    
+    // Ícone baseado no tipo
+    const icon = getStatusIcon(type);
+    
+    banner.innerHTML = `
+        <div class="status-banner-content">
+            <span class="status-icon">${icon}</span>
+            <span class="status-message">${message}</span>
+        </div>
+    `;
+    
+    return banner;
+}
+
+/**
+ * Obtém ícone apropriado para o tipo de status
+ * @param {string} type - Tipo de status
+ * @returns {string} Emoji do ícone
+ */
+function getStatusIcon(type) {
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️',
+        loading: '⏳'
+    };
+    return icons[type] || icons.info;
+}
+
+/**
+ * Obtém duração padrão baseada no tipo
+ * @param {string} type - Tipo de status
+ * @returns {number} Duração em ms
+ */
+function getDefaultDuration(type) {
+    const durations = {
+        success: UI_CONSTANTS.SUCCESS_MESSAGE_DURATION || 5000,
+        error: 8000,    // Erros ficam mais tempo
+        warning: 6000,  // Warnings tempo médio
+        info: 4000,     // Info tempo curto
+        loading: 0      // Loading não some automaticamente
+    };
+    return durations[type] || 5000;
+}
+
+/**
+ * Insere o banner de status no DOM
+ * @param {HTMLElement} banner - Banner a ser inserido
+ */
+function insertStatusBanner(banner) {
+    // Tentar inserir no main-content primeiro
+    const mainContent = document.querySelector(".main-content");
+    if (mainContent) {
+        mainContent.insertBefore(banner, mainContent.firstChild);
+        return;
+    }
+    
+    // Fallback: inserir no body
+    const body = document.body;
+    if (body.firstChild) {
+        body.insertBefore(banner, body.firstChild);
+    } else {
+        body.appendChild(banner);
+    }
+}
+
+/**
+ * Agenda a remoção automática do banner
+ * @param {HTMLElement} banner - Banner a ser removido
+ * @param {number} duration - Duração em ms
+ */
+function scheduleStatusBannerRemoval(banner, duration) {
+    if (duration > 0) {
+        setTimeout(() => {
+            if (banner && banner.parentNode) {
+                banner.remove();
+                activeBanners.delete(banner);
+            }
+        }, duration);
+    }
+}
+
+/**
+ * 🆕 FUNÇÃO: Exibe status de carregamento
+ * @param {string} message - Mensagem de carregamento
+ * @returns {Function} Função para remover o loading
+ */
+function showLoadingStatus(message = 'Carregando...') {
+    removeExistingStatusBanner();
+    const banner = createStatusBanner(message, 'loading');
+    insertStatusBanner(banner);
+    activeBanners.add(banner);
+    
+    // Retorna função para remover o loading
+    return () => {
+        if (banner && banner.parentNode) {
+            banner.remove();
+            activeBanners.delete(banner);
+        }
+    };
+}
+
+/**
+ * 🆕 FUNÇÃO: Exibe status temporário com callback
+ * @param {string} message - Mensagem
+ * @param {string} type - Tipo de status
+ * @param {number} duration - Duração
+ * @param {Function} callback - Callback após remoção
+ */
+function showTemporaryStatus(message, type = 'success', duration = 3000, callback = null) {
+    showSystemStatus(message, type, duration);
+    
+    if (callback && typeof callback === 'function') {
+        setTimeout(callback, duration);
+    }
+}
+
+/**
+ * 🆕 FUNÇÃO: Verifica se há banner ativo
+ * @returns {boolean} True se há banner ativo
+ */
+function hasActiveStatusBanner() {
+    return activeBanners.size > 0;
+}
+
+/**
+ * 🆕 FUNÇÃO: Obtém contagem de banners ativos
+ * @returns {number} Número de banners ativos
+ */
+function getActiveBannersCount() {
+    return activeBanners.size;
+}
+
+// Exportações para módulos ES6
+export {
+    showSystemStatus,
+    removeExistingStatusBanner,
+    removeAllStatusBanners,
+    createStatusBanner,
+    insertStatusBanner,
+    scheduleStatusBannerRemoval,
+    showLoadingStatus,
+    showTemporaryStatus,
+    hasActiveStatusBanner,
+    getActiveBannersCount
+};
+
+// Compatibilidade global para scripts legados
+if (typeof window !== 'undefined') {
+    window.showSystemStatus = showSystemStatus;
+    window.removeExistingStatusBanner = removeExistingStatusBanner;
+    window.removeAllStatusBanners = removeAllStatusBanners;
+    window.showLoadingStatus = showLoadingStatus;
+    window.showTemporaryStatus = showTemporaryStatus;
+}
+/* ==== FIM: ui/components/status.js ==== */

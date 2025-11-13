@@ -121,7 +121,9 @@ def main():
         server_core = ServerCore()
         cache_cleaner = CacheCleaner()
         file_utils = FileUtils()
-        sessions_manager = SessionsManager()
+        
+        # SessionsManager é importado globalmente, não precisa instanciar aqui
+        from servidor_modules.core.sessions_core import sessions_manager
         
         # Configuração
         print("   Configurando handlers de sinal...")

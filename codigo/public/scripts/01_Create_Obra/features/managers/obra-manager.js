@@ -29,7 +29,7 @@ function buildObraHTML(obraName, obraId, hasId = false) {
         <div class="obra-header">
             <button class="minimizer" onclick="toggleObra('${obraId}', event)">+</button>
             <h2 class="obra-title compact-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
-            <div class="obra-header-spacer"><span>Adicionar campos de cadastro de empresas</span></div>
+            <div class="obra-header-spacer"><button class="btn-empresa-identifier" onclick="window.ativarCadastroEmpresa('${obraId}')">Adicionar campos de cadastro de empresas</button></div>
             <div class="obra-actions">
                 <button class="btn btn-delete" onclick="window.deleteObra('${obraName}', '${obraId}')">Remover Obra</button>
             </div>
@@ -37,7 +37,7 @@ function buildObraHTML(obraName, obraId, hasId = false) {
 
         <div class="obra-content collapsed" id="obra-content-${obraId}">
             <div class="projetc-header-record very-dark">
-                <span>Adicionar campos de cadastro de empresas</span>
+                <button class="btn-empresa-cadastro" onclick="window.ativarCadastroEmpresa('${obraId}')">Adicionar campos de cadastro de empresas</button>
             </div>
             <div class="projects-container" id="projects-${obraId}"></div>
             <div class="add-project-section">

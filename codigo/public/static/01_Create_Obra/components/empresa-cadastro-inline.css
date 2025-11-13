@@ -1,0 +1,538 @@
+/* ===== ESTILOS PARA CADASTRO INLINE DE EMPRESAS ===== */
+
+/* Botões de empresa */
+.btn-empresa-cadastro {
+    background: var(--color-gray-200);
+    color: var(--color-gray-800);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    width: 100%;
+    text-align: center;
+    margin: var(--spacing-xs) 0;
+}
+
+.btn-empresa-cadastro:hover {
+    background: var(--color-gray-300);
+    border-color: var(--color-gray-400);
+}
+
+.btn-empresa-cadastro:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+.btn-empresa-identifier {
+    background: var(--color-gray-100);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    font-weight: bold;
+    color: var(--color-gray-800);
+}
+
+.btn-empresa-identifier:hover {
+    background: var(--color-gray-200);
+    border-color: var(--color-gray-400);
+}
+
+/* Container principal do cadastro */
+.empresa-cadastro-inline {
+    background: var(--bg-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-md) 0;
+    animation: slideDown 0.3s ease-out;
+    box-shadow: var(--card-shadow);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Grid do formulário de cadastro */
+.empresa-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-gray-700);
+    font-size: 14px;
+}
+
+.form-group input {
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--capacity-input-focus-shadow);
+}
+
+.form-group input:read-only {
+    background-color: var(--color-gray-100);
+    color: var(--color-gray-600);
+    cursor: not-allowed;
+}
+
+/* Autocomplete */
+.autocomplete-suggestions {
+    position: absolute;
+    background: var(--bg-primary);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: var(--card-shadow);
+    display: none;
+    margin-top: 35px;
+}
+
+.suggestion-item {
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-gray-200);
+    color: var(--color-gray-700);
+    transition: background-color 0.2s ease;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+/* Ações do formulário */
+.empresa-form-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    border-top: 1px solid var(--color-gray-200);
+    padding-top: var(--spacing-md);
+}
+
+.btn-cancel {
+    background: var(--color-gray-500);
+    color: var(--color-white);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.btn-confirm {
+    background: var(--success-gradient);
+    color: var(--color-white);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background: var(--color-gray-600);
+}
+
+.btn-confirm:hover {
+    background: linear-gradient(135deg, #2D774E 0%, #3aa766 100%);
+}
+
+/* ID da Obra Gerado */
+.obra-id-gerado {
+    background: var(--color-gray-100);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    text-align: center;
+}
+
+.obra-id-gerado strong {
+    color: var(--color-gray-700);
+}
+
+#obra-id-value {
+    font-family: monospace;
+    font-weight: bold;
+    color: var(--color-gray-800);
+}
+
+/* ===== FORMULÁRIO ATIVO DE EMPRESA ===== */
+
+.empresa-formulario-ativo {
+    background: var(--bg-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-md) 0;
+    box-shadow: var(--card-shadow);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.empresa-formulario-ativo h4 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--color-primary);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    grid-column: 1 / -1;
+}
+
+/* Grid horizontal responsivo - LAYOUT HORIZONTAL */
+.empresa-form-grid-horizontal {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.form-group-horizontal {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.form-group-horizontal label {
+    display: block;
+    font-weight: 600;
+    color: var(--color-gray-700);
+    margin-bottom: var(--spacing-xs);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.form-group-horizontal input {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 13px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.form-group-horizontal input:read-only {
+    background: var(--color-gray-100);
+    color: var(--color-gray-600);
+    cursor: not-allowed;
+}
+
+.form-group-horizontal input:not(:read-only):focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--capacity-input-focus-shadow);
+}
+
+/* Header da obra com identificador da empresa */
+.obra-header-spacer button[data-tooltip] {
+    position: relative;
+    background: var(--color-gray-100);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--color-gray-800);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.obra-header-spacer button[data-tooltip]:hover {
+    background: var(--color-gray-200);
+    border-color: var(--color-gray-400);
+}
+
+.obra-header-spacer button[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-gray-800);
+    color: var(--color-white);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius);
+    font-size: 12px;
+    white-space: pre-line;
+    z-index: 1000;
+    min-width: 200px;
+    text-align: left;
+    box-shadow: var(--card-shadow);
+}
+
+.obra-header-spacer button[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--color-gray-800);
+    margin-bottom: -10px;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+
+/* Tablets - 2 colunas */
+@media (max-width: 1024px) {
+    .empresa-form-grid-horizontal {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
+    }
+    
+    .empresa-form-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+}
+
+/* Tablets pequenos */
+@media (max-width: 768px) {
+    .empresa-form-grid-horizontal {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
+    }
+    
+    .empresa-cadastro-inline {
+        padding: var(--spacing-md);
+    }
+    
+    .empresa-formulario-ativo {
+        padding: var(--spacing-md);
+    }
+    
+    .empresa-form-actions {
+        flex-direction: column;
+    }
+}
+
+/* Mobile - 1 coluna */
+@media (max-width: 480px) {
+    .empresa-form-grid-horizontal {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .empresa-form-actions {
+        flex-direction: column;
+    }
+    
+    .empresa-form-actions button {
+        width: 100%;
+    }
+    
+    .form-group-horizontal input {
+        padding: var(--spacing-md);
+        font-size: 14px;
+    }
+    
+    .btn-empresa-cadastro {
+        padding: var(--spacing-md);
+        font-size: 14px;
+    }
+}
+
+/* Telas muito grandes - 4 colunas */
+@media (min-width: 1400px) {
+    .empresa-form-grid-horizontal {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Ajuste específico para 6 campos - 3x2 em telas grandes */
+@media (min-width: 1024px) {
+    .empresa-form-grid-horizontal:has(.form-group-horizontal:nth-child(6)) {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, auto);
+    }
+}
+
+/* Estados de foco e hover consistentes */
+.btn-empresa-cadastro:focus,
+.btn-empresa-identifier:focus,
+.form-group-horizontal input:focus,
+.form-group input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+/* Animações suaves */
+.empresa-cadastro-inline,
+.empresa-formulario-ativo,
+.btn-empresa-cadastro,
+.btn-empresa-identifier,
+.form-group-horizontal input,
+.form-group input {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Melhorias de acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+    .empresa-cadastro-inline,
+    .empresa-formulario-ativo,
+    .btn-empresa-cadastro,
+    .btn-empresa-identifier,
+    .form-group-horizontal input,
+    .form-group input {
+        transition: none;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+}
+
+/* Estados de desabilitado */
+.btn-empresa-cadastro:disabled,
+.btn-empresa-identifier:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-empresa-cadastro:disabled:hover,
+.btn-empresa-identifier:disabled:hover {
+    background: var(--color-gray-200);
+    border-color: var(--color-gray-300);
+}
+
+/* Loading states */
+.btn-empresa-cadastro.loading,
+.btn-empresa-identifier.loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-empresa-cadastro.loading::after,
+.btn-empresa-identifier.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Estados de erro e sucesso */
+.form-group-horizontal input.error {
+    border-color: #e53e3e;
+    box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.1);
+}
+
+.form-group-horizontal input.success {
+    border-color: #38a169;
+    box-shadow: 0 0 0 2px rgba(56, 161, 105, 0.1);
+}
+
+/* Tooltips melhorados */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-gray-800);
+    color: var(--color-white);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius);
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
+[data-tooltip]:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+/* Scrollbar personalizado para autocomplete */
+.autocomplete-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+    border-radius: 3px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: 3px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500);
+}

@@ -19,6 +19,9 @@ import { loadObrasFromServer } from './data/adapters/obra-adapter.js';
 import { getGeralCount } from './data/adapters/session-adapter.js';
 import { shutdownManual } from './data/adapters/shutdown-adapter.js';
 
+// 🆕 IMPORTAR MÓDULO DE EMPRESAS
+import EmpresaCadastroInline from './data/builders/empresa-cadastro-inline.js';
+
 // Carregar módulos dinamicamente
 let modulesLoaded = false;
 
@@ -80,6 +83,9 @@ class ShutdownManager {
 // Inicializar shutdown manager
 let shutdownManager = null;
 
+// 🆕 Inicializar sistema de cadastro de empresas
+let empresaCadastro = null;
+
 // FUNÇÕES GLOBAIS ATUALIZADAS PARA NOVA ESTRUTURA
 window.createEmptyObra = async function(obraName, obraId) {
     try {
@@ -137,6 +143,14 @@ window.createEmptyRoom = async function(obraId, projectId, roomName, roomId) {
         console.error('❌ Erro em createEmptyRoom:', error);
         return false;
     }
+};
+
+// 🆕 FUNÇÃO PARA OBTER DADOS DE EMPRESA PREPARADOS
+window.obterDadosEmpresa = function(obraId) {
+    if (empresaCadastro && typeof empresaCadastro.obterDadosPreparados === 'function') {
+        return empresaCadastro.obterDadosPreparados(obraId);
+    }
+    return null;
 };
 
 /**
@@ -197,6 +211,9 @@ async function loadAllModules() {
           import('./features/managers/obra-manager.js'),  // obraManagerModule
           import('./features/managers/project-manager.js'), // projectManagerModule
           
+          // 🆕 MÓDULO DE EMPRESAS
+          import('./data/builders/empresa-cadastro-inline.js'), // empresaCadastroModule
+          
           // Data Modules - 
           import('./data/modules/rooms.js'),              // roomsModule
           import('./data/modules/climatizacao.js'),       // climatizationModule
@@ -229,6 +246,9 @@ async function loadAllModules() {
           // Features Managers
           obraManagerModule,
           projectManagerModule,
+          
+          // 🆕 MÓDULO DE EMPRESAS
+          empresaCadastroModule,
           
           // Data Modules - 
           roomsModule,
@@ -339,7 +359,10 @@ async function loadAllModules() {
           extractThermalGainsData: dataBuildersModule.extractThermalGainsData,
           extractClimatizationInputs: dataBuildersModule.extractClimatizationInputs,
           extractCapacityData: dataBuildersModule.extractCapacityData,
-          extractConfigurationData: dataBuildersModule.extractConfigurationData
+          extractConfigurationData: dataBuildersModule.extractConfigurationData,
+          
+          // 🆕 FUNÇÕES DE EMPRESA
+          obterDadosEmpresa: window.obterDadosEmpresa
       };
       
       // ✅ ATRIBUIR FUNÇÕES AO WINDOW
@@ -361,6 +384,35 @@ async function loadAllModules() {
   } catch (error) {
       console.error("❌ Erro ao carregar módulos:", error);
       return false;
+  }
+}
+
+/**
+ * Inicializa o sistema de cadastro de empresas
+ */
+async function initializeEmpresaCadastro() {
+  try {
+    console.log("🏢 Inicializando sistema de cadastro de empresas...");
+    
+    // Aguardar um pouco para garantir que o DOM esteja pronto
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Inicializar o sistema de cadastro inline de empresas
+    empresaCadastro = new EmpresaCadastroInline();
+    
+    // Disponibilizar globalmente
+    window.empresaCadastro = empresaCadastro;
+    
+    console.log("✅ Sistema de cadastro de empresas inicializado");
+    
+    // Verificar se há elementos de cadastro disponíveis
+    const spansCadastro = document.querySelectorAll('.projetc-header-record.very-dark span');
+    console.log(`🔍 Encontrados ${spansCadastro.length} elementos de cadastro de empresas`);
+    
+    return true;
+  } catch (error) {
+    console.error("❌ Erro ao inicializar sistema de cadastro de empresas:", error);
+    return false;
   }
 }
 
@@ -442,6 +494,7 @@ function finalSystemDebug() {
   console.log('- Módulos carregados:', modulesLoaded);
   console.log('- Constantes carregadas:', !!window.systemConstants);
   console.log('- Shutdown Manager:', !!shutdownManager);
+  console.log('- Empresa Cadastro:', !!empresaCadastro);
   
   console.log('- Funções de toggle disponíveis:', {
     toggleSection: typeof window.toggleSection,
@@ -622,7 +675,8 @@ function verifyCriticalFunctions() {
         'deleteObra',
         'deleteRoom',
         'calculateVazaoArAndThermalGains',
-        'makeEditable'
+        'makeEditable',
+        'obterDadosEmpresa'
     ];
     
     console.log('🔍 Verificando funções críticas...');
@@ -663,7 +717,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       console.warn("⚠️ Alguns módulos não carregaram completamente");
     }
     
-    // 5. Verificar e carregar sessão existente
+    // 5. 🆕 Inicializar sistema de cadastro de empresas
+    console.log("🏢 Inicializando sistema de empresas...");
+    const empresaSystemLoaded = await initializeEmpresaCadastro();
+    if (!empresaSystemLoaded) {
+      console.warn("⚠️ Sistema de cadastro de empresas não carregou completamente");
+    }
+    
+    // 6. Verificar e carregar sessão existente
     console.log("🔍 Verificando sessão existente...");
     const hasExistingSession = await checkAndLoadExistingSession();
     
@@ -672,7 +733,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       console.log("💡 Dica: Clique em 'Nova Obra' para começar");
     }
     
-    // 6. Verificar obras existentes
+    // 7. Verificar obras existentes
     await verifyAndCreateBaseObra();
     
     console.log("✅ Sistema inicializado com sucesso - PRONTO PARA USO");

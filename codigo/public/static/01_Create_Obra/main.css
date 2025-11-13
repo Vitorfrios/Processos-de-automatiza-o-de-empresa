@@ -7,13 +7,14 @@
 @import url('components/forms.css');
 @import url('components/cards.css');
 @import url('components/tables.css');
-@import url('layout/grid.css');
-@import url('pages/thermal-calculation.css');
-@import url('pages/projects.css');
 @import url('components/machines.css');
 @import url('components/capacity-tables.css');
+@import url('components/empresa-cadastro-inline.css');
+@import url('layout/grid.css');
 @import url('layout/modal.css');
 @import url('layout/exit-modal.css');
+@import url('pages/thermal-calculation.css');
+@import url('pages/projects.css');
 
 /* Botão de Shutdown */
 .shutdown-btn {

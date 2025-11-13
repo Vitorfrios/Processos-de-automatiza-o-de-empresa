@@ -18,6 +18,39 @@ import{extractNumberFromText,getMachineName,parseMachinePrice } from '../utils/d
  */
 
 /**
+ * Extrai dados de empresa cadastrados inline
+ * @param {HTMLElement} obraElement - Elemento HTML da obra
+ * @returns {Object} Dados da empresa
+ */
+function extractEmpresaData(obraElement) {
+    const empresaData = {};
+    
+    if (!obraElement) return empresaData;
+
+    // Buscar dados dos data attributes
+    const camposEmpresa = [
+        'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
+        'clienteFinal', 'codigoCliente', 'dataCadastro', 
+        'orcamentistaResponsavel', 'idGerado'
+    ];
+
+    camposEmpresa.forEach(campo => {
+        if (obraElement.dataset[campo]) {
+            // Converter número quando apropriado
+            if (campo === 'numeroClienteFinal') {
+                empresaData[campo] = parseInt(obraElement.dataset[campo]) || 0;
+            } else {
+                empresaData[campo] = obraElement.dataset[campo];
+            }
+        }
+    });
+
+    console.log(`🏢 Dados de empresa extraídos:`, empresaData);
+    return empresaData;
+}
+
+
+/**
  * Constrói o objeto de dados completo de uma obra a partir do HTML - VERSÃO CORRIGIDA
  * @param {string|HTMLElement} obraIdOrElement - ID da obra ou elemento HTML
  * @returns {Object|null} Dados completos da obra ou null em caso de erro
@@ -72,6 +105,9 @@ function buildObraData(obraIdOrElement) {
         timestamp: new Date().toISOString(),
         projetos: []
     };
+
+    const empresaData = extractEmpresaData(obraElement);
+    Object.assign(obraData, empresaData);
 
     const projectElements = obraElement.querySelectorAll('.project-block');
     console.log(`🔍 Encontrados ${projectElements.length} projetos na obra "${obraName}"`);
@@ -657,7 +693,7 @@ export {
     extractClimatizationMachineData,
     extractCapacityData,
     extractConfigurationData,
-    
+    extractEmpresaData,
     // Utilitários
     attemptAlternativeSearch
 };
@@ -673,4 +709,5 @@ if (typeof window !== 'undefined') {
     window.extractClimatizationMachineData = extractClimatizationMachineData;
     window.extractCapacityData = extractCapacityData;
     window.extractConfigurationData = extractConfigurationData;
+    window.extractEmpresaData = extractEmpresaData;
 }

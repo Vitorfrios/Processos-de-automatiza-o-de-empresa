@@ -1603,5 +1603,18 @@
     "Metro tubo PVC 1\"": 19.20,
     "Metro Barra Roscada 3/8\"": 23.65,
     "Chumbador 3/8\" por 2.1/2\"": 2.88
-  }
+  },
+  "empresas": [
+    { "ACT": "AeroCool Technologies" },
+    { "BLC": "BlueLink Consulting" },
+    { "CRN": "Cronos Engenharia Integrada" },
+    { "DTS": "DataSphere Systems" },
+    { "EVC": "Evolux Construções Sustentáveis" },
+    { "FLX": "Fluxon Automação Industrial" },
+    { "GHT": "GreenHeat Termotecnologia" },
+    { "HRM": "Horizon Recursos Mecânicos" },
+    { "INX": "Innext Soluções Inteligentes" },
+    { "JPT": "JetPoint Tecnologia Climática" },
+    { "WSD": "Rps Tecnologia Climática" }
+  ]
 }

@@ -3,6 +3,14 @@
     {
       "id": "obra_a68",
       "nome": "Obra1",
+      "idGerado": "obra_ACT_151",
+      "empresaSigla": "ACT",
+      "numeroClienteFinal": 151,
+      "empresaNome": "AeroCool Technologies",
+      "clienteFinal": "TechPrime Engenharia",
+      "codigoCliente": "TP-ENG-0524",
+      "dataCadastro": "2025-11-12T18:01:41.248Z",
+      "orcamentistaResponsavel": "Vitor Rios",
       "timestamp": "2025-11-12T18:01:41.248Z",
       "projetos": [
         {

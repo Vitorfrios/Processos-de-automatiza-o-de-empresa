@@ -1,3 +1,5 @@
+# servidor_modules/handlers/http_handler.py
+
 """
 http_handler.py
 HTTP Request Handler - Interface HTTP Principal
@@ -24,12 +26,25 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"📁 Diretório base: {self.project_root}")
         
+        # Inicializa RoutesCore primeiro
+        from servidor_modules.core.routes_core import RoutesCore
+        self.routes_core = RoutesCore(
+            self.project_root,
+            sessions_manager,
+            self.file_utils,
+            self.cache_cleaner
+        )
+        
+        # Agora inicializa RouteHandler
         self.route_handler = RouteHandler(
             self.project_root, 
             sessions_manager, 
             self.file_utils, 
             self.cache_cleaner
         )
+        
+        # Injeta o RoutesCore no RouteHandler
+        self.route_handler.set_routes_core(self.routes_core)
         
         serve_directory = self.project_root
         super().__init__(*args, directory=str(serve_directory), **kwargs)
@@ -67,6 +82,15 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_sessions_current(self)
         elif path == '/api/backup-completo':
             self.route_handler.handle_get_backup_completo(self)
+        # 🆕 ROTAS DE EMPRESAS
+        elif path == '/api/dados/empresas':
+            self.route_handler.handle_get_empresas(self)
+        elif path.startswith('/api/dados/empresas/buscar/'):
+            termo = path.split('/')[-1]
+            self.route_handler.handle_buscar_empresas(self, termo)
+        elif path.startswith('/api/dados/empresas/numero/'):
+            sigla = path.split('/')[-1]
+            self.route_handler.handle_get_proximo_numero(self, sigla)
         elif path.startswith('/obras/') and self.command == 'GET':
             self.route_handler.handle_get_obra_by_id(self, path.split('/')[-1])
         # ROTAS LEGACY (COMPATIBILIDADE)
@@ -109,6 +133,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_post_sessions_add_obra(self)
         elif path == '/api/reload-page':
             self.route_handler.handle_post_reload_page(self)
+        # 🆕 ROTAS DE EMPRESAS
+        elif path == '/api/dados/empresas':
+            self.route_handler.handle_post_empresas(self)
         # ROTAS LEGACY (COMPATIBILIDADE)
         elif path in ['/projetos', '/projects']:
             self.route_handler.handle_post_projetos(self)

@@ -4,13 +4,26 @@ Handler principal de rotas - Interface entre HTTP e Core
 """
 
 import json
-from servidor_modules.core.routes_core import RoutesCore
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
+import os
+# from servidor_modules.core.routes_core import RoutesCore
 
 class RouteHandler:
-    """Handler para todas as rotas da API"""
+    """Manipula o roteamento de requisições HTTP"""
     
     def __init__(self, project_root, sessions_manager, file_utils, cache_cleaner):
-        self.routes_core = RoutesCore(project_root, sessions_manager, file_utils, cache_cleaner)
+        self.project_root = project_root
+        self.sessions_manager = sessions_manager
+        self.file_utils = file_utils
+        self.cache_cleaner = cache_cleaner
+        
+        # RoutesCore será injetado depois para evitar import circular
+        self.routes_core = None
+    
+    def set_routes_core(self, routes_core):
+        """Define o RoutesCore após a inicialização para evitar import circular"""
+        self.routes_core = routes_core
 
     # ========== ROTAS DE OBRAS ==========
 
@@ -60,6 +73,31 @@ class RouteHandler:
             })
         else:
             handler.send_error(500, "Erro ao deletar obra")
+
+    # ========== ROTAS DE EMPRESAS ==========
+
+    def handle_get_empresas(self, handler):
+        """GET /api/dados/empresas"""
+        empresas = self.routes_core.handle_get_empresas()
+        handler.send_json_response(empresas)
+
+    def handle_post_empresas(self, handler):
+        """POST /api/dados/empresas"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_empresas(post_data)
+        handler.send_json_response(result)
+
+    def handle_buscar_empresas(self, handler, termo):
+        """GET /api/dados/empresas/buscar/{termo}"""
+        empresas = self.routes_core.handle_buscar_empresas(termo)
+        handler.send_json_response(empresas)
+
+    def handle_get_proximo_numero(self, handler, sigla):
+        """GET /api/dados/empresas/numero/{sigla}"""
+        numero = self.routes_core.handle_get_proximo_numero(sigla)
+        handler.send_json_response(numero)
 
     # ========== ROTAS DE SESSÃO ==========
 
