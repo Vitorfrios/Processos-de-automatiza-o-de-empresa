@@ -683,7 +683,7 @@ function criarFormularioVazioEmpresa(obraId, container) {
 }
 
 /**
- * 🆕 INICIALIZA INPUT HÍBRIDO DE EMPRESA - CORRIGIDO
+ * 🆕 INICIALIZA INPUT HÍBRIDO DE EMPRESA - COMPLETA E CORRIGIDA
  */
 async function inicializarInputEmpresaHibrido(obraId) {
     console.log(`🔧 [INPUT HÍBRIDO] Inicializando para obra: ${obraId}`);
@@ -764,8 +764,14 @@ async function inicializarInputEmpresaHibrido(obraId) {
         const termo = e.target.value.trim();
         console.log(`🔍 [INPUT HÍBRIDO] Buscando: "${termo}"`);
         
-        if (termo.length < 1) {
+        // 🔄 SINCRONIZAÇÃO: Se o usuário apagou a empresa, limpa o número
+        if (termo.length === 0) {
+            limparNumeroCliente(obraId);
             dropdown.style.display = 'none';
+            
+            // Limpa dados de seleção
+            delete input.dataset.siglaSelecionada;
+            delete input.dataset.nomeSelecionado;
             return;
         }
         
@@ -777,9 +783,31 @@ async function inicializarInputEmpresaHibrido(obraId) {
     
     // Evento de foco - mostrar todas as opções
     input.addEventListener('focus', function() {
-        if (this.value.trim().length === 0) {
+        const valorAtual = this.value.trim();
+        
+        if (valorAtual.length === 0) {
+            limparNumeroCliente(obraId);
             exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        } else {
+            // Tem texto, mostra sugestões baseadas no que já tem
+            const sugestoes = filtrarEmpresas(valorAtual, empresas);
+            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
         }
+    });
+    
+    // Evento de blur - verifica se deve limpar quando perde foco
+    input.addEventListener('blur', function() {
+        setTimeout(() => {
+            const valorAtual = this.value.trim();
+            if (valorAtual.length === 0) {
+                limparNumeroCliente(obraId);
+            }
+            
+            // Fecha dropdown após um delay para permitir clique
+            setTimeout(() => {
+                dropdown.style.display = 'none';
+            }, 150);
+        }, 200);
     });
     
     // Evento de teclado para navegação
@@ -795,6 +823,7 @@ async function inicializarInputEmpresaHibrido(obraId) {
             selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
         } else if (e.key === 'Escape') {
             dropdown.style.display = 'none';
+            input.blur();
         }
     });
     
@@ -806,6 +835,17 @@ async function inicializarInputEmpresaHibrido(obraId) {
     });
     
     console.log(`✅ [INPUT HÍBRIDO] Inicializado com sucesso para obra ${obraId}`);
+}
+
+/**
+ * 🆕 LIMPAR NÚMERO DO CLIENTE QUANDO EMPRESA FOR REMOVIDA
+ */
+function limparNumeroCliente(obraId) {
+    const numeroInput = document.querySelector(`[data-obra-id="${obraId}"] .numero-cliente-final-cadastro`);
+    if (numeroInput) {
+        numeroInput.value = '';
+        console.log(`🔄 [EMPRESA] Número do cliente limpo para obra ${obraId}`);
+    }
 }
 
 /**
@@ -937,7 +977,7 @@ function selecionarEmpresa(sigla, nome, input, dropdown, obraId) {
     input.dataset.nomeSelecionado = nome;
     dropdown.style.display = 'none';
     
-    // Calcular número do cliente automaticamente
+    // 🔄 SÓ CALCULA O NÚMERO SE UMA EMPRESA FOI SELECIONADA
     calcularNumeroClienteFinal(sigla, obraId);
     
     console.log(`✅ [EMPRESA] Empresa selecionada: ${sigla} - ${nome}`);
