@@ -398,45 +398,12 @@ function applyPage2PostProcessing() {
     const obraBlocks = document.querySelectorAll('.obra-block');
     obraBlocks.forEach(obraBlock => {
         const obraId = obraBlock.dataset.obraId;
-        addObraStatsToHeader(obraBlock, obraId);
     });
     
     console.log('✅ Pós-processamento aplicado');
 }
 
-/**
- * ADICIONAR ESTATÍSTICAS AO HEADER
- */
-function addObraStatsToHeader(obraBlock, obraId) {
-    const spacer = obraBlock.querySelector('.obra-header-spacer');
-    
-    if (spacer) {
-        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
-        if (obraElement) {
-            const projetos = obraElement.querySelectorAll('.project-block');
-            let totalSalas = 0;
-            let totalMaquinas = 0;
-            
-            projetos.forEach(projeto => {
-                const salas = projeto.querySelectorAll('.room-block');
-                totalSalas += salas.length;
-                
-                salas.forEach(sala => {
-                    const maquinas = sala.querySelectorAll('.climatization-machine, .machine-block');
-                    totalMaquinas += maquinas.length;
-                });
-            });
-            
-            const statsText = formatObraStats({
-                projetos: projetos.length,
-                salas: totalSalas,
-                maquinas: totalMaquinas
-            });
-            
-            spacer.innerHTML = `<span>${statsText}</span>`;
-        }
-    }
-}
+
 
 /**
  * MANIPULAR EXCLUSÃO DE OBRA

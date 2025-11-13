@@ -3,15 +3,7 @@
     {
       "id": "obra_a68",
       "nome": "Obra1",
-      "idGerado": "obra_ACT_151",
-      "empresaSigla": "ACT",
-      "numeroClienteFinal": 151,
-      "empresaNome": "AeroCool Technologies",
-      "clienteFinal": "TechPrime Engenharia",
-      "codigoCliente": "TP-ENG-0524",
-      "dataCadastro": "2025-11-12T18:01:41.248Z",
-      "orcamentistaResponsavel": "Vitor Rios",
-      "timestamp": "2025-11-12T18:01:41.248Z",
+      "timestamp": "2025-11-13T15:38:18.303Z",
       "projetos": [
         {
           "id": "obra_a68_proj_r73_2",
@@ -38,10 +30,10 @@
                 "numPessoas": 12,
                 "pressurizacaoSetpoint": 44,
                 "setpointTemp": 2512,
-                "combateIncendio": "fm200",
-                "pressurizacao": true,
                 "numPortasDuplas": 15,
-                "numPortasSimples": 4
+                "numPortasSimples": 4,
+                "combateIncendio": "fm200",
+                "pressurizacao": true
               },
               "maquinas": [
                 {
@@ -96,16 +88,16 @@
                 "folga": "10.0%"
               },
               "ganhosTermicos": {
-                "total-ganhos-w": 16935,
-                "total-tr": 5,
+                "total-ganhos-w": 1364965,
+                "total-tr": 389,
                 "total-externo": 9166,
                 "total-divisoes": 4194,
                 "total-piso": 689,
                 "total-iluminacao": 238,
                 "total-dissi": 12,
                 "total-pessoas": 2638,
-                "total-ar-sensivel": 0,
-                "total-ar-latente": 0
+                "total-ar-sensivel": 424689,
+                "total-ar-latente": 923342
               },
               "configuracao": {
                 "opcoesInstalacao": [
@@ -117,7 +109,117 @@
               "somavaloresmaquinatotal": 3680
             }
           ],
-          "timestamp": "2025-11-12T18:01:41.249Z"
+          "timestamp": "2025-11-13T15:38:18.304Z"
+        }
+      ],
+      "empresaSigla": "ACT",
+      "empresaNome": "AeroCool Technologies",
+      "numeroClienteFinal": 151,
+      "clienteFinal": "TechPrime Engenharia",
+      "codigoCliente": "TP-ENG-0524",
+      "dataCadastro": "2025-11-12T18:01:41.248Z",
+      "orcamentistaResponsavel": "Vitor Rios",
+      "idGerado": "obra_ACT_151"
+    },
+    {
+      "id": "obra_z53",
+      "nome": "Obra2",
+      "timestamp": "2025-11-13T16:25:22.929Z",
+      "projetos": [
+        {
+          "id": "obra_z53_proj_j52_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_z53_proj_j52_2_sala_o55_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "NaN",
+                "solucaoBackup": "NaN",
+                "totalCapacidade": "NaN",
+                "folga": "0.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ],
+          "timestamp": "2025-11-13T16:25:22.930Z"
+        }
+      ]
+    },
+    {
+      "id": "obra_t69",
+      "nome": "Obra2",
+      "timestamp": "2025-11-13T17:57:39.217Z",
+      "projetos": [
+        {
+          "id": "obra_t69_proj_o95_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_t69_proj_o95_2_sala_l19_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 0,
+                "solucaoBackup": 0,
+                "totalCapacidade": 0,
+                "folga": 0,
+                "backup": "n",
+                "cargaEstimada": 0
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ],
+          "timestamp": "2025-11-13T17:57:39.219Z"
         }
       ]
     }

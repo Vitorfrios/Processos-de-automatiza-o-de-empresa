@@ -1,0 +1,2572 @@
+
+/* ==== INÍCIO: data/builders/empresa-cadastro-inline.js ==== */
+/**
+ * features/empresa-cadastro-inline.js
+ * Sistema de cadastro inline de empresas para Página 1
+ * Integração com dados.json (empresas) e backup.json (obras)
+ */
+
+import { showSystemStatus } from '../../ui/components/status.js';
+import { extractNumberFromText } from '../../data/utils/data-utils.js';
+
+class EmpresaCadastroInline {
+    constructor() {
+        this.empresas = [];
+        this.obrasExistentes = [];
+        this.container = null;
+        this.isActive = false;
+        
+        this.init();
+    }
+
+    async init() {
+        await this.carregarDados();
+        this.vincularEventos();
+    }
+
+    async carregarDados() {
+        try {
+            // Carregar empresas do dados.json
+            const responseEmpresas = await fetch('/api/dados/empresas');
+            if (responseEmpresas.ok) {
+                const dados = await responseEmpresas.json();
+                this.empresas = dados.empresas || [];
+            }
+
+            // Carregar obras existentes do backup.json
+            const responseBackup = await fetch('/api/backup-completo');
+            if (responseBackup.ok) {
+                const backup = await responseBackup.json();
+                this.obrasExistentes = backup.obras || [];
+            }
+
+            console.log(`📊 Dados carregados: ${this.empresas.length} empresas, ${this.obrasExistentes.length} obras`);
+        } catch (error) {
+            console.error('❌ Erro ao carregar dados:', error);
+        }
+    }
+
+    vincularEventos() {
+        // Encontrar todos os spans de cadastro de empresas e transformar em botões
+        const spansCadastro = document.querySelectorAll('.projetc-header-record.very-dark span');
+        
+        spansCadastro.forEach(span => {
+            // Transformar span em botão
+            const button = document.createElement('button');
+            button.className = 'btn-empresa-cadastro';
+            button.textContent = span.textContent;
+            button.setAttribute('type', 'button');
+            
+            // Substituir span por botão
+            span.parentNode.replaceChild(button, span);
+            
+            // Vincular eventos
+            button.addEventListener('click', (e) => this.ativarCadastro(e));
+            button.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.ativarCadastro(e);
+                }
+            });
+        });
+    }
+
+    ativarCadastro(event) {
+        if (this.isActive) return;
+
+        const span = event.target;
+        this.container = span.closest('.projetc-header-record');
+        
+        if (!this.container) {
+            console.error('❌ Container não encontrado');
+            return;
+        }
+
+        // Ocultar span e mostrar formulário inline
+        span.style.display = 'none';
+        this.renderizarFormulario();
+        this.isActive = true;
+
+        console.log('✅ Cadastro inline ativado');
+    }
+
+    renderizarFormulario() {
+        const formHTML = this.criarHTMLFormulario();
+        this.container.insertAdjacentHTML('beforeend', formHTML);
+        
+        // Vincular eventos do formulário
+        this.vincularEventosFormulario();
+        
+        // Focar no primeiro campo
+        setTimeout(() => {
+            const empresaInput = this.container.querySelector('#empresa-input');
+            if (empresaInput) empresaInput.focus();
+        }, 100);
+    }
+
+    criarHTMLFormulario() {
+        return `
+        <div class="empresa-cadastro-inline" id="empresa-cadastro-inline">
+            <div class="empresa-form-grid">
+                <!-- Empresa -->
+                <div class="form-group">
+                    <label for="empresa-input">Empresa *</label>
+                    <input type="text" 
+                           id="empresa-input" 
+                           class="empresa-input" 
+                           placeholder="Digite sigla ou nome..."
+                           autocomplete="off">
+                    <div class="autocomplete-suggestions" id="empresa-suggestions"></div>
+                </div>
+
+                <!-- Número Cliente Final -->
+                <div class="form-group">
+                    <label for="numero-cliente-final">Número Cliente Final</label>
+                    <input type="text" 
+                           id="numero-cliente-final" 
+                           class="numero-cliente-final" 
+                           readonly
+                           placeholder="Será calculado automaticamente">
+                </div>
+
+                <!-- Cliente Final -->
+                <div class="form-group">
+                    <label for="cliente-final">Cliente Final</label>
+                    <input type="text" 
+                           id="cliente-final" 
+                           class="cliente-final" 
+                           placeholder="Nome do cliente final">
+                </div>
+
+                <!-- Código Cliente -->
+                <div class="form-group">
+                    <label for="codigo-cliente">Código Cliente</label>
+                    <input type="text" 
+                           id="codigo-cliente" 
+                           class="codigo-cliente" 
+                           placeholder="Código interno do cliente">
+                </div>
+
+                <!-- Data do Cadastro -->
+                <div class="form-group">
+                    <label for="data-cadastro">Data do Cadastro</label>
+                    <input type="text" 
+                           id="data-cadastro" 
+                           class="data-cadastro" 
+                           readonly
+                           value="${new Date().toLocaleString('pt-BR')}">
+                </div>
+
+                <!-- Orçamentista Responsável -->
+                <div class="form-group">
+                    <label for="orcamentista-responsavel">Orçamentista Responsável</label>
+                    <input type="text" 
+                           id="orcamentista-responsavel" 
+                           class="orcamentista-responsavel" 
+                           placeholder="Nome do orçamentista">
+                </div>
+            </div>
+
+            <div class="empresa-form-actions">
+                <button type="button" class="btn btn-cancel" onclick="window.empresaCadastro.cancelarCadastro()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-confirm" onclick="window.empresaCadastro.prepararDados()">
+                    Confirmar Dados
+                </button>
+            </div>
+
+            
+        </div>
+        `;
+    }
+
+    vincularEventosFormulario() {
+        const empresaInput = this.container.querySelector('#empresa-input');
+        if (empresaInput) {
+            empresaInput.addEventListener('input', (e) => this.buscarEmpresas(e.target.value));
+            empresaInput.addEventListener('blur', () => {
+                setTimeout(() => this.ocultarSugestoes(), 200);
+            });
+            empresaInput.addEventListener('keydown', (e) => this.tratarTecladoAutocomplete(e));
+        }
+    }
+
+    async buscarEmpresas(termo) {
+        if (!termo || termo.length < 2) {
+            this.ocultarSugestoes();
+            return;
+        }
+
+        const termoNormalizado = this.normalizarTermo(termo);
+        const sugestoes = this.filtrarEmpresas(termoNormalizado);
+        
+        this.exibirSugestoes(sugestoes);
+    }
+
+    normalizarTermo(termo) {
+        return termo.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    filtrarEmpresas(termo) {
+        return this.empresas.filter(empresaObj => {
+            const [sigla, nome] = Object.entries(empresaObj)[0];
+            const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const primeiroNome = nome.split(' ')[0].toUpperCase();
+            
+            return sigla === termo || 
+                   nomeNormalizado.includes(termo) ||
+                   primeiroNome.includes(termo);
+        });
+    }
+
+    exibirSugestoes(sugestoes) {
+        const containerSugestoes = this.container.querySelector('#empresa-suggestions');
+        if (!containerSugestoes) return;
+
+        if (sugestoes.length === 0) {
+            this.ocultarSugestoes();
+            return;
+        }
+
+        const html = sugestoes.map(empresaObj => {
+            const [sigla, nome] = Object.entries(empresaObj)[0];
+            const primeiroNome = nome.split(' ')[0];
+
+            return `
+                <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
+                    <strong>${sigla}</strong> - ${primeiroNome}
+                </div>
+            `;
+        }).join('');
+
+        containerSugestoes.innerHTML = html;
+        containerSugestoes.style.display = 'block';
+
+        // Vincular eventos de clique nas sugestões
+        containerSugestoes.querySelectorAll('.suggestion-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const sigla = item.dataset.sigla;
+                const nome = item.dataset.nome;
+                this.selecionarEmpresa(sigla, nome);
+            });
+        });
+    }
+
+    ocultarSugestoes() {
+        const containerSugestoes = this.container.querySelector('#empresa-suggestions');
+        if (containerSugestoes) {
+            containerSugestoes.style.display = 'none';
+        }
+    }
+
+    tratarTecladoAutocomplete(event) {
+        const sugestoes = this.container.querySelectorAll('.suggestion-item');
+        if (sugestoes.length === 0) return;
+
+        const sugestaoAtiva = this.container.querySelector('.suggestion-item.active');
+        
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                this.navegarSugestoes(sugestoes, sugestaoAtiva, 1);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                this.navegarSugestoes(sugestoes, sugestaoAtiva, -1);
+                break;
+            case 'Enter':
+                event.preventDefault();
+                if (sugestaoAtiva) {
+                    const sigla = sugestaoAtiva.dataset.sigla;
+                    const nome = sugestaoAtiva.dataset.nome;
+                    this.selecionarEmpresa(sigla, nome);
+                }
+                break;
+            case 'Escape':
+                this.ocultarSugestoes();
+                break;
+        }
+    }
+
+    navegarSugestoes(sugestoes, atual, direcao) {
+        let index = Array.from(sugestoes).indexOf(atual);
+        
+        if (index === -1) index = direcao > 0 ? -1 : sugestoes.length;
+        
+        index = (index + direcao + sugestoes.length) % sugestoes.length;
+        
+        sugestoes.forEach(s => s.classList.remove('active'));
+        sugestoes[index].classList.add('active');
+    }
+
+    selecionarEmpresa(sigla, nome) {
+        const empresaInput = this.container.querySelector('#empresa-input');
+        if (empresaInput) {
+            empresaInput.value = `${sigla} - ${nome}`;
+            empresaInput.dataset.siglaSelecionada = sigla;
+            empresaInput.dataset.nomeSelecionado = nome;
+        }
+
+        this.ocultarSugestoes();
+        this.calcularNumeroClienteFinal(sigla);
+    }
+
+    calcularNumeroClienteFinal(sigla) {
+        // Filtrar obras existentes pela sigla
+        const obrasDaEmpresa = this.obrasExistentes.filter(obra => {
+            return obra.empresaSigla === sigla || 
+                   (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`));
+        });
+
+        // Encontrar maior número existente
+        let maiorNumero = 0;
+        obrasDaEmpresa.forEach(obra => {
+            if (obra.numeroClienteFinal && obra.numeroClienteFinal > maiorNumero) {
+                maiorNumero = obra.numeroClienteFinal;
+            }
+            
+            // Também tentar extrair do ID gerado
+            if (obra.idGerado) {
+                const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
+                if (match) {
+                    const numero = parseInt(match[1]);
+                    if (numero > maiorNumero) maiorNumero = numero;
+                }
+            }
+        });
+
+        const novoNumero = maiorNumero + 1;
+        
+        const numeroInput = this.container.querySelector('#numero-cliente-final');
+        if (numeroInput) {
+            numeroInput.value = novoNumero;
+        }
+
+        // Atualizar preview do ID da obra
+        this.atualizarPreviewIdObra(sigla, novoNumero);
+    }
+
+    atualizarPreviewIdObra(sigla, numero) {
+        const idObraValue = this.container.querySelector('#obra-id-value');
+        
+        if (idObraContainer && idObraValue) {
+            const idObra = `obra_${sigla}_${numero}`;
+            idObraValue.textContent = idObra;
+            idObraContainer.style.display = 'block';
+        }
+    }
+
+    async prepararDados() {
+        const dados = this.coletarDadosFormulario();
+        
+        if (!this.validarDados(dados)) {
+            return;
+        }
+
+        // Verificar se precisa cadastrar nova empresa
+        if (!dados.empresaExistente) {
+            const sucesso = await this.cadastrarNovaEmpresa(dados.sigla, dados.nomeEmpresa);
+            if (!sucesso) return;
+        }
+
+        // Preparar dados para a obra
+        this.prepararDadosObra(dados);
+        
+        showSystemStatus('Dados da empresa preparados! Agora salve a obra.', 'success');
+        
+        // Ocultar formulário mas manter dados preparados
+        this.ocultarFormulario();
+    }
+
+    coletarDadosFormulario() {
+        const empresaInput = this.container.querySelector('#empresa-input');
+        const siglaSelecionada = empresaInput?.dataset.siglaSelecionada;
+        const nomeSelecionado = empresaInput?.dataset.nomeSelecionado;
+        
+        return {
+            empresaInput: empresaInput?.value || '',
+            sigla: siglaSelecionada,
+            nomeEmpresa: nomeSelecionado,
+            empresaExistente: !!siglaSelecionada,
+            numeroClienteFinal: this.container.querySelector('#numero-cliente-final')?.value || '',
+            clienteFinal: this.container.querySelector('#cliente-final')?.value || '',
+            codigoCliente: this.container.querySelector('#codigo-cliente')?.value || '',
+            dataCadastro: this.container.querySelector('#data-cadastro')?.value || '',
+            orcamentistaResponsavel: this.container.querySelector('#orcamentista-responsavel')?.value || ''
+        };
+    }
+
+    validarDados(dados) {
+        if (!dados.empresaInput.trim()) {
+            showSystemStatus('Por favor, informe a empresa', 'error');
+            return false;
+        }
+
+        if (!dados.empresaExistente) {
+            // Validar formato da sigla para nova empresa
+            const siglaMatch = dados.empresaInput.match(/^[A-Za-z]{3}$/);
+            if (siglaMatch) {
+                // Usuário digitou apenas sigla - solicitar nome completo
+                const nomeCompleto = prompt(`Você digitou apenas a sigla "${dados.empresaInput}". Por favor, informe o nome completo da empresa:`);
+                if (!nomeCompleto || !nomeCompleto.trim()) {
+                    showSystemStatus('Nome completo da empresa é obrigatório', 'error');
+                    return false;
+                }
+                dados.nomeEmpresa = nomeCompleto.trim();
+                dados.sigla = dados.empresaInput.toUpperCase();
+            } else {
+                // Usuário digitou nome - sugerir sigla
+                const primeiraPalavra = dados.empresaInput.split(' ')[0];
+                const siglaSugerida = primeiraPalavra.substring(0, 3).toUpperCase();
+                
+                const siglaConfirmada = prompt(`Empresa não encontrada. Sugerimos a sigla "${siglaSugerida}". Confirme ou digite outra sigla de 3 letras:`, siglaSugerida);
+                
+                if (!siglaConfirmada || siglaConfirmada.length !== 3) {
+                    showSystemStatus('Sigla deve ter exatamente 3 letras', 'error');
+                    return false;
+                }
+                
+                dados.sigla = siglaConfirmada.toUpperCase();
+                dados.nomeEmpresa = dados.empresaInput;
+            }
+        }
+
+        return true;
+    }
+
+    async cadastrarNovaEmpresa(sigla, nome) {
+        try {
+            // Verificar se sigla já existe
+            const siglaExistente = this.empresas.find(empresaObj => {
+                const [siglaExistente] = Object.keys(empresaObj);
+                return siglaExistente === sigla;
+            });
+
+            if (siglaExistente) {
+                showSystemStatus(`Sigla ${sigla} já está em uso. Escolha outra sigla.`, 'error');
+                return false;
+            }
+
+            // Adicionar nova empresa
+            const novaEmpresa = { [sigla]: nome };
+            this.empresas.push(novaEmpresa);
+
+            // Salvar no dados.json
+            const response = await fetch('/api/dados/empresas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(novaEmpresa)
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao salvar empresa');
+            }
+
+            showSystemStatus(`Empresa ${sigla} - ${nome} cadastrada com sucesso!`, 'success');
+            return true;
+
+        } catch (error) {
+            console.error('❌ Erro ao cadastrar nova empresa:', error);
+            showSystemStatus('Erro ao cadastrar empresa', 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Atualiza o header da obra com a sigla e numeração
+     * @param {HTMLElement} obraElement - Elemento da obra
+     * @param {Object} dadosEmpresa - Dados da empresa
+     */
+
+
+    atualizarHeaderObra(obraElement, dadosEmpresa) {
+        try {
+            const headerSpacer = obraElement.querySelector('.obra-header-spacer');
+            if (!headerSpacer) {
+                console.error('❌ Elemento .obra-header-spacer não encontrado');
+                return;
+            }
+
+            // Limpar conteúdo atual
+            headerSpacer.innerHTML = '';
+
+            if (dadosEmpresa.empresaSigla && dadosEmpresa.numeroClienteFinal) {
+                // Criar botão com sigla e número
+                const button = document.createElement('button');
+                button.className = 'btn-empresa-identifier';
+                const textoHeader = `${dadosEmpresa.empresaSigla}-${dadosEmpresa.numeroClienteFinal}`;
+                button.textContent = textoHeader;
+                button.setAttribute('data-tooltip', this.criarTooltipEmpresa(dadosEmpresa));
+                button.onclick = (e) => this.ativarCadastro(e);
+                
+                headerSpacer.appendChild(button);
+                console.log(`✅ Header da obra atualizado: ${textoHeader}`);
+            } else {
+                // Botão padrão
+                this.resetHeaderObra(headerSpacer);
+            }
+        } catch (error) {
+            console.error('❌ Erro ao atualizar header da obra:', error);
+        }
+    }
+
+
+
+    /**
+     * Cria texto de tooltip com informações completas da empresa
+     * @param {Object} dadosEmpresa - Dados da empresa
+     * @returns {string} Texto do tooltip
+     */
+    criarTooltipEmpresa(dadosEmpresa) {
+        const partes = [];
+        
+        if (dadosEmpresa.empresaNome) {
+            partes.push(`Empresa: ${dadosEmpresa.empresaNome}`);
+        }
+        if (dadosEmpresa.clienteFinal) {
+            partes.push(`Cliente: ${dadosEmpresa.clienteFinal}`);
+        }
+        if (dadosEmpresa.codigoCliente) {
+            partes.push(`Código: ${dadosEmpresa.codigoCliente}`);
+        }
+        if (dadosEmpresa.dataCadastro) {
+            // 🆕 FORMATAR DATA PARA dd/mm/aaaa
+            const dataFormatada = this.formatarDataParaTooltip(dadosEmpresa.dataCadastro);
+            partes.push(`Data: ${dataFormatada}`);
+        }
+        if (dadosEmpresa.orcamentistaResponsavel) {
+            partes.push(`Orçamentista: ${dadosEmpresa.orcamentistaResponsavel}`);
+        }
+        
+        return partes.join('\n');
+    }
+
+    /**
+     * Formata data para o formato dd/mm/aaaa no tooltip
+     * @param {string} dataString - Data em qualquer formato
+     * @returns {string} Data formatada como dd/mm/aaaa
+     */
+    formatarDataParaTooltip(dataString) {
+        if (!dataString) return '';
+        
+        try {
+            // Se já estiver no formato dd/mm/aaaa, retornar como está
+            if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                return dataString;
+            }
+            
+            // Tentar converter para Date
+            const data = new Date(dataString);
+            
+            if (isNaN(data.getTime())) {
+                console.warn(`⚠️ Data inválida no tooltip: ${dataString}`);
+                return dataString;
+            }
+            
+            // Formatar para dd/mm/aaaa
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            
+            return `${dia}/${mes}/${ano}`;
+            
+        } catch (error) {
+            console.error(`❌ Erro ao formatar data para tooltip ${dataString}:`, error);
+            return dataString;
+        }
+    }
+
+    /**
+     * Reseta o header para o estado original
+     * @param {HTMLElement} headerSpacer - Elemento do header
+     */
+    /**
+     * Reseta o header para o estado original
+     */
+    resetHeaderObra(headerSpacer) {
+        const button = document.createElement('button');
+        button.className = 'btn-empresa-cadastro';
+        button.textContent = 'Adicionar campos de cadastro de empresas';
+        button.onclick = (e) => this.ativarCadastro(e);
+        
+        headerSpacer.innerHTML = '';
+        headerSpacer.appendChild(button);
+    }
+
+    /**
+     * Prepara dados da obra e atualiza o header
+     * @param {Object} dados - Dados coletados do formulário
+     */
+    prepararDadosObra(dados) {
+        // Armazenar dados no container da obra para uso posterior
+        const obraBlock = this.container.closest('.obra-block');
+        if (obraBlock) {
+            obraBlock.dataset.empresaSigla = dados.sigla;
+            obraBlock.dataset.empresaNome = dados.nomeEmpresa;
+            obraBlock.dataset.numeroClienteFinal = dados.numeroClienteFinal;
+            obraBlock.dataset.clienteFinal = dados.clienteFinal;
+            obraBlock.dataset.codigoCliente = dados.codigoCliente;
+            
+            // 🆕 USAR DATA FORMATADA
+            const dataFormatada = this.formatarData(dados.dataCadastro);
+            obraBlock.dataset.dataCadastro = dataFormatada;
+            
+            obraBlock.dataset.orcamentistaResponsavel = dados.orcamentistaResponsavel;
+            obraBlock.dataset.idGerado = `obra_${dados.sigla}_${dados.numeroClienteFinal}`;
+            
+            // 🆕 ATUALIZAR HEADER DA OBRA
+            this.atualizarHeaderObra(obraBlock, {
+                empresaSigla: dados.sigla,
+                empresaNome: dados.nomeEmpresa,
+                numeroClienteFinal: dados.numeroClienteFinal,
+                clienteFinal: dados.clienteFinal,
+                codigoCliente: dados.codigoCliente,
+                dataCadastro: dataFormatada, // 🆕 DATA FORMATADA
+                orcamentistaResponsavel: dados.orcamentistaResponsavel
+            });
+            
+            console.log('📦 Dados da obra preparados:', obraBlock.dataset);
+        }
+    }
+
+    cancelarCadastro() {
+        this.ocultarFormulario();
+        this.mostrarSpanOriginal();
+        
+        // 🆕 RESETAR HEADER SE NÃO HOUVER DADOS DE EMPRESA
+        const obraBlock = this.container.closest('.obra-block');
+        if (obraBlock) {
+            const headerSpacer = obraBlock.querySelector('.obra-header-spacer span');
+            if (headerSpacer && !obraBlock.dataset.empresaSigla) {
+                this.resetHeaderObra(headerSpacer);
+            }
+        }
+    }
+
+    ocultarFormulario() {
+        const form = this.container.querySelector('#empresa-cadastro-inline');
+        if (form) {
+            form.remove();
+        }
+        this.isActive = false;
+    }
+
+    mostrarSpanOriginal() {
+        const span = this.container.querySelector('span');
+        if (span) {
+            span.style.display = 'inline';
+        }
+    }
+
+    // Método para obter dados preparados (usado pelo sistema de salvamento)
+    obterDadosPreparados(obraId) {
+        const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraBlock) return null;
+
+        return {
+            empresaSigla: obraBlock.dataset.empresaSigla,
+            empresaNome: obraBlock.dataset.empresaNome,
+            numeroClienteFinal: obraBlock.dataset.numeroClienteFinal ? parseInt(obraBlock.dataset.numeroClienteFinal) : null,
+            clienteFinal: obraBlock.dataset.clienteFinal,
+            codigoCliente: obraBlock.dataset.codigoCliente,
+            dataCadastro: obraBlock.dataset.dataCadastro,
+            orcamentistaResponsavel: obraBlock.dataset.orcamentistaResponsavel,
+            idGerado: obraBlock.dataset.idGerado
+        };
+    }
+    /**
+     * Formata data para dd/mm/aaaa
+     */
+    formatarData(dataString) {
+        if (!dataString) return '';
+        
+        try {
+            // Se já estiver no formato dd/mm/aaaa, retornar como está
+            if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                return dataString;
+            }
+            
+            const data = new Date(dataString);
+            
+            if (isNaN(data.getTime())) {
+                console.warn(`⚠️ Data inválida: ${dataString}`);
+                return dataString;
+            }
+            
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            
+            return `${dia}/${mes}/${ano}`;
+            
+        } catch (error) {
+            console.error(`❌ Erro ao formatar data ${dataString}:`, error);
+            return dataString;
+        }
+    }
+}
+
+// Exportação e inicialização
+export default EmpresaCadastroInline;
+
+if (typeof window !== 'undefined') {
+    window.EmpresaCadastroInline = EmpresaCadastroInline;
+    
+    // Inicializar quando DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', () => {
+        window.empresaCadastro = new EmpresaCadastroInline();
+    });
+}
+/* ==== FIM: data/builders/empresa-cadastro-inline.js ==== */
+
+/* ==== INÍCIO: data/adapters/obra-adapter.js ==== */
+// adapters/obra-adapter.js - CORREÇÃO COMPLETA COM EMPRESAS:
+
+/**
+ * Remove todas as obras base do container HTML
+ */
+function removeBaseObraFromHTML() {
+    const obrasContainer = document.getElementById("projects-container")
+    if (!obrasContainer) return
+
+    const existingObras = obrasContainer.querySelectorAll(".obra-block")
+    existingObras.forEach((obra) => obra.remove())
+}
+
+/**
+ * Carrega obras salvas do servidor para a sessão atual - 
+ */
+async function loadObrasFromServer() {
+    console.log("🔄 [LOAD OBRAS] Carregando OBRAS do servidor...");
+    
+    try {
+        const sessionResponse = await fetch('/api/session-obras');
+        if (!sessionResponse.ok) {
+            console.log("📭 Nenhuma sessão ativa encontrada");
+            return;
+        }
+        
+        const sessionData = await sessionResponse.json();
+        const obraIds = sessionData.obras || [];
+        
+        console.log(`📊 [LOAD OBRAS] Sessão com ${obraIds.length} obras:`, obraIds);
+        
+        if (obraIds.length === 0) {
+            console.log("📭 [LOAD OBRAS] Nenhuma obra na sessão");
+            return;
+        }
+
+        // Buscar TODAS as obras do servidor
+        const obrasResponse = await fetch('/obras');
+        if (!obrasResponse.ok) {
+            console.error("❌ [LOAD OBRAS] Erro ao buscar dados das obras");
+            return;
+        }
+
+        const todasObras = await obrasResponse.json();
+        console.log(`📦 [LOAD OBRAS] ${todasObras.length} obras disponíveis no servidor`);
+        
+        // Converter IDs da sessão para string e encontrar correspondências
+        const obrasDaSessao = todasObras.filter(obra => {
+            // Tentar encontrar por ID exato (novo formato)
+            if (obraIds.includes(obra.id)) {
+                return true;
+            }
+            
+            // Tentar encontrar por ID numérico (compatibilidade com sessão antiga)
+            const obraIdNumero = obra.id.toString();
+            if (obraIds.includes(obraIdNumero)) {
+                return true;
+            }
+            
+            return false;
+        });
+        
+        console.log(`🎯 [LOAD OBRAS] ${obrasDaSessao.length} obras da sessão encontradas:`, 
+            obrasDaSessao.map(o => ({id: o.id, nome: o.nome})));
+
+        if (obrasDaSessao.length === 0) {
+            console.log("📭 [LOAD OBRAS] Nenhuma obra correspondente encontrada");
+            
+            // Limpar sessão se não encontrar obras correspondentes
+            console.log("🔄 [LOAD OBRAS] Tentando migrar sessão para novos IDs...");
+            //await migrateSessionToNewIds(obraIds, todasObras);
+            return;
+        }
+
+        // Limpar interface antes de carregar
+        removeBaseObraFromHTML();
+        
+        // Carregar cada obra individualmente com await
+        let loadedCount = 0;
+        for (const obraData of obrasDaSessao) {
+            const success = await loadSingleObra(obraData);
+            if (success) loadedCount++;
+        }
+        
+        console.log(`✅ [LOAD OBRAS] ${loadedCount}/${obrasDaSessao.length} obras carregadas com sucesso`);
+        
+    } catch (error) {
+        console.error("❌ [LOAD OBRAS] Erro ao carregar obras da sessão:", error);
+    }
+}
+
+/**
+ * Função para carregar uma obra individual
+ */
+async function loadSingleObra(obraData) {
+    if (!obraData || !obraData.id) {
+        console.error('❌ [LOAD OBRAS] Dados de obra inválidos:', obraData);
+        return false;
+    }
+
+    console.log(`🔄 [LOAD OBRAS] Carregando obra: "${obraData.nome}" (ID: ${obraData.id})`);
+    
+    try {
+        // Verificar se a obra já existe no DOM
+        const obraExistente = document.querySelector(`[data-obra-id="${obraData.id}"]`);
+        if (obraExistente) {
+            console.log(`⚠️ [LOAD OBRAS] Obra "${obraData.nome}" já existe no DOM, atualizando...`);
+            
+            if (typeof window.populateObraData === 'function') {
+                await window.populateObraData(obraData);
+                console.log(`✅ [LOAD OBRAS] Obra "${obraData.nome}" atualizada com sucesso`);
+                return true;
+            }
+        }
+        
+        // Se não existe, criar nova obra
+        if (typeof window.createEmptyObra === 'function') {
+            console.log(`🔨 [LOAD OBRAS] Criando nova obra: "${obraData.nome}"`);
+            
+            // Criar obra vazia com ID específico
+            await window.createEmptyObra(obraData.nome, obraData.id);
+            
+            // Aguardar criação no DOM
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Verificar se foi criada
+            const obraCriada = document.querySelector(`[data-obra-id="${obraData.id}"]`);
+            if (obraCriada && typeof window.populateObraData === 'function') {
+                console.log(`🎨 [LOAD OBRAS] Preenchendo dados da obra "${obraData.nome}"...`);
+                await window.populateObraData(obraData);
+                
+                // 🆕 PREPARAR DADOS DE EMPRESA SE EXISTIREM
+                await prepararDadosEmpresaNaObra(obraData, obraCriada);
+                
+                console.log(`✅ [LOAD OBRAS] Obra "${obraData.nome}" carregada com sucesso`);
+                return true;
+            } else {
+                console.error(`❌ [LOAD OBRAS] Falha ao criar obra "${obraData.nome}" no DOM`);
+            }
+        } else {
+            console.error(`❌ [LOAD OBRAS] createEmptyObra não disponível`);
+        }
+        
+        return false;
+    } catch (error) {
+        console.error(`💥 [LOAD OBRAS] ERRO ao carregar obra "${obraData.nome}":`, error);
+        return false;
+    }
+}
+
+/**
+ * 🆕 PREPARA DADOS DE EMPRESA NA OBRA CARREGADA
+ */
+async function prepararDadosEmpresaNaObra(obraData, obraElement) {
+    try {
+        // Verificar se a obra tem dados de empresa
+        const camposEmpresa = [
+            'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
+            'clienteFinal', 'codigoCliente', 'dataCadastro', 
+            'orcamentistaResponsavel', 'idGerado'
+        ];
+        
+        const temDadosEmpresa = camposEmpresa.some(campo => obraData[campo]);
+        
+        if (!temDadosEmpresa) {
+            console.log(`📭 [EMPRESA] Obra "${obraData.nome}" não possui dados de empresa`);
+            return;
+        }
+        
+        console.log(`🏢 [EMPRESA] Preparando dados de empresa para obra "${obraData.nome}"`);
+        
+        // Preencher dados da empresa nos data attributes da obra
+        camposEmpresa.forEach(campo => {
+            if (obraData[campo]) {
+                obraElement.dataset[campo] = obraData[campo];
+                console.log(`📝 [EMPRESA] ${campo}: ${obraData[campo]}`);
+            }
+        });
+        
+        // 🆕 ATUALIZAR INTERFACE COM DADOS DA EMPRESA
+        await atualizarInterfaceComEmpresa(obraElement, obraData);
+        
+        // 🆕 ATUALIZAR HEADER DA OBRA
+        if (window.empresaCadastro && typeof window.empresaCadastro.atualizarHeaderObra === 'function') {
+            window.empresaCadastro.atualizarHeaderObra(obraElement, obraData);
+        }
+        
+        console.log(`✅ [EMPRESA] Dados de empresa preparados para obra "${obraData.nome}"`);
+        
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao preparar dados de empresa:`, error);
+    }
+}
+
+/**
+ * 🆕 ATUALIZA A INTERFACE COM OS DADOS DA EMPRESA
+ */
+async function atualizarInterfaceComEmpresa(obraElement, obraData) {
+    try {
+        // Encontrar o container de cadastro de empresas
+        const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
+        if (!empresaContainer) {
+            console.log(`❌ [EMPRESA] Container de empresa não encontrado na obra "${obraData.nome}"`);
+            return;
+        }
+        
+        // 🆕 SEMPRE CRIAR FORMULÁRIO ATIVO (não verificar se já existe)
+        criarVisualizacaoEmpresa(obraData, empresaContainer);
+        
+        console.log(`✅ [EMPRESA] Interface atualizada com formulário ativo`);
+        
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao atualizar interface:`, error);
+    }
+}
+
+/**
+ * 🆕 ATUALIZA CAMPOS DO FORMULÁRIO DE EMPRESA EXISTENTE - COM DATA FORMATADA
+ */
+function atualizarCamposEmpresaForm(obraData, formElement) {
+    const camposMapping = {
+        'empresaSigla': 'empresa-input',
+        'numeroClienteFinal': 'numero-cliente-final',
+        'clienteFinal': 'cliente-final',
+        'codigoCliente': 'codigo-cliente',
+        'dataCadastro': 'data-cadastro',
+        'orcamentistaResponsavel': 'orcamentista-responsavel'
+    };
+    
+    Object.entries(camposMapping).forEach(([dataField, inputId]) => {
+        const input = formElement.querySelector(`#${inputId}`);
+        if (input && obraData[dataField]) {
+            // 🆕 FORMATAR DATA SE FOR O CAMPO dataCadastro
+            if (dataField === 'dataCadastro') {
+                input.value = formatarData(obraData[dataField]);
+            } else {
+                input.value = obraData[dataField];
+            }
+            
+            // Configurar dados adicionais para empresa
+            if (dataField === 'empresaSigla' && obraData.empresaNome) {
+                input.dataset.siglaSelecionada = obraData.empresaSigla;
+                input.dataset.nomeSelecionado = obraData.empresaNome;
+            }
+        }
+    });
+    
+    // Atualizar preview do ID da obra
+    const idObraValue = formElement.querySelector('#obra-id-value');
+    if (idObraContainer && idObraValue && obraData.idGerado) {
+        idObraValue.textContent = obraData.idGerado;
+        idObraContainer.style.display = 'block';
+    }
+}
+
+/**
+ * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES - COM DATA FORMATADA
+ */
+function criarVisualizacaoEmpresa(obraData, container) {
+    // Ocultar botão se existir
+    const botao = container.querySelector('.btn-empresa-cadastro');
+    if (botao) {
+        botao.style.display = 'none';
+    }
+    
+    // 🆕 FORMATAR DATA
+    const dataFormatada = formatarData(obraData.dataCadastro);
+    
+    // Criar formulário
+    const formularioHTML = `
+    <div class="empresa-formulario-ativo">
+        <h4>Dados da Empresa</h4>
+
+        <div class="empresa-form-grid-horizontal">
+            <div class="form-group-horizontal">
+                <label>Empresa</label>
+                <input type="text" class="empresa-input-readonly" 
+                    value="${obraData.empresaSigla || ''} - ${obraData.empresaNome || ''}" readonly>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Nº Cliente</label>
+                <input type="text" class="numero-cliente-final-readonly" 
+                    value="${obraData.numeroClienteFinal || ''}" readonly>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Cliente Final</label>
+                <input type="text" class="cliente-final-input" 
+                    value="${obraData.clienteFinal || ''}" 
+                    onchange="atualizarDadosEmpresa(this, 'clienteFinal', '${obraData.id}')">
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Código</label>
+                <input type="text" class="codigo-cliente-input" 
+                    value="${obraData.codigoCliente || ''}" 
+                    onchange="atualizarDadosEmpresa(this, 'codigoCliente', '${obraData.id}')">
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Data</label>
+                <input type="text" class="data-cadastro-readonly" 
+                    value="${dataFormatada}" readonly>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Orçamentista</label>
+                <input type="text" class="orcamentista-responsavel-input" 
+                    value="${obraData.orcamentistaResponsavel || ''}" 
+                    onchange="atualizarDadosEmpresa(this, 'orcamentistaResponsavel', '${obraData.id}')">
+            </div>
+        </div>
+
+
+
+        <div class="empresa-form-actions">
+            <button type="button" class="btn-cancel" 
+                    onclick="window.ocultarFormularioEmpresa(this, '${obraData.id}')">
+                Ocultar
+            </button>
+        </div>
+    </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', formularioHTML);
+    console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id} com data: ${dataFormatada}`);
+}
+
+/**
+ * 🆕 FUNÇÃO GLOBAL PARA EDITAR DADOS DA EMPRESA
+ */
+/**
+ * 🆕 FUNÇÃO GLOBAL PARA EDITAR DADOS DA EMPRESA
+ */
+window.editarDadosEmpresa = function(button, obraId = null) {
+    try {
+        const visualizacao = button.closest('.empresa-dados-visualizacao');
+        let obraBlock;
+        
+        if (obraId) {
+            // Se recebeu obraId, buscar por ID
+            obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+        } else {
+            // Buscar pelo DOM
+            obraBlock = visualizacao.closest('.obra-block');
+        }
+        
+        if (!obraBlock) {
+            console.error('❌ [EMPRESA] Obra não encontrada para edição');
+            return;
+        }
+        
+        // Remover visualização se existir
+        if (visualizacao) {
+            visualizacao.remove();
+        }
+        
+        // Mostrar span original para ativar cadastro
+        const spanOriginal = obraBlock.querySelector('.projetc-header-record.very-dark span');
+        if (spanOriginal) {
+            spanOriginal.style.display = 'inline';
+            
+            // Simular clique para ativar cadastro
+            if (window.empresaCadastro && typeof window.empresaCadastro.ativarCadastro === 'function') {
+                const event = new Event('click');
+                spanOriginal.dispatchEvent(event);
+            } else {
+                spanOriginal.click();
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro ao editar dados da empresa:', error);
+    }
+};
+
+/**
+ * 🆕 OBTÉM DADOS DE EMPRESA DE UMA OBRA ESPECÍFICA
+ */
+function obterDadosEmpresaDaObra(obraId) {
+    try {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [EMPRESA] Obra com ID ${obraId} não encontrada`);
+            return null;
+        }
+        
+        const camposEmpresa = [
+            'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
+            'clienteFinal', 'codigoCliente', 'dataCadastro', 
+            'orcamentistaResponsavel', 'idGerado'
+        ];
+        
+        const dadosEmpresa = {};
+        let temDados = false;
+        
+        camposEmpresa.forEach(campo => {
+            if (obraElement.dataset[campo]) {
+                dadosEmpresa[campo] = obraElement.dataset[campo];
+                temDados = true;
+            }
+        });
+        
+        return temDados ? dadosEmpresa : null;
+        
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao obter dados de empresa:`, error);
+        return null;
+    }
+}
+
+// Função alternativa para debug
+async function debugLoadObras() {
+    console.log("🐛 [DEBUG] Iniciando debug do carregamento...");
+    
+    // Verificar funções globais
+    console.log("🔍 [DEBUG] Funções disponíveis:", {
+        createEmptyObra: typeof window.createEmptyObra,
+        populateObraData: typeof window.populateObraData,
+        createEmptyProject: typeof window.createEmptyProject,
+        createEmptyRoom: typeof window.createEmptyRoom,
+        obterDadosEmpresa: typeof window.obterDadosEmpresa
+    });
+    
+    // Verificar obras no servidor
+    try {
+        const response = await fetch('/obras');
+        if (response.ok) {
+            const obras = await response.json();
+            console.log(`📦 [DEBUG] Obras no servidor: ${obras.length}`, obras.map(o => ({
+                id: o.id, 
+                nome: o.nome,
+                empresaSigla: o.empresaSigla,
+                idGerado: o.idGerado
+            })));
+        }
+    } catch (error) {
+        console.error("❌ [DEBUG] Erro ao buscar obras:", error);
+    }
+}
+
+
+/**
+ * 🆕 FORMATA DATA PARA dd/mm/aaaa
+ */
+function formatarData(dataString) {
+    if (!dataString) return '';
+    
+    try {
+        // Se já estiver no formato dd/mm/aaaa, retornar como está
+        if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            return dataString;
+        }
+        
+        // Tentar parse como Date
+        const data = new Date(dataString);
+        
+        // Verificar se é uma data válida
+        if (isNaN(data.getTime())) {
+            console.warn(`⚠️ [EMPRESA] Data inválida: ${dataString}`);
+            return dataString; // Retorna original se não conseguir formatar
+        }
+        
+        // Formatar para dd/mm/aaaa
+        const dia = String(data.getDate()).padStart(2, '0');
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const ano = data.getFullYear();
+        
+        return `${dia}/${mes}/${ano}`;
+        
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao formatar data ${dataString}:`, error);
+        return dataString; // Retorna original em caso de erro
+    }
+}
+
+
+/**
+ * 🆕 ATUALIZA DADOS DA EMPRESA EM TEMPO REAL
+ */
+window.atualizarDadosEmpresa = function(input, campo, obraId) {
+    try {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [EMPRESA] Obra ${obraId} não encontrada`);
+            return;
+        }
+        
+        // Atualizar data attribute
+        obraElement.dataset[campo] = input.value;
+        
+        console.log(`📝 [EMPRESA] Campo ${campo} atualizado para:`, input.value);
+        
+        // Se for cliente final ou orçamentista, atualizar tooltip do header
+        if (campo === 'clienteFinal' || campo === 'orcamentistaResponsavel') {
+            if (window.empresaCadastro && typeof window.empresaCadastro.atualizarHeaderObra === 'function') {
+                const dadosAtuais = obterDadosEmpresaDaObra(obraId);
+                if (dadosAtuais) {
+                    window.empresaCadastro.atualizarHeaderObra(obraElement, dadosAtuais);
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao atualizar campo ${campo}:`, error);
+    }
+};
+
+/**
+ * 🆕 OCULTAR FORMULÁRIO DE EMPRESA E RESTAURAR BOTÃO
+ */
+window.ocultarFormularioEmpresa = function(button, obraId) {
+    try {
+        const formulario = button.closest('.empresa-formulario-ativo');
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        
+        if (!obraElement) {
+            console.error(`❌ [EMPRESA] Obra ${obraId} não encontrada`);
+            return;
+        }
+        
+        // Encontrar o container de empresa
+        const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
+        if (!empresaContainer) {
+            console.error(`❌ [EMPRESA] Container de empresa não encontrado`);
+            return;
+        }
+        
+        // Remover formulário se existir
+        if (formulario) {
+            formulario.remove();
+        }
+        
+        // Verificar se já existe botão
+        const botaoExistente = empresaContainer.querySelector('.btn-empresa-cadastro');
+        if (!botaoExistente) {
+            // Criar e adicionar botão
+            const botao = document.createElement('button');
+            botao.className = 'btn-empresa-cadastro';
+            botao.textContent = 'Adicionar campos de cadastro de empresas';
+            botao.onclick = () => window.ativarCadastroEmpresa(obraId);
+            
+            empresaContainer.appendChild(botao);
+        } else {
+            // Garantir que o botão está visível
+            botaoExistente.style.display = 'block';
+        }
+        
+        console.log(`👁️ [EMPRESA] Formulário ocultado e botão restaurado para obra ${obraId}`);
+        
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro ao ocultar formulário:', error);
+    }
+};
+
+/**
+ * 🆕 FUNÇÃO GLOBAL PARA ATIVAR CADASTRO DE EMPRESA - CORRIGIDA
+ */
+window.ativarCadastroEmpresa = function(obraId) {
+    try {
+        console.log(`🎯 [EMPRESA] Ativando cadastro para obra: ${obraId}`);
+        
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [EMPRESA] Obra ${obraId} não encontrada`);
+            return;
+        }
+        
+        // Encontrar container de empresa
+        const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
+        if (!empresaContainer) {
+            console.error(`❌ [EMPRESA] Container de empresa não encontrado`);
+            return;
+        }
+        
+        // ✅ CORREÇÃO: Verificar se já existe formulário ativo
+        const formularioExistente = empresaContainer.querySelector('.empresa-formulario-ativo');
+        if (formularioExistente) {
+            console.log(`✅ [EMPRESA] Formulário já está ativo para obra ${obraId}`);
+            return; // ✅ IMPEDE EXECUÇÃO DUPLICADA
+        }
+        
+        // Ocultar botão
+        const botao = empresaContainer.querySelector('.btn-empresa-cadastro');
+        if (botao) {
+            botao.style.display = 'none';
+        }
+        
+        // Verificar se há dados de empresa existentes
+        const dadosEmpresa = obterDadosEmpresaDaObra(obraId);
+        
+        if (dadosEmpresa) {
+            // Se já tem dados, criar formulário com dados existentes
+            console.log(`📊 [EMPRESA] Criando formulário com dados existentes para obra ${obraId}`);
+            criarVisualizacaoEmpresa({...dadosEmpresa, id: obraId}, empresaContainer);
+        } else {
+            // Se não tem dados, criar formulário vazio para cadastro
+            console.log(`🆕 [EMPRESA] Criando novo formulário para obra ${obraId}`);
+            criarFormularioVazioEmpresa(obraId, empresaContainer);
+        }
+        
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao ativar cadastro para obra ${obraId}:`, error);
+    }
+};
+
+/**
+ * 🆕 CRIA FORMULÁRIO VAZIO PARA NOVO CADASTRO COM INPUT HÍBRIDO
+ */
+function criarFormularioVazioEmpresa(obraId, container) {
+    const formularioHTML = `
+    <div class="empresa-formulario-ativo">
+        <h4>Cadastro de Empresa</h4>
+
+        <div class="empresa-form-grid-horizontal">
+            <div class="form-group-horizontal">
+                <label>Empresa *</label>
+                <div class="empresa-input-container">
+                    <input type="text" 
+                           class="empresa-input-cadastro" 
+                           id="empresa-input-${obraId}"
+                           placeholder="Digite sigla ou nome ou selecione..."
+                           autocomplete="off">
+                    <div class="empresa-dropdown" id="empresa-dropdown-${obraId}">
+                        <div class="dropdown-options" id="empresa-options-${obraId}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Nº Cliente</label>
+                <input type="text" class="numero-cliente-final-cadastro" readonly
+                    placeholder="Será gerado automaticamente">
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Cliente Final</label>
+                <input type="text" class="cliente-final-cadastro" 
+                    placeholder="Nome do cliente final">
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Código</label>
+                <input type="text" class="codigo-cliente-cadastro" 
+                    placeholder="Código do cliente">
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Data</label>
+                <input type="text" class="data-cadastro-cadastro" 
+                    value="${new Date().toLocaleDateString('pt-BR')}" readonly>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Orçamentista</label>
+                <input type="text" class="orcamentista-responsavel-cadastro" 
+                    placeholder="Nome do orçamentista">
+            </div>
+        </div>
+
+        <div class="empresa-form-actions">
+            <button type="button" class="btn-cancel" 
+                    onclick="window.ocultarFormularioEmpresa(this, '${obraId}')">
+                Cancelar
+            </button>
+        </div>
+    </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', formularioHTML);
+    
+    // Inicializar o input híbrido
+    setTimeout(() => {
+        inicializarInputEmpresaHibrido(obraId);
+    }, 100);
+}
+
+/**
+ * 🆕 INICIALIZA INPUT HÍBRIDO DE EMPRESA - COMPLETA E CORRIGIDA
+ */
+async function inicializarInputEmpresaHibrido(obraId) {
+    console.log(`🔧 [INPUT HÍBRIDO] Inicializando para obra: ${obraId}`);
+    
+    const input = document.getElementById(`empresa-input-${obraId}`);
+    const dropdown = document.getElementById(`empresa-dropdown-${obraId}`);
+    const optionsContainer = document.getElementById(`empresa-options-${obraId}`);
+    
+    if (!input) {
+        console.error(`❌ [INPUT HÍBRIDO] Input não encontrado para obra ${obraId}`);
+        return;
+    }
+    
+    let empresas = [];
+    let empresasCarregadas = false;
+    
+    // Carregar empresas do banco de dados
+    try {
+        console.log(`📡 [INPUT HÍBRIDO] Buscando empresas da API...`);
+        const response = await fetch('/api/dados/empresas');
+        
+        if (response.ok) {
+            const dados = await response.json();
+            
+            if (dados.success && Array.isArray(dados.empresas)) {
+                empresas = dados.empresas;
+                empresasCarregadas = true;
+                console.log(`📊 [INPUT HÍBRIDO] ${empresas.length} empresas carregadas com sucesso`);
+            } else {
+                console.error(`❌ [INPUT HÍBRIDO] Resposta da API inválida:`, dados);
+            }
+        } else {
+            console.error(`❌ [INPUT HÍBRIDO] Erro HTTP na API: ${response.status} ${response.statusText}`);
+        }
+    } catch (error) {
+        console.error('❌ [INPUT HÍBRIDO] Erro de rede ao carregar empresas:', error);
+    }
+    
+    // Se não conseguiu carregar empresas, mostrar mensagem
+    if (!empresasCarregadas) {
+        console.warn('⚠️ [INPUT HÍBRIDO] Não foi possível carregar empresas do servidor');
+        
+        // Mostrar mensagem no dropdown quando o usuário tentar usar
+        input.addEventListener('focus', function() {
+            optionsContainer.innerHTML = `
+                <div class="dropdown-no-results">
+                    ❌ Erro ao carregar empresas<br>
+                    <small>Tente recarregar a página</small>
+                </div>
+            `;
+            dropdown.style.display = 'block';
+        });
+        
+        return; // Não inicializa o resto da funcionalidade
+    }
+    
+    // Verificar se encontrou empresas
+    if (empresas.length === 0) {
+        console.warn('⚠️ [INPUT HÍBRIDO] Nenhuma empresa cadastrada no sistema');
+        
+        input.addEventListener('focus', function() {
+            optionsContainer.innerHTML = `
+                <div class="dropdown-no-results">
+                    📝 Nenhuma empresa cadastrada<br>
+                    <small>Cadastre empresas primeiro</small>
+                </div>
+            `;
+            dropdown.style.display = 'block';
+        });
+        
+        return;
+    }
+    
+    // ✅ EMPRESAS CARREGADAS COM SUCESSO - INICIALIZAR FUNCIONALIDADE COMPLETA
+    
+    // Evento de input para busca em tempo real
+    input.addEventListener('input', function(e) {
+        const termo = e.target.value.trim();
+        console.log(`🔍 [INPUT HÍBRIDO] Buscando: "${termo}"`);
+        
+        // 🔄 SINCRONIZAÇÃO: Se o usuário apagou a empresa, limpa o número
+        if (termo.length === 0) {
+            limparNumeroCliente(obraId);
+            
+            // Limpa dados de seleção
+            delete input.dataset.siglaSelecionada;
+            delete input.dataset.nomeSelecionado;
+            
+            // ✅ MOSTRA TODAS AS EMPRESAS NOVAMENTE PARA NOVA SELEÇÃO
+            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+            return;
+        }
+        
+        const sugestoes = filtrarEmpresas(termo, empresas);
+        console.log(`🎯 [INPUT HÍBRIDO] ${sugestoes.length} sugestões encontradas`);
+        
+        exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+    });
+    
+    // Evento de foco - mostrar todas as opções (ATUALIZADO)
+    input.addEventListener('focus', function() {
+        const valorAtual = this.value.trim();
+        const empresaJaSelecionada = this.dataset.siglaSelecionada;
+        
+        // 🔥 SE JÁ TEM EMPRESA SELECIONADA, NÃO MOSTRA DROPDOWN
+        if (empresaJaSelecionada && valorAtual === `${this.dataset.siglaSelecionada} - ${this.dataset.nomeSelecionado}`) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        if (valorAtual.length === 0) {
+            limparNumeroCliente(obraId);
+            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        } else {
+            const sugestoes = filtrarEmpresas(valorAtual, empresas);
+            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+        }
+    });
+
+    
+    // Evento de blur - verifica se deve limpar quando perde foco
+    input.addEventListener('blur', function() {
+        setTimeout(() => {
+            const valorAtual = this.value.trim();
+            if (valorAtual.length === 0) {
+                limparNumeroCliente(obraId);
+            }
+            
+            // Fecha dropdown após um delay para permitir clique
+            setTimeout(() => {
+                dropdown.style.display = 'none';
+            }, 150);
+        }, 200);
+    });
+    
+    // Evento de teclado para navegação
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            navegarDropdown('down', optionsContainer, input);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            navegarDropdown('up', optionsContainer, input);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+            input.blur();
+        }
+    });
+    
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    console.log(`✅ [INPUT HÍBRIDO] Inicializado com sucesso para obra ${obraId}`);
+}
+
+/**
+ * 🆕 LIMPAR NÚMERO DO CLIENTE QUANDO EMPRESA FOR REMOVIDA
+ */
+function limparNumeroCliente(obraId) {
+    const numeroInput = document.querySelector(`[data-obra-id="${obraId}"] .numero-cliente-final-cadastro`);
+    if (numeroInput) {
+        numeroInput.value = '';
+        console.log(`🔄 [EMPRESA] Número do cliente limpo para obra ${obraId}`);
+    }
+}
+
+/**
+ * 🆕 FILTRAR EMPRESAS POR TERMO - CORRIGIDA
+ */
+function filtrarEmpresas(termo, empresas) {
+    if (!termo || termo.length < 1) return [];
+    
+    const termoNormalizado = termo.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    
+    return empresas.filter(empresaObj => {
+        // Cada empresaObj é um objeto como { "ACT": "AeroCool Technologies" }
+        const [sigla, nome] = Object.entries(empresaObj)[0];
+        const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        
+        // Buscar por sigla exata ou parcial no nome
+        return sigla === termoNormalizado || 
+               sigla.includes(termoNormalizado) ||
+               nomeNormalizado.includes(termoNormalizado);
+    });
+}
+
+/**
+ * 🆕 EXIBIR SUGESTÕES NO DROPDOWN - COM MENSAGEM PARA CRIAÇÃO
+ */
+function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
+    const valorAtual = input.value.trim();
+    const empresaJaSelecionada = input.dataset.siglaSelecionada;
+    
+    // 🔥 SE JÁ TEM UMA EMPRESA SELECIONADA E O USUÁRIO NÃO DIGITOU NADA NOVO
+    if (empresaJaSelecionada && valorAtual === `${input.dataset.siglaSelecionada} - ${input.dataset.nomeSelecionado}`) {
+        container.innerHTML = '';
+        dropdown.style.display = 'none';
+        return;
+    }
+    
+    if (!sugestoes || sugestoes.length === 0) {
+        // 🔥 MENSAGEM DIFERENCIADA: Se não encontrou empresas para o termo digitado
+        if (valorAtual.length > 0) {
+            container.innerHTML = `
+                <div class="dropdown-no-results">
+                    📝 Nenhuma empresa encontrada<br>
+                    <small>Criando nova empresa: "${valorAtual}"</small>
+                </div>
+            `;
+        } else {
+            container.innerHTML = '<div class="dropdown-no-results">Digite para buscar empresas</div>';
+        }
+        dropdown.style.display = 'block';
+        return;
+    }
+    
+    const html = sugestoes.map(empresaObj => {
+        const [sigla, nome] = Object.entries(empresaObj)[0];
+        const primeiroNome = nome.split(' ')[0];
+        return `
+            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
+                <strong>${sigla}</strong> - ${primeiroNome}
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+    dropdown.style.display = 'block';
+    
+    // Vincular eventos de clique
+    container.querySelectorAll('.dropdown-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const sigla = this.dataset.sigla;
+            const nome = this.dataset.nome;
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+        });
+    });
+}
+
+/**
+ * 🆕 EXIBIR TODAS AS EMPRESAS - CORRIGIDO
+ */
+function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
+    const empresaJaSelecionada = input.dataset.siglaSelecionada;
+    
+    // 🔥 SE JÁ TEM UMA EMPRESA SELECIONADA, NÃO MOSTRA O DROPDOWN
+    if (empresaJaSelecionada) {
+        container.innerHTML = '';
+        dropdown.style.display = 'none';
+        return;
+    }
+    
+    if (!empresas || empresas.length === 0) {
+        container.innerHTML = `
+            <div class="dropdown-no-results">
+                📝 Nenhuma empresa cadastrada<br>
+                <small>Digite o nome para criar uma nova</small>
+            </div>
+        `;
+        dropdown.style.display = 'block';
+        return;
+    }
+    
+    const html = empresas.map(empresaObj => {
+        const [sigla, nome] = Object.entries(empresaObj)[0];
+        const primeiroNome = nome.split(' ')[0];
+        return `
+            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
+                <strong>${sigla}</strong> - ${primeiroNome}
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+    dropdown.style.display = 'block';
+    
+    // Vincular eventos de clique
+    container.querySelectorAll('.dropdown-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const sigla = this.dataset.sigla;
+            const nome = this.dataset.nome;
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+        });
+    });
+}
+
+/**
+ * 🆕 NAVEGAR NO DROPDOWN COM TECLADO
+ */
+function navegarDropdown(direcao, container, input) {
+    const options = container.querySelectorAll('.dropdown-option');
+    if (options.length === 0) return;
+    
+    const activeOption = container.querySelector('.dropdown-option.active');
+    let nextIndex = 0;
+    
+    if (activeOption) {
+        const currentIndex = Array.from(options).indexOf(activeOption);
+        nextIndex = direcao === 'down' 
+            ? Math.min(currentIndex + 1, options.length - 1)
+            : Math.max(currentIndex - 1, 0);
+    }
+    
+    options.forEach(opt => opt.classList.remove('active'));
+    options[nextIndex].classList.add('active');
+    
+    // Scroll para a opção ativa
+    options[nextIndex].scrollIntoView({ block: 'nearest' });
+}
+
+/**
+ * 🆕 SELECIONAR OPÇÃO ATIVA COM ENTER
+ */
+function selecionarOpcaoAtiva(container, input, dropdown, obraId) {
+    const activeOption = container.querySelector('.dropdown-option.active');
+    if (activeOption) {
+        const sigla = activeOption.dataset.sigla;
+        const nome = activeOption.dataset.nome;
+        selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+    }
+}
+
+/**
+ * 🆕 SELECIONAR EMPRESA
+ */
+function selecionarEmpresa(sigla, nome, input, dropdown, obraId) {
+    input.value = `${sigla} - ${nome}`;
+    input.dataset.siglaSelecionada = sigla;
+    input.dataset.nomeSelecionado = nome;
+    dropdown.style.display = 'none';
+    
+    // 🔄 SÓ CALCULA O NÚMERO SE UMA EMPRESA FOI SELECIONADA
+    calcularNumeroClienteFinal(sigla, obraId);
+    
+    console.log(`✅ [EMPRESA] Empresa selecionada: ${sigla} - ${nome}`);
+}
+
+/**
+ * 🆕 CALCULAR NÚMERO DO CLIENTE FINAL - CORRIGIDO E MAIS ROBUSTO
+ */
+async function calcularNumeroClienteFinal(sigla, obraId) {
+    try {
+        console.log(`🔢 [EMPRESA] Calculando número para: ${sigla}`);
+        
+        // Tentar a API primeiro
+        const response = await fetch(`/api/dados/empresas/numero/${encodeURIComponent(sigla)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const dados = await response.json();
+        
+        if (dados.success) {
+            const novoNumero = dados.numero;
+            atualizarNumeroClienteInput(novoNumero, obraId);
+            console.log(`✅ [EMPRESA] Número da API: ${novoNumero} para ${sigla}`);
+        } else {
+            console.warn('⚠️ [EMPRESA] API retornou erro, usando cálculo local:', dados.error);
+            calcularNumeroLocal(sigla, obraId);
+        }
+        
+    } catch (error) {
+        console.warn('⚠️ [EMPRESA] Erro na API, usando cálculo local:', error.message);
+        calcularNumeroLocal(sigla, obraId);
+    }
+}
+
+/**
+ * 🆕 CALCULAR NÚMERO LOCALMENTE COMO FALLBACK
+ */
+async function calcularNumeroLocal(sigla, obraId) {
+    try {
+        // Buscar todas as obras para calcular localmente
+        const response = await fetch('/api/backup-completo');
+        if (!response.ok) {
+            throw new Error('Não foi possível carregar obras');
+        }
+        
+        const backup = await response.json();
+        const obrasExistentes = backup.obras || [];
+        
+        // Filtrar obras da mesma empresa
+        const obrasDaEmpresa = obrasExistentes.filter(obra => 
+            obra.empresaSigla === sigla || 
+            (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`))
+        );
+        
+        // Encontrar maior número
+        let maiorNumero = 0;
+        obrasDaEmpresa.forEach(obra => {
+            if (obra.numeroClienteFinal && obra.numeroClienteFinal > maiorNumero) {
+                maiorNumero = obra.numeroClienteFinal;
+            }
+            
+            if (obra.idGerado) {
+                const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
+                if (match) {
+                    const numero = parseInt(match[1]);
+                    if (numero > maiorNumero) maiorNumero = numero;
+                }
+            }
+        });
+        
+        const novoNumero = maiorNumero + 1;
+        atualizarNumeroClienteInput(novoNumero, obraId);
+        console.log(`🔢 [EMPRESA] Número local: ${novoNumero} para ${sigla}`);
+        
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro no cálculo local:', error);
+        // Fallback final: número aleatório
+        const numeroFallback = Math.floor(Math.random() * 100) + 1;
+        atualizarNumeroClienteInput(numeroFallback, obraId);
+        console.log(`🔄 [EMPRESA] Número fallback: ${numeroFallback} para ${sigla}`);
+    }
+}
+
+/**
+ * 🆕 ATUALIZAR INPUT DO NÚMERO DO CLIENTE
+ */
+function atualizarNumeroClienteInput(numero, obraId) {
+    const numeroInput = document.querySelector(`[data-obra-id="${obraId}"] .numero-cliente-final-cadastro`);
+    if (numeroInput) {
+        numeroInput.value = numero;
+    }
+}
+
+
+
+
+export {
+    formatarData,
+    loadObrasFromServer,
+    removeBaseObraFromHTML,
+    loadSingleObra,
+    debugLoadObras,
+    obterDadosEmpresaDaObra,
+    prepararDadosEmpresaNaObra
+};
+/* ==== FIM: data/adapters/obra-adapter.js ==== */
+
+/* ==== INÍCIO: features/managers/obra-manager.js ==== */
+/**
+ * features/managers/obra-manager.js
+ * 🎯 FUSÃO COMPLETA: projects.js + obra-manager.js
+ * ⚡ REDUÇÃO: 2 arquivos → 1 arquivo (~700 → ~450 linhas)
+ */
+import{getNextObraNumber} from '../../data/utils/data-utils.js'
+import { ensureStringId, generateObraId } from '../../data/utils/id-generator.js';
+import { buildObraData } from '../../data/builders/data-builders.js';
+import { showSystemStatus } from '../../ui/components/status.js';
+import { showConfirmationModal } from '../../ui/components/modal/modal.js';
+import { addNewProjectToObra } from './project-manager.js';
+import { isSessionActive, startSessionOnFirstSave } from '../../data/adapters/session-adapter.js';
+import { calculateRoomCompletionStats } from '../../ui/helpers.js';
+
+/**
+ * 🏗️ FUNÇÕES DE CONSTRUÇÃO DE INTERFACE (obra-manager.js)
+ */
+
+function buildObraHTML(obraName, obraId, hasId = false) {
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (buildObraHTML) [ID de obra inválido: ${obraId}]`);
+        obraId = generateObraId();
+    }
+    
+    console.log(`🔍 Build Obra HTML: ${obraName}, ID: ${obraId}`);
+
+    return `
+    <div class="obra-block" data-obra-id="${obraId}" data-obra-name="${obraName}">
+        <div class="obra-header">
+            <button class="minimizer" onclick="toggleObra('${obraId}', event)">+</button>
+            <h2 class="obra-title compact-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
+            <div class="obra-header-spacer"><button class="btn-empresa-identifier" onclick="window.ativarCadastroEmpresa('${obraId}')">Adicionar campos de cadastro de empresas</button></div>
+            <div class="obra-actions">
+                <button class="btn btn-delete" onclick="window.deleteObra('${obraName}', '${obraId}')">Remover Obra</button>
+            </div>
+        </div>
+
+        <div class="obra-content collapsed" id="obra-content-${obraId}">
+            <div class="projetc-header-record very-dark">
+                <button class="btn-empresa-cadastro" onclick="window.ativarCadastroEmpresa('${obraId}')">Adicionar campos de cadastro de empresas</button>
+            </div>
+            <div class="projects-container" id="projects-${obraId}"></div>
+            <div class="add-project-section">
+                <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraId}')">+ Adicionar Projeto</button>
+            </div>
+            ${buildObraActionsFooter(obraId, obraName, hasId)} 
+        </div>
+    </div>
+    `;
+}
+
+function buildObraActionsFooter(obraId, obraName, hasId = false) {
+    const buttonText = hasId ? "Atualizar Obra" : "Salvar Obra";
+    const buttonClass = hasId ? "btn-update" : "btn-save";
+
+    console.log(`🔧 Build Obra Footer: ${obraName}, ID: ${obraId}, HasId: ${hasId}, Button: ${buttonText}`);
+
+    return `
+    <div class="obra-actions-footer">
+        <button class="btn btn-verify" onclick="verifyObraData('${obraId}')">Verificar Dados</button>
+        <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraId}')">${buttonText}</button>      
+        <button class="btn btn-download" onclick="downloadPDF('${obraId}')">Baixar PDF</button>
+        <button class="btn btn-download" onclick="downloadWord('${obraId}')">Baixar Word</button>
+    </div>
+    `;
+}
+
+async function insertObraIntoDOM(obraHTML, obraId) {
+    console.log(`📤 Inserindo obra no DOM: ${obraId}`);
+    
+    const projectsContainer = document.getElementById("projects-container");
+    
+    if (!projectsContainer) {
+        console.error('❌ Container de projetos não encontrado');
+        
+        const mainContent = document.querySelector('main, body');
+        if (mainContent) {
+            const newContainer = document.createElement('div');
+            newContainer.id = 'projects-container';
+            newContainer.innerHTML = '<!-- Hierarquia: Obra → Projeto → Sala -->';
+            mainContent.appendChild(newContainer);
+            console.log('✅ projects-container criado');
+            return insertObraIntoDOM(obraHTML, obraId);
+        }
+        
+        return false;
+    }
+    
+    console.log(`✅ Container encontrado, inserindo obra ${obraId}...`);
+    console.log(`📦 Container antes:`, projectsContainer.children.length, 'elementos');
+    
+    try {
+        projectsContainer.insertAdjacentHTML("beforeend", obraHTML);
+        
+        setTimeout(() => {
+            const obraInserida = document.querySelector(`[data-obra-id="${obraId}"]`);
+            if (obraInserida) {
+                console.log(`✅ Obra ${obraId} INSERIDA COM SUCESSO no container`);
+                console.log(`📦 Container depois:`, projectsContainer.children.length, 'elementos');
+            } else {
+                console.error(`❌ FALHA: Obra ${obraId} NÃO FOI INSERIDA no container`);
+            }
+        }, 50);
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao inserir obra no DOM:', error);
+        return false;
+    }
+}
+
+async function createEmptyObra(obraName, obraId) {
+    const finalObraId = obraId || generateObraId();
+    const obraHTML = buildObraHTML(obraName, finalObraId);
+    
+    console.log(`🏗️ Criando obra: ${obraName} com ID: ${finalObraId}`);
+    console.log(`📝 HTML gerado:`, obraHTML.substring(0, 200) + '...');
+    
+    const inserted = await insertObraIntoDOM(obraHTML, finalObraId);
+    
+    if (inserted) {
+        console.log(`✅ Obra ${obraName} criada e INSERIDA NO DOM - ID: ${finalObraId}`);
+        
+        setTimeout(() => {
+            const obraNoDOM = document.querySelector(`[data-obra-id="${finalObraId}"]`);
+            if (obraNoDOM) {
+                console.log(`✅ CONFIRMADO: Obra ${finalObraId} encontrada no DOM`);
+            } else {
+                console.error(`❌ FALHA CRÍTICA: Obra ${finalObraId} NÃO está no DOM após criação`);
+            }
+        }, 100);
+    } else {
+        console.error(`❌ FALHA: Obra ${obraName} NÃO FOI INSERIDA NO DOM`);
+    }
+    
+    return inserted;
+}
+
+/**
+ * 🔄 FUNÇÕES DE ATUALIZAÇÃO DE INTERFACE
+ */
+
+function updateObraButtonAfterSave(obraName, obraId) {
+    console.log(`🔄 Atualizando botão da obra: ${obraName} (${obraId})`);
+    
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID ${obraId} não encontrada para atualizar botão`);
+        return;
+    }
+
+    obraBlock.dataset.obraId = obraId;
+
+    const obraContent = document.getElementById(`obra-content-${obraId}`);
+    if (!obraContent) {
+        console.error(`❌ Conteúdo da obra ${obraId} não encontrado`);
+        return;
+    }
+
+    const oldFooter = obraContent.querySelector('.obra-actions-footer');
+    if (!oldFooter) {
+        console.error(`❌ Rodapé não encontrado na obra ${obraId}`);
+        return;
+    }
+
+    const saveButton = oldFooter.querySelector('.btn-save, .btn-update');
+    if (saveButton) {
+        saveButton.textContent = "Atualizar Obra";
+        saveButton.className = "btn btn-update";
+        saveButton.setAttribute('onclick', `event.preventDefault(); saveOrUpdateObra('${obraId}')`);
+        console.log(`✅ Botão atualizado para: "Atualizar Obra" (ID: ${obraId})`);
+    } else {
+        console.error(`❌ Botão de salvar não encontrado na obra ${obraId}`);
+    }
+
+    const projectsContainer = document.getElementById(`projects-${obraId}`);
+    if (!projectsContainer) {
+        console.error(`❌ CRÍTICO: Container de projetos PERDIDO na obra ${obraId}!`);
+    }
+}
+
+
+
+/**
+ * 🚀 FUNÇÕES PRINCIPAIS DE GERENCIAMENTO
+ */
+
+async function addNewObra() {
+    try {
+        const obraNumber = getNextObraNumber();
+        const obraName = `Obra${obraNumber}`;
+        const obraId = generateObraId();
+
+        console.log(`🏗️ Criando nova obra: ${obraName} com ID: ${obraId}`);
+        await createEmptyObra(obraName, obraId);
+        console.log(`✅ ${obraName} adicionada com ID único: ${obraId}`);
+
+        setTimeout(async () => {
+            console.log(`🔄 Criando projeto e sala automáticos para ${obraName}`);
+            if (typeof window.addNewProjectToObra === 'function') {
+                await window.addNewProjectToObra(obraId);
+                console.log(`✅ Projeto e sala automáticos criados para ${obraName}`);
+            } else {
+                console.error('❌ addNewProjectToObra não disponível');
+            }
+        }, 500);
+
+    } catch (error) {
+        console.error("❌ Erro ao adicionar nova obra:", error);
+        alert("Erro ao criar nova obra. Verifique o console para detalhes.");
+    }
+}
+
+async function deleteObra(obraName, obraId) {
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID ${obraId} não encontrada`);
+        return;
+    }
+
+    showConfirmationModal(obraName, obraId, obraBlock);
+}
+
+/**
+ * 💾 FUNÇÕES DE PERSISTÊNCIA (projects.js)
+ */
+
+async function fetchObras() {
+    try {
+        const response = await fetch('/obras');
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                return [];
+            }
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+
+        const obras = await response.json();
+        return obras || [];
+    } catch (error) {
+        console.error("❌ Erro ao buscar obras:", error);
+        return [];
+    }
+}
+
+async function atualizarObra(obraId, obraData) {
+    try {
+        if (!obraId || obraId === 'undefined' || obraId === 'null') {
+            console.error(`ERRO FALBACK (atualizarObra) [ID de obra inválido: ${obraId}]`);
+            showSystemStatus("ERRO: ID da obra inválido para atualização", "error");
+            return null;
+        }
+
+        if (!isSessionActive()) {
+            console.warn("⚠️ Sessão não está ativa - obra não será atualizada");
+            showSystemStatus("ERRO: Sessão não está ativa. Obra não atualizada.", "error");
+            return null;
+        }
+
+        obraId = ensureStringId(obraId);
+
+        console.log(`🔍 Verificando se obra ${obraId} existe no servidor...`);
+        
+        const todasObrasResponse = await fetch('/api/backup-completo');
+        if (!todasObrasResponse.ok) {
+            throw new Error('Falha ao carregar backup para verificação');
+        }
+        
+        const backupData = await todasObrasResponse.json();
+        const todasObras = backupData.obras || [];
+        const obraExistente = todasObras.find(obra => String(obra.id) === String(obraId));
+        
+        console.log(`📊 Verificação: Obra ${obraId} existe? ${!!obraExistente}`);
+        console.log(`📋 TODAS as obras no backup:`, todasObras.map(o => ({ id: o.id, nome: o.nome })));
+
+        if (!obraExistente) {
+            console.log(`❌ Obra ${obraId} não encontrada no backup, criando nova...`);
+            console.log(`🆕 Criando nova obra com ID seguro preservado: ${obraId}`);
+            obraData.id = obraId;
+            return await salvarObra(obraData);
+        }
+
+        console.log('🔄 ATUALIZANDO OBRA EXISTENTE:', {
+            id: obraData.id,
+            nome: obraData.nome,
+            projetos: obraData.projetos?.length || 0
+        });
+
+        const url = `/obras/${obraId}`;
+        console.log(`🎯 Fazendo PUT para: ${url}`);
+        
+        const response = await fetch(url, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(obraData),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro ao atualizar obra: ${errorText}`);
+        }
+
+        const updatedObra = await response.json();
+        showSystemStatus("Obra atualizada com sucesso!", "success");
+        
+        console.log('✅ OBRA ATUALIZADA:', {
+            id: updatedObra.id,
+            nome: updatedObra.nome,
+            projetos: updatedObra.projetos?.length || 0
+        });
+        return updatedObra;
+    } catch (error) {
+        console.error("❌ Erro ao ATUALIZAR obra:", error);
+        showSystemStatus("ERRO: Não foi possível atualizar a obra", "error");
+        return null;
+    }
+}
+
+async function salvarObra(obraData) {
+    try {
+        if (!obraData || !obraData.nome) {
+            console.error(`ERRO FALBACK (salvarObra) [Dados da obra inválidos: ${JSON.stringify(obraData)}]`);
+            showSystemStatus("ERRO: Dados da obra inválidos", "error");
+            return null;
+        }
+
+        if (!isSessionActive()) {
+            console.warn("⚠️ Sessão não está ativa - obra não será salva");
+            showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
+            return null;
+        }
+
+        if (!obraData.id || obraData.id === 'undefined' || obraData.id === 'null') {
+            console.error(`ERRO FALBACK (salvarObra) [Obra sem ID seguro: ${obraData.id}]`);
+            showSystemStatus("ERRO: Obra não possui ID válido", "error");
+            return null;
+        }
+
+        console.log('📤 SALVANDO NOVA OBRA:', {
+            id: obraData.id,
+            nome: obraData.nome,
+            projetos: obraData.projetos?.length || 0,
+            timestamp: obraData.timestamp
+        });
+
+        const response = await fetch('/obras', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(obraData),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro ao salvar obra: ${errorText}`);
+        }
+
+        const createdObra = await response.json();
+        
+        console.log(`📝 Adicionando obra ${createdObra.id} à sessão...`);
+        await fetch('/api/sessions/add-obra', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ obra_id: createdObra.id })
+        });
+        
+        showSystemStatus("Obra salva com sucesso!", "success");
+        
+        console.log('✅ NOVA OBRA SALVA E ADICIONADA À SESSÃO:', {
+            id: createdObra.id,
+            nome: createdObra.nome,
+            projetos: createdObra.projetos?.length || 0
+        });
+        return createdObra;
+    } catch (error) {
+        console.error("❌ Erro ao SALVAR obra:", error);
+        showSystemStatus("ERRO: Não foi possível salvar a obra", "error");
+        return null;
+    }
+}
+
+/**
+ * 🔍 FUNÇÕES AUXILIARES DE BUSCA E VERIFICAÇÃO
+ */
+
+function findObraBlock(obraId) {
+    console.log(`🔍 Buscando obra pelo ID: "${obraId}"`);
+    
+    let obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (obraBlock) {
+        console.log(`✅ Obra encontrada por ID exato: "${obraId}"`);
+        return obraBlock;
+    }
+    
+    const todasObras = document.querySelectorAll('[data-obra-id]');
+    console.log(`📋 Obras encontradas no DOM: ${todasObras.length}`);
+    
+    todasObras.forEach((obra, index) => {
+        console.log(`  ${index + 1}.`, {
+            id: obra.dataset.obraId,
+            name: obra.dataset.obraName,
+            classes: obra.className
+        });
+    });
+    
+    console.log(`❌ Obra com ID "${obraId}" não encontrada no DOM`);
+    return null;
+}
+
+async function findObraBlockWithRetry(obraId, maxAttempts = 10) {
+    console.log(`🔍 Buscando obra com retry: "${obraId}"`);
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+        
+        if (obraBlock) {
+            console.log(`✅ Obra encontrada na tentativa ${attempt}/${maxAttempts}`);
+            return obraBlock;
+        }
+        
+        console.log(`⏳ Tentativa ${attempt}/${maxAttempts} - obra não encontrada, aguardando...`);
+        
+        if (attempt < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+    }
+    
+    console.log(`❌ Obra não encontrada após ${maxAttempts} tentativas`);
+    return null;
+}
+
+
+
+/**
+ * 💾 FUNÇÃO PRINCIPAL DE SALVAMENTO
+ */
+
+async function saveObra(obraId, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    console.log(`💾 SALVANDO OBRA pelo ID: "${obraId}"`);
+
+    let obraBlock = await findObraBlockWithRetry(obraId, 15);
+    
+    if (!obraBlock) {
+        console.error('❌ Obra não encontrada no DOM após múltiplas tentativas:', obraId);
+        
+        const todasObras = document.querySelectorAll('[data-obra-id]');
+        console.log('📋 Obras disponíveis no DOM:', Array.from(todasObras).map(o => ({
+            id: o.dataset.obraId,
+            name: o.dataset.obraName
+        })));
+        
+        showSystemStatus("ERRO: Obra não encontrada na interface", "error");
+        return;
+    }
+
+    const obraOriginalReference = obraBlock;
+    const obraContainer = obraBlock.parentElement;
+    
+    console.log('🔒 REFERÊNCIA SALVA:', {
+        obra: obraOriginalReference,
+        container: obraContainer,
+        obraNoContainer: obraContainer.contains(obraOriginalReference)
+    });
+
+    if (!isSessionActive()) {
+        console.log("🆕 Iniciando sessão para primeira obra...");
+        await startSessionOnFirstSave();
+    }
+
+    if (!isSessionActive()) {
+        console.warn("⚠️ Sessão não está ativa - obra não será salva");
+        showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
+        return;
+    }
+
+    console.log('✅ Obra confirmada no DOM:', {
+        element: obraBlock,
+        dataset: obraBlock.dataset,
+        id: obraBlock.dataset.obraId,
+        name: obraBlock.dataset.obraName
+    });
+
+    console.log('🔨 Construindo dados da obra...');
+    const obraData = buildObraData(obraBlock);
+
+    if (!obraData) {
+        console.error('❌ Falha ao construir dados da obra');
+        showSystemStatus("ERRO: Falha ao construir dados da obra", "error");
+        return;
+    }
+
+    const obraIdFromDOM = obraBlock.dataset.obraId;
+    const obraIdFromData = obraData.id;
+    const finalObraId = obraIdFromDOM || obraIdFromData;
+    
+    console.log('🔍 VERIFICAÇÃO DE OBRA MELHORADA:');
+    console.log('- ID no DOM:', obraIdFromDOM);
+    console.log('- ID nos dados:', obraIdFromData);
+    console.log('- ID final para uso:', finalObraId);
+    console.log('- É ID seguro?:', finalObraId?.startsWith('obra_'));
+    
+    let isNewObra = true;
+    
+    try {
+        const todasObrasResponse = await fetch('/api/backup-completo');
+        if (todasObrasResponse.ok) {
+            const backupData = await todasObrasResponse.json();
+            const todasObras = backupData.obras || [];
+            const obraExistente = todasObras.find(obra => String(obra.id) === String(finalObraId));
+            
+            isNewObra = !obraExistente;
+            console.log(`- Já existe no servidor?: ${!isNewObra}`);
+        }
+    } catch (error) {
+        console.log('- Não foi possível verificar servidor, assumindo como nova obra');
+    }
+
+    console.log('- É nova obra?:', isNewObra);
+
+    let result = null;
+    
+    if (isNewObra) {
+        console.log('🆕 SALVANDO COMO NOVA OBRA COM ID SEGURO:', finalObraId);
+        
+        obraData.id = finalObraId;
+        
+        if (!obraData.id || !obraData.id.startsWith('obra_')) {
+            console.error('❌ Obra não possui ID seguro válido para salvar');
+            showSystemStatus("ERRO: Obra não possui ID válido", "error");
+            return;
+        }
+        
+        result = await salvarObra(obraData);
+    } else {
+        console.log('📝 ATUALIZANDO OBRA EXISTENTE, ID SEGURO:', finalObraId);
+        
+        if (!finalObraId.startsWith('obra_')) {
+            console.error(`ERRO: ID não seguro para atualização: ${finalObraId}`);
+            showSystemStatus("ERRO: ID da obra inválido para atualização", "error");
+            return;
+        }
+        
+        result = await atualizarObra(finalObraId, obraData);
+    }
+
+    if (result) {
+        const finalId = ensureStringId(result.id);
+        
+        let obraBlockAtual = document.querySelector(`[data-obra-id="${finalId}"]`);
+        
+        if (!obraBlockAtual) {
+            console.error('❌ CRÍTICO: Obra desapareceu do DOM durante salvamento!');
+            console.log('🔍 Tentando recuperar da referência original...');
+            
+            if (obraContainer && document.body.contains(obraContainer)) {
+                const obrasNoContainer = obraContainer.querySelectorAll('[data-obra-id]');
+                console.log(`📦 Obras no container original: ${obrasNoContainer.length}`);
+                
+                if (obraContainer.contains(obraOriginalReference)) {
+                    obraBlockAtual = obraOriginalReference;
+                    console.log('✅ Obra recuperada da referência original');
+                } else {
+                    console.error('❌ Obra não está mais no container original');
+                    showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
+                    return;
+                }
+            } else {
+                console.error('❌ Container original não encontrado');
+                showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
+                return;
+            }
+        }
+
+        obraBlockAtual.dataset.obraId = finalId;
+        obraBlockAtual.dataset.obraName = obraData.nome;
+        
+        const titleElement = obraBlockAtual.querySelector('.obra-title');
+        if (titleElement && titleElement.textContent !== obraData.nome) {
+            titleElement.textContent = obraData.nome;
+        }
+
+        if (typeof updateObraButtonAfterSave === 'function' && document.body.contains(obraBlockAtual)) {
+            console.log("✅ Obra confirmada no DOM, atualizando botão...");
+            updateObraButtonAfterSave(obraData.nome, finalId);
+        } else {
+            console.error('❌ Obra não está no DOM para atualizar botão');
+        }
+
+        console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${finalId}`);
+        
+        showSystemStatus("Obra salva com sucesso!", "success");
+    } else {
+        console.error('❌ FALHA AO SALVAR OBRA NO SERVIDOR');
+        showSystemStatus("ERRO: Falha ao salvar obra no servidor", "error");
+    }
+}
+
+/**
+ * 🗑️ FUNÇÕES DE REMOÇÃO E VERIFICAÇÃO
+ */
+
+async function deleteObraFromServer(obraName, obraId) {
+    try {
+        if (!obraId || obraId === 'undefined' || obraId === 'null' || !obraId.startsWith('obra_')) {
+            console.error(`ERRO FALBACK (deleteObraFromServer) [ID de obra inválido: ${obraId}]`);
+            showSystemStatus("ERRO: ID da obra inválido para remoção", "error");
+            return;
+        }
+
+        if (!isSessionActive()) {
+            console.warn("⚠️ Sessão não está ativa - obra não será removida do servidor");
+            return;
+        }
+
+        obraId = ensureStringId(obraId);
+
+        console.log(`🗑️ Removendo obra ${obraId} do servidor...`);
+
+        const response = await fetch(`/obras/${obraId}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro ao remover obra: ${errorText}`);
+        }
+
+        console.log(`✅ Obra ${obraId} removida do servidor`);
+        showSystemStatus("Obra removida do servidor com sucesso", "success");
+    } catch (error) {
+        console.error("❌ Erro ao remover obra do servidor:", error);
+        showSystemStatus("ERRO: Não foi possível remover a obra do servidor", "error");
+    }
+}
+
+function verifyObraData(obraId) {
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) {
+        console.error(`❌ Obra com ID "${obraId}" não encontrada para verificação`);
+        alert(`ERRO: Obra com ID "${obraId}" não encontrada`);
+        return;
+    }
+
+    const obraName = obraBlock.dataset.obraName;
+    const projects = obraBlock.querySelectorAll(".project-block");
+    let totalRooms = 0;
+    
+    let report = `Verificação da Obra "${obraName}" (ID: ${obraId}):\n\n`;
+    report += `Total de projetos: ${projects.length}\n\n`;
+
+    projects.forEach((project, index) => {
+        const projectName = project.dataset.projectName;
+        const rooms = project.querySelectorAll(".room-block");
+        totalRooms += rooms.length;
+        
+        report += `Projeto ${index + 1}: ${projectName}\n`;
+        report += `  - Salas: ${rooms.length}\n`;
+        
+        rooms.forEach((room, roomIndex) => {
+            const roomName = room.querySelector(".room-title")?.textContent || `Sala ${roomIndex + 1}`;
+            const stats = calculateRoomCompletionStats(room);
+            report += `    - ${roomName}: ${stats.filled}/${stats.total} campos (${stats.percentage}%)\n`;
+        });
+        report += '\n';
+    });
+
+    report += `RESUMO: ${projects.length} projetos, ${totalRooms} salas`;
+
+    console.log(`🔍 Relatório gerado para obra: ${obraName} (ID: ${obraId})`);
+    alert(report);
+}
+
+/**
+ * 🌐 EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
+ */
+
+// Exportações para módulos ES6
+export {
+    // Interface
+    createEmptyObra,
+    buildObraHTML,
+    buildObraActionsFooter,
+    insertObraIntoDOM,
+    updateObraButtonAfterSave,
+    addNewObra,
+    deleteObra,
+    
+    // Persistência
+    fetchObras,
+    salvarObra,
+    atualizarObra,
+    saveObra,
+    deleteObraFromServer,
+    
+    // Utilitários
+    verifyObraData,
+    findObraBlock,
+    findObraBlockWithRetry,
+
+    // IDs
+    generateObraId,
+    ensureStringId
+};
+
+// Compatibilidade global para scripts legados
+if (typeof window !== 'undefined') {
+    window.deleteObra = deleteObra;
+    window.addNewObra = addNewObra;
+    window.saveObra = saveObra;
+    window.verifyObraData = verifyObraData;
+    window.findObraBlock = findObraBlock;
+    window.generateObraId = generateObraId;
+    window.ensureStringId = ensureStringId;
+}
+/* ==== FIM: features/managers/obra-manager.js ==== */

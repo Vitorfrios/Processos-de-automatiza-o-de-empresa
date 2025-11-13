@@ -174,11 +174,7 @@ class EmpresaCadastroInline {
                 </button>
             </div>
 
-            <!-- ID da Obra Gerado -->
-            <div class="obra-id-gerado" id="obra-id-gerado" style="display: none;">
-                <strong>ID da Obra:</strong> 
-                <span id="obra-id-value"></span>
-            </div>
+            
         </div>
         `;
     }
@@ -233,9 +229,11 @@ class EmpresaCadastroInline {
 
         const html = sugestoes.map(empresaObj => {
             const [sigla, nome] = Object.entries(empresaObj)[0];
+            const primeiroNome = nome.split(' ')[0];
+
             return `
-                <div class="suggestion-item" data-sigla="${sigla}" data-nome="${nome}">
-                    <strong>${sigla}</strong> - ${nome}
+                <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
+                    <strong>${sigla}</strong> - ${primeiroNome}
                 </div>
             `;
         }).join('');
@@ -348,7 +346,6 @@ class EmpresaCadastroInline {
     }
 
     atualizarPreviewIdObra(sigla, numero) {
-        const idObraContainer = this.container.querySelector('#obra-id-gerado');
         const idObraValue = this.container.querySelector('#obra-id-value');
         
         if (idObraContainer && idObraValue) {
@@ -480,7 +477,6 @@ class EmpresaCadastroInline {
      * @param {Object} dadosEmpresa - Dados da empresa
      */
 
-
     atualizarHeaderObra(obraElement, dadosEmpresa) {
         try {
             const headerSpacer = obraElement.querySelector('.obra-header-spacer');
@@ -493,24 +489,61 @@ class EmpresaCadastroInline {
             headerSpacer.innerHTML = '';
 
             if (dadosEmpresa.empresaSigla && dadosEmpresa.numeroClienteFinal) {
-                // Criar botão com sigla e número
-                const button = document.createElement('button');
-                button.className = 'btn-empresa-identifier';
+                // 🆕 CRIAR SPAN COM IDENTIFICADOR DA EMPRESA (não botão)
+                const span = document.createElement('span');
+                span.className = 'empresa-identifier-display';
                 const textoHeader = `${dadosEmpresa.empresaSigla}-${dadosEmpresa.numeroClienteFinal}`;
-                button.textContent = textoHeader;
-                button.setAttribute('data-tooltip', this.criarTooltipEmpresa(dadosEmpresa));
-                button.title = `${dadosEmpresa.empresaNome} - ${dadosEmpresa.clienteFinal || ''}`;
-                button.onclick = (e) => this.ativarCadastro(e);
+                span.textContent = textoHeader;
+                span.setAttribute('data-tooltip', this.criarTooltipEmpresa(dadosEmpresa));
                 
-                headerSpacer.appendChild(button);
-                console.log(`✅ Header da obra atualizado: ${textoHeader}`);
+                // 🆕 ADICIONAR SISTEMA DE TOOLTIP VIA JAVASCRIPT
+                this.inicializarTooltipJavaScript(span);
+                
+                headerSpacer.appendChild(span);
+                console.log(`✅ Header da obra atualizado para SPAN: ${textoHeader}`);
             } else {
-                // Botão padrão
+                // Botão padrão para cadastro
                 this.resetHeaderObra(headerSpacer);
             }
         } catch (error) {
             console.error('❌ Erro ao atualizar header da obra:', error);
         }
+    }
+
+    /**
+     * 🆕 INICIALIZAR TOOLTIP - VERSÃO QUE FUNCIONA
+     */
+    inicializarTooltipJavaScript(element) {
+        console.log('🔧 Inicializando tooltip para:', element);
+        
+        // FORÇAR posição relativa
+        element.style.position = 'relative';
+        element.style.overflow = 'visible';
+        
+        // Criar tooltip
+        const tooltip = document.createElement('div');
+        tooltip.className = 'empresa-tooltip';
+        
+        // Adicionar ao span
+        element.appendChild(tooltip);
+        
+        // Event listeners simples
+        element.addEventListener('mouseenter', function(e) {
+            console.log('🐭 Mouse ENTER no span');
+            const tooltipText = this.getAttribute('data-tooltip');
+            if (tooltipText) {
+                tooltip.textContent = tooltipText;
+                tooltip.classList.add('show');
+                console.log('🔦 Tooltip mostrado:', tooltipText);
+            }
+        });
+
+        element.addEventListener('mouseleave', function() {
+            console.log('🐭 Mouse LEAVE no span');
+            tooltip.classList.remove('show');
+        });
+        
+        console.log('✅ Tooltip inicializado');
     }
 
 
@@ -533,7 +566,9 @@ class EmpresaCadastroInline {
             partes.push(`Código: ${dadosEmpresa.codigoCliente}`);
         }
         if (dadosEmpresa.dataCadastro) {
-            partes.push(`Data: ${dadosEmpresa.dataCadastro}`);
+            // 🆕 FORMATAR DATA PARA dd/mm/aaaa
+            const dataFormatada = this.formatarDataParaTooltip(dadosEmpresa.dataCadastro);
+            partes.push(`Data: ${dataFormatada}`);
         }
         if (dadosEmpresa.orcamentistaResponsavel) {
             partes.push(`Orçamentista: ${dadosEmpresa.orcamentistaResponsavel}`);
@@ -543,17 +578,56 @@ class EmpresaCadastroInline {
     }
 
     /**
-     * Reseta o header para o estado original
-     * @param {HTMLElement} headerSpacer - Elemento do header
+     * Formata data para o formato dd/mm/aaaa no tooltip
+     * @param {string} dataString - Data em qualquer formato
+     * @returns {string} Data formatada como dd/mm/aaaa
      */
+    formatarDataParaTooltip(dataString) {
+        if (!dataString) return '';
+        
+        try {
+            // Se já estiver no formato dd/mm/aaaa, retornar como está
+            if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                return dataString;
+            }
+            
+            // Tentar converter para Date
+            const data = new Date(dataString);
+            
+            if (isNaN(data.getTime())) {
+                console.warn(`⚠️ Data inválida no tooltip: ${dataString}`);
+                return dataString;
+            }
+            
+            // Formatar para dd/mm/aaaa
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            
+            return `${dia}/${mes}/${ano}`;
+            
+        } catch (error) {
+            console.error(`❌ Erro ao formatar data para tooltip ${dataString}:`, error);
+            return dataString;
+        }
+    }
+
     /**
      * Reseta o header para o estado original
+     * @param {HTMLElement} headerSpacer - Elemento do header
      */
     resetHeaderObra(headerSpacer) {
         const button = document.createElement('button');
         button.className = 'btn-empresa-cadastro';
         button.textContent = 'Adicionar campos de cadastro de empresas';
-        button.onclick = (e) => this.ativarCadastro(e);
+        button.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const obraBlock = headerSpacer.closest('.obra-block');
+            if (obraBlock && obraBlock.dataset.obraId) {
+                window.ativarCadastroEmpresa(obraBlock.dataset.obraId);
+            }
+        };
         
         headerSpacer.innerHTML = '';
         headerSpacer.appendChild(button);
@@ -683,3 +757,5 @@ if (typeof window !== 'undefined') {
         window.empresaCadastro = new EmpresaCadastroInline();
     });
 }
+
+

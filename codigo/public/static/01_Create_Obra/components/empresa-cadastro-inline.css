@@ -1,6 +1,12 @@
-/* ===== ESTILOS PARA CADASTRO INLINE DE EMPRESAS ===== */
+/* =================================================================
+   ESTILOS PARA SISTEMA DE CADASTRO DE EMPRESAS
+   ================================================================= */
 
-/* Botões de empresa */
+/* =================================================================
+   SEÇÃO 1: BOTÕES E ELEMENTOS INTERATIVOS
+   ================================================================= */
+
+/* Botão principal de cadastro de empresa */
 .btn-empresa-cadastro {
     background: var(--color-gray-200);
     color: var(--color-gray-800);
@@ -27,6 +33,7 @@
     box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
 }
 
+/* Botão identificador de empresa no header */
 .btn-empresa-identifier {
     background: var(--color-gray-100);
     border: 1px solid var(--color-gray-300);
@@ -45,7 +52,11 @@
     border-color: var(--color-gray-400);
 }
 
-/* Container principal do cadastro */
+/* =================================================================
+   SEÇÃO 2: CONTAINERS PRINCIPAIS E LAYOUT
+   ================================================================= */
+
+/* Container principal do cadastro inline */
 .empresa-cadastro-inline {
     background: var(--bg-primary);
     border: 2px solid var(--color-primary);
@@ -67,141 +78,7 @@
     }
 }
 
-/* Grid do formulário de cadastro */
-.empresa-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group label {
-    font-weight: 600;
-    margin-bottom: var(--spacing-xs);
-    color: var(--color-gray-700);
-    font-size: 14px;
-}
-
-.form-group input {
-    padding: var(--spacing-sm);
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--border-radius);
-    font-size: 14px;
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: var(--capacity-input-focus-shadow);
-}
-
-.form-group input:read-only {
-    background-color: var(--color-gray-100);
-    color: var(--color-gray-600);
-    cursor: not-allowed;
-}
-
-/* Autocomplete */
-.autocomplete-suggestions {
-    position: absolute;
-    background: var(--bg-primary);
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--border-radius);
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    box-shadow: var(--card-shadow);
-    display: none;
-    margin-top: 35px;
-}
-
-.suggestion-item {
-    padding: var(--spacing-sm);
-    cursor: pointer;
-    border-bottom: 1px solid var(--color-gray-200);
-    color: var(--color-gray-700);
-    transition: background-color 0.2s ease;
-}
-
-.suggestion-item:hover,
-.suggestion-item.active {
-    background-color: var(--color-primary);
-    color: var(--color-white);
-}
-
-.suggestion-item:last-child {
-    border-bottom: none;
-}
-
-/* Ações do formulário */
-.empresa-form-actions {
-    display: flex;
-    gap: var(--spacing-sm);
-    justify-content: flex-end;
-    border-top: 1px solid var(--color-gray-200);
-    padding-top: var(--spacing-md);
-}
-
-.btn-cancel {
-    background: var(--color-gray-500);
-    color: var(--color-white);
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s ease;
-}
-
-.btn-confirm {
-    background: var(--success-gradient);
-    color: var(--color-white);
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s ease;
-}
-
-.btn-cancel:hover {
-    background: var(--color-gray-600);
-}
-
-.btn-confirm:hover {
-    background: linear-gradient(135deg, #2D774E 0%, #3aa766 100%);
-}
-
-/* ID da Obra Gerado */
-.obra-id-gerado {
-    background: var(--color-gray-100);
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-md);
-    margin-top: var(--spacing-md);
-    text-align: center;
-}
-
-.obra-id-gerado strong {
-    color: var(--color-gray-700);
-}
-
-#obra-id-value {
-    font-family: monospace;
-    font-weight: bold;
-    color: var(--color-gray-800);
-}
-
-/* ===== FORMULÁRIO ATIVO DE EMPRESA ===== */
-
+/* Container do formulário ativo de empresa */
 .empresa-formulario-ativo {
     background: var(--bg-primary);
     border: 1px solid var(--color-primary);
@@ -211,6 +88,8 @@
     box-shadow: var(--card-shadow);
     width: 100%;
     box-sizing: border-box;
+    position: relative;
+    z-index: 1;
 }
 
 .empresa-formulario-ativo h4 {
@@ -223,7 +102,11 @@
     grid-column: 1 / -1;
 }
 
-/* Grid horizontal responsivo - LAYOUT HORIZONTAL */
+/* =================================================================
+   SEÇÃO 3: SISTEMAS DE GRID E FORMULÁRIOS
+   ================================================================= */
+
+/* Grid horizontal responsivo para formulários */
 .empresa-form-grid-horizontal {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -231,6 +114,15 @@
     margin-bottom: var(--spacing-md);
 }
 
+/* Grid vertical para formulários (legado) */
+.empresa-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Grupos de formulário horizontais */
 .form-group-horizontal {
     display: flex;
     flex-direction: column;
@@ -272,56 +164,390 @@
     box-shadow: var(--capacity-input-focus-shadow);
 }
 
-/* Header da obra com identificador da empresa */
-.obra-header-spacer button[data-tooltip] {
-    position: relative;
-    background: var(--color-gray-100);
+/* Grupos de formulário verticais (legado) */
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-gray-700);
+    font-size: 14px;
+}
+
+.form-group input {
+    padding: var(--spacing-sm);
     border: 1px solid var(--color-gray-300);
     border-radius: var(--border-radius);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-family: 'Courier New', monospace;
     font-size: 14px;
-    font-weight: bold;
-    color: var(--color-gray-800);
-    cursor: pointer;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
     transition: all 0.2s ease;
 }
 
-.obra-header-spacer button[data-tooltip]:hover {
-    background: var(--color-gray-200);
-    border-color: var(--color-gray-400);
+.form-group input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--capacity-input-focus-shadow);
 }
 
-.obra-header-spacer button[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--color-gray-800);
-    color: var(--color-white);
-    padding: var(--spacing-sm);
+.form-group input:read-only {
+    background-color: var(--color-gray-100);
+    color: var(--color-gray-600);
+    cursor: not-allowed;
+}
+
+/* =================================================================
+   SEÇÃO 4: SISTEMA DE INPUT HÍBRIDO E DROPDOWN
+   ================================================================= */
+
+/* Container do input híbrido de empresa */
+.empresa-input-container {
+    position: relative;
+    width: 100%;
+}
+
+.empresa-input-cadastro {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-gray-300);
     border-radius: var(--border-radius);
-    font-size: 12px;
-    white-space: pre-line;
-    z-index: 1000;
-    min-width: 200px;
-    text-align: left;
-    box-shadow: var(--card-shadow);
+    font-size: 14px;
+    box-sizing: border-box;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
 }
 
-.obra-header-spacer button[data-tooltip]:hover::before {
+.empresa-input-cadastro:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--capacity-input-focus-shadow);
+}
+
+/* Dropdown de sugestões de empresas */
+.empresa-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 2px;
+}
+
+.dropdown-options {
+    padding: 4px 0;
+}
+
+.dropdown-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-gray-200);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 36px;
+    box-sizing: border-box;
+    color: var(--text-secondary);
+}
+
+.dropdown-option:hover,
+.dropdown-option.active {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+}
+
+.dropdown-option:last-child {
+    border-bottom: none;
+}
+
+.dropdown-option strong {
+    color: #007bff;
+    font-weight: 600;
+    min-width: 50px;
+    text-align: left;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.dropdown-option:hover strong,
+.dropdown-option.active strong {
+    color: var(--color-white) !important;
+}
+
+.dropdown-no-results {
+    padding: 12px;
+    text-align: center;
+    color: var(--color-gray-600);
+    font-style: italic;
+    font-size: 13px;
+}
+
+/* Sistema de autocomplete (legado) */
+.autocomplete-suggestions {
+    position: absolute;
+    background: var(--bg-primary);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: var(--card-shadow);
+    display: none;
+    margin-top: 35px;
+}
+
+.suggestion-item {
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-gray-200);
+    color: var(--color-gray-700);
+    transition: background-color 0.2s ease;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+/* =================================================================
+   SEÇÃO 5: AÇÕES E BOTÕES DE FORMULÁRIO
+   ================================================================= */
+
+/* Container de ações do formulário */
+.empresa-form-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    border-top: 1px solid var(--color-gray-200);
+    padding-top: var(--spacing-md);
+}
+
+/* Botão de cancelar */
+.btn-cancel {
+    background: var(--color-gray-500);
+    color: var(--color-white);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background: var(--color-gray-600);
+}
+
+/* Botão de confirmar */
+.btn-confirm {
+    background: var(--success-gradient);
+    color: var(--color-white);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.btn-confirm:hover {
+    background: linear-gradient(135deg, #2D774E 0%, #3aa766 100%);
+}
+
+/* =================================================================
+   SEÇÃO 6: TOOLTIPS E ELEMENTOS DE INFORMAÇÃO - CORRIGIDO
+   ================================================================= */
+
+/* 🔥 SPAN COM TOOLTIP */
+.empresa-identifier-display {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--primary-gradient);
+    color: var(--color-white);
+    border-radius: var(--border-radius-lg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* 🔥 FONTE DO SISTEMA */
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    min-height: 40px;
+    position: relative !important;
+}
+
+.empresa-identifier-display:hover {
+    background: linear-gradient(135deg, var(--color-gray-800) 0%, var(--color-gray-700) 100%);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px);
+}
+
+/* 🔥 TOOLTIP COM FONTE DO SISTEMA */
+.empresa-tooltip {
+    position: absolute !important;
+    bottom: calc(100% + 8px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: var(--color-gray-800) !important;
+    color: var(--color-white) !important;
+    padding: 12px 16px !important;
+    border-radius: var(--border-radius-lg) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; /* 🔥 MESMA FONTE DO SISTEMA */
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    font-style: normal !important;
+    line-height: 1.4 !important;
+    white-space: pre-line !important;
+    text-align: left !important;
+    z-index: 9999 !important;
+    min-width: 280px !important;
+    max-width: 380px !important;
+    border: 1px solid var(--color-gray-600) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+    pointer-events: none !important;
+    backdrop-filter: blur(10px) !important;
+    opacity: 0;
+    transition: opacity 0.2s ease !important;
+    display: none;
+}
+
+.empresa-tooltip.show {
+    opacity: 1;
+    display: block;
+}
+
+/* 🔥 SETA DO TOOLTIP */
+.empresa-tooltip::after {
     content: '';
     position: absolute;
-    bottom: 100%;
+    top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    border: 5px solid transparent;
+    border: 6px solid transparent;
     border-top-color: var(--color-gray-800);
-    margin-bottom: -10px;
 }
 
-/* ===== RESPONSIVIDADE ===== */
+/* 🔥 GARANTIR VISIBILIDADE */
+.obra-header-spacer,
+.obra-header,
+.obra-block {
+    position: relative !important;
+    overflow: visible !important;
+    z-index: auto !important;
+}
+
+* {
+    overflow: visible !important;
+}
+/* =================================================================
+   SEÇÃO 7: ELEMENTOS DE IDENTIFICAÇÃO E ESTADO
+   ================================================================= */
+
+/* Display do ID da obra gerado */
+.obra-id-gerado {
+    background: var(--color-gray-100);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    text-align: center;
+}
+
+.obra-id-gerado strong {
+    color: var(--color-gray-700);
+}
+
+#obra-id-value {
+    font-family: monospace;
+    font-weight: bold;
+    color: var(--color-gray-800);
+}
+
+/* Estados de validação de formulário */
+.form-group-horizontal input.error {
+    border-color: #e53e3e;
+    box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.1);
+}
+
+.form-group-horizontal input.success {
+    border-color: #38a169;
+    box-shadow: 0 0 0 2px rgba(56, 161, 105, 0.1);
+}
+
+/* Estados de loading */
+.btn-empresa-cadastro.loading,
+.btn-empresa-identifier.loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-empresa-cadastro.loading::after,
+.btn-empresa-identifier.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* =================================================================
+   SEÇÃO 8: SCROLLBARS PERSONALIZADAS
+   ================================================================= */
+
+/* Scrollbar para dropdowns e autocomplete */
+.empresa-dropdown::-webkit-scrollbar,
+.autocomplete-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.empresa-dropdown::-webkit-scrollbar-track,
+.autocomplete-suggestions::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+    border-radius: 3px;
+}
+
+.empresa-dropdown::-webkit-scrollbar-thumb,
+.autocomplete-suggestions::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: 3px;
+}
+
+.empresa-dropdown::-webkit-scrollbar-thumb:hover,
+.autocomplete-suggestions::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500);
+}
+
+/* =================================================================
+   SEÇÃO 9: RESPONSIVIDADE E MEDIA QUERIES
+   ================================================================= */
 
 /* Tablets - 2 colunas */
 @media (max-width: 1024px) {
@@ -354,6 +580,22 @@
     .empresa-form-actions {
         flex-direction: column;
     }
+    
+    /* Ajuste do dropdown em mobile */
+    .empresa-dropdown {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        max-height: 60vh;
+    }
+    
+    /* Ajuste de tooltips em mobile */
+    [data-tooltip]::before {
+        min-width: 200px;
+        max-width: 280px;
+        font-size: 12px;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
 }
 
 /* Mobile - 1 coluna */
@@ -380,6 +622,12 @@
         padding: var(--spacing-md);
         font-size: 14px;
     }
+    
+    /* Ajuste do dropdown em mobile pequeno */
+    .dropdown-option {
+        padding: 10px 12px;
+        min-height: 40px;
+    }
 }
 
 /* Telas muito grandes - 4 colunas */
@@ -397,7 +645,11 @@
     }
 }
 
-/* Estados de foco e hover consistentes */
+/* =================================================================
+   SEÇÃO 10: ACESSIBILIDADE E ESTADOS ESPECIAIS
+   ================================================================= */
+
+/* Estados de foco consistentes */
 .btn-empresa-cadastro:focus,
 .btn-empresa-identifier:focus,
 .form-group-horizontal input:focus,
@@ -417,27 +669,6 @@
     transition: all 0.2s ease-in-out;
 }
 
-/* Melhorias de acessibilidade */
-@media (prefers-reduced-motion: reduce) {
-    .empresa-cadastro-inline,
-    .empresa-formulario-ativo,
-    .btn-empresa-cadastro,
-    .btn-empresa-identifier,
-    .form-group-horizontal input,
-    .form-group input {
-        transition: none;
-    }
-    
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-}
-
 /* Estados de desabilitado */
 .btn-empresa-cadastro:disabled,
 .btn-empresa-identifier:disabled {
@@ -451,156 +682,38 @@
     border-color: var(--color-gray-300);
 }
 
-/* Loading states */
-.btn-empresa-cadastro.loading,
-.btn-empresa-identifier.loading {
-    position: relative;
-    color: transparent;
+/* Melhorias de acessibilidade - redução de movimento */
+@media (prefers-reduced-motion: reduce) {
+    .empresa-cadastro-inline,
+    .empresa-formulario-ativo,
+    .btn-empresa-cadastro,
+    .btn-empresa-identifier,
+    .form-group-horizontal input,
+    .form-group input {
+        transition: none;
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    [data-tooltip]::before,
+    [data-tooltip]::after {
+        transition: none;
+        animation: none;
+    }
 }
 
-.btn-empresa-cadastro.loading::after,
-.btn-empresa-identifier.loading::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    top: 50%;
-    left: 50%;
-    margin: -8px 0 0 -8px;
-    border: 2px solid transparent;
-    border-top-color: currentColor;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Estados de erro e sucesso */
-.form-group-horizontal input.error {
-    border-color: #e53e3e;
-    box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.1);
-}
-
-.form-group-horizontal input.success {
-    border-color: #38a169;
-    box-shadow: 0 0 0 2px rgba(56, 161, 105, 0.1);
-}
-
-/* Tooltips melhorados */
-[data-tooltip] {
-    position: relative;
-}
-
-[data-tooltip]::before {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--color-gray-800);
-    color: var(--color-white);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius);
-    font-size: 12px;
-    white-space: nowrap;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.2s ease;
-}
-
-[data-tooltip]:hover::before {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(-5px);
-}
-
-/* Scrollbar personalizado para autocomplete */
-.autocomplete-suggestions::-webkit-scrollbar {
-    width: 6px;
-}
-
-.autocomplete-suggestions::-webkit-scrollbar-track {
-    background: var(--color-gray-100);
-    border-radius: 3px;
-}
-
-.autocomplete-suggestions::-webkit-scrollbar-thumb {
-    background: var(--color-gray-400);
-    border-radius: 3px;
-}
-
-.autocomplete-suggestions::-webkit-scrollbar-thumb:hover {
-    background: var(--color-gray-500);
-}
-/* Container do input híbrido */
-.empresa-input-container {
-    position: relative;
-    width: 100%;
-}
-
-.empresa-input-cadastro {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-    box-sizing: border-box;
-}
-
-.empresa-dropdown {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    margin-top: 2px;
-}
-
-.dropdown-options {
-    padding: 5px 0;
-}
-
-.dropdown-option {
-    padding: 8px 12px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background-color 0.2s;
-}
-
-.dropdown-option:hover,
-.dropdown-option.active {
-    background-color: #f8f9fa;
-}
-
-.dropdown-option:last-child {
-    border-bottom: none;
-}
-
-.dropdown-option strong {
-    color: #007bff;
-    font-weight: 600;
-}
-
-.dropdown-no-results {
-    padding: 12px;
-    text-align: center;
-    color: #6c757d;
-    font-style: italic;
-}
-
-/* Garantir que o dropdown fique acima de outros elementos */
-.empresa-formulario-ativo {
-    position: relative;
-    z-index: 1;
+/* Suporte a alto contraste */
+@media (prefers-contrast: high) {
+    [data-tooltip]::before {
+        background: #000000;
+        border: 2px solid #ffffff;
+        color: #ffffff;
+    }
+    
+    [data-tooltip]::after {
+        border-top-color: #000000;
+    }
 }
