@@ -1,5 +1,13 @@
 // adapters/obra-adapter.js - CORREÇÃO COMPLETA COM EMPRESAS:
 
+
+
+/**
+ * 🆕 SISTEMA DE DETECÇÃO DE BACKSPACE/DELETE
+ */
+window.usuarioEstaApagando = false;
+window.ultimoValorInput = '';
+
 /**
  * Remove todas as obras base do container HTML
  */
@@ -667,14 +675,14 @@ function criarFormularioVazioEmpresa(obraId, container) {
     
     container.insertAdjacentHTML('beforeend', formularioHTML);
     
-    // Inicializar o input híbrido
+    // 🔥 CORREÇÃO: Inicializar com timeout maior para garantir que o DOM está pronto
     setTimeout(() => {
         inicializarInputEmpresaHibrido(obraId);
-    }, 100);
+    }, 300);
 }
 
 /**
- * 🆕 INICIALIZA INPUT HÍBRIDO DE EMPRESA - COMPLETA E CORRIGIDA
+ * INICIALIZAR INPUT HÍBRIDO - COM CONTROLE DE BACKSPACE (CORRIGIDO)
  */
 async function inicializarInputEmpresaHibrido(obraId) {
     console.log(`🔧 [INPUT HÍBRIDO] Inicializando para obra: ${obraId}`);
@@ -688,148 +696,101 @@ async function inicializarInputEmpresaHibrido(obraId) {
         return;
     }
     
+    // 🔥 CORREÇÃO: CARREGAR EMPRESAS ANTES DE TUDO
     let empresas = [];
-    let empresasCarregadas = false;
-    
-    // Carregar empresas do banco de dados
     try {
-        console.log(`📡 [INPUT HÍBRIDO] Buscando empresas da API...`);
+        console.log(`📦 [INPUT HÍBRIDO] Carregando empresas para obra ${obraId}...`);
         const response = await fetch('/api/dados/empresas');
-        
         if (response.ok) {
-            const dados = await response.json();
-            
-            if (dados.success && Array.isArray(dados.empresas)) {
-                empresas = dados.empresas;
-                empresasCarregadas = true;
-                console.log(`📊 [INPUT HÍBRIDO] ${empresas.length} empresas carregadas com sucesso`);
-            } else {
-                console.error(`❌ [INPUT HÍBRIDO] Resposta da API inválida:`, dados);
-            }
+            const data = await response.json();
+            empresas = data.empresas || [];
+            console.log(`✅ [INPUT HÍBRIDO] ${empresas.length} empresas carregadas`);
         } else {
-            console.error(`❌ [INPUT HÍBRIDO] Erro HTTP na API: ${response.status} ${response.statusText}`);
+            console.error(`❌ [INPUT HÍBRIDO] Erro ao carregar empresas: ${response.status}`);
         }
     } catch (error) {
-        console.error('❌ [INPUT HÍBRIDO] Erro de rede ao carregar empresas:', error);
+        console.error(`❌ [INPUT HÍBRIDO] Erro no carregamento de empresas:`, error);
     }
-    
-    // Se não conseguiu carregar empresas, mostrar mensagem
-    if (!empresasCarregadas) {
-        console.warn('⚠️ [INPUT HÍBRIDO] Não foi possível carregar empresas do servidor');
-        
-        // Mostrar mensagem no dropdown quando o usuário tentar usar
-        input.addEventListener('focus', function() {
-            optionsContainer.innerHTML = `
-                <div class="dropdown-no-results">
-                    ❌ Erro ao carregar empresas<br>
-                    <small>Tente recarregar a página</small>
-                </div>
-            `;
-            dropdown.style.display = 'block';
-        });
-        
-        return; // Não inicializa o resto da funcionalidade
-    }
-    
-    // Verificar se encontrou empresas
-    if (empresas.length === 0) {
-        console.warn('⚠️ [INPUT HÍBRIDO] Nenhuma empresa cadastrada no sistema');
-        
-        input.addEventListener('focus', function() {
-            optionsContainer.innerHTML = `
-                <div class="dropdown-no-results">
-                    📝 Nenhuma empresa cadastrada<br>
-                    <small>Cadastre empresas primeiro</small>
-                </div>
-            `;
-            dropdown.style.display = 'block';
-        });
-        
-        return;
-    }
-    
-    // 🔥 CORREÇÃO NO EVENTO DE FOCO - MANTÉM CONTEÚDO EDITÁVEL
-    input.addEventListener('focus', function() {
-        const valorAtual = this.value.trim();
-        const empresaJaSelecionada = this.dataset.siglaSelecionada;
-        
-        console.log('🎯 Foco no input:', {
-            valor: valorAtual,
-            empresaSelecionada: empresaJaSelecionada
-        });
-        
-        // 🔥 CORREÇÃO: NUNCA limpar o campo automaticamente
-        // Apenas mostra o dropdown baseado no conteúdo atual
-        
-        if (valorAtual.length === 0) {
-            // Campo vazio: mostra todas as empresas
-            console.log('🔄 Campo vazio - mostrando todas empresas');
-            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
-        } else if (empresaJaSelecionada && valorAtual === `${this.dataset.siglaSelecionada} - ${this.dataset.nomeSelecionado}`) {
-            // 🔥 CORREÇÃO: Empresa já selecionada - mostra sugestões baseadas no nome atual
-            // MAS NÃO LIMPA O CAMPO - deixa editável
-            console.log('🔄 Empresa selecionada - mostrando sugestões para edição');
-            const sugestoes = filtrarEmpresas(valorAtual, empresas);
-            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
-        } else {
-            // Texto parcial: mostra sugestões
-            console.log('🔄 Texto parcial - mostrando sugestões');
-            const sugestoes = filtrarEmpresas(valorAtual, empresas);
-            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
-        }
-    });
 
-    // 🔥 CORREÇÃO NO EVENTO DE INPUT - MOSTRAR EMPRESAS AO APAGAR
+    // 🔥 INICIALIZAR DETECTOR DE BACKSPACE PRIMEIRO
+    inicializarDetectorBackspace(input, obraId);
+    
+    // 🔥 EVENTO DE INPUT ATUALIZADO - RESPEITAR BACKSPACE
     input.addEventListener('input', function(e) {
         const termo = e.target.value.trim();
-        console.log(`🔍 [INPUT] Digitando: "${termo}"`);
+        console.log(`🔍 [INPUT] Digitando: "${termo}" | Apagando: ${window.usuarioEstaApagando}`);
         
-        // Se o usuário apagou completamente, mostra todas as empresas
+        // 🔥 SE USUÁRIO ESTÁ APAGANDO, NÃO FAZER AUTOCOMPLETE
+        if (window.usuarioEstaApagando) {
+            console.log('🚫 Autocomplete bloqueado - usuário apagando');
+            
+            // Apenas busca normal, sem autocomplete automático
+            if (termo.length === 0) {
+                limparDadosSelecao(input, obraId);
+                exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+            } else {
+                const sugestoes = filtrarEmpresas(termo, empresas);
+                exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+            }
+            
+            // Resetar flag após processar o input
+            setTimeout(() => {
+                window.usuarioEstaApagando = false;
+            }, 100);
+            return;
+        }
+        
+        // 🔥 COMPORTAMENTO NORMAL (não está apagando)
         if (termo.length === 0) {
             console.log('🔄 Campo apagado - mostrando todas empresas');
-            
-            // Limpa dados de seleção se o campo está vazio
-            delete input.dataset.siglaSelecionada;
-            delete input.dataset.nomeSelecionado;
-            
-            // Limpa número do cliente
-            limparNumeroCliente(obraId);
-            
-            // 🔥 CORREÇÃO: MOSTRAR TODAS AS EMPRESAS
+            limparDadosSelecao(input, obraId);
             exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
             return;
         }
         
-        // Se há texto, fazer busca normal
         const sugestoes = filtrarEmpresas(termo, empresas);
         console.log(`🎯 [INPUT] ${sugestoes.length} sugestões para "${termo}"`);
         
-        // 🔥 CORREÇÃO: Atualizar dados de seleção se necessário
-        if (sugestoes.length === 1 && termo.length > 0) {
+        // 🔥 AUTOCOMPLETE SÓ SE NÃO ESTIVER APAGANDO
+        if (sugestoes.length === 1 && termo.length > 0 && !window.usuarioEstaApagando) {
             const [sigla, nome] = Object.entries(sugestoes[0])[0];
-            // Só atualiza os dados se o texto corresponde exatamente à sugestão única
-            if (termo === `${sigla} - ${nome}` || termo === sigla) {
-                input.dataset.siglaSelecionada = sigla;
-                input.dataset.nomeSelecionado = nome;
+            
+            // Verificar se é um match forte (usuário digitou sigla completa ou nome significativo)
+            const matchForte = termo === sigla || termo.length >= 3;
+            
+            if (matchForte) {
+                console.log(`✅ [AUTOCOMPLETE] Única sugestão: ${sigla} - ${nome}`);
+                selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'autocomplete');
+                return;
             }
         }
         
         exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
     });
-
     
-    // Evento de blur - verifica se deve limpar quando perde foco
+    // 🔥 EVENTO DE FOCO - RESETAR FLAGS E MOSTRAR EMPRESAS
+    input.addEventListener('focus', function() {
+        window.usuarioEstaApagando = false;
+        window.ultimoValorInput = this.value;
+        
+        const valorAtual = this.value.trim();
+        const empresaJaSelecionada = this.dataset.siglaSelecionada;
+        
+        if (valorAtual.length === 0) {
+            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        } else if (empresaJaSelecionada && valorAtual === `${this.dataset.siglaSelecionada} - ${this.dataset.nomeSelecionado}`) {
+            // Empresa já selecionada, não mostrar dropdown
+            dropdown.style.display = 'none';
+        } else {
+            const sugestoes = filtrarEmpresas(valorAtual, empresas);
+            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+        }
+    });
+    
+    // 🔥 EVENTO DE BLUR - RESETAR FLAGS
     input.addEventListener('blur', function() {
         setTimeout(() => {
-            const valorAtual = this.value.trim();
-            if (valorAtual.length === 0) {
-                limparNumeroCliente(obraId);
-            }
-            
-            // Fecha dropdown após um delay para permitir clique
-            setTimeout(() => {
-                dropdown.style.display = 'none';
-            }, 150);
+            window.usuarioEstaApagando = false;
         }, 200);
     });
     
@@ -866,12 +827,119 @@ async function inicializarInputEmpresaHibrido(obraId) {
     
     // Fechar dropdown ao clicar fora
     document.addEventListener('click', function(e) {
-        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+        if (input && dropdown && !input.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.style.display = 'none';
         }
     });
     
     console.log(`✅ [INPUT HÍBRIDO] Inicializado com sucesso para obra ${obraId}`);
+}
+
+/**
+ * 🆕 LIMPAR DADOS DE SELEÇÃO
+ */
+function limparDadosSelecao(input, obraId) {
+    delete input.dataset.siglaSelecionada;
+    delete input.dataset.nomeSelecionado;
+    limparNumeroCliente(obraId);
+    console.log('🔄 Dados de seleção limpos');
+}
+
+/**
+ * 🆕 DETECTAR BACKSPACE/DELETE DE FORMA MAIS PRECISA
+ */
+function criarSistemaBackspaceDetector(input) {
+    let pressionandoBackspace = false;
+    let timeoutBackspace;
+    
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            pressionandoBackspace = true;
+            usuarioEstaApagando = true;
+            
+            // Limpar timeout anterior
+            if (timeoutBackspace) clearTimeout(timeoutBackspace);
+            
+            // Timeout para resetar se parou de apertar
+            timeoutBackspace = setTimeout(() => {
+                pressionandoBackspace = false;
+                usuarioEstaApagando = false;
+            }, 500);
+            
+            console.log('⌫ Tecla de apagar pressionada');
+        }
+    });
+    
+    input.addEventListener('keyup', function(e) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            // Pequeno delay para garantir que o input foi processado
+            setTimeout(() => {
+                if (!pressionandoBackspace) {
+                    usuarioEstaApagando = false;
+                }
+            }, 50);
+        }
+    });
+    
+    // Detectar seleção total (Ctrl+A) + Backspace
+    input.addEventListener('input', function(e) {
+        if (pressionandoBackspace && this.value.length === 0) {
+            console.log('🎯 Usuário apagou tudo - reset completo');
+            limparDadosSelecao(input, input.closest('[data-obra-id]')?.dataset.obraId);
+        }
+    });
+}
+
+/**
+ * 🆕 INICIALIZAR DETECTOR DE BACKSPACE SEPARADAMENTE (CORRIGIDO)
+ */
+function inicializarDetectorBackspace(input, obraId) {
+    console.log(`⌫ [BACKSPACE] Inicializando detector para obra ${obraId}`);
+    
+    let pressionandoBackspace = false;
+    let timeoutBackspace;
+    
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            window.usuarioEstaApagando = true;
+            pressionandoBackspace = true;
+            
+            console.log('⌫ Tecla de apagar pressionada - bloqueando autocomplete');
+            
+            // Limpar timeout anterior
+            if (timeoutBackspace) clearTimeout(timeoutBackspace);
+            
+            // Timeout para resetar se parou de apertar
+            timeoutBackspace = setTimeout(() => {
+                pressionandoBackspace = false;
+                window.usuarioEstaApagando = false;
+                console.log('🔄 Resetando flag de apagamento');
+            }, 500);
+        }
+        
+        // Salvar valor atual para comparação
+        window.ultimoValorInput = this.value;
+    });
+    
+    input.addEventListener('keyup', function(e) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            // Pequeno delay para garantir que o input foi processado
+            setTimeout(() => {
+                if (!pressionandoBackspace) {
+                    window.usuarioEstaApagando = false;
+                    console.log('🔄 Tecla de apagar liberada');
+                }
+            }, 50);
+        }
+    });
+    
+    // Detectar seleção total (Ctrl+A) + Backspace
+    input.addEventListener('input', function(e) {
+        if (pressionandoBackspace && this.value.length === 0) {
+            console.log('🎯 Usuário apagou tudo - reset completo');
+            limparDadosSelecao(input, obraId);
+        }
+    });
 }
 
 /**
@@ -929,6 +997,12 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     const valorAtual = input.value.trim();
     const empresaJaSelecionada = input.dataset.siglaSelecionada;
     
+    // 🔥 NÃO FAZER AUTOCOMPLETE SE USUÁRIO ESTÁ APAGANDO
+    if (usuarioEstaApagando) {
+        console.log('🚫 Autocomplete ignorado - modo apagando ativo');
+        // Mostrar sugestões normais, mas não auto-selecionar
+    }
+    
     if (empresaJaSelecionada && valorAtual === `${input.dataset.siglaSelecionada} - ${input.dataset.nomeSelecionado}`) {
         container.innerHTML = '';
         dropdown.style.display = 'none';
@@ -952,12 +1026,10 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     
     const sugestoesLimitadas = sugestoes.slice(0, 50);
     
-    // 1. NA SELEÇÃO AUTOMÁTICA (quando há apenas 1 opção)
-    if (sugestoesLimitadas.length === 1 && valorAtual.length > 0) {
+    // 🔥 BLOQUEAR SELEÇÃO AUTOMÁTICA SE ESTÁ APAGANDO
+    if (sugestoesLimitadas.length === 1 && valorAtual.length > 0 && !usuarioEstaApagando) {
         const [sigla, nome] = Object.entries(sugestoesLimitadas[0])[0];
         console.log(`✅ [AUTOCOMPLETE] Única sugestão: ${sigla} - ${nome}`);
-        
-        // 🔥 TIPO: autocomplete (verdadeiro autocomplete)
         selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'autocomplete');
         return;
     }
@@ -1294,6 +1366,15 @@ window.addEventListener('resize', corrigirPosicaoDropdown);
 // 🔥 CORRIGIR NO SCROLL (para casos de virtual keyboard)
 window.addEventListener('scroll', corrigirPosicaoDropdown);
 
+// 🔥 INICIALIZAR DETECTOR EM TODOS OS INPUTS EXISTENTES
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const inputs = document.querySelectorAll('.empresa-input-cadastro');
+        inputs.forEach(input => {
+            criarSistemaBackspaceDetector(input);
+        });
+    }, 1000);
+});
 
 export {
     formatarData,
