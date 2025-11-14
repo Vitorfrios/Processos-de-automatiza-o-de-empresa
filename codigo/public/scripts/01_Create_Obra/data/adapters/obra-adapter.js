@@ -748,50 +748,73 @@ async function inicializarInputEmpresaHibrido(obraId) {
         return;
     }
     
-    // ✅ EMPRESAS CARREGADAS COM SUCESSO - INICIALIZAR FUNCIONALIDADE COMPLETA
-    
-    // Evento de input para busca em tempo real
-    input.addEventListener('input', function(e) {
-        const termo = e.target.value.trim();
-        console.log(`🔍 [INPUT HÍBRIDO] Buscando: "${termo}"`);
-        
-        // 🔄 SINCRONIZAÇÃO: Se o usuário apagou a empresa, limpa o número
-        if (termo.length === 0) {
-            limparNumeroCliente(obraId);
-            
-            // Limpa dados de seleção
-            delete input.dataset.siglaSelecionada;
-            delete input.dataset.nomeSelecionado;
-            
-            // ✅ MOSTRA TODAS AS EMPRESAS NOVAMENTE PARA NOVA SELEÇÃO
-            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
-            return;
-        }
-        
-        const sugestoes = filtrarEmpresas(termo, empresas);
-        console.log(`🎯 [INPUT HÍBRIDO] ${sugestoes.length} sugestões encontradas`);
-        
-        exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
-    });
-    
-    // Evento de foco - mostrar todas as opções (ATUALIZADO)
+    // 🔥 CORREÇÃO NO EVENTO DE FOCO - MANTÉM CONTEÚDO EDITÁVEL
     input.addEventListener('focus', function() {
         const valorAtual = this.value.trim();
         const empresaJaSelecionada = this.dataset.siglaSelecionada;
         
-        // 🔥 SE JÁ TEM EMPRESA SELECIONADA, NÃO MOSTRA DROPDOWN
-        if (empresaJaSelecionada && valorAtual === `${this.dataset.siglaSelecionada} - ${this.dataset.nomeSelecionado}`) {
-            dropdown.style.display = 'none';
-            return;
-        }
+        console.log('🎯 Foco no input:', {
+            valor: valorAtual,
+            empresaSelecionada: empresaJaSelecionada
+        });
+        
+        // 🔥 CORREÇÃO: NUNCA limpar o campo automaticamente
+        // Apenas mostra o dropdown baseado no conteúdo atual
         
         if (valorAtual.length === 0) {
-            limparNumeroCliente(obraId);
+            // Campo vazio: mostra todas as empresas
+            console.log('🔄 Campo vazio - mostrando todas empresas');
             exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        } else if (empresaJaSelecionada && valorAtual === `${this.dataset.siglaSelecionada} - ${this.dataset.nomeSelecionado}`) {
+            // 🔥 CORREÇÃO: Empresa já selecionada - mostra sugestões baseadas no nome atual
+            // MAS NÃO LIMPA O CAMPO - deixa editável
+            console.log('🔄 Empresa selecionada - mostrando sugestões para edição');
+            const sugestoes = filtrarEmpresas(valorAtual, empresas);
+            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
         } else {
+            // Texto parcial: mostra sugestões
+            console.log('🔄 Texto parcial - mostrando sugestões');
             const sugestoes = filtrarEmpresas(valorAtual, empresas);
             exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
         }
+    });
+
+    // 🔥 CORREÇÃO NO EVENTO DE INPUT - MOSTRAR EMPRESAS AO APAGAR
+    input.addEventListener('input', function(e) {
+        const termo = e.target.value.trim();
+        console.log(`🔍 [INPUT] Digitando: "${termo}"`);
+        
+        // Se o usuário apagou completamente, mostra todas as empresas
+        if (termo.length === 0) {
+            console.log('🔄 Campo apagado - mostrando todas empresas');
+            
+            // Limpa dados de seleção se o campo está vazio
+            delete input.dataset.siglaSelecionada;
+            delete input.dataset.nomeSelecionado;
+            
+            // Limpa número do cliente
+            limparNumeroCliente(obraId);
+            
+            // 🔥 CORREÇÃO: MOSTRAR TODAS AS EMPRESAS
+            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+            return;
+        }
+        
+        // Se há texto, fazer busca normal
+        const sugestoes = filtrarEmpresas(termo, empresas);
+        console.log(`🎯 [INPUT] ${sugestoes.length} sugestões para "${termo}"`);
+        
+        // 🔥 CORREÇÃO: Atualizar dados de seleção se necessário
+        if (sugestoes.length === 1 && termo.length > 0) {
+            const [sigla, nome] = Object.entries(sugestoes[0])[0];
+            // Só atualiza os dados se o texto corresponde exatamente à sugestão única
+            if (termo === `${sigla} - ${nome}` || termo === sigla) {
+                input.dataset.siglaSelecionada = sigla;
+                input.dataset.nomeSelecionado = nome;
+            }
+        }
+        
+        exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
     });
 
     
@@ -881,7 +904,7 @@ function filtrarEmpresas(termo, empresas) {
 }
 
 /**
- * EXIBIR SUGESTÕES NO DROPDOWN - COM COMPORTAMENTO EXCEL
+ * EXIBIR SUGESTÕES NO DROPDOWN - COM COMPORTAMENTO EXCEL CORRIGIDO
  */
 function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     const valorAtual = input.value.trim();
@@ -910,22 +933,14 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     
     const sugestoesLimitadas = sugestoes.slice(0, 50);
     
-    // 🔥 COMPORTAMENTO EXCEL: Se há apenas 1 sugestão, seleciona automaticamente
+    // 🔥 COMPORTAMENTO EXCEL CORRIGIDO: Se há apenas 1 sugestão, seleciona automaticamente
     if (sugestoesLimitadas.length === 1 && valorAtual.length > 0) {
         const [sigla, nome] = Object.entries(sugestoesLimitadas[0])[0];
         
-        // Preenche o input automaticamente (igual Excel)
-        input.value = `${sigla} - ${nome}`;
-        input.dataset.siglaSelecionada = sigla;
-        input.dataset.nomeSelecionado = nome;
+        console.log(`✅ [EXCEL] Única sugestão detectada: ${sigla} - ${nome}`);
         
-        // Fecha o dropdown
-        dropdown.style.display = 'none';
-        
-        // Calcula o número do cliente automaticamente
-        calcularNumeroClienteFinal(sigla, obraId);
-        
-        console.log(`✅ [EXCEL] Única sugestão selecionada automaticamente: ${sigla} - ${nome}`);
+        // 🔥 CORREÇÃO: Chamar a função selecionarEmpresa para garantir o comportamento completo
+        selecionarEmpresa(sigla, nome, input, dropdown, obraId);
         return;
     }
     
@@ -943,7 +958,7 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     container.innerHTML = html;
     dropdown.style.display = 'block';
     
-    // 🔥 COMPORTAMENTO EXCEL: Se há poucas sugestões, seleciona a primeira automaticamente para navegação com setas
+    // COMPORTAMENTO EXCEL: Se há poucas sugestões, seleciona a primeira automaticamente para navegação com setas
     if (sugestoesLimitadas.length > 0) {
         const primeiraOpcao = container.querySelector('.dropdown-option');
         if (primeiraOpcao) {
@@ -960,9 +975,13 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     
     // Vincular eventos de clique
     container.querySelectorAll('.dropdown-option').forEach(option => {
-        option.addEventListener('click', function() {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const sigla = this.dataset.sigla;
             const nome = this.dataset.nome;
+            console.log('🖱️ Clique na opção:', sigla, nome);
             selecionarEmpresa(sigla, nome, input, dropdown, obraId);
         });
     });
@@ -1028,9 +1047,8 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
     console.log(`📊 [EMPRESA] Exibindo ${empresasLimitadas.length} de ${empresas.length} empresas`);
 }
 
-
 /**
- * NAVEGAR NO DROPDOWN COM TECLADO - ATUALIZADO PARA COMPORTAMENTO EXCEL
+ * NAVEGAR NO DROPDOWN COM TECLADO - COM LOOP (FINAL → INÍCIO)
  */
 function navegarDropdown(direcao, container, input, dropdown, obraId) {
     const options = container.querySelectorAll('.dropdown-option');
@@ -1041,11 +1059,23 @@ function navegarDropdown(direcao, container, input, dropdown, obraId) {
     
     if (activeOption) {
         const currentIndex = Array.from(options).indexOf(activeOption);
-        nextIndex = direcao === 'down' 
-            ? Math.min(currentIndex + 1, options.length - 1)
-            : Math.max(currentIndex - 1, 0);
+        
+        // 🔥 COMPORTAMENTO EXCEL COM LOOP
+        if (direcao === 'down') {
+            // Para baixo: se está no último, volta para o primeiro
+            nextIndex = currentIndex === options.length - 1 ? 0 : currentIndex + 1;
+        } else {
+            // Para cima: se está no primeiro, vai para o último
+            nextIndex = currentIndex === 0 ? options.length - 1 : currentIndex - 1;
+        }
+        
+        console.log(`🔄 Navegação: ${currentIndex} → ${nextIndex} (total: ${options.length})`);
+    } else {
+        // Se não há opção ativa, começa na primeira (down) ou última (up)
+        nextIndex = direcao === 'down' ? 0 : options.length - 1;
     }
     
+    // Remove active de todas e aplica na nova
     options.forEach(opt => opt.classList.remove('active'));
     options[nextIndex].classList.add('active');
     
@@ -1055,44 +1085,121 @@ function navegarDropdown(direcao, container, input, dropdown, obraId) {
     input.value = `${sigla} - ${nome}`;
     
     // Scroll para a opção ativa
-    options[nextIndex].scrollIntoView({ block: 'nearest' });
+    options[nextIndex].scrollIntoView({ 
+        block: 'nearest',
+        behavior: 'smooth' 
+    });
+    
+    console.log(`🎯 Navegando para: ${sigla} - ${nome} (${nextIndex + 1}/${options.length})`);
+}
+
+
+/**
+ * SELECIONAR EMPRESA - SEM BLOQUEAR EDIÇÃO FUTURA
+ */
+function selecionarEmpresa(sigla, nome, input, dropdown, obraId) {
+    console.log('🎯 Selecionando empresa:', sigla, nome);
+    
+    // Preenche o input
+    input.value = `${sigla} - ${nome}`;
+    input.dataset.siglaSelecionada = sigla;
+    input.dataset.nomeSelecionado = nome;
+    
+    // Fecha dropdown
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+    
+    // Remove foco do input (mas mantém editável para futuro)
+    setTimeout(() => {
+        input.blur();
+        
+        // Mostra aviso
+        mostrarAvisoAutocompletado(input);
+    }, 10);
+    
+    // Calcula o número do cliente
+    calcularNumeroClienteFinal(sigla, obraId);
+    
+    console.log(`✅ Empresa selecionada: ${sigla} - ${nome}`);
+}
+
+
+/**
+ * 🆕 MOSTRAR AVISO DE AUTOCOMPLETE - VERSÃO ULTRA-GARANTIDA
+ */
+function mostrarAvisoAutocompletado(input) {
+    console.log('🔔 VERSÃO ULTRA-GARANTIDA DO AVISO');
+    
+    // 🔥 ESTRATÉGIA RADICAL: Criar aviso no body com posição fixa
+    const rect = input.getBoundingClientRect();
+    
+    // Remove avisos anteriores
+    document.querySelectorAll('.aviso-autocomplete-global').forEach(aviso => aviso.remove());
+    
+    // Cria aviso com posição fixa baseada no input
+    const aviso = document.createElement('div');
+    aviso.className = 'aviso-autocomplete-global';
+    aviso.textContent = 'Empresa autocompletada ✓';
+    
+    // Posição fixa calculada baseada no input
+    aviso.style.cssText = `
+        position: fixed !important;
+        top: ${rect.top - 50}px !important;
+        left: ${rect.left}px !important;
+        width: ${rect.width}px !important;
+        background: #10b981 !important;
+        color: white !important;
+        padding: 10px 12px !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        z-index: 10000 !important;
+        opacity: 0 !important;
+        transform: translateY(10px) !important;
+        transition: all 0.3s ease !important;
+        pointer-events: none !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+        border: 2px solid #059669 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    `;
+    
+    document.body.appendChild(aviso);
+    
+    // Animação
+    setTimeout(() => {
+        aviso.style.opacity = '1';
+        aviso.style.transform = 'translateY(0)';
+    }, 50);
+    
+    // Remover
+    setTimeout(() => {
+        aviso.style.opacity = '0';
+        aviso.style.transform = 'translateY(-10px)';
+        setTimeout(() => aviso.remove(), 400);
+    }, 2000);
 }
 
 /**
- * SELECIONAR OPÇÃO ATIVA COM ENTER - ATUALIZADO
+ * ATUALIZAR EVENTO DE ENTER - CORRIGIDO
  */
 function selecionarOpcaoAtiva(container, input, dropdown, obraId) {
     const activeOption = container.querySelector('.dropdown-option.active');
     if (activeOption) {
         const sigla = activeOption.dataset.sigla;
         const nome = activeOption.dataset.nome;
+        console.log('⌨️ Enter na opção:', sigla, nome);
         selecionarEmpresa(sigla, nome, input, dropdown, obraId);
     } else {
-        // 🔥 COMPORTAMENTO EXCEL: Se não há opção ativa mas há sugestões, seleciona a primeira
         const primeiraOpcao = container.querySelector('.dropdown-option');
         if (primeiraOpcao) {
             const sigla = primeiraOpcao.dataset.sigla;
             const nome = primeiraOpcao.dataset.nome;
+            console.log('⌨️ Enter na primeira opção:', sigla, nome);
             selecionarEmpresa(sigla, nome, input, dropdown, obraId);
         }
     }
-}
-
-
-
-/**
- * 🆕 SELECIONAR EMPRESA
- */
-function selecionarEmpresa(sigla, nome, input, dropdown, obraId) {
-    input.value = `${sigla} - ${nome}`;
-    input.dataset.siglaSelecionada = sigla;
-    input.dataset.nomeSelecionado = nome;
-    dropdown.style.display = 'none';
-    
-    // 🔄 SÓ CALCULA O NÚMERO SE UMA EMPRESA FOI SELECIONADA
-    calcularNumeroClienteFinal(sigla, obraId);
-    
-    console.log(`✅ [EMPRESA] Empresa selecionada: ${sigla} - ${nome}`);
 }
 
 /**

@@ -205,8 +205,8 @@
 
 /* Container do input híbrido de empresa */
 .empresa-input-container {
-    position: relative;
-    width: 100%;
+    position: relative !important;
+    width: 100% !important;
 }
 
 .empresa-input-cadastro {
@@ -302,32 +302,54 @@
     font-size: 13px;
     flex-shrink: 0;
 }
-/* 🔥 AVISO DE AUTOCOMPLETE */
+/* 🔥 AVISO DE AUTOCOMPLETE - CORRIGIDO */
+.empresa-input-container {
+    position: relative !important;
+    width: 100%;
+}
+
 .aviso-autocomplete {
-    position: absolute;
-    top: -30px;
-    left: 0;
-    right: 0;
-    background: var(--color-success);
-    color: var(--color-white);
-    padding: 6px 10px;
-    border-radius: var(--border-radius);
-    font-size: 12px;
-    font-weight: 500;
-    text-align: center;
-    z-index: 1001;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.3s ease;
-    pointer-events: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: absolute !important;
+    top: -40px !important; /* 🔥 Ajuste da posição */
+    left: 0 !important;
+    right: 0 !important;
+    background: #10b981 !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    z-index: 9999 !important; /* 🔥 Z-index muito alto */
+    opacity: 0 !important;
+    transform: translateY(10px) !important;
+    transition: all 0.3s ease !important;
+    pointer-events: none !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    border: 1px solid #059669 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .aviso-autocomplete.show {
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 1 !important;
+    transform: translateY(0) !important;
 }
 
+/* 🔥 GARANTIR QUE O INPUT PERCA FOCO VISUALMENTE */
+.empresa-input-cadastro:not(:focus) {
+    border-color: var(--color-primary) !important;
+    background-color: #f0f9ff !important;
+}
+
+.empresa-form-group-horizontal {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.form-group-horizontal {
+    position: relative !important;
+    overflow: visible !important;
+}
 
 .nome-empresa {
     flex: 1;
