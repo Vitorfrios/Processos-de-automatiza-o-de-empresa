@@ -868,8 +868,11 @@ function filtrarEmpresas(termo, empresas) {
     });
 }
 
+
+
+
 /**
- * 🆕 EXIBIR SUGESTÕES NO DROPDOWN - COM MENSAGEM PARA CRIAÇÃO
+ * 🆕 EXIBIR SUGESTÕES NO DROPDOWN - CORRIGIDA PARA RESPEITAR LIMITE
  */
 function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     const valorAtual = input.value.trim();
@@ -898,18 +901,45 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
         return;
     }
     
-    const html = sugestoes.map(empresaObj => {
+    // 🔥 LIMITAR SUGESTÕES TAMBÉM
+    const sugestoesLimitadas = sugestoes.slice(0, 50);
+    
+    const html = sugestoesLimitadas.map(empresaObj => {
         const [sigla, nome] = Object.entries(empresaObj)[0];
-        const primeiroNome = nome.split(' ')[0];
+        const palavras = nome.split(' ');
+        const primeiroNome = palavras[0];
+        const segundoNome = palavras[1] || ''; // Segundo nome, se existir
+        
+        // 🆕 MOSTRAR PRIMEIRO E SEGUNDO NOMES
+        let textoExibicao = primeiroNome;
+        if (segundoNome) {
+            textoExibicao += ` ${segundoNome}`;
+        }
+        
+        // 🆕 OPÇÃO PARA TERCEIRO NOME - DESCOMENTE SE QUISER IMPLEMENTAR
+        const terceiroNome = palavras[2] || '';
+        if (terceiroNome) {
+            textoExibicao += ` ${terceiroNome}`;
+        }
+        
+        
         return `
             <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
-                <strong>${sigla}</strong> - ${primeiroNome}
+                <strong>${sigla}</strong> - ${textoExibicao}
             </div>
         `;
     }).join('');
     
     container.innerHTML = html;
     dropdown.style.display = 'block';
+    
+    // 🔥 FORÇAR O CSS A RESPEITAR A ALTURA MÁXIMA
+    setTimeout(() => {
+        if (dropdown.scrollHeight > 200) {
+            dropdown.style.overflowY = 'auto';
+            dropdown.style.maxHeight = '200px';
+        }
+    }, 10);
     
     // Vincular eventos de clique
     container.querySelectorAll('.dropdown-option').forEach(option => {
@@ -919,10 +949,12 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
             selecionarEmpresa(sigla, nome, input, dropdown, obraId);
         });
     });
+    
+    console.log(`🔍 [EMPRESA] Exibindo ${sugestoesLimitadas.length} sugestões`);
 }
 
 /**
- * 🆕 EXIBIR TODAS AS EMPRESAS - CORRIGIDO
+ * 🆕 EXIBIR TODAS AS EMPRESAS - CORRIGIDA PARA RESPEITAR LIMITE DE ALTURA
  */
 function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
     const empresaJaSelecionada = input.dataset.siglaSelecionada;
@@ -945,7 +977,10 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
         return;
     }
     
-    const html = empresas.map(empresaObj => {
+    // 🔥 LIMITAR O NÚMERO DE EMPRESAS EXIBIDAS PARA EVITAR SOBRECARGA
+    const empresasLimitadas = empresas.slice(0, 50); // Máximo 50 empresas
+    
+    const html = empresasLimitadas.map(empresaObj => {
         const [sigla, nome] = Object.entries(empresaObj)[0];
         const primeiroNome = nome.split(' ')[0];
         return `
@@ -958,6 +993,14 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
     container.innerHTML = html;
     dropdown.style.display = 'block';
     
+    // 🔥 FORÇAR O CSS A RESPEITAR A ALTURA MÁXIMA
+    setTimeout(() => {
+        if (dropdown.scrollHeight > 200) {
+            dropdown.style.overflowY = 'auto';
+            dropdown.style.maxHeight = '200px';
+        }
+    }, 10);
+    
     // Vincular eventos de clique
     container.querySelectorAll('.dropdown-option').forEach(option => {
         option.addEventListener('click', function() {
@@ -966,6 +1009,8 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
             selecionarEmpresa(sigla, nome, input, dropdown, obraId);
         });
     });
+    
+    console.log(`📊 [EMPRESA] Exibindo ${empresasLimitadas.length} de ${empresas.length} empresas`);
 }
 
 /**

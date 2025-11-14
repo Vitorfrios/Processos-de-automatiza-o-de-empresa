@@ -200,7 +200,7 @@
 }
 
 /* =================================================================
-   SEÇÃO 4: SISTEMA DE INPUT HÍBRIDO E DROPDOWN
+   SEÇÃO 4: SISTEMA DE INPUT HÍBRIDO E DROPDOWN - CORRIGIDO
    ================================================================= */
 
 /* Container do input híbrido de empresa */
@@ -227,7 +227,7 @@
     box-shadow: var(--capacity-input-focus-shadow);
 }
 
-/* Dropdown de sugestões de empresas */
+/* Dropdown de sugestões de empresas - CORREÇÃO DEFINITIVA */
 .empresa-dropdown {
     display: none;
     position: absolute;
@@ -238,14 +238,19 @@
     border: 1px solid var(--color-gray-300);
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
-    max-height: 200px;
-    overflow-y: auto;
+    max-height: 200px !important;
+    height: auto;
+    overflow-y: auto !important;
+    overflow-x: hidden;
     z-index: 1000;
     margin-top: 2px;
 }
 
+/* Container interno do dropdown - SEM LIMITAÇÕES DE ALTURA */
 .dropdown-options {
     padding: 4px 0;
+    height: auto;
+    max-height: none !important;
 }
 
 .dropdown-option {
@@ -259,6 +264,9 @@
     min-height: 36px;
     box-sizing: border-box;
     color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dropdown-option:hover,
@@ -274,10 +282,10 @@
 .dropdown-option strong {
     color: #007bff;
     font-weight: 600;
-    min-width: 50px;
     text-align: left;
     font-family: 'Courier New', monospace;
     font-size: 13px;
+    flex-shrink: 0;
 }
 
 .dropdown-option:hover strong,
@@ -291,6 +299,10 @@
     color: var(--color-gray-600);
     font-style: italic;
     font-size: 13px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Sistema de autocomplete (legado) */
@@ -371,10 +383,10 @@
 }
 
 /* =================================================================
-   SEÇÃO 6: TOOLTIPS E ELEMENTOS DE INFORMAÇÃO - CORRIGIDO
+   SEÇÃO 6: TOOLTIPS E ELEMENTOS DE INFORMAÇÃO
    ================================================================= */
 
-/* 🔥 SPAN COM TOOLTIP */
+/* Span com tooltip */
 .empresa-identifier-display {
     display: inline-flex;
     align-items: center;
@@ -382,7 +394,7 @@
     background: var(--primary-gradient);
     color: var(--color-white);
     border-radius: var(--border-radius-lg);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* 🔥 FONTE DO SISTEMA */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
@@ -399,7 +411,7 @@
     transform: translateY(-2px);
 }
 
-/* 🔥 TOOLTIP COM FONTE DO SISTEMA */
+/* Tooltip com fonte do sistema */
 .empresa-tooltip {
     position: absolute !important;
     bottom: calc(100% + 8px) !important;
@@ -409,7 +421,7 @@
     color: var(--color-white) !important;
     padding: 12px 16px !important;
     border-radius: var(--border-radius-lg) !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; /* 🔥 MESMA FONTE DO SISTEMA */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     font-size: 13px !important;
     font-weight: 500 !important;
     font-style: normal !important;
@@ -433,7 +445,7 @@
     display: block;
 }
 
-/* 🔥 SETA DO TOOLTIP */
+/* Seta do tooltip */
 .empresa-tooltip::after {
     content: '';
     position: absolute;
@@ -444,7 +456,7 @@
     border-top-color: var(--color-gray-800);
 }
 
-/* 🔥 GARANTIR VISIBILIDADE */
+/* Garantir visibilidade */
 .obra-header-spacer,
 .obra-header,
 .obra-block {
@@ -453,9 +465,6 @@
     z-index: auto !important;
 }
 
-* {
-    overflow: visible !important;
-}
 /* =================================================================
    SEÇÃO 7: ELEMENTOS DE IDENTIFICAÇÃO E ESTADO
    ================================================================= */
@@ -525,24 +534,33 @@
 /* Scrollbar para dropdowns e autocomplete */
 .empresa-dropdown::-webkit-scrollbar,
 .autocomplete-suggestions::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 .empresa-dropdown::-webkit-scrollbar-track,
 .autocomplete-suggestions::-webkit-scrollbar-track {
     background: var(--color-gray-100);
-    border-radius: 3px;
+    border-radius: 4px;
+    margin: 2px 0;
 }
 
 .empresa-dropdown::-webkit-scrollbar-thumb,
 .autocomplete-suggestions::-webkit-scrollbar-thumb {
     background: var(--color-gray-400);
-    border-radius: 3px;
+    border-radius: 4px;
+    border: 2px solid var(--color-gray-100);
 }
 
 .empresa-dropdown::-webkit-scrollbar-thumb:hover,
 .autocomplete-suggestions::-webkit-scrollbar-thumb:hover {
     background: var(--color-gray-500);
+}
+
+/* Scrollbar para Firefox */
+.empresa-dropdown,
+.autocomplete-suggestions {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-gray-400) var(--color-gray-100);
 }
 
 /* =================================================================
@@ -587,14 +605,13 @@
         left: 10px;
         right: 10px;
         max-height: 60vh;
+        top: auto;
+        bottom: auto;
     }
     
-    /* Ajuste de tooltips em mobile */
-    [data-tooltip]::before {
-        min-width: 200px;
-        max-width: 280px;
-        font-size: 12px;
-        padding: var(--spacing-xs) var(--spacing-sm);
+    /* Garantir que o dropdown fique acima de todos os elementos */
+    .empresa-dropdown.mobile-open {
+        z-index: 9999;
     }
 }
 
@@ -627,6 +644,11 @@
     .dropdown-option {
         padding: 10px 12px;
         min-height: 40px;
+        font-size: 14px;
+    }
+    
+    .empresa-dropdown {
+        max-height: 50vh;
     }
 }
 
@@ -634,6 +656,11 @@
 @media (min-width: 1400px) {
     .empresa-form-grid-horizontal {
         grid-template-columns: repeat(4, 1fr);
+    }
+    
+    /* Dropdown maior em telas grandes */
+    .empresa-dropdown {
+        max-height: 250px;
     }
 }
 
