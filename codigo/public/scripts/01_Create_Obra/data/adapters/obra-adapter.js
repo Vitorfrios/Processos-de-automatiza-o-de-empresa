@@ -814,16 +814,30 @@ async function inicializarInputEmpresaHibrido(obraId) {
     input.addEventListener('keydown', function(e) {
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            navegarDropdown('down', optionsContainer, input);
+            navegarDropdown('down', optionsContainer, input, dropdown, obraId);
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            navegarDropdown('up', optionsContainer, input);
+            navegarDropdown('up', optionsContainer, input, dropdown, obraId);
         } else if (e.key === 'Enter') {
             e.preventDefault();
-            selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
+            
+            // 🔥 COMPORTAMENTO EXCEL: Se o dropdown está aberto, seleciona a opção ativa
+            if (dropdown.style.display === 'block') {
+                selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
+            } else {
+                // Se o dropdown está fechado mas há uma empresa já preenchida, apenas fecha
+                dropdown.style.display = 'none';
+                input.blur();
+            }
         } else if (e.key === 'Escape') {
             dropdown.style.display = 'none';
             input.blur();
+        } else if (e.key === 'Tab') {
+            // 🔥 COMPORTAMENTO EXCEL: Tab também seleciona a opção ativa
+            if (dropdown.style.display === 'block') {
+                e.preventDefault();
+                selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
+            }
         }
     });
     
@@ -867,7 +881,7 @@ function filtrarEmpresas(termo, empresas) {
 }
 
 /**
- * EXIBIR SUGESTÕES NO DROPDOWN
+ * EXIBIR SUGESTÕES NO DROPDOWN - COM COMPORTAMENTO EXCEL
  */
 function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     const valorAtual = input.value.trim();
@@ -896,6 +910,25 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     
     const sugestoesLimitadas = sugestoes.slice(0, 50);
     
+    // 🔥 COMPORTAMENTO EXCEL: Se há apenas 1 sugestão, seleciona automaticamente
+    if (sugestoesLimitadas.length === 1 && valorAtual.length > 0) {
+        const [sigla, nome] = Object.entries(sugestoesLimitadas[0])[0];
+        
+        // Preenche o input automaticamente (igual Excel)
+        input.value = `${sigla} - ${nome}`;
+        input.dataset.siglaSelecionada = sigla;
+        input.dataset.nomeSelecionado = nome;
+        
+        // Fecha o dropdown
+        dropdown.style.display = 'none';
+        
+        // Calcula o número do cliente automaticamente
+        calcularNumeroClienteFinal(sigla, obraId);
+        
+        console.log(`✅ [EXCEL] Única sugestão selecionada automaticamente: ${sigla} - ${nome}`);
+        return;
+    }
+    
     const html = sugestoesLimitadas.map(empresaObj => {
         const [sigla, nome] = Object.entries(empresaObj)[0];
         
@@ -910,6 +943,14 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     container.innerHTML = html;
     dropdown.style.display = 'block';
     
+    // 🔥 COMPORTAMENTO EXCEL: Se há poucas sugestões, seleciona a primeira automaticamente para navegação com setas
+    if (sugestoesLimitadas.length > 0) {
+        const primeiraOpcao = container.querySelector('.dropdown-option');
+        if (primeiraOpcao) {
+            primeiraOpcao.classList.add('active');
+        }
+    }
+    
     setTimeout(() => {
         if (dropdown.scrollHeight > 200) {
             dropdown.style.overflowY = 'auto';
@@ -917,6 +958,7 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
         }
     }, 10);
     
+    // Vincular eventos de clique
     container.querySelectorAll('.dropdown-option').forEach(option => {
         option.addEventListener('click', function() {
             const sigla = this.dataset.sigla;
@@ -927,6 +969,7 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     
     console.log(`🔍 [EMPRESA] Exibindo ${sugestoesLimitadas.length} sugestões`);
 }
+
 
 /**
  * EXIBIR TODAS AS EMPRESAS
@@ -987,9 +1030,9 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
 
 
 /**
- * 🆕 NAVEGAR NO DROPDOWN COM TECLADO
+ * NAVEGAR NO DROPDOWN COM TECLADO - ATUALIZADO PARA COMPORTAMENTO EXCEL
  */
-function navegarDropdown(direcao, container, input) {
+function navegarDropdown(direcao, container, input, dropdown, obraId) {
     const options = container.querySelectorAll('.dropdown-option');
     if (options.length === 0) return;
     
@@ -1006,12 +1049,17 @@ function navegarDropdown(direcao, container, input) {
     options.forEach(opt => opt.classList.remove('active'));
     options[nextIndex].classList.add('active');
     
+    // 🔥 COMPORTAMENTO EXCEL: Atualiza o input em tempo real durante navegação
+    const sigla = options[nextIndex].dataset.sigla;
+    const nome = options[nextIndex].dataset.nome;
+    input.value = `${sigla} - ${nome}`;
+    
     // Scroll para a opção ativa
     options[nextIndex].scrollIntoView({ block: 'nearest' });
 }
 
 /**
- * 🆕 SELECIONAR OPÇÃO ATIVA COM ENTER
+ * SELECIONAR OPÇÃO ATIVA COM ENTER - ATUALIZADO
  */
 function selecionarOpcaoAtiva(container, input, dropdown, obraId) {
     const activeOption = container.querySelector('.dropdown-option.active');
@@ -1019,8 +1067,18 @@ function selecionarOpcaoAtiva(container, input, dropdown, obraId) {
         const sigla = activeOption.dataset.sigla;
         const nome = activeOption.dataset.nome;
         selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+    } else {
+        // 🔥 COMPORTAMENTO EXCEL: Se não há opção ativa mas há sugestões, seleciona a primeira
+        const primeiraOpcao = container.querySelector('.dropdown-option');
+        if (primeiraOpcao) {
+            const sigla = primeiraOpcao.dataset.sigla;
+            const nome = primeiraOpcao.dataset.nome;
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+        }
     }
 }
+
+
 
 /**
  * 🆕 SELECIONAR EMPRESA
