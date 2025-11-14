@@ -6,7 +6,6 @@
    SEÇÃO 1: BOTÕES E ELEMENTOS INTERATIVOS
    ================================================================= */
 
-/* Botão principal de cadastro de empresa */
 .btn-empresa-cadastro {
     background: var(--color-gray-200);
     color: var(--color-gray-800);
@@ -33,7 +32,6 @@
     box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
 }
 
-/* Botão identificador de empresa no header */
 .btn-empresa-identifier {
     background: var(--color-gray-100);
     border: 1px solid var(--color-gray-300);
@@ -56,7 +54,6 @@
    SEÇÃO 2: CONTAINERS PRINCIPAIS E LAYOUT
    ================================================================= */
 
-/* Container principal do cadastro inline */
 .empresa-cadastro-inline {
     background: var(--bg-primary);
     border: 2px solid var(--color-primary);
@@ -78,7 +75,6 @@
     }
 }
 
-/* Container do formulário ativo de empresa */
 .empresa-formulario-ativo {
     background: var(--bg-primary);
     border: 1px solid var(--color-primary);
@@ -106,7 +102,6 @@
    SEÇÃO 3: SISTEMAS DE GRID E FORMULÁRIOS
    ================================================================= */
 
-/* Grid horizontal responsivo para formulários */
 .empresa-form-grid-horizontal {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -114,7 +109,6 @@
     margin-bottom: var(--spacing-md);
 }
 
-/* Grid vertical para formulários (legado) */
 .empresa-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -122,11 +116,11 @@
     margin-bottom: var(--spacing-lg);
 }
 
-/* Grupos de formulário horizontais */
 .form-group-horizontal {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    position: relative;
 }
 
 .form-group-horizontal label {
@@ -164,7 +158,6 @@
     box-shadow: var(--capacity-input-focus-shadow);
 }
 
-/* Grupos de formulário verticais (legado) */
 .form-group {
     display: flex;
     flex-direction: column;
@@ -203,10 +196,9 @@
    SEÇÃO 4: SISTEMA DE INPUT HÍBRIDO E DROPDOWN - CORRIGIDO
    ================================================================= */
 
-/* Container do input híbrido de empresa */
 .empresa-input-container {
-    position: relative !important;
-    width: 100% !important;
+    position: relative;
+    width: 100%;
 }
 
 .empresa-input-cadastro {
@@ -227,7 +219,7 @@
     box-shadow: var(--capacity-input-focus-shadow);
 }
 
-/* Dropdown de sugestões de empresas - CORREÇÃO DEFINITIVA */
+/* DROPDOWN PRINCIPAL - SEMPRE RELATIVO AO INPUT */
 .empresa-dropdown {
     display: none;
     position: absolute;
@@ -238,25 +230,21 @@
     border: 1px solid var(--color-gray-300);
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
-    max-height: 200px !important;
-    height: auto;
-    overflow-y: auto !important;
+    max-height: 200px;
+    overflow-y: auto;
     overflow-x: hidden;
     z-index: 1000;
     margin-top: 2px;
 }
 
-/* Container interno do dropdown - SEM LIMITAÇÕES DE ALTURA */
 .dropdown-options {
     padding: 4px 0;
-    height: auto;
-    max-height: none !important;
 }
 
 .dropdown-option {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding: 8px 12px;
     cursor: pointer;
     border-bottom: 1px solid var(--color-gray-200);
@@ -267,21 +255,8 @@
     white-space: nowrap;
     overflow: hidden;
     max-width: 100%;
-}
+    align-items: flex-end;
 
-.dropdown-option:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    background: #333;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    white-space: normal;
-    max-width: 300px;
-    z-index: 10000;
-    font-size: 12px;
 }
 
 .dropdown-option:hover,
@@ -302,53 +277,10 @@
     font-size: 13px;
     flex-shrink: 0;
 }
-/* 🔥 AVISO DE AUTOCOMPLETE - CORRIGIDO */
-.empresa-input-container {
-    position: relative !important;
-    width: 100%;
-}
 
-.aviso-autocomplete {
-    position: absolute !important;
-    top: -40px !important; /* 🔥 Ajuste da posição */
-    left: 0 !important;
-    right: 0 !important;
-    background: #10b981 !important;
-    color: white !important;
-    padding: 8px 12px !important;
-    border-radius: 6px !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    text-align: center !important;
-    z-index: 9999 !important; /* 🔥 Z-index muito alto */
-    opacity: 0 !important;
-    transform: translateY(10px) !important;
-    transition: all 0.3s ease !important;
-    pointer-events: none !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-    border: 1px solid #059669 !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-}
-
-.aviso-autocomplete.show {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-}
-
-/* 🔥 GARANTIR QUE O INPUT PERCA FOCO VISUALMENTE */
-.empresa-input-cadastro:not(:focus) {
-    border-color: var(--color-primary) !important;
-    background-color: #f0f9ff !important;
-}
-
-.empresa-form-group-horizontal {
-    position: relative !important;
-    overflow: visible !important;
-}
-
-.form-group-horizontal {
-    position: relative !important;
-    overflow: visible !important;
+.dropdown-option:hover strong,
+.dropdown-option.active strong {
+    color: var(--color-white) !important;
 }
 
 .nome-empresa {
@@ -357,19 +289,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
-    font-size: 15px;
-}
-
-.dropdown-option > span {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.dropdown-option:hover strong,
-.dropdown-option.active strong {
-    color: var(--color-white) !important;
 }
 
 .dropdown-no-results {
@@ -384,43 +303,39 @@
     justify-content: center;
 }
 
-/* Sistema de autocomplete (legado) */
-.autocomplete-suggestions {
+/* AVISO DE AUTOCOMPLETE */
+.aviso-autocomplete-relativo {
     position: absolute;
-    background: var(--bg-primary);
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--border-radius);
-    max-height: 200px;
-    overflow-y: auto;
+    top: -35px;
+    left: 0;
+    right: 0;
+    background: #10b981;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
     z-index: 1000;
-    box-shadow: var(--card-shadow);
-    display: none;
-    margin-top: 35px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    border: 1px solid #059669;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
 }
 
-.suggestion-item {
-    padding: var(--spacing-sm);
-    cursor: pointer;
-    border-bottom: 1px solid var(--color-gray-200);
-    color: var(--color-gray-700);
-    transition: background-color 0.2s ease;
-}
-
-.suggestion-item:hover,
-.suggestion-item.active {
-    background-color: var(--color-primary);
-    color: var(--color-white);
-}
-
-.suggestion-item:last-child {
-    border-bottom: none;
+.aviso-autocomplete-relativo.show {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* =================================================================
    SEÇÃO 5: AÇÕES E BOTÕES DE FORMULÁRIO
    ================================================================= */
 
-/* Container de ações do formulário */
 .empresa-form-actions {
     display: flex;
     gap: var(--spacing-sm);
@@ -429,7 +344,6 @@
     padding-top: var(--spacing-md);
 }
 
-/* Botão de cancelar */
 .btn-cancel {
     background: var(--color-gray-500);
     color: var(--color-white);
@@ -445,7 +359,6 @@
     background: var(--color-gray-600);
 }
 
-/* Botão de confirmar */
 .btn-confirm {
     background: var(--success-gradient);
     color: var(--color-white);
@@ -465,7 +378,6 @@
    SEÇÃO 6: TOOLTIPS E ELEMENTOS DE INFORMAÇÃO
    ================================================================= */
 
-/* Span com tooltip */
 .empresa-identifier-display {
     display: inline-flex;
     align-items: center;
@@ -481,7 +393,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
     min-height: 40px;
-    position: relative !important;
+    position: relative;
 }
 
 .empresa-identifier-display:hover {
@@ -490,32 +402,30 @@
     transform: translateY(-2px);
 }
 
-/* Tooltip com fonte do sistema */
 .empresa-tooltip {
-    position: absolute !important;
-    bottom: calc(100% + 8px) !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    background: var(--color-gray-800) !important;
-    color: var(--color-white) !important;
-    padding: 12px 16px !important;
-    border-radius: var(--border-radius-lg) !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    font-style: normal !important;
-    line-height: 1.4 !important;
-    white-space: pre-line !important;
-    text-align: left !important;
-    z-index: 9999 !important;
-    min-width: 280px !important;
-    max-width: 380px !important;
-    border: 1px solid var(--color-gray-600) !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
-    pointer-events: none !important;
-    backdrop-filter: blur(10px) !important;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-gray-800);
+    color: var(--color-white);
+    padding: 12px 16px;
+    border-radius: var(--border-radius-lg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: pre-line;
+    text-align: left;
+    z-index: 9999;
+    min-width: 280px;
+    max-width: 380px;
+    border: 1px solid var(--color-gray-600);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    backdrop-filter: blur(10px);
     opacity: 0;
-    transition: opacity 0.2s ease !important;
+    transition: opacity 0.2s ease;
     display: none;
 }
 
@@ -524,7 +434,6 @@
     display: block;
 }
 
-/* Seta do tooltip */
 .empresa-tooltip::after {
     content: '';
     position: absolute;
@@ -535,20 +444,18 @@
     border-top-color: var(--color-gray-800);
 }
 
-/* Garantir visibilidade */
 .obra-header-spacer,
 .obra-header,
 .obra-block {
-    position: relative !important;
-    overflow: visible !important;
-    z-index: auto !important;
+    position: relative;
+    overflow: visible;
+    z-index: auto;
 }
 
 /* =================================================================
    SEÇÃO 7: ELEMENTOS DE IDENTIFICAÇÃO E ESTADO
    ================================================================= */
 
-/* Display do ID da obra gerado */
 .obra-id-gerado {
     background: var(--color-gray-100);
     border: 1px solid var(--color-gray-300);
@@ -568,7 +475,6 @@
     color: var(--color-gray-800);
 }
 
-/* Estados de validação de formulário */
 .form-group-horizontal input.error {
     border-color: #e53e3e;
     box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.1);
@@ -579,7 +485,6 @@
     box-shadow: 0 0 0 2px rgba(56, 161, 105, 0.1);
 }
 
-/* Estados de loading */
 .btn-empresa-cadastro.loading,
 .btn-empresa-identifier.loading {
     position: relative;
@@ -610,43 +515,34 @@
    SEÇÃO 8: SCROLLBARS PERSONALIZADAS
    ================================================================= */
 
-/* Scrollbar para dropdowns e autocomplete */
-.empresa-dropdown::-webkit-scrollbar,
-.autocomplete-suggestions::-webkit-scrollbar {
-    width: 8px;
+.empresa-dropdown::-webkit-scrollbar {
+    width: 6px;
 }
 
-.empresa-dropdown::-webkit-scrollbar-track,
-.autocomplete-suggestions::-webkit-scrollbar-track {
+.empresa-dropdown::-webkit-scrollbar-track {
     background: var(--color-gray-100);
-    border-radius: 4px;
-    margin: 2px 0;
+    border-radius: 3px;
 }
 
-.empresa-dropdown::-webkit-scrollbar-thumb,
-.autocomplete-suggestions::-webkit-scrollbar-thumb {
+.empresa-dropdown::-webkit-scrollbar-thumb {
     background: var(--color-gray-400);
-    border-radius: 4px;
-    border: 2px solid var(--color-gray-100);
+    border-radius: 3px;
 }
 
-.empresa-dropdown::-webkit-scrollbar-thumb:hover,
-.autocomplete-suggestions::-webkit-scrollbar-thumb:hover {
+.empresa-dropdown::-webkit-scrollbar-thumb:hover {
     background: var(--color-gray-500);
 }
 
-/* Scrollbar para Firefox */
-.empresa-dropdown,
-.autocomplete-suggestions {
+.empresa-dropdown {
     scrollbar-width: thin;
     scrollbar-color: var(--color-gray-400) var(--color-gray-100);
 }
 
 /* =================================================================
-   SEÇÃO 9: RESPONSIVIDADE E MEDIA QUERIES
+   SEÇÃO 9: RESPONSIVIDADE E MEDIA QUERIES - CORRIGIDA
    ================================================================= */
 
-/* Tablets - 2 colunas */
+/* Tablets */
 @media (max-width: 1024px) {
     .empresa-form-grid-horizontal {
         grid-template-columns: repeat(2, 1fr);
@@ -657,13 +553,22 @@
         grid-template-columns: 1fr;
         gap: var(--spacing-sm);
     }
+    
+    .empresa-dropdown {
+        max-height: 180px;
+    }
+    
+    /* 🔥 GARANTIR QUE O DROPDOWN ACOMPANHE O INPUT */
+    .form-group-horizontal {
+        position: relative;
+    }
 }
 
-/* Tablets pequenos */
+/* Tablets pequenos - REMOVIDO POSITION FIXED */
 @media (max-width: 768px) {
     .empresa-form-grid-horizontal {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-sm);
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
     }
     
     .empresa-cadastro-inline {
@@ -676,25 +581,29 @@
     
     .empresa-form-actions {
         flex-direction: column;
+        gap: var(--spacing-sm);
     }
     
-    /* Ajuste do dropdown em mobile */
+    /* 🔥 CORREÇÃO: DROPDOWN MANTÉM POSIÇÃO RELATIVA */
     .empresa-dropdown {
-        position: fixed;
-        left: 10px;
-        right: 10px;
+        /* REMOVIDO: position: fixed e transform */
         max-height: 60vh;
-        top: auto;
-        bottom: auto;
+        z-index: 1000;
+        border: 1px solid var(--color-gray-300); /* Volta ao normal */
     }
     
-    /* Garantir que o dropdown fique acima de todos os elementos */
-    .empresa-dropdown.mobile-open {
-        z-index: 9999;
+    .aviso-autocomplete-relativo {
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+    
+    /* 🔥 GARANTIR QUE O CONTAINER TENHA ESPAÇO SUFICIENTE */
+    .form-group-horizontal {
+        margin-bottom: var(--spacing-sm);
     }
 }
 
-/* Mobile - 1 coluna */
+/* Mobile */
 @media (max-width: 480px) {
     .empresa-form-grid-horizontal {
         grid-template-columns: 1fr;
@@ -711,51 +620,90 @@
     
     .form-group-horizontal input {
         padding: var(--spacing-md);
-        font-size: 14px;
+        font-size: 16px;
     }
     
     .btn-empresa-cadastro {
         padding: var(--spacing-md);
+        font-size: 16px;
+    }
+    
+    .dropdown-option {
+        padding: 12px 16px;
+        min-height: 44px;
         font-size: 14px;
     }
     
-    /* Ajuste do dropdown em mobile pequeno */
+    /* 🔥 CORREÇÃO: DROPDOWN NORMAL EM MOBILE */
+    .empresa-dropdown {
+        max-height: 50vh;
+        /* REMOVIDO: left e right fixes */
+    }
+    
+    .aviso-autocomplete-relativo {
+        max-width: 150px;   
+
+        font-size: 10px;
+    }
+    
+    /* 🔥 EVITAR QUEBRAS NO LAYOUT */
+    .empresa-formulario-ativo {
+        overflow: visible;
+    }
+    
+    .empresa-cadastro-inline {
+        overflow: visible;
+    }
+}
+/* 🔥 GARANTIR QUE O DROPDOWN NÃO QUEBRE EM DISPOSITIVOS MÓVEIS */
+@media (max-width: 768px) {
+    .empresa-dropdown {
+        /* Forçar que o dropdown respeite o container do input */
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Garantir que o form-group tenha overflow visível */
+    .form-group-horizontal {
+        overflow: visible !important;
+    }
+    
+    /* Garantir que o container principal não corte o dropdown */
+    .empresa-input-container {
+        overflow: visible !important;
+    }
+    
+    .empresa-formulario-ativo {
+        overflow: visible !important;
+    }
+}
+
+/* 🔥 CORREÇÃO PARA TELAS MUITO PEQUENAS */
+@media (max-width: 360px) {
+    .empresa-dropdown {
+        max-height: 45vh;
+    }
+    
     .dropdown-option {
         padding: 10px 12px;
         min-height: 40px;
-        font-size: 14px;
+        font-size: 13px;
     }
     
-    .empresa-dropdown {
-        max-height: 50vh;
+    .dropdown-option strong {
+        min-width: 45px;
+        font-size: 12px;
     }
 }
-
-/* Telas muito grandes - 4 colunas */
-@media (min-width: 1400px) {
-    .empresa-form-grid-horizontal {
-        grid-template-columns: repeat(4, 1fr);
-    }
-    
-    /* Dropdown maior em telas grandes */
-    .empresa-dropdown {
-        max-height: 250px;
-    }
-}
-
-/* Ajuste específico para 6 campos - 3x2 em telas grandes */
-@media (min-width: 1024px) {
-    .empresa-form-grid-horizontal:has(.form-group-horizontal:nth-child(6)) {
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(2, auto);
-    }
-}
-
 /* =================================================================
    SEÇÃO 10: ACESSIBILIDADE E ESTADOS ESPECIAIS
    ================================================================= */
 
-/* Estados de foco consistentes */
 .btn-empresa-cadastro:focus,
 .btn-empresa-identifier:focus,
 .form-group-horizontal input:focus,
@@ -765,7 +713,6 @@
     box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
 }
 
-/* Animações suaves */
 .empresa-cadastro-inline,
 .empresa-formulario-ativo,
 .btn-empresa-cadastro,
@@ -775,7 +722,6 @@
     transition: all 0.2s ease-in-out;
 }
 
-/* Estados de desabilitado */
 .btn-empresa-cadastro:disabled,
 .btn-empresa-identifier:disabled {
     opacity: 0.6;
@@ -788,7 +734,6 @@
     border-color: var(--color-gray-300);
 }
 
-/* Melhorias de acessibilidade - redução de movimento */
 @media (prefers-reduced-motion: reduce) {
     .empresa-cadastro-inline,
     .empresa-formulario-ativo,
@@ -803,15 +748,8 @@
         from { opacity: 0; }
         to { opacity: 1; }
     }
-    
-    [data-tooltip]::before,
-    [data-tooltip]::after {
-        transition: none;
-        animation: none;
-    }
 }
 
-/* Suporte a alto contraste */
 @media (prefers-contrast: high) {
     [data-tooltip]::before {
         background: #000000;

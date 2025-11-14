@@ -875,6 +875,25 @@ async function inicializarInputEmpresaHibrido(obraId) {
 }
 
 /**
+ * 🆕 CORRIGIR POSIÇÃO DO DROPDOWN EM DISPOSITIVOS MÓVEIS
+ */
+function corrigirPosicaoDropdown() {
+    const dropdowns = document.querySelectorAll('.empresa-dropdown');
+    
+    dropdowns.forEach(dropdown => {
+        const input = dropdown.previousElementSibling;
+        if (input && input.classList.contains('empresa-input-cadastro')) {
+            // 🔥 GARANTIR QUE O DROPDOWN FIQUE EXATAMENTE ABAIXO DO INPUT
+            const rect = input.getBoundingClientRect();
+            dropdown.style.width = rect.width + 'px';
+            dropdown.style.left = '0';
+            dropdown.style.right = 'auto';
+        }
+    });
+}
+
+
+/**
  * 🆕 LIMPAR NÚMERO DO CLIENTE QUANDO EMPRESA FOR REMOVIDA
  */
 function limparNumeroCliente(obraId) {
@@ -933,14 +952,13 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     
     const sugestoesLimitadas = sugestoes.slice(0, 50);
     
-    // 🔥 COMPORTAMENTO EXCEL CORRIGIDO: Se há apenas 1 sugestão, seleciona automaticamente
+    // 1. NA SELEÇÃO AUTOMÁTICA (quando há apenas 1 opção)
     if (sugestoesLimitadas.length === 1 && valorAtual.length > 0) {
         const [sigla, nome] = Object.entries(sugestoesLimitadas[0])[0];
+        console.log(`✅ [AUTOCOMPLETE] Única sugestão: ${sigla} - ${nome}`);
         
-        console.log(`✅ [EXCEL] Única sugestão detectada: ${sigla} - ${nome}`);
-        
-        // 🔥 CORREÇÃO: Chamar a função selecionarEmpresa para garantir o comportamento completo
-        selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+        // 🔥 TIPO: autocomplete (verdadeiro autocomplete)
+        selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'autocomplete');
         return;
     }
     
@@ -957,7 +975,8 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     
     container.innerHTML = html;
     dropdown.style.display = 'block';
-    
+    setTimeout(corrigirPosicaoDropdown, 10);
+
     // COMPORTAMENTO EXCEL: Se há poucas sugestões, seleciona a primeira automaticamente para navegação com setas
     if (sugestoesLimitadas.length > 0) {
         const primeiraOpcao = container.querySelector('.dropdown-option');
@@ -975,14 +994,17 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     
     // Vincular eventos de clique
     container.querySelectorAll('.dropdown-option').forEach(option => {
+        // 2. NO CLIQUE MANUAL (dropdown)
         option.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
             const sigla = this.dataset.sigla;
             const nome = this.dataset.nome;
-            console.log('🖱️ Clique na opção:', sigla, nome);
-            selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+            console.log('🖱️ Clique manual na opção');
+            
+            // 🔥 TIPO: manual (usuário clicou)
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'manual');
         });
     });
     
@@ -1028,7 +1050,8 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
     
     container.innerHTML = html;
     dropdown.style.display = 'block';
-    
+    setTimeout(corrigirPosicaoDropdown, 10);
+
     setTimeout(() => {
         if (dropdown.scrollHeight > 200) {
             dropdown.style.overflowY = 'auto';
@@ -1095,10 +1118,10 @@ function navegarDropdown(direcao, container, input, dropdown, obraId) {
 
 
 /**
- * SELECIONAR EMPRESA - SEM BLOQUEAR EDIÇÃO FUTURA
+ * SELECIONAR EMPRESA - COM CONTROLE DE TIPO DE SELEÇÃO
  */
-function selecionarEmpresa(sigla, nome, input, dropdown, obraId) {
-    console.log('🎯 Selecionando empresa:', sigla, nome);
+function selecionarEmpresa(sigla, nome, input, dropdown, obraId, tipoSelecao = 'manual') {
+    console.log('🎯 Selecionando empresa:', sigla, nome, 'Tipo:', tipoSelecao);
     
     // Preenche o input
     input.value = `${sigla} - ${nome}`;
@@ -1110,95 +1133,69 @@ function selecionarEmpresa(sigla, nome, input, dropdown, obraId) {
         dropdown.style.display = 'none';
     }
     
-    // Remove foco do input (mas mantém editável para futuro)
+    // Remove foco do input
     setTimeout(() => {
         input.blur();
         
-        // Mostra aviso
-        mostrarAvisoAutocompletado(input);
+        // 🔥 MOSTRAR AVISO APENAS SE FOR AUTOCOMPLETE
+        mostrarAvisoAutocompletado(input, tipoSelecao);
     }, 10);
     
     // Calcula o número do cliente
     calcularNumeroClienteFinal(sigla, obraId);
     
-    console.log(`✅ Empresa selecionada: ${sigla} - ${nome}`);
+    console.log(`✅ Empresa selecionada: ${sigla} - ${nome} (${tipoSelecao})`);
 }
 
 
+
 /**
- * 🆕 MOSTRAR AVISO DE AUTOCOMPLETE - VERSÃO ULTRA-GARANTIDA
+ * 🆕 MOSTRAR AVISO DE AUTOCOMPLETE - CSS EXTERNO
  */
-function mostrarAvisoAutocompletado(input) {
-    console.log('🔔 VERSÃO ULTRA-GARANTIDA DO AVISO');
-    
-    // 🔥 ESTRATÉGIA RADICAL: Criar aviso no body com posição fixa
-    const rect = input.getBoundingClientRect();
+function mostrarAvisoAutocompletado(input, tipoSelecao = 'manual') {
+    if (tipoSelecao !== 'autocomplete') return;
     
     // Remove avisos anteriores
-    document.querySelectorAll('.aviso-autocomplete-global').forEach(aviso => aviso.remove());
+    document.querySelectorAll('.aviso-autocomplete-relativo').forEach(aviso => aviso.remove());
     
-    // Cria aviso com posição fixa baseada no input
+    // Encontrar container
+    const container = input.closest('.form-group-horizontal') || 
+                     input.closest('.empresa-input-container') || 
+                     input.parentNode;
+    
+    if (!container) return;
+    
+    // Criar aviso
     const aviso = document.createElement('div');
-    aviso.className = 'aviso-autocomplete-global';
+    aviso.className = 'aviso-autocomplete-relativo';
     aviso.textContent = 'Empresa autocompletada ✓';
     
-    // Posição fixa calculada baseada no input
-    aviso.style.cssText = `
-        position: fixed !important;
-        top: ${rect.top - 50}px !important;
-        left: ${rect.left}px !important;
-        width: ${rect.width}px !important;
-        background: #10b981 !important;
-        color: white !important;
-        padding: 10px 12px !important;
-        border-radius: 8px !important;
-        font-size: 13px !important;
-        font-weight: 600 !important;
-        text-align: center !important;
-        z-index: 10000 !important;
-        opacity: 0 !important;
-        transform: translateY(10px) !important;
-        transition: all 0.3s ease !important;
-        pointer-events: none !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-        border: 2px solid #059669 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    `;
-    
-    document.body.appendChild(aviso);
+    // Adicionar ao container
+    container.appendChild(aviso);
     
     // Animação
-    setTimeout(() => {
-        aviso.style.opacity = '1';
-        aviso.style.transform = 'translateY(0)';
-    }, 50);
+    setTimeout(() => aviso.classList.add('show'), 50);
     
     // Remover
     setTimeout(() => {
-        aviso.style.opacity = '0';
-        aviso.style.transform = 'translateY(-10px)';
-        setTimeout(() => aviso.remove(), 400);
-    }, 2000);
+        aviso.classList.remove('show');
+        setTimeout(() => aviso.remove(), 300);
+    }, 1200);
 }
 
 /**
  * ATUALIZAR EVENTO DE ENTER - CORRIGIDO
  */
+// 3. NO ENTER/TAB (navegação)
 function selecionarOpcaoAtiva(container, input, dropdown, obraId) {
     const activeOption = container.querySelector('.dropdown-option.active');
     if (activeOption) {
         const sigla = activeOption.dataset.sigla;
         const nome = activeOption.dataset.nome;
-        console.log('⌨️ Enter na opção:', sigla, nome);
-        selecionarEmpresa(sigla, nome, input, dropdown, obraId);
-    } else {
-        const primeiraOpcao = container.querySelector('.dropdown-option');
-        if (primeiraOpcao) {
-            const sigla = primeiraOpcao.dataset.sigla;
-            const nome = primeiraOpcao.dataset.nome;
-            console.log('⌨️ Enter na primeira opção:', sigla, nome);
-            selecionarEmpresa(sigla, nome, input, dropdown, obraId);
-        }
+        console.log('⌨️ Seleção por teclado');
+        
+        // 🔥 TIPO: manual (usuário usou teclado)
+        selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'manual');
     }
 }
 
@@ -1292,7 +1289,10 @@ function atualizarNumeroClienteInput(numero, obraId) {
     }
 }
 
+window.addEventListener('resize', corrigirPosicaoDropdown);
 
+// 🔥 CORRIGIR NO SCROLL (para casos de virtual keyboard)
+window.addEventListener('scroll', corrigirPosicaoDropdown);
 
 
 export {
