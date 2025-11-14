@@ -849,7 +849,7 @@ function limparNumeroCliente(obraId) {
 }
 
 /**
- * 🆕 FILTRAR EMPRESAS POR TERMO - CORRIGIDA
+ * FILTRAR EMPRESAS POR TERMO
  */
 function filtrarEmpresas(termo, empresas) {
     if (!termo || termo.length < 1) return [];
@@ -857,28 +857,22 @@ function filtrarEmpresas(termo, empresas) {
     const termoNormalizado = termo.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     
     return empresas.filter(empresaObj => {
-        // Cada empresaObj é um objeto como { "ACT": "AeroCool Technologies" }
         const [sigla, nome] = Object.entries(empresaObj)[0];
         const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         
-        // Buscar por sigla exata ou parcial no nome
         return sigla === termoNormalizado || 
                sigla.includes(termoNormalizado) ||
                nomeNormalizado.includes(termoNormalizado);
     });
 }
 
-
-
-
 /**
- * 🆕 EXIBIR SUGESTÕES NO DROPDOWN - CORRIGIDA PARA RESPEITAR LIMITE
+ * EXIBIR SUGESTÕES NO DROPDOWN
  */
 function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     const valorAtual = input.value.trim();
     const empresaJaSelecionada = input.dataset.siglaSelecionada;
     
-    // 🔥 SE JÁ TEM UMA EMPRESA SELECIONADA E O USUÁRIO NÃO DIGITOU NADA NOVO
     if (empresaJaSelecionada && valorAtual === `${input.dataset.siglaSelecionada} - ${input.dataset.nomeSelecionado}`) {
         container.innerHTML = '';
         dropdown.style.display = 'none';
@@ -886,7 +880,6 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     }
     
     if (!sugestoes || sugestoes.length === 0) {
-        // 🔥 MENSAGEM DIFERENCIADA: Se não encontrou empresas para o termo digitado
         if (valorAtual.length > 0) {
             container.innerHTML = `
                 <div class="dropdown-no-results">
@@ -901,31 +894,15 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
         return;
     }
     
-    // 🔥 LIMITAR SUGESTÕES TAMBÉM
     const sugestoesLimitadas = sugestoes.slice(0, 50);
     
     const html = sugestoesLimitadas.map(empresaObj => {
         const [sigla, nome] = Object.entries(empresaObj)[0];
-        const palavras = nome.split(' ');
-        const primeiroNome = palavras[0];
-        const segundoNome = palavras[1] || ''; // Segundo nome, se existir
-        
-        // 🆕 MOSTRAR PRIMEIRO E SEGUNDO NOMES
-        let textoExibicao = primeiroNome;
-        if (segundoNome) {
-            textoExibicao += ` ${segundoNome}`;
-        }
-        
-        // 🆕 OPÇÃO PARA TERCEIRO NOME - DESCOMENTE SE QUISER IMPLEMENTAR
-        const terceiroNome = palavras[2] || '';
-        if (terceiroNome) {
-            textoExibicao += ` ${terceiroNome}`;
-        }
-        
         
         return `
-            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
-                <strong>${sigla}</strong> - ${textoExibicao}
+            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}" title="${nome}">
+                <strong>${sigla}</strong> 
+                <div class="nome-empresa">- ${nome}</div>
             </div>
         `;
     }).join('');
@@ -933,7 +910,6 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     container.innerHTML = html;
     dropdown.style.display = 'block';
     
-    // 🔥 FORÇAR O CSS A RESPEITAR A ALTURA MÁXIMA
     setTimeout(() => {
         if (dropdown.scrollHeight > 200) {
             dropdown.style.overflowY = 'auto';
@@ -941,7 +917,6 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
         }
     }, 10);
     
-    // Vincular eventos de clique
     container.querySelectorAll('.dropdown-option').forEach(option => {
         option.addEventListener('click', function() {
             const sigla = this.dataset.sigla;
@@ -954,12 +929,11 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
 }
 
 /**
- * 🆕 EXIBIR TODAS AS EMPRESAS - CORRIGIDA PARA RESPEITAR LIMITE DE ALTURA
+ * EXIBIR TODAS AS EMPRESAS
  */
 function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
     const empresaJaSelecionada = input.dataset.siglaSelecionada;
     
-    // 🔥 SE JÁ TEM UMA EMPRESA SELECIONADA, NÃO MOSTRA O DROPDOWN
     if (empresaJaSelecionada) {
         container.innerHTML = '';
         dropdown.style.display = 'none';
@@ -977,15 +951,15 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
         return;
     }
     
-    // 🔥 LIMITAR O NÚMERO DE EMPRESAS EXIBIDAS PARA EVITAR SOBRECARGA
-    const empresasLimitadas = empresas.slice(0, 50); // Máximo 50 empresas
+    const empresasLimitadas = empresas.slice(0, 50);
     
     const html = empresasLimitadas.map(empresaObj => {
         const [sigla, nome] = Object.entries(empresaObj)[0];
-        const primeiroNome = nome.split(' ')[0];
+        
         return `
-            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
-                <strong>${sigla}</strong> - ${primeiroNome}
+            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}" title="${nome}">
+                <strong>${sigla}</strong> 
+                <div class="nome-empresa">- ${nome}</div>
             </div>
         `;
     }).join('');
@@ -993,7 +967,6 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
     container.innerHTML = html;
     dropdown.style.display = 'block';
     
-    // 🔥 FORÇAR O CSS A RESPEITAR A ALTURA MÁXIMA
     setTimeout(() => {
         if (dropdown.scrollHeight > 200) {
             dropdown.style.overflowY = 'auto';
@@ -1001,7 +974,6 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
         }
     }, 10);
     
-    // Vincular eventos de clique
     container.querySelectorAll('.dropdown-option').forEach(option => {
         option.addEventListener('click', function() {
             const sigla = this.dataset.sigla;
@@ -1012,6 +984,7 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
     
     console.log(`📊 [EMPRESA] Exibindo ${empresasLimitadas.length} de ${empresas.length} empresas`);
 }
+
 
 /**
  * 🆕 NAVEGAR NO DROPDOWN COM TECLADO
