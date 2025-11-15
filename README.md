@@ -4,6 +4,7 @@
 
 - Aplicação web single-page para gestão de obras, projetos, salas e cálculos de climatização, alimentada por um backend Python em `codigo/servidor.py`.
 - O front-end moderno vive em `codigo/public/scripts/01_Create_Obra`, organizado por camadas (`core`, `data`, `features`, `ui`, `utils`) e carregado dinamicamente por `main.js`.
+- Fluxo de cadastro inline de empresas (`data/builders/empresa-cadastro-inline.js` + `public/static/01_Create_Obra/components/empresa-cadastro-inline.css`) adiciona autocomplete com `dados.json`/`backup.json`, grava atributos `data-*` por obra e atualiza o cabeAalho com `SIGLA-NA�MERO`.
 - A pasta `backup de arquivos` guarda uma cópia completa do código JavaScript antes da refatoração; ela serve como referência histórica.
 - Ferramentas auxiliares em `utilitarios py` automatizam geração de CSS/JS e consolidação de arquivos.
 
@@ -52,7 +53,9 @@ Cada tabela indica as funções ou classes expostas por arquivo e seu objetivo p
 
 | Arquivo | Funções/Classes chave | O que faz |
 | --- | --- | --- |
-| `data/adapters/obra-adapter.js` | `loadObrasFromServer()`, `migrateSessionToNewIds()`, `loadSingleObra()`, `debugLoadObras()` | Consome `/api/session-obras` e `/obras`, converte IDs antigos/novos, remove obras base duplicadas e orquestra `createEmptyObra`/`populateObraData`. |
+| `data/adapters/obra-adapter.js` | `loadObrasFromServer()`, `prepararDadosEmpresaNaObra()`, `ativarCadastroEmpresa()` | Camada agregadora que reexporta o pipeline de empresa (`empresa-loader.js`) e os handlers de interface (`empresa-interface.js`), mantendo compatibilidade global com os scripts legados. |
+| `data/adapters/empresa/empresa-loader.js` | `removeBaseObraFromHTML()`, `loadObrasFromServer()`, `loadSingleObra()`, `prepararDadosEmpresaNaObra()`, `obterDadosEmpresaDaObra()`, `debugLoadObras()` | Restaura obras da sess?o, sincroniza atributos `data-*` com os cadastros, recria visualiza??es inline para empresas e imprime diagn?sticos completos do backend. |
+| `data/adapters/empresa/empresa-interface.js` | `formatarData()`, `ativarCadastroEmpresa()`, `editarDadosEmpresa()`, `ocultarFormularioEmpresa()`, `atualizarDadosEmpresa()` | Gerencia o formul?rio inline, mant?m inputs e tooltips `SIGLA-NUMERO` alinhados ao dataset e controla o input h?brido/autocomplete com detector de backspace. |
 | `data/adapters/session-adapter.js` | `isSessionActive()`, `setSessionActive()`, `getSessionObras()`, `addObraToSession()`, `clearSessionObras()`, `clearRenderedObras()`, `getGeralCount()`, `startNewSession()`, `startSessionOnFirstSave()` | Controle fino de sessão no `sessionStorage`, contador global de obras e limpeza seletiva do DOM preservando obras já salvas. |
 | `data/adapters/shutdown-adapter.js` | `shutdownManual()`, `ensureSingleActiveSession()`, `initializeSession()`, `showShutdownMessage()` | Fluxo completo de desligamento manual: modal customizado, limpeza de sessões (frontend/backend) e POST `/api/shutdown`, além de overlays amigáveis em caso de erro. |
 
@@ -61,6 +64,8 @@ Cada tabela indica as funções ou classes expostas por arquivo e seu objetivo p
 | Arquivo | Funções/Classes chave | O que faz |
 | --- | --- | --- |
 | `data/builders/data-builders.js` | `buildObraData()`, `buildProjectData()`, `extractRoomData()`, `extractThermalGainsData()`, `extractClimatizationInputs()`, `extractMachinesData()`, `extractCapacityData()`, `extractConfigurationData()` | Percorre o DOM para montar JSON completo de obra/projeto/sala com seções de clima, máquinas, capacidade e configuração antes de salvar no servidor. |
+| `data/builders/empresa-cadastro-inline.js` | `EmpresaCadastroInline`, `carregarDados()`, `buscarEmpresas()`, `prepararDados()`, `atualizarHeaderObra()` | Classe que substitui o span do header por formulario inline, carrega empresas/obras de `dados.json`/`backup.json`, oferece autocomplete com teclado/mouse, cadastra novas siglas e sincroniza o tooltip/cabecalho com `SIGLA-NUMERO`. |
+
 | `data/builders/ui-builders.js` | `renderObraFromData()`, `renderProjectFromData()`, `renderRoomFromData()`, `fillClimatizationInputs()`, `fillThermalGainsData()`, `fillCapacityData()`, `fillConfigurationData()`, `ensureAllRoomSections()`, `ensureMachinesSection()`, `populateObraData()`, `populateMachineData()` | Processo inverso: recebe JSON e reconstrói a interface, incluindo fallback para IDs, preenchimento das tabelas e disparo de cálculos após render. |
 | `data/utils/data-utils.js` | `getNextObraNumber()`, `getNextProjectNumber()`, `getNextRoomNumber()`, `getRoomFullId()`, `getObraName()`, `getProjectName()`, `collectClimatizationInputs()`, `findClimatizationSection()` | Utilidades para numerar nomes, garantir IDs seguros, extrair nomes/IDs do DOM e coletar inputs usados em cálculos de ar/ganhos térmicos. |
 | `data/utils/id-generator.js` | `generateObraId()`, `generateProjectId()`, `generateRoomId()`, `generateMachineId()`, `ensureStringId()`, `isValidSecureId()`, `validateIdHierarchy()`, `sanitizeId()` | Sistema único de IDs hierárquicos (`obra_*`, `*_proj_*`, `*_sala_*`), com validações, extração de sequências e helpers para sessões e máquinas. |
@@ -248,11 +253,31 @@ Para evoluções futuras, concentre novos desenvolvimentos em `codigo/public/scr
 
 ### codigo/public/scripts/01_Create_Obra/data/adapters/obra-adapter.js
 
-- `removeBaseObraFromHTML()`: limpa `.obra-block` placeholders antes de repintar dados vindos do backend.
-- `loadObrasFromServer()`: fluxo “” — lê `/api/session-obras`, busca todas as obras em `/obras`, converte IDs numéricos em strings, filtra as obras da sessão e chama `loadSingleObra()`; quando não encontra correspondentes, chama `migrateSessionToNewIds()`.
-- `migrateSessionToNewIds(oldObraIds, todasObras)`: substitui os IDs da sessão por IDs seguros (novos) e reexecuta o carregamento.
-- `loadSingleObra(obraData)`: garante que cada obra exista no DOM (criando via `window.createEmptyObra()` se necessário) e preenche os dados com `window.populateObraData()`.
-- `debugLoadObras()`: utilitário mencionado como “Função alternativa para debug” que lista funções globais e obras quando há inconsistência no carregamento.
+- Arquivo passou a centralizar apenas as importações/reexportações de `empresa-loader.js` e `empresa-interface.js`, expondo as funções no `window` para manter os HTMLs legados funcionando.
+- Também define flags globais (`window.usuarioEstaApagando`, `window.ultimoValorInput`) consumidas pelo input híbrido e garante que `loadObrasFromServer`/`prepararDadosEmpresaNaObra` continuem acessíveis via scripts inline.
+
+### codigo/public/scripts/01_Create_Obra/data/adapters/empresa/empresa-loader.js
+
+- `removeBaseObraFromHTML()`: limpa `.obra-block` placeholders antes de repintar os dados da sessão restaurada.
+- `loadObrasFromServer()`: busca `/api/session-obras`, cruza IDs com `/obras`, manipula conversões string/number e carrega cada obra em sequência (logando cenários vazios).
+- `loadSingleObra(obraData)`: verifica se a obra já existe, chama `window.populateObraData()` ou `window.createEmptyObra()` e aguarda o DOM antes de continuar.
+- `prepararDadosEmpresaNaObra(obraData, obraElement)`: copia `empresaSigla`, `numeroClienteFinal`, `clienteFinal`, `codigoCliente`, `dataCadastro`, `orcamentistaResponsavel` e `idGerado` para `dataset` e dispara a atualização visual.
+- `atualizarInterfaceComEmpresa()` / `criarVisualizacaoEmpresaCarregada()`: reconstroem o bloco inline (span `SIGLA-NUMERO`, tooltip e formulário de consulta) quando obras são restauradas.
+- `obterDadosEmpresaDaObra(obraId)` / `formatarData(dataString)`: helpers que retornam os dados atuais e normalizam datas para `dd/mm/aaaa` antes de preencher inputs/tooltip.
+- `debugLoadObras()`: imprime funções globais disponíveis, obras retornadas do backend e ajuda a diagnosticar carregamentos inconsistentes.
+
+### codigo/public/scripts/01_Create_Obra/data/adapters/empresa/empresa-interface.js
+
+- `formatarData()` mantém o padrão `dd/mm/aaaa` usado no tooltip, formulários e `dataset`.
+- `ativarCadastroEmpresa(obraId)` / `ocultarFormularioEmpresa(button, obraId)`: abrem/fecham o formulário inline garantindo que apenas um painel exista por obra e restaurando o botão padrão ao cancelar.
+- `editarDadosEmpresa(button, obraId)` / `atualizarDadosEmpresa(input, campo, obraId)`: alternam entre visualização e edição, salvando cada alteração nos `data-*`.
+- `criarVisualizacaoEmpresa(...)` / `criarFormularioVazioEmpresa(...)`: constroem tanto o modo visual (campos readonly + botão Ocultar) quanto o modo de cadastro com grade responsiva.
+- `inicializarInputEmpresaHibrido(obraId)`: configura o campo combinando texto e dropdown, carrega `/api/dados/empresas`, reseta flags de backspace e trata teclas especiais (Enter, Tab, setas, Esc).
+- `criarSistemaBackspaceDetector()`, `inicializarDetectorBackspace()`, `corrigirPosicaoDropdown()`, `limparDadosSelecao()`, `limparNumeroCliente()`: camada de UX que evita autocompletar enquanto o usuário apaga e garante alinhamento correto do dropdown em resize/scroll.
+- `filtrarEmpresas()`, `exibirSugestoes()`, `exibirTodasEmpresas()`, `navegarDropdown()`: implementam o comportamento “Excel” (loop de setas, item ativo, limite de 50 itens, mensagem quando não há resultados).
+- `selecionarEmpresa()`, `mostrarAvisoAutocompletado()`, `selecionarOpcaoAtiva()`: registram a escolha (mouse/teclado/autocomplete), exibem aviso discreto quando preenchido automaticamente e fecham o dropdown com segurança.
+- `calcularNumeroClienteFinal()` / `calcularNumeroLocal()` / `atualizarNumeroClienteInput()`: consultam `/api/dados/empresas/numero/{sigla}` e usam `/api/backup-completo` como fallback para manter a numeração sequencial por empresa.
+
 
 ### codigo/public/scripts/01_Create_Obra/data/adapters/session-adapter.js
 
@@ -280,6 +305,7 @@ Para evoluções futuras, concentre novos desenvolvimentos em `codigo/public/scr
 ### codigo/public/scripts/01_Create_Obra/data/builders/data-builders.js
 
 - `buildObraData(obraIdOrElement)`: garante que o elemento da obra ainda está no DOM, coleta os projetos e monta um objeto com ID, nome e timestamp.
+- `extractEmpresaData(obraElement)`: le os atributos `data-empresa*`/`data-cliente*`/`data-idGerado` adicionados pelo cadastro inline, converte `numeroClienteFinal` para inteiro e injeta essas informacoes no objeto salvo.
 - `buildProjectData(projectIdOrElement)`: valida o elemento do projeto e constrói o payload com ID, nome, salas e timestamp.
 - `extractRoomData(roomElement, projectElement)`: extrai os blocos de uma sala (inputs, máquinas, capacidade, ganhos térmicos, configuração) e devolve um objeto consolidado.
 - `extractThermalGainsData(roomElement)`: lê todos os elementos `total-*` (W e TR), limpando HTML e convertendo texto em número; usa `attemptAlternativeSearch()` quando algum seletor não existe mais.
@@ -307,6 +333,31 @@ Para evoluções futuras, concentre novos desenvolvimentos em `codigo/public/scr
 - `populateProjectData(projectElement, projectData, obraId, obraName)`: atualiza um projeto específico, criando salas ausentes e preenchendo as existentes.
 - `populateRoomData(roomElement, roomData)`: garante seções, aplica inputs, restaura máquinas e dispara cálculos (`calculateVazaoArAndThermalGains`) para atualizar resultados.
 - `populateMachineData(machineElement, machineData)`: aplica os dados de uma máquina individual (nome, selects, opções, preços) e recalcula totais.
+
+
+
+### codigo/public/scripts/01_Create_Obra/data/builders/empresa-cadastro-inline.js
+
+- `EmpresaCadastroInline` (classe + `init`) cria o singleton exposto em `window.empresaCadastro`, carrega dados iniciais e amarra eventos assim que o DOM dispara `DOMContentLoaded`.
+- `carregarDados()` busca `/api/dados/empresas` e `/api/backup-completo`, guarda `this.empresas` e `this.obrasExistentes` para uso offline e registra logs amigaveis.
+- `vincularEventos()` / `ativarCadastro(event)` transformam o span original do header em `button.btn-empresa-cadastro`, tratam teclado (Enter/Espaco) e exibem o formulario inline apenas uma vez por obra.
+- `renderizarFormulario()` / `criarHTMLFormulario()` / `vincularEventosFormulario()` montam o painel responsivo, conectam o campo de empresa ao autocomplete e focam automaticamente no primeiro input.
+- `buscarEmpresas(termo)`, `normalizarTermo()`, `filtrarEmpresas()`, `exibirSugestoes()`, `ocultarSugestoes()`, `tratarTecladoAutocomplete()`, `navegarSugestoes()` oferecem UX completa de autocomplete (mouse/teclado), limitam resultados e desabilitam sugestoes quando o termo ainda nao tem 2 caracteres.
+- `selecionarEmpresa(sigla, nome)` / `calcularNumeroClienteFinal(sigla)` / `atualizarPreviewIdObra(sigla, numero)` persistem a selecao, calculam o proximo numero da empresa olhando para `backup.json` e mostram o ID sugerido (`obra_SIGLA_NUM`).
+- `prepararDados()` / `coletarDadosFormulario()` / `validarDados(dados)` / `cadastrarNovaEmpresa(sigla, nome)` validam a entrada, permitem criar siglas novas (inclusive sugerindo uma), salvam em `/api/dados/empresas` e exibem mensagens com `showSystemStatus`.
+- `prepararDadosObra(dados)` / `atualizarHeaderObra()` / `criarTooltipEmpresa()` / `formatarDataParaTooltip()` / `resetHeaderObra()` escrevem os `data-*` na `.obra-block`, atualizam o header com `SIGLA-NUMERO` e exibem tooltip detalhado (empresa, cliente, codigo, data, orcamentista).
+- `cancelarCadastro()` / `ocultarFormulario()` / `mostrarSpanOriginal()` / `obterDadosPreparados(obraId)` escondem o painel quando o usuario desiste, restauram o botao original e expem os dados coletados para o fluxo de salvamento.
+- `formatarData(dataString)` padroniza datas para `dd/mm/aaaa` antes de persistir ou mostrar; tambem e usada pelo tooltip.
+
+
+
+### codigo/public/static/01_Create_Obra/components/empresa-cadastro-inline.css
+
+- `.btn-empresa-cadastro` e `.btn-empresa-identifier` padronizam botões do cadastro (cores cinza, bordas suaves, foco personalizado) e oferecem estados `:hover`/`:disabled` consistentes.
+- `.empresa-cadastro-inline` e `.empresa-formulario-ativo` definem containers com `box-shadow`, `border-radius` amplo e animação `slideDown` quando o painel aparece.
+- `.empresa-form-grid`/`.empresa-form-grid-horizontal` distribuem inputs em colunas responsivas, enquanto `.form-group-horizontal` e `.empresa-input-container` controlam espaçamentos e posicionamento do dropdown híbrido.
+- `.empresa-dropdown`, `.dropdown-option`, `.dropdown-no-results` e `.aviso-autocomplete-relativo` tratam o autocomplete (altura limitada, scroll automático, item `active`, aviso de autocompletar) e recebem ajustes via `@media` para telas de 768px/360px.
+- A seção de acessibilidade garante foco visível, reduz animações em `prefers-reduced-motion` e aumenta contraste em `prefers-contrast: high`.
 
 ### codigo/public/scripts/01_Create_Obra/data/utils/data-utils.js
 
@@ -554,3 +605,26 @@ Para evoluções futuras, concentre novos desenvolvimentos em `codigo/public/scr
 - `generateUniqueId(prefix = 'item')`: cria IDs simples baseados em timestamp/random para componentes que não dependem dos geradores hierárquicos.
 - `isValidElement(element)`: confirma se o objeto recebido é um elemento DOM antes de manipulá-lo.
 - `debounce(func, wait)`: implementação reutilizável de debounce utilizada por inputs e cálculos intensivos.
+
+
+
+## Utilitarios Python
+
+
+
+### utilitarios py/juntar_linhas.py
+
+
+
+- Parametriza `PASTA_CODIGO_DEFAULT`, `EXTENSOES_PERMITIDAS` e `SKIP_DIRS`, percorre a pasta base com `Path.rglob()`/filtros e ignora `node_modules`, `__pycache__` etc.
+
+- `FileJoinerApp` (Tkinter) monta UI com seleção de pasta, filtro textual, botão para recarregar e indicadores de quantidade de arquivos/selecionados.
+
+- Alterna dinamicamente entre modo checkbox (multi) e rádio (single), possui botões "Selecionar todos"/"Limpar seleção" e lista responsiva com scroll customizado.
+
+- Opções extras habilitam exibição de caminhos completos e inserção automática de separadores contendo o caminho relativo de cada arquivo antes/depois do conteúdo unido.
+
+- `_export()` pergunta pelo destino (`asksaveasfilename`), concatena linha a linha com `normalize_eol`, trata erros de leitura com mensagens amigáveis e mostra um resumo com o total de linhas escritas.
+
+
+
