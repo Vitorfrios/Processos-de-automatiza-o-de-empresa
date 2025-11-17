@@ -5,10 +5,7 @@
  */
 
 import { 
-    safeNumber as coreSafeNumber, 
-    updateElementText as coreUpdateElementText,
-    waitForElement as coreWaitForElement
-} from '../../utils/core-utils.js';
+    safeNumber} from './core-utils.js';
 
 
 // =============================================================================

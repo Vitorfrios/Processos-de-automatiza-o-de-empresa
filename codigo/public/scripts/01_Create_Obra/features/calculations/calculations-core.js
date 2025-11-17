@@ -10,7 +10,7 @@ import {
     updateElementText as coreUpdateElementText,
     waitForElement as coreWaitForElement,
     debounce as coreDebounce
-} from '../../utils/core-utils.js';
+} from '../../data/utils/core-utils.js';
 
 import {
     collectClimatizationInputs as dataCollectClimatizationInputs,

@@ -1,0 +1,1209 @@
+================================================================================
+RELATÓRIO COMPLETO DE ANÁLISE JAVASCRIPT
+================================================================================
+
+DETALHAMENTO POR ARQUIVO:
+================================================================================
+
+📁 ARQUIVO: core\app.js
+   📏 Linhas de código: 343
+   🔧 Funções encontradas: 7
+   📋 Lista de funções:
+      • bootstrapApplication() (usada em 1 arquivos)
+      • getAppStatus() (usada em 1 arquivos)
+      • initializeCoreSystems() (usada em 1 arquivos)
+      • initializeEventBus() (usada em 1 arquivos)
+      • initializeInterface() (usada em 1 arquivos)
+      • initializeState() (usada em 1 arquivos)
+      • reinitializeApplication() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • eventBus
+      • appState
+      • bootstrapApplication
+      • reinitializeApplication
+      • getAppStatus
+      • // Event Bus
+    EventBus
+      • // Application State
+    ApplicationState
+      • // Initialization functions
+    initializeEventBus
+      • initializeState
+      • initializeCoreSystems
+      • reinitializeApplication
+      • getAppStatus
+------------------------------------------------------------
+
+📁 ARQUIVO: core\constants.js
+   📏 Linhas de código: 319
+   🔧 Funções encontradas: 3
+   📋 Lista de funções:
+      • getAllConstants() (usada em 1 arquivos)
+      • getConstant() (usada em 1 arquivos)
+      • hasConstant() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • CALCULATION_CONSTANTS
+      • UI_CONSTANTS
+      • STORAGE_KEYS
+      • VALIDATION_CONSTANTS
+      • API_CONSTANTS
+      • MESSAGE_CONSTANTS
+      • PERFORMANCE_CONSTANTS
+      • SESSION_ACTIVE_KEY
+      • SESSION_STORAGE_KEY
+      • REMOVED_PROJECTS_KEY
+      • NORMALIZATION_DONE_KEY
+      • getAllConstants
+      • hasConstant
+      • getConstant
+------------------------------------------------------------
+
+📁 ARQUIVO: core\shared-utils.js
+   📏 Linhas de código: 8
+   🔧 Funções encontradas: 1
+   📋 Lista de funções:
+      • attachModuleToWindow() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • attachModuleToWindow
+------------------------------------------------------------
+
+📁 ARQUIVO: data\adapters\obra-adapter-folder\empresa-autocomplete.js
+   📏 Linhas de código: 433
+   🔧 Funções encontradas: 7
+   📋 Lista de funções:
+      • exibirSugestoes() (usada em 1 arquivos)
+      • exibirTodasEmpresas() (usada em 1 arquivos)
+      • filtrarEmpresas() (usada em 1 arquivos)
+      • inicializarInputEmpresaHibrido() (usada em 1 arquivos)
+      • navegarDropdown() (usada em 1 arquivos)
+      • selecionarEmpresa() (usada em 1 arquivos)
+      • selecionarOpcaoAtiva() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • inicializarInputEmpresaHibrido
+      • filtrarEmpresas
+      • exibirSugestoes
+      • exibirTodasEmpresas
+      • navegarDropdown
+      • selecionarEmpresa
+      • selecionarOpcaoAtiva
+------------------------------------------------------------
+
+📁 ARQUIVO: data\adapters\obra-adapter-folder\empresa-form-manager.js
+   📏 Linhas de código: 215
+   🔧 Funções encontradas: 4
+   📋 Lista de funções:
+      • atualizarCamposEmpresaForm() (usada em 1 arquivos)
+      • atualizarInterfaceComEmpresa() (usada em 1 arquivos)
+      • criarFormularioVazioEmpresa() (usada em 1 arquivos)
+      • criarVisualizacaoEmpresa() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • atualizarInterfaceComEmpresa
+      • atualizarCamposEmpresaForm
+      • criarVisualizacaoEmpresa
+      • criarFormularioVazioEmpresa
+------------------------------------------------------------
+
+📁 ARQUIVO: data\adapters\obra-adapter-folder\obra-data-loader.js
+   📏 Linhas de código: 260
+   🔧 Funções encontradas: 6
+   📋 Lista de funções:
+      • debugLoadObras() (usada em 1 arquivos)
+      • loadObrasFromServer() (usada em 1 arquivos)
+      • loadSingleObra() (usada em 1 arquivos)
+      • obterDadosEmpresaDaObra() (usada em 1 arquivos)
+      • prepararDadosEmpresaNaObra() (usada em 1 arquivos)
+      • removeBaseObraFromHTML() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • { atualizarInterfaceComEmpresa  } from './empresa-form-manager.js'
+   📤 EXPORTS:
+      • removeBaseObraFromHTML
+      • loadObrasFromServer
+      • loadSingleObra
+      • prepararDadosEmpresaNaObra
+      • obterDadosEmpresaDaObra
+      • debugLoadObras
+------------------------------------------------------------
+
+📁 ARQUIVO: data\adapters\obra-adapter-folder\ui-helpers-obra-adapter.js
+   📏 Linhas de código: 325
+   🔧 Funções encontradas: 10
+   📋 Lista de funções:
+      • atualizarNumeroClienteInput() (usada em 1 arquivos)
+      • calcularNumeroClienteFinal() (usada em 1 arquivos)
+      • calcularNumeroLocal() (usada em 1 arquivos)
+      • corrigirPosicaoDropdown() (usada em 1 arquivos)
+      • criarSistemaBackspaceDetector() (usada em 1 arquivos)
+      • formatarData() (usada em 1 arquivos)
+      • inicializarDetectorBackspace() (usada em 1 arquivos)
+      • limparDadosSelecao() (usada em 1 arquivos)
+      • limparNumeroCliente() (usada em 1 arquivos)
+      • mostrarAvisoAutocompletado() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • limparDadosSelecao
+      • criarSistemaBackspaceDetector
+      • inicializarDetectorBackspace
+      • corrigirPosicaoDropdown
+      • limparNumeroCliente
+      • mostrarAvisoAutocompletado
+      • calcularNumeroClienteFinal
+      • calcularNumeroLocal
+      • atualizarNumeroClienteInput
+      • formatarData
+------------------------------------------------------------
+
+📁 ARQUIVO: data\adapters\obra-adapter.js
+   📏 Linhas de código: 181
+   🔧 Funções encontradas: 0
+------------------------------------------------------------
+
+📁 ARQUIVO: data\adapters\session-adapter.js
+   📏 Linhas de código: 312
+   🔧 Funções encontradas: 20
+   📋 Lista de funções:
+      • addObraToRemovedList() (usada em 1 arquivos)
+      • addObraToSession() (usada em 1 arquivos)
+      • clearRenderedObras() (usada em 1 arquivos)
+      • clearSessionObras() (usada em 1 arquivos)
+      • decrementGeralCount() (usada em 1 arquivos)
+      • getGeralCount() (usada em 1 arquivos)
+      • getRemovedObrasList() (usada em 1 arquivos)
+      • getSessionObras() (usada em 1 arquivos)
+      • incrementGeralCount() (usada em 1 arquivos)
+      • initializeGeralCount() (usada em 1 arquivos)
+      • isObraInSession() (usada em 1 arquivos)
+      • isObraRemoved() (usada em 1 arquivos)
+      • isSessionActive() (usada em 1 arquivos)
+      • removeObraFromSessionLocal() (usada em 1 arquivos)
+      • resetDisplayLogic() (usada em 1 arquivos)
+      • saveFirstObraIdOfSession() (usada em 1 arquivos)
+      • setSessionActive() (usada em 1 arquivos)
+      • setSessionObras() (usada em 1 arquivos)
+      • startNewSession() (usada em 1 arquivos)
+      • startSessionOnFirstSave() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  SESSION_STORAGE_KEY, REMOVED_PROJECTS_KEY, SESSION_ACTIVE_KEY  } from '../../core/constants.js'
+      • {  ensureStringId  } from '../utils/id-generator.js'
+   📤 EXPORTS:
+      • isSessionActive
+      • setSessionActive
+      • getSessionObras
+      • addObraToSession
+      • removeObraFromSessionLocal
+      • clearSessionObras
+      • clearRenderedObras
+      • initializeGeralCount
+      • incrementGeralCount
+      • decrementGeralCount
+      • getGeralCount
+      • saveFirstObraIdOfSession
+      • addObraToRemovedList
+      • getRemovedObrasList
+      • isObraRemoved
+      • resetDisplayLogic
+      • startNewSession
+      • startSessionOnFirstSave
+------------------------------------------------------------
+
+📁 ARQUIVO: data\adapters\shutdown-adapter.js
+   📏 Linhas de código: 307
+   🔧 Funções encontradas: 6
+   📋 Lista de funções:
+      • ensureSingleActiveSession() (usada em 1 arquivos)
+      • initializeSession() (usada em 1 arquivos)
+      • showFinalMessageWithManualClose() (usada em 1 arquivos)
+      • showFinalShutdownMessage() (usada em 1 arquivos)
+      • showShutdownMessage() (usada em 1 arquivos)
+      • shutdownManual() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  setSessionActive, clearSessionObras, clearRenderedObras  } from './session-adapter.js'
+   📤 EXPORTS:
+      • shutdownManual
+      • ensureSingleActiveSession
+      • initializeSession
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\data-builders-folder\empresa-data-extractor.js
+   📏 Linhas de código: 32
+   🔧 Funções encontradas: 1
+   📋 Lista de funções:
+      • extractEmpresaData() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • extractEmpresaData
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\data-builders-folder\machines-data-extractors.js
+   📏 Linhas de código: 110
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • extractClimatizationMachineData() (usada em 1 arquivos)
+      • extractMachinesData() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  getMachineName, parseMachinePrice  } from '../../utils/data-utils.js'
+   📤 EXPORTS:
+      • extractMachinesData
+      • extractClimatizationMachineData
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\data-builders-folder\obra-data-builder.js
+   📏 Linhas de código: 167
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • buildObraData() (usada em 1 arquivos)
+      • buildProjectData() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  generateObraId, generateProjectId, generateRoomId  } from '../../utils/id-generator.js'
+      • {  extractEmpresaData  } from './empresa-data-extractor.js'
+   📤 EXPORTS:
+      • buildObraData
+      • buildProjectData
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\data-builders-folder\room-data-extractors.js
+   📏 Linhas de código: 245
+   🔧 Funções encontradas: 5
+   📋 Lista de funções:
+      • extractCapacityData() (usada em 1 arquivos)
+      • extractClimatizationInputs() (usada em 1 arquivos)
+      • extractConfigurationData() (usada em 1 arquivos)
+      • extractRoomData() (usada em 1 arquivos)
+      • extractThermalGainsData() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  generateRoomId  } from '../../utils/id-generator.js'
+      • {  extractNumberFromText  } from '../../utils/data-utils.js'
+   📤 EXPORTS:
+      • extractRoomData
+      • extractClimatizationInputs
+      • extractThermalGainsData
+      • extractCapacityData
+      • extractConfigurationData
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\data-builders.js
+   📏 Linhas de código: 28
+   🔧 Funções encontradas: 0
+   📥 IMPORTS:
+      • {  attachModuleToWindow  } from '../../core/shared-utils.js'
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\empresa-cadastro-inline.js
+   📏 Linhas de código: 762
+   🔧 Funções encontradas: 0
+   📥 IMPORTS:
+      • {  showSystemStatus  } from '../../ui/components/status.js'
+      • {  extractNumberFromText  } from '../../data/utils/data-utils.js'
+   📤 EXPORTS:
+      • EmpresaCadastroInline (default)
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\ui-builders.js
+   📏 Linhas de código: 25
+   🔧 Funções encontradas: 0
+   📥 IMPORTS:
+      • {  attachModuleToWindow  } from '../../core/shared-utils.js'
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\ui-folder\data-fillers.js
+   📏 Linhas de código: 417
+   🔧 Funções encontradas: 5
+   📋 Lista de funções:
+      • ensureAllRoomSections() (usada em 1 arquivos)
+      • fillCapacityData() (usada em 1 arquivos)
+      • fillClimatizationInputs() (usada em 1 arquivos)
+      • fillConfigurationData() (usada em 1 arquivos)
+      • fillThermalGainsData() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  calculateVazaoArAndThermalGains  } from '../../../features/calculations/air-flow.js'
+   📤 EXPORTS:
+      • fillClimatizationInputs
+      • fillThermalGainsData
+      • fillCapacityData
+      • fillConfigurationData
+      • ensureAllRoomSections
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\ui-folder\machine-renderer.js
+   📏 Linhas de código: 449
+   🔧 Funções encontradas: 5
+   📋 Lista de funções:
+      • ensureMachinesSection() (usada em 1 arquivos)
+      • fillMachinesData() (usada em 1 arquivos)
+      • findMachinesSection() (usada em 1 arquivos)
+      • findSectionByTitle() (usada em 1 arquivos)
+      • populateMachineData() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  buildMachinesSection, addMachine  } from '../../modules/machines/machines-core.js'
+   📤 EXPORTS:
+      • findMachinesSection
+      • findSectionByTitle
+      • ensureMachinesSection
+      • fillMachinesData
+      • populateMachineData
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\ui-folder\obra-renderer.js
+   📏 Linhas de código: 179
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • populateObraData() (usada em 1 arquivos)
+      • renderObraFromData() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  ensureStringId, generateObraId  } from '../../utils/id-generator.js'
+      • {  waitForElement  } from '../../utils/core-utils.js'
+   📤 EXPORTS:
+      • renderObraFromData
+      • populateObraData
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\ui-folder\project-renderer.js
+   📏 Linhas de código: 144
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • populateProjectData() (usada em 1 arquivos)
+      • renderProjectFromData() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  ensureStringId  } from '../../utils/id-generator.js'
+      • {  waitForElement  } from '../../utils/core-utils.js'
+   📤 EXPORTS:
+      • renderProjectFromData
+      • populateProjectData
+------------------------------------------------------------
+
+📁 ARQUIVO: data\builders\ui-folder\room-renderer.js
+   📏 Linhas de código: 129
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • populateRoomData() (usada em 1 arquivos)
+      • renderRoomFromData() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  ensureStringId  } from '../../utils/id-generator.js'
+   📤 EXPORTS:
+      • renderRoomFromData
+      • populateRoomData
+------------------------------------------------------------
+
+📁 ARQUIVO: data\modules\climatizacao.js
+   📏 Linhas de código: 766
+   🔧 Funções encontradas: 10
+   📋 Lista de funções:
+      • buildClimaCell() (usada em 1 arquivos)
+      • buildClimaRow() (usada em 1 arquivos)
+      • buildClimatizationSection() (usada em 1 arquivos)
+      • buildClimatizationTable() (usada em 1 arquivos)
+      • buildPressurizationRow() (usada em 1 arquivos)
+      • buildResultRow() (usada em 1 arquivos)
+      • buildSelectInput() (usada em 1 arquivos)
+      • buildTextInput() (usada em 1 arquivos)
+      • buildThermalGainsSection() (usada em 1 arquivos)
+      • togglePressurizationFields() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  calculateVazaoArAndThermalGains  } from '../../features/calculations/air-flow.js'
+   📤 EXPORTS:
+      • buildClimatizationSection
+      • buildClimatizationTable
+      • buildClimaRow
+      • buildClimaCell
+      • buildSelectInput
+      • buildTextInput
+      • buildResultRow
+      • buildThermalGainsSection
+      • buildPressurizationRow
+      • togglePressurizationFields
+------------------------------------------------------------
+
+📁 ARQUIVO: data\modules\configuracao.js
+   📏 Linhas de código: 74
+   🔧 Funções encontradas: 1
+   📋 Lista de funções:
+      • buildConfigurationSection() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • buildConfigurationSection
+------------------------------------------------------------
+
+📁 ARQUIVO: data\modules\machines\capacity-calculator.js
+   📏 Linhas de código: 624
+   🔧 Funções encontradas: 21
+   📋 Lista de funções:
+      • applyBackupConfiguration() (usada em 1 arquivos)
+      • applyCapacityData() (usada em 1 arquivos)
+      • applyFatorSeguranca() (usada em 1 arquivos)
+      • buildCapacityCalculationTable() (usada em 1 arquivos)
+      • calculateCapacitySolution() (usada em 1 arquivos)
+      • findRoomId() (usada em 1 arquivos)
+      • getBackupFromClimaInputs() (usada em 1 arquivos)
+      • getBackupFromClimatization() (usada em 1 arquivos)
+      • getCapacityData() (usada em 1 arquivos)
+      • getThermalLoadTR() (usada em 1 arquivos)
+      • handleClimaInputBackupChange() (usada em 1 arquivos)
+      • initializeCapacitySystem() (usada em 1 arquivos)
+      • initializeStaticCapacityTable() (usada em 1 arquivos)
+      • loadCapacityData() (usada em 1 arquivos)
+      • saveCapacityData() (usada em 1 arquivos)
+      • scheduleCapacityInit() (usada em 1 arquivos)
+      • syncBackupWithClimaInputs() (usada em 1 arquivos)
+      • syncCapacityTableBackup() (usada em 1 arquivos)
+      • updateBackupConfiguration() (usada em 1 arquivos)
+      • updateCapacityDisplay() (usada em 1 arquivos)
+      • updateCargaEstimadaInput() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  updateElementText  } from '../../utils/core-utils.js'
+   📤 EXPORTS:
+      • buildCapacityCalculationTable
+      • calculateCapacitySolution
+      • getCapacityData
+      • saveCapacityData
+      • loadCapacityData
+      • applyCapacityData
+      • updateBackupConfiguration
+      • handleClimaInputBackupChange
+      • syncCapacityTableBackup
+      • initializeStaticCapacityTable
+------------------------------------------------------------
+
+📁 ARQUIVO: data\modules\machines\machines-core.js
+   📏 Linhas de código: 602
+   🔧 Funções encontradas: 26
+   📋 Lista de funções:
+      • addMachine() (usada em 1 arquivos)
+      • buildFormGroup() (usada em 1 arquivos)
+      • buildMachineFromSavedData() (usada em 1 arquivos)
+      • buildMachineHTML() (usada em 1 arquivos)
+      • buildMachinesSection() (usada em 1 arquivos)
+      • buildOptionsHTML() (usada em 1 arquivos)
+      • buildSelect() (usada em 1 arquivos)
+      • calculateAllMachinesTotal() (usada em 1 arquivos)
+      • calculateMachinePrice() (usada em 1 arquivos)
+      • deleteMachine() (usada em 1 arquivos)
+      • handlePowerChange() (usada em 1 arquivos)
+      • loadMachinesData() (usada em 1 arquivos)
+      • loadSavedMachines() (usada em 1 arquivos)
+      • removeEmptyMessage() (usada em 1 arquivos)
+      • resetMachineFields() (usada em 1 arquivos)
+      • saveTotalToRoom() (usada em 1 arquivos)
+      • showEmptyMessage() (usada em 1 arquivos)
+      • toggleMachineSection() (usada em 1 arquivos)
+      • toggleOption() (usada em 1 arquivos)
+      • updateAllMachinesTotal() (usada em 1 arquivos)
+      • updateMachineOptions() (usada em 1 arquivos)
+      • updateMachineTitle() (usada em 1 arquivos)
+      • updateMachineUI() (usada em 1 arquivos)
+      • updateOptionSelection() (usada em 1 arquivos)
+      • updateOptionValues() (usada em 1 arquivos)
+      • updateSelectUI() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  buildCapacityCalculationTable  } from './capacity-calculator.js'
+      • {  updateElementText, safeNumber  } from '../../utils/core-utils.js'
+      • {  generateMachineId  } from '../../utils/id-generator.js'
+   📤 EXPORTS:
+      • buildMachinesSection
+      • loadMachinesData
+      • loadSavedMachines
+      • addMachine
+      • buildMachineHTML
+      • toggleMachineSection
+      • updateMachineTitle
+      • updateMachineOptions
+      • calculateMachinePrice
+      • deleteMachine
+      • toggleOption
+      • updateOptionSelection
+      • updateOptionValues
+      • handlePowerChange
+      • calculateAllMachinesTotal
+      • updateAllMachinesTotal
+      • generateMachineId
+------------------------------------------------------------
+
+📁 ARQUIVO: data\modules\rooms.js
+   📏 Linhas de código: 499
+   🔧 Funções encontradas: 17
+   📋 Lista de funções:
+      • addNewRoom() (usada em 1 arquivos)
+      • addNewRoomLegacy() (usada em 1 arquivos)
+      • addNewRoomToProject() (usada em 1 arquivos)
+      • buildRoomActions() (usada em 1 arquivos)
+      • buildRoomHTML() (usada em 1 arquivos)
+      • buildRoomHeader() (usada em 1 arquivos)
+      • createEmptyRoom() (usada em 1 arquivos)
+      • deleteRoom() (usada em 1 arquivos)
+      • deleteRoomLegacy() (usada em 1 arquivos)
+      • fixExistingCapacityInputs() (usada em 1 arquivos)
+      • getRoomCountInProject() (usada em 1 arquivos)
+      • initializeRoomComponents() (usada em 1 arquivos)
+      • initializeWithRetry() (usada em 1 arquivos)
+      • insertRoomIntoProject() (usada em 1 arquivos)
+      • loadMachinesPreloadModule() (usada em 1 arquivos)
+      • safeInitializeFatorSeguranca() (usada em 1 arquivos)
+      • tryInitialize() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  buildClimatizationSection  } from './climatizacao.js'
+      • {  buildMachinesSection  } from './machines/machines-core.js'
+      • {  buildConfigurationSection  } from './configuracao.js'
+      • {  generateRoomId  } from '../utils/id-generator.js'
+      • {  removeEmptyProjectMessage, showEmptyProjectMessageIfNeeded  } from '../../ui/helpers.js'
+   📤 EXPORTS:
+      • // Construção
+    buildRoomHTML
+      • buildRoomHeader
+      • buildRoomActions
+      • // Operações
+    createEmptyRoom
+      • insertRoomIntoProject
+      • addNewRoom
+      • deleteRoom
+      • deleteRoomLegacy
+      • safeInitializeFatorSeguranca
+      • addNewRoomToProject
+      • // Utilitários
+    getRoomCountInProject
+      • initializeRoomComponents
+      • fixExistingCapacityInputs
+      • loadMachinesPreloadModule
+------------------------------------------------------------
+
+📁 ARQUIVO: data\utils\core-utils.js
+   📏 Linhas de código: 121
+   🔧 Funções encontradas: 9
+   📋 Lista de funções:
+      • check() (usada em 1 arquivos)
+      • debounce() (usada em 1 arquivos)
+      • executedFunction() (usada em 1 arquivos)
+      • generateUniqueId() (usada em 1 arquivos)
+      • isValidElement() (usada em 1 arquivos)
+      • later() (usada em 1 arquivos)
+      • safeNumber() (usada em 1 arquivos)
+      • updateElementText() (usada em 1 arquivos)
+      • waitForElement() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • waitForElement
+      • safeNumber
+      • updateElementText
+      • generateUniqueId
+      • isValidElement
+      • debounce
+------------------------------------------------------------
+
+📁 ARQUIVO: data\utils\data-utils.js
+   📏 Linhas de código: 456
+   🔧 Funções encontradas: 13
+   📋 Lista de funções:
+      • collectClimatizationInputs() (usada em 1 arquivos)
+      • debugThermalGainsElements() (usada em 1 arquivos)
+      • extractNumberFromText() (usada em 1 arquivos)
+      • findClimatizationSection() (usada em 1 arquivos)
+      • getMachineName() (usada em 1 arquivos)
+      • getNextObraNumber() (usada em 1 arquivos)
+      • getNextProjectNumber() (usada em 1 arquivos)
+      • getNextRoomNumber() (usada em 1 arquivos)
+      • getObraName() (usada em 1 arquivos)
+      • getProjectName() (usada em 1 arquivos)
+      • getRoomFullId() (usada em 1 arquivos)
+      • getRoomName() (usada em 1 arquivos)
+      • parseMachinePrice() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  
+    safeNumber } from './core-utils.js'
+   📤 EXPORTS:
+      • // Sistema de Numeração
+    getNextProjectNumber
+      • getNextRoomNumber
+      • getNextObraNumber
+      • // Funções de Nomeação
+    getRoomFullId
+      • getObraName
+      • getProjectName
+      • getRoomName
+      • // Utilitários Gerais
+    extractNumberFromText
+      • getMachineName
+      • parseMachinePrice
+      • debugThermalGainsElements
+      • // Coleta de Dados
+    collectClimatizationInputs
+      • findClimatizationSection
+      • 
+------------------------------------------------------------
+
+📁 ARQUIVO: data\utils\id-generator.js
+   📏 Linhas de código: 283
+   🔧 Funções encontradas: 16
+   📋 Lista de funções:
+      • areIdsFromSameObra() (usada em 1 arquivos)
+      • ensureStringId() (usada em 1 arquivos)
+      • extractObraBaseFromId() (usada em 1 arquivos)
+      • extractSequenceNumber() (usada em 1 arquivos)
+      • generateMachineId() (usada em 1 arquivos)
+      • generateObraId() (usada em 1 arquivos)
+      • generateProjectId() (usada em 1 arquivos)
+      • generateRoomId() (usada em 1 arquivos)
+      • generateSessionId() (usada em 1 arquivos)
+      • getNextSequenceNumber() (usada em 1 arquivos)
+      • getProjectCountInObra() (usada em 1 arquivos)
+      • getRoomCountInProjectFromId() (usada em 1 arquivos)
+      • hasValidSecureId() (usada em 1 arquivos)
+      • isValidSecureId() (usada em 1 arquivos)
+      • sanitizeId() (usada em 1 arquivos)
+      • validateIdHierarchy() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • generateObraId
+      • generateProjectId
+      • generateRoomId
+      • generateMachineId
+      • generateSessionId
+      • ensureStringId
+      • isValidSecureId
+      • extractSequenceNumber
+      • extractObraBaseFromId
+      • areIdsFromSameObra
+      • validateIdHierarchy
+      • hasValidSecureId
+      • getProjectCountInObra
+      • getRoomCountInProjectFromId
+      • getNextSequenceNumber
+      • sanitizeId
+------------------------------------------------------------
+
+📁 ARQUIVO: features\calculations\air-flow.js
+   📏 Linhas de código: 269
+   🔧 Funções encontradas: 8
+   📋 Lista de funções:
+      • calculateDoorFlow() (usada em 1 arquivos)
+      • calculateVazaoAr() (usada em 1 arquivos)
+      • calculateVazaoArAndThermalGains() (usada em 1 arquivos)
+      • computeAirFlowRate() (usada em 1 arquivos)
+      • getAirFlowStats() (usada em 1 arquivos)
+      • prepareAirFlowData() (usada em 1 arquivos)
+      • updateFlowRateDisplay() (usada em 1 arquivos)
+      • validateAirFlowInputs() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  CALCULATION_CONSTANTS  } from '../../core/constants.js'
+      • {   
+    waitForSystemConstants, 
+    validateSystemConstants, 
+    collectClimatizationInputs,
+    findClimatizationSection,
+    safeNumber 
+ } from './calculations-core.js'
+   📤 EXPORTS:
+      • // Cálculos principais
+    calculateDoorFlow
+      • computeAirFlowRate
+      • calculateVazaoAr
+      • calculateVazaoArAndThermalGains
+      • // Display
+    updateFlowRateDisplay
+      • // Validações e utilitários
+    validateAirFlowInputs
+      • prepareAirFlowData
+      • getAirFlowStats
+------------------------------------------------------------
+
+📁 ARQUIVO: features\calculations\calculations-core.js
+   📏 Linhas de código: 272
+   🔧 Funções encontradas: 8
+   📋 Lista de funções:
+      • calculateVazaoArAndThermalGainsDebounced() (usada em 1 arquivos)
+      • calculateVazaoArAndThermalGainsImmediate() (usada em 1 arquivos)
+      • clearAllCalculationTimeouts() (usada em 1 arquivos)
+      • debouncedCalculation() (usada em 1 arquivos)
+      • prepareCalculationData() (usada em 1 arquivos)
+      • validateCalculationData() (usada em 1 arquivos)
+      • validateSystemConstants() (usada em 1 arquivos)
+      • waitForSystemConstants() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  
+    safeNumber as coreSafeNumber, 
+    updateElementText as coreUpdateElementText,
+    waitForElement as coreWaitForElement,
+    debounce as coreDebounce
+ } from '../../data/utils/core-utils.js'
+      • { 
+    collectClimatizationInputs as dataCollectClimatizationInputs,
+    findClimatizationSection as dataFindClimatizationSection
+ } from '../../data/utils/data-utils.js'
+   📤 EXPORTS:
+      • collectClimatizationInputs
+      • findClimatizationSection
+      • safeNumber
+      • updateElementText
+      • // Sistema de Performance
+    debouncedCalculation
+      • clearAllCalculationTimeouts
+      • // Sistema de Constantes
+    waitForSystemConstants
+      • validateSystemConstants
+      • // Sistema de Cálculos
+    calculateVazaoArAndThermalGainsDebounced
+      • calculateVazaoArAndThermalGainsImmediate
+      • // Validação e Preparação
+    validateCalculationData
+      • prepareCalculationData
+      • 
+------------------------------------------------------------
+
+📁 ARQUIVO: features\calculations\thermal-gains.js
+   📏 Linhas de código: 460
+   🔧 Funções encontradas: 17
+   📋 Lista de funções:
+      • calculateAuxiliaryVariables() (usada em 1 arquivos)
+      • calculateCeilingGain() (usada em 1 arquivos)
+      • calculateDissipationGain() (usada em 1 arquivos)
+      • calculateExternalAirLatentGain() (usada em 1 arquivos)
+      • calculateExternalAirSensibleGain() (usada em 1 arquivos)
+      • calculateFloorGain() (usada em 1 arquivos)
+      • calculateLightingGain() (usada em 1 arquivos)
+      • calculatePartitionGain() (usada em 1 arquivos)
+      • calculatePeopleGain() (usada em 1 arquivos)
+      • calculateThermalGains() (usada em 1 arquivos)
+      • calculateTotals() (usada em 1 arquivos)
+      • calculateUValues() (usada em 1 arquivos)
+      • calculateWallGain() (usada em 1 arquivos)
+      • findRoomContentThermal() (usada em 1 arquivos)
+      • updatePartitionDisplay() (usada em 1 arquivos)
+      • updateThermalGainsDisplay() (usada em 1 arquivos)
+      • updateWallDisplay() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  
+    waitForSystemConstants, 
+    validateSystemConstants,
+    collectClimatizationInputs,
+ } from './calculations-core.js'
+      • {  safeNumber, updateElementText  } from '../../data/utils/core-utils.js'
+   📤 EXPORTS:
+      • calculateThermalGains
+      • calculateUValues
+      • calculateAuxiliaryVariables
+      • findRoomContentThermal
+      • calculateCeilingGain
+      • calculateWallGain
+      • calculatePartitionGain
+      • calculateFloorGain
+      • calculateLightingGain
+      • calculateDissipationGain
+      • calculatePeopleGain
+      • calculateExternalAirSensibleGain
+      • calculateExternalAirLatentGain
+      • calculateTotals
+      • updateThermalGainsDisplay
+      • updateWallDisplay
+      • updatePartitionDisplay
+------------------------------------------------------------
+
+📁 ARQUIVO: features\managers\obra-folder\obra-creator.js
+   📏 Linhas de código: 165
+   🔧 Funções encontradas: 5
+   📋 Lista de funções:
+      • addNewObra() (usada em 1 arquivos)
+      • buildObraActionsFooter() (usada em 1 arquivos)
+      • buildObraHTML() (usada em 1 arquivos)
+      • createEmptyObra() (usada em 1 arquivos)
+      • insertObraIntoDOM() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  getNextObraNumber  } from '../../../data/utils/data-utils.js'
+      • {  generateObraId  } from '../../../data/utils/id-generator.js'
+   📤 EXPORTS:
+      • buildObraHTML
+      • buildObraActionsFooter
+      • insertObraIntoDOM
+      • createEmptyObra
+      • addNewObra
+------------------------------------------------------------
+
+📁 ARQUIVO: features\managers\obra-folder\obra-dom-manager.js
+   📏 Linhas de código: 101
+   🔧 Funções encontradas: 3
+   📋 Lista de funções:
+      • findObraBlock() (usada em 1 arquivos)
+      • findObraBlockWithRetry() (usada em 1 arquivos)
+      • updateObraButtonAfterSave() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  ensureStringId, generateObraId  } from '../../../data/utils/id-generator.js'
+   📤 EXPORTS:
+      • findObraBlock
+      • findObraBlockWithRetry
+      • updateObraButtonAfterSave
+------------------------------------------------------------
+
+📁 ARQUIVO: features\managers\obra-folder\obra-persistence.js
+   📏 Linhas de código: 203
+   🔧 Funções encontradas: 4
+   📋 Lista de funções:
+      • atualizarObra() (usada em 1 arquivos)
+      • deleteObraFromServer() (usada em 1 arquivos)
+      • fetchObras() (usada em 1 arquivos)
+      • salvarObra() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  ensureStringId  } from '../../../data/utils/id-generator.js'
+      • {  showSystemStatus  } from '../../../ui/components/status.js'
+      • {  isSessionActive  } from '../../../data/adapters/session-adapter.js'
+   📤 EXPORTS:
+      • fetchObras
+      • salvarObra
+      • atualizarObra
+      • deleteObraFromServer
+------------------------------------------------------------
+
+📁 ARQUIVO: features\managers\obra-folder\obra-save-handler.js
+   📏 Linhas de código: 180
+   🔧 Funções encontradas: 1
+   📋 Lista de funções:
+      • saveObra() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  ensureStringId  } from '../../../data/utils/id-generator.js'
+      • {  buildObraData  } from '../../../data/builders/data-builders.js'
+      • {  showSystemStatus  } from '../../../ui/components/status.js'
+      • {  isSessionActive, startSessionOnFirstSave  } from '../../../data/adapters/session-adapter.js'
+      • {  findObraBlockWithRetry  } from './obra-dom-manager.js'
+      • {  salvarObra, atualizarObra  } from './obra-persistence.js'
+   📤 EXPORTS:
+      • saveObra
+------------------------------------------------------------
+
+📁 ARQUIVO: features\managers\obra-folder\obra-utils.js
+   📏 Linhas de código: 59
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • deleteObra() (usada em 1 arquivos)
+      • verifyObraData() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  showConfirmationModal  } from '../../../ui/components/modal/modal.js'
+      • {  calculateRoomCompletionStats  } from '../../../ui/helpers.js'
+   📤 EXPORTS:
+      • deleteObra
+      • verifyObraData
+------------------------------------------------------------
+
+📁 ARQUIVO: features\managers\obra-manager.js
+   📏 Linhas de código: 33
+   🔧 Funções encontradas: 0
+   📥 IMPORTS:
+      • {  attachModuleToWindow  } from '../../core/shared-utils.js'
+   📤 EXPORTS:
+      • generateObraId
+      • ensureStringId
+------------------------------------------------------------
+
+📁 ARQUIVO: features\managers\project-manager.js
+   📏 Linhas de código: 209
+   🔧 Funções encontradas: 4
+   📋 Lista de funções:
+      • addNewProjectToObra() (usada em 1 arquivos)
+      • buildProjectHTML() (usada em 1 arquivos)
+      • createEmptyProject() (usada em 1 arquivos)
+      • deleteProject() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  createEmptyRoom  } from '../../data/modules/rooms.js'
+      • {  generateProjectId  } from '../../data/utils/id-generator.js'
+      • {  getNextProjectNumber  } from '../../data/utils/data-utils.js'
+      • {  removeEmptyObraMessage  } from '../../ui/helpers.js'
+      • {  addNewRoomToProject  } from '../../data/modules/rooms.js'
+   📤 EXPORTS:
+      • createEmptyProject
+      • buildProjectHTML
+      • addNewProjectToObra
+      • deleteProject
+------------------------------------------------------------
+
+📁 ARQUIVO: main.js
+   📏 Linhas de código: 778
+   🔧 Funções encontradas: 8
+   📋 Lista de funções:
+      • checkAndLoadExistingSession() (usada em 1 arquivos)
+      • finalSystemDebug() (usada em 1 arquivos)
+      • initializeEmpresaCadastro() (usada em 1 arquivos)
+      • loadAllModules() (usada em 1 arquivos)
+      • loadSystemConstants() (usada em 1 arquivos)
+      • showServerOfflineMessage() (usada em 1 arquivos)
+      • verifyAndCreateBaseObra() (usada em 1 arquivos)
+      • verifyCriticalFunctions() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  loadObrasFromServer  } from './data/adapters/obra-adapter.js'
+      • {  getGeralCount  } from './data/adapters/session-adapter.js'
+      • {  shutdownManual  } from './data/adapters/shutdown-adapter.js'
+      • { EmpresaCadastroInline } from './data/builders/empresa-cadastro-inline.js'
+------------------------------------------------------------
+
+📁 ARQUIVO: ui\components\edit.js
+   📏 Linhas de código: 487
+   🔧 Funções encontradas: 18
+   📋 Lista de funções:
+      • applyNameChange() (usada em 1 arquivos)
+      • attachEditingEventListeners() (usada em 1 arquivos)
+      • cancelInlineEdit() (usada em 1 arquivos)
+      • disableAllEditing() (usada em 1 arquivos)
+      • disableEditing() (usada em 1 arquivos)
+      • enableEditing() (usada em 1 arquivos)
+      • getEditStats() (usada em 1 arquivos)
+      • handleBlur() (usada em 1 arquivos)
+      • handleKeydown() (usada em 1 arquivos)
+      • hasPendingEdits() (usada em 1 arquivos)
+      • makeAllEditable() (usada em 1 arquivos)
+      • makeEditable() (usada em 1 arquivos)
+      • makeEditableCompatibility() (usada em 1 arquivos)
+      • saveAllPendingEdits() (usada em 1 arquivos)
+      • saveInlineEdit() (usada em 1 arquivos)
+      • selectElementContent() (usada em 1 arquivos)
+      • showEditError() (usada em 1 arquivos)
+      • validateEditedText() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  isValidElement  } from '../../data/utils/core-utils.js'
+   📤 EXPORTS:
+      • // Sistema principal de edição
+    makeEditable
+      • enableEditing
+      • selectElementContent
+      • attachEditingEventListeners
+      • saveInlineEdit
+      • disableEditing
+      • validateEditedText
+      • cancelInlineEdit
+      • // Funções avançadas
+    makeAllEditable
+      • disableAllEditing
+      • saveAllPendingEdits
+      • hasPendingEdits
+      • getEditStats
+      • // Funções de aplicação
+    applyNameChange
+      • showEditError
+      • // Compatibilidade
+    makeEditableCompatibility
+------------------------------------------------------------
+
+📁 ARQUIVO: ui\components\modal\exit-modal.js
+   📏 Linhas de código: 182
+   🔧 Funções encontradas: 11
+   📋 Lista de funções:
+      • cleanup() (usada em 1 arquivos)
+      • createModalHTML() (usada em 1 arquivos)
+      • createShutdownModal() (usada em 1 arquivos)
+      • onBackdropClick() (usada em 1 arquivos)
+      • onCancel() (usada em 1 arquivos)
+      • onConfirm() (usada em 1 arquivos)
+      • onKeyDown() (usada em 1 arquivos)
+      • removeExistingModal() (usada em 1 arquivos)
+      • setupModalEvents() (usada em 1 arquivos)
+      • showCustomShutdownModal() (usada em 1 arquivos)
+      • showShutdownConfirmationModal() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • showShutdownConfirmationModal
+      • showCustomShutdownModal
+------------------------------------------------------------
+
+📁 ARQUIVO: ui\components\modal\modal.js
+   📏 Linhas de código: 548
+   🔧 Funções encontradas: 16
+   📋 Lista de funções:
+      • animateAndRemove() (usada em 1 arquivos)
+      • closeConfirmationModal() (usada em 1 arquivos)
+      • closeConfirmationModalWithoutClearing() (usada em 1 arquivos)
+      • completeDeletion() (usada em 1 arquivos)
+      • completeDeletionImmediate() (usada em 1 arquivos)
+      • confirmDeletion() (usada em 1 arquivos)
+      • createToastContainer() (usada em 1 arquivos)
+      • getPendingDeletion() (usada em 1 arquivos)
+      • hideSpecificToast() (usada em 1 arquivos)
+      • hideToast() (usada em 1 arquivos)
+      • showConfirmationModal() (usada em 1 arquivos)
+      • showToast() (usada em 1 arquivos)
+      • startCountdown() (usada em 1 arquivos)
+      • sweepDanglingToasts() (usada em 1 arquivos)
+      • undoDeletion() (usada em 1 arquivos)
+      • verificarObraNoServidor() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • showConfirmationModal
+      • closeConfirmationModal
+      • hideSpecificToast
+      • hideToast
+      • undoDeletion
+      • getPendingDeletion
+------------------------------------------------------------
+
+📁 ARQUIVO: ui\components\status.js
+   📏 Linhas de código: 229
+   🔧 Funções encontradas: 12
+   📋 Lista de funções:
+      • createStatusBanner() (usada em 1 arquivos)
+      • getActiveBannersCount() (usada em 1 arquivos)
+      • getDefaultDuration() (usada em 1 arquivos)
+      • getStatusIcon() (usada em 1 arquivos)
+      • hasActiveStatusBanner() (usada em 1 arquivos)
+      • insertStatusBanner() (usada em 1 arquivos)
+      • removeAllStatusBanners() (usada em 1 arquivos)
+      • removeExistingStatusBanner() (usada em 1 arquivos)
+      • scheduleStatusBannerRemoval() (usada em 1 arquivos)
+      • showLoadingStatus() (usada em 1 arquivos)
+      • showSystemStatus() (usada em 1 arquivos)
+      • showTemporaryStatus() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  UI_CONSTANTS  } from '../../core/constants.js'
+   📤 EXPORTS:
+      • showSystemStatus
+      • removeExistingStatusBanner
+      • removeAllStatusBanners
+      • createStatusBanner
+      • insertStatusBanner
+      • scheduleStatusBannerRemoval
+      • showLoadingStatus
+      • showTemporaryStatus
+      • hasActiveStatusBanner
+      • getActiveBannersCount
+------------------------------------------------------------
+
+📁 ARQUIVO: ui\helpers.js
+   📏 Linhas de código: 210
+   🔧 Funções encontradas: 10
+   📋 Lista de funções:
+      • calculateRoomCompletionStats() (usada em 1 arquivos)
+      • collapseElement() (usada em 1 arquivos)
+      • expandElement() (usada em 1 arquivos)
+      • isElementVisible() (usada em 1 arquivos)
+      • removeEmptyObraMessage() (usada em 1 arquivos)
+      • removeEmptyProjectMessage() (usada em 1 arquivos)
+      • showEmptyObraMessageIfNeeded() (usada em 1 arquivos)
+      • showEmptyProjectMessageIfNeeded() (usada em 1 arquivos)
+      • toggleAllElements() (usada em 1 arquivos)
+      • toggleElementVisibility() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  UI_CONSTANTS  } from '../core/constants.js'
+   📤 EXPORTS:
+      • toggleElementVisibility
+      • expandElement
+      • collapseElement
+      • calculateRoomCompletionStats
+      • removeEmptyObraMessage
+      • showEmptyObraMessageIfNeeded
+      • removeEmptyProjectMessage
+      • showEmptyProjectMessageIfNeeded
+      • isElementVisible
+      • toggleAllElements
+------------------------------------------------------------
+
+📁 ARQUIVO: ui\interface.js
+   📏 Linhas de código: 444
+   🔧 Funções encontradas: 9
+   📋 Lista de funções:
+      • addNewProject() (usada em 1 arquivos)
+      • downloadPDF() (usada em 1 arquivos)
+      • downloadWord() (usada em 1 arquivos)
+      • saveOrUpdateObra() (usada em 1 arquivos)
+      • toggleObra() (usada em 1 arquivos)
+      • toggleProject() (usada em 1 arquivos)
+      • toggleRoom() (usada em 1 arquivos)
+      • toggleSection() (usada em 1 arquivos)
+      • toggleSubsection() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  
+    showSystemStatus,
+    removeExistingStatusBanner,
+    createStatusBanner,
+    insertStatusBanner,
+    scheduleStatusBannerRemoval,
+ } from './components/status.js'
+      • {  
+    toggleElementVisibility,
+    expandElement,
+    collapseElement,
+    calculateRoomCompletionStats,
+    removeEmptyObraMessage,
+    showEmptyObraMessageIfNeeded,
+    removeEmptyProjectMessage,
+    showEmptyProjectMessageIfNeeded,
+ } from './helpers.js'
+      • {  
+    createEmptyObra,
+    buildObraHTML,
+    buildObraActionsFooter,
+    insertObraIntoDOM,
+    updateObraButtonAfterSave,
+    deleteObra,
+    addNewObra,
+ } from '../features/managers/obra-manager.js'
+      • {  
+    createEmptyProject,
+    buildProjectHTML,
+    addNewProjectToObra
+ } from '../features/managers/project-manager.js'
+      • {  
+    getNextProjectNumber,
+    getNextObraNumber 
+ } from '../data/utils/data-utils.js'
+      • {  
+    createEmptyRoom 
+ } from '../data/modules/rooms.js'
+   📤 EXPORTS:
+      • showSystemStatus
+      • removeExistingStatusBanner
+      • createStatusBanner
+      • insertStatusBanner
+      • scheduleStatusBannerRemoval
+      • toggleElementVisibility
+      • expandElement
+      • collapseElement
+      • calculateRoomCompletionStats
+      • removeEmptyObraMessage
+      • showEmptyObraMessageIfNeeded
+      • removeEmptyProjectMessage
+      • showEmptyProjectMessageIfNeeded
+      • createEmptyObra
+      • buildObraHTML
+      • buildObraActionsFooter
+      • insertObraIntoDOM
+      • updateObraButtonAfterSave
+      • deleteObra
+      • getNextObraNumber
+      • addNewObra
+      • createEmptyProject
+      • buildProjectHTML
+      • addNewProjectToObra
+      • getNextProjectNumber
+      • createEmptyRoom
+      • 
+      • addNewProject
+      • toggleObra
+      • toggleProject
+      • toggleRoom
+      • downloadPDF
+      • downloadWord
+      • saveOrUpdateObra
+      • toggleSubsection
+      • toggleSection
+      • 
+------------------------------------------------------------
+
+
+================================================================================
+ANÁLISE DE FUNÇÕES DUPLICADAS
+================================================================================
+
+✅ Nenhuma função duplicada encontrada!
+
+
+================================================================================
+ESTATÍSTICAS GERAIS
+================================================================================
+
+📊 ESTATÍSTICAS:
+   • Total de arquivos .js: 47
+   • Total de linhas de código: 13644
+   • Total de funções: 339
+   • Total de imports: 70
+   • Total de exports: 330
+   • Funções duplicadas: 0
+
+🏆 TOP 10 ARQUIVOS COM MAIS FUNÇÕES:
+    1. data\modules\machines\machines-core.js: 26 funções, 602 linhas
+    2. data\modules\machines\capacity-calculator.js: 21 funções, 624 linhas
+    3. data\adapters\session-adapter.js: 20 funções, 312 linhas
+    4. ui\components\edit.js: 18 funções, 487 linhas
+    5. data\modules\rooms.js: 17 funções, 499 linhas
+    6. features\calculations\thermal-gains.js: 17 funções, 460 linhas
+    7. data\utils\id-generator.js: 16 funções, 283 linhas
+    8. ui\components\modal\modal.js: 16 funções, 548 linhas
+    9. data\utils\data-utils.js: 13 funções, 456 linhas
+   10. ui\components\status.js: 12 funções, 229 linhas
+
+⚠️  ARQUIVOS SEM EXPORTS (4):
+   • data\adapters\obra-adapter.js
+   • data\builders\data-builders.js
+   • data\builders\ui-builders.js
+   • main.js

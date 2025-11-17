@@ -171,6 +171,120 @@
           "timestamp": "2025-11-13T23:09:17.271Z"
         }
       ]
+    },
+    {
+      "id": "obra_w24",
+      "nome": "Obra2",
+      "timestamp": "2025-11-17T00:44:10.611Z",
+      "projetos": [
+        {
+          "id": "obra_w24_proj_n72_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_w24_proj_n72_2_sala_b45_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "NaN",
+                "solucaoBackup": "NaN",
+                "totalCapacidade": "NaN",
+                "folga": "0.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ],
+          "timestamp": "2025-11-17T00:44:10.614Z"
+        }
+      ],
+      "empresaSigla": "RPS",
+      "empresaNome": "Rios Projetos e Sistemas",
+      "dataCadastro": "16/11/2025",
+      "numeroClienteFinal": 1,
+      "clienteFinal": "3adsfsadf",
+      "codigoCliente": "eeeasdfasdfee",
+      "orcamentistaResponsavel": "eafwfasf"
+    },
+    {
+      "id": "obra_a91",
+      "nome": "Obra3",
+      "projetos": [
+        {
+          "id": "obra_a91_proj_v91_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_a91_proj_v91_2_sala_o42_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 0,
+                "solucaoBackup": 0,
+                "totalCapacidade": 0,
+                "folga": 0,
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ]
+        }
+      ],
+      "empresaSigla": "ACT",
+      "empresaNome": "AeroCool Technologies",
+      "dataCadastro": "16/11/2025",
+      "numeroClienteFinal": 152,
+      "clienteFinal": "dsfasdf",
+      "codigoCliente": "asdfasdf",
+      "orcamentistaResponsavel": "asdfasdf",
+      "timestamp": "2025-11-16T21:47:23.418511"
     }
   ]
 }

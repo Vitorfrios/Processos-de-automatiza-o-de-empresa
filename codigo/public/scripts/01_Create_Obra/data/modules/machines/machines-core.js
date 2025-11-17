@@ -5,7 +5,7 @@
  */
 
 import { buildCapacityCalculationTable } from './capacity-calculator.js';
-import { updateElementText, safeNumber } from '../../../utils/core-utils.js';
+import { updateElementText, safeNumber } from '../../utils/core-utils.js';
 import { generateMachineId } from '../../utils/id-generator.js';
 
 // =============================================================================

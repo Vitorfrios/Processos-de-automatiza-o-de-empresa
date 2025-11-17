@@ -4,7 +4,7 @@
  * Gerencia edição inline de obras, projetos e salas
  */
 
-import { isValidElement } from '../../utils/core-utils.js';
+import { isValidElement } from '../../data/utils/core-utils.js';
 
 // =============================================================================
 // SISTEMA DE EDIÇÃO INLINE (De edit.js)
@@ -204,7 +204,6 @@ function applyNameChange(element, newText, type, originalText) {
             element: element,
             oldName: originalText,
             newName: newText,
-            timestamp: new Date().toISOString()
         }
     });
     element.dispatchEvent(changeEvent);

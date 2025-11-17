@@ -1,795 +1,200 @@
 # Processos de automatização de empresa
 
-## Visão geral
+Aplicação single-page que centraliza cadastro de obras, projetos, salas e cálculos de climatização, integrada a um backend Python simples que persiste dados em JSON e expõe tudo via HTTP local.
 
-- Aplicação web single-page para gestão de obras, projetos, salas e cálculos de climatização, alimentada por um backend Python em `codigo/servidor.py`.
-- O front-end moderno vive em `codigo/public/scripts/01_Create_Obra`, organizado por camadas (`core`, `data`, `features`, `ui`, `utils`) e carregado dinamicamente por `main.js`.
-- Fluxo de cadastro inline de empresas (`data/builders/empresa-cadastro-inline.js` + `public/static/01_Create_Obra/components/empresa-cadastro-inline.css`) adiciona autocomplete com `dados.json`/`backup.json`, grava atributos `data-*` por obra e atualiza o cabeçalho com `SIGLA-NÚMERO`.
-- A pasta `backup de arquivos` guarda uma cópia completa do código JavaScript antes da refatoração; ela serve como referência histórica.
-- Ferramentas auxiliares em `utilitarios py` automatizam geração de CSS/JS e consolidação de arquivos.
+## Visão geral rápida
+
+- SPA modular construída em JavaScript puro (`codigo/public/scripts/01_Create_Obra`) organizada pelas camadas `core`, `data`, `features` e `ui`.
+- Camada de dados garante IDs seguros (`obra_`, `project_`, `room_`), reconstrói obras e sincroniza informações com a sessão ativa do usuário.
+- Cadastro inline de empresas traz autocomplete conectado a `codigo/json/dados.json`, formata cabeçalhos e grava `data-*` na obra.
+- Servidor Python (`codigo/servidor.py` + `servidor_modules`) atende `/obras`, `/api/session-obras`, `/api/dados/empresas` e demais rotas REST gravando em JSON.
+- Scripts auxiliares em `utilitarios py` aceleram geração de builders e mantêm o histórico em `backup de arquivos`.
+
+## Requisitos e execução local
+
+1. Python 3.11+ (o projeto usa apenas a biblioteca padrão e os pacotes listados em `requirements.txt`).
+2. (Opcional) `python -m venv .venv` e ative a virtualenv.
+3. `pip install -r requirements.txt`.
+4. Execute `python codigo/servidor.py` para subir o backend, carregar constantes e iniciar monitores.
+5. Acesse `http://127.0.0.1:8000/codigo/public/pages/01_Create_Obra/index.html`.
+6. `dados.json`, `backup.json` e `sessions.json` são criados/atualizados automaticamente quando novas obras são salvas.
 
 ## Estrutura de pastas
 
 ```text
 Processos-de-automatiza-o-de-empresa/
-├─ app.py
-├─ codigo/
-│  ├─ servidor.py                        # ponto de entrada do backend
-│  ├─ servidor_modules/
-│  │  ├─ core/                           # rotas, sessões, server_core, routes_core
-│  │  ├─ handlers/                       # http_handler, route_handler etc.
-│  │  └─ utils/                          # file_utils, server_utils, cache_cleaner, browser_monitor
-│  ├─ json/                              # configurações e bases auxiliares
-│  └─ public/
-│     ├─ pages/                          # HTMLs (01_Create_Obra)
-│     ├─ scripts/01_Create_Obra/         # JavaScript modular (documentado abaixo)
-│     └─ static/01_Create_Obra/
-│        ├─ base/                        # variables.css, reset.css
-│        ├─ components/                  # buttons.css, cards.css, tables.css, machines.css...
-│        ├─ layout/                      # grid.css, sections.css, modal.css, exit-modal.css
-│        └─ pages/                       # thermal-calculation.css, projects.css, main.css
-├─ backup de arquivos/
-│  └─ scripts/01_Create_Obra/            # versão anterior completa do front-end
-├─ utilitarios py/                       # scripts Python de apoio (Detalhes*, juntar_linhas.py)
-└─ requirements.txt, runtime.txt, rander.yml, CNAME
-````
+├── README.md
+├── codigo/
+│   ├── servidor.py
+│   ├── servidor_modules/
+│   │   ├── core/ (server_core.py, routes_core.py, sessions_core.py)
+│   │   ├── handlers/ (http_handler.py, route_handler.py)
+│   │   └── utils/ (file_utils.py, cache_cleaner.py, browser_monitor.py, server_utils.py)
+│   ├── json/ (backup.json, dados.json, sessions.json)
+│   └── public/
+│       ├── pages/01_Create_Obra/index.html
+│       ├── scripts/01_Create_Obra/
+│       │   ├── main.js
+│       │   ├── core/
+│       │   ├── data/ (adapters, builders, modules, utils)
+│       │   ├── features/ (calculations, managers)
+│       │   └── ui/ (components, helpers, interface)
+│       └── static/01_Create_Obra/ (base, components, layout, pages, empresa-cadastro-inline.css)
+├── backup de arquivos/ (snapshot da versão anterior do front-end)
+└── utilitarios py/ (scripts de apoio, ex.: funções.py)
+```
 
-## Documentação dos arquivos JavaScript
+## Fluxo principal do sistema
 
-Cada tabela indica as funções ou classes expostas por arquivo e seu objetivo principal.
+1. `main.js` busca constantes em `/constants`, carrega todos os módulos via import dinâmico, tenta restaurar uma sessão com obras salvas e cria uma obra/projeto/sala base caso nada exista.
+2. `core/app.js` inicializa `EventBus`, estado global e sistema de eventos `app:*`, expondo funções críticas via `window`.
+3. Adaptadores (`data/adapters`) conectam a camada de dados às fontes externas: carregam obras do servidor, mantêm `sessions.json`, tratam desligamento e sincronizam cadastro de empresa.
+4. Builders (`data/builders`) convertem DOM ⇄ JSON: constroem trechos HTML, preenchem seções, exportam dados de salas e garantem compatibilidade com as rotinas de persistência.
+5. Gerenciadores (`features/managers`) criam/removem obras/projetos/salas, salvam no servidor, apresentam status e reagem a ações da UI.
+6. Módulos de cálculo (`features/calculations` + `data/modules`) calculam vazão, ganhos térmicos, capacidade e constroem seções visuais como climatização, máquinas e configurações.
+7. Componentes de UI (`ui/`) habilitam edição inline, modais de confirmação, banners de status e operações de download em PDF/Word.
+8. O backend Python (`servidor.py`, `http_handler.py`, `route_handler.py`) recebe POST/PUT/DELETE, atualiza `codigo/json`, mantém sessões e responde autocompletes de empresa.
 
----
-
-## Aplicação atual (`codigo/public/scripts/01_Create_Obra`)
+## Camadas do front-end (`codigo/public/scripts/01_Create_Obra`)
 
 ### Núcleo e bootstrap
 
-| Arquivo               | Funções/Classes chave                                                                                                                                                                | O que faz                                                                                                                                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `main.js`             | `ShutdownManager`, `loadSystemConstants()`, `loadAllModules()`, `checkAndLoadExistingSession()`, `verifyCriticalFunctions()`                                                         | Entry point do front-end: inicializa botões de desligamento, busca constantes no backend, carrega módulos dinamicamente, sincroniza sessões e expõe no `window` todas as funções globais usadas pelos HTMLs. |
-| `core/app.js`         | `EventBus`, `ApplicationState`, `bootstrapApplication()`, `reinitializeApplication()`, `getAppStatus()`                                                                              | Une antigo bootstrap/event-bus/state; registra listeners, mantém estado global (obras/projetos/salas/sessão) e dispara eventos `app:*`. Exporta inicialização automática quando o DOM carrega.               |
-| `core/constants.js`   | `CALCULATION_CONSTANTS`, `UI_CONSTANTS`, `STORAGE_KEYS`, `VALIDATION_CONSTANTS`, `API_CONSTANTS`, `MESSAGE_CONSTANTS`, `PERFORMANCE_CONSTANTS`, `getAllConstants()`, `getConstant()` | Central de constantes usadas em cálculos, UI, sessão e API. Facilita import único e expõe `window.APP_CONSTANTS` para scripts legados.                                                                       |
-| `utils/core-utils.js` | `waitForElement()`, `safeNumber()`, `updateElementText()`, `generateUniqueId()`, `debounce()`                                                                                        | Utilidades genéricas (await de elementos, sanitização numérica, atualização de DOM, geração de IDs e debounce) utilizadas por módulos de cálculo e UI.                                                       |
+| Arquivo | Funções/objetos em destaque | Responsabilidade |
+| --- | --- | --- |
+| `main.js` | `loadSystemConstants()`, `loadAllModules()`, `initializeEmpresaCadastro()`, `checkAndLoadExistingSession()`, `verifyAndCreateBaseObra()`, `verifyCriticalFunctions()` | Entry point do SPA: garante que constantes e módulos estejam disponíveis, injeta cadastro de empresa, restaura obras da sessão e monitora funções globais críticas antes de liberar o uso. |
+| `core/app.js` | `initializeEventBus()`, `initializeState()`, `initializeInterface()`, `initializeCoreSystems()`, `bootstrapApplication()`, `reinitializeApplication()`, `getAppStatus()` | Inicializa EventBus e estado compartilhado (obras, salas, sessão, UI) e expõe funções para reinicializar e diagnosticar o aplicativo. |
+| `core/constants.js` | `CALCULATION_CONSTANTS`, `UI_CONSTANTS`, `STORAGE_KEYS`, `API_CONSTANTS`, `MESSAGE_CONSTANTS`, `PERFORMANCE_CONSTANTS`, `getAllConstants()`, `getConstant()` | Centraliza constantes usadas em cálculos, UI e API; também publica-as em `window.APP_CONSTANTS` para facilitar debug. |
+| `core/shared-utils.js` | `attachModuleToWindow()` | Utilitário único que percorre exports de cada módulo importado dinamicamente e disponibiliza funções no escopo global para manter compatibilidade com os HTMLs. |
+
+### Data · Adapters (obras e empresa)
+
+| Arquivo | Funções em destaque | Responsabilidade |
+| --- | --- | --- |
+| `data/adapters/obra-adapter.js` | Reexporta os adaptadores de obra, define `window.editarDadosEmpresa()`, `window.atualizarDadosEmpresa()`, `window.ocultarFormularioEmpresa()` e `window.ativarCadastroEmpresa()` | Fachada única para tudo que toca obras/empresas, garantindo que o cadastro inline seja acessível a partir do HTML legado. |
+| `obra-adapter-folder/obra-data-loader.js` | `removeBaseObraFromHTML()`, `loadObrasFromServer()`, `loadSingleObra()`, `prepararDadosEmpresaNaObra()`, `obterDadosEmpresaDaObra()`, `debugLoadObras()` | Busca IDs da sessão, carrega as obras correspondentes via `/obras`, reconstrói DOM, injeta dados de empresa e oferece utilitário de debug. |
+| `obra-adapter-folder/empresa-form-manager.js` | `atualizarInterfaceComEmpresa()`, `atualizarCamposEmpresaForm()`, `criarVisualizacaoEmpresa()`, `criarFormularioVazioEmpresa()` | Gerencia o formulário inline (vazio ou pré-preenchido), sincronizando cada input com a obra e renderizando a visualização após salvar. |
+| `obra-adapter-folder/empresa-autocomplete.js` | `inicializarInputEmpresaHibrido()`, `filtrarEmpresas()`, `exibirSugestoes()`, `exibirTodasEmpresas()`, `navegarDropdown()`, `selecionarEmpresa()`, `selecionarOpcaoAtiva()` | Implementa autocomplete híbrido sigla/nome integrado ao backend (`/api/dados/empresas`), com teclado, mouse e fallback para listar todas as empresas. |
+| `obra-adapter-folder/ui-helpers-obra-adapter.js` | `limparDadosSelecao()`, `inicializarDetectorBackspace()`, `corrigirPosicaoDropdown()`, `mostrarAvisoAutocompletado()`, `calcularNumeroClienteFinal()`, `calcularNumeroLocal()`, `atualizarNumeroClienteInput()`, `formatarData()` | Utilidades de UI para inputs de empresa: detectam backspace, reposicionam dropdown, calculam números de cliente/local e deixam tooltips em sincronia. |
+
+### Data · Adapters (sessão e desligamento)
+
+| Arquivo | Funções em destaque | Responsabilidade |
+| --- | --- | --- |
+| `session-adapter.js` | `isSessionActive()`, `startSessionOnFirstSave()`, `getSessionObras()`, `addObraToSession()`, `removeObraFromSessionLocal()`, `clearSessionObras()`, `initializeGeralCount()`, `incrementGeralCount()` | Controla o estado da sessão no navegador e no backend (`/api/session-obras`), adicionando/removendo IDs e expondo contadores usados na UI. |
+| `shutdown-adapter.js` | `shutdownManual()`, `ensureSingleActiveSession()`, `initializeSession()`, `showShutdownMessage()`, `showFinalShutdownMessage()`, `showFinalMessageWithManualClose()` | Orquestra o desligamento seguro do sistema: mostra modais, garante que apenas uma sessão esteja ativa e dispara chamadas para `/api/sessions/shutdown`. |
+
+### Data · Builders
+
+| Arquivo | Funções em destaque | Responsabilidade |
+| --- | --- | --- |
+| `data-builders.js` | Reexporta builders e chama `attachModuleToWindow()` | Ponto único para carregar `obra-data-builder`, `room-data-extractors`, `machines-data-extractors` e `empresa-data-extractor` com import dinâmico. |
+| `data-builders-folder/obra-data-builder.js` | `buildObraData()`, `buildProjectData()` | Lê o DOM de uma obra/projeto, agrega dados de empresa, projetos e salas e devolve JSON pronto para persistência. |
+| `data-builders-folder/room-data-extractors.js` | `extractRoomData()`, `extractClimatizationInputs()`, `extractThermalGainsData()`, `extractCapacityData()`, `extractConfigurationData()` | Extrai todos os blocos de uma sala (inputs, ganhos térmicos, tabela de capacidade, configurações e dados auxiliares). |
+| `data-builders-folder/machines-data-extractors.js` | `extractMachinesData()`, `extractClimatizationMachineData()` | Percorre o grid de máquinas, coleta opções selecionadas, preços e potências para cada unidade da sala. |
+| `data-builders-folder/empresa-data-extractor.js` | `extractEmpresaData()` | Captura dados `data-*` referentes à empresa associada à obra, sincronizando com o formulário inline. |
+
+### Data · Builders de UI
+
+| Arquivo | Funções em destaque | Responsabilidade |
+| --- | --- | --- |
+| `ui-builders.js` | Reexporta renderers/preenchedores e chama `attachModuleToWindow()` | Disponibiliza `obra-renderer`, `project-renderer`, `room-renderer`, `machine-renderer` e `data-fillers` para outros módulos. |
+| `ui-folder/obra-renderer.js` | `renderObraFromData()`, `populateObraData()` | Cria o HTML da obra com base no JSON e preenche seus atributos (nome, botões, cadastro de empresa). |
+| `ui-folder/project-renderer.js` | `renderProjectFromData()`, `populateProjectData()` | Reconstrói cada projeto, incluindo cabeçalho, botões e vínculo com a obra, mantendo IDs seguros. |
+| `ui-folder/room-renderer.js` | `renderRoomFromData()`, `populateRoomData()` | Monta o markup completo da sala (climatização, máquinas, capacidade, configurações) e mapeia os dados salvos para inputs. |
+| `ui-folder/machine-renderer.js` | `findMachinesSection()`, `ensureMachinesSection()`, `fillMachinesData()`, `populateMachineData()` | Localiza/gera seções de máquinas, injeta itens salvos e garante que listas suspensas reflitam todas as opções disponíveis. |
+| `ui-folder/data-fillers.js` | `fillClimatizationInputs()`, `fillThermalGainsData()`, `fillCapacityData()`, `fillConfigurationData()`, `ensureAllRoomSections()` | Preenche cada seção da sala com os dados persistidos antes de iniciar cálculos. |
+
+### Cadastro de empresa inline
+
+- `data/builders/empresa-cadastro-inline.js`: define a classe `EmpresaCadastroInline` e métodos como `ativarCadastro()`, `renderizarFormulario()`, `prepararDados()`, `prepararDadosObra()`, `cancelarCadastro()` e `atualizarHeaderObra()` para tratar a experiência completa do formulário inline e atualizar o header da obra.
+- `public/static/01_Create_Obra/components/empresa-cadastro-inline.css`: estilos específicos para o formulário, dropdown hibrido, badges do header e estados de validação.
+
+### Data · Modules
+
+| Arquivo | Funções em destaque | Responsabilidade |
+| --- | --- | --- |
+| `data/modules/rooms.js` | `buildRoomHTML()`, `createEmptyRoom()`, `insertRoomIntoProject()`, `addNewRoom()`, `addNewRoomToProject()`, `deleteRoom()` | Cria salas vazias, injeta-as no projeto correto, garante IDs hierárquicos e remove salas de forma segura. |
+| `data/modules/climatizacao.js` | `buildClimatizationSection()`, `buildClimatizationTable()`, `buildPressurizationRow()`, `buildThermalGainsSection()`, `togglePressurizationFields()` | Constrói a aba de climatização (inputs, tabelas, pressurização e ganhos térmicos) e alterna campos conforme necessário. |
+| `data/modules/configuracao.js` | `buildConfigurationSection()` | Monta a seção de configurações/instalações, com switches e checkboxes atrelados a cada sala. |
+| `data/modules/machines/machines-core.js` | `loadMachinesData()`, `buildMachinesSection()`, `addMachine()`, `loadSavedMachines()`, `updateMachineOptions()`, `updateMachineUI()`, `calculateMachinePrice()`, `calculateAllMachinesTotal()`, `deleteMachine()` | Responsável por buscar catálogo de máquinas, gerar formulários, atualizar selects dinâmicos e manter totais de custo por sala. |
+| `data/modules/machines/capacity-calculator.js` | `initializeCapacitySystem()`, `applyFatorSeguranca()`, `calculateCapacitySolution()`, `saveCapacityData()`, `loadCapacityData()`, `applyCapacityData()`, `updateCapacityDisplay()`, `syncBackupWithClimaInputs()` | Controla a tabela de capacidade (TR, backup, folga), sincroniza com inputs de climatização e garante persistência das escolhas. |
+
+### Data · Utils
+
+| Arquivo | Funções em destaque | Responsabilidade |
+| --- | --- | --- |
+| `data/utils/data-utils.js` | `getNextProjectNumber()`, `getNextRoomNumber()`, `getNextObraNumber()`, `getRoomFullId()`, `getObraName()`, `getProjectName()`, `getRoomName()`, `extractNumberFromText()`, `getMachineName()`, `parseMachinePrice()`, `collectClimatizationInputs()`, `findClimatizationSection()` | Funções utilitárias para gerar nomes sequenciais, localizar elementos no DOM, extrair dados de climatização e debugar estruturas complexas. |
+| `data/utils/id-generator.js` | `generateObraId()`, `generateProjectId()`, `generateRoomId()`, `ensureStringId()`, `isValidSecureId()`, `extractSequenceNumber()`, `generateMachineId()`, `sanitizeId()`, `generateSessionId()`, `validateIdHierarchy()`, `getNextSequenceNumber()` | Garante IDs seguros e hierárquicos (`obra_`, `project_`, `room_`) e oferece validadores compartilhados entre UI e persistência. |
+| `data/utils/core-utils.js` | `waitForElement()`, `safeNumber()`, `updateElementText()`, `generateUniqueId()`, `isValidElement()`, `debounce()` | Utilidades menores usados em várias camadas (await pelo DOM, debounce, formatação). |
+
+### Features · Managers
+
+| Arquivo | Funções em destaque | Responsabilidade |
+| --- | --- | --- |
+| `features/managers/obra-manager.js` | Reexporta módulos de obra e ID, usa `attachModuleToWindow()` | Garante que `obra-creator`, `obra-persistence`, `obra-dom-manager`, `obra-save-handler` e `obra-utils` estejam disponíveis no `window` e compartilhados com o restante da aplicação. |
+| `obra-folder/obra-creator.js` | `buildObraHTML()`, `buildObraActionsFooter()`, `insertObraIntoDOM()`, `createEmptyObra()`, `addNewObra()` | Cria toda a estrutura visual de uma obra, injeta no DOM e dispara criação automática de projeto/sala inicial. |
+| `obra-folder/obra-dom-manager.js` | `findObraBlock()`, `findObraBlockWithRetry()`, `updateObraButtonAfterSave()` | Localiza blocos de obra no DOM (com retry) e ajusta os botões após salvar/atualizar. |
+| `obra-folder/obra-save-handler.js` | `saveObra()` | Função principal de salvamento: coleta dados via builders, verifica se a obra é nova/existente, chama persistência e atualiza UI/status. |
+| `obra-folder/obra-persistence.js` | `fetchObras()`, `salvarObra()`, `atualizarObra()`, `deleteObraFromServer()` | Interface com o backend `/obras`: GET/POST/PUT/DELETE, valida IDs e usa `showSystemStatus()` para feedback do usuário. |
+| `obra-folder/obra-utils.js` | `deleteObra()`, `verifyObraData()` | Remove obras com modal de confirmação e gera relatórios de preenchimento por projeto/sala usando `calculateRoomCompletionStats()`. |
+| `features/managers/project-manager.js` | `buildProjectHTML()`, `createEmptyProject()`, `addNewProjectToObra()`, `deleteProject()` | Responsável por criar/remover projetos dentro de uma obra, mantendo botões e containers sincronizados. |
+
+### Features · Calculations
+
+| Arquivo | Funções em destaque | Responsabilidade |
+| --- | --- | --- |
+| `features/calculations/calculations-core.js` | `debouncedCalculation()`, `clearAllCalculationTimeouts()`, `waitForSystemConstants()`, `calculateVazaoArAndThermalGainsDebounced()`, `calculateVazaoArAndThermalGainsImmediate()`, `validateCalculationData()`, `prepareCalculationData()` | Camada intermediária que carrega constantes, valida dados e dispara cálculos de vazão/ganhos térmicos com debounce. |
+| `features/calculations/air-flow.js` | `calculateDoorFlow()`, `computeAirFlowRate()`, `calculateVazaoAr()`, `calculateVazaoArAndThermalGains()`, `updateFlowRateDisplay()`, `validateAirFlowInputs()`, `prepareAirFlowData()`, `getAirFlowStats()` | Processa pressurização, número de portas, vazão externa e atualiza a UI com os resultados de vazão. |
+| `features/calculations/thermal-gains.js` | `calculateCeilingGain()`, `calculateWallGain()`, `calculatePartitionGain()`, `calculateFloorGain()`, `calculateLightingGain()`, `calculateDissipationGain()`, `calculatePeopleGain()`, `calculateExternalAirSensibleGain()`, `calculateExternalAirLatentGain()`, `calculateTotals()`, `updateThermalGainsDisplay()`, `calculateUValues()`, `calculateAuxiliaryVariables()`, `calculateThermalGains()` | Calcula os ganhos térmicos completos (envoltória, carga interna, ar externo), atualiza a UI e alimenta a tabela de capacidade. |
+
+### UI
+
+| Arquivo | Funções em destaque | Responsabilidade |
+| --- | --- | --- |
+| `ui/interface.js` | `addNewProject()`, `toggleObra()`, `toggleProject()`, `toggleRoom()`, `toggleSection()`, `toggleSubsection()`, `downloadPDF()`, `downloadWord()`, `saveOrUpdateObra()` | Controla interações globais (expandir/colapsar, downloads, salvar) conectando botões HTML aos managers. |
+| `ui/helpers.js` | `toggleElementVisibility()`, `expandElement()`, `collapseElement()`, `calculateRoomCompletionStats()`, `removeEmptyObraMessage()`, `showEmptyObraMessageIfNeeded()`, `removeEmptyProjectMessage()`, `showEmptyProjectMessageIfNeeded()`, `toggleAllElements()` | Utilidades de UI para manter mensagens de vazio, contadores e cálculo de preenchimento de sala. |
+| `ui/components/edit.js` | `makeEditable()`, `enableEditing()`, `attachEditingEventListeners()`, `saveInlineEdit()`, `applyNameChange()`, `disableEditing()`, `validateEditedText()`, `makeAllEditable()`, `saveAllPendingEdits()`, `getEditStats()` | Sistema de edição inline usado em títulos de obra/projeto/sala com validação, undo básico e estatísticas. |
+| `ui/components/status.js` | `showSystemStatus()`, `removeExistingStatusBanner()`, `removeAllStatusBanners()`, `createStatusBanner()`, `getStatusIcon()`, `getDefaultDuration()`, `insertStatusBanner()`, `scheduleStatusBannerRemoval()`, `showLoadingStatus()`, `showTemporaryStatus()`, `hasActiveStatusBanner()`, `getActiveBannersCount()` | Banners de status fixos/temporários que sinalizam sucesso, erro ou carregamento durante salvamentos e carregamentos. |
+| `ui/components/modal/modal.js` | `showConfirmationModal()`, `closeConfirmationModal()`, `showToast()`, `hideSpecificToast()`, `hideToast()`, `undoDeletion()`, `confirmDeletion()`, `getPendingDeletion()` | Modal de confirmação de exclusão e sistema de "toast" com undo e countdown para remoção definitiva de obras. |
+| `ui/components/modal/exit-modal.js` | `createModalHTML()`, `setupModalEvents()`, `removeExistingModal()`, `createShutdownModal()`, `showShutdownConfirmationModal()`, `showCustomShutdownModal()` | Modal de desligamento aplicado pelo `shutdown-adapter`, com timers e atalhos para encerramento seguro. |
+
+### Estilos
+
+Os estilos estão em `codigo/public/static/01_Create_Obra`, separados por responsabilidade:
 
----
+- `base/`: variáveis e reset (`variables.css`, `reset.css`).
+- `components/`: botões, cards, tabelas e `empresa-cadastro-inline.css`.
+- `layout/`: grids, seções, modais.
+- `pages/`: estilos específicos por página (ex.: `main.css`, `projects.css`, `thermal-calculation.css`).
 
-### Adaptadores, sessão e shutdown
+## Dados auxiliares (`codigo/json`)
 
-| Arquivo                             | Funções/Classes chave                                                                                                                                                                                    | O que faz                                                                                                                                                                                                                                                                                          |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `data/adapters/obra-adapter.js`     | `loadObrasFromServer()`, `prepararDadosEmpresaNaObra()`, `ativarCadastroEmpresa()`                                                                                                                       | Camada agregadora que expõe, no escopo global, as rotinas de obras e empresa concentradas em `data/builders/data-builders.js` (carregamento de obras da sessão, sincronismo de atributos `data-*` da empresa e ativação do cadastro inline), mantendo compatibilidade com scripts e HTMLs legados. |
-| `data/adapters/session-adapter.js`  | `isSessionActive()`, `setSessionActive()`, `getSessionObras()`, `addObraToSession()`, `clearSessionObras()`, `clearRenderedObras()`, `getGeralCount()`, `startNewSession()`, `startSessionOnFirstSave()` | Controle fino de sessão no `sessionStorage`, contador global de obras e limpeza seletiva do DOM preservando obras já salvas.                                                                                                                                                                       |
-| `data/adapters/shutdown-adapter.js` | `shutdownManual()`, `ensureSingleActiveSession()`, `initializeSession()`, `showShutdownMessage()`                                                                                                        | Fluxo completo de desligamento manual: modal customizado, limpeza de sessões (frontend/backend) e POST `/api/shutdown`, além de overlays amigáveis em caso de erro.                                                                                                                                |
+| Arquivo | Conteúdo | Observações |
+| --- | --- | --- |
+| `dados.json` | Catálogo de empresas e valores auxiliares usados pelo autocomplete e cabeçalho das obras. | Pode ser alimentado manualmente ou via rotas `/dados`. |
+| `backup.json` | Snapshot completo das obras e projetos (utilizado para comparar durante atualizações). | Rota `/backup` atualiza/retorna este arquivo. |
+| `sessions.json` | Lista a sessão/obras ativas para garantir exclusividade de edição. | Manipulado pelo `session-adapter` e pelas rotas `/api/sessions/*`. |
 
----
+## Backend Python
 
-### Construtores e utilitários de dados
+| Arquivo | Componentes/funções | Responsabilidade |
+| --- | --- | --- |
+| `codigo/servidor.py` | `diagnostico_completo()`, `active_session_after_delay()`, `main()` | Inicializa o servidor HTTP, executa diagnósticos, configura portas, threads e monitora o tempo de atividade. |
+| `servidor_modules/core/server_core.py` | Classe `ServerCore` | Encapsula criação do servidor, handlers de sinal, threads auxiliares, shutdown assíncrono e impressão de informações do sistema. |
+| `servidor_modules/core/routes_core.py` | Classe `RoutesCore` | Agrupa as rotas REST, injeta dependências (sessões, FileUtils, CacheCleaner) e centraliza regras de roteamento. |
+| `servidor_modules/core/sessions_core.py` | Classe `SessionsManager`, instância `sessions_manager` | Lê/escreve `sessions.json`, valida sessões únicas e é compartilhado com handlers e adaptadores JS. |
+| `servidor_modules/handlers/http_handler.py` | `UniversalHTTPRequestHandler.do_GET/POST/PUT/DELETE()`, `send_json_response()` | Handler HTTP principal que roteia para `RouteHandler`, serve arquivos estáticos e expõe rotas como `/obras`, `/api/dados/empresas`, `/api/backup-completo`, `/api/sessions/*`. |
+| `servidor_modules/handlers/route_handler.py` | Métodos `handle_get/post/put/delete_*` | Implementa a lógica de cada rota: CRUD de obras, controle de sessões, leitura de dados/backup e integrações específicas de empresas. |
+| `servidor_modules/utils/file_utils.py` | `FileUtils.find_project_root()` e utilidades de paths | Resolve caminhos e garante que todos os handlers consigam achar `codigo/`, `json/` e assets. |
+| `servidor_modules/utils/cache_cleaner.py` | Classe `CacheCleaner` | Limpa caches temporários e acompanha o ciclo de vida do servidor. |
+| `servidor_modules/utils/browser_monitor.py` | `monitorar_navegador()` | Abre/monitora o navegador padrão quando o servidor sobe. |
+| `servidor_modules/utils/server_utils.py` | Funções auxiliares de log e diagnósticos | Apoia `server_core` e os handlers com mensagens e verificações adicionais. |
 
-| Arquivo                                    | Funções/Classes chave                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | O que faz                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `data/builders/data-builders.js`           | `buildObraData()`, `extractEmpresaData()`, `buildProjectData()`, `extractRoomData()`, `extractThermalGainsData()`, `extractClimatizationInputs()`, `extractMachinesData()`, `extractCapacityData()`, `extractConfigurationData()`, `removeBaseObraFromHTML()`, `loadObrasFromServer()`, `loadSingleObra()`, `prepararDadosEmpresaNaObra()`, `obterDadosEmpresaDaObra()`, `debugLoadObras()`, `formatarData()`, `ativarCadastroEmpresa()`, `ocultarFormularioEmpresa()`, `editarDadosEmpresa()`, `atualizarDadosEmpresa()`, `criarVisualizacaoEmpresa()`, `criarFormularioVazioEmpresa()`, `atualizarInterfaceComEmpresa()`, `criarVisualizacaoEmpresaCarregada()`, `inicializarInputEmpresaHibrido()`, `criarSistemaBackspaceDetector()`, `inicializarDetectorBackspace()`, `corrigirPosicaoDropdown()`, `limparDadosSelecao()`, `limparNumeroCliente()`, `filtrarEmpresas()`, `exibirSugestoes()`, `exibirTodasEmpresas()`, `navegarDropdown()`, `selecionarEmpresa()`, `mostrarAvisoAutocompletado()`, `selecionarOpcaoAtiva()`, `calcularNumeroClienteFinal()`, `calcularNumeroLocal()`, `atualizarNumeroClienteInput()` | Arquivo central de construção, extração, carregamento e sincronização de dados. Monta o JSON completo de obra/projeto/sala (climatização, máquinas, capacidade, configuração), gerencia o carregamento de obras da sessão, e concentra todo o pipeline de empresa: copia dados de empresa entre backend, `dataset` e interface, reconstrói a visualização inline ao restaurar obras, cuida do input híbrido/autocomplete, numeração de clientes e do aviso visual de “Empresa autocompletada”. |
-| `data/builders/empresa-cadastro-inline.js` | `EmpresaCadastroInline`, `carregarDados()`, `buscarEmpresas()`, `prepararDados()`, `atualizarHeaderObra()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Classe que substitui o span do header por formulário inline, carrega empresas/obras de `dados.json`/`backup.json`, oferece autocomplete com teclado/mouse, cadastra novas siglas e sincroniza o tooltip/cabeçalho com `SIGLA-NÚMERO`.                                                                                                                                                                                                                                                          |
-| `data/builders/ui-builders.js`             | `renderObraFromData()`, `renderProjectFromData()`, `renderRoomFromData()`, `fillClimatizationInputs()`, `fillThermalGainsData()`, `fillCapacityData()`, `fillConfigurationData()`, `ensureAllRoomSections()`, `ensureMachinesSection()`, `populateObraData()`, `populateMachineData()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Processo inverso: recebe JSON e reconstrói a interface, incluindo fallback para IDs, preenchimento das tabelas e disparo de cálculos após render.                                                                                                                                                                                                                                                                                                                                              |
-| `data/utils/data-utils.js`                 | `getNextObraNumber()`, `getNextProjectNumber()`, `getNextRoomNumber()`, `getRoomFullId()`, `getObraName()`, `getProjectName()`, `collectClimatizationInputs()`, `findClimatizationSection()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Utilidades para numerar nomes, garantir IDs seguros, extrair nomes/IDs do DOM e coletar inputs usados em cálculos de ar/ganhos térmicos.                                                                                                                                                                                                                                                                                                                                                       |
-| `data/utils/id-generator.js`               | `generateObraId()`, `generateProjectId()`, `generateRoomId()`, `generateMachineId()`, `ensureStringId()`, `isValidSecureId()`, `validateIdHierarchy()`, `sanitizeId()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Sistema único de IDs hierárquicos (`obra_*`, `*_proj_*`, `*_sala_*`), com validações, extração de sequências e helpers para sessões e máquinas.                                                                                                                                                                                                                                                                                                                                                |
+## Scripts auxiliares
 
----
+- `utilitarios py/funções.py`: gera automaticamente a pasta `data/builders/data-builders-folder` com arquivos base (obra, sala, climatização, máquinas, empresa etc.) para acelerar refatorações.
 
-### Módulos de dados (salas, climatização e máquinas)
+## Backup e referências
 
-| Arquivo                                        | Funções/Classes chave                                                                                                                                                                                             | O que faz                                                                                                                                                       |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `data/modules/rooms.js`                        | `buildRoomHTML()`, `createEmptyRoom()`, `initializeRoomComponents()`, `addNewRoom()`, `deleteRoom()`, `fixExistingCapacityInputs()`                                                                               | Gera o markup completo das salas (clima+máquinas+config), injeta no projeto correto, garante IDs válidos e inicializa dependências com tentativas progressivas. |
-| `data/modules/climatizacao.js`                 | `buildClimatizationSection()`, `buildClimatizationTable()`, `buildPressurizationRow()`                                                                                                                            | Monta inputs hierárquicos da seção de climatização com validações de ID e handlers conectados aos cálculos de vazão e ganhos térmicos.                          |
-| `data/modules/configuracao.js`                 | `buildConfigurationSection()`                                                                                                                                                                                     | Renderiza a grade de checkboxes de configuração de instalação com nomes únicos por sala.                                                                        |
-| `data/modules/machines/machines-core.js`       | `loadMachinesData()`, `buildMachinesSection()`, `addMachine()`, `loadSavedMachines()`, `updateMachineOptions()`, `calculateMachinePrice()`, `toggleOption()`, `deleteMachine()`, `calculateAllMachinesTotal()`    | Garante cache de dados `/machines`, monta cards de máquinas, trata selects dependentes, cálculo de preço/opções e sincroniza total geral da sala.               |
-| `data/modules/machines/capacity-calculator.js` | `buildCapacityCalculationTable()`, `scheduleCapacityInit()`, `initializeCapacitySystem()`, `calculateCapacitySolution()`, `updateCapacityDisplay()`, `updateBackupConfiguration()`, `syncBackupWithClimaInputs()` | Responsável pelos cálculos de capacidade/TR e pelo acoplamento entre backup configurado nas entradas de climatização e na tabela de capacidade.                 |
-
----
-
-### Funcionalidades de cálculo
-
-| Arquivo                                      | Funções/Classes chave                                                                                                                                                                                                                       | O que faz                                                                                                                                                   |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `features/calculations/air-flow.js`          | `calculateVazaoAr()`, `calculateVazaoArAndThermalGains()`, `computeAirFlowRate()`, `updateFlowRateDisplay()`, `validateAirFlowInputs()`                                                                                                     | Calcula vazão de ar considerando portas/pressurização, garante constantes carregadas e encadeia ganhos térmicos quando necessário.                          |
-| `features/calculations/calculations-core.js` | `debouncedCalculation()`, `clearAllCalculationTimeouts()`, `waitForSystemConstants()`, `validateSystemConstants()`, `calculateVazaoArAndThermalGainsDebounced()`, `calculateVazaoArAndThermalGainsImmediate()`, `validateCalculationData()` | Núcleo compartilhado de cálculos: trata debounce por sala, checa constantes obrigatórias e expõe helpers reutilizados pelos módulos de ar e térmicos.       |
-| `features/calculations/thermal-gains.js`     | `calculateThermalGains()`, `calculateCeilingGain()`, `calculateWallGain()`, `calculateExternalAirSensibleGain()`, `calculateExternalAirLatentGain()`, `updateThermalGainsDisplay()`                                                         | Consolida lógicas de componentes/totais/visualização dos ganhos térmicos (paredes, piso, iluminação, pessoas, ar externo) e informa a tabela de capacidade. |
-
----
-
-### Gerenciadores e camada de negócio
-
-| Arquivo                                | Funções/Classes chave                                                                                                                                                              | O que faz                                                                                                                                                        |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `features/managers/obra-manager.js`    | `buildObraHTML()`, `insertObraIntoDOM()`, `createEmptyObra()`, `addNewObra()`, `saveObra()`, `salvarObra()`, `atualizarObra()`, `deleteObra()`, `fetchObras()`, `verifyObraData()` | Fabrica e injeta o container de obra, coordena criação automática de projeto inicial, integração com backend (`/obras`), atualização de botões e remoção segura. |
-| `features/managers/project-manager.js` | `buildProjectHTML()`, `createEmptyProject()`, `addNewProjectToObra()`, `deleteProject()`                                                                                           | Responsável pelo ciclo de vida dos projetos dentro de cada obra e por disparar a criação da primeira sala quando necessário.                                     |
-
----
-
-### Interface e componentes
-
-| Arquivo                             | Funções/Classes chave                                                                                                                                                                                                        | O que faz                                                                                                                       |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `ui/interface.js`                   | `addNewProject()`, `toggleObra()`, `toggleProject()`, `toggleRoom()`, `toggleSection()`, `toggleSubsection()`, `downloadPDF()`, `downloadWord()`, `saveOrUpdateObra()`                                                       | Cola a UI com os managers: registra toggles com IDs únicos, encaminha downloads e encapsula chamadas a `saveObra`/`updateObra`. |
-| `ui/helpers.js`                     | `toggleElementVisibility()`, `expandElement()`, `collapseElement()`, `removeEmptyObraMessage()`, `showEmptyObraMessageIfNeeded()`, `removeEmptyProjectMessage()`, `showEmptyProjectMessageIfNeeded()`, `toggleAllElements()` | Helpers visuais para mensagens de vazio e animação de colapsar/expandir seções.                                                 |
-| `ui/components/edit.js`             | `makeEditable()`, `saveInlineEdit()`, `applyNameChange()`, `disableEditing()`, `validateEditedText()`, `cancelInlineEdit()`, `makeAllEditable()`, `saveAllPendingEdits()`                                                    | Componente inline-edit com suporte a atalhos, validações e contabilidade de edições pendentes antes de sair da página.          |
-| `ui/components/status.js`           | `showSystemStatus()`, `createStatusBanner()`, `insertStatusBanner()`, `scheduleStatusBannerRemoval()`, `showLoadingStatus()`, `showTemporaryStatus()`, `getActiveBannersCount()`                                             | Sistema de toasts/banners reutilizado por `main.js` e managers para avisos de sessão, erros e progresso.                        |
-| `ui/components/modal/modal.js`      | `showConfirmationModal()`, `closeConfirmationModal()`, `showToast()`, `undoDeletion()`, `confirmDeletion()`, `getPendingDeletion()`                                                                                          | Modal reutilizável para confirmação e undo de exclusões, com toasts temporizados e contagem regressiva.                         |
-| `ui/components/modal/exit-modal.js` | `showShutdownConfirmationModal()`, `showCustomShutdownModal()`, `createModalHTML()`, `setupModalEvents()`                                                                                                                    | Modal específico para desligamento, com promessa que resolve apenas após clique explícito do usuário.                           |
-
----
-
-## Scripts legados (`backup de arquivos/scripts/01_Create_Obra`)
-
-Estes arquivos preservam a versão anterior do front-end. Mantêm o mesmo domínio funcional da versão atual, porém sem o carregamento dinâmico e com código mais verboso. Servem para consulta ou rollback.
-
-### Núcleo e configuração legados
-
-| Arquivo legado                                         | Responsabilidade e funções                                                                                                     |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `backup de arquivos/scripts/01_Create_Obra/globals.js` | Define e inicializa variáveis globais usadas pelo front-end antigo (contadores, seletores de DOM, flags de sessão).            |
-| `.../main.js`                                          | Antigo bootstrap que fazia import estático dos módulos, registrava eventos e cuidava de timers de sessão antes da refatoração. |
-| `.../config/config.js`                                 | Versão anterior das constantes de cálculo, UI e API, hoje consolidadas em `core/constants.js`.                                 |
-| `.../core/bootstrap.js`                                | Orquestrador antigo que carregava helpers de UI e iniciava listeners sem EventBus.                                             |
-| `.../core/event-bus.js`                                | Implementação original do pub/sub (mesmo conceito que migrou para `core/app.js`).                                              |
-| `.../core/state.js`                                    | Estado global legado com arrays de obras/projetos/salas e flags de sessão.                                                     |
-
----
-
-### Dados e adaptadores legados
-
-| Arquivo legado                           | Responsabilidade e funções                                                                                        |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `.../data/data-utils.js`                 | Helpers antigos de IDs e coleta de inputs (hoje substituídos por `data/utils` unificado).                         |
-| `.../data/projects.js`                   | Operações de CRUD dos projetos (pré-refatoração dos managers).                                                    |
-| `.../data/rooms.js`                      | Criação/remoção de salas e binding de eventos no modelo antigo.                                                   |
-| `.../data/server-utils.js`               | Funções auxiliares para comunicação com o backend (fetch genéricos, normalização de respostas).                   |
-| `.../data/server.js`                     | Barramento que reexportava adapters e inicializava contadores na versão antiga do app.                            |
-| `.../data/adapters/obra-adapter.js`      | Pipeline legado de carregamento de obras e sincronismo com DOM, antes do suporte a IDs seguros.                   |
-| `.../data/adapters/session-adapter.js`   | Gestão de sessão no `sessionStorage` antigo, com funções como `startNewSession()` e `saveFirstObraIdOfSession()`. |
-| `.../data/adapters/shutdown-adapter.js`  | Tratamento anterior de shutdown manual, com fluxos baseados em `confirm()` nativo.                                |
-| `.../data/data-files/data-builders.js`   | Construtores de JSON por obra/projeto/sala da versão antiga (sem fusão com extractors).                           |
-| `.../data/data-files/data-extractors.js` | Rotinas específicas para extrair dados do DOM antes de salvar.                                                    |
-| `.../data/data-files/data-populate.js`   | Preenchimento do DOM a partir de dados recebidos do servidor, anterior ao `ui-builders.js`.                       |
-| `.../data/data-files/data-utils-core.js` | Núcleo duplicado de helpers (IDs, buscas no DOM) que foi absorvido pelo novo `data/utils`.                        |
-
----
-
-### Módulos legados de salas, climatização e máquinas
-
-| Arquivo legado                                    | Responsabilidade e funções                                                                                  |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `.../data/modules/climatizacao.js`                | Construção das seções de climatização antes da reorganização por IDs seguros.                               |
-| `.../data/modules/configuracao.js`                | UI antiga da grade de configurações de instalação.                                                          |
-| `.../data/modules/maquinas.js`                    | Barramento que juntava utilities, builder e management de máquinas (hoje condensado em `machines-core.js`). |
-| `.../data/modules/room-operations.js`             | Controlava inserção e remoção de salas com base em IDs não padronizados.                                    |
-| `.../data/modules/salas.js`                       | Layout antigo das salas e binding de botões "Adicionar Sala".                                               |
-| `.../data/modules/machines/capacityCalculator.js` | Versão anterior da tabela de capacidade e sincronismo de backup.                                            |
-| `.../data/modules/machines/machineManagement.js`  | Funções de CRUD de máquinas legadas (`addMachine`, `updateMachineOptions`, etc.).                           |
-| `.../data/modules/machines/machinesBuilder.js`    | Renderização dos cards de máquinas antes da fusão com management.                                           |
-| `.../data/modules/machines/utilities.js`          | Helpers antigos para formatar preços, montar selects e normalizar opções.                                   |
-
----
-
-### Funcionalidades de cálculo legadas
-
-| Arquivo legado                                              | Responsabilidade e funções                                          |
-| ----------------------------------------------------------- | ------------------------------------------------------------------- |
-| `.../features/calculos/calculos-manager.js`                 | Coordenava manualmente callbacks de cálculo (sem debounce central). |
-| `.../features/calculos/calculos-view.js`                    | Atualizava DOM dos resultados (vazão/carga) no layout anterior.     |
-| `.../features/calculos/airFlow/airFlowCalculations.js`      | Fórmulas antigas de vazão.                                          |
-| `.../features/calculos/airFlow/airFlowDisplay.js`           | Atualização visual das tabelas de vazão.                            |
-| `.../features/calculos/thermalGains/thermalCalculations.js` | Cálculos de ganho térmico legados.                                  |
-| `.../features/calculos/thermalGains/thermalComponents.js`   | Funções auxiliares (tetos, paredes, divisórias) anteriores.         |
-| `.../features/calculos/thermalGains/thermalDisplay.js`      | Renderização dos resultados térmicos na UI antiga.                  |
-| `.../features/calculos/utils/helpers.js`                    | Pequenos utilitários de formatação de números e debounce legado.    |
-
----
-
-### Features de obras/projetos/salas legadas
-
-| Arquivo legado                                 | Responsabilidade e funções                                     |
-| ---------------------------------------------- | -------------------------------------------------------------- |
-| `.../features/obras/obras-controller.js`       | Controlador antigo das ações de obra (criar, salvar, remover). |
-| `.../features/obras/obras-view.js`             | Templates de obra no layout pré-refatoração.                   |
-| `.../features/projetos/projetos-controller.js` | Controller legado para projetos.                               |
-| `.../features/projetos/projetos-view.js`       | HTML helper antigo de projetos.                                |
-| `.../features/salas/salas-controller.js`       | Controller legada das salas.                                   |
-| `.../features/salas/salas-view.js`             | Templates de sala antes da fusão com `rooms.js`.               |
-
----
-
-### Interface e utilidades legadas
-
-| Arquivo legado                          | Responsabilidade e funções                                                      |
-| --------------------------------------- | ------------------------------------------------------------------------------- |
-| `.../ui/edit.js`                        | Componente inline-edit predecessor (sem estatísticas/atalhos atuais).           |
-| `.../ui/interface.js`                   | Bridge antigo que conectava botões do HTML aos controllers legados.             |
-| `.../ui/intr-files/obra-manager.js`     | Camada intermediária para criar/remover obras no layout antigo.                 |
-| `.../ui/intr-files/project-manager.js`  | Idem para projetos.                                                             |
-| `.../ui/intr-files/status-manager.js`   | Toasts/banners anteriores ao componente `status.js`.                            |
-| `.../ui/intr-files/ui-helpers.js`       | Funções utilitárias usadas pela interface pré-refatorada.                       |
-| `.../ui/intr-files/modal/modal.js`      | Modal legacy para exclusão.                                                     |
-| `.../ui/intr-files/modal/exit-modal.js` | Modal legacy para shutdown/exit.                                                |
-| `.../utils/utils.js`                    | Coleção de helpers genéricos (debounce, formatadores) usada pelo bundle antigo. |
-
----
-
-Para evoluções futuras, concentre novos desenvolvimentos em `codigo/public/scripts/01_Create_Obra`. Os arquivos em `backup de arquivos` podem ser excluídos quando a migração estiver 100% validada.
-
----
-
-## Resumo detalhado das funções (comentários condensados)
-
-### `codigo/public/scripts/01_Create_Obra/main.js`
-
-- `ShutdownManager`: encapsula o “Sistema de shutdown manual – ATUALIZADO`.
-
-  - `init()` executa logo após o construtor, registra logs e chama as rotinas que removem listeners nativos e criam o botão dedicado.
-  - `disableAutoShutdown()` limpa `beforeunload`, `unload` e `pagehide`, garantindo que apenas o fluxo manual finalize a página.
-  - `createShutdownButton()` insere um único botão `.shutdown-btn` em `.header-right`, define título “Encerrar Servidor” e delega o clique para `shutdownManual()`.
-  - `shutdownManual()` confirma com o usuário, importa `shutdownManual` do adaptador, envia o comando assíncrono e trata quedas do servidor.
-- `window.createEmptyObra(obraName, obraId)`: import lazy de `features/managers/obra-manager.js` para criar obras vazias com IDs controlados; registra erros quando o módulo não é encontrado.
-- `window.createEmptyProject(obraId, obraName, projectId, projectName)`: usa `project-manager.js` somente quando o usuário adiciona um projeto, mantendo o padrão de IDs seguros.
-- `window.populateObraData(obraData)`: injeta `data/builders/ui-builders.js` sob demanda e executa `populateObraData` para preencher obras restauradas do backend.
-- `window.createEmptyRoom(obraId, projectId, roomName, roomId)`: carrega `data/modules/rooms.js` no momento da necessidade e delega a criação de salas com validações de ID.
-- `loadSystemConstants()`: busca `/constants`, valida os campos essenciais (`VARIAVEL_PD`, `VARIAVEL_PS`), popula `window.systemConstants` e lança erros amigáveis quando o fetch falha.
-- `loadAllModules()`: “Carrega todos os módulos do sistema dinamicamente” – importa interface, componentes, managers, módulos de dados, cálculos e utils, expondo cada função crítica no `window`.
-- `checkAndLoadExistingSession()`: consulta `/api/session-obras`, compara os IDs retornados, marca a sessão como ativa no `sessionStorage` e chama `loadObrasFromServer()` quando há obras pendentes.
-- `verifyAndCreateBaseObra()`: após curto atraso, compara `window.GeralCount` com o total de `.obra-block` e orienta o usuário quando o sistema carrega vazio.
-- `finalSystemDebug()`: imprime no console um “DEBUG FINAL DO SISTEMA” com contadores, flags e disponibilidade das funções de toggle.
-- `showServerOfflineMessage()`: monta o overlay “Servidor Offline” (mensagem amigável, animação `iconPulse`, countdown de 10 s e fechamento automático).
-- `verifyCriticalFunctions()`: percorre a lista de “funções críticas” e denuncia bindings ausentes após a inicialização.
-- `window.addEventListener("DOMContentLoaded", ...)`: a sequência “Inicialização principal do sistema” instancia `ShutdownManager`, garante que as funções globais existam, baixa constantes, carrega módulos, procura sessões existentes, mostra banners de status, executa `finalSystemDebug`/`verifyCriticalFunctions` via `setTimeout` e trata erros de rede mostrando `showServerOfflineMessage()`.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/core/app.js`
-
-- `EventBus`: substitui o antigo `event-bus.js`.
-
-  - `on(event, callback)`: adiciona listeners por evento.
-  - `off(event, callback)`: remove callbacks previamente registrados.
-  - `emit(event, data)`: dispara callbacks com `try/catch` para logar “Erro no listener do evento”.
-  - `clear(event)`: remove ouvintes de um evento específico ou limpa tudo quando chamado sem parâmetros.
-- `ApplicationState`: fusão do antigo `state.js`.
-
-  - `setObras`, `setProjetos`, `setSalas`: atualizam coleções e emitem `state:*-changed`.
-  - `setCurrentObra`, `setCurrentProject`, `setCurrentRoom`: armazenam o registro selecionado, disparando eventos correspondentes.
-  - `setSessionActive(active)`: sinaliza se há sessão ativa e emite `state:session-changed`.
-  - `setSystemConstants(constants)`: armazena constantes carregadas e emite `state:constants-loaded`.
-  - `getConstant(key)`: leitura segura das constantes persistidas.
-  - `clear()`: zera todas as coleções, flags e referências, emitindo `state:cleared`.
-- `initializeEventBus()`: expõe `window.eventBus` e registra “Event Bus inicializado”.
-- `initializeState()`: expõe `window.appState` com o mesmo padrão de log.
-- `initializeInterface()`: importa `../ui/interface.js` de forma assíncrona para evitar dependências circulares, chamando `initializeInterface()` se a função existir.
-- `initializeCoreSystems()`: orquestra EventBus, State e Interface; em caso de sucesso emite `app:core-ready`, senão `app:core-error`.
-- `bootstrapApplication()`: evita execuções duplicadas com `window.appInitialized`, chama `initializeCoreSystems()` e expõe helpers globais.
-- `reinitializeApplication()`: limpa estado, zera listeners, redefine `window.appInitialized` e reinicia o bootstrap.
-- `getAppStatus()`: devolve um snapshot do estado (quantidade de obras/projetos/salas e estado da sessão) para inspeção externa.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/core/constants.js`
-
-- `CALCULATION_CONSTANTS`: coeficientes usados em vazão de ar, ganhos térmicos, fatores de segurança e tolerâncias.
-- `UI_CONSTANTS`: símbolos de toggle, timeouts, classes CSS e breakpoints responsáveis pela UX.
-- `STORAGE_KEYS`: chaves usadas no `localStorage/sessionStorage` para sessão, cache e preferências do usuário.
-- `VALIDATION_CONSTANTS`: limites de comprimento, faixas numéricas e regex (e-mail, telefone, IDs) utilizados nas validações.
-- `API_CONSTANTS`: URLs base, endpoints (`/obras`, `/api/sessions`, etc.), timeouts e headers padrão.
-- `MESSAGE_CONSTANTS`: textos pré-definidos de sucesso, erro, aviso e informação herdados do antigo `config.js`.
-- `PERFORMANCE_CONSTANTS`: ajustes de debounce, tamanhos de lote e limites de cache/memória.
-- `getAllConstants()`: retorna todos os blocos em um único objeto.
-- `hasConstant(category, key)`: confirma a existência de uma chave antes de usá-la.
-- `getConstant(category, key, defaultValue)`: busca segura com fallback quando a constante não foi definida.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/adapters/obra-adapter.js`
-
-- Arquivo central de ponte entre HTML legado e o núcleo de dados atual.
-- Reexporta, para o escopo global (`window`), as funções de empresa e carregamento de obras definidas em `data/builders/data-builders.js`, como:
-
-  - `loadObrasFromServer`
-  - `prepararDadosEmpresaNaObra`
-  - `obterDadosEmpresaDaObra`
-  - `atualizarInterfaceComEmpresa`
-  - `criarVisualizacaoEmpresaCarregada`
-  - `ativarCadastroEmpresa`
-- Também define flags globais (`window.usuarioEstaApagando`, `window.ultimoValorInput`) consumidas pelo input híbrido de empresa e garante que `loadObrasFromServer`/`prepararDadosEmpresaNaObra` continuem acessíveis via scripts inline legados.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/adapters/session-adapter.js`
-
-- `isSessionActive()`: retorna o valor de `SESSION_ACTIVE_KEY` no `sessionStorage`.
-- `setSessionActive(active)`: grava o estado da sessão e, ao desativar, chama `clearSessionObras()` e `clearRenderedObras()` para sincronizar interface e storage.
-- `getSessionObras()` / `setSessionObras(obraIds)`: leem/escrevem a lista serializada usada para restaurar obras.
-- `addObraToSession(obraId)` / `removeObraFromSessionLocal(obraId)`: mantêm a lista sem duplicidades.
-- `clearSessionObras()`: remove os registros de obras e a lista de projetos removidos (`REMOVED_PROJECTS_KEY`).
-- `clearRenderedObras()`: percorre todas as `.obra-block`, preserva obras salvas ou com conteúdo e remove apenas placeholders vazios, ajustando `window.GeralCount`.
-- `isObraInSession(obraId)`: helper utilizado durante a limpeza para decidir se uma obra pode ser removida.
-- `initializeGeralCount()`, `incrementGeralCount()`, `decrementGeralCount()`, `getGeralCount()`: garantem que o contador global existe, mantém coerência com o DOM e não fica negativo.
-- `resetDisplayLogic()`: desativa a sessão, limpa storage, remove obras e zera o contador global.
-- `startNewSession()` / `startSessionOnFirstSave()`: iniciam a sessão manualmente ou no momento em que a primeira obra é salva.
-- `saveFirstObraIdOfSession(obraId)`: usa `ensureStringId` para gravar o primeiro ID válido e adicioná-lo à lista da sessão.
-- `addObraToRemovedList(obraId)`, `getRemovedObrasList()`, `isObraRemoved(obraId)`: mantêm a lista de obras removidas para que não ressurgam após recarregar a página.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/adapters/shutdown-adapter.js`
-
-- `shutdownManual()`: encerra o servidor e a sessão atual de forma controlada — abre o modal customizado, limpa sessões backend/frontend, zera `window.GeralCount`, envia `POST /api/shutdown` e controla os overlays/mensagens até fechar a aba.
-- `ensureSingleActiveSession()`: chama `/api/sessions/ensure-single` para garantir exclusividade da sessão ativa.
-- `initializeSession()`: se `isSessionActive()` retornar verdadeiro, chama `loadObrasFromServer()` para restaurar o estado.
-- `showShutdownMessage(message)`: cria o overlay full-screen com animações `fadeIn`/`pulse`.
-- `showFinalShutdownMessage()` / `showFinalMessageWithManualClose()`: atualizam o overlay após completar o shutdown, exibindo feedback positivo ou oferecendo o botão “Fechar Janela”.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/builders/data-builders.js`
-
-#### 4.1. Construção de dados de obra/projeto/sala
-
-- `buildObraData(obraIdOrElement)`
-  Garante que o elemento da obra ainda está no DOM, coleta os projetos e monta um objeto com ID, nome, timestamp e marcações usadas pelo backend.
-
-- `extractEmpresaData(obraElement)`
-  Lê os atributos `data-empresa*`, `data-cliente*`, `data-idGerado` adicionados pelo cadastro inline (sigla, cliente final, código, número do cliente, data, orçamentista), converte `numeroClienteFinal` para inteiro e injeta essas informações no objeto salvo.
-
-- `buildProjectData(projectIdOrElement)`
-  Valida o elemento do projeto e constrói o payload com ID, nome, lista de salas e timestamp.
-
-- `extractRoomData(roomElement, projectElement)`
-  Extrai os blocos de uma sala (inputs de climatização, máquinas, capacidade, ganhos térmicos, configuração) e devolve um objeto consolidado.
-
-- `extractThermalGainsData(roomElement)`
-  Lê todos os elementos `total-*` (W e TR), limpando HTML e convertendo texto em número; quando algum seletor não existe mais, utiliza `attemptAlternativeSearch()` como fallback textual.
-
-- `extractClimatizationInputs(roomElement)`
-  Percorre campos da seção de climatização (inputs, rádios, selects), incluindo pressurização e área, montando o dicionário de inputs usado pelos cálculos.
-
-- `extractMachinesData(roomElement)`
-  Coleta todas as máquinas (`.climatization-machine`) presentes na sala, chamando `extractClimatizationMachineData()` para cada uma.
-
-- `extractClimatizationMachineData(machineElement)`
-  Monta o objeto da máquina (nome, tipo, potência, tensão, preços, opções selecionadas) a partir de elementos do DOM e textos exibidos.
-
-- `extractCapacityData(roomElement)`
-  Lê fator de segurança, capacidade unitária, solução com/sem backup, total, folga, backup selecionado e carga estimada (em texto ou input).
-
-- `extractConfigurationData(roomElement)`
-  Reúne as opções de instalação (checkboxes) marcadas para a sala.
-
-- `attemptAlternativeSearch(key, roomId, gains)`
-  Fallback quando elementos identificados por ID não estão no DOM; busca por rótulos como “Total Piso” para tentar recuperar os valores numéricos.
-
-#### 4.2. Carregamento de obras da sessão e sincronismo de empresa
-
-- `removeBaseObraFromHTML()`
-  Remove placeholders `.obra-block` base antes de repintar os dados da sessão restaurada, evitando duplicação visual.
-
-- `loadObrasFromServer()`
-  Busca as obras associadas à sessão atual (`/api/session-obras`), cruza os IDs com `/obras`, trata conversões string/number e carrega cada obra em sequência. Loga cenários vazios ou inconsistentes para facilitar debug.
-
-- `loadSingleObra(obraData)`
-  Verifica se a obra já existe no DOM; se existir, chama `window.populateObraData()`, senão cria uma nova com `window.createEmptyObra()`. Aguarda o DOM estabilizar antes de seguir para atualização de empresa/salas.
-
-- `prepararDadosEmpresaNaObra(obraData, obraElement)`
-  Copia `empresaSigla`, `numeroClienteFinal`, `clienteFinal`, `codigoCliente`, `dataCadastro`, `orcamentistaResponsavel` e `idGerado` do payload para o `dataset` da obra (`data-*`). Em seguida, dispara a atualização visual para refletir esses dados no cabeçalho/tooltip.
-
-- `obterDadosEmpresaDaObra(obraId)`
-  Lê o `dataset` da obra (ou seu container principal) e retorna um objeto com os dados de empresa atualmente associados àquele ID.
-
-- `debugLoadObras()`
-  Imprime no console as funções globais disponíveis, as obras retornadas pela API e o resultado da reconstrução de cada obra, ajudando a diagnosticar problemas de sessão e de empresa.
-
-#### 4.3. Interface inline de empresa e visualização
-
-- `formatarData(dataString)`
-  Normaliza datas para o padrão `dd/mm/aaaa`, usado em tooltips, inputs de data e atributos `data-*` gravados na obra.
-
-- `ativarCadastroEmpresa(obraId)`
-  Abre o formulário inline de empresa dentro da obra indicada, garantindo que apenas um painel ativo exista por obra. Prepara o cabeçalho para receber a visualização `SIGLA-NÚMERO`.
-
-- `ocultarFormularioEmpresa(button, obraId)`
-  Fecha o formulário inline de empresa, restaura o estado visual anterior e impede múltiplos formulários ativos simultaneamente.
-
-- `editarDadosEmpresa(button, obraId)`
-  Alterna o bloco de empresa entre modo visual (somente leitura) e modo de edição, permitindo ajustes pontuais nos campos já preenchidos.
-
-- `atualizarDadosEmpresa(input, campo, obraId)`
-  Ao alterar um campo, atualiza o `dataset` da obra com o novo valor (por exemplo `data-cliente-final`, `data-codigo-cliente`) e sincroniza o que é exibido na interface.
-
-- `criarVisualizacaoEmpresa(obraElement, dadosEmpresa)`
-  Constrói o modo visual da empresa associada à obra: span com `SIGLA-NÚMERO`, tooltip com detalhes e botões “Editar/Ocultar”, reaproveitando os dados do `dataset`.
-
-- `criarFormularioVazioEmpresa(obraElement)`
-  Monta o formulário de cadastro de empresa em branco para uma obra que ainda não possui dados, mantendo o layout em grid responsivo.
-
-- `atualizarInterfaceComEmpresa(obraElement, dadosEmpresa)`
-  Função orquestradora: decide se precisa criar uma visualização nova, atualizar a existente ou mostrar o formulário vazio, dependendo do estado atual dos dados de empresa na obra.
-
-- `criarVisualizacaoEmpresaCarregada(obraElement, dadosEmpresa)`
-  Específico para o fluxo de obras restauradas: recria apenas a parte visual da empresa (span, tooltip, texto de cliente/código) a partir do JSON que veio do backend.
-
-#### 4.4. Input híbrido/autocomplete e UX da empresa
-
-- `inicializarInputEmpresaHibrido(obraId)`
-  Configura o campo de empresa com comportamento híbrido: texto + dropdown de sugestões. Carrega `/api/dados/empresas`, registra handlers de teclado (Enter, Tab, setas, Esc) e integra o campo com o cadastro inline.
-
-- `criarSistemaBackspaceDetector()` / `inicializarDetectorBackspace()`
-  Implementam um “detector de backspace”, evitando que o autocomplete dispare enquanto o usuário ainda está apagando o conteúdo do campo. Alimentam flags globais utilizadas em validações.
-
-- `corrigirPosicaoDropdown()`
-  Ajusta a posição do dropdown em relação ao input de empresa em eventos de `scroll`/`resize`, mantendo as sugestões alinhadas com o campo.
-
-- `limparDadosSelecao()` / `limparNumeroCliente()`
-  Helpers que apagam os dados selecionados (sigla, número de cliente, preview de ID) quando o usuário decide alterar manualmente o texto do campo.
-
-- `filtrarEmpresas(listaEmpresas, termo)`
-  Filtra as empresas com base no termo digitado, aplicando normalização (maiúsculas/minúsculas/acentos) e limitando a quantidade de resultados exibidos.
-
-- `exibirSugestoes(listaFiltrada, container)`
-  Renderiza a lista de sugestões no dropdown, marca item ativo e aplica o limite de itens e a mensagem de “nenhum resultado encontrado”.
-
-- `exibirTodasEmpresas()`
-  Exibe a lista completa, respeitando o limite de exibição e os mesmos estilos do autocomplete.
-
-- `navegarDropdown(event)`
-  Implementa a navegação por setas (para cima/baixo), Enter e Esc dentro da lista, atualizando qual sugestão está ativa.
-
-- `selecionarEmpresa(sigla, nome, obraId)`
-  Registra a escolha feita pelo usuário (via clique ou teclado), preenche o campo de empresa, dispara o cálculo do número de cliente final e atualiza o cabeçalho da obra.
-
-- `mostrarAvisoAutocompletado(obraId)`
-  Mostra um pequeno aviso visual (“Empresa autocompletada”) acima do campo de empresa, com animação suave e desaparecimento automático, indicando que o valor foi completado pelo sistema.
-
-- `selecionarOpcaoAtiva(obraId)`
-  Aciona a seleção da opção atualmente marcada como ativa no dropdown (uso em fluxo de teclado).
-
-- `calcularNumeroClienteFinal(sigla)` / `calcularNumeroLocal(sigla)` / `atualizarNumeroClienteInput(sigla, numero)`
-  Consultam `/api/dados/empresas/numero/{sigla}` e, em caso de falha, usam `/api/backup-completo` como fallback. Atualizam o número sugerido de cliente final/local e o input correspondente, mantendo a sequência por empresa.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/builders/ui-builders.js`
-
-- `renderObraFromData(obraData)`: cria a obra com `createEmptyObra()`, remove mensagens vazias e agenda o render de cada projeto retornado do backend.
-- `renderProjectFromData(projectData, obraId, obraName)`: garante que exista uma obra alvo, cria o projeto e prepara os contêineres de salas antes de preenchê-los.
-- `renderRoomFromData(projectId, projectName, roomData, obraId, obraName)`: chama `createEmptyRoom`, aguarda o DOM montar todas as seções e preenche os dados da sala.
-- `fillClimatizationInputs(roomElement, inputsData)`: percorre cada campo do formulário de climatização e aplica os valores persistidos (incluindo radiobuttons e selects).
-- `fillThermalGainsData(roomElement, thermalGainsData)`: atualiza os elementos `total-*` com os valores recuperados do servidor.
-- `fillCapacityData(roomElement, capacityData)`: restaura fator de segurança, capacidade unitária, soluções, total, folga e backup configurado.
-- `fillConfigurationData(roomElement, configData)`: marca as checkboxes de opções de instalação usadas anteriormente.
-- `findMachinesSection(roomElement)` / `findSectionByTitle(roomElement, titleText)`: localizam contêineres antes de injetar dados.
-- `ensureAllRoomSections(roomElement)`: garante que climatização, máquinas e configuração existam, chamando os builders correspondentes quando necessário.
-- `ensureMachinesSection(roomElement)`: monta (ou remonta) a seção de máquinas e a tabela de capacidade.
-- `fillMachinesData(roomElement, machinesData)`: recria cada máquina salva, chamando `addMachine()` e reaplicando tipo/potência/tensão/opções/preços.
-- `populateObraData(obraData)`: orquestra todo o preenchimento de uma obra (projetos → salas → seções), tratando cenários onde os módulos globais ainda não foram carregados.
-- `populateProjectData(projectElement, projectData, obraId, obraName)`: atualiza um projeto específico, criando salas ausentes e preenchendo as existentes.
-- `populateRoomData(roomElement, roomData)`: garante seções, aplica inputs, restaura máquinas e dispara cálculos (`calculateVazaoArAndThermalGains`) para atualizar resultados.
-- `populateMachineData(machineElement, machineData)`: aplica os dados de uma máquina individual (nome, selects, opções, preços) e recalcula totais.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/builders/empresa-cadastro-inline.js`
-
-- `EmpresaCadastroInline` (classe + `init`) cria o singleton exposto em `window.empresaCadastro`, carrega dados iniciais e amarra eventos assim que o DOM dispara `DOMContentLoaded`.
-- `carregarDados()` busca `/api/dados/empresas` e `/api/backup-completo`, guarda `this.empresas` e `this.obrasExistentes` para uso offline e registra logs amigáveis.
-- `vincularEventos()` / `ativarCadastro(event)` transformam o span original do header em `button.btn-empresa-cadastro`, tratam teclado (Enter/Espaço) e exibem o formulário inline apenas uma vez por obra.
-- `renderizarFormulario()` / `criarHTMLFormulario()` / `vincularEventosFormulario()` montam o painel responsivo, conectam o campo de empresa ao autocomplete e focam automaticamente no primeiro input.
-- `buscarEmpresas(termo)`, `normalizarTermo()`, `filtrarEmpresas()`, `exibirSugestoes()`, `ocultarSugestoes()`, `tratarTecladoAutocomplete()`, `navegarSugestoes()` oferecem UX completa de autocomplete (mouse/teclado), limitam resultados e desabilitam sugestões quando o termo ainda não tem 2 caracteres.
-- `selecionarEmpresa(sigla, nome)` / `calcularNumeroClienteFinal(sigla)` / `atualizarPreviewIdObra(sigla, numero)` persistem a seleção, calculam o próximo número da empresa olhando para `backup.json` e mostram o ID sugerido (`obra_SIGLA_NUM`).
-- `prepararDados()` / `coletarDadosFormulario()` / `validarDados(dados)` / `cadastrarNovaEmpresa(sigla, nome)` validam a entrada, permitem criar siglas novas, salvam em `/api/dados/empresas` e exibem mensagens com `showSystemStatus`.
-- `prepararDadosObra(dados)` / `atualizarHeaderObra()` / `criarTooltipEmpresa()` / `formatarDataParaTooltip()` / `resetHeaderObra()` escrevem os `data-*` na `.obra-block`, atualizam o header com `SIGLA-NUMERO` e exibem tooltip detalhado (empresa, cliente, código, data, orçamentista).
-- `cancelarCadastro()` / `ocultarFormulario()` / `mostrarSpanOriginal()` / `obterDadosPreparados(obraId)` escondem o painel quando o usuário desiste, restauram o botão original e expõem os dados coletados para o fluxo de salvamento.
-- `formatarData(dataString)` padroniza datas para `dd/mm/aaaa` antes de persistir ou mostrar; também é usada pelo tooltip.
-
----
-
-### `codigo/public/static/01_Create_Obra/components/empresa-cadastro-inline.css`
-
-- `.btn-empresa-cadastro` e `.btn-empresa-identifier` padronizam botões do cadastro (cores cinza, bordas suaves, foco personalizado) e oferecem estados `:hover`/`:disabled` consistentes.
-- `.empresa-cadastro-inline` e `.empresa-formulario-ativo` definem containers com `box-shadow`, `border-radius` amplo e animação `slideDown` quando o painel aparece.
-- `.empresa-form-grid`/`.empresa-form-grid-horizontal` distribuem inputs em colunas responsivas, enquanto `.form-group-horizontal` e `.empresa-input-container` controlam espaçamentos e posicionamento do dropdown híbrido.
-- `.empresa-dropdown`, `.dropdown-option`, `.dropdown-no-results` e `.aviso-autocomplete-relativo` tratam o autocomplete (altura limitada, scroll automático, item `active`, aviso de autocompletar) e recebem ajustes via `@media` para telas de 768px/360px.
-- A seção de acessibilidade garante foco visível, reduz animações em `prefers-reduced-motion` e aumenta contraste em `prefers-contrast: high`.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/utils/data-utils.js`
-
-- `getNextProjectNumber(obraId)`: lê os nomes dos projetos de uma obra no DOM para sugerir o próximo número sequencial.
-- `getNextRoomNumber(projectId)`: faz o mesmo para salas dentro de um projeto específico.
-- `getNextObraNumber()`: inspeciona todas as obras renderizadas e retorna o próximo índice amigável.
-- `getRoomFullId(roomElement)`, `getObraName(obraElement)`, `getProjectName(projectElement)`, `getRoomName(roomElement)`: helpers que recuperam IDs/nomes válidos, com fallback quando o DOM ainda não atualizou.
-- `extractNumberFromText(text)`: usado para converter textos como “Total Piso: 500 W” em números.
-- `getMachineName(machineElement, machineId)` / `parseMachinePrice(priceText)`: padronizam nomes de máquinas e convertem strings monetárias em números.
-- `debugThermalGainsElements(roomElement)`: imprime elementos relacionados a ganhos térmicos quando algo não é encontrado.
-- `collectClimatizationInputs(climaSection, roomId)`: coleta inputs relevantes para cômputo de vazão e ganhos térmicos (incluindo pressurização).
-- `findClimatizationSection(roomId)`: devolve o elemento da seção de climatização de uma sala específica para uso nos cálculos.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/utils/id-generator.js`
-
-- `generateObraId()`, `generateProjectId(...)`, `generateRoomId(...)`: criam IDs hierárquicos seguros (`obra_w12`, `obra_w12_proj_t34_1`, `obra_w12_proj_t34_1_sala_r21_1`) usando timestamp, letras aleatórias e contadores.
-- `getProjectCountInObra(obraId)` / `getRoomCountInProjectFromId(projectId)`: contam quantos projetos/salas existem para montar os sufixos sequenciais.
-- `ensureStringId(id)`: converte qualquer valor em string e rejeita `undefined/null`.
-- `isValidSecureId(id)`: valida se o ID respeita os padrões seguros definidos.
-- `extractSequenceNumber(id, type)`: captura o número final de um ID de projeto ou sala.
-- `extractObraBaseFromId(id)` / `areIdsFromSameObra(id1, id2)`: verificam se IDs hierárquicos pertencem à mesma obra.
-- `generateMachineId(roomId)`: cria IDs únicos para máquinas (baseados em timestamp + sufixo aleatório).
-- `sanitizeId(id)`: remove fragmentos inválidos como `-undefined` e caracteres fora do padrão.
-- `hasValidSecureId(element, expectedType)`: inspeciona atributos `data-obra-id`, `data-project-id` ou `data-room-id` para confirmar se são seguros.
-- `generateSessionId()`: cria identificadores únicos de sessão (`session_<timestamp>_<random>`).
-- `validateIdHierarchy(obraId, projectId, roomId)`: garante que IDs de projeto e sala pertençam à mesma obra antes de continuar.
-- `getNextSequenceNumber(parentId, childType)`: calcula o próximo número sequencial olhando para os elementos filhos existentes.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/modules/climatizacao.js`
-
-- `buildClimatizationSection(obraId, projectId, roomName, finalRoomId)`: retorna o bloco completo de climatização (cabeçalho, tabela de inputs e seção de ganhos térmicos) validando o ID único da sala.
-- `buildClimatizationTable(roomId)`: monta a tabela com inputs agrupados (ambiente, backup, área, paredes, divisórias, dissipação, pessoas).
-- `buildPressurizationRow(roomId)`: adiciona rádios “Pressurização (TR) Sim/Não” com inputs condicionais e callback `togglePressurizationFields`.
-- `buildClimaRow(fields, roomId)` / `buildClimaCell(field, roomId)`: helpers que constroem cada linha/célula de formulário e amarram atributos `data-field`.
-- `buildSelectInput(field, roomId)` / `buildTextInput(field, roomId)`: geram selects e inputs text/number com placeholders e `onchange` configurados.
-- `buildResultRow(roomId)`: produz a linha de resultados (vazão/ganhos) no final da tabela.
-- `togglePressurizationFields(roomId, enabled)`: trata o estado habilitado/desabilitado dos campos dependentes de pressurização.
-- `buildThermalGainsSection(roomId)`: adiciona o bloco “Tabela de Resultados de Ganhos Térmicos” linkado aos cálculos automáticos.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/modules/configuracao.js`
-
-- `buildConfigurationSection(obraId, projectId, roomName, finalRoomId)`: gera o grid de checkboxes das “Opções de Instalação”, com IDs exclusivos e validação para campos indefinidos.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/modules/rooms.js`
-
-- `buildRoomHTML(obraId, projectId, roomName, roomId)`: monta a estrutura completa da sala (header, botões, seções de climatização/máquinas/configuração) validando todos os IDs.
-- `buildRoomHeader(...)`: gera apenas o cabeçalho (título/editável/botão remover).
-- `buildRoomActions(roomId)`: placeholder para futuras ações.
-- `loadMachinesPreloadModule()`: importa `machines/machines-core.js` uma única vez para pré-carregar dados de máquinas.
-- `createEmptyRoom(...)`: gera um ID seguro (quando não informado), injeta o HTML na posição correta do projeto, remove mensagens “empty”, pré-carrega dados de máquinas e inicializa componentes específicos da sala.
-- `getRoomCountInProject(obraId, projectId)`: conta quantas salas existem naquele projeto para auxiliar na geração do ID.
-- `initializeRoomComponents(...)`: chama funções globais (como `calculateVazaoArAndThermalGains`) com tentativas escalonadas usando o helper `initializeWithRetry`.
-- `safeInitializeFatorSeguranca(roomId)`: tenta invocar `initializeFatorSeguranca` caso ela já esteja carregada.
-- `insertRoomIntoProject(obraId, projectId, roomHTML, roomId)`: injeta o HTML antes da `.add-room-section` ou no final do `.project-content`.
-- `addNewRoom(obraId, projectId)`: fluxo moderno para adicionar salas usando `createEmptyRoom`.
-- `addNewRoomToProject(obraId, projectId)`: mapeia o botão “Adicionar Sala” para `addNewRoom`.
-- `addNewRoomLegacy(projectName)`: preserva compatibilidade com a versão antiga que aceitava apenas o nome do projeto.
-- `deleteRoom(obraId, projectId, roomId)`: remove a sala, atualiza mensagens de vazio e chama `showEmptyProjectMessageIfNeeded`.
-- `deleteRoomLegacy(projectName, roomName)`: preserva o comportamento antigo usado por templates legados.
-- `fixExistingCapacityInputs()` + listener `DOMContentLoaded`: asseguram que inputs antigos da tabela de capacidade tenham atributos e IDs corretos ao carregar a página.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/modules/machines/machines-core.js`
-
-- `loadMachinesData()`: busca `/machines`, armazena em `window.machinesDataCache` e retorna os dados (ou cache).
-- `buildMachinesSection(...)`: gera o bloco de máquinas da sala, incluindo o botão “+ Adicionar” e a tabela de capacidade proveniente de `buildCapacityCalculationTable`.
-- `buildMachineHTML(...)`: desenha o formulário completo de uma nova máquina com inputs de tipo, capacidade, tensão, preços e opções adicionais.
-- `buildMachineFromSavedData(...)`: recria uma máquina a partir dos dados salvos no servidor.
-- `buildFormGroup(label, content)`: helper para manter a estrutura `<label> + conteúdo`.
-- `buildSelect(...)`: gera selects com as opções fornecidas.
-- `buildOptionsHTML(...)`: renderiza cada opção adicional, exibindo preço incremental e ligando o clique ao `toggleOption`.
-- `addMachine(roomId)`: monta uma nova máquina (criando ID com `generateMachineId`), injeta no DOM e inicializa campos.
-- `loadSavedMachines(roomId, savedMachines)`: percorre a lista de máquinas salvas e chama `buildMachineFromSavedData`.
-- `updateMachineOptions(selectElement)`: ao selecionar o tipo de máquina, habilita e preenche selects de potência/tensão.
-- `updateMachineUI(machineId, machine)`: aplica valores nos selects/labels a partir do objeto `machine`.
-- `updateSelectUI(selector, options, disabled)`: helper para gerar `<option>` dinamicamente.
-- `resetMachineFields(machineId)`: limpa as escolhas quando os dados dependentes não estão disponíveis.
-- `calculateMachinePrice(machineId)`: soma preço base + opções marcadas e atualiza os displays.
-- `updateOptionValues(machineId)`: recalcula os preços das opções com base na potência selecionada.
-- `calculateAllMachinesTotal(roomId)` / `updateAllMachinesTotal(roomId)`: agregam o custo de todas as máquinas de uma sala e exibem o total.
-- `saveTotalToRoom(roomId)`: armazena o total geral como atributo da sala.
-- `toggleMachineSection(button)`: expande/recolhe o conteúdo de uma máquina individual.
-- `updateMachineTitle(input, machineId)`: atualiza o nome exibido no cabeçalho da máquina após edição.
-- `toggleOption(machineId, optionId)` / `updateOptionSelection(machineId, optionId)`: gerenciam o estado visual e lógico das opções adicionais.
-- `handlePowerChange(machineId)`: responde a mudanças de potência recalculando preços e opções.
-- `deleteMachine(machineId)`: remove o card e, se não houver outras máquinas, mostra a mensagem “Nenhuma máquina adicionada ainda”.
-- `showEmptyMessage(container, message)` / `removeEmptyMessage(container)`: exibem ou removem mensagens padrão dentro da seção de máquinas.
-- No final, funções são expostas globalmente para compatibilidade.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/data/modules/machines/capacity-calculator.js`
-
-- `findRoomId(element)`: descobre o `data-room-id` associado a uma tabela de capacidade.
-- `buildCapacityCalculationTable(roomId)`: constrói a tabela “Cálculo de Capacidade de Refrigeração” com campos para carga estimada, fator de segurança, capacidade unitária, solução e backup.
-- `initializeStaticCapacityTable()`: inicializa uma tabela estática especial caso exista fora das salas.
-- `scheduleCapacityInit(roomId)`: adiciona a sala ao mapa `capacityState` e agenda `initializeCapacitySystem()`.
-- `initializeCapacitySystem(roomId)`: aplica o fator de segurança configurado em `systemConstants` (ou fallback) após algumas tentativas.
-- `applyFatorSeguranca(roomId, fatorSeguranca)`: grava o valor e dispara `calculateCapacitySolution()`.
-- `getThermalLoadTR(roomId)`: lê o TR total (`#total-tr-*`) ou converte Watts em TR quando necessário.
-- `calculateCapacitySolution(roomId)`: lê inputs, calcula quantas unidades são necessárias (com e sem backup) e atualiza a tabela.
-- `getCapacityData(roomId)` / `saveCapacityData(roomId)`: coletam/persistem os valores atuais da tabela.
-- `loadCapacityData(roomId)` / `applyCapacityData(roomId, capacityData)`: reaplicam valores em todos os campos da tabela.
-- `applyBackupConfiguration(unidadesOperacionais, backupType)`: calcula quantas unidades adicionais são necessárias conforme `n/n+1/n+2`.
-- `getBackupFromClimatization(roomId)` / `getBackupFromClimaInputs(roomId)`: mantêm o backup escolhido sincronizado entre a tabela e o formulário de climatização.
-- `updateCapacityDisplay(...)`: atualiza elementos de resultado (`solução`, `solução com backup`, `TOTAL`, `FOLGA`).
-- `updateCargaEstimadaInput(roomId, value)`: escreve o valor recalculado de carga estimada.
-- `updateBackupConfiguration(selectElement)`: responde a alterações no select de backup.
-- `handleClimaInputBackupChange(roomId, newBackupValue)` / `syncBackupWithClimaInputs(roomId, backupValue)` / `syncCapacityTableBackup(roomId)`: mantêm os selects de backup alinhados em ambos os formulários.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/features/calculations/air-flow.js`
-
-- `calculateDoorFlow(doorCount, doorVariable, pressure)`: aplica coeficiente de fluxo, variáveis das portas e expoente de pressão para estimar m³/h por conjunto de portas.
-- `computeAirFlowRate(inputData)`: combina fluxos de portas duplas/simples, converte para l/s e aplica o fator de segurança.
-- `calculateVazaoAr(roomId, calculateThermal = true)`: aguarda `systemConstants`, coleta inputs de climatização, calcula vazão e, opcionalmente, aciona `calculateThermalGains`.
-- `calculateVazaoArAndThermalGains(roomId)`: executa `calculateVazaoAr` e em seguida `calculateThermalGains`.
-- `updateFlowRateDisplay(roomId, flowRate)`: escreve o resultado e registra logs.
-- `validateAirFlowInputs(inputData)`: garante campos obrigatórios existentes e não negativos.
-- `prepareAirFlowData(rawData)` / `getAirFlowStats(inputData, result)`: normalizam entradas e produzem estatísticas auxiliares.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/features/calculations/calculations-core.js`
-
-- `debouncedCalculation(roomId, calculationFunction, delay)`: armazena timeouts por sala e evita cálculos consecutivos enquanto o usuário digita.
-- `clearAllCalculationTimeouts()`: limpa todos os timeouts pendentes.
-- `waitForSystemConstants()`: aguarda até que `window.systemConstants` tenha `VARIAVEL_PD`.
-- `validateSystemConstants()`: verifica a lista de constantes obrigatórias antes de permitir cálculos.
-- `calculateVazaoArAndThermalGainsDebounced(roomId)`: usa debounce para chamar `calculateVazaoAr` e `calculateThermalGains`.
-- `calculateVazaoArAndThermalGainsImmediate(roomId)`: aciona ambos os cálculos imediatamente.
-- `validateCalculationData(inputData)`: verifica campos mínimos e emite avisos quando faltam dados.
-- `prepareCalculationData(rawData)`: normaliza valores numéricos (vírgulas, strings).
-
----
-
-### `codigo/public/scripts/01_Create_Obra/features/calculations/thermal-gains.js`
-
-- `calculateCeilingGain(area, uValue, deltaT)`: multiplica área, valor-U e ΔT, registrando o cálculo.
-- `calculateWallGain(comprimento, peDireito, uValue, deltaT)`: calcula área de cada parede e aplica os fatores.
-- `calculatePartitionGain(inputArea, peDireito, uValue, deltaT)`: converte divisórias em ganhos térmicos.
-- `calculateFloorGain(area, constants)`: usa fatores auxiliares para calcular a contribuição do piso.
-- `calculateLightingGain(area, constants)`: aplica fatores de iluminação.
-- `calculateDissipationGain(dissipacao, constants)`: transforma dissipação (W) em ganho térmico.
-- `calculatePeopleGain(numPessoas, constants)`: soma ganhos sensíveis e latentes das pessoas.
-- `calculateExternalAirSensibleGain(...)` / `calculateExternalAirLatentGain(...)`: convertem vazão de ar externo em cargas sensíveis/latentes.
-- `calculateTotals(gains)`: agrega componentes e converte Watts para TR.
-- `updateWallDisplay(...)` / `updatePartitionDisplay(...)`: escrevem valores individuais na UI.
-- `updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData)`: atualiza todos os elementos de resultados.
-- `findRoomContentThermal(roomId)`: localiza o container de resultados térmicos.
-- `calculateUValues(tipoConstrucao)`: define valores U conforme o tipo de construção.
-- `calculateAuxiliaryVariables(inputData)`: calcula variáveis auxiliares para os ganhos de ar externo.
-- `calculateThermalGains(roomId, vazaoArExterno)`: pipeline completo – coleta inputs, calcula, atualiza UI e informa a tabela de capacidade.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/features/managers/obra-manager.js`
-
-- `buildObraHTML(obraName, obraId, hasId)`: retorna o HTML principal de uma obra, com cabeçalho editável, contadores e botões “Salvar/Atualizar/Remover”.
-- `buildObraActionsFooter(obraId, obraName, hasId)`: cria o bloco de botões inferiores (download, salvar, excluir) adaptando os textos conforme a obra já tem ID persistido.
-- `insertObraIntoDOM(obraHTML, obraId)`: injeta o template no container e evita duplicações.
-- `createEmptyObra(obraName, obraId)`: aponta o local correto no DOM, cria a obra, ajusta contadores globais e garante que mensagens vazias desapareçam.
-- `updateObraButtonAfterSave(obraName, obraId)`: troca o botão “Salvar” por “Atualizar” e ajusta atributos `data-*` após o primeiro persist.
-- `addNewObra()`: gera IDs, chama `createEmptyObra()` e adiciona automaticamente um projeto se `window.addNewProjectToObra` estiver disponível.
-- `deleteObra(obraName, obraId)`: aciona o modal de confirmação, remove o bloco e chama `deleteObraFromServer()` para excluir no backend.
-- `fetchObras()`: ponto único de leitura (`GET /obras`) usado por outros adaptadores.
-- `atualizarObra(obraId, obraData)`: envia `PUT /obras/{id}` com o payload montado.
-- `salvarObra(obraData)` / `saveObra(obraId, event)`: chamadas `POST /obras` que lidam com status, mensagens e início automático da sessão.
-- `findObraBlock(obraId)` / `findObraBlockWithRetry(obraId, maxAttempts)`: localizam o elemento no DOM, repetindo a busca quando a renderização ainda não terminou.
-- `deleteObraFromServer(obraName, obraId)`: executa a exclusão no backend.
-- `verifyObraData(obraId)`: validações finais antes de salvar/atualizar.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/features/managers/project-manager.js`
-
-- `buildProjectHTML(obraId, obraName, projectId, projectName)`: template dos projetos com cabeçalho, botão “Adicionar Sala” e contêineres de salas.
-- `createEmptyProject(obraId, obraName, projectId, projectName)`: injeta o projeto na obra correspondente, remove mensagens “empty” e expõe as ações.
-- `addNewProjectToObra(obraId)`: obtém o próximo número de projeto, cria o projeto e adiciona uma sala inicial quando `window.addNewRoomToProject` está disponível.
-- `deleteProject(obraId, projectId)`: remove o projeto do DOM e atualiza mensagens de vazio/contadores.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/ui/interface.js`
-
-- `addNewProject()`: wrapper legado que cria uma nova obra e adiciona um projeto imediatamente.
-- `toggleObra(obraId, event)`: implementa o toggle com IDs únicos para expandir/recolher `#obra-content-{id}`.
-- `toggleProject(projectId, event)` / `toggleRoom(roomId, event)`: mesma lógica aplicada aos níveis de projeto e sala.
-- `toggleSection(sectionId)` / `toggleSubsection(subsectionId)`: controlam blocos internos dentro das seções de sala.
-- `downloadPDF(obraId, projectName)` / `downloadWord(obraId, projectName)`: iniciam downloads de relatórios baseados na obra ou projeto selecionado.
-- `saveOrUpdateObra(obraParam, event)`: decide entre `salvarObra` e `atualizarObra` dependendo do estado atual da obra, impedindo submits duplicados.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/ui/helpers.js`
-
-- `toggleElementVisibility(contentId, minimizerElement)`: alterna `collapsed` em um container genérico e atualiza o minimizer.
-- `expandElement(element, minimizerElement)` / `collapseElement(element, minimizerElement)`: manipulam explicitamente o estado (expandido/recolhido) e alteram o símbolo exibido.
-- `calculateRoomCompletionStats(room)`: conta quantas seções de uma sala estão preenchidas para exibir indicadores de progresso.
-- `removeEmptyObraMessage(obraName)` / `showEmptyObraMessageIfNeeded(obraName)`: removem ou mostram mensagens “Nenhuma obra”.
-- `removeEmptyProjectMessage(projectContent)` / `showEmptyProjectMessageIfNeeded(projectContent)`: equivalentes para os contêineres de salas.
-- `isElementVisible(elementId)`: retorna se um bloco está expandido.
-- `toggleAllElements(containerId, expand = true)`: expande ou recolhe todas as seções de um container (por exemplo, todas as salas de uma obra).
-
----
-
-### `codigo/public/scripts/01_Create_Obra/ui/components/edit.js`
-
-- `makeEditable(element, type)`: entrada principal que habilita edição inline para títulos de obra/projeto/sala.
-- `enableEditing(element)` / `selectElementContent(element)`: ativam `contentEditable`, aplicam classes auxiliares e selecionam o texto.
-- `attachEditingEventListeners(element, type)`: registra listeners (`handleKeydown`, `handleBlur`) que salvam com Enter/Tab e cancelam com Esc.
-- `saveInlineEdit(element, type)`: valida o texto, aplica a mudança com `applyNameChange()` e desativa o modo de edição.
-- `applyNameChange(element, newText, type, originalText)`: atualiza atributos `data-*`, IDs relacionados e o texto exibido, conforme o tipo.
-- `disableEditing(element)`: reverte `contentEditable` e remove estilos/handlers.
-- `validateEditedText(newText, originalText, element)`: impede textos vazios ou iguais, exibindo mensagens.
-- `showEditError(message)`: usa `showSystemStatus` para avisar o usuário.
-- `cancelInlineEdit(element)`: descarta alterações e restaura o texto original.
-- `makeAllEditable(selector, type)` / `disableAllEditing()`: ligam/desligam edição em massa.
-- `saveAllPendingEdits()` / `hasPendingEdits()` / `getEditStats()`: controlam o estado de edições ativas, inclusive o alerta `beforeunload`.
-- `makeEditableCompatibility(element, type)`: mantém compatibilidade com scripts que chamavam a API antiga.
-- Listeners globais (`document.keydown`, `window.beforeunload`) reforçam o comportamento para evitar perdas de dados.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/ui/components/status.js`
-
-- `showSystemStatus(message, type = 'info', duration = null)`: renderiza um banner de status com ícone e duração apropriados.
-- `removeExistingStatusBanner()` / `removeAllStatusBanners()`: limpam banners existentes.
-- `createStatusBanner(message, type)`: monta o HTML do banner usando o ícone de `getStatusIcon(type)`.
-- `getStatusIcon(type)` / `getDefaultDuration(type)`: mapeiam tipos (success/error/warning/info) para ícones e tempos padrão.
-- `insertStatusBanner(banner)` / `scheduleStatusBannerRemoval(banner, duration)`: inserem o banner no DOM e agendam sua remoção.
-- `showLoadingStatus(message)` / `showTemporaryStatus(message, type, duration, callback)`: atalhos para mensagens de carregamento ou temporárias.
-- `hasActiveStatusBanner()` / `getActiveBannersCount()`: informam se ainda existe banner na tela.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/ui/components/modal/modal.js`
-
-- `showConfirmationModal(obraName, obraId, obraBlock)`: exibe o modal de confirmação de exclusão de obra, salvando o pending deletion em memória.
-- `closeConfirmationModal()` / `closeConfirmationModalWithoutClearing()`: fecham o modal, removendo ou preservando dados pendentes.
-- `createToastContainer()`: garante que exista container para toasts de undo/erro.
-- `showToast(obraName, type = 'undo', obraId = null)`: cria toasts temporizados, disparando `startCountdown()` para mostrar quanto tempo resta.
-- `startCountdown(toastElement, seconds)`: atualiza o contador visível e executa o callback ao expirar.
-- `animateAndRemove(el)` / `sweepDanglingToasts()`: aplicam animações de saída e limpam toasts antigos.
-- `hideSpecificToast(toastId)` / `hideToast()`: APIs públicas para remover toasts.
-- `undoDeletion(obraId, obraName)`: restaura a obra caso o usuário clique em “Desfazer”.
-- `completeDeletion(obraId, obraName)` / `completeDeletionImmediate(obraId, obraName)`: executam a remoção no backend ao final do countdown ou imediatamente.
-- `verificarObraNoServidor(obraId)`: confirma se a obra ainda existe antes de deletar.
-- `confirmDeletion()`: é chamado pelo botão “Confirmar exclusão” do modal.
-- `getPendingDeletion()`: expõe o item que está aguardando undo.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/ui/components/modal/exit-modal.js`
-
-- `createModalHTML(config)`: monta o HTML completo do modal de desligamento (título, texto, botões) usando o objeto de configuração.
-- `setupModalEvents(modalElement, resolve)`: registra os botões “Cancelar/Encerrar”, fecha o modal nos cliques corretos e resolve a Promise que sinaliza a escolha do usuário.
-- `removeExistingModal()`: garante que apenas um modal de saída esteja aberto por vez.
-- `createShutdownModal(config)`: compõe `createModalHTML`, injeta no DOM e retorna o elemento pronto.
-- `showShutdownConfirmationModal()`: fluxo padrão chamado pelo adaptador de shutdown; retorna uma Promise que resolve somente após a confirmação.
-- `showCustomShutdownModal(options)`: permite abrir variações personalizadas reutilizando a mesma infraestrutura.
-
----
-
-### `codigo/public/scripts/01_Create_Obra/utils/core-utils.js`
-
-- `waitForElement(selector, timeout = 3000)`: Promise que resolve quando o elemento aparece no DOM ou rejeita ao atingir o timeout.
-- `safeNumber(value, defaultValue = 0)`: converte valores em números válidos, retornando `defaultValue` quando o input é inválido.
-- `updateElementText(elementId, value)`: encapsula o acesso ao DOM, atualizando o texto apenas se o elemento existir.
-- `generateUniqueId(prefix = 'item')`: cria IDs simples baseados em timestamp/random para componentes que não dependem dos geradores hierárquicos.
-- `isValidElement(element)`: confirma se o objeto recebido é um elemento DOM antes de manipulá-lo.
-- `debounce(func, wait)`: implementação reutilizável de debounce utilizada por inputs e cálculos intensivos.
-
----
-
-## Utilitários Python
-
-### `utilitarios py/juntar_linhas.py`
-
-- Parametriza `PASTA_CODIGO_DEFAULT`, `EXTENSOES_PERMITIDAS` e `SKIP_DIRS`, percorre a pasta base com `Path.rglob()`/filtros e ignora `node_modules`, `__pycache__` etc.
-- `FileJoinerApp` (Tkinter) monta UI com seleção de pasta, filtro textual, botão para recarregar e indicadores de quantidade de arquivos/selecionados.
-- Alterna dinamicamente entre modo checkbox (multi) e rádio (single), possui botões "Selecionar todos"/"Limpar seleção" e lista responsiva com scroll customizado.
-- Opções extras habilitam exibição de caminhos completos e inserção automática de separadores contendo o caminho relativo de cada arquivo antes/depois do conteúdo unido.
-- `_export()` pergunta pelo destino (`asksaveasfilename`), concatena linha a linha com `normalize_eol`, trata erros de leitura com mensagens amigáveis e mostra um resumo com o total de linhas escritas.
-
----
+- `backup de arquivos/scripts/01_Create_Obra`: cópia congelada do front-end antes da refatoração atual. Útil para comparar comportamentos antigos ou recuperar trechos específicos.
+- Sempre que uma nova função for criada, adicione-a às tabelas acima para manter o README sincronizado com a estrutura vigente.

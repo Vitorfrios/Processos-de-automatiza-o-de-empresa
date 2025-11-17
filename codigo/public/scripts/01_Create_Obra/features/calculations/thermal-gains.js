@@ -11,7 +11,7 @@ import {
     collectClimatizationInputs,
 } from './calculations-core.js'  
 
-import { safeNumber, updateElementText } from '../../utils/core-utils.js';
+import { safeNumber, updateElementText } from '../../data/utils/core-utils.js';
 
 /**
  * 🔥 CÁLCULOS DE COMPONENTES TÉRMICOS (thermalComponents.js)

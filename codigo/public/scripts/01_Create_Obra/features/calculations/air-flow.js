@@ -231,7 +231,6 @@ function getAirFlowStats(inputData, result) {
         pressurizacaoAtiva: inputData.pressurizacao,
         pressurizacaoValue: pressure,
         vazaoResultante: result,
-        timestamp: new Date().toISOString()
     };
 }
 

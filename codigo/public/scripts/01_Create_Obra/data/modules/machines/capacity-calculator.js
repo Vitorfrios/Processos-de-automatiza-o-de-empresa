@@ -1,6 +1,6 @@
 // capacityCalculator.js
 
-import { updateElementText } from '../../../utils/core-utils.js';
+import { updateElementText } from '../../utils/core-utils.js';
 
 
 /**
