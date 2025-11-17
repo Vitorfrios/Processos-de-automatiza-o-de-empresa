@@ -2,10 +2,33 @@
 RELATÓRIO COMPLETO DE ANÁLISE JAVASCRIPT
 ================================================================================
 
-DETALHAMENTO POR ARQUIVO:
+Pastas analisadas:
+   • 01_Create_Obra: C:\Users\vitor\OneDrive\Repositórios\Processos-de-automatiza-o-de-empresa\codigo\public\scripts\01_Create_Obra
+   • 02_Obras_manager: C:\Users\vitor\OneDrive\Repositórios\Processos-de-automatiza-o-de-empresa\codigo\public\scripts\02_Obras_manager
+
+================================================================================
+📂 INÍCIO DA ANÁLISE DA PASTA: 01_Create_Obra
 ================================================================================
 
-📁 ARQUIVO: core\app.js
+----- FIM DA PASTA: 01_Create_Obra -----
+
+======================================== INÍCIO PRÓXIMA PASTA ========================================
+
+================================================================================
+📂 INÍCIO DA ANÁLISE DA PASTA: 02_Obras_manager
+================================================================================
+
+----- FIM DA PASTA: 02_Obras_manager -----
+
+======================================== INÍCIO PRÓXIMA PASTA ========================================
+
+
+================================================================================
+DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
+================================================================================
+
+📁 ARQUIVO: 01_Create_Obra/core\app.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 343
    🔧 Funções encontradas: 7
    📋 Lista de funções:
@@ -34,7 +57,8 @@ DETALHAMENTO POR ARQUIVO:
       • getAppStatus
 ------------------------------------------------------------
 
-📁 ARQUIVO: core\constants.js
+📁 ARQUIVO: 01_Create_Obra/core\constants.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 319
    🔧 Funções encontradas: 3
    📋 Lista de funções:
@@ -58,7 +82,8 @@ DETALHAMENTO POR ARQUIVO:
       • getConstant
 ------------------------------------------------------------
 
-📁 ARQUIVO: core\shared-utils.js
+📁 ARQUIVO: 01_Create_Obra/core\shared-utils.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 8
    🔧 Funções encontradas: 1
    📋 Lista de funções:
@@ -67,8 +92,9 @@ DETALHAMENTO POR ARQUIVO:
       • attachModuleToWindow
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\adapters\obra-adapter-folder\empresa-autocomplete.js
-   📏 Linhas de código: 433
+📁 ARQUIVO: 01_Create_Obra/data\adapters\obra-adapter-folder\empresa-autocomplete.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 489
    🔧 Funções encontradas: 7
    📋 Lista de funções:
       • exibirSugestoes() (usada em 1 arquivos)
@@ -78,6 +104,13 @@ DETALHAMENTO POR ARQUIVO:
       • navegarDropdown() (usada em 1 arquivos)
       • selecionarEmpresa() (usada em 1 arquivos)
       • selecionarOpcaoAtiva() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • { 
+    inicializarDetectorBackspace,
+    corrigirPosicaoDropdown,
+    calcularNumeroClienteFinal,
+    mostrarAvisoAutocompletado,
+    limparDadosSelecao      } from './ui-helpers-obra-adapter.js'
    📤 EXPORTS:
       • inicializarInputEmpresaHibrido
       • filtrarEmpresas
@@ -88,14 +121,18 @@ DETALHAMENTO POR ARQUIVO:
       • selecionarOpcaoAtiva
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\adapters\obra-adapter-folder\empresa-form-manager.js
-   📏 Linhas de código: 215
+📁 ARQUIVO: 01_Create_Obra/data\adapters\obra-adapter-folder\empresa-form-manager.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 217
    🔧 Funções encontradas: 4
    📋 Lista de funções:
       • atualizarCamposEmpresaForm() (usada em 1 arquivos)
       • atualizarInterfaceComEmpresa() (usada em 1 arquivos)
       • criarFormularioVazioEmpresa() (usada em 1 arquivos)
       • criarVisualizacaoEmpresa() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • { formatarData  } from './ui-helpers-obra-adapter.js'
+      • { inicializarInputEmpresaHibrido  } from './empresa-autocomplete.js'
    📤 EXPORTS:
       • atualizarInterfaceComEmpresa
       • atualizarCamposEmpresaForm
@@ -103,8 +140,9 @@ DETALHAMENTO POR ARQUIVO:
       • criarFormularioVazioEmpresa
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\adapters\obra-adapter-folder\obra-data-loader.js
-   📏 Linhas de código: 260
+📁 ARQUIVO: 01_Create_Obra/data\adapters\obra-adapter-folder\obra-data-loader.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 289
    🔧 Funções encontradas: 6
    📋 Lista de funções:
       • debugLoadObras() (usada em 1 arquivos)
@@ -124,7 +162,8 @@ DETALHAMENTO POR ARQUIVO:
       • debugLoadObras
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\adapters\obra-adapter-folder\ui-helpers-obra-adapter.js
+📁 ARQUIVO: 01_Create_Obra/data\adapters\obra-adapter-folder\ui-helpers-obra-adapter.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 325
    🔧 Funções encontradas: 10
    📋 Lista de funções:
@@ -151,12 +190,14 @@ DETALHAMENTO POR ARQUIVO:
       • formatarData
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\adapters\obra-adapter.js
-   📏 Linhas de código: 181
+📁 ARQUIVO: 01_Create_Obra/data\adapters\obra-adapter.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 182
    🔧 Funções encontradas: 0
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\adapters\session-adapter.js
+📁 ARQUIVO: 01_Create_Obra/data\adapters\session-adapter.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 312
    🔧 Funções encontradas: 20
    📋 Lista de funções:
@@ -204,7 +245,8 @@ DETALHAMENTO POR ARQUIVO:
       • startSessionOnFirstSave
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\adapters\shutdown-adapter.js
+📁 ARQUIVO: 01_Create_Obra/data\adapters\shutdown-adapter.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 307
    🔧 Funções encontradas: 6
    📋 Lista de funções:
@@ -222,8 +264,9 @@ DETALHAMENTO POR ARQUIVO:
       • initializeSession
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\data-builders-folder\empresa-data-extractor.js
-   📏 Linhas de código: 32
+📁 ARQUIVO: 01_Create_Obra/data\builders\data-builders-folder\empresa-data-extractor.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 158
    🔧 Funções encontradas: 1
    📋 Lista de funções:
       • extractEmpresaData() (usada em 1 arquivos)
@@ -231,7 +274,8 @@ DETALHAMENTO POR ARQUIVO:
       • extractEmpresaData
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\data-builders-folder\machines-data-extractors.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\data-builders-folder\machines-data-extractors.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 110
    🔧 Funções encontradas: 2
    📋 Lista de funções:
@@ -244,7 +288,8 @@ DETALHAMENTO POR ARQUIVO:
       • extractClimatizationMachineData
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\data-builders-folder\obra-data-builder.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\data-builders-folder\obra-data-builder.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 167
    🔧 Funções encontradas: 2
    📋 Lista de funções:
@@ -258,7 +303,8 @@ DETALHAMENTO POR ARQUIVO:
       • buildProjectData
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\data-builders-folder\room-data-extractors.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\data-builders-folder\room-data-extractors.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 245
    🔧 Funções encontradas: 5
    📋 Lista de funções:
@@ -278,16 +324,24 @@ DETALHAMENTO POR ARQUIVO:
       • extractConfigurationData
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\data-builders.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\data-builders.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 28
    🔧 Funções encontradas: 0
    📥 IMPORTS:
       • {  attachModuleToWindow  } from '../../core/shared-utils.js'
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\empresa-cadastro-inline.js
-   📏 Linhas de código: 762
-   🔧 Funções encontradas: 0
+📁 ARQUIVO: 01_Create_Obra/data\builders\empresa-cadastro-inline.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 943
+   🔧 Funções encontradas: 5
+   📋 Lista de funções:
+      • atualizarPosicaoTooltip() (usada em 1 arquivos)
+      • cancelarAutoCloseTimer() (usada em 1 arquivos)
+      • esconderTooltip() (usada em 1 arquivos)
+      • iniciarAutoCloseTimer() (usada em 1 arquivos)
+      • mostrarTooltip() (usada em 1 arquivos)
    📥 IMPORTS:
       • {  showSystemStatus  } from '../../ui/components/status.js'
       • {  extractNumberFromText  } from '../../data/utils/data-utils.js'
@@ -295,14 +349,16 @@ DETALHAMENTO POR ARQUIVO:
       • EmpresaCadastroInline (default)
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\ui-builders.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\ui-builders.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 25
    🔧 Funções encontradas: 0
    📥 IMPORTS:
       • {  attachModuleToWindow  } from '../../core/shared-utils.js'
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\ui-folder\data-fillers.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\ui-folder\data-fillers.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 417
    🔧 Funções encontradas: 5
    📋 Lista de funções:
@@ -321,7 +377,8 @@ DETALHAMENTO POR ARQUIVO:
       • ensureAllRoomSections
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\ui-folder\machine-renderer.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\ui-folder\machine-renderer.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 449
    🔧 Funções encontradas: 5
    📋 Lista de funções:
@@ -340,7 +397,8 @@ DETALHAMENTO POR ARQUIVO:
       • populateMachineData
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\ui-folder\obra-renderer.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\ui-folder\obra-renderer.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 179
    🔧 Funções encontradas: 2
    📋 Lista de funções:
@@ -354,7 +412,8 @@ DETALHAMENTO POR ARQUIVO:
       • populateObraData
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\ui-folder\project-renderer.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\ui-folder\project-renderer.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 144
    🔧 Funções encontradas: 2
    📋 Lista de funções:
@@ -368,7 +427,8 @@ DETALHAMENTO POR ARQUIVO:
       • populateProjectData
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\builders\ui-folder\room-renderer.js
+📁 ARQUIVO: 01_Create_Obra/data\builders\ui-folder\room-renderer.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 129
    🔧 Funções encontradas: 2
    📋 Lista de funções:
@@ -381,7 +441,8 @@ DETALHAMENTO POR ARQUIVO:
       • populateRoomData
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\modules\climatizacao.js
+📁 ARQUIVO: 01_Create_Obra/data\modules\climatizacao.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 766
    🔧 Funções encontradas: 10
    📋 Lista de funções:
@@ -410,7 +471,8 @@ DETALHAMENTO POR ARQUIVO:
       • togglePressurizationFields
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\modules\configuracao.js
+📁 ARQUIVO: 01_Create_Obra/data\modules\configuracao.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 74
    🔧 Funções encontradas: 1
    📋 Lista de funções:
@@ -419,7 +481,8 @@ DETALHAMENTO POR ARQUIVO:
       • buildConfigurationSection
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\modules\machines\capacity-calculator.js
+📁 ARQUIVO: 01_Create_Obra/data\modules\machines\capacity-calculator.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 624
    🔧 Funções encontradas: 21
    📋 Lista de funções:
@@ -459,7 +522,8 @@ DETALHAMENTO POR ARQUIVO:
       • initializeStaticCapacityTable
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\modules\machines\machines-core.js
+📁 ARQUIVO: 01_Create_Obra/data\modules\machines\machines-core.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 602
    🔧 Funções encontradas: 26
    📋 Lista de funções:
@@ -513,7 +577,8 @@ DETALHAMENTO POR ARQUIVO:
       • generateMachineId
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\modules\rooms.js
+📁 ARQUIVO: 01_Create_Obra/data\modules\rooms.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 499
    🔧 Funções encontradas: 17
    📋 Lista de funções:
@@ -560,7 +625,8 @@ DETALHAMENTO POR ARQUIVO:
       • loadMachinesPreloadModule
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\utils\core-utils.js
+📁 ARQUIVO: 01_Create_Obra/data\utils\core-utils.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 121
    🔧 Funções encontradas: 9
    📋 Lista de funções:
@@ -582,7 +648,8 @@ DETALHAMENTO POR ARQUIVO:
       • debounce
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\utils\data-utils.js
+📁 ARQUIVO: 01_Create_Obra/data\utils\data-utils.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 456
    🔧 Funções encontradas: 13
    📋 Lista de funções:
@@ -623,8 +690,9 @@ DETALHAMENTO POR ARQUIVO:
       • 
 ------------------------------------------------------------
 
-📁 ARQUIVO: data\utils\id-generator.js
-   📏 Linhas de código: 283
+📁 ARQUIVO: 01_Create_Obra/data\utils\id-generator.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 282
    🔧 Funções encontradas: 16
    📋 Lista de funções:
       • areIdsFromSameObra() (usada em 1 arquivos)
@@ -662,8 +730,9 @@ DETALHAMENTO POR ARQUIVO:
       • sanitizeId
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\calculations\air-flow.js
-   📏 Linhas de código: 269
+📁 ARQUIVO: 01_Create_Obra/features\calculations\air-flow.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 268
    🔧 Funções encontradas: 8
    📋 Lista de funções:
       • calculateDoorFlow() (usada em 1 arquivos)
@@ -697,7 +766,8 @@ DETALHAMENTO POR ARQUIVO:
       • getAirFlowStats
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\calculations\calculations-core.js
+📁 ARQUIVO: 01_Create_Obra/features\calculations\calculations-core.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 272
    🔧 Funções encontradas: 8
    📋 Lista de funções:
@@ -740,7 +810,8 @@ DETALHAMENTO POR ARQUIVO:
       • 
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\calculations\thermal-gains.js
+📁 ARQUIVO: 01_Create_Obra/features\calculations\thermal-gains.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 460
    🔧 Funções encontradas: 17
    📋 Lista de funções:
@@ -788,7 +859,8 @@ DETALHAMENTO POR ARQUIVO:
       • updatePartitionDisplay
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\managers\obra-folder\obra-creator.js
+📁 ARQUIVO: 01_Create_Obra/features\managers\obra-folder\obra-creator.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 165
    🔧 Funções encontradas: 5
    📋 Lista de funções:
@@ -808,7 +880,8 @@ DETALHAMENTO POR ARQUIVO:
       • addNewObra
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\managers\obra-folder\obra-dom-manager.js
+📁 ARQUIVO: 01_Create_Obra/features\managers\obra-folder\obra-dom-manager.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 101
    🔧 Funções encontradas: 3
    📋 Lista de funções:
@@ -823,29 +896,32 @@ DETALHAMENTO POR ARQUIVO:
       • updateObraButtonAfterSave
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\managers\obra-folder\obra-persistence.js
-   📏 Linhas de código: 203
+📁 ARQUIVO: 01_Create_Obra/features\managers\obra-folder\obra-persistence.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 202
    🔧 Funções encontradas: 4
    📋 Lista de funções:
       • atualizarObra() (usada em 1 arquivos)
       • deleteObraFromServer() (usada em 1 arquivos)
       • fetchObras() (usada em 1 arquivos)
-      • salvarObra() (usada em 1 arquivos)
+      • supportFrom_saveObra() (usada em 1 arquivos)
    📥 IMPORTS:
       • {  ensureStringId  } from '../../../data/utils/id-generator.js'
       • {  showSystemStatus  } from '../../../ui/components/status.js'
       • {  isSessionActive  } from '../../../data/adapters/session-adapter.js'
    📤 EXPORTS:
       • fetchObras
-      • salvarObra
+      • supportFrom_saveObra
       • atualizarObra
       • deleteObraFromServer
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\managers\obra-folder\obra-save-handler.js
-   📏 Linhas de código: 180
-   🔧 Funções encontradas: 1
+📁 ARQUIVO: 01_Create_Obra/features\managers\obra-folder\obra-save-handler.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 225
+   🔧 Funções encontradas: 2
    📋 Lista de funções:
+      • atualizarHeaderObraAposSalvamento() (usada em 1 arquivos)
       • saveObra() (usada em 1 arquivos)
    📥 IMPORTS:
       • {  ensureStringId  } from '../../../data/utils/id-generator.js'
@@ -853,12 +929,15 @@ DETALHAMENTO POR ARQUIVO:
       • {  showSystemStatus  } from '../../../ui/components/status.js'
       • {  isSessionActive, startSessionOnFirstSave  } from '../../../data/adapters/session-adapter.js'
       • {  findObraBlockWithRetry  } from './obra-dom-manager.js'
-      • {  salvarObra, atualizarObra  } from './obra-persistence.js'
+      • {  supportFrom_saveObra, atualizarObra  } from './obra-persistence.js'
    📤 EXPORTS:
       • saveObra
+      • atualizarHeaderObraAposSalvamento
+      • 
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\managers\obra-folder\obra-utils.js
+📁 ARQUIVO: 01_Create_Obra/features\managers\obra-folder\obra-utils.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 59
    🔧 Funções encontradas: 2
    📋 Lista de funções:
@@ -872,7 +951,8 @@ DETALHAMENTO POR ARQUIVO:
       • verifyObraData
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\managers\obra-manager.js
+📁 ARQUIVO: 01_Create_Obra/features\managers\obra-manager.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 33
    🔧 Funções encontradas: 0
    📥 IMPORTS:
@@ -882,7 +962,8 @@ DETALHAMENTO POR ARQUIVO:
       • ensureStringId
 ------------------------------------------------------------
 
-📁 ARQUIVO: features\managers\project-manager.js
+📁 ARQUIVO: 01_Create_Obra/features\managers\project-manager.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 209
    🔧 Funções encontradas: 4
    📋 Lista de funções:
@@ -903,7 +984,8 @@ DETALHAMENTO POR ARQUIVO:
       • deleteProject
 ------------------------------------------------------------
 
-📁 ARQUIVO: main.js
+📁 ARQUIVO: 01_Create_Obra/main.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 778
    🔧 Funções encontradas: 8
    📋 Lista de funções:
@@ -922,8 +1004,9 @@ DETALHAMENTO POR ARQUIVO:
       • { EmpresaCadastroInline } from './data/builders/empresa-cadastro-inline.js'
 ------------------------------------------------------------
 
-📁 ARQUIVO: ui\components\edit.js
-   📏 Linhas de código: 487
+📁 ARQUIVO: 01_Create_Obra/ui\components\edit.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 486
    🔧 Funções encontradas: 18
    📋 Lista de funções:
       • applyNameChange() (usada em 1 arquivos)
@@ -969,46 +1052,48 @@ DETALHAMENTO POR ARQUIVO:
     makeEditableCompatibility
 ------------------------------------------------------------
 
-📁 ARQUIVO: ui\components\modal\exit-modal.js
+📁 ARQUIVO: 01_Create_Obra/ui\components\modal\exit-modal.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 182
    🔧 Funções encontradas: 11
    📋 Lista de funções:
-      • cleanup() (usada em 1 arquivos)
-      • createModalHTML() (usada em 1 arquivos)
-      • createShutdownModal() (usada em 1 arquivos)
-      • onBackdropClick() (usada em 1 arquivos)
-      • onCancel() (usada em 1 arquivos)
-      • onConfirm() (usada em 1 arquivos)
-      • onKeyDown() (usada em 1 arquivos)
-      • removeExistingModal() (usada em 1 arquivos)
-      • setupModalEvents() (usada em 1 arquivos)
-      • showCustomShutdownModal() (usada em 1 arquivos)
-      • showShutdownConfirmationModal() (usada em 1 arquivos)
+      • cleanup() (usada em 2 arquivos)
+      • createModalHTML() (usada em 2 arquivos)
+      • createShutdownModal() (usada em 2 arquivos)
+      • onBackdropClick() (usada em 2 arquivos)
+      • onCancel() (usada em 2 arquivos)
+      • onConfirm() (usada em 2 arquivos)
+      • onKeyDown() (usada em 2 arquivos)
+      • removeExistingModal() (usada em 2 arquivos)
+      • setupModalEvents() (usada em 2 arquivos)
+      • showCustomShutdownModal() (usada em 2 arquivos)
+      • showShutdownConfirmationModal() (usada em 2 arquivos)
    📤 EXPORTS:
       • showShutdownConfirmationModal
       • showCustomShutdownModal
 ------------------------------------------------------------
 
-📁 ARQUIVO: ui\components\modal\modal.js
+📁 ARQUIVO: 01_Create_Obra/ui\components\modal\modal.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 548
    🔧 Funções encontradas: 16
    📋 Lista de funções:
-      • animateAndRemove() (usada em 1 arquivos)
-      • closeConfirmationModal() (usada em 1 arquivos)
-      • closeConfirmationModalWithoutClearing() (usada em 1 arquivos)
-      • completeDeletion() (usada em 1 arquivos)
-      • completeDeletionImmediate() (usada em 1 arquivos)
-      • confirmDeletion() (usada em 1 arquivos)
-      • createToastContainer() (usada em 1 arquivos)
-      • getPendingDeletion() (usada em 1 arquivos)
-      • hideSpecificToast() (usada em 1 arquivos)
-      • hideToast() (usada em 1 arquivos)
-      • showConfirmationModal() (usada em 1 arquivos)
-      • showToast() (usada em 1 arquivos)
-      • startCountdown() (usada em 1 arquivos)
-      • sweepDanglingToasts() (usada em 1 arquivos)
-      • undoDeletion() (usada em 1 arquivos)
-      • verificarObraNoServidor() (usada em 1 arquivos)
+      • animateAndRemove() (usada em 2 arquivos)
+      • closeConfirmationModal() (usada em 2 arquivos)
+      • closeConfirmationModalWithoutClearing() (usada em 2 arquivos)
+      • completeDeletion() (usada em 2 arquivos)
+      • completeDeletionImmediate() (usada em 2 arquivos)
+      • confirmDeletion() (usada em 2 arquivos)
+      • createToastContainer() (usada em 2 arquivos)
+      • getPendingDeletion() (usada em 2 arquivos)
+      • hideSpecificToast() (usada em 2 arquivos)
+      • hideToast() (usada em 2 arquivos)
+      • showConfirmationModal() (usada em 2 arquivos)
+      • showToast() (usada em 2 arquivos)
+      • startCountdown() (usada em 2 arquivos)
+      • sweepDanglingToasts() (usada em 2 arquivos)
+      • undoDeletion() (usada em 2 arquivos)
+      • verificarObraNoServidor() (usada em 2 arquivos)
    📤 EXPORTS:
       • showConfirmationModal
       • closeConfirmationModal
@@ -1018,7 +1103,8 @@ DETALHAMENTO POR ARQUIVO:
       • getPendingDeletion
 ------------------------------------------------------------
 
-📁 ARQUIVO: ui\components\status.js
+📁 ARQUIVO: 01_Create_Obra/ui\components\status.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 229
    🔧 Funções encontradas: 12
    📋 Lista de funções:
@@ -1049,7 +1135,8 @@ DETALHAMENTO POR ARQUIVO:
       • getActiveBannersCount
 ------------------------------------------------------------
 
-📁 ARQUIVO: ui\helpers.js
+📁 ARQUIVO: 01_Create_Obra/ui\helpers.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 210
    🔧 Funções encontradas: 10
    📋 Lista de funções:
@@ -1078,7 +1165,8 @@ DETALHAMENTO POR ARQUIVO:
       • toggleAllElements
 ------------------------------------------------------------
 
-📁 ARQUIVO: ui\interface.js
+📁 ARQUIVO: 01_Create_Obra/ui\interface.js
+   📂 Pasta base: 01_Create_Obra
    📏 Linhas de código: 444
    🔧 Funções encontradas: 9
    📋 Lista de funções:
@@ -1170,12 +1258,351 @@ DETALHAMENTO POR ARQUIVO:
       • 
 ------------------------------------------------------------
 
+📁 ARQUIVO: 02_Obras_manager/core\app.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 102
+   🔧 Funções encontradas: 3
+   📋 Lista de funções:
+      • bootstrapManagerApplication() (usada em 1 arquivos)
+      • getManagerStatus() (usada em 1 arquivos)
+      • reinitializeManager() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  initializeManagerInterface  } from '../ui/interface.js'
+      • {  showSystemStatus  } from '../../01_Create_Obra/ui/components/status.js'
+      • {  loadSystemConstantsFromJSON, waitForConstants  } from '../data/adapters/constants-adapter.js'
+   📤 EXPORTS:
+      • reinitializeManager
+      • getManagerStatus
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/core\constants.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 34
+   🔧 Funções encontradas: 0
+   📤 EXPORTS:
+      • PAGE_MODE
+      • MANAGER_EVENTS
+      • BACKUP_ENDPOINTS
+      • MESSAGES
+      • SELECTORS
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/data\adapters\constants-adapter.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 101
+   🔧 Funções encontradas: 4
+   📋 Lista de funções:
+      • areConstantsLoaded() (usada em 1 arquivos)
+      • loadSystemConstantsFromJSON() (usada em 1 arquivos)
+      • validateRequiredConstants() (usada em 1 arquivos)
+      • waitForConstants() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • areConstantsLoaded
+      • validateRequiredConstants
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/data\adapters\obras-adapter.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 185
+   🔧 Funções encontradas: 4
+   📋 Lista de funções:
+      • loadBackupObras() (usada em 1 arquivos)
+      • normalizeBackup() (usada em 1 arquivos)
+      • removeObraFromBackup() (usada em 1 arquivos)
+      • updateBackupFile() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  BACKUP_ENDPOINTS, MESSAGES  } from '../../core/constants.js'
+      • {  showSystemStatus  } from '../../../01_Create_Obra/ui/components/status.js'
+   📤 EXPORTS:
+      • normalizeBackup
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/data\builders\obras-builder.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 115
+   🔧 Funções encontradas: 4
+   📋 Lista de funções:
+      • applyFilters() (usada em 3 arquivos)
+      • extractObraMetadata() (usada em 1 arquivos)
+      • formatObraStats() (usada em 1 arquivos)
+      • getObraStats() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • getObraStats
+      • formatObraStats
+      • extractObraMetadata
+      • applyFilters
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/features\managers\obras-manager.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 598
+   🔧 Funções encontradas: 18
+   📋 Lista de funções:
+      • applyFilters() (usada em 3 arquivos)
+      • applyPage2PostProcessing() (usada em 1 arquivos)
+      • calculateVazaoArWithDisplay() (usada em 1 arquivos)
+      • ensureRequiredFunctions() (usada em 1 arquivos)
+      • forceRealVazaoCalculation() (usada em 1 arquivos)
+      • handleObraDeletion() (usada em 1 arquivos)
+      • handleVazaoUpdate() (usada em 1 arquivos)
+      • loadAllPage1Functions() (usada em 1 arquivos)
+      • loadAllPage1Modules() (usada em 1 arquivos)
+      • loadAndRenderObras() (usada em 1 arquivos)
+      • loadPage1Module() (usada em 1 arquivos)
+      • loadRealCalculationFunctions() (usada em 1 arquivos)
+      • removeStubsAndLoadRealFunctions() (usada em 1 arquivos)
+      • renderObra() (usada em 1 arquivos)
+      • setupInputListeners() (usada em 1 arquivos)
+      • setupRealTimeUpdates() (usada em 1 arquivos)
+      • setupRoomListeners() (usada em 1 arquivos)
+      • updateVazaoDisplay() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  loadBackupObras, removeObraFromBackup  } from '../../data/adapters/obras-adapter.js'
+      • {  getObraStats, formatObraStats, applyFilters as applyObraFilters  } from '../../data/builders/obras-builder.js'
+      • {  showSystemStatus  } from '../../../01_Create_Obra/ui/components/status.js'
+      • {  showConfirmationModal  } from '../../../01_Create_Obra/ui/components/modal/modal.js'
+      • {  waitForConstants, validateRequiredConstants  } from '../../data/adapters/constants-adapter.js'
+   📤 EXPORTS:
+      • applyFilters
+      • renderObra
+      • applyPage2PostProcessing
+      • handleObraDeletion
+      • loadAllPage1Functions
+      • updateVazaoDisplay
+      • calculateVazaoArWithDisplay
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/main.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 28
+   🔧 Funções encontradas: 1
+   📋 Lista de funções:
+      • initialize() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  bootstrapManagerApplication  } from './core/app.js'
+      • * from './utils/global-stubs.js'
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/ui\components\cards.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 247
+   🔧 Funções encontradas: 0
+   📥 IMPORTS:
+      • {  UI_CONSTANTS  } from '../../core/constants.js'
+   📤 EXPORTS:
+      • CardsComponent
+      • cardsComponent
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/ui\components\modal\exit-modal.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 182
+   🔧 Funções encontradas: 11
+   📋 Lista de funções:
+      • cleanup() (usada em 2 arquivos)
+      • createModalHTML() (usada em 2 arquivos)
+      • createShutdownModal() (usada em 2 arquivos)
+      • onBackdropClick() (usada em 2 arquivos)
+      • onCancel() (usada em 2 arquivos)
+      • onConfirm() (usada em 2 arquivos)
+      • onKeyDown() (usada em 2 arquivos)
+      • removeExistingModal() (usada em 2 arquivos)
+      • setupModalEvents() (usada em 2 arquivos)
+      • showCustomShutdownModal() (usada em 2 arquivos)
+      • showShutdownConfirmationModal() (usada em 2 arquivos)
+   📤 EXPORTS:
+      • showShutdownConfirmationModal
+      • showCustomShutdownModal
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/ui\components\modal\modal.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 548
+   🔧 Funções encontradas: 16
+   📋 Lista de funções:
+      • animateAndRemove() (usada em 2 arquivos)
+      • closeConfirmationModal() (usada em 2 arquivos)
+      • closeConfirmationModalWithoutClearing() (usada em 2 arquivos)
+      • completeDeletion() (usada em 2 arquivos)
+      • completeDeletionImmediate() (usada em 2 arquivos)
+      • confirmDeletion() (usada em 2 arquivos)
+      • createToastContainer() (usada em 2 arquivos)
+      • getPendingDeletion() (usada em 2 arquivos)
+      • hideSpecificToast() (usada em 2 arquivos)
+      • hideToast() (usada em 2 arquivos)
+      • showConfirmationModal() (usada em 2 arquivos)
+      • showToast() (usada em 2 arquivos)
+      • startCountdown() (usada em 2 arquivos)
+      • sweepDanglingToasts() (usada em 2 arquivos)
+      • undoDeletion() (usada em 2 arquivos)
+      • verificarObraNoServidor() (usada em 2 arquivos)
+   📤 EXPORTS:
+      • showConfirmationModal
+      • closeConfirmationModal
+      • hideSpecificToast
+      • hideToast
+      • undoDeletion
+      • getPendingDeletion
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/ui\components\search.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 53
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • applyFilters() (usada em 3 arquivos)
+      • initializeSearchSystem() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • applyFilters
+      • initializeSearchSystem
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/ui\interface.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 120
+   🔧 Funções encontradas: 5
+   📋 Lista de funções:
+      • addManagerHeader() (usada em 1 arquivos)
+      • clearManagerInterface() (usada em 1 arquivos)
+      • initializeManagerInterface() (usada em 1 arquivos)
+      • setupProjectsContainer() (usada em 1 arquivos)
+      • setupShutdownButton() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  loadAndRenderObras  } from '../features/managers/obras-manager.js'
+      • {  showShutdownConfirmationModal  } from '../../01_Create_Obra/ui/components/modal/exit-modal.js'
+      • {  MESSAGES, SELECTORS  } from '../core/constants.js'
+   📤 EXPORTS:
+      • initializeManagerInterface
+      • clearManagerInterface
+------------------------------------------------------------
+
+📁 ARQUIVO: 02_Obras_manager/utils\global-stubs.js
+   📂 Pasta base: 02_Obras_manager
+   📏 Linhas de código: 534
+   🔧 Funções encontradas: 1
+   📋 Lista de funções:
+      • saveChanges() (usada em 1 arquivos)
+------------------------------------------------------------
+
 
 ================================================================================
-ANÁLISE DE FUNÇÕES DUPLICADAS
+ANÁLISE DE FUNÇÕES DUPLICADAS (ENTRE TODAS AS PASTAS)
 ================================================================================
 
-✅ Nenhuma função duplicada encontrada!
+🚨 FUNÇÕES DUPLICADAS ENCONTRADAS: 28
+
+🔧 function applyFilters() - aparece em 3 arquivos:
+   📁 02_Obras_manager/data\builders\obras-builder.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/features\managers\obras-manager.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\search.js (1x) - 🔴 DEFINIDA
+
+🔧 function createModalHTML() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function setupModalEvents() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function removeExistingModal() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function createShutdownModal() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function showShutdownConfirmationModal() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function showCustomShutdownModal() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function cleanup() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function onConfirm() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function onCancel() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function onBackdropClick() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function onKeyDown() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\exit-modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function showConfirmationModal() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function closeConfirmationModal() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function closeConfirmationModalWithoutClearing() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function createToastContainer() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function showToast() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function startCountdown() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function animateAndRemove() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function sweepDanglingToasts() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function hideSpecificToast() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function hideToast() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function undoDeletion() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function completeDeletion() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function completeDeletionImmediate() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function verificarObraNoServidor() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function confirmDeletion() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+
+🔧 function getPendingDeletion() - aparece em 2 arquivos:
+   📁 01_Create_Obra/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
+   📁 02_Obras_manager/ui\components\modal\modal.js (1x) - 🔴 DEFINIDA
 
 
 ================================================================================
@@ -1183,27 +1610,29 @@ ESTATÍSTICAS GERAIS
 ================================================================================
 
 📊 ESTATÍSTICAS:
-   • Total de arquivos .js: 47
-   • Total de linhas de código: 13644
-   • Total de funções: 339
-   • Total de imports: 70
-   • Total de exports: 330
-   • Funções duplicadas: 0
+   • Total de arquivos .js: 60
+   • Total de linhas de código: 16927
+   • Total de funções: 414
+   • Total de imports: 89
+   • Total de exports: 367
+   • Funções duplicadas: 28
 
 🏆 TOP 10 ARQUIVOS COM MAIS FUNÇÕES:
-    1. data\modules\machines\machines-core.js: 26 funções, 602 linhas
-    2. data\modules\machines\capacity-calculator.js: 21 funções, 624 linhas
-    3. data\adapters\session-adapter.js: 20 funções, 312 linhas
-    4. ui\components\edit.js: 18 funções, 487 linhas
-    5. data\modules\rooms.js: 17 funções, 499 linhas
-    6. features\calculations\thermal-gains.js: 17 funções, 460 linhas
-    7. data\utils\id-generator.js: 16 funções, 283 linhas
-    8. ui\components\modal\modal.js: 16 funções, 548 linhas
-    9. data\utils\data-utils.js: 13 funções, 456 linhas
-   10. ui\components\status.js: 12 funções, 229 linhas
+    1. 01_Create_Obra/data\modules\machines\machines-core.js: 26 funções, 602 linhas
+    2. 01_Create_Obra/data\modules\machines\capacity-calculator.js: 21 funções, 624 linhas
+    3. 01_Create_Obra/data\adapters\session-adapter.js: 20 funções, 312 linhas
+    4. 01_Create_Obra/ui\components\edit.js: 18 funções, 486 linhas
+    5. 02_Obras_manager/features\managers\obras-manager.js: 18 funções, 598 linhas
+    6. 01_Create_Obra/data\modules\rooms.js: 17 funções, 499 linhas
+    7. 01_Create_Obra/features\calculations\thermal-gains.js: 17 funções, 460 linhas
+    8. 01_Create_Obra/data\utils\id-generator.js: 16 funções, 282 linhas
+    9. 01_Create_Obra/ui\components\modal\modal.js: 16 funções, 548 linhas
+   10. 02_Obras_manager/ui\components\modal\modal.js: 16 funções, 548 linhas
 
-⚠️  ARQUIVOS SEM EXPORTS (4):
-   • data\adapters\obra-adapter.js
-   • data\builders\data-builders.js
-   • data\builders\ui-builders.js
-   • main.js
+⚠️  ARQUIVOS SEM EXPORTS (6):
+   • 01_Create_Obra/data\adapters\obra-adapter.js
+   • 01_Create_Obra/data\builders\data-builders.js
+   • 01_Create_Obra/data\builders\ui-builders.js
+   • 01_Create_Obra/main.js
+   • 02_Obras_manager/main.js
+   • 02_Obras_manager/utils\global-stubs.js

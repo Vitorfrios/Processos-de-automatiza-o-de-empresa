@@ -49,15 +49,17 @@ function buildObraData(obraIdOrElement) {
     console.log(`📦 Construindo dados da obra: "${obraName}" (ID: ${obraId}) - ELEMENTO NO DOM: ${document.body.contains(obraElement)}`);
 
     const finalObraId = obraId || generateObraId();
+    const empresaData = extractEmpresaData(obraElement);
     
     const obraData = {
         id: finalObraId,
         nome: obraName,
+        empresa_id: `empresa_${finalObraId}`,
+        ...empresaData,
+
         projetos: []
     };
 
-    const empresaData = extractEmpresaData(obraElement);
-    Object.assign(obraData, empresaData);
 
     const projectElements = obraElement.querySelectorAll('.project-block');
     console.log(`🔍 Encontrados ${projectElements.length} projetos na obra "${obraName}"`);

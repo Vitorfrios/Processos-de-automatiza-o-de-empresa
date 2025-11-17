@@ -135,7 +135,7 @@ Processos-de-automatiza-o-de-empresa/
 | `obra-folder/obra-creator.js` | `buildObraHTML()`, `buildObraActionsFooter()`, `insertObraIntoDOM()`, `createEmptyObra()`, `addNewObra()` | Cria toda a estrutura visual de uma obra, injeta no DOM e dispara criação automática de projeto/sala inicial. |
 | `obra-folder/obra-dom-manager.js` | `findObraBlock()`, `findObraBlockWithRetry()`, `updateObraButtonAfterSave()` | Localiza blocos de obra no DOM (com retry) e ajusta os botões após salvar/atualizar. |
 | `obra-folder/obra-save-handler.js` | `saveObra()` | Função principal de salvamento: coleta dados via builders, verifica se a obra é nova/existente, chama persistência e atualiza UI/status. |
-| `obra-folder/obra-persistence.js` | `fetchObras()`, `salvarObra()`, `atualizarObra()`, `deleteObraFromServer()` | Interface com o backend `/obras`: GET/POST/PUT/DELETE, valida IDs e usa `showSystemStatus()` para feedback do usuário. |
+| `obra-folder/obra-persistence.js` | `fetchObras()`, `supportFrom_saveObra()`, `atualizarObra()`, `deleteObraFromServer()` | Interface com o backend `/obras`: GET/POST/PUT/DELETE, valida IDs e usa `showSystemStatus()` para feedback do usuário. |
 | `obra-folder/obra-utils.js` | `deleteObra()`, `verifyObraData()` | Remove obras com modal de confirmação e gera relatórios de preenchimento por projeto/sala usando `calculateRoomCompletionStats()`. |
 | `features/managers/project-manager.js` | `buildProjectHTML()`, `createEmptyProject()`, `addNewProjectToObra()`, `deleteProject()` | Responsável por criar/remover projetos dentro de uma obra, mantendo botões e containers sincronizados. |
 

@@ -289,7 +289,7 @@ async function loadAllModules() {
           deleteObra: obraManagerModule.deleteObra,
           saveObra: obraManagerModule.saveObra,
           fetchObras: obraManagerModule.fetchObras,
-          salvarObra: obraManagerModule.salvarObra,
+          supportFrom_saveObra: obraManagerModule.supportFrom_saveObra,
           atualizarObra: obraManagerModule.atualizarObra,
           
           // ========== PROJECT MANAGEMENT ==========

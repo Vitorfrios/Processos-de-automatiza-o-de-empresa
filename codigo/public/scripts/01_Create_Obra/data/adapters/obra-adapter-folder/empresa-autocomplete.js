@@ -442,7 +442,20 @@ function selecionarEmpresa(sigla, nome, input, dropdown, obraId, tipoSelecao = '
         });
     }
     
-    // Resto do código...
+    // Fecha dropdown
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+    
+    // Remove foco do input
+    setTimeout(() => {
+        input.blur();
+        
+        // 🔥 MOSTRAR AVISO APENAS SE FOR AUTOCOMPLETE
+        mostrarAvisoAutocompletado(input, tipoSelecao);
+    }, 10);
+    
+    // Calcula o número do cliente
     calcularNumeroClienteFinal(sigla, obraId);
     
     console.log(`✅ Empresa selecionada e TODOS os dados salvos: ${sigla} - ${nome}`);

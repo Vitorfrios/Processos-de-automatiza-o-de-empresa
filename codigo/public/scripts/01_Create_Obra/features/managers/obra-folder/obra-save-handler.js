@@ -3,7 +3,7 @@ import { buildObraData } from '../../../data/builders/data-builders.js';
 import { showSystemStatus } from '../../../ui/components/status.js';
 import { isSessionActive, startSessionOnFirstSave } from '../../../data/adapters/session-adapter.js';
 import { findObraBlockWithRetry } from './obra-dom-manager.js';
-import { salvarObra, atualizarObra } from './obra-persistence.js';
+import { supportFrom_saveObra, atualizarObra } from './obra-persistence.js';
 
 /**
  * 💾 FUNÇÃO PRINCIPAL DE SALVAMENTO
@@ -109,7 +109,7 @@ async function saveObra(obraId, event) {
             return;
         }
         
-        result = await salvarObra(obraData);
+        result = await supportFrom_saveObra(obraData);
     } else {
         console.log('📝 ATUALIZANDO OBRA EXISTENTE, ID SEGURO:', finalObraId);
         
@@ -165,8 +165,11 @@ async function saveObra(obraId, event) {
             console.error('❌ Obra não está no DOM para atualizar botão');
         }
 
+        // 🆕 🆕 🆕 ATUALIZAR HEADER APÓS SALVAMENTO
+        console.log('🔄 [HEADER] Chamando atualização do header após salvamento...');
+        await atualizarHeaderObraAposSalvamento(finalId);
+
         console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${finalId}`);
-        
         showSystemStatus("Obra salva com sucesso!", "success");
     } else {
         console.error('❌ FALHA AO SALVAR OBRA NO SERVIDOR');
@@ -174,7 +177,49 @@ async function saveObra(obraId, event) {
     }
 }
 
+/**
+ * 🆕 ATUALIZA O HEADER DA OBRA APÓS SALVAMENTO
+ */
+async function atualizarHeaderObraAposSalvamento(obraId) {
+    try {
+        console.log(`🔄 [HEADER] Iniciando atualização do header para obra: ${obraId}`);
+        
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [HEADER] Obra ${obraId} não encontrada no DOM`);
+            return;
+        }
+
+        // Importar as funções necessárias
+        const { extractEmpresaData } = await import('../../../data/builders/data-builders-folder/empresa-data-extractor.js');
+        const { atualizarInterfaceComEmpresa } = await import('../../../data/adapters/obra-adapter-folder/empresa-form-manager.js');
+        
+        // Extrair dados atualizados da empresa
+        console.log('🔍 [HEADER] Extraindo dados da empresa...');
+        const empresaData = extractEmpresaData(obraElement);
+        
+        console.log('📊 [HEADER] Dados extraídos:', empresaData);
+        
+        if (!empresaData.empresaSigla || !empresaData.empresaNome) {
+            console.log('⚠️ [HEADER] Dados de empresa incompletos para atualizar header');
+            return;
+        }
+
+        // Atualizar a interface
+        console.log('🎨 [HEADER] Chamando atualizarInterfaceComEmpresa...');
+        await atualizarInterfaceComEmpresa(obraElement, empresaData);
+        
+        console.log('✅ [HEADER] Header atualizado com sucesso!');
+
+    } catch (error) {
+        console.error('❌ [HEADER] Erro ao atualizar header:', error);
+    }
+}
+
+
+
 // EXPORTS NO FINAL
 export {
-    saveObra
+    saveObra,
+    atualizarHeaderObraAposSalvamento,
 };

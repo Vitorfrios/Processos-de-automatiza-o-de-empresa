@@ -5,11 +5,10 @@
  */
 
 /**
- * Gera um ID único para obra baseado no timestamp
+ * Gera um ID único para obra 
  * @returns {string} ID único no formato "obra_w12"
  */
 function generateObraId() {
-    const timestamp = Date.now().toString();
     const randomChar = String.fromCharCode(97 + Math.floor(Math.random() * 26)); // a-z
     const randomNum = Math.floor(Math.random() * 90 + 10); // 10-99
     

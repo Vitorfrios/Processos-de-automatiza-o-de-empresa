@@ -197,9 +197,9 @@
                 "capacidadeUnitaria": 1,
                 "backup": "n",
                 "cargaEstimada": 0,
-                "solucao": "NaN",
-                "solucaoBackup": "NaN",
-                "totalCapacidade": "NaN",
+                "solucao": "0",
+                "solucaoBackup": "0",
+                "totalCapacidade": "0.0",
                 "folga": "0.0%"
               },
               "ganhosTermicos": {
@@ -251,12 +251,13 @@
               "maquinas": [],
               "capacidade": {
                 "fatorSeguranca": 10,
-                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": 0,
-                "solucaoBackup": 0,
-                "totalCapacidade": 0,
-                "folga": 0,
-                "backup": "n"
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "NaN",
+                "solucaoBackup": "NaN",
+                "totalCapacidade": "NaN",
+                "folga": "0.0%"
               },
               "ganhosTermicos": {
                 "total-ganhos-w": 0,
@@ -285,6 +286,348 @@
       "codigoCliente": "asdfasdf",
       "orcamentistaResponsavel": "asdfasdf",
       "timestamp": "2025-11-16T21:47:23.418511"
+    },
+    {
+      "id": "obra_o65",
+      "nome": "Obra2",
+      "empresa_id": "empresa_obra_o65",
+      "empresaSigla": "JPT",
+      "empresaNome": "JetPoint Tecnologia Climática",
+      "numeroClienteFinal": 2,
+      "clienteFinal": "aerg",
+      "codigoCliente": "aeg",
+      "dataCadastro": "16/11/2025",
+      "orcamentistaResponsavel": "reg",
+      "projetos": [
+        {
+          "id": "obra_o65_proj_t87_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_o65_proj_t87_2_sala_u68_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "0",
+                "solucaoBackup": "0",
+                "totalCapacidade": "0.0",
+                "folga": "0.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obra_g34",
+      "nome": "Obra3",
+      "empresa_id": "empresa_obra_g34",
+      "empresaSigla": "ACT",
+      "empresaNome": "AeroCool Technologies",
+      "numeroClienteFinal": 2,
+      "clienteFinal": "asd",
+      "codigoCliente": "asd",
+      "dataCadastro": "16/11/2025",
+      "orcamentistaResponsavel": "asdg",
+      "projetos": [
+        {
+          "id": "obra_g34_proj_u45_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_g34_proj_u45_2_sala_v19_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "0",
+                "solucaoBackup": "0",
+                "totalCapacidade": "0.0",
+                "folga": "0.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obra_f84",
+      "nome": "Obra4",
+      "empresa_id": "empresa_obra_f84",
+      "empresaSigla": "RPS",
+      "empresaNome": "Rios Projetos e Sistemas",
+      "numeroClienteFinal": 2,
+      "clienteFinal": "\\\\\\\\\\\\\\\\\\",
+      "codigoCliente": "zzzzzzzzzz",
+      "dataCadastro": "16/11/2025",
+      "orcamentistaResponsavel": "xxxxxxxxxxxxx",
+      "projetos": [
+        {
+          "id": "obra_f84_proj_j59_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_f84_proj_j59_2_sala_o30_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "0",
+                "solucaoBackup": "0",
+                "totalCapacidade": "0.0",
+                "folga": "0.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obra_o29",
+      "nome": "Obra5",
+      "empresa_id": "empresa_obra_o29",
+      "empresaSigla": "RPS",
+      "empresaNome": "Rios Projetos e Sistemas",
+      "numeroClienteFinal": 3,
+      "clienteFinal": "er",
+      "codigoCliente": "erg",
+      "dataCadastro": "16/11/2025",
+      "orcamentistaResponsavel": "erg",
+      "projetos": [
+        {
+          "id": "obra_o29_proj_x61_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_o29_proj_x61_2_sala_k90_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "0",
+                "solucaoBackup": "0",
+                "totalCapacidade": "0.0",
+                "folga": "0.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obra_q36",
+      "nome": "Obra6",
+      "empresa_id": "empresa_obra_q36",
+      "empresaSigla": "ACT",
+      "empresaNome": "AeroCool Technologies",
+      "numeroClienteFinal": 153,
+      "clienteFinal": "fgfd",
+      "codigoCliente": "dfgdfg",
+      "dataCadastro": "16/11/2025",
+      "orcamentistaResponsavel": "dfg",
+      "projetos": [
+        {
+          "id": "obra_q36_proj_l17_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_q36_proj_l17_2_sala_n38_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "0",
+                "solucaoBackup": "0",
+                "totalCapacidade": "0.0",
+                "folga": "0.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obra_f62",
+      "nome": "Obra7",
+      "empresa_id": "empresa_obra_f62",
+      "empresaSigla": "JPT",
+      "empresaNome": "JetPoint Tecnologia Climática",
+      "numeroClienteFinal": 3,
+      "clienteFinal": "s",
+      "codigoCliente": "s",
+      "dataCadastro": "17/11/2025",
+      "orcamentistaResponsavel": "s",
+      "projetos": [
+        {
+          "id": "obra_f62_proj_q32_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_f62_proj_q32_2_sala_h46_1",
+              "nome": "Sala1",
+              "inputs": {
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "backup": "n",
+                "cargaEstimada": 0,
+                "solucao": "0",
+                "solucaoBackup": "0",
+                "totalCapacidade": "0.0",
+                "folga": "0.0%"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "configuracao": {
+                "opcoesInstalacao": []
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

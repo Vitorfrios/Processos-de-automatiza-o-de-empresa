@@ -59,7 +59,7 @@ async function atualizarObra(obraId, obraData) {
             console.log(`❌ Obra ${obraId} não encontrada no backup, criando nova...`);
             console.log(`🆕 Criando nova obra com ID seguro preservado: ${obraId}`);
             obraData.id = obraId;
-            return await salvarObra(obraData);
+            return await supportFrom_saveObra(obraData);
         }
 
         console.log('🔄 ATUALIZANDO OBRA EXISTENTE:', {
@@ -98,10 +98,10 @@ async function atualizarObra(obraId, obraData) {
     }
 }
 
-async function salvarObra(obraData) {
+async function supportFrom_saveObra(obraData) {
     try {
         if (!obraData || !obraData.nome) {
-            console.error(`ERRO FALBACK (salvarObra) [Dados da obra inválidos: ${JSON.stringify(obraData)}]`);
+            console.error(`ERRO FALBACK (supportFrom_saveObra) [Dados da obra inválidos: ${JSON.stringify(obraData)}]`);
             showSystemStatus("ERRO: Dados da obra inválidos", "error");
             return null;
         }
@@ -113,7 +113,7 @@ async function salvarObra(obraData) {
         }
 
         if (!obraData.id || obraData.id === 'undefined' || obraData.id === 'null') {
-            console.error(`ERRO FALBACK (salvarObra) [Obra sem ID seguro: ${obraData.id}]`);
+            console.error(`ERRO FALBACK (supportFrom_saveObra) [Obra sem ID seguro: ${obraData.id}]`);
             showSystemStatus("ERRO: Obra não possui ID válido", "error");
             return null;
         }
@@ -196,7 +196,7 @@ async function deleteObraFromServer(obraName, obraId) {
 // EXPORTS NO FINAL
 export {
     fetchObras,
-    salvarObra,
+    supportFrom_saveObra,
     atualizarObra,
     deleteObraFromServer
 };

@@ -148,39 +148,68 @@ async function loadSingleObra(obraData) {
 /**
  * 🆕 PREPARA DADOS DE EMPRESA NA OBRA CARREGADA
  */
+
 async function prepararDadosEmpresaNaObra(obraData, obraElement) {
     try {
-        // Verificar se a obra tem dados de empresa
+        console.log('🔄 [PREPARAR EMPRESA] INICIANDO preparação para obra:', obraData.nome);
+        console.log('📦 [PREPARAR EMPRESA] Dados recebidos da obra:', {
+            empresaSigla: obraData.empresaSigla,
+            empresaNome: obraData.empresaNome,
+            numeroClienteFinal: obraData.numeroClienteFinal,
+            clienteFinal: obraData.clienteFinal,
+            codigoCliente: obraData.codigoCliente,
+            dataCadastro: obraData.dataCadastro,
+            orcamentistaResponsavel: obraData.orcamentistaResponsavel,
+            idGerado: obraData.idGerado
+        });
+
         const camposEmpresa = [
             'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
             'clienteFinal', 'codigoCliente', 'dataCadastro', 
             'orcamentistaResponsavel', 'idGerado'
         ];
         
+        // 🆕 VERIFICAR ANTES DE ATRIBUIR
+        console.log('🔍 [PREPARAR EMPRESA] Data attributes ANTES da preparação:');
+        camposEmpresa.forEach(campo => {
+            console.log(`   ${campo}: "${obraElement.dataset[campo]}"`);
+        });
+
         const temDadosEmpresa = camposEmpresa.some(campo => obraData[campo]);
         
         if (!temDadosEmpresa) {
-            console.log(`📭 [EMPRESA] Obra "${obraData.nome}" não possui dados de empresa`);
+            console.log('📭 [PREPARAR EMPRESA] Obra não possui dados de empresa');
             return;
         }
         
-        console.log(`🏢 [EMPRESA] Preparando dados de empresa para obra "${obraData.nome}"`);
+        console.log('🏢 [PREPARAR EMPRESA] Atribuindo dados aos data attributes...');
         
         // Preencher dados da empresa nos data attributes da obra
         camposEmpresa.forEach(campo => {
-            if (obraData[campo]) {
-                obraElement.dataset[campo] = obraData[campo];
-                console.log(`📝 [EMPRESA] ${campo}: ${obraData[campo]}`);
+            const valorAntigo = obraElement.dataset[campo];
+            const valorNovo = obraData[campo];
+            
+            if (valorNovo) {
+                obraElement.dataset[campo] = valorNovo;
+                console.log(`✅ [PREPARAR EMPRESA] ${campo}: "${valorAntigo || 'vazio'}" → "${valorNovo}"`);
+            } else {
+                console.log(`❌ [PREPARAR EMPRESA] ${campo}: VALOR AUSENTE nos dados da obra`);
             }
         });
         
-        // 🆕 ATUALIZAR INTERFACE COM SPAN NO HEADER
+        // 🆕 VERIFICAR DEPOIS DE ATRIBUIR
+        console.log('🔍 [PREPARAR EMPRESA] Data attributes DEPOIS da preparação:');
+        camposEmpresa.forEach(campo => {
+            console.log(`   ${campo}: "${obraElement.dataset[campo]}"`);
+        });
+        
+        // Atualizar interface
         await atualizarInterfaceComEmpresa(obraElement, obraData);
         
-        console.log(`✅ [EMPRESA] Dados de empresa preparados para obra "${obraData.nome}"`);
+        console.log('✅ [PREPARAR EMPRESA] Preparação concluída');
         
     } catch (error) {
-        console.error(`❌ [EMPRESA] Erro ao preparar dados de empresa:`, error);
+        console.error('❌ [PREPARAR EMPRESA] Erro:', error);
     }
 }
 

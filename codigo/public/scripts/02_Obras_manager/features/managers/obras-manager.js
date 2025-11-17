@@ -209,14 +209,14 @@ async function loadPage1Module(modulePath, moduleName) {
 }
 
 /**
- * 🎯 CARREGAR TODOS OS MÓDULOS NECESSÁRIOS
+ * 🎯 CARREGAR TODOS OS MÓDULOS NECESSÁRIOS - VERSÃO CORRIGIDA
  */
 async function loadAllPage1Modules() {
     const modules = [
         { path: `${PAGE_1_BASE_PATH}/features/managers/obra-manager.js`, name: 'obra-manager' },
         { path: `${PAGE_1_BASE_PATH}/data/builders/ui-builders.js`, name: 'ui-builders' },
         { path: `${PAGE_1_BASE_PATH}/ui/helpers.js`, name: 'helpers' },
-        { path: `${PAGE_1_BASE_PATH}/data/modules/rooms.js`, name: 'rooms' },
+        { path: `${PAGE_1_BASE_PATH}/data/modules/features/managers/project-manager.js`, name: 'rooms' }, // 🎯 IMPORTANTE: Este módulo tem createEmptyProject
         { path: `${PAGE_1_BASE_PATH}/data/modules/climatizacao.js`, name: 'climatizacao' },
         { path: `${PAGE_1_BASE_PATH}/data/modules/configuracao.js`, name: 'configuracao' },
         { path: `${PAGE_1_BASE_PATH}/data/modules/machines/machines-core.js`, name: 'machines-core' },
@@ -225,12 +225,16 @@ async function loadAllPage1Modules() {
         { path: `${PAGE_1_BASE_PATH}/features/calculations/thermal-gains.js`, name: 'thermal-gains' },
         { path: `${PAGE_1_BASE_PATH}/data/modules/machines/capacity-calculator.js`, name: 'capacity-calculator' }
     ];
-
     const results = [];
     
     for (const module of modules) {
-        const result = await loadPage1Module(module.path, module.name);
-        results.push({ name: module.name, success: !!result, module: result });
+        try {
+            const result = await loadPage1Module(module.path, module.name);
+            results.push({ name: module.name, success: !!result, module: result });
+        } catch (error) {
+            console.error(`❌ Erro crítico ao carregar ${module.name}:`, error);
+            results.push({ name: module.name, success: false, module: null });
+        }
     }
     
     console.log(`📊 Resumo carregamento: ${results.filter(r => r.success).length}/${modules.length} módulos carregados`);
@@ -239,6 +243,9 @@ async function loadAllPage1Modules() {
 
 /**
  * 🎯 CARREGAR FUNÇÕES GLOBAIS DA PÁGINA 1
+ */
+/**
+ * 🎯 CARREGAR FUNÇÕES GLOBAIS DA PÁGINA 1 - VERSÃO CORRIGIDA
  */
 async function loadAllPage1Functions() {
     if (globalFunctionsLoaded) {
@@ -259,22 +266,55 @@ async function loadAllPage1Functions() {
         // Carregar módulos
         const loadResults = await loadAllPage1Modules();
         
+        // 🎯 CORREÇÃO: Buscar as funções específicas que estão faltando
         const obraManagerModule = loadResults.find(r => r.name === 'obra-manager')?.module;
         const uiBuildersModule = loadResults.find(r => r.name === 'ui-builders')?.module;
+        const roomsModule = loadResults.find(r => r.name === 'rooms')?.module;
         
-        if (obraManagerModule && uiBuildersModule) {
-            page1Functions = {
-                createEmptyObra: obraManagerModule.createEmptyObra,
-                insertObraIntoDOM: obraManagerModule.insertObraIntoDOM,
-                populateObraData: uiBuildersModule.populateObraData,
-                updateObraButtonAfterSave: obraManagerModule.updateObraButtonAfterSave,
-            };
-        } else {
-            console.error('❌ Módulos críticos da Página 1 não carregados');
-            throw new Error('Módulos críticos da Página 1 não carregados');
+        // 🎯 CORREÇÃO: Criar objeto com todas as funções necessárias
+        page1Functions = {
+            // Funções do obra-manager
+            createEmptyObra: obraManagerModule?.createEmptyObra,
+            insertObraIntoDOM: obraManagerModule?.insertObraIntoDOM,
+            updateObraButtonAfterSave: obraManagerModule?.updateObraButtonAfterSave,
+            
+            // 🎯 CORREÇÃO: Adicionar a função que estava undefined
+            createEmptyProject: obraManagerModule?.createEmptyProject || 
+                              roomsModule?.createEmptyProject ||
+                              window.createEmptyProject, // Fallback para global
+            
+            // Funções do ui-builders
+            populateObraData: uiBuildersModule?.populateObraData,
+            
+            // Funções de rooms
+            createEmptyRoom: roomsModule?.createEmptyRoom || window.createEmptyRoom
+        };
+        
+        // 🎯 CORREÇÃO: Verificar se todas as funções necessárias estão disponíveis
+        const missingFunctions = [];
+        Object.entries(page1Functions).forEach(([name, func]) => {
+            if (typeof func !== 'function') {
+                missingFunctions.push(name);
+                console.warn(`⚠️ Função ${name} não carregada:`, typeof func);
+            }
+        });
+        
+        if (missingFunctions.length > 0) {
+            console.warn(`⚠️ Funções faltando: ${missingFunctions.join(', ')}`);
+            
+            // 🎯 CORREÇÃO: Tentar carregar do escopo global como fallback
+            missingFunctions.forEach(funcName => {
+                if (window[funcName] && typeof window[funcName] === 'function') {
+                    page1Functions[funcName] = window[funcName];
+                    console.log(`✅ Função ${funcName} recuperada do escopo global`);
+                }
+            });
         }
         
-        console.log('✅ Funções da Página 1 carregadas');
+        console.log('✅ Funções da Página 1 carregadas:', 
+            Object.keys(page1Functions).filter(k => typeof page1Functions[k] === 'function')
+        );
+        
         globalFunctionsLoaded = true;
         
     } catch (error) {
@@ -283,23 +323,63 @@ async function loadAllPage1Functions() {
     }
 }
 
+
 /**
- * 🎯 RENDERIZAR OBRA COM CÁLCULOS REAIS
+ * 🎯 VERIFICAR FUNÇÕES NECESSÁRIAS - VERSÃO CORRIGIDA
+ */
+async function ensureRequiredFunctions() {
+    const requiredFunctions = ['createEmptyProject', 'createEmptyRoom', 'populateObraData'];
+    
+    const missingFunctions = requiredFunctions.filter(funcName => 
+        !page1Functions || typeof page1Functions[funcName] !== 'function'
+    );
+    
+    if (missingFunctions.length > 0) {
+        console.error('❌ Funções necessárias não disponíveis:', 
+            missingFunctions.reduce((acc, funcName) => {
+                acc[funcName] = typeof (page1Functions?.[funcName] || window[funcName]);
+                return acc;
+            }, {})
+        );
+        
+        // Tentar recarregar
+        await loadAllPage1Functions();
+        
+        // Verificar novamente
+        const stillMissing = requiredFunctions.filter(funcName => 
+            typeof page1Functions[funcName] !== 'function'
+        );
+        
+        if (stillMissing.length > 0) {
+            console.error('❌ Funções ainda não disponíveis após espera');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
+/**
+ * 🎯 RENDERIZAR OBRA COM CÁLCULOS REAIS - VERSÃO CORRIGIDA
  */
 async function renderObra(obraData) {
     try {
         await loadAllPage1Functions();
         
-        if (!page1Functions) {
-            console.error('❌ Funções da Página 1 não disponíveis');
+        // 🎯 CORREÇÃO: Verificar se as funções necessárias estão disponíveis
+        const functionsReady = await ensureRequiredFunctions();
+        if (!functionsReady) {
+            console.error('❌ Funções necessárias não disponíveis para renderizar obra');
             return false;
         }
         
-        const { createEmptyObra, populateObraData } = page1Functions;
+        const { createEmptyProject, populateObraData } = page1Functions;
         
         console.log(`🎨 Renderizando obra: ${obraData.nome} (ID: ${obraData.id})`);
         
-        const obraCreated = await createEmptyObra(obraData.nome, obraData.id);
+        // 🎯 CORREÇÃO: Usar createEmptyProject em vez de createEmptyObra
+        const obraCreated = await createEmptyProject(obraData.nome, obraData.id);
         
         if (!obraCreated) {
             console.error(`❌ Falha ao criar obra: ${obraData.nome}`);

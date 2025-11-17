@@ -511,39 +511,220 @@ class EmpresaCadastroInline {
     }
 
     /**
-     * 🆕 INICIALIZAR TOOLTIP - VERSÃO QUE FUNCIONA
+     * 🆕 INICIALIZAR TOOLTIP - VERSÃO COM AUTO-CLOSE NO MOBILE
      */
     inicializarTooltipJavaScript(element) {
-        console.log('🔧 Inicializando tooltip para:', element);
+        console.log('🔧 Inicializando tooltip RESPONSIVO com auto-close');
         
-        // FORÇAR posição relativa
+        // 🆕 DETECTAR SE É MOBILE
+        const isMobile = window.innerWidth <= 768;
+        
+        // 🆕 VARIÁVEL PARA CONTROLAR O TIMER
+        let autoCloseTimer = null;
+        
+        // FORÇAR ESTILOS PARA GARANTIR VISIBILIDADE
         element.style.position = 'relative';
         element.style.overflow = 'visible';
+        element.style.zIndex = '100';
         
         // Criar tooltip
         const tooltip = document.createElement('div');
         tooltip.className = 'empresa-tooltip';
         
-        // Adicionar ao span
-        element.appendChild(tooltip);
+        // 🆕 ADICIONAR CLASSE PARA MOBILE
+        if (isMobile) {
+            tooltip.classList.add('empresa-tooltip-mobile');
+            
+            // 🆕 ADICIONAR BOTÃO DE FECHAR NO MOBILE
+            const closeButton = document.createElement('button');
+            closeButton.className = 'empresa-tooltip-close';
+            closeButton.innerHTML = '×';
+            closeButton.setAttribute('aria-label', 'Fechar tooltip');
+            tooltip.appendChild(closeButton);
+            
+            // 🆕 EVENTO PARA FECHAR COM BOTÃO
+            closeButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                esconderTooltip();
+            });
+        }
         
-        // Event listeners simples
-        element.addEventListener('mouseenter', function(e) {
-            console.log('🐭 Mouse ENTER no span');
-            const tooltipText = this.getAttribute('data-tooltip');
+        // 🆕 POSICIONAR O TOOLTIP FORA DA HIERARQUIA DO ELEMENTO
+        document.body.appendChild(tooltip);
+        
+        // 🆕 FUNÇÃO PARA INICIAR TIMER DE AUTO-CLOSE
+        const iniciarAutoCloseTimer = () => {
+            if (autoCloseTimer) {
+                clearTimeout(autoCloseTimer);
+            }
+            // 🆕 FECHAR AUTOMATICAMENTE APÓS 5 SEGUNDOS NO MOBILE
+            autoCloseTimer = setTimeout(() => {
+                console.log('⏰ Auto-close do tooltip no mobile');
+                esconderTooltip();
+            }, 5000); // 5 segundos
+        };
+        
+        // 🆕 FUNÇÃO PARA CANCELAR TIMER
+        const cancelarAutoCloseTimer = () => {
+            if (autoCloseTimer) {
+                clearTimeout(autoCloseTimer);
+                autoCloseTimer = null;
+            }
+        };
+        
+        // 🆕 FUNÇÃO PARA ATUALIZAR POSIÇÃO DO TOOLTIP - VERSÃO RESPONSIVA
+        const atualizarPosicaoTooltip = () => {
+            const rect = element.getBoundingClientRect();
+            const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+            const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+            const isMobileNow = window.innerWidth <= 768;
+            
+            if (isMobileNow) {
+                // 🆕 POSICIONAMENTO PARA MOBILE
+                tooltip.style.position = 'fixed';
+                tooltip.style.left = '50%';
+                tooltip.style.top = '50%';
+                tooltip.style.transform = 'translate(-50%, -50%)';
+                tooltip.style.bottom = 'auto';
+                tooltip.style.right = 'auto';
+                tooltip.style.width = '90vw';
+                tooltip.style.maxWidth = '320px';
+                tooltip.style.maxHeight = '70vh';
+                tooltip.style.overflowY = 'auto';
+                tooltip.style.zIndex = '100000';
+            } else {
+                // 🆕 POSICIONAMENTO PARA DESKTOP
+                tooltip.style.position = 'fixed';
+                tooltip.style.left = (rect.left + scrollX + (rect.width / 2)) + 'px';
+                tooltip.style.bottom = (window.innerHeight - rect.top - scrollY + 8) + 'px';
+                tooltip.style.transform = 'translateX(-50%)';
+                tooltip.style.width = 'auto';
+                tooltip.style.maxWidth = '380px';
+                tooltip.style.maxHeight = 'none';
+            }
+        };
+        
+        // 🆕 FUNÇÃO PARA MOSTRAR TOOLTIP
+        const mostrarTooltip = () => {
+            console.log('🐭 Mouse ENTER/TAP no span');
+            const tooltipText = element.getAttribute('data-tooltip');
             if (tooltipText) {
-                tooltip.textContent = tooltipText;
+                // 🆕 ATUALIZAR CONTEÚDO (exceto botão de fechar se existir)
+                const closeBtn = tooltip.querySelector('.empresa-tooltip-close');
+                tooltip.innerHTML = tooltipText;
+                if (closeBtn && isMobile) {
+                    tooltip.appendChild(closeBtn);
+                }
+                
                 tooltip.classList.add('show');
+                atualizarPosicaoTooltip();
+                
+                // 🆕 INICIAR TIMER DE AUTO-CLOSE NO MOBILE
+                if (isMobile) {
+                    iniciarAutoCloseTimer();
+                }
+                
                 console.log('🔦 Tooltip mostrado:', tooltipText);
             }
-        });
-
-        element.addEventListener('mouseleave', function() {
-            console.log('🐭 Mouse LEAVE no span');
+        };
+        
+        // 🆕 FUNÇÃO PARA ESCONDER TOOLTIP
+        const esconderTooltip = () => {
+            console.log('🐭 Escondendo tooltip');
             tooltip.classList.remove('show');
+            cancelarAutoCloseTimer(); // 🆕 CANCELAR TIMER AO ESCONDER
+        };
+        
+        // 🆕 EVENT LISTENERS DIFERENCIADOS PARA MOBILE/DESKTOP
+        if (isMobile) {
+            // 🆕 PARA MOBILE: USAR CLICK/TOUCH
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (tooltip.classList.contains('show')) {
+                    esconderTooltip();
+                } else {
+                    mostrarTooltip();
+                }
+            });
+            
+            // 🆕 FECHAR TOOLTIP AO CLICAR FORA (MOBILE)
+            document.addEventListener('click', (e) => {
+                if (!element.contains(e.target) && !tooltip.contains(e.target)) {
+                    esconderTooltip();
+                }
+            });
+            
+            // 🆕 FECHAR TOOLTIP AO ROLAR (MOBILE)
+            window.addEventListener('scroll', esconderTooltip);
+            
+            // 🆕 FECHAR TOOLTIP AO MUDAR ORIENTAÇÃO (MOBILE)
+            window.addEventListener('orientationchange', esconderTooltip);
+            
+        } else {
+            // 🆕 PARA DESKTOP: USAR HOVER
+            element.addEventListener('mouseenter', mostrarTooltip);
+            element.addEventListener('mouseleave', esconderTooltip);
+        }
+        
+        // 🆕 REINICIAR TIMER SE O USUÁRIO INTERAGIR COM O TOOLTIP (MOBILE)
+        if (isMobile) {
+            tooltip.addEventListener('touchstart', () => {
+                cancelarAutoCloseTimer(); // Cancelar timer atual
+                iniciarAutoCloseTimer();  // Reiniciar timer
+            });
+            
+            tooltip.addEventListener('click', () => {
+                cancelarAutoCloseTimer(); // Cancelar timer atual  
+                iniciarAutoCloseTimer();  // Reiniciar timer
+            });
+        }
+        
+        // 🆕 ATUALIZAR POSIÇÃO AO ROLAR/REDIMENSIONAR
+        window.addEventListener('scroll', () => {
+            if (tooltip.classList.contains('show')) {
+                atualizarPosicaoTooltip();
+            }
         });
         
-        console.log('✅ Tooltip inicializado');
+        window.addEventListener('resize', () => {
+            if (tooltip.classList.contains('show')) {
+                atualizarPosicaoTooltip();
+            }
+            
+            // 🆕 RECARREGAR COMPORTAMENTO AO REDIMENSIONAR ENTRE MOBILE/DESKTOP
+            const novaCondicaoMobile = window.innerWidth <= 768;
+            if (isMobile !== novaCondicaoMobile) {
+                console.log('🔄 Mudança entre mobile/desktop detectada');
+                esconderTooltip();
+                // Recriar tooltip com novo comportamento
+                tooltip.remove();
+                this.inicializarTooltipJavaScript(element);
+            }
+        });
+        
+        // 🆕 LIMPAR EVENT LISTENERS QUANDO ELEMENTO FOR REMOVIDO
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.removedNodes.length > 0) {
+                    const removed = Array.from(mutation.removedNodes);
+                    if (removed.includes(element) || element.parentNode === null) {
+                        tooltip.remove();
+                        cancelarAutoCloseTimer();
+                        window.removeEventListener('scroll', atualizarPosicaoTooltip);
+                        window.removeEventListener('resize', atualizarPosicaoTooltip);
+                        document.removeEventListener('click', esconderTooltip);
+                        window.removeEventListener('orientationchange', esconderTooltip);
+                        observer.disconnect();
+                    }
+                }
+            });
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        console.log('✅ Tooltip inicializado (com auto-close) - Mobile:', isMobile);
     }
 
 

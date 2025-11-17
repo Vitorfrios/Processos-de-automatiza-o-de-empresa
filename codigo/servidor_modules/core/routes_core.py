@@ -114,9 +114,7 @@ class RoutesCore:
             
             nova_obra['id'] = obra_id
             
-            if 'timestamp' not in nova_obra:
-                from datetime import datetime
-                nova_obra['timestamp'] = datetime.now().isoformat()
+
             
             print(f"📝 Tentando adicionar obra {obra_id} à sessão...")
             success = self.sessions_manager.add_obra_to_session(obra_id)

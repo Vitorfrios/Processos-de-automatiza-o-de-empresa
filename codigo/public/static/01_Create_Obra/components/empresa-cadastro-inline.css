@@ -375,7 +375,7 @@
 }
 
 /* =================================================================
-   SEÇÃO 6: TOOLTIPS E ELEMENTOS DE INFORMAÇÃO
+   SEÇÃO 6: TOOLTIPS E ELEMENTOS DE INFORMAÇÃO - RESPONSIVO
    ================================================================= */
 
 .empresa-identifier-display {
@@ -394,19 +394,24 @@
     transition: all 0.3s ease;
     min-height: 40px;
     position: relative;
+    overflow: visible !important;
+    z-index: 100;
+    
+    /* 🆕 MELHORIAS PARA MOBILE */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .empresa-identifier-display:hover {
     background: linear-gradient(135deg, var(--color-gray-800) 0%, var(--color-gray-700) 100%);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
     transform: translateY(-2px);
+    z-index: 10000;
 }
 
+/* TOOLTIP BASE */
 .empresa-tooltip {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
+    position: fixed;
     background: var(--color-gray-800);
     color: var(--color-white);
     padding: 12px 16px;
@@ -417,7 +422,7 @@
     line-height: 1.4;
     white-space: pre-line;
     text-align: left;
-    z-index: 9999;
+    z-index: 10001;
     min-width: 280px;
     max-width: 380px;
     border: 1px solid var(--color-gray-600);
@@ -432,6 +437,7 @@
 .empresa-tooltip.show {
     opacity: 1;
     display: block;
+    pointer-events: auto; /* 🆕 PERMITIR INTERAÇÃO NO MOBILE */
 }
 
 .empresa-tooltip::after {
@@ -444,12 +450,114 @@
     border-top-color: var(--color-gray-800);
 }
 
-.obra-header-spacer,
-.obra-header,
-.obra-block {
-    position: relative;
-    overflow: visible;
-    z-index: auto;
+/* 🆕 TOOLTIP MOBILE - VERSÃO CENTRALIZADA */
+.empresa-tooltip-mobile {
+    min-width: auto !important;
+    width: 90vw !important;
+    max-width: 320px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    bottom: auto !important;
+    right: auto !important;
+    padding: 16px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+    border: 2px solid var(--color-primary) !important;
+    z-index: 100000 !important; /* 🆕 Z-INDEX MUITO ALTO PARA MOBILE */
+}
+
+.empresa-tooltip-mobile::after {
+    display: none !important; /* 🆕 REMOVER SETA NO MOBILE */
+}
+
+/* 🆕 OVERLAY PARA MOBILE */
+.empresa-tooltip-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99999;
+    display: none;
+}
+
+.empresa-tooltip-mobile.show + .empresa-tooltip-overlay,
+.empresa-tooltip-overlay.show {
+    display: block;
+}
+
+/* 🆕 BOTÃO FECHAR PARA MOBILE */
+.empresa-tooltip-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: var(--color-white);
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    z-index: 100002;
+    line-height: 1;
+    padding: 0;
+}
+
+.empresa-tooltip-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.empresa-tooltip-close:active {
+    transform: scale(0.95);
+}
+
+/* 🆕 INDICADOR VISUAL DE AUTO-CLOSE */
+.empresa-tooltip-mobile::before {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.empresa-tooltip-mobile::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0%;
+    height: 3px;
+    background: var(--color-primary);
+    border-radius: 2px;
+    animation: autoCloseProgress 5s linear forwards;
+}
+
+@keyframes autoCloseProgress {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+/* 🆕 PAUSAR ANIMAÇÃO QUANDO HOUVER INTERAÇÃO */
+.empresa-tooltip-mobile.paused::after {
+    animation-play-state: paused;
 }
 
 /* =================================================================
@@ -539,10 +647,23 @@
 }
 
 /* =================================================================
-   SEÇÃO 9: RESPONSIVIDADE E MEDIA QUERIES - CORRIGIDA
+   SEÇÃO 9: RESPONSIVIDADE E MEDIA QUERIES - COMPLETA E CORRIGIDA
    ================================================================= */
 
-/* Tablets */
+/* Tablets Grandes (1025px - 1200px) */
+@media (max-width: 1200px) {
+    .empresa-form-grid-horizontal {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-md);
+    }
+    
+    .empresa-tooltip:not(.empresa-tooltip-mobile) {
+        max-width: 360px;
+        min-width: 260px;
+    }
+}
+
+/* Tablets (769px - 1024px) */
 @media (max-width: 1024px) {
     .empresa-form-grid-horizontal {
         grid-template-columns: repeat(2, 1fr);
@@ -550,23 +671,6 @@
     }
     
     .empresa-form-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-sm);
-    }
-    
-    .empresa-dropdown {
-        max-height: 180px;
-    }
-    
-    /* 🔥 GARANTIR QUE O DROPDOWN ACOMPANHE O INPUT */
-    .form-group-horizontal {
-        position: relative;
-    }
-}
-
-/* Tablets pequenos - REMOVIDO POSITION FIXED */
-@media (max-width: 768px) {
-    .empresa-form-grid-horizontal {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
     }
@@ -579,53 +683,98 @@
         padding: var(--spacing-md);
     }
     
-    .empresa-form-actions {
-        flex-direction: column;
-        gap: var(--spacing-sm);
+    .empresa-tooltip:not(.empresa-tooltip-mobile) {
+        max-width: 340px;
+        font-size: 12px;
+        padding: 10px 14px;
+        min-width: 240px;
     }
     
-    /* 🔥 CORREÇÃO: DROPDOWN MANTÉM POSIÇÃO RELATIVA */
     .empresa-dropdown {
-        /* REMOVIDO: position: fixed e transform */
-        max-height: 60vh;
-        z-index: 1000;
-        border: 1px solid var(--color-gray-300); /* Volta ao normal */
+        max-height: 180px;
     }
     
-    .aviso-autocomplete-relativo {
-        font-size: 11px;
-        padding: 5px 8px;
-    }
-    
-    /* 🔥 GARANTIR QUE O CONTAINER TENHA ESPAÇO SUFICIENTE */
+    /* 🔥 GARANTIR QUE O DROPDOWN ACOMPANHE O INPUT */
     .form-group-horizontal {
-        margin-bottom: var(--spacing-sm);
+        position: relative;
+    }
+    
+    .empresa-identifier-display {
+        padding: 8px 14px;
+        font-size: 13px;
     }
 }
 
-/* Mobile */
-@media (max-width: 480px) {
+/* Tablets Pequenos e Mobile Landscape (577px - 768px) */
+@media (max-width: 768px) {
     .empresa-form-grid-horizontal {
         grid-template-columns: 1fr;
-        gap: var(--spacing-sm);
+        gap: var(--spacing-md);
+    }
+    
+    .empresa-cadastro-inline {
+        padding: var(--spacing-sm);
+        margin: var(--spacing-sm) 0;
+    }
+    
+    .empresa-formulario-ativo {
+        padding: var(--spacing-sm);
+        margin: var(--spacing-sm) 0;
     }
     
     .empresa-form-actions {
         flex-direction: column;
+        gap: var(--spacing-sm);
     }
     
     .empresa-form-actions button {
         width: 100%;
     }
     
-    .form-group-horizontal input {
-        padding: var(--spacing-md);
-        font-size: 16px;
+    /* 🔥 CORREÇÃO: DROPDOWN MANTÉM POSIÇÃO RELATIVA */
+    .empresa-dropdown {
+        max-height: 60vh;
+        z-index: 1000;
+        border: 1px solid var(--color-gray-300);
+    }
+    
+    .aviso-autocomplete-relativo {
+        font-size: 11px;
+        padding: 5px 8px;
+        max-width: 200px;
+    }
+    
+    /* 🔥 GARANTIR QUE O CONTAINER TENHA ESPAÇO SUFICIENTE */
+    .form-group-horizontal {
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    /* 🆕 COMPORTAMENTO DO IDENTIFICADOR NO MOBILE */
+    .empresa-identifier-display {
+        padding: 10px 14px;
+        font-size: 13px;
+        min-height: 44px; /* 🆕 MELHOR TOUCH TARGET */
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        margin: var(--spacing-xs) 0;
+    }
+    
+    /* 🆕 ESCONDER TOOLTIP NORMAL NO MOBILE */
+    .empresa-tooltip:not(.empresa-tooltip-mobile) {
+        display: none !important;
     }
     
     .btn-empresa-cadastro {
+        padding: var(--spacing-md) var(--spacing-lg);
+        font-size: 15px;
+        min-height: 48px;
+    }
+    
+    .form-group-horizontal input {
         padding: var(--spacing-md);
-        font-size: 16px;
+        font-size: 16px; /* 🆕 MELHOR LEGIBILIDADE EM MOBILE */
+        min-height: 44px;
     }
     
     .dropdown-option {
@@ -633,29 +782,9 @@
         min-height: 44px;
         font-size: 14px;
     }
-    
-    /* 🔥 CORREÇÃO: DROPDOWN NORMAL EM MOBILE */
-    .empresa-dropdown {
-        max-height: 50vh;
-        /* REMOVIDO: left e right fixes */
-    }
-    
-    .aviso-autocomplete-relativo {
-        max-width: 150px;   
-
-        font-size: 10px;
-    }
-    
-    /* 🔥 EVITAR QUEBRAS NO LAYOUT */
-    .empresa-formulario-ativo {
-        overflow: visible;
-    }
-    
-    .empresa-cadastro-inline {
-        overflow: visible;
-    }
 }
-/* 🔥 GARANTIR QUE O DROPDOWN NÃO QUEBRE EM DISPOSITIVOS MÓVEIS */
+
+/* 🔥 CORREÇÃO ESPECÍFICA PARA DROPDOWN EM DISPOSITIVOS MÓVEIS */
 @media (max-width: 768px) {
     .empresa-dropdown {
         /* Forçar que o dropdown respeite o container do input */
@@ -681,12 +810,101 @@
     .empresa-formulario-ativo {
         overflow: visible !important;
     }
+    
+    .empresa-cadastro-inline {
+        overflow: visible !important;
+    }
 }
 
-/* 🔥 CORREÇÃO PARA TELAS MUITO PEQUENAS */
-@media (max-width: 360px) {
-    .empresa-dropdown {
-        max-height: 45vh;
+/* Mobile (426px - 576px) */
+@media (max-width: 576px) {
+    .empresa-form-grid-horizontal {
+        gap: var(--spacing-sm);
+    }
+    
+    .empresa-cadastro-inline {
+        padding: var(--spacing-sm);
+        border-width: 1px;
+    }
+    
+    .empresa-formulario-ativo {
+        padding: var(--spacing-sm);
+        border-width: 1px;
+    }
+    
+    .empresa-form-actions {
+        gap: var(--spacing-xs);
+    }
+    
+    .empresa-identifier-display {
+        padding: 12px 16px;
+        font-size: 14px;
+        min-height: 48px;
+    }
+    
+    .empresa-tooltip-mobile {
+        width: 95vw !important;
+        max-width: 300px !important;
+        padding: 14px !important;
+        font-size: 13px !important;
+    }
+    
+    .form-group-horizontal label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+    
+    .form-group-horizontal input {
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    .btn-cancel,
+    .btn-confirm {
+        padding: 12px 16px;
+        font-size: 15px;
+        min-height: 48px;
+    }
+}
+
+/* Mobile Pequeno (376px - 425px) */
+@media (max-width: 425px) {
+    .empresa-form-grid-horizontal {
+        gap: var(--spacing-xs);
+    }
+    
+    .empresa-cadastro-inline {
+        padding: var(--spacing-xs);
+        margin: var(--spacing-xs) 0;
+    }
+    
+    .empresa-formulario-ativo {
+        padding: var(--spacing-xs);
+        margin: var(--spacing-xs) 0;
+    }
+    
+    .empresa-formulario-ativo h4 {
+        font-size: 15px;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .empresa-identifier-display {
+        padding: 10px 12px;
+        font-size: 13px;
+        min-height: 44px;
+    }
+    
+    .empresa-tooltip-mobile {
+        width: 96vw !important;
+        max-width: 280px !important;
+        padding: 12px !important;
+        font-size: 12px !important;
+    }
+    
+    .form-group-horizontal input {
+        padding: 10px 12px;
+        font-size: 15px;
+        min-height: 42px;
     }
     
     .dropdown-option {
@@ -698,6 +916,203 @@
     .dropdown-option strong {
         min-width: 45px;
         font-size: 12px;
+    }
+}
+
+/* Mobile Muito Pequeno (320px - 375px) */
+@media (max-width: 375px) {
+    .empresa-form-grid-horizontal {
+        gap: 8px;
+    }
+    
+    .empresa-cadastro-inline {
+        padding: 10px;
+        border-radius: var(--border-radius);
+    }
+    
+    .empresa-formulario-ativo {
+        padding: 10px;
+        border-radius: var(--border-radius);
+    }
+    
+    .empresa-identifier-display {
+        padding: 8px 10px;
+        font-size: 12px;
+        min-height: 40px;
+        border-radius: var(--border-radius);
+    }
+    
+    .empresa-tooltip-mobile {
+        width: 98vw !important;
+        max-width: 260px !important;
+        padding: 10px !important;
+        font-size: 11px !important;
+        border-radius: var(--border-radius);
+    }
+    
+    .form-group-horizontal input {
+        padding: 8px 10px;
+        font-size: 14px;
+        min-height: 40px;
+    }
+    
+    .btn-cancel,
+    .btn-confirm {
+        padding: 10px 12px;
+        font-size: 14px;
+        min-height: 44px;
+    }
+    
+    .dropdown-option {
+        padding: 8px 10px;
+        min-height: 38px;
+        font-size: 12px;
+    }
+    
+    .aviso-autocomplete-relativo {
+        font-size: 10px;
+        padding: 4px 6px;
+        max-width: 150px;
+    }
+}
+
+/* 🔥 CORREÇÃO PARA TELAS MUITO PEQUENAS (até 320px) */
+@media (max-width: 320px) {
+    .empresa-dropdown {
+        max-height: 45vh;
+    }
+    
+    .dropdown-option {
+        padding: 8px;
+        min-height: 36px;
+        font-size: 11px;
+    }
+    
+    .dropdown-option strong {
+        min-width: 40px;
+        font-size: 11px;
+    }
+    
+    .empresa-identifier-display {
+        font-size: 11px;
+        padding: 6px 8px;
+        min-height: 36px;
+    }
+    
+    .empresa-tooltip-mobile {
+        width: 99vw !important;
+        max-width: 240px !important;
+        padding: 8px !important;
+        font-size: 10px !important;
+    }
+}
+
+/* 🆕 ORIENTAÇÃO LANDSCAPE NO MOBILE */
+@media (max-width: 768px) and (orientation: landscape) {
+    .empresa-tooltip-mobile {
+        max-height: 60vh !important;
+        top: 45% !important;
+        width: 80vw !important;
+    }
+    
+    .empresa-identifier-display {
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .empresa-dropdown {
+        max-height: 50vh;
+    }
+    
+    .empresa-form-grid-horizontal {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
+    }
+}
+
+/* 🆕 DISPOSITIVOS COM ALTURA MUITO PEQUENA */
+@media (max-height: 500px) {
+    .empresa-tooltip-mobile {
+        max-height: 50vh !important;
+        top: 40% !important;
+    }
+    
+    .empresa-dropdown {
+        max-height: 40vh;
+    }
+    
+    .empresa-cadastro-inline {
+        padding: var(--spacing-sm);
+    }
+    
+    .empresa-formulario-ativo {
+        padding: var(--spacing-sm);
+    }
+}
+
+/* 🆕 SUPORTE PARA DARK MODE EM DISPOSITIVOS MÓVEIS */
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
+    .empresa-identifier-display {
+        background: linear-gradient(135deg, var(--color-gray-800) 0%, var(--color-gray-700) 100%);
+        border-color: var(--color-gray-600);
+    }
+    
+    .empresa-tooltip-mobile {
+        background: var(--color-gray-900);
+        border-color: var(--color-gray-700);
+        color: var(--color-gray-100);
+    }
+}
+
+/* 🆕 DISPOSITIVOS COM TOUCH SCREEN */
+@media (hover: none) and (pointer: coarse) {
+    .empresa-identifier-display:hover {
+        transform: none;
+        background: var(--primary-gradient);
+    }
+    
+    .btn-empresa-cadastro:hover,
+    .btn-cancel:hover,
+    .btn-confirm:hover {
+        transform: scale(0.98);
+    }
+    
+    /* Melhorar feedback visual para touch */
+    .empresa-identifier-display:active {
+        transform: scale(0.95);
+        transition: transform 0.1s ease;
+    }
+}
+
+/* 🆕 DISPOSITIVOS COM HOVER (desktop) */
+@media (hover: hover) and (pointer: fine) {
+    .empresa-identifier-display:hover {
+        transform: translateY(-2px);
+    }
+    
+    .btn-empresa-cadastro:hover,
+    .btn-cancel:hover,
+    .btn-confirm:hover {
+        transform: translateY(-1px);
+    }
+}
+
+/* 🆕 IMPRESSÃO */
+@media print {
+    .empresa-cadastro-inline,
+    .empresa-formulario-ativo,
+    .btn-empresa-cadastro,
+    .empresa-dropdown,
+    .aviso-autocomplete-relativo {
+        display: none !important;
+    }
+    
+    .empresa-identifier-display {
+        background: none !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
     }
 }
 /* =================================================================
