@@ -576,17 +576,25 @@ function handleClimaInputBackupChange(roomId, newBackupValue) {
  * @returns {void}
  */
 function syncBackupWithClimaInputs(roomId, backupValue) {
-  const roomContent = document.getElementById(`room-content-${roomId}`)
-  if (roomContent) {
-    const backupInputs = roomContent.querySelectorAll(`.clima-input[data-field="backup"]`)
+    const roomContent = document.getElementById(`room-content-${roomId}`)
+    if (roomContent) {
+        const backupInputs = roomContent.querySelectorAll(`.clima-input[data-field="backup"]`)
 
-    backupInputs.forEach((input) => {
-      if (input.value !== backupValue) {
-        input.value = backupValue
-        input.dispatchEvent(new Event("change", { bubbles: true }))
-      }
-    })
-  }
+        backupInputs.forEach((input) => {
+            if (input.value !== backupValue) {
+                // 🔄 MUDANÇA CRÍTICA: Remove temporariamente o onchange para evitar loop
+                const originalOnChange = input.onchange;
+                input.onchange = null;
+                
+                input.value = backupValue;
+                
+                // Restaura o onchange após um breve delay
+                setTimeout(() => {
+                    input.onchange = originalOnChange;
+                }, 100);
+            }
+        })
+    }
 }
 
 /**
@@ -609,6 +617,61 @@ function syncCapacityTableBackup(roomId) {
   }, 500)
 }
 
+
+/**
+ * 🔄 Função global para ser chamada diretamente do HTML - EVITA LOOP
+ * @param {string} roomId - ID da sala
+ * @param {string} newValue - Novo valor do backup
+ * @returns {void}
+ */
+function handleClimaBackupChange(roomId, newValue) {
+    console.log(`🔄 Backup alterado no form: ${newValue} (sala: ${roomId})`);
+    
+    // Atualiza o backup-select SEM disparar eventos de volta
+    const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+    if (capacityTable) {
+        const backupSelect = capacityTable.querySelector(".backup-select");
+        if (backupSelect && backupSelect.value !== newValue) {
+            // 🔄 MUDANÇA CRÍTICA: Atualiza silenciosamente sem disparar onchange
+            backupSelect.value = newValue;
+            
+            // Recalcular capacidade
+            calculateCapacitySolution(roomId);
+            
+            // Salvar dados
+            saveCapacityData(roomId);
+        }
+    }
+    
+    // Mantém o cálculo térmico original
+    calculateVazaoArAndThermalGains(roomId);
+}
+
+/**
+ * 🔄 WRAPPER: Para ser chamada diretamente do onchange do HTML
+ * @param {HTMLSelectElement} selectElement - Elemento select do form
+ * @returns {void}
+ */
+function handleClimaInputBackupChangeFromEvent(selectElement) {
+    const roomId = findRoomId(selectElement);
+    if (!roomId) {
+        console.warn('❌ Não foi possível encontrar roomId para handleClimaInputBackupChangeFromEvent');
+        return;
+    }
+    
+    const newBackupValue = selectElement.value;
+    console.log(`🔄 Backup alterado no form: ${newBackupValue} (sala: ${roomId})`);
+    
+    // Usa a função existente que já faz todo o trabalho
+    handleClimaInputBackupChange(roomId, newBackupValue);
+    
+    // Também dispara o cálculo térmico (mantém funcionalidade original)
+    calculateVazaoArAndThermalGains(roomId);
+}
+// 🔄 Torna a função global para ser acessível do HTML
+if (typeof window !== 'undefined') {
+    window.handleClimaBackupChange = handleClimaBackupChange;
+}
 // Exportação das funções do módulo
 export {
   buildCapacityCalculationTable,
@@ -620,5 +683,6 @@ export {
   updateBackupConfiguration,
   handleClimaInputBackupChange,
   syncCapacityTableBackup,
-  initializeStaticCapacityTable
+  initializeStaticCapacityTable,
+  handleClimaInputBackupChangeFromEvent
 }

@@ -316,15 +316,19 @@ function buildSelectInput(field, roomId) {
     
     const options = field.options
     .map((opt) => `<option value="${opt}">${opt === "" ? "Selecione" : opt}</option>`)
-    .join("")
+    .join("");
+
+    // 🔄 MODIFICAÇÃO: Para campo backup, usar função específica que evita loop
+    const onChangeHandler = field.field === "backup" 
+        ? `handleClimaBackupChange('${roomId}', this.value)`
+        : `calculateVazaoArAndThermalGains('${roomId}')`;
 
     return `
-    <select class="form-input clima-input" data-field="${field.field}" onchange="calculateVazaoArAndThermalGains('${roomId}')">
+    <select class="form-input clima-input" data-field="${field.field}" onchange="${onChangeHandler}">
       ${options}
     </select>
-  `
+  `;
 }
-
 /**
  * Constrói campo de input textual ou numérico
  */
