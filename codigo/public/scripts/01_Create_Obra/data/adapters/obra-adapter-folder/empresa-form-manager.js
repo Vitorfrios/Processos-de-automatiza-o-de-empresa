@@ -137,15 +137,13 @@ function criarVisualizacaoEmpresa(obraData, container) {
     console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id} com data: ${dataFormatada}`);
 }
 
-/**
- * 🆕 CRIA FORMULÁRIO VAZIO PARA NOVO CADASTRO COM INPUT HÍBRIDO
- */
 function criarFormularioVazioEmpresa(obraId, container) {
     const formularioHTML = `
     <div class="empresa-formulario-ativo">
         <h4>Cadastro de Empresa</h4>
 
         <div class="empresa-form-grid-horizontal">
+            <!-- Empresa 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Empresa *</label>
                 <div class="empresa-input-container">
@@ -160,30 +158,35 @@ function criarFormularioVazioEmpresa(obraId, container) {
                 </div>
             </div>
 
+            <!-- Nº Cliente 🔴 SOMENTE LEITURA -->
             <div class="form-group-horizontal">
                 <label>Nº Cliente</label>
                 <input type="text" class="numero-cliente-final-cadastro" readonly
                     placeholder="Será gerado automaticamente">
             </div>
 
+            <!-- Cliente Final 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Cliente Final</label>
                 <input type="text" class="cliente-final-cadastro" 
                     placeholder="Nome do cliente final">
             </div>
 
+            <!-- Código 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Código</label>
                 <input type="text" class="codigo-cliente-cadastro" 
                     placeholder="Código do cliente">
             </div>
 
+            <!-- Data 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Data</label>
                 <input type="text" class="data-cadastro-cadastro" 
-                    value="${new Date().toLocaleDateString('pt-BR')}" readonly>
+                    value="${new Date().toLocaleDateString('pt-BR')}">
             </div>
 
+            <!-- Orçamentista 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Orçamentista</label>
                 <input type="text" class="orcamentista-responsavel-cadastro" 
@@ -205,6 +208,17 @@ function criarFormularioVazioEmpresa(obraId, container) {
     // 🔥 CORREÇÃO: Inicializar com timeout maior para garantir que o DOM está pronto
     setTimeout(() => {
         inicializarInputEmpresaHibrido(obraId);
+        
+        // 🆕 CONFIGURAR CAMPOS COMO EDITÁVEIS APÓS INICIALIZAÇÃO
+        setTimeout(() => {
+            const dataCampo = container.querySelector('.data-cadastro-cadastro');
+            if (dataCampo) {
+                dataCampo.removeAttribute('readonly');
+                dataCampo.readOnly = false;
+                console.log('✅ Campo de data liberado após inicialização');
+            }
+        }, 500);
+        
     }, 300);
 }
 

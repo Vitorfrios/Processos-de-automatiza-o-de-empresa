@@ -1,0 +1,348 @@
+Ahhh! Então você quer que o **número do cliente também seja EDITÁVEL**! Vou corrigir:
+
+## 🔧 **CORREÇÃO PARA CAMPO EDITÁVEL**
+
+**Arquivo:** `empresa-cadastro-inline.js`
+
+```javascript
+/**
+ * 🆕 CONFIGURAR TODOS OS CAMPOS COMO EDITÁVEIS
+ */
+configurarEstadoCampos() {
+    // 🟢 TODOS OS CAMPOS EDITÁVEIS
+    const todosCampos = [
+        'empresa-input',
+        'numero-cliente-final', // 🆕 AGORA EDITÁVEL
+        'cliente-final', 
+        'codigo-cliente',
+        'data-cadastro',
+        'orcamentista-responsavel'
+    ];
+    
+    todosCampos.forEach(campoId => {
+        const campo = this.container.querySelector(`#${campoId}`);
+        if (campo) {
+            // 🟢 REMOVER COMPLETAMENTE READONLY E DISABLED
+            campo.removeAttribute('readonly');
+            campo.removeAttribute('disabled');
+            campo.readOnly = false;
+            campo.disabled = false;
+            
+            // 🟢 ESTILOS VISUAIS DE CAMPO EDITÁVEL
+            campo.style.backgroundColor = '#ffffff';
+            campo.style.borderColor = '#007bff';
+            campo.style.cursor = 'text';
+            campo.style.color = '#000000';
+            
+            console.log(`🟢 Campo EDITÁVEL: ${campoId}`);
+        }
+    });
+    
+    // 🟢 CONFIGURAÇÃO ESPECIAL PARA O CAMPO DE DATA
+    this.configurarCampoData();
+    
+    // 🟢 CONFIGURAÇÃO ESPECIAL PARA NÚMERO DO CLIENTE
+    this.configurarCampoNumeroCliente();
+}
+
+/**
+ * 🆕 CONFIGURAR CAMPO DE NÚMERO DO CLIENTE COMO EDITÁVEL
+ */
+configurarCampoNumeroCliente() {
+    const numeroCampo = this.container.querySelector('#numero-cliente-final');
+    if (numeroCampo) {
+        // 🟢 REMOVER READONLY COMPLETAMENTE
+        numeroCampo.removeAttribute('readonly');
+        numeroCampo.readOnly = false;
+        
+        // 🟢 TORNAR COMPLETAMENTE EDITÁVEL
+        numeroCampo.disabled = false;
+        
+        // 🟢 MELHORAR USABILIDADE
+        numeroCampo.title = "Número do cliente (editável)";
+        numeroCampo.placeholder = "Digite o número ou será gerado automaticamente";
+        
+        // 🟢 ESTILOS DE CAMPO EDITÁVEL
+        numeroCampo.style.backgroundColor = '#ffffff';
+        numeroCampo.style.borderColor = '#007bff';
+        numeroCampo.style.cursor = 'text';
+        numeroCampo.style.color = '#000000';
+        
+        // 🟢 ADICIONAR VALIDAÇÃO PARA APENAS NÚMEROS
+        numeroCampo.addEventListener('input', (e) => {
+            this.validarApenasNumeros(e.target);
+        });
+        
+        console.log('🟢 Campo de NÚMERO DO CLIENTE configurado como EDITÁVEL');
+    }
+}
+
+/**
+ * 🆕 VALIDAR APENAS NÚMEROS NO CAMPO DE NÚMERO DO CLIENTE
+ */
+validarApenasNumeros(input) {
+    // Permitir apenas números
+    input.value = input.value.replace(/\D/g, '');
+    
+    // Limitar a um tamanho razoável (ex: 6 dígitos)
+    if (input.value.length > 6) {
+        input.value = input.value.substring(0, 6);
+    }
+}
+```
+
+## 🔧 **CORREÇÃO NO HTML - REMOVER READONLY**
+
+**No método `criarHTMLFormulario()`:**
+
+```javascript
+criarHTMLFormulario() {
+    return `
+    <div class="empresa-cadastro-inline" id="empresa-cadastro-inline">
+        <div class="empresa-form-grid">
+            <!-- Empresa 🟢 EDITÁVEL -->
+            <div class="form-group">
+                <label for="empresa-input">Empresa *</label>
+                <input type="text" 
+                       id="empresa-input" 
+                       class="empresa-input" 
+                       placeholder="Digite sigla ou nome..."
+                       autocomplete="off">
+                <div class="autocomplete-suggestions" id="empresa-suggestions"></div>
+            </div>
+
+            <!-- Número Cliente Final 🟢 EDITÁVEL -->
+            <div class="form-group">
+                <label for="numero-cliente-final">Número Cliente Final</label>
+                <input type="text" 
+                       id="numero-cliente-final" 
+                       class="numero-cliente-final" 
+                       placeholder="Digite o número ou será gerado automaticamente">
+                <small class="field-description">Pode digitar ou será gerado automaticamente</small>
+            </div>
+
+            <!-- Cliente Final 🟢 EDITÁVEL -->
+            <div class="form-group">
+                <label for="cliente-final">Cliente Final</label>
+                <input type="text" 
+                       id="cliente-final" 
+                       class="cliente-final" 
+                       placeholder="Nome do cliente final">
+            </div>
+
+            <!-- Código Cliente 🟢 EDITÁVEL -->
+            <div class="form-group">
+                <label for="codigo-cliente">Código Cliente</label>
+                <input type="text" 
+                       id="codigo-cliente" 
+                       class="codigo-cliente" 
+                       placeholder="Código interno do cliente">
+            </div>
+
+            <!-- Data do Cadastro 🟢 EDITÁVEL -->
+            <div class="form-group">
+                <label for="data-cadastro">Data do Cadastro</label>
+                <input type="text" 
+                       id="data-cadastro" 
+                       class="data-cadastro" 
+                       placeholder="DD/MM/AAAA"
+                       value="${new Date().toLocaleDateString('pt-BR')}">
+            </div>
+
+            <!-- Orçamentista Responsável 🟢 EDITÁVEL -->
+            <div class="form-group">
+                <label for="orcamentista-responsavel">Orçamentista Responsável</label>
+                <input type="text" 
+                       id="orcamentista-responsavel" 
+                       class="orcamentista-responsavel" 
+                       placeholder="Nome do orçamentista">
+            </div>
+        </div>
+
+        <div class="empresa-form-actions">
+            <button type="button" class="btn btn-cancel" onclick="window.empresaCadastro.cancelarCadastro()">
+                Cancelar
+            </button>
+            <button type="button" class="btn btn-confirm" onclick="window.empresaCadastro.prepararDados()">
+                Confirmar Dados
+            </button>
+        </div>
+    </div>
+    `;
+}
+```
+
+## 🔧 **CORREÇÃO NO `empresa-form-manager.js`**
+
+**No método `criarFormularioVazioEmpresa()`:**
+
+```javascript
+function criarFormularioVazioEmpresa(obraId, container) {
+    const formularioHTML = `
+    <div class="empresa-formulario-ativo">
+        <h4>Cadastro de Empresa</h4>
+
+        <div class="empresa-form-grid-horizontal">
+            <!-- Empresa 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Empresa *</label>
+                <div class="empresa-input-container">
+                    <input type="text" 
+                           class="empresa-input-cadastro" 
+                           id="empresa-input-${obraId}"
+                           placeholder="Digite sigla ou nome ou selecione..."
+                           autocomplete="off">
+                    <div class="empresa-dropdown" id="empresa-dropdown-${obraId}">
+                        <div class="dropdown-options" id="empresa-options-${obraId}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nº Cliente 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Nº Cliente</label>
+                <input type="text" 
+                       class="numero-cliente-final-cadastro" 
+                       placeholder="Digite o número ou será gerado automaticamente">
+            </div>
+
+            <!-- Cliente Final 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Cliente Final</label>
+                <input type="text" class="cliente-final-cadastro" 
+                    placeholder="Nome do cliente final">
+            </div>
+
+            <!-- Código 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Código</label>
+                <input type="text" class="codigo-cliente-cadastro" 
+                    placeholder="Código do cliente">
+            </div>
+
+            <!-- Data 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Data</label>
+                <input type="text" class="data-cadastro-cadastro" 
+                    value="${new Date().toLocaleDateString('pt-BR')}">
+            </div>
+
+            <!-- Orçamentista 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Orçamentista</label>
+                <input type="text" class="orcamentista-responsavel-cadastro" 
+                    placeholder="Nome do orçamentista">
+            </div>
+        </div>
+
+        <div class="empresa-form-actions">
+            <button type="button" class="btn-cancel" 
+                    onclick="window.ocultarFormularioEmpresa(this, '${obraId}')">
+                Cancelar
+            </button>
+        </div>
+    </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', formularioHTML);
+    
+    // 🔥 CORREÇÃO: Inicializar com timeout maior para garantir que o DOM está pronto
+    setTimeout(() => {
+        inicializarInputEmpresaHibrido(obraId);
+        
+        // 🆕 CONFIGURAR CAMPO DE NÚMERO COMO EDITÁVEL
+        setTimeout(() => {
+            const numeroCampo = container.querySelector('.numero-cliente-final-cadastro');
+            if (numeroCampo) {
+                // 🆕 REMOVER QUALQUER READONLY
+                numeroCampo.removeAttribute('readonly');
+                numeroCampo.readOnly = false;
+                numeroCampo.disabled = false;
+                
+                // 🆕 ADICIONAR VALIDAÇÃO DE NÚMEROS
+                numeroCampo.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '');
+                });
+                
+                console.log('✅ Campo de NÚMERO CLIENTE configurado como EDITÁVEL');
+            }
+        }, 500);
+        
+    }, 300);
+}
+```
+
+## 🔧 **ATUALIZAR FUNÇÃO DE CALCULAR NÚMERO**
+
+**No `empresa-cadastro-inline.js` - atualizar a função de calcular número:**
+
+```javascript
+/**
+ * 🆕 CALCULAR NÚMERO DO CLIENTE - MAS PERMITIR EDIÇÃO MANUAL
+ */
+calcularNumeroClienteFinal(sigla) {
+    // 🆕 VERIFICAR SE O USUÁRIO JÁ DIGITOU ALGO
+    const numeroInput = this.container.querySelector('#numero-cliente-final');
+    if (numeroInput && numeroInput.value.trim() !== '') {
+        console.log('🟡 Usuário já digitou um número manualmente, mantendo:', numeroInput.value);
+        return; // Não sobrescrever se usuário já digitou
+    }
+
+    // Filtrar obras existentes pela sigla
+    const obrasDaEmpresa = this.obrasExistentes.filter(obra => {
+        return obra.empresaSigla === sigla || 
+               (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`));
+    });
+
+    // Encontrar maior número existente
+    let maiorNumero = 0;
+    obrasDaEmpresa.forEach(obra => {
+        if (obra.numeroClienteFinal && obra.numeroClienteFinal > maiorNumero) {
+            maiorNumero = obra.numeroClienteFinal;
+        }
+        
+        // Também tentar extrair do ID gerado
+        if (obra.idGerado) {
+            const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
+            if (match) {
+                const numero = parseInt(match[1]);
+                if (numero > maiorNumero) maiorNumero = numero;
+            }
+        }
+    });
+
+    const novoNumero = maiorNumero + 1;
+    
+    if (numeroInput) {
+        // 🆕 SÓ PREENCHER SE O CAMPO ESTIVER VAZIO
+        if (!numeroInput.value || numeroInput.value.trim() === '') {
+            numeroInput.value = novoNumero;
+            console.log(`🔢 Número automático gerado: ${novoNumero}`);
+        }
+    }
+
+    // Atualizar preview do ID da obra
+    this.atualizarPreviewIdObra(sigla, novoNumero);
+}
+```
+
+## ✅ **RESULTADO FINAL:**
+
+Agora **TODOS os campos** ficarão **EDITÁVEIS**:
+
+```
+[Empresa: _______________ ] 🟢 EDITÁVEL
+[Nº Cliente: _________ ] 🟢 EDITÁVEL (aceita apenas números)
+[Cliente Final: _______ ] 🟢 EDITÁVEL  
+[Código: _____________ ] 🟢 EDITÁVEL
+[Data: _______________ ] 🟢 EDITÁVEL
+[Orçamentista: _______ ] 🟢 EDITÁVEL
+```
+
+**Comportamento:**
+- ✅ **Número automático**: Gera quando seleciona empresa (se campo estiver vazio)
+- ✅ **Edição manual**: Usuário pode digitar qualquer número
+- ✅ **Validação**: Aceita apenas números
+- ✅ **Não sobrescreve**: Se usuário já digitou, mantém o número digitado
+
+Agora o usuário tem **controle total** sobre todos os campos! 🎉

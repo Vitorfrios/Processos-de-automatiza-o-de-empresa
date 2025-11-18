@@ -2,7 +2,7 @@ from pathlib import Path
 from collections import defaultdict, Counter
 import re
 
-ROOT = Path(".").resolve()
+ROOT = Path("arquivostxt").resolve()
 SERV_DIR = ROOT / "codigo" / "servidor_modules"
 SERVER_FILE = ROOT / "codigo" / "servidor.py"
 REPORT_FILE = ROOT / "relatorio_python_detalhado.txt"

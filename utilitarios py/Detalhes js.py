@@ -2,7 +2,7 @@ from pathlib import Path
 from collections import defaultdict, Counter
 import re
 
-ROOT = Path(".").resolve()
+ROOT = Path("arquivostxt").resolve()
 
 # Pastas possíveis
 JS_DIR_01 = ROOT / "codigo" / "public" / "scripts" / "01_Create_Obra"

@@ -70,3 +70,45 @@
     white-space: nowrap;
   }
 }
+
+
+
+/* Animações para recolhimento/expansão */
+.collapsing {
+    transition: height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0.8;
+}
+
+.expanding {
+    transition: height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0.8;
+}
+
+/* Tooltip melhorado para sigla */
+.empresa-tooltip {
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: pre-line;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    z-index: 10000;
+    max-width: 300px;
+}
+
+.empresa-tooltip-mobile {
+    font-size: 14px;
+    padding: 12px 16px;
+}
+
+.empresa-tooltip-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    cursor: pointer;
+}

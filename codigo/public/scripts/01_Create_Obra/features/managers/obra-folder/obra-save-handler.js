@@ -5,10 +5,61 @@ import { isSessionActive, startSessionOnFirstSave } from '../../../data/adapters
 import { findObraBlockWithRetry } from './obra-dom-manager.js';
 import { supportFrom_saveObra, atualizarObra } from './obra-persistence.js';
 
-/**
- * 💾 FUNÇÃO PRINCIPAL DE SALVAMENTO
- */
 
+
+
+
+
+/**
+ * 🆕 MINIMIZAR TODOS OS TOGGLES AO SALVAR
+ */
+async function minimizarTogglesAposSalvamento(obraId) {
+    console.log(`📁 [TOGGLES] Minimizando todos os toggles para obra: ${obraId}`);
+    
+    try {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [TOGGLES] Obra ${obraId} não encontrada`);
+            return;
+        }
+
+        // 🆕 MINIMIZAR OBRA PRINCIPAL
+        const obraContent = obraElement.querySelector('.obra-content');
+        const obraMinimizer = obraElement.querySelector('.minimizer');
+        if (obraContent && obraMinimizer) {
+            collapseElement(obraContent, obraMinimizer);
+        }
+
+        // 🆕 MINIMIZAR TODOS OS PROJETOS
+        const projetos = obraElement.querySelectorAll('.project-block');
+        projetos.forEach(projeto => {
+            const projectContent = projeto.querySelector('.project-content');
+            const projectMinimizer = projeto.querySelector('.minimizer');
+            if (projectContent && projectMinimizer) {
+                collapseElement(projectContent, projectMinimizer);
+            }
+
+            // 🆕 MINIMIZAR TODAS AS SALAS
+            const salas = projeto.querySelectorAll('.room-block');
+            salas.forEach(sala => {
+                const roomContent = sala.querySelector('.room-content');
+                const roomMinimizer = sala.querySelector('.minimizer');
+                if (roomContent && roomMinimizer) {
+                    collapseElement(roomContent, roomMinimizer);
+                }
+            });
+        });
+
+        console.log(`✅ [TOGGLES] Todos os toggles minimizados para obra ${obraId}`);
+        
+    } catch (error) {
+        console.error(`❌ [TOGGLES] Erro ao minimizar toggles:`, error);
+    }
+}
+
+/**
+ * 💾 FUNÇÃO PRINCIPAL DE SALVAMENTO - ATUALIZADA COM TOGGLES
+ */
 async function saveObra(obraId, event) {
     if (event) {
         event.preventDefault();
@@ -16,6 +67,7 @@ async function saveObra(obraId, event) {
     }
 
     console.log(`💾 SALVANDO OBRA pelo ID: "${obraId}"`);
+
 
     let obraBlock = await findObraBlockWithRetry(obraId, 15);
     
@@ -168,6 +220,10 @@ async function saveObra(obraId, event) {
         // 🆕 🆕 🆕 ATUALIZAR HEADER APÓS SALVAMENTO
         console.log('🔄 [HEADER] Chamando atualização do header após salvamento...');
         await atualizarHeaderObraAposSalvamento(finalId);
+
+        // 🆕 MINIMIZAR TOGGLES APÓS SALVAMENTO BEM-SUCEDIDO
+        console.log('📁 [SALVAMENTO] Minimizando toggles automaticamente...');
+        await minimizarTogglesAposSalvamento(finalId);
 
         console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${finalId}`);
         showSystemStatus("Obra salva com sucesso!", "success");

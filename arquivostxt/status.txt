@@ -1,0 +1,126 @@
+---
+
+# 🧠 **STATUS GERAL DO PROJETO**
+
+## 🟢 **JÁ FINALIZADO / OK**
+
+Tudo que está neste bloco já está **implementado e funcional**:
+
+### ✔ CLIMATIZAÇÃO – preenchimentos e sincronizações
+
+* Ambiente: preenchido automaticamente com o nome da sala
+* Parede Leste ↔ Oeste: sincronização espelhada
+* Parede Norte ↔ Sul: sincronização espelhada
+* Backup: preenchimento automático
+* Sigla da empresa (tooltip): validação corrigida
+
+### ✔ CONFIGURAÇÃO DOS INPUTS (ajustes finos)
+
+| Campo                           | Situação |
+| ------------------------------- | -------- |
+| Pé direito (base 3 / passo 0.1) | OK       |
+| Setpoint (passo 0.5)            | OK       |
+| Pressurização TR (passo 5)      | OK       |
+| Nº de pessoas (base 1)          | OK       |
+
+### ✔ CÁLCULOS TÉRMICOS – ajustes de lógica
+
+* “Total geral” renomeado para **“Total de máquinas”**
+* Troca de base do cálculo de vazão: **setpoint → pressurização**
+* Cálculo já corrigido
+
+### ✔ CONFIGURAÇÕES POR TIPO DE MÁQUINA
+
+* Reutilização dos campos de instalação **implementada**
+* Customização por tipo de máquina **implementada**
+
+### ✔ EMPRESA – melhorias
+
+* Campos de data e seleção de empresa já liberados
+* Correção de sigla aplicada
+
+### ✔ INTERFACE – ajustes visuais
+
+* Botão “Adicionar Máquina” movido para o fim da div
+* Botão alinhado com “Adicionar Sala”
+
+---
+
+# 🟡 **PENDENTES / EM ABERTO**
+
+### 📌 **CÁLCULOS TÉRMICOS (UI)** – **FALTA**
+
+* Reposicionar a tabela de **total de ganhos térmicos** (visibilidade/interface)
+
+* Criar **tabela separada** para **TR (capacidade térmica)**
+
+  * Deve aparecer logo após o cálculo de ganhos
+
+### 🔧 **LÓGICA DE SELEÇÃO – FALTA**
+
+**Bocal de insuflamento / bocal acoplado a rede de dutos:**
+
+* Deve funcionar como **escolha exclusiva:**
+  → Se um é marcado, o outro deve ser automaticamente desmarcado
+
+---
+
+# 📌 **RESUMO ESTRATÉGICO**
+
+| Categoria                        | Status          |
+| -------------------------------- | --------------- |
+| Sincronizações de campos         | ✔ Concluído     |
+| Inputs & validações              | ✔ Concluído     |
+| Cálculos térmicos (lógica)       | ✔ Concluído     |
+| Cálculos térmicos (interface)    | **🟡 Pendente** |
+| Lógica de seleção (bocal)        | **🟡 Pendente** |
+| Configuração por tipo de máquina | ✔ Concluído     |
+| Empresa (dados & validação)      | ✔ Concluído     |
+| Interface geral                  | ✔ Concluído     |
+
+
+---
+
+## 🔐 **SISTEMA DE LOGIN (PROPOSTA FUTURA)**
+
+### 👨‍💼 ADM:
+
+* Cria login do usuário.
+* Pode alterar senha usando **tok e corrigido jáen**.
+* Validação de padrão de senha (regras).
+
+### 📲 Login do usuário:
+
+* `Empresa` (usuário)
+* `Tok e corrigido jáen` (senha)
+* Tela simples de login.
+
+### ⏱ Validade do tok e corrigido jáen:
+
+* Criar programa para gerar **tok e corrigido jáen válido de 1 a 12 meses**.
+* No **primeiro login**:
+
+  * salvar a data.
+* Todo dia:
+
+  * verificar quanto falta para expirar.
+* Quando expirar:
+
+  * **bloquear automaticamente o tok e corrigido jáen**.
+  * impedir novo login com o mesmo tok e corrigido jáen.
+
+---
+
+## 📦 **CAMPOS DE CLIENTE (NOVO MÓDULO)**
+
+* Criar **tabela completa de cálculo térmico**
+* Subir também a **tabela de cálculo de TR**
+* Organizar como um módulo separado de inputs do cliente.
+
+### 🧾 Header:
+
+* Remover todos os links.
+* Manter **apenas “Criar Obras”**.
+---
+
+

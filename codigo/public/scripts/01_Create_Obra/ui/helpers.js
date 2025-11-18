@@ -181,6 +181,70 @@ function toggleAllElements(containerId, expand = true) {
   });
 }
 
+
+/**
+ * 🆕 RECOLHER ELEMENTO COM ANIMAÇÃO
+ */
+function collapseElementWithAnimation(element, minimizerElement) {
+    // Adicionar classe de animação
+    element.classList.add('collapsing');
+    
+    // Definir altura atual
+    const currentHeight = element.scrollHeight;
+    element.style.height = currentHeight + 'px';
+    
+    // Forçar reflow
+    element.offsetHeight;
+    
+    // Animar para altura 0
+    setTimeout(() => {
+        element.style.height = '0px';
+        element.style.overflow = 'hidden';
+    }, 10);
+    
+    // Finalizar animação
+    setTimeout(() => {
+        element.classList.add("collapsed");
+        element.classList.remove("collapsing");
+        element.style.height = '';
+        element.style.overflow = '';
+        minimizerElement.textContent = "+";
+        
+        console.log(`📁 Elemento recolhido com animação: ${element.id}`);
+    }, 300);
+}
+
+/**
+ * 🆕 EXPANDIR ELEMENTO COM ANIMAÇÃO  
+ */
+function expandElementWithAnimation(element, minimizerElement) {
+    // Remover classe collapsed
+    element.classList.remove("collapsed");
+    element.classList.add("expanding");
+    
+    // Definir altura para auto após animação
+    setTimeout(() => {
+        const fullHeight = element.scrollHeight;
+        element.style.height = '0px';
+        
+        // Forçar reflow
+        element.offsetHeight;
+        
+        // Animar para altura completa
+        element.style.height = fullHeight + 'px';
+        
+        // Finalizar animação
+        setTimeout(() => {
+            element.classList.remove("expanding");
+            element.style.height = '';
+            minimizerElement.textContent = "−";
+            
+            console.log(`📂 Elemento expandido com animação: ${element.id}`);
+        }, 300);
+    }, 10);
+}
+
+
 // Exportações para módulos ES6
 export {
   toggleElementVisibility,

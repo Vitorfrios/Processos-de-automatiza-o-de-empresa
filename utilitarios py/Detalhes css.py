@@ -2,7 +2,7 @@ from pathlib import Path
 from collections import defaultdict, Counter
 import re
 
-ROOT = Path(".").resolve()
+ROOT = Path("arquivostxt").resolve()
 CSS_DIR = ROOT / "codigo" / "public" / "static" / "01_Create_Obra"
 REPORT_FILE = ROOT / "relatorio_css_detalhado.txt"
 

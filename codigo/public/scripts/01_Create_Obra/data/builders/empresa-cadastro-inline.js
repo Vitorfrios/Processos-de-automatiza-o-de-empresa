@@ -88,9 +88,15 @@ class EmpresaCadastroInline {
         console.log('✅ Cadastro inline ativado');
     }
 
+    /**
+     * 🆕 RENDERIZAR FORMULÁRIO COM CAMPOS CORRETAMENTE LIBERADOS/BLOQUEADOS
+     */
     renderizarFormulario() {
         const formHTML = this.criarHTMLFormulario();
         this.container.insertAdjacentHTML('beforeend', formHTML);
+        
+        // 🆕 CONFIGURAR ESTADO DOS CAMPOS APÓS RENDERIZAÇÃO
+        this.configurarEstadoCampos();
         
         // Vincular eventos do formulário
         this.vincularEventosFormulario();
@@ -102,66 +108,230 @@ class EmpresaCadastroInline {
         }, 100);
     }
 
+    /**
+     * 🆕 CONFIGURAR ESTADO CORRETO DOS CAMPOS - LIBERADOS vs BLOQUEADOS
+     */
+    configurarEstadoCampos() {
+        // 🟢 CAMPOS QUE DEVEM FICAR SEMPRE LIBERADOS (editáveis)
+        const camposLiberados = [
+            'empresa-input',
+            'cliente-final', 
+            'codigo-cliente',
+            'data-cadastro',
+            'orcamentista-responsavel'
+        ];
+        
+        camposLiberados.forEach(campoId => {
+            const campo = this.container.querySelector(`#${campoId}`);
+            if (campo) {
+                // 🟢 REMOVER COMPLETAMENTE READONLY E DISABLED
+                campo.removeAttribute('readonly');
+                campo.removeAttribute('disabled');
+                
+                // 🟢 GARANTIR QUE ESTEJAM EDITÁVEIS
+                campo.readOnly = false;
+                campo.disabled = false;
+                
+                // 🟢 ESTILOS VISUAIS DE CAMPO EDITÁVEL
+                campo.style.backgroundColor = '#ffffff';
+                campo.style.borderColor = '#007bff';
+                campo.style.cursor = 'text';
+                campo.style.color = '#000000';
+                
+                console.log(`🟢 Campo LIBERADO: ${campoId}`);
+            }
+        });
+        
+        // 🔴 CAMPOS QUE DEVEM FICAR BLOQUEADOS (somente leitura)
+        const camposBloqueados = [
+            'numero-cliente-final'
+        ];
+        
+        camposBloqueados.forEach(campoId => {
+            const campo = this.container.querySelector(`#${campoId}`);
+            if (campo) {
+                // 🔴 MANTER COMO SOMENTE LEITURA
+                campo.readOnly = true;
+                campo.setAttribute('readonly', 'true');
+                
+                // 🔴 ESTILOS VISUAIS DE CAMPO BLOQUEADO
+                campo.style.backgroundColor = '#f8f9fa';
+                campo.style.borderColor = '#ced4da';
+                campo.style.cursor = 'not-allowed';
+                campo.style.color = '#6c757d';
+                
+                console.log(`🔴 Campo BLOQUEADO: ${campoId}`);
+            }
+        });
+        
+        // 🟢 CONFIGURAÇÃO ESPECIAL PARA O CAMPO DE DATA
+        this.configurarCampoData();
+    }
+
+    /**
+     * 🆕 CONFIGURAR CAMPO DE DATA COMO EDITÁVEL
+     */
+    configurarCampoData() {
+        const dataCampo = this.container.querySelector('#data-cadastro');
+        if (dataCampo) {
+            // 🟢 REMOVER COMPLETAMENTE O READONLY
+            dataCampo.removeAttribute('readonly');
+            dataCampo.readOnly = false;
+            
+            // 🟢 TORNAR EDITÁVEL
+            dataCampo.disabled = false;
+            
+            // 🟢 MELHORAR USABILIDADE
+            dataCampo.title = "Clique para editar a data (DD/MM/AAAA)";
+            dataCampo.placeholder = "DD/MM/AAAA";
+            
+            // 🟢 ESTILOS DE CAMPO EDITÁVEL
+            dataCampo.style.backgroundColor = '#ffffff';
+            dataCampo.style.borderColor = '#007bff';
+            dataCampo.style.cursor = 'text';
+            dataCampo.style.color = '#000000';
+            
+            // 🟢 ADICIONAR MÁSCARA DE DATA EM TEMPO REAL
+            dataCampo.addEventListener('input', (e) => {
+                this.aplicarMascaraData(e.target);
+            });
+            
+            // 🟢 VALIDAR DATA AO PERDER O FOCO
+            dataCampo.addEventListener('blur', (e) => {
+                this.validarData(e.target);
+            });
+            
+            console.log('🟢 Campo de DATA configurado como editável');
+        }
+    }
+
+    /**
+     * 🆕 APLICAR MÁSCARA DE DATA EM TEMPO REAL
+     */
+    aplicarMascaraData(input) {
+        let value = input.value.replace(/\D/g, '');
+        
+        // Limitar a 8 dígitos (DDMMAAAA)
+        if (value.length > 8) {
+            value = value.substring(0, 8);
+        }
+        
+        // Aplicar máscara
+        if (value.length > 4) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4) + '/' + value.substring(4);
+        } else if (value.length > 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2);
+        }
+        
+        input.value = value;
+    }
+
+    /**
+     * 🆕 VALIDAR DATA AO PERDER FOCO
+     */
+    validarData(input) {
+        const valor = input.value.trim();
+        
+        if (!valor) return true; // Campo vazio é válido
+        
+        // Validar formato DD/MM/AAAA
+        const regexData = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        const match = valor.match(regexData);
+        
+        if (!match) {
+            showSystemStatus('Formato de data inválido. Use DD/MM/AAAA', 'warning');
+            input.focus();
+            return false;
+        }
+        
+        const dia = parseInt(match[1], 10);
+        const mes = parseInt(match[2], 10);
+        const ano = parseInt(match[3], 10);
+        
+        // Validar valores
+        if (mes < 1 || mes > 12) {
+            showSystemStatus('Mês deve estar entre 01 e 12', 'warning');
+            input.focus();
+            return false;
+        }
+        
+        if (dia < 1 || dia > 31) {
+            showSystemStatus('Dia deve estar entre 01 e 31', 'warning');
+            input.focus();
+            return false;
+        }
+        
+        // Validar fevereiro e meses com 30 dias
+        const data = new Date(ano, mes - 1, dia);
+        if (data.getDate() !== dia || data.getMonth() + 1 !== mes || data.getFullYear() !== ano) {
+            showSystemStatus('Data inválida para o mês especificado', 'warning');
+            input.focus();
+            return false;
+        }
+        
+        return true;
+    }
+
     criarHTMLFormulario() {
         return `
         <div class="empresa-cadastro-inline" id="empresa-cadastro-inline">
             <div class="empresa-form-grid">
-                <!-- Empresa -->
+                <!-- Empresa 🟢 EDITÁVEL -->
                 <div class="form-group">
                     <label for="empresa-input">Empresa *</label>
                     <input type="text" 
-                           id="empresa-input" 
-                           class="empresa-input" 
-                           placeholder="Digite sigla ou nome..."
-                           autocomplete="off">
+                        id="empresa-input" 
+                        class="empresa-input" 
+                        placeholder="Digite sigla ou nome..."
+                        autocomplete="off">
                     <div class="autocomplete-suggestions" id="empresa-suggestions"></div>
                 </div>
 
-                <!-- Número Cliente Final -->
+                <!-- Número Cliente Final 🔴 SOMENTE LEITURA -->
                 <div class="form-group">
                     <label for="numero-cliente-final">Número Cliente Final</label>
                     <input type="text" 
-                           id="numero-cliente-final" 
-                           class="numero-cliente-final" 
-                           readonly
-                           placeholder="Será calculado automaticamente">
+                        id="numero-cliente-final" 
+                        class="numero-cliente-final" 
+                        readonly
+                        placeholder="Será calculado automaticamente">
                 </div>
 
-                <!-- Cliente Final -->
+                <!-- Cliente Final 🟢 EDITÁVEL -->
                 <div class="form-group">
                     <label for="cliente-final">Cliente Final</label>
                     <input type="text" 
-                           id="cliente-final" 
-                           class="cliente-final" 
-                           placeholder="Nome do cliente final">
+                        id="cliente-final" 
+                        class="cliente-final" 
+                        placeholder="Nome do cliente final">
                 </div>
 
-                <!-- Código Cliente -->
+                <!-- Código Cliente 🟢 EDITÁVEL -->
                 <div class="form-group">
                     <label for="codigo-cliente">Código Cliente</label>
                     <input type="text" 
-                           id="codigo-cliente" 
-                           class="codigo-cliente" 
-                           placeholder="Código interno do cliente">
+                        id="codigo-cliente" 
+                        class="codigo-cliente" 
+                        placeholder="Código interno do cliente">
                 </div>
 
-                <!-- Data do Cadastro -->
+                <!-- Data do Cadastro 🟢 EDITÁVEL -->
                 <div class="form-group">
                     <label for="data-cadastro">Data do Cadastro</label>
                     <input type="text" 
-                           id="data-cadastro" 
-                           class="data-cadastro" 
-                           readonly
-                           value="${new Date().toLocaleString('pt-BR')}">
+                        id="data-cadastro" 
+                        class="data-cadastro" 
+                        placeholder="DD/MM/AAAA"
+                        value="${new Date().toLocaleDateString('pt-BR')}">
                 </div>
 
-                <!-- Orçamentista Responsável -->
+                <!-- Orçamentista Responsável 🟢 EDITÁVEL -->
                 <div class="form-group">
                     <label for="orcamentista-responsavel">Orçamentista Responsável</label>
                     <input type="text" 
-                           id="orcamentista-responsavel" 
-                           class="orcamentista-responsavel" 
-                           placeholder="Nome do orçamentista">
+                        id="orcamentista-responsavel" 
+                        class="orcamentista-responsavel" 
+                        placeholder="Nome do orçamentista">
                 </div>
             </div>
 
@@ -173,8 +343,6 @@ class EmpresaCadastroInline {
                     Confirmar Dados
                 </button>
             </div>
-
-            
         </div>
         `;
     }
@@ -395,6 +563,9 @@ class EmpresaCadastroInline {
         };
     }
 
+    /**
+     * 🆕 VALIDAÇÃO CORRIGIDA DA SIGLA - COM REGEX E TOOLTIP
+     */
     validarDados(dados) {
         if (!dados.empresaInput.trim()) {
             showSystemStatus('Por favor, informe a empresa', 'error');
@@ -402,30 +573,50 @@ class EmpresaCadastroInline {
         }
 
         if (!dados.empresaExistente) {
-            // Validar formato da sigla para nova empresa
-            const siglaMatch = dados.empresaInput.match(/^[A-Za-z]{3}$/);
-            if (siglaMatch) {
+            // 🆕 VALIDAÇÃO CORRIGIDA DA SIGLA - REGEX MELHORADO
+            const regexSigla = /^[A-Z]{2,6}$/; // 2 a 6 letras maiúsculas
+            
+            // Verificar se usuário digitou apenas sigla
+            if (regexSigla.test(dados.empresaInput)) {
                 // Usuário digitou apenas sigla - solicitar nome completo
                 const nomeCompleto = prompt(`Você digitou apenas a sigla "${dados.empresaInput}". Por favor, informe o nome completo da empresa:`);
                 if (!nomeCompleto || !nomeCompleto.trim()) {
                     showSystemStatus('Nome completo da empresa é obrigatório', 'error');
                     return false;
                 }
-                dados.nomeEmpresa = nomeCompleto.trim();
-                dados.sigla = dados.empresaInput.toUpperCase();
-            } else {
-                // Usuário digitou nome - sugerir sigla
-                const primeiraPalavra = dados.empresaInput.split(' ')[0];
-                const siglaSugerida = primeiraPalavra.substring(0, 3).toUpperCase();
                 
-                const siglaConfirmada = prompt(`Empresa não encontrada. Sugerimos a sigla "${siglaSugerida}". Confirme ou digite outra sigla de 3 letras:`, siglaSugerida);
-                
-                if (!siglaConfirmada || siglaConfirmada.length !== 3) {
-                    showSystemStatus('Sigla deve ter exatamente 3 letras', 'error');
+                // 🆕 VALIDAR FORMATO DO NOME
+                if (nomeCompleto.trim().length < 3) {
+                    showSystemStatus('Nome da empresa deve ter pelo menos 3 caracteres', 'error');
                     return false;
                 }
                 
-                dados.sigla = siglaConfirmada.toUpperCase();
+                dados.nomeEmpresa = nomeCompleto.trim();
+                dados.sigla = dados.empresaInput.toUpperCase();
+                
+            } else {
+                // Usuário digitou nome - sugerir sigla válida
+                const primeiraPalavra = dados.empresaInput.split(' ')[0];
+                const siglaSugerida = primeiraPalavra.substring(0, 3).toUpperCase();
+                
+                // 🆕 GARANTIR QUE SIGLA TENHA FORMATO VÁLIDO
+                let siglaConfirmada = prompt(`Empresa não encontrada. Sugerimos a sigla "${siglaSugerida}". Confirme ou digite outra sigla (2-6 letras maiúsculas):`, siglaSugerida);
+                
+                if (!siglaConfirmada) {
+                    showSystemStatus('Sigla é obrigatória', 'error');
+                    return false;
+                }
+                
+                // 🆕 NORMALIZAR SIGLA
+                siglaConfirmada = siglaConfirmada.trim().toUpperCase().replace(/[^A-Z]/g, '');
+                
+                // 🆕 VALIDAR FORMATO DA SIGLA
+                if (!regexSigla.test(siglaConfirmada)) {
+                    showSystemStatus('Sigla deve conter 2 a 6 letras maiúsculas, sem espaços ou caracteres especiais', 'error');
+                    return false;
+                }
+                
+                dados.sigla = siglaConfirmada;
                 dados.nomeEmpresa = dados.empresaInput;
             }
         }
