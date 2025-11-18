@@ -373,12 +373,13 @@
               ],
               "capacidade": {
                 "fatorSeguranca": 1.2,
-                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": 2,
-                "solucaoBackup": 4,
-                "totalCapacidade": 20,
-                "folga": 33.3,
-                "backup": "n+2"
+                "capacidadeUnitaria": 10,
+                "backup": "n+1",
+                "cargaEstimada": 15,
+                "solucao": "2",
+                "solucaoBackup": "3",
+                "totalCapacidade": "20.0",
+                "folga": "33.3%"
               },
               "ganhosTermicos": {
                 "total-ganhos-w": 49543,
@@ -398,7 +399,8 @@
                   "bocal_acoplado_dutos",
                   "condicionadores_externos_se"
                 ]
-              }
+              },
+              "somavaloresmaquinatotal": 67516
             }
           ]
         }

@@ -10,7 +10,7 @@
 }
 
 
-.add-room-section {
+.add-room-section , .add-machine {
   margin: var(--spacing-lg) 0;
   text-align: center;
 }

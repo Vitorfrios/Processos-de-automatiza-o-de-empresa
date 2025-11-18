@@ -61,15 +61,18 @@ function buildMachinesSection(obraId, projectId, roomName, finalRoomId) {
       <div class="section-header-machine">
         <button class="minimizer" onclick="toggleSection('${finalRoomId}-maquinas')">+</button>
         <h4 class="section-title">Máquinas</h4>
-        <button class="btn btn-add-small" onclick="addMachine('${finalRoomId}')">+ Adicionar</button>
+        
       </div>
       <div class="section-content collapsed" id="section-content-${finalRoomId}-maquinas">
         ${buildCapacityCalculationTable(finalRoomId)}
         <div class="machines-container" id="machines-${finalRoomId}">
           <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
         </div>
+        <div class="add-machine">
+            <button class="btn btn-add-secondary" onclick="addMachine('${finalRoomId}')">+ Adicionar Máquina</button> 
+        </div>
         <div class="all-machines-total-price">
-          <strong>Total Geral: <span id="total-all-machines-price-${finalRoomId}">R$ 0,00</span></strong>
+          <strong>Total de Maquinas: <span id="total-all-machines-price-${finalRoomId}">R$ 0,00</span></strong>
         </div>
       </div>
     </div>`;

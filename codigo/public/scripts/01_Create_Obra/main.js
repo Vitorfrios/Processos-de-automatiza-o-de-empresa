@@ -1,213 +1,221 @@
 /**
- * main.js - ARQUIVO PRINCIPAL COM LOGGER 100% EMBUTIDO
- * 🎯 Reduz logs em 90% - ZERO dependências externas
+ * main.js - ARQUIVO PRINCIPAL
+ * Sistema principal com controle de carregamento
  */
 
-// ✅ LOGGER 100% EMBUTIDO - SEM tentar carregar arquivos externos
-(function() {
-    'use strict';
-    
-    console.log('🔧 Iniciando sistema de logs automático...');
-    
-    class SmartLogger {
-        constructor() {
-            this.levels = { 
-                ERROR: 0, 
-                WARN: 1, 
-                INFO: 2, 
-                DEBUG: 3
-            };
-            
-            // ✅ CONFIGURAÇÃO DE FILTROS
-            this.config = {
-                globalLevel: 'WARN', // Só mostra ERROR e WARN por padrão
-                silentPatterns: [
-                    // Cálculos térmicos
-                    'Vazão atualizada para', 'Salvando dados para sala', 'Iniciando cálculos para sala',
-                    'Ganhos calculados para', 'Dados coletados para', 'Tentando atualizar tabela',
-                    'Obras carregadas:', 'Sala ainda não salva', 'Procurando sala:',
-                    
-                    // Sincronização
-                    'Sincronização configurada', 'Observer configurado', 'VERIFICAÇÃO COMPLETA',
-                    'Elementos encontrados', 'Construindo seção de', '🧱 Sincronização paredes',
-                    '🔧 Configurando par', '✅ Sincronização configurada', '⚡ INICIALIZANDO VALORES PADRÃO',
-                    '🎯 CONFIGURANDO TODAS AS SINCRONIZAÇÕES', '🔧 CONFIGURANDO SINCRONIZAÇÃO BIDIRECIONAL',
-                    
-                    // UI e componentes
-                    'Módulos carregados', 'Funções críticas', 'DEBUG FINAL', 'Carregando constantes',
-                    'Inicializando sistema', '✅ Constantes carregadas', '📦 Carregando módulos',
-                    '🔍 Verificando sessão', '📊 Sessão encontrada', '🔒 Sistema de shutdown',
-                    '🏢 Inicializando sistema', 'ℹ️ Display térmico atualizado',
-                    
-                    // Thermal gains
-                    '🔥 [THERMAL]', '[THERMAL] Iniciando cálculos', '[THERMAL] Ganhos calculados',
-                    '[THERMAL] Totais para', '[THERMAL] Tentando atualizar',
-                    
-                    // Capacity calculator
-                    '[CAPACITY] Salvando dados', '[CAPACITY] Obras carregadas', '[CAPACITY] Sala ainda não salva',
-                    
-                    // Data collection
-                    '📝 [COLLECT] Coletando inputs', '🎯 [COLLECT] Estado da pressurização',
-                    '✅ [COLLECT] dados coletados', '✅ [FIND] Seção encontrada',
-                    
-                    // Room verification
-                    '🔍 VERIFICAÇÃO COMPLETA DA SALA', '📊 Título: ✅ Encontrado',
-                    '🎉 TODOS OS ELEMENTOS ENCONTRADOS',
-                    
-                    // Machines
-                    '✅ Máquina adicionada à sala', '🔍 Procurando máquinas após clique',
-                    '🖊️ Preenchendo campos', '🔧 Encontradas máquinas', '🔧 Preenchendo apenas a PRIMEIRA',
-                    '🔧 Preenchendo máquina', '✅ Tipo de máquina selecionado', '✅ Capacidade selecionada',
-                    '✅ Tensão selecionada', '🎲 Selecionando opções aleatórias', '🔧 Encontrados checkboxes',
-                    '✅ Opção selecionada', '🎲 opções selecionadas aleatoriamente',
-                    
-                    // Obra saving
-                    '💾 Botão Salvar Obra clicado', '🔄 Alterando TODOS os valores', '✅ TODOS os valores alterados',
-                    '💾 Chamando função original', '💾 SALVANDO OBRA pelo ID', '🔍 Buscando obra com retry',
-                    '✅ Obra encontrada na tentativa', '🔒 REFERÊNCIA SALVA', '✅ Obra confirmada no DOM',
-                    '🔨 Construindo dados da obra', '🚨 buildObraData INICIADA', '📦 Construindo dados da obra',
-                    
-                    // Empresa data extraction
-                    '🔍 [EXTRACT EMPRESA]', '📋 [EXTRACT EMPRESA]', '✅ [EXTRACT EMPRESA]',
-                    '🏢 [EXTRACT EMPRESA]', '🔢 [EXTRACT EMPRESA]', '🎯 [EXTRACT EMPRESA]',
-                    '📅 [EXTRACT EMPRESA]',
-                    
-                    // Project and room data
-                    '🔍 Encontrados projetos', '📝 Processando projeto', '🔍 Encontradas salas',
-                    '🔍 Extraindo dados da sala', '📝 Inputs de climatização', '🔧 Extraindo dados da máquina',
-                    '✅ Máquina extraída', '🤖 máquina(s) extraída(s)', '❄️ Dados de capacidade',
-                    '🔥 ganhos térmicos', '⚙️ opções de instalação', '📊 Dados extraídos da sala',
-                    '✅ Projeto processado', '✅ Projeto adicionado à obra', '📦 Dados da obra construídos',
-                    
-                    // Obra persistence
-                    '🔍 VERIFICAÇÃO FINAL', '🔍 VERIFICAÇÃO DE OBRA MELHORADA', '🆕 SALVANDO COMO NOVA OBRA',
-                    '📤 SALVANDO NOVA OBRA', '📝 Adicionando obra à sessão', '✅ NOVA OBRA SALVA',
-                    '✅ Obra confirmada no DOM', '🔄 Atualizando botão da obra', '✅ Botão atualizado para',
-                    
-                    // Header updates
-                    '🔄 [HEADER] Chamando', '🔄 [HEADER] Iniciando', '🔍 [HEADER] Extraindo',
-                    '📊 [HEADER] Dados extraídos', '🎨 [HEADER] Chamando', '🔧 Inicializando tooltip',
-                    '✅ Tooltip inicializado', '✅ Header da obra atualizado', '✅ [EMPRESA] Interface atualizada',
-                    '✅ [HEADER] Header atualizado', '✅ OBRA SALVA/ATUALIZADA',
-                    
-                    // Misc
-                    '🐭 Escondendo', '🔄 Backup alterado no form'
-                ]
-            };
-            
-            // Salvar console original
-            this.originalConsole = {
-                log: console.log,
-                warn: console.warn,
-                error: console.error,
-                info: console.info,
-                debug: console.debug
-            };
-            
-            this.initialize();
-        }
-        
-        initialize() {
-            this.interceptConsole();
-            this.originalConsole.log('✅ Sistema de logs automático ativado - 90% dos logs serão filtrados');
-        }
-        
-        /**
-         * 🎯 INTERCEPTA console.log GLOBALMENTE
-         */
-        interceptConsole() {
-            const self = this;
-            
-            console.log = function(...args) {
-                self.processLog('INFO', args);
-            };
-            
-            console.info = function(...args) {
-                self.processLog('INFO', args);
-            };
-            
-            console.warn = function(...args) {
-                self.processLog('WARN', args);
-            };
-            
-            console.error = function(...args) {
-                self.processLog('ERROR', args);
-            };
-            
-            console.debug = function(...args) {
-                self.processLog('DEBUG', args);
-            };
-        }
-        
-        /**
-         * 🎯 Processa cada log automaticamente
-         */
-        processLog(level, args) {
-            const message = args.map(arg => 
-                typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-            ).join(' ');
-            
-            // 🚫 Pular logs silenciados
-            if (this.shouldSilence(message)) {
-                return;
-            }
-            
-            // 📊 Mostrar apenas logs importantes
-            if (this.shouldShow(level)) {
-                const icon = this.getIcon(level);
-                const method = level === 'INFO' ? 'log' : level.toLowerCase();
-                this.originalConsole[method](icon, ...args);
-            }
-        }
-        
-        /**
-         * 🚫 Verifica se deve silenciar a mensagem
-         */
-        shouldSilence(message) {
-            return this.config.silentPatterns.some(pattern => message.includes(pattern));
-        }
-        
-        /**
-         * 📊 Verifica se deve mostrar baseado no nível
-         */
-        shouldShow(level) {
-            return this.levels[level] <= this.levels[this.config.globalLevel];
-        }
-        
-        /**
-         * 🎯 Retorna ícone para o nível
-         */
-        getIcon(level) {
-            const icons = { 
-                ERROR: '❌', 
-                WARN: '⚠️', 
-                INFO: 'ℹ️', 
-                DEBUG: '🔍'
-            };
-            return icons[level] || '💬';
-        }
-    }
+// ✅ IMPORTAR LOGGER
+import { createSmartLogger } from './core/logger.js';
 
-    // 🎯 INICIALIZAR LOGGER IMEDIATAMENTE
-    window.logger = new SmartLogger();
+// ✅ INICIALIZAR LOGGER IMEDIATAMENTE
+window.logger = createSmartLogger();
 
-})();
-
-// ✅ SEU CÓDIGO ORIGINAL CONTINUA A PARTIR DAQUI
+// ✅ VARIÁVEIS GLOBAIS
 window.systemConstants = null;
 window.obraCounter = 0;
 window.GeralCount = 0;
+window.systemLoaded = false;
 
 console.log("🚀 Variáveis globais inicializadas:", {
   systemConstants: window.systemConstants,
   obraCounter: window.obraCounter,
-  GeralCount: window.GeralCount
+  GeralCount: window.GeralCount,
+  systemLoaded: window.systemLoaded
 });
 
 // ✅ IMPORTAR DOS MÓDULOS PRINCIPAIS
 import { initializeSystem } from './main-folder/system-init.js';
 import { checkAndLoadExistingSession } from './main-folder/session-manager-main.js';
 import { showServerOfflineMessage } from './main-folder/error-handler.js';
+
+/**
+ * ✅ VERIFICA SE O SISTEMA ESTÁ 100% CARREGADO
+ * Baseado na presença da div de status de sucesso
+ */
+function checkSystemLoaded() {
+    const statusBanner = document.querySelector('#system-status-banner.system-status-banner.success');
+    const isLoaded = !!statusBanner;
+    
+    if (isLoaded && !window.systemLoaded) {
+        console.log('✅ SISTEMA 100% CARREGADO - Botão Nova Obra liberado');
+        window.systemLoaded = true;
+        updateAddObraButtonState();
+        setupAddObraButtonProtection();
+    }
+    
+    return isLoaded;
+}
+
+/**
+ * ✅ ATUALIZA ESTADO DO BOTÃO "NOVA OBRA"
+ */
+function updateAddObraButtonState() {
+    const addButton = document.getElementById('add-obra-btn');
+    if (!addButton) {
+        console.log('🔍 Botão add-obra-btn ainda não encontrado no DOM');
+        return;
+    }
+    
+    if (window.systemLoaded) {
+        // ✅ Sistema carregado - botão funciona normalmente
+        addButton.disabled = false;
+        addButton.style.opacity = '1';
+        addButton.style.cursor = 'pointer';
+        addButton.title = 'Clique para adicionar uma nova obra';
+        console.log('✅ Botão Nova Obra habilitado');
+    } else {
+        // ❌ Sistema não carregado - botão desabilitado
+        addButton.disabled = true;
+        addButton.style.opacity = '0.6';
+        addButton.style.cursor = 'not-allowed';
+        addButton.title = 'Sistema ainda não carregou completamente';
+        console.log('⏳ Botão Nova Obra desabilitado - aguardando carregamento');
+    }
+}
+
+/**
+ * ✅ MOSTRA MENSAGEM RÁPIDA DE SISTEMA NÃO CARREGADO
+ */
+function showSystemNotLoadedMessage() {
+    const tempMessage = document.createElement('div');
+    tempMessage.textContent = '⏳ Sistema ainda não foi 100% carregado...';
+    tempMessage.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ff9800;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        z-index: 10000;
+        font-size: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        animation: fadeInOut 2.5s ease-in-out;
+    `;
+    
+    if (!document.querySelector('#system-loading-styles')) {
+        const style = document.createElement('style');
+        style.id = 'system-loading-styles';
+        style.textContent = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateY(-10px); }
+                20% { opacity: 1; transform: translateY(0); }
+                80% { opacity: 1; transform: translateY(0); }
+                100% { opacity: 0; transform: translateY(-10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(tempMessage);
+    
+    setTimeout(() => {
+        if (tempMessage.parentNode) {
+            tempMessage.parentNode.removeChild(tempMessage);
+        }
+    }, 2500);
+}
+
+/**
+ * ✅ WRAPPER PARA A FUNÇÃO addNewObra ORIGINAL
+ * Impede execução se sistema não estiver carregado
+ */
+function setupAddObraButtonProtection() {
+    if (typeof window.addNewObra !== 'function') {
+        console.log('⏳ addNewObra ainda não disponível - aguardando...');
+        setTimeout(setupAddObraButtonProtection, 1000);
+        return;
+    }
+    
+    console.log('✅ Função addNewObra encontrada - configurando proteção');
+    
+    const originalAddNewObra = window.addNewObra;
+    
+    window.addNewObra = function(...args) {
+        if (!window.systemLoaded) {
+            console.warn('⚠️ Tentativa de adicionar obra bloqueada - sistema não carregado');
+            showSystemNotLoadedMessage();
+            return false;
+        }
+        
+        console.log('✅ Sistema carregado - executando addNewObra normalmente');
+        return originalAddNewObra.apply(this, args);
+    };
+    
+    console.log('✅ Proteção do botão Nova Obra configurada com sucesso');
+}
+
+/**
+ * ✅ PROTEGE CLIQUE DIRETO NO BOTÃO
+ */
+function setupDirectButtonProtection() {
+    const checkButton = setInterval(() => {
+        const addButton = document.getElementById('add-obra-btn');
+        
+        if (addButton) {
+            console.log('✅ Botão Nova Obra encontrado no DOM - configurando proteção direta');
+            
+            const newButton = addButton.cloneNode(true);
+            addButton.parentNode.replaceChild(newButton, addButton);
+            
+            newButton.addEventListener('click', function(e) {
+                if (!window.systemLoaded) {
+                    console.warn('⚠️ Clique direto no botão bloqueado - sistema não carregado');
+                    showSystemNotLoadedMessage();
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                
+                console.log('✅ Clique autorizado - sistema carregado');
+            });
+            
+            clearInterval(checkButton);
+        }
+    }, 500);
+    
+    setTimeout(() => {
+        clearInterval(checkButton);
+    }, 10000);
+}
+
+/**
+ * ✅ OBSERVER PARA MONITORAR CARREGAMENTO DO SISTEMA
+ */
+function setupSystemLoadObserver() {
+    const observer = new MutationObserver(function(mutations) {
+        for (let mutation of mutations) {
+            if (mutation.type === 'childList') {
+                if (checkSystemLoaded()) {
+                    observer.disconnect();
+                    console.log('✅ Observer do sistema carregado - desconectado');
+                    break;
+                }
+            }
+        }
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    console.log('✅ Observer do carregamento do sistema iniciado');
+    
+    const intervalCheck = setInterval(() => {
+        if (checkSystemLoaded()) {
+            clearInterval(intervalCheck);
+            console.log('✅ Verificação periódica do sistema - concluída');
+        }
+    }, 500);
+    
+    setTimeout(() => {
+        clearInterval(intervalCheck);
+        if (!window.systemLoaded) {
+            console.warn('⚠️ Timeout do carregamento do sistema - verificando estado atual');
+            checkSystemLoaded();
+        }
+    }, 30000);
+}
 
 /**
  * Função de debug para verificar o estado final do sistema
@@ -223,6 +231,8 @@ function finalSystemDebug() {
   console.log('- Constantes carregadas:', !!window.systemConstants);
   console.log('- Shutdown Manager:', !!window.shutdownManager);
   console.log('- Empresa Cadastro:', !!window.empresaCadastro);
+  console.log('- Sistema Carregado:', window.systemLoaded);
+  console.log('- addNewObra disponível:', typeof window.addNewObra === 'function');
   
   console.log('- Funções de toggle disponíveis:', {
     toggleSection: typeof window.toggleSection,
@@ -290,7 +300,7 @@ function showSystemStatusMessage(hasExistingSession) {
 }
 
 /**
- * Verifica funções críticas do sistema
+ * Verifica funções críticas do sistema - MOSTRA APENAS AS CARREGADAS
  */
 function verifyCriticalFunctions() {
     const criticalFunctions = [
@@ -305,17 +315,66 @@ function verifyCriticalFunctions() {
         'deleteRoom',
         'calculateVazaoArAndThermalGains',
         'makeEditable'
-        // REMOVIDO: 'obterDadosEmpresa' - essa função pode não existir ainda
     ];
     
-    console.log('🔍 Verificando funções críticas...');
+    console.log('🔍 Verificando funções críticas CARREGADAS...');
+    
+    const loadedFunctions = [];
+    const missingFunctions = [];
+
     criticalFunctions.forEach(funcName => {
-        if (typeof window[funcName] !== 'function') {
-            console.error(`❌ CRÍTICO: ${funcName} não está disponível globalmente`);
-        } else {
-            console.log(`✅ ${funcName} disponível globalmente`);
+        if (typeof window[funcName] === 'function') {
+            loadedFunctions.push(funcName);
+            console.log(`✅ ${funcName} atribuída ao window`); // ✅ MOSTRA APENAS AS CARREGADAS
+        }
+        else {
+            missingFunctions.push(funcName);
+
         }
     });
+    
+    console.log(`📊 Total de funções carregadas: ${loadedFunctions.length}/${criticalFunctions.length}`);
+    
+    // ✅ AGORA MOSTRA APENAS AS QUE FORAM ENCONTRADAS
+    if (loadedFunctions.length > 0) {
+        console.log('🎯 Funções disponíveis:', loadedFunctions.join(', '));
+    } else {
+        console.warn('⚠️ Nenhuma função crítica foi carregada');
+    }
+    console.log(`📊 Resumo: ${loadedFunctions.length}/${criticalFunctions.length} funções carregadas`);
+    
+    if (missingFunctions.length > 0) {
+        console.warn(`⚠️ Funções faltando: ${missingFunctions.join(', ')}`);
+    }
+}
+
+
+
+/**
+ * ✅ VERIFICAÇÃO CONTÍNUA DO BOTÃO E ESTADO
+ */
+function setupContinuousButtonMonitoring() {
+    let checkCount = 0;
+    const maxChecks = 60;
+    
+    const monitorInterval = setInterval(() => {
+        checkCount++;
+        
+        updateAddObraButtonState();
+        
+        if (typeof window.addNewObra === 'function' && !window.addNewObra._protected) {
+            setupAddObraButtonProtection();
+        }
+        
+        if (window.systemLoaded || checkCount >= maxChecks) {
+            clearInterval(monitorInterval);
+            if (window.systemLoaded) {
+                console.log('✅ Monitoramento do botão finalizado - sistema carregado');
+            } else {
+                console.warn('⚠️ Monitoramento do botão finalizado por timeout');
+            }
+        }
+    }, 1000);
 }
 
 /**
@@ -325,8 +384,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Inicializando sistema...");
   
   try {
-    // ✅ O LOGGER JÁ ESTÁ ATIVO (embutido no início do arquivo)
-    // NÃO há mais tentativa de carregar logger externo!
+    // ✅ CONFIGURAR PROTEÇÕES IMEDIATAS
+    setupDirectButtonProtection();
+    setupAddObraButtonProtection();
+    setupContinuousButtonMonitoring();
+    
+    // ✅ INICIAR OBSERVER DO CARREGAMENTO
+    setupSystemLoadObserver();
     
     // ✅ Inicializar sistema completo
     await initializeSystem();
@@ -337,7 +401,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     if (!hasExistingSession) {
       console.log("📭 Nenhuma sessão existente - sistema começa vazio");
-      console.log("💡 Dica: Clique em 'Nova Obra' para começar");
+      console.log("💡 Dica: Clique em 'Nova Obra' para começar (após carregamento)");
     }
     
     // ✅ Verificar obras existentes
@@ -348,8 +412,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     // ✅ Mostrar status para usuário
     showSystemStatusMessage(hasExistingSession);
     
-    // ✅ Debug final
-    setTimeout(finalSystemDebug, 1000);
+    // ✅ Verificação final do estado do sistema
+    setTimeout(() => {
+        checkSystemLoaded();
+        finalSystemDebug();
+    }, 1000);
     
     // ✅ Verificar funções críticas após inicialização completa
     setTimeout(verifyCriticalFunctions, 2000);

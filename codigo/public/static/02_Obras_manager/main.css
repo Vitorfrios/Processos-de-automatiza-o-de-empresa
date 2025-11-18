@@ -9,7 +9,8 @@ body[data-page="manager"] {
 body[data-page="manager"] .btn-salvar,
 body[data-page="manager"] .btn-add-secondary,
 body[data-page="manager"] .add-project-section,
-body[data-page="manager"] .add-room-section {
+body[data-page="manager"] .add-room-section,
+body[data-page="manager"] .add-machine {
     display: none !important;
 }
 
