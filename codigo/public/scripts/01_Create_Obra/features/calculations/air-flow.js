@@ -46,7 +46,9 @@ function calculateDoorFlow(doorCount, doorVariable, pressure) {
 function computeAirFlowRate(inputData) {
     const numPortasDuplas = safeNumber(inputData.numPortasDuplas);
     const numPortasSimples = safeNumber(inputData.numPortasSimples);
-    const pressure = inputData.pressurizacao ? safeNumber(inputData.setpointTemp) : 0;
+    
+    // ✅ CORREÇÃO: Usar pressurizacaoSetpoint em vez de setpointTemp
+    const pressure = inputData.pressurizacao ? safeNumber(inputData.pressurizacaoSetpoint) : 0;
 
     // Validação de constantes
     if (!window.systemConstants?.VARIAVEL_PD || !window.systemConstants?.VARIAVEL_PS) {
@@ -180,7 +182,7 @@ function validateAirFlowInputs(inputData) {
         return false;
     }
     
-    if (inputData.pressurizacao && safeNumber(inputData.setpointTemp) < 0) {
+    if (inputData.pressurizacao && safeNumber(inputData.pressurizacaoSetpoint) < 0) {
         console.warn("Pressurização não pode ser negativa");
         return false;
     }
@@ -197,7 +199,7 @@ function prepareAirFlowData(rawData) {
     const prepared = { ...rawData };
     
     // Converter campos numéricos
-    const numericFields = ['numPortasDuplas', 'numPortasSimples', 'setpointTemp'];
+    const numericFields = ['numPortasDuplas', 'numPortasSimples', 'pressurizacaoSetpoint'];
     numericFields.forEach(field => {
         if (prepared[field] !== undefined) {
             prepared[field] = safeNumber(prepared[field]);
@@ -208,7 +210,7 @@ function prepareAirFlowData(rawData) {
     if (prepared.numPortasDuplas === undefined) prepared.numPortasDuplas = 0;
     if (prepared.numPortasSimples === undefined) prepared.numPortasSimples = 0;
     if (prepared.pressurizacao === undefined) prepared.pressurizacao = false;
-    if (prepared.setpointTemp === undefined) prepared.setpointTemp = 0;
+    if (prepared.pressurizacaoSetpoint === undefined) prepared.pressurizacaoSetpoint = 0;
     
     return prepared;
 }
@@ -222,7 +224,7 @@ function prepareAirFlowData(rawData) {
 function getAirFlowStats(inputData, result) {
     const numPortasDuplas = safeNumber(inputData.numPortasDuplas);
     const numPortasSimples = safeNumber(inputData.numPortasSimples);
-    const pressure = inputData.pressurizacao ? safeNumber(inputData.setpointTemp) : 0;
+    const pressure = inputData.pressurizacao ? safeNumber(inputData.pressurizacaoSetpoint) : 0;
     
     return {
         totalPortas: numPortasDuplas + numPortasSimples,

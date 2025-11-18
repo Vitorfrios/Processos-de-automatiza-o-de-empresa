@@ -1,4 +1,49 @@
+// data/modules/climatizacao/climatizacao-fill.js - FUNÇÕES DE SINCRONIZAÇÃO ADICIONADAS
+
 import { calculateVazaoArAndThermalGains } from '../../../features/calculations/air-flow.js';
+
+// ✅ ADICIONAR: Funções de sincronização locais
+function setupRoomTitleChangeListener(roomId) {
+    console.log(`🎯 Configurando listener de título para sala: ${roomId}`);
+    
+    const roomTitle = document.querySelector(`[data-room-id="${roomId}"] .room-title`);
+    const ambienteInput = document.querySelector(`input[data-field="ambiente"][data-room-id="${roomId}"]`);
+    
+    if (roomTitle && ambienteInput) {
+        // Sincronização Ambiente → Título
+        ambienteInput.addEventListener('input', function() {
+            if (this.value && this.value.trim() !== '' && this.value !== roomTitle.textContent) {
+                if (typeof window.syncAmbienteToTitle === 'function') {
+                    window.syncAmbienteToTitle(roomId, this.value);
+                } else {
+                    // Fallback direto
+                    roomTitle.textContent = this.value;
+                    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+                    if (roomBlock) {
+                        roomBlock.dataset.roomName = this.value;
+                    }
+                    console.log(`🔄 Ambiente → Título: "${this.value}"`);
+                }
+                triggerCalculation(roomId);
+            }
+        });
+        
+        console.log(`✅ Listener título↔ambiente configurado para ${roomId}`);
+    }
+}
+
+function triggerCalculation(roomId) {
+    setTimeout(() => {
+        if (typeof calculateVazaoArAndThermalGains === 'function') {
+            calculateVazaoArAndThermalGains(roomId);
+        }
+    }, 100);
+}
+
+// ✅ ADICIONAR: Tornar funções globais para compatibilidade
+if (typeof window !== 'undefined') {
+    window.setupRoomTitleChangeListener = setupRoomTitleChangeListener;
+}
 
 /**
  * Preenche os campos de climatização de uma sala com dados do JSON
@@ -12,6 +57,14 @@ function fillClimatizationInputs(roomElement, inputsData) {
     console.log(`🔄 Preenchendo inputs de climatização:`, inputsData);
 
     const roomId = roomElement.dataset.roomId;
+    const roomName = roomElement.dataset.roomName;
+    
+    // ✅ CORREÇÃO: Preencher campo ambiente com nome da sala se estiver vazio
+    const ambienteInput = roomElement.querySelector(`input[data-field="ambiente"]`);
+    if (ambienteInput && (!inputsData.ambiente || inputsData.ambiente === '') && roomName) {
+        inputsData.ambiente = roomName;
+        console.log(`✅ Campo ambiente preenchido automaticamente com nome da sala: "${roomName}"`);
+    }
     
     // PRIMEIRO: Processar pressurização (radio buttons) - CRÍTICO
     if (inputsData.pressurizacao !== undefined) {
@@ -195,6 +248,23 @@ function fillClimatizationInputs(roomElement, inputsData) {
                 }
             }
             
+            // ✅ CORREÇÃO MELHORADA: Configurar TODAS as sincronizações após preenchimento
+            setTimeout(() => {
+                console.log(`🎯 CONFIGURANDO TODAS AS SINCRONIZAÇÕES PARA: ${roomId}`);
+                
+                // 1. Sincronização Título ↔ Ambiente
+                setupRoomTitleChangeListener(roomId);
+                
+                // 2. Sincronização das Paredes usando a lógica escolhida
+                if (typeof window.setupCompleteRoomSync === 'function') {
+                    window.setupCompleteRoomSync(roomId);
+                }
+                
+                console.log(`✅ Todas as sincronizações configuradas para: ${roomId}`);
+            }, 500);
+
+            console.log(`✅ Processo de preenchimento iniciado para sala ${roomId}`);
+            
             // Disparar cálculo final após todos os campos estarem preenchidos
             if (roomId && typeof calculateVazaoArAndThermalGains === 'function') {
                 setTimeout(() => {
@@ -202,6 +272,7 @@ function fillClimatizationInputs(roomElement, inputsData) {
                     calculateVazaoArAndThermalGains(roomId);
                 }, 300);
             }
+
         }, 150);
 
     }, 400); // Delay maior para garantir que a pressurização foi processada primeiro
@@ -397,7 +468,15 @@ async function ensureAllRoomSections(roomElement) {
                 return true;
             }
         }
-
+        setTimeout(() => {
+            console.log(`🔧 CONFIGURANDO SINCRONIZAÇÕES APÓS CRIAR SEÇÕES: ${roomId}`);
+            
+            if (typeof window.setupCompleteRoomSync === 'function') {
+                window.setupCompleteRoomSync(roomId);
+            }
+            
+            console.log(`✅ Sincronizações configuradas após criação de seções: ${roomId}`);
+        }, 1000);
         console.log(`❌ Não foi possível criar todas as seções para sala ${roomName}`);
         return false;
 
@@ -413,5 +492,6 @@ export {
     fillThermalGainsData,
     fillCapacityData,
     fillConfigurationData,
-    ensureAllRoomSections
+    ensureAllRoomSections,
+    setupRoomTitleChangeListener
 };

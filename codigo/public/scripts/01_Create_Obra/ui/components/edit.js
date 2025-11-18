@@ -171,6 +171,7 @@ function saveInlineEdit(element, type) {
  * @param {string} originalText - Texto original
  * @returns {void}
  */
+
 function applyNameChange(element, newText, type, originalText) {
     element.textContent = newText;
     
@@ -185,6 +186,17 @@ function applyNameChange(element, newText, type, originalText) {
     if (dataAttribute && element.closest(`[data-${dataAttribute}]`)) {
         const parentElement = element.closest(`[data-${dataAttribute}]`);
         parentElement.dataset[dataAttribute] = newText;
+        
+        // ✅ CORREÇÃO CRÍTICA: Se for uma sala, sincronizar com campo ambiente
+        if (type === 'room') {
+            const roomId = parentElement.dataset.roomId;
+            if (roomId) {
+                console.log(`🔄 Título da sala alterado: "${originalText}" → "${newText}" → sincronizando com ambiente`);
+                
+                // ✅ CORREÇÃO: Sincronização imediata e direta
+                syncTitleToAmbienteDirect(roomId, newText);
+            }
+        }
     }
     
     // Log apropriado para o tipo
@@ -207,6 +219,68 @@ function applyNameChange(element, newText, type, originalText) {
         }
     });
     element.dispatchEvent(changeEvent);
+}
+
+// ✅ ADICIONAR: Função de sincronização direta título → ambiente
+function syncTitleToAmbienteDirect(roomId, newTitle) {
+    console.log(`🎯 SINCRONIZAÇÃO DIRETA TÍTULO → AMBIENTE: ${roomId} → "${newTitle}"`);
+    
+    // Estratégia 1: Buscar pelo data-field e data-room-id
+    let ambienteInput = document.querySelector(`input[data-field="ambiente"][data-room-id="${roomId}"]`);
+    
+    // Estratégia 2: Buscar dentro do room-block
+    if (!ambienteInput) {
+        const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+        if (roomBlock) {
+            ambienteInput = roomBlock.querySelector('input[data-field="ambiente"]');
+        }
+    }
+    
+    // Estratégia 3: Buscar por placeholder
+    if (!ambienteInput) {
+        const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+        if (roomBlock) {
+            ambienteInput = roomBlock.querySelector('input[placeholder*="ambiente" i]') || 
+                           roomBlock.querySelector('input[placeholder*="sala" i]');
+        }
+    }
+    
+    if (ambienteInput) {
+        // ✅ CORREÇÃO: Atualizar valor apenas se for diferente
+        if (ambienteInput.value !== newTitle) {
+            ambienteInput.value = newTitle;
+            console.log(`✅ SINCRONIZAÇÃO BEM-SUCEDIDA: Título → Ambiente: "${newTitle}"`);
+            
+            // Disparar evento change para acionar cálculos
+            const changeEvent = new Event('change', { bubbles: true });
+            ambienteInput.dispatchEvent(changeEvent);
+            
+            // Disparar cálculo diretamente
+            setTimeout(() => {
+                if (typeof window.calculateVazaoArAndThermalGains === 'function') {
+                    window.calculateVazaoArAndThermalGains(roomId);
+                }
+            }, 100);
+        } else {
+            console.log(`⏭️  Sincronização não necessária: valores já estão iguais`);
+        }
+    } else {
+        console.error(`❌ FALHA NA SINCRONIZAÇÃO: Campo ambiente não encontrado para sala ${roomId}`);
+        
+        // Debug: mostrar todos os inputs disponíveis
+        const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+        if (roomBlock) {
+            console.log('🔍 Inputs disponíveis no room-block:');
+            roomBlock.querySelectorAll('input').forEach(input => {
+                console.log(`  - Input:`, {
+                    'data-field': input.dataset.field,
+                    'data-room-id': input.dataset.roomId,
+                    placeholder: input.placeholder,
+                    value: input.value
+                });
+            });
+        }
+    }
 }
 
 /**
