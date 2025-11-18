@@ -1,6 +1,9 @@
 // data/modules/climatizacao/climatizacao-fill.js - FUNÇÕES DE SINCRONIZAÇÃO ADICIONADAS
 
 import { calculateVazaoArAndThermalGains } from '../../../features/calculations/air-flow.js';
+import { triggerCalculation } from '../../../core/shared-utils.js';
+
+
 
 // ✅ ADICIONAR: Funções de sincronização locais
 function setupRoomTitleChangeListener(roomId) {
@@ -32,13 +35,7 @@ function setupRoomTitleChangeListener(roomId) {
     }
 }
 
-function triggerCalculation(roomId) {
-    setTimeout(() => {
-        if (typeof calculateVazaoArAndThermalGains === 'function') {
-            calculateVazaoArAndThermalGains(roomId);
-        }
-    }, 100);
-}
+
 
 // ✅ ADICIONAR: Tornar funções globais para compatibilidade
 if (typeof window !== 'undefined') {

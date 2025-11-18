@@ -120,6 +120,289 @@
       "dataCadastro": "2025-11-12T18:01:41.248Z",
       "orcamentistaResponsavel": "Vitor Rios",
       "idGerado": "obra_ACT_151"
+    },
+    {
+      "id": "obra_i58",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_i58",
+      "empresaSigla": "ACT",
+      "empresaNome": "AeroCool Technologies",
+      "numeroClienteFinal": 152,
+      "clienteFinal": "vdsfv",
+      "codigoCliente": "dfvdfv",
+      "dataCadastro": "18/11/2025",
+      "orcamentistaResponsavel": "dfvdfv",
+      "projetos": [
+        {
+          "id": "obra_i58_proj_i19_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_i58_proj_i19_2_sala_h85_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala de Servidores",
+                "backup": "n+1",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 5.5,
+                "paredeLeste": 5.5,
+                "paredeNorte": 8,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "numPortasDuplas": 2,
+                "numPortasSimples": 3,
+                "combateIncendio": "fm200",
+                "pressurizacao": true
+              },
+              "maquinas": [
+                {
+                  "nome": "Maquina1",
+                  "tipo": "Wall Mounted",
+                  "potencia": "3TR",
+                  "tensao": "220V/3F",
+                  "precoBase": 34852.8,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 5300,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 200,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Umidificação",
+                      "value": 9200,
+                      "originalName": "Umidificação",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
+                      "value": 2070,
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 5,
+                      "name": "2 Dampers com atuador on/off",
+                      "value": 4470,
+                      "originalName": "2 Dampers com atuador on/off",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 6,
+                      "name": "Ventilador Eletrônico",
+                      "value": 4000,
+                      "originalName": "Ventilador Eletrônico",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 7,
+                      "name": "Controle de Condensação Proporcional",
+                      "value": 9300,
+                      "originalName": "Controle de Condensação Proporcional",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 8,
+                      "name": "Goldfin",
+                      "value": 1400,
+                      "originalName": "Goldfin",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 9,
+                      "name": "Sensor de Filtro Sujo",
+                      "value": 1100,
+                      "originalName": "Sensor de Filtro Sujo",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 10,
+                      "name": "Resistencia de Aquecimento",
+                      "value": 2100,
+                      "originalName": "Resistencia de Aquecimento",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 11,
+                      "name": "Pintura Especial",
+                      "value": 5500,
+                      "originalName": "Pintura Especial",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 12,
+                      "name": "Chaparia em Inox",
+                      "value": 17426.4,
+                      "originalName": "Chaparia em Inox",
+                      "potenciaAplicada": "3TR"
+                    }
+                  ],
+                  "precoTotal": 101919.2,
+                  "potenciaSelecionada": "3TR",
+                  "tipoSelecionado": "Wall Mounted"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 1.2,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 2,
+                "solucaoBackup": 3,
+                "totalCapacidade": 20,
+                "folga": 42.9,
+                "backup": "n+1"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 46748,
+                "total-tr": 14,
+                "total-externo": 6642,
+                "total-divisoes": 2216,
+                "total-piso": 1013,
+                "total-iluminacao": 350,
+                "total-dissi": 5000,
+                "total-pessoas": 2198,
+                "total-ar-sensivel": 9241,
+                "total-ar-latente": 20090
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obra_l58",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_l58",
+      "empresaSigla": "ACT",
+      "empresaNome": "AeroCool Technologies",
+      "numeroClienteFinal": 1,
+      "clienteFinal": "qwag",
+      "codigoCliente": "asg",
+      "dataCadastro": "18/11/2025",
+      "orcamentistaResponsavel": "asg",
+      "projetos": [
+        {
+          "id": "obra_l58_proj_r95_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_l58_proj_r95_2_sala_e24_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "fffffasdfasdfsadfasdfsadfasdf",
+                "backup": "n+2",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 6,
+                "paredeLeste": 5.5,
+                "paredeNorte": 6,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacaoSetpoint": 30,
+                "setpointTemp": 25.5,
+                "numPortasDuplas": 2,
+                "numPortasSimples": 3,
+                "combateIncendio": "fm200",
+                "pressurizacao": true
+              },
+              "maquinas": [
+                {
+                  "nome": "Maquina1",
+                  "tipo": "Split System",
+                  "potencia": "35TR",
+                  "tensao": "380V/3F",
+                  "precoBase": 62500,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 2,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "35TR"
+                    },
+                    {
+                      "id": 6,
+                      "name": "Ventilador Eletrônico",
+                      "value": 6,
+                      "originalName": "Ventilador Eletrônico",
+                      "potenciaAplicada": "35TR"
+                    },
+                    {
+                      "id": 8,
+                      "name": "Goldfin",
+                      "value": 8,
+                      "originalName": "Goldfin",
+                      "potenciaAplicada": "35TR"
+                    }
+                  ],
+                  "precoTotal": 67516,
+                  "potenciaSelecionada": "35TR",
+                  "tipoSelecionado": "Split System"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 1.2,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 2,
+                "solucaoBackup": 4,
+                "totalCapacidade": 20,
+                "folga": 33.3,
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 49543,
+                "total-tr": 15,
+                "total-externo": 6493,
+                "total-divisoes": 2368,
+                "total-piso": 1013,
+                "total-iluminacao": 350,
+                "total-dissi": 5000,
+                "total-pessoas": 2198,
+                "total-ar-sensivel": 10120,
+                "total-ar-latente": 22002
+              },
+              "configuracao": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -9,6 +9,7 @@ import { buildMachinesSection } from './machines/machines-core.js';
 import { buildConfigurationSection } from './configuracao.js';
 import { generateRoomId } from '../utils/id-generator.js';
 import { removeEmptyProjectMessage, showEmptyProjectMessageIfNeeded } from '../../ui/helpers.js';
+import { triggerCalculation, syncTitleToAmbienteDirect } from '../../core/shared-utils.js';
 
 // Cache para módulo de máquinas
 let machinesPreloadModule = null;
@@ -492,27 +493,8 @@ function findAmbienteInput(roomId) {
            roomBlock.querySelector('input[placeholder*="sala" i]');
 }
 
-// ✅ FUNÇÃO AUXILIAR PARA SINCRONIZAÇÃO TÍTULO → AMBIENTE
-function syncTitleToAmbienteDirect(roomId, newTitle) {
-    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
-    if (!roomBlock) return;
-    
-    const ambienteInput = findAmbienteInput(roomId);
-    if (ambienteInput && ambienteInput.value !== newTitle) {
-        ambienteInput.value = newTitle;
-        console.log(`✅ Título → Ambiente: "${newTitle}"`);
-        triggerCalculation(roomId);
-    }
-}
 
-// ✅ FUNÇÃO AUXILIAR PARA CÁLCULOS
-function triggerCalculation(roomId) {
-    setTimeout(() => {
-        if (typeof window.calculateVazaoArAndThermalGains === 'function') {
-            window.calculateVazaoArAndThermalGains(roomId);
-        }
-    }, 100);
-}
+
 
 
 // ✅ FUNÇÃO PARA VERIFICAÇÃO COMPLETA DO SETUP

@@ -2,7 +2,10 @@
 // VERSÃO COMPLETA COM TODAS AS EXPORTAÇÕES
 
 import { calculateVazaoArAndThermalGains } from '../../../features/calculations/air-flow.js';
+import { triggerCalculation } from '../../../core/shared-utils.js';
 
+// ❌ REMOVER a função local
+// function triggerCalculation(roomId) { ... }
 // =============================================================================
 // SINCRONIZAÇÃO GLOBAL - FUNÇÕES COMPLETAS
 // =============================================================================
@@ -159,14 +162,7 @@ if (typeof window !== 'undefined') {
         }
     }
 
-    // ✅ FUNÇÃO AUXILIAR PARA CÁLCULOS
-    function triggerCalculation(roomId) {
-        setTimeout(() => {
-            if (typeof calculateVazaoArAndThermalGains === 'function') {
-                calculateVazaoArAndThermalGains(roomId);
-            }
-        }, 100);
-    }
+
 
     // Atribuir às variáveis de exportação
     handleWallInputSync = window.handleWallInputSync;

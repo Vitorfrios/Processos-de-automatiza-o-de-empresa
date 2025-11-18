@@ -73,14 +73,25 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
       • getConstant
 ------------------------------------------------------------
 
+📁 ARQUIVO: 01_Create_Obra/core\logger.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 128
+   🔧 Funções encontradas: 0
+------------------------------------------------------------
+
 📁 ARQUIVO: 01_Create_Obra/core\shared-utils.js
    📂 Pasta base: 01_Create_Obra
-   📏 Linhas de código: 8
-   🔧 Funções encontradas: 1
+   📏 Linhas de código: 73
+   🔧 Funções encontradas: 3
    📋 Lista de funções:
       • attachModuleToWindow() (usada em 1 arquivos)
+      • syncTitleToAmbienteDirect() (usada em 1 arquivos)
+      • triggerCalculation() (usada em 1 arquivos)
    📤 EXPORTS:
       • attachModuleToWindow
+      • triggerCalculation
+      • // 🔄 NOVA
+    syncTitleToAmbienteDirect  // 🔄 NOVA
 ------------------------------------------------------------
 
 📁 ARQUIVO: 01_Create_Obra/data\adapters\obra-adapter-folder\empresa-autocomplete.js
@@ -350,8 +361,8 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
 
 📁 ARQUIVO: 01_Create_Obra/data\builders\ui-folder\data-fillers.js
    📂 Pasta base: 01_Create_Obra
-   📏 Linhas de código: 497
-   🔧 Funções encontradas: 7
+   📏 Linhas de código: 494
+   🔧 Funções encontradas: 6
    📋 Lista de funções:
       • ensureAllRoomSections() (usada em 1 arquivos)
       • fillCapacityData() (usada em 1 arquivos)
@@ -359,9 +370,9 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
       • fillConfigurationData() (usada em 1 arquivos)
       • fillThermalGainsData() (usada em 1 arquivos)
       • setupRoomTitleChangeListener() (usada em 1 arquivos)
-      • triggerCalculation() (usada em 3 arquivos)
    📥 IMPORTS:
       • {  calculateVazaoArAndThermalGains  } from '../../../features/calculations/air-flow.js'
+      • {  triggerCalculation  } from '../../../core/shared-utils.js'
    📤 EXPORTS:
       • fillClimatizationInputs
       • fillThermalGainsData
@@ -479,7 +490,7 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
 
 📁 ARQUIVO: 01_Create_Obra/data\modules\climatizate\climatizacao-builder.js
    📂 Pasta base: 01_Create_Obra
-   📏 Linhas de código: 774
+   📏 Linhas de código: 778
    🔧 Funções encontradas: 10
    📋 Lista de funções:
       • buildClimaCell() (usada em 1 arquivos)
@@ -509,15 +520,15 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
 
 📁 ARQUIVO: 01_Create_Obra/data\modules\climatizate\climatizacao-sync.js
    📂 Pasta base: 01_Create_Obra
-   📏 Linhas de código: 187
-   🔧 Funções encontradas: 4
+   📏 Linhas de código: 183
+   🔧 Funções encontradas: 3
    📋 Lista de funções:
       • setupTitleAmbienteSyncDirect() (usada em 1 arquivos)
       • setupWallEventListenersDirect() (usada em 1 arquivos)
       • setupWallInput() (usada em 1 arquivos)
-      • triggerCalculation() (usada em 3 arquivos)
    📥 IMPORTS:
       • {  calculateVazaoArAndThermalGains  } from '../../../features/calculations/air-flow.js'
+      • {  triggerCalculation  } from '../../../core/shared-utils.js'
    📤 EXPORTS:
       • handleWallInputSync
       • syncTitleToAmbiente
@@ -537,8 +548,8 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
 
 📁 ARQUIVO: 01_Create_Obra/data\modules\machines\capacity-calculator.js
    📂 Pasta base: 01_Create_Obra
-   📏 Linhas de código: 624
-   🔧 Funções encontradas: 21
+   📏 Linhas de código: 688
+   🔧 Funções encontradas: 23
    📋 Lista de funções:
       • applyBackupConfiguration() (usada em 1 arquivos)
       • applyCapacityData() (usada em 1 arquivos)
@@ -550,7 +561,9 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
       • getBackupFromClimatization() (usada em 1 arquivos)
       • getCapacityData() (usada em 1 arquivos)
       • getThermalLoadTR() (usada em 1 arquivos)
+      • handleClimaBackupChange() (usada em 1 arquivos)
       • handleClimaInputBackupChange() (usada em 1 arquivos)
+      • handleClimaInputBackupChangeFromEvent() (usada em 1 arquivos)
       • initializeCapacitySystem() (usada em 1 arquivos)
       • initializeStaticCapacityTable() (usada em 1 arquivos)
       • loadCapacityData() (usada em 1 arquivos)
@@ -574,6 +587,7 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
       • handleClimaInputBackupChange
       • syncCapacityTableBackup
       • initializeStaticCapacityTable
+      • handleClimaInputBackupChangeFromEvent
 ------------------------------------------------------------
 
 📁 ARQUIVO: 01_Create_Obra/data\modules\machines\machines-core.js
@@ -633,8 +647,8 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
 
 📁 ARQUIVO: 01_Create_Obra/data\modules\rooms.js
    📂 Pasta base: 01_Create_Obra
-   📏 Linhas de código: 819
-   🔧 Funções encontradas: 25
+   📏 Linhas de código: 801
+   🔧 Funções encontradas: 23
    📋 Lista de funções:
       • addNewRoom() (usada em 1 arquivos)
       • addNewRoomLegacy() (usada em 1 arquivos)
@@ -658,8 +672,6 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
       • setupFirstInteractionWallSync() (usada em 1 arquivos)
       • setupTitleChangeObserver() (usada em 1 arquivos)
       • syncOppositeWallInitial() (usada em 1 arquivos)
-      • syncTitleToAmbienteDirect() (usada em 2 arquivos)
-      • triggerCalculation() (usada em 3 arquivos)
       • verifyRoomSetupComplete() (usada em 1 arquivos)
    📥 IMPORTS:
       • {  buildClimatizationSection  } from './climatizacao.js'
@@ -667,6 +679,7 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
       • {  buildConfigurationSection  } from './configuracao.js'
       • {  generateRoomId  } from '../utils/id-generator.js'
       • {  removeEmptyProjectMessage, showEmptyProjectMessageIfNeeded  } from '../../ui/helpers.js'
+      • {  triggerCalculation, syncTitleToAmbienteDirect  } from '../../core/shared-utils.js'
    📤 EXPORTS:
       • // Construção
     buildRoomHTML
@@ -1048,30 +1061,64 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
       • deleteProject
 ------------------------------------------------------------
 
-📁 ARQUIVO: 01_Create_Obra/main.js
+📁 ARQUIVO: 01_Create_Obra/main-folder\error-handler.js
    📂 Pasta base: 01_Create_Obra
-   📏 Linhas de código: 778
-   🔧 Funções encontradas: 8
+   📏 Linhas de código: 170
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • showServerOfflineMessage() (usada em 1 arquivos)
+      • showSystemWarning() (usada em 1 arquivos)
+   📤 EXPORTS:
+      • showServerOfflineMessage
+      • showSystemWarning
+------------------------------------------------------------
+
+📁 ARQUIVO: 01_Create_Obra/main-folder\session-manager-main.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 81
+   🔧 Funções encontradas: 2
    📋 Lista de funções:
       • checkAndLoadExistingSession() (usada em 1 arquivos)
-      • finalSystemDebug() (usada em 1 arquivos)
-      • initializeEmpresaCadastro() (usada em 1 arquivos)
-      • loadAllModules() (usada em 1 arquivos)
-      • loadSystemConstants() (usada em 1 arquivos)
-      • showServerOfflineMessage() (usada em 1 arquivos)
-      • verifyAndCreateBaseObra() (usada em 1 arquivos)
       • verifyCriticalFunctions() (usada em 1 arquivos)
    📥 IMPORTS:
-      • {  loadObrasFromServer  } from './data/adapters/obra-adapter.js'
-      • {  getGeralCount  } from './data/adapters/session-adapter.js'
-      • {  shutdownManual  } from './data/adapters/shutdown-adapter.js'
-      • { EmpresaCadastroInline } from './data/builders/empresa-cadastro-inline.js'
+      • {  loadObrasFromServer  } from '../data/adapters/obra-adapter.js'
+   📤 EXPORTS:
+      • verifyCriticalFunctions
+------------------------------------------------------------
+
+📁 ARQUIVO: 01_Create_Obra/main-folder\system-init.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 92
+   🔧 Funções encontradas: 2
+   📋 Lista de funções:
+      • initializeSystem() (usada em 1 arquivos)
+      • loadSystemConstants() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  loadSystemConstants  } from './core/system-constants.js'
+      • {  loadAllModules  } from './core/module-loader.js'
+      • {  initializeEmpresaCadastro  } from './core/empresa-init.js'
+      • { ShutdownManager } from './core/shutdown-manager.js'
+------------------------------------------------------------
+
+📁 ARQUIVO: 01_Create_Obra/main.js
+   📂 Pasta base: 01_Create_Obra
+   📏 Linhas de código: 139
+   🔧 Funções encontradas: 4
+   📋 Lista de funções:
+      • finalSystemDebug() (usada em 1 arquivos)
+      • handleInitializationError() (usada em 1 arquivos)
+      • showSystemStatusMessage() (usada em 1 arquivos)
+      • verifyAndCreateBaseObra() (usada em 1 arquivos)
+   📥 IMPORTS:
+      • {  initializeSystem  } from './main-folder/system-init.js'
+      • {  checkAndLoadExistingSession  } from './main-folder/session-manager-main.js'
+      • {  showServerOfflineMessage  } from './main-folder/error-handler.js'
 ------------------------------------------------------------
 
 📁 ARQUIVO: 01_Create_Obra/ui\components\edit.js
    📂 Pasta base: 01_Create_Obra
-   📏 Linhas de código: 560
-   🔧 Funções encontradas: 19
+   📏 Linhas de código: 500
+   🔧 Funções encontradas: 18
    📋 Lista de funções:
       • applyNameChange() (usada em 1 arquivos)
       • attachEditingEventListeners() (usada em 1 arquivos)
@@ -1090,9 +1137,9 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
       • saveInlineEdit() (usada em 1 arquivos)
       • selectElementContent() (usada em 1 arquivos)
       • showEditError() (usada em 1 arquivos)
-      • syncTitleToAmbienteDirect() (usada em 2 arquivos)
       • validateEditedText() (usada em 1 arquivos)
    📥 IMPORTS:
+      • {  syncTitleToAmbienteDirect  } from '../../core/shared-utils.js'
       • {  isValidElement  } from '../../data/utils/core-utils.js'
    📤 EXPORTS:
       • // Sistema principal de edição
@@ -1328,16 +1375,7 @@ DETALHAMENTO POR ARQUIVO (TODAS AS PASTAS)
 ANÁLISE DE FUNÇÕES DUPLICADAS (ENTRE TODAS AS PASTAS)
 ================================================================================
 
-🚨 FUNÇÕES DUPLICADAS ENCONTRADAS: 2
-
-🔧 function triggerCalculation() - aparece em 3 arquivos:
-   📁 01_Create_Obra/data\builders\ui-folder\data-fillers.js (1x) - 🔴 DEFINIDA
-   📁 01_Create_Obra/data\modules\rooms.js (1x) - 🔴 DEFINIDA
-   📁 01_Create_Obra/data\modules\climatizate\climatizacao-sync.js (1x) - 🔴 DEFINIDA
-
-🔧 function syncTitleToAmbienteDirect() - aparece em 2 arquivos:
-   📁 01_Create_Obra/data\modules\rooms.js (1x) - 🔴 DEFINIDA
-   📁 01_Create_Obra/ui\components\edit.js (1x) - 🔴 DEFINIDA
+✅ Nenhuma função duplicada encontrada!
 
 
 ================================================================================
@@ -1345,27 +1383,29 @@ ESTATÍSTICAS GERAIS
 ================================================================================
 
 📊 ESTATÍSTICAS:
-   • Total de arquivos .js: 49
-   • Total de linhas de código: 14816
-   • Total de funções: 360
-   • Total de imports: 76
-   • Total de exports: 353
-   • Funções duplicadas: 2
+   • Total de arquivos .js: 53
+   • Total de linhas de código: 14696
+   • Total de funções: 361
+   • Total de imports: 84
+   • Total de exports: 359
+   • Funções duplicadas: 0
 
 🏆 TOP 10 ARQUIVOS COM MAIS FUNÇÕES:
     1. 01_Create_Obra/data\modules\machines\machines-core.js: 26 funções, 602 linhas
-    2. 01_Create_Obra/data\modules\rooms.js: 25 funções, 819 linhas
-    3. 01_Create_Obra/data\modules\machines\capacity-calculator.js: 21 funções, 624 linhas
+    2. 01_Create_Obra/data\modules\rooms.js: 23 funções, 801 linhas
+    3. 01_Create_Obra/data\modules\machines\capacity-calculator.js: 23 funções, 688 linhas
     4. 01_Create_Obra/data\adapters\session-adapter.js: 20 funções, 312 linhas
-    5. 01_Create_Obra/ui\components\edit.js: 19 funções, 560 linhas
+    5. 01_Create_Obra/ui\components\edit.js: 18 funções, 500 linhas
     6. 01_Create_Obra/features\calculations\thermal-gains.js: 17 funções, 460 linhas
     7. 01_Create_Obra/data\utils\id-generator.js: 16 funções, 282 linhas
     8. 01_Create_Obra/ui\components\modal\modal.js: 16 funções, 548 linhas
     9. 01_Create_Obra/data\utils\data-utils.js: 13 funções, 456 linhas
    10. 01_Create_Obra/ui\components\status.js: 12 funções, 229 linhas
 
-⚠️  ARQUIVOS SEM EXPORTS (4):
+⚠️  ARQUIVOS SEM EXPORTS (6):
+   • 01_Create_Obra/core\logger.js
    • 01_Create_Obra/data\adapters\obra-adapter.js
    • 01_Create_Obra/data\builders\data-builders.js
    • 01_Create_Obra/data\builders\ui-builders.js
+   • 01_Create_Obra/main-folder\system-init.js
    • 01_Create_Obra/main.js
