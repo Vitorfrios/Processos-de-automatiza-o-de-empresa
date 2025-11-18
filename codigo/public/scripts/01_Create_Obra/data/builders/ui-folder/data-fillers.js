@@ -1,9 +1,7 @@
-// data/modules/climatizacao/climatizacao-fill.js - FUNÇÕES DE SINCRONIZAÇÃO ADICIONADAS
+// data/modules/climatizacao/data-fill.js 
 
 import { calculateVazaoArAndThermalGains } from '../../../features/calculations/air-flow.js';
 import { triggerCalculation } from '../../../core/shared-utils.js';
-
-
 
 // ✅ ADICIONAR: Funções de sincronização locais
 function setupRoomTitleChangeListener(roomId) {
@@ -34,8 +32,6 @@ function setupRoomTitleChangeListener(roomId) {
         console.log(`✅ Listener título↔ambiente configurado para ${roomId}`);
     }
 }
-
-
 
 // ✅ ADICIONAR: Tornar funções globais para compatibilidade
 if (typeof window !== 'undefined') {
@@ -289,9 +285,11 @@ function fillThermalGainsData(roomElement, thermalGainsData) {
     const roomId = roomElement.dataset.roomId;
     console.log(`🔄 Preenchendo ganhos térmicos para sala ${roomId}:`, thermalGainsData);
 
+    // ✅ CORREÇÃO: Atualizar os seletores para os novos IDs
     const gainSelectors = {
         'total-ganhos-w': `#total-ganhos-w-${roomId}`,
-        'total-tr': `#total-tr-${roomId}`,
+        'total-tr-aprox': `#total-tr-aprox-${roomId}`, // ✅ NOVO: valor aproximado
+        'total-tr-exato': `#total-tr-exato-${roomId}`, // ✅ NOVO: valor exato
         'total-externo': `#total-externo-${roomId}`,
         'total-divisoes': `#total-divisoes-${roomId}`,
         'total-piso': `#total-piso-${roomId}`,
@@ -305,7 +303,12 @@ function fillThermalGainsData(roomElement, thermalGainsData) {
     Object.entries(gainSelectors).forEach(([key, selector]) => {
         const element = document.querySelector(selector);
         if (element && thermalGainsData[key] !== undefined) {
-            element.textContent = thermalGainsData[key];
+            // ✅ CORREÇÃO: Para valor TR exato, manter 3 casas decimais
+            if (key === 'total-tr-exato' && typeof thermalGainsData[key] === 'number') {
+                element.textContent = thermalGainsData[key].toFixed(3);
+            } else {
+                element.textContent = thermalGainsData[key];
+            }
             console.log(`✅ ${key} preenchido: ${thermalGainsData[key]}`);
         }
     });

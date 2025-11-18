@@ -29,10 +29,6 @@ Tudo que está neste bloco já está **implementado e funcional**:
 * Troca de base do cálculo de vazão: **setpoint → pressurização**
 * Cálculo já corrigido
 
-### ✔ CONFIGURAÇÕES POR TIPO DE MÁQUINA
-
-* Reutilização dos campos de instalação **implementada**
-* Customização por tipo de máquina **implementada**
 
 ### ✔ EMPRESA – melhorias
 
@@ -44,17 +40,21 @@ Tudo que está neste bloco já está **implementado e funcional**:
 * Botão “Adicionar Máquina” movido para o fim da div
 * Botão alinhado com “Adicionar Sala”
 
----
 
-# 🟡 **PENDENTES / EM ABERTO**
-
-### 📌 **CÁLCULOS TÉRMICOS (UI)** – **FALTA**
+### ✔ **CÁLCULOS TÉRMICOS (UI)** –
 
 * Reposicionar a tabela de **total de ganhos térmicos** (visibilidade/interface)
 
 * Criar **tabela separada** para **TR (capacidade térmica)**
 
   * Deve aparecer logo após o cálculo de ganhos
+
+
+---
+
+# 🟡 **PENDENTES / EM ABERTO**
+
+
 
 ### 🔧 **LÓGICA DE SELEÇÃO – FALTA**
 
@@ -63,6 +63,10 @@ Tudo que está neste bloco já está **implementado e funcional**:
 * Deve funcionar como **escolha exclusiva:**
   → Se um é marcado, o outro deve ser automaticamente desmarcado
 
+### ? CONFIGURAÇÕES POR TIPO DE MÁQUINA
+
+* Reutilização dos campos de instalação 
+* Customização por tipo de máquina 
 ---
 
 # 📌 **RESUMO ESTRATÉGICO**
@@ -72,9 +76,9 @@ Tudo que está neste bloco já está **implementado e funcional**:
 | Sincronizações de campos         | ✔ Concluído     |
 | Inputs & validações              | ✔ Concluído     |
 | Cálculos térmicos (lógica)       | ✔ Concluído     |
-| Cálculos térmicos (interface)    | **🟡 Pendente** |
+| Cálculos térmicos (interface)    | ✔ Concluído     |
 | Lógica de seleção (bocal)        | **🟡 Pendente** |
-| Configuração por tipo de máquina | ✔ Concluído     |
+| Configuração por tipo de máquina | **🟡 Pendente** |
 | Empresa (dados & validação)      | ✔ Concluído     |
 | Interface geral                  | ✔ Concluído     |
 

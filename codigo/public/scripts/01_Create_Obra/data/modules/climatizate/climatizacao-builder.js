@@ -175,6 +175,7 @@ function buildClimatizationTable(roomId, roomName = 'Sala') {
   )}
       ${buildPressurizationRow(roomId)}
       ${buildResultRow(roomId)}
+      ${buildThermalSummaryRow(roomId)}
     </div>
   `;
 }
@@ -372,6 +373,39 @@ function buildTextInput(field, roomId) {
 }
 
 /**
+ * Constrói linha de resumo dos ganhos térmicos
+ */
+function buildThermalSummaryRow(roomId) {
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildThermalSummaryRow) [Room ID inválido: ${roomId}]`);
+        return '<div class="clima-row"><div class="clima-cell">Erro: ID inválido</div></div>';
+    }
+    
+    return `
+    <div class="clima-row">
+      <div class="thermal-summary">
+        <div class="thermal-summary-item">
+          <span class="thermal-summary-label">Total de Ganhos Térmicos:</span>
+          <span class="thermal-summary-value" id="total-ganhos-w-${roomId}">0</span>
+          <span class="thermal-summary-unit">W</span>
+        </div>
+        <div class="thermal-summary-item">
+          <span class="thermal-summary-label">Total em TR Aproximado:</span>
+          <span class="thermal-summary-value" id="total-tr-aprox-${roomId}">0</span>
+          <span class="thermal-summary-unit">TR</span>
+        </div>
+        <div class="thermal-summary-item-noaprox">
+          <span class="thermal-summary-label">Total em TR:</span>
+          <span class="thermal-summary-value" id="total-tr-exato-${roomId}">0</span>
+          <span class="thermal-summary-unit">TR</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Constrói linha de exibição de resultado calculado
  */
 function buildResultRow(roomId) {
@@ -399,7 +433,7 @@ function buildResultRow(roomId) {
         </select>
       </div>
     </div>
-  `
+  `;
 }
 
 
@@ -426,19 +460,6 @@ function buildThermalGainsSection(roomId) {
         <h5 class="subsection-title">Cálculo de Ganhos Térmicos</h5>
       </div>
       <div class="subsection-content collapsed" id="subsection-content-${roomId}-ganhos">
-        <!-- Conteúdo dos ganhos térmicos -->
-        <div class="thermal-summary">
-          <div class="thermal-summary-item">
-            <span class="thermal-summary-label">Total de Ganhos Térmicos:</span>
-            <span class="thermal-summary-value" id="total-ganhos-w-${roomId}">0</span>
-            <span class="thermal-summary-unit">W</span>
-          </div>
-          <div class="thermal-summary-item">
-            <span class="thermal-summary-label">Total em TR:</span>
-            <span class="thermal-summary-value" id="total-tr-${roomId}">0</span>
-            <span class="thermal-summary-unit">TR</span>
-          </div>
-        </div>
         <!-- Tabela de Paredes Externas e Teto -->
         <div class="thermal-table-container">
           <h6 class="thermal-table-title">Ganhos por Paredes Externas e Teto</h6>

@@ -125,6 +125,7 @@ function calculateTotals(gains) {
     arExterno: Math.ceil(totalArExterno),
     geralW: Math.ceil(totalGeralW),
     geralTR: Math.ceil(totalGeralTR),
+    geralTRExato: totalGeralTR //  valor exato sem arredondamento
   };
 
   return totals;
@@ -150,7 +151,9 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   console.log(`🔥 Atualizando display térmico para sala: ${roomId}`);
   
   updateElementText(`total-ganhos-w-${roomId}`, totals.geralW);
-  updateElementText(`total-tr-${roomId}`, totals.geralTR);
+
+  updateElementText(`total-tr-aprox-${roomId}`, totals.geralTR); 
+  updateElementText(`total-tr-exato-${roomId}`, (totals.geralW / 3517).toFixed(3)); // Valor exato com 3 casas decimais
 
   updateElementText(`area-teto-${roomId}`, Math.ceil(inputData.area || 0));
   updateElementText(`uvalue-teto-${roomId}`, uValues.teto.toFixed(3));

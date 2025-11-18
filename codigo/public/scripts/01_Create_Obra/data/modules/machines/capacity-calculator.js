@@ -175,7 +175,13 @@ function applyFatorSeguranca(roomId, fatorSeguranca) {
  */
 function getThermalLoadTR(roomId) {
   try {
-    const totalTRElement = document.getElementById(`total-tr-${roomId}`)
+
+    const totalTRExatoElement = document.getElementById(`total-tr-exato-${roomId}`)
+    if (totalTRExatoElement?.textContent) {
+      return Number.parseFloat(totalTRExatoElement.textContent) || 0
+    }
+
+    const totalTRElement = document.getElementById(`total-tr-aprox-${roomId}`)
     if (totalTRElement?.textContent) {
       return Number.parseFloat(totalTRElement.textContent) || 0
     }

@@ -118,8 +118,8 @@ function extractThermalGainsData(roomElement) {
     
     const totalSelectors = {
         'total-ganhos-w': `#total-ganhos-w-${roomId}`,
-        'total-tr': `#total-tr-${roomId}`,
-        'total-externo': `#total-externo-${roomId}`,
+        'total-tr-aprox': `#total-tr-aprox-${roomId}`, // ✅ CORREÇÃO: ID atualizado
+        'total-tr-exato': `#total-tr-exato-${roomId}`, // ✅ NOVO: valor exato        'total-externo': `#total-externo-${roomId}`,
         'total-divisoes': `#total-divisoes-${roomId}`,
         'total-piso': `#total-piso-${roomId}`,
         'total-iluminacao': `#total-iluminacao-${roomId}`,
