@@ -9,6 +9,16 @@ import { createSmartLogger } from './core/logger.js';
 // ✅ INICIALIZAR LOGGER IMEDIATAMENTE
 window.logger = createSmartLogger();
 
+// ✅ EXPOR FUNÇÃO GLOBAL PARA CONTROLE DO LOGGER
+window.toggleSystemLogger = function(enable = null) {
+    if (window.logger && typeof window.toggleLogger === 'function') {
+        return window.toggleLogger(enable);
+    } else {
+        console.warn('⚠️ Logger não disponível para controle');
+        return false;
+    }
+};
+
 // ✅ VARIÁVEIS GLOBAIS
 window.systemConstants = null;
 window.obraCounter = 0;
@@ -26,6 +36,7 @@ console.log("🚀 Variáveis globais inicializadas:", {
 import { initializeSystem } from './main-folder/system-init.js';
 import { checkAndLoadExistingSession } from './main-folder/session-manager-main.js';
 import { showServerOfflineMessage } from './main-folder/error-handler.js';
+import { configurarAutoFormatacaoData } from './empresa-form-manager.js';
 
 /**
  * ✅ VERIFICA SE O SISTEMA ESTÁ 100% CARREGADO
@@ -348,8 +359,6 @@ function verifyCriticalFunctions() {
     }
 }
 
-
-
 /**
  * ✅ VERIFICAÇÃO CONTÍNUA DO BOTÃO E ESTADO
  */
@@ -378,6 +387,32 @@ function setupContinuousButtonMonitoring() {
 }
 
 /**
+ * ✅ INICIALIZAR SISTEMA DE AUTO-FORMATAÇÃO DE DATA
+ */
+function inicializarSistemaData() {
+    try {
+        // Aguardar um pouco para garantir que o DOM está pronto
+        setTimeout(() => {
+            configurarAutoFormatacaoData();
+            console.log('✅ Sistema de auto-formatação de data inicializado');
+            
+            // Verificar se há campos de data já existentes no DOM
+            const camposData = document.querySelectorAll('.data-cadastro-cadastro, .data-cadastro-input');
+            if (camposData.length > 0) {
+                console.log(`✅ ${camposData.length} campo(s) de data encontrado(s) - configurando auto-formatação`);
+                camposData.forEach(campo => {
+                    // Configurar atributos básicos
+                    campo.placeholder = 'DD/MM/AAAA';
+                    campo.maxLength = 10;
+                });
+            }
+        }, 1000);
+    } catch (error) {
+        console.warn('⚠️ Erro ao inicializar sistema de auto-formatação de data:', error);
+    }
+}
+
+/**
  * Inicialização principal do sistema
  */
 window.addEventListener("DOMContentLoaded", async () => {
@@ -391,6 +426,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     // ✅ INICIAR OBSERVER DO CARREGAMENTO
     setupSystemLoadObserver();
+    
+    // ✅ INICIALIZAR SISTEMA DE AUTO-FORMATAÇÃO DE DATA
+    inicializarSistemaData();
     
     // ✅ Inicializar sistema completo
     await initializeSystem();

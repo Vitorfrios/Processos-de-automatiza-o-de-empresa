@@ -6,8 +6,6 @@
 export function createSmartLogger() {
     'use strict';
     
-    console.log('🔧 Iniciando sistema de logs automático...');
-    
     class SmartLogger {
         constructor() {
             this.levels = { 
@@ -20,6 +18,7 @@ export function createSmartLogger() {
             // ✅ CONFIGURAÇÃO DE FILTROS
             this.config = {
                 globalLevel: 'WARN', // Só mostra ERROR e WARN por padrão
+                enabled: true, // ✅ INICIA ATIVADO
                 silentPatterns: [
                     // Cálculos térmicos
                     'Vazão atualizada para', 'Salvando dados para sala', 'Iniciando cálculos para sala',
@@ -108,7 +107,9 @@ export function createSmartLogger() {
         
         initialize() {
             this.interceptConsole();
-            this.originalConsole.log('✅ Sistema de logs automático ativado - 90% dos logs serão filtrados');
+            
+            // ✅ MOSTRAR COMANDOS COM PRIORIDADE MÁXIMA (nunca filtrar)
+            this.showLoggerCommands();
         }
         
         /**
@@ -118,22 +119,42 @@ export function createSmartLogger() {
             const self = this;
             
             console.log = function(...args) {
+                if (!self.config.enabled) {
+                    self.originalConsole.log(...args); // Mostra tudo se desativado
+                    return;
+                }
                 self.processLog('INFO', args);
             };
             
             console.info = function(...args) {
+                if (!self.config.enabled) {
+                    self.originalConsole.info(...args);
+                    return;
+                }
                 self.processLog('INFO', args);
             };
             
             console.warn = function(...args) {
+                if (!self.config.enabled) {
+                    self.originalConsole.warn(...args);
+                    return;
+                }
                 self.processLog('WARN', args);
             };
             
             console.error = function(...args) {
+                if (!self.config.enabled) {
+                    self.originalConsole.error(...args);
+                    return;
+                }
                 self.processLog('ERROR', args);
             };
             
             console.debug = function(...args) {
+                if (!self.config.enabled) {
+                    self.originalConsole.debug(...args);
+                    return;
+                }
                 self.processLog('DEBUG', args);
             };
         }
@@ -184,6 +205,80 @@ export function createSmartLogger() {
                 DEBUG: '🔍'
             };
             return icons[level] || '💬';
+        }
+        
+        /**
+         * 🔥 MOSTRAR COMANDOS COM PRIORIDADE MÁXIMA
+         * Nunca é filtrado - sempre aparece
+         */
+        showLoggerCommands() {
+            const self = this;
+            
+            // ✅ Função para ativar/desativar logs
+            window.toggleLogger = function(enable = null) {
+                if (enable === null) {
+                    // Alternar estado atual
+                    self.config.enabled = !self.config.enabled;
+                } else {
+                    // Definir estado específico
+                    self.config.enabled = Boolean(enable);
+                }
+                
+                const status = self.config.enabled ? '✅ ATIVADO' : '❌ DESATIVADO';
+                const message = `🔧 Logger ${status} - Todos os logs serão ${self.config.enabled ? 'filtrados' : 'mostrados'}`;
+                
+                // ✅ MOSTRAR STATUS SEMPRE (nunca filtrar)
+                self.originalConsole.log('%c' + message, 
+                    'color: #ffffff; background: #1976d2; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
+                
+                return self.config.enabled;
+            };
+            
+            // ✅ Função para ver status
+            window.getLoggerStatus = function() {
+                const status = {
+                    enabled: self.config.enabled,
+                    level: self.config.globalLevel,
+                    filteredPatterns: self.config.silentPatterns.length
+                };
+                
+                // ✅ MOSTRAR STATUS SEMPRE (nunca filtrar)
+                self.originalConsole.log('%c🔧 Status do Logger:', 
+                    'color: #1976d2; font-weight: bold;', status);
+                
+                return status;
+            };
+            
+            // ✅ Função para restaurar console original
+            window.restoreOriginalConsole = function() {
+                console.log = self.originalConsole.log;
+                console.warn = self.originalConsole.warn;
+                console.error = self.originalConsole.error;
+                console.info = self.originalConsole.info;
+                console.debug = self.originalConsole.debug;
+                
+                // ✅ MOSTRAR MENSAGEM SEMPRE (nunca filtrar)
+                self.originalConsole.log('%c🔧 Console original restaurado - filtros removidos', 
+                    'color: #ffffff; background: #d32f2f; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
+            };
+            
+            // ✅ Adicionar atalhos rápidos
+            window.loggerOn = () => window.toggleLogger(true);
+            window.loggerOff = () => window.toggleLogger(false);
+            
+            // ✅ MOSTRAR COMANDOS INICIAIS COM PRIORIDADE MÁXIMA
+            setTimeout(() => {
+                self.originalConsole.log('%c🔧 SISTEMA DE LOGS INTELIGENTE ATIVADO', 
+                    'color: #ffffff; background: #388e3c; padding: 2px 4px; border-radius: 4px; font-weight: bold; font-size: 12px;');
+                
+                self.originalConsole.log('%cComandos disponíveis:', 'color: #1976d2; font-weight: bold;');
+                self.originalConsole.log('   - toggleLogger()       - Alternar filtro de logs');
+                self.originalConsole.log('   - loggerOn()           - Ativar filtro');
+                self.originalConsole.log('   - loggerOff()          - Desativar filtro (mostrar tudo)');
+                self.originalConsole.log('   - getLoggerStatus()    - Ver status atual');
+                self.originalConsole.log('   - restoreOriginalConsole() - Remover filtros completamente');
+                self.originalConsole.log('');
+            }, 100);
         }
     }
 

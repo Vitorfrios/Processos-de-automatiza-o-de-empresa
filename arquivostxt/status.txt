@@ -63,10 +63,16 @@ Tudo que está neste bloco já está **implementado e funcional**:
 * Deve funcionar como **escolha exclusiva:**
   → Se um é marcado, o outro deve ser automaticamente desmarcado
 
+
 ### ? CONFIGURAÇÕES POR TIPO DE MÁQUINA
 
 * Reutilização dos campos de instalação 
 * Customização por tipo de máquina 
+
+### + ADIÇÃO DE NOVOS BLOCOS em baixo de maquinas (sbstituição de configuração)
+* - Duto
+* - Acessórios
+* - Tubulação
 ---
 
 # 📌 **RESUMO ESTRATÉGICO**

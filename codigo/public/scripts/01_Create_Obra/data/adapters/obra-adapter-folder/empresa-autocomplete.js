@@ -1,20 +1,56 @@
- // empresa-autocomplete.js
+// empresa-autocomplete.js
 
 import {
     inicializarDetectorBackspace,
     corrigirPosicaoDropdown,
     calcularNumeroClienteFinal,
     mostrarAvisoAutocompletado,
-    limparDadosSelecao     } from './ui-helpers-obra-adapter.js'
+    limparDadosSelecao
+} from './ui-helpers-obra-adapter.js'
+
+// 🆕 CACHE DE EMPRESAS - EVITA MÚLTIPLAS REQUISIÇÕES
+window.empresasCache = null;
+window.cacheTimestamp = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 /**
- * 🆕 SISTEMA DE DETECÇÃO DE BACKSPACE/DELETE
+ * CARREGAR EMPRESAS COM CACHE
  */
-window.usuarioEstaApagando = false;
-window.ultimoValorInput = '';
+async function carregarEmpresasComCache() {
+    const agora = Date.now();
+    
+    // Se tem cache válido, retorna do cache
+    if (window.empresasCache && window.cacheTimestamp && (agora - window.cacheTimestamp) < CACHE_DURATION) {
+        console.log('📦 [CACHE] Retornando empresas do cache');
+        return window.empresasCache;
+    }
+    
+    try {
+        console.log('📦 [CACHE] Carregando empresas do servidor...');
+        const response = await fetch('/api/dados/empresas');
+        
+        if (response.ok) {
+            const data = await response.json();
+            const empresas = data.empresas || [];
+            
+            // Atualiza cache
+            window.empresasCache = empresas;
+            window.cacheTimestamp = agora;
+            
+            console.log(`✅ [CACHE] ${empresas.length} empresas carregadas e cacheadas`);
+            return empresas;
+        } else {
+            console.error('❌ [CACHE] Erro ao carregar empresas:', response.status);
+            return [];
+        }
+    } catch (error) {
+        console.error('❌ [CACHE] Erro no carregamento:', error);
+        return window.empresasCache || []; // Retorna cache antigo se disponível
+    }
+}
 
 /**
- * INICIALIZAR INPUT HÍBRIDO - COM CONTROLE DE BACKSPACE (CORRIGIDO)
+ * INICIALIZAR INPUT HÍBRIDO - OTIMIZADO
  */
 async function inicializarInputEmpresaHibrido(obraId) {
     console.log(`🔧 [INPUT HÍBRIDO] Inicializando para obra: ${obraId}`);
@@ -28,79 +64,38 @@ async function inicializarInputEmpresaHibrido(obraId) {
         return;
     }
     
-    // 🔥 CORREÇÃO: CARREGAR EMPRESAS ANTES DE TUDO
+    // 🔥 CORREÇÃO: CARREGAR EMPRESAS COM CACHE
     let empresas = [];
     try {
-        console.log(`📦 [INPUT HÍBRIDO] Carregando empresas para obra ${obraId}...`);
-        const response = await fetch('/api/dados/empresas');
-        if (response.ok) {
-            const data = await response.json();
-            empresas = data.empresas || [];
-            console.log(`✅ [INPUT HÍBRIDO] ${empresas.length} empresas carregadas`);
-        } else {
-            console.error(`❌ [INPUT HÍBRIDO] Erro ao carregar empresas: ${response.status}`);
-        }
+        empresas = await carregarEmpresasComCache();
+        console.log(`✅ [INPUT HÍBRIDO] ${empresas.length} empresas disponíveis`);
     } catch (error) {
-        console.error(`❌ [INPUT HÍBRIDO] Erro no carregamento de empresas:`, error);
+        console.error(`❌ [INPUT HÍBRIDO] Erro ao carregar empresas:`, error);
+        empresas = [];
     }
 
-    // 🔥 INICIALIZAR DETECTOR DE BACKSPACE PRIMEIRO
+    // 🔥 DEBOUNCE PARA EVITA MUITAS BUSCAS RÁPIDAS
+    let timeoutBusca;
+    
+    // 🔥 INICIALIZAR DETECTOR DE BACKSPACE
     inicializarDetectorBackspace(input, obraId);
     
-    // 🔥 EVENTO DE INPUT ATUALIZADO - RESPEITAR BACKSPACE
+    // 🔥 EVENTO DE INPUT OTIMIZADO
     input.addEventListener('input', function(e) {
         const termo = e.target.value.trim();
-        console.log(`🔍 [INPUT] Digitando: "${termo}" | Apagando: ${window.usuarioEstaApagando}`);
         
-        // 🔥 SE USUÁRIO ESTÁ APAGANDO, NÃO FAZER AUTOCOMPLETE
-        if (window.usuarioEstaApagando) {
-            console.log('🚫 Autocomplete bloqueado - usuário apagando');
-            
-            // Apenas busca normal, sem autocomplete automático
-            if (termo.length === 0) {
-                limparDadosSelecao(input, obraId);
-                exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
-            } else {
-                const sugestoes = filtrarEmpresas(termo, empresas);
-                exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
-            }
-            
-            // Resetar flag após processar o input
-            setTimeout(() => {
-                window.usuarioEstaApagando = false;
-            }, 100);
-            return;
+        // Limpa timeout anterior
+        if (timeoutBusca) {
+            clearTimeout(timeoutBusca);
         }
         
-        // 🔥 COMPORTAMENTO NORMAL (não está apagando)
-        if (termo.length === 0) {
-            console.log('🔄 Campo apagado - mostrando todas empresas');
-            limparDadosSelecao(input, obraId);
-            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
-            return;
-        }
-        
-        const sugestoes = filtrarEmpresas(termo, empresas);
-        console.log(`🎯 [INPUT] ${sugestoes.length} sugestões para "${termo}"`);
-        
-        // 🔥 AUTOCOMPLETE SÓ SE NÃO ESTIVER APAGANDO
-        if (sugestoes.length === 1 && termo.length > 0 && !window.usuarioEstaApagando) {
-            const [sigla, nome] = Object.entries(sugestoes[0])[0];
-            
-            // Verificar se é um match forte (usuário digitou sigla completa ou nome significativo)
-            const matchForte = termo === sigla || termo.length >= 3;
-            
-            if (matchForte) {
-                console.log(`✅ [AUTOCOMPLETE] Única sugestão: ${sigla} - ${nome}`);
-                selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'autocomplete');
-                return;
-            }
-        }
-        
-        exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+        // 🔥 DEBOUNCE: Aguarda 150ms antes de processar
+        timeoutBusca = setTimeout(() => {
+            processarInputEmpresa(termo, input, dropdown, optionsContainer, obraId, empresas);
+        }, 150);
     });
     
-    // 🔥 EVENTO DE FOCO - RESETAR FLAGS E MOSTRAR EMPRESAS
+    // 🔥 EVENTO DE FOCO - MAIS RÁPIDO
     input.addEventListener('focus', function() {
         window.usuarioEstaApagando = false;
         window.ultimoValorInput = this.value;
@@ -111,7 +106,6 @@ async function inicializarInputEmpresaHibrido(obraId) {
         if (valorAtual.length === 0) {
             exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
         } else if (empresaJaSelecionada && valorAtual === `${this.dataset.siglaSelecionada} - ${this.dataset.nomeSelecionado}`) {
-            // Empresa já selecionada, não mostrar dropdown
             dropdown.style.display = 'none';
         } else {
             const sugestoes = filtrarEmpresas(valorAtual, empresas);
@@ -119,56 +113,117 @@ async function inicializarInputEmpresaHibrido(obraId) {
         }
     });
     
-    // 🔥 EVENTO DE BLUR - RESETAR FLAGS
+    // 🔥 EVENTO DE BLUR
     input.addEventListener('blur', function() {
+        if (timeoutBusca) {
+            clearTimeout(timeoutBusca);
+        }
         setTimeout(() => {
             window.usuarioEstaApagando = false;
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
         }, 200);
     });
     
-    // Evento de teclado para navegação
+    // 🔥 EVENTO DE TECLADO OTIMIZADO
     input.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            navegarDropdown('down', optionsContainer, input, dropdown, obraId);
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            navegarDropdown('up', optionsContainer, input, dropdown, obraId);
-        } else if (e.key === 'Enter') {
+        if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
             e.preventDefault();
             
-            // 🔥 COMPORTAMENTO EXCEL: Se o dropdown está aberto, seleciona a opção ativa
-            if (dropdown.style.display === 'block') {
-                selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
-            } else {
-                // Se o dropdown está fechado mas há uma empresa já preenchida, apenas fecha
-                dropdown.style.display = 'none';
-                input.blur();
-            }
-        } else if (e.key === 'Escape') {
-            dropdown.style.display = 'none';
-            input.blur();
-        } else if (e.key === 'Tab') {
-            // 🔥 COMPORTAMENTO EXCEL: Tab também seleciona a opção ativa
-            if (dropdown.style.display === 'block') {
-                e.preventDefault();
-                selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
+            switch(e.key) {
+                case 'ArrowDown':
+                    navegarDropdown('down', optionsContainer, input, dropdown, obraId);
+                    break;
+                case 'ArrowUp':
+                    navegarDropdown('up', optionsContainer, input, dropdown, obraId);
+                    break;
+                case 'Enter':
+                case 'Tab':
+                    if (dropdown.style.display === 'block') {
+                        selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
+                    } else {
+                        dropdown.style.display = 'none';
+                        input.blur();
+                    }
+                    break;
+                case 'Escape':
+                    dropdown.style.display = 'none';
+                    input.blur();
+                    break;
             }
         }
     });
     
-    // Fechar dropdown ao clicar fora
-    document.addEventListener('click', function(e) {
+    // 🔥 EVENTO DE CLIQUE FORA - OTIMIZADO
+    const fecharDropdownHandler = function(e) {
         if (input && dropdown && !input.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.style.display = 'none';
         }
-    });
+    };
+    
+    document.addEventListener('click', fecharDropdownHandler);
+    
+    // 🔥 LIMPEZA AO DESTRUIR COMPONENTE
+    input._cleanup = () => {
+        document.removeEventListener('click', fecharDropdownHandler);
+        if (timeoutBusca) {
+            clearTimeout(timeoutBusca);
+        }
+    };
     
     console.log(`✅ [INPUT HÍBRIDO] Inicializado com sucesso para obra ${obraId}`);
 }
 
 /**
- * FILTRAR EMPRESAS POR TERMO
+ * PROCESSAR INPUT COM DEBOUNCE
+ */
+function processarInputEmpresa(termo, input, dropdown, optionsContainer, obraId, empresas) {
+    console.log(`🔍 [INPUT] Processando: "${termo}" | Apagando: ${window.usuarioEstaApagando}`);
+    
+    // 🔥 SE USUÁRIO ESTÁ APAGANDO, NÃO FAZER AUTOCOMPLETE
+    if (window.usuarioEstaApagando) {
+        console.log('🚫 Autocomplete bloqueado - usuário apagando');
+        
+        if (termo.length === 0) {
+            limparDadosSelecao(input, obraId);
+            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        } else {
+            const sugestoes = filtrarEmpresas(termo, empresas);
+            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+        }
+        
+        setTimeout(() => {
+            window.usuarioEstaApagando = false;
+        }, 100);
+        return;
+    }
+    
+    // 🔥 COMPORTAMENTO NORMAL
+    if (termo.length === 0) {
+        limparDadosSelecao(input, obraId);
+        exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        return;
+    }
+    
+    const sugestoes = filtrarEmpresas(termo, empresas);
+    
+    // 🔥 AUTOCOMPLETE SÓ SE NÃO ESTIVER APAGANDO
+    if (sugestoes.length === 1 && termo.length > 0 && !window.usuarioEstaApagando) {
+        const [sigla, nome] = Object.entries(sugestoes[0])[0];
+        const matchForte = termo === sigla || termo.length >= 3;
+        
+        if (matchForte) {
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'autocomplete');
+            return;
+        }
+    }
+    
+    exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+}
+
+/**
+ * FILTRAR EMPRESAS OTIMIZADO
  */
 function filtrarEmpresas(termo, empresas) {
     if (!termo || termo.length < 1) return [];
@@ -186,17 +241,11 @@ function filtrarEmpresas(termo, empresas) {
 }
 
 /**
- * EXIBIR SUGESTÕES NO DROPDOWN - COM COMPORTAMENTO EXCEL CORRIGIDO
+ * EXIBIR SUGESTÕES OTIMIZADO
  */
 function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     const valorAtual = input.value.trim();
     const empresaJaSelecionada = input.dataset.siglaSelecionada;
-    
-    // 🔥 NÃO FAZER AUTOCOMPLETE SE USUÁRIO ESTÁ APAGANDO
-    if (window.usuarioEstaApagando) {
-        console.log('🚫 Autocomplete ignorado - modo apagando ativo');
-        // Mostrar sugestões normais, mas não auto-selecionar
-    }
     
     if (empresaJaSelecionada && valorAtual === `${input.dataset.siglaSelecionada} - ${input.dataset.nomeSelecionado}`) {
         container.innerHTML = '';
@@ -205,16 +254,10 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     }
     
     if (!sugestoes || sugestoes.length === 0) {
-        if (valorAtual.length > 0) {
-            container.innerHTML = `
-                <div class="dropdown-no-results">
-                    📝 Nenhuma empresa encontrada<br>
-                    <small>Criando nova empresa: "${valorAtual}"</small>
-                </div>
-            `;
-        } else {
-            container.innerHTML = '<div class="dropdown-no-results">Digite para buscar empresas</div>';
-        }
+        container.innerHTML = valorAtual.length > 0 
+            ? `<div class="dropdown-no-results">📝 Nenhuma empresa encontrada<br><small>Criando nova empresa: "${valorAtual}"</small></div>`
+            : '<div class="dropdown-no-results">Digite para buscar empresas</div>';
+        
         dropdown.style.display = 'block';
         return;
     }
@@ -224,14 +267,13 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
     // 🔥 BLOQUEAR SELEÇÃO AUTOMÁTICA SE ESTÁ APAGANDO
     if (sugestoesLimitadas.length === 1 && valorAtual.length > 0 && !window.usuarioEstaApagando) {
         const [sigla, nome] = Object.entries(sugestoesLimitadas[0])[0];
-        console.log(`✅ [AUTOCOMPLETE] Única sugestão: ${sigla} - ${nome}`);
         selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'autocomplete');
         return;
     }
     
-    const html = sugestoesLimitadas.map(empresaObj => {
+    // 🔥 RENDERIZAÇÃO MAIS RÁPIDA
+    container.innerHTML = sugestoesLimitadas.map(empresaObj => {
         const [sigla, nome] = Object.entries(empresaObj)[0];
-        
         return `
             <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}" title="${nome}">
                 <strong>${sigla}</strong> 
@@ -240,39 +282,26 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
         `;
     }).join('');
     
-    container.innerHTML = html;
     dropdown.style.display = 'block';
     setTimeout(corrigirPosicaoDropdown, 10);
 
-    // COMPORTAMENTO EXCEL: Se há poucas sugestões, seleciona a primeira automaticamente para navegação com setas
-    if (sugestoesLimitadas.length > 0) {
-        const primeiraOpcao = container.querySelector('.dropdown-option');
-        if (primeiraOpcao) {
-            primeiraOpcao.classList.add('active');
-        }
+    // Selecionar primeira opção
+    const primeiraOpcao = container.querySelector('.dropdown-option');
+    if (primeiraOpcao) {
+        primeiraOpcao.classList.add('active');
     }
     
-    setTimeout(() => {
-        if (dropdown.scrollHeight > 200) {
-            dropdown.style.overflowY = 'auto';
-            dropdown.style.maxHeight = '200px';
-        }
-    }, 10);
-    
-    // Vincular eventos de clique
-    container.querySelectorAll('.dropdown-option').forEach(option => {
-        // 2. NO CLIQUE MANUAL (dropdown)
-        option.addEventListener('click', function(e) {
+    // 🔥 VINCULAR EVENTOS DE CLIQUE DE FORMA MAIS EFICIENTE
+    container.addEventListener('click', function(e) {
+        const option = e.target.closest('.dropdown-option');
+        if (option) {
             e.preventDefault();
             e.stopPropagation();
             
-            const sigla = this.dataset.sigla;
-            const nome = this.dataset.nome;
-            console.log('🖱️ Clique manual na opção');
-            
-            // 🔥 TIPO: manual (usuário clicou)
+            const sigla = option.dataset.sigla;
+            const nome = option.dataset.nome;
             selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'manual');
-        });
+        }
     });
     
     console.log(`🔍 [EMPRESA] Exibindo ${sugestoesLimitadas.length} sugestões`);
@@ -477,6 +506,15 @@ function selecionarOpcaoAtiva(container, input, dropdown, obraId) {
     }
 }
 
+/**
+ * LIMPAR CACHE (para ser chamado quando novas empresas forem adicionadas)
+ */
+function limparCacheEmpresas() {
+    window.empresasCache = null;
+    window.cacheTimestamp = null;
+    console.log('🧹 [CACHE] Cache de empresas limpo');
+}
+
 // EXPORTS NO FINAL
 export {
     inicializarInputEmpresaHibrido,
@@ -485,5 +523,7 @@ export {
     exibirTodasEmpresas,
     navegarDropdown,
     selecionarEmpresa,
-    selecionarOpcaoAtiva
+    selecionarOpcaoAtiva,
+    carregarEmpresasComCache,
+    limparCacheEmpresas
 };

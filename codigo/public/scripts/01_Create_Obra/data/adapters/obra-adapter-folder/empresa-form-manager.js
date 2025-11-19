@@ -1,6 +1,6 @@
 // empresa-form-manager.js
-import {formatarData } from './ui-helpers-obra-adapter.js'
-import {inicializarInputEmpresaHibrido } from './empresa-autocomplete.js'
+import { formatarData } from './ui-helpers-obra-adapter.js'
+import { inicializarInputEmpresaHibrido } from './empresa-autocomplete.js'
 
 /**
  * 🆕 ATUALIZA A INTERFACE COM OS DADOS DA EMPRESA
@@ -110,10 +110,16 @@ function criarVisualizacaoEmpresa(obraData, container) {
                     onchange="atualizarDadosEmpresa(this, 'codigoCliente', '${obraData.id}')">
             </div>
 
+            <!-- 🆕 CAMPO DE DATA EDITÁVEL COM FORMATAÇÃO -->
             <div class="form-group-horizontal">
                 <label>Data</label>
-                <input type="text" class="data-cadastro-readonly" 
-                    value="${dataFormatada}" readonly>
+                <input type="text" 
+                       class="data-cadastro-input" 
+                       id="data-cadastro-edit-${obraData.id}"
+                       value="${dataFormatada}" 
+                       placeholder="DD/MM/AAAA"
+                       maxlength="10"
+                       onchange="atualizarDadosEmpresa(this, 'dataCadastro', '${obraData.id}')">
             </div>
 
             <div class="form-group-horizontal">
@@ -134,10 +140,21 @@ function criarVisualizacaoEmpresa(obraData, container) {
     `;
     
     container.insertAdjacentHTML('beforeend', formularioHTML);
+    
+    // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA NA VISUALIZAÇÃO
+    setTimeout(() => {
+        const dataCampo = container.querySelector(`#data-cadastro-edit-${obraData.id}`);
+        if (dataCampo) {
+            configurarCampoDataEspecifico(dataCampo);
+        }
+    }, 100);
+    
     console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id} com data: ${dataFormatada}`);
 }
 
 function criarFormularioVazioEmpresa(obraId, container) {
+    const dataAtual = new Date().toLocaleDateString('pt-BR');
+    
     const formularioHTML = `
     <div class="empresa-formulario-ativo">
         <h4>Cadastro de Empresa</h4>
@@ -182,8 +199,12 @@ function criarFormularioVazioEmpresa(obraId, container) {
             <!-- Data 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Data</label>
-                <input type="text" class="data-cadastro-cadastro" 
-                    value="${new Date().toLocaleDateString('pt-BR')}">
+                <input type="text" 
+                       class="data-cadastro-cadastro" 
+                       id="data-cadastro-${obraId}"
+                       placeholder="DD/MM/AAAA"
+                       value="${dataAtual}"
+                       maxlength="10">
             </div>
 
             <!-- Orçamentista 🟢 EDITÁVEL -->
@@ -205,21 +226,245 @@ function criarFormularioVazioEmpresa(obraId, container) {
     
     container.insertAdjacentHTML('beforeend', formularioHTML);
     
-    // 🔥 CORREÇÃO: Inicializar com timeout maior para garantir que o DOM está pronto
+    // 🔥 INICIALIZAR COM TIMEOUT
     setTimeout(() => {
         inicializarInputEmpresaHibrido(obraId);
         
-        // 🆕 CONFIGURAR CAMPOS COMO EDITÁVEIS APÓS INICIALIZAÇÃO
-        setTimeout(() => {
-            const dataCampo = container.querySelector('.data-cadastro-cadastro');
-            if (dataCampo) {
-                dataCampo.removeAttribute('readonly');
-                dataCampo.readOnly = false;
-                console.log('✅ Campo de data liberado após inicialização');
-            }
-        }, 500);
+        // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA
+        const dataCampo = container.querySelector(`#data-cadastro-${obraId}`);
+        if (dataCampo) {
+            configurarCampoDataEspecifico(dataCampo);
+            console.log('✅ Auto-formatação de data configurada');
+        }
         
     }, 300);
+}
+
+/**
+ * 🆕 FORMATA AUTOMATICAMENTE O CAMPO DE DATA ENQUANTO DIGITA
+ * Formato: DD/MM/AAAA
+ */
+function configurarAutoFormatacaoData() {
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('data-cadastro-cadastro') || 
+            e.target.classList.contains('data-cadastro-input')) {
+            formatarDataEmTempoReal(e.target);
+        }
+    });
+    
+    // Também prevenir caracteres não numéricos
+    document.addEventListener('keydown', function(e) {
+        if (e.target.classList.contains('data-cadastro-cadastro') || 
+            e.target.classList.contains('data-cadastro-input')) {
+            permitirApenasNumerosEControles(e);
+        }
+    });
+    
+    // Validação ao sair do campo
+    document.addEventListener('blur', function(e) {
+        if (e.target.classList.contains('data-cadastro-cadastro') || 
+            e.target.classList.contains('data-cadastro-input')) {
+            validarDataInput(e.target);
+        }
+    }, true);
+    
+    console.log('✅ Sistema de auto-formatação de data configurado');
+}
+
+/**
+ * 🆕 FORMATA DATA EM TEMPO REAL
+ */
+function formatarDataEmTempoReal(input) {
+    let value = input.value.replace(/\D/g, ''); // Remove não números
+    
+    // Aplica formatação automática
+    if (value.length > 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2);
+    }
+    if (value.length > 5) {
+        value = value.substring(0, 5) + '/' + value.substring(5, 9);
+    }
+    
+    input.value = value;
+    
+    // 🆕 VALIDAÇÃO BÁSICA DA DATA
+    validarDataInput(input);
+}
+
+/**
+ * 🆕 PERMITE APENAS NÚMEROS E TECLAS DE CONTROLE
+ */
+function permitirApenasNumerosEControles(event) {
+    const teclasPermitidas = [
+        'Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 
+        'ArrowLeft', 'ArrowRight', 'Home', 'End'
+    ];
+    
+    if (teclasPermitidas.includes(event.key)) {
+        return; // Permite teclas de controle
+    }
+    
+    // Permite apenas números
+    if (!/^\d$/.test(event.key)) {
+        event.preventDefault();
+        return;
+    }
+    
+    // 🆕 LIMITA O TAMANHO MÁXIMO (10 caracteres com formatação)
+    const input = event.target;
+    if (input.value.replace(/\D/g, '').length >= 8 && !teclasPermitidas.includes(event.key)) {
+        event.preventDefault();
+        return;
+    }
+}
+
+/**
+ * 🆕 VALIDAÇÃO BÁSICA DA DATA
+ */
+function validarDataInput(input) {
+    const value = input.value;
+    
+    // Verifica se está vazio
+    if (!value) {
+        input.style.borderColor = '';
+        return true;
+    }
+    
+    // Verifica formato básico
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    // Extrai dia, mês e ano
+    const [dia, mes, ano] = value.split('/').map(Number);
+    
+    // Validações básicas
+    if (dia < 1 || dia > 31) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    if (mes < 1 || mes > 12) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    if (ano < 1900 || ano > 2100) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    // Valida meses com 30 dias
+    const meses30Dias = [4, 6, 9, 11];
+    if (meses30Dias.includes(mes) && dia > 30) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    // Valida fevereiro e anos bissextos
+    if (mes === 2) {
+        const isBissexto = (ano % 4 === 0 && ano % 100 !== 0) || (ano % 400 === 0);
+        if (dia > (isBissexto ? 29 : 28)) {
+            input.style.borderColor = '#ff4444';
+            return false;
+        }
+    }
+    
+    // Data válida
+    input.style.borderColor = '#4CAF50';
+    return true;
+}
+
+/**
+ * 🆕 CONFIGURA AUTO-FORMATAÇÃO PARA UM CAMPO ESPECÍFICO
+ */
+function configurarCampoDataEspecifico(inputElement) {
+    if (!inputElement) return;
+    
+    inputElement.addEventListener('input', function() {
+        formatarDataEmTempoReal(this);
+    });
+    
+    inputElement.addEventListener('keydown', function(e) {
+        permitirApenasNumerosEControles(e);
+    });
+    
+    inputElement.addEventListener('blur', function() {
+        validarDataInput(this);
+    });
+    
+    // 🆕 CONFIGURA PLACEHOLDER E ATRIBUTOS
+    inputElement.placeholder = 'DD/MM/AAAA';
+    inputElement.maxLength = 10;
+    
+    console.log('✅ Campo de data configurado com auto-formatação:', inputElement.id);
+}
+
+/**
+ * 🆕 OBTÉM DATA FORMATADA DO CAMPO
+ * Retorna no formato YYYY-MM-DD para armazenamento
+ */
+function obterDataFormatadaDoCampo(inputElement) {
+    if (!inputElement || !inputElement.value) return null;
+    
+    const value = inputElement.value;
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return null;
+    
+    const [dia, mes, ano] = value.split('/');
+    return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+}
+
+/**
+ * 🆕 DEFINE DATA NO CAMPO FORMATADO
+ * Aceita formato YYYY-MM-DD ou DD/MM/AAAA
+ */
+function definirDataNoCampo(inputElement, data) {
+    if (!inputElement || !data) return;
+    
+    let dataFormatada;
+    
+    if (data.includes('-')) {
+        // Formato YYYY-MM-DD
+        const [ano, mes, dia] = data.split('-');
+        dataFormatada = `${dia}/${mes}/${ano}`;
+    } else if (data.includes('/')) {
+        // Já está no formato DD/MM/AAAA
+        dataFormatada = data;
+    } else {
+        console.warn('Formato de data não reconhecido:', data);
+        return;
+    }
+    
+    inputElement.value = dataFormatada;
+    validarDataInput(inputElement);
+}
+
+/**
+ * 🆕 VALIDA TODOS OS CAMPOS DE DATA DO FORMULÁRIO
+ */
+function validarTodosCamposDataNoFormulario(formElement) {
+    const camposData = formElement.querySelectorAll('.data-cadastro-cadastro, .data-cadastro-input');
+    let todosValidos = true;
+    
+    camposData.forEach(campo => {
+        if (!validarDataInput(campo)) {
+            todosValidos = false;
+        }
+    });
+    
+    return todosValidos;
+}
+
+/**
+ * 🆕 LIMPA E RESETA CAMPO DE DATA
+ */
+function limparCampoData(inputElement) {
+    if (!inputElement) return;
+    
+    inputElement.value = '';
+    inputElement.style.borderColor = '';
+    inputElement.placeholder = 'DD/MM/AAAA';
 }
 
 // EXPORTS NO FINAL
@@ -227,5 +472,11 @@ export {
     atualizarInterfaceComEmpresa,
     atualizarCamposEmpresaForm,
     criarVisualizacaoEmpresa,
-    criarFormularioVazioEmpresa
+    criarFormularioVazioEmpresa,
+    configurarAutoFormatacaoData,
+    configurarCampoDataEspecifico,
+    obterDataFormatadaDoCampo,
+    definirDataNoCampo,
+    validarTodosCamposDataNoFormulario,
+    limparCampoData
 };
