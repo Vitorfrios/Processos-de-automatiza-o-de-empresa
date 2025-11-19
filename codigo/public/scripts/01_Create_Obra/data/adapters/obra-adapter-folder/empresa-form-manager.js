@@ -255,60 +255,52 @@ function criarFormularioVazioEmpresa(obraId, container) {
 function alternarDatePicker(obraId, tipo) {
     const textInput = document.getElementById(`data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
     const container = textInput.closest('.date-input-container');
-    const calendarIcon = container.querySelector('.calendar-icon');
     
     if (!textInput) return;
     
-    // Esconde o ícone e o texto
-    calendarIcon.style.display = 'none';
+    // 🆕 NÃO ESCONDE O ÍCONE - apenas o texto
     textInput.style.display = 'none';
     
-    // 🆕 CRIA UM INPUT DATE TEMPORÁRIO COM FORMATAÇÃO FORÇADA
+    // 🆕 CRIA UM INPUT DATE VISÍVEL MAS COM FORMATAÇÃO BRASILEIRA
     const datePickerHTML = `
-        <div class="date-picker-wrapper">
+        <div class="date-picker-visible-wrapper" id="date-picker-wrapper-${obraId}">
             <input type="date" 
-                   class="date-picker-active"
+                   class="date-picker-visible"
                    id="date-picker-temp-${obraId}"
                    onchange="aplicarDataDoDatePicker('${obraId}', '${tipo}', this.value)"
                    onblur="restaurarInputTexto('${obraId}', '${tipo}')">
-            <div class="date-display" id="date-display-${obraId}"></div>
+            <div class="date-display-overlay" id="date-display-${obraId}"></div>
         </div>
     `;
     
     container.insertAdjacentHTML('beforeend', datePickerHTML);
     
-    const datePicker = container.querySelector('.date-picker-active');
+    const datePicker = container.querySelector('.date-picker-visible');
     const dateDisplay = container.querySelector(`#date-display-${obraId}`);
     
     // Define valor inicial baseado no texto atual
+    let dataInicial = 'DD/MM/AAAA';
     if (textInput.value && /^\d{2}\/\d{2}\/\d{4}$/.test(textInput.value)) {
         const [dia, mes, ano] = textInput.value.split('/');
         datePicker.value = `${ano}-${mes}-${dia}`;
-        // 🆕 ATUALIZA O DISPLAY VISUAL
-        atualizarDisplayData(dateDisplay, textInput.value);
-    } else {
-        atualizarDisplayData(dateDisplay, 'DD/MM/AAAA');
+        dataInicial = textInput.value;
     }
     
+    // 🆕 ATUALIZA O DISPLAY VISUAL COM FORMATAÇÃO BRASILEIRA
+    atualizarDisplayData(dateDisplay, dataInicial);
+    
     // 🆕 OBSERVA MUDANÇAS NO DATE PICKER PARA ATUALIZAR O DISPLAY
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
-                if (datePicker.value) {
-                    const [ano, mes, dia] = datePicker.value.split('-');
-                    const dataBrasileira = `${dia}/${mes}/${ano}`;
-                    atualizarDisplayData(dateDisplay, dataBrasileira);
-                } else {
-                    atualizarDisplayData(dateDisplay, 'DD/MM/AAAA');
-                }
-            }
-        });
+    datePicker.addEventListener('input', function() {
+        if (this.value) {
+            const [ano, mes, dia] = this.value.split('-');
+            const dataBrasileira = `${dia}/${mes}/${ano}`;
+            atualizarDisplayData(dateDisplay, dataBrasileira);
+        } else {
+            atualizarDisplayData(dateDisplay, 'DD/MM/AAAA');
+        }
     });
     
-    observer.observe(datePicker, { attributes: true });
-    
-    // 🆕 TAMBÉM OBSERVA EVENTOS DE INPUT
-    datePicker.addEventListener('input', function() {
+    datePicker.addEventListener('change', function() {
         if (this.value) {
             const [ano, mes, dia] = this.value.split('-');
             const dataBrasileira = `${dia}/${mes}/${ano}`;
@@ -316,29 +308,13 @@ function alternarDatePicker(obraId, tipo) {
         }
     });
     
-    // Foca e abre o date picker
+    // Foca e abre o calendário
     setTimeout(() => {
         datePicker.focus();
         datePicker.showPicker();
     }, 100);
     
-    console.log('✅ Date picker ativado para obra:', obraId);
-}
-
-/**
- * 🆕 ATUALIZA O DISPLAY VISUAL DA DATA
- */
-function atualizarDisplayData(dateDisplay, dataFormatada) {
-    dateDisplay.textContent = dataFormatada;
-    
-    // Destaca visualmente se for uma data válida
-    if (dataFormatada && /^\d{2}\/\d{2}\/\d{4}$/.test(dataFormatada)) {
-        dateDisplay.style.color = '#000';
-        dateDisplay.style.fontWeight = 'normal';
-    } else {
-        dateDisplay.style.color = '#999';
-        dateDisplay.style.fontStyle = 'italic';
-    }
+    console.log('✅ Date picker com formatação brasileira ativado para obra:', obraId);
 }
 
 /**
@@ -346,9 +322,18 @@ function atualizarDisplayData(dateDisplay, dataFormatada) {
  */
 function aplicarDataDoDatePicker(obraId, tipo, dataISO) {
     const container = document.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`).closest('.date-input-container');
-    const datePickerWrapper = container.querySelector('.date-picker-wrapper');
     const textInput = container.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
-    const calendarIcon = container.querySelector('.calendar-icon');
+    
+    // 🆕 VERIFICAÇÃO MAIS ROBUSTA PARA REMOVER O DATE PICKER
+    const datePickerWrapper = document.getElementById(`date-picker-wrapper-${obraId}`);
+    if (datePickerWrapper && datePickerWrapper.parentNode) {
+        try {
+            datePickerWrapper.remove();
+            console.log('✅ Date picker removido com sucesso');
+        } catch (error) {
+            console.log('⚠️ Date picker já foi removido:', error.message);
+        }
+    }
     
     if (dataISO) {
         // Converte YYYY-MM-DD para DD/MM/AAAA
@@ -357,11 +342,6 @@ function aplicarDataDoDatePicker(obraId, tipo, dataISO) {
         
         // Aplica ao campo de texto
         textInput.value = dataBrasileira;
-    }
-    
-    // Remove o wrapper do date picker
-    if (datePickerWrapper) {
-        datePickerWrapper.remove();
     }
     
     // Restaura a visualização normal
@@ -373,10 +353,6 @@ function aplicarDataDoDatePicker(obraId, tipo, dataISO) {
             // Posiciona o cursor no final do texto
             textInput.setSelectionRange(textInput.value.length, textInput.value.length);
         }, 50);
-    }
-    
-    if (calendarIcon) {
-        calendarIcon.style.display = 'block';
     }
     
     // Dispara evento change se houve alteração
@@ -395,13 +371,17 @@ function aplicarDataDoDatePicker(obraId, tipo, dataISO) {
  */
 function restaurarInputTexto(obraId, tipo) {
     const container = document.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`).closest('.date-input-container');
-    const datePickerWrapper = container.querySelector('.date-picker-wrapper');
     const textInput = container.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
-    const calendarIcon = container.querySelector('.calendar-icon');
     
-    // Remove o wrapper do date picker
-    if (datePickerWrapper) {
-        datePickerWrapper.remove();
+    // 🆕 VERIFICAÇÃO MAIS ROBUSTA PARA REMOVER O DATE PICKER
+    const datePickerWrapper = document.getElementById(`date-picker-wrapper-${obraId}`);
+    if (datePickerWrapper && datePickerWrapper.parentNode) {
+        try {
+            datePickerWrapper.remove();
+            console.log('✅ Date picker removido com sucesso (blur)');
+        } catch (error) {
+            console.log('⚠️ Date picker já foi removido (blur):', error.message);
+        }
     }
     
     // Restaura o input de texto
@@ -413,13 +393,28 @@ function restaurarInputTexto(obraId, tipo) {
         }, 50);
     }
     
-    // Restaura o ícone
-    if (calendarIcon) {
-        calendarIcon.style.display = 'block';
-    }
-    
     console.log('✅ Input de texto restaurado');
 }
+
+/**
+ * 🆕 ATUALIZA O DISPLAY VISUAL DA DATA
+ */
+function atualizarDisplayData(dateDisplay, dataFormatada) {
+    dateDisplay.textContent = dataFormatada;
+    
+    // Destaca visualmente se for uma data válida
+    if (dataFormatada && /^\d{2}\/\d{2}\/\d{4}$/.test(dataFormatada)) {
+        dateDisplay.style.color = '#000';
+        dateDisplay.style.fontWeight = 'normal';
+        dateDisplay.style.fontStyle = 'normal';
+    } else {
+        dateDisplay.style.color = '#999';
+        dateDisplay.style.fontWeight = 'normal';
+        dateDisplay.style.fontStyle = 'italic';
+    }
+}
+
+
 
 /**
  * 🆕 FORMATA AUTOMATICAMENTE O CAMPO DE DATA ENQUANTO DIGITA
