@@ -66,7 +66,7 @@ function atualizarCamposEmpresaForm(obraData, formElement) {
 }
 
 /**
- * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES - COM DATA FORMATADA
+ * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES - COM DATA FORMATADA E DATEPICKER DINÂMICO
  */
 function criarVisualizacaoEmpresa(obraData, container) {
     // Ocultar botão se existir
@@ -110,16 +110,19 @@ function criarVisualizacaoEmpresa(obraData, container) {
                     onchange="atualizarDadosEmpresa(this, 'codigoCliente', '${obraData.id}')">
             </div>
 
-            <!-- 🆕 CAMPO DE DATA EDITÁVEL COM FORMATAÇÃO -->
+            <!-- 🆕 CAMPO DE DATA COM DATEPICKER DINÂMICO -->
             <div class="form-group-horizontal">
                 <label>Data</label>
-                <input type="text" 
-                       class="data-cadastro-input" 
-                       id="data-cadastro-edit-${obraData.id}"
-                       value="${dataFormatada}" 
-                       placeholder="DD/MM/AAAA"
-                       maxlength="10"
-                       onchange="atualizarDadosEmpresa(this, 'dataCadastro', '${obraData.id}')">
+                <div class="date-input-container">
+                    <input type="text" 
+                           class="data-cadastro-input" 
+                           id="data-cadastro-edit-${obraData.id}"
+                           value="${dataFormatada}" 
+                           placeholder="DD/MM/AAAA"
+                           maxlength="10"
+                           onchange="atualizarDadosEmpresa(this, 'dataCadastro', '${obraData.id}')">
+                    <span class="calendar-icon" onclick="alternarDatePicker('${obraData.id}', 'edit')">📅</span>
+                </div>
             </div>
 
             <div class="form-group-horizontal">
@@ -141,7 +144,7 @@ function criarVisualizacaoEmpresa(obraData, container) {
     
     container.insertAdjacentHTML('beforeend', formularioHTML);
     
-    // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA NA VISUALIZAÇÃO
+    // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA
     setTimeout(() => {
         const dataCampo = container.querySelector(`#data-cadastro-edit-${obraData.id}`);
         if (dataCampo) {
@@ -152,6 +155,9 @@ function criarVisualizacaoEmpresa(obraData, container) {
     console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id} com data: ${dataFormatada}`);
 }
 
+/**
+ * 🆕 CRIA FORMULÁRIO VAZIO DE EMPRESA COM DATEPICKER DINÂMICO
+ */
 function criarFormularioVazioEmpresa(obraId, container) {
     const dataAtual = new Date().toLocaleDateString('pt-BR');
     
@@ -196,15 +202,18 @@ function criarFormularioVazioEmpresa(obraId, container) {
                     placeholder="Código do cliente">
             </div>
 
-            <!-- Data 🟢 EDITÁVEL -->
+            <!-- Data 🟢 EDITÁVEL COM DATEPICKER DINÂMICO -->
             <div class="form-group-horizontal">
                 <label>Data</label>
-                <input type="text" 
-                       class="data-cadastro-cadastro" 
-                       id="data-cadastro-${obraId}"
-                       placeholder="DD/MM/AAAA"
-                       value="${dataAtual}"
-                       maxlength="10">
+                <div class="date-input-container">
+                    <input type="text" 
+                           class="data-cadastro-cadastro" 
+                           id="data-cadastro-${obraId}"
+                           placeholder="DD/MM/AAAA"
+                           value="${dataAtual}"
+                           maxlength="10">
+                    <span class="calendar-icon" onclick="alternarDatePicker('${obraId}', 'cadastro')">📅</span>
+                </div>
             </div>
 
             <!-- Orçamentista 🟢 EDITÁVEL -->
@@ -238,6 +247,178 @@ function criarFormularioVazioEmpresa(obraId, container) {
         }
         
     }, 300);
+}
+
+/**
+ * 🆕 ALTERNA ENTRE INPUT TEXT E DATE QUANDO CLICA NO ÍCONE
+ */
+function alternarDatePicker(obraId, tipo) {
+    const textInput = document.getElementById(`data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
+    const container = textInput.closest('.date-input-container');
+    const calendarIcon = container.querySelector('.calendar-icon');
+    
+    if (!textInput) return;
+    
+    // Esconde o ícone e o texto
+    calendarIcon.style.display = 'none';
+    textInput.style.display = 'none';
+    
+    // 🆕 CRIA UM INPUT DATE TEMPORÁRIO COM FORMATAÇÃO FORÇADA
+    const datePickerHTML = `
+        <div class="date-picker-wrapper">
+            <input type="date" 
+                   class="date-picker-active"
+                   id="date-picker-temp-${obraId}"
+                   onchange="aplicarDataDoDatePicker('${obraId}', '${tipo}', this.value)"
+                   onblur="restaurarInputTexto('${obraId}', '${tipo}')">
+            <div class="date-display" id="date-display-${obraId}"></div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', datePickerHTML);
+    
+    const datePicker = container.querySelector('.date-picker-active');
+    const dateDisplay = container.querySelector(`#date-display-${obraId}`);
+    
+    // Define valor inicial baseado no texto atual
+    if (textInput.value && /^\d{2}\/\d{2}\/\d{4}$/.test(textInput.value)) {
+        const [dia, mes, ano] = textInput.value.split('/');
+        datePicker.value = `${ano}-${mes}-${dia}`;
+        // 🆕 ATUALIZA O DISPLAY VISUAL
+        atualizarDisplayData(dateDisplay, textInput.value);
+    } else {
+        atualizarDisplayData(dateDisplay, 'DD/MM/AAAA');
+    }
+    
+    // 🆕 OBSERVA MUDANÇAS NO DATE PICKER PARA ATUALIZAR O DISPLAY
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                if (datePicker.value) {
+                    const [ano, mes, dia] = datePicker.value.split('-');
+                    const dataBrasileira = `${dia}/${mes}/${ano}`;
+                    atualizarDisplayData(dateDisplay, dataBrasileira);
+                } else {
+                    atualizarDisplayData(dateDisplay, 'DD/MM/AAAA');
+                }
+            }
+        });
+    });
+    
+    observer.observe(datePicker, { attributes: true });
+    
+    // 🆕 TAMBÉM OBSERVA EVENTOS DE INPUT
+    datePicker.addEventListener('input', function() {
+        if (this.value) {
+            const [ano, mes, dia] = this.value.split('-');
+            const dataBrasileira = `${dia}/${mes}/${ano}`;
+            atualizarDisplayData(dateDisplay, dataBrasileira);
+        }
+    });
+    
+    // Foca e abre o date picker
+    setTimeout(() => {
+        datePicker.focus();
+        datePicker.showPicker();
+    }, 100);
+    
+    console.log('✅ Date picker ativado para obra:', obraId);
+}
+
+/**
+ * 🆕 ATUALIZA O DISPLAY VISUAL DA DATA
+ */
+function atualizarDisplayData(dateDisplay, dataFormatada) {
+    dateDisplay.textContent = dataFormatada;
+    
+    // Destaca visualmente se for uma data válida
+    if (dataFormatada && /^\d{2}\/\d{2}\/\d{4}$/.test(dataFormatada)) {
+        dateDisplay.style.color = '#000';
+        dateDisplay.style.fontWeight = 'normal';
+    } else {
+        dateDisplay.style.color = '#999';
+        dateDisplay.style.fontStyle = 'italic';
+    }
+}
+
+/**
+ * 🆕 APLICA A DATA SELECIONADA NO DATEPICKER AO CAMPO DE TEXTO
+ */
+function aplicarDataDoDatePicker(obraId, tipo, dataISO) {
+    const container = document.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`).closest('.date-input-container');
+    const datePickerWrapper = container.querySelector('.date-picker-wrapper');
+    const textInput = container.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
+    const calendarIcon = container.querySelector('.calendar-icon');
+    
+    if (dataISO) {
+        // Converte YYYY-MM-DD para DD/MM/AAAA
+        const [ano, mes, dia] = dataISO.split('-');
+        const dataBrasileira = `${dia}/${mes}/${ano}`;
+        
+        // Aplica ao campo de texto
+        textInput.value = dataBrasileira;
+    }
+    
+    // Remove o wrapper do date picker
+    if (datePickerWrapper) {
+        datePickerWrapper.remove();
+    }
+    
+    // Restaura a visualização normal
+    if (textInput) {
+        textInput.style.display = 'block';
+        // Foca no campo de texto para continuar a digitação
+        setTimeout(() => {
+            textInput.focus();
+            // Posiciona o cursor no final do texto
+            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+        }, 50);
+    }
+    
+    if (calendarIcon) {
+        calendarIcon.style.display = 'block';
+    }
+    
+    // Dispara evento change se houve alteração
+    if (dataISO) {
+        const event = new Event('change', { bubbles: true });
+        textInput.dispatchEvent(event);
+        validarDataInput(textInput);
+        console.log('✅ Data do date picker aplicada:', textInput.value);
+    } else {
+        console.log('✅ Date picker cancelado');
+    }
+}
+
+/**
+ * 🆕 RESTAURA O INPUT DE TEXTO SE O USUÁRIO CANCELAR
+ */
+function restaurarInputTexto(obraId, tipo) {
+    const container = document.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`).closest('.date-input-container');
+    const datePickerWrapper = container.querySelector('.date-picker-wrapper');
+    const textInput = container.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
+    const calendarIcon = container.querySelector('.calendar-icon');
+    
+    // Remove o wrapper do date picker
+    if (datePickerWrapper) {
+        datePickerWrapper.remove();
+    }
+    
+    // Restaura o input de texto
+    if (textInput) {
+        textInput.style.display = 'block';
+        setTimeout(() => {
+            textInput.focus();
+            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+        }, 50);
+    }
+    
+    // Restaura o ícone
+    if (calendarIcon) {
+        calendarIcon.style.display = 'block';
+    }
+    
+    console.log('✅ Input de texto restaurado');
 }
 
 /**
@@ -403,7 +584,7 @@ function configurarCampoDataEspecifico(inputElement) {
 
 /**
  * 🆕 OBTÉM DATA FORMATADA DO CAMPO
- * Retorna no formato YYYY-MM-DD para armazenamento
+ * Retorna no formato DD/MM/AAAA para armazenamento (igual ao JSON)
  */
 function obterDataFormatadaDoCampo(inputElement) {
     if (!inputElement || !inputElement.value) return null;
@@ -411,8 +592,8 @@ function obterDataFormatadaDoCampo(inputElement) {
     const value = inputElement.value;
     if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return null;
     
-    const [dia, mes, ano] = value.split('/');
-    return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    // 🆕 RETORNA NO FORMATO DD/MM/AAAA (igual ao JSON)
+    return value;
 }
 
 /**
@@ -467,7 +648,7 @@ function limparCampoData(inputElement) {
     inputElement.placeholder = 'DD/MM/AAAA';
 }
 
-// EXPORTS NO FINAL
+// 🆕 EXPORTA AS FUNÇÕES
 export {
     atualizarInterfaceComEmpresa,
     atualizarCamposEmpresaForm,
@@ -478,5 +659,14 @@ export {
     obterDataFormatadaDoCampo,
     definirDataNoCampo,
     validarTodosCamposDataNoFormulario,
-    limparCampoData
+    limparCampoData,
+    alternarDatePicker,
+    aplicarDataDoDatePicker,
+    restaurarInputTexto,
+    atualizarDisplayData
 };
+
+// 🆕 TORNA AS FUNÇÕES DISPONÍVEIS GLOBALMENTE PARA OS EVENTOS HTML
+window.alternarDatePicker = alternarDatePicker;
+window.aplicarDataDoDatePicker = aplicarDataDoDatePicker;
+window.restaurarInputTexto = restaurarInputTexto;
