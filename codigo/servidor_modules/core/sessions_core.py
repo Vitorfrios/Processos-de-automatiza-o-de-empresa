@@ -354,7 +354,7 @@ class SessionsManager:
 # Instância global com tratamento de erro
 try:
     sessions_manager = SessionsManager()
-    print("✅ SessionsManager CORRIGIDO inicializado com sucesso!")
+    print("✅ SessionsManager  inicializado com sucesso!")
     
     # Força sessão única na inicialização
     sessions_manager.ensure_single_session()
@@ -365,11 +365,11 @@ except Exception as e:
     
     # Gerenciador de sessões de emergência
     class EmergencySessionsManager:
-        """Gerenciador de sessões de emergência CORRIGIDO"""
+        """Gerenciador de sessões de emergência """
         
         def __init__(self):
             self.project_root = Path(__file__).parent.parent.parent
-            print(f"⚠️  Usando EmergencySessionsManager CORRIGIDO: {self.project_root}")
+            print(f"⚠️  Usando EmergencySessionsManager : {self.project_root}")
         
         def get_current_session_id(self):
             return "session_active"

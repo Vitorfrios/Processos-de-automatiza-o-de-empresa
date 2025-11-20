@@ -1,6 +1,6 @@
 /**
  * =====================
- * Gerenciador de Modal e Toast - CORRIGIDO (Notificações Acumulativas)
+ * Gerenciador de Modal e Toast -  (Notificações Acumulativas)
  * =====================
  */
 
@@ -379,7 +379,7 @@ async function completeDeletion(obraId, obraName) {
 }
 
 /**
- * Remove a obra do servidor imediatamente - CORRIGIDO
+ * Remove a obra do servidor imediatamente - 
  */
 async function completeDeletionImmediate(obraId, obraName) {
     console.log(`🔍 Iniciando remoção completa da obra: ${obraName} (ID SEGURO: ${obraId})`);

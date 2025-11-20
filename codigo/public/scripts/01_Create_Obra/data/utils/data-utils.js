@@ -13,7 +13,7 @@ import {
 // =============================================================================
 
 /**
- * Obtém o próximo número de projeto disponível PARA UMA OBRA ESPECÍFICA - CORRIGIDO
+ * Obtém o próximo número de projeto disponível PARA UMA OBRA ESPECÍFICA - 
  * @param {string} obraId - ID único da obra
  * @returns {number} Próximo número disponível para projeto na obra específica
  */
@@ -53,7 +53,7 @@ function getNextProjectNumber(obraId) {
 }
 
 /**
- * Obtém o próximo número de sala - CORRIGIDO
+ * Obtém o próximo número de sala - 
  * @param {string} projectId - ID do projeto
  * @returns {number} Próximo número disponível para sala
  */
@@ -145,7 +145,7 @@ function getRoomFullId(roomElement) {
 }
 
 /**
- * Obtém o nome da obra a partir do elemento - CORRIGIDO
+ * Obtém o nome da obra a partir do elemento - 
  * @param {HTMLElement} obraElement - Elemento da obra
  * @returns {string} Nome da obra
  */
@@ -174,7 +174,7 @@ function getObraName(obraElement) {
 }
 
 /**
- * Obtém o nome do projeto a partir do elemento - CORRIGIDO
+ * Obtém o nome do projeto a partir do elemento - 
  * @param {HTMLElement} projectElement - Elemento do projeto
  * @returns {string} Nome do projeto
  */
@@ -205,7 +205,7 @@ function getProjectName(projectElement) {
 }
 
 /**
- * Obtém o nome da sala a partir do elemento - CORRIGIDO
+ * Obtém o nome da sala a partir do elemento - 
  * @param {HTMLElement} roomElement - Elemento da sala
  * @returns {string} Nome da sala
  */

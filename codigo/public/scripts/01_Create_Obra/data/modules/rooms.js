@@ -749,7 +749,7 @@ function fixExistingCapacityInputs() {
             if (input && input.value === '') {
                 const valor = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE || 10;
                 input.value = valor;
-                console.log(`✅ Input ${roomId} corrigido: ${valor}% (Obra: ${obraId}, Projeto: ${projectId})`);
+                console.log(`✅ Input ${roomId} : ${valor}% (Obra: ${obraId}, Projeto: ${projectId})`);
             }
         }
     });

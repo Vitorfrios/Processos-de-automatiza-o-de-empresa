@@ -10,20 +10,23 @@ from pathlib import Path
 class FileUtils:
     """Utilitários para manipulação de arquivos"""
     
+    def __init__(self):
+        self._project_root = None  # Cache do project root
+    
     def find_project_root(self):
-        """Encontra a raiz do projeto procurando pela estrutura de pastas"""
-        current_dir = Path(__file__).parent.parent.parent  # Pasta servidor_modules -> codigo
+        """Encontra a raiz do projeto COM CACHE"""
+        if self._project_root is not None:
+            return self._project_root
+            
+        current_dir = Path(__file__).parent.parent.parent
         
-        print(f"Procurando estrutura a partir de: {current_dir}")
-        
-        # Verifica se estamos na estrutura correta
+        # Verificação rápida
         if (current_dir / "public" / "pages" / "01_Create_Obras.html").exists():
-            print("Estrutura encontrada: Diretorio correto")
-            return current_dir
-        
-        # Fallback: diretório atual do script
-        print("Usando diretorio do script como raiz")
-        return current_dir
+            self._project_root = current_dir
+        else:
+            self._project_root = current_dir
+            
+        return self._project_root
 
     def find_json_file(self, filename, project_root=None):
         """Encontra arquivos JSON"""
@@ -38,8 +41,6 @@ class FileUtils:
         
         # Se o arquivo não existe, cria com estrutura básica
         if not target_file.exists():
-            print(f"Criando arquivo: {target_file}")
-            
             if filename == "backup.json":
                 default_data = {"obras": []}
             elif filename == "dados.json":

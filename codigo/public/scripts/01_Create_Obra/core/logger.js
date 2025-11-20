@@ -1,5 +1,5 @@
 /**
- * logger.js - SISTEMA DE LOGS INTELIGENTE
+ * logger.js
  * 🎯 Reduz logs em 90% - Filtro automático de mensagens
  */
 
@@ -268,8 +268,8 @@ export function createSmartLogger() {
             
             // ✅ MOSTRAR COMANDOS INICIAIS COM PRIORIDADE MÁXIMA
             setTimeout(() => {
-                self.originalConsole.log('%c🔧 SISTEMA DE LOGS INTELIGENTE ATIVADO', 
-                    'color: #ffffff; background: #388e3c; padding: 2px 4px; border-radius: 4px; font-weight: bold; font-size: 12px;');
+                self.originalConsole.log('%c🔧 FILTRO DE LOGS ATIVADO', 
+                    'color: #ffffff; background: #388e3c; padding: 3px 5px; border-radius: 4px; font-size: 14px;');
                 
                 self.originalConsole.log('%cComandos disponíveis:', 'color: #1976d2; font-weight: bold;');
                 self.originalConsole.log('   - toggleLogger()       - Alternar filtro de logs');

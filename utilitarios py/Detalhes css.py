@@ -20,7 +20,7 @@ def analyze_css_comprehensive():
         print(f"[aviso] Nenhum arquivo CSS encontrado em {CSS_DIR}")
         return
     
-    # Padrões regex para CSS - CORRIGIDOS
+    # Padrões regex para CSS - S
     selector_pattern = r'^([^{]+)\{'
     class_pattern = r'\.([a-zA-Z][\w-]*)'
     id_pattern = r'#([a-zA-Z_][\w-]*)'  # IDs começam com letra ou _

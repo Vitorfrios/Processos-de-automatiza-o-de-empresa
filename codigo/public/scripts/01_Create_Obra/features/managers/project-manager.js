@@ -1,6 +1,6 @@
 /**
  * project-manager.js
- * Gerenciador de projetos - SISTEMA CORRIGIDO COM IDs ÚNICOS
+ * Gerenciador de projetos - SISTEMA  COM IDs ÚNICOS
  */
 
 import { createEmptyRoom } from '../../data/modules/rooms.js';

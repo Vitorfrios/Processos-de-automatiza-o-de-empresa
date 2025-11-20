@@ -1,9 +1,9 @@
 /**
  * interface.js - CORREÇÃO DO SISTEMA DE TOGGLE
- * SISTEMA CORRIGIDO COM IDs ÚNICOS
+ * SISTEMA  COM IDs ÚNICOS
  */
 
-// ✅ IMPORTS CORRIGIDOS - CAMINHOS ATUALIZADOS
+// ✅ IMPORTS S - CAMINHOS ATUALIZADOS
 import { 
     showSystemStatus,
     removeExistingStatusBanner,
@@ -94,7 +94,7 @@ function addNewProject() {
 }
 
 // =============================================================================
-// SISTEMA DE TOGGLE CORRIGIDO - IDs ÚNICOS
+// SISTEMA DE TOGGLE  - IDs ÚNICOS
 // =============================================================================
 
 /**
@@ -372,7 +372,7 @@ function saveOrUpdateObra(obraParam, event) {
         }
     }
 
-    // Agora busca pelo ID corrigido
+    // Agora busca pelo ID 
     const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
     
     if (!obraBlock) {

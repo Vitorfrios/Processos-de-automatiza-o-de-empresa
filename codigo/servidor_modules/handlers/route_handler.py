@@ -7,7 +7,6 @@ import json
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import os
-# from servidor_modules.core.routes_core import RoutesCore
 
 class RouteHandler:
     """Manipula o roteamento de requisições HTTP"""
@@ -86,6 +85,19 @@ class RouteHandler:
         numero = self.routes_core.handle_get_proximo_numero(sigla)
         handler.send_json_response(numero)
 
+    def handle_post_empresas(self, handler):
+        """POST /api/dados/empresas"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_empresas(post_data)
+        handler.send_json_response(result)
+
+    def handle_buscar_empresas(self, handler, termo):
+        """GET /api/dados/empresas/buscar/{termo}"""
+        result = self.routes_core.handle_buscar_empresas(termo)
+        handler.send_json_response(result)
+
     # ========== ROTAS DE SESSÃO ==========
 
     def handle_get_sessions_current(self, handler):
@@ -122,6 +134,11 @@ class RouteHandler:
         result = self.routes_core.handle_post_sessions_shutdown()
         handler.send_json_response(result)
 
+    def handle_shutdown(self, handler):
+        """POST /api/shutdown"""
+        response = self.routes_core.handle_shutdown()
+        handler.send_json_response(response)
+
     def handle_post_sessions_ensure_single(self, handler):
         """POST /api/sessions/ensure-single"""
         result = self.routes_core.handle_post_sessions_ensure_single()
@@ -132,10 +149,10 @@ class RouteHandler:
 
     # ========== ROTAS DE SISTEMA ==========
 
-    def handle_shutdown(self, handler):
-        """POST /api/shutdown"""
-        response = self.routes_core.handle_shutdown()
-        handler.send_json_response(response)
+    def handle_get_server_uptime(self, handler):
+        """GET /api/server/uptime"""
+        result = self.routes_core.handle_get_server_uptime()
+        handler.send_json_response(result)
 
     def handle_get_constants(self, handler):
         """GET /constants"""

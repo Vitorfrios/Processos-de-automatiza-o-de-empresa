@@ -27,7 +27,7 @@ Tudo que está neste bloco já está **implementado e funcional**:
 
 * “Total geral” renomeado para **“Total de máquinas”**
 * Troca de base do cálculo de vazão: **setpoint → pressurização**
-* Cálculo já corrigido
+* Cálculo já 
 
 
 ### ✔ EMPRESA – melhorias
@@ -96,18 +96,18 @@ Tudo que está neste bloco já está **implementado e funcional**:
 ### 👨‍💼 ADM:
 
 * Cria login do usuário.
-* Pode alterar senha usando **tok e corrigido jáen**.
+* Pode alterar senha usando **tok e  jáen**.
 * Validação de padrão de senha (regras).
 
 ### 📲 Login do usuário:
 
 * `Empresa` (usuário)
-* `Tok e corrigido jáen` (senha)
+* `Tok e  jáen` (senha)
 * Tela simples de login.
 
-### ⏱ Validade do tok e corrigido jáen:
+### ⏱ Validade do tok e  jáen:
 
-* Criar programa para gerar **tok e corrigido jáen válido de 1 a 12 meses**.
+* Criar programa para gerar **tok e  jáen válido de 1 a 12 meses**.
 * No **primeiro login**:
 
   * salvar a data.
@@ -116,8 +116,8 @@ Tudo que está neste bloco já está **implementado e funcional**:
   * verificar quanto falta para expirar.
 * Quando expirar:
 
-  * **bloquear automaticamente o tok e corrigido jáen**.
-  * impedir novo login com o mesmo tok e corrigido jáen.
+  * **bloquear automaticamente o tok e  jáen**.
+  * impedir novo login com o mesmo tok e  jáen.
 
 ---
 

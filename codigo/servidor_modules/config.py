@@ -9,9 +9,9 @@ servidor_rodando = True
 ultimo_heartbeat = None  
 
 # Configurações do servidor
-SERVER_TIMEOUT = 1  # 1 segundo - permite verificação periódica de sinais
+SERVER_TIMEOUT = 0.5  # 1 segundo - permite verificação periódica de sinais
 DEFAULT_PORT = 8000
-MAX_PORT_ATTEMPTS = 15  # Número máximo de tentativas para encontrar porta disponível
+MAX_PORT_ATTEMPTS = 4  # Número máximo de tentativas para encontrar porta disponível
 
 # Mensagens do sistema
 MESSAGES = {

@@ -491,7 +491,7 @@ function selecionarEmpresa(sigla, nome, input, dropdown, obraId, tipoSelecao = '
 }
 
 /**
- * ATUALIZAR EVENTO DE ENTER - CORRIGIDO
+ * ATUALIZAR EVENTO DE ENTER - 
  */
 // 3. NO ENTER/TAB (navegação)
 function selecionarOpcaoAtiva(container, input, dropdown, obraId) {

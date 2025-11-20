@@ -56,7 +56,7 @@ function criarSistemaBackspaceDetector(input) {
 }
 
 /**
- * 🆕 INICIALIZAR DETECTOR DE BACKSPACE SEPARADAMENTE (CORRIGIDO)
+ * 🆕 INICIALIZAR DETECTOR DE BACKSPACE SEPARADAMENTE ()
  */
 function inicializarDetectorBackspace(input, obraId) {
     console.log(`⌫ [BACKSPACE] Inicializando detector para obra ${obraId}`);
@@ -171,7 +171,7 @@ function mostrarAvisoAutocompletado(input, tipoSelecao = 'manual') {
 }
 
 /**
- * 🆕 CALCULAR NÚMERO DO CLIENTE FINAL - CORRIGIDO E MAIS ROBUSTO
+ * 🆕 CALCULAR NÚMERO DO CLIENTE FINAL -  E MAIS ROBUSTO
  */
 async function calcularNumeroClienteFinal(sigla, obraId) {
     try {
