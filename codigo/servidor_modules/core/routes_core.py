@@ -91,10 +91,15 @@ class RoutesCore:
             print(f"❌ ERRO em handle_get_obra_by_id: {str(e)}")
             return None
 
+
     def handle_post_obras(self, post_data):
-        """Salva nova obra e adiciona à sessão"""
+        """Salva nova obra e adiciona à sessão - COM VERIFICAÇÃO DE EMPRESA"""
         try:
             nova_obra = json.loads(post_data)
+            
+            # 🆕 VERIFICAR E CRIAR EMPRESA AUTOMATICAMENTE ANTES DE SALVAR OBRA
+            print("🔍 [OBRA] Verificando se precisa criar empresa automaticamente...")
+            nova_obra = self.empresa_handler.verificar_e_criar_empresa_automatica(nova_obra)
             
             backup_file = self.file_utils.find_json_file('backup.json', self.project_root)
             backup_data = self.file_utils.load_json_file(backup_file, {"obras": [], "projetos": []})
@@ -113,8 +118,6 @@ class RoutesCore:
                 print(f"🆕 Backend gerou ID seguro: {obra_id}")
             
             nova_obra['id'] = obra_id
-            
-
             
             print(f"📝 Tentando adicionar obra {obra_id} à sessão...")
             success = self.sessions_manager.add_obra_to_session(obra_id)
@@ -139,10 +142,16 @@ class RoutesCore:
             print(f"❌ Erro ao adicionar obra: {str(e)}")
             return None
 
+# NO routes_core.py, MODIFIQUE também o método handle_put_obra:
+
     def handle_put_obra(self, obra_id, put_data):
-        """Atualiza obra existente"""
+        """Atualiza obra existente - COM VERIFICAÇÃO DE EMPRESA"""
         try:
             obra_atualizada = json.loads(put_data)
+            
+            # 🆕 VERIFICAR E CRIAR EMPRESA AUTOMATICAMENTE ANTES DE ATUALIZAR OBRA
+            print("🔍 [OBRA UPDATE] Verificando se precisa criar empresa automaticamente...")
+            obra_atualizada = self.empresa_handler.verificar_e_criar_empresa_automatica(obra_atualizada)
             
             backup_file = self.file_utils.find_json_file('backup.json', self.project_root)
             backup_data = self.file_utils.load_json_file(backup_file)
@@ -668,3 +677,4 @@ class RoutesCore:
         except Exception as e:
             print(f"❌ Erro ao remover obra da sessão: {str(e)}")
             return {"success": False, "error": str(e)}
+        

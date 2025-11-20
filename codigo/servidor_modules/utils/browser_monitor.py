@@ -25,7 +25,7 @@ class ServerTimeMonitor:
         
         while self.is_running:
             try:
-                time.sleep(300)  # Verifica a cada 5 minutos
+                time.sleep(1800)  # Verifica a cada 30 minutos
                 self._log_uptime()
             except Exception as e:
                 print(f"⏰ Monitor de tempo: Erro - {e}")

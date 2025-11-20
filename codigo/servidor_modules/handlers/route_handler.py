@@ -225,3 +225,11 @@ class RouteHandler:
             handler.send_json_response(result)
         else:
             handler.send_error(500, result["error"])
+        
+    def handle_post_empresas_auto(self, handler):
+        """POST /api/dados/empresas/auto"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_empresas_auto(post_data)
+        handler.send_json_response(result)

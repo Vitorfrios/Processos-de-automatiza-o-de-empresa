@@ -19,13 +19,20 @@ class EmpresaHandler:
             from servidor_modules.utils.file_utils import FileUtils
             self.file_utils = FileUtils()
 
+
     def obter_empresas(self):
-        """Obtém lista de empresas do dados.json"""
+        """Obtém lista de empresas do dados.json NO FORMATO CORRETO"""
         try:
             # Usa find_json_file para garantir que o arquivo existe
             dados_file = self.file_utils.find_json_file('dados.json')
             dados = self.file_utils.load_json_file(dados_file, {"empresas": []})
-            return dados.get('empresas', [])
+            
+            # 🎯 RETORNA NO FORMATO: [{ "SIGLA": "Nome Completo" }, ...]
+            empresas = dados.get('empresas', [])
+            print(f"📊 [EMPRESAS] Carregadas {len(empresas)} empresas do dados.json")
+            
+            return empresas
+            
         except Exception as e:
             print(f"❌ Erro ao obter empresas: {e}")
             return []
@@ -125,3 +132,86 @@ class EmpresaHandler:
         except Exception as e:
             print(f"❌ Erro ao obter próximo número: {e}")
             return 1
+    
+
+    def adicionar_empresa_automatica(self, sigla, nome_completo):
+        """Adiciona nova empresa automaticamente ao dados.json NO FORMATO CORRETO"""
+        try:
+            # Validar sigla
+            if not sigla or not nome_completo:
+                return False, "Sigla e nome são obrigatórios"
+            
+            # Garantir que a sigla tenha formato válido (2-6 letras maiúsculas)
+            import re
+            if not re.match(r'^[A-Z]{2,6}$', sigla):
+                return False, "Sigla deve conter 2-6 letras maiúsculas"
+            
+            # Carregar dados existentes
+            dados_file = self.file_utils.find_json_file('dados.json')
+            dados = self.file_utils.load_json_file(dados_file, {"empresas": []})
+
+            # Verificar se empresa já existe
+            empresas_existentes = dados.get('empresas', [])
+            
+            for empresa in empresas_existentes:
+                if sigla in empresa:
+                    return True, f"Empresa com sigla {sigla} já existe"
+
+            # 🆕 CORREÇÃO: Criar no formato correto { "SIGLA": "Nome Completo" }
+            nova_empresa = {sigla: nome_completo}
+            empresas_existentes.append(nova_empresa)
+            dados['empresas'] = empresas_existentes
+
+            # Salvar
+            sucesso = self.file_utils.save_json_file(dados_file, dados)
+            if sucesso:
+                print(f"✅ [EMPRESA AUTO] Empresa salva no formato correto: {sigla} - {nome_completo}")
+                return True, f"Empresa {sigla} - {nome_completo} cadastrada com sucesso"
+            else:
+                return False, "Erro ao salvar dados"
+
+        except Exception as e:
+            print(f"❌ Erro ao adicionar empresa automaticamente: {e}")
+            return False, f"Erro interno: {str(e)}"
+
+    def verificar_e_criar_empresa_automatica(self, obra_data):
+        """Verifica se precisa criar empresa automaticamente a partir dos dados da obra"""
+        try:
+            empresa_sigla = obra_data.get('empresaSigla')
+            empresa_nome = obra_data.get('empresaNome')
+            
+            # Se não tem dados de empresa, não faz nada
+            if not empresa_sigla or not empresa_nome:
+                print("🔍 [EMPRESA AUTO] Sem dados de empresa na obra")
+                return obra_data
+                
+            print(f"🔍 [EMPRESA AUTO] Verificando empresa: {empresa_sigla} - {empresa_nome}")
+            
+            # Verificar se empresa já existe
+            empresas_existentes = self.obter_empresas()
+            empresa_ja_existe = False
+            
+            for empresa in empresas_existentes:
+                if empresa_sigla in empresa:
+                    empresa_ja_existe = True
+                    print(f"✅ [EMPRESA AUTO] Empresa {empresa_sigla} já existe no sistema")
+                    break
+            
+            # Se empresa não existe, criar automaticamente
+            if not empresa_ja_existe:
+                print(f"🆕 [EMPRESA AUTO] Criando nova empresa: {empresa_sigla} - {empresa_nome}")
+                success, message = self.adicionar_empresa_automatica(empresa_sigla, empresa_nome)
+                
+                if success:
+                    print(f"✅ [EMPRESA AUTO] Empresa criada com sucesso: {message}")
+                    # 🆕 ATUALIZAR CACHE se existir
+                    if hasattr(self, 'empresas_cache'):
+                        self.empresas_cache = None
+                else:
+                    print(f"❌ [EMPRESA AUTO] Erro ao criar empresa: {message}")
+            
+            return obra_data
+            
+        except Exception as e:
+            print(f"❌ [EMPRESA AUTO] Erro ao verificar/criar empresa: {e}")
+            return obra_data
