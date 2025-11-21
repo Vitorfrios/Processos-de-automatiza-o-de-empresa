@@ -95,6 +95,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """GET ULTRA-RÁPIDO com cache e compressão"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
+    
+        # Limpa cache em recarregamentos de página - COM TRY/EXCEPT
+        if self.path == '/' or self.path.endswith('.html'):
+            try:
+                from servidor_modules.utils.browser_monitor import handle_reload_cache
+                cleared_files = handle_reload_cache()
+                if cleared_files > 0:
+                    print(f"🔄 Página recarregada - {cleared_files} arquivos de cache limpos")
+            except ImportError as e:
+                # Silenciosamente ignora se o módulo não estiver disponível
+                pass
+            except Exception as e:
+                print(f"⚠️  Erro ao limpar cache: {e}")
         
         # Normalização rápida de path
         if path.startswith('/codigo/'):

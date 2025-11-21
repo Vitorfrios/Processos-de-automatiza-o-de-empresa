@@ -331,13 +331,14 @@
     grid-template-columns: 1fr;
   }
 
-  .machine-options-section {
+  .machine-options-section, .machine-config-section {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
   }
 
-  .machine-options-section .option-checkbox {
+  .machine-options-section .option-checkbox,
+  .machine-config-section .config-checkbox {
     flex-direction: column;
     align-items: flex-start;
   }

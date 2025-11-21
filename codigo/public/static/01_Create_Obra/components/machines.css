@@ -122,11 +122,12 @@
 }
 
 /* Seção de opções */
-.machine-options-section {
+.machine-options-section, .machine-config-section {
   margin-bottom: var(--spacing-lg);
 }
 
-.machine-options-section h6 {
+.machine-options-section h6,
+.machine-config-section h6 {
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-gray-dark);
@@ -136,7 +137,7 @@
 }
 
 
-.options-grid {
+.options-grid, .config-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--options-grid-gap);
@@ -144,7 +145,7 @@
   text-align: left;
 }
 
-.option-checkbox {
+.option-checkbox, .config-checkbox {
   display: flex;
   align-items: flex-start;
   gap: var(--option-gap);
@@ -155,7 +156,7 @@
   transition: all 0.2s ease;
 }
 
-.option-checkbox:hover {
+.option-checkbox:hover, .config-checkbox:hover {
   background: var(--option-hover-bg);
   border-color: var(--option-hover-border);
 }
@@ -306,7 +307,7 @@
 
 
   /* Mantendo o restante do CSS original */
-  .options-grid {
+  .options-grid, .config-grid {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--spacing-sm);
   }
@@ -322,7 +323,7 @@
   }
 
   /* Mantendo o restante do CSS original */
-  .options-grid {
+  .options-grid, .config-grid {
     grid-template-columns: 1fr;
   }
 }

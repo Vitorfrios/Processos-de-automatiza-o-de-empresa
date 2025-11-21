@@ -6,7 +6,81 @@ import { findObraBlockWithRetry } from './obra-dom-manager.js';
 import { supportFrom_saveObra, atualizarObra } from './obra-persistence.js';
 
 
+// NO obra-save-handler.js - SUBSTITUA a função salvarEmpresaAutomaticamente por:
 
+/**
+ * 🆕 VERIFICA E PREPARA EMPRESA PARA SALVAMENTO (APENAS NA HORA DE SALVAR OBRA)
+ * Detecta quando o usuário digitou uma empresa não cadastrada e a prepara para salvar junto com a obra
+ */
+async function prepararEmpresaParaSalvamento(obraElement) {
+    try {
+        console.log('🔍 [EMPRESA] Verificando empresa para salvamento com obra...');
+        
+        // Buscar inputs de empresa
+        const empresaInput = obraElement.querySelector('.empresa-input-cadastro, .empresa-input-readonly');
+        const numeroInput = obraElement.querySelector('.numero-cliente-final-cadastro');
+        
+        if (!empresaInput || !empresaInput.value) {
+            console.log('❌ [EMPRESA] Nenhuma empresa digitada');
+            return false;
+        }
+        
+        // Se já tem sigla selecionada (empresa já cadastrada), não faz nada
+        if (empresaInput.dataset.siglaSelecionada) {
+            console.log('✅ [EMPRESA] Empresa já cadastrada:', empresaInput.dataset.siglaSelecionada);
+            return true;
+        }
+        
+        const nomeEmpresa = empresaInput.value.trim();
+        if (!nomeEmpresa) {
+            console.log('❌ [EMPRESA] Nome da empresa vazio');
+            return false;
+        }
+        
+        console.log('🆕 [EMPRESA] Nova empresa detectada para salvar com obra:', nomeEmpresa);
+        
+        // Extrair sigla (primeiras 3 letras em maiúsculo)
+        let sigla = nomeEmpresa.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '');
+        
+        // Garantir que a sigla tenha pelo menos 2 caracteres
+        if (sigla.length < 2) {
+            sigla = nomeEmpresa.substring(0, 2).toUpperCase() + 'X';
+        }
+        if (sigla.length > 6) {
+            sigla = sigla.substring(0, 6);
+        }
+        
+        console.log(`🆕 [EMPRESA] Preparando empresa: ${sigla} - ${nomeEmpresa}`);
+        
+        // 🆕 NÃO SALVA A EMPRESA AQUI - APENAS PREPARA OS DADOS
+        // A empresa será salva junto com a obra no processo normal
+        
+        // Atualizar a obra com os dados da nova empresa
+        obraElement.dataset.empresaSigla = sigla;
+        obraElement.dataset.empresaNome = nomeEmpresa;
+        obraElement.dataset.numeroClienteFinal = '1'; // Número inicial para empresa nova
+        
+        // Atualizar inputs
+        if (empresaInput) {
+            empresaInput.value = `${sigla} - ${nomeEmpresa}`;
+            empresaInput.dataset.siglaSelecionada = sigla;
+            empresaInput.dataset.nomeSelecionado = nomeEmpresa;
+        }
+        
+        if (numeroInput) {
+            numeroInput.value = '1';
+        }
+        
+        console.log(`✅ [EMPRESA] Empresa preparada para salvamento: ${sigla} - ${nomeEmpresa}`);
+        showSystemStatus(`Empresa ${sigla} preparada para salvar com a obra!`, 'success');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro ao preparar empresa:', error);
+        showSystemStatus('Erro ao preparar empresa para salvamento', 'error');
+        return false;
+    }
+}
 
 
 
@@ -68,24 +142,20 @@ async function saveObra(obraId, event) {
 
     console.log(`💾 SALVANDO OBRA pelo ID: "${obraId}"`);
 
-
     let obraBlock = await findObraBlockWithRetry(obraId, 15);
     
     if (!obraBlock) {
         console.error('❌ Obra não encontrada no DOM após múltiplas tentativas:', obraId);
-        
-        const todasObras = document.querySelectorAll('[data-obra-id]');
-        console.log('📋 Obras disponíveis no DOM:', Array.from(todasObras).map(o => ({
-            id: o.dataset.obraId,
-            name: o.dataset.obraName
-        })));
-        
         showSystemStatus("ERRO: Obra não encontrada na interface", "error");
         return;
     }
 
     const obraOriginalReference = obraBlock;
     const obraContainer = obraBlock.parentElement;
+
+    // 🆕 🆕 🆕 PREPARAR EMPRESA PARA SALVAMENTO (APENAS PREPARA, NÃO SALVA AINDA)
+    console.log('🔍 [SALVAMENTO] Preparando empresa para salvamento com obra...');
+    await prepararEmpresaParaSalvamento(obraBlock);
     
     console.log('🔒 REFERÊNCIA SALVA:', {
         obra: obraOriginalReference,

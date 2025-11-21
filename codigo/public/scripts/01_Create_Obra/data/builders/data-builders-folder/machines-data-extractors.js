@@ -45,6 +45,7 @@ function extractClimatizationMachineData(machineElement) {
         tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
         precoBase: 0,
         opcoesSelecionadas: [],
+        configuracoesSelecionadas: [], // 🆕 NOVO CAMPO
         precoTotal: 0,
         potenciaSelecionada: machineElement.querySelector('.machine-power-select')?.value || '',
         tipoSelecionado: machineElement.querySelector('.machine-type-select')?.value || ''
@@ -59,7 +60,7 @@ function extractClimatizationMachineData(machineElement) {
 
         // Opções selecionadas
         const selectedOptions = [];
-        const optionCheckboxes = machineElement.querySelectorAll('input[type="checkbox"]:checked');
+        const optionCheckboxes = machineElement.querySelectorAll('#options-container-' + machineId + ' input[type="checkbox"]:checked');
         
         optionCheckboxes.forEach((checkbox, index) => {
             const optionId = checkbox.getAttribute('data-option-id') || (index + 1).toString();
@@ -77,6 +78,22 @@ function extractClimatizationMachineData(machineElement) {
 
         machineData.opcoesSelecionadas = selectedOptions;
 
+        // 🆕 CONFIGURAÇÕES SELECIONADAS (SEM VALORES)
+        const selectedConfigs = [];
+        const configCheckboxes = machineElement.querySelectorAll('#config-container-' + machineId + ' input[type="checkbox"]:checked');
+        
+        configCheckboxes.forEach((checkbox, index) => {
+            const configId = checkbox.getAttribute('data-config-id') || (index + 1).toString();
+            const configName = checkbox.getAttribute('data-config-name') || `Configuração ${configId}`;
+            
+            selectedConfigs.push({
+                id: parseInt(configId) || (index + 1),
+                nome: configName,
+            });
+        });
+
+        machineData.configuracoesSelecionadas = selectedConfigs;
+
         // Preço total
         const totalPriceElement = document.getElementById(`total-price-${machineId}`);
         if (totalPriceElement) {
@@ -84,6 +101,7 @@ function extractClimatizationMachineData(machineElement) {
         } else {
             machineData.precoTotal = machineData.precoBase + 
                 selectedOptions.reduce((sum, option) => sum + option.value, 0);
+            // 🆕 CONFIGURAÇÕES NÃO AFETAM O PREÇO
         }
 
         console.log(`✅ Máquina ${machineId} extraída:`, {
@@ -92,6 +110,7 @@ function extractClimatizationMachineData(machineElement) {
             potencia: machineData.potencia,
             precoBase: machineData.precoBase,
             opcoes: machineData.opcoesSelecionadas.length,
+            configuracoes: machineData.configuracoesSelecionadas.length,
             precoTotal: machineData.precoTotal
         });
 

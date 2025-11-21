@@ -157,6 +157,7 @@ Processos-de-automatiza-o-de-empresa/
 #### Front-end `codigo/public/scripts/01_Create_Obra`
 
 ##### `main.js`
+
 - `setupLoggerControl` (`codigo/public/scripts/01_Create_Obra/main.js:33`): adiciona `window.toggleLogger`/`window.getLoggerStatus`, permitindo ativar ou silenciar o logger inteligente a qualquer momento.
 - `checkSystemLoaded` (`:76`): verifica se o banner de sucesso está no DOM, define `window.systemLoaded` e libera o botão “Nova Obra”.
 - `updateAddObraButtonState` (`:93`): habilita ou bloqueia o botão principal ajustando `disabled`, `opacity`, `cursor` e tooltip conforme o estado global.
@@ -172,6 +173,7 @@ Processos-de-automatiza-o-de-empresa/
 - `setupContinuousButtonMonitoring` (`:398`): revalida o botão e o wrapper de `addNewObra` por até 60 segundos para cobrir carregamentos tardios.
 
 ##### `main-folder/system-init.js`
+
 - `ShutdownManager.init/disableAutoShutdown/createShutdownButton/shutdownManual` (`codigo/public/scripts/01_Create_Obra/main-folder/system-init.js:14`): classe que remove listeners padrão de `beforeunload`, injeta um botão ⚙️ no header e chama o adapter de shutdown com confirmação customizada.
 - `loadSystemConstants` (`:69`): baixa `/constants`, valida campos críticos (`VARIAVEL_PD/PS`) e coloca o resultado em `window.systemConstants`.
 - `loadAllModules` (`:105`): importa dinamicamente todos os módulos de UI, managers, builders, utils e cálculos e anexa as funções relevantes ao `window`.
@@ -179,14 +181,17 @@ Processos-de-automatiza-o-de-empresa/
 - `initializeSystem` (`:310`): orquestra shutdown manual, carregamento de constantes, módulos e cadastro de empresas, lançando exceções quando algo falha.
 
 ##### `main-folder/session-manager-main.js`
+
 - `checkAndLoadExistingSession` (`:12`): consulta `/api/session-obras`, ativa `sessionStorage`, chama `loadObrasFromServer` e retorna `true` quando obras foram restauradas.
 - `verifyCriticalFunctions` (`:58`): loga em `console.error` qualquer função crítica não exposta globalmente, ajudando no diagnóstico de bundles quebrados.
 
 ##### `main-folder/error-handler.js`
+
 - `showServerOfflineMessage` (`:9`): renderiza um overlay fullscreen com contagem regressiva, instruções e botão de fechamento quando o backend cai.
 - `showSystemWarning` (`:164`): delega uma mensagem de aviso/erro ao componente `showSystemStatus`, mantendo o console sincronizado.
 
 ##### `core/app.js`
+
 - `EventBus.on/off/emit/clear` (`codigo/public/scripts/01_Create_Obra/core/app.js:10`): registram e disparam eventos globais (`app:*`, `state:*`), garantindo isolamento entre módulos.
 - `ApplicationState.setObras/setProjetos/setSalas` (`:76`): atualizam listas internas e notificam interessados via `eventBus`.
 - `ApplicationState.setCurrentObra/setCurrentProject/setCurrentRoom` (`:115`): trocam seleções ativas e propagam eventos `state:*-changed`.
@@ -200,26 +205,31 @@ Processos-de-automatiza-o-de-empresa/
 - `getAppStatus` (`:294`): retorna um snapshot com métricas básicas (`initialized`, `listeners`, contagens de obras/projetos/salas).
 
 ##### `core/constants.js`
+
 - `getAllConstants` (`codigo/public/scripts/01_Create_Obra/core/constants.js:262`): agrega todos os blocos de constantes em um único objeto pronto para serialização.
 - `hasConstant` (`:280`): verifica de maneira segura se uma chave específica existe dentro de uma categoria.
 - `getConstant` (`:301`): retorna uma constante específica ou um fallback caso ela não esteja carregada.
 
 ##### `core/logger.js`
+
 - `createSmartLogger` (`codigo/public/scripts/01_Create_Obra/core/logger.js:6`): instancia o logger inteligente, guarda ponteiros para o console original e expõe filtros por nível/padrão.
 - `SmartLogger.initialize/interceptConsole/processLog/shouldSilence/shouldShow/getIcon` (`:21`): internas responsáveis por interceptar `console.*`, aplicar filtros de mensagens e adicionar ícones (❌/⚠️/ℹ️/🔍).
 
 ##### `core/shared-utils.js`
+
 - `attachModuleToWindow` (`codigo/public/scripts/01_Create_Obra/core/shared-utils.js:2`): itera sobre um módulo e expõe automaticamente as funções públicas no `window`.
 - `triggerCalculation` (`:16`): agenda a execução de `calculateVazaoArAndThermalGains` para um `roomId` válido, mesmo quando a função só existe no `window`.
 - `syncTitleToAmbienteDirect` (`:40`): força o input “ambiente” a acompanhar o título da sala e dispara os cálculos após a sincronização.
 
 ##### `data/adapters/obra-adapter.js`
+
 - `window.editarDadosEmpresa` (`codigo/public/scripts/01_Create_Obra/data/adapters/obra-adapter.js:11`): substitui a visualização de empresa pelo formulário editável correspondente à obra clicada.
 - `window.atualizarDadosEmpresa` (`:34`): sincroniza inputs de empresa com os `data-*` da obra e atualiza tooltips conforme necessário.
 - `window.ocultarFormularioEmpresa` (`:59`): remove o formulário ativo, restabelece o botão “Adicionar campos” e garante consistência do container.
 - `window.ativarCadastroEmpresa` (`:92`): cria o formulário inline correto (com dados existentes ou vazios) e evita instâncias duplicadas por obra.
 
 ##### `data/adapters/obra-adapter-folder/empresa-autocomplete.js`
+
 - `carregarEmpresasComCache` (`codigo/public/scripts/01_Create_Obra/data/adapters/obra-adapter-folder/empresa-autocomplete.js:19`): baixa `/api/dados/empresas`, guarda o resultado por 5 minutos e reutiliza se houver cache válido.
 - `inicializarInputEmpresaHibrido` (`:55`): associa eventos de input/focus/blur/keydown ao campo de empresa e injeta o dropdown customizado.
 - `processarInputEmpresa` (`:181`): aplica debounce e escolhe entre mostrar todas as empresas, filtrar ou esconder o dropdown conforme o termo digitado.
@@ -232,12 +242,14 @@ Processos-de-automatiza-o-de-empresa/
 - `limparCacheEmpresas` (`:512`): invalida o cache global quando novas empresas forem adicionadas.
 
 ##### `data/adapters/obra-adapter-folder/empresa-form-manager.js`
+
 - `atualizarInterfaceComEmpresa` (`codigo/public/scripts/01_Create_Obra/data/adapters/obra-adapter-folder/empresa-form-manager.js:8`): injeta o resumo da empresa na barra da obra e atualiza tooltips via `EmpresaCadastroInline`.
 - `atualizarCamposEmpresaForm` (`:32`): popula inputs e spans de um formulário existente com os dados da obra, formatando datas.
 - `criarVisualizacaoEmpresa` (`:71`): monta o painel readonly da empresa com inputs editáveis apenas para campos críticos.
 - `criarFormularioVazioEmpresa` (`:140`): gera o formulário editável padrão e inicializa o autocomplete após um pequeno delay.
 
 ##### `data/adapters/obra-adapter-folder/obra-data-loader.js`
+
 - `removeBaseObraFromHTML` (`codigo/public/scripts/01_Create_Obra/data/adapters/obra-adapter-folder/obra-data-loader.js:7`): limpa todas as obras do container antes de um carregamento completo.
 - `loadObrasFromServer` (`:18`): restaura as obras da sessão atual, buscando `/api/session-obras` e `/obras`, e monta cada obra individualmente.
 - `loadSingleObra` (`:92`): garante que uma obra exista no DOM, invoca `createEmptyObra` se necessário e preenche com `populateObraData`.
@@ -246,6 +258,7 @@ Processos-de-automatiza-o-de-empresa/
 - `debugLoadObras` (`:252`): imprime diagnósticos (funções globais disponíveis e obras retornadas pelo servidor) para troubleshooting.
 
 ##### `data/adapters/obra-adapter-folder/ui-helpers-obra-adapter.js`
+
 - `limparDadosSelecao` (`codigo/public/scripts/01_Create_Obra/data/adapters/obra-adapter-folder/ui-helpers-obra-adapter.js:6`): remove `dataset.sigla/nome` do input e reseta o número do cliente.
 - `criarSistemaBackspaceDetector` (`:16`) e `inicializarDetectorBackspace` (`:61`): controlam flags globais de “usuário está apagando” para evitar autocomplete involuntário.
 - `corrigirPosicaoDropdown` (`:113`): recalcula largura/posição dos dropdowns de empresa em scroll/resize.
@@ -257,6 +270,7 @@ Processos-de-automatiza-o-de-empresa/
 - `formatarData` (`:266`): converte datas salvas (ISO ou Date) para `dd/mm/aaaa`, mantendo o formato se já estiver correto.
 
 ##### `data/adapters/session-adapter.js`
+
 - `isSessionActive/setSessionActive` (`codigo/public/scripts/01_Create_Obra/data/adapters/session-adapter.js:12`): verificam/definem a flag `session_active` no `sessionStorage`, limpando dados locais quando desativada.
 - `getSessionObras/setSessionObras/addObraToSession/removeObraFromSessionLocal` (`:31`): CRUD da lista de IDs de obras controlada pela sessão atual.
 - `clearSessionObras` (`:73`): limpa a lista de obras e reseta o histórico de projetos removidos.
@@ -269,12 +283,14 @@ Processos-de-automatiza-o-de-empresa/
 - `addObraToRemovedList/getRemovedObrasList/isObraRemoved` (`:264`): mantém histórico de obras removidas e evita inconsistências na contagem.
 
 ##### `data/adapters/shutdown-adapter.js`
+
 - `shutdownManual` (`codigo/public/scripts/01_Create_Obra/data/adapters/shutdown-adapter.js:8`): pede confirmação via modal customizado, limpa sessões (local e via `/api/sessions/shutdown`) e chama `/api/shutdown`.
 - `ensureSingleActiveSession` (`:96`): aciona `/api/sessions/ensure-single` para forçar uma única sessão ativa no backend.
 - `initializeSession` (`:118`): checa se há sessão ativa e, se sim, carrega as obras automaticamente ao abrir a página.
 - `showShutdownMessage` (`:136`), `showFinalShutdownMessage` (`:211`) e `showFinalMessageWithManualClose` (`:257`): constroem overlays animados que informam o progresso do shutdown e instruem o usuário sobre o fechamento da janela.
 
 ##### `data/builders/empresa-cadastro-inline.js`
+
 - `constructor/init/carregarDados` (`codigo/public/scripts/01_Create_Obra/data/builders/empresa-cadastro-inline.js:6`): inicializam o componente, carregam `dados.json`/`backup.json` e armazenam listas de empresas/obras.
 - `vincularEventos` (`:47`): converte spans em botões e liga os handlers necessários para abrir o cadastro inline.
 - `ativarCadastro` (`:72`): garante que apenas um formulário esteja ativo por vez e dispara `renderizarFormulario`.
@@ -295,6 +311,7 @@ Processos-de-automatiza-o-de-empresa/
 - `formatarData` (`:1092`): helper interno para conversões de data dentro do builder.
 
 ##### `data/builders/data-builders-folder/room-data-extractors.js`
+
 - `extractRoomData` (`codigo/public/scripts/01_Create_Obra/data/builders/data-builders-folder/room-data-extractors.js:7`): monta um objeto completo de sala (inputs, máquinas, capacidade, ganhos e configuração).
 - `extractClimatizationInputs` (`:42`): lê todos os inputs/seletores de climatização, inclusive pressurização e campos dependentes.
 - `extractThermalGainsData` (`:110`): captura os totais numéricos da tabela de ganhos térmicos via `document.querySelector`.
@@ -302,23 +319,28 @@ Processos-de-automatiza-o-de-empresa/
 - `extractConfigurationData` (`:218`): coleta checkboxes marcados na seção de configuração.
 
 ##### `data/builders/data-builders-folder/machines-data-extractors.js`
+
 - `extractMachinesData` (`codigo/public/scripts/01_Create_Obra/data/builders/data-builders-folder/machines-data-extractors.js:6`): percorre `.climatization-machine` e chama o extractor individual para cada card.
 - `extractClimatizationMachineData` (`:30`): lê selects (tipo/potência/tensão), preços base/total e opções extras marcadas.
 
 ##### `data/builders/data-builders-folder/obra-data-builder.js`
+
 - `buildObraData` (`codigo/public/scripts/01_Create_Obra/data/builders/data-builders-folder/obra-data-builder.js:9`): garante que a obra existe no DOM, coleta dados de empresa e itera sobre todos os projetos.
 - `buildProjectData` (`:102`): valida o elemento do projeto, gera um ID seguro e itera sobre as salas chamando `extractRoomData`.
 
 ##### `data/builders/data-builders-folder/empresa-data-extractor.js`
+
 - `extractEmpresaData` (`codigo/public/scripts/01_Create_Obra/data/builders/data-builders-folder/empresa-data-extractor.js:8`): busca dados atualizados primeiro nos inputs ativos e depois nos `data-*` caso o formulário não esteja aberto.
 
 ##### `data/builders/ui-folder/machine-renderer.js`
+
 - `findMachinesSection/findSectionByTitle` (`codigo/public/scripts/01_Create_Obra/data/builders/ui-folder/machine-renderer.js:6`): localizam seções no DOM pelo título para reutilizar espaços existentes.
 - `ensureMachinesSection` (`:44`): garante que a seção de máquinas exista (ou cria uma nova via `buildMachinesSection`) antes de qualquer preenchimento.
 - `fillMachinesData` (`:123`): remove máquinas anteriores, chama `addMachine` com retry e delega cada card para `populateMachineData`.
 - `populateMachineData` (`:242`): define tipo/potência/tensão, marca opções extras, atualiza preços e dispara o cálculo final.
 
 ##### `data/builders/ui-folder/data-fillers.js`
+
 - `setupRoomTitleChangeListener` (`codigo/public/scripts/01_Create_Obra/data/builders/ui-folder/data-fillers.js:7`): sincroniza o input “Ambiente” com o título da sala e dispara cálculos após alterações.
 - `fillClimatizationInputs` (`:44`): popula todos os inputs de climatização (pressurização, paredes, setpoints) e dispara `calculateVazaoArAndThermalGains`.
 - `fillThermalGainsData` (`:279`): escreve os valores de ganhos térmicos nos cards correspondentes e atualiza totais.
@@ -327,18 +349,22 @@ Processos-de-automatiza-o-de-empresa/
 - `ensureAllRoomSections` (`:380`): monta ou reconstrói as seções de climatização, máquinas e configuração para garantir que existam antes do preenchimento.
 
 ##### `data/builders/ui-folder/obra-renderer.js`
+
 - `renderObraFromData` (`codigo/public/scripts/01_Create_Obra/data/builders/ui-folder/obra-renderer.js:5`): cria uma obra vazia e delega projetos para `renderProjectFromData`.
 - `populateObraData` (`:20`): cria a obra caso não exista, garante que `createEmptyProject`/`createEmptyRoom` estejam disponíveis e preenche todos os projetos em sequência.
 
 ##### `data/builders/ui-folder/project-renderer.js`
+
 - `renderProjectFromData` (`codigo/public/scripts/01_Create_Obra/data/builders/ui-folder/project-renderer.js:5`): cria um projeto vazio na obra correta e renderiza as salas vindas do JSON.
 - `populateProjectData` (`:20`): remove salas antigas, chama `createEmptyRoom` + `populateRoomData` para cada sala persistida.
 
 ##### `data/builders/ui-folder/room-renderer.js`
+
 - `renderRoomFromData` (`codigo/public/scripts/01_Create_Obra/data/builders/ui-folder/room-renderer.js:5`): cria a sala e chama `populateRoomInputs`.
 - `populateRoomData` (`:20`): garante a existência das seções, atualiza o título, preenche inputs/ganhos/capacidade/configuração e agenda o preenchimento de máquinas com retries.
 
 ##### `data/modules/rooms.js`
+
 - `buildRoomHTML` (`codigo/public/scripts/01_Create_Obra/data/modules/rooms.js:29`): gera o HTML completo da sala (cabeçalho, conteúdo e seções) com IDs seguros.
 - `buildRoomHeader/buildRoomActions` (`:74`): produzem apenas o cabeçalho ou bloco de ações quando necessário.
 - `loadMachinesPreloadModule` (`:106`): importa antecipadamente o módulo de máquinas para reduzir atrasos quando uma sala nova é criada.
@@ -357,9 +383,11 @@ Processos-de-automatiza-o-de-empresa/
 - `fixExistingCapacityInputs` (`:734`): normaliza inputs de capacidade quando o HTML antigo é carregado.
 
 ##### `data/modules/configuracao.js`
+
 - `buildConfigurationSection` (`codigo/public/scripts/01_Create_Obra/data/modules/configuracao.js:11`): cria a UI de checkboxes com IDs únicos por sala para cada opção de instalação.
 
 ##### `data/modules/climatizate/climatizacao-builder.js`
+
 - `buildClimatizationSection` (`codigo/public/scripts/01_Create_Obra/data/modules/climatizate/climatizacao-builder.js:9`): monta a seção completa de climatização com tabela de inputs e bloco de ganhos térmicos.
 - `buildClimatizationTable` (`:44`): cria a tabela principal com linhas geradas por `buildClimaRow`.
 - `buildPressurizationRow` (`:186`): constrói o grupo de campos específicos de pressurização (radios, setpoint e contagem de portas).
@@ -370,12 +398,14 @@ Processos-de-automatiza-o-de-empresa/
 - `togglePressurizationFields` (`:754`): habilita/desabilita campos vinculados à pressurização e reseta valores quando necessário.
 
 ##### `data/modules/climatizate/climatizacao-sync.js`
+
 - `window.handleWallInputSyncFirstInteraction/handleWallInputSync` (`codigo/public/scripts/01_Create_Obra/data/modules/climatizate/climatizacao-sync.js:18`): sincronizam automaticamente pares de paredes apenas na primeira interação para evitar valores inconsistentes.
 - `window.syncTitleToAmbiente/window.syncAmbienteToTitle` (`:51`): refletem alterações de título↔input ambiente e disparam recalculagens.
 - `window.setupCompleteRoomSync` (`:72`): executa `setupWallEventListenersDirect` e `setupTitleAmbienteSyncDirect`, preparando toda a sala recém-criada.
 - `setupWallEventListenersDirect/setupTitleAmbienteSyncDirect` (`:85`): funções auxiliares usadas internamente para ligar eventos de input e iniciar sincronias iniciais.
 
 ##### `data/modules/machines/machines-core.js`
+
 - `loadMachinesData` (`codigo/public/scripts/01_Create_Obra/data/modules/machines/machines-core.js:27`): busca `/machines` uma vez, guarda os dados em cache global e retorna uma lista pronta para consumo.
 - `buildMachinesSection` (`:56`): gera o HTML da seção, incluindo a tabela de capacidade e o container onde os cards serão inseridos.
 - `buildMachineHTML` (`:84`): retorna o markup completo de uma máquina (cabeçalho, selects, preços e opções).
@@ -396,6 +426,7 @@ Processos-de-automatiza-o-de-empresa/
 - `showEmptyMessage/removeEmptyMessage` (`:558`): exibem ou escondem a mensagem de “Nenhuma máquina” conforme a quantidade atual.
 
 ##### `data/modules/machines/capacity-calculator.js`
+
 - `findRoomId` (`codigo/public/scripts/01_Create_Obra/data/modules/machines/capacity-calculator.js:11`): resolve o `roomId` baseado em qualquer elemento (select/input) clicado dentro da sala.
 - `buildCapacityCalculationTable` (`:51`): retorna o HTML da tabela de capacidade e agenda a inicialização dos listeners.
 - `initializeStaticCapacityTable` (`:115`): fallback para inicializar o widget em páginas legadas que só têm uma sala.
@@ -413,6 +444,7 @@ Processos-de-automatiza-o-de-empresa/
 - `syncBackupWithClimaInputs/syncCapacityTableBackup` (`:584`/`:611`): mantêm o valor de backup alinhado entre os dois módulos.
 
 ##### `data/utils/id-generator.js`
+
 - `generateObraId/generateProjectId/generateRoomId` (`codigo/public/scripts/01_Create_Obra/data/utils/id-generator.js:8`): criam IDs seguros seguindo o padrão `obra_xx`, `obra_xx_proj_xx_seq` e `..._sala_xx_seq`.
 - `getProjectCountInObra/getRoomCountInProjectFromId` (`:45`): contam elementos no DOM para auxiliar na geração de IDs sequenciais.
 - `ensureStringId` (`:63`): converte qualquer entrada em string válida, rejeitando `undefined/null`.
@@ -423,6 +455,7 @@ Processos-de-automatiza-o-de-empresa/
 - `generateSessionId/validateIdHierarchy/getNextSequenceNumber` (`:155`): mantêm consistência de sessões e ajudam na numeração incremental.
 
 ##### `data/utils/data-utils.js`
+
 - `getNextProjectNumber/getNextRoomNumber/getNextObraNumber` (`codigo/public/scripts/01_Create_Obra/data/utils/data-utils.js:20`): inspecionam títulos existentes para sugerir a próxima numeração amigável.
 - `getRoomFullId/getObraName/getProjectName/getRoomName` (`:135`): retornam nomes e IDs completos a partir do DOM.
 - `extractNumberFromText/getMachineName/parseMachinePrice` (`:248`): helpers para parsing de números, nomes de máquina e preços formatados.
@@ -431,6 +464,7 @@ Processos-de-automatiza-o-de-empresa/
 - `findClimatizationSection` (`:455`): encontra a seção de climatização correspondente ao `roomId` fornecido.
 
 ##### `data/utils/core-utils.js`
+
 - `waitForElement` (`codigo/public/scripts/01_Create_Obra/data/utils/core-utils.js:11`): aguarda até que um seletor seja encontrado ou lança timeout.
 - `safeNumber` (`:27`): converte valores para `Number`, aplicando padrões e tratando vírgula como decimal.
 - `updateElementText` (`:42`): altera `textContent` (com logs quando o elemento não existe).
@@ -439,6 +473,7 @@ Processos-de-automatiza-o-de-empresa/
 - `debounce` (`:68`): wrapper genérico para debouncing de funções.
 
 ##### `features/calculations/air-flow.js`
+
 - `calculateDoorFlow` (`codigo/public/scripts/01_Create_Obra/features/calculations/air-flow.js:17`): calcula a contribuição de cada tipo de porta com base nas constantes de fluxo.
 - `computeAirFlowRate` (`:33`): combina portas duplas/simples, pressão e fatores de segurança para retornar a vazão final.
 - `calculateVazaoAr` (`:57`): orquestra o cálculo para um `roomId`, incluindo coleta de inputs e updates no DOM.
@@ -447,6 +482,7 @@ Processos-de-automatiza-o-de-empresa/
 - `validateAirFlowInputs/prepareAirFlowData/getAirFlowStats` (`:128`/`:150`/`:169`): valida dados de entrada, aplica conversões e retorna estatísticas para logs/dashboards.
 
 ##### `features/calculations/thermal-gains.js`
+
 - `calculateCeilingGain/calculateWallGain/calculatePartitionGain/calculateFloorGain/calculateLightingGain/calculateDissipationGain/calculatePeopleGain` (`codigo/public/scripts/01_Create_Obra/features/calculations/thermal-gains.js:20`): funções individuais que tratam cada componente de ganho térmico com base nas constantes carregadas.
 - `calculateExternalAirSensibleGain/calculateExternalAirLatentGain` (`:78`): calculam os ganhos de ar externo (sensível e latente) convertendo resultados para W/TR.
 - `calculateTotals` (`:102`): soma todos os ganhos e converte o total para TR, retornando um objeto consolidado.
@@ -457,6 +493,7 @@ Processos-de-automatiza-o-de-empresa/
 - `calculateThermalGains` (`:309`): fluxo completo que coleta dados, calcula todos os ganhos, atualiza o DOM e, se possível, dispara o recálculo de capacidade.
 
 ##### `features/calculations/calculations-core.js`
+
 - `debouncedCalculation` (`codigo/public/scripts/01_Create_Obra/features/calculations/calculations-core.js:25`): aplica debounce por `roomId`, evitando chamadas redundantes de cálculo.
 - `clearAllCalculationTimeouts` (`:40`): mata todos os timeouts pendentes (usado em unload ou reinicializações).
 - `waitForSystemConstants/validateSystemConstants` (`:52`/`:70`): aguardam o carregamento das constantes e validam se todas as chaves necessárias estão presentes.
@@ -464,6 +501,7 @@ Processos-de-automatiza-o-de-empresa/
 - `validateCalculationData/prepareCalculationData` (`:178`/`:196`): verificam se os campos mínimos foram preenchidos e convertem valores antes dos cálculos.
 
 ##### `features/managers/obra-folder/obra-creator.js`
+
 - `buildObraHTML` (`codigo/public/scripts/01_Create_Obra/features/managers/obra-folder/obra-creator.js:8`): retorna o HTML de uma obra completa incluindo header, conteúdo e botões.
 - `buildObraActionsFooter` (`:41`): gera o rodapé com botões de salvar/atualizar e status.
 - `insertObraIntoDOM` (`:57`): injeta o HTML no container principal e remove mensagens vazias.
@@ -471,32 +509,38 @@ Processos-de-automatiza-o-de-empresa/
 - `addNewObra` (`:132`): função pública para criar uma nova obra (usada pelo botão principal).
 
 ##### `features/managers/obra-folder/obra-dom-manager.js`
+
 - `findObraBlock` (`codigo/public/scripts/01_Create_Obra/features/managers/obra-folder/obra-dom-manager.js:7`): localiza a obra pelo ID e retorna o elemento correspondente.
 - `findObraBlockWithRetry` (`:31`): repete a busca algumas vezes quando o DOM ainda está sendo montado.
 - `updateObraButtonAfterSave` (`:57`): troca o botão “Salvar” por “Atualizar” após o primeiro POST bem-sucedido.
 
 ##### `features/managers/obra-folder/obra-persistence.js`
+
 - `fetchObras` (`codigo/public/scripts/01_Create_Obra/features/managers/obra-folder/obra-persistence.js:9`): carrega `/obras` do backend, tratando erros e logs.
 - `atualizarObra` (`:28`): envia PUT para `/obras/:id` com os dados construídos por `buildObraData`.
 - `supportFrom_saveObra` (`:101`): rotina auxiliar que prepara o payload, chama POST/PUT e trata respostas.
 - `deleteObraFromServer` (`:162`): remove uma obra do backend e retorna o sucesso para os handlers de UI.
 
 ##### `features/managers/obra-folder/obra-save-handler.js`
+
 - `minimizarTogglesAposSalvamento` (`codigo/public/scripts/01_Create_Obra/features/managers/obra-folder/obra-save-handler.js:16`): recolhe seções e reduz ruído visual após um salvamento completo.
 - `saveObra` (`:63`): pipeline principal de salvamento (valida dados, constrói payload, chama `supportFrom_saveObra` e atualiza a interface).
 - `atualizarHeaderObraAposSalvamento` (`:239`): sincroniza informações do header (empresa, datas, status) depois de um POST/PUT bem-sucedido.
 
 ##### `features/managers/obra-folder/obra-utils.js`
+
 - `deleteObra` (`codigo/public/scripts/01_Create_Obra/features/managers/obra-folder/obra-utils.js:8`): remove a obra do DOM e aciona a exclusão no backend.
 - `verifyObraData` (`:18`): faz validações básicas antes do salvamento (existência de projetos/salas, dados obrigatórios).
 
 ##### `features/managers/project-manager.js`
+
 - `buildProjectHTML` (`codigo/public/scripts/01_Create_Obra/features/managers/project-manager.js:19`): gera o HTML completo de um projeto (header, conteúdo e botão “Adicionar sala”).
 - `createEmptyProject` (`:74`): adiciona o projeto ao DOM da obra certa e inicializa a primeira sala caso solicitado.
 - `addNewProjectToObra` (`:133`): handler público usado para criar projetos via botão da UI.
 - `deleteProject` (`:179`): remove o projeto e atualiza mensagens/contadores associados.
 
 ##### `ui/components/status.js`
+
 - `showSystemStatus` (`codigo/public/scripts/01_Create_Obra/ui/components/status.js:22`): cria/adiciona um banner fixo no topo com mensagem e ícone adequados.
 - `removeExistingStatusBanner/removeAllStatusBanners` (`:44`/`:55`): removem banners individuais ou todos os existentes.
 - `createStatusBanner` (`:70`): constrói o elemento com classes, ícone e texto.
@@ -506,6 +550,7 @@ Processos-de-automatiza-o-de-empresa/
 - `hasActiveStatusBanner/getActiveBannersCount` (`:196`/`:204`): consultam o estado atual do componente.
 
 ##### `ui/helpers.js`
+
 - `toggleElementVisibility/expandElement/collapseElement` (`codigo/public/scripts/01_Create_Obra/ui/helpers.js:18`): controlam classes `collapsed`/`hidden` e atualizam indicadores visuais.
 - `calculateRoomCompletionStats` (`:59`): gera métricas simples (quantidade de inputs preenchidos) para mostrar progresso.
 - `removeEmptyObraMessage/showEmptyObraMessageIfNeeded` (`:82`/`:97`): exibem/ocultam mensagens de lista vazia para obras.
@@ -514,6 +559,7 @@ Processos-de-automatiza-o-de-empresa/
 - `collapseElementWithAnimation/expandElementWithAnimation` (`:188`/`:220`): adicionam animações CSS durante a expansão/colapso.
 
 ##### `ui/interface.js`
+
 - `addNewProject` (`codigo/public/scripts/01_Create_Obra/ui/interface.js:88`): wrapper para `addNewProjectToObra` usado pelo botão “Novo projeto”.
 - `toggleObra/toggleProject/toggleRoom` (`:109`/`:154`/`:199`): minimizam/expande blocos específicos atualizando as classes de estado.
 - `toggleSection/toggleSubsection` (`:246`/`:263`): controlam colapsos em seções internas (climatização, máquinas, etc.).
@@ -521,6 +567,7 @@ Processos-de-automatiza-o-de-empresa/
 - `saveOrUpdateObra` (`:343`): chama `saveObra` ou `atualizarObra` conforme o botão disponível.
 
 ##### `ui/components/modal/modal.js`
+
 - `showConfirmationModal` (`codigo/public/scripts/01_Create_Obra/ui/components/modal/modal.js:26`): cria um modal genérico com botões confirm/cancel, callbacks e títulos customizados.
 - `closeConfirmationModal/closeConfirmationModalWithoutClearing` (`:77`/`:96`): fecham o modal atual com ou sem limpar o cache.
 - `createToastContainer/showToast/startCountdown/animateAndRemove/sweepDanglingToasts/hideSpecificToast/hideToast` (`:111`/`:122`/`:219`/`:252`/`:264`/`:277`/`:307`): constróem e controlam o sistema de toasts usado para confirmações de exclusão.
@@ -528,11 +575,13 @@ Processos-de-automatiza-o-de-empresa/
 - `verificarObraNoServidor/confirmDeletion/getPendingDeletion` (`:424`/`:455`/`:507`): verificam se a obra ainda existe, disparam exclusão e mantêm um mapa das remoções pendentes.
 
 ##### `ui/components/modal/exit-modal.js`
+
 - `createModalHTML/setupModalEvents/cleanup` (`codigo/public/scripts/01_Create_Obra/ui/components/modal/exit-modal.js:24`): constroem o modal específico de shutdown e seus listeners.
 - `onConfirm/onCancel/onBackdropClick/onKeyDown` (`:89`/`:94`/`:99`/`:105`): tratam interações do usuário.
 - `removeExistingModal/createShutdownModal/showShutdownConfirmationModal/showCustomShutdownModal` (`:126`/`:138`/`:156`/`:174`): controlam a criação e exibição das variações do modal de saída.
 
 ##### `ui/components/edit.js`
+
 - `makeEditable` (`codigo/public/scripts/01_Create_Obra/ui/components/edit.js:25`): transforma títulos em inputs editáveis e dispara listeners.
 - `enableEditing/selectElementContent/attachEditingEventListeners` (`:53`/`:72`/`:97`): tratam a ativação do modo edição, seleção de texto e binding de eventos.
 - `handleKeydown/handleBlur` (`:103`/`:128`): salvam ou cancelam edições com Enter/Esc e ao perder o foco.

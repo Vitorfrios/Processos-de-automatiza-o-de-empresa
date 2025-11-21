@@ -36,7 +36,8 @@ textarea.form-input {
   min-height: 80px;
 }
 /* Checkboxes */
-.checkbox-options-grid {
+.checkbox-options-grid, 
+.checkbox-config-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--options-grid-gap, 15px);
@@ -130,7 +131,8 @@ textarea.form-input {
 }
 
 @media (max-width: 600px) {
-  .checkbox-options-grid {
+  .checkbox-options-grid,
+  .checkbox-config-grid {
     grid-template-columns: 1fr;
   }
 

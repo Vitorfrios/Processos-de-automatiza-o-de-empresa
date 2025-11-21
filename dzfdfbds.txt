@@ -1,0 +1,2828 @@
+
+/* ==== INÍCIO: data/adapters/obra-adapter-folder/empresa-autocomplete.js ==== */
+// empresa-autocomplete.js
+
+import {
+    inicializarDetectorBackspace,
+    corrigirPosicaoDropdown,
+    calcularNumeroClienteFinal,
+    mostrarAvisoAutocompletado,
+    limparDadosSelecao
+} from './ui-helpers-obra-adapter.js'
+
+// 🆕 CACHE DE EMPRESAS - EVITA MÚLTIPLAS REQUISIÇÕES
+window.empresasCache = null;
+window.cacheTimestamp = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+/**
+ * CARREGAR EMPRESAS COM CACHE
+ */
+async function carregarEmpresasComCache() {
+    const agora = Date.now();
+    
+    // Se tem cache válido, retorna do cache
+    if (window.empresasCache && window.cacheTimestamp && (agora - window.cacheTimestamp) < CACHE_DURATION) {
+        console.log('📦 [CACHE] Retornando empresas do cache');
+        return window.empresasCache;
+    }
+    
+    try {
+        console.log('📦 [CACHE] Carregando empresas do servidor...');
+        const response = await fetch('/api/dados/empresas');
+        
+        if (response.ok) {
+            const data = await response.json();
+            const empresas = data.empresas || [];
+            
+            // Atualiza cache
+            window.empresasCache = empresas;
+            window.cacheTimestamp = agora;
+            
+            console.log(`✅ [CACHE] ${empresas.length} empresas carregadas e cacheadas`);
+            return empresas;
+        } else {
+            console.error('❌ [CACHE] Erro ao carregar empresas:', response.status);
+            return [];
+        }
+    } catch (error) {
+        console.error('❌ [CACHE] Erro no carregamento:', error);
+        return window.empresasCache || []; // Retorna cache antigo se disponível
+    }
+}
+
+/**
+ * INICIALIZAR INPUT HÍBRIDO - OTIMIZADO
+ */
+async function inicializarInputEmpresaHibrido(obraId) {
+    console.log(`🔧 [INPUT HÍBRIDO] Inicializando para obra: ${obraId}`);
+    
+    const input = document.getElementById(`empresa-input-${obraId}`);
+    const dropdown = document.getElementById(`empresa-dropdown-${obraId}`);
+    const optionsContainer = document.getElementById(`empresa-options-${obraId}`);
+    
+    if (!input) {
+        console.error(`❌ [INPUT HÍBRIDO] Input não encontrado para obra ${obraId}`);
+        return;
+    }
+    
+    // 🔥 CORREÇÃO: CARREGAR EMPRESAS COM CACHE
+    let empresas = [];
+    try {
+        empresas = await carregarEmpresasComCache();
+        console.log(`✅ [INPUT HÍBRIDO] ${empresas.length} empresas disponíveis`);
+    } catch (error) {
+        console.error(`❌ [INPUT HÍBRIDO] Erro ao carregar empresas:`, error);
+        empresas = [];
+    }
+
+    // 🔥 DEBOUNCE PARA EVITA MUITAS BUSCAS RÁPIDAS
+    let timeoutBusca;
+    
+    // 🔥 INICIALIZAR DETECTOR DE BACKSPACE
+    inicializarDetectorBackspace(input, obraId);
+    
+    // 🔥 EVENTO DE INPUT OTIMIZADO
+    input.addEventListener('input', function(e) {
+        const termo = e.target.value.trim();
+        
+        // Limpa timeout anterior
+        if (timeoutBusca) {
+            clearTimeout(timeoutBusca);
+        }
+        
+        // 🔥 DEBOUNCE: Aguarda 150ms antes de processar
+        timeoutBusca = setTimeout(() => {
+            processarInputEmpresa(termo, input, dropdown, optionsContainer, obraId, empresas);
+        }, 150);
+    });
+    
+    // 🔥 EVENTO DE FOCO - MAIS RÁPIDO
+    input.addEventListener('focus', function() {
+        window.usuarioEstaApagando = false;
+        window.ultimoValorInput = this.value;
+        
+        const valorAtual = this.value.trim();
+        const empresaJaSelecionada = this.dataset.siglaSelecionada;
+        
+        if (valorAtual.length === 0) {
+            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        } else if (empresaJaSelecionada && valorAtual === `${this.dataset.siglaSelecionada} - ${this.dataset.nomeSelecionado}`) {
+            dropdown.style.display = 'none';
+        } else {
+            const sugestoes = filtrarEmpresas(valorAtual, empresas);
+            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+        }
+    });
+    
+    // 🔥 EVENTO DE BLUR
+    input.addEventListener('blur', function() {
+        if (timeoutBusca) {
+            clearTimeout(timeoutBusca);
+        }
+        setTimeout(() => {
+            window.usuarioEstaApagando = false;
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+        }, 200);
+    });
+    
+    // 🔥 EVENTO DE TECLADO OTIMIZADO
+    input.addEventListener('keydown', function(e) {
+        if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
+            e.preventDefault();
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    navegarDropdown('down', optionsContainer, input, dropdown, obraId);
+                    break;
+                case 'ArrowUp':
+                    navegarDropdown('up', optionsContainer, input, dropdown, obraId);
+                    break;
+                case 'Enter':
+                case 'Tab':
+                    if (dropdown.style.display === 'block') {
+                        selecionarOpcaoAtiva(optionsContainer, input, dropdown, obraId);
+                    } else {
+                        dropdown.style.display = 'none';
+                        input.blur();
+                    }
+                    break;
+                case 'Escape':
+                    dropdown.style.display = 'none';
+                    input.blur();
+                    break;
+            }
+        }
+    });
+    
+    // 🔥 EVENTO DE CLIQUE FORA - OTIMIZADO
+    const fecharDropdownHandler = function(e) {
+        if (input && dropdown && !input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    };
+    
+    document.addEventListener('click', fecharDropdownHandler);
+    
+    // 🔥 LIMPEZA AO DESTRUIR COMPONENTE
+    input._cleanup = () => {
+        document.removeEventListener('click', fecharDropdownHandler);
+        if (timeoutBusca) {
+            clearTimeout(timeoutBusca);
+        }
+    };
+    
+    console.log(`✅ [INPUT HÍBRIDO] Inicializado com sucesso para obra ${obraId}`);
+}
+
+/**
+ * PROCESSAR INPUT COM DEBOUNCE
+ */
+function processarInputEmpresa(termo, input, dropdown, optionsContainer, obraId, empresas) {
+    console.log(`🔍 [INPUT] Processando: "${termo}" | Apagando: ${window.usuarioEstaApagando}`);
+    
+    // 🔥 SE USUÁRIO ESTÁ APAGANDO, NÃO FAZER AUTOCOMPLETE
+    if (window.usuarioEstaApagando) {
+        console.log('🚫 Autocomplete bloqueado - usuário apagando');
+        
+        if (termo.length === 0) {
+            limparDadosSelecao(input, obraId);
+            exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        } else {
+            const sugestoes = filtrarEmpresas(termo, empresas);
+            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+        }
+        
+        setTimeout(() => {
+            window.usuarioEstaApagando = false;
+        }, 100);
+        return;
+    }
+    
+    // 🔥 COMPORTAMENTO NORMAL
+    if (termo.length === 0) {
+        limparDadosSelecao(input, obraId);
+        exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
+        return;
+    }
+    
+    const sugestoes = filtrarEmpresas(termo, empresas);
+    
+    // 🔥 AUTOCOMPLETE SÓ SE NÃO ESTIVER APAGANDO
+    if (sugestoes.length === 1 && termo.length > 0 && !window.usuarioEstaApagando) {
+        const [sigla, nome] = Object.entries(sugestoes[0])[0];
+        const matchForte = termo === sigla || termo.length >= 3;
+        
+        if (matchForte) {
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'autocomplete');
+            return;
+        }
+    }
+    
+    exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+}
+
+/**
+ * FILTRAR EMPRESAS OTIMIZADO
+ */
+function filtrarEmpresas(termo, empresas) {
+    if (!termo || termo.length < 1) return [];
+    
+    const termoNormalizado = termo.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    
+    return empresas.filter(empresaObj => {
+        const [sigla, nome] = Object.entries(empresaObj)[0];
+        const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        
+        return sigla === termoNormalizado || 
+               sigla.includes(termoNormalizado) ||
+               nomeNormalizado.includes(termoNormalizado);
+    });
+}
+
+/**
+ * EXIBIR SUGESTÕES OTIMIZADO
+ */
+function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
+    const valorAtual = input.value.trim();
+    const empresaJaSelecionada = input.dataset.siglaSelecionada;
+    
+    if (empresaJaSelecionada && valorAtual === `${input.dataset.siglaSelecionada} - ${input.dataset.nomeSelecionado}`) {
+        container.innerHTML = '';
+        dropdown.style.display = 'none';
+        return;
+    }
+    
+    if (!sugestoes || sugestoes.length === 0) {
+        container.innerHTML = valorAtual.length > 0 
+            ? `<div class="dropdown-no-results">📝 Nenhuma empresa encontrada<br><small>Criando nova empresa: "${valorAtual}"</small></div>`
+            : '<div class="dropdown-no-results">Digite para buscar empresas</div>';
+        
+        dropdown.style.display = 'block';
+        return;
+    }
+    
+    const sugestoesLimitadas = sugestoes.slice(0, 50);
+    
+    // 🔥 BLOQUEAR SELEÇÃO AUTOMÁTICA SE ESTÁ APAGANDO
+    if (sugestoesLimitadas.length === 1 && valorAtual.length > 0 && !window.usuarioEstaApagando) {
+        const [sigla, nome] = Object.entries(sugestoesLimitadas[0])[0];
+        selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'autocomplete');
+        return;
+    }
+    
+    // 🔥 RENDERIZAÇÃO MAIS RÁPIDA
+    container.innerHTML = sugestoesLimitadas.map(empresaObj => {
+        const [sigla, nome] = Object.entries(empresaObj)[0];
+        return `
+            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}" title="${nome}">
+                <strong>${sigla}</strong> 
+                <div class="nome-empresa">- ${nome}</div>
+            </div>
+        `;
+    }).join('');
+    
+    dropdown.style.display = 'block';
+    setTimeout(corrigirPosicaoDropdown, 10);
+
+    // Selecionar primeira opção
+    const primeiraOpcao = container.querySelector('.dropdown-option');
+    if (primeiraOpcao) {
+        primeiraOpcao.classList.add('active');
+    }
+    
+    // 🔥 VINCULAR EVENTOS DE CLIQUE DE FORMA MAIS EFICIENTE
+    container.addEventListener('click', function(e) {
+        const option = e.target.closest('.dropdown-option');
+        if (option) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const sigla = option.dataset.sigla;
+            const nome = option.dataset.nome;
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'manual');
+        }
+    });
+    
+    console.log(`🔍 [EMPRESA] Exibindo ${sugestoesLimitadas.length} sugestões`);
+}
+
+/**
+ * EXIBIR TODAS AS EMPRESAS
+ */
+function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
+    const empresaJaSelecionada = input.dataset.siglaSelecionada;
+    
+    if (empresaJaSelecionada) {
+        container.innerHTML = '';
+        dropdown.style.display = 'none';
+        return;
+    }
+    
+    if (!empresas || empresas.length === 0) {
+        container.innerHTML = `
+            <div class="dropdown-no-results">
+                📝 Nenhuma empresa cadastrada<br>
+                <small>Digite o nome para criar uma nova</small>
+            </div>
+        `;
+        dropdown.style.display = 'block';
+        return;
+    }
+    
+    const empresasLimitadas = empresas.slice(0, 50);
+    
+    const html = empresasLimitadas.map(empresaObj => {
+        const [sigla, nome] = Object.entries(empresaObj)[0];
+        
+        return `
+            <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}" title="${nome}">
+                <strong>${sigla}</strong> 
+                <div class="nome-empresa">- ${nome}</div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+    dropdown.style.display = 'block';
+    setTimeout(corrigirPosicaoDropdown, 10);
+
+    setTimeout(() => {
+        if (dropdown.scrollHeight > 200) {
+            dropdown.style.overflowY = 'auto';
+            dropdown.style.maxHeight = '200px';
+        }
+    }, 10);
+    
+    container.querySelectorAll('.dropdown-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const sigla = this.dataset.sigla;
+            const nome = this.dataset.nome;
+            selecionarEmpresa(sigla, nome, input, dropdown, obraId);
+        });
+    });
+    
+    console.log(`📊 [EMPRESA] Exibindo ${empresasLimitadas.length} de ${empresas.length} empresas`);
+}
+
+/**
+ * NAVEGAR NO DROPDOWN COM TECLADO - COM LOOP (FINAL → INÍCIO)
+ */
+function navegarDropdown(direcao, container, input, dropdown, obraId) {
+    const options = container.querySelectorAll('.dropdown-option');
+    if (options.length === 0) return;
+    
+    const activeOption = container.querySelector('.dropdown-option.active');
+    let nextIndex = 0;
+    
+    if (activeOption) {
+        const currentIndex = Array.from(options).indexOf(activeOption);
+        
+        // 🔥 COMPORTAMENTO EXCEL COM LOOP
+        if (direcao === 'down') {
+            // Para baixo: se está no último, volta para o primeiro
+            nextIndex = currentIndex === options.length - 1 ? 0 : currentIndex + 1;
+        } else {
+            // Para cima: se está no primeiro, vai para o último
+            nextIndex = currentIndex === 0 ? options.length - 1 : currentIndex - 1;
+        }
+        
+        console.log(`🔄 Navegação: ${currentIndex} → ${nextIndex} (total: ${options.length})`);
+    } else {
+        // Se não há opção ativa, começa na primeira (down) ou última (up)
+        nextIndex = direcao === 'down' ? 0 : options.length - 1;
+    }
+    
+    // Remove active de todas e aplica na nova
+    options.forEach(opt => opt.classList.remove('active'));
+    options[nextIndex].classList.add('active');
+    
+    // 🔥 COMPORTAMENTO EXCEL: Atualiza o input em tempo real durante navegação
+    const sigla = options[nextIndex].dataset.sigla;
+    const nome = options[nextIndex].dataset.nome;
+    input.value = `${sigla} - ${nome}`;
+    
+    // Scroll para a opção ativa
+    options[nextIndex].scrollIntoView({ 
+        block: 'nearest',
+        behavior: 'smooth' 
+    });
+    
+    console.log(`🎯 Navegando para: ${sigla} - ${nome} (${nextIndex + 1}/${options.length})`);
+}
+
+/**
+ * SELECIONAR EMPRESA - COM CONTROLE DE TIPO DE SELEÇÃO
+ */
+
+
+
+function selecionarEmpresa(sigla, nome, input, dropdown, obraId, tipoSelecao = 'manual') {
+    console.log('🎯 Selecionando empresa:', sigla, nome, 'Tipo:', tipoSelecao);
+    
+    // Preenche o input
+    input.value = `${sigla} - ${nome}`;
+    input.dataset.siglaSelecionada = sigla;
+    input.dataset.nomeSelecionado = nome;
+    
+    // ✅ CORREÇÃO: SALVAR TODOS OS DADOS NOS DATA ATTRIBUTES DA OBRA
+    const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (obraElement) {
+        // Dados básicos da empresa
+        obraElement.dataset.empresaSigla = sigla;
+        obraElement.dataset.empresaNome = nome;
+        obraElement.dataset.dataCadastro = new Date().toLocaleDateString('pt-BR');
+        
+        // ✅ BUSCAR E SALVAR OS DEMAIS CAMPOS DO FORMULÁRIO
+        const formEmpresa = obraElement.querySelector('.empresa-formulario-ativo');
+        if (formEmpresa) {
+            // Buscar número do cliente
+            const numeroClienteInput = formEmpresa.querySelector('.numero-cliente-final-cadastro');
+            if (numeroClienteInput?.value) {
+                obraElement.dataset.numeroClienteFinal = numeroClienteInput.value;
+            }
+            
+            // Buscar cliente final
+            const clienteFinalInput = formEmpresa.querySelector('.cliente-final-cadastro');
+            if (clienteFinalInput?.value) {
+                obraElement.dataset.clienteFinal = clienteFinalInput.value;
+            }
+            
+            // Buscar código do cliente
+            const codigoClienteInput = formEmpresa.querySelector('.codigo-cliente-cadastro');
+            if (codigoClienteInput?.value) {
+                obraElement.dataset.codigoCliente = codigoClienteInput.value;
+            }
+            
+            // Buscar orçamentista
+            const orcamentistaInput = formEmpresa.querySelector('.orcamentista-responsavel-cadastro');
+            if (orcamentistaInput?.value) {
+                obraElement.dataset.orcamentistaResponsavel = orcamentistaInput.value;
+            }
+        }
+        
+        console.log(`💾 TODOS os dados salvos na obra ${obraId}:`, {
+            empresaSigla: sigla,
+            empresaNome: nome,
+            numeroClienteFinal: obraElement.dataset.numeroClienteFinal,
+            clienteFinal: obraElement.dataset.clienteFinal,
+            codigoCliente: obraElement.dataset.codigoCliente,
+            orcamentistaResponsavel: obraElement.dataset.orcamentistaResponsavel
+        });
+    }
+    
+    // Fecha dropdown
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+    
+    // Remove foco do input
+    setTimeout(() => {
+        input.blur();
+        
+        // 🔥 MOSTRAR AVISO APENAS SE FOR AUTOCOMPLETE
+        mostrarAvisoAutocompletado(input, tipoSelecao);
+    }, 10);
+    
+    // Calcula o número do cliente
+    calcularNumeroClienteFinal(sigla, obraId);
+    
+    console.log(`✅ Empresa selecionada e TODOS os dados salvos: ${sigla} - ${nome}`);
+}
+
+/**
+ * ATUALIZAR EVENTO DE ENTER - 
+ */
+// 3. NO ENTER/TAB (navegação)
+function selecionarOpcaoAtiva(container, input, dropdown, obraId) {
+    const activeOption = container.querySelector('.dropdown-option.active');
+    if (activeOption) {
+        const sigla = activeOption.dataset.sigla;
+        const nome = activeOption.dataset.nome;
+        console.log('⌨️ Seleção por teclado');
+        
+        // 🔥 TIPO: manual (usuário usou teclado)
+        selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'manual');
+    }
+}
+
+/**
+ * LIMPAR CACHE (para ser chamado quando novas empresas forem adicionadas)
+ */
+function limparCacheEmpresas() {
+    window.empresasCache = null;
+    window.cacheTimestamp = null;
+    console.log('🧹 [CACHE] Cache de empresas limpo');
+}
+
+// EXPORTS NO FINAL
+export {
+    inicializarInputEmpresaHibrido,
+    filtrarEmpresas,
+    exibirSugestoes,
+    exibirTodasEmpresas,
+    navegarDropdown,
+    selecionarEmpresa,
+    selecionarOpcaoAtiva,
+    carregarEmpresasComCache,
+    limparCacheEmpresas
+};
+/* ==== FIM: data/adapters/obra-adapter-folder/empresa-autocomplete.js ==== */
+
+/* ==== INÍCIO: data/builders/empresa-cadastro-inline.js ==== */
+/**
+ * features/empresa-cadastro-inline.js
+ * Sistema de cadastro inline de empresas para Página 1
+ * Integração com dados.json (empresas) e backup.json (obras)
+ */
+
+import { showSystemStatus } from '../../ui/components/status.js';
+import { extractNumberFromText } from '../../data/utils/data-utils.js';
+
+class EmpresaCadastroInline {
+    constructor() {
+        this.empresas = [];
+        this.obrasExistentes = [];
+        this.container = null;
+        this.isActive = false;
+        
+        this.init();
+    }
+
+    async init() {
+        await this.carregarDados();
+        this.vincularEventos();
+    }
+
+    async carregarDados() {
+        try {
+            // Carregar empresas do dados.json
+            const responseEmpresas = await fetch('/api/dados/empresas');
+            if (responseEmpresas.ok) {
+                const dados = await responseEmpresas.json();
+                this.empresas = dados.empresas || [];
+            }
+
+            // Carregar obras existentes do backup.json
+            const responseBackup = await fetch('/api/backup-completo');
+            if (responseBackup.ok) {
+                const backup = await responseBackup.json();
+                this.obrasExistentes = backup.obras || [];
+            }
+
+            console.log(`📊 Dados carregados: ${this.empresas.length} empresas, ${this.obrasExistentes.length} obras`);
+        } catch (error) {
+            console.error('❌ Erro ao carregar dados:', error);
+        }
+    }
+
+    vincularEventos() {
+        // Encontrar todos os spans de cadastro de empresas e transformar em botões
+        const spansCadastro = document.querySelectorAll('.projetc-header-record.very-dark span');
+        
+        spansCadastro.forEach(span => {
+            // Transformar span em botão
+            const button = document.createElement('button');
+            button.className = 'btn-empresa-cadastro';
+            button.textContent = span.textContent;
+            button.setAttribute('type', 'button');
+            
+            // Substituir span por botão
+            span.parentNode.replaceChild(button, span);
+            
+            // Vincular eventos
+            button.addEventListener('click', (e) => this.ativarCadastro(e));
+            button.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.ativarCadastro(e);
+                }
+            });
+        });
+    }
+
+    ativarCadastro(event) {
+        if (this.isActive) return;
+
+        const span = event.target;
+        this.container = span.closest('.projetc-header-record');
+        
+        if (!this.container) {
+            console.error('❌ Container não encontrado');
+            return;
+        }
+
+        // Ocultar span e mostrar formulário inline
+        span.style.display = 'none';
+        this.renderizarFormulario();
+        this.isActive = true;
+
+        console.log('✅ Cadastro inline ativado');
+    }
+
+    /**
+     * 🆕 RENDERIZAR FORMULÁRIO COM CAMPOS CORRETAMENTE LIBERADOS/BLOQUEADOS
+     */
+    renderizarFormulario() {
+        const formHTML = this.criarHTMLFormulario();
+        this.container.insertAdjacentHTML('beforeend', formHTML);
+        
+        // 🆕 CONFIGURAR ESTADO DOS CAMPOS APÓS RENDERIZAÇÃO
+        this.configurarEstadoCampos();
+        
+        // Vincular eventos do formulário
+        this.vincularEventosFormulario();
+        
+        // Focar no primeiro campo
+        setTimeout(() => {
+            const empresaInput = this.container.querySelector('#empresa-input');
+            if (empresaInput) empresaInput.focus();
+        }, 100);
+    }
+
+    /**
+     * 🆕 CONFIGURAR ESTADO CORRETO DOS CAMPOS - LIBERADOS vs BLOQUEADOS
+     */
+    configurarEstadoCampos() {
+        // 🟢 CAMPOS QUE DEVEM FICAR SEMPRE LIBERADOS (editáveis)
+        const camposLiberados = [
+            'empresa-input',
+            'cliente-final', 
+            'codigo-cliente',
+            'data-cadastro',
+            'orcamentista-responsavel'
+        ];
+        
+        camposLiberados.forEach(campoId => {
+            const campo = this.container.querySelector(`#${campoId}`);
+            if (campo) {
+                // 🟢 REMOVER COMPLETAMENTE READONLY E DISABLED
+                campo.removeAttribute('readonly');
+                campo.removeAttribute('disabled');
+                
+                // 🟢 GARANTIR QUE ESTEJAM EDITÁVEIS
+                campo.readOnly = false;
+                campo.disabled = false;
+                
+                // 🟢 ESTILOS VISUAIS DE CAMPO EDITÁVEL
+                campo.style.backgroundColor = '#ffffff';
+                campo.style.borderColor = '#007bff';
+                campo.style.cursor = 'text';
+                campo.style.color = '#000000';
+                
+                console.log(`🟢 Campo LIBERADO: ${campoId}`);
+            }
+        });
+        
+        // 🔴 CAMPOS QUE DEVEM FICAR BLOQUEADOS (somente leitura)
+        const camposBloqueados = [
+            'numero-cliente-final'
+        ];
+        
+        camposBloqueados.forEach(campoId => {
+            const campo = this.container.querySelector(`#${campoId}`);
+            if (campo) {
+                // 🔴 MANTER COMO SOMENTE LEITURA
+                campo.readOnly = true;
+                campo.setAttribute('readonly', 'true');
+                
+                // 🔴 ESTILOS VISUAIS DE CAMPO BLOQUEADO
+                campo.style.backgroundColor = '#f8f9fa';
+                campo.style.borderColor = '#ced4da';
+                campo.style.cursor = 'not-allowed';
+                campo.style.color = '#6c757d';
+                
+                console.log(`🔴 Campo BLOQUEADO: ${campoId}`);
+            }
+        });
+        
+        // 🟢 CONFIGURAÇÃO ESPECIAL PARA O CAMPO DE DATA
+        this.configurarCampoData();
+    }
+
+    /**
+     * 🆕 CONFIGURAR CAMPO DE DATA COMO EDITÁVEL
+     */
+    configurarCampoData() {
+        const dataCampo = this.container.querySelector('#data-cadastro');
+        if (dataCampo) {
+            // 🟢 REMOVER COMPLETAMENTE O READONLY
+            dataCampo.removeAttribute('readonly');
+            dataCampo.readOnly = false;
+            
+            // 🟢 TORNAR EDITÁVEL
+            dataCampo.disabled = false;
+            
+            // 🟢 MELHORAR USABILIDADE
+            dataCampo.title = "Clique para editar a data (DD/MM/AAAA)";
+            dataCampo.placeholder = "DD/MM/AAAA";
+            
+            // 🟢 ESTILOS DE CAMPO EDITÁVEL
+            dataCampo.style.backgroundColor = '#ffffff';
+            dataCampo.style.borderColor = '#007bff';
+            dataCampo.style.cursor = 'text';
+            dataCampo.style.color = '#000000';
+            
+            // 🟢 ADICIONAR MÁSCARA DE DATA EM TEMPO REAL
+            dataCampo.addEventListener('input', (e) => {
+                this.aplicarMascaraData(e.target);
+            });
+            
+            // 🟢 VALIDAR DATA AO PERDER O FOCO
+            dataCampo.addEventListener('blur', (e) => {
+                this.validarData(e.target);
+            });
+            
+            console.log('🟢 Campo de DATA configurado como editável');
+        }
+    }
+
+    /**
+     * 🆕 APLICAR MÁSCARA DE DATA EM TEMPO REAL
+     */
+    aplicarMascaraData(input) {
+        let value = input.value.replace(/\D/g, '');
+        
+        // Limitar a 8 dígitos (DDMMAAAA)
+        if (value.length > 8) {
+            value = value.substring(0, 8);
+        }
+        
+        // Aplicar máscara
+        if (value.length > 4) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4) + '/' + value.substring(4);
+        } else if (value.length > 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2);
+        }
+        
+        input.value = value;
+    }
+
+    /**
+     * 🆕 VALIDAR DATA AO PERDER FOCO
+     */
+    validarData(input) {
+        const valor = input.value.trim();
+        
+        if (!valor) return true; // Campo vazio é válido
+        
+        // Validar formato DD/MM/AAAA
+        const regexData = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        const match = valor.match(regexData);
+        
+        if (!match) {
+            showSystemStatus('Formato de data inválido. Use DD/MM/AAAA', 'warning');
+            input.focus();
+            return false;
+        }
+        
+        const dia = parseInt(match[1], 10);
+        const mes = parseInt(match[2], 10);
+        const ano = parseInt(match[3], 10);
+        
+        // Validar valores
+        if (mes < 1 || mes > 12) {
+            showSystemStatus('Mês deve estar entre 01 e 12', 'warning');
+            input.focus();
+            return false;
+        }
+        
+        if (dia < 1 || dia > 31) {
+            showSystemStatus('Dia deve estar entre 01 e 31', 'warning');
+            input.focus();
+            return false;
+        }
+        
+        // Validar fevereiro e meses com 30 dias
+        const data = new Date(ano, mes - 1, dia);
+        if (data.getDate() !== dia || data.getMonth() + 1 !== mes || data.getFullYear() !== ano) {
+            showSystemStatus('Data inválida para o mês especificado', 'warning');
+            input.focus();
+            return false;
+        }
+        
+        return true;
+    }
+
+    criarHTMLFormulario() {
+        return `
+        <div class="empresa-cadastro-inline" id="empresa-cadastro-inline">
+            <div class="empresa-form-grid">
+                <!-- Empresa 🟢 EDITÁVEL -->
+                <div class="form-group">
+                    <label for="empresa-input">Empresa *</label>
+                    <input type="text" 
+                        id="empresa-input" 
+                        class="empresa-input" 
+                        placeholder="Digite sigla ou nome..."
+                        autocomplete="off">
+                    <div class="autocomplete-suggestions" id="empresa-suggestions"></div>
+                </div>
+
+                <!-- Número Cliente Final 🔴 SOMENTE LEITURA -->
+                <div class="form-group">
+                    <label for="numero-cliente-final">Número Cliente Final</label>
+                    <input type="text" 
+                        id="numero-cliente-final" 
+                        class="numero-cliente-final" 
+                        readonly
+                        placeholder="Será calculado automaticamente">
+                </div>
+
+                <!-- Cliente Final 🟢 EDITÁVEL -->
+                <div class="form-group">
+                    <label for="cliente-final">Cliente Final</label>
+                    <input type="text" 
+                        id="cliente-final" 
+                        class="cliente-final" 
+                        placeholder="Nome do cliente final">
+                </div>
+
+                <!-- Código Cliente 🟢 EDITÁVEL -->
+                <div class="form-group">
+                    <label for="codigo-cliente">Código Cliente</label>
+                    <input type="text" 
+                        id="codigo-cliente" 
+                        class="codigo-cliente" 
+                        placeholder="Código interno do cliente">
+                </div>
+
+                <!-- Data do Cadastro 🟢 EDITÁVEL -->
+                <div class="form-group">
+                    <label for="data-cadastro">Data do Cadastro</label>
+                    <input type="text" 
+                        id="data-cadastro" 
+                        class="data-cadastro" 
+                        placeholder="DD/MM/AAAA"
+                        value="${new Date().toLocaleDateString('pt-BR')}">
+                </div>
+
+                <!-- Orçamentista Responsável 🟢 EDITÁVEL -->
+                <div class="form-group">
+                    <label for="orcamentista-responsavel">Orçamentista Responsável</label>
+                    <input type="text" 
+                        id="orcamentista-responsavel" 
+                        class="orcamentista-responsavel" 
+                        placeholder="Nome do orçamentista">
+                </div>
+            </div>
+
+            <div class="empresa-form-actions">
+                <button type="button" class="btn btn-cancel" onclick="window.empresaCadastro.cancelarCadastro()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-confirm" onclick="window.empresaCadastro.prepararDados()">
+                    Confirmar Dados
+                </button>
+            </div>
+        </div>
+        `;
+    }
+
+    vincularEventosFormulario() {
+        const empresaInput = this.container.querySelector('#empresa-input');
+        if (empresaInput) {
+            empresaInput.addEventListener('input', (e) => this.buscarEmpresas(e.target.value));
+            empresaInput.addEventListener('blur', () => {
+                setTimeout(() => this.ocultarSugestoes(), 200);
+            });
+            empresaInput.addEventListener('keydown', (e) => this.tratarTecladoAutocomplete(e));
+        }
+    }
+
+    async buscarEmpresas(termo) {
+        if (!termo || termo.length < 2) {
+            this.ocultarSugestoes();
+            return;
+        }
+
+        const termoNormalizado = this.normalizarTermo(termo);
+        const sugestoes = this.filtrarEmpresas(termoNormalizado);
+        
+        this.exibirSugestoes(sugestoes);
+    }
+
+    normalizarTermo(termo) {
+        return termo.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    filtrarEmpresas(termo) {
+        return this.empresas.filter(empresaObj => {
+            const [sigla, nome] = Object.entries(empresaObj)[0];
+            const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const primeiroNome = nome.split(' ')[0].toUpperCase();
+            
+            return sigla === termo || 
+                   nomeNormalizado.includes(termo) ||
+                   primeiroNome.includes(termo);
+        });
+    }
+
+    exibirSugestoes(sugestoes) {
+        const containerSugestoes = this.container.querySelector('#empresa-suggestions');
+        if (!containerSugestoes) return;
+
+        if (sugestoes.length === 0) {
+            this.ocultarSugestoes();
+            return;
+        }
+
+        const html = sugestoes.map(empresaObj => {
+            const [sigla, nome] = Object.entries(empresaObj)[0];
+            const primeiroNome = nome.split(' ')[0];
+
+            return `
+                <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
+                    <strong>${sigla}</strong> - ${primeiroNome}
+                </div>
+            `;
+        }).join('');
+
+        containerSugestoes.innerHTML = html;
+        containerSugestoes.style.display = 'block';
+
+        // Vincular eventos de clique nas sugestões
+        containerSugestoes.querySelectorAll('.suggestion-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const sigla = item.dataset.sigla;
+                const nome = item.dataset.nome;
+                this.selecionarEmpresa(sigla, nome);
+            });
+        });
+    }
+
+    ocultarSugestoes() {
+        const containerSugestoes = this.container.querySelector('#empresa-suggestions');
+        if (containerSugestoes) {
+            containerSugestoes.style.display = 'none';
+        }
+    }
+
+    tratarTecladoAutocomplete(event) {
+        const sugestoes = this.container.querySelectorAll('.suggestion-item');
+        if (sugestoes.length === 0) return;
+
+        const sugestaoAtiva = this.container.querySelector('.suggestion-item.active');
+        
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                this.navegarSugestoes(sugestoes, sugestaoAtiva, 1);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                this.navegarSugestoes(sugestoes, sugestaoAtiva, -1);
+                break;
+            case 'Enter':
+                event.preventDefault();
+                if (sugestaoAtiva) {
+                    const sigla = sugestaoAtiva.dataset.sigla;
+                    const nome = sugestaoAtiva.dataset.nome;
+                    this.selecionarEmpresa(sigla, nome);
+                }
+                break;
+            case 'Escape':
+                this.ocultarSugestoes();
+                break;
+        }
+    }
+
+    navegarSugestoes(sugestoes, atual, direcao) {
+        let index = Array.from(sugestoes).indexOf(atual);
+        
+        if (index === -1) index = direcao > 0 ? -1 : sugestoes.length;
+        
+        index = (index + direcao + sugestoes.length) % sugestoes.length;
+        
+        sugestoes.forEach(s => s.classList.remove('active'));
+        sugestoes[index].classList.add('active');
+    }
+
+    selecionarEmpresa(sigla, nome) {
+        const empresaInput = this.container.querySelector('#empresa-input');
+        if (empresaInput) {
+            empresaInput.value = `${sigla} - ${nome}`;
+            empresaInput.dataset.siglaSelecionada = sigla;
+            empresaInput.dataset.nomeSelecionado = nome;
+        }
+
+        this.ocultarSugestoes();
+        this.calcularNumeroClienteFinal(sigla);
+    }
+
+    calcularNumeroClienteFinal(sigla) {
+        // Filtrar obras existentes pela sigla
+        const obrasDaEmpresa = this.obrasExistentes.filter(obra => {
+            return obra.empresaSigla === sigla || 
+                   (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`));
+        });
+
+        // Encontrar maior número existente
+        let maiorNumero = 0;
+        obrasDaEmpresa.forEach(obra => {
+            if (obra.numeroClienteFinal && obra.numeroClienteFinal > maiorNumero) {
+                maiorNumero = obra.numeroClienteFinal;
+            }
+            
+            // Também tentar extrair do ID gerado
+            if (obra.idGerado) {
+                const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
+                if (match) {
+                    const numero = parseInt(match[1]);
+                    if (numero > maiorNumero) maiorNumero = numero;
+                }
+            }
+        });
+
+        const novoNumero = maiorNumero + 1;
+        
+        const numeroInput = this.container.querySelector('#numero-cliente-final');
+        if (numeroInput) {
+            numeroInput.value = novoNumero;
+        }
+
+        // Atualizar preview do ID da obra
+        this.atualizarPreviewIdObra(sigla, novoNumero);
+    }
+
+    atualizarPreviewIdObra(sigla, numero) {
+        const idObraValue = this.container.querySelector('#obra-id-value');
+        
+        if (idObraContainer && idObraValue) {
+            const idObra = `obra_${sigla}_${numero}`;
+            idObraValue.textContent = idObra;
+            idObraContainer.style.display = 'block';
+        }
+    }
+
+    async prepararDados() {
+        const dados = this.coletarDadosFormulario();
+        
+        if (!this.validarDados(dados)) {
+            return;
+        }
+
+        // Verificar se precisa cadastrar nova empresa
+        if (!dados.empresaExistente) {
+            const sucesso = await this.cadastrarNovaEmpresa(dados.sigla, dados.nomeEmpresa);
+            if (!sucesso) return;
+        }
+
+        // Preparar dados para a obra
+        this.prepararDadosObra(dados);
+        
+        showSystemStatus('Dados da empresa preparados! Agora salve a obra.', 'success');
+        
+        // Ocultar formulário mas manter dados preparados
+        this.ocultarFormulario();
+    }
+
+    coletarDadosFormulario() {
+        const empresaInput = this.container.querySelector('#empresa-input');
+        const siglaSelecionada = empresaInput?.dataset.siglaSelecionada;
+        const nomeSelecionado = empresaInput?.dataset.nomeSelecionado;
+        
+        return {
+            empresaInput: empresaInput?.value || '',
+            sigla: siglaSelecionada,
+            nomeEmpresa: nomeSelecionado,
+            empresaExistente: !!siglaSelecionada,
+            numeroClienteFinal: this.container.querySelector('#numero-cliente-final')?.value || '',
+            clienteFinal: this.container.querySelector('#cliente-final')?.value || '',
+            codigoCliente: this.container.querySelector('#codigo-cliente')?.value || '',
+            dataCadastro: this.container.querySelector('#data-cadastro')?.value || '',
+            orcamentistaResponsavel: this.container.querySelector('#orcamentista-responsavel')?.value || ''
+        };
+    }
+
+    /**
+     * 🆕 VALIDAÇÃO CORRIGIDA DA SIGLA - COM REGEX E TOOLTIP
+     */
+    validarDados(dados) {
+        if (!dados.empresaInput.trim()) {
+            showSystemStatus('Por favor, informe a empresa', 'error');
+            return false;
+        }
+
+        if (!dados.empresaExistente) {
+            // 🆕 VALIDAÇÃO CORRIGIDA DA SIGLA - REGEX MELHORADO
+            const regexSigla = /^[A-Z]{2,6}$/; // 2 a 6 letras maiúsculas
+            
+            // Verificar se usuário digitou apenas sigla
+            if (regexSigla.test(dados.empresaInput)) {
+                // Usuário digitou apenas sigla - solicitar nome completo
+                const nomeCompleto = prompt(`Você digitou apenas a sigla "${dados.empresaInput}". Por favor, informe o nome completo da empresa:`);
+                if (!nomeCompleto || !nomeCompleto.trim()) {
+                    showSystemStatus('Nome completo da empresa é obrigatório', 'error');
+                    return false;
+                }
+                
+                // 🆕 VALIDAR FORMATO DO NOME
+                if (nomeCompleto.trim().length < 3) {
+                    showSystemStatus('Nome da empresa deve ter pelo menos 3 caracteres', 'error');
+                    return false;
+                }
+                
+                dados.nomeEmpresa = nomeCompleto.trim();
+                dados.sigla = dados.empresaInput.toUpperCase();
+                
+            } else {
+                // Usuário digitou nome - sugerir sigla válida
+                const primeiraPalavra = dados.empresaInput.split(' ')[0];
+                const siglaSugerida = primeiraPalavra.substring(0, 3).toUpperCase();
+                
+                // 🆕 GARANTIR QUE SIGLA TENHA FORMATO VÁLIDO
+                let siglaConfirmada = prompt(`Empresa não encontrada. Sugerimos a sigla "${siglaSugerida}". Confirme ou digite outra sigla (2-6 letras maiúsculas):`, siglaSugerida);
+                
+                if (!siglaConfirmada) {
+                    showSystemStatus('Sigla é obrigatória', 'error');
+                    return false;
+                }
+                
+                // 🆕 NORMALIZAR SIGLA
+                siglaConfirmada = siglaConfirmada.trim().toUpperCase().replace(/[^A-Z]/g, '');
+                
+                // 🆕 VALIDAR FORMATO DA SIGLA
+                if (!regexSigla.test(siglaConfirmada)) {
+                    showSystemStatus('Sigla deve conter 2 a 6 letras maiúsculas, sem espaços ou caracteres especiais', 'error');
+                    return false;
+                }
+                
+                dados.sigla = siglaConfirmada;
+                dados.nomeEmpresa = dados.empresaInput;
+            }
+        }
+
+        return true;
+    }
+
+    async cadastrarNovaEmpresa(sigla, nome) {
+        try {
+            // Verificar se sigla já existe
+            const siglaExistente = this.empresas.find(empresaObj => {
+                const [siglaExistente] = Object.keys(empresaObj);
+                return siglaExistente === sigla;
+            });
+
+            if (siglaExistente) {
+                showSystemStatus(`Sigla ${sigla} já está em uso. Escolha outra sigla.`, 'error');
+                return false;
+            }
+
+            // Adicionar nova empresa
+            const novaEmpresa = { [sigla]: nome };
+            this.empresas.push(novaEmpresa);
+
+            // Salvar no dados.json
+            const response = await fetch('/api/dados/empresas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(novaEmpresa)
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao salvar empresa');
+            }
+
+            showSystemStatus(`Empresa ${sigla} - ${nome} cadastrada com sucesso!`, 'success');
+            return true;
+
+        } catch (error) {
+            console.error('❌ Erro ao cadastrar nova empresa:', error);
+            showSystemStatus('Erro ao cadastrar empresa', 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Atualiza o header da obra com a sigla e numeração
+     * @param {HTMLElement} obraElement - Elemento da obra
+     * @param {Object} dadosEmpresa - Dados da empresa
+     */
+
+    atualizarHeaderObra(obraElement, dadosEmpresa) {
+        try {
+            const headerSpacer = obraElement.querySelector('.obra-header-spacer');
+            if (!headerSpacer) {
+                console.error('❌ Elemento .obra-header-spacer não encontrado');
+                return;
+            }
+
+            // Limpar conteúdo atual
+            headerSpacer.innerHTML = '';
+
+            if (dadosEmpresa.empresaSigla && dadosEmpresa.numeroClienteFinal) {
+                // 🆕 CRIAR SPAN COM IDENTIFICADOR DA EMPRESA (não botão)
+                const span = document.createElement('span');
+                span.className = 'empresa-identifier-display';
+                const textoHeader = `${dadosEmpresa.empresaSigla}-${dadosEmpresa.numeroClienteFinal}`;
+                span.textContent = textoHeader;
+                span.setAttribute('data-tooltip', this.criarTooltipEmpresa(dadosEmpresa));
+                
+                // 🆕 ADICIONAR SISTEMA DE TOOLTIP VIA JAVASCRIPT
+                this.inicializarTooltipJavaScript(span);
+                
+                headerSpacer.appendChild(span);
+                console.log(`✅ Header da obra atualizado para SPAN: ${textoHeader}`);
+            } else {
+                // Botão padrão para cadastro
+                this.resetHeaderObra(headerSpacer);
+            }
+        } catch (error) {
+            console.error('❌ Erro ao atualizar header da obra:', error);
+        }
+    }
+
+    /**
+     * 🆕 INICIALIZAR TOOLTIP - VERSÃO COM AUTO-CLOSE NO MOBILE
+     */
+    inicializarTooltipJavaScript(element) {
+        console.log('🔧 Inicializando tooltip RESPONSIVO com auto-close');
+        
+        // 🆕 DETECTAR SE É MOBILE
+        const isMobile = window.innerWidth <= 768;
+        
+        // 🆕 VARIÁVEL PARA CONTROLAR O TIMER
+        let autoCloseTimer = null;
+        
+        // FORÇAR ESTILOS PARA GARANTIR VISIBILIDADE
+        element.style.position = 'relative';
+        element.style.overflow = 'visible';
+        element.style.zIndex = '100';
+        
+        // Criar tooltip
+        const tooltip = document.createElement('div');
+        tooltip.className = 'empresa-tooltip';
+        
+        // 🆕 ADICIONAR CLASSE PARA MOBILE
+        if (isMobile) {
+            tooltip.classList.add('empresa-tooltip-mobile');
+            
+            // 🆕 ADICIONAR BOTÃO DE FECHAR NO MOBILE
+            const closeButton = document.createElement('button');
+            closeButton.className = 'empresa-tooltip-close';
+            closeButton.innerHTML = '×';
+            closeButton.setAttribute('aria-label', 'Fechar tooltip');
+            tooltip.appendChild(closeButton);
+            
+            // 🆕 EVENTO PARA FECHAR COM BOTÃO
+            closeButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                esconderTooltip();
+            });
+        }
+        
+        // 🆕 POSICIONAR O TOOLTIP FORA DA HIERARQUIA DO ELEMENTO
+        document.body.appendChild(tooltip);
+        
+        // 🆕 FUNÇÃO PARA INICIAR TIMER DE AUTO-CLOSE
+        const iniciarAutoCloseTimer = () => {
+            if (autoCloseTimer) {
+                clearTimeout(autoCloseTimer);
+            }
+            // 🆕 FECHAR AUTOMATICAMENTE APÓS 5 SEGUNDOS NO MOBILE
+            autoCloseTimer = setTimeout(() => {
+                console.log('⏰ Auto-close do tooltip no mobile');
+                esconderTooltip();
+            }, 5000); // 5 segundos
+        };
+        
+        // 🆕 FUNÇÃO PARA CANCELAR TIMER
+        const cancelarAutoCloseTimer = () => {
+            if (autoCloseTimer) {
+                clearTimeout(autoCloseTimer);
+                autoCloseTimer = null;
+            }
+        };
+        
+        // 🆕 FUNÇÃO PARA ATUALIZAR POSIÇÃO DO TOOLTIP - VERSÃO RESPONSIVA
+        const atualizarPosicaoTooltip = () => {
+            const rect = element.getBoundingClientRect();
+            const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+            const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+            const isMobileNow = window.innerWidth <= 768;
+            
+            if (isMobileNow) {
+                // 🆕 POSICIONAMENTO PARA MOBILE
+                tooltip.style.position = 'fixed';
+                tooltip.style.left = '50%';
+                tooltip.style.top = '50%';
+                tooltip.style.transform = 'translate(-50%, -50%)';
+                tooltip.style.bottom = 'auto';
+                tooltip.style.right = 'auto';
+                tooltip.style.width = '90vw';
+                tooltip.style.maxWidth = '320px';
+                tooltip.style.maxHeight = '70vh';
+                tooltip.style.overflowY = 'auto';
+                tooltip.style.zIndex = '100000';
+            } else {
+                // 🆕 POSICIONAMENTO PARA DESKTOP
+                tooltip.style.position = 'fixed';
+                tooltip.style.left = (rect.left + scrollX + (rect.width / 2)) + 'px';
+                tooltip.style.bottom = (window.innerHeight - rect.top - scrollY + 8) + 'px';
+                tooltip.style.transform = 'translateX(-50%)';
+                tooltip.style.width = 'auto';
+                tooltip.style.maxWidth = '380px';
+                tooltip.style.maxHeight = 'none';
+            }
+        };
+        
+        // 🆕 FUNÇÃO PARA MOSTRAR TOOLTIP
+        const mostrarTooltip = () => {
+            console.log('🐭 Mouse ENTER/TAP no span');
+            const tooltipText = element.getAttribute('data-tooltip');
+            if (tooltipText) {
+                // 🆕 ATUALIZAR CONTEÚDO (exceto botão de fechar se existir)
+                const closeBtn = tooltip.querySelector('.empresa-tooltip-close');
+                tooltip.innerHTML = tooltipText;
+                if (closeBtn && isMobile) {
+                    tooltip.appendChild(closeBtn);
+                }
+                
+                tooltip.classList.add('show');
+                atualizarPosicaoTooltip();
+                
+                // 🆕 INICIAR TIMER DE AUTO-CLOSE NO MOBILE
+                if (isMobile) {
+                    iniciarAutoCloseTimer();
+                }
+                
+                console.log('🔦 Tooltip mostrado:', tooltipText);
+            }
+        };
+        
+        // 🆕 FUNÇÃO PARA ESCONDER TOOLTIP
+        const esconderTooltip = () => {
+            console.log('🐭 Escondendo tooltip');
+            tooltip.classList.remove('show');
+            cancelarAutoCloseTimer(); // 🆕 CANCELAR TIMER AO ESCONDER
+        };
+        
+        // 🆕 EVENT LISTENERS DIFERENCIADOS PARA MOBILE/DESKTOP
+        if (isMobile) {
+            // 🆕 PARA MOBILE: USAR CLICK/TOUCH
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (tooltip.classList.contains('show')) {
+                    esconderTooltip();
+                } else {
+                    mostrarTooltip();
+                }
+            });
+            
+            // 🆕 FECHAR TOOLTIP AO CLICAR FORA (MOBILE)
+            document.addEventListener('click', (e) => {
+                if (!element.contains(e.target) && !tooltip.contains(e.target)) {
+                    esconderTooltip();
+                }
+            });
+            
+            // 🆕 FECHAR TOOLTIP AO ROLAR (MOBILE)
+            window.addEventListener('scroll', esconderTooltip);
+            
+            // 🆕 FECHAR TOOLTIP AO MUDAR ORIENTAÇÃO (MOBILE)
+            window.addEventListener('orientationchange', esconderTooltip);
+            
+        } else {
+            // 🆕 PARA DESKTOP: USAR HOVER
+            element.addEventListener('mouseenter', mostrarTooltip);
+            element.addEventListener('mouseleave', esconderTooltip);
+        }
+        
+        // 🆕 REINICIAR TIMER SE O USUÁRIO INTERAGIR COM O TOOLTIP (MOBILE)
+        if (isMobile) {
+            tooltip.addEventListener('touchstart', () => {
+                cancelarAutoCloseTimer(); // Cancelar timer atual
+                iniciarAutoCloseTimer();  // Reiniciar timer
+            });
+            
+            tooltip.addEventListener('click', () => {
+                cancelarAutoCloseTimer(); // Cancelar timer atual  
+                iniciarAutoCloseTimer();  // Reiniciar timer
+            });
+        }
+        
+        // 🆕 ATUALIZAR POSIÇÃO AO ROLAR/REDIMENSIONAR
+        window.addEventListener('scroll', () => {
+            if (tooltip.classList.contains('show')) {
+                atualizarPosicaoTooltip();
+            }
+        });
+        
+        window.addEventListener('resize', () => {
+            if (tooltip.classList.contains('show')) {
+                atualizarPosicaoTooltip();
+            }
+            
+            // 🆕 RECARREGAR COMPORTAMENTO AO REDIMENSIONAR ENTRE MOBILE/DESKTOP
+            const novaCondicaoMobile = window.innerWidth <= 768;
+            if (isMobile !== novaCondicaoMobile) {
+                console.log('🔄 Mudança entre mobile/desktop detectada');
+                esconderTooltip();
+                // Recriar tooltip com novo comportamento
+                tooltip.remove();
+                this.inicializarTooltipJavaScript(element);
+            }
+        });
+        
+        // 🆕 LIMPAR EVENT LISTENERS QUANDO ELEMENTO FOR REMOVIDO
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.removedNodes.length > 0) {
+                    const removed = Array.from(mutation.removedNodes);
+                    if (removed.includes(element) || element.parentNode === null) {
+                        tooltip.remove();
+                        cancelarAutoCloseTimer();
+                        window.removeEventListener('scroll', atualizarPosicaoTooltip);
+                        window.removeEventListener('resize', atualizarPosicaoTooltip);
+                        document.removeEventListener('click', esconderTooltip);
+                        window.removeEventListener('orientationchange', esconderTooltip);
+                        observer.disconnect();
+                    }
+                }
+            });
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        console.log('✅ Tooltip inicializado (com auto-close) - Mobile:', isMobile);
+    }
+
+
+
+    /**
+     * Cria texto de tooltip com informações completas da empresa
+     * @param {Object} dadosEmpresa - Dados da empresa
+     * @returns {string} Texto do tooltip
+     */
+    criarTooltipEmpresa(dadosEmpresa) {
+        const partes = [];
+        
+        if (dadosEmpresa.empresaNome) {
+            partes.push(`Empresa: ${dadosEmpresa.empresaNome}`);
+        }
+        if (dadosEmpresa.clienteFinal) {
+            partes.push(`Cliente: ${dadosEmpresa.clienteFinal}`);
+        }
+        if (dadosEmpresa.codigoCliente) {
+            partes.push(`Código: ${dadosEmpresa.codigoCliente}`);
+        }
+        if (dadosEmpresa.dataCadastro) {
+            // 🆕 FORMATAR DATA PARA dd/mm/aaaa
+            const dataFormatada = this.formatarDataParaTooltip(dadosEmpresa.dataCadastro);
+            partes.push(`Data: ${dataFormatada}`);
+        }
+        if (dadosEmpresa.orcamentistaResponsavel) {
+            partes.push(`Orçamentista: ${dadosEmpresa.orcamentistaResponsavel}`);
+        }
+        
+        return partes.join('\n');
+    }
+
+    /**
+     * Formata data para o formato dd/mm/aaaa no tooltip
+     * @param {string} dataString - Data em qualquer formato
+     * @returns {string} Data formatada como dd/mm/aaaa
+     */
+    formatarDataParaTooltip(dataString) {
+        if (!dataString) return '';
+        
+        try {
+            // Se já estiver no formato dd/mm/aaaa, retornar como está
+            if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                return dataString;
+            }
+            
+            // Tentar converter para Date
+            const data = new Date(dataString);
+            
+            if (isNaN(data.getTime())) {
+                console.warn(`⚠️ Data inválida no tooltip: ${dataString}`);
+                return dataString;
+            }
+            
+            // Formatar para dd/mm/aaaa
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            
+            return `${dia}/${mes}/${ano}`;
+            
+        } catch (error) {
+            console.error(`❌ Erro ao formatar data para tooltip ${dataString}:`, error);
+            return dataString;
+        }
+    }
+
+    /**
+     * Reseta o header para o estado original
+     * @param {HTMLElement} headerSpacer - Elemento do header
+     */
+    resetHeaderObra(headerSpacer) {
+        const button = document.createElement('button');
+        button.className = 'btn-empresa-cadastro';
+        button.textContent = 'Adicionar campos de cadastro de empresas';
+        button.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const obraBlock = headerSpacer.closest('.obra-block');
+            if (obraBlock && obraBlock.dataset.obraId) {
+                window.ativarCadastroEmpresa(obraBlock.dataset.obraId);
+            }
+        };
+        
+        headerSpacer.innerHTML = '';
+        headerSpacer.appendChild(button);
+    }
+
+    /**
+     * Prepara dados da obra e atualiza o header
+     * @param {Object} dados - Dados coletados do formulário
+     */
+    prepararDadosObra(dados) {
+        // Armazenar dados no container da obra para uso posterior
+        const obraBlock = this.container.closest('.obra-block');
+        if (obraBlock) {
+            obraBlock.dataset.empresaSigla = dados.sigla;
+            obraBlock.dataset.empresaNome = dados.nomeEmpresa;
+            obraBlock.dataset.numeroClienteFinal = dados.numeroClienteFinal;
+            obraBlock.dataset.clienteFinal = dados.clienteFinal;
+            obraBlock.dataset.codigoCliente = dados.codigoCliente;
+            
+            // 🆕 USAR DATA FORMATADA
+            const dataFormatada = this.formatarData(dados.dataCadastro);
+            obraBlock.dataset.dataCadastro = dataFormatada;
+            
+            obraBlock.dataset.orcamentistaResponsavel = dados.orcamentistaResponsavel;
+            obraBlock.dataset.idGerado = `obra_${dados.sigla}_${dados.numeroClienteFinal}`;
+            
+            // 🆕 ATUALIZAR HEADER DA OBRA
+            this.atualizarHeaderObra(obraBlock, {
+                empresaSigla: dados.sigla,
+                empresaNome: dados.nomeEmpresa,
+                numeroClienteFinal: dados.numeroClienteFinal,
+                clienteFinal: dados.clienteFinal,
+                codigoCliente: dados.codigoCliente,
+                dataCadastro: dataFormatada, // 🆕 DATA FORMATADA
+                orcamentistaResponsavel: dados.orcamentistaResponsavel
+            });
+            
+            console.log('📦 Dados da obra preparados:', obraBlock.dataset);
+        }
+    }
+
+    cancelarCadastro() {
+        this.ocultarFormulario();
+        this.mostrarSpanOriginal();
+        
+        // 🆕 RESETAR HEADER SE NÃO HOUVER DADOS DE EMPRESA
+        const obraBlock = this.container.closest('.obra-block');
+        if (obraBlock) {
+            const headerSpacer = obraBlock.querySelector('.obra-header-spacer span');
+            if (headerSpacer && !obraBlock.dataset.empresaSigla) {
+                this.resetHeaderObra(headerSpacer);
+            }
+        }
+    }
+
+    ocultarFormulario() {
+        const form = this.container.querySelector('#empresa-cadastro-inline');
+        if (form) {
+            form.remove();
+        }
+        this.isActive = false;
+    }
+
+    mostrarSpanOriginal() {
+        const span = this.container.querySelector('span');
+        if (span) {
+            span.style.display = 'inline';
+        }
+    }
+
+    // Método para obter dados preparados (usado pelo sistema de salvamento)
+    obterDadosPreparados(obraId) {
+        const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraBlock) return null;
+
+        return {
+            empresaSigla: obraBlock.dataset.empresaSigla,
+            empresaNome: obraBlock.dataset.empresaNome,
+            numeroClienteFinal: obraBlock.dataset.numeroClienteFinal ? parseInt(obraBlock.dataset.numeroClienteFinal) : null,
+            clienteFinal: obraBlock.dataset.clienteFinal,
+            codigoCliente: obraBlock.dataset.codigoCliente,
+            dataCadastro: obraBlock.dataset.dataCadastro,
+            orcamentistaResponsavel: obraBlock.dataset.orcamentistaResponsavel,
+            idGerado: obraBlock.dataset.idGerado
+        };
+    }
+    /**
+     * Formata data para dd/mm/aaaa
+     */
+    formatarData(dataString) {
+        if (!dataString) return '';
+        
+        try {
+            // Se já estiver no formato dd/mm/aaaa, retornar como está
+            if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                return dataString;
+            }
+            
+            const data = new Date(dataString);
+            
+            if (isNaN(data.getTime())) {
+                console.warn(`⚠️ Data inválida: ${dataString}`);
+                return dataString;
+            }
+            
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            
+            return `${dia}/${mes}/${ano}`;
+            
+        } catch (error) {
+            console.error(`❌ Erro ao formatar data ${dataString}:`, error);
+            return dataString;
+        }
+    }
+}
+
+// Exportação e inicialização
+export default EmpresaCadastroInline;
+
+if (typeof window !== 'undefined') {
+    window.EmpresaCadastroInline = EmpresaCadastroInline;
+    
+    // Inicializar quando DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', () => {
+        window.empresaCadastro = new EmpresaCadastroInline();
+    });
+}
+
+
+/* ==== FIM: data/builders/empresa-cadastro-inline.js ==== */
+
+/* ==== INÍCIO: data/builders/data-builders-folder/empresa-data-extractor.js ==== */
+// data/builders/data-builders-folder/empresa-data-extractor.js
+
+/**
+ * Extrai dados de empresa cadastrados inline
+ */
+
+
+function extractEmpresaData(obraElement) {
+    const empresaData = {};
+    
+    if (!obraElement) {
+        console.error('❌ Elemento da obra é nulo para extração de empresa');
+        return empresaData;
+    }
+
+    console.log('🔍 [EXTRACT EMPRESA] INICIANDO extração para obra:', obraElement.dataset.obraId);
+
+    const camposEmpresa = [
+        'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
+        'clienteFinal', 'codigoCliente', 'dataCadastro', 
+        'orcamentistaResponsavel', 'idGerado'
+    ];
+
+    // 🆕 ESTRATÉGIA: PRIMEIRO buscar nos INPUTS ATUAIS (valores mais recentes)
+    console.log('🔍 [EXTRACT EMPRESA] FASE 1 - Buscando nos INPUTS ATUAIS do formulário...');
+    
+    const formEmpresa = obraElement.querySelector('.empresa-formulario-ativo');
+    if (formEmpresa) {
+        console.log('📋 [EXTRACT EMPRESA] Formulário ativo encontrado, extraindo dados atuais...');
+        
+        const mapeamentoCampos = {
+            // 🆕 PRIORIDADE: Inputs de cadastro/edição (valores mais recentes)
+            'empresa-input-cadastro': ['empresaSigla', 'empresaNome'],
+            'numero-cliente-final-cadastro': ['numeroClienteFinal'], 
+            'cliente-final-cadastro': ['clienteFinal'],
+            'codigo-cliente-cadastro': ['codigoCliente'],
+            'data-cadastro-cadastro': ['dataCadastro'],
+            'orcamentista-responsavel-cadastro': ['orcamentistaResponsavel'],
+            
+            // 🆕 Inputs de visualização/readonly
+            'empresa-input-readonly': ['empresaSigla', 'empresaNome'],
+            'numero-cliente-final-readonly': ['numeroClienteFinal'],
+            'cliente-final-input': ['clienteFinal'],
+            'codigo-cliente-input': ['codigoCliente'], 
+            'data-cadastro-readonly': ['dataCadastro'],
+            'orcamentista-responsavel-input': ['orcamentistaResponsavel']
+        };
+
+        Object.entries(mapeamentoCampos).forEach(([inputClass, camposAlvo]) => {
+            const input = formEmpresa.querySelector(`.${inputClass}`);
+            
+            if (input && input.value && input.value.trim() !== '') {
+                let valor = input.value.trim();
+                console.log(`✅ [EXTRACT EMPRESA] Input ${inputClass} encontrado: "${valor}"`);
+                
+                camposAlvo.forEach(campo => {
+                    if (!empresaData[campo]) { // Só preenche se ainda não tem valor
+                        if (campo === 'numeroClienteFinal') {
+                            empresaData[campo] = parseInt(valor) || 0;
+                            console.log(`🔢 [EXTRACT EMPRESA] ${campo} convertido para número: ${empresaData[campo]}`);
+                        } else if (campo === 'empresaSigla' && valor.includes(' - ')) {
+                            // Extrair sigla e nome do formato "SIGLA - Nome"
+                            const partes = valor.split(' - ');
+                            empresaData.empresaSigla = partes[0];
+                            if (partes[1]) {
+                                empresaData.empresaNome = partes[1];
+                            }
+                            console.log(`🏢 [EXTRACT EMPRESA] Empresa extraída: ${empresaData.empresaSigla} - ${empresaData.empresaNome}`);
+                        } else if (campo === 'empresaNome' && !valor.includes(' - ')) {
+                            // Se for apenas o nome, sem sigla
+                            empresaData[campo] = valor;
+                        } else if (campo !== 'empresaSigla') {
+                            // Para outros campos
+                            empresaData[campo] = valor;
+                        }
+                    }
+                });
+            }
+        });
+
+        // 🆕 BUSCAR DADOS DO AUTOCOMPLETE (prioridade máxima)
+        const empresaInput = formEmpresa.querySelector('.empresa-input-cadastro');
+        if (empresaInput && empresaInput.dataset.siglaSelecionada) {
+            console.log('🎯 [EXTRACT EMPRESA] Dados do autocomplete encontrados:', {
+                sigla: empresaInput.dataset.siglaSelecionada,
+                nome: empresaInput.dataset.nomeSelecionado
+            });
+            
+            // 🆕 SOBRESCREVER com dados do autocomplete (são os mais confiáveis)
+            empresaData.empresaSigla = empresaInput.dataset.siglaSelecionada;
+            empresaData.empresaNome = empresaInput.dataset.nomeSelecionado;
+        }
+    } else {
+        console.log('❌ [EXTRACT EMPRESA] Formulário ativo não encontrado');
+    }
+
+    // 🆕 FASE 2: Só buscar nos data attributes os campos que ainda estão faltando
+    console.log('🔍 [EXTRACT EMPRESA] FASE 2 - Buscando campos faltantes nos data attributes...');
+    
+    const camposFaltantes = camposEmpresa.filter(campo => !empresaData[campo]);
+    console.log(`📋 [EXTRACT EMPRESA] Campos ainda faltantes: ${camposFaltantes.join(', ')}`);
+    
+    camposFaltantes.forEach(campo => {
+        const valorDataAttr = obraElement.dataset[campo];
+        if (valorDataAttr) {
+            if (campo === 'numeroClienteFinal') {
+                empresaData[campo] = parseInt(valorDataAttr) || 0;
+            } else {
+                empresaData[campo] = valorDataAttr;
+            }
+            console.log(`📦 [EXTRACT EMPRESA] ${campo} extraído do data-attribute: ${empresaData[campo]}`);
+        }
+    });
+
+    // 🆕 VALIDAÇÃO FINAL E CORREÇÕES
+    console.log('🔍 [EXTRACT EMPRESA] FASE 3 - Validação final...');
+    
+    // 🆕 CORRIGIR: Se temos empresaSigla mas não temos empresaNome (ou vice-versa)
+    if (empresaData.empresaSigla && !empresaData.empresaNome) {
+        console.log('⚠️ [EXTRACT EMPRESA] Temos sigla mas não nome, buscando nome...');
+        // Tentar buscar o nome de outra fonte
+        const empresaInput = formEmpresa?.querySelector('.empresa-input-cadastro, .empresa-input-readonly');
+        if (empresaInput?.value && empresaInput.value.includes(' - ')) {
+            const partes = empresaInput.value.split(' - ');
+            if (partes[0] === empresaData.empresaSigla && partes[1]) {
+                empresaData.empresaNome = partes[1];
+                console.log(`✅ [EXTRACT EMPRESA] Nome recuperado: ${empresaData.empresaNome}`);
+            }
+        }
+    }
+
+    // 🆕 CORRIGIR: Formatar data se necessário
+    if (empresaData.dataCadastro && !empresaData.dataCadastro.includes('T')) {
+        console.log(`📅 [EXTRACT EMPRESA] Data no formato local: ${empresaData.dataCadastro}`);
+        // Manter formato local se não for ISO
+    }
+
+    console.log('🏢 [EXTRACT EMPRESA] DADOS FINAIS EXTRAÍDOS:', empresaData);
+    
+    // 🆕 VERIFICAÇÃO CRÍTICA
+    const statusCampos = {};
+    camposEmpresa.forEach(campo => {
+        statusCampos[campo] = empresaData[campo] 
+            ? `✅ ${empresaData[campo]}` 
+            : '❌ AUSENTE';
+    });
+    
+    console.log('📋 [EXTRACT EMPRESA] STATUS FINAL:', statusCampos);
+    
+    return empresaData;
+}
+
+
+
+// EXPORTS NO FINAL
+export {
+    extractEmpresaData
+};
+/* ==== FIM: data/builders/data-builders-folder/empresa-data-extractor.js ==== */
+
+/* ==== INÍCIO: data/adapters/obra-adapter-folder/empresa-form-manager.js ==== */
+// empresa-form-manager.js
+import { formatarData } from './ui-helpers-obra-adapter.js'
+import { inicializarInputEmpresaHibrido } from './empresa-autocomplete.js'
+
+/**
+ * 🆕 ATUALIZA A INTERFACE COM OS DADOS DA EMPRESA
+ */
+async function atualizarInterfaceComEmpresa(obraElement, obraData) {
+    try {
+        // Encontrar o container de cadastro de empresas
+        const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
+        if (!empresaContainer) {
+            console.log(`❌ [EMPRESA] Container de empresa não encontrado na obra "${obraData.nome}"`);
+            return;
+        }
+        
+        // 🆕 ATUALIZAR HEADER DA OBRA COM SPAN (não botão)
+        if (window.empresaCadastro && typeof window.empresaCadastro.atualizarHeaderObra === 'function') {
+            window.empresaCadastro.atualizarHeaderObra(obraElement, obraData);
+        }
+        
+        console.log(`✅ [EMPRESA] Interface atualizada com SPAN no header`);
+        
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao atualizar interface:`, error);
+    }
+}
+
+/**
+ * 🆕 ATUALIZA CAMPOS DO FORMULÁRIO DE EMPRESA EXISTENTE - COM DATA FORMATADA
+ */
+function atualizarCamposEmpresaForm(obraData, formElement) {
+    const camposMapping = {
+        'empresaSigla': 'empresa-input',
+        'numeroClienteFinal': 'numero-cliente-final',
+        'clienteFinal': 'cliente-final',
+        'codigoCliente': 'codigo-cliente',
+        'dataCadastro': 'data-cadastro',
+        'orcamentistaResponsavel': 'orcamentista-responsavel'
+    };
+    
+    Object.entries(camposMapping).forEach(([dataField, inputId]) => {
+        const input = formElement.querySelector(`#${inputId}`);
+        if (input && obraData[dataField]) {
+            // 🆕 FORMATAR DATA SE FOR O CAMPO dataCadastro
+            if (dataField === 'dataCadastro') {
+                input.value = formatarData(obraData[dataField]);
+            } else {
+                input.value = obraData[dataField];
+            }
+            
+            // Configurar dados adicionais para empresa
+            if (dataField === 'empresaSigla' && obraData.empresaNome) {
+                input.dataset.siglaSelecionada = obraData.empresaSigla;
+                input.dataset.nomeSelecionado = obraData.empresaNome;
+            }
+        }
+    });
+    
+    // Atualizar preview do ID da obra
+    const idObraValue = formElement.querySelector('#obra-id-value');
+    if (idObraContainer && idObraValue && obraData.idGerado) {
+        idObraValue.textContent = obraData.idGerado;
+        idObraContainer.style.display = 'block';
+    }
+}
+
+/**
+ * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES - COM DATA FORMATADA E DATEPICKER DINÂMICO
+ */
+function criarVisualizacaoEmpresa(obraData, container) {
+    // Ocultar botão se existir
+    const botao = container.querySelector('.btn-empresa-cadastro');
+    if (botao) {
+        botao.style.display = 'none';
+    }
+    
+    // 🆕 FORMATAR DATA
+    const dataFormatada = formatarData(obraData.dataCadastro);
+    
+    // Criar formulário
+    const formularioHTML = `
+    <div class="empresa-formulario-ativo">
+        <h4>Dados da Empresa</h4>
+
+        <div class="empresa-form-grid-horizontal">
+            <div class="form-group-horizontal">
+                <label>Empresa</label>
+                <input type="text" class="empresa-input-readonly" 
+                    value="${obraData.empresaSigla || ''} - ${obraData.empresaNome || ''}" readonly>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Nº Cliente</label>
+                <input type="text" class="numero-cliente-final-readonly" 
+                    value="${obraData.numeroClienteFinal || ''}" readonly>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Cliente Final</label>
+                <input type="text" class="cliente-final-input" 
+                    value="${obraData.clienteFinal || ''}" 
+                    onchange="atualizarDadosEmpresa(this, 'clienteFinal', '${obraData.id}')">
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Código</label>
+                <input type="text" class="codigo-cliente-input" 
+                    value="${obraData.codigoCliente || ''}" 
+                    onchange="atualizarDadosEmpresa(this, 'codigoCliente', '${obraData.id}')">
+            </div>
+
+            <!-- 🆕 CAMPO DE DATA COM DATEPICKER DINÂMICO -->
+            <div class="form-group-horizontal">
+                <label>Data</label>
+                <div class="date-input-container">
+                    <input type="text" 
+                           class="data-cadastro-input" 
+                           id="data-cadastro-edit-${obraData.id}"
+                           value="${dataFormatada}" 
+                           placeholder="DD/MM/AAAA"
+                           maxlength="10"
+                           onchange="atualizarDadosEmpresa(this, 'dataCadastro', '${obraData.id}')">
+                    <span class="calendar-icon" onclick="alternarDatePicker('${obraData.id}', 'edit')">📅</span>
+                </div>
+            </div>
+
+            <div class="form-group-horizontal">
+                <label>Orçamentista</label>
+                <input type="text" class="orcamentista-responsavel-input" 
+                    value="${obraData.orcamentistaResponsavel || ''}" 
+                    onchange="atualizarDadosEmpresa(this, 'orcamentistaResponsavel', '${obraData.id}')">
+            </div>
+        </div>
+
+        <div class="empresa-form-actions">
+            <button type="button" class="btn-cancel" 
+                    onclick="window.ocultarFormularioEmpresa(this, '${obraData.id}')">
+                Ocultar
+            </button>
+        </div>
+    </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', formularioHTML);
+    
+    // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA
+    setTimeout(() => {
+        const dataCampo = container.querySelector(`#data-cadastro-edit-${obraData.id}`);
+        if (dataCampo) {
+            configurarCampoDataEspecifico(dataCampo);
+        }
+    }, 100);
+    
+    console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id} com data: ${dataFormatada}`);
+}
+
+/**
+ * 🆕 CRIA FORMULÁRIO VAZIO DE EMPRESA COM DATEPICKER DINÂMICO
+ */
+function criarFormularioVazioEmpresa(obraId, container) {
+    const dataAtual = new Date().toLocaleDateString('pt-BR');
+    
+    const formularioHTML = `
+    <div class="empresa-formulario-ativo">
+        <h4>Cadastro de Empresa</h4>
+
+        <div class="empresa-form-grid-horizontal">
+            <!-- Empresa 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Empresa *</label>
+                <div class="empresa-input-container">
+                    <input type="text" 
+                           class="empresa-input-cadastro" 
+                           id="empresa-input-${obraId}"
+                           placeholder="Digite sigla ou nome ou selecione..."
+                           autocomplete="off">
+                    <div class="empresa-dropdown" id="empresa-dropdown-${obraId}">
+                        <div class="dropdown-options" id="empresa-options-${obraId}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nº Cliente 🔴 SOMENTE LEITURA -->
+            <div class="form-group-horizontal">
+                <label>Nº Cliente</label>
+                <input type="text" class="numero-cliente-final-cadastro" readonly
+                    placeholder="Será gerado automaticamente">
+            </div>
+
+            <!-- Cliente Final 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Cliente Final</label>
+                <input type="text" class="cliente-final-cadastro" 
+                    placeholder="Nome do cliente final">
+            </div>
+
+            <!-- Código 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Código</label>
+                <input type="text" class="codigo-cliente-cadastro" 
+                    placeholder="Código do cliente">
+            </div>
+
+            <!-- Data 🟢 EDITÁVEL COM DATEPICKER DINÂMICO -->
+            <div class="form-group-horizontal">
+                <label>Data</label>
+                <div class="date-input-container">
+                    <input type="text" 
+                           class="data-cadastro-cadastro" 
+                           id="data-cadastro-${obraId}"
+                           placeholder="DD/MM/AAAA"
+                           value="${dataAtual}"
+                           maxlength="10">
+                    <span class="calendar-icon" onclick="alternarDatePicker('${obraId}', 'cadastro')">📅</span>
+                </div>
+            </div>
+
+            <!-- Orçamentista 🟢 EDITÁVEL -->
+            <div class="form-group-horizontal">
+                <label>Orçamentista</label>
+                <input type="text" class="orcamentista-responsavel-cadastro" 
+                    placeholder="Nome do orçamentista">
+            </div>
+        </div>
+
+        <div class="empresa-form-actions">
+            <button type="button" class="btn-cancel" 
+                    onclick="window.ocultarFormularioEmpresa(this, '${obraId}')">
+                Cancelar
+            </button>
+        </div>
+    </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', formularioHTML);
+    
+    // 🔥 INICIALIZAR COM TIMEOUT
+    setTimeout(() => {
+        inicializarInputEmpresaHibrido(obraId);
+        
+        // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA
+        const dataCampo = container.querySelector(`#data-cadastro-${obraId}`);
+        if (dataCampo) {
+            configurarCampoDataEspecifico(dataCampo);
+            console.log('✅ Auto-formatação de data configurada');
+        }
+        
+    }, 300);
+}
+
+/**
+ * 🆕 ALTERNA ENTRE INPUT TEXT E DATE QUANDO CLICA NO ÍCONE
+ */
+function alternarDatePicker(obraId, tipo) {
+    const textInput = document.getElementById(`data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
+    const container = textInput.closest('.date-input-container');
+    
+    if (!textInput) return;
+    
+    // 🆕 NÃO ESCONDE O ÍCONE - apenas o texto
+    textInput.style.display = 'none';
+    
+    // 🆕 CRIA UM INPUT DATE VISÍVEL MAS COM FORMATAÇÃO BRASILEIRA
+    const datePickerHTML = `
+        <div class="date-picker-visible-wrapper" id="date-picker-wrapper-${obraId}">
+            <input type="date" 
+                   class="date-picker-visible"
+                   id="date-picker-temp-${obraId}"
+                   onchange="aplicarDataDoDatePicker('${obraId}', '${tipo}', this.value)"
+                   onblur="restaurarInputTexto('${obraId}', '${tipo}')">
+            <div class="date-display-overlay" id="date-display-${obraId}"></div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', datePickerHTML);
+    
+    const datePicker = container.querySelector('.date-picker-visible');
+    const dateDisplay = container.querySelector(`#date-display-${obraId}`);
+    
+    // Define valor inicial baseado no texto atual
+    let dataInicial = 'DD/MM/AAAA';
+    if (textInput.value && /^\d{2}\/\d{2}\/\d{4}$/.test(textInput.value)) {
+        const [dia, mes, ano] = textInput.value.split('/');
+        datePicker.value = `${ano}-${mes}-${dia}`;
+        dataInicial = textInput.value;
+    }
+    
+    // 🆕 ATUALIZA O DISPLAY VISUAL COM FORMATAÇÃO BRASILEIRA
+    atualizarDisplayData(dateDisplay, dataInicial);
+    
+    // 🆕 OBSERVA MUDANÇAS NO DATE PICKER PARA ATUALIZAR O DISPLAY
+    datePicker.addEventListener('input', function() {
+        if (this.value) {
+            const [ano, mes, dia] = this.value.split('-');
+            const dataBrasileira = `${dia}/${mes}/${ano}`;
+            atualizarDisplayData(dateDisplay, dataBrasileira);
+        } else {
+            atualizarDisplayData(dateDisplay, 'DD/MM/AAAA');
+        }
+    });
+    
+    datePicker.addEventListener('change', function() {
+        if (this.value) {
+            const [ano, mes, dia] = this.value.split('-');
+            const dataBrasileira = `${dia}/${mes}/${ano}`;
+            atualizarDisplayData(dateDisplay, dataBrasileira);
+        }
+    });
+    
+    // Foca e abre o calendário
+    setTimeout(() => {
+        datePicker.focus();
+        datePicker.showPicker();
+    }, 100);
+    
+    console.log('✅ Date picker com formatação brasileira ativado para obra:', obraId);
+}
+
+/**
+ * 🆕 APLICA A DATA SELECIONADA NO DATEPICKER AO CAMPO DE TEXTO
+ */
+function aplicarDataDoDatePicker(obraId, tipo, dataISO) {
+    const container = document.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`).closest('.date-input-container');
+    const textInput = container.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
+    
+    // 🆕 VERIFICAÇÃO MAIS ROBUSTA PARA REMOVER O DATE PICKER
+    const datePickerWrapper = document.getElementById(`date-picker-wrapper-${obraId}`);
+    if (datePickerWrapper && datePickerWrapper.parentNode) {
+        try {
+            datePickerWrapper.remove();
+            console.log('✅ Date picker removido com sucesso');
+        } catch (error) {
+            console.log('⚠️ Date picker já foi removido:', error.message);
+        }
+    }
+    
+    if (dataISO) {
+        // Converte YYYY-MM-DD para DD/MM/AAAA
+        const [ano, mes, dia] = dataISO.split('-');
+        const dataBrasileira = `${dia}/${mes}/${ano}`;
+        
+        // Aplica ao campo de texto
+        textInput.value = dataBrasileira;
+    }
+    
+    // Restaura a visualização normal
+    if (textInput) {
+        textInput.style.display = 'block';
+        // Foca no campo de texto para continuar a digitação
+        setTimeout(() => {
+            textInput.focus();
+            // Posiciona o cursor no final do texto
+            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+        }, 50);
+    }
+    
+    // Dispara evento change se houve alteração
+    if (dataISO) {
+        const event = new Event('change', { bubbles: true });
+        textInput.dispatchEvent(event);
+        validarDataInput(textInput);
+        console.log('✅ Data do date picker aplicada:', textInput.value);
+    } else {
+        console.log('✅ Date picker cancelado');
+    }
+}
+
+/**
+ * 🆕 RESTAURA O INPUT DE TEXTO SE O USUÁRIO CANCELAR
+ */
+function restaurarInputTexto(obraId, tipo) {
+    const container = document.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`).closest('.date-input-container');
+    const textInput = container.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
+    
+    // 🆕 VERIFICAÇÃO MAIS ROBUSTA PARA REMOVER O DATE PICKER
+    const datePickerWrapper = document.getElementById(`date-picker-wrapper-${obraId}`);
+    if (datePickerWrapper && datePickerWrapper.parentNode) {
+        try {
+            datePickerWrapper.remove();
+            console.log('✅ Date picker removido com sucesso (blur)');
+        } catch (error) {
+            console.log('⚠️ Date picker já foi removido (blur):', error.message);
+        }
+    }
+    
+    // Restaura o input de texto
+    if (textInput) {
+        textInput.style.display = 'block';
+        setTimeout(() => {
+            textInput.focus();
+            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+        }, 50);
+    }
+    
+    console.log('✅ Input de texto restaurado');
+}
+
+
+/**
+ * 🆕 ATUALIZA O DISPLAY VISUAL DA DATA
+ */
+function atualizarDisplayData(dateDisplay, dataFormatada) {
+    dateDisplay.textContent = dataFormatada;
+    
+    // Destaca visualmente se for uma data válida
+    if (dataFormatada && /^\d{2}\/\d{2}\/\d{4}$/.test(dataFormatada)) {
+        dateDisplay.style.color = '#000';
+        dateDisplay.style.fontWeight = 'normal';
+        dateDisplay.style.fontStyle = 'normal';
+    } else {
+        dateDisplay.style.color = '#999';
+        dateDisplay.style.fontWeight = 'normal';
+        dateDisplay.style.fontStyle = 'italic';
+    }
+}
+
+
+
+/**
+ * 🆕 FORMATA AUTOMATICAMENTE O CAMPO DE DATA ENQUANTO DIGITA
+ * Formato: DD/MM/AAAA
+ */
+function configurarAutoFormatacaoData() {
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('data-cadastro-cadastro') || 
+            e.target.classList.contains('data-cadastro-input')) {
+            formatarDataEmTempoReal(e.target);
+        }
+    });
+    
+    // Também prevenir caracteres não numéricos
+    document.addEventListener('keydown', function(e) {
+        if (e.target.classList.contains('data-cadastro-cadastro') || 
+            e.target.classList.contains('data-cadastro-input')) {
+            permitirApenasNumerosEControles(e);
+        }
+    });
+    
+    // Validação ao sair do campo
+    document.addEventListener('blur', function(e) {
+        if (e.target.classList.contains('data-cadastro-cadastro') || 
+            e.target.classList.contains('data-cadastro-input')) {
+            validarDataInput(e.target);
+        }
+    }, true);
+    
+    console.log('✅ Sistema de auto-formatação de data configurado');
+}
+
+/**
+ * 🆕 FORMATA DATA EM TEMPO REAL
+ */
+function formatarDataEmTempoReal(input) {
+    let value = input.value.replace(/\D/g, ''); // Remove não números
+    
+    // Aplica formatação automática
+    if (value.length > 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2);
+    }
+    if (value.length > 5) {
+        value = value.substring(0, 5) + '/' + value.substring(5, 9);
+    }
+    
+    input.value = value;
+    
+    // 🆕 VALIDAÇÃO BÁSICA DA DATA
+    validarDataInput(input);
+}
+
+/**
+ * 🆕 PERMITE APENAS NÚMEROS E TECLAS DE CONTROLE
+ */
+function permitirApenasNumerosEControles(event) {
+    const teclasPermitidas = [
+        'Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 
+        'ArrowLeft', 'ArrowRight', 'Home', 'End'
+    ];
+    
+    if (teclasPermitidas.includes(event.key)) {
+        return; // Permite teclas de controle
+    }
+    
+    // Permite apenas números
+    if (!/^\d$/.test(event.key)) {
+        event.preventDefault();
+        return;
+    }
+    
+    // 🆕 LIMITA O TAMANHO MÁXIMO (10 caracteres com formatação)
+    const input = event.target;
+    if (input.value.replace(/\D/g, '').length >= 8 && !teclasPermitidas.includes(event.key)) {
+        event.preventDefault();
+        return;
+    }
+}
+
+/**
+ * 🆕 VALIDAÇÃO BÁSICA DA DATA
+ */
+function validarDataInput(input) {
+    const value = input.value;
+    
+    // Verifica se está vazio
+    if (!value) {
+        input.style.borderColor = '';
+        return true;
+    }
+    
+    // Verifica formato básico
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    // Extrai dia, mês e ano
+    const [dia, mes, ano] = value.split('/').map(Number);
+    
+    // Validações básicas
+    if (dia < 1 || dia > 31) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    if (mes < 1 || mes > 12) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    if (ano < 1900 || ano > 2100) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    // Valida meses com 30 dias
+    const meses30Dias = [4, 6, 9, 11];
+    if (meses30Dias.includes(mes) && dia > 30) {
+        input.style.borderColor = '#ff4444';
+        return false;
+    }
+    
+    // Valida fevereiro e anos bissextos
+    if (mes === 2) {
+        const isBissexto = (ano % 4 === 0 && ano % 100 !== 0) || (ano % 400 === 0);
+        if (dia > (isBissexto ? 29 : 28)) {
+            input.style.borderColor = '#ff4444';
+            return false;
+        }
+    }
+    
+    // Data válida
+    input.style.borderColor = '#4CAF50';
+    return true;
+}
+
+/**
+ * 🆕 CONFIGURA AUTO-FORMATAÇÃO PARA UM CAMPO ESPECÍFICO
+ */
+function configurarCampoDataEspecifico(inputElement) {
+    if (!inputElement) return;
+    
+    inputElement.addEventListener('input', function() {
+        formatarDataEmTempoReal(this);
+    });
+    
+    inputElement.addEventListener('keydown', function(e) {
+        permitirApenasNumerosEControles(e);
+    });
+    
+    inputElement.addEventListener('blur', function() {
+        validarDataInput(this);
+    });
+    
+    // 🆕 CONFIGURA PLACEHOLDER E ATRIBUTOS
+    inputElement.placeholder = 'DD/MM/AAAA';
+    inputElement.maxLength = 10;
+    
+    console.log('✅ Campo de data configurado com auto-formatação:', inputElement.id);
+}
+
+/**
+ * 🆕 OBTÉM DATA FORMATADA DO CAMPO
+ * Retorna no formato DD/MM/AAAA para armazenamento (igual ao JSON)
+ */
+function obterDataFormatadaDoCampo(inputElement) {
+    if (!inputElement || !inputElement.value) return null;
+    
+    const value = inputElement.value;
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return null;
+    
+    // 🆕 RETORNA NO FORMATO DD/MM/AAAA (igual ao JSON)
+    return value;
+}
+
+/**
+ * 🆕 DEFINE DATA NO CAMPO FORMATADO
+ * Aceita formato YYYY-MM-DD ou DD/MM/AAAA
+ */
+function definirDataNoCampo(inputElement, data) {
+    if (!inputElement || !data) return;
+    
+    let dataFormatada;
+    
+    if (data.includes('-')) {
+        // Formato YYYY-MM-DD
+        const [ano, mes, dia] = data.split('-');
+        dataFormatada = `${dia}/${mes}/${ano}`;
+    } else if (data.includes('/')) {
+        // Já está no formato DD/MM/AAAA
+        dataFormatada = data;
+    } else {
+        console.warn('Formato de data não reconhecido:', data);
+        return;
+    }
+    
+    inputElement.value = dataFormatada;
+    validarDataInput(inputElement);
+}
+
+/**
+ * 🆕 VALIDA TODOS OS CAMPOS DE DATA DO FORMULÁRIO
+ */
+function validarTodosCamposDataNoFormulario(formElement) {
+    const camposData = formElement.querySelectorAll('.data-cadastro-cadastro, .data-cadastro-input');
+    let todosValidos = true;
+    
+    camposData.forEach(campo => {
+        if (!validarDataInput(campo)) {
+            todosValidos = false;
+        }
+    });
+    
+    return todosValidos;
+}
+
+/**
+ * 🆕 LIMPA E RESETA CAMPO DE DATA
+ */
+function limparCampoData(inputElement) {
+    if (!inputElement) return;
+    
+    inputElement.value = '';
+    inputElement.style.borderColor = '';
+    inputElement.placeholder = 'DD/MM/AAAA';
+}
+
+// 🆕 EXPORTA AS FUNÇÕES
+export {
+    atualizarInterfaceComEmpresa,
+    atualizarCamposEmpresaForm,
+    criarVisualizacaoEmpresa,
+    criarFormularioVazioEmpresa,
+    configurarAutoFormatacaoData,
+    configurarCampoDataEspecifico,
+    obterDataFormatadaDoCampo,
+    definirDataNoCampo,
+    validarTodosCamposDataNoFormulario,
+    limparCampoData,
+    alternarDatePicker,
+    aplicarDataDoDatePicker,
+    restaurarInputTexto,
+    atualizarDisplayData
+};
+
+// 🆕 TORNA AS FUNÇÕES DISPONÍVEIS GLOBALMENTE PARA OS EVENTOS HTML
+window.alternarDatePicker = alternarDatePicker;
+window.aplicarDataDoDatePicker = aplicarDataDoDatePicker;
+window.restaurarInputTexto = restaurarInputTexto;
+/* ==== FIM: data/adapters/obra-adapter-folder/empresa-form-manager.js ==== */
+
+/* ==== INÍCIO: data/adapters/obra-adapter-folder/ui-helpers-obra-adapter.js ==== */
+// ui-helpers-obra-adapters.js
+
+/**
+ * 🆕 LIMPAR DADOS DE SELEÇÃO
+ */
+function limparDadosSelecao(input, obraId) {
+    delete input.dataset.siglaSelecionada;
+    delete input.dataset.nomeSelecionado;
+    limparNumeroCliente(obraId);
+    console.log('🔄 Dados de seleção limpos');
+}
+
+/**
+ * 🆕 DETECTAR BACKSPACE/DELETE DE FORMA MAIS PRECISA
+ */
+function criarSistemaBackspaceDetector(input) {
+    let pressionandoBackspace = false;
+    let timeoutBackspace;
+    
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            pressionandoBackspace = true;
+            window.usuarioEstaApagando = true;
+            
+            // Limpar timeout anterior
+            if (timeoutBackspace) clearTimeout(timeoutBackspace);
+            
+            // Timeout para resetar se parou de apertar
+            timeoutBackspace = setTimeout(() => {
+                pressionandoBackspace = false;
+                window.usuarioEstaApagando = false;
+            }, 500);
+            
+            console.log('⌫ Tecla de apagar pressionada');
+        }
+    });
+    
+    input.addEventListener('keyup', function(e) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            // Pequeno delay para garantir que o input foi processado
+            setTimeout(() => {
+                if (!pressionandoBackspace) {
+                    window.usuarioEstaApagando = false;
+                }
+            }, 50);
+        }
+    });
+    
+    // Detectar seleção total (Ctrl+A) + Backspace
+    input.addEventListener('input', function(e) {
+        if (pressionandoBackspace && this.value.length === 0) {
+            console.log('🎯 Usuário apagou tudo - reset completo');
+            limparDadosSelecao(input, input.closest('[data-obra-id]')?.dataset.obraId);
+        }
+    });
+}
+
+/**
+ * 🆕 INICIALIZAR DETECTOR DE BACKSPACE SEPARADAMENTE ()
+ */
+function inicializarDetectorBackspace(input, obraId) {
+    console.log(`⌫ [BACKSPACE] Inicializando detector para obra ${obraId}`);
+    
+    let pressionandoBackspace = false;
+    let timeoutBackspace;
+    
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            window.usuarioEstaApagando = true;
+            pressionandoBackspace = true;
+            
+            console.log('⌫ Tecla de apagar pressionada - bloqueando autocomplete');
+            
+            // Limpar timeout anterior
+            if (timeoutBackspace) clearTimeout(timeoutBackspace);
+            
+            // Timeout para resetar se parou de apertar
+            timeoutBackspace = setTimeout(() => {
+                pressionandoBackspace = false;
+                window.usuarioEstaApagando = false;
+                console.log('🔄 Resetando flag de apagamento');
+            }, 500);
+        }
+        
+        // Salvar valor atual para comparação
+        window.ultimoValorInput = this.value;
+    });
+    
+    input.addEventListener('keyup', function(e) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            // Pequeno delay para garantir que o input foi processado
+            setTimeout(() => {
+                if (!pressionandoBackspace) {
+                    window.usuarioEstaApagando = false;
+                    console.log('🔄 Tecla de apagar liberada');
+                }
+            }, 50);
+        }
+    });
+    
+    // Detectar seleção total (Ctrl+A) + Backspace
+    input.addEventListener('input', function(e) {
+        if (pressionandoBackspace && this.value.length === 0) {
+            console.log('🎯 Usuário apagou tudo - reset completo');
+            limparDadosSelecao(input, obraId);
+        }
+    });
+}
+
+/**
+ * 🆕 CORRIGIR POSIÇÃO DO DROPDOWN EM DISPOSITIVOS MÓVEIS
+ */
+function corrigirPosicaoDropdown() {
+    const dropdowns = document.querySelectorAll('.empresa-dropdown');
+    
+    dropdowns.forEach(dropdown => {
+        const input = dropdown.previousElementSibling;
+        if (input && input.classList.contains('empresa-input-cadastro')) {
+            // 🔥 GARANTIR QUE O DROPDOWN FIQUE EXATAMENTE ABAIXO DO INPUT
+            const rect = input.getBoundingClientRect();
+            dropdown.style.width = rect.width + 'px';
+            dropdown.style.left = '0';
+            dropdown.style.right = 'auto';
+        }
+    });
+}
+
+/**
+ * 🆕 LIMPAR NÚMERO DO CLIENTE QUANDO EMPRESA FOR REMOVIDA
+ */
+function limparNumeroCliente(obraId) {
+    const numeroInput = document.querySelector(`[data-obra-id="${obraId}"] .numero-cliente-final-cadastro`);
+    if (numeroInput) {
+        numeroInput.value = '';
+        console.log(`🔄 [EMPRESA] Número do cliente limpo para obra ${obraId}`);
+    }
+}
+
+/**
+ * 🆕 MOSTRAR AVISO DE AUTOCOMPLETE - CSS EXTERNO
+ */
+function mostrarAvisoAutocompletado(input, tipoSelecao = 'manual') {
+    if (tipoSelecao !== 'autocomplete') return;
+    
+    // Remove avisos anteriores
+    document.querySelectorAll('.aviso-autocomplete-relativo').forEach(aviso => aviso.remove());
+    
+    // Encontrar container
+    const container = input.closest('.form-group-horizontal') || 
+                     input.closest('.empresa-input-container') || 
+                     input.parentNode;
+    
+    if (!container) return;
+    
+    // Criar aviso
+    const aviso = document.createElement('div');
+    aviso.className = 'aviso-autocomplete-relativo';
+    aviso.textContent = 'Empresa autocompletada ✓';
+    
+    // Adicionar ao container
+    container.appendChild(aviso);
+    
+    // Animação
+    setTimeout(() => aviso.classList.add('show'), 50);
+    
+    // Remover
+    setTimeout(() => {
+        aviso.classList.remove('show');
+        setTimeout(() => aviso.remove(), 300);
+    }, 1200);
+}
+
+/**
+ * 🆕 CALCULAR NÚMERO DO CLIENTE FINAL -  E MAIS ROBUSTO
+ */
+async function calcularNumeroClienteFinal(sigla, obraId) {
+    try {
+        console.log(`🔢 [EMPRESA] Calculando número para: ${sigla}`);
+        
+        // Tentar a API primeiro
+        const response = await fetch(`/api/dados/empresas/numero/${encodeURIComponent(sigla)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const dados = await response.json();
+        
+        if (dados.success) {
+            const novoNumero = dados.numero;
+            atualizarNumeroClienteInput(novoNumero, obraId);
+            console.log(`✅ [EMPRESA] Número da API: ${novoNumero} para ${sigla}`);
+        } else {
+            console.warn('⚠️ [EMPRESA] API retornou erro, usando cálculo local:', dados.error);
+            calcularNumeroLocal(sigla, obraId);
+        }
+        
+    } catch (error) {
+        console.warn('⚠️ [EMPRESA] Erro na API, usando cálculo local:', error.message);
+        calcularNumeroLocal(sigla, obraId);
+    }
+}
+
+/**
+ * 🆕 CALCULAR NÚMERO LOCALMENTE COMO FALLBACK
+ */
+async function calcularNumeroLocal(sigla, obraId) {
+    try {
+        // Buscar todas as obras para calcular localmente
+        const response = await fetch('/api/backup-completo');
+        if (!response.ok) {
+            throw new Error('Não foi possível carregar obras');
+        }
+        
+        const backup = await response.json();
+        const obrasExistentes = backup.obras || [];
+        
+        // Filtrar obras da mesma empresa
+        const obrasDaEmpresa = obrasExistentes.filter(obra => 
+            obra.empresaSigla === sigla || 
+            (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`))
+        );
+        
+        // Encontrar maior número
+        let maiorNumero = 0;
+        obrasDaEmpresa.forEach(obra => {
+            if (obra.numeroClienteFinal && obra.numeroClienteFinal > maiorNumero) {
+                maiorNumero = obra.numeroClienteFinal;
+            }
+            
+            if (obra.idGerado) {
+                const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
+                if (match) {
+                    const numero = parseInt(match[1]);
+                    if (numero > maiorNumero) maiorNumero = numero;
+                }
+            }
+        });
+        
+        const novoNumero = maiorNumero + 1;
+        atualizarNumeroClienteInput(novoNumero, obraId);
+        console.log(`🔢 [EMPRESA] Número local: ${novoNumero} para ${sigla}`);
+        
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro no cálculo local:', error);
+        // Fallback final: número aleatório
+        const numeroFallback = Math.floor(Math.random() * 100) + 1;
+        atualizarNumeroClienteInput(numeroFallback, obraId);
+        console.log(`🔄 [EMPRESA] Número fallback: ${numeroFallback} para ${sigla}`);
+    }
+}
+
+/**
+ * 🆕 ATUALIZAR INPUT DO NÚMERO DO CLIENTE
+ */
+function atualizarNumeroClienteInput(numero, obraId) {
+    const numeroInput = document.querySelector(`[data-obra-id="${obraId}"] .numero-cliente-final-cadastro`);
+    if (numeroInput) {
+        numeroInput.value = numero;
+    }
+}
+
+/**
+ * 🆕 FORMATA DATA PARA dd/mm/aaaa
+ */
+function formatarData(dataString) {
+    if (!dataString) return '';
+    
+    try {
+        // Se já estiver no formato dd/mm/aaaa, retornar como está
+        if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            return dataString;
+        }
+        
+        // Tentar parse como Date
+        const data = new Date(dataString);
+        
+        // Verificar se é uma data válida
+        if (isNaN(data.getTime())) {
+            console.warn(`⚠️ [EMPRESA] Data inválida: ${dataString}`);
+            return dataString; // Retorna original se não conseguir formatar
+        }
+        
+        // Formatar para dd/mm/aaaa
+        const dia = String(data.getDate()).padStart(2, '0');
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const ano = data.getFullYear();
+        
+        return `${dia}/${mes}/${ano}`;
+        
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao formatar data ${dataString}:`, error);
+        return dataString; // Retorna original em caso de erro
+    }
+}
+
+// Event listeners globais
+window.addEventListener('resize', corrigirPosicaoDropdown);
+
+// 🔥 CORRIGIR NO SCROLL (para casos de virtual keyboard)
+window.addEventListener('scroll', corrigirPosicaoDropdown);
+
+// 🔥 INICIALIZAR DETECTOR EM TODOS OS INPUTS EXISTENTES
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const inputs = document.querySelectorAll('.empresa-input-cadastro');
+        inputs.forEach(input => {
+            criarSistemaBackspaceDetector(input);
+        });
+    }, 1000);
+});
+
+// EXPORTS NO FINAL
+export {
+    limparDadosSelecao,
+    criarSistemaBackspaceDetector,
+    inicializarDetectorBackspace,
+    corrigirPosicaoDropdown,
+    limparNumeroCliente,
+    mostrarAvisoAutocompletado,
+    calcularNumeroClienteFinal,
+    calcularNumeroLocal,
+    atualizarNumeroClienteInput,
+    formatarData
+};
+/* ==== FIM: data/adapters/obra-adapter-folder/ui-helpers-obra-adapter.js ==== */

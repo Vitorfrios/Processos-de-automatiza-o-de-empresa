@@ -34,6 +34,7 @@ Tudo que está neste bloco já está **implementado e funcional**:
 
 * Campos de data e seleção de empresa já liberados
 * Correção de sigla aplicada
+* Salvamentos de empresas nao cadastradas
 
 ### ✔ INTERFACE – ajustes visuais
 
