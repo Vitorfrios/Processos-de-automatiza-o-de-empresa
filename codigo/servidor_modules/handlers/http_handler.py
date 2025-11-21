@@ -8,19 +8,13 @@ from pathlib import Path
 import os
 import gzip
 import threading
+import re
 
 # IMPORTS
 from servidor_modules.utils.file_utils import FileUtils
 
 class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    """Handler ULTRA-RÁPIDO para carregamento de arquivos"""
-    
-    # Cache de arquivos estáticos em memória
-    _static_cache = {}
-    _cache_lock = threading.Lock()
-    
-    # Extensões para compressão GZIP
-    COMPRESSIBLE_TYPES = {'.js', '.css', '.html', '.json', '.txt'}
+    """Handler ULTRA-RÁPIDO com CACHE BUSTER AUTOMÁTICO PARA TODOS OS ARQUIVOS"""
     
     # Arquivos que NUNCA devem ser logados (acelera MUITO)
     SILENT_PATHS = {
@@ -50,6 +44,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # INICIALIZAÇÃO RÁPIDA
         self.file_utils = FileUtils()
         self.project_root = self.file_utils.find_project_root()
+        
+        # Timestamp único para TODOS os arquivos (muda a cada execução do servidor)
+        self.CACHE_BUSTER = f"v{int(time.time())}"
+        print(f"🔄 CACHE BUSTER INICIADO: {self.CACHE_BUSTER}")
         
         # Inicialização Preguiçosa - só quando necessário
         self._routes_core = None
@@ -92,22 +90,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return self._route_handler
 
     def do_GET(self):
-        """GET ULTRA-RÁPIDO com cache e compressão"""
+        """GET com CACHE BUSTER AUTOMÁTICO para CSS/JS/HTML"""
         parsed_path = urlparse(self.path)
+        original_path = self.path
         path = parsed_path.path
-    
-        # Limpa cache em recarregamentos de página - COM TRY/EXCEPT
-        if self.path == '/' or self.path.endswith('.html'):
-            try:
-                from servidor_modules.utils.browser_monitor import handle_reload_cache
-                cleared_files = handle_reload_cache()
-                if cleared_files > 0:
-                    print(f"🔄 Página recarregada - {cleared_files} arquivos de cache limpos")
-            except ImportError as e:
-                # Silenciosamente ignora se o módulo não estiver disponível
-                pass
-            except Exception as e:
-                print(f"⚠️  Erro ao limpar cache: {e}")
         
         # Normalização rápida de path
         if path.startswith('/codigo/'):
@@ -116,6 +102,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # Log apenas para rotas importantes (acelera MUITO)
         if not any(silent in path for silent in self.SILENT_PATHS):
             print(f"📥 GET: {path}")
+        
+        # CACHE BUSTER AUTOMÁTICO: Adiciona versionamento a CSS, JS e HTML
+        if any(path.endswith(ext) for ext in ['.css', '.js', '.html', '.htm']):
+            new_path = self._add_cache_buster(original_path)
+            if new_path != original_path:
+                print(f"🔄 AUTO CACHE BUSTER: {original_path} -> {new_path}")
+                self.path = new_path
         
         # Roteamento RÁPIDO para APIs
         if path in self.API_ROUTES:
@@ -126,8 +119,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif path.startswith('/obras/'):
             self.handle_obra_routes(path)
         else:
-            # Serve arquivo estático COM CACHE
-            self.serve_static_file(path)
+            # Serve arquivo estático COM HEADERS ANTI-CACHE
+            self.serve_static_file_no_cache(path)
     
     def do_POST(self):
         """POST com todas as rotas necessárias"""
@@ -229,109 +222,103 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if self.command == 'GET':
             obra_id = path.split('/')[-1]
             self.route_handler.handle_get_obra_by_id(self, obra_id)
+
+    def _add_cache_buster(self, path):
+        """Adiciona cache buster à URL se não tiver"""
+        if '?' in path:
+            # Já tem parâmetros, adiciona ou atualiza o v=
+            if 'v=' in path:
+                # Substitui versão existente
+                path = re.sub(r'[?&]v=[^&]+', f'&v={self.CACHE_BUSTER}', path)
+                # Corrige se ficou ?& substituindo por ?
+                path = path.replace('?&', '?')
+            else:
+                # Adiciona novo parâmetro
+                path += f'&v={self.CACHE_BUSTER}'
+        else:
+            # Primeiro parâmetro
+            path += f'?v={self.CACHE_BUSTER}'
+        
+        return path
     
-    def serve_static_file(self, path):
-        """Serve arquivos estáticos COM CACHE E COMPRESSÃO"""
+    def serve_static_file_no_cache(self, path):
+        """Serve arquivos estáticos SEM CACHE - sempre do disco com headers anti-cache"""
         try:
-            # Tenta cache primeiro (MAIS RÁPIDO)
-            cache_key = path
-            with self._cache_lock:
-                if cache_key in self._static_cache:
-                    cached_data = self._static_cache[cache_key]
-                    self.send_cached_response(*cached_data)
-                    return
+            # Remove parâmetros para encontrar arquivo real
+            clean_path = path.split('?')[0]
+            file_path = self.translate_path(clean_path)
             
-            # Se não está em cache, serve normalmente
-            super().do_GET()
-            
-            # Adiciona ao cache se for um arquivo estático
-            if self.should_cache_path(path):
-                self.cache_current_file(path)
+            if os.path.isfile(file_path):
+                self.send_response(200)
+                
+                # Determina content-type
+                if clean_path.endswith('.css'):
+                    content_type = 'text/css'
+                elif clean_path.endswith('.js'):
+                    content_type = 'application/javascript'
+                elif clean_path.endswith(('.html', '.htm')):
+                    content_type = 'text/html'
+                elif clean_path.endswith('.json'):
+                    content_type = 'application/json'
+                elif clean_path.endswith('.png'):
+                    content_type = 'image/png'
+                elif clean_path.endswith('.jpg') or clean_path.endswith('.jpeg'):
+                    content_type = 'image/jpeg'
+                elif clean_path.endswith('.svg'):
+                    content_type = 'image/svg+xml'
+                elif clean_path.endswith('.ico'):
+                    content_type = 'image/x-icon'
+                else:
+                    content_type = self.guess_type(clean_path)
+                
+                self.send_header('Content-type', content_type)
+                
+                # HEADERS ANTI-CACHE DEFINITIVOS
+                self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+                self.send_header('Pragma', 'no-cache')
+                self.send_header('Expires', '0')
+                self.send_header('Last-Modified', self.date_time_string(time.time()))
+                
+                self.end_headers()
+                
+                with open(file_path, 'rb') as f:
+                    self.wfile.write(f.read())
+            else:
+                self.send_error(404, f"File not found: {clean_path}")
                 
         except Exception as e:
             if path != '/favicon.ico':
                 print(f"❌ Erro em {path}: {e}")
             self.send_error(404, f"Recurso não encontrado: {path}")
     
-    def should_cache_path(self, path):
-        """Define quais paths devem ser cacheados"""
-        cache_extensions = {'.css', '.js', '.html', '.ico', '.png', '.jpg', '.jpeg', '.svg'}
-        return any(path.endswith(ext) for ext in cache_extensions)
-    
-    def cache_current_file(self, path):
-        """Cache do arquivo atual em memória"""
-        try:
-            file_path = self.translate_path(path)
-            if os.path.isfile(file_path):
-                with open(file_path, 'rb') as f:
-                    content = f.read()
-                
-                # Detecta tipo MIME
-                content_type = self.guess_type(path)
-                
-                # Compressão GZIP para textos
-                if any(ext in path for ext in self.COMPRESSIBLE_TYPES):
-                    compressed = gzip.compress(content)
-                    cache_data = (compressed, content_type, True)  # (content, type, compressed)
-                else:
-                    cache_data = (content, content_type, False)  # (content, type, compressed)
-                
-                # Adiciona ao cache
-                with self._cache_lock:
-                    self._static_cache[path] = cache_data
-                    
-        except Exception as e:
-            print(f"⚠️  Erro no cache de {path}: {e}")
-    
-    def send_cached_response(self, content, content_type, compressed):
-        """Resposta ULTRA-RÁPIDA do cache"""
-        self.send_response(200)
-        self.send_header('Content-type', content_type)
-        self.send_header('Content-Length', str(len(content)))
-        
-        if compressed:
-            self.send_header('Content-Encoding', 'gzip')
-        
-        # Headers de cache para o navegador
-        self.send_header('Cache-Control', 'public, max-age=3600')  # 1 hora
-        self.send_header('ETag', f'"{hash(content)}"')
-        self.end_headers()
-        
-        self.wfile.write(content)
-    
     def send_json_response(self, data, status=200):
-        """Resposta JSON RÁPIDA com compressão"""
+        """Resposta JSON RÁPIDA SEM compressão para simplicidade"""
         try:
             response = json.dumps(data, ensure_ascii=False).encode('utf-8')
             
-            # Compressão GZIP para JSON
-            if len(response) > 1024:  # Só comprime se for grande
-                response = gzip.compress(response)
-                self.send_response(status)
-                self.send_header('Content-type', 'application/json; charset=utf-8')
-                self.send_header('Content-Encoding', 'gzip')
-                self.send_header('Content-Length', str(len(response)))
-                self.send_header('Cache-Control', 'no-cache')
-                self.end_headers()
-                self.wfile.write(response)
-            else:
-                # Resposta normal para JSON pequeno
-                self.send_response(status)
-                self.send_header('Content-type', 'application/json; charset=utf-8')
-                self.send_header('Content-Length', str(len(response)))
-                self.send_header('Cache-Control', 'no-cache')
-                self.end_headers()
-                self.wfile.write(response)
+            # Resposta direta SEM compressão
+            self.send_response(status)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(response)))
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+            self.end_headers()
+            self.wfile.write(response)
                 
         except Exception as e:
             print(f"❌ Erro em send_json_response: {e}")
             self.send_error(500, "Erro interno")
     
     def end_headers(self):
-        """Headers CORS otimizados"""
+        """Headers CORS otimizados SEM cache"""
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        # Headers anti-cache
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         super().end_headers()
     
     def do_OPTIONS(self):

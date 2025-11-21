@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Criação de Obras e Projetos</title>
     <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
-    
+
+
 
 </head>
 <body>
     <header class="header">
         <div class="header-left">
-            <img src="" alt="Logo Esquerda" class="logo">
+            <img src="https://esienergia.com.br/wp-content/uploads/2023/08/logo-esienergia-white.png" alt="Logo Esquerda" class="logo">
         </div>
         <div class="header-center">
             <h1>Criação de Obras e Projetos</h1>
@@ -23,11 +24,11 @@
 
     <nav class="navbar">
         <ul class="nav-list">
-            <li><a href="#01_CreateProjects">Criar Obras</a></li>
-            <li><a href="./02_Manager_Obras.html">Gerenciar Obras</a></li>
-            <li><a href="#relatorios">Relatórios</a></li>
-            <li><a href="./03_Edit_data.html">Editar dados</a></li>
-            <li><a href="#ajuda">Ajuda</a></li>
+            <li><a href="./01_Create_Obra.html" id="nav-criar-obras">Criar Obras</a></li>
+            <li><a href="./02_Manager_Obras.html" id="nav-gerenciar-obras">Gerenciar Obras</a></li>
+            <li><a href="#relatorios" id="nav-relatorios">Relatórios</a></li>
+            <li><a href="./03_Edit_data.html" id="nav-editar-dados">Editar dados</a></li>
+            <li><a href="#ajuda" id="nav-ajuda">Ajuda</a></li>
         </ul>
     </nav>
 
@@ -67,5 +68,100 @@
     </div>
     
     <script type="module" src="../scripts/01_Create_Obra/main.js"></script>
+    
+    <script>
+        // Função para destacar e travar apenas o clique da página ativa
+        function highlightAndLockActivePage() {
+            // Obtém o caminho atual da página
+            const currentPath = window.location.pathname.toLowerCase();
+            
+            // Remove a classe 'active' de todos os links
+            document.querySelectorAll('.nav-list li a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            let activeLink = null;
+            
+            // Identifica qual link corresponde à página atual
+            if (currentPath.includes('create_obra')) {
+                activeLink = document.getElementById('nav-criar-obras');
+            } else if (currentPath.includes('manager_obras')) {
+                activeLink = document.getElementById('nav-gerenciar-obras');
+            } else if (currentPath.includes('edit_data')) {
+                activeLink = document.getElementById('nav-editar-dados');
+            } else {
+                // Padrão: primeira página
+                activeLink = document.querySelector('.nav-list li a');
+            }
+            
+            // Adiciona a classe 'active' e trava apenas o clique
+            if (activeLink) {
+                activeLink.classList.add('active');
+                
+                // Remove apenas a ação do clique, mantendo href para CSS
+                activeLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return false;
+                }, true); // Use capture phase para garantir que execute primeiro
+                
+                // Adiciona atributo para identificar visualmente (opcional)
+                activeLink.setAttribute('data-current-page', 'true');
+                
+                console.log('Página ativa: clique travado, CSS mantido -', activeLink.textContent);
+            }
+        }
+
+        // Executa a função quando a página carrega
+        document.addEventListener('DOMContentLoaded', highlightAndLockActivePage);
+
+        // Versão alternativa mais robusta
+        function lockActivePageAdvanced() {
+            const currentPath = window.location.pathname.toLowerCase();
+            
+            document.querySelectorAll('.nav-list li a').forEach(link => {
+                const linkHref = link.getAttribute('href');
+                
+                // Verifica se este link corresponde à página atual
+                const isCurrentPage = 
+                    (linkHref && currentPath.includes(linkHref.replace('./', '').replace('.html', '').toLowerCase())) ||
+                    (currentPath.includes('create_obra') && link.id === 'nav-criar-obras') ||
+                    (currentPath.includes('manager_obras') && link.id === 'nav-gerenciar-obras') ||
+                    (currentPath.includes('edit_data') && link.id === 'nav-editar-dados');
+                
+                if (isCurrentPage) {
+                    // Esta é a página atual - adiciona classe ativa
+                    link.classList.add('active');
+                    
+                    // Remove qualquer evento de clique existente
+                    link.replaceWith(link.cloneNode(true));
+                    const newLink = document.querySelector(`[href="${linkHref}"]`) || document.getElementById(link.id);
+                    
+                    // Adiciona novo listener que previne o clique
+                    newLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    });
+                    
+                    // Mantém todos os estilos de hover normais
+                    newLink.style.pointerEvents = 'auto';
+                    newLink.style.cursor = 'pointer';
+                    
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        }
+
+        // Use esta segunda versão se a primeira não funcionar perfeitamente
+        document.addEventListener('DOMContentLoaded', function() {
+            highlightAndLockActivePage();
+            
+            // Executa novamente após um delay para garantir
+            setTimeout(highlightAndLockActivePage, 50);
+        });
+    </script>
 </body>
 </html>

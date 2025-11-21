@@ -136,13 +136,22 @@
   border-top: 1px solid #0d151e;
 }
 
-
 .options-grid, .config-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--options-grid-gap);
   color: #3e3e3e;
   text-align: left;
+}
+
+/* Itens de opção e configuração */
+.option-item, .config-option {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.option-item:hover, .config-option:hover {
+  transform: translateY(-2px);
 }
 
 .option-checkbox, .config-checkbox {
@@ -154,6 +163,7 @@
   border: 1px solid var(--option-border);
   border-radius: var(--border-radius);
   transition: all 0.2s ease;
+  height: 100%;
 }
 
 .option-checkbox:hover, .config-checkbox:hover {
@@ -161,13 +171,15 @@
   border-color: var(--option-hover-border);
 }
 
-.option-checkbox input[type="checkbox"] {
+.option-checkbox input[type="checkbox"],
+.config-checkbox input[type="checkbox"] {
   margin-top: 0.2rem;
   flex-shrink: 0;
 }
 
-/* Estilos para opções com valor */
-.option-checkbox label {
+/* Estilos para opções e configurações com valor */
+.option-checkbox label,
+.config-checkbox label {
   display: flex;
   align-items: flex-start;
   gap: var(--option-gap);
@@ -176,7 +188,7 @@
   flex-wrap: wrap;
 }
 
-.option-content {
+.option-content, .config-content {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -184,7 +196,7 @@
   min-width: 0;
 }
 
-.option-name {
+.option-name, .config-name {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--option-name-color);
@@ -203,18 +215,26 @@
   white-space: normal;
 }
 
-.option-checkbox input[type="checkbox"]:checked+.option-content .option-name {
+/* Estados selecionados */
+.option-selected .option-checkbox,
+.config-selected .config-checkbox {
+  background: var(--option-checked-bg);
+  border-color: var(--option-checked-border);
+}
+
+.option-checkbox input[type="checkbox"]:checked + .option-content .option-name,
+.config-checkbox input[type="checkbox"]:checked + .config-content .config-name {
   font-weight: 600;
   color: var(--option-checked-name);
 }
 
-.option-checkbox input[type="checkbox"]:checked+.option-content .option-price {
+.option-checkbox input[type="checkbox"]:checked + .option-content .option-price {
   color: var(--option-checked-price);
 }
 
-.option-checkbox:has(input[type="checkbox"]:checked) {
-  background: var(--option-checked-bg);
-  border-color: var(--option-checked-border);
+.option-item.option-selected,
+.config-option.config-selected {
+  transform: scale(1.02);
 }
 
 /* Preços */
@@ -253,7 +273,7 @@
 
 /* Selects específicos */
 .machine-type-select,
-.machine-potency-select,
+.machine-power-select,
 .machine-voltage-select {
   background: var(--color-white);
   border: 2px solid var(--select-border);
@@ -265,11 +285,21 @@
 }
 
 .machine-type-select:focus,
-.machine-potency-select:focus,
+.machine-power-select:focus,
 .machine-voltage-select:focus {
   outline: none;
   border-color: var(--select-focus-border);
   box-shadow: var(--select-focus-shadow);
+}
+
+/* Mensagens vazias */
+.empty-options-message,
+.empty-config-message {
+  text-align: center;
+  color: var(--color-gray-medium);
+  font-style: italic;
+  padding: var(--spacing-lg);
+  grid-column: 1 / -1;
 }
 
 /* Animações */
@@ -278,7 +308,6 @@
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -289,10 +318,8 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-/* ===== MACHINE HEADER RESPONSIVO -  ===== */
+/* ===== MACHINE HEADER RESPONSIVO ===== */
 @media (max-width: 768px) {
-
-
   .machine-title-editable {
     order: 2;
     flex: 1;
@@ -303,10 +330,6 @@
     margin: 0;
   }
 
-
-
-
-  /* Mantendo o restante do CSS original */
   .options-grid, .config-grid {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--spacing-sm);
@@ -322,8 +345,15 @@
     min-width: 120px;
   }
 
-  /* Mantendo o restante do CSS original */
   .options-grid, .config-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .option-checkbox, .config-checkbox {
+    padding: var(--spacing-sm);
+  }
+  
+  .option-name, .config-name {
+    font-size: 0.85rem;
   }
 }

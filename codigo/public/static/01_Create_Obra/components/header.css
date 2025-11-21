@@ -26,9 +26,87 @@
 }
 
 .logo {
-  width: 50px;
-  height: 50px;
-  border-radius: var(--border-radius-lg);
-  background: white;
+  display: block;
+  max-width: 120px;         
+  height: auto;             
   padding: var(--spacing-xs);
+  border-radius: var(--border-radius-lg);
+  object-fit: contain;      
 }
+
+@media (max-width: 768px) {
+  .logo {
+    max-width: 110px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    max-width: 90px;
+  }
+}
+
+
+/* Link base (não ativo) */
+.nav-list li a {
+  display: inline-block;
+  padding: 0.45em 1.2em;
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid transparent;
+  background: transparent;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  transition:
+    background-color 0.22s ease,
+    color 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.16s ease;
+}
+
+/* Hover suave (não ativo) */
+.nav-list li a:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transform: translateY(-0.5px);
+}
+
+/* Estado ativo — discreto, mas claramente selecionado */
+.nav-list li a.active {
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.18),
+      rgba(255, 255, 255, 0.10));
+  color: #ffffff;
+  font-weight: 500;
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 4px 10px rgba(0, 0, 0, 0.18);
+  cursor: default;
+  transform: translateY(0);
+}
+
+/* Hover no ativo — reforça sem exagerar */
+.nav-list li a.active:hover {
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.22),
+      rgba(255, 255, 255, 0.12));
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 5px 12px rgba(0, 0, 0, 0.22);
+  transform: translateY(0);
+}
+
+/* Foco acessível (teclado) */
+.nav-list li a:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.75),
+    0 0 0 3px rgba(255, 255, 255, 0.18);
+}
+

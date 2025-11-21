@@ -211,7 +211,7 @@ function buildOptionsHTML(options, machineId, selectedOptions = [], selectedPowe
 }
 
 /**
- * 🆕 CONSTRÓI HTML DAS CONFIGURAÇÕES DE INSTALAÇÃO - VERSÃO CORRIGIDA
+ * 🆕 CONSTRÓI HTML DAS CONFIGURAÇÕES DE INSTALAÇÃO - COM SELEÇÃO EXCLUSIVA CORRIGIDA
  */
 function buildConfigHTML(configuracoes, machineId, configuracoesSelecionadas = [], potencia = '') {
     console.log(`🔨 buildConfigHTML: ${configuracoes?.length || 0} configurações para ${machineId}`);
@@ -227,24 +227,33 @@ function buildConfigHTML(configuracoes, machineId, configuracoesSelecionadas = [
             ? configuracoesSelecionadas.some(selected => selected.id === config.id)
             : false;
         
+        // ✅ IDENTIFICAR CONFIGURAÇÕES EXCLUSIVAS - COMPARAÇÃO EXATA
+        const configName = config.nome;
+        const isBocalInsuflamento = configName === "Bocal de insuflamento protegido por grelha diretamente no ambiente";
+        const isBocalAcoplado = configName === "Bocal acoplado à rede de dutos por lona flexível. Distribuição por grelhas";
+        const isExclusiveGroup = isBocalInsuflamento || isBocalAcoplado;
+        
         const configElement = `
-        <div class="config-option ${isChecked ? 'config-selected' : ''}" onclick="toggleConfig('${machineId}', ${config.id})">
+        <div class="config-option ${isChecked ? 'config-selected' : ''} ${isExclusiveGroup ? 'exclusive-group' : ''}" 
+             onclick="toggleConfig('${machineId}', ${config.id})">
             <div class="config-checkbox">
                 <input type="checkbox" data-config-id="${config.id}" 
-                       data-config-name="${config.nome}" id="config-${machineId}-${config.id}"
-                       onchange="updateConfigSelection('${machineId}', ${config.id}); calculateMachinePrice('${machineId}')"
+                       data-config-name="${configName}" 
+                       data-exclusive-group="${isExclusiveGroup ? 'bocal-distribuicao' : ''}"
+                       id="config-${machineId}-${config.id}"
+                       onchange="handleConfigChange('${machineId}', ${config.id})"
                        ${isChecked ? 'checked' : ''}>
                 <div class="config-content">
-                    <div class="config-name">${config.nome}</div>
+                    <div class="config-name">${configName}</div>
                 </div>
             </div>
         </div>`;
         
-        console.log(`   Config ${config.id}: ${config.nome}`);
+        console.log(`   Config ${config.id}: "${configName}" ${isExclusiveGroup ? '(EXCLUSIVA)' : ''}`);
         return configElement;
     }).join('');
     
-    console.log(`📦 HTML final gerado:`, html);
+    console.log(`📦 HTML final gerado com ${configuracoes.length} configurações`);
     return html;
 }
 
@@ -374,7 +383,6 @@ function updateMachineUI(machineId, machine) {
             : '<p class="empty-options-message">Nenhuma opção disponível</p>';
     }
 
-    // 🆕 ATUALIZAR CONFIGURAÇÕES - CORREÇÃO CRÍTICA
     // 🆕 ATUALIZAR CONFIGURAÇÕES - CORREÇÃO DEFINITIVA
     const configContainer = document.getElementById(`config-container-${machineId}`);
     console.log(`🔍 Container encontrado:`, configContainer);
@@ -649,14 +657,15 @@ function deleteMachine(machineId) {
 // =============================================================================
 // 🆕 FUNÇÕES DE INTERAÇÃO PARA CONFIGURAÇÕES
 // =============================================================================
+
 /**
- * Alterna o estado de uma configuração de instalação
+ * Alterna o estado de uma configuração
  */
 function toggleConfig(machineId, configId) {
     const checkbox = document.getElementById(`config-${machineId}-${configId}`);
     if (checkbox) {
         checkbox.checked = !checkbox.checked;
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        handleConfigChange(machineId, configId);
     }
 }
 
@@ -671,8 +680,58 @@ function updateConfigSelection(machineId, configId) {
     }
 }
 
+/**
+ * 🆕 MANIPULA MUDANÇAS NAS CONFIGURAÇÕES COM LÓGICA EXCLUSIVA
+ */
+function handleConfigChange(machineId, configId) {
+    console.log(`🔄 handleConfigChange: máquina ${machineId}, config ${configId}`);
+    
+    const checkbox = document.getElementById(`config-${machineId}-${configId}`);
+    if (!checkbox) return;
+    
+    const configName = checkbox.getAttribute('data-config-name');
+    const isExclusiveGroup = checkbox.getAttribute('data-exclusive-group') === 'bocal-distribuicao';
+    
+    console.log(`🔍 Configuração: "${configName}", Exclusiva: ${isExclusiveGroup}, Marcada: ${checkbox.checked}`);
+    
+    // ✅ ATUALIZAÇÃO VISUAL
+    updateConfigSelection(machineId, configId);
+    
+    // ✅ LÓGICA DE SELEÇÃO EXCLUSIVA
+    if (isExclusiveGroup && checkbox.checked) {
+        console.log(`🚫 Aplicando lógica exclusiva para configuração "${configName}"`);
+        deselectOtherBocalOptions(machineId, configId);
+    }
+    
+    // ✅ RECALCULAR PREÇO (se necessário)
+    calculateMachinePrice(machineId);
+}
 
-
+/**
+ * 🆕 DESMARCA OUTRAS OPÇÕES DO GRUPO EXCLUSIVO "BOCAL"
+ */
+function deselectOtherBocalOptions(machineId, selectedConfigId) {
+    console.log(`🚫 Desmarcando outras opções do grupo bocal, exceto ${selectedConfigId}`);
+    
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (!machineElement) return;
+    
+    // Encontrar todas as checkboxes do grupo exclusivo
+    const bocalCheckboxes = machineElement.querySelectorAll('input[data-exclusive-group="bocal-distribuicao"]');
+    
+    console.log(`🔍 Encontradas ${bocalCheckboxes.length} checkboxes do grupo bocal`);
+    
+    bocalCheckboxes.forEach(checkbox => {
+        const configId = parseInt(checkbox.getAttribute('data-config-id'));
+        const configName = checkbox.getAttribute('data-config-name');
+        
+        if (configId !== selectedConfigId && checkbox.checked) {
+            console.log(`❌ Desmarcando configuração ${configId}: "${configName}"`);
+            checkbox.checked = false;
+            updateConfigSelection(machineId, configId);
+        }
+    });
+}
 
 // =============================================================================
 // FUNÇÕES AUXILIARES
@@ -716,6 +775,8 @@ export {
     buildConfigHTML,
     toggleConfig,
     updateConfigSelection,
+    handleConfigChange, 
+    deselectOtherBocalOptions, 
     buildOptionsHTML,
     updateSelectUI,
     showEmptyMessage,
@@ -741,10 +802,12 @@ if (typeof window !== 'undefined') {
         updateOptionValues,
         handlePowerChange,
         
-        // 🆕 CONFIGURAÇÕES - CORREÇÃO CRÍTICA
+        // 🆕 CONFIGURAÇÕES 
+        buildConfigHTML,
         toggleConfig,
         updateConfigSelection,
-        buildConfigHTML,
+        handleConfigChange, 
+        deselectOtherBocalOptions, 
         
         // Totais
         calculateAllMachinesTotal,
@@ -760,5 +823,19 @@ if (typeof window !== 'undefined') {
     };
 
     Object.assign(window, functions);
-    console.log('✅ Todas as funções de máquinas carregadas no escopo global (incluindo configurações)');
+    console.log('✅ Todas as funções de máquinas carregadas no escopo global (incluindo lógica exclusiva)');
 }
+
+// ✅ GARANTIR QUE AS FUNÇÕES ESTEJAM DISPONÍVEIS MESMO COM PROBLEMAS DE CARREGAMENTO
+setTimeout(() => {
+    if (typeof window !== 'undefined') {
+        if (!window.handleConfigChange) {
+            window.handleConfigChange = handleConfigChange;
+            console.log('✅ handleConfigChange forçada no escopo global');
+        }
+        if (!window.deselectOtherBocalOptions) {
+            window.deselectOtherBocalOptions = deselectOtherBocalOptions;
+            console.log('✅ deselectOtherBocalOptions forçada no escopo global');
+        }
+    }
+}, 2000);

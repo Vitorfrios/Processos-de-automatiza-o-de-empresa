@@ -1,6 +1,6 @@
 """
 servidor.py
-Servidor principal com inicialização acelerada
+Servidor principal SEM CACHE
 """
 
 import os
@@ -9,16 +9,28 @@ import time
 from pathlib import Path
 
 def setup_environment():
-    """Configuração rápida do ambiente"""
+    """Configuração do ambiente SEM CACHE"""
     current_dir = Path(__file__).parent
     sys.path.insert(0, str(current_dir))
     
-    # Configurações de performance
+    # DESATIVA CACHES DO PYTHON
+    os.environ['PYTHONDONTWRITEBYTECODE'] = '1'  # Não gera .pyc
     os.environ['PYTHONOPTIMIZE'] = '1'
+    
+    # Desativa cache de importação
+    sys.dont_write_bytecode = True
 
-def load_optimized_modules():
-    """Carrega módulos de forma otimizada"""
+def load_modules_no_cache():
+    """Carrega módulos SEM cache"""
     try:
+        # Force reload para evitar cache de módulos
+        if 'servidor_modules.core.server_core' in sys.modules:
+            del sys.modules['servidor_modules.core.server_core']
+        if 'servidor_modules.handlers.http_handler' in sys.modules:
+            del sys.modules['servidor_modules.handlers.http_handler']
+        if 'servidor_modules.utils.browser_monitor' in sys.modules:
+            del sys.modules['servidor_modules.utils.browser_monitor']
+        
         from servidor_modules.core.server_core import ServerCore
         from servidor_modules.handlers.http_handler import UniversalHTTPRequestHandler
         from servidor_modules.utils.browser_monitor import monitorar_navegador
@@ -29,17 +41,21 @@ def load_optimized_modules():
         sys.exit(1)
 
 def initialize_server():
-    """Inicialização rápida do servidor"""
-    print("🚀 INICIANDO SERVIDOR ")
+    """Inicialização do servidor SEM CACHE"""
+    print("🚀 INICIANDO SERVIDOR SEM CACHE")
     start_time = time.time()
     
+    # Limpa possíveis caches na inicialização
+    import gc
+    gc.collect()
+    
     # Carrega módulos
-    ServerCore, UniversalHTTPRequestHandler, monitorar_navegador = load_optimized_modules()
+    ServerCore, UniversalHTTPRequestHandler, monitorar_navegador = load_modules_no_cache()
     
     # Cria núcleo do servidor
     server_core = ServerCore()
     
-    # Configura porta de forma rápida
+    # Configura porta
     print("🔧 Configurando porta...")
     port = server_core.setup_port(8000)
     if not port:
@@ -54,28 +70,27 @@ def initialize_server():
         print(f"❌ Erro ao criar servidor: {e}")
         sys.exit(1)
     
-    # Configura handlers de sinal (rápido)
+    # Configura handlers de sinal
     server_core.setup_signal_handlers()
     
     # Exibe informações
     server_core.print_server_info(port)
     
-    # Inicia threads (otimizado)
+    # Inicia threads
     server_core.start_server_threads(port, httpd, monitorar_navegador)
     
     # Tempo de inicialização
     init_time = time.time() - start_time
-    print(f"⚡ Servidor iniciado em {init_time:.2f} segundos")
+    print(f"⚡ Servidor SEM CACHE iniciado em {init_time:.2f} segundos")
     
     return httpd, server_core
 
 def run_server():
-    """Loop principal otimizado do servidor"""
+    """Loop principal do servidor SEM CACHE"""
     httpd, server_core = initialize_server()
     
     try:
-        # Loop principal com timeout reduzido
-        print("🔄 Servidor em execução...")
+        print("🔄 Servidor em execução (SEM CACHE)...")
         
         while server_core.servidor_rodando:
             try:
@@ -84,7 +99,6 @@ def run_server():
                 print("\n⏹️  Interrupção pelo usuário")
                 break
             except Exception as e:
-                # Apenas logs críticos
                 if "Broken pipe" not in str(e) and "Connection reset" not in str(e):
                     print(f"⚠️  Erro não crítico: {e}")
                 continue
@@ -93,20 +107,15 @@ def run_server():
         print(f"❌ Erro no servidor: {e}")
     
     finally:
-        # Encerramento rápido
         shutdown_server(httpd, server_core)
 
 def shutdown_server(httpd, server_core):
-    """Encerramento otimizado do servidor"""
+    """Encerramento do servidor"""
     print("\n🔴 Encerrando servidor...")
     
     try:
-        # Limpeza rápida
-        from servidor_modules.utils.cache_cleaner import CacheCleaner
-        cache_cleaner = CacheCleaner()
-        
-        # Encerra servidor em thread separada (não bloqueante)
-        server_core.shutdown_server_async(httpd, cache_cleaner)
+        # Encerra servidor sem limpeza de cache (já que não usamos)
+        server_core.shutdown_server_async(httpd, None)  # Passa None para cache_cleaner
         
         print("✅ Servidor encerrado com sucesso")
         
@@ -117,7 +126,7 @@ def shutdown_server(httpd, server_core):
         sys.exit(0)
 
 if __name__ == "__main__":
-    # Configura ambiente
+    # Configura ambiente SEM CACHE
     setup_environment()
     
     # Inicia servidor
