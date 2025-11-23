@@ -820,3 +820,201 @@ Os estilos estÃ£o em `codigo/public/static/01_Create_Obra`, separados por respon
 
 - `backup de arquivos/scripts/01_Create_Obra`: cÃ³pia congelada do front-end antes da refatoraÃ§Ã£o atual. Ãštil para comparar comportamentos antigos ou recuperar trechos especÃ­ficos.
 - Sempre que uma nova funÃ§Ã£o for criada, adicione-a Ã s tabelas acima para manter o README sincronizado com a estrutura vigente.
+
+## Guia operacional de ponta a ponta
+
+1. Inicie o backend local com `python codigo/servidor.py` (usa a porta 8000 por padrão e escolhe a próxima disponível se já estiver ocupada; abre o navegador automaticamente para a página `01_Create_Obra`).
+2. Confirme que `codigo/json/dados.json`, `codigo/json/backup.json` e `codigo/json/sessions.json` existem; eles são criados automaticamente se não estiverem presentes.
+3. Na SPA, preencha o cabeçalho de empresa: o autocomplete lê `dados.json/empresas` e, se a sigla for nova, o backend cria a entrada automaticamente via `empresa_handler`.
+4. Crie/renomeie obras, projetos e salas; os cálculos são disparados conforme você digita e os resultados alimentam a tabela de capacidade e os cards de máquinas.
+5. Clique em salvar/atualizar para persistir: o front monta o payload completo da obra, envia para `/obras` e atualiza `backup.json`; em seguida `session-adapter` sincroniza `sessions.json` chamando `/api/sessions/add-obra`.
+6. Use `02_Obras_manager` para revisar obras já salvas (`/api/backup-completo`) e comparar estatísticas; o módulo reutiliza cálculos da página principal.
+7. Para finalizar, acione o botão de desligamento ou chame `/api/sessions/shutdown` + `/api/shutdown` para limpar sessão, fechar threads e encerrar o servidor.
+
+## Convencoes de IDs e formatos basicos
+
+- Prefixos: `obra_*`, `project_*` e `room_*` são gerados por `data/utils/id-generator.js` e validados tanto no front quanto no backend (`SessionsManager` e rotas `/obras`).
+- IDs compostos seguem o padrão `obra_<sigla>_<sequencia>`, `obra_<sigla>_<seq>_proj_<hash>_<n>` e `..._sala_<hash>_<n>` para manter unicidade em múltiplas criações rápidas.
+- Dados de empresa gravados na obra incluem `empresaSigla`, `empresaNome`, `numeroClienteFinal`, `clienteFinal`, `codigoCliente`, `empresa_id` e `idGerado` (quando montado).
+- `sessions.json` mantém apenas IDs (`{"sessions":{"session_active":{"obras":[]}}}`); o conteúdo real permanece em `backup.json`.
+- `dados.json` armazena `constants`, `machines`, `empresas` (lista de objetos `{SIGLA: Nome}`) e custos auxiliares usados nos cálculos.
+
+## Estruturas de dados principais (exemplos)
+
+### backup.json (obras, projetos e salas)
+
+```json
+{
+  "id": "obra_SIGLA_01",
+  "nome": "Obra1",
+  "empresaSigla": "SIG",
+  "empresaNome": "Empresa de Exemplo",
+  "numeroClienteFinal": 12,
+  "clienteFinal": "Cliente XPTO",
+  "projetos": [
+    {
+      "id": "obra_SIGLA_01_proj_ab1_1",
+      "nome": "Projeto1",
+      "salas": [
+        {
+          "id": "obra_SIGLA_01_proj_ab1_1_sala_cd2_1",
+          "nome": "Sala1",
+          "inputs": {
+            "ambiente": "Sala de Servidores",
+            "backup": "n+1",
+            "area": 50,
+            "pressurizacao": true,
+            "pressurizacaoSetpoint": 25,
+            "numPortasDuplas": 2,
+            "numPortasSimples": 3,
+            "paredeOeste": 5.5,
+            "paredeLeste": 5.5,
+            "paredeNorte": 8,
+            "paredeSul": 8,
+            "divisoriaNaoClima1": 10,
+            "divisoriaNaoClima2": 10,
+            "divisoriaClima1": 15,
+            "divisoriaClima2": 15,
+            "dissipacao": 5000,
+            "numPessoas": 10,
+            "setpointTemp": 25
+          },
+          "maquinas": [
+            {
+              "nome": "Maquina1",
+              "tipo": "Wall Mounted",
+              "potencia": "2TR",
+              "tensao": "220V/1F",
+              "precoBase": 28503.4,
+              "opcoesSelecionadas": [],
+              "configuracoesSelecionadas": [],
+              "precoTotal": 39373.4
+            }
+          ],
+          "capacidade": {
+            "fatorSeguranca": 1.2,
+            "cargaEstimada": 13.292,
+            "solucao": "2",
+            "solucaoBackup": "3",
+            "totalCapacidade": "20.0",
+            "folga": "50.5%"
+          },
+          "ganhosTermicos": {
+            "total-ganhos-w": 46748,
+            "total-tr-aprox": 14,
+            "total-ar-sensivel": 9241,
+            "total-ar-latente": 20090
+          },
+          "configuracao": {
+            "opcoesInstalacao": [
+              "bocal_insuflamento_protegido",
+              "condicionadores_externos_se"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+- Campos opcionais podem ser omitidos, mas o front espera sempre `inputs`, `maquinas`, `capacidade`, `ganhosTermicos` e `configuracao` para evitar erros de renderização.
+- `somavaloresmaquinatotal` armazena o somatório final dos preços das máquinas quando calculado.
+
+### dados.json (constants, machines, empresas)
+
+- `constants`: blocos numéricos usados nos cálculos de ganhos e capacidade (`VARIAVEL_PD`, `VARIAVEL_PS`, `deltaT_*`, `FATOR_SEGURANCA_CAPACIDADE` etc).
+- `machines`: catálogo por tipo com impostos, opções extras, configurações de instalação e faixas de potência/preço; o front usa para montar dropdowns e calcular `precoTotal`.
+- `empresas`: lista de objetos `{SIGLA: "Nome Completo"}`; novos registros podem ser inseridos manualmente ou via `/api/dados/empresas`/`/api/dados/empresas/auto`.
+- Outras chaves incluem custos unitários de materiais e impostos auxiliares reutilizados em cálculos e tooltips.
+
+### sessions.json (controle de sessão)
+
+```json
+{
+  "sessions": {
+    "session_active": {
+      "obras": ["obra_x", "obra_y"]
+    }
+  }
+}
+```
+
+- Nenhum dado sensível é salvo aqui; serve apenas para filtrar quais obras do `backup.json` podem ser carregadas pela sessão atual.
+
+## Endpoints HTTP (backend Python)
+
+### Obras
+- `GET /obras`: retorna obras da sessão ativa (filtradas de `backup.json`).
+- `GET /obras/{id}`: busca obra específica.
+- `POST /obras`: cria obra; body é o objeto completo (ver `backup.json`); gera ID se faltando.
+- `PUT /obras/{id}`: atualiza obra existente; sobrescreve o registro no `backup.json`.
+- `DELETE /obras/{id}`: remove obra do backup e, se chamada via UI, dispara reload para limpar a sessão.
+
+### Empresas
+- `GET /api/dados/empresas`: lista `{SIGLA: Nome}`.
+- `GET /api/dados/empresas/numero/{sigla}`: devolve próximo número sequencial de cliente para a sigla.
+- `GET /api/dados/empresas/buscar/{termo}`: busca por sigla ou substring.
+- `POST /api/dados/empresas`: body `{ "SIG": "Nome Empresa" }`; adiciona ao `dados.json`.
+- `POST /api/dados/empresas/auto`: usado internamente para auto-criar empresa a partir de dados da obra; mesmo formato do endpoint acima.
+
+### Sessao
+- `GET /api/session-obras`: retorna IDs de obras ativas para bootstrap.
+- `GET /api/sessions/current`: retorna estrutura completa de `sessions.json`.
+- `POST /api/sessions/add-obra`: body `{"obra_id": "obra_x"}`; insere ID no `sessions.json`.
+- `DELETE /api/sessions/remove-obra/{id}`: remove ID da sessão; usado após confirmações/undos.
+- `POST /api/sessions/shutdown`: limpa sessão ativa (lista de obras).
+- `POST /api/sessions/ensure-single`: força apenas uma sessão ativa (cleanup defensivo).
+
+### Dados auxiliares e sistema
+- `GET /constants`: retorna `dados.json.constants`.
+- `GET /machines`: retorna `dados.json.machines`.
+- `GET /dados` / `POST /dados`: lê/salva `dados.json` completo.
+- `GET /backup` / `POST /backup`: lê/salva `backup.json` completo.
+- `GET /api/backup-completo`: retorna todas as obras sem filtrar por sessão.
+- `POST /api/reload-page`: endpoint de compatibilidade usado pelos modais de undo para sinalizar recarregamento.
+- `GET /api/server/uptime`: informa tempo em execução do backend.
+- `POST /api/shutdown`: encerra o servidor Python de forma graceful.
+
+## Fluxo de sessao e persistencia
+
+- Bootstrap (`system-init.js`) baixa constantes (`/constants`), carrega módulos e, em seguida, `session-manager-main.js` chama `/api/session-obras` para recuperar IDs válidos.
+- `obra-data-loader` usa os IDs para buscar `/obras` e renderizar cada obra com `renderObraFromData`.
+- Ao salvar, `obra-save-handler` envia o JSON para `/obras` e, se o servidor responder com sucesso, aciona `session-adapter.addObraToSessionLocal` e `/api/sessions/add-obra` para manter o alinhamento.
+- Exclusões disparam `/api/sessions/remove-obra/{id}` e `/api/reload-page` (para limpar DOM e estado), respeitando o sistema de undo da UI.
+- O botão de desligamento usa `shutdown-adapter` para chamar `/api/sessions/shutdown` (limpa `sessions.json`) e depois `/api/shutdown` (encerra threads/HTTP server).
+
+## Logs, diagnostico e monitoramento
+
+- Front-end: `core/logger` intercepta `console.*`; use `window.toggleLogger()` e `window.getLoggerStatus()` para ligar/desligar o logger inteligente. `finalSystemDebug` imprime estado global após o carregamento.
+- Backend: mensagens em `servidor.py` e `server_core.py` indicam porta, URL e tempo de uptime; handlers mostram ícones para ações de obra/empresa e erros.
+- Arquivos auxiliares: `arquivostxt/status.txt` pode armazenar status manuais; `arquivostxt/relatorio_js_detalhado.txt` registra mapeamento de funções JS gerado pelos utilitários Python.
+- Diagnóstico rápido: consulte `codigo/json/backup.json` para verificar se a obra foi persistida e `codigo/json/sessions.json` para confirmar se a sessão contém o ID salvo.
+- Para limpar caches Python, `cache_cleaner` roda em thread; se precisar forçar, remova `__pycache__` manualmente ou reinicie o servidor.
+
+## Checklist de testes manuais
+
+- Subir o servidor e acessar a página 01; confirmar carregamento das constantes (sem status vermelho).
+- Criar nova obra com empresa nova: preencher sigla/nome, salvar e confirmar que a sigla aparece em `dados.json` e no cabeçalho da obra.
+- Adicionar múltiplos projetos/salas, preencher campos de climatizacao, conferir recálculo automático de vazão/ganhos/capacidade e valores exibidos nos cards de máquinas.
+- Salvar obra, recarregar página e validar restauração completa (dados de empresa, projetos, salas, máquinas e banners de status).
+- Abrir `02_Obras_manager`, verificar listagem e filtros, e conferir cores/ícones (`powerMatch`) para vazão.
+- Executar fluxo de exclusão com modal, testar undo e confirmar que `sessions.json` e `backup.json` refletem o resultado final.
+
+## Troubleshooting rapido
+
+- Porta ocupada: o servidor tenta matar processos na porta padrão; se falhar, ele escolhe a próxima disponível. Verifique se outra instância do app está rodando.
+- SPA não carrega módulos: confira se `/constants` está respondendo; se não, `dados.json` pode estar corrompido (rode `python -m json.tool codigo/json/dados.json` para validar).
+- Autocomplete de empresa vazio: certifique-se de que `dados.json` possui a chave `empresas` em formato de lista de objetos e que o backend está respondendo a `/api/dados/empresas`.
+- Sessão presa (obras não removem): chame manualmente `/api/sessions/shutdown` para limpar `sessions.json` e recarregue a página.
+- Persistência falhando: verifique permissões de escrita na pasta `codigo/json`; o backend usa `FileUtils.save_json_file` e avisará no console se não conseguir gravar.
+
+## Implantacao e servico
+
+- Para produção/render, use `app.py` (Flask) que serve os assets estáticos e mantém health check; a URL padrão continua `http://<host>:<port>/codigo/public/pages/01_Create_Obra/index.html`.
+- `runtime.txt` e `rander.yml` definem a versão de Python e configurações de deploy; `CNAME` aponta domínio personalizado caso configurado.
+
+## Scripts auxiliares
+
+- `utilitarios py/funções.py`: gera templates base de builders (`data/builders/data-builders-folder`) para acelerar refatorações; execute em um ambiente virtual para não poluir dependências globais.
+- Scripts adicionais na pasta `utilitarios py/` podem auditar pastas, juntar linhas ou criar relatórios; revise cada cabeçalho para entender parâmetros antes de rodar.

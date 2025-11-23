@@ -39,7 +39,7 @@
   --primary-gradient: linear-gradient(135deg, #4A5568 0%, #718096 100%);
 
   /* Gradientes semânticos (sucesso/erro/aviso/info) – buttons.css */
-  --success-gradient: linear-gradient(135deg, #2D774E 0%, #48BB78 100%);
+  --success-gradient: linear-gradient(135deg, #2D774E 0%, #298650 100%);
   --danger-gradient:  linear-gradient(135deg, #C53030 0%, #FC8181 100%);
   --warning-gradient: linear-gradient(135deg, #139090 0%);
 

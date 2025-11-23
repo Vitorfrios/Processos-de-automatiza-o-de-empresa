@@ -8,7 +8,6 @@ import { showSystemStatus } from '../../../01_Create_Obra/ui/components/status.j
 
 /**
  * Carrega todas as obras do backup.json
- * @returns {Promise<Array>} Array de obras normalizadas
  */
 export async function loadBackupObras() {
     try {
@@ -35,8 +34,6 @@ export async function loadBackupObras() {
 
 /**
  * Normaliza os dados do backup para array de obras
- * @param {Object|Array} backupData - Dados brutos do backup
- * @returns {Array} Array de obras normalizadas
  */
 export function normalizeBackup(backupData) {
     if (!backupData) {
@@ -73,8 +70,6 @@ export function normalizeBackup(backupData) {
 
 /**
  * Remove uma obra do backup (persistente)
- * @param {string} obraId - ID da obra a ser removida
- * @returns {Promise<boolean>} True se a remoção foi bem-sucedida
  */
 export async function removeObraFromBackup(obraId) {
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
@@ -143,43 +138,12 @@ export async function removeObraFromBackup(obraId) {
     } catch (error) {
         console.error('❌ Erro ao remover obra do backup:', error);
         
-        // Se não conseguir remover do backup, pelo menos informar o usuário
         if (error.message.includes('501') || error.message.includes('404')) {
             showSystemStatus('Funcionalidade de exclusão não disponível no servidor', 'warning');
         } else {
             showSystemStatus(MESSAGES.DELETE_ERROR, 'error');
         }
         
-        return false;
-    }
-}
-
-/**
- * Alternativa: Atualiza todo o backup (se necessário)
- * @param {Array} obras - Array atualizado de obras
- * @returns {Promise<boolean>} True se a atualização foi bem-sucedida
- */
-export async function updateBackupFile(obras) {
-    try {
-        console.log('💾 Atualizando arquivo de backup...');
-        
-        const response = await fetch(BACKUP_ENDPOINTS.UPDATE_BACKUP, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(obras)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status}`);
-        }
-        
-        console.log('✅ Backup atualizado com sucesso');
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Erro ao atualizar backup:', error);
         return false;
     }
 }

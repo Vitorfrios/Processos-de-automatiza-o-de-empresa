@@ -5,7 +5,9 @@
 
 import { initializeManagerInterface } from '../ui/interface.js';
 import { showSystemStatus } from '../../01_Create_Obra/ui/components/status.js';
-import { loadSystemConstantsFromJSON, waitForConstants } from '../data/adapters/constants-adapter.js';
+import { loadSystemConstantsFromJSON } from '../data/adapters/constants-adapter.js';
+// ✅ CORREÇÃO: Importar modal universal
+import '../ui/components/modal/universal-modal.js';
 
 /**
  * Bootstrap da aplicação da Página 2
@@ -20,19 +22,9 @@ export async function bootstrapManagerApplication() {
     }
     
     try {
-        // 1. PRIMEIRO: Carregar constantes do sistema (AGUARDAR conclusão)
+        // 1. PRIMEIRO: Carregar constantes do sistema
         console.log('📥 Carregando constantes do sistema...');
-        const constants = await loadSystemConstantsFromJSON();
-        
-        // ✅ DEBUG: Verificar estrutura carregada
-        console.log('🔍 Estrutura das constantes carregadas:', {
-            hasConstants: !!constants,
-            keys: Object.keys(constants),
-            sampleValues: Object.keys(constants).slice(0, 5).reduce((acc, key) => {
-                acc[key] = constants[key];
-                return acc;
-            }, {})
-        });
+        await loadSystemConstantsFromJSON();
         
         // 2. VERIFICAR se as constantes estão disponíveis
         if (!window.systemConstants) {
@@ -62,12 +54,6 @@ export async function bootstrapManagerApplication() {
     } catch (error) {
         console.error('❌ Erro no bootstrap da Página 2:', error);
         showSystemStatus('Erro ao carregar gerenciamento', 'error');
-        
-        // Tentar recarregar após erro
-        setTimeout(() => {
-            console.log('🔄 Tentando recarregar constantes...');
-            bootstrapManagerApplication();
-        }, 2000);
     }
 }
 

@@ -18,7 +18,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     
     # Arquivos que NUNCA devem ser logados (acelera MUITO)
     SILENT_PATHS = {
-        '/favicon.ico', '/static/', '.css', '.js', '.png', '.jpg', '.jpeg',
+        '/static/', '.css', '.js', '.png', '.jpg', '.jpeg',
         '/public/static/', '/public/scripts/', '.woff', '.woff2', '.ico',
         '.svg', '.gif', '.map', '.ttf', '.eot'
     }
@@ -242,7 +242,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return path
     
     def serve_static_file_no_cache(self, path):
-        """Serve arquivos estáticos SEM CACHE - sempre do disco com headers anti-cache"""
+        """Serve arquivos estáticos - sempre do disco com headers anti-cache"""
         try:
             # Remove parâmetros para encontrar arquivo real
             clean_path = path.split('?')[0]
@@ -266,8 +266,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     content_type = 'image/jpeg'
                 elif clean_path.endswith('.svg'):
                     content_type = 'image/svg+xml'
-                elif clean_path.endswith('.ico'):
-                    content_type = 'image/x-icon'
                 else:
                     content_type = self.guess_type(clean_path)
                 
@@ -287,8 +285,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404, f"File not found: {clean_path}")
                 
         except Exception as e:
-            if path != '/favicon.ico':
-                print(f"❌ Erro em {path}: {e}")
+            print(f"❌ Erro em {path}: {e}")
             self.send_error(404, f"Recurso não encontrado: {path}")
     
     def send_json_response(self, data, status=200):
@@ -311,7 +308,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(500, "Erro interno")
     
     def end_headers(self):
-        """Headers CORS otimizados SEM cache"""
+        """Headers CORS otimizados """
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')

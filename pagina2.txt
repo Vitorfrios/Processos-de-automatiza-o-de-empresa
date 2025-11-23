@@ -1,0 +1,2847 @@
+/**
+ * core/app.js
+ * Bootstrap e inicialização da Página 2
+ */
+
+import { initializeManagerInterface } from '../ui/interface.js';
+import { showSystemStatus } from '../../01_Create_Obra/ui/components/status.js';
+import { loadSystemConstantsFromJSON, waitForConstants } from '../data/adapters/constants-adapter.js';
+
+/**
+ * Bootstrap da aplicação da Página 2
+ */
+export async function bootstrapManagerApplication() {
+    console.log('🎯 Iniciando bootstrap da Página 2 (Gerenciamento)...');
+    
+    // Verificar se já está inicializado
+    if (window.managerInitialized) {
+        console.log('⚠️ Gerenciador já inicializado');
+        return;
+    }
+    
+    try {
+        // 1. PRIMEIRO: Carregar constantes do sistema (AGUARDAR conclusão)
+        console.log('📥 Carregando constantes do sistema...');
+        const constants = await loadSystemConstantsFromJSON();
+        
+        // ✅ DEBUG: Verificar estrutura carregada
+        console.log('🔍 Estrutura das constantes carregadas:', {
+            hasConstants: !!constants,
+            keys: Object.keys(constants),
+            sampleValues: Object.keys(constants).slice(0, 5).reduce((acc, key) => {
+                acc[key] = constants[key];
+                return acc;
+            }, {})
+        });
+        
+        // 2. VERIFICAR se as constantes estão disponíveis
+        if (!window.systemConstants) {
+            throw new Error('Constantes do sistema não carregadas');
+        }
+        
+        console.log('✅ Constantes carregadas:', Object.keys(window.systemConstants).length, 'constantes disponíveis');
+        
+        // 3. Configurar contexto global
+        window.managerContext = {
+            page: 'manager',
+            version: '2.0.0',
+            timestamp: new Date().toISOString(),
+            constantsLoaded: true,
+            constantsCount: Object.keys(window.systemConstants).length
+        };
+        
+        // 4. Inicializar interface (que carregará as obras)
+        initializeManagerInterface();
+        
+        // 5. Marcar como inicializado
+        window.managerInitialized = true;
+        
+        console.log('✅ Bootstrap da Página 2 concluído');
+        showSystemStatus('Gerenciamento de obras carregado', 'success');
+        
+    } catch (error) {
+        console.error('❌ Erro no bootstrap da Página 2:', error);
+        showSystemStatus('Erro ao carregar gerenciamento', 'error');
+        
+        // Tentar recarregar após erro
+        setTimeout(() => {
+            console.log('🔄 Tentando recarregar constantes...');
+            bootstrapManagerApplication();
+        }, 2000);
+    }
+}
+
+/**
+ * Reinicializa o gerenciador
+ */
+export function reinitializeManager() {
+    console.log('🔄 Reinicializando gerenciador...');
+    
+    window.managerInitialized = false;
+    
+    // Limpar interface
+    if (typeof clearManagerInterface === 'function') {
+        clearManagerInterface();
+    }
+    
+    // Recarregar
+    setTimeout(bootstrapManagerApplication, 500);
+}
+
+/**
+ * Status do gerenciador
+ */
+export function getManagerStatus() {
+    return {
+        initialized: !!window.managerInitialized,
+        constantsLoaded: !!window.systemConstants,
+        context: window.managerContext || {},
+        obrasCount: document.querySelectorAll('.obra-block').length,
+        timestamp: new Date().toISOString()
+    };
+}
+import { UI_CONSTANTS } from '../../core/constants.js';
+
+export class CardsComponent {
+    constructor() {
+        this.cardTemplates = new Map();
+        this.initializeTemplates();
+    }
+
+    initializeTemplates() {
+        // Template para card de obra
+        this.cardTemplates.set('obra', this.createObraCardTemplate());
+        this.cardTemplates.set('project', this.createProjectCardTemplate());
+        this.cardTemplates.set('room', this.createRoomCardTemplate());
+    }
+
+    createObraCard(obra) {
+        const template = this.cardTemplates.get('obra');
+        return this.renderTemplate(template, {
+            id: obra.id,
+            name: obra.nome,
+            projectCount: obra.projetos ? obra.projetos.length : 0,
+            roomCount: this.calculateTotalRooms(obra),
+            lastModified: new Date(obra.timestamp).toLocaleDateString('pt-BR'),
+            timestamp: obra.timestamp
+        });
+    }
+
+    createProjectCard(project, obraId) {
+        const template = this.cardTemplates.get('project');
+        return this.renderTemplate(template, {
+            id: project.id,
+            name: project.nome,
+            roomCount: project.salas ? project.salas.length : 0,
+            lastModified: new Date(project.timestamp).toLocaleDateString('pt-BR'),
+            obraId: obraId,
+            timestamp: project.timestamp
+        });
+    }
+
+    createRoomCard(room, projectId) {
+        const template = this.cardTemplates.get('room');
+        return this.renderTemplate(template, {
+            id: room.id,
+            name: room.nome,
+            machineCount: room.maquinas ? room.maquinas.length : 0,
+            totalPower: this.calculateRoomPower(room.maquinas),
+            area: room.inputs?.area || 'N/A',
+            projectId: projectId,
+            climatizationType: room.inputs?.ambiente || 'N/A'
+        });
+    }
+
+    createObraCardTemplate() {
+        return `
+            <div class="card obra-card" data-obra-id="{{id}}">
+                <div class="card-header">
+                    <h3 class="card-title">{{name}}</h3>
+                    <span class="card-id">ID: {{id}}</span>
+                </div>
+                
+                <div class="card-body">
+                    <div class="card-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">{{projectCount}}</span>
+                            <span class="stat-label">Projetos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{roomCount}}</span>
+                            <span class="stat-label">Salas</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-date">{{lastModified}}</span>
+                            <span class="stat-label">Modificado</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-view" data-action="view" data-obra-id="{{id}}">
+                        <span class="btn-icon">👁️</span>
+                        Ver Detalhes
+                    </button>
+                    <button class="btn btn-secondary btn-edit" data-action="edit" data-obra-id="{{id}}">
+                        <span class="btn-icon">✏️</span>
+                        Editar
+                    </button>
+                    <button class="btn btn-danger btn-delete" data-action="delete" data-obra-id="{{id}}">
+                        <span class="btn-icon">🗑️</span>
+                        Excluir
+                    </button>
+                </div>
+                
+                <div class="card-footer">
+                    <small>Criado em: {{timestamp}}</small>
+                </div>
+            </div>
+        `;
+    }
+
+    createProjectCardTemplate() {
+        return `
+            <div class="card project-card" data-project-id="{{id}}" data-obra-id="{{obraId}}">
+                <div class="card-header">
+                    <h4 class="card-title">{{name}}</h4>
+                    <span class="card-id">ID: {{id}}</span>
+                </div>
+                
+                <div class="card-body">
+                    <div class="card-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">{{roomCount}}</span>
+                            <span class="stat-label">Salas</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-date">{{lastModified}}</span>
+                            <span class="stat-label">Modificado</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-actions">
+                    <button class="btn btn-sm btn-primary" data-action="view-project" data-project-id="{{id}}">
+                        Ver Salas
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    createRoomCardTemplate() {
+        return `
+            <div class="card room-card" data-room-id="{{id}}" data-project-id="{{projectId}}">
+                <div class="card-header">
+                    <h5 class="card-title">{{name}}</h5>
+                    <span class="card-id">ID: {{id}}</span>
+                </div>
+                
+                <div class="card-body">
+                    <div class="room-info">
+                        <div class="info-row">
+                            <span class="info-label">Área:</span>
+                            <span class="info-value">{{area}} m²</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Tipo:</span>
+                            <span class="info-value">{{climatizationType}}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Máquinas:</span>
+                            <span class="info-value">{{machineCount}}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Potência:</span>
+                            <span class="info-value">{{totalPower}}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-actions">
+                    <button class="btn btn-sm btn-outline" data-action="view-room" data-room-id="{{id}}">
+                        Detalhes
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    renderTemplate(template, data) {
+        let rendered = template;
+        
+        for (const [key, value] of Object.entries(data)) {
+            const placeholder = new RegExp(`{{${key}}}`, 'g');
+            rendered = rendered.replace(placeholder, this.escapeHtml(value));
+        }
+        
+        return rendered;
+    }
+
+    escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        
+        return unsafe.toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    calculateTotalRooms(obra) {
+        if (!obra.projetos) return 0;
+        return obra.projetos.reduce((total, projeto) => {
+            return total + (projeto.salas ? projeto.salas.length : 0);
+        }, 0);
+    }
+
+    calculateRoomPower(maquinas) {
+        if (!maquinas || maquinas.length === 0) return '0 BTU/h';
+        
+        const total = maquinas.reduce((sum, maquina) => {
+            const powerMatch = (maquina.potenciaSelecionada || maquina.potencia || '0').match(/(\d+)/);
+            return sum + (powerMatch ? parseInt(powerMatch[1]) : 0);
+        }, 0);
+        
+        return `${total} BTU/h`;
+    }
+
+    createEmptyState(message, action = null) {
+        return `
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>${message}</h3>
+                ${action ? `
+                    <div class="empty-action">
+                        ${action}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    createLoadingState() {
+        return `
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Carregando...</p>
+            </div>
+        `;
+    }
+
+    createErrorState(message, retryAction = null) {
+        return `
+            <div class="error-state">
+                <div class="error-icon">⚠️</div>
+                <h3>Erro</h3>
+                <p>${message}</p>
+                ${retryAction ? `
+                    <div class="error-action">
+                        ${retryAction}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+}
+
+export const cardsComponent = new CardsComponent();
+/**
+ * data/adapters/constants-adapter.js
+ * Carrega constantes do sistema do arquivo JSON
+ */
+
+let constantsLoaded = false;
+let constantsPromise = null;
+
+export async function loadSystemConstantsFromJSON() {
+    // Retornar promise existente se já estiver carregando
+    if (constantsPromise) {
+        return constantsPromise;
+    }
+    
+    constantsPromise = new Promise(async (resolve, reject) => {
+        try {
+            console.log('📦 Carregando constantes do sistema do JSON...');
+            
+            const response = await fetch('/json/dados.json');
+            
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // ✅ CORREÇÃO: As constantes estão dentro do objeto "constants"
+            if (!data.constants) {
+                throw new Error('Estrutura do JSON inválida: objeto "constants" não encontrado');
+            }
+            
+            const constants = data.constants;
+            
+            // Disponibilizar globalmente (como na Página 1)
+            window.systemConstants = constants;
+            constantsLoaded = true;
+            
+            console.log('✅ Constantes do sistema carregadas do JSON:', Object.keys(constants).length, 'constantes');
+            resolve(constants);
+            
+        } catch (error) {
+            console.error('❌ Erro ao carregar constantes do JSON:', error);
+            constantsPromise = null;
+            reject(error);
+        }
+    });
+    
+    return constantsPromise;
+}
+
+/**
+ * Verifica se as constantes já foram carregadas
+ */
+export function areConstantsLoaded() {
+    return constantsLoaded && window.systemConstants && Object.keys(window.systemConstants).length > 0;
+}
+
+/**
+ * Aguarda o carregamento das constantes
+ */
+export async function waitForConstants() {
+    if (areConstantsLoaded()) {
+        return window.systemConstants;
+    }
+    
+    // Se já está carregando, esperar a promise existente
+    if (constantsPromise) {
+        return constantsPromise;
+    }
+    
+    // Se não, iniciar o carregamento
+    return loadSystemConstantsFromJSON();
+}
+
+/**
+ * Valida se as constantes necessárias estão disponíveis
+ */
+export function validateRequiredConstants() {
+    if (!areConstantsLoaded()) {
+        console.error('❌ Constantes não carregadas');
+        return false;
+    }
+    
+    const requiredConstants = [
+        'VARIAVEL_PD', 'VARIAVEL_PS', 'AUX_U_Value_Piso', 'AUX_Fator_Iluminacao',
+        'AUX_Fs_Iluminacao', 'AUX_Fator_Conver_Painel', 'AUX_Fs_Paineis',
+        'AUX_OCp_Csp', 'AUX_OCp_Clp', 'Densi_ar'
+    ];
+    
+    const missing = requiredConstants.filter(constant => 
+        window.systemConstants[constant] === undefined || window.systemConstants[constant] === null
+    );
+    
+    if (missing.length > 0) {
+        console.error('❌ Constantes necessárias faltando:', missing);
+        return false;
+    }
+    
+    console.log('✅ Todas as constantes necessárias estão disponíveis');
+    return true;
+}
+/**
+ * core/constants.js
+ * Constantes e configurações específicas da Página 2
+ */
+
+export const PAGE_MODE = 'manager';
+
+export const MANAGER_EVENTS = {
+    OBRAS_LOADED: 'manager:obras-loaded',
+    OBRA_DELETED: 'manager:obra-deleted',
+    FILTER_APPLIED: 'manager:filter-applied'
+};
+
+export const BACKUP_ENDPOINTS = {
+    LOAD: '/api/backup-completo',
+    REMOVE_OBRA: '/api/backup/obras/remove',
+    UPDATE_BACKUP: '/api/backup.json'
+};
+
+export const MESSAGES = {
+    LOADING: 'Carregando obras...',
+    LOAD_SUCCESS: 'Obras carregadas com sucesso',
+    LOAD_ERROR: 'Erro ao carregar obras',
+    DELETE_SUCCESS: 'Obra removida do backup',
+    DELETE_ERROR: 'Erro ao remover obra',
+    NO_OBRAS: 'Nenhuma obra encontrada no backup'
+};
+
+export const SELECTORS = {
+    CONTAINER: '#projects-container',
+    OBRA_BLOCK: '.obra-block',
+    BTN_SAVE: '.btn-save',
+    BTN_ADD_PROJECT: '.btn-add-secondary'
+};
+/**
+ * Modal de confirmação para encerramento do servidor - ESTILO TOAST
+ * @module ExitModal
+ */
+
+/**
+ * Configuração padrão do modal
+ */
+const DEFAULT_CONFIG = {
+    id: 'shutdown-confirmation-modal',
+    title: 'Encerrar Servidor',
+    message: 'Tem certeza que deseja encerrar o servidor?',
+    confirmText: 'Encerrar Servidor',
+    cancelText: 'Cancelar',
+    icon: '⚠️',
+    borderColor: '#4299e1'
+};
+
+/**
+ * Cria o HTML do modal baseado na configuração
+ * @param {Object} config - Configuração do modal
+ * @returns {string} HTML do modal
+ */
+function createModalHTML(config) {
+    const isDefaultModal = config.isDefault;
+    
+    const messageContent = isDefaultModal ? `
+        <strong>Tem certeza que deseja encerrar o servidor?</strong>
+        
+        <div class="warning-list">
+            <span>Esta ação irá:</span>
+            <ul>
+                <li>Desligar o servidor</li>
+                <li>Limpar todas as sessões ativas</li>
+                <li>Fechar esta aplicação</li>
+            </ul>
+        </div>
+
+        <div class="warning-note">
+            <small>⚠️ Todas as conexões ativas serão finalizadas e o servidor será desligado completamente.</small>
+        </div>
+    ` : config.message;
+
+    const borderStyle = config.borderColor ? `style="--custom-border-color: ${config.borderColor}"` : '';
+    const customClass = config.borderColor ? 'custom-border' : '';
+
+    return `
+        <div class="modal-content toast-style ${customClass}" ${borderStyle}>
+            <div class="modal-icon">${config.icon}</div>
+            <h2 class="modal-title">${config.title}</h2>
+            <p class="modal-message">${messageContent}</p>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" id="shutdown-cancel-btn">
+                    ${config.cancelText}
+                </button>
+                <button class="modal-btn btn-confirm" id="shutdown-confirm-btn">
+                    ${config.confirmText}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Configura os event listeners do modal
+ * @param {HTMLElement} modalElement - Elemento do modal
+ * @param {Function} resolve - Função resolve da Promise
+ */
+function setupModalEvents(modalElement, resolve) {
+    const cancelBtn = document.getElementById('shutdown-cancel-btn');
+    const confirmBtn = document.getElementById('shutdown-confirm-btn');
+
+    const cleanup = () => {
+        cancelBtn.removeEventListener('click', onCancel);
+        confirmBtn.removeEventListener('click', onConfirm);
+        modalElement.removeEventListener('click', onBackdropClick);
+        document.removeEventListener('keydown', onKeyDown);
+        
+        if (modalElement) {
+            modalElement.classList.remove('active');
+            setTimeout(() => {
+                if (modalElement.parentNode) {
+                    modalElement.remove();
+                }
+            }, 300);
+        }
+    };
+
+    const onConfirm = () => {
+        cleanup();
+        resolve(true);
+    };
+
+    const onCancel = () => {
+        cleanup();
+        resolve(false);
+    };
+
+    const onBackdropClick = (e) => {
+        if (e.target === modalElement) {
+            onCancel();
+        }
+    };
+
+    const onKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            onCancel();
+        } else if (e.key === 'Enter') {
+            onConfirm();
+        }
+    };
+
+    // Adiciona os event listeners
+    cancelBtn.addEventListener('click', onCancel);
+    confirmBtn.addEventListener('click', onConfirm);
+    modalElement.addEventListener('click', onBackdropClick);
+    document.addEventListener('keydown', onKeyDown);
+
+    // Foca no botão de cancelar por segurança
+    cancelBtn.focus();
+}
+
+/**
+ * Remove modal existente se houver
+ */
+function removeExistingModal() {
+    const existingModal = document.getElementById('shutdown-confirmation-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+}
+
+/**
+ * Cria e exibe o modal de confirmação
+ * @param {Object} config - Configuração do modal
+ * @returns {Promise<boolean>} Promise que resolve com true se confirmado, false se cancelado
+ */
+function createShutdownModal(config) {
+    return new Promise((resolve) => {
+        removeExistingModal();
+
+        const modal = document.createElement('div');
+        modal.id = config.id;
+        modal.className = 'confirmation-modal active';
+        modal.innerHTML = createModalHTML(config);
+
+        document.body.appendChild(modal);
+        setupModalEvents(modal, resolve);
+    });
+}
+
+/**
+ * Cria e exibe o modal de confirmação para encerramento do servidor
+ * @returns {Promise<boolean>} Promise que resolve com true se confirmado, false se cancelado
+ */
+export function showShutdownConfirmationModal() {
+    return createShutdownModal({
+        ...DEFAULT_CONFIG,
+        isDefault: true
+    });
+}
+
+/**
+ * Versão alternativa do modal com opções customizáveis - ESTILO TOAST
+ * @param {Object} options - Opções de customização
+ * @param {string} options.title - Título do modal
+ * @param {string} options.message - Mensagem principal
+ * @param {string} options.confirmText - Texto do botão de confirmação
+ * @param {string} options.cancelText - Texto do botão de cancelamento
+ * @param {string} options.icon - Ícone do modal
+ * @param {string} options.borderColor - Cor da borda (padrão: #4299e1)
+ * @returns {Promise<boolean>}
+ */
+export function showCustomShutdownModal(options = {}) {
+    const config = {
+        ...DEFAULT_CONFIG,
+        ...options,
+        isDefault: false
+    };
+    
+    return createShutdownModal(config);
+}
+/**
+ * utils/global-stubs.js
+ * Stubs para funções globais que podem não estar disponíveis
+ */
+
+console.log('🚀 global-stubs.js CARREGANDO...');
+
+// Verificar se toggleSection já existe ANTES de definir o stub
+console.log(`🔍 toggleSection existe antes do stub? ${typeof window.toggleSection}`);
+console.log(`🔍 toggleSubsection existe antes do stub? ${typeof window.toggleSubsection}`);
+
+
+
+
+// Stub para toggleObra
+if (typeof window.toggleObra !== 'function') {
+    window.toggleObra = function(obraId, event) {
+        if (event) event.stopPropagation();
+        console.log(`🔧 toggleObra stub chamado para obra: ${obraId}`);
+        
+        const obraContent = document.getElementById(`obra-content-${obraId}`);
+        const minimizer = event?.target;
+        
+        if (obraContent && minimizer) {
+            const isCollapsed = obraContent.classList.contains('collapsed');
+            obraContent.classList.toggle('collapsed', !isCollapsed);
+            minimizer.textContent = isCollapsed ? '−' : '+';
+        }
+    };
+}
+
+// Stub para toggleRoom
+if (typeof window.toggleRoom !== 'function') {
+    window.toggleRoom = function(roomId, event) {
+        if (event) event.stopPropagation();
+        console.log(`🔧 toggleRoom stub chamado para sala: ${roomId}`);
+        
+        const roomContent = document.getElementById(`room-content-${roomId}`);
+        const minimizer = event?.target;
+        
+        if (roomContent && minimizer) {
+            const isCollapsed = roomContent.classList.contains('collapsed');
+            roomContent.classList.toggle('collapsed', !isCollapsed);
+            minimizer.textContent = isCollapsed ? '−' : '+';
+        }
+    };
+}
+
+// Stub para toggleProject
+if (typeof window.toggleProject  !== 'function') {
+    window.toggleProject  = function(projectId, event) {
+        if (event) event.stopPropagation();
+        console.log(`🔧 toggleProject  stub chamado para sala: ${projectId}`);
+        
+        const projectContent = document.getElementById(`project-content-${projectId}`);
+        const minimizer = event?.target;
+        
+        if (projectContent && minimizer) {
+            const isCollapsed = projectContent.classList.contains('collapsed');
+            projectContent.classList.toggle('collapsed', !isCollapsed);
+            minimizer.textContent = isCollapsed ? '−' : '+';
+        }
+    };
+}
+
+// TOGGLE SECTION - VERSÃO DEFINITIVA CORRIGIDA
+if (typeof window.toggleSection !== 'function') {
+    window.toggleSection = function(sectionId, event) {
+        console.log(`🔧 toggleSection DEFINITIVO chamado para: ${sectionId}`);
+        
+        // Se não tem event, tentar obter do window.event (para navegadores antigos)
+        if (!event && window.event) {
+            event = window.event;
+        }
+        
+        if (event) {
+            event.stopPropagation();
+        }
+        
+        let content = null;
+        let minimizer = event?.target;
+        
+        // ESTRATÉGIA 1: ID exato como está no DOM
+        const contentId = `section-content-${sectionId}`;
+        content = document.getElementById(contentId);
+        
+        // ESTRATÉGIA 2: Se não encontrou o minimizer no event, tentar encontrar pelo ID
+        if (!minimizer) {
+            console.log('🔄 Minimizer não veio no event, buscando pelo contexto...');
+            // Buscar o minimizer que tem o onclick com este sectionId
+            const possibleMinimizers = document.querySelectorAll('.minimizer, .section-minimizer');
+            for (let min of possibleMinimizers) {
+                const onclickAttr = min.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.includes(`toggleSection('${sectionId}'`)) {
+                    minimizer = min;
+                    console.log(`📍 Minimizer encontrado via onclick:`, minimizer);
+                    break;
+                }
+            }
+        }
+        
+        // ESTRATÉGIA 3: Buscar pelo elemento pai do minimizer
+        if (!content && minimizer) {
+            console.log('🔍 Buscando via elemento pai do minimizer...');
+            const sectionBlock = minimizer.closest('.section-block');
+            if (sectionBlock) {
+                content = sectionBlock.querySelector('.section-content');
+                if (content) {
+                    console.log(`📍 Encontrado via elemento pai: ${content.id}`);
+                }
+            }
+        }
+        
+        // ESTRATÉGIA 4: Buscar diretamente pelo ID
+        if (!content) {
+            console.log(`🔍 Buscando diretamente por ID: ${contentId}`);
+            content = document.getElementById(contentId);
+        }
+        
+        // SE ENCONTRAMOS O CONTEÚDO E TEMOS MINIMIZER
+        if (content) {
+            // Se não temos minimizer, tentar encontrar um
+            if (!minimizer) {
+                const sectionBlock = content.closest('.section-block');
+                if (sectionBlock) {
+                    minimizer = sectionBlock.querySelector('.minimizer, .section-minimizer');
+                }
+            }
+            
+            const isCollapsed = content.classList.contains('collapsed');
+            content.classList.toggle('collapsed', !isCollapsed);
+            
+            // Atualizar o texto do minimizer se existir
+            if (minimizer && minimizer.textContent) {
+                minimizer.textContent = isCollapsed ? '−' : '+';
+            }
+            
+            console.log(`✅ Seção ${sectionId} ${isCollapsed ? 'expandida' : 'recolhida'}`);
+            console.log(`🔍 Elemento: ${content.id}, Estado: ${content.classList.contains('collapsed') ? 'collapsed' : 'expanded'}`);
+            
+            return true;
+            
+        } else {
+            console.error(`❌ Conteúdo da seção não encontrado: ${sectionId}`);
+            console.log(`🔍 Procurando por ID: ${contentId}`);
+            
+            // DEBUG: Mostrar o que existe no DOM
+            const existingContents = document.querySelectorAll('.section-content');
+            console.log(`📋 ${existingContents.length} elementos .section-content encontrados:`);
+            existingContents.forEach((el, index) => {
+                console.log(`   ${index + 1}. ID: "${el.id}" | Classes: "${el.className}"`);
+            });
+            
+            return false;
+        }
+    };
+}
+
+// TOGGLE SUBSECTION - VERSÃO DEFINITIVA CORRIGIDA
+if (typeof window.toggleSubsection !== 'function') {
+    window.toggleSubsection = function(subsectionId, event) {
+        console.log(`🔧 toggleSubsection DEFINITIVO chamado para: ${subsectionId}`);
+        
+        // Se não tem event, tentar obter do window.event (para navegadores antigos)
+        if (!event && window.event) {
+            event = window.event;
+        }
+        
+        if (event) {
+            event.stopPropagation();
+        }
+        
+        let content = null;
+        let minimizer = event?.target;
+        
+        // ESTRATÉGIA 1: ID exato como está no DOM
+        const contentId = `subsection-content-${subsectionId}`;
+        content = document.getElementById(contentId);
+        
+        // ESTRATÉGIA 2: Se não encontrou o minimizer no event, tentar encontrar pelo ID
+        if (!minimizer) {
+            console.log('🔄 Minimizer não veio no event, buscando pelo contexto...');
+            // Buscar o minimizer que tem o onclick com este subsectionId
+            const possibleMinimizers = document.querySelectorAll('.minimizer, .subsection-minimizer');
+            for (let min of possibleMinimizers) {
+                const onclickAttr = min.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.includes(`toggleSubsection('${subsectionId}'`)) {
+                    minimizer = min;
+                    console.log(`📍 Minimizer encontrado via onclick:`, minimizer);
+                    break;
+                }
+            }
+        }
+        
+        // ESTRATÉGIA 3: Buscar pelo elemento pai do minimizer
+        if (!content && minimizer) {
+            console.log('🔍 Buscando via elemento pai do minimizer...');
+            const subsectionBlock = minimizer.closest('.subsection-block');
+            if (subsectionBlock) {
+                content = subsectionBlock.querySelector('.subsection-content');
+                if (content) {
+                    console.log(`📍 Encontrado via elemento pai: ${content.id}`);
+                }
+            }
+        }
+        
+        // ESTRATÉGIA 4: Buscar diretamente pelo ID
+        if (!content) {
+            console.log(`🔍 Buscando diretamente por ID: ${contentId}`);
+            content = document.getElementById(contentId);
+        }
+        
+        // SE ENCONTRAMOS O CONTEÚDO E TEMOS MINIMIZER
+        if (content) {
+            // Se não temos minimizer, tentar encontrar um
+            if (!minimizer) {
+                const subsectionBlock = content.closest('.subsection-block');
+                if (subsectionBlock) {
+                    minimizer = subsectionBlock.querySelector('.minimizer, .subsection-minimizer');
+                }
+            }
+            
+            const isCollapsed = content.classList.contains('collapsed');
+            content.classList.toggle('collapsed', !isCollapsed);
+            
+            // Atualizar o texto do minimizer se existir
+            if (minimizer && minimizer.textContent) {
+                minimizer.textContent = isCollapsed ? '−' : '+';
+            }
+            
+            console.log(`✅ Subseção ${subsectionId} ${isCollapsed ? 'expandida' : 'recolhida'}`);
+            console.log(`🔍 Elemento: ${content.id}, Estado: ${content.classList.contains('collapsed') ? 'collapsed' : 'expanded'}`);
+            
+            return true;
+            
+        } else {
+            console.error(`❌ Conteúdo da subseção não encontrado: ${subsectionId}`);
+            console.log(`🔍 Procurando por ID: ${contentId}`);
+            
+            // DEBUG: Mostrar o que existe no DOM
+            const existingContents = document.querySelectorAll('.subsection-content');
+            console.log(`📋 ${existingContents.length} elementos .subsection-content encontrados:`);
+            existingContents.forEach((el, index) => {
+                console.log(`   ${index + 1}. ID: "${el.id}" | Classes: "${el.className}"`);
+            });
+            
+            return false;
+        }
+    };
+}
+
+// TOGGLE MACHINE SECTION - VERSÃO DEFINITIVA CORRIGIDA
+if (typeof window.toggleMachineSection !== 'function') {
+    window.toggleMachineSection = function(machineId, event) {
+        if (event) event.stopPropagation();
+        console.log(`🔧 toggleMachineSection DEFINITIVO chamado para máquina: ${machineId}`);
+        
+        let content = null;
+        let minimizer = event?.target;
+        let machineBlock = null;
+        
+        // ESTRATÉGIA 1: ID exato como está no DOM
+        const contentId = `machine-content-${machineId}`;
+        content = document.getElementById(contentId);
+        
+        // ESTRATÉGIA 2: Buscar por data attributes
+        if (!content) {
+            content = document.querySelector(`[data-machine="${machineId}"]`);
+        }
+        
+        // ESTRATÉGIA 3: Buscar por classe contendo o ID
+        if (!content) {
+            content = document.querySelector(`[class*="${machineId}"]`);
+        }
+        
+        // ESTRATÉGIA 4: Buscar no elemento pai do minimizer
+        if (!content && minimizer) {
+            machineBlock = minimizer.closest('.climatization-machine, .machine-block, [data-machine]');
+            if (machineBlock) {
+                content = machineBlock.querySelector('.machine-content, [data-machine-content]');
+            }
+        }
+        
+        // ESTRATÉGIA 5: Buscar por qualquer elemento com o ID
+        if (!content) {
+            const possibleElements = document.querySelectorAll(`[id*="${machineId}"]`);
+            content = possibleElements[0] || null;
+        }
+        
+        // SE ENCONTRAMOS O CONTEÚDO
+        if (content && minimizer) {
+            const isCollapsed = content.classList.contains('collapsed');
+            content.classList.toggle('collapsed', !isCollapsed);
+            
+            // Atualizar o texto do minimizer se existir
+            if (minimizer.textContent) {
+                minimizer.textContent = isCollapsed ? '−' : '+';
+            }
+            
+            // Encontrar o bloco pai se não encontrado ainda
+            if (!machineBlock) {
+                machineBlock = content.closest('.climatization-machine, .machine-block, [data-machine]');
+            }
+            
+            // Alternar classe no bloco pai para estilização
+            if (machineBlock) {
+                machineBlock.classList.toggle('collapsed', !isCollapsed);
+            }
+            
+            console.log(`✅ Máquina ${machineId} ${isCollapsed ? 'expandida' : 'recolhida'}`);
+            return true;
+            
+        } else {
+            console.error(`❌ Conteúdo da máquina não encontrado: ${machineId}`);
+            console.log('🔍 Elementos disponíveis com machine:');
+            const allMachines = document.querySelectorAll('[id*="machine"], [class*="machine"]');
+            allMachines.forEach(el => {
+                console.log(`   - ${el.id || el.className}:`, el);
+            });
+            
+            return false;
+        }
+    };
+}
+
+// Stub para makeEditable
+if (typeof window.makeEditable !== 'function') {
+    window.makeEditable = function(element, type) {
+        console.log(`🔧 makeEditable stub chamado para: ${type}`);
+        
+        if (element.getAttribute('contenteditable') === 'true') return;
+        
+        element.setAttribute('contenteditable', 'true');
+        element.classList.add('editing');
+        element.focus();
+        
+        const originalText = element.textContent;
+        
+        function saveChanges() {
+            element.setAttribute('contenteditable', 'false');
+            element.classList.remove('editing');
+            console.log(`✅ ${type} atualizado: ${element.textContent}`);
+        }
+        
+        element.addEventListener('blur', saveChanges, { once: true });
+        element.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveChanges();
+            } else if (e.key === 'Escape') {
+                element.textContent = originalText;
+                saveChanges();
+            }
+        });
+    };
+}
+
+// FUNÇÃO DE INICIALIZAÇÃO PARA TODOS OS TOGGLES
+window.initializeAllToggles = function() {
+    console.log('🔧 INICIALIZANDO TODOS OS TOGGLES...');
+    
+    // Inicializar seções
+    const sections = document.querySelectorAll('.section-block, [data-section]');
+    sections.forEach((section, index) => {
+        const minimizer = section.querySelector('.section-minimizer, .minimizer');
+        if (minimizer && !minimizer.hasAttribute('data-initialized')) {
+            const sectionId = section.id?.replace('section-', '') || 
+                            section.dataset.section || 
+                            `section-${index}`;
+            
+            minimizer.addEventListener('click', (e) => {
+                window.toggleSection(sectionId, e);
+            });
+            minimizer.setAttribute('data-initialized', 'true');
+        }
+    });
+    
+    // Inicializar subseções
+    const subsections = document.querySelectorAll('.subsection-block, [data-subsection]');
+    subsections.forEach((subsection, index) => {
+        const minimizer = subsection.querySelector('.subsection-minimizer, .minimizer');
+        if (minimizer && !minimizer.hasAttribute('data-initialized')) {
+            const subsectionId = subsection.id?.replace('subsection-', '') || 
+                               subsection.dataset.subsection || 
+                               `subsection-${index}`;
+            
+            minimizer.addEventListener('click', (e) => {
+                window.toggleSubsection(subsectionId, e);
+            });
+            minimizer.setAttribute('data-initialized', 'true');
+        }
+    });
+    
+    // Inicializar máquinas
+    const machines = document.querySelectorAll('.climatization-machine, .machine-block, [data-machine]');
+    machines.forEach((machine, index) => {
+        const minimizer = machine.querySelector('.machine-minimizer, .minimizer');
+        if (minimizer && !minimizer.hasAttribute('data-initialized')) {
+            const machineId = machine.id?.replace('machine-', '') || 
+                            machine.dataset.machine || 
+                            `machine-${index}`;
+            
+            minimizer.addEventListener('click', (e) => {
+                window.toggleMachineSection(machineId, e);
+            });
+            minimizer.setAttribute('data-initialized', 'true');
+        }
+    });
+    
+    console.log(`✅ ${sections.length} seções, ${subsections.length} subseções e ${machines.length} máquinas inicializadas`);
+};
+
+// Executar inicialização quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            window.initializeAllToggles();
+        }, 100);
+    });
+} else {
+    setTimeout(() => {
+        window.initializeAllToggles();
+    }, 100);
+}
+
+// ✅ STUBS DEFINITIVOS PARA AS FUNÇÕES FALTANTES
+if (typeof window.calculateCapacitySolution !== 'function') {
+    window.calculateCapacitySolution = function(roomId) {
+        console.log(`🔧 calculateCapacitySolution STUB DEFINITIVO para ${roomId}`);
+        
+        // Cálculo básico de capacidade
+        const totalGainsElement = document.getElementById(`total-ganhos-w-${roomId}`);
+        const totalGains = totalGainsElement ? parseInt(totalGainsElement.textContent) || 0 : 0;
+        
+        // Converter W para TR (1 TR ≈ 3516.85 W)
+        const capacityTR = totalGains / 3516.85;
+        const capacityBTU = totalGains * 3.412;
+        
+        return {
+            capacityBTU: Math.round(capacityBTU),
+            capacityTR: Math.round(capacityTR * 100) / 100,
+            sensibleLoad: Math.round(totalGains * 0.7),
+            latentLoad: Math.round(totalGains * 0.3),
+            totalLoad: totalGains,
+            roomId: roomId,
+            timestamp: new Date().toISOString()
+        };
+    };
+}
+
+if (typeof window.updateCapacityFromThermalGains !== 'function') {
+    window.updateCapacityFromThermalGains = function(roomId, thermalGains) {
+        console.log(`🔧 updateCapacityFromThermalGains STUB DEFINITIVO para ${roomId}`, thermalGains);
+        
+        // Calcular capacidade baseada nos ganhos térmicos
+        const capacitySolution = calculateCapacitySolution(roomId);
+        
+        // Atualizar elementos DOM se existirem
+        const elements = {
+            capacityTR: document.getElementById(`total-tr-${roomId}`),
+            capacityBTU: document.getElementById(`total-btu-${roomId}`)
+        };
+        
+        if (elements.capacityTR) {
+            elements.capacityTR.textContent = capacitySolution.capacityTR.toFixed(1);
+        }
+        
+        return {
+            success: true,
+            capacitySolution: capacitySolution,
+            thermalGains: thermalGains,
+            message: 'Capacidade atualizada com sucesso (stub)'
+        };
+    };
+}
+
+// ✅ STUB DEFINITIVO PARA calculateVazaoArAndThermalGains
+if (typeof window.calculateVazaoArAndThermalGains !== 'function') {
+    window.calculateVazaoArAndThermalGains = function(roomId) {
+        console.log(`🔧 calculateVazaoArAndThermalGains STUB DEFINITIVO para ${roomId}`);
+        
+        try {
+            // Simular cálculo básico de vazão de ar
+            const areaElement = document.querySelector(`[data-field="area"][data-room-id="${roomId}"]`);
+            const area = areaElement ? parseFloat(areaElement.value) || 0 : 0;
+            
+            // Cálculo simplificado: 10 l/s por m²
+            const vazaoAr = Math.round(area * 10);
+            
+            // Atualizar display se existir
+            const vazaoDisplay = document.getElementById(`vazao-ar-${roomId}`);
+            if (vazaoDisplay) {
+                vazaoDisplay.textContent = vazaoAr;
+            }
+            
+            // Disparar cálculo de ganhos térmicos se a função existir
+            if (typeof window.updateThermalGains === 'function') {
+                setTimeout(() => {
+                    window.updateThermalGains(roomId);
+                }, 100);
+            }
+            
+            console.log(`✅ Vazão calculada (stub): ${vazaoAr} l/s para sala ${roomId}`);
+            return vazaoAr;
+            
+        } catch (error) {
+            console.error(`❌ Erro no stub calculateVazaoArAndThermalGains:`, error);
+            return 0;
+        }
+    };
+}
+
+// Stub para outras funções comuns
+const stubFunctions = [
+    'updateMachineTitle', 
+    'deleteMachine',
+    'updateMachineOptions',
+    'handlePowerChange',
+    'calculateMachinePrice',
+    'updateBackupConfiguration',
+    'initializeFatorSeguranca',
+    'syncCapacityTableBackup'
+];
+
+stubFunctions.forEach(funcName => {
+    if (typeof window[funcName] !== 'function') {
+        window[funcName] = function(...args) {
+            console.log(`🔧 ${funcName} stub chamado com:`, args);
+            // Stub vazio - será substituído quando o módulo real for carregado
+        };
+    }
+});
+
+console.log('✅ Stubs globais carregados');
+/**
+ * ui/interface.js
+ * Interface e gerenciamento de eventos da Página 2
+ */
+
+import { loadAndRenderObras } from '../features/managers/obras-manager.js';
+import { showShutdownConfirmationModal } from '../../01_Create_Obra/ui/components/modal/exit-modal.js';
+import { MESSAGES, SELECTORS } from '../core/constants.js';
+
+/**
+ * Inicializa a interface da Página 2
+ */
+export function initializeManagerInterface() {
+    console.log('🎯 Inicializando interface do gerenciador...');
+    
+    try {
+        // 1. Configurar contexto da Página 2
+        document.body.dataset.page = 'manager';
+        
+        // 2. Adicionar header específico
+        addManagerHeader();
+        
+        // 3. Configurar container de projetos
+        setupProjectsContainer();
+        
+        // 4. Configurar botão de shutdown
+        setupShutdownButton();
+        
+        // 5. Carregar e renderizar obras
+        loadAndRenderObras();
+        
+        console.log('✅ Interface do gerenciador inicializada');
+        
+    } catch (error) {
+        console.error('❌ Erro na inicialização da interface:', error);
+    }
+}
+
+/**
+ * Adiciona header específico da Página 2
+ */
+function addManagerHeader() {
+    const mainContent = document.querySelector('main, .main-content') || document.body;
+    
+    const managerHeader = document.createElement('div');
+    managerHeader.className = 'manager-header';
+    managerHeader.innerHTML = `
+        <h1>Gerenciamento de Obras <span class="manager-badge">Todos os Registros</span></h1>
+        <div class="subtitle">Visualize, atualize e gerencie todas as obras do sistema</div>
+    `;
+    
+    // Inserir no início do conteúdo principal
+    if (mainContent.firstChild) {
+        mainContent.insertBefore(managerHeader, mainContent.firstChild);
+    } else {
+        mainContent.appendChild(managerHeader);
+    }
+}
+
+/**
+ * Configura o container de projetos para a Página 2
+ */
+function setupProjectsContainer() {
+    let container = document.getElementById('projects-container');
+    
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'projects-container';
+        
+        const mainContent = document.querySelector('main, .main-content') || document.body;
+        mainContent.appendChild(container);
+    }
+    
+    // Limpar conteúdo existente (se houver)
+    container.innerHTML = '<!-- Obras carregadas do backup.json -->';
+    
+    console.log('✅ Container de projetos configurado');
+}
+
+/**
+ * Configura botão de shutdown (se existir)
+ */
+function setupShutdownButton() {
+    const shutdownBtn = document.querySelector('.shutdown-btn');
+    
+    if (shutdownBtn) {
+        shutdownBtn.addEventListener('click', async () => {
+            console.log('🔄 Botão de shutdown clicado na Página 2');
+            
+            const confirmed = await showShutdownConfirmationModal();
+            
+            if (confirmed) {
+                console.log('✅ Confirmação de shutdown recebida');
+                // O modal já cuida do shutdown, apenas log
+                showSystemStatus('Servidor sendo encerrado...', 'warning');
+            } else {
+                console.log('❌ Shutdown cancelado pelo usuário');
+            }
+        });
+        
+        console.log('✅ Botão de shutdown configurado');
+    }
+}
+
+/**
+ * Limpa a interface (para futuros recarregamentos)
+ */
+export function clearManagerInterface() {
+    const container = document.getElementById('projects-container');
+    if (container) {
+        container.innerHTML = '';
+    }
+    
+    const managerHeader = document.querySelector('.manager-header');
+    if (managerHeader) {
+        managerHeader.remove();
+    }
+    
+    console.log('✅ Interface do gerenciador limpa');
+}
+/**
+ * main.js
+ * Entry point da Página 2 - Gerenciamento de Obras
+ */
+
+import { bootstrapManagerApplication } from './core/app.js';
+
+// Carregar stubs primeiro para evitar erros de funções não definidas
+import './utils/global-stubs.js';
+
+/**
+ * Inicialização quando o DOM estiver pronto
+ */
+function initialize() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootstrapManagerApplication);
+    } else {
+        bootstrapManagerApplication();
+    }
+}
+
+// Inicializar aplicação
+initialize();
+
+// Disponibilizar globalmente para debug
+window.bootstrapManagerApplication = bootstrapManagerApplication;
+
+console.log('🚀 Página 2 - Gerenciamento de Obras carregada');
+/**
+ * =====================
+ * Gerenciador de Modal e Toast -  (Notificações Acumulativas)
+ * =====================
+ */
+
+// Variáveis globais para controle do modal e undo
+let pendingDeletion = {
+    obraName: null,
+    obraId: null, 
+    obraBlock: null,
+    obraHTML: null,
+    originalPosition: null
+};
+
+let undoTimeout = null;
+let currentToasts = []; 
+
+/* =========================
+ * MODAL: abrir / fechar
+ * ========================= */
+
+/**
+ * Mostra o modal de confirmação
+ */
+export function showConfirmationModal(obraName, obraId, obraBlock) {
+    // ✅ CORREÇÃO: Validar ID seguro
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error(`ERRO FALBACK (showConfirmationModal) modal.js [ID de obra inválido: ${obraId}]`);
+        return;
+    }
+    
+    // Salva a posição original da obra no DOM
+    const projectsContainer = document.getElementById("projects-container");
+    const obraBlocks = projectsContainer ? Array.from(projectsContainer.children) : [];
+    const originalIndex = obraBlocks.indexOf(obraBlock);
+
+    pendingDeletion = {
+        obraName,
+        obraId, // ✅ ID SEGURO (ex: obra_w12)
+        obraBlock,
+        obraHTML: obraBlock ? obraBlock.outerHTML : null,
+        originalPosition: originalIndex
+    };
+
+    const modal = document.getElementById('confirmationModal');
+    const modalMessage = document.getElementById('modalMessage');
+
+    if (!modal || !modalMessage) {
+        console.error('❌ Modal ou modalMessage não encontrado no DOM');
+        return;
+    }
+
+    modalMessage.innerHTML = `
+        <strong>"${obraName}"</strong> será removida <span style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">apenas da tela</span>.<br><br>
+        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem; border-radius: 8px;">
+            <span style="color: #51f956ff; font-size: 2rem;">✓</span>
+            <small style="color: #ffffffff;">A obra permanece salva no servidor e pode ser recuperada a qualquer momento.</small>
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #cccccc;">
+            ID: ${obraId} - Nome: ${obraName}
+        </div>
+    `;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+
+    setTimeout(() => {
+        const btn = document.querySelector('.btn-cancel');
+        if (btn) btn.focus();
+    }, 100);
+}
+
+/**
+ * Fecha o modal de confirmação (limpa estado)
+ */
+export function closeConfirmationModal() {
+    console.log('🔒 Fechando modal de confirmação');
+    const modal = document.getElementById('confirmationModal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.classList.add('hidden');
+    }
+    pendingDeletion = {
+        obraName: null,
+        obraId: null,
+        obraBlock: null,
+        obraHTML: null,
+        originalPosition: null
+    };
+}
+
+/**
+ * Fecha modal sem limpar pendingDeletion (usado no fluxo de confirmação)
+ */
+function closeConfirmationModalWithoutClearing() {
+    console.log('🔒 Fechando modal sem limpar dados');
+    const modal = document.getElementById('confirmationModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    modal.classList.add('hidden');
+}
+
+/* =========================
+ * TOASTS
+ * ========================= */
+
+/**
+ * Cria container de toast se não existir
+ */
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+/**
+ * Mostra toast notification (undo/success/error) - acumulativa
+ */
+function showToast(obraName, type = 'undo', obraId = null) {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    toast.id = toastId;
+    toast.dataset.obraId = obraId || ''; // ✅ ID SEGURO
+
+    if (type === 'undo') {
+        toast.innerHTML = `
+            <div class="toast-icon">⏳</div>
+            <div class="toast-content">
+                <div class="toast-title">Obra "${obraName}" removida</div>
+                <div class="toast-message">
+                    <span class="countdown-text">Você tem <span class="countdown-number">8</span> segundos para desfazer esta ação</span>
+                </div>
+                <div class="toast-id">ID: ${obraId}</div>
+                <div class="toast-actions">
+                    <button class="toast-btn toast-undo" onclick="window.undoDeletion('${obraId}', '${obraName}')">Desfazer</button>
+                </div>
+                <div class="countdown-bar"></div>
+            </div>
+        `;
+
+        // Inicia animação da barra de contagem regressiva
+        setTimeout(() => {
+            const countdownBar = toast.querySelector('.countdown-bar');
+            if (countdownBar) {
+                countdownBar.style.animation = 'countdown 8s linear forwards';
+            }
+        }, 100);
+
+        // ✅ NOVO: Contador regressivo dos segundos
+        startCountdown(toast, 8);
+
+    } else if (type === 'success') {
+        toast.innerHTML = `
+            <div class="toast-icon">✅</div>
+            <div class="toast-content">
+                <div class="toast-title">Obra "${obraName}" removida</div>
+                <div class="toast-message">Removida com sucesso</div>
+                <div class="toast-id">ID: ${obraId}</div>
+                <button class="toast-btn toast-close" onclick="window.hideSpecificToast('${toastId}')">Fechar</button>
+            </div>
+        `;
+    } else {
+        toast.innerHTML = `
+            <div class="toast-icon">❌</div>
+            <div class="toast-content">
+                <div class="toast-title">Erro ao remover "${obraName}"</div>
+                <div class="toast-message">Ocorreu um erro durante a remoção</div>
+                <div class="toast-id">ID: ${obraId}</div>
+                <button class="toast-btn toast-close" onclick="window.hideSpecificToast('${toastId}')">Fechar</button>
+            </div>
+        `;
+    }
+
+    // Insere no topo
+    if (toastContainer.firstChild) {
+        toastContainer.insertBefore(toast, toastContainer.firstChild);
+    } else {
+        toastContainer.appendChild(toast);
+    }
+
+    // Estado interno
+    const toastData = {
+        id: toastId,
+        element: toast,
+        obraName,
+        obraId, // ✅ ID SEGURO
+        type,
+        timeout: null,
+        countdownInterval: null // ✅ NOVO: Para armazenar o intervalo do contador
+    };
+    currentToasts.push(toastData);
+
+    // Timeouts por tipo
+    if (type === 'undo') {
+        toastData.timeout = setTimeout(() => {
+            console.log(`⏰ Timeout de 8 segundos completado para obra ${obraName} (ID: ${obraId})`);
+            // Remove o toast de undo primeiro
+            hideSpecificToast(toastId);
+            // Em seguida processa remoção definitiva
+            completeDeletion(obraId, obraName);
+        }, 8000);
+    } else {
+        toastData.timeout = setTimeout(() => {
+            console.log(`⏰ Removendo toast de ${type} para obra ${obraName} (ID: ${obraId})`);
+            hideSpecificToast(toastId);
+        }, 3500);
+    }
+}
+
+/**
+ * Inicia o contador regressivo visual
+ */
+function startCountdown(toastElement, seconds) {
+    const countdownNumber = toastElement.querySelector('.countdown-number');
+    if (!countdownNumber) return;
+
+    let timeLeft = seconds;
+    
+    const countdownInterval = setInterval(() => {
+        timeLeft--;
+        countdownNumber.textContent = timeLeft;
+        
+        // Mudar cor quando estiver acabando o tempo
+        if (timeLeft <= 3) {
+            countdownNumber.style.color = '#ff6b6b';
+            countdownNumber.style.fontWeight = 'bold';
+        } else if (timeLeft <= 5) {
+            countdownNumber.style.color = '#ffa726';
+        }
+        
+        if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+        }
+    }, 1000);
+
+    // Armazenar o intervalo no toast data para poder parar se necessário
+    const toastData = currentToasts.find(t => t.element === toastElement);
+    if (toastData) {
+        toastData.countdownInterval = countdownInterval;
+    }
+}
+
+/**
+ * Remove (com animação) um elemento de toast
+ */
+function animateAndRemove(el) {
+    try {
+        el.classList.add('hiding'); // se existir CSS de transição
+        setTimeout(() => { if (el && el.parentNode) el.remove(); }, 300);
+    } catch (_) {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+    }
+}
+
+/**
+ * Limpa do array toasts cujo elemento já não está no DOM
+ */
+function sweepDanglingToasts() {
+    for (let i = currentToasts.length - 1; i >= 0; i--) {
+        const t = currentToasts[i];
+        if (!t.element || !document.body.contains(t.element)) {
+            if (t.timeout) clearTimeout(t.timeout);
+            currentToasts.splice(i, 1);
+        }
+    }
+}
+
+/**
+ * Esconde um toast específico (robusta com fallback DOM)
+ */
+export function hideSpecificToast(toastId) {
+    // 1) tenta remover pelo estado (currentToasts)
+    const idx = currentToasts.findIndex(t => t.id === toastId);
+    if (idx !== -1) {
+        const t = currentToasts[idx];
+        console.log(`🗑️ Removendo toast ${toastId} para obra ${t.obraName}`);
+        if (t.timeout) clearTimeout(t.timeout);
+
+        animateAndRemove(t.element);
+        currentToasts.splice(idx, 1);
+        console.log(`✅ Toast ${toastId} removido (estado). Restantes: ${currentToasts.length}`);
+        return;
+    }
+
+    // 2) Fallback: remove direto do DOM (toast "órfão" não registrado em currentToasts)
+    const orphan = document.getElementById(toastId);
+    if (orphan) {
+        animateAndRemove(orphan);
+        console.log(`✅ Toast ${toastId} removido (fallback DOM).`);
+        // saneia array de possíveis zumbis
+        sweepDanglingToasts();
+        return;
+    }
+
+    console.log(`⚠️ Toast ${toastId} não encontrado em estado nem DOM.`);
+}
+
+/**
+ * Esconde o primeiro toast (compatibilidade)
+ */
+export function hideToast() {
+    if (currentToasts.length > 0) {
+        hideSpecificToast(currentToasts[0].id);
+    }
+}
+
+/* =========================
+ * UNDO / DELETE
+ * ========================= */
+
+/**
+ * Desfaz a exclusão (restaura obra e mostra success)
+ */
+export function undoDeletion(obraId, obraName) {
+    console.log(`↩️ Usuário clicou em Desfazer para obra ${obraName} (ID SEGURO: ${obraId})`);
+
+    // Encontra e remove o toast correspondente
+    const toastIndex = currentToasts.findIndex(t => t.obraId === obraId && t.type === 'undo');
+    if (toastIndex !== -1) {
+        hideSpecificToast(currentToasts[toastIndex].id);
+    } else {
+        const fallbackToast = currentToasts.find(t => t.obraName === obraName && t.type === 'undo');
+        if (fallbackToast) hideSpecificToast(fallbackToast.id);
+    }
+
+    // Restaura a obra no DOM a partir do sessionStorage
+    const savedDeletion = sessionStorage.getItem(`pendingDeletion-${obraId}`);
+    if (savedDeletion) {
+        try {
+            const deletionData = JSON.parse(savedDeletion);
+            const { obraHTML, originalPosition } = deletionData;
+
+            if (obraHTML) {
+                const projectsContainer = document.getElementById("projects-container");
+                if (projectsContainer) {
+                    if (originalPosition !== null && originalPosition >= 0) {
+                        const referenceNode = projectsContainer.children[originalPosition];
+                        if (referenceNode) {
+                            referenceNode.insertAdjacentHTML('beforebegin', obraHTML);
+                            console.log(`✅ Obra "${obraName}" (ID: ${obraId}) restaurada na posição original ${originalPosition}`);
+                        } else {
+                            projectsContainer.insertAdjacentHTML('beforeend', obraHTML);
+                            console.log(`✅ Obra "${obraName}" (ID: ${obraId}) restaurada no final`);
+                        }
+                    } else {
+                        projectsContainer.insertAdjacentHTML('beforeend', obraHTML);
+                        console.log(`✅ Obra "${obraName}" (ID: ${obraId}) restaurada no final`);
+                    }
+                }
+
+                // Toast de sucesso
+                showToast(obraName, 'success', obraId);
+            }
+        } catch (e) {
+            console.error("❌ Erro ao restaurar obra:", e);
+            showToast(obraName, 'error', obraId);
+        }
+    } else {
+        console.error("❌ Dados não encontrados para restaurar obra");
+        showToast(obraName, 'error', obraId);
+    }
+
+    // Limpa chave da deleção
+    sessionStorage.removeItem(`pendingDeletion-${obraId}`);
+}
+
+/**
+ * Completa a exclusão após timeout (remove do servidor)
+ */
+async function completeDeletion(obraId, obraName) {
+    console.log(`⏰ completeDeletion() chamado para obra ${obraName} (ID: ${obraId})`);
+    await completeDeletionImmediate(obraId, obraName);
+}
+
+/**
+ * Remove a obra do servidor imediatamente - 
+ */
+async function completeDeletionImmediate(obraId, obraName) {
+    console.log(`🔍 Iniciando remoção completa da obra: ${obraName} (ID SEGURO: ${obraId})`);
+
+    // ✅ CORREÇÃO: Verificar se a obra existe no servidor antes de tentar remover
+    const obraExisteNoServidor = await verificarObraNoServidor(obraId);
+    
+    if (obraExisteNoServidor && obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
+        try {
+            console.log(`🗑️ Obra existe no servidor, removendo ${obraId} da sessão...`);
+
+            const response = await fetch(`/api/sessions/remove-obra/${obraId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log(`✅ Obra removida da sessão:`, result);
+                showToast(obraName, 'success', obraId);
+            } else {
+                console.log(`⚠️ Erro ao remover do servidor (${response.status}) - obra removida apenas da interface`);
+                showToast(obraName, 'success', obraId);
+            }
+        } catch (error) {
+            console.log(`🌐 Erro de rede - obra removida apenas da interface:`, error.message);
+            showToast(obraName, 'success', obraId);
+        }
+    } else {
+        // ✅ CORREÇÃO: Obra não existe no servidor ou ID inválido - apenas remover da interface
+        console.log(`ℹ️ Obra ${obraName} não existe no servidor ou ID inválido - removendo apenas da interface`);
+        showToast(obraName, 'success', obraId);
+    }
+
+    // Sempre limpar sessionStorage
+    sessionStorage.removeItem(`pendingDeletion-${obraId}`);
+}
+
+/**
+ * ✅ NOVA FUNÇÃO: Verifica se uma obra existe no servidor
+ */
+async function verificarObraNoServidor(obraId) {
+    try {
+        console.log(`🔍 Verificando se obra ${obraId} existe no servidor...`);
+        
+        // Buscar todas as obras do servidor
+        const response = await fetch('/api/backup-completo');
+        if (!response.ok) {
+            console.log('⚠️ Não foi possível verificar obras no servidor');
+            return false;
+        }
+        
+        const backupData = await response.json();
+        const todasObras = backupData.obras || [];
+        
+        // Verificar se a obra existe
+        const obraExiste = todasObras.some(obra => String(obra.id) === String(obraId));
+        
+        console.log(`📊 Obra ${obraId} existe no servidor? ${obraExiste}`);
+        console.log(`📋 Obras no servidor:`, todasObras.map(o => ({ id: o.id, nome: o.nome })));
+        
+        return obraExiste;
+        
+    } catch (error) {
+        console.log(`🌐 Erro ao verificar obra no servidor:`, error.message);
+        return false;
+    }
+}
+
+/**
+ * Confirma e executa a exclusão com sistema de undo - ATUALIZADO
+ */
+export async function confirmDeletion() {
+    console.log('🎯 confirmDeletion() CHAMADO - Iniciando processo de deleção');
+    
+    const { obraName, obraId, obraBlock, obraHTML, originalPosition } = pendingDeletion;
+    
+    if (!obraName || !obraId) {
+        console.error('❌ Dados incompletos para deleção');
+        return;
+    }
+
+    // ✅ CORREÇÃO: Validar ID seguro antes de salvar
+    if (obraId === 'undefined' || obraId === 'null') {
+        console.error(`❌ ID de obra inválido para deleção: ${obraId}`);
+        return;
+    }
+
+    console.log(`🗑️ Confirmando deleção da obra: ${obraName} (ID: ${obraId})`);
+
+    // Salva dados específicos para esta obra (para permitir undo independente)
+    sessionStorage.setItem(`pendingDeletion-${obraId}`, JSON.stringify({
+        obraName,
+        obraId, // ✅ ID SEGURO
+        obraHTML,
+        originalPosition
+    }));
+
+    // Fecha modal sem limpar o pendingDeletion (fluxo pede isso)
+    closeConfirmationModalWithoutClearing();
+
+    // Efeito visual de remoção do bloco
+    if (obraBlock) {
+        obraBlock.style.transition = 'all 0.5s ease';
+        obraBlock.style.transform = 'translateX(-100%)';
+        obraBlock.style.opacity = '0';
+
+        setTimeout(() => {
+            if (obraBlock.parentNode) {
+                obraBlock.remove();
+                console.log(`🗑️ Obra ${obraName} (ID: ${obraId}) removida do DOM (aguardando undo)`);
+            }
+        }, 500);
+    }
+
+    // Mostra toast com opção de desfazer
+    showToast(obraName, 'undo', obraId);
+    
+    console.log('✅ Deleção confirmada e processo iniciado');
+}
+
+/**
+ * Acessa dados pendentes de deleção (se necessário em outro módulo)
+ */
+export function getPendingDeletion() {
+    return pendingDeletion;
+}
+
+/* =========================
+ * EVENT LISTENERS - SIMPLIFICADOS
+ * ========================= */
+
+// Fecha modal clicando fora (mantido pois funciona bem)
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🔧 Modal system inicializado');
+    
+    const modal = document.getElementById('confirmationModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target.id === 'confirmationModal') {
+                closeConfirmationModal();
+            }
+        });
+        console.log('✅ Listener de clique fora do modal adicionado');
+    }
+});
+
+// ESC fecha modal
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeConfirmationModal();
+    }
+});
+
+/* =========================
+ * EXPORTAÇÕES P/ HTML
+ * ========================= */
+
+// Disponibiliza funções GLOBAIS para o HTML
+window.closeConfirmationModal = closeConfirmationModal;
+window.confirmDeletion = confirmDeletion;
+window.undoDeletion = undoDeletion;
+window.hideToast = hideToast;
+window.hideSpecificToast = hideSpecificToast;
+
+console.log('✅ Modal system carregado e funções globais disponíveis');
+/**
+ * data/adapters/obras-adapter.js
+ * Adaptador para carregar e manipular obras do backup.json
+ */
+
+import { BACKUP_ENDPOINTS, MESSAGES } from '../../core/constants.js';
+import { showSystemStatus } from '../../../01_Create_Obra/ui/components/status.js';
+
+/**
+ * Carrega todas as obras do backup.json
+ * @returns {Promise<Array>} Array de obras normalizadas
+ */
+export async function loadBackupObras() {
+    try {
+        console.log('📂 Carregando obras do backup...');
+        
+        const response = await fetch(BACKUP_ENDPOINTS.LOAD);
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const obras = normalizeBackup(data);
+        
+        console.log(`✅ ${obras.length} obra(s) carregada(s) do backup`);
+        return obras;
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar obras do backup:', error);
+        showSystemStatus(MESSAGES.LOAD_ERROR, 'error');
+        return [];
+    }
+}
+
+/**
+ * Normaliza os dados do backup para array de obras
+ * @param {Object|Array} backupData - Dados brutos do backup
+ * @returns {Array} Array de obras normalizadas
+ */
+export function normalizeBackup(backupData) {
+    if (!backupData) {
+        console.warn('⚠️ Dados do backup vazios ou nulos');
+        return [];
+    }
+    
+    let obras = [];
+    
+    // Caso 1: Backup é um objeto com propriedade 'obras'
+    if (backupData.obras && Array.isArray(backupData.obras)) {
+        obras = backupData.obras;
+    }
+    // Caso 2: Backup é diretamente um array
+    else if (Array.isArray(backupData)) {
+        obras = backupData;
+    }
+    // Caso 3: Backup é um objeto único (tratar como array com um elemento)
+    else if (typeof backupData === 'object' && backupData.id) {
+        obras = [backupData];
+    }
+    
+    console.log(`📊 Backup normalizado: ${obras.length} obra(s)`);
+    
+    // Garantir que todas as obras tenham ID e nome
+    return obras.map(obra => ({
+        id: obra.id || `obra_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        nome: obra.nome || 'Obra sem nome',
+        projetos: obra.projetos || [],
+        timestamp: obra.timestamp || new Date().toISOString(),
+        ...obra
+    }));
+}
+
+/**
+ * Remove uma obra do backup (persistente)
+ * @param {string} obraId - ID da obra a ser removida
+ * @returns {Promise<boolean>} True se a remoção foi bem-sucedida
+ */
+export async function removeObraFromBackup(obraId) {
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        console.error('❌ ID da obra inválido para remoção:', obraId);
+        showSystemStatus('ID da obra inválido', 'error');
+        return false;
+    }
+    
+    try {
+        console.log(`🗑️ Removendo obra ${obraId} do backup...`);
+        
+        // Tentar endpoint específico primeiro
+        let response = await fetch(BACKUP_ENDPOINTS.REMOVE_OBRA, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ obraId })
+        });
+        
+        // Se endpoint não implementado, tentar alternativa
+        if (response.status === 501 || response.status === 404) {
+            console.log('🔄 Endpoint específico não implementado, tentando alternativa...');
+            
+            // Alternativa: carregar backup completo, remover obra e salvar
+            response = await fetch(BACKUP_ENDPOINTS.LOAD);
+            if (!response.ok) {
+                throw new Error(`Erro ao carregar backup: ${response.status}`);
+            }
+            
+            const backupData = await response.json();
+            const obras = backupData.obras || backupData;
+            
+            // Remover a obra do array
+            const obrasAtualizadas = obras.filter(obra => obra.id !== obraId);
+            
+            // Salvar backup atualizado
+            const saveResponse = await fetch(BACKUP_ENDPOINTS.UPDATE_BACKUP, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(obrasAtualizadas)
+            });
+            
+            if (!saveResponse.ok) {
+                throw new Error(`Erro ao salvar backup: ${saveResponse.status}`);
+            }
+            
+            console.log(`✅ Obra removida do backup via método alternativo`);
+            showSystemStatus(MESSAGES.DELETE_SUCCESS, 'success');
+            return true;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        console.log(`✅ Obra removida do backup:`, result);
+        showSystemStatus(MESSAGES.DELETE_SUCCESS, 'success');
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Erro ao remover obra do backup:', error);
+        
+        // Se não conseguir remover do backup, pelo menos informar o usuário
+        if (error.message.includes('501') || error.message.includes('404')) {
+            showSystemStatus('Funcionalidade de exclusão não disponível no servidor', 'warning');
+        } else {
+            showSystemStatus(MESSAGES.DELETE_ERROR, 'error');
+        }
+        
+        return false;
+    }
+}
+
+/**
+ * Alternativa: Atualiza todo o backup (se necessário)
+ * @param {Array} obras - Array atualizado de obras
+ * @returns {Promise<boolean>} True se a atualização foi bem-sucedida
+ */
+export async function updateBackupFile(obras) {
+    try {
+        console.log('💾 Atualizando arquivo de backup...');
+        
+        const response = await fetch(BACKUP_ENDPOINTS.UPDATE_BACKUP, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(obras)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
+        console.log('✅ Backup atualizado com sucesso');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar backup:', error);
+        return false;
+    }
+}
+/**
+ * data/builders/obras-builder.js
+ * Auxiliares não-visuais para obras (contagens, formatos, metadados)
+ */
+
+/**
+ * Calcula estatísticas de uma obra
+ * @param {Object} obra - Dados da obra
+ * @returns {Object} Estatísticas da obra
+ */
+export function getObraStats(obra) {
+    const projetos = obra.projetos || [];
+    let totalSalas = 0;
+    let totalMaquinas = 0;
+    
+    projetos.forEach(projeto => {
+        const salas = projeto.salas || [];
+        totalSalas += salas.length;
+        
+        salas.forEach(sala => {
+            totalMaquinas += (sala.maquinas || []).length;
+        });
+    });
+    
+    return {
+        projetos: projetos.length,
+        salas: totalSalas,
+        maquinas: totalMaquinas,
+        lastUpdated: obra.timestamp || 'N/A'
+    };
+}
+
+/**
+ * Formata estatísticas para exibição
+ * @param {Object} stats - Estatísticas da obra
+ * @returns {string} Texto formatado
+ */
+export function formatObraStats(stats) {
+    const parts = [];
+    
+    if (stats.projetos > 0) {
+        parts.push(`${stats.projetos} projeto${stats.projetos !== 1 ? 's' : ''}`);
+    }
+    
+    if (stats.salas > 0) {
+        parts.push(`${stats.salas} sala${stats.salas !== 1 ? 's' : ''}`);
+    }
+    
+    if (stats.maquinas > 0) {
+        parts.push(`${stats.maquinas} máquina${stats.maquinas !== 1 ? 's' : ''}`);
+    }
+    
+    return parts.join(' • ') || 'Vazia';
+}
+
+/**
+ * Extrai metadados para filtros futuros
+ * @param {Object} obra - Dados da obra
+ * @returns {Object} Metadados para filtragem
+ */
+export function extractObraMetadata(obra) {
+    const stats = getObraStats(obra);
+    
+    return {
+        id: obra.id,
+        nome: obra.nome,
+        ...stats,
+        hasProjects: stats.projetos > 0,
+        hasRooms: stats.salas > 0,
+        hasMachines: stats.maquinas > 0,
+        isEmpty: stats.projetos === 0 && stats.salas === 0 && stats.maquinas === 0,
+        timestamp: obra.timestamp,
+        searchableText: `${obra.nome} ${obra.id}`.toLowerCase()
+    };
+}
+
+/**
+ * Aplica filtros às obras (stub para implementação futura)
+ * @param {Array} obras - Array de obras
+ * @param {Object} criteria - Critérios de filtro
+ * @returns {Array} Obras filtradas
+ */
+export function applyFilters(obras, criteria = {}) {
+    console.log('🔍 Aplicando filtros:', criteria);
+    
+    let filtered = [...obras];
+    
+    // Filtro por texto (nome ou ID)
+    if (criteria.searchText) {
+        const searchText = criteria.searchText.toLowerCase();
+        filtered = filtered.filter(obra => 
+            obra.nome.toLowerCase().includes(searchText) ||
+            obra.id.toLowerCase().includes(searchText)
+        );
+    }
+    
+    // Filtro por projetos
+    if (criteria.hasProjects !== undefined) {
+        const stats = filtered.map(obra => getObraStats(obra));
+        filtered = filtered.filter((obra, index) => 
+            criteria.hasProjects ? stats[index].projetos > 0 : stats[index].projetos === 0
+        );
+    }
+    
+    // Filtro por salas
+    if (criteria.hasRooms !== undefined) {
+        const stats = filtered.map(obra => getObraStats(obra));
+        filtered = filtered.filter((obra, index) => 
+            criteria.hasRooms ? stats[index].salas > 0 : stats[index].salas === 0
+        );
+    }
+    
+    console.log(`📊 Filtros aplicados: ${filtered.length} obra(s) restante(s)`);
+    return filtered;
+}
+/**
+ * features/managers/obras-manager.js
+ * Gerenciador principal da Página 2 - VERSÃO CORRIGIDA SEM STUBS
+ */
+
+import { loadBackupObras, removeObraFromBackup } from '../../data/adapters/obras-adapter.js';
+import { getObraStats, formatObraStats, applyFilters as applyObraFilters } from '../../data/builders/obras-builder.js';
+import { showSystemStatus } from '../../../01_Create_Obra/ui/components/status.js';
+import { showConfirmationModal } from '../../../01_Create_Obra/ui/components/modal/modal.js';
+import { waitForConstants, validateRequiredConstants } from '../../data/adapters/constants-adapter.js';
+
+// Mapeamento correto dos imports da Página 1
+const PAGE_1_BASE_PATH = '/public/scripts/01_Create_Obra';
+
+// Cache para funções da Página 1
+let page1Functions = null;
+let globalFunctionsLoaded = false;
+
+/**
+ * 🎯 REMOVER STUBS E CARREGAR FUNÇÕES REAIS
+ */
+async function removeStubsAndLoadRealFunctions() {
+    console.log('🚨 REMOVENDO STUBS CONFLITANTES...');
+    
+    // Remover stubs que bloqueiam funções reais
+    const stubsToRemove = [
+        'calculateVazaoArAndThermalGains',
+        'calculateCapacitySolution', 
+        'updateCapacityFromThermalGains'
+    ];
+    
+    stubsToRemove.forEach(stub => {
+        if (window[stub] && window[stub].toString().includes('STUB')) {
+            delete window[stub];
+            console.log(`✅ Stub removido: ${stub}`);
+        }
+    });
+    
+    // Carregar funções reais
+    await loadRealCalculationFunctions();
+}
+
+/**
+ * 🎯 CARREGAR FUNÇÕES REAIS DE CÁLCULO
+ */
+async function loadRealCalculationFunctions() {
+    console.log('🎯 CARREGANDO FUNÇÕES REAIS DE CÁLCULO...');
+    
+    try {
+        // Carregar air-flow.js
+        const airFlowModule = await import(`${PAGE_1_BASE_PATH}/features/calculations/air-flow.js`);
+        if (airFlowModule && airFlowModule.calculateVazaoArAndThermalGains) {
+            window.calculateVazaoArAndThermalGains = airFlowModule.calculateVazaoArAndThermalGains;
+            console.log('✅ calculateVazaoArAndThermalGains REAL carregada');
+        }
+        
+        // Carregar capacity-calculator.js
+        const capacityModule = await import(`${PAGE_1_BASE_PATH}/data/modules/machines/capacity-calculator.js`);
+        if (capacityModule) {
+            if (capacityModule.calculateCapacitySolution) {
+                window.calculateCapacitySolution = capacityModule.calculateCapacitySolution;
+                console.log('✅ calculateCapacitySolution REAL carregada');
+            }
+            if (capacityModule.updateCapacityFromThermalGains) {
+                window.updateCapacityFromThermalGains = capacityModule.updateCapacityFromThermalGains;
+                console.log('✅ updateCapacityFromThermalGains REAL carregada');
+            }
+        }
+        
+        // Carregar thermal-gains.js
+        const thermalModule = await import(`${PAGE_1_BASE_PATH}/features/calculations/thermal-gains.js`);
+        if (thermalModule) {
+            console.log('✅ thermal-gains.js REAL carregado');
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao carregar funções reais:', error);
+        return false;
+    }
+}
+
+/**
+ * 🎯 ATUALIZAR DISPLAY DA VAZÃO
+ */
+function updateVazaoDisplay(roomId, vazaoValue) {
+    console.log(`🎯 ATUALIZANDO DISPLAY: ${roomId} = ${vazaoValue} l/s`);
+    
+    const vazaoElement = document.getElementById(`vazao-ar-${roomId}`);
+    if (vazaoElement) {
+        vazaoElement.textContent = vazaoValue;
+        
+        
+        console.log(`✅ Vazão atualizada no HTML: ${vazaoValue} l/s`);
+    } else {
+        console.error(`❌ Elemento vazao-ar-${roomId} não encontrado`);
+    }
+}
+
+/**
+ * 🎯 WRAPPER PARA CÁLCULO COM ATUALIZAÇÃO AUTOMÁTICA
+ */
+function calculateVazaoArWithDisplay(roomId) {
+    console.log(`🎯 CALCULANDO VAZÃO COM DISPLAY: ${roomId}`);
+    
+    if (typeof window.calculateVazaoArAndThermalGains === 'function' && 
+        !window.calculateVazaoArAndThermalGains.toString().includes('STUB')) {
+        
+        const vazaoResult = window.calculateVazaoArAndThermalGains(roomId);
+        console.log(`📊 Resultado cálculo REAL: ${vazaoResult} l/s`);
+        
+        // ATUALIZA O DISPLAY IMEDIATAMENTE
+        updateVazaoDisplay(roomId, vazaoResult);
+        
+        return vazaoResult;
+    } else {
+        console.error('❌ calculateVazaoArAndThermalGains não disponível ou ainda é stub');
+        return 0;
+    }
+}
+
+/**
+ * 🎯 SISTEMA DE OBSERVAÇÃO PARA ATUALIZAÇÃO EM TEMPO REAL
+ */
+function setupRealTimeUpdates() {
+    console.log('🎯 CONFIGURANDO ATUALIZAÇÕES EM TEMPO REAL...');
+    
+    // Observar mudanças no DOM
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) {
+                    const roomInputs = node.querySelectorAll ? node.querySelectorAll('[data-room-id]') : [];
+                    roomInputs.forEach(setupInputListeners);
+                    
+                    if (node.hasAttribute && node.hasAttribute('data-room-id')) {
+                        setupInputListeners(node);
+                    }
+                }
+            });
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // Configurar listeners para inputs existentes
+    document.querySelectorAll('[data-room-id]').forEach(setupInputListeners);
+    
+    console.log('✅ Sistema de atualização em tempo real configurado');
+}
+
+/**
+ * 🎯 CONFIGURAR LISTENERS PARA INPUTS
+ */
+function setupInputListeners(element) {
+    const roomId = element.getAttribute('data-room-id');
+    if (!roomId) return;
+    
+    const criticalFields = ['area', 'numPessoas', 'setpointTemp', 'pressurizacaoSetpoint'];
+    
+    criticalFields.forEach(field => {
+        const input = element.querySelector(`[data-field="${field}"]`);
+        if (input) {
+            // Remover listeners existentes
+            input.removeEventListener('input', handleVazaoUpdate);
+            input.removeEventListener('change', handleVazaoUpdate);
+            
+            // Adicionar novos listeners
+            input.addEventListener('input', handleVazaoUpdate);
+            input.addEventListener('change', handleVazaoUpdate);
+            
+            console.log(`✅ Listener configurado para ${field} em ${roomId}`);
+        }
+    });
+}
+
+/**
+ * 🎯 MANIPULADOR DE ATUALIZAÇÃO DE VAZÃO
+ */
+function handleVazaoUpdate(event) {
+    const input = event.target;
+    const roomId = input.closest('[data-room-id]')?.getAttribute('data-room-id');
+    
+    if (roomId) {
+        console.log(`🔄 Input alterado: ${input.dataset.field} = ${input.value} para ${roomId}`);
+        
+        clearTimeout(window.vazaoUpdateTimeout);
+        window.vazaoUpdateTimeout = setTimeout(() => {
+            calculateVazaoArWithDisplay(roomId);
+        }, 300);
+    }
+}
+
+/**
+ * 🎯 CARREGAR MÓDULOS DA PÁGINA 1
+ */
+async function loadPage1Module(modulePath, moduleName) {
+    try {
+        const module = await import(modulePath);
+        console.log(`✅ ${moduleName} carregado`);
+        return module;
+    } catch (error) {
+        console.error(`❌ Erro ao carregar ${moduleName}:`, error.message);
+        return null;
+    }
+}
+
+/**
+ * 🎯 CARREGAR TODOS OS MÓDULOS NECESSÁRIOS - VERSÃO CORRIGIDA
+ */
+async function loadAllPage1Modules() {
+    const modules = [
+        { path: `${PAGE_1_BASE_PATH}/features/managers/obra-manager.js`, name: 'obra-manager' },
+        { path: `${PAGE_1_BASE_PATH}/data/builders/ui-builders.js`, name: 'ui-builders' },
+        { path: `${PAGE_1_BASE_PATH}/ui/helpers.js`, name: 'helpers' },
+        { path: `${PAGE_1_BASE_PATH}/data/modules/features/managers/project-manager.js`, name: 'rooms' }, // 🎯 IMPORTANTE: Este módulo tem createEmptyProject
+        { path: `${PAGE_1_BASE_PATH}/data/modules/climatizacao.js`, name: 'climatizacao' },
+        { path: `${PAGE_1_BASE_PATH}/data/modules/configuracao.js`, name: 'configuracao' },
+        { path: `${PAGE_1_BASE_PATH}/data/modules/machines/machines-core.js`, name: 'machines-core' },
+        { path: `${PAGE_1_BASE_PATH}/features/calculations/calculations-core.js`, name: 'calculations-core' },
+        { path: `${PAGE_1_BASE_PATH}/features/calculations/air-flow.js`, name: 'air-flow' },
+        { path: `${PAGE_1_BASE_PATH}/features/calculations/thermal-gains.js`, name: 'thermal-gains' },
+        { path: `${PAGE_1_BASE_PATH}/data/modules/machines/capacity-calculator.js`, name: 'capacity-calculator' }
+    ];
+    const results = [];
+    
+    for (const module of modules) {
+        try {
+            const result = await loadPage1Module(module.path, module.name);
+            results.push({ name: module.name, success: !!result, module: result });
+        } catch (error) {
+            console.error(`❌ Erro crítico ao carregar ${module.name}:`, error);
+            results.push({ name: module.name, success: false, module: null });
+        }
+    }
+    
+    console.log(`📊 Resumo carregamento: ${results.filter(r => r.success).length}/${modules.length} módulos carregados`);
+    return results;
+}
+
+/**
+ * 🎯 CARREGAR FUNÇÕES GLOBAIS DA PÁGINA 1
+ */
+/**
+ * 🎯 CARREGAR FUNÇÕES GLOBAIS DA PÁGINA 1 - VERSÃO CORRIGIDA
+ */
+async function loadAllPage1Functions() {
+    if (globalFunctionsLoaded) {
+        console.log('🔁 Funções já carregadas, pulando...');
+        return;
+    }
+    
+    try {
+        console.log('📦 Carregando TODAS as funções da Página 1...');
+        
+        // PRIMEIRO: Remover stubs e carregar funções reais
+        await removeStubsAndLoadRealFunctions();
+        
+        // Garantir constantes
+        await waitForConstants();
+        console.log('✅ Constantes verificadas');
+        
+        // Carregar módulos
+        const loadResults = await loadAllPage1Modules();
+        
+        // 🎯 CORREÇÃO: Buscar as funções específicas que estão faltando
+        const obraManagerModule = loadResults.find(r => r.name === 'obra-manager')?.module;
+        const uiBuildersModule = loadResults.find(r => r.name === 'ui-builders')?.module;
+        const roomsModule = loadResults.find(r => r.name === 'rooms')?.module;
+        
+        // 🎯 CORREÇÃO: Criar objeto com todas as funções necessárias
+        page1Functions = {
+            // Funções do obra-manager
+            createEmptyObra: obraManagerModule?.createEmptyObra,
+            insertObraIntoDOM: obraManagerModule?.insertObraIntoDOM,
+            updateObraButtonAfterSave: obraManagerModule?.updateObraButtonAfterSave,
+            
+            // 🎯 CORREÇÃO: Adicionar a função que estava undefined
+            createEmptyProject: obraManagerModule?.createEmptyProject || 
+                              roomsModule?.createEmptyProject ||
+                              window.createEmptyProject, // Fallback para global
+            
+            // Funções do ui-builders
+            populateObraData: uiBuildersModule?.populateObraData,
+            
+            // Funções de rooms
+            createEmptyRoom: roomsModule?.createEmptyRoom || window.createEmptyRoom
+        };
+        
+        // 🎯 CORREÇÃO: Verificar se todas as funções necessárias estão disponíveis
+        const missingFunctions = [];
+        Object.entries(page1Functions).forEach(([name, func]) => {
+            if (typeof func !== 'function') {
+                missingFunctions.push(name);
+                console.warn(`⚠️ Função ${name} não carregada:`, typeof func);
+            }
+        });
+        
+        if (missingFunctions.length > 0) {
+            console.warn(`⚠️ Funções faltando: ${missingFunctions.join(', ')}`);
+            
+            // 🎯 CORREÇÃO: Tentar carregar do escopo global como fallback
+            missingFunctions.forEach(funcName => {
+                if (window[funcName] && typeof window[funcName] === 'function') {
+                    page1Functions[funcName] = window[funcName];
+                    console.log(`✅ Função ${funcName} recuperada do escopo global`);
+                }
+            });
+        }
+        
+        console.log('✅ Funções da Página 1 carregadas:', 
+            Object.keys(page1Functions).filter(k => typeof page1Functions[k] === 'function')
+        );
+        
+        globalFunctionsLoaded = true;
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar funções da Página 1:', error);
+        throw error;
+    }
+}
+
+
+/**
+ * 🎯 VERIFICAR FUNÇÕES NECESSÁRIAS - VERSÃO CORRIGIDA
+ */
+async function ensureRequiredFunctions() {
+    const requiredFunctions = ['createEmptyProject', 'createEmptyRoom', 'populateObraData'];
+    
+    const missingFunctions = requiredFunctions.filter(funcName => 
+        !page1Functions || typeof page1Functions[funcName] !== 'function'
+    );
+    
+    if (missingFunctions.length > 0) {
+        console.error('❌ Funções necessárias não disponíveis:', 
+            missingFunctions.reduce((acc, funcName) => {
+                acc[funcName] = typeof (page1Functions?.[funcName] || window[funcName]);
+                return acc;
+            }, {})
+        );
+        
+        // Tentar recarregar
+        await loadAllPage1Functions();
+        
+        // Verificar novamente
+        const stillMissing = requiredFunctions.filter(funcName => 
+            typeof page1Functions[funcName] !== 'function'
+        );
+        
+        if (stillMissing.length > 0) {
+            console.error('❌ Funções ainda não disponíveis após espera');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
+/**
+ * 🎯 RENDERIZAR OBRA COM CÁLCULOS REAIS - VERSÃO CORRIGIDA
+ */
+async function renderObra(obraData) {
+    try {
+        await loadAllPage1Functions();
+        
+        // 🎯 CORREÇÃO: Verificar se as funções necessárias estão disponíveis
+        const functionsReady = await ensureRequiredFunctions();
+        if (!functionsReady) {
+            console.error('❌ Funções necessárias não disponíveis para renderizar obra');
+            return false;
+        }
+        
+        const { createEmptyProject, populateObraData } = page1Functions;
+        
+        console.log(`🎨 Renderizando obra: ${obraData.nome} (ID: ${obraData.id})`);
+        
+        // 🎯 CORREÇÃO: Usar createEmptyProject em vez de createEmptyObra
+        const obraCreated = await createEmptyProject(obraData.nome, obraData.id);
+        
+        if (!obraCreated) {
+            console.error(`❌ Falha ao criar obra: ${obraData.nome}`);
+            return false;
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        await populateObraData(obraData);
+        
+        // ✅ CONFIGURAR ATUALIZAÇÃO EM TEMPO REAL APÓS RENDERIZAÇÃO
+        setTimeout(() => {
+            setupRoomListeners(obraData.id);
+            
+            // ✅ FORÇAR CÁLCULO INICIAL COM FUNÇÕES REAIS
+            forceRealVazaoCalculation(obraData.id);
+        }, 1000);
+        
+        console.log(`✅ Obra renderizada: ${obraData.nome}`);
+        return true;
+        
+    } catch (error) {
+        console.error(`❌ Erro ao renderizar obra ${obraData.nome}:`, error);
+        return false;
+    }
+}
+
+/**
+ * 🎯 FORÇAR CÁLCULO REAL DA VAZÃO
+ */
+function forceRealVazaoCalculation(obraId) {
+    console.log(`🎯 FORÇANDO CÁLCULO REAL DA VAZÃO: ${obraId}`);
+    
+    const roomElements = document.querySelectorAll(`[data-room-id*="${obraId}"]`);
+    console.log(`📊 ${roomElements.length} salas encontradas para cálculo real`);
+    
+    roomElements.forEach(roomElement => {
+        const roomId = roomElement.dataset.roomId;
+        if (roomId) {
+            setTimeout(() => {
+                console.log(`🔧 Cálculo real forçado para: ${roomId}`);
+                calculateVazaoArWithDisplay(roomId);
+            }, 500);
+        }
+    });
+}
+
+/**
+ * 🎯 CONFIGURAR LISTENERS PARA SALAS
+ */
+function setupRoomListeners(obraId) {
+    console.log(`🎯 CONFIGURANDO LISTENERS PARA OBRA: ${obraId}`);
+    
+    const roomElements = document.querySelectorAll(`[data-room-id*="${obraId}"]`);
+    console.log(`📊 ${roomElements.length} salas encontradas para configuração`);
+    
+    roomElements.forEach(roomElement => {
+        const roomId = roomElement.dataset.roomId;
+        if (roomId) {
+            setTimeout(() => {
+                setupInputListeners(roomElement);
+            }, 100);
+        }
+    });
+}
+
+/**
+ * APLICAR PÓS-PROCESSAMENTO
+ */
+function applyPage2PostProcessing() {
+    console.log('🔧 Aplicando pós-processamento da Página 2...');
+    
+    const saveButtons = document.querySelectorAll('.btn-salvar');
+    saveButtons.forEach(btn => {
+        btn.style.display = 'none';
+    });
+    
+    const addSections = document.querySelectorAll('.add-project-section, .add-room-section');
+    addSections.forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    const obraHeaders = document.querySelectorAll('.obra-header');
+    obraHeaders.forEach(header => {
+        const deleteBtn = header.querySelector('.btn-delete');
+        if (deleteBtn) {
+            const obraId = deleteBtn.closest('.obra-block').dataset.obraId;
+            const obraName = deleteBtn.closest('.obra-block').dataset.obraName;
+            
+            deleteBtn.textContent = 'Excluir do Backup';
+            deleteBtn.className = 'btn btn-manager-delete';
+            deleteBtn.onclick = () => handleObraDeletion(obraId, obraName);
+        }
+    });
+    
+    const obraBlocks = document.querySelectorAll('.obra-block');
+    obraBlocks.forEach(obraBlock => {
+        const obraId = obraBlock.dataset.obraId;
+    });
+    
+    console.log('✅ Pós-processamento aplicado');
+}
+
+
+
+/**
+ * MANIPULAR EXCLUSÃO DE OBRA
+ */
+async function handleObraDeletion(obraId, obraName) {
+    console.log(`🗑️ Iniciando exclusão da obra: ${obraName} (ID: ${obraId})`);
+    
+    showConfirmationModal(obraName, obraId, document.querySelector(`[data-obra-id="${obraId}"]`));
+    
+    window.confirmDeletion = async () => {
+        console.log(`✅ Confirmada exclusão da obra: ${obraName}`);
+        
+        try {
+            const success = await removeObraFromBackup(obraId);
+            
+            if (success) {
+                const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+                if (obraBlock) {
+                    obraBlock.remove();
+                    console.log(`✅ Obra ${obraName} removida do DOM`);
+                }
+                
+                showSystemStatus(`Obra "${obraName}" removida do backup`, 'success');
+            } else {
+                const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+                if (obraBlock) {
+                    obraBlock.remove();
+                    showSystemStatus(`Obra "${obraName}" removida da visualização`, 'warning');
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro na exclusão:', error);
+            showSystemStatus('Erro ao remover obra', 'error');
+        }
+    };
+}
+
+/**
+ * 🎯 CARREGAR E RENDERIZAR OBRAS COM CÁLCULOS REAIS
+ */
+export async function loadAndRenderObras() {
+    try {
+        console.log('🚀 Iniciando carregamento e renderização de obras...');
+        showSystemStatus('Carregando obras...', 'info');
+        
+        // ✅ PRIMEIRO: Carregar funções reais (sem stubs)
+        await loadAllPage1Functions();
+        
+        const obras = await loadBackupObras();
+        
+        if (obras.length === 0) {
+            showSystemStatus('Nenhuma obra encontrada no backup', 'warning');
+            return;
+        }
+        
+        console.log(`📊 ${obras.length} obra(s) para renderizar`);
+        
+        let successCount = 0;
+        for (const obra of obras) {
+            const success = await renderObra(obra);
+            if (success) successCount++;
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        applyPage2PostProcessing();
+        
+        // ✅ INICIAR SISTEMA DE ATUALIZAÇÃO EM TEMPO REAL
+        setupRealTimeUpdates();
+        
+        // ✅ FORÇAR CÁLCULO FINAL DE TODAS AS OBRAS
+        setTimeout(() => {
+            console.log('🎯 CÁLCULO FINAL DE TODAS AS VAZÕES');
+            obras.forEach(obra => {
+                forceRealVazaoCalculation(obra.id);
+            });
+        }, 3000);
+        
+        console.log(`🎉 Renderização concluída: ${successCount}/${obras.length} obra(s)`);
+        showSystemStatus(`${successCount} obra(s) carregada(s)`, 'success');
+        
+    } catch (error) {
+        console.error('❌ Erro no carregamento e renderização:', error);
+        showSystemStatus('Erro ao carregar obras', 'error');
+    }
+}
+
+/**
+ * STUB PARA FILTROS FUTUROS
+ */
+export function applyFilters(criteria = {}) {
+    console.log('🔍 Aplicando filtros (stub):', criteria);
+    
+    const filteredObras = applyObraFilters([], criteria);
+    
+    return {
+        criteria,
+        filteredCount: filteredObras.length,
+        message: 'Sistema de filtros será implementado futuramente',
+        timestamp: new Date().toISOString()
+    };
+}
+
+// Exportações
+export {
+    renderObra,
+    applyPage2PostProcessing,
+    handleObraDeletion,
+    loadAllPage1Functions,
+    updateVazaoDisplay,
+    calculateVazaoArWithDisplay
+};
+/**
+ * ui/components/search.js
+ * Stub para sistema de busca/filtro futuro
+ */
+
+/**
+ * Aplica filtros às obras (stub para implementação futura)
+ * @param {Object} criteria - Critérios de filtro
+ */
+export function applyFilters(criteria = {}) {
+    console.log('🔍 Aplicando filtros (stub):', criteria);
+    
+    // Esta função será implementada quando o UI de busca for criado
+    // Por enquanto, apenas log e retorna o critério para demonstração
+    
+    return {
+        criteria,
+        message: 'Sistema de filtros será implementado futuramente',
+        timestamp: new Date().toISOString()
+    };
+}
+
+/**
+ * Inicializa o sistema de busca (stub)
+ */
+export function initializeSearchSystem() {
+    console.log('🔍 Sistema de busca inicializado (stub)');
+    
+    // Placeholder para futura implementação
+    const searchContainer = document.createElement('div');
+    searchContainer.id = 'search-container';
+    searchContainer.style.cssText = `
+        padding: var(--spacing-lg);
+        background: var(--color-gray-lightest);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-lg);
+        text-align: center;
+    `;
+    
+    searchContainer.innerHTML = `
+        <h3>🔍 Sistema de Busca</h3>
+        <p>Funcionalidade de busca e filtros será implementada em breve</p>
+        <small>Filtros por nome, data, projetos, salas, etc.</small>
+    `;
+    
+    // Inserir após o header do gerenciador
+    const managerHeader = document.querySelector('.manager-header');
+    if (managerHeader) {
+        managerHeader.insertAdjacentElement('afterend', searchContainer);
+    }
+    
+    return searchContainer;
+}

@@ -5,7 +5,7 @@
 
 import { bootstrapManagerApplication } from './core/app.js';
 
-// Carregar stubs primeiro para evitar erros de funções não definidas
+// Carregar stubs seguros primeiro
 import './utils/global-stubs.js';
 
 /**

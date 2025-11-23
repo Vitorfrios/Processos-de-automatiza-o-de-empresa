@@ -9,8 +9,15 @@ console.log('🚀 global-stubs.js CARREGANDO...');
 console.log(`🔍 toggleSection existe antes do stub? ${typeof window.toggleSection}`);
 console.log(`🔍 toggleSubsection existe antes do stub? ${typeof window.toggleSubsection}`);
 
-
-
+// ✅ CORREÇÃO: Stub para ativarCadastroEmpresa
+if (typeof window.ativarCadastroEmpresa !== 'function') {
+    window.ativarCadastroEmpresa = function() {
+        console.log('🔧 ativarCadastroEmpresa stub chamado');
+        // Stub vazio - função não é necessária na Página 2
+        return true;
+    };
+    console.log('✅ Stub ativarCadastroEmpresa criado');
+}
 
 // Stub para toggleObra
 if (typeof window.toggleObra !== 'function') {
@@ -510,16 +517,82 @@ if (typeof window.calculateVazaoArAndThermalGains !== 'function') {
     };
 }
 
+// ✅ CORREÇÃO: Stubs para funções de delete que podem ser chamadas pelo HTML
+if (typeof window.deleteProject !== 'function') {
+    window.deleteProject = function(obraId, projectId) {
+        console.log(`🔧 deleteProject stub chamado para obra: ${obraId}, projeto: ${projectId}`);
+        
+        const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`);
+        const projectName = projectBlock?.querySelector('.project-title')?.textContent || 'Projeto sem nome';
+        const obraBlock = projectBlock?.closest('.obra-block');
+        const obraName = obraBlock?.querySelector('.obra-title')?.textContent || 'Obra sem nome';
+        
+        // Chamar modal universal
+        if (window.showUniversalDeleteModal) {
+            showUniversalDeleteModal('project', projectId, projectName, projectBlock, { 
+                parentId: obraId, 
+                parentName: obraName 
+            });
+        }
+    };
+}
+
+if (typeof window.deleteRoom !== 'function') {
+    window.deleteRoom = function(projectId, roomId) {
+        console.log(`🔧 deleteRoom stub chamado para projeto: ${projectId}, sala: ${roomId}`);
+        
+        const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+        const roomName = roomBlock?.querySelector('.room-title')?.textContent || 'Sala sem nome';
+        const projectBlock = roomBlock?.closest('.project-block');
+        const projectName = projectBlock?.querySelector('.project-title')?.textContent || 'Projeto sem nome';
+        const obraBlock = projectBlock?.closest('.obra-block');
+        const obraName = obraBlock?.querySelector('.obra-title')?.textContent || 'Obra sem nome';
+        
+        // Chamar modal universal
+        if (window.showUniversalDeleteModal) {
+            showUniversalDeleteModal('room', roomId, roomName, roomBlock, { 
+                parentId: projectId, 
+                parentName: `${projectName} (${obraName})` 
+            });
+        }
+    };
+}
+
+if (typeof window.deleteMachine !== 'function') {
+    window.deleteMachine = function(roomId, machineId) {
+        console.log(`🔧 deleteMachine stub chamado para sala: ${roomId}, máquina: ${machineId}`);
+        
+        const machineBlock = document.querySelector(`[data-machine="${machineId}"]`) || document.getElementById(machineId);
+        const machineName = machineBlock?.querySelector('.machine-title, .machine-name')?.textContent || 'Máquina sem nome';
+        const roomBlock = machineBlock?.closest('.room-block');
+        const roomName = roomBlock?.querySelector('.room-title')?.textContent || 'Sala sem nome';
+        const projectBlock = roomBlock?.closest('.project-block');
+        const projectName = projectBlock?.querySelector('.project-title')?.textContent || 'Projeto sem nome';
+        const obraBlock = projectBlock?.closest('.obra-block');
+        const obraName = obraBlock?.querySelector('.obra-title')?.textContent || 'Obra sem nome';
+        
+        // Chamar modal universal
+        if (window.showUniversalDeleteModal) {
+            showUniversalDeleteModal('machine', machineId, machineName, machineBlock, { 
+                parentId: roomId, 
+                parentName: `${roomName} → ${projectName} → ${obraName}` 
+            });
+        }
+    };
+}
+
 // Stub para outras funções comuns
 const stubFunctions = [
     'updateMachineTitle', 
-    'deleteMachine',
     'updateMachineOptions',
     'handlePowerChange',
     'calculateMachinePrice',
     'updateBackupConfiguration',
     'initializeFatorSeguranca',
-    'syncCapacityTableBackup'
+    'syncCapacityTableBackup',
+    'toggleConfig',
+    'handleConfigChange',
+    'updateThermalGains'
 ];
 
 stubFunctions.forEach(funcName => {

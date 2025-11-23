@@ -1,6 +1,6 @@
 """
 servidor.py
-Servidor principal SEM CACHE
+Servidor principal 
 """
 
 import os
@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 def setup_environment():
-    """Configuração do ambiente SEM CACHE"""
+    """Configuração do ambiente """
     current_dir = Path(__file__).parent
     sys.path.insert(0, str(current_dir))
     
@@ -21,7 +21,7 @@ def setup_environment():
     sys.dont_write_bytecode = True
 
 def load_modules_no_cache():
-    """Carrega módulos SEM cache"""
+    """Carrega módulos """
     try:
         # Force reload para evitar cache de módulos
         if 'servidor_modules.core.server_core' in sys.modules:
@@ -41,8 +41,8 @@ def load_modules_no_cache():
         sys.exit(1)
 
 def initialize_server():
-    """Inicialização do servidor SEM CACHE"""
-    print("🚀 INICIANDO SERVIDOR SEM CACHE")
+    """Inicialização do servidor """
+    print("🚀 INICIANDO SERVIDOR ")
     start_time = time.time()
     
     # Limpa possíveis caches na inicialização
@@ -81,16 +81,16 @@ def initialize_server():
     
     # Tempo de inicialização
     init_time = time.time() - start_time
-    print(f"⚡ Servidor SEM CACHE iniciado em {init_time:.2f} segundos")
+    print(f"⚡ Servidor  iniciado em {init_time:.2f} segundos")
     
     return httpd, server_core
 
 def run_server():
-    """Loop principal do servidor SEM CACHE"""
+    """Loop principal do servidor """
     httpd, server_core = initialize_server()
     
     try:
-        print("🔄 Servidor em execução (SEM CACHE)...")
+        print("🔄 Servidor em execução ()...")
         
         while server_core.servidor_rodando:
             try:
@@ -126,7 +126,7 @@ def shutdown_server(httpd, server_core):
         sys.exit(0)
 
 if __name__ == "__main__":
-    # Configura ambiente SEM CACHE
+    # Configura ambiente 
     setup_environment()
     
     # Inicia servidor
