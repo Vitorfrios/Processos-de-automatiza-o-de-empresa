@@ -72,7 +72,16 @@ Tudo que está neste bloco já está **implementado e funcional**:
 
 ### + ADIÇÃO DE NOVOS BLOCOS em baixo de maquinas (sbstituição de configuração)
 * - Duto
-* - Acessórios
+* - Acessórios (seleção e valor)
+  - GI = Grelha de Insuflamento
+  - GR = Grelha de Retorno
+  - TAE = Tomada de Ar Externo
+  - VZ = Venezianas
+  - DSP 15 = damper de sobrepressao 15 m/s
+  - DSP 30 = damper de sobrepressao 30 m/s
+  - DCF 90 = damper corta fogo 90 min
+  - DCF 120 = damper corta-fogo 120min
+
 * - Tubulação
 ---
 
@@ -134,4 +143,16 @@ Tudo que está neste bloco já está **implementado e funcional**:
 * Manter **apenas “Criar Obras”**.
 ---
 
+
+
+
+
+--------- TUBULAÇÂO -----------------
+Bitola Ls -> linha de gas (select)
+Bitola Ll -> linha de liquido (select)
+Espessura Ls / LL -> base 1,59 mm 
+  - ou 1,59 mm ou 0.8
+
+input
+  - comprimento 
 

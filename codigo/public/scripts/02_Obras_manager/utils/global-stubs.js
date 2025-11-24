@@ -1,6 +1,7 @@
 /**
  * utils/global-stubs.js
  * Stubs para funções globais que podem não estar disponíveis
+ * ✅ ATUALIZADO: Stubs não conflitantes com funções reais da Página 1
  */
 
 console.log('🚀 global-stubs.js CARREGANDO...');
@@ -9,7 +10,9 @@ console.log('🚀 global-stubs.js CARREGANDO...');
 console.log(`🔍 toggleSection existe antes do stub? ${typeof window.toggleSection}`);
 console.log(`🔍 toggleSubsection existe antes do stub? ${typeof window.toggleSubsection}`);
 
-// ✅ CORREÇÃO: Stub para ativarCadastroEmpresa
+// ✅ STUBS SEGUROS: Apenas funções que NÃO existem na Página 1
+
+// Stub para ativarCadastroEmpresa (não existe na Página 1)
 if (typeof window.ativarCadastroEmpresa !== 'function') {
     window.ativarCadastroEmpresa = function() {
         console.log('🔧 ativarCadastroEmpresa stub chamado');
@@ -431,36 +434,17 @@ if (document.readyState === 'loading') {
 }
 
 // ✅ STUBS DEFINITIVOS PARA AS FUNÇÕES FALTANTES
-if (typeof window.calculateCapacitySolution !== 'function') {
-    window.calculateCapacitySolution = function(roomId) {
-        console.log(`🔧 calculateCapacitySolution STUB DEFINITIVO para ${roomId}`);
-        
-        // Cálculo básico de capacidade
-        const totalGainsElement = document.getElementById(`total-ganhos-w-${roomId}`);
-        const totalGains = totalGainsElement ? parseInt(totalGainsElement.textContent) || 0 : 0;
-        
-        // Converter W para TR (1 TR ≈ 3516.85 W)
-        const capacityTR = totalGains / 3516.85;
-        const capacityBTU = totalGains * 3.412;
-        
-        return {
-            capacityBTU: Math.round(capacityBTU),
-            capacityTR: Math.round(capacityTR * 100) / 100,
-            sensibleLoad: Math.round(totalGains * 0.7),
-            latentLoad: Math.round(totalGains * 0.3),
-            totalLoad: totalGains,
-            roomId: roomId,
-            timestamp: new Date().toISOString()
-        };
-    };
-}
+// ❌ REMOVIDOS: calculateCapacitySolution, calculateVazaoArAndThermalGains, updateCapacityFromThermalGains
+// ✅ AGORA: Estas funções serão carregadas da Página 1 via page1-functions-adapter
 
+// ✅ STUB SEGURO PARA updateCapacityFromThermalGains (não existe na Página 1)
 if (typeof window.updateCapacityFromThermalGains !== 'function') {
     window.updateCapacityFromThermalGains = function(roomId, thermalGains) {
         console.log(`🔧 updateCapacityFromThermalGains STUB DEFINITIVO para ${roomId}`, thermalGains);
         
         // Calcular capacidade baseada nos ganhos térmicos
-        const capacitySolution = calculateCapacitySolution(roomId);
+        // Esta função será substituída pela função real quando disponível
+        const capacitySolution = { capacityBTU: 0, capacityTR: 0, roomId: roomId };
         
         // Atualizar elementos DOM se existirem
         const elements = {
@@ -469,7 +453,7 @@ if (typeof window.updateCapacityFromThermalGains !== 'function') {
         };
         
         if (elements.capacityTR) {
-            elements.capacityTR.textContent = capacitySolution.capacityTR.toFixed(1);
+            elements.capacityTR.textContent = '0.0';
         }
         
         return {
@@ -478,42 +462,6 @@ if (typeof window.updateCapacityFromThermalGains !== 'function') {
             thermalGains: thermalGains,
             message: 'Capacidade atualizada com sucesso (stub)'
         };
-    };
-}
-
-// ✅ STUB DEFINITIVO PARA calculateVazaoArAndThermalGains
-if (typeof window.calculateVazaoArAndThermalGains !== 'function') {
-    window.calculateVazaoArAndThermalGains = function(roomId) {
-        console.log(`🔧 calculateVazaoArAndThermalGains STUB DEFINITIVO para ${roomId}`);
-        
-        try {
-            // Simular cálculo básico de vazão de ar
-            const areaElement = document.querySelector(`[data-field="area"][data-room-id="${roomId}"]`);
-            const area = areaElement ? parseFloat(areaElement.value) || 0 : 0;
-            
-            // Cálculo simplificado: 10 l/s por m²
-            const vazaoAr = Math.round(area * 10);
-            
-            // Atualizar display se existir
-            const vazaoDisplay = document.getElementById(`vazao-ar-${roomId}`);
-            if (vazaoDisplay) {
-                vazaoDisplay.textContent = vazaoAr;
-            }
-            
-            // Disparar cálculo de ganhos térmicos se a função existir
-            if (typeof window.updateThermalGains === 'function') {
-                setTimeout(() => {
-                    window.updateThermalGains(roomId);
-                }, 100);
-            }
-            
-            console.log(`✅ Vazão calculada (stub): ${vazaoAr} l/s para sala ${roomId}`);
-            return vazaoAr;
-            
-        } catch (error) {
-            console.error(`❌ Erro no stub calculateVazaoArAndThermalGains:`, error);
-            return 0;
-        }
     };
 }
 
@@ -581,7 +529,7 @@ if (typeof window.deleteMachine !== 'function') {
     };
 }
 
-// Stub para outras funções comuns
+// Stub para outras funções comuns que NÃO existem na Página 1
 const stubFunctions = [
     'updateMachineTitle', 
     'updateMachineOptions',
@@ -592,7 +540,7 @@ const stubFunctions = [
     'syncCapacityTableBackup',
     'toggleConfig',
     'handleConfigChange',
-    'updateThermalGains'
+    'updateThermalGains' // ❌ Esta será substituída pela função real
 ];
 
 stubFunctions.forEach(funcName => {
@@ -604,4 +552,21 @@ stubFunctions.forEach(funcName => {
     }
 });
 
-console.log('✅ Stubs globais carregados');
+// ✅ STUB ESPECIAL PARA SALVAMENTO NA PÁGINA 2
+if (typeof window.saveObra !== 'function') {
+    window.saveObra = function(obraId) {
+        console.log(`🔧 saveObra STUB - Salvamento bloqueado na Página 2 para obra: ${obraId}`);
+        showSystemStatus('Salvamento não disponível no modo de visualização', 'warning');
+        return false;
+    };
+}
+
+if (typeof window.atualizarObra !== 'function') {
+    window.atualizarObra = function(obraId) {
+        console.log(`🔧 atualizarObra STUB - Atualização bloqueada na Página 2 para obra: ${obraId}`);
+        showSystemStatus('Atualização não disponível no modo de visualização', 'warning');
+        return false;
+    };
+}
+
+console.log('✅ Stubs globais carregados (versão não conflitante)');

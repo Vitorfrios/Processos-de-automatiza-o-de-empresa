@@ -77,7 +77,7 @@
                 }
               ],
               "capacidade": {
-                "fatorSeguranca": 10,
+                "fatorSeguranca": 1.2,
                 "capacidadeUnitaria": 10,
                 "backup": "n+1",
                 "cargaEstimada": 13.292,

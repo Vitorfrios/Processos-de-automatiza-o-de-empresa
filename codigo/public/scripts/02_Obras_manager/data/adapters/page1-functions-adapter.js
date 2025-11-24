@@ -39,7 +39,7 @@ export class Page1FunctionsAdapter {
             // 3. Validar funções essenciais
             this._validateEssentialFunctions();
             
-            // ✅ CORREÇÃO: Disponibilizar funções globalmente
+            // ✅ CORREÇÃO CRÍTICA: Disponibilizar funções globalmente
             this._makeFunctionsGlobal();
             
             this.initialized = true;
@@ -59,7 +59,9 @@ export class Page1FunctionsAdapter {
     _validateEssentialFunctions() {
         const essentialFunctions = [
             'createEmptyObra',
-            'populateObraData'
+            'populateObraData',
+            'calculateVazaoArAndThermalGains',
+            'calculateCapacitySolution'
         ];
         
         const missing = essentialFunctions.filter(func => !this.functions[func]);
@@ -72,20 +74,25 @@ export class Page1FunctionsAdapter {
     }
     
     /**
-     * ✅ CORREÇÃO: Disponibiliza funções no escopo global
+     * ✅ CORREÇÃO CRÍTICA: Disponibiliza funções no escopo global
      */
     _makeFunctionsGlobal() {
         console.log('🌐 Disponibilizando funções no escopo global...');
         
-        const globalFunctions = {
-            'calculateVazaoArAndThermalGains': this.functions.calculateVazaoArAndThermalGains,
-            'calculateCapacitySolution': this.functions.calculateCapacitySolution,
-        };
+        const globalFunctions = [
+            'calculateVazaoArAndThermalGains',
+            'calculateCapacitySolution',
+            'updateThermalGains',
+            'togglePressurizationFields',
+            'handleClimaBackupChange',
+            'handleClimaInputBackupChange',
+            'syncBackupWithClimaInputs'
+        ];
         
-        Object.entries(globalFunctions).forEach(([name, func]) => {
-            if (func && typeof func === 'function') {
-                window[name] = func;
-                console.log(`✅ ${name} disponibilizada globalmente`);
+        globalFunctions.forEach(funcName => {
+            if (this.functions[funcName] && typeof this.functions[funcName] === 'function') {
+                window[funcName] = this.functions[funcName];
+                console.log(`✅ ${funcName} disponibilizada globalmente`);
             }
         });
         
@@ -119,6 +126,10 @@ export class Page1FunctionsAdapter {
     
     calculateVazaoArAndThermalGains(roomId) {
         return this.getFunction('calculateVazaoArAndThermalGains')(roomId);
+    }
+    
+    calculateCapacitySolution(roomId) {
+        return this.getFunction('calculateCapacitySolution')(roomId);
     }
 }
 

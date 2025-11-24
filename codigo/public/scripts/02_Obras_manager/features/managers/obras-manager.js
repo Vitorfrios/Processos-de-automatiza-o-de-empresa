@@ -17,6 +17,7 @@ async function loadAndRenderObras() {
         showSystemStatus('Carregando obras...', 'info');
         
         // 1. INICIALIZAR ADAPTER COM FUNÇÕES REAIS
+        console.log('🔧 Inicializando adaptador da Página 1...');
         await page1Adapter.initialize();
         
         // 2. CARREGAR OBRAS DO BACKUP
@@ -35,7 +36,8 @@ async function loadAndRenderObras() {
         for (const obra of obras) {
             const success = await renderObra(obra);
             if (success) successCount++;
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Pequeno delay entre obras para evitar sobrecarga
+            await new Promise(resolve => setTimeout(resolve, 300));
         }
         
         // 4. APLICAR CONTEXTO DA PÁGINA 2
@@ -67,7 +69,7 @@ async function renderObra(obraData) {
         }
         
         // Pequeno delay para DOM atualizar
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // USAR FUNÇÃO REAL para popular dados
         await page1Adapter.populateObraData(obraData);
@@ -97,7 +99,7 @@ function applyManagerContext() {
         section.style.display = 'none';
     });
     
-    // 3. ✅ CORREÇÃO: Substituir funcionalidade dos botões existentes
+    // 3. ✅ CORREÇÃO: Substituir funcionalidade dos botões existentes SEM modificar HTML
     replaceExistingDeleteButtons();
     
     console.log('✅ Contexto da Página 2 aplicado');

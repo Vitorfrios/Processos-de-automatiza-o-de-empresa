@@ -32,7 +32,14 @@ export async function loadPage1Functions() {
             // 4 – Tabela de capacidade (TR, backup, folga)
             import('../../01_Create_Obra/data/modules/machines/capacity-calculator.js'),
 
-            import('../../01_Create_Obra/data/modules/rooms.js')
+            // 5 – Módulo de salas
+            import('../../01_Create_Obra/data/modules/rooms.js'),
+
+            // 6 – Módulo de climatização
+            import('../../01_Create_Obra/data/modules/climatizate/climatizacao-builder.js'),
+            
+            // 7 – Cálculos térmicos
+            import('../../01_Create_Obra/features/calculations/thermal-gains.js')
         ]);
 
         functionsCache = {
@@ -53,15 +60,52 @@ export async function loadPage1Functions() {
 
             // Capacidade (TR, backup, folga)
             calculateCapacitySolution: modules[4].calculateCapacitySolution,
+            updateBackupConfiguration: modules[4].updateBackupConfiguration,
+            handleClimaBackupChange: modules[4].handleClimaBackupChange,
+            handleClimaInputBackupChange: modules[4].handleClimaInputBackupChange,
+            syncBackupWithClimaInputs: modules[4].syncBackupWithClimaInputs,
+
+            // Climatização
+            togglePressurizationFields: modules[6].togglePressurizationFields,
+
+            // Cálculos térmicos
+            updateThermalGains: modules[7].updateThermalGains,
+
+            // ✅ CORREÇÃO: Adicionar funções de empresa
+            obterDadosEmpresaDaObra: modules[2].obterDadosEmpresaDaObra,
+            criarVisualizacaoEmpresa: modules[2].criarVisualizacaoEmpresa,
+            criarFormularioVazioEmpresa: modules[2].criarFormularioVazioEmpresa
         };
 
-        // ✅ CORREÇÃO CRÍTICA: Adicionar return faltante
         console.log('✅ Funções da Página 1 carregadas com sucesso');
         return functionsCache;
         
     } catch (error) {
         console.error('❌ Erro ao carregar funções da Página 1 no manager:', error);
-        throw error; // ✅ CORREÇÃO: Propagar o erro
+        
+        // Fallback: tentar carregar módulos básicos
+        console.log('🔄 Tentando carregar módulos básicos...');
+        try {
+            const basicModules = await Promise.all([
+                import('../../01_Create_Obra/features/managers/obra-manager.js'),
+                import('../../01_Create_Obra/data/builders/ui-builders.js'),
+                import('../../01_Create_Obra/features/calculations/air-flow.js')
+            ]);
+
+            functionsCache = {
+                createEmptyObra: basicModules[0].createEmptyObra,
+                populateObraData: basicModules[1].populateObraData,
+                calculateVazaoArAndThermalGains: basicModules[2].calculateVazaoArAndThermalGains,
+                calculateCapacitySolution: () => ({ capacityBTU: 0, capacityTR: 0 }) // Fallback
+            };
+
+            console.log('✅ Módulos básicos carregados como fallback');
+            return functionsCache;
+            
+        } catch (fallbackError) {
+            console.error('❌ Falha total no carregamento de funções:', fallbackError);
+            throw fallbackError;
+        }
     }
 }
 
@@ -72,7 +116,13 @@ export function removeConflictingStubs() {
     const stubsToRemove = [
         'calculateVazaoArAndThermalGains',
         'calculateCapacitySolution', 
-        'updateCapacityFromThermalGains'
+        'updateCapacityFromThermalGains',
+        'updateThermalGains',
+        'togglePressurizationFields',
+        'handleClimaBackupChange',
+        'handleClimaInputBackupChange',
+        'syncBackupWithClimaInputs',
+        'updateBackupConfiguration'
     ];
     
     stubsToRemove.forEach(stub => {

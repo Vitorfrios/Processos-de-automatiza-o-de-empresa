@@ -1794,48 +1794,63 @@
     "Metro Barra Roscada 3/8\"": 23.65,
     "Chumbador 3/8\" por 2.1/2\"": 2.88
   },
-  "empresas": [
+"empresas": [
     {
-      "ACT": "AeroCool Technologies"
+      "ACT": "ACTEMIUM"
     },
     {
-      "BLC": "BlueLink Consulting"
+      "AMC": "AMC SOLUÇÕES"
     },
     {
-      "CRN": "Cronos Engenharia Integrada"
+      "ARC": "ARCON"
     },
     {
-      "DTS": "DataSphere Systems"
+      "ART": "ARTECAL"
     },
     {
-      "EVC": "Evolux Construções Sustentáveis"
+      "CIC": "CICLO SOLAR"
     },
     {
-      "FLX": "Fluxon Automação Industrial"
+      "GEP": "GRUPO ELETROPAINEL"
     },
     {
-      "GHT": "GreenHeat Termotecnologia"
+      "IHM": "IHM ENGENHARIA"
     },
     {
-      "HRM": "Horizon Recursos Mecânicos"
+      "SEP": "SEMPEL"
     },
     {
-      "INX": "Innext Soluções Inteligentes"
+      "SEN": "SENIOR"
     },
     {
-      "JPT": "JetPoint Tecnologia Climática"
+      "TEC": "TECNOTEMP"
     },
     {
-      "TTR": "aavvr Tecnologia Climática"
+      "SIT": "SIMATEC"
     },
     {
-      "RPS": "Rios Projetos e Sistemas"
+      "INO": "INOVAR"
     },
     {
-      "SOP": "sophia fon valente rios freitas"
+      "SIE": "SIEMENS"
     },
     {
-      "KLV": "klvjlsaijvaiuhaipuvhapiouvh asfwqvwevw"
+      "GEE": "GE POWER"
+    },
+    {
+      "EMA": "EMAC"
+    },
+    {
+      "MAR": "MARP PAINÉIS"
+    },
+    {
+      "ENG": "ENGESULT"
+    },
+    {
+      "CAM": "CAM ENGENHARIA"
+    },
+    {
+      "SRA": "SRA"
     }
   ]
 }
