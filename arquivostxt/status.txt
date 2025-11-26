@@ -146,8 +146,20 @@ Tudo que está neste bloco já está **implementado e funcional**:
 
 
 
+### + ADIÇÃO DE NOVOS BLOCOS em baixo de maquinas (sbstituição de configuração)
+* - Duto
+* - Acessórios (seleção e valor)
+  - GI = Grelha de Insuflamento
+  - GR = Grelha de Retorno
+  - TAE = Tomada de Ar Externo
+  - VZ = Venezianas
+  - DSP 15 = damper de sobrepressao 15 m/s
+  - DSP 30 = damper de sobrepressao 30 m/s
+  - DCF 90 = damper corta fogo 90 min
+  - DCF 120 = damper corta-fogo 120min
 
---------- TUBULAÇÂO -----------------
+
+--------- TUBULAÇÂO ----------------- Apenas em maquinas específicas
 Bitola Ls -> linha de gas (select)
 Bitola Ll -> linha de liquido (select)
 Espessura Ls / LL -> base 1,59 mm 
@@ -155,4 +167,26 @@ Espessura Ls / LL -> base 1,59 mm
 
 input
   - comprimento 
+
+
+========= NOME DE MAQUINA ========= ok 
+tag -> {Nome do tipo da maquina}-{numero da maquina em decrescente}_{LETRA}
+
+numero da maquina decrescente -> pega a maquina de maior capacidade e colocar em ordem decrescente sempre reordenando
+Letra- Para maquinas repetidas com mesma capacidade 
+
+Maquinas de mesma capacidade
+Wall Mounted-01A 
+Wall Mounted-01B
+
+Maquinas caacidades diferentes
+Wall Mounted-01A 
+Wall Mounted-01B
+Wall Mounted-02A 
+Wall Mounted-02B
+
+------------------
+Atualizar tabela de teste de Cálculo de Capacidade de Refrigeração
+Adicionar botao toggle em maquinas (maquina1)  ok 
+------------------
 

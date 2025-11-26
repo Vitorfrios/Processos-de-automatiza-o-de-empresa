@@ -122,7 +122,8 @@ function isValidSecureId(id) {
     const secureIdPatterns = [
         /^obra_[a-z][0-9]{2}$/, // obra_w12
         /^obra_[a-z][0-9]{2}_proj_[a-z][0-9]{2}_[0-9]+$/, // obra_w12_proj_t34_1
-        /^obra_[a-z][0-9]{2}_proj_[a-z][0-9]{2}_[0-9]+_sala_[a-z][0-9]{2}_[0-9]+$/ // obra_w12_proj_t34_1_sala_r21_1
+        /^obra_[a-z][0-9]{2}_proj_[a-z][0-9]{2}_[0-9]+_sala_[a-z][0-9]{2}_[0-9]+$/, // obra_w12_proj_t34_1_sala_r21_1
+        /^obra_[a-z][0-9]{2}_maq_[a-z][0-9]{2}$/ // obra_w12_maq_m45
     ];
     
     return secureIdPatterns.some(pattern => pattern.test(id));
@@ -144,7 +145,6 @@ function extractSequenceNumber(id, type) {
     const match = id.match(pattern);
     return match ? parseInt(match[1]) : null;
 }
-
 /**
  * Extrai a base do ID da obra de qualquer ID hierárquico
  * @param {string} id - ID completo (obra, projeto ou sala)
@@ -173,12 +173,32 @@ function areIdsFromSameObra(id1, id2) {
 /**
  * Gera um ID único para máquina baseado na sala pai
  * @param {string} roomId - ID único da sala pai
- * @returns {string} ID único no formato "machine_123456789"
+ * @returns {string} ID único no formato "obra_w12_proj_t34_1_sala_r21_1_maq_m45_1"
  */
-function generateMachineId(roomId) {
-    const timestamp = Date.now().toString();
-    const randomSuffix = Math.floor(Math.random() * 1000);
-    return `machine_${timestamp}_${randomSuffix}`;
+function generateMachineId(obraId) {
+    if (!obraId || !isValidSecureId(obraId)) {
+        console.error('❌ Obra ID inválido para gerar machine ID:', obraId);
+        const randomChar = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+        const randomNum = Math.floor(Math.random() * 90 + 10);
+        return `maq_${randomChar}${randomNum}`;
+    }
+    
+    const randomChar = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+    const randomNum = Math.floor(Math.random() * 90 + 10);
+    
+    return `${obraId}_maq_${randomChar}${randomNum}`;
+}
+
+/**
+ * Conta quantas máquinas existem em uma sala específica
+ * @param {string} roomId - ID único da sala
+ * @returns {number} Quantidade de máquinas na sala
+ */
+function getMachineCountInRoomFromId(roomId) {
+    if (!roomId || !isValidSecureId(roomId)) return 0;
+    
+    const machineElements = document.querySelectorAll(`[data-room-id="${roomId}"]`);
+    return machineElements.length;
 }
 
 /**
