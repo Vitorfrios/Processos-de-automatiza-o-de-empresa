@@ -6,7 +6,7 @@
 
 import { buildClimatizationSection } from './climatizacao.js';
 import { buildMachinesSection } from './machines/machines-core.js';
-import { buildConfigurationSection } from './configuracao.js';
+import { buildAccessoriesSection } from './acessorios.js';
 import { generateRoomId } from '../utils/id-generator.js';
 import { removeEmptyProjectMessage, showEmptyProjectMessageIfNeeded } from '../../ui/helpers.js';
 import { triggerCalculation, syncTitleToAmbienteDirect } from '../../core/shared-utils.js';
@@ -57,11 +57,12 @@ function buildRoomHTML(obraId, projectId, roomName, roomId) {
         <div class="room-content collapsed" id="room-content-${roomId}">
           ${buildClimatizationSection(obraId, projectId, roomName, roomId)}
           ${buildMachinesSection(obraId, projectId, roomName, roomId)}
-          ${buildConfigurationSection(obraId, projectId, roomName, roomId)}
+          ${buildAccessoriesSection(obraId, projectId, roomName, roomId)}
+        
         </div>
       </div>
     `;
-}
+} //adicionar ao final de build as sessoes de tubulação e dutos;
 
 /**
  * Constrói apenas o cabeçalho da sala com título e ações

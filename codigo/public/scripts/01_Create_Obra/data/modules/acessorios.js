@@ -1,37 +1,37 @@
 /**
- * configuracao.js - ATUALIZADO COM IDs SEGUROS
- * Constrói a seção de configuração de instalação para uma sala
+ * acessorios.js - ATUALIZADO COM IDs SEGUROS
+ * Constrói a seção de Acessorios de instalação para uma sala
  */
 
 /**
- * Constrói a seção de configuração de instalação para uma sala
+ * Constrói a seção de Acessorios de instalação para uma sala
  * Inclui opções de instalação de climatização em formato de grid com checkboxes
  * @param {string} obraId - ID único da obra
  * @param {string} projectId - ID único do projeto
  * @param {string} roomName - Nome da sala
  * @param {string} finalRoomId - ID único da sala
- * @returns {string} HTML da seção de configuração
+ * @returns {string} HTML da seção de Acessorios
  */
-function buildConfigurationSection(obraId, projectId, roomName, finalRoomId) {
+function buildAccessoriesSection(obraId, projectId, roomName, finalRoomId) {
     // ✅ CORREÇÃO: Validar ID único
     if (!finalRoomId || finalRoomId === 'undefined' || finalRoomId === 'null') {
-        console.error(`ERRO FALBACK (buildConfigurationSection) configuracao.js [Room ID inválido: ${finalRoomId}]`);
+        console.error(`ERRO FALBACK (buildAccessoriesSection) acessorios.js [Room ID inválido: ${finalRoomId}]`);
         return '';
     }
     
     const roomId = finalRoomId;
-    console.log(`🔧 Construindo seção de configuração para sala: ${roomName} (ID: ${roomId})`);
+    console.log(`🔧 Construindo seção de Acessorios para sala: ${roomName} (ID: ${roomId})`);
     
     return `
     <div class="section-block">
       <div class="section-header">
-        <button class="minimizer" onclick="toggleSection('${roomId}-config')">+</button>
-        <h4 class="section-title">Configuração de Instalação</h4>
+        <button class="minimizer" onclick="toggleSection('${roomId}accessory')">+</button>
+        <h4 class="section-title">Acessorios de Instalação</h4>
       </div>
-      <div class="section-content collapsed" id="section-content-${roomId}-config">
+      <div class="section-content collapsed" id="section-content-${roomId}accessory">
         <div class="form-grid">
           <div class="form-group full-width">
-            <label class="config-label">Opções de Instalação (selecione uma ou mais):</label>
+            <label class="acess-label">Opções de Acessorios (selecione uma ou mais):</label>
             <div class="checkbox-options-grid">
               <div class="checkbox-column">
                 <div class="checkbox-option">
@@ -67,8 +67,8 @@ function buildConfigurationSection(obraId, projectId, roomName, finalRoomId) {
       </div>
     </div>
   `
-}
+} //exemplo de como ficaria, mas os acessorios são preenchidos automaticamente pelo json 
 
 export {
-  buildConfigurationSection
+  buildAccessoriesSection
 }

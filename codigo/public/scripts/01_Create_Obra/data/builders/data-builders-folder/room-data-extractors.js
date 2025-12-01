@@ -22,7 +22,8 @@ function extractRoomData(roomElement, projectElement) {
         maquinas: extractMachinesData(roomElement),
         capacidade: extractCapacityData(roomElement),
         ganhosTermicos: extractThermalGainsData(roomElement),
-        configuracao: extractConfigurationData(roomElement)
+        acessorio: extractAccessoriesData(roomElement)
+        //adicionar aqui as sessoes de dutos e tubulação
     };
 
     console.log(`📊 Dados extraídos da sala ${roomId}:`, {
@@ -30,7 +31,8 @@ function extractRoomData(roomElement, projectElement) {
         maquinas: roomData.maquinas.length,
         capacidade: Object.keys(roomData.capacidade).length,
         ganhosTermicos: Object.keys(roomData.ganhosTermicos).length,
-        configuracao: Object.keys(roomData.configuracao).length
+        acessorio: Object.keys(roomData.acessorio).length
+        //adicionar aqui sessao de dutos e tubulação
     });
     
     return roomData;
@@ -215,24 +217,24 @@ function extractCapacityData(roomElement) {
 /**
  * Extrai dados de configuração de instalação de uma sala
  */
-function extractConfigurationData(roomElement) {
-    const config = { opcoesInstalacao: [] };
+function extractAccessoriesData(roomElement) {
+    const acess = { opcoesInstalacao: [] };
     
     if (!roomElement?.dataset.roomId) {
-        console.error('❌ Elemento da sala inválido para extração de configuração');
-        return config;
+        console.error('❌ Elemento da sala inválido para extração de acessorios');
+        return acess;
     }
     
     const opcoesInstalacaoCheckboxes = roomElement.querySelectorAll('input[name^="opcoesInstalacao-"][type="checkbox"]');
     
     opcoesInstalacaoCheckboxes.forEach(checkbox => {
         if (checkbox.checked) {
-            config.opcoesInstalacao.push(checkbox.value);
+            acess.opcoesInstalacao.push(checkbox.value);
         }
     });
     
-    console.log(`⚙️ ${config.opcoesInstalacao.length} opções de instalação coletadas`);
-    return config;
+    console.log(`⚙️ ${acess.opcoesInstalacao.length} opções de instalação coletadas`);
+    return acess;
 }
 
 // EXPORTS NO FINAL
@@ -241,5 +243,5 @@ export {
     extractClimatizationInputs,
     extractThermalGainsData,
     extractCapacityData,
-    extractConfigurationData
+    extractAccessoriesData
 };

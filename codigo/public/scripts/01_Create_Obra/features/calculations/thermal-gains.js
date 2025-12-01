@@ -382,33 +382,25 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
 
     updateThermalGainsDisplay(roomId, gains, totals, uValues, {...inputData, vazaoArExterno});
 
-    console.log(`🔥 [THERMAL] Tentando atualizar tabela de capacidade para ${roomId}`);
-    setTimeout(() => {
-      if (typeof calculateCapacitySolution === 'function') {
-        calculateCapacitySolution(roomId);
-      } else if (typeof window.calculateCapacitySolution === 'function') {
-        window.calculateCapacitySolution(roomId);
-      } else if (typeof updateCapacityFromThermalGains === 'function') {
-        updateCapacityFromThermalGains(roomId);
-      } else if (typeof window.updateCapacityFromThermalGains === 'function') {
-        window.updateCapacityFromThermalGains(roomId);
+  console.log(`🔥 [THERMAL] Atualizando capacidade para ${roomId}`);
+  setTimeout(() => {
+    if (typeof window.updateCapacityFromThermalGains === 'function') {
+      const success = window.updateCapacityFromThermalGains(roomId);
+      if (success) {
+        console.log(`✅ [THERMAL] Capacidade atualizada com sucesso para ${roomId}`);
       } else {
-        console.error(`[THERMAL] Nenhuma função de capacidade encontrada para ${roomId}`);
-        
-        const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
-        if (capacityTable) {
-          console.log(`[THERMAL] Tabela de capacidade encontrada, tentando inicialização manual`);
-          const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`);
-          const totalTRElement = document.getElementById(`total-tr-${roomId}`);
-          
-          if (totalTRElement && cargaEstimadaElement) {
-            const totalTR = parseFloat(totalTRElement.textContent) || 0;
-            cargaEstimadaElement.textContent = totalTR.toFixed(1);
-            console.log(`[THERMAL] Carga estimada atualizada manualmente: ${totalTR}`);
-          }
-        }
+        console.log(`⚠️ [THERMAL] Aguardando carga térmica para ${roomId}`);
       }
-    }, 300);
+    } else {
+      console.log(`ℹ️ [THERMAL] Função de capacidade ainda não disponível para ${roomId}`);
+      // Tenta novamente em 1 segundo
+      setTimeout(() => {
+        if (typeof window.updateCapacityFromThermalGains === 'function') {
+          window.updateCapacityFromThermalGains(roomId);
+        }
+      }, 1000);
+    }
+  }, 500);
     
   } catch (error) {
     console.error(`[THERMAL] Erro em calculateThermalGains para ${roomId}:`, error);

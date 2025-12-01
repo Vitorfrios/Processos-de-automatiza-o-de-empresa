@@ -15,7 +15,8 @@ function renderRoomFromData(projectId, projectName, roomData, obraId = null, obr
         maquinas: roomData.maquinas?.length || 0,
         capacidade: Object.keys(roomData.capacidade || {}).length,
         ganhosTermicos: Object.keys(roomData.ganhosTermicos || {}).length,
-        configuracao: Object.keys(roomData.configuracao || {}).length
+        acessorio: Object.keys(roomData.acessorios || {}).length
+        // adicionar aqui tubulação e dutos
     });
 
     setTimeout(() => {
@@ -80,9 +81,9 @@ async function populateRoomData(roomElement, roomData) {
             fillCapacityData(roomElement, roomData.capacidade);
         }
 
-        if (roomData.configuracao) {
-            console.log(`⚙️ Preenchendo configurações para sala ${roomName}`);
-            fillConfigurationData(roomElement, roomData.configuracao);
+        if (roomData.acessorios) {
+            console.log(`⚙️ Preenchendo acessorios para sala ${roomName}`);
+            fillAccessoriesData(roomElement, roomData.acessorios);
         }
 
         if (roomData.maquinas && Array.isArray(roomData.maquinas)) {

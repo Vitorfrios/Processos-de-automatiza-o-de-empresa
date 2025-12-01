@@ -125,7 +125,7 @@ async function loadAllModules() {
           // Data Modules
           import('../data/modules/rooms.js'),              // roomsModule
           import('../data/modules/climatizacao.js'),       // climatizationModule
-          import('../data/modules/configuracao.js'),       // configuracaoModule
+          import('../data/modules/acessorios.js'),       // acessoriosModule
           import('../data/modules/machines/machines-core.js'), // machinesCoreModule
           import('../data/modules/machines/capacity-calculator.js'), // capacityCalculatorModule
           
@@ -198,7 +198,7 @@ async function loadAllModules() {
           // ========== CONSTRUCTION SECTIONS ==========
           buildClimatizationSection: climatizationModule.buildClimatizationSection, 
           buildMachinesSection: machinesCoreModule.buildMachinesSection,           
-          buildConfigurationSection: configuracaoModule.buildConfigurationSection, 
+          buildAccessoriesSection: configuracaoModule.buildAccessoriesSection, 
           
           // ========== CALCULATIONS ==========
           calculateVazaoArAndThermalGains: airFlowModule.calculateVazaoArAndThermalGains,
@@ -240,7 +240,7 @@ async function loadAllModules() {
           fillClimatizationInputs: uiBuildersModule.fillClimatizationInputs,
           fillThermalGainsData: uiBuildersModule.fillThermalGainsData,
           fillCapacityData: uiBuildersModule.fillCapacityData,
-          fillConfigurationData: uiBuildersModule.fillConfigurationData,
+          fillAccessoriesData: uiBuildersModule.fillAccessoriesData,
           ensureAllRoomSections: uiBuildersModule.ensureAllRoomSections,
           ensureMachinesSection: uiBuildersModule.ensureMachinesSection,
           populateMachineData: uiBuildersModule.populateMachineData,
@@ -253,7 +253,7 @@ async function loadAllModules() {
           extractThermalGainsData: dataBuildersModule.extractThermalGainsData,
           extractClimatizationInputs: dataBuildersModule.extractClimatizationInputs,
           extractCapacityData: dataBuildersModule.extractCapacityData,
-          extractConfigurationData: dataBuildersModule.extractConfigurationData
+          extractAccessoriesData: dataBuildersModule.extractAccessoriesData
       };
       
       // ✅ ATRIBUIR FUNÇÕES AO WINDOW

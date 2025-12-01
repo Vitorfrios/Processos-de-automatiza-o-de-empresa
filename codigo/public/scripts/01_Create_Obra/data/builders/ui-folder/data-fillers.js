@@ -352,7 +352,7 @@ function fillCapacityData(roomElement, capacityData) {
 /**
  * Preenche as configurações de instalação da sala
  */
-function fillConfigurationData(roomElement, configData) {
+function fillAccessoriesData(roomElement, configData) {
     if (!roomElement || !configData) {
         console.error('❌ Elemento da sala ou dados de configuração inválidos');
         return;
@@ -398,9 +398,9 @@ async function ensureAllRoomSections(roomElement) {
     // ✅ CORREÇÃO: Usar as novas funções para verificar seções
     const climatizationSection = findSectionByTitle(roomElement, 'Climatização');
     const machinesSection = findMachinesSection(roomElement);
-    const configurationSection = findSectionByTitle(roomElement, 'Configuração');
+    const accessorySection = findSectionByTitle(roomElement, 'Acessorios');
 
-    if (climatizationSection && machinesSection && configurationSection) {
+    if (climatizationSection && machinesSection && accessorySection) {
         console.log(`✅ Todas as seções já existem para sala ${roomName}`);
         return true;
     }
@@ -419,7 +419,9 @@ async function ensureAllRoomSections(roomElement) {
 
             if (typeof window.buildClimatizationSection !== 'function' || 
                 typeof buildMachinesSection !== 'function' ||
-                typeof window.buildConfigurationSection !== 'function') {
+                typeof window.buildAccessoriesSection !== 'function'
+                // aqui falta duto e tubulação
+                ) {
                 console.error('❌ Funções de construção de seções não disponíveis');
                 return false;
             }
@@ -443,7 +445,7 @@ async function ensureAllRoomSections(roomElement) {
             await new Promise(resolve => setTimeout(resolve, 300));
 
             // Criar seção de configuração
-            const configurationHTML = await window.buildConfigurationSection(obraId, projectId, roomName, roomId);
+            const configurationHTML = await window.buildAccessoriesSection(obraId, projectId, roomName, roomId);
             if (configurationHTML) {
                 roomContent.insertAdjacentHTML('beforeend', configurationHTML);
                 console.log(`✅ Seção de configuração criada`);
@@ -491,7 +493,7 @@ export {
     fillClimatizationInputs,
     fillThermalGainsData,
     fillCapacityData,
-    fillConfigurationData,
+    fillAccessoriesData,
     ensureAllRoomSections,
     setupRoomTitleChangeListener
 };

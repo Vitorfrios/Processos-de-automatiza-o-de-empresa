@@ -148,7 +148,7 @@ Tudo que está neste bloco já está **implementado e funcional**:
 
 ### + ADIÇÃO DE NOVOS BLOCOS em baixo de maquinas (sbstituição de configuração)
 * - Duto
-* - Acessórios (seleção e valor)
+* - Acessórios (seleção e valor) pelo json 
   - GI = Grelha de Insuflamento
   - GR = Grelha de Retorno
   - TAE = Tomada de Ar Externo
@@ -159,7 +159,7 @@ Tudo que está neste bloco já está **implementado e funcional**:
   - DCF 120 = damper corta-fogo 120min
 
 
---------- TUBULAÇÂO ----------------- Apenas em maquinas específicas
+--------- TUBULAÇÂO ----------------- Apenas em maquinas específicas pelo json 
 Bitola Ls -> linha de gas (select)
 Bitola Ll -> linha de liquido (select)
 Espessura Ls / LL -> base 1,59 mm 
@@ -186,7 +186,12 @@ Wall Mounted-02A
 Wall Mounted-02B
 
 ------------------
-Atualizar tabela de teste de Cálculo de Capacidade de Refrigeração
 Adicionar botao toggle em maquinas (maquina1)  ok 
 ------------------
+Atualizar tabela de teste de Cálculo de Capacidade de Refrigeração urgente ok 
+
+proble principal, o resultado do TR-aproximado, deve ser exibido no campo TR da tabela de capacidade, e os calculos devem ser sempre realizados após qualquer alteração de qualquer um dos campos da tabela;
+
+----------------------------
+dutos
 
