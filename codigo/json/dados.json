@@ -26,7 +26,6 @@
     "deltaT_divi_clim2": 3,
     "FATOR_SEGURANCA_CAPACIDADE": 10
   },
-
   "machines": [
     {
       "type": "Wall Mounted",
@@ -41,7 +40,6 @@
         {
           "id": 1,
           "nome": "Bocal de insuflamento protegido por grelha diretamente no ambiente"
-
         },
         {
           "id": 2,
@@ -1783,7 +1781,6 @@
       ]
     }
   ],
-
   "materials": {
     "Kg cobre": 99.0,
     "Metro isolante 1.1/8": 41.73,
@@ -1794,7 +1791,7 @@
     "Metro Barra Roscada 3/8\"": 23.65,
     "Chumbador 3/8\" por 2.1/2\"": 2.88
   },
-"empresas": [
+  "empresas": [
     {
       "ACT": "ACTEMIUM"
     },
@@ -1851,6 +1848,9 @@
     },
     {
       "SRA": "SRA"
+    },
+    {
+      "BLC": "BlueLink Consulting"
     }
   ]
 }

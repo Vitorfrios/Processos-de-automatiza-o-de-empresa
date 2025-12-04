@@ -38,6 +38,11 @@ import { checkAndLoadExistingSession } from './main-folder/session-manager-main.
 import { showServerOfflineMessage } from './main-folder/error-handler.js';
 import { configurarAutoFormatacaoData } from './data/adapters/obra-adapter-folder/empresa-form-manager.js';
 
+// ✅ IMPORTAR MÓDULOS DE FILTRO
+import './features/filters/filter-system.js';
+import './features/filters/filter-dom.js';
+import './features/filters/filter-autocomplete.js';
+
 /**
  * ✅ VERIFICA SE O SISTEMA ESTÁ 100% CARREGADO
  * Baseado na presença da div de status de sucesso
@@ -229,6 +234,107 @@ function setupSystemLoadObserver() {
 }
 
 /**
+ * ✅ INICIALIZAR SISTEMA DE FILTROS - FUNÇÃO OTIMIZADA
+ */
+function initializeFilterSystem() {
+    console.log('🔧 [MAIN] Inicializando sistema de filtros...');
+    
+    // 🔍 DEBUG: Verificar se módulos foram carregados
+    console.log('🔍 [DEBUG] Módulos disponíveis:', {
+        FilterSystem: !!window.FilterSystem,
+        FilterDOM: !!window.FilterDOM,
+        FilterAutocomplete: !!window.FilterAutocomplete,
+        systemLoaded: window.systemLoaded
+    });
+    
+    // Verificar se módulos foram carregados
+    if (!window.FilterSystem || !window.FilterDOM || !window.FilterAutocomplete) {
+        console.warn('⚠️ [MAIN] Módulos de filtro não carregados, tentando novamente em 1s...');
+        
+        // Tentar novamente após 1 segundo
+        setTimeout(initializeFilterSystem, 1000);
+        return;
+    }
+    
+    try {
+        // Inicializar módulo principal
+        if (window.FilterSystem.initialize && typeof window.FilterSystem.initialize === 'function') {
+            const success = window.FilterSystem.initialize();
+            if (success) {
+                console.log('✅ [MAIN] Sistema de filtros inicializado com sucesso');
+                
+                // Atualizar estado do switch após sistema carregar
+                setupFilterSwitchState();
+            } else {
+                console.error('❌ [MAIN] Falha ao inicializar FilterSystem');
+                
+                // Tentar novamente em caso de falha
+                setTimeout(() => {
+                    initializeFilterSystem();
+                }, 2000);
+            }
+        } else {
+            console.error('❌ [MAIN] FilterSystem.initialize não é uma função');
+        }
+    } catch (error) {
+        console.error('❌ [MAIN] Erro ao inicializar sistema de filtros:', error);
+        
+        // Tentar novamente em caso de erro
+        setTimeout(() => {
+            initializeFilterSystem();
+        }, 2000);
+    }
+}
+
+/**
+ * ✅ CONFIGURAR ESTADO DO SWITCH APÓS SISTEMA CARREGAR
+ */
+function setupFilterSwitchState() {
+    console.log('🎛️ [MAIN] Configurando estado do switch de filtro...');
+    
+    // Monitorar quando o sistema carregar para atualizar switch
+    let attempts = 0;
+    const maxAttempts = 60; // 30 segundos
+    
+    const checkSystemLoaded = setInterval(() => {
+        attempts++;
+        
+        if (window.systemLoaded) {
+            clearInterval(checkSystemLoaded);
+            
+            console.log('✅ [MAIN] Sistema carregado - atualizando estado do switch de filtro');
+            
+            // Garantir que o switch está habilitado (replicando lógica do botão Nova Obra)
+            const filterToggle = document.getElementById('filter-toggle');
+            if (filterToggle) {
+                filterToggle.disabled = false;
+                filterToggle.title = 'Ativar filtros avançados';
+                
+                const switchArea = document.querySelector('.filtro-switch-area');
+                if (switchArea) {
+                    switchArea.style.opacity = '1';
+                    switchArea.style.cursor = 'pointer';
+                }
+                
+                console.log('✅ [MAIN] Switch de filtro habilitado (mesma lógica do botão Nova Obra)');
+            } else {
+                console.error('❌ [MAIN] Elemento filter-toggle não encontrado');
+            }
+        } else if (attempts >= maxAttempts) {
+            clearInterval(checkSystemLoaded);
+            console.warn('⚠️ [MAIN] Timeout ao aguardar sistema carregar para switch');
+            
+            // Forçar habilitação do switch (fallback)
+            const filterToggle = document.getElementById('filter-toggle');
+            if (filterToggle) {
+                filterToggle.disabled = false;
+                console.log('🔄 [MAIN] Switch habilitado via fallback');
+            }
+        }
+    }, 500);
+}
+
+/**
  * Função de debug para verificar o estado final do sistema
  */
 function finalSystemDebug() {
@@ -251,6 +357,12 @@ function finalSystemDebug() {
     toggleObra: typeof window.toggleObra,
     toggleProject: typeof window.toggleProject,
     toggleRoom: typeof window.toggleRoom
+  });
+  
+  console.log('- Sistema de Filtros:', {
+    FilterSystem: !!window.FilterSystem,
+    FilterDOM: !!window.FilterDOM,
+    FilterAutocomplete: !!window.FilterAutocomplete
   });
 }
 
@@ -336,23 +448,20 @@ function verifyCriticalFunctions() {
     criticalFunctions.forEach(funcName => {
         if (typeof window[funcName] === 'function') {
             loadedFunctions.push(funcName);
-            console.log(`✅ ${funcName} atribuída ao window`); // ✅ MOSTRA APENAS AS CARREGADAS
+            console.log(`✅ ${funcName} atribuída ao window`);
         }
         else {
             missingFunctions.push(funcName);
-
         }
     });
     
     console.log(`📊 Total de funções carregadas: ${loadedFunctions.length}/${criticalFunctions.length}`);
     
-    // ✅ AGORA MOSTRA APENAS AS QUE FORAM ENCONTRADAS
     if (loadedFunctions.length > 0) {
         console.log('🎯 Funções disponíveis:', loadedFunctions.join(', '));
     } else {
         console.warn('⚠️ Nenhuma função crítica foi carregada');
     }
-    console.log(`📊 Resumo: ${loadedFunctions.length}/${criticalFunctions.length} funções carregadas`);
     
     if (missingFunctions.length > 0) {
         console.warn(`⚠️ Funções faltando: ${missingFunctions.join(', ')}`);
@@ -412,6 +521,38 @@ function inicializarSistemaData() {
     }
 }
 
+
+/**
+ * ✅ EXPORTAR FUNÇÕES PARA USO GLOBAL (para filtros acessarem)
+ */
+function setupGlobalFunctionsForFilters() {
+    // Verificar se as funções existem e exportar para window
+    if (typeof loadObrasFromServer === 'function') {
+        window.loadObrasFromServer = loadObrasFromServer;
+        console.log('✅ [MAIN] loadObrasFromServer exportado para escopo global');
+    }
+    
+    if (typeof loadSingleObra === 'function') {
+        window.loadSingleObra = loadSingleObra;
+        console.log('✅ [MAIN] loadSingleObra exportado para escopo global');
+    }
+    
+    // Verificar outras funções importantes
+    const importantFunctions = [
+        'createEmptyObra',
+        'populateObraData',
+        'removeBaseObraFromHTML'
+    ];
+    
+    importantFunctions.forEach(funcName => {
+        if (typeof window[funcName] === 'function' && !window[`_${funcName}`]) {
+            window[`_${funcName}`] = window[funcName]; // Backup
+            console.log(`✅ [MAIN] ${funcName} disponível no escopo global`);
+        }
+    });
+}
+
+
 /**
  * Inicialização principal do sistema
  */
@@ -432,7 +573,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     // ✅ Inicializar sistema completo
     await initializeSystem();
-    
+    setupGlobalFunctionsForFilters();
+
     // ✅ Verificar e carregar sessão existente
     console.log("🔍 Verificando sessão existente...");
     const hasExistingSession = await checkAndLoadExistingSession();
@@ -458,6 +600,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     // ✅ Verificar funções críticas após inicialização completa
     setTimeout(verifyCriticalFunctions, 2000);
+    
+    // ✅ INICIALIZAR SISTEMA DE FILTROS
+    // Aguardar 500ms para garantir que o DOM está pronto e outros módulos carregaram
+    setTimeout(() => {
+        initializeFilterSystem();
+    }, 500);
     
   } catch (error) {
     handleInitializationError(error);

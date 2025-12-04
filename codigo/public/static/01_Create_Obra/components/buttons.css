@@ -126,3 +126,308 @@
 .room-header .minimizer:hover {
   background: var(--minimizer-hover-bg);
 }
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================================
+   LINHA PRINCIPAL DO TOPO
+============================================================ */
+.add-obra-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: var(--spacing-xl);
+}
+
+
+
+/* ============================================================
+   BLOCO ESQUERDO DIVIDIDO NA ALTURA
+============================================================ */
+.filtro-bloco-altura {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 78px;
+    height: auto;
+    padding: 4px 0;
+}
+
+
+
+
+/* ============================================================
+   SWITCH — METADE SUPERIOR
+============================================================ */
+.filtro-switch-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 2px;
+}
+
+
+
+/* ============================================================
+   INPUTS — METADE INFERIOR
+============================================================ */
+.filtro-inputs-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  /* inicialmente ocultos */
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+
+  transition: opacity .28s ease, height .28s ease, transform .28s ease;
+}
+
+/* Quando ativos → fluidez */
+.filtro-inputs-area.ativo {
+  opacity: 1;
+  pointer-events: auto;
+  height: auto;
+  transform: translateY(3px);
+}
+
+
+
+/* ============================================================
+   INPUTS — ESTILO ESCURO, ELEGANTE E FLUIDO
+============================================================ */
+.filtro-inputs-area input {
+  width: 185px;
+  padding: 7px 12px;
+
+  background: #f3f3f3;
+  /* mais escuro e menos “claro” */
+  border: 1px solid #b8b8b8;
+  border-radius: 7px;
+
+  font-size: 13.4px;
+  color: #333;
+
+  transition:
+    background .25s ease,
+    border-color .25s ease,
+    box-shadow .25s ease,
+    transform .2s ease;
+}
+
+/* Hover suave */
+.filtro-inputs-area input:hover {
+  background: #efefef;
+  border-color: #a8a8a8;
+}
+
+/* Foco “premium” estilo corporativo */
+.filtro-inputs-area input:focus {
+  border-color: #2979ff;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 2px rgba(41, 121, 255, 0.22),
+    inset 0 1px 3px rgba(0, 0, 0, 0.10);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+/* Placeholder mais visível */
+.filtro-inputs-area input::placeholder {
+  color: #777;
+  font-size: 12.5px;
+}
+
+
+
+/* ============================================================
+   SWITCH ESTILO iOS — MAIS SUAVE
+============================================================ */
+.filter-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.filter-switch input {
+  display: none;
+}
+
+.filter-switch .slider {
+  position: absolute;
+  inset: 0;
+  background: #999;
+  border-radius: 20px;
+
+  transition: background .25s ease, box-shadow .25s ease;
+}
+
+.filter-switch .slider::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+
+  transition: transform .25s ease, background .25s ease;
+}
+
+/* Ativado */
+.filter-switch input:checked+.slider {
+  background: #4CAF50;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.4);
+}
+
+.filter-switch input:checked+.slider::before {
+  transform: translateX(22px);
+}
+
+
+
+/* ============================================================
+   LABEL DO SWITCH
+============================================================ */
+.switch-label-text {
+  font-weight: 600;
+  color: #040404;
+  margin-left: 10px;
+  user-select: none;
+  opacity: .9;
+
+  transition: opacity .25s ease;
+}
+
+.filtro-inputs-area.ativo~.switch-label-text {
+  opacity: 1;
+}
+
+
+
+/* Cadeado indicando bloqueio */
+.filter-lock {
+  font-size: 16px;
+  margin-left: 8px;
+  color: #777;
+  opacity: 0.85;
+  transition: opacity .3s ease, transform .3s ease;
+  cursor: not-allowed;
+}
+
+/* Cadeado some suavemente quando filtros liberados */
+.filter-lock.hidden {
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+}
+
+/* Estilos para autocomplete de filtro */
+.filter-empresa-dropdown {
+    font-family: inherit;
+    border: 1px solid #b8b8b8 !important;
+    border-radius: 7px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    margin-top: 4px !important;
+}
+
+.filter-empresa-options {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.empresa-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+    font-size: 13px;
+}
+
+.empresa-option:hover,
+.empresa-option.active {
+    background-color: #f5f5f5;
+}
+
+.empresa-option strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.empresa-option .nome-empresa {
+    color: #666;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.no-results {
+    padding: 12px;
+    color: #999;
+    text-align: center;
+    font-style: italic;
+    font-size: 13px;
+}
+
+/* Status messages */
+.filter-status-message {
+    margin: 10px 0;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.filter-no-results {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+    font-size: 14px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+/* Input clear icon */
+.input-clear-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
+    font-size: 14px;
+    background: #f3f3f3;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.input-clear-icon:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.filter-clear-button:hover {
+    background-color: #f5f5f5;
+    color: #333;
+}

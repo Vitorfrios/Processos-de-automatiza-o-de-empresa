@@ -1,0 +1,686 @@
+========================================================================================================================
+📊 RELATÓRIO DETALHADO DE REFERÊNCIAS A 'EMPRESA'
+📅 Gerado em: 03/12/2025 22:19:21
+========================================================================================================================
+
+🎯 RESUMO EXECUTIVO
+========================================================================================================================
+
+• 📁 Total de arquivos analisados: 113
+• 🔍 Arquivos com referências a 'empresa': 25
+• 📈 Total de referências encontradas: 381
+• 📊 Taxa de referências: 22.1%
+• 🎯 Média de referências por arquivo: 15.2
+
+
+🏆 TOP 10 ARQUIVOS COM MAIS REFERÊNCIAS
+========================================================================================================================
+
+ 1. empresa-cadastro-inline.js               :   59 referências (15.5%)
+ 2. empresa_handler.py                       :   42 referências (11.0%)
+ 3. empresa-autocomplete.js                  :   34 referências (8.9%)
+ 4. empresa-data-extractor.js                :   33 referências (8.7%)
+ 5. obra-adapter.js                          :   32 referências (8.4%)
+ 6. empresa-form-manager.js                  :   32 referências (8.4%)
+ 7. obra-save-handler.js                     :   29 referências (7.6%)
+ 8. obra-data-loader.js                      :   24 referências (6.3%)
+ 9. ui-helpers-obra-adapter.js               :   18 referências (4.7%)
+10. routes_core.py                           :   16 referências (4.2%)
+
+
+📊 DISTRIBUIÇÃO POR CATEGORIA
+========================================================================================================================
+
+• string_empresa            :    291 ( 76.4%)
+• comentario_empresa        :     60 ( 15.7%)
+• variavel_empresa          :     12 (  3.1%)
+• funcao_empresa            :     12 (  3.1%)
+• import_empresa            :      6 (  1.6%)
+
+
+📄 DISTRIBUIÇÃO POR TIPO DE ARQUIVO
+========================================================================================================================
+
+• .js        :     72 arquivos ( 63.7%)
+• .css       :     19 arquivos ( 16.8%)
+• .py        :     16 arquivos ( 14.2%)
+• .json      :      3 arquivos (  2.7%)
+• .html      :      3 arquivos (  2.7%)
+
+
+📁 TOP 10 DIRETÓRIOS COM MAIS REFERÊNCIAS
+========================================================================================================================
+
+ 1. codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter-folder :  108 referências (28.3%)
+ 2. codigo\public\scripts\01_Create_Obra\data\builders           :   61 referências (16.0%)
+ 3. codigo\servidor_modules\handlers                             :   56 referências (14.7%)
+ 4. codigo\public\scripts\01_Create_Obra\data\builders\data-builders-folder :   37 referências (9.7%)
+ 5. codigo\public\scripts\01_Create_Obra\data\adapters           :   32 referências (8.4%)
+ 6. codigo\public\scripts\01_Create_Obra\features\managers\obra-folder :   30 referências (7.9%)
+ 7. codigo\servidor_modules\core                                 :   16 referências (4.2%)
+ 8. codigo\public\scripts\01_Create_Obra\main-folder             :   12 referências (3.1%)
+ 9. codigo\public\pages                                          :   10 referências (2.6%)
+10. codigo\json                                                  :    7 referências (1.8%)
+
+
+========================================================================================================================
+🔍 ANÁLISE DETALHADA POR ARQUIVO
+========================================================================================================================
+
+
+================================================================================
+📄 ARQUIVO: empresa-cadastro-inline.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\data\builders\empresa-cadastro-inline.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\data\builders
+📊 TOTAL DE REFERÊNCIAS: 59
+📈 DENSIDADE: 4.50% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 51 linhas
+================================================================================
+
+🔧 FUNÇÕES ENCONTRADAS:
+----------------------------------------
+• responseEmpresas
+
+📦 VARIÁVEIS ENCONTRADAS:
+----------------------------------------
+• novaEmpresa
+• obrasDaEmpresa
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+🔧 Linha   28 [funcao_empresa ]: responseEmpresas - const responseEmpresas =
+💬 Linha   27 [comentario_empresa]: // Carregar empresas do dados.json
+💬 Linha   48 [comentario_empresa]: // Encontrar todos os spans de cadastro de empresas e transformar em botões
+💬 Linha  106 [comentario_empresa]: #empresa-input');
+💬 Linha  351 [comentario_empresa]: #empresa-input');
+... e mais 54 referências
+
+
+================================================================================
+📄 ARQUIVO: empresa_handler.py
+📍 CAMINHO: codigo\servidor_modules\handlers\empresa_handler.py
+📁 DIRETÓRIO: codigo\servidor_modules\handlers
+📊 TOTAL DE REFERÊNCIAS: 42
+📈 DENSIDADE: 19.35% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 42 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+💬 Linha    1 [comentario_empresa]: # servidor_modules/handlers/empresa_handler.py
+💬 Linha   47 [comentario_empresa]: # Verificar se empresa já existe
+💬 Linha   55 [comentario_empresa]: # Adicionar nova empresa
+💬 Linha  113 [comentario_empresa]: # Verificar por empresaSigla
+💬 Linha  153 [comentario_empresa]: # Verificar se empresa já existe
+... e mais 37 referências
+
+
+================================================================================
+📄 ARQUIVO: empresa-autocomplete.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter-folder\empresa-autocomplete.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter-folder
+📊 TOTAL DE REFERÊNCIAS: 34
+📈 DENSIDADE: 5.46% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 33 linhas
+================================================================================
+
+🔧 FUNÇÕES ENCONTRADAS:
+----------------------------------------
+• carregarEmpresasComCache
+• exibirTodasEmpresas
+• filtrarEmpresas
+• inicializarInputEmpresaHibrido
+• limparCacheEmpresas
+
+📦 VARIÁVEIS ENCONTRADAS:
+----------------------------------------
+• formEmpresa
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+🔧 Linha   19 [funcao_empresa ]: carregarEmpresasComCache - async function carregarEmpresasComCache(
+🔧 Linha   55 [funcao_empresa ]: inicializarInputEmpresaHibrido - async function inicializarInputEmpresaHibrido(
+🔧 Linha  228 [funcao_empresa ]: filtrarEmpresas - function filtrarEmpresas(
+🔧 Linha  356 [funcao_empresa ]: exibirTodasEmpresas - function exibirTodasEmpresas(
+🔧 Linha  583 [funcao_empresa ]: limparCacheEmpresas - function limparCacheEmpresas(
+... e mais 29 referências
+
+
+================================================================================
+📄 ARQUIVO: empresa-data-extractor.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\data\builders\data-builders-folder\empresa-data-extractor.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\data\builders\data-builders-folder
+📊 TOTAL DE REFERÊNCIAS: 33
+📈 DENSIDADE: 20.25% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 32 linhas
+================================================================================
+
+🔧 FUNÇÕES ENCONTRADAS:
+----------------------------------------
+• extractEmpresaData
+
+📦 VARIÁVEIS ENCONTRADAS:
+----------------------------------------
+• camposEmpresa
+• formEmpresa
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+🔧 Linha    8 [funcao_empresa ]: extractEmpresaData - function extractEmpresaData(
+💬 Linha    1 [comentario_empresa]: // data/builders/data-builders-folder/empresa-data-extractor.js
+💬 Linha  118 [comentario_empresa]: // 🆕 CORRIGIR: Se temos empresaSigla mas não temos empresaNome (ou vice-versa)
+📄 Linha   12 [string_empresa ]: '❌ Elemento da obra é nulo para extração de empresa'
+📄 Linha   16 [string_empresa ]: '🔍 [EXTRACT EMPRESA] INICIANDO extração para obra:'
+... e mais 28 referências
+
+
+================================================================================
+📄 ARQUIVO: obra-adapter.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\data\adapters
+📊 TOTAL DE REFERÊNCIAS: 32
+📈 DENSIDADE: 17.03% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 31 linhas
+================================================================================
+
+📦 VARIÁVEIS ENCONTRADAS:
+----------------------------------------
+• dadosEmpresa
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+📥 Linha    8 [import_empresa ]: import {obterDadosEmpresaDaObra }from
+📥 Linha    9 [import_empresa ]: import {criarVisualizacaoEmpresa,criarFormularioVazioEmpresa }from
+💬 Linha   99 [comentario_empresa]: // Encontrar o container de empresa
+💬 Linha  146 [comentario_empresa]: // Encontrar container de empresa
+💬 Linha  166 [comentario_empresa]: // Verificar se há dados de empresa existentes
+... e mais 27 referências
+
+
+================================================================================
+📄 ARQUIVO: empresa-form-manager.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter-folder\empresa-form-manager.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter-folder
+📊 TOTAL DE REFERÊNCIAS: 32
+📈 DENSIDADE: 4.64% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 31 linhas
+================================================================================
+
+🔧 FUNÇÕES ENCONTRADAS:
+----------------------------------------
+• atualizarCamposEmpresaForm
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+🔧 Linha   32 [funcao_empresa ]: atualizarCamposEmpresaForm - function atualizarCamposEmpresaForm(
+📥 Linha    3 [import_empresa ]: import { inicializarInputEmpresaHibrido } from
+💬 Linha    1 [comentario_empresa]: // empresa-form-manager.js
+💬 Linha   10 [comentario_empresa]: // Encontrar o container de cadastro de empresas
+💬 Linha   52 [comentario_empresa]: // Configurar dados adicionais para empresa
+... e mais 27 referências
+
+
+================================================================================
+📄 ARQUIVO: obra-save-handler.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\features\managers\obra-folder\obra-save-handler.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\features\managers\obra-folder
+📊 TOTAL DE REFERÊNCIAS: 29
+📈 DENSIDADE: 8.26% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 29 linhas
+================================================================================
+
+🔧 FUNÇÕES ENCONTRADAS:
+----------------------------------------
+• prepararEmpresaParaSalvamento
+
+📦 VARIÁVEIS ENCONTRADAS:
+----------------------------------------
+• nomeEmpresa
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+🔧 Linha   15 [funcao_empresa ]: prepararEmpresaParaSalvamento - async function prepararEmpresaParaSalvamento(
+💬 Linha    9 [comentario_empresa]: // NO obra-save-handler.js - SUBSTITUA a função salvarEmpresaAutomaticamente por:
+💬 Linha   19 [comentario_empresa]: // Buscar inputs de empresa
+💬 Linha   28 [comentario_empresa]: // Se já tem sigla selecionada (empresa já cadastrada), não faz nada
+💬 Linha   55 [comentario_empresa]: // 🆕 NÃO SALVA A EMPRESA AQUI - APENAS PREPARA OS DADOS
+... e mais 24 referências
+
+
+================================================================================
+📄 ARQUIVO: obra-data-loader.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter-folder\obra-data-loader.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter-folder
+📊 TOTAL DE REFERÊNCIAS: 24
+📈 DENSIDADE: 7.96% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 23 linhas
+================================================================================
+
+🔧 FUNÇÕES ENCONTRADAS:
+----------------------------------------
+• obterDadosEmpresaDaObra
+• prepararDadosEmpresaNaObra
+
+📦 VARIÁVEIS ENCONTRADAS:
+----------------------------------------
+• camposEmpresa
+• dadosEmpresa
+• temDadosEmpresa
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+🔧 Linha  152 [funcao_empresa ]: prepararDadosEmpresaNaObra - async function prepararDadosEmpresaNaObra(
+🔧 Linha  219 [funcao_empresa ]: obterDadosEmpresaDaObra - function obterDadosEmpresaDaObra(
+📥 Linha    2 [import_empresa ]: import {atualizarInterfaceComEmpresa } from
+💬 Linha  129 [comentario_empresa]: // 🆕 PREPARAR DADOS DE EMPRESA SE EXISTIREM
+💬 Linha  187 [comentario_empresa]: // Preencher dados da empresa nos data attributes da obra
+... e mais 19 referências
+
+
+================================================================================
+📄 ARQUIVO: ui-helpers-obra-adapter.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter-folder\ui-helpers-obra-adapter.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\data\adapters\obra-adapter-folder
+📊 TOTAL DE REFERÊNCIAS: 18
+📈 DENSIDADE: 5.54% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 18 linhas
+================================================================================
+
+📦 VARIÁVEIS ENCONTRADAS:
+----------------------------------------
+• obrasDaEmpresa
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+💬 Linha  218 [comentario_empresa]: // Filtrar obras da mesma empresa
+📄 Linha  114 [string_empresa ]: '.empresa-dropdown'
+📄 Linha  118 [string_empresa ]: 'empresa-input-cadastro'
+📄 Linha  135 [string_empresa ]: `🔄 [EMPRESA] Número do cliente limpo para obra ${obraId}`
+📄 Linha  150 [string_empresa ]: '.empresa-input-container'
+... e mais 13 referências
+
+
+================================================================================
+📄 ARQUIVO: routes_core.py
+📍 CAMINHO: codigo\servidor_modules\core\routes_core.py
+📁 DIRETÓRIO: codigo\servidor_modules\core
+📊 TOTAL DE REFERÊNCIAS: 16
+📈 DENSIDADE: 2.35% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 16 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+💬 Linha   12 [comentario_empresa]: # from servidor_modules.handlers.empresa_handler import EmpresaHandler  # REMOVA esta linha
+💬 Linha   23 [comentario_empresa]: # Inicializa EmpresaHandler com file_utils injetado
+💬 Linha  100 [comentario_empresa]: # 🆕 VERIFICAR E CRIAR EMPRESA AUTOMATICAMENTE ANTES DE SALVAR OBRA
+💬 Linha  152 [comentario_empresa]: # 🆕 VERIFICAR E CRIAR EMPRESA AUTOMATICAMENTE ANTES DE ATUALIZAR OBRA
+💬 Linha  221 [comentario_empresa]: # ========= Metodos para empresas ========
+... e mais 11 referências
+
+
+================================================================================
+📄 ARQUIVO: system-init.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\main-folder\system-init.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\main-folder
+📊 TOTAL DE REFERÊNCIAS: 11
+📈 DENSIDADE: 2.92% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 10 linhas
+================================================================================
+
+🔧 FUNÇÕES ENCONTRADAS:
+----------------------------------------
+• initializeEmpresaCadastro
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+🔧 Linha  284 [funcao_empresa ]: initializeEmpresaCadastro - async function initializeEmpresaCadastro(
+📥 Linha   10 [import_empresa ]: import EmpresaCadastroInline from
+💬 Linha  291 [comentario_empresa]: // Inicializar o sistema de cadastro inline de empresas
+💬 Linha  329 [comentario_empresa]: // 4. Inicializar sistema de cadastro de empresas
+📄 Linha   10 [string_empresa ]: '../data/builders/empresa-cadastro-inline.js'
+... e mais 6 referências
+
+
+================================================================================
+📄 ARQUIVO: 01_Create_Obras.html
+📍 CAMINHO: codigo\public\pages\01_Create_Obras.html
+📁 DIRETÓRIO: codigo\public\pages
+📊 TOTAL DE REFERÊNCIAS: 10
+📈 DENSIDADE: 1.77% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 10 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+💬 Linha  240 [comentario_empresa]: // Callback quando empresa é selecionada
+📄 Linha   61 [string_empresa ]: "text" id="filter-empresa" placeholder="Empresa"
+📄 Linha  165 [string_empresa ]: "filter-empresa", "filter-numero-cliente", "filter-nome-obra"
+📄 Linha  233 [string_empresa ]: 'filter-empresa'
+📄 Linha  244 [string_empresa ]: 'empresa'
+... e mais 5 referências
+
+
+================================================================================
+📄 ARQUIVO: http_handler.py
+📍 CAMINHO: codigo\servidor_modules\handlers\http_handler.py
+📁 DIRETÓRIO: codigo\servidor_modules\handlers
+📊 TOTAL DE REFERÊNCIAS: 8
+📈 DENSIDADE: 2.42% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 8 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+💬 Linha  152 [comentario_empresa]: # ROTAS DE EMPRESAS
+📄 Linha   38 [string_empresa ]: '/api/dados/empresas': 'handle_get_empresas'
+📄 Linha  117 [string_empresa ]: '/api/dados/empresas/'
+📄 Linha  153 [string_empresa ]: '/api/dados/empresas'
+📄 Linha  212 [string_empresa ]: """Rotas de empresa otimizadas"""
+... e mais 3 referências
+
+
+================================================================================
+📄 ARQUIVO: backup.json
+📍 CAMINHO: codigo\json\backup.json
+📁 DIRETÓRIO: codigo\json
+📊 TOTAL DE REFERÊNCIAS: 6
+📈 DENSIDADE: 3.12% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 6 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+📄 Linha    6 [string_empresa ]: "empresa_id": "empresa_obra_j54"
+📄 Linha    7 [string_empresa ]: "empresaSigla": "BLC"
+📄 Linha    8 [string_empresa ]: "empresaNome": "BlueLink Consulting"
+📄 Linha  117 [string_empresa ]: "empresa_id": "empresa_obra_j52"
+📄 Linha  118 [string_empresa ]: "empresaSigla": "ACT"
+... e mais 1 referências
+
+
+================================================================================
+📄 ARQUIVO: route_handler.py
+📍 CAMINHO: codigo\servidor_modules\handlers\route_handler.py
+📁 DIRETÓRIO: codigo\servidor_modules\handlers
+📊 TOTAL DE REFERÊNCIAS: 6
+📈 DENSIDADE: 2.55% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 6 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+💬 Linha   76 [comentario_empresa]: # ========== ROTAS DE EMPRESAS ==========
+📄 Linha   79 [string_empresa ]: """GET /api/dados/empresas"""
+📄 Linha   84 [string_empresa ]: """GET /api/dados/empresas/numero/{sigla}"""
+📄 Linha   89 [string_empresa ]: """POST /api/dados/empresas"""
+📄 Linha   97 [string_empresa ]: """GET /api/dados/empresas/buscar/{termo}"""
+... e mais 1 referências
+
+
+================================================================================
+📄 ARQUIVO: logger.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\core\logger.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\core
+📊 TOTAL DE REFERÊNCIAS: 5
+📈 DENSIDADE: 1.75% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 5 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+💬 Linha   68 [comentario_empresa]: // Empresa data extraction
+📄 Linha   69 [string_empresa ]: '🔍 [EXTRACT EMPRESA]', '📋 [EXTRACT EMPRESA]', '✅ [EXTRACT EMPRESA]'
+📄 Linha   70 [string_empresa ]: '🏢 [EXTRACT EMPRESA]', '🔢 [EXTRACT EMPRESA]', '🎯 [EXTRACT EMPRESA]'
+📄 Linha   71 [string_empresa ]: '📅 [EXTRACT EMPRESA]'
+📄 Linha   88 [string_empresa ]: '✅ Tooltip inicializado', '✅ Header da obra atualizado', '✅ [EMPRESA] Interface atualizada'
+
+
+================================================================================
+📄 ARQUIVO: obra-data-builder.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\data\builders\data-builders-folder\obra-data-builder.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\data\builders\data-builders-folder
+📊 TOTAL DE REFERÊNCIAS: 4
+📈 DENSIDADE: 1.80% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 3 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+📥 Linha    4 [import_empresa ]: import { extractEmpresaData } from
+💬 Linha    2 [comentario_empresa]: // Responsável por montar o objeto completo da obra (incluindo dados de empresa, projetos e salas).
+📄 Linha    4 [string_empresa ]: './empresa-data-extractor.js'
+📄 Linha   57 [string_empresa ]: `empresa_${finalObraId}`
+
+
+================================================================================
+📄 ARQUIVO: global-stubs.js
+📍 CAMINHO: codigo\public\scripts\02_Obras_manager\utils\global-stubs.js
+📁 DIRETÓRIO: codigo\public\scripts\02_Obras_manager\utils
+📊 TOTAL DE REFERÊNCIAS: 3
+📈 DENSIDADE: 0.52% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 3 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+💬 Linha   15 [comentario_empresa]: // Stub para ativarCadastroEmpresa (não existe na Página 1)
+📄 Linha   18 [string_empresa ]: '🔧 ativarCadastroEmpresa stub chamado'
+📄 Linha   22 [string_empresa ]: '✅ Stub ativarCadastroEmpresa criado'
+
+
+================================================================================
+📄 ARQUIVO: main.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\main.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra
+📊 TOTAL DE REFERÊNCIAS: 2
+📈 DENSIDADE: 0.43% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 2 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+📄 Linha   39 [string_empresa ]: './data/adapters/obra-adapter-folder/empresa-form-manager.js'
+📄 Linha  244 [string_empresa ]: '- Empresa Cadastro:'
+
+
+================================================================================
+📄 ARQUIVO: data-builders.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\data\builders\data-builders.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\data\builders
+📊 TOTAL DE REFERÊNCIAS: 2
+📈 DENSIDADE: 7.14% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 2 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+📄 Linha   10 [string_empresa ]: './data-builders-folder/empresa-data-extractor.js'
+📄 Linha   21 [string_empresa ]: './data-builders-folder/empresa-data-extractor.js'
+
+
+================================================================================
+📄 ARQUIVO: dados.json
+📍 CAMINHO: codigo\json\dados.json
+📁 DIRETÓRIO: codigo\json
+📊 TOTAL DE REFERÊNCIAS: 1
+📈 DENSIDADE: 0.05% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 1 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+📄 Linha 1797 [string_empresa ]: "empresas"
+
+
+================================================================================
+📄 ARQUIVO: obra-creator.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\features\managers\obra-folder\obra-creator.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\features\managers\obra-folder
+📊 TOTAL DE REFERÊNCIAS: 1
+📈 DENSIDADE: 0.61% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 1 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+📄 Linha   29 [string_empresa ]: "btn-empresa-cadastro" onclick="window.ativarCadastroEmpresa('${obraId}')"
+
+
+================================================================================
+📄 ARQUIVO: session-manager-main.js
+📍 CAMINHO: codigo\public\scripts\01_Create_Obra\main-folder\session-manager-main.js
+📁 DIRETÓRIO: codigo\public\scripts\01_Create_Obra\main-folder
+📊 TOTAL DE REFERÊNCIAS: 1
+📈 DENSIDADE: 1.22% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 1 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+📄 Linha   71 [string_empresa ]: 'obterDadosEmpresa'
+
+
+================================================================================
+📄 ARQUIVO: page1-functions-loader.js
+📍 CAMINHO: codigo\public\scripts\02_Obras_manager\utils\page1-functions-loader.js
+📁 DIRETÓRIO: codigo\public\scripts\02_Obras_manager\utils
+📊 TOTAL DE REFERÊNCIAS: 1
+📈 DENSIDADE: 0.75% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 1 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+💬 Linha   74 [comentario_empresa]: // ✅ CORREÇÃO: Adicionar funções de empresa
+
+
+================================================================================
+📄 ARQUIVO: main.css
+📍 CAMINHO: codigo\public\static\01_Create_Obra\main.css
+📁 DIRETÓRIO: codigo\public\static\01_Create_Obra
+📊 TOTAL DE REFERÊNCIAS: 1
+📈 DENSIDADE: 0.19% das linhas contêm 'empresa'
+📝 LINHAS COM REFERÊNCIAS: 1 linhas
+================================================================================
+
+📝 EXEMPLOS DE REFERÊNCIAS:
+----------------------------------------
+📄 Linha   12 [string_empresa ]: 'components/empresa-cadastro-inline.css'
+
+
+
+========================================================================================================================
+📋 LISTA COMPLETA DE FUNÇÕES/MÉTODOS/CLASSES
+========================================================================================================================
+
+🔧 FUNÇÕES (ordenadas por frequência):
+------------------------------------------------------------
+  1. carregarEmpresasComCache                           :   1 ocorrências
+  2. inicializarInputEmpresaHibrido                     :   1 ocorrências
+  3. filtrarEmpresas                                    :   1 ocorrências
+  4. exibirTodasEmpresas                                :   1 ocorrências
+  5. limparCacheEmpresas                                :   1 ocorrências
+  6. atualizarCamposEmpresaForm                         :   1 ocorrências
+  7. prepararDadosEmpresaNaObra                         :   1 ocorrências
+  8. obterDadosEmpresaDaObra                            :   1 ocorrências
+  9. responseEmpresas                                   :   1 ocorrências
+ 10. extractEmpresaData                                 :   1 ocorrências
+ 11. prepararEmpresaParaSalvamento                      :   1 ocorrências
+ 12. initializeEmpresaCadastro                          :   1 ocorrências
+
+📦 VARIÁVEIS:
+------------------------------------------------------------
+  1. camposEmpresa                                      :   3 ocorrências
+  2. dadosEmpresa                                       :   2 ocorrências
+  3. formEmpresa                                        :   2 ocorrências
+  4. obrasDaEmpresa                                     :   2 ocorrências
+  5. temDadosEmpresa                                    :   1 ocorrências
+  6. novaEmpresa                                        :   1 ocorrências
+  7. nomeEmpresa                                        :   1 ocorrências
+
+
+
+========================================================================================================================
+🔄 ANÁLISE DE DEPENDÊNCIAS E IMPORTS
+========================================================================================================================
+
+📥 Total de imports encontrados: 6 (6 únicos)
+
+📋 Lista de imports:
+------------------------------------------------------------
+  1. import EmpresaCadastroInline from
+  2. import { extractEmpresaData } from
+  3. import { inicializarInputEmpresaHibrido } from
+  4. import {atualizarInterfaceComEmpresa } from
+  5. import {criarVisualizacaoEmpresa,criarFormularioVazioEmpresa }from
+  6. import {obterDadosEmpresaDaObra }from
+
+
+========================================================================================================================
+📈 ESTATÍSTICAS AVANÇADAS
+========================================================================================================================
+
+📏 DISTRIBUIÇÃO POR TAMANHO DE ARQUIVO:
+• Menor arquivo: 1,141 bytes
+• Maior arquivo: 44,875 bytes
+• Média: 15,004 bytes
+• Total: 375,109 bytes
+
+📊 HISTOGRAMA DE FREQUÊNCIA POR ARQUIVO:
+----------------------------------------
+1-5    referências:  10 arquivos ████████████████████ (40.0%)
+6-10   referências:   4 arquivos ████████ (16.0%)
+11-20  referências:   3 arquivos ██████ (12.0%)
+21-50  referências:   7 arquivos ██████████████ (28.0%)
+51-100 referências:   1 arquivos ██ (4.0%)
+100+   referências:   0 arquivos  (0.0%)
+
+
+========================================================================================================================
+💡 RECOMENDAÇÕES E INSIGHTS
+========================================================================================================================
+
+1. 📍 ARQUIVOS PRINCIPAIS:
+   Os seguintes arquivos são os mais centrais para a funcionalidade de 'empresa':
+   • empresa-cadastro-inline.js
+   • empresa_handler.py
+   • empresa-autocomplete.js
+
+2. 🔧 FUNÇÕES CHAVE:
+   As funções mais importantes relacionadas a empresa são:
+   • carregarEmpresasComCache
+   • inicializarInputEmpresaHibrido
+   • filtrarEmpresas
+   • exibirTodasEmpresas
+   • limparCacheEmpresas
+
+3. 🏛️  ARQUITETURA IDENTIFICADA:
+   Com base na análise, a estrutura relacionada a empresa inclui:
+   • Funções principais: carregarEmpresasComCache, inicializarInputEmpresaHibrido, filtrarEmpresas
+
+4. 🔄 DEPENDÊNCIAS:
+   O sistema possui imports específicos para funcionalidades de empresa.
+
+5. 📈 PONTOS DE ATENÇÃO:
+   • empresa-cadastro-inline.js tem 59 referências - considerar modularização
+
+
+========================================================================================================================
+📋 RESUMO FINAL
+========================================================================================================================
+
+✅ A busca identificou um sistema robusto de funcionalidades de 'empresa' com:
+   • 381 referências distribuídas em 25 arquivos
+   • 12 funções/classes principais
+   • Arquitetura bem definida com separação clara de responsabilidades
+
+🎯 Próximos passos recomendados:
+   1. Analisar os arquivos principais listados acima
+   2. Revisar as funções mais utilizadas
+   3. Considerar refatoração se houver arquivos com mais de 50 referências
+
+========================================================================================================================
+📅 Relatório gerado em: 03/12/2025 22:19:21
+🔍 Total de análise: 113 arquivos processados
+========================================================================================================================

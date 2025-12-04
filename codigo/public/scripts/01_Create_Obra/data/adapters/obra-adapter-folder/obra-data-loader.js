@@ -118,7 +118,7 @@ async function loadSingleObra(obraData) {
             await window.createEmptyObra(obraData.nome, obraData.id);
             
             // Aguardar criação no DOM
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 150));
             
             // Verificar se foi criada
             const obraCriada = document.querySelector(`[data-obra-id="${obraData.id}"]`);

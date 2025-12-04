@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,10 +10,12 @@
 
 
 </head>
+
 <body>
     <header class="header">
         <div class="header-left">
-            <img src="https://esienergia.com.br/wp-content/uploads/2023/08/logo-esienergia-white.png" alt="Logo Esquerda" class="logo">
+            <img src="https://esienergia.com.br/wp-content/uploads/2023/08/logo-esienergia-white.png"
+                alt="Logo Esquerda" class="logo">
         </div>
         <div class="header-center">
             <h1>Criação de Obras e Projetos</h1>
@@ -36,9 +39,37 @@
         <div class="container">
             <!-- Botão para adicionar nova obra -->
             <div class="add-obra-section">
-                <button class="btn btn-add" onclick="addNewObra()" id="add-obra-btn">
+
+                <!-- BLOCO ESQUERDO (switch + inputs divididos verticalmente) -->
+                <div class="filtro-bloco-altura">
+
+                    <!-- METADE DE CIMA — SWITCH -->
+                    <div class="filtro-switch-area">
+                        <label class="filter-switch">
+                            <input type="checkbox" id="filter-toggle" disabled>
+                            <span class="slider"></span>
+                        </label>
+
+                        <span class="switch-label-text">Filtro de Obras</span>
+
+                    </div>
+
+                    <!-- METADE DE BAIXO — INPUTS -->
+                    <div class="filtro-inputs-area" id="filtros-inputs">
+                        <input type="text" id="filter-empresa" placeholder="Empresa" disabled>
+
+                        <input type="number" id="filter-numero-cliente" placeholder="Nº Cliente" min="1" step="1"
+                            disabled>
+
+                        <input type="text" id="filter-nome-obra" placeholder="Nome da Obra" disabled>
+                    </div>
+                </div>
+
+                <!-- BOTÃO NO MESMO NÍVEL -->
+                <button class="btn btn-add" onclick="addNewObra()" id="add-obra-btn" disabled>
                     + Adicionar Nova Obra
                 </button>
+
             </div>
 
             <!-- Container de Obras -->
@@ -47,7 +78,7 @@
             </div>
         </div>
     </main>
-    
+
     <!-- Modal de Confirmação para Exclusão -->
     <div id="confirmationModal" class="confirmation-modal hidden">
         <div class="modal-content">
@@ -66,22 +97,22 @@
             </div>
         </div>
     </div>
-    
+
     <script type="module" src="../scripts/01_Create_Obra/main.js"></script>
-    
+
     <script>
         // Função para destacar e travar apenas o clique da página ativa
         function highlightAndLockActivePage() {
             // Obtém o caminho atual da página
             const currentPath = window.location.pathname.toLowerCase();
-            
+
             // Remove a classe 'active' de todos os links
             document.querySelectorAll('.nav-list li a').forEach(link => {
                 link.classList.remove('active');
             });
-            
+
             let activeLink = null;
-            
+
             // Identifica qual link corresponde à página atual
             if (currentPath.includes('create_obra')) {
                 activeLink = document.getElementById('nav-criar-obras');
@@ -93,22 +124,22 @@
                 // Padrão: primeira página
                 activeLink = document.querySelector('.nav-list li a');
             }
-            
+
             // Adiciona a classe 'active' e trava apenas o clique
             if (activeLink) {
                 activeLink.classList.add('active');
-                
+
                 // Remove apenas a ação do clique, mantendo href para CSS
-                activeLink.addEventListener('click', function(e) {
+                activeLink.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
                     return false;
                 }, true); // Use capture phase para garantir que execute primeiro
-                
+
                 // Adiciona atributo para identificar visualmente (opcional)
                 activeLink.setAttribute('data-current-page', 'true');
-                
+
                 console.log('Página ativa: clique travado, CSS mantido -', activeLink.textContent);
             }
         }
@@ -119,36 +150,36 @@
         // Versão alternativa mais robusta
         function lockActivePageAdvanced() {
             const currentPath = window.location.pathname.toLowerCase();
-            
+
             document.querySelectorAll('.nav-list li a').forEach(link => {
                 const linkHref = link.getAttribute('href');
-                
+
                 // Verifica se este link corresponde à página atual
-                const isCurrentPage = 
+                const isCurrentPage =
                     (linkHref && currentPath.includes(linkHref.replace('./', '').replace('.html', '').toLowerCase())) ||
                     (currentPath.includes('create_obra') && link.id === 'nav-criar-obras') ||
                     (currentPath.includes('manager_obras') && link.id === 'nav-gerenciar-obras') ||
                     (currentPath.includes('edit_data') && link.id === 'nav-editar-dados');
-                
+
                 if (isCurrentPage) {
                     // Esta é a página atual - adiciona classe ativa
                     link.classList.add('active');
-                    
+
                     // Remove qualquer evento de clique existente
                     link.replaceWith(link.cloneNode(true));
                     const newLink = document.querySelector(`[href="${linkHref}"]`) || document.getElementById(link.id);
-                    
+
                     // Adiciona novo listener que previne o clique
-                    newLink.addEventListener('click', function(e) {
+                    newLink.addEventListener('click', function (e) {
                         e.preventDefault();
                         e.stopPropagation();
                         return false;
                     });
-                    
+
                     // Mantém todos os estilos de hover normais
                     newLink.style.pointerEvents = 'auto';
                     newLink.style.cursor = 'pointer';
-                    
+
                 } else {
                     link.classList.remove('active');
                 }
@@ -156,12 +187,13 @@
         }
 
         // Use esta segunda versão se a primeira não funcionar perfeitamente
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             highlightAndLockActivePage();
-            
+
             // Executa novamente após um delay para garantir
             setTimeout(highlightAndLockActivePage, 50);
         });
     </script>
 </body>
+
 </html>
