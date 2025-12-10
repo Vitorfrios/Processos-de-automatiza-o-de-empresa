@@ -566,7 +566,6 @@ function exportSystemFunctionsForFilters() {
     
     // Funções que PRECISAM ser acessadas pelos filtros
     const criticalFunctions = [
-        'loadObrasFromServer',
         'loadSingleObra', 
         'createEmptyObra',
         'populateObraData',
@@ -665,9 +664,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     // ✅ Inicializar sistema completo
     await initializeSystem();
-    
-    // 🔍 DEBUG: Verificar funções disponíveis
-    debugAvailableFunctions();
+
     
     // ✅ EXPORTAR FUNÇÕES PARA FILTROS (IMPORTANTE!)
     exportSystemFunctionsForFilters();

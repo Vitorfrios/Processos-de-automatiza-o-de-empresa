@@ -278,6 +278,14 @@ async function debugLoadObras() {
     }
 }
 
+
+if (typeof window !== "undefined") {
+    window.prepararDadosEmpresaNaObra = prepararDadosEmpresaNaObra;
+    window.obterDadosEmpresaDaObra = obterDadosEmpresaDaObra;
+}
+
+
+
 // EXPORTS NO FINAL
 export {
     removeBaseObraFromHTML,

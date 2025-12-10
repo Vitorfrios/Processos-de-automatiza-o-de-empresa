@@ -128,8 +128,8 @@ def vasculhar_arquivos_por_empresa(diretorio_base):
     }
     
     extensoes = [
-        '.js', '.ts', '.jsx', '.tsx', '.vue', '.html', '.htm',
-        '.css', '.scss', '.less', '.json', '.md', '.txt', '.py',
+        '.js', '.ts', '.jsx', '.tsx', '.vue', '.htm',
+        '.css', '.scss', '.less', '.py',
         '.php', '.java', '.cs', '.go', '.rb', '.cpp', '.h'
     ]
     

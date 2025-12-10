@@ -339,6 +339,19 @@ const FilterSystem = (function () {
                 const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
                 if (obraElement) {
                     await window.systemFunctions.populateObraData(obraData);
+                    // Aplicar dados da empresa na obra carregada pelo filtro
+                    try {
+                        const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
+                        if (obraElement && window.prepararDadosEmpresaNaObra) {
+                            await window.prepararDadosEmpresaNaObra(obraData, obraElement);
+                            console.log(`🏢 Empresa hidratada para obra ${obraData.id}`);
+                        } else {
+                            console.warn(`⚠️ Obra ${obraData.id} encontrada?`, !!obraElement,
+                                "Função prepararDadosEmpresaNaObra existe?", !!window.prepararDadosEmpresaNaObra);
+                        }
+                    } catch (err) {
+                        console.error("❌ Erro aplicando dados de empresa na obra filtrada:", err);
+                    }
                 }
             }
             else if (typeof window.createEmptyObra === 'function' && typeof window.populateObraData === 'function') {
