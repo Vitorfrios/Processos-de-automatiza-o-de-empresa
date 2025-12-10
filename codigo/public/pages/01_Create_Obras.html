@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Criação de Obras e Projetos</title>
+    <title>Sistema de Criação de Obras ESI</title>
     <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
 
 
@@ -18,7 +18,7 @@
                 alt="Logo Esquerda" class="logo">
         </div>
         <div class="header-center">
-            <h1>Criação de Obras e Projetos</h1>
+            <h1 id="page-title">Criação de Obras</h1>
         </div>
         <button class="shutdown-btn" onclick="shutdownManual()" title="Encerrar Servidor">
             Encerrar Servidor
@@ -46,7 +46,8 @@
                     <!-- METADE DE CIMA — SWITCH -->
                     <div class="filtro-switch-area">
                         <label class="filter-switch">
-                            <input type="checkbox" id="filter-toggle" disabled>
+                            <input type="checkbox" id="filter-toggle""
+                                disabled>
                             <span class="slider"></span>
                         </label>
 
@@ -192,6 +193,31 @@
 
             // Executa novamente após um delay para garantir
             setTimeout(highlightAndLockActivePage, 50);
+        });
+    </script>
+    <script>
+        // ✅ ATUALIZAR TÍTULO
+        function atualizarTituloPagina(modoEdicao) {
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle) {
+                pageTitle.textContent = modoEdicao
+                    ? "Edição de Obras"
+                    : "Criação de Obras";
+            }
+        }
+        // No seu arquivo main.js ou dentro de uma tag <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleSwitch = document.getElementById('filter-toggle');
+
+            if (toggleSwitch) {
+                toggleSwitch.addEventListener('change', function () {
+                    atualizarTituloPagina(this.checked);
+
+                    // Aqui você pode adicionar outras funcionalidades
+                    // que devem ocorrer quando o modo é alterado
+                    console.log('Modo alterado para:', this.checked ? 'Edição' : 'Criação');
+                });
+            }
         });
     </script>
 </body>

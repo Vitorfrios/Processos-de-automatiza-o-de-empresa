@@ -552,6 +552,98 @@ function setupGlobalFunctionsForFilters() {
     });
 }
 
+/**
+ * ✅ EXPORTAR FUNÇÕES DO SISTEMA PARA FILTROS
+ */
+/**
+ * ✅ EXPORTAR FUNÇÕES DO SISTEMA PARA FILTROS - VERSÃO CORRIGIDA
+ */
+function exportSystemFunctionsForFilters() {
+    console.log('📤 [MAIN] Exportando funções para sistema de filtros...');
+    
+    // 🔥 PRIMEIRO: Verificar quais funções estão disponíveis GLOBALMENTE (não apenas no window)
+    console.log('🔍 [MAIN] Verificando funções disponíveis no escopo:');
+    
+    // Funções que PRECISAM ser acessadas pelos filtros
+    const criticalFunctions = [
+        'loadObrasFromServer',
+        'loadSingleObra', 
+        'createEmptyObra',
+        'populateObraData',
+        'removeBaseObraFromHTML'
+    ];
+    
+    // 🔥 MÉTODO 1: Verificar variáveis globais via eval (cuidadoso)
+    criticalFunctions.forEach(funcName => {
+        try {
+            // Tenta avaliar se a função existe no escopo
+            if (eval(`typeof ${funcName}`) === 'function') {
+                // Exporta para window.systemFunctions
+                if (!window.systemFunctions) window.systemFunctions = {};
+                window.systemFunctions[funcName] = eval(funcName);
+                console.log(`✅ [MAIN] ${funcName} exportada (encontrada como global)`);
+                return;
+            }
+        } catch (e) {
+            // Ignora erros de variável não definida
+        }
+        
+        // 🔥 MÉTODO 2: Verificar no window
+        if (window[funcName] && typeof window[funcName] === 'function') {
+            if (!window.systemFunctions) window.systemFunctions = {};
+            window.systemFunctions[funcName] = window[funcName];
+            console.log(`✅ [MAIN] ${funcName} exportada (encontrada no window)`);
+            return;
+        }
+        
+        // 🔥 MÉTODO 3: Verificar se foi importada como módulo
+        const moduleFunc = getFunctionFromModules(funcName);
+        if (moduleFunc) {
+            if (!window.systemFunctions) window.systemFunctions = {};
+            window.systemFunctions[funcName] = moduleFunc;
+            console.log(`✅ [MAIN] ${funcName} exportada (encontrada em módulos)`);
+            return;
+        }
+        
+        console.warn(`⚠️ [MAIN] ${funcName} não encontrada em nenhum escopo`);
+    });
+    
+    // 🔥 VERIFICAÇÃO FINAL: Mostrar o que foi exportado
+    if (window.systemFunctions) {
+        console.log('📊 [MAIN] Funções exportadas para systemFunctions:', 
+            Object.keys(window.systemFunctions).join(', '));
+    } else {
+        console.error('❌ [MAIN] NENHUMA função foi exportada para systemFunctions!');
+    }
+}
+
+/**
+ * 🔥 FUNÇÃO AUXILIAR: Buscar função em módulos importados
+ */
+function getFunctionFromModules(funcName) {
+    // Verificar se há algum objeto de módulos global
+    if (window.modules) {
+        for (const moduleKey in window.modules) {
+            if (window.modules[moduleKey] && 
+                window.modules[moduleKey][funcName] && 
+                typeof window.modules[moduleKey][funcName] === 'function') {
+                return window.modules[moduleKey][funcName];
+            }
+        }
+    }
+    
+    // Verificar namespace ESI específico (se existir)
+    if (window.ESI && window.ESI[funcName] && typeof window.ESI[funcName] === 'function') {
+        return window.ESI[funcName];
+    }
+    
+    return null;
+}
+
+
+
+
+
 
 /**
  * Inicialização principal do sistema
@@ -573,11 +665,18 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     // ✅ Inicializar sistema completo
     await initializeSystem();
-    setupGlobalFunctionsForFilters();
-
+    
+    // 🔍 DEBUG: Verificar funções disponíveis
+    debugAvailableFunctions();
+    
+    // ✅ EXPORTAR FUNÇÕES PARA FILTROS (IMPORTANTE!)
+    exportSystemFunctionsForFilters();
+    
     // ✅ Verificar e carregar sessão existente
     console.log("🔍 Verificando sessão existente...");
     const hasExistingSession = await checkAndLoadExistingSession();
+    
+    // ... resto do código continua igual ...
     
     if (!hasExistingSession) {
       console.log("📭 Nenhuma sessão existente - sistema começa vazio");
