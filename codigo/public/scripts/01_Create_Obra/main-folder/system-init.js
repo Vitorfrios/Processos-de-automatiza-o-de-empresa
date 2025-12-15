@@ -77,7 +77,8 @@ async function loadSystemConstants() {
     window.systemConstants = constantsData;
     console.log("✅ Constantes carregadas do JSON:", window.systemConstants);
 
-    if (!window.systemConstants.VARIAVEL_PD || !window.systemConstants.VARIAVEL_PS) {
+    if (!window.systemConstants.VARIAVEL_PD.value
+ || !window.systemConstants.VARIAVEL_PS) {
       throw new Error("Constantes essenciais não encontradas no JSON");
     }
 

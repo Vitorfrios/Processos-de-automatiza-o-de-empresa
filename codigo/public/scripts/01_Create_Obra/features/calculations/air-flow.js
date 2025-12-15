@@ -56,7 +56,8 @@ function computeAirFlowRate(inputData) {
         return 0;
     }
 
-    const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD, pressure);
+    const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD.value
+, pressure);
     const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS, pressure);
 
     const totalFlow = doubleDoorFlow + singleDoorFlow;

@@ -1,6 +1,9 @@
 {
   "constants": {
-    "VARIAVEL_PD": 0.0402,
+    "VARIAVEL_PD": {
+      "value": 0.0402,
+      "description": "Coeficiente de perda térmica por densidade"
+    },
     "VARIAVEL_PS": 0.024,
     "AUX_U_Value_Piso": 2.7,
     "AUX_Fator_Iluminacao": 7,

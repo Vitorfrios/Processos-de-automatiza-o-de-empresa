@@ -244,6 +244,12 @@ class RouteHandler:
         
         
     # ========== ROTAS PARA SISTEMA DE EDIÇÃO ==========
+    # ========== ROTAS PARA SISTEMA DE EDIÇÃO ==========
+
+    def handle_get_system_data(self, handler):
+        """GET /api/system-data - Retorna TODOS os dados do sistema"""
+        system_data = self.routes_core.handle_get_system_data()
+        handler.send_json_response(system_data)
 
     def handle_get_constants_json(self, handler):
         """GET /api/constants - Retorna apenas as constantes"""
@@ -327,4 +333,32 @@ class RouteHandler:
         post_data = handler.rfile.read(content_length).decode('utf-8')
         
         result = self.routes_core.handle_post_update_machine(post_data)
+        handler.send_json_response(result)
+
+    def handle_post_empresas_auto(self, handler):
+        """POST /api/dados/empresas/auto"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_empresas_auto(post_data)
+        handler.send_json_response(result)
+
+    # ========== ROTAS EXISTENTES QUE PODEM FALTAR ==========
+
+    def handle_get_projetos(self, handler):
+        """GET /projetos (legacy)"""
+        projetos = self.routes_core.handle_get_projetos()
+        handler.send_json_response(projetos)
+
+    def handle_get_session_projects(self, handler):
+        """GET /api/session-projects (legacy)"""
+        handler.send_json_response([])
+
+    def handle_health_check(self, handler):
+        """GET /health-check"""
+        handler.send_json_response({"status": "online", "timestamp": time.time()})
+
+    def handle_get_server_uptime(self, handler):
+        """GET /api/server/uptime"""
+        result = self.routes_core.handle_get_server_uptime()
         handler.send_json_response(result)

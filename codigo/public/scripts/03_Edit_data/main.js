@@ -10,18 +10,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Carregar todos os módulos
     await loadModules();
     
-    // Configurar eventos
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') performSearch();
-        });
-    }
-    
-    const searchBtn = document.querySelector('.btn-info[onclick*="performSearch"]');
-    if (searchBtn) {
-        searchBtn.addEventListener('click', performSearch);
-    }
     
     // Carregar dados iniciais
     setTimeout(() => {
@@ -73,20 +61,7 @@ window.shutdownManual = function() {
     });
 };
 
-// Função de busca (simplificada)
-window.performSearch = function() {
-    const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-    const filter = document.getElementById('searchFilter').value;
-    
-    if (!searchTerm) {
-        showWarning('Digite um termo para buscar');
-        return;
-    }
-    
-    console.log(`Busca: "${searchTerm}" no filtro: ${filter}`);
-    // Implementação completa será adicionada posteriormente
-    showInfo('Funcionalidade de busca em desenvolvimento');
-};
+
 
 // Arquivo adicional para JSON Editor
 const jsonEditorModule = {

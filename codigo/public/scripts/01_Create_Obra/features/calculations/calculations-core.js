@@ -72,7 +72,8 @@ async function waitForSystemConstants() {
     let attempts = 0;
     const maxAttempts = 100;
     
-    while ((!window.systemConstants || !window.systemConstants.VARIAVEL_PD) && attempts < maxAttempts) {
+    while ((!window.systemConstants || !window.systemConstants.VARIAVEL_PD.value
+) && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 200));
         attempts++;
     }

@@ -152,7 +152,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # Rotas definidas no dicionário API_ROUTES
         if path in self.API_ROUTES:
             handler_name = self.API_ROUTES[path]
-            getattr(self.route_handler, handler_name)(self)
+            try:
+                getattr(self.route_handler, handler_name)(self)
+            except AttributeError as e:
+                print(f"❌ Handler não encontrado: {handler_name}")
+                print(f"❌ Métodos disponíveis: {[m for m in dir(self.route_handler) if not m.startswith('_')]}")
+                self.send_error(501, f"Handler não implementado: {handler_name}")
         
         # ========== ROTAS COM PARÂMETROS ==========
         
