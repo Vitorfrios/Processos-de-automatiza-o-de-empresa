@@ -1,22 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Criação de Projetos</title>
-    <link rel="stylesheet" href="../static/page1/main.css">
+    <title>Sistema - Edição de Dados</title>
+    <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
+    <link rel="stylesheet" href="../static/03_Edit_data/edit_data.css">
 </head>
-
 <body>
     <header class="header">
         <div class="header-left">
             <img src="" alt="Logo Esquerda" class="logo">
         </div>
         <div class="header-center">
-            <h1>Criação de Projetos</h1>
+            <h1>Edição de Dados do Sistema</h1>
         </div>
-
         <button class="shutdown-btn" onclick="shutdownManual()" title="Encerrar Servidor">
             Encerrar Servidor
         </button>
@@ -25,10 +23,256 @@
     <!-- Barra de Navegação -->
     <nav class="navbar">
         <ul class="nav-list">
-            <li><a href="./01_CreateProjects.html">Criar Projetos</a></li>
-            <li><a href="./02_Projetos.html">Gerenciar Projetos</a></li>
-            <li><a href="#relatorios">Relatórios</a></li>
-            <li><a href="#03_Edit_data">Editar dados</a></li>
-            <li><a href="#ajuda">Ajuda</a></li>
+            <li><a href="./01_Create_Obras.html" id="nav-criar-obras">Criar Obras</a></li>
+            <li><a href="./02_Manager_Obras.html" id="nav-gerenciar-obras">Gerenciar Obras</a></li>
+            <li><a href="#relatorios" id="nav-relatorios">Relatórios</a></li>
+            <li><a href="./03_Edit_data.html" id="nav-editar-dados">Editar dados</a></li>
+            <li><a href="#ajuda" id="nav-ajuda">Ajuda</a></li>
         </ul>
     </nav>
+
+    <main class="edit-data-container">
+        <!-- Barra de Ferramentas -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-primary" onclick="loadData()">
+                    <i class="icon-refresh"></i> Carregar Dados
+                </button>
+                <button class="btn btn-success" onclick="saveData()">
+                    <i class="icon-save"></i> Salvar Tudo
+                </button>
+                <button class="btn btn-danger" onclick="exportToJSON()">
+                    <i class="icon-download"></i> Exportar JSON
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importFromJSON(event)">
+                <button class="btn btn-warning" onclick="document.getElementById('importFile').click()">
+                    <i class="icon-upload"></i> Importar JSON
+                </button>
+            </div>
+            <div class="toolbar-right">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Buscar em todos os dados...">
+                    <select id="searchFilter">
+                        <option value="all">Tudo</option>
+                        <option value="constants">Constantes</option>
+                        <option value="machines">Máquinas</option>
+                        <option value="materials">Materiais</option>
+                        <option value="empresas">Empresas</option>
+                    </select>
+                    <button class="btn btn-info" onclick="performSearch()">
+                        <i class="icon-search"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de Navegação -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('constants')">Constantes</button>
+            <button class="tab" onclick="switchTab('machines')">Máquinas</button>
+            <button class="tab" onclick="switchTab('materials')">Materiais</button>
+            <button class="tab" onclick="switchTab('empresas')">Empresas</button>
+            <button class="tab" onclick="switchTab('raw')">JSON Bruto</button>
+        </div>
+
+        <!-- Conteúdo das Tabs -->
+        <div id="tabContent">
+            <!-- Tab Constantes -->
+            <div id="constantsTab" class="tab-pane active">
+                <div class="tab-header">
+                    <h2><i class="icon-settings"></i> Constantes do Sistema</h2>
+                    <button class="btn btn-small btn-success" onclick="addConstant()">
+                        <i class="icon-add"></i> Nova Constante
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="30%">Nome</th>
+                                <th width="40%">Descrição</th>
+                                <th width="20%">Valor</th>
+                                <th width="10%">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="constantsTableBody">
+                            <!-- Dados serão carregados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Máquinas -->
+            <div id="machinesTab" class="tab-pane">
+                <div class="tab-header">
+                    <h2><i class="icon-machine"></i> Tipos de Máquinas</h2>
+                    <div class="machine-actions">
+                        <select id="machineTypeFilter" onchange="filterMachines()">
+                            <option value="">Todas as máquinas</option>
+                        </select>
+                        <button class="btn btn-small btn-success" onclick="addMachine()">
+                            <i class="icon-add"></i> Nova Máquina
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="machinesList">
+                    <!-- Cards de máquinas serão carregados aqui -->
+                </div>
+
+                <div class="machine-detail-view" id="machineDetailView" style="display: none;">
+                    <div class="detail-header">
+                        <h3>Editando: <span id="machineDetailTitle"></span></h3>
+                        <button class="btn btn-small btn-danger" onclick="closeMachineDetail()">
+                            <i class="icon-close"></i> Fechar
+                        </button>
+                    </div>
+                    <div id="machineDetailContent">
+                        <!-- Conteúdo dinâmico da máquina -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Materiais -->
+            <div id="materialsTab" class="tab-pane">
+                <div class="tab-header">
+                    <h2><i class="icon-material"></i> Materiais e Preços</h2>
+                    <button class="btn btn-small btn-success" onclick="addMaterial()">
+                        <i class="icon-add"></i> Novo Material
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="40%">Material</th>
+                                <th width="40%">Unidade</th>
+                                <th width="15%">Preço</th>
+                                <th width="5%">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialsTableBody">
+                            <!-- Dados serão carregados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Empresas -->
+            <div id="empresasTab" class="tab-pane">
+                <div class="tab-header">
+                    <h2><i class="icon-company"></i> Empresas Cadastradas</h2>
+                    <button class="btn btn-small btn-success" onclick="addEmpresa()">
+                        <i class="icon-add"></i> Nova Empresa
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="15%">Código</th>
+                                <th width="70%">Nome da Empresa</th>
+                                <th width="15%">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empresasTableBody">
+                            <!-- Dados serão carregados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab JSON Bruto -->
+            <div id="rawTab" class="tab-pane">
+                <div class="tab-header">
+                    <h2><i class="icon-code"></i> JSON Completo</h2>
+                    <div class="json-actions">
+                        <button class="btn btn-small btn-info" onclick="formatJSON()">
+                            <i class="icon-format"></i> Formatar
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="validateJSON()">
+                            <i class="icon-validate"></i> Validar
+                        </button>
+                    </div>
+                </div>
+                <div class="json-container">
+                    <textarea id="jsonEditor" spellcheck="false"></textarea>
+                </div>
+                <div class="json-status">
+                    <span id="jsonStatus"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para confirmação -->
+        <div id="confirmationModal" class="modal">
+            <div class="modal-content">
+                <h3 id="modalTitle">Confirmação</h3>
+                <p id="modalMessage">Tem certeza que deseja realizar esta ação?</p>
+                <div class="modal-actions">
+                    <button class="btn btn-danger" onclick="confirmAction(true)">Confirmar</button>
+                    <button class="btn btn-secondary" onclick="confirmAction(false)">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para edição detalhada -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <h3 id="editModalTitle">Editar Item</h3>
+                <div id="editModalContent">
+                    <!-- Conteúdo dinâmico -->
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-success" onclick="saveEdit()">Salvar</button>
+                    <button class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../scripts/03_Edit_data/edit_data.js"></script>
+    <script>
+        // Função para destacar e travar apenas o clique da página ativa
+        function highlightAndLockActivePage() {
+            const currentPath = window.location.pathname.toLowerCase();
+            document.querySelectorAll('.nav-list li a').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            let activeLink = null;
+            if (currentPath.includes('create_obra')) {
+                activeLink = document.getElementById('nav-criar-obras');
+            } else if (currentPath.includes('manager_obras')) {
+                activeLink = document.getElementById('nav-gerenciar-obras');
+            } else if (currentPath.includes('edit_data')) {
+                activeLink = document.getElementById('nav-editar-dados');
+            } else {
+                activeLink = document.querySelector('.nav-list li a');
+            }
+
+            if (activeLink) {
+                activeLink.classList.add('active');
+                activeLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return false;
+                }, true);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            highlightAndLockActivePage();
+            setTimeout(highlightAndLockActivePage, 50);
+            
+            // Carregar dados ao iniciar
+            setTimeout(() => {
+                if (typeof loadData === 'function') {
+                    loadData();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

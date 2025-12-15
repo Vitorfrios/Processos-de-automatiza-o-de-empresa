@@ -13,6 +13,7 @@
 @import url('layout/grid.css');
 @import url('layout/modal.css');
 @import url('layout/exit-modal.css');
+@import url('layout/universal-delete-modal.css');
 @import url('pages/thermal-calculation.css');
 @import url('pages/projects.css');
 

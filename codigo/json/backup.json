@@ -42,49 +42,15 @@
                 "combateIncendio": "fm200",
                 "pressurizacao": true
               },
-              "maquinas": [
-                {
-                  "nome": "Maquina1",
-                  "tipo": "Wall Mounted",
-                  "potencia": "2TR",
-                  "tensao": "220V/1F",
-                  "precoBase": 28503.4,
-                  "opcoesSelecionadas": [
-                    {
-                      "id": 5,
-                      "name": "2 Dampers com atuador on/off",
-                      "value": 4470,
-                      "originalName": "2 Dampers com atuador on/off",
-                      "potenciaAplicada": "2TR"
-                    },
-                    {
-                      "id": 8,
-                      "name": "Goldfin",
-                      "value": 1400,
-                      "originalName": "Goldfin",
-                      "potenciaAplicada": "2TR"
-                    }
-                  ],
-                  "configuracoesSelecionadas": [
-                    {
-                      "id": 1,
-                      "nome": "Bocal de insuflamento protegido por grelha diretamente no ambiente"
-                    }
-                  ],
-                  "precoTotal": 39373.4,
-                  "potenciaSelecionada": "2TR",
-                  "tipoSelecionado": "Wall Mounted"
-                }
-              ],
+              "maquinas": [],
               "capacidade": {
                 "fatorSeguranca": 1.2,
-                "capacidadeUnitaria": 10,
-                "backup": "n+1",
-                "cargaEstimada": 13.292,
-                "solucao": "2",
-                "solucaoBackup": "3",
-                "totalCapacidade": "20.0",
-                "folga": "50.5%"
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 2,
+                "solucaoBackup": 3,
+                "totalCapacidade": 20,
+                "folga": 42.9,
+                "backup": "n+1"
               },
               "ganhosTermicos": {
                 "total-ganhos-w": 46748,
@@ -98,14 +64,13 @@
                 "total-ar-sensivel": 9241,
                 "total-ar-latente": 20090
               },
-              "configuracao": {
+              "acessorio": {
                 "opcoesInstalacao": [
                   "bocal_insuflamento_protegido",
                   "bocal_acoplado_dutos",
                   "condicionadores_externos_se"
                 ]
-              },
-              "somavaloresmaquinatotal": 39373.4
+              }
             }
           ]
         }
