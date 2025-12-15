@@ -853,6 +853,7 @@ class RoutesCore:
 
 
     # ==========  FUNÇÕES PARA SISTEMA DE EDIÇÃO ==========
+    # ========== NOVOS MÉTODOS PARA SISTEMA DE EDIÇÃO ==========
 
     def handle_get_system_data(self):
         """Retorna TODOS os dados do sistema para a interface de edição"""
@@ -1122,3 +1123,37 @@ class RoutesCore:
         except Exception as e:
             print(f"❌ Erro ao atualizar machine: {str(e)}")
             return {"success": False, "error": str(e)}
+            """Atualiza máquina existente"""
+            try:
+                update_data = json.loads(post_data)
+                
+                machine_type = update_data.get("type")
+                if not machine_type:
+                    return {"success": False, "error": "Tipo de máquina não especificado"}
+                
+                dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+                dados_data = self.file_utils.load_json_file(dados_file, {})
+                
+                machines = dados_data.get("machines", [])
+                updated = False
+                
+                for i, machine in enumerate(machines):
+                    if machine.get("type") == machine_type:
+                        machines[i] = update_data
+                        updated = True
+                        break
+                
+                if not updated:
+                    return {"success": False, "error": f"Máquina '{machine_type}' não encontrada"}
+                
+                dados_data["machines"] = machines
+                
+                if self.file_utils.save_json_file(dados_file, dados_data):
+                    print(f"💾 Máquina '{machine_type}' atualizada")
+                    return {"success": True, "message": "Máquina atualizada", "machine": update_data}
+                else:
+                    return {"success": False, "error": "Erro ao atualizar máquina"}
+                    
+            except Exception as e:
+                print(f"❌ Erro ao atualizar machine: {str(e)}")
+                return {"success": False, "error": str(e)}

@@ -25,6 +25,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     
     # Roteamento direto para máxima velocidade
     API_ROUTES = {
+        # ROTAS EXISTENTES DO SISTEMA
         '/constants': 'handle_get_constants',
         '/system-constants': 'handle_get_constants', 
         '/dados': 'handle_get_dados',
@@ -38,10 +39,42 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         '/api/dados/empresas': 'handle_get_empresas',
         '/obras': 'handle_get_obras',
         '/api/server/uptime': 'handle_get_server_uptime',
+
+        # ========== NOVAS ROTAS PARA SISTEMA DE EDIÇÃO ==========
+        
+        # ROTAS GET - DADOS DO SISTEMA
         '/api/system-data': 'handle_get_system_data',
         '/api/constants': 'handle_get_constants_json',
         '/api/materials': 'handle_get_materials',
         '/api/empresas/all': 'handle_get_all_empresas',
+        
+        # ROTAS GET - MÁQUINAS
+        '/api/machines/types': 'handle_get_machine_types',
+        # '/api/machines/type/{type}' é tratada separadamente no handle_machine_routes
+        
+        # ROTAS POST - SALVAMENTO DE DADOS
+        '/api/system-data/save': 'handle_post_save_system_data',
+        '/api/constants/save': 'handle_post_save_constants',
+        '/api/materials/save': 'handle_post_save_materials',
+        '/api/empresas/save': 'handle_post_save_empresas',
+        '/api/machines/save': 'handle_post_save_machines',
+        '/api/machines/add': 'handle_post_add_machine',
+        '/api/machines/update': 'handle_post_update_machine',
+        
+        # ROTAS DE EMPRESAS ESPECÍFICAS
+        '/api/dados/empresas/auto': 'handle_post_empresas_auto',
+        
+        # ROTAS DE SESSÃO
+        '/api/sessions/shutdown': 'handle_post_sessions_shutdown',
+        '/api/sessions/ensure-single': 'handle_post_sessions_ensure_single',
+        '/api/sessions/add-obra': 'handle_post_sessions_add_obra',
+        '/api/reload-page': 'handle_post_reload_page',
+        
+        # ROTAS DE SHUTDOWN
+        '/api/shutdown': 'handle_shutdown',
+        
+        # ROTA UNIVERSAL DELETE
+        '/api/delete': 'handle_delete_universal',
     }
 
     def __init__(self, *args, **kwargs):
@@ -114,31 +147,35 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 print(f"🔄 AUTO CACHE BUSTER: {original_path} -> {new_path}")
                 self.path = new_path
         
-        # Roteamento RÁPIDO para APIs
+        # ========== ROTEAMENTO RÁPIDO PARA APIs ==========
+        
+        # Rotas definidas no dicionário API_ROUTES
         if path in self.API_ROUTES:
             handler_name = self.API_ROUTES[path]
             getattr(self.route_handler, handler_name)(self)
-        elif path.startswith('/api/dados/empresas/'):
-            self.handle_empresa_routes(path)
+        
+        # ========== ROTAS COM PARÂMETROS ==========
+        
+        # Rotas de empresas com parâmetros
+        elif path.startswith('/api/dados/empresas/buscar/'):
+            termo = path.split('/')[-1]
+            self.route_handler.handle_buscar_empresas(self, termo)
+        elif path.startswith('/api/dados/empresas/numero/'):
+            sigla = path.split('/')[-1]
+            self.route_handler.handle_get_proximo_numero(self, sigla)
+        
+        # Rotas de obras com ID
         elif path.startswith('/obras/'):
             self.handle_obra_routes(path)
         
-        # NOVAS ROTAS DE EDIÇÃO
-        elif path == '/api/system-data':
-            self.route_handler.handle_get_system_data(self)
-        elif path == '/api/constants':
-            self.route_handler.handle_get_constants_json(self)
-        elif path == '/api/materials':
-            self.route_handler.handle_get_materials(self)
-        elif path == '/api/empresas/all':
-            self.route_handler.handle_get_all_empresas(self)
+        # Rotas de máquinas com parâmetros
         elif path.startswith('/api/machines/'):
             self.handle_machine_routes(path)
+        
+        # ========== ARQUIVOS ESTÁTICOS ==========
         else:
             # Serve arquivo estático COM HEADERS ANTI-CACHE
             self.serve_static_file_no_cache(path)
-        
-        
     def do_POST(self):
         """POST com todas as rotas necessárias"""
         parsed_path = urlparse(self.path)
@@ -149,33 +186,45 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"📨 POST: {path}")
         
-        # ROTAS PRINCIPAIS - SHUTDOWN CORRIGIDAS
+        # ========== ROTAS PRINCIPAIS - OBRAS ==========
         if path == '/obras':
             self.route_handler.handle_post_obras(self)
+        
+        # ========== ROTAS DE SESSÃO ==========
         elif path == '/api/sessions/shutdown':
             self.route_handler.handle_post_sessions_shutdown(self)
         elif path == '/api/shutdown':
             self.route_handler.handle_shutdown(self)
-        elif path == '/dados':
-            self.route_handler.handle_post_dados(self)
-        elif path == '/backup':
-            self.route_handler.handle_post_backup(self)
         elif path == '/api/sessions/ensure-single':
             self.route_handler.handle_post_sessions_ensure_single(self)
         elif path == '/api/sessions/add-obra':
             self.route_handler.handle_post_sessions_add_obra(self)
         elif path == '/api/reload-page':
             self.route_handler.handle_post_reload_page(self)
-        # ROTAS DE EMPRESAS
+        
+        # ========== ROTAS DE DADOS ==========
+        elif path == '/dados':
+            self.route_handler.handle_post_dados(self)
+        elif path == '/backup':
+            self.route_handler.handle_post_backup(self)
+        
+        # ========== ROTAS DE EMPRESAS ==========
         elif path == '/api/dados/empresas':
             self.route_handler.handle_post_empresas(self)
-        # ROTAS LEGACY (COMPATIBILIDADE)
+        elif path == '/api/dados/empresas/auto':
+            self.route_handler.handle_post_empresas_auto(self)
+        
+        # ========== ROTAS LEGACY (COMPATIBILIDADE) ==========
         elif path in ['/projetos', '/projects']:
             self.route_handler.handle_post_projetos(self)
         
-        # NOVAS ROTAS PARA EDIÇÃO
+        # ========== NOVAS ROTAS PARA EDIÇÃO DE DADOS ==========
+        
+        # ROTAS DE SALVAMENTO COMPLETO
         elif path == '/api/system-data/save':
             self.route_handler.handle_post_save_system_data(self)
+        
+        # ROTAS DE SALVAMENTO POR SEÇÃO
         elif path == '/api/constants/save':
             self.route_handler.handle_post_save_constants(self)
         elif path == '/api/materials/save':
@@ -184,13 +233,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_post_save_empresas(self)
         elif path == '/api/machines/save':
             self.route_handler.handle_post_save_machines(self)
+        
+        # ROTAS ESPECÍFICAS DE MÁQUINAS
         elif path == '/api/machines/add':
             self.route_handler.handle_post_add_machine(self)
         elif path == '/api/machines/update':
             self.route_handler.handle_post_update_machine(self)
+        
+        # ========== ROTA NÃO ENCONTRADA ==========
         else:
             print(f"❌ POST não implementado: {path}")
             self.send_error(501, f"Método não suportado: POST {path}")
+            
         
     def do_PUT(self):
         """PUT para atualizações"""
@@ -413,3 +467,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             elif path.startswith('/api/machines/type/'):
                 machine_type = path.split('/')[-1]
                 self.route_handler.handle_get_machine_by_type(self, machine_type)
+        elif self.command == 'POST':
+            # As rotas POST de máquinas já são tratadas no do_POST
+            pass

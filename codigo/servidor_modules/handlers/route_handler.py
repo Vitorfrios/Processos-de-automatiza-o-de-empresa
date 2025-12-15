@@ -245,11 +245,6 @@ class RouteHandler:
         
     # ========== ROTAS PARA SISTEMA DE EDIÇÃO ==========
 
-    def handle_get_system_data(self, handler):
-        """GET /api/system-data - Retorna TODOS os dados do sistema"""
-        system_data = self.routes_core.handle_get_system_data()
-        handler.send_json_response(system_data)
-
     def handle_get_constants_json(self, handler):
         """GET /api/constants - Retorna apenas as constantes"""
         constants = self.routes_core.handle_get_constants_json()

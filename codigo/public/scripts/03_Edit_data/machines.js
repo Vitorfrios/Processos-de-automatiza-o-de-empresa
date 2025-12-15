@@ -1,0 +1,650 @@
+// scripts/03_Edit_data/machines.js
+// Gerenciamento de máquinas
+
+import { systemData, currentMachineIndex, addPendingChange } from './state.js';
+import { escapeHtml, showError, showInfo, showWarning, showSuccess, showConfirmation } from './ui.js';
+
+export function loadMachines() {
+    const container = document.getElementById('machinesList');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (!systemData.machines || !Array.isArray(systemData.machines)) {
+        systemData.machines = [];
+        return;
+    }
+    
+    if (systemData.machines.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="icon-machine" style="font-size: 48px; opacity: 0.5;"></i>
+                <h3>Nenhuma máquina cadastrada</h3>
+                <p>Clique no botão abaixo para adicionar sua primeira máquina.</p>
+                <button class="btn btn-success" onclick="addMachine()">
+                    <i class="icon-add"></i> Adicionar Primeira Máquina
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    systemData.machines.forEach((machine, index) => {
+        const card = document.createElement('div');
+        card.className = 'machine-card';
+        card.innerHTML = `
+            <div class="machine-card-header">
+                <h3>${escapeHtml(machine.type || 'Sem nome')}</h3>
+                <div class="machine-card-actions">
+                    <button class="btn btn-small btn-primary" 
+                            onclick="editMachine(${index})"
+                            title="Editar máquina">
+                        <i class="icon-edit"></i> Editar
+                    </button>
+                    <button class="btn btn-small btn-danger"
+                            onclick="deleteMachine(${index})"
+                            title="Excluir máquina">
+                        <i class="icon-delete"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="machine-card-body">
+                <p><strong>Configurações:</strong> ${machine.configuracoes_instalacao?.length || 0}</p>
+                <p><strong>Opções:</strong> ${machine.options?.length || 0}</p>
+                <p><strong>Tensões:</strong> ${machine.voltages?.length || 0}</p>
+                <p><strong>Valores base:</strong> ${Object.keys(machine.baseValues || {}).length}</p>
+            </div>
+            <div class="machine-card-footer">
+                <span>ID: ${index}</span>
+                <span>Tipo: ${machine.type || 'Não definido'}</span>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+export function populateMachineFilter() {
+    const filter = document.getElementById('machineTypeFilter');
+    if (!filter) return;
+    
+    filter.innerHTML = '<option value="">Todas as máquinas</option>';
+    
+    systemData.machines.forEach((machine, index) => {
+        const option = document.createElement('option');
+        option.value = machine.type;
+        option.textContent = machine.type || `Máquina ${index + 1}`;
+        filter.appendChild(option);
+    });
+}
+
+export function filterMachines() {
+    const filterValue = document.getElementById('machineTypeFilter').value.toLowerCase();
+    const cards = document.querySelectorAll('.machine-card');
+    
+    cards.forEach(card => {
+        const machineType = card.querySelector('h3').textContent.toLowerCase();
+        if (!filterValue || machineType.includes(filterValue)) {
+            card.style.display = 'block';
+            card.classList.add('fade-in');
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+export function addMachine() {
+    const newMachine = {
+        type: `NOVO_TIPO_${Date.now().toString().slice(-4)}`,
+        impostos: {
+            "PIS_COFINS": "INCL",
+            "IPI": "ISENTO",
+            "ICMS": "12%",
+            "PRAZO": "45 a 60 dias",
+            "FRETE": "FOB/Cabreúva/SP"
+        },
+        configuracoes_instalacao: [],
+        baseValues: {},
+        options: [],
+        voltages: []
+    };
+    
+    systemData.machines.push(newMachine);
+    loadMachines();
+    populateMachineFilter();
+    editMachine(systemData.machines.length - 1);
+    addPendingChange('machines');
+    showInfo('Nova máquina adicionada. Configure os detalhes.');
+}
+
+export function editMachine(index) {
+    if (index < 0 || index >= systemData.machines.length) return;
+    
+    const machine = systemData.machines[index];
+    currentMachineIndex = index;
+    
+    // Atualizar título
+    document.getElementById('machineDetailTitle').textContent = machine.type || 'Nova Máquina';
+    
+    // Construir conteúdo de edição
+    let content = `
+        <div class="machine-edit-form">
+            <div class="form-group">
+                <label>Tipo de Máquina:</label>
+                <input type="text" id="editMachineType" value="${escapeHtml(machine.type || '')}" 
+                       class="form-control" onchange="updateMachineField('type', this.value)">
+            </div>
+            
+            <div class="form-section">
+                <h4>Impostos</h4>
+                <div class="impostos-grid">
+                    ${Object.entries(machine.impostos || {}).map(([key, value]) => `
+                        <div class="form-group">
+                            <label>${key}:</label>
+                            <input type="text" value="${escapeHtml(value)}"
+                                   onchange="updateImposto('${key}', this.value)"
+                                   class="form-input-small">
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="btn btn-small btn-info" onclick="addImposto()">
+                    <i class="icon-add"></i> Adicionar Imposto
+                </button>
+            </div>
+            
+            <div class="form-section">
+                <div class="section-header">
+                    <h4>Configurações de Instalação</h4>
+                    <button class="btn btn-small btn-success" onclick="addConfiguracao()">
+                        <i class="icon-add"></i> Adicionar
+                    </button>
+                </div>
+                <div id="configuracoesList" class="configuracoes-list">
+                    ${loadConfiguracoesHTML(machine)}
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <div class="section-header">
+                    <h4>Valores Base</h4>
+                    <button class="btn btn-small btn-success" onclick="addBaseValue()">
+                        <i class="icon-add"></i> Adicionar
+                    </button>
+                </div>
+                <div id="baseValuesList" class="base-values-list">
+                    ${loadBaseValuesHTML(machine)}
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <div class="section-header">
+                    <h4>Opções</h4>
+                    <button class="btn btn-small btn-success" onclick="addOption()">
+                        <i class="icon-add"></i> Adicionar
+                    </button>
+                </div>
+                <div id="optionsList" class="options-list">
+                    ${loadOptionsHTML(machine)}
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <div class="section-header">
+                    <h4>Tensões</h4>
+                    <button class="btn btn-small btn-success" onclick="addVoltage()">
+                        <i class="icon-add"></i> Adicionar
+                    </button>
+                </div>
+                <div id="voltagesList" class="voltages-list">
+                    ${loadVoltagesHTML(machine)}
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button class="btn btn-success" onclick="saveMachineChanges()">
+                    <i class="icon-save"></i> Salvar Alterações
+                </button>
+                <button class="btn btn-secondary" onclick="closeMachineDetail()">
+                    <i class="icon-close"></i> Fechar
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('machineDetailContent').innerHTML = content;
+    document.getElementById('machineDetailView').style.display = 'block';
+    
+    document.getElementById('machineDetailView').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Funções auxiliares para máquinas
+function loadConfiguracoesHTML(machine) {
+    const configuracoes = machine.configuracoes_instalacao || [];
+    
+    if (configuracoes.length === 0) {
+        return '<p class="empty-message">Nenhuma configuração cadastrada.</p>';
+    }
+    
+    return configuracoes.map((config, index) => `
+        <div class="config-item" data-index="${index}">
+            <div class="config-header">
+                <span>Configuração ${index + 1}</span>
+                <button class="btn btn-xs btn-danger" onclick="removeConfiguracao(${index})" title="Remover">
+                    <i class="icon-delete"></i>
+                </button>
+            </div>
+            <div class="config-content">
+                <input type="text" value="${escapeHtml(config.nome || '')}" 
+                       placeholder="Descrição da configuração"
+                       onchange="updateConfiguracao(${index}, 'nome', this.value)"
+                       class="form-input">
+                ${config.valor !== undefined ? `
+                    <input type="number" value="${config.valor}" step="0.01"
+                           placeholder="Valor"
+                           onchange="updateConfiguracao(${index}, 'valor', this.value)"
+                           class="form-input">
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadBaseValuesHTML(machine) {
+    const baseValues = machine.baseValues || {};
+    const entries = Object.entries(baseValues);
+    
+    if (entries.length === 0) {
+        return '<p class="empty-message">Nenhum valor base cadastrado.</p>';
+    }
+    
+    return entries.map(([key, value], index) => `
+        <div class="base-value-item" data-key="${key}">
+            <div class="base-value-header">
+                <input type="text" value="${escapeHtml(key)}" 
+                       placeholder="Chave (ex: 1TR)"
+                       onchange="updateBaseValueKey('${key}', this.value)"
+                       class="form-input-small">
+                <button class="btn btn-xs btn-danger" onclick="removeBaseValue('${key}')" title="Remover">
+                    <i class="icon-delete"></i>
+                </button>
+            </div>
+            <input type="number" value="${value}" step="0.01"
+                   placeholder="Valor"
+                   onchange="updateBaseValue('${key}', this.value)"
+                   class="form-input">
+        </div>
+    `).join('');
+}
+
+function loadOptionsHTML(machine) {
+    const options = machine.options || [];
+    
+    if (options.length === 0) {
+        return '<p class="empty-message">Nenhuma opção cadastrada.</p>';
+    }
+    
+    return options.map((option, index) => `
+        <div class="option-item" data-index="${index}">
+            <div class="option-header">
+                <span>Opção ${index + 1}: ${escapeHtml(option.name || 'Sem nome')}</span>
+                <button class="btn btn-xs btn-danger" onclick="removeOption(${index})" title="Remover">
+                    <i class="icon-delete"></i>
+                </button>
+            </div>
+            <div class="option-content">
+                <input type="text" value="${escapeHtml(option.name || '')}" 
+                       placeholder="Nome da opção"
+                       onchange="updateOption(${index}, 'name', this.value)"
+                       class="form-input">
+                <div class="option-values">
+                    <h5>Valores por Capacidade:</h5>
+                    ${option.values ? Object.entries(option.values).map(([key, val]) => `
+                        <div class="option-value-row">
+                            <span>${key}:</span>
+                            <input type="number" value="${val}" step="0.01"
+                                   onchange="updateOptionValue(${index}, '${key}', this.value)"
+                                   class="form-input-small">
+                        </div>
+                    `).join('') : '<p>Sem valores definidos</p>'}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadVoltagesHTML(machine) {
+    const voltages = machine.voltages || [];
+    
+    if (voltages.length === 0) {
+        return '<p class="empty-message">Nenhuma tensão cadastrada.</p>';
+    }
+    
+    return voltages.map((voltage, index) => `
+        <div class="voltage-item" data-index="${index}">
+            <div class="voltage-header">
+                <span>Tensão ${index + 1}</span>
+                <button class="btn btn-xs btn-danger" onclick="removeVoltage(${index})" title="Remover">
+                    <i class="icon-delete"></i>
+                </button>
+            </div>
+            <div class="voltage-content">
+                <input type="text" value="${escapeHtml(voltage.name || '')}" 
+                       placeholder="Nome (ex: 220V/1F)"
+                       onchange="updateVoltage(${index}, 'name', this.value)"
+                       class="form-input">
+                <input type="number" value="${voltage.value || 0}" step="0.01"
+                       placeholder="Valor"
+                       onchange="updateVoltage(${index}, 'value', this.value)"
+                       class="form-input">
+            </div>
+        </div>
+    `).join('');
+}
+
+export function closeMachineDetail() {
+    document.getElementById('machineDetailView').style.display = 'none';
+    currentMachineIndex = null;
+}
+
+export function updateMachineField(field, value) {
+    if (currentMachineIndex !== null) {
+        systemData.machines[currentMachineIndex][field] = value;
+        document.getElementById('machineDetailTitle').textContent = value;
+        addPendingChange('machines');
+    }
+}
+
+export function updateImposto(key, value) {
+    if (currentMachineIndex !== null) {
+        if (!systemData.machines[currentMachineIndex].impostos) {
+            systemData.machines[currentMachineIndex].impostos = {};
+        }
+        systemData.machines[currentMachineIndex].impostos[key] = value;
+        addPendingChange('machines');
+    }
+}
+
+export function addImposto() {
+    if (currentMachineIndex !== null) {
+        const newKey = `NOVO_IMPOSTO_${Date.now().toString().slice(-4)}`;
+        if (!systemData.machines[currentMachineIndex].impostos) {
+            systemData.machines[currentMachineIndex].impostos = {};
+        }
+        systemData.machines[currentMachineIndex].impostos[newKey] = '';
+        editMachine(currentMachineIndex);
+        addPendingChange('machines');
+    }
+}
+
+// Funções para Configurações
+export function addConfiguracao() {
+    if (currentMachineIndex !== null) {
+        if (!systemData.machines[currentMachineIndex].configuracoes_instalacao) {
+            systemData.machines[currentMachineIndex].configuracoes_instalacao = [];
+        }
+        
+        const newId = systemData.machines[currentMachineIndex].configuracoes_instalacao.length + 1;
+        systemData.machines[currentMachineIndex].configuracoes_instalacao.push({
+            id: newId,
+            nome: 'Nova Configuração',
+            valor: 0
+        });
+        
+        editMachine(currentMachineIndex);
+        addPendingChange('machines');
+    }
+}
+
+export function updateConfiguracao(index, field, value) {
+    if (currentMachineIndex !== null) {
+        const machine = systemData.machines[currentMachineIndex];
+        if (machine.configuracoes_instalacao && machine.configuracoes_instalacao[index]) {
+            if (field === 'valor') {
+                machine.configuracoes_instalacao[index][field] = parseFloat(value) || 0;
+            } else {
+                machine.configuracoes_instalacao[index][field] = value;
+            }
+            addPendingChange('machines');
+        }
+    }
+}
+
+export function removeConfiguracao(index) {
+    showConfirmation('Deseja remover esta configuração?', () => {
+        if (currentMachineIndex !== null) {
+            const machine = systemData.machines[currentMachineIndex];
+            if (machine.configuracoes_instalacao) {
+                machine.configuracoes_instalacao.splice(index, 1);
+                editMachine(currentMachineIndex);
+                addPendingChange('machines');
+                showWarning('Configuração removida.');
+            }
+        }
+    });
+}
+
+// Funções para Valores Base
+export function addBaseValue() {
+    if (currentMachineIndex !== null) {
+        const machine = systemData.machines[currentMachineIndex];
+        if (!machine.baseValues) {
+            machine.baseValues = {};
+        }
+        
+        const newKey = `NOVA_CAPACIDADE_${Object.keys(machine.baseValues).length + 1}`;
+        machine.baseValues[newKey] = 0;
+        
+        editMachine(currentMachineIndex);
+        addPendingChange('machines');
+    }
+}
+
+export function updateBaseValueKey(oldKey, newKey) {
+    if (currentMachineIndex !== null && newKey && newKey.trim() !== '') {
+        const machine = systemData.machines[currentMachineIndex];
+        if (machine.baseValues && machine.baseValues[oldKey] !== undefined) {
+            const value = machine.baseValues[oldKey];
+            delete machine.baseValues[oldKey];
+            machine.baseValues[newKey] = value;
+            editMachine(currentMachineIndex);
+            addPendingChange('machines');
+        }
+    }
+}
+
+export function updateBaseValue(key, value) {
+    if (currentMachineIndex !== null) {
+        const machine = systemData.machines[currentMachineIndex];
+        if (machine.baseValues && machine.baseValues[key] !== undefined) {
+            machine.baseValues[key] = parseFloat(value) || 0;
+            addPendingChange('machines');
+        }
+    }
+}
+
+export function removeBaseValue(key) {
+    showConfirmation(`Deseja remover o valor base "${key}"?`, () => {
+        if (currentMachineIndex !== null) {
+            const machine = systemData.machines[currentMachineIndex];
+            if (machine.baseValues && machine.baseValues[key] !== undefined) {
+                delete machine.baseValues[key];
+                editMachine(currentMachineIndex);
+                addPendingChange('machines');
+                showWarning(`Valor base "${key}" removido.`);
+            }
+        }
+    });
+}
+
+// Funções para Opções
+export function addOption() {
+    if (currentMachineIndex !== null) {
+        const machine = systemData.machines[currentMachineIndex];
+        if (!machine.options) {
+            machine.options = [];
+        }
+        
+        const newId = machine.options.length + 1;
+        machine.options.push({
+            id: newId,
+            name: 'Nova Opção',
+            values: {}
+        });
+        
+        editMachine(currentMachineIndex);
+        addPendingChange('machines');
+    }
+}
+
+export function updateOption(index, field, value) {
+    if (currentMachineIndex !== null) {
+        const machine = systemData.machines[currentMachineIndex];
+        if (machine.options && machine.options[index]) {
+            machine.options[index][field] = value;
+            addPendingChange('machines');
+        }
+    }
+}
+
+export function updateOptionValue(optionIndex, key, value) {
+    if (currentMachineIndex !== null) {
+        const machine = systemData.machines[currentMachineIndex];
+        if (machine.options && machine.options[optionIndex]) {
+            if (!machine.options[optionIndex].values) {
+                machine.options[optionIndex].values = {};
+            }
+            machine.options[optionIndex].values[key] = parseFloat(value) || 0;
+            addPendingChange('machines');
+        }
+    }
+}
+
+export function removeOption(index) {
+    showConfirmation('Deseja remover esta opção?', () => {
+        if (currentMachineIndex !== null) {
+            const machine = systemData.machines[currentMachineIndex];
+            if (machine.options) {
+                machine.options.splice(index, 1);
+                editMachine(currentMachineIndex);
+                addPendingChange('machines');
+                showWarning('Opção removida.');
+            }
+        }
+    });
+}
+
+// Funções para Tensões
+export function addVoltage() {
+    if (currentMachineIndex !== null) {
+        const machine = systemData.machines[currentMachineIndex];
+        if (!machine.voltages) {
+            machine.voltages = [];
+        }
+        
+        machine.voltages.push({
+            id: machine.voltages.length + 1,
+            name: 'Nova Tensão',
+            value: 0
+        });
+        
+        editMachine(currentMachineIndex);
+        addPendingChange('machines');
+    }
+}
+
+export function updateVoltage(index, field, value) {
+    if (currentMachineIndex !== null) {
+        const machine = systemData.machines[currentMachineIndex];
+        if (machine.voltages && machine.voltages[index]) {
+            if (field === 'value') {
+                machine.voltages[index][field] = parseFloat(value) || 0;
+            } else {
+                machine.voltages[index][field] = value;
+            }
+            addPendingChange('machines');
+        }
+    }
+}
+
+export function removeVoltage(index) {
+    showConfirmation('Deseja remover esta tensão?', () => {
+        if (currentMachineIndex !== null) {
+            const machine = systemData.machines[currentMachineIndex];
+            if (machine.voltages) {
+                machine.voltages.splice(index, 1);
+                editMachine(currentMachineIndex);
+                addPendingChange('machines');
+                showWarning('Tensão removida.');
+            }
+        }
+    });
+}
+
+export function saveMachineChanges() {
+    if (currentMachineIndex !== null) {
+        addPendingChange('machines');
+        showSuccess('Alterações na máquina salvas. Lembre-se de salvar todos os dados.');
+        closeMachineDetail();
+    }
+}
+
+export async function deleteMachine(index) {
+    const machine = systemData.machines[index];
+    const machineType = machine.type || `Máquina ${index + 1}`;
+    
+    showConfirmation(`Deseja excluir a máquina "${machineType}"?`, async () => {
+        try {
+            const response = await fetch('/api/delete', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    path: ['machines', index.toString()] 
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                systemData.machines.splice(index, 1);
+                loadMachines();
+                populateMachineFilter();
+                closeMachineDetail();
+                addPendingChange('machines');
+                showWarning(`Máquina "${machineType}" excluída.`);
+            } else {
+                throw new Error(result.error || 'Erro ao excluir');
+            }
+        } catch (error) {
+            console.error('Erro ao excluir máquina:', error);
+            showError(`Erro ao excluir máquina: ${error.message}`);
+        }
+    });
+}
+
+// Exportar funções globalmente
+window.loadMachines = loadMachines;
+window.populateMachineFilter = populateMachineFilter;
+window.filterMachines = filterMachines;
+window.addMachine = addMachine;
+window.editMachine = editMachine;
+window.closeMachineDetail = closeMachineDetail;
+window.updateMachineField = updateMachineField;
+window.updateImposto = updateImposto;
+window.addImposto = addImposto;
+window.addConfiguracao = addConfiguracao;
+window.updateConfiguracao = updateConfiguracao;
+window.removeConfiguracao = removeConfiguracao;
+window.addBaseValue = addBaseValue;
+window.updateBaseValueKey = updateBaseValueKey;
+window.updateBaseValue = updateBaseValue;
+window.removeBaseValue = removeBaseValue;
+window.addOption = addOption;
+window.updateOption = updateOption;
+window.updateOptionValue = updateOptionValue;
+window.removeOption = removeOption;
+window.addVoltage = addVoltage;
+window.updateVoltage = updateVoltage;
+window.removeVoltage = removeVoltage;
+window.saveMachineChanges = saveMachineChanges;
+window.deleteMachine = deleteMachine;
