@@ -53,7 +53,7 @@ export function loadEmpresas() {
             </td>
             <td class="actions-cell">
                 <button class="btn btn-small btn-danger"
-                        onclick="deleteEmpresa(${index})"
+                        onclick="deleteEmpresa(${index}, '${sigla}')"
                         title="Excluir empresa">
                     <i class="icon-delete"></i>
                 </button>
@@ -124,33 +124,38 @@ export function updateEmpresaNome(index, newNome) {
     }
 }
 
-export async function deleteEmpresa(index) {
+export async function deleteEmpresa(index, sigla) {
     const empresa = systemData.empresas[index];
-    const sigla = Object.keys(empresa)[0] || '';
     const nome = empresa[sigla] || '';
     
     showConfirmation(`Deseja excluir a empresa "${sigla} - ${nome}"?`, async () => {
         try {
-            const response = await fetch('/api/delete', {
+
+            const response = await fetch(`/api/empresas/${index}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    path: ['empresas', index.toString()] 
-                })
+                }
             });
+            
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
+            }
             
             const result = await response.json();
             
             if (result.success) {
+                // Atualiza localmente apenas se a API confirmar sucesso
                 systemData.empresas.splice(index, 1);
                 loadEmpresas();
                 addPendingChange('empresas');
                 showWarning(`Empresa "${sigla}" excluída.`);
             } else {
-                throw new Error(result.error || 'Erro ao excluir');
+                throw new Error(result.error || 'Erro ao excluir empresa na API');
             }
+            
         } catch (error) {
             console.error('Erro ao excluir empresa:', error);
             showError(`Erro ao excluir empresa: ${error.message}`);

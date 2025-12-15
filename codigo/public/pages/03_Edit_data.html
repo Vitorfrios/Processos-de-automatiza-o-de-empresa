@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema - Edição de Dados</title>
     <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
     <link rel="stylesheet" href="../static/03_Edit_data/edit_data.css">
+    <link rel="stylesheet" href="../static/03_Edit_data/machine_edit.css">
+    
 </head>
+
 <body>
     <header class="header">
         <div class="header-left">
-            <img src="" alt="Logo Esquerda" class="logo">
+            <img src="https://esienergia.com.br/wp-content/uploads/2023/08/logo-esienergia-white.png"
+                alt="Logo Esquerda" class="logo">
         </div>
         <div class="header-center">
             <h1>Edição de Dados do Sistema</h1>
@@ -44,7 +49,8 @@
                 <button class="btn btn-danger" onclick="exportToJSON()">
                     <i class="icon-download"></i> Exportar JSON
                 </button>
-                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importFromJSON(event)">
+                <input type="file" id="importFile" accept=".json" style="display: none;"
+                    onchange="importFromJSON(event)">
                 <button class="btn btn-warning" onclick="document.getElementById('importFile').click()">
                     <i class="icon-upload"></i> Importar JSON
                 </button>
@@ -67,9 +73,6 @@
             <div id="constantsTab" class="tab-pane active">
                 <div class="tab-header">
                     <h2><i class="icon-settings"></i> Constantes do Sistema</h2>
-                    <button class="btn btn-small btn-success" onclick="addConstant()">
-                        <i class="icon-add"></i> Nova Constante
-                    </button>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
@@ -78,7 +81,6 @@
                                 <th width="30%">Nome</th>
                                 <th width="40%">Descrição</th>
                                 <th width="20%">Valor</th>
-                                <th width="10%">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="constantsTableBody">
@@ -101,7 +103,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div id="machinesList">
                     <!-- Cards de máquinas serão carregados aqui -->
                 </div>
@@ -123,18 +125,15 @@
             <div id="materialsTab" class="tab-pane">
                 <div class="tab-header">
                     <h2><i class="icon-material"></i> Materiais e Preços</h2>
-                    <button class="btn btn-small btn-success" onclick="addMaterial()">
-                        <i class="icon-add"></i> Novo Material
-                    </button>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th width="40%">Material</th>
-                                <th width="40%">Unidade</th>
-                                <th width="15%">Preço</th>
-                                <th width="5%">Ações</th>
+                                <th width="25%">Material</th>
+                                <th width="45%">Descrição</th>
+                                <th width="15%">Unidade</th>
+                                <th width="15%">Preço (R$)</th>
                             </tr>
                         </thead>
                         <tbody id="materialsTableBody">
@@ -148,9 +147,6 @@
             <div id="empresasTab" class="tab-pane">
                 <div class="tab-header">
                     <h2><i class="icon-company"></i> Empresas Cadastradas</h2>
-                    <button class="btn btn-small btn-success" onclick="addEmpresa()">
-                        <i class="icon-add"></i> Nova Empresa
-                    </button>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
@@ -218,6 +214,7 @@
     </main>
 
     <script type="module" src="../scripts/03_Edit_data/main.js"></script>
+    <script type="module" src="../scripts/01_Create_Obra/main-folder/system-init.js"></script>
     <script>
         // Função para destacar e travar apenas o clique da página ativa
         function highlightAndLockActivePage() {
@@ -239,7 +236,7 @@
 
             if (activeLink) {
                 activeLink.classList.add('active');
-                activeLink.addEventListener('click', function(e) {
+                activeLink.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
@@ -248,10 +245,10 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             highlightAndLockActivePage();
             setTimeout(highlightAndLockActivePage, 50);
-            
+
             // Carregar dados ao iniciar
             setTimeout(() => {
                 if (typeof loadData === 'function') {
@@ -261,4 +258,5 @@
         });
     </script>
 </body>
+
 </html>

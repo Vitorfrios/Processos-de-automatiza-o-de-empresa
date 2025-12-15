@@ -7,7 +7,7 @@ import {
     pendingChanges, 
     updateSystemData,
     clearPendingChanges,
-    addPendingChange 
+    updateOriginalData  // Importe a nova função
 } from './state.js';
 import { showLoading, hideLoading, showSuccess, showError, showWarning, showInfo } from './ui.js';
 
@@ -94,7 +94,9 @@ export async function saveData() {
         const result = await response.json();
         
         if (result.success) {
-            originalData = JSON.parse(JSON.stringify(systemData));
+            // CORREÇÃO: Use a função updateOriginalData
+            updateOriginalData(systemData);
+            
             clearPendingChanges();
             showSuccess(result.message || 'Dados salvos com sucesso!');
             

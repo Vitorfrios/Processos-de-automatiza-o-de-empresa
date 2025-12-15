@@ -362,3 +362,9 @@ class RouteHandler:
         """GET /api/server/uptime"""
         result = self.routes_core.handle_get_server_uptime()
         handler.send_json_response(result)
+        
+        
+    def handle_delete_empresa(self, handler, index):
+        """DELETE /api/empresas/{index}"""
+        result = self.routes_core.handle_delete_empresa(index)
+        handler.send_json_response(result)

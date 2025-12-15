@@ -2,6 +2,23 @@
 // Ponto de entrada principal
 
 import { loadModules } from './loader.js';
+// ✅ IMPORTAR LOGGER
+import { createSmartLogger } from '../01_Create_Obra/core/logger.js';
+
+// ✅ INICIALIZAR LOGGER IMEDIATAMENTE
+window.logger = createSmartLogger();
+
+// ✅ EXPOR FUNÇÃO GLOBAL PARA CONTROLE DO LOGGER
+window.toggleSystemLogger = function(enable = null) {
+    if (window.logger && typeof window.toggleLogger === 'function') {
+        return window.toggleLogger(enable);
+    } else {
+        console.warn('⚠️ Logger não disponível para controle');
+        return false;
+    }
+};
+
+
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
@@ -37,28 +54,6 @@ window.closeEditModal = function() {
 
 window.saveEdit = function() {
     closeEditModal();
-};
-
-window.shutdownManual = function() {
-    showConfirmation('Deseja realmente encerrar o servidor?', async () => {
-        try {
-            const response = await fetch('/api/shutdown', {
-                method: 'POST'
-            });
-            
-            const data = await response.json();
-            
-            if (data.action === 'close_window') {
-                showSuccess('Servidor encerrado. Esta janela será fechada.');
-                setTimeout(() => {
-                    window.close();
-                }, data.close_delay || 3000);
-            }
-        } catch (error) {
-            console.error('Erro ao encerrar servidor:', error);
-            showError('Erro ao encerrar servidor. Tente novamente.');
-        }
-    });
 };
 
 

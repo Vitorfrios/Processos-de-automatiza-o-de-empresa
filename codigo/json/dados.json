@@ -1,6 +1,9 @@
 {
-
   "constants": {
+    "TESTE": {
+      "value": 32424523452343,
+      "description": "sdfdfgsdfg"
+    },
     "VARIAVEL_PD": {
       "value": 0.0402,
       "description": "Coeficiente de perda térmica por densidade"
@@ -102,7 +105,6 @@
       "description": "Margem de segurança aplicada à capacidade final"
     }
   },
-
   "machines": [
     {
       "type": "Wall Mounted",
@@ -1859,15 +1861,51 @@
     }
   ],
   "materials": {
-    "Kg cobre": 99,
-    "Metro isolante 1.1/8": 41.73,
-    "Metro isolante 5/8": 29.1,
-    "Kg Gás R-410A": 43.88,
-    "Metro tubo PVC 3/4\"": 15.16,
-    "Metro tubo PVC 1\"": 19.2,
-    "Metro Barra Roscada 3/8\"": 23.65,
-    "Chumbador 3/8\" por 2.1/2\"": 2.88,
-    "NOVO_MATERIAL_276031": 0
+    "COBRE": {
+      "value": 99,
+      "unit": "kg",
+      "description": "Cobre utilizado na instalação"
+    },
+    "ISOLANTE_1_1_8": {
+      "value": 41.73,
+      "unit": "m",
+      "description": "Isolante térmico para tubulação de 1 1/8 polegada"
+    },
+    "ISOLANTE_5_8": {
+      "value": 29.1,
+      "unit": "m",
+      "description": "Isolante térmico para tubulação de 5/8 polegada"
+    },
+    "GAS_R_410A": {
+      "value": 43.88,
+      "unit": "kg",
+      "description": "Gás refrigerante R-410A"
+    },
+    "TUBO_PVC_3_4": {
+      "value": 15.16,
+      "unit": "m",
+      "description": "Tubo PVC de 3/4 polegada"
+    },
+    "TUBO_PVC_1": {
+      "value": 19.2,
+      "unit": "m",
+      "description": "Tubo PVC de 1 polegada"
+    },
+    "BARRA_ROSCADA_3_8": {
+      "value": 23.65,
+      "unit": "m",
+      "description": "Barra roscada de 3/8 polegada"
+    },
+    "CHUMBADOR_3_8": {
+      "value": 2.88,
+      "unit": "un",
+      "description": "Chumbador 3/8 por 2 1/2 polegadas"
+    },
+    "NOVO_MATERIAL_276031": {
+      "value": 0.09,
+      "unit": "undfsdfsdf",
+      "description": "sdfsdfsdfMaterial genérico cadastrado para uso futuro"
+    }
   },
   "empresas": [
     {
@@ -1931,7 +1969,7 @@
       "BLC": "BlueLink Consulting"
     },
     {
-      "NOV343": "Nova Empresa NOV343"
+      "NOV170": "Nova Empresa NOV170"
     }
   ]
 }

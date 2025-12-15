@@ -1154,3 +1154,75 @@ class RoutesCore:
         except Exception as e:
             print(f"❌ Erro ao obter projetos: {str(e)}")
             return []
+        
+    
+    def handle_delete_empresa_by_index(self, index):
+        """Deleta uma empresa pelo índice"""
+        try:
+            index_int = int(index)
+            print(f"🗑️  [DELETE EMPRESA] Excluindo empresa no índice: {index_int}")
+
+            # Carrega dados.json
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+
+            empresas = dados_data.get("empresas", [])
+            if not isinstance(empresas, list):
+                return {"success": False, "error": "Estrutura 'empresas' inválida"}
+
+            # Verifica índice
+            if 0 <= index_int < len(empresas):
+                empresa_removida = empresas.pop(index_int)
+                sigla_removida = list(empresa_removida.keys())[0] if empresa_removida else "?"
+                print(f"✅ Empresa '{sigla_removida}' (índice {index_int}) removida.")
+
+                # Salva
+                dados_data["empresas"] = empresas
+                if self.file_utils.save_json_file(dados_file, dados_data):
+                    return {"success": True, "message": f"Empresa {sigla_removida} excluída"}
+                else:
+                    return {"success": False, "error": "Falha ao salvar arquivo"}
+            else:
+                return {"success": False, "error": f"Índice {index_int} inválido"}
+
+        except ValueError:
+            return {"success": False, "error": f"Índice inválido: '{index}'"}
+        except Exception as e:
+            print(f"❌ Erro em handle_delete_empresa_by_index: {e}")
+            return {"success": False, "error": str(e)}
+        
+        
+    def handle_delete_empresa(self, index):
+        """Deleta uma empresa pelo índice"""
+        try:
+            index_int = int(index)
+            print(f"🗑️  [DELETE EMPRESA] Excluindo empresa no índice: {index_int}")
+
+            # Carrega dados.json
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+
+            empresas = dados_data.get("empresas", [])
+            if not isinstance(empresas, list):
+                return {"success": False, "error": "Estrutura 'empresas' inválida"}
+
+            # Verifica índice
+            if 0 <= index_int < len(empresas):
+                empresa_removida = empresas.pop(index_int)
+                sigla_removida = list(empresa_removida.keys())[0] if empresa_removida else "?"
+                print(f"✅ Empresa '{sigla_removida}' (índice {index_int}) removida.")
+
+                # Salva
+                dados_data["empresas"] = empresas
+                if self.file_utils.save_json_file(dados_file, dados_data):
+                    return {"success": True, "message": f"Empresa {sigla_removida} excluída"}
+                else:
+                    return {"success": False, "error": "Falha ao salvar arquivo"}
+            else:
+                return {"success": False, "error": f"Índice {index_int} inválido"}
+
+        except ValueError:
+            return {"success": False, "error": f"Índice inválido: '{index}'"}
+        except Exception as e:
+            print(f"❌ Erro em handle_delete_empresa: {e}")
+            return {"success": False, "error": str(e)}

@@ -47,6 +47,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         '/api/constants': 'handle_get_constants_json',
         '/api/materials': 'handle_get_materials',
         '/api/empresas/all': 'handle_get_all_empresas',
+        '/api/empresas/': 'handle_delete_empresa_route',
         
         # ROTAS GET - MÁQUINAS
         '/api/machines/types': 'handle_get_machine_types',
@@ -282,7 +283,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ========== NOVA ROTA UNIVERSAL ==========
         if path == '/api/delete':
             self.handle_delete_universal()
-        # =========================================
+
+        # ========== ROTA ESPECÍFICA PARA EMPRESAS ==========
+        elif path.startswith('/api/empresas/'):
+            self.handle_delete_empresa()  
+            
+            
         # ROTAS PRINCIPAIS - OBRAS
         elif path.startswith('/obras/'):
             obra_id = path.split('/')[-1]
@@ -475,3 +481,25 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif self.command == 'POST':
             # As rotas POST de máquinas já são tratadas no do_POST
             pass
+        
+    def handle_delete_empresa(self):
+        """Handler para DELETE /api/empresas/{index}"""
+        try:
+            # Extrai o índice da URL (ex: /api/empresas/21 -> index=21)
+            index = self.path.split('/')[-1]
+            print(f"🗑️  DELETE empresa - índice: {index}")
+            
+            # Chama o método no RoutesCore
+            result = self.routes_core.handle_delete_empresa_by_index(index)
+            
+            if result.get("success"):
+                self.send_json_response(result)
+            else:
+                self.send_json_response(result, status=500)
+                
+        except Exception as e:
+            print(f"❌ Erro em handle_delete_empresa: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)

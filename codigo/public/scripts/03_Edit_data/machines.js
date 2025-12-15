@@ -1,7 +1,7 @@
 // scripts/03_Edit_data/machines.js
 // Gerenciamento de máquinas
 
-import { systemData, currentMachineIndex, addPendingChange } from './state.js';
+import { systemData, addPendingChange, getCurrentMachineIndex, setCurrentMachineIndex, clearCurrentMachineIndex } from './state.js';
 import { escapeHtml, showError, showInfo, showWarning, showSuccess, showConfirmation } from './ui.js';
 
 export function loadMachines() {
@@ -120,7 +120,7 @@ export function editMachine(index) {
     if (index < 0 || index >= systemData.machines.length) return;
     
     const machine = systemData.machines[index];
-    currentMachineIndex = index;
+    setCurrentMachineIndex(index);
     
     // Atualizar título
     document.getElementById('machineDetailTitle').textContent = machine.type || 'Nova Máquina';
@@ -342,61 +342,66 @@ function loadVoltagesHTML(machine) {
 
 export function closeMachineDetail() {
     document.getElementById('machineDetailView').style.display = 'none';
-    currentMachineIndex = null;
+    clearCurrentMachineIndex();
 }
 
 export function updateMachineField(field, value) {
-    if (currentMachineIndex !== null) {
-        systemData.machines[currentMachineIndex][field] = value;
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        systemData.machines[currentIndex][field] = value;
         document.getElementById('machineDetailTitle').textContent = value;
         addPendingChange('machines');
     }
 }
 
 export function updateImposto(key, value) {
-    if (currentMachineIndex !== null) {
-        if (!systemData.machines[currentMachineIndex].impostos) {
-            systemData.machines[currentMachineIndex].impostos = {};
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        if (!systemData.machines[currentIndex].impostos) {
+            systemData.machines[currentIndex].impostos = {};
         }
-        systemData.machines[currentMachineIndex].impostos[key] = value;
+        systemData.machines[currentIndex].impostos[key] = value;
         addPendingChange('machines');
     }
 }
 
 export function addImposto() {
-    if (currentMachineIndex !== null) {
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
         const newKey = `NOVO_IMPOSTO_${Date.now().toString().slice(-4)}`;
-        if (!systemData.machines[currentMachineIndex].impostos) {
-            systemData.machines[currentMachineIndex].impostos = {};
+        if (!systemData.machines[currentIndex].impostos) {
+            systemData.machines[currentIndex].impostos = {};
         }
-        systemData.machines[currentMachineIndex].impostos[newKey] = '';
-        editMachine(currentMachineIndex);
+        systemData.machines[currentIndex].impostos[newKey] = '';
+        editMachine(currentIndex);
         addPendingChange('machines');
     }
 }
 
 // Funções para Configurações
 export function addConfiguracao() {
-    if (currentMachineIndex !== null) {
-        if (!systemData.machines[currentMachineIndex].configuracoes_instalacao) {
-            systemData.machines[currentMachineIndex].configuracoes_instalacao = [];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        if (!systemData.machines[currentIndex].configuracoes_instalacao) {
+            systemData.machines[currentIndex].configuracoes_instalacao = [];
         }
         
-        const newId = systemData.machines[currentMachineIndex].configuracoes_instalacao.length + 1;
-        systemData.machines[currentMachineIndex].configuracoes_instalacao.push({
+        const newId = systemData.machines[currentIndex].configuracoes_instalacao.length + 1;
+        systemData.machines[currentIndex].configuracoes_instalacao.push({
             id: newId,
             nome: 'Nova Configuração',
             valor: 0
         });
         
-        editMachine(currentMachineIndex);
+        editMachine(currentIndex);
         addPendingChange('machines');
     }
 }
 
 export function updateConfiguracao(index, field, value) {
-    if (currentMachineIndex !== null) {
-        const machine = systemData.machines[currentMachineIndex];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
         if (machine.configuracoes_instalacao && machine.configuracoes_instalacao[index]) {
             if (field === 'valor') {
                 machine.configuracoes_instalacao[index][field] = parseFloat(value) || 0;
@@ -410,11 +415,12 @@ export function updateConfiguracao(index, field, value) {
 
 export function removeConfiguracao(index) {
     showConfirmation('Deseja remover esta configuração?', () => {
-        if (currentMachineIndex !== null) {
-            const machine = systemData.machines[currentMachineIndex];
+        const currentIndex = getCurrentMachineIndex();
+        if (currentIndex !== null) {
+            const machine = systemData.machines[currentIndex];
             if (machine.configuracoes_instalacao) {
                 machine.configuracoes_instalacao.splice(index, 1);
-                editMachine(currentMachineIndex);
+                editMachine(currentIndex);
                 addPendingChange('machines');
                 showWarning('Configuração removida.');
             }
@@ -424,8 +430,9 @@ export function removeConfiguracao(index) {
 
 // Funções para Valores Base
 export function addBaseValue() {
-    if (currentMachineIndex !== null) {
-        const machine = systemData.machines[currentMachineIndex];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
         if (!machine.baseValues) {
             machine.baseValues = {};
         }
@@ -433,27 +440,29 @@ export function addBaseValue() {
         const newKey = `NOVA_CAPACIDADE_${Object.keys(machine.baseValues).length + 1}`;
         machine.baseValues[newKey] = 0;
         
-        editMachine(currentMachineIndex);
+        editMachine(currentIndex);
         addPendingChange('machines');
     }
 }
 
 export function updateBaseValueKey(oldKey, newKey) {
-    if (currentMachineIndex !== null && newKey && newKey.trim() !== '') {
-        const machine = systemData.machines[currentMachineIndex];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null && newKey && newKey.trim() !== '') {
+        const machine = systemData.machines[currentIndex];
         if (machine.baseValues && machine.baseValues[oldKey] !== undefined) {
             const value = machine.baseValues[oldKey];
             delete machine.baseValues[oldKey];
             machine.baseValues[newKey] = value;
-            editMachine(currentMachineIndex);
+            editMachine(currentIndex);
             addPendingChange('machines');
         }
     }
 }
 
 export function updateBaseValue(key, value) {
-    if (currentMachineIndex !== null) {
-        const machine = systemData.machines[currentMachineIndex];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
         if (machine.baseValues && machine.baseValues[key] !== undefined) {
             machine.baseValues[key] = parseFloat(value) || 0;
             addPendingChange('machines');
@@ -463,11 +472,12 @@ export function updateBaseValue(key, value) {
 
 export function removeBaseValue(key) {
     showConfirmation(`Deseja remover o valor base "${key}"?`, () => {
-        if (currentMachineIndex !== null) {
-            const machine = systemData.machines[currentMachineIndex];
+        const currentIndex = getCurrentMachineIndex();
+        if (currentIndex !== null) {
+            const machine = systemData.machines[currentIndex];
             if (machine.baseValues && machine.baseValues[key] !== undefined) {
                 delete machine.baseValues[key];
-                editMachine(currentMachineIndex);
+                editMachine(currentIndex);
                 addPendingChange('machines');
                 showWarning(`Valor base "${key}" removido.`);
             }
@@ -477,8 +487,9 @@ export function removeBaseValue(key) {
 
 // Funções para Opções
 export function addOption() {
-    if (currentMachineIndex !== null) {
-        const machine = systemData.machines[currentMachineIndex];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
         if (!machine.options) {
             machine.options = [];
         }
@@ -490,14 +501,15 @@ export function addOption() {
             values: {}
         });
         
-        editMachine(currentMachineIndex);
+        editMachine(currentIndex);
         addPendingChange('machines');
     }
 }
 
 export function updateOption(index, field, value) {
-    if (currentMachineIndex !== null) {
-        const machine = systemData.machines[currentMachineIndex];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
         if (machine.options && machine.options[index]) {
             machine.options[index][field] = value;
             addPendingChange('machines');
@@ -506,8 +518,9 @@ export function updateOption(index, field, value) {
 }
 
 export function updateOptionValue(optionIndex, key, value) {
-    if (currentMachineIndex !== null) {
-        const machine = systemData.machines[currentMachineIndex];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
         if (machine.options && machine.options[optionIndex]) {
             if (!machine.options[optionIndex].values) {
                 machine.options[optionIndex].values = {};
@@ -520,11 +533,12 @@ export function updateOptionValue(optionIndex, key, value) {
 
 export function removeOption(index) {
     showConfirmation('Deseja remover esta opção?', () => {
-        if (currentMachineIndex !== null) {
-            const machine = systemData.machines[currentMachineIndex];
+        const currentIndex = getCurrentMachineIndex();
+        if (currentIndex !== null) {
+            const machine = systemData.machines[currentIndex];
             if (machine.options) {
                 machine.options.splice(index, 1);
-                editMachine(currentMachineIndex);
+                editMachine(currentIndex);
                 addPendingChange('machines');
                 showWarning('Opção removida.');
             }
@@ -534,8 +548,9 @@ export function removeOption(index) {
 
 // Funções para Tensões
 export function addVoltage() {
-    if (currentMachineIndex !== null) {
-        const machine = systemData.machines[currentMachineIndex];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
         if (!machine.voltages) {
             machine.voltages = [];
         }
@@ -546,14 +561,15 @@ export function addVoltage() {
             value: 0
         });
         
-        editMachine(currentMachineIndex);
+        editMachine(currentIndex);
         addPendingChange('machines');
     }
 }
 
 export function updateVoltage(index, field, value) {
-    if (currentMachineIndex !== null) {
-        const machine = systemData.machines[currentMachineIndex];
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
         if (machine.voltages && machine.voltages[index]) {
             if (field === 'value') {
                 machine.voltages[index][field] = parseFloat(value) || 0;
@@ -567,11 +583,12 @@ export function updateVoltage(index, field, value) {
 
 export function removeVoltage(index) {
     showConfirmation('Deseja remover esta tensão?', () => {
-        if (currentMachineIndex !== null) {
-            const machine = systemData.machines[currentMachineIndex];
+        const currentIndex = getCurrentMachineIndex();
+        if (currentIndex !== null) {
+            const machine = systemData.machines[currentIndex];
             if (machine.voltages) {
                 machine.voltages.splice(index, 1);
-                editMachine(currentMachineIndex);
+                editMachine(currentIndex);
                 addPendingChange('machines');
                 showWarning('Tensão removida.');
             }
@@ -580,7 +597,8 @@ export function removeVoltage(index) {
 }
 
 export function saveMachineChanges() {
-    if (currentMachineIndex !== null) {
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
         addPendingChange('machines');
         showSuccess('Alterações na máquina salvas. Lembre-se de salvar todos os dados.');
         closeMachineDetail();

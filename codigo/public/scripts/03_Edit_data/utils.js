@@ -4,30 +4,9 @@
 import { escapeHtml } from './ui.js';
 import { showError } from './ui.js';
 
-export function getConstantDescription(key) {
-    const descriptions = {
-        'VARIAVEL_PD': 'Variável PD - Fator de projeto',
-        'VARIAVEL_PS': 'Variável PS - Fator de segurança',
-        'AUX_U_Value_Piso': 'Valor U para piso',
-        'AUX_Fator_Iluminacao': 'Fator de iluminação',
-        'FATOR_SEGURANCA_CAPACIDADE': 'Fator de segurança para capacidade'
-    };
-    return descriptions[key] || '';
-}
 
-export function getMaterialUnit(material) {
-    const units = {
-        'Kg cobre': 'kg',
-        'Metro isolante 1.1/8': 'm',
-        'Metro isolante 5/8': 'm',
-        'Kg Gás R-410A': 'kg',
-        'Metro tubo PVC 3/4"': 'm',
-        'Metro tubo PVC 1"': 'm',
-        'Metro Barra Roscada 3/8"': 'm',
-        'Chumbador 3/8" por 2.1/2"': 'un'
-    };
-    return units[material] || '';
-}
+
+
 
 export function exportToJSON() {
     try {

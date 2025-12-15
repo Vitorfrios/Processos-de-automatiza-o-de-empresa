@@ -1,6 +1,8 @@
 // scripts/03_Edit_data/state.js
 // Estado global do sistema
 
+import { showError } from './ui.js';
+
 export let systemData = {
     constants: {},
     machines: [],
@@ -12,7 +14,9 @@ export let originalData = {};
 export let pendingChanges = new Set();
 export let currentEditItem = null;
 export let currentEditType = null;
-export let currentMachineIndex = null;
+
+// Variável interna para gerenciar o índice da máquina atual
+let _currentMachineIndex = null;
 
 // Exportar para acesso global
 window.systemData = systemData;
@@ -28,6 +32,23 @@ export function updateSystemData(newData) {
     // Manter referência global
     window.systemData = systemData;
     originalData = JSON.parse(JSON.stringify(systemData));
+}
+
+export function updateOriginalData(newData) {
+    originalData = JSON.parse(JSON.stringify(newData));
+}
+
+// Funções para gerenciar currentMachineIndex
+export function getCurrentMachineIndex() {
+    return _currentMachineIndex;
+}
+
+export function setCurrentMachineIndex(index) {
+    _currentMachineIndex = index;
+}
+
+export function clearCurrentMachineIndex() {
+    _currentMachineIndex = null;
 }
 
 export function addPendingChange(type) {
@@ -55,10 +76,20 @@ export function updateSaveButton() {
 
 export function validateData() {
     try {
-        // Validar constantes
-        for (const [key, value] of Object.entries(systemData.constants)) {
-            if (typeof value !== 'number' || isNaN(value)) {
-                showError(`Valor inválido para constante "${key}": ${value}`);
+        // Validar constantes (novo formato)
+        for (const [key, constant] of Object.entries(systemData.constants)) {
+            if (typeof constant !== 'object' || constant === null) {
+                showError(`Estrutura inválida para constante "${key}"`);
+                return false;
+            }
+            
+            if (typeof constant.value !== 'number' || isNaN(constant.value)) {
+                showError(`Valor inválido para constante "${key}": ${constant.value}`);
+                return false;
+            }
+            
+            if (constant.description && typeof constant.description !== 'string') {
+                showError(`Descrição inválida para constante "${key}"`);
                 return false;
             }
         }
@@ -81,10 +112,25 @@ export function validateData() {
             }
         }
         
-        // Validar materiais
-        for (const [key, value] of Object.entries(systemData.materials)) {
-            if (typeof value !== 'number' || isNaN(value) || value < 0) {
-                showError(`Preço inválido para material "${key}": ${value}`);
+        // Validar materiais (novo formato)
+        for (const [key, material] of Object.entries(systemData.materials)) {
+            if (typeof material !== 'object' || material === null) {
+                showError(`Estrutura inválida para material "${key}"`);
+                return false;
+            }
+            
+            if (typeof material.value !== 'number' || isNaN(material.value) || material.value < 0) {
+                showError(`Preço inválido para material "${key}": ${material.value}`);
+                return false;
+            }
+            
+            if (!material.unit || typeof material.unit !== 'string') {
+                showError(`Unidade inválida para material "${key}"`);
+                return false;
+            }
+            
+            if (material.description && typeof material.description !== 'string') {
+                showError(`Descrição inválida para material "${key}"`);
                 return false;
             }
         }

@@ -1,0 +1,594 @@
+/* ===== MÁQUINAS - ESTILOS ESPECÍFICOS ===== */
+
+/* ===== AÇÕES DE MÁQUINAS ===== */
+.machine-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.machine-actions select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    background: var(--color-white);
+    font-size: 0.9rem;
+    min-width: 200px;
+}
+
+/* ===== LISTA DE MÁQUINAS ===== */
+#machinesList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+}
+
+.machine-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 2px 8px var(--card-shadow);
+    padding: var(--spacing-md);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.machine-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px var(--card-hover-shadow);
+    border-color: var(--color-primary);
+}
+
+.machine-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-gray-200);
+    min-height: 40px;
+}
+
+.machine-card-header h3 {
+    color: var(--color-gray-800);
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.3;
+    flex: 1;
+    word-break: break-word;
+}
+
+.machine-card-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+}
+
+.machine-card-body {
+    color: var(--color-gray-600);
+    font-size: 0.9rem;
+    flex: 1;
+    padding: var(--spacing-xs) 0;
+}
+
+.machine-card-body p {
+    margin: 0.4rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.machine-card-body strong {
+    color: var(--color-gray-700);
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.machine-card-footer {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-gray-500);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.machine-card-footer span {
+    background: var(--color-gray-100);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+}
+
+/* ===== VIZUALIZAÇÃO DETALHADA DE MÁQUINAS ===== */
+.machine-detail-view {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    animation: slideIn 0.3s ease;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--color-gray-300);
+}
+
+.detail-header h3 {
+    color: var(--color-gray-800);
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.detail-header h3 i {
+    font-size: 1.2em;
+    color: var(--color-primary);
+}
+
+/* ===== FORMULÁRIO DE EDIÇÃO DE MÁQUINA ===== */
+.machine-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.form-group label {
+    color: var(--color-gray-700);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background: var(--color-white);
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(74, 85, 104, 0.15);
+}
+
+/* ===== SEÇÕES DO FORMULÁRIO ===== */
+.form-section {
+    background: var(--color-gray-50);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-gray-200);
+}
+
+.form-section h4 {
+    color: var(--color-gray-800);
+    font-size: 1.2rem;
+    margin: 0 0 var(--spacing-md) 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.form-section h4 i {
+    font-size: 0.9em;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+/* ===== IMPOSTOS ===== */
+.impostos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.form-input-small {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    background: var(--color-white);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-input-small:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
+}
+
+/* ===== CONFIGURAÇÕES DE INSTALAÇÃO ===== */
+.configuracoes-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.config-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.config-header span {
+    color: var(--color-gray-700);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.config-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+/* ===== VALORES BASE ===== */
+.base-values-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.base-value-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.base-value-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-xs);
+}
+
+.base-value-header input {
+    flex: 1;
+    margin-right: var(--spacing-xs);
+}
+
+/* ===== OPÇÕES ===== */
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.option-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.option-header span {
+    color: var(--color-gray-700);
+    font-weight: 600;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+.option-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.option-values {
+    background: var(--color-gray-50);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+}
+
+.option-values h5 {
+    color: var(--color-gray-700);
+    font-size: 0.95rem;
+    margin: 0 0 var(--spacing-md) 0;
+    font-weight: 600;
+}
+
+.option-value-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+    padding: 0.3rem 0;
+}
+
+.option-value-row span {
+    color: var(--color-gray-600);
+    font-size: 0.9rem;
+    min-width: 80px;
+}
+
+/* ===== TENSÕES ===== */
+.voltages-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.voltage-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.voltage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.voltage-header span {
+    color: var(--color-gray-700);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.voltage-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+/* ===== AÇÕES DO FORMULÁRIO ===== */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid var(--color-gray-200);
+}
+
+/* ===== ESTADOS VAZIOS ===== */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-gray-500);
+}
+
+.empty-state h3 {
+    color: var(--color-gray-600);
+    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+}
+
+.empty-message {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--color-gray-500);
+    font-style: italic;
+    background: var(--color-gray-100);
+    border-radius: var(--border-radius);
+    border: 1px dashed var(--color-gray-300);
+}
+
+/* ===== ANIMAÇÕES ===== */
+.fade-in {
+    animation: fadeInCard 0.3s ease;
+}
+
+@keyframes fadeInCard {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* ===== RESPONSIVIDADE PARA MÁQUINAS ===== */
+@media (max-width: 1024px) {
+    #machinesList {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    
+    .impostos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+    
+    .base-values-list,
+    .voltages-list {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    #machinesList {
+        grid-template-columns: 1fr;
+    }
+    
+    .machine-detail-view {
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-md);
+    }
+    
+    .detail-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-md);
+    }
+    
+    .impostos-grid,
+    .base-values-list,
+    .voltages-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .config-content,
+    .voltage-content {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .machine-card {
+        padding: var(--spacing-sm);
+    }
+    
+    .machine-card-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+    }
+    
+    .machine-card-actions {
+        justify-content: flex-end;
+    }
+    
+    .machine-card-body p {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+    }
+    
+    .machine-card-footer {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        align-items: stretch;
+    }
+    
+    .form-section {
+        padding: var(--spacing-md);
+    }
+    
+    .option-content {
+        gap: var(--spacing-sm);
+    }
+    
+    .option-values {
+        padding: var(--spacing-sm);
+    }
+}
+
+/* ===== UTILITÁRIOS ===== */
+.btn-xs {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    min-height: 24px;
+    min-width: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===== BOTÕES DE AÇÃO ESPECÍFICOS ===== */
+.btn-remove {
+    background: linear-gradient(135deg, var(--color-danger-light), var(--color-danger));
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-remove:hover {
+    background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
+    transform: scale(1.05);
+}
+
+/* ===== FORMULÁRIOS RESPONSIVOS ===== */
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+    background: var(--color-white);
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(74, 85, 104, 0.15);
+}
+
+/* ===== ÍCONES ESPECÍFICOS PARA MÁQUINAS ===== */
+.icon-config::before { content: "⚙️"; }
+.icon-base::before { content: "📊"; }
+.icon-option::before { content: "📋"; }
+.icon-voltage::before { content: "⚡"; }
+.icon-tax::before { content: "💰"; }
