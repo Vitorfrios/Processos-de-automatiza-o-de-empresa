@@ -51,14 +51,15 @@ function computeAirFlowRate(inputData) {
     const pressure = inputData.pressurizacao ? safeNumber(inputData.pressurizacaoSetpoint) : 0;
 
     // Validação de constantes
-    if (!window.systemConstants?.VARIAVEL_PD || !window.systemConstants?.VARIAVEL_PS) {
+    if (!window.systemConstants?.VARIAVEL_PD.value || !window.systemConstants?.VARIAVEL_PS.value) {
         console.error("Constantes do sistema não disponíveis");
         return 0;
     }
 
     const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD.value
 , pressure);
-    const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS, pressure);
+    const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS.value
+, pressure);
 
     const totalFlow = doubleDoorFlow + singleDoorFlow;
     const adjustedFlow = totalFlow / CALCULATION_CONSTANTS.FLOW_DIVISOR;

@@ -1,34 +1,108 @@
 {
+
   "constants": {
     "VARIAVEL_PD": {
       "value": 0.0402,
       "description": "Coeficiente de perda térmica por densidade"
     },
-    "VARIAVEL_PS": 0.024,
-    "AUX_U_Value_Piso": 2.7,
-    "AUX_Fator_Iluminacao": 7,
-    "AUX_Fs_Iluminacao": 1,
-    "AUX_Fator_Conver_Painel": 1,
-    "AUX_Fs_Paineis": 100,
-    "AUX_OCp_Csp": 86.5,
-    "AUX_OCp_Clp": 133.3,
-    "AUX_f_ArExterno": 3.01,
-    "AUX_deltaUa_ArExterno": 8.47,
-    "Densi_ar": 1.17,
-    "AUX_c_ArExterno": 0.24,
-    "AUX_deltaT_ArExterno": 10,
-    "deltaT_piso": 7.5,
-    "deltaT_teto": 20,
-    "deltaT_parede_Oes": 13,
-    "deltaT_parede_Les": 13,
-    "deltaT_parede_Nor": 13,
-    "deltaT_parede_Sul": 13,
-    "deltaT_divi_N_clim1": 10,
-    "deltaT_divi_N_clim2": 10,
-    "deltaT_divi_clim1": 3,
-    "deltaT_divi_clim2": 3,
-    "FATOR_SEGURANCA_CAPACIDADE": 10
+    "VARIAVEL_PS": {
+      "value": 0.024,
+      "description": "Coeficiente de perda térmica por superfície"
+    },
+    "AUX_U_Value_Piso": {
+      "value": 2.7,
+      "description": "Coeficiente U de transmissão térmica do piso"
+    },
+    "AUX_Fator_Iluminacao": {
+      "value": 7,
+      "description": "Fator de carga térmica por iluminação"
+    },
+    "AUX_Fs_Iluminacao": {
+      "value": 1,
+      "description": "Fator de simultaneidade da iluminação"
+    },
+    "AUX_Fator_Conver_Painel": {
+      "value": 1,
+      "description": "Fator de conversão térmica dos painéis"
+    },
+    "AUX_Fs_Paineis": {
+      "value": 100,
+      "description": "Fator de simultaneidade dos painéis"
+    },
+    "AUX_OCp_Csp": {
+      "value": 86.5,
+      "description": "Carga sensível por ocupante"
+    },
+    "AUX_OCp_Clp": {
+      "value": 133.3,
+      "description": "Carga latente por ocupante"
+    },
+    "AUX_f_ArExterno": {
+      "value": 3.01,
+      "description": "Fator de renovação do ar externo"
+    },
+    "AUX_deltaUa_ArExterno": {
+      "value": 8.47,
+      "description": "Diferença de umidade absoluta do ar externo"
+    },
+    "Densi_ar": {
+      "value": 1.17,
+      "description": "Densidade do ar"
+    },
+    "AUX_c_ArExterno": {
+      "value": 0.24,
+      "description": "Calor específico do ar"
+    },
+    "AUX_deltaT_ArExterno": {
+      "value": 10,
+      "description": "Diferença de temperatura do ar externo"
+    },
+    "deltaT_piso": {
+      "value": 7.5,
+      "description": "Diferença de temperatura do piso"
+    },
+    "deltaT_teto": {
+      "value": 20,
+      "description": "Diferença de temperatura do teto"
+    },
+    "deltaT_parede_Oes": {
+      "value": 13,
+      "description": "Diferença de temperatura da parede oeste"
+    },
+    "deltaT_parede_Les": {
+      "value": 13,
+      "description": "Diferença de temperatura da parede leste"
+    },
+    "deltaT_parede_Nor": {
+      "value": 13,
+      "description": "Diferença de temperatura da parede norte"
+    },
+    "deltaT_parede_Sul": {
+      "value": 13,
+      "description": "Diferença de temperatura da parede sul"
+    },
+    "deltaT_divi_N_clim1": {
+      "value": 10,
+      "description": "Delta T divisória não climatizada 1"
+    },
+    "deltaT_divi_N_clim2": {
+      "value": 10,
+      "description": "Delta T divisória não climatizada 2"
+    },
+    "deltaT_divi_clim1": {
+      "value": 3,
+      "description": "Delta T divisória climatizada 1"
+    },
+    "deltaT_divi_clim2": {
+      "value": 3,
+      "description": "Delta T divisória climatizada 2"
+    },
+    "FATOR_SEGURANCA_CAPACIDADE": {
+      "value": 10,
+      "description": "Margem de segurança aplicada à capacidade final"
+    }
   },
+
   "machines": [
     {
       "type": "Wall Mounted",

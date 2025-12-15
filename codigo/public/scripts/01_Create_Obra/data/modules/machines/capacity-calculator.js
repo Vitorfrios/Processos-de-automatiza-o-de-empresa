@@ -154,11 +154,11 @@ function initializeCapacitySystem(roomId) {
 
   state.attempts++;
 
-  const systemConstantsReady = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE !== undefined;
+  const systemConstantsReady = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE.value !== undefined;
 
   if (systemConstantsReady || state.attempts >= capacityConfig.maxInitAttempts) {
     const fatorSeguranca = systemConstantsReady
-      ? window.systemConstants.FATOR_SEGURANCA_CAPACIDADE
+      ? window.systemConstants.FATOR_SEGURANCA_CAPACIDADE.value
       : 10;
 
     applyFatorSeguranca(roomId, fatorSeguranca);

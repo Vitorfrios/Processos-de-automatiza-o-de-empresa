@@ -152,6 +152,115 @@
           ]
         }
       ]
+    },
+    {
+      "id": "obra_n34",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_n34",
+      "empresaSigla": "AMC",
+      "empresaNome": "AMC SOLUÇÕES",
+      "numeroClienteFinal": 1,
+      "clienteFinal": "b",
+      "codigoCliente": "xcb",
+      "dataCadastro": "15/12/2025",
+      "orcamentistaResponsavel": "cxbxcbvx",
+      "projetos": [
+        {
+          "id": "obra_n34_proj_d55_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_n34_proj_d55_2_sala_g84_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala de Servidores",
+                "backup": "n+1",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 5.5,
+                "paredeLeste": 5.5,
+                "paredeNorte": 8,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "numPortasDuplas": 2,
+                "numPortasSimples": 3,
+                "combateIncendio": "fm200",
+                "pressurizacao": true
+              },
+              "maquinas": [
+                {
+                  "nome": "Split System-01A (45TR)",
+                  "tipo": "Split System",
+                  "potencia": "45TR",
+                  "tensao": "220V/3F",
+                  "precoBase": 3,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 11,
+                      "name": "Pintura Especial",
+                      "value": 7,
+                      "originalName": "Pintura Especial",
+                      "potenciaAplicada": "45TR"
+                    },
+                    {
+                      "id": 12,
+                      "name": "Chaparia em Inox",
+                      "value": 8,
+                      "originalName": "Chaparia em Inox",
+                      "potenciaAplicada": "45TR"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "nome": "Unidade interna instalada no forro"
+                    }
+                  ],
+                  "precoTotal": 5018,
+                  "potenciaSelecionada": "45TR",
+                  "tipoSelecionado": "Split System"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 1.2,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 2,
+                "solucaoBackup": 3,
+                "totalCapacidade": 20,
+                "folga": 42.9,
+                "backup": "n+1"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 46748,
+                "total-tr-aprox": 14,
+                "total-tr-exato": 13.292,
+                "total-divisoes": 2216,
+                "total-piso": 1013,
+                "total-iluminacao": 350,
+                "total-dissi": 5000,
+                "total-pessoas": 2198,
+                "total-ar-sensivel": 9241,
+                "total-ar-latente": 20090
+              },
+              "acessorio": {
+                "opcoesInstalacao": [
+                  "bocal_insuflamento_protegido",
+                  "bocal_acoplado_dutos",
+                  "condicionadores_externos_se"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

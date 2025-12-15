@@ -44,29 +44,29 @@ function calculatePartitionGain(inputArea, peDireito, uValue, deltaT) {
 }
 
 function calculateFloorGain(area, constants) {
-  const uValue = window.systemConstants?.AUX_U_Value_Piso || 2.7;
-  const deltaT = window.systemConstants?.deltaT_piso || 7.5;
+  const uValue = window.systemConstants?.AUX_U_Value_Piso.value || 2.7;
+  const deltaT = window.systemConstants?.deltaT_piso.value || 7.5;
   const result = safeNumber(area) * uValue * deltaT;
   return result;
 }
 
 function calculateLightingGain(area, constants) {
-  const fatorIluminacao = window.systemConstants?.AUX_Fator_Iluminacao || 7;
-  const fsIluminacao = window.systemConstants?.AUX_Fs_Iluminacao || 1;
+  const fatorIluminacao = window.systemConstants?.AUX_Fator_Iluminacao.value || 7;
+  const fsIluminacao = window.systemConstants?.AUX_Fs_Iluminacao.value || 1;
   const result = safeNumber(area) * fatorIluminacao * fsIluminacao;
   return result;
 }
 
 function calculateDissipationGain(dissipacao, constants) {
-  const fatorConversao = window.systemConstants?.AUX_Fator_Conver_Painel || 1;
-  const fsPaineis = window.systemConstants?.AUX_Fs_Paineis || 100;
+  const fatorConversao = window.systemConstants?.AUX_Fator_Conver_Painel.value || 1;
+  const fsPaineis = window.systemConstants?.AUX_Fs_Paineis.value || 100;
   const result = (fatorConversao * safeNumber(dissipacao) * fsPaineis) / 100;
   return result;
 }
 
 function calculatePeopleGain(numPessoas, constants) {
-  const csp = window.systemConstants?.AUX_OCp_Csp || 86.5;
-  const clp = window.systemConstants?.AUX_OCp_Clp || 133.3;
+  const csp = window.systemConstants?.AUX_OCp_Csp.value || 86.5;
+  const clp = window.systemConstants?.AUX_OCp_Clp.value || 133.3;
   const fsPessoas = 100;
   const pessoas = safeNumber(numPessoas);
   const ganhoSensivel = (csp * pessoas * fsPessoas) / 100;
@@ -76,8 +76,8 @@ function calculatePeopleGain(numPessoas, constants) {
 }
 
 function calculateExternalAirSensibleGain(vazaoArExterno, auxVars, constants) {
-  const c_ArExterno = window.systemConstants?.AUX_c_ArExterno || 0.24;
-  const deltaT_ArExterno = window.systemConstants?.AUX_deltaT_ArExterno || 10;
+  const c_ArExterno = window.systemConstants?.AUX_c_ArExterno.value || 0.24;
+  const deltaT_ArExterno = window.systemConstants?.AUX_deltaT_ArExterno.value || 10;
   
   const calc_Gsens_ArE = auxVars.m_ArExterno * c_ArExterno * deltaT_ArExterno;
   const resultado = (calc_Gsens_ArE / 1000) * 1.16;
@@ -86,8 +86,8 @@ function calculateExternalAirSensibleGain(vazaoArExterno, auxVars, constants) {
 }
 
 function calculateExternalAirLatentGain(vazaoArExterno, constants) {
-  const f_ArExterno = window.systemConstants?.AUX_f_ArExterno || 3.01;
-  const deltaUa_ArExterno = window.systemConstants?.AUX_deltaUa_ArExterno || 8.47;
+  const f_ArExterno = window.systemConstants?.AUX_f_ArExterno.value || 3.01;
+  const deltaUa_ArExterno = window.systemConstants?.AUX_deltaUa_ArExterno.value || 8.47;
   
   const vazao = safeNumber(vazaoArExterno);
   const ganho = vazao * f_ArExterno * deltaUa_ArExterno;
@@ -157,39 +157,39 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
 
   updateElementText(`area-teto-${roomId}`, Math.ceil(inputData.area || 0));
   updateElementText(`uvalue-teto-${roomId}`, uValues.teto.toFixed(3));
-  updateElementText(`deltat-teto-${roomId}`, window.systemConstants?.deltaT_teto || 20);
+  updateElementText(`deltat-teto-${roomId}`, window.systemConstants?.deltaT_teto.value || 20);
   updateElementText(`ganho-teto-${roomId}`, Math.ceil(gains.teto));
 
-  updateWallDisplay(roomId, "oeste", gains.paredeOeste, uValues.parede, inputData.paredeOeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Oes || 0);
-  updateWallDisplay(roomId, "leste", gains.paredeLeste, uValues.parede, inputData.paredeLeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Les || 0);
-  updateWallDisplay(roomId, "norte", gains.paredeNorte, uValues.parede, inputData.paredeNorte, inputData.peDireito, window.systemConstants?.deltaT_parede_Nor || 0);
-  updateWallDisplay(roomId, "sul", gains.paredeSul, uValues.parede, inputData.paredeSul, inputData.peDireito, window.systemConstants?.deltaT_parede_Sul || 0);
+  updateWallDisplay(roomId, "oeste", gains.paredeOeste, uValues.parede, inputData.paredeOeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Oes.value || 0);
+  updateWallDisplay(roomId, "leste", gains.paredeLeste, uValues.parede, inputData.paredeLeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Les.value || 0);
+  updateWallDisplay(roomId, "norte", gains.paredeNorte, uValues.parede, inputData.paredeNorte, inputData.peDireito, window.systemConstants?.deltaT_parede_Nor.value || 0);
+  updateWallDisplay(roomId, "sul", gains.paredeSul, uValues.parede, inputData.paredeSul, inputData.peDireito, window.systemConstants?.deltaT_parede_Sul.value || 0);
 
-  updatePartitionDisplay(roomId, "nc1", gains.divisoriaNaoClima1, uValues.parede, inputData.divisoriaNaoClima1, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim1 || 0);
-  updatePartitionDisplay(roomId, "nc2", gains.divisoriaNaoClima2, uValues.parede, inputData.divisoriaNaoClima2, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim2 || 0);
-  updatePartitionDisplay(roomId, "c1", gains.divisoriaClima1, uValues.parede, inputData.divisoriaClima1, inputData.peDireito, window.systemConstants?.deltaT_divi_clim1 || 0);
-  updatePartitionDisplay(roomId, "c2", gains.divisoriaClima2, uValues.parede, inputData.divisoriaClima2, inputData.peDireito, window.systemConstants?.deltaT_divi_clim2 || 0);
+  updatePartitionDisplay(roomId, "nc1", gains.divisoriaNaoClima1, uValues.parede, inputData.divisoriaNaoClima1, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim1.value || 0);
+  updatePartitionDisplay(roomId, "nc2", gains.divisoriaNaoClima2, uValues.parede, inputData.divisoriaNaoClima2, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim2.value || 0);
+  updatePartitionDisplay(roomId, "c1", gains.divisoriaClima1, uValues.parede, inputData.divisoriaClima1, inputData.peDireito, window.systemConstants?.deltaT_divi_clim1.value || 0);
+  updatePartitionDisplay(roomId, "c2", gains.divisoriaClima2, uValues.parede, inputData.divisoriaClima2, inputData.peDireito, window.systemConstants?.deltaT_divi_clim2.value || 0);
 
   updateElementText(`area-piso-${roomId}`, Math.ceil(inputData.area || 0));
   updateElementText(`uvalue-piso-${roomId}`, uValues.piso.toFixed(3));
-  updateElementText(`deltat-piso-${roomId}`, window.systemConstants?.deltaT_piso || 5);
+  updateElementText(`deltat-piso-${roomId}`, window.systemConstants?.deltaT_piso.value || 5);
   updateElementText(`ganho-piso-${roomId}`, Math.ceil(gains.piso));
   updateElementText(`total-piso-${roomId}`, totals.piso);
 
   updateElementText(`area-iluminacao-${roomId}`, Math.ceil(inputData.area || 0));
-  updateElementText(`fator-iluminacao-${roomId}`, window.systemConstants?.AUX_Fator_Iluminacao || 7);
-  updateElementText(`fs-iluminacao-${roomId}`, window.systemConstants?.AUX_Fs_Iluminacao || 1);
+  updateElementText(`fator-iluminacao-${roomId}`, window.systemConstants?.AUX_Fator_Iluminacao.value || 7);
+  updateElementText(`fs-iluminacao-${roomId}`, window.systemConstants?.AUX_Fs_Iluminacao.value || 1);
   updateElementText(`ganho-iluminacao-${roomId}`, Math.ceil(gains.iluminacao));
   updateElementText(`total-iluminacao-${roomId}`, totals.iluminacao);
 
-  updateElementText(`fator-conversao-dissi-${roomId}`, window.systemConstants?.AUX_Fator_Conver_Painel || 1);
+  updateElementText(`fator-conversao-dissi-${roomId}`, window.systemConstants?.AUX_Fator_Conver_Painel.value || 1);
   updateElementText(`pe-dissi-${roomId}`, inputData.dissipacao || 0);
-  updateElementText(`fs-dissi-${roomId}`, window.systemConstants?.AUX_Fs_Paineis || 100);
+  updateElementText(`fs-dissi-${roomId}`, window.systemConstants?.AUX_Fs_Paineis.value || 100);
   updateElementText(`ganho-dissi-${roomId}`, Math.ceil(gains.dissipacao));
   updateElementText(`total-dissi-${roomId}`, totals.equipamentos);
 
-  updateElementText(`csp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Csp || 86.5);
-  updateElementText(`clp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Clp || 133.3);
+  updateElementText(`csp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Csp.value || 86.5);
+  updateElementText(`clp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Clp.value || 133.3);
   updateElementText(`o-pessoas-${roomId}`, inputData.numPessoas || 0);
   updateElementText(`fs-pessoas-${roomId}`, 100);
   updateElementText(`ganho-pessoas-${roomId}`, Math.ceil(gains.pessoas));
@@ -199,14 +199,14 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   const m_ArExterno = (inputData.vazaoArExterno || 0) * 3.6 * densiAr * 1000;
 
   updateElementText(`m-ar-sensivel-${roomId}`, Math.ceil(m_ArExterno));
-  updateElementText(`c-ar-sensivel-${roomId}`, window.systemConstants?.AUX_c_ArExterno || 0.24);
-  updateElementText(`deltat-ar-sensivel-${roomId}`, window.systemConstants?.AUX_deltaT_ArExterno || 10);
+  updateElementText(`c-ar-sensivel-${roomId}`, window.systemConstants?.AUX_c_ArExterno.value || 0.24);
+  updateElementText(`deltat-ar-sensivel-${roomId}`, window.systemConstants?.AUX_deltaT_ArExterno.value || 10);
   updateElementText(`ganho-ar-sensivel-${roomId}`, Math.ceil(gains.arSensivel));
   updateElementText(`total-ar-sensivel-${roomId}`, totals.arSensivel);
 
   updateElementText(`var-ar-latente-${roomId}`, inputData.vazaoArExterno || 0);
-  updateElementText(`f-ar-latente-${roomId}`, window.systemConstants?.AUX_f_ArExterno || 3.01);
-  updateElementText(`deltaua-ar-latente-${roomId}`, window.systemConstants?.AUX_deltaUa_ArExterno || 8.47);
+  updateElementText(`f-ar-latente-${roomId}`, window.systemConstants?.AUX_f_ArExterno.value || 3.01);
+  updateElementText(`deltaua-ar-latente-${roomId}`, window.systemConstants?.AUX_deltaUa_ArExterno.value || 8.47);
   updateElementText(`ganho-ar-latente-${roomId}`, Math.ceil(gains.arLatente));
   updateElementText(`total-ar-latente-${roomId}`, totals.arLatente);
 
@@ -283,7 +283,7 @@ function calculateUValues(tipoConstrucao) {
   const result = {
     parede: uValueParede,
     teto: uValueTeto,
-    piso: window.systemConstants?.AUX_U_Value_Piso || 2.7,
+    piso: window.systemConstants?.AUX_U_Value_Piso.value || 2.7,
   };
 
   console.log("[THERMAL UVALUES] UValues calculados:", result);
@@ -292,7 +292,7 @@ function calculateUValues(tipoConstrucao) {
 
 function calculateAuxiliaryVariables(inputData) {
   const vazaoArExterno = safeNumber(inputData.vazaoArExterno);
-  const densiAr = window.systemConstants?.Densi_ar || 1.17;
+  const densiAr = window.systemConstants?.Densi_ar.value || 1.17;
 
   const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000;
 
@@ -357,15 +357,15 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
     const auxVars = calculateAuxiliaryVariables({...calcData, vazaoArExterno});
 
     const gains = {
-      teto: calculateCeilingGain(calcData.area, uValues.teto, window.systemConstants.deltaT_teto),
-      paredeOeste: calculateWallGain(calcData.paredeOeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Oes),
-      paredeLeste: calculateWallGain(calcData.paredeLeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Les),
-      paredeNorte: calculateWallGain(calcData.paredeNorte, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Nor),
-      paredeSul: calculateWallGain(calcData.paredeSul, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Sul),
-      divisoriaNaoClima1: calculatePartitionGain(calcData.divisoriaNaoClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim1),
-      divisoriaNaoClima2: calculatePartitionGain(calcData.divisoriaNaoClima2, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim2),
-      divisoriaClima1: calculatePartitionGain(calcData.divisoriaClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_clim1),
-      divisoriaClima2: calculatePartitionGain(calcData.divisoriaClima2, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_clim2),
+      teto: calculateCeilingGain(calcData.area, uValues.teto, window.systemConstants.deltaT_teto.value),
+      paredeOeste: calculateWallGain(calcData.paredeOeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Oes.value),
+      paredeLeste: calculateWallGain(calcData.paredeLeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Les.value),
+      paredeNorte: calculateWallGain(calcData.paredeNorte, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Nor.value),
+      paredeSul: calculateWallGain(calcData.paredeSul, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Sul.value),
+      divisoriaNaoClima1: calculatePartitionGain(calcData.divisoriaNaoClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim1.value),
+      divisoriaNaoClima2: calculatePartitionGain(calcData.divisoriaNaoClima2, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim2.value),
+      divisoriaClima1: calculatePartitionGain(calcData.divisoriaClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_clim1.value),
+      divisoriaClima2: calculatePartitionGain(calcData.divisoriaClima2, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_clim2.value),
       piso: calculateFloorGain(calcData.area, window.systemConstants),
       iluminacao: calculateLightingGain(calcData.area, window.systemConstants),
       dissipacao: calculateDissipationGain(calcData.dissipacao, window.systemConstants),

@@ -748,7 +748,7 @@ function fixExistingCapacityInputs() {
             const input = document.getElementById(`fator-seguranca-${roomId}`);
             
             if (input && input.value === '') {
-                const valor = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE || 10;
+                const valor = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE.value || 10;
                 input.value = valor;
                 console.log(`✅ Input ${roomId} : ${valor}% (Obra: ${obraId}, Projeto: ${projectId})`);
             }
