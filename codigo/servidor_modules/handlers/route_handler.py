@@ -233,3 +233,10 @@ class RouteHandler:
         
         result = self.routes_core.handle_post_empresas_auto(post_data)
         handler.send_json_response(result)
+        
+            # ========== ROTA UNIVERSAL DELETE ==========
+    
+    def handle_delete_universal(self, handler):
+        """DELETE /api/delete - Rota universal para deletar qualquer item"""
+        result = self.routes_core.handle_delete_universal_from_handler(handler)
+        handler.send_json_response(result)

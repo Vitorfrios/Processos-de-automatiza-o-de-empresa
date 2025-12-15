@@ -187,8 +187,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"🗑️  DELETE: {path}")
         
+        # ========== NOVA ROTA UNIVERSAL ==========
+        if path == '/api/delete':
+            self.handle_delete_universal()
+        # =========================================
         # ROTAS PRINCIPAIS - OBRAS
-        if path.startswith('/obras/'):
+        elif path.startswith('/obras/'):
             obra_id = path.split('/')[-1]
             print(f"🎯 Roteando DELETE para obra: {obra_id}")
             self.route_handler.handle_delete_obra(self, obra_id)
@@ -196,13 +200,49 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif path.startswith('/api/sessions/remove-obra/'):
             obra_id = path.split('/')[-1]
             self.route_handler.handle_delete_sessions_remove_obra(self, obra_id)
-        # ROTAS LEGACY (COMPATIBILIDADE)
-        elif path.startswith('/api/sessions/remove-project/'):
-            project_id = path.split('/')[-1]
-            self.route_handler.handle_delete_sessions_remove_project(self, project_id)
+
         else:
             print(f"❌ DELETE não implementado: {path}")
             self.send_error(501, f"Método não suportado: DELETE {path}")
+
+    def handle_delete_universal(self):
+        """API universal para deletar qualquer item do backup.json usando path"""
+        try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            data = json.loads(post_data)
+            
+            # Obrigatório: path como array (ex: ["obras", "obra_id", "projetos", "projeto_id"])
+            path = data.get('path')
+            
+            if not path or not isinstance(path, list):
+                self.send_json_response({
+                    "success": False,
+                    "error": "Path inválido. Deve ser um array (ex: ['obras', 'id_da_obra'])"
+                }, status=400)
+                return
+            
+            print(f"🗑️  DELETE UNIVERSAL - Path: {path}")
+            
+            # Chama o método no RoutesCore
+            result = self.routes_core.handle_delete_universal(path)
+            
+            if result["success"]:
+                self.send_json_response(result)
+            else:
+                self.send_json_response(result, status=500)
+                
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False,
+                "error": "JSON inválido"
+            }, status=400)
+        except Exception as e:
+            print(f"❌ Erro em handle_delete_universal: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)
 
     def handle_health_check(self):
         """Health check rápido"""

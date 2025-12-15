@@ -650,31 +650,129 @@ class RoutesCore:
                 "message": "Recarregamento forçado devido a erro"
             }
 
-    # ========== ROTAS DE COMPATIBILIDADE ==========
-
-    def handle_get_projetos(self):
-        """COMPATIBILIDADE: Retorna array vazio"""
-        print("⚠️  AVISO: handle_get_projetos() - método legado, retornando vazia")
-        return []
-
-    def handle_delete_sessions_remove_project(self, project_id):
-        """COMPATIBILIDADE: Remove projeto/obra da sessão"""
+            # ========== ROTA UNIVERSAL DELETE ==========
+    
+    def handle_delete_universal(self, path_array):
+        """Deleta qualquer item no backup.json seguindo um caminho específico"""
         try:
-            print(f"🗑️  [COMPAT] Removendo projeto/obra {project_id} da sessão")
+            # Carrega backup.json
+            backup_file = self.file_utils.find_json_file('backup.json', self.project_root)
+            backup_data = self.file_utils.load_json_file(backup_file, {})
             
-            success = self.sessions_manager.remove_obra(project_id)
+            current = backup_data
+            parent = None
+            parent_key = None
             
-            if success:
-                return {
-                    "success": True, 
-                    "message": f"Obra {project_id} removida da sessão"
-                }
-                print(f"✅ Obra {project_id} removida da sessão via rota de compatibilidade")
-            else:
-                print(f"❌ Falha ao remover obra {project_id} da sessão")
-                return {"success": False, "error": "Erro ao remover obra da sessão"}
+            # Navega até o penúltimo nível (parent do item a ser deletado)
+            for i, key in enumerate(path_array[:-1]):
+                if key not in current:
+                    return {
+                        "success": False,
+                        "error": f"Caminho inválido: '{key}' não encontrado",
+                        "path": path_array
+                    }
+                parent = current
+                parent_key = key
+                current = current[key]
+            
+            # Último elemento é o ID a ser deletado
+            item_id = path_array[-1]
+            
+            # Verifica se existe no nível atual
+            if isinstance(current, list):
+                # Para arrays, precisamos encontrar pelo ID
+                item_index = -1
+                for i, item in enumerate(current):
+                    if isinstance(item, dict) and str(item.get('id')) == item_id:
+                        item_index = i
+                        break
                 
+                if item_index == -1:
+                    return {
+                        "success": False,
+                        "error": f"Item '{item_id}' não encontrado no array",
+                        "path": path_array
+                    }
+                
+                # Remove o item do array
+                deleted_item = current.pop(item_index)
+                print(f"✅ Item deletado do array: {path_array}")
+                
+            elif isinstance(current, dict):
+                # Para dicionários, remover pela chave
+                if item_id not in current:
+                    return {
+                        "success": False,
+                        "error": f"Item '{item_id}' não encontrado no dicionário",
+                        "path": path_array
+                    }
+                
+                deleted_item = current.pop(item_id)
+                print(f"✅ Item deletado do dicionário: {path_array}")
+            
+            else:
+                return {
+                    "success": False,
+                    "error": f"Tipo inválido no caminho: {type(current)}",
+                    "path": path_array
+                }
+            
+            # Salva backup atualizado
+            if self.file_utils.save_json_file(backup_file, backup_data):
+                # Se for uma obra, também remove da sessão atual
+                if len(path_array) == 2 and path_array[0] == 'obras':
+                    obra_id = path_array[1]
+                    self.sessions_manager.remove_obra(obra_id)
+                    print(f"🗑️  Obra {obra_id} também removida da sessão")
+                
+                return {
+                    "success": True,
+                    "message": f"Item deletado com sucesso",
+                    "path": path_array,
+                    "deleted_id": item_id,
+                    "item_type": "array" if isinstance(current, list) else "dict"
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": "Erro ao salvar backup.json",
+                    "path": path_array
+                }
+            
         except Exception as e:
-            print(f"❌ Erro ao remover obra da sessão: {str(e)}")
-            return {"success": False, "error": str(e)}
+            print(f"❌ Erro ao deletar item universal: {e}")
+            return {
+                "success": False,
+                "error": f"Erro ao deletar: {str(e)}",
+                "path": path_array
+            }
+
+    def handle_delete_universal_from_handler(self, handler):
+        """Wrapper para receber dados do handler HTTP"""
+        try:
+            content_length = int(handler.headers['Content-Length'])
+            post_data = handler.rfile.read(content_length).decode('utf-8')
+            data = json.loads(post_data)
+            
+            path = data.get('path')
+            
+            if not path or not isinstance(path, list):
+                return {
+                    "success": False,
+                    "error": "Path inválido. Deve ser um array (ex: ['obras', 'id_da_obra'])"
+                }
+            
+            return self.handle_delete_universal(path)
+            
+        except json.JSONDecodeError:
+            return {
+                "success": False,
+                "error": "JSON inválido"
+            }
+        except Exception as e:
+            print(f"❌ Erro em handle_delete_universal_from_handler: {e}")
+            return {
+                "success": False,
+                "error": f"Erro no handler: {str(e)}"
+            }
         
