@@ -240,3 +240,96 @@ class RouteHandler:
         """DELETE /api/delete - Rota universal para deletar qualquer item"""
         result = self.routes_core.handle_delete_universal_from_handler(handler)
         handler.send_json_response(result)
+        
+        
+        
+    # ========== ROTAS PARA SISTEMA DE EDIÇÃO ==========
+
+    def handle_get_system_data(self, handler):
+        """GET /api/system-data - Retorna TODOS os dados do sistema"""
+        system_data = self.routes_core.handle_get_system_data()
+        handler.send_json_response(system_data)
+
+    def handle_get_constants_json(self, handler):
+        """GET /api/constants - Retorna apenas as constantes"""
+        constants = self.routes_core.handle_get_constants_json()
+        handler.send_json_response(constants)
+
+    def handle_get_materials(self, handler):
+        """GET /api/materials - Retorna materiais"""
+        materials = self.routes_core.handle_get_materials()
+        handler.send_json_response(materials)
+
+    def handle_get_all_empresas(self, handler):
+        """GET /api/empresas/all - Retorna todas empresas formatadas"""
+        empresas = self.routes_core.handle_get_all_empresas()
+        handler.send_json_response(empresas)
+
+    def handle_get_machine_types(self, handler):
+        """GET /api/machines/types - Retorna tipos de máquinas"""
+        machine_types = self.routes_core.handle_get_machine_types()
+        handler.send_json_response(machine_types)
+
+    def handle_get_machine_by_type(self, handler, machine_type):
+        """GET /api/machines/type/{type} - Retorna máquina específica"""
+        machine = self.routes_core.handle_get_machine_by_type(machine_type)
+        if machine:
+            handler.send_json_response(machine)
+        else:
+            handler.send_error(404, f"Máquina tipo {machine_type} não encontrada")
+
+    def handle_post_save_system_data(self, handler):
+        """POST /api/system-data/save - Salva todos os dados"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_save_system_data(post_data)
+        handler.send_json_response(result)
+
+    def handle_post_save_constants(self, handler):
+        """POST /api/constants/save - Salva constantes"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_save_constants(post_data)
+        handler.send_json_response(result)
+
+    def handle_post_save_materials(self, handler):
+        """POST /api/materials/save - Salva materiais"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_save_materials(post_data)
+        handler.send_json_response(result)
+
+    def handle_post_save_empresas(self, handler):
+        """POST /api/empresas/save - Salva empresas"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_save_empresas(post_data)
+        handler.send_json_response(result)
+
+    def handle_post_save_machines(self, handler):
+        """POST /api/machines/save - Salva máquinas"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_save_machines(post_data)
+        handler.send_json_response(result)
+
+    def handle_post_add_machine(self, handler):
+        """POST /api/machines/add - Adiciona nova máquina"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_add_machine(post_data)
+        handler.send_json_response(result)
+
+    def handle_post_update_machine(self, handler):
+        """POST /api/machines/update - Atualiza máquina existente"""
+        content_length = int(handler.headers['Content-Length'])
+        post_data = handler.rfile.read(content_length).decode('utf-8')
+        
+        result = self.routes_core.handle_post_update_machine(post_data)
+        handler.send_json_response(result)

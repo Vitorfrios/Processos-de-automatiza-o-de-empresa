@@ -235,7 +235,7 @@ body:has(#universal-delete-modal.active) {
 }
 
 .message-text strong {
-    color: #e53e3e;
+    color: #d60404;
     font-size: 1.1rem;
     font-weight: 700;
 }

@@ -38,6 +38,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         '/api/dados/empresas': 'handle_get_empresas',
         '/obras': 'handle_get_obras',
         '/api/server/uptime': 'handle_get_server_uptime',
+        '/api/system-data': 'handle_get_system_data',
+        '/api/constants': 'handle_get_constants_json',
+        '/api/materials': 'handle_get_materials',
+        '/api/empresas/all': 'handle_get_all_empresas',
     }
 
     def __init__(self, *args, **kwargs):
@@ -118,10 +122,23 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_empresa_routes(path)
         elif path.startswith('/obras/'):
             self.handle_obra_routes(path)
+        
+        # NOVAS ROTAS DE EDIÇÃO
+        elif path == '/api/system-data':
+            self.route_handler.handle_get_system_data(self)
+        elif path == '/api/constants':
+            self.route_handler.handle_get_constants_json(self)
+        elif path == '/api/materials':
+            self.route_handler.handle_get_materials(self)
+        elif path == '/api/empresas/all':
+            self.route_handler.handle_get_all_empresas(self)
+        elif path.startswith('/api/machines/'):
+            self.handle_machine_routes(path)
         else:
             # Serve arquivo estático COM HEADERS ANTI-CACHE
             self.serve_static_file_no_cache(path)
-    
+        
+        
     def do_POST(self):
         """POST com todas as rotas necessárias"""
         parsed_path = urlparse(self.path)
@@ -155,10 +172,26 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ROTAS LEGACY (COMPATIBILIDADE)
         elif path in ['/projetos', '/projects']:
             self.route_handler.handle_post_projetos(self)
+        
+        # NOVAS ROTAS PARA EDIÇÃO
+        elif path == '/api/system-data/save':
+            self.route_handler.handle_post_save_system_data(self)
+        elif path == '/api/constants/save':
+            self.route_handler.handle_post_save_constants(self)
+        elif path == '/api/materials/save':
+            self.route_handler.handle_post_save_materials(self)
+        elif path == '/api/empresas/save':
+            self.route_handler.handle_post_save_empresas(self)
+        elif path == '/api/machines/save':
+            self.route_handler.handle_post_save_machines(self)
+        elif path == '/api/machines/add':
+            self.route_handler.handle_post_add_machine(self)
+        elif path == '/api/machines/update':
+            self.route_handler.handle_post_update_machine(self)
         else:
             print(f"❌ POST não implementado: {path}")
             self.send_error(501, f"Método não suportado: POST {path}")
-
+        
     def do_PUT(self):
         """PUT para atualizações"""
         parsed_path = urlparse(self.path)
@@ -369,3 +402,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # Apenas logs importantes
         if any(keyword in message for keyword in [' 404', ' 500', ' 403', '/api/', '/obras', '/empresas']):
             print(f"🌐 {self.address_string()} - {message}")
+            
+            
+            
+    def handle_machine_routes(self, path):
+        """Rotas específicas para máquinas"""
+        if self.command == 'GET':
+            if path == '/api/machines/types':
+                self.route_handler.handle_get_machine_types(self)
+            elif path.startswith('/api/machines/type/'):
+                machine_type = path.split('/')[-1]
+                self.route_handler.handle_get_machine_by_type(self, machine_type)

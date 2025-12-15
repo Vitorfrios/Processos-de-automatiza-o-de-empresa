@@ -849,3 +849,276 @@ class RoutesCore:
         except Exception as e:
             print(f"❌ Erro em handle_delete_universal_from_handler: {e}")
             return {"success": False, "error": f"Erro no handler: {str(e)}"}
+
+
+
+    # ==========  FUNÇÕES PARA SISTEMA DE EDIÇÃO ==========
+
+    def handle_get_system_data(self):
+        """Retorna TODOS os dados do sistema para a interface de edição"""
+        try:
+            # Carrega dados.json
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(
+                dados_file, 
+                {"constants": {}, "machines": [], "materials": {}, "empresas": []}
+            )
+            
+            # Garante que tem a estrutura completa
+            if "empresas" not in dados_data:
+                # Carrega empresas do formato existente
+                if isinstance(dados_data.get("empresas"), list):
+                    empresas_data = dados_data.get("empresas", [])
+                else:
+                    empresas_data = []
+                dados_data["empresas"] = empresas_data
+            
+            print("📊 Retornando todos os dados do sistema")
+            return dados_data
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar system data: {str(e)}")
+            return {"constants": {}, "machines": [], "materials": {}, "empresas": []}
+
+    def handle_get_constants_json(self):
+        """Retorna apenas as constantes formatadas"""
+        try:
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            constants = dados_data.get("constants", {})
+            return {"constants": constants}
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar constants: {str(e)}")
+            return {"constants": {}}
+
+    def handle_get_materials(self):
+        """Retorna materiais"""
+        try:
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            materials = dados_data.get("materials", {})
+            return {"materials": materials}
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar materials: {str(e)}")
+            return {"materials": {}}
+
+    def handle_get_all_empresas(self):
+        """Retorna todas empresas no formato correto"""
+        try:
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            empresas = dados_data.get("empresas", [])
+            # Garante que é uma lista de objetos
+            if isinstance(empresas, list):
+                return {"empresas": empresas}
+            else:
+                # Converte de dict para lista se necessário
+                empresas_list = []
+                if isinstance(empresas, dict):
+                    for sigla, nome in empresas.items():
+                        empresas_list.append({sigla: nome})
+                return {"empresas": empresas_list}
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar empresas: {str(e)}")
+            return {"empresas": []}
+
+    def handle_get_machine_types(self):
+        """Retorna lista de tipos de máquinas"""
+        try:
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            machines = dados_data.get("machines", [])
+            machine_types = [machine.get("type", "") for machine in machines if machine.get("type")]
+            
+            return {"machine_types": machine_types}
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar machine types: {str(e)}")
+            return {"machine_types": []}
+
+    def handle_get_machine_by_type(self, machine_type):
+        """Retorna máquina específica pelo tipo"""
+        try:
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            machines = dados_data.get("machines", [])
+            
+            for machine in machines:
+                if machine.get("type") == machine_type:
+                    return {"machine": machine}
+            
+            return {"machine": None}
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar machine: {str(e)}")
+            return {"machine": None}
+
+    def handle_post_save_system_data(self, post_data):
+        """Salva TODOS os dados do sistema"""
+        try:
+            new_data = json.loads(post_data)
+            
+            # Valida estrutura básica
+            if not all(key in new_data for key in ["constants", "machines", "materials", "empresas"]):
+                return {"success": False, "error": "Estrutura de dados inválida"}
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            
+            if self.file_utils.save_json_file(dados_file, new_data):
+                print("💾 TODOS os dados do sistema salvos")
+                return {"success": True, "message": "Dados salvos com sucesso"}
+            else:
+                return {"success": False, "error": "Erro ao salvar dados"}
+                
+        except Exception as e:
+            print(f"❌ Erro ao salvar system data: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def handle_post_save_constants(self, post_data):
+        """Salva apenas as constantes"""
+        try:
+            new_constants = json.loads(post_data)
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            dados_data["constants"] = new_constants.get("constants", {})
+            
+            if self.file_utils.save_json_file(dados_file, dados_data):
+                print("💾 Constantes salvas")
+                return {"success": True, "message": "Constantes salvas"}
+            else:
+                return {"success": False, "error": "Erro ao salvar constantes"}
+                
+        except Exception as e:
+            print(f"❌ Erro ao salvar constants: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def handle_post_save_materials(self, post_data):
+        """Salva materiais"""
+        try:
+            new_materials = json.loads(post_data)
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            dados_data["materials"] = new_materials.get("materials", {})
+            
+            if self.file_utils.save_json_file(dados_file, dados_data):
+                print("💾 Materiais salvos")
+                return {"success": True, "message": "Materiais salvos"}
+            else:
+                return {"success": False, "error": "Erro ao salvar materiais"}
+                
+        except Exception as e:
+            print(f"❌ Erro ao salvar materials: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def handle_post_save_empresas(self, post_data):
+        """Salva empresas"""
+        try:
+            new_empresas = json.loads(post_data)
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            dados_data["empresas"] = new_empresas.get("empresas", [])
+            
+            if self.file_utils.save_json_file(dados_file, dados_data):
+                print("💾 Empresas salvas")
+                return {"success": True, "message": "Empresas salvas"}
+            else:
+                return {"success": False, "error": "Erro ao salvar empresas"}
+                
+        except Exception as e:
+            print(f"❌ Erro ao salvar empresas: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def handle_post_save_machines(self, post_data):
+        """Salva todas as máquinas"""
+        try:
+            new_machines = json.loads(post_data)
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            dados_data["machines"] = new_machines.get("machines", [])
+            
+            if self.file_utils.save_json_file(dados_file, dados_data):
+                print("💾 Máquinas salvas")
+                return {"success": True, "message": "Máquinas salvas"}
+            else:
+                return {"success": False, "error": "Erro ao salvar máquinas"}
+                
+        except Exception as e:
+            print(f"❌ Erro ao salvar machines: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def handle_post_add_machine(self, post_data):
+        """Adiciona nova máquina"""
+        try:
+            new_machine = json.loads(post_data)
+            
+            if not new_machine.get("type"):
+                return {"success": False, "error": "Tipo de máquina não especificado"}
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            machines = dados_data.get("machines", [])
+            machines.append(new_machine)
+            dados_data["machines"] = machines
+            
+            if self.file_utils.save_json_file(dados_file, dados_data):
+                print(f"💾 Nova máquina '{new_machine.get('type')}' adicionada")
+                return {"success": True, "message": "Máquina adicionada", "machine": new_machine}
+            else:
+                return {"success": False, "error": "Erro ao adicionar máquina"}
+                
+        except Exception as e:
+            print(f"❌ Erro ao adicionar machine: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def handle_post_update_machine(self, post_data):
+        """Atualiza máquina existente"""
+        try:
+            update_data = json.loads(post_data)
+            
+            machine_type = update_data.get("type")
+            if not machine_type:
+                return {"success": False, "error": "Tipo de máquina não especificado"}
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            machines = dados_data.get("machines", [])
+            updated = False
+            
+            for i, machine in enumerate(machines):
+                if machine.get("type") == machine_type:
+                    machines[i] = update_data
+                    updated = True
+                    break
+            
+            if not updated:
+                return {"success": False, "error": f"Máquina '{machine_type}' não encontrada"}
+            
+            dados_data["machines"] = machines
+            
+            if self.file_utils.save_json_file(dados_file, dados_data):
+                print(f"💾 Máquina '{machine_type}' atualizada")
+                return {"success": True, "message": "Máquina atualizada", "machine": update_data}
+            else:
+                return {"success": False, "error": "Erro ao atualizar máquina"}
+                
+        except Exception as e:
+            print(f"❌ Erro ao atualizar machine: {str(e)}")
+            return {"success": False, "error": str(e)}
