@@ -12,7 +12,8 @@ import {
     loadVoltagesHTML
 } from './machines-render.js';
 
-// ===== FUNÇÕES UTILITÁRIAS PARA TR =====
+// ===== FUNÇÕES UTILITÁRIAS =====
+let originalMachineState = null;
 
 
 // Seleciona texto no label
@@ -147,6 +148,9 @@ export function editMachine(index) {
     if (index < 0 || index >= systemData.machines.length) return;
 
     const machine = systemData.machines[index];
+    
+    originalMachineState = JSON.parse(JSON.stringify(machine));
+    
     setCurrentMachineIndex(index);
 
     document.getElementById('machineDetailTitle').textContent = machine.type || 'Nova Máquina';
@@ -349,5 +353,49 @@ export function preventScroll(event) {
         // Prevenir scroll da página
         window.scrollTo(window.scrollX, window.scrollY);
         return false;
+    }
+}
+
+
+
+export function resetMachineChanges() {
+    const currentIndex = getCurrentMachineIndex();
+    
+    if (currentIndex !== null && originalMachineState) {
+        showConfirmation(
+            'Deseja descartar todas as alterações feitas nesta máquina? Esta ação não pode ser desfeita.',
+            () => {
+                // Restaura o estado original
+                systemData.machines[currentIndex] = JSON.parse(JSON.stringify(originalMachineState));
+                
+                // Atualiza a interface
+                document.getElementById('machineDetailTitle').textContent = 
+                    systemData.machines[currentIndex].type || 'Nova Máquina';
+                
+                // Recarrega os dados na interface
+                const machine = systemData.machines[currentIndex];
+                
+                // Atualiza os campos editáveis
+                const typeInput = document.getElementById('editMachineType');
+                if (typeInput) {
+                    typeInput.value = machine.type || '';
+                }
+                
+                // Remove o pending change se houver
+                // Nota: Você pode precisar ajustar isso dependendo de como sua função addPendingChange funciona
+                
+                showWarning('Alterações descartadas. Dados restaurados ao estado original.');
+                
+                // Opcional: Fechar o detalhe após reset
+                closeMachineDetail();
+                
+                // Opcional: Recarregar toda a visualização
+                editMachine(currentIndex);
+            },
+            'Descartar Alterações',
+            'Cancelar'
+        );
+    } else {
+        showWarning('Não há alterações para descartar ou nenhuma máquina está sendo editada.');
     }
 }

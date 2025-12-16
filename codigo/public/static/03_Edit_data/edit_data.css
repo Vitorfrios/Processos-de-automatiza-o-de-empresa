@@ -249,13 +249,15 @@
 }
 
 .modal-content {
-    background: var(--card-bg);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-xl);
     width: 90%;
     max-width: 500px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     animation: slideUpModal 0.3s ease;
+}
+.modal-content p{
+    margin-top: 15px;
 }
 
 @keyframes slideUpModal {

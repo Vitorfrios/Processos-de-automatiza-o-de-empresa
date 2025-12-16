@@ -111,10 +111,16 @@
 
                 <div class="machine-detail-view" id="machineDetailView" style="display: none;">
                     <div class="detail-header">
-                        <h3>Editando: <span id="machineDetailTitle"></span></h3>
-                        <button class="btn btn-small btn-danger" onclick="closeMachineDetail()">
-                            <i class="icon-close"></i> Fechar
-                        </button>
+                        <h3>Editando: <span id="machineDetailTitle">Wall Mounted</span></h3>
+                        <div class="detail-header-actions">
+                            <button class="btn btn-small btn-warning" onclick="resetMachineChanges()"
+                                title="Descartar alterações">
+                                <i class="icon-refresh"></i> Resetar
+                            </button>
+                            <button class="btn btn-small btn-danger" onclick="closeMachineDetail()">
+                                <i class="icon-close"></i> Fechar
+                            </button>
+                        </div>
                     </div>
                     <div id="machineDetailContent">
                         <!-- Conteúdo dinâmico da máquina -->

@@ -153,7 +153,10 @@
         "15TR": 85729.62,
         "20TR": 108787.8,
         "25TR": 125451,
-        "30TR": 141800
+        "30TR": 141800,
+        "NOVA_CAPACIDADE_6876": 0,
+        "NOVA_CAPACIDADE_8097": 0,
+        "NOVA_CAPACIDADE_8653": 0
       },
       "options": [
         {

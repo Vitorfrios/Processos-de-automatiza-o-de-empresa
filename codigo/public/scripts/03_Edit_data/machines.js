@@ -15,7 +15,8 @@ import {
     saveMachineChanges,
     deleteMachine,
     updateMachineField,
-    selectTextInLabel
+    selectTextInLabel,
+    resetMachineChanges
 } from './machines/machines-core.js';
 
 import {
@@ -79,6 +80,7 @@ export {
     deleteMachine,
     updateMachineField,
     selectTextInLabel,
+    resetMachineChanges,
     
     // Impostos
     updateImposto,
@@ -132,6 +134,7 @@ export function exposeToWindow() {
     window.editMachine = editMachine;
     window.closeMachineDetail = closeMachineDetail;
     window.updateMachineField = updateMachineField;
+    window.resetMachineChanges = resetMachineChanges;
     window.updateImposto = updateImposto;
     window.updateImpostoKey = updateImpostoKey;
     window.removeImposto = removeImposto;

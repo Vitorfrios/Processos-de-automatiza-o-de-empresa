@@ -201,15 +201,19 @@ export function addBaseValue(event) {
     }
 }
 
-function addBaseValueToDOM(capacityKey) {
+export function addBaseValueToDOM(capacityKey) {
     const baseValuesList = document.querySelector('.base-values-list');
     if (baseValuesList) {
+        // Encontrar o próximo índice
+        const items = baseValuesList.querySelectorAll('.base-value-item');
+        const index = items.length;
+        
         const newItem = document.createElement('div');
         newItem.className = 'base-value-item';
         newItem.setAttribute('data-key', capacityKey);
         newItem.innerHTML = `
             <div class="base-value-header">
-                <span>Valor base de capacidade</span>
+                <span>Valor Base ${index + 1}</span>
                 <button class="btn btn-xs btn-danger" onclick="removeBaseValue('${capacityKey}', event)" title="Remover">
                     <i class="icon-delete"></i>
                 </button>
