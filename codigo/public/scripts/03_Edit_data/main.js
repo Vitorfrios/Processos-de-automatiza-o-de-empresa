@@ -1,22 +1,22 @@
 import { loadModules } from './loader.js';
 import { createSmartLogger } from '../01_Create_Obra/core/logger.js';
 
-// ✅ INICIALIZAR LOGGER
-window.logger = createSmartLogger();
+// // ✅ INICIALIZAR LOGGER
+// window.logger = createSmartLogger();
 
-// ✅ EXPOR FUNÇÃO GLOBAL PARA CONTROLE DO LOGGER
-window.toggleSystemLogger = function(enable = null) {
-    if (window.logger && typeof window.toggleLogger === 'function') {
-        return window.toggleLogger(enable);
-    } else {
-        console.warn('⚠️ Logger não disponível para controle');
-        return false;
-    }
-};
+// // ✅ EXPOR FUNÇÃO GLOBAL PARA CONTROLE DO LOGGER
+// window.toggleSystemLogger = function(enable = null) {
+//     if (window.logger && typeof window.toggleLogger === 'function') {
+//         return window.toggleLogger(enable);
+//     } else {
+//         console.warn('⚠️ Logger não disponível para controle');
+//         return false;
+//     }
+// };
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Sistema de Edição de Dados iniciado');
+    console.log('🚀 Sistema de Edição de Dados iniciado');
     
     // Carregar todos os módulos
     await loadModules();
@@ -25,19 +25,36 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.stagingData = null;
     window.hasPendingChanges = false;
     
+    // Função para forçar atualização do editor quando a tab é aberta
+    window.activateJSONTab = function() {
+        console.log('📝 Ativando tab JSON...');
+        
+        // Garante que o editor seja inicializado
+        if (typeof window.initJSONEditor === 'function') {
+            setTimeout(() => {
+                window.initJSONEditor();
+                
+                // Atualiza botão de aplicar
+                if (typeof window.updateApplyButtonState === 'function') {
+                    window.updateApplyButtonState();
+                }
+            }, 100);
+        }
+    };
+    
     // Carregar dados iniciais
     setTimeout(() => {
         if (typeof window.loadData === 'function') {
             window.loadData();
-        }
-        
-        // Inicializar botão Aplicar JSON
-        if (typeof updateApplyButtonState === 'function') {
-            updateApplyButtonState();
+        } else {
+            console.warn('⚠️ Função loadData não encontrada');
+            // Inicializa editor mesmo sem dados
+            if (typeof window.initJSONEditor === 'function') {
+                setTimeout(window.initJSONEditor, 200);
+            }
         }
     }, 500);
 });
-
 // Funções globais para modais (existentes)
 window.confirmAction = function(confirmed) {
     const modal = document.getElementById('confirmationModal');
@@ -233,3 +250,32 @@ if (typeof window.switchTab === 'undefined') {
         });
     };
 }
+
+
+
+// Adiciona evento para quando a tab JSON for clicada
+document.addEventListener('DOMContentLoaded', function() {
+    // Encontra todas as tabs
+    const tabs = document.querySelectorAll('.tab');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabText = this.textContent.toLowerCase();
+            
+            if (tabText.includes('json') || tabText.includes('raw') || tabText.includes('bruto')) {
+                console.log('🎯 Tab JSON clicada, inicializando editor...');
+                
+                // Pequeno delay para garantir que a tab está visível
+                setTimeout(() => {
+                    if (typeof window.initJSONEditor === 'function') {
+                        window.initJSONEditor();
+                    }
+                    
+                    if (typeof window.updateApplyButtonState === 'function') {
+                        window.updateApplyButtonState();
+                    }
+                }, 150);
+            }
+        });
+    });
+});

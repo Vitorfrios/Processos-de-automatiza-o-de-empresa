@@ -7,7 +7,6 @@
     <title>Sistema - Edição de Dados</title>
     <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
     <link rel="stylesheet" href="../static/03_Edit_data/edit_data.css">
-    <!-- <link rel="stylesheet" href="../static/03_Edit_data/machines.css"> -->
 
 
 </head>
@@ -56,19 +55,18 @@
                     <button class="btn btn-info" onclick="exportToJSON()">
                         <i class="icon-download"></i> Exportar JSON
                     </button>
-
-                    <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">
+                    <!-- MODIFICADO: Chama a função diretamente -->
+                    <button class="btn btn-warning" onclick="importFromJSON()">
                         <i class="icon-upload"></i> Importar JSON
                     </button>
                 </div>
 
-                <!-- Conjunto Excel -->
                 <div class="toolbar-stack">
                     <button class="btn btn-info" onclick="exportToExcel()">
                         <i class="icon-download"></i> Exportar Excel
                     </button>
-
-                    <button class="btn btn-secondary" onclick="document.getElementById('importExcelFile').click()">
+                    <!-- MODIFICADO: Chama a função diretamente -->
+                    <button class="btn btn-secondary" onclick="importFromExcel()">
                         <i class="icon-upload"></i> Importar Excel
                     </button>
                 </div>
@@ -209,14 +207,26 @@
                         </button>
                     </div>
                 </div>
-
-                <div class="json-container">
-                    <textarea id="jsonEditor" spellcheck="false"></textarea>
-                </div>
-
                 <div class="json-status">
                     <span id="jsonStatus"></span>
                 </div>
+
+                <div class="json-container">
+                    <!-- Container do editor e números -->
+                    <div class="json-scroll-wrapper">
+                        <!-- Números das linhas (gerados dinamicamente) -->
+                        <div class="line-numbers-wrapper">
+                            <div class="line-numbers" id="lineNumbers"></div>
+                        </div>
+
+                        <!-- Editor JSON -->
+                        <div class="json-editor-wrapper">
+                            <textarea id="jsonEditor" spellcheck="false"></textarea>
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
