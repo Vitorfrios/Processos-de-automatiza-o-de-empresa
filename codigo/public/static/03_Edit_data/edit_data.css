@@ -1,5 +1,12 @@
 /* ===== EDIÇÃO DE DADOS - SISTEMA CRUD COMPLETO ===== */
 
+@import url('machines/machine_cards.css');
+@import url('machines/machine_components.css');
+@import url('machines/machine_form.css');
+@import url('machines/machine_options_voltages.css');
+@import url('machines/machine_toggles_responsive.css');
+
+
 .edit-data-container {
     padding: var(--spacing-md);
     max-width: 1400px;

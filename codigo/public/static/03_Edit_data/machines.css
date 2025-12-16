@@ -425,6 +425,86 @@
     padding: 0.5rem 0.75rem;
 }
 
+/* ===== LABELS EDITÁVEIS ===== */
+
+/* Labels editáveis nas opções */
+.option-value-item label[contenteditable="true"] {
+    cursor: text;
+    padding: 0.25rem;
+    border: 1px dashed transparent;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+    min-width: 60px;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    color: var(--color-gray-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.option-value-item label[contenteditable="true"]:hover {
+    border-color: var(--color-gray-300);
+    background: var(--color-gray-50);
+}
+
+.option-value-item label[contenteditable="true"]:focus {
+    border-color: var(--color-primary);
+    background: var(--color-white);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+/* Labels editáveis nos valores base */
+.base-value-header label[contenteditable="true"] {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-gray-800);
+    cursor: text;
+    border: 1px dashed transparent;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+    outline: none;
+    height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.base-value-header label[contenteditable="true"]:hover {
+    border-color: var(--color-gray-300);
+    background: var(--color-gray-50);
+}
+
+.base-value-header label[contenteditable="true"]:focus {
+    border-color: var(--color-primary);
+    background: var(--color-white);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+/* Labels padrão (não editáveis) para compatibilidade */
+.option-value-item label {
+    color: var(--color-gray-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.base-value-header span {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-gray-800);
+}
+
 /* ===== OPÇÕES ===== */
 .options-list {
     display: flex;
@@ -476,17 +556,6 @@
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-xs);
-}
-
-.option-value-item label {
-    color: var(--color-gray-700);
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-align: center;
-    min-height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .option-value-item input {
@@ -614,7 +683,6 @@
     background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
     transform: scale(1.05);
 }
-
 
 /* ===== TOGGLES E COLAPSO DE SEÇÕES ===== */
 .minimizer {
@@ -927,6 +995,13 @@ body.no-scroll {
     overflow: hidden;
 }
 
+/* Botão "Adicionar Imposto" menor */
+.text-center .btn-info {
+    padding: 0.625rem 1rem;
+    font-size: 0.9rem;
+    min-height: 40px;
+}
+
 /* ===== RESPONSIVIDADE ===== */
 
 /* TELAS MÉDIAS GRANDES (1024px - 1200px) */
@@ -1165,10 +1240,4 @@ body.no-scroll {
         height: 38px;
         font-size: 0.9rem;
     }
-}
-/* Botão "Adicionar Imposto" menor */
-.text-center .btn-info {
-    padding: 0.625rem 1rem;
-    font-size: 0.9rem;
-    min-height: 40px;
 }

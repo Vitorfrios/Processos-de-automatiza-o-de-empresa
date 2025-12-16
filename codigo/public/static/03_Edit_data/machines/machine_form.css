@@ -1,0 +1,148 @@
+/* ==== machine_form.css ==== */
+/* Estilos do formulário principal e estrutura base */
+
+/* ===== FORMULÁRIO DE EDIÇÃO DE MÁQUINA ===== */
+.machine-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+/* ===== SEÇÕES DO FORMULÁRIO ===== */
+.form-section {
+    background: var(--color-gray-50);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-gray-200);
+}
+
+.form-section h4 {
+    color: var(--color-gray-800);
+    font-size: 1.2rem;
+    margin: 0 0 var(--spacing-md) 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.form-section h4 i {
+    font-size: 0.9em;
+}
+
+/* Container para botões de adicionar */
+.add-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-gray-200);
+}
+
+/* ===== FORM CONTROLS BÁSICOS ===== */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.form-group label {
+    color: var(--color-gray-700);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background: var(--color-white);
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(74, 85, 104, 0.15);
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+    background: var(--color-white);
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(74, 85, 104, 0.15);
+}
+
+.form-input-small {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    background: var(--color-white);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-input-small:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
+}
+
+/* ===== AÇÕES DO FORMULÁRIO ===== */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid var(--color-gray-200);
+}
+
+/* ===== ESTADOS VAZIOS ===== */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-gray-500);
+}
+
+.empty-state h3 {
+    color: var(--color-gray-600);
+    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+}
+
+.empty-message {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--color-gray-500);
+    font-style: italic;
+    background: var(--color-gray-100);
+    border-radius: var(--border-radius);
+    border: 1px dashed var(--color-gray-300);
+}
+
+/* ===== BOTÕES CENTRALIZADOS ===== */
+.text-center {
+    text-align: center;
+    margin-top: var(--spacing-md);
+}
+
+/* Botão "Adicionar Imposto" menor */
+.text-center .btn-info {
+    padding: 0.625rem 1rem;
+    font-size: 0.9rem;
+    min-height: 40px;
+}

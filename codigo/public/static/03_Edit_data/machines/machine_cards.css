@@ -1,0 +1,161 @@
+/* ==== machine_cards.css ==== */
+/* Estilos para a lista e cards de máquinas */
+
+/* ===== LISTA DE MÁQUINAS ===== */
+#machinesList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+}
+
+.machine-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 2px 8px var(--card-shadow);
+    padding: var(--spacing-md);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.machine-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px var(--card-hover-shadow);
+    border-color: var(--color-primary);
+}
+
+.machine-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-gray-200);
+    min-height: 40px;
+}
+
+.machine-card-header h3 {
+    color: var(--color-gray-800);
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.3;
+    flex: 1;
+    word-break: break-word;
+}
+
+.machine-card-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+}
+
+.machine-card-body {
+    color: var(--color-gray-600);
+    font-size: 0.9rem;
+    flex: 1;
+    padding: var(--spacing-xs) 0;
+}
+
+.machine-card-body p {
+    margin: 0.4rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.machine-card-body strong {
+    color: var(--color-gray-700);
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.machine-card-footer {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-gray-500);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.machine-card-footer span {
+    background: var(--color-gray-100);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+}
+
+/* ===== VIZUALIZAÇÃO DETALHADA DE MÁQUINAS ===== */
+.machine-detail-view {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    animation: slideIn 0.3s ease;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--color-gray-300);
+}
+
+.detail-header h3 {
+    color: var(--color-gray-800);
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.detail-header h3 i {
+    font-size: 1.2em;
+    color: var(--color-primary);
+}
+
+/* ===== AÇÕES DE MÁQUINAS ===== */
+.machine-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.machine-actions select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    background: var(--color-white);
+    font-size: 0.9rem;
+    min-width: 200px;
+}
+
+/* ===== ANIMAÇÕES ===== */
+.fade-in {
+    animation: fadeInCard 0.3s ease;
+}
+
+@keyframes fadeInCard {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}

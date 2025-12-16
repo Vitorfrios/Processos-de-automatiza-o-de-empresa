@@ -1,0 +1,261 @@
+/* ==== machine_options_voltages.css ==== */
+/* Estilos para opções e tensões */
+
+/* ===== OPÇÕES ===== */
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.option-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: var(--spacing-md);
+}
+
+.option-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.option-values {
+    background: var(--color-gray-50);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+}
+
+.option-values h5 {
+    color: var(--color-gray-700);
+    font-size: 1rem;
+    margin: 0 0 var(--spacing-md) 0;
+    font-weight: 600;
+    text-align: center;
+}
+
+.option-values-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.option-value-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-gray-200);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.option-value-item input {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius-sm);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.option-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+.option-label {
+    color: var(--color-gray-700);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+/* ===== TENSÕES ===== */
+.voltages-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 colunas por padrão (desktop) */
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.voltage-card {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.voltage-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-primary-light);
+}
+
+.voltage-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.voltage-card-header span {
+    font-weight: 600;
+    color: var(--color-gray-700);
+    font-size: 1rem;
+}
+
+.voltage-card-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    align-items: end;
+}
+
+.voltage-card-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.voltage-card-field label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-gray-700);
+    margin-bottom: 0.25rem;
+}
+
+.tensao-input, .valor-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.tensao-input:focus, .valor-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
+}
+
+.valor-input {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+}
+
+/* Botão delete */
+.delete-tensao-btn {
+    padding: 0.5rem 0.75rem;
+    min-width: 44px;
+    min-height: 44px;
+    background: var(--danger-gradient);
+    border: none;
+    border-radius: var(--border-radius);
+    color: var(--color-white);
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.delete-tensao-btn:hover {
+    background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
+    transform: scale(1.05);
+}
+
+/* ===== LABELS EDITÁVEIS ===== */
+
+/* Labels editáveis nas opções */
+.option-value-item label[contenteditable="true"] {
+    cursor: text;
+    padding: 0.25rem;
+    border: 1px dashed transparent;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+    min-width: 60px;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    color: var(--color-gray-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.option-value-item label[contenteditable="true"]:hover {
+    border-color: var(--color-gray-300);
+    background: var(--color-gray-50);
+}
+
+.option-value-item label[contenteditable="true"]:focus {
+    border-color: var(--color-primary);
+    background: var(--color-white);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+/* Labels editáveis nos valores base */
+.base-value-header label[contenteditable="true"] {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-gray-800);
+    cursor: text;
+    border: 1px dashed transparent;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+    outline: none;
+    height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.base-value-header label[contenteditable="true"]:hover {
+    border-color: var(--color-gray-300);
+    background: var(--color-gray-50);
+}
+
+.base-value-header label[contenteditable="true"]:focus {
+    border-color: var(--color-primary);
+    background: var(--color-white);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+/* Labels padrão (não editáveis) para compatibilidade */
+.option-value-item label {
+    color: var(--color-gray-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.base-value-header span {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-gray-800);
+}
