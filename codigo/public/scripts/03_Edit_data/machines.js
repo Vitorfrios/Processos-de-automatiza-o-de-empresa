@@ -125,7 +125,7 @@ export function editMachine(index) {
     // Atualizar título
     document.getElementById('machineDetailTitle').textContent = machine.type || 'Nova Máquina';
     
-    // Construir conteúdo de edição
+    // Construir conteúdo de edição com toggles
     let content = `
         <div class="machine-edit-form">
             <div class="form-group">
@@ -135,67 +135,107 @@ export function editMachine(index) {
             </div>
             
             <div class="form-section">
-                <h4>Impostos</h4>
-                <div class="impostos-grid">
-                    ${Object.entries(machine.impostos || {}).map(([key, value]) => `
-                        <div class="form-group">
-                            <label>${key}:</label>
-                            <input type="text" value="${escapeHtml(value)}"
-                                   onchange="updateImposto('${key}', this.value)"
-                                   class="form-input-small">
-                        </div>
-                    `).join('')}
+                <div class="section-header" onclick="toggleSection('impostos', event)">
+                    <button class="minimizer">+</button>
+                    <h4>Impostos</h4>
+                    <button class="btn btn-small btn-success" onclick="addImposto(event)">
+                        <i class="icon-add"></i> Adicionar
+                    </button>
                 </div>
-                <button class="btn btn-small btn-info" onclick="addImposto()">
-                    <i class="icon-add"></i> Adicionar Imposto
-                </button>
+                <div id="impostosList" class="section-content collapsed">
+                    <div class="impostos-grid">
+                        ${Object.entries(machine.impostos || {}).map(([key, value]) => `
+                            <div class="form-group impostos-item" data-key="${escapeHtml(key)}">
+                                <input type="text" value="${escapeHtml(key)}" class="form-input-small impostos-key"
+                                       onchange="updateImpostoKey('${key}', this.value)"
+                                       placeholder="Nome do imposto">
+                                <input type="text" value="${escapeHtml(value)}"
+                                       onchange="updateImposto('${key}', this.value)"
+                                       class="form-input-small"
+                                       placeholder="Valor">
+                                <button class="btn btn-xs btn-danger" onclick="removeImposto('${key}', event)" title="Remover">
+                                    <i class="icon-delete"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="text-center" style="margin-top: var(--spacing-md);">
+                        <button class="btn btn-small btn-info" onclick="addImposto(event)">
+                            <i class="icon-add"></i> Adicionar Imposto
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div class="form-section">
-                <div class="section-header">
+                <div class="section-header" onclick="toggleSection('configuracoes', event)">
+                    <button class="minimizer">+</button>
                     <h4>Configurações de Instalação</h4>
-                    <button class="btn btn-small btn-success" onclick="addConfiguracao()">
+                    <button class="btn btn-small btn-success" onclick="addConfiguracao(event)">
                         <i class="icon-add"></i> Adicionar
                     </button>
                 </div>
-                <div id="configuracoesList" class="configuracoes-list">
+                <div id="configuracoesList" class="section-content collapsed">
                     ${loadConfiguracoesHTML(machine)}
+                    <div class="text-center" style="margin-top: var(--spacing-md);">
+                        <button class="btn btn-small btn-info" onclick="addConfiguracao(event)">
+                            <i class="icon-add"></i> Adicionar Configuração
+                        </button>
+                    </div>
                 </div>
             </div>
             
             <div class="form-section">
-                <div class="section-header">
+                <div class="section-header" onclick="toggleSection('valoresbase', event)">
+                    <button class="minimizer">+</button>
                     <h4>Valores Base</h4>
-                    <button class="btn btn-small btn-success" onclick="addBaseValue()">
+                    <button class="btn btn-small btn-success" onclick="addBaseValue(event)">
                         <i class="icon-add"></i> Adicionar
                     </button>
                 </div>
-                <div id="baseValuesList" class="base-values-list">
+                <div id="baseValuesList" class="section-content collapsed">
                     ${loadBaseValuesHTML(machine)}
+                    <div class="text-center" style="margin-top: var(--spacing-md);">
+                        <button class="btn btn-small btn-info" onclick="addBaseValue(event)">
+                            <i class="icon-add"></i> Adicionar Valor Base
+                        </button>
+                    </div>
                 </div>
             </div>
             
             <div class="form-section">
-                <div class="section-header">
+                <div class="section-header" onclick="toggleSection('opcoes', event)">
+                    <button class="minimizer">+</button>
                     <h4>Opções</h4>
-                    <button class="btn btn-small btn-success" onclick="addOption()">
+                    <button class="btn btn-small btn-success" onclick="addOption(event)">
                         <i class="icon-add"></i> Adicionar
                     </button>
                 </div>
-                <div id="optionsList" class="options-list">
+                <div id="optionsList" class="section-content collapsed">
                     ${loadOptionsHTML(machine)}
+                    <div class="text-center" style="margin-top: var(--spacing-md);">
+                        <button class="btn btn-small btn-info" onclick="addOption(event)">
+                            <i class="icon-add"></i> Adicionar Opção
+                        </button>
+                    </div>
                 </div>
             </div>
             
             <div class="form-section">
-                <div class="section-header">
+                <div class="section-header" onclick="toggleSection('tensoes', event)">
+                    <button class="minimizer">+</button>
                     <h4>Tensões</h4>
-                    <button class="btn btn-small btn-success" onclick="addVoltage()">
+                    <button class="btn btn-small btn-success" onclick="addVoltage(event)">
                         <i class="icon-add"></i> Adicionar
                     </button>
                 </div>
-                <div id="voltagesList" class="voltages-list">
+                <div id="voltagesList" class="section-content collapsed">
                     ${loadVoltagesHTML(machine)}
+                    <div class="text-center" style="margin-top: var(--spacing-md);">
+                        <button class="btn btn-small btn-info" onclick="addVoltage(event)">
+                            <i class="icon-add"></i> Adicionar Tensão
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -213,10 +253,12 @@ export function editMachine(index) {
     document.getElementById('machineDetailContent').innerHTML = content;
     document.getElementById('machineDetailView').style.display = 'block';
     
+    // Restaurar estado dos toggles se existir
+    restoreSectionStates();
+    
     document.getElementById('machineDetailView').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Funções auxiliares para máquinas
 function loadConfiguracoesHTML(machine) {
     const configuracoes = machine.configuracoes_instalacao || [];
     
@@ -224,28 +266,29 @@ function loadConfiguracoesHTML(machine) {
         return '<p class="empty-message">Nenhuma configuração cadastrada.</p>';
     }
     
-    return configuracoes.map((config, index) => `
-        <div class="config-item" data-index="${index}">
-            <div class="config-header">
-                <span>Configuração ${index + 1}</span>
-                <button class="btn btn-xs btn-danger" onclick="removeConfiguracao(${index})" title="Remover">
-                    <i class="icon-delete"></i>
-                </button>
-            </div>
-            <div class="config-content">
-                <input type="text" value="${escapeHtml(config.nome || '')}" 
-                       placeholder="Descrição da configuração"
-                       onchange="updateConfiguracao(${index}, 'nome', this.value)"
-                       class="form-input">
-                ${config.valor !== undefined ? `
-                    <input type="number" value="${config.valor}" step="0.01"
-                           placeholder="Valor"
-                           onchange="updateConfiguracao(${index}, 'valor', this.value)"
-                           class="form-input">
-                ` : ''}
-            </div>
+    return `
+        <div class="configuracoes-list">
+            ${configuracoes.map((config, index) => `
+                <div class="config-item" data-index="${index}">
+                    <div class="config-header">
+                        <span>Configuração ${index + 1}</span>
+                        <button class="btn btn-xs btn-danger" onclick="removeConfiguracao(${index}, event)" title="Remover">
+                            <i class="icon-delete"></i>
+                        </button>
+                    </div>
+                    <div class="config-content">
+                        <div class="config-field">
+                            <span class="config-label">Descrição:</span>
+                            <input type="text" value="${escapeHtml(config.nome || '')}" 
+                                   placeholder="Descrição da configuração"
+                                   onchange="updateConfiguracao(${index}, 'nome', this.value)"
+                                   class="form-input">
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
         </div>
-    `).join('');
+    `;
 }
 
 function loadBaseValuesHTML(machine) {
@@ -256,23 +299,27 @@ function loadBaseValuesHTML(machine) {
         return '<p class="empty-message">Nenhum valor base cadastrado.</p>';
     }
     
-    return entries.map(([key, value], index) => `
-        <div class="base-value-item" data-key="${key}">
-            <div class="base-value-header">
-                <input type="text" value="${escapeHtml(key)}" 
-                       placeholder="Chave (ex: 1TR)"
-                       onchange="updateBaseValueKey('${key}', this.value)"
-                       class="form-input-small">
-                <button class="btn btn-xs btn-danger" onclick="removeBaseValue('${key}')" title="Remover">
-                    <i class="icon-delete"></i>
-                </button>
-            </div>
-            <input type="number" value="${value}" step="0.01"
-                   placeholder="Valor"
-                   onchange="updateBaseValue('${key}', this.value)"
-                   class="form-input">
+    return `
+        <div class="base-values-list">
+            ${entries.map(([key, value], index) => `
+                <div class="base-value-item" data-key="${key}">
+                    <div class="base-value-header">
+                        <input type="text" value="${escapeHtml(key)}" 
+                               placeholder="Chave (ex: 1TR)"
+                               onchange="updateBaseValueKey('${key}', this.value)"
+                               class="form-input-small">
+                        <button class="btn btn-xs btn-danger" onclick="removeBaseValue('${key}', event)" title="Remover">
+                            <i class="icon-delete"></i>
+                        </button>
+                    </div>
+                    <input type="number" value="${value}" step="0.01"
+                           placeholder="Valor"
+                           onchange="updateBaseValue('${key}', this.value)"
+                           class="form-input">
+                </div>
+            `).join('')}
         </div>
-    `).join('');
+    `;
 }
 
 function loadOptionsHTML(machine) {
@@ -282,33 +329,48 @@ function loadOptionsHTML(machine) {
         return '<p class="empty-message">Nenhuma opção cadastrada.</p>';
     }
     
-    return options.map((option, index) => `
-        <div class="option-item" data-index="${index}">
-            <div class="option-header">
-                <span>Opção ${index + 1}: ${escapeHtml(option.name || 'Sem nome')}</span>
-                <button class="btn btn-xs btn-danger" onclick="removeOption(${index})" title="Remover">
-                    <i class="icon-delete"></i>
-                </button>
-            </div>
-            <div class="option-content">
-                <input type="text" value="${escapeHtml(option.name || '')}" 
-                       placeholder="Nome da opção"
-                       onchange="updateOption(${index}, 'name', this.value)"
-                       class="form-input">
-                <div class="option-values">
-                    <h5>Valores por Capacidade:</h5>
-                    ${option.values ? Object.entries(option.values).map(([key, val]) => `
-                        <div class="option-value-row">
-                            <span>${key}:</span>
-                            <input type="number" value="${val}" step="0.01"
-                                   onchange="updateOptionValue(${index}, '${key}', this.value)"
-                                   class="form-input-small">
+    return `
+        <div class="options-list">
+            ${options.map((option, index) => `
+                <div class="option-item" data-index="${index}">
+                    <div class="option-header" onclick="toggleOptionItem(${index}, event)">
+                        <button class="minimizer">+</button>
+                        <span>Opção ${index + 1}: ${escapeHtml(option.name || 'Sem nome')}</span>
+                        <button class="btn btn-xs btn-danger" onclick="removeOption(${index}, event)" title="Remover">
+                            <i class="icon-delete"></i>
+                        </button>
+                    </div>
+                    <div class="option-content collapsed">
+                        <div class="option-field">
+                            <span class="option-label">Nome da Opção:</span>
+                            <input type="text" value="${escapeHtml(option.name || '')}" 
+                                   placeholder="Nome da opção"
+                                   onchange="updateOption(${index}, 'name', this.value)"
+                                   class="form-input">
                         </div>
-                    `).join('') : '<p>Sem valores definidos</p>'}
+                        <div class="option-values">
+                            <h5>Valores por Capacidade:</h5>
+                            <div class="option-values-grid">
+                                ${option.values ? Object.entries(option.values).map(([key, val]) => `
+                                    <div class="option-value-item">
+                                        <label>${key}</label>
+                                        <input type="number" value="${val}" step="0.01"
+                                               onchange="updateOptionValue(${index}, '${key}', this.value)"
+                                               class="form-input-small">
+                                    </div>
+                                `).join('') : '<p>Sem valores definidos</p>'}
+                            </div>
+                            <div class="text-center" style="margin-top: var(--spacing-md);">
+                                <button class="btn btn-xs btn-info" onclick="addOptionValue(${index}, event)">
+                                    <i class="icon-add"></i> Adicionar Capacidade
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            `).join('')}
         </div>
-    `).join('');
+    `;
 }
 
 function loadVoltagesHTML(machine) {
@@ -318,26 +380,83 @@ function loadVoltagesHTML(machine) {
         return '<p class="empty-message">Nenhuma tensão cadastrada.</p>';
     }
     
-    return voltages.map((voltage, index) => `
-        <div class="voltage-item" data-index="${index}">
-            <div class="voltage-header">
-                <span>Tensão ${index + 1}</span>
-                <button class="btn btn-xs btn-danger" onclick="removeVoltage(${index})" title="Remover">
-                    <i class="icon-delete"></i>
-                </button>
-            </div>
-            <div class="voltage-content">
-                <input type="text" value="${escapeHtml(voltage.name || '')}" 
-                       placeholder="Nome (ex: 220V/1F)"
-                       onchange="updateVoltage(${index}, 'name', this.value)"
-                       class="form-input">
-                <input type="number" value="${voltage.value || 0}" step="0.01"
-                       placeholder="Valor"
-                       onchange="updateVoltage(${index}, 'value', this.value)"
-                       class="form-input">
+    return `
+        <div class="voltages-list">
+            <!-- Tabela para desktop -->
+            <table class="voltages-table">
+                <thead>
+                    <tr>
+                        <th>Tensão</th>
+                        <th>Valor (R$)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${voltages.map((voltage, index) => `
+                        <tr data-index="${index}">
+                            <td>
+                                <input type="text" 
+                                       value="${escapeHtml(voltage.name || '')}" 
+                                       placeholder="Ex: 220V/1F"
+                                       onchange="updateVoltage(${index}, 'name', this.value)"
+                                       class="tensao-input">
+                            </td>
+                            <td>
+                                <input type="number" 
+                                       value="${voltage.value || 0}" 
+                                       step="1"
+                                       placeholder="0.00"
+                                       onchange="updateVoltage(${index}, 'value', this.value)"
+                                       class="valor-input">
+                            </td>
+                            <td>
+                                <button class="delete-tensao-btn" 
+                                        onclick="removeVoltage(${index}, event)" 
+                                        title="Remover tensão">
+                                    <i class="icon-delete"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            
+            <!-- Grid 2x2 para mobile/tablet -->
+            <div class="voltages-grid">
+                ${voltages.map((voltage, index) => `
+                    <div class="voltage-card" data-index="${index}">
+                        <div class="voltage-card-header">
+                            <span>Tensão ${index + 1}</span>
+                            <button class="btn btn-xs btn-danger" 
+                                    onclick="removeVoltage(${index}, event)" 
+                                    title="Remover">
+                                <i class="icon-delete"></i>
+                            </button>
+                        </div>
+                        <div class="voltage-card-content">
+                            <div class="voltage-card-field">
+                                <label>Tensão:</label>
+                                <input type="text" 
+                                       value="${escapeHtml(voltage.name || '')}" 
+                                       placeholder="Ex: 220V/1F"
+                                       onchange="updateVoltage(${index}, 'name', this.value)"
+                                       class="tensao-input">
+                            </div>
+                            <div class="voltage-card-field">
+                                <label>Valor (R$):</label>
+                                <input type="number" 
+                                       value="${voltage.value || 0}" 
+                                       step="1"
+                                       placeholder="0.00"
+                                       onchange="updateVoltage(${index}, 'value', this.value)"
+                                       class="valor-input">
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
         </div>
-    `).join('');
+    `;
 }
 
 export function closeMachineDetail() {
@@ -365,7 +484,45 @@ export function updateImposto(key, value) {
     }
 }
 
-export function addImposto() {
+export function updateImpostoKey(oldKey, newKey) {
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null && newKey && newKey.trim() !== '') {
+        const machine = systemData.machines[currentIndex];
+        if (machine.impostos && machine.impostos[oldKey] !== undefined) {
+            const value = machine.impostos[oldKey];
+            delete machine.impostos[oldKey];
+            machine.impostos[newKey] = value;
+            addPendingChange('machines');
+            
+            // Atualizar visualmente
+            setTimeout(() => editMachine(currentIndex), 100);
+        }
+    }
+}
+
+export function removeImposto(key, event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
+        if (machine.impostos && machine.impostos[key] !== undefined) {
+            delete machine.impostos[key];
+            addPendingChange('machines');
+            // Não recarregar a tela inteira
+            setTimeout(() => {
+                const section = document.querySelector(`.impostos-item[data-key="${key}"]`);
+                if (section) section.remove();
+            }, 10);
+        }
+    }
+}
+
+export function addImposto(event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         const newKey = `NOVO_IMPOSTO_${Date.now().toString().slice(-4)}`;
@@ -373,28 +530,93 @@ export function addImposto() {
             systemData.machines[currentIndex].impostos = {};
         }
         systemData.machines[currentIndex].impostos[newKey] = '';
-        editMachine(currentIndex);
         addPendingChange('machines');
+        
+        // Adicionar visualmente sem recarregar
+        const impostosList = document.querySelector('.impostos-grid');
+        if (impostosList) {
+            const newItem = document.createElement('div');
+            newItem.className = 'form-group impostos-item';
+            newItem.setAttribute('data-key', newKey);
+            newItem.innerHTML = `
+                <input type="text" value="${newKey}" class="form-input-small impostos-key"
+                       onchange="updateImpostoKey('${newKey}', this.value)"
+                       placeholder="Nome do imposto">
+                <input type="text" value=""
+                       onchange="updateImposto('${newKey}', this.value)"
+                       class="form-input-small"
+                       placeholder="Valor">
+                <button class="btn btn-xs btn-danger" onclick="removeImposto('${newKey}', event)" title="Remover">
+                    <i class="icon-delete"></i>
+                </button>
+            `;
+            impostosList.appendChild(newItem);
+            
+            // Focar no novo campo
+            setTimeout(() => {
+                const input = newItem.querySelector('.impostos-key');
+                if (input) input.focus();
+            }, 50);
+        }
     }
 }
 
 // Funções para Configurações
-export function addConfiguracao() {
+export function addConfiguracao(event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
-        if (!systemData.machines[currentIndex].configuracoes_instalacao) {
-            systemData.machines[currentIndex].configuracoes_instalacao = [];
+        const machine = systemData.machines[currentIndex];
+        if (!machine.configuracoes_instalacao) {
+            machine.configuracoes_instalacao = [];
         }
         
-        const newId = systemData.machines[currentIndex].configuracoes_instalacao.length + 1;
-        systemData.machines[currentIndex].configuracoes_instalacao.push({
-            id: newId,
-            nome: 'Nova Configuração',
-            valor: 0
+        const newIndex = machine.configuracoes_instalacao.length;
+        machine.configuracoes_instalacao.push({
+            nome: 'Nova Configuração'
+            // Não incluir valor por padrão
         });
         
-        editMachine(currentIndex);
         addPendingChange('machines');
+        
+        // Adicionar visualmente sem recarregar tudo
+        const configuracoesList = document.querySelector('.configuracoes-list');
+        if (configuracoesList) {
+            const newItem = document.createElement('div');
+            newItem.className = 'config-item';
+            newItem.setAttribute('data-index', newIndex);
+            newItem.innerHTML = `
+                <div class="config-header">
+                    <span>Configuração ${newIndex + 1}</span>
+                    <button class="btn btn-xs btn-danger" onclick="removeConfiguracao(${newIndex}, event)" title="Remover">
+                        <i class="icon-delete"></i>
+                    </button>
+                </div>
+                <div class="config-content">
+                    <div class="config-field">
+                        <span class="config-label">Descrição:</span>
+                        <input type="text" value="Nova Configuração" 
+                               placeholder="Descrição da configuração"
+                               onchange="updateConfiguracao(${newIndex}, 'nome', this.value)"
+                               class="form-input">
+                    </div>
+                </div>
+            `;
+            configuracoesList.appendChild(newItem);
+            
+            // Focar no novo campo
+            setTimeout(() => {
+                const input = newItem.querySelector('input');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }, 50);
+        } else {
+            editMachine(currentIndex);
+        }
     }
 }
 
@@ -403,25 +625,47 @@ export function updateConfiguracao(index, field, value) {
     if (currentIndex !== null) {
         const machine = systemData.machines[currentIndex];
         if (machine.configuracoes_instalacao && machine.configuracoes_instalacao[index]) {
-            if (field === 'valor') {
-                machine.configuracoes_instalacao[index][field] = parseFloat(value) || 0;
-            } else {
-                machine.configuracoes_instalacao[index][field] = value;
-            }
+            machine.configuracoes_instalacao[index][field] = value;
             addPendingChange('machines');
         }
     }
 }
 
-export function removeConfiguracao(index) {
+export function removeConfiguracao(index, event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
     showConfirmation('Deseja remover esta configuração?', () => {
         const currentIndex = getCurrentMachineIndex();
         if (currentIndex !== null) {
             const machine = systemData.machines[currentIndex];
             if (machine.configuracoes_instalacao) {
                 machine.configuracoes_instalacao.splice(index, 1);
-                editMachine(currentIndex);
                 addPendingChange('machines');
+                
+                // Remover visualmente
+                const item = document.querySelector(`.config-item[data-index="${index}"]`);
+                if (item) item.remove();
+                
+                // Renumerar os itens restantes
+                const items = document.querySelectorAll('.config-item');
+                items.forEach((item, newIndex) => {
+                    item.setAttribute('data-index', newIndex);
+                    const span = item.querySelector('.config-header span');
+                    if (span) span.textContent = `Configuração ${newIndex + 1}`;
+                    
+                    // Atualizar eventos
+                    const removeBtn = item.querySelector('button.btn-danger');
+                    if (removeBtn) {
+                        removeBtn.setAttribute('onclick', `removeConfiguracao(${newIndex}, event)`);
+                    }
+                    
+                    const input = item.querySelector('input');
+                    if (input) {
+                        input.setAttribute('onchange', `updateConfiguracao(${newIndex}, 'nome', this.value)`);
+                    }
+                });
+                
                 showWarning('Configuração removida.');
             }
         }
@@ -429,7 +673,10 @@ export function removeConfiguracao(index) {
 }
 
 // Funções para Valores Base
-export function addBaseValue() {
+export function addBaseValue(event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         const machine = systemData.machines[currentIndex];
@@ -440,8 +687,42 @@ export function addBaseValue() {
         const newKey = `NOVA_CAPACIDADE_${Object.keys(machine.baseValues).length + 1}`;
         machine.baseValues[newKey] = 0;
         
-        editMachine(currentIndex);
         addPendingChange('machines');
+        
+        // Adicionar visualmente
+        const baseValuesList = document.querySelector('.base-values-list');
+        if (baseValuesList) {
+            const newItem = document.createElement('div');
+            newItem.className = 'base-value-item';
+            newItem.setAttribute('data-key', newKey);
+            newItem.innerHTML = `
+                <div class="base-value-header">
+                    <input type="text" value="${newKey}" 
+                           placeholder="Chave (ex: 1TR)"
+                           onchange="updateBaseValueKey('${newKey}', this.value)"
+                           class="form-input-small">
+                    <button class="btn btn-xs btn-danger" onclick="removeBaseValue('${newKey}', event)" title="Remover">
+                        <i class="icon-delete"></i>
+                    </button>
+                </div>
+                <input type="number" value="0" step="0.01"
+                       placeholder="Valor"
+                       onchange="updateBaseValue('${newKey}', this.value)"
+                       class="form-input">
+            `;
+            baseValuesList.appendChild(newItem);
+            
+            // Focar no campo de chave
+            setTimeout(() => {
+                const input = newItem.querySelector('.form-input-small');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }, 50);
+        } else {
+            editMachine(currentIndex);
+        }
     }
 }
 
@@ -453,7 +734,6 @@ export function updateBaseValueKey(oldKey, newKey) {
             const value = machine.baseValues[oldKey];
             delete machine.baseValues[oldKey];
             machine.baseValues[newKey] = value;
-            editMachine(currentIndex);
             addPendingChange('machines');
         }
     }
@@ -470,15 +750,22 @@ export function updateBaseValue(key, value) {
     }
 }
 
-export function removeBaseValue(key) {
+export function removeBaseValue(key, event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
     showConfirmation(`Deseja remover o valor base "${key}"?`, () => {
         const currentIndex = getCurrentMachineIndex();
         if (currentIndex !== null) {
             const machine = systemData.machines[currentIndex];
             if (machine.baseValues && machine.baseValues[key] !== undefined) {
                 delete machine.baseValues[key];
-                editMachine(currentIndex);
                 addPendingChange('machines');
+                
+                // Remover visualmente
+                const item = document.querySelector(`.base-value-item[data-key="${key}"]`);
+                if (item) item.remove();
+                
                 showWarning(`Valor base "${key}" removido.`);
             }
         }
@@ -486,7 +773,10 @@ export function removeBaseValue(key) {
 }
 
 // Funções para Opções
-export function addOption() {
+export function addOption(event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         const machine = systemData.machines[currentIndex];
@@ -494,15 +784,69 @@ export function addOption() {
             machine.options = [];
         }
         
-        const newId = machine.options.length + 1;
+        const newIndex = machine.options.length;
         machine.options.push({
-            id: newId,
+            id: newIndex + 1,
             name: 'Nova Opção',
             values: {}
         });
         
-        editMachine(currentIndex);
         addPendingChange('machines');
+        editMachine(currentIndex); // Recarregar para mostrar o novo item
+    }
+}
+
+export function addOptionValue(optionIndex, event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        const machine = systemData.machines[currentIndex];
+        if (machine.options && machine.options[optionIndex]) {
+            if (!machine.options[optionIndex].values) {
+                machine.options[optionIndex].values = {};
+            }
+            
+            // Encontrar a próxima capacidade disponível
+            const capacities = Object.keys(machine.options[optionIndex].values);
+            let newCapacity = '1TR';
+            if (capacities.length > 0) {
+                // Encontrar o maior número
+                const numbers = capacities.map(cap => {
+                    const match = cap.match(/(\d+(?:,\d+)?)TR/);
+                    return match ? parseFloat(match[1].replace(',', '.')) : 0;
+                });
+                const maxNumber = Math.max(...numbers);
+                newCapacity = `${maxNumber + 1}TR`;
+            }
+            
+            machine.options[optionIndex].values[newCapacity] = 0;
+            addPendingChange('machines');
+            
+            // Adicionar visualmente
+            const optionValuesGrid = document.querySelector(`.option-item[data-index="${optionIndex}"] .option-values-grid`);
+            if (optionValuesGrid) {
+                const newItem = document.createElement('div');
+                newItem.className = 'option-value-item';
+                newItem.innerHTML = `
+                    <label>${newCapacity}</label>
+                    <input type="number" value="0" step="0.01"
+                           onchange="updateOptionValue(${optionIndex}, '${newCapacity}', this.value)"
+                           class="form-input-small">
+                `;
+                optionValuesGrid.appendChild(newItem);
+                
+                // Focar no novo campo
+                setTimeout(() => {
+                    const input = newItem.querySelector('input');
+                    if (input) {
+                        input.focus();
+                        input.select();
+                    }
+                }, 50);
+            }
+        }
     }
 }
 
@@ -531,15 +875,18 @@ export function updateOptionValue(optionIndex, key, value) {
     }
 }
 
-export function removeOption(index) {
+export function removeOption(index, event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
     showConfirmation('Deseja remover esta opção?', () => {
         const currentIndex = getCurrentMachineIndex();
         if (currentIndex !== null) {
             const machine = systemData.machines[currentIndex];
             if (machine.options) {
                 machine.options.splice(index, 1);
-                editMachine(currentIndex);
                 addPendingChange('machines');
+                editMachine(currentIndex); // Recarregar
                 showWarning('Opção removida.');
             }
         }
@@ -547,7 +894,10 @@ export function removeOption(index) {
 }
 
 // Funções para Tensões
-export function addVoltage() {
+export function addVoltage(event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         const machine = systemData.machines[currentIndex];
@@ -555,14 +905,15 @@ export function addVoltage() {
             machine.voltages = [];
         }
         
+        const newIndex = machine.voltages.length;
         machine.voltages.push({
-            id: machine.voltages.length + 1,
+            id: newIndex + 1,
             name: 'Nova Tensão',
             value: 0
         });
         
-        editMachine(currentIndex);
         addPendingChange('machines');
+        editMachine(currentIndex); // Recarregar a view
     }
 }
 
@@ -581,15 +932,45 @@ export function updateVoltage(index, field, value) {
     }
 }
 
-export function removeVoltage(index) {
+export function removeVoltage(index, event) {
+    if (event) event.stopPropagation();
+    event.preventDefault();
+    
     showConfirmation('Deseja remover esta tensão?', () => {
         const currentIndex = getCurrentMachineIndex();
         if (currentIndex !== null) {
             const machine = systemData.machines[currentIndex];
             if (machine.voltages) {
                 machine.voltages.splice(index, 1);
-                editMachine(currentIndex);
                 addPendingChange('machines');
+                
+                // Remover visualmente
+                const tableRow = document.querySelector(`.voltages-table tr[data-index="${index}"]`);
+                const gridCard = document.querySelector(`.voltage-card[data-index="${index}"]`);
+                
+                if (tableRow) tableRow.remove();
+                if (gridCard) gridCard.remove();
+                
+                // Renumerar os itens restantes
+                document.querySelectorAll('.voltages-table tr[data-index]').forEach((row, newIndex) => {
+                    row.setAttribute('data-index', newIndex);
+                    const inputs = row.querySelectorAll('input');
+                    inputs[0].setAttribute('onchange', `updateVoltage(${newIndex}, 'name', this.value)`);
+                    inputs[1].setAttribute('onchange', `updateVoltage(${newIndex}, 'value', this.value)`);
+                    const button = row.querySelector('button');
+                    button.setAttribute('onclick', `removeVoltage(${newIndex}, event)`);
+                });
+                
+                document.querySelectorAll('.voltage-card[data-index]').forEach((card, newIndex) => {
+                    card.setAttribute('data-index', newIndex);
+                    card.querySelector('.voltage-card-header span').textContent = `Tensão ${newIndex + 1}`;
+                    const inputs = card.querySelectorAll('input');
+                    inputs[0].setAttribute('onchange', `updateVoltage(${newIndex}, 'name', this.value)`);
+                    inputs[1].setAttribute('onchange', `updateVoltage(${newIndex}, 'value', this.value)`);
+                    const button = card.querySelector('button');
+                    button.setAttribute('onclick', `removeVoltage(${newIndex}, event)`);
+                });
+                
                 showWarning('Tensão removida.');
             }
         }
@@ -640,6 +1021,126 @@ export async function deleteMachine(index) {
     });
 }
 
+// ===== FUNÇÕES PARA TOGGLES =====
+
+export function toggleSection(sectionId, event) {
+    if (!event) return;
+    
+    event.stopPropagation();
+    
+    const header = event.currentTarget;
+    const content = header.nextElementSibling;
+    const minimizer = header.querySelector('.minimizer');
+    
+    if (!content || !minimizer) return;
+    
+    if (content.classList.contains('collapsed')) {
+        // Expandir
+        content.classList.remove('collapsed');
+        content.classList.add('expanded');
+        minimizer.textContent = '−'; // Sinal de menos
+        minimizer.title = 'Recolher seção';
+        
+        // Salvar estado como expandido
+        saveSectionState(sectionId, 'expanded');
+    } else {
+        // Recolher
+        content.classList.remove('expanded');
+        content.classList.add('collapsed');
+        minimizer.textContent = '+'; // Sinal de mais
+        minimizer.title = 'Expandir seção';
+        
+        // Salvar estado como recolhido
+        saveSectionState(sectionId, 'collapsed');
+    }
+}
+
+export function toggleOptionItem(index, event) {
+    if (!event) return;
+    
+    event.stopPropagation();
+    
+    const header = event.currentTarget;
+    const content = header.nextElementSibling;
+    const minimizer = header.querySelector('.minimizer');
+    
+    if (!content || !minimizer) return;
+    
+    if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        content.classList.add('expanded');
+        minimizer.textContent = '−';
+    } else {
+        content.classList.remove('expanded');
+        content.classList.add('collapsed');
+        minimizer.textContent = '+';
+    }
+}
+
+export function saveSectionState(sectionId, state) {
+    try {
+        // Salvar no localStorage
+        const sectionStates = JSON.parse(localStorage.getItem('machineSectionStates') || '{}');
+        sectionStates[sectionId] = state;
+        localStorage.setItem('machineSectionStates', JSON.stringify(sectionStates));
+    } catch (error) {
+        console.error('Erro ao salvar estado da seção:', error);
+    }
+}
+
+export function restoreSectionStates() {
+    try {
+        const sectionStates = JSON.parse(localStorage.getItem('machineSectionStates') || '{}');
+        
+        // Para cada seção no DOM
+        document.querySelectorAll('.form-section').forEach(section => {
+            const header = section.querySelector('.section-header');
+            const content = header?.nextElementSibling;
+            const minimizer = header?.querySelector('.minimizer');
+            
+            if (!header || !content || !minimizer) return;
+            
+            // Determinar qual seção é baseada no conteúdo
+            let sectionId = '';
+            if (content.id.includes('impostos')) sectionId = 'impostos';
+            else if (content.id.includes('configuracoes')) sectionId = 'configuracoes';
+            else if (content.id.includes('baseValues')) sectionId = 'valoresbase';
+            else if (content.id.includes('options')) sectionId = 'opcoes';
+            else if (content.id.includes('voltages')) sectionId = 'tensoes';
+            
+            if (sectionId && sectionStates[sectionId] === 'expanded') {
+                // Expandir se estava expandida
+                content.classList.remove('collapsed');
+                content.classList.add('expanded');
+                minimizer.textContent = '−';
+                minimizer.title = 'Recolher seção';
+            } else {
+                // Por padrão, colapsar
+                content.classList.remove('expanded');
+                content.classList.add('collapsed');
+                minimizer.textContent = '+';
+                minimizer.title = 'Expandir seção';
+            }
+        });
+        
+        // Também restaurar estados dos option-items
+        document.querySelectorAll('.option-item').forEach(optionItem => {
+            const header = optionItem.querySelector('.option-header');
+            const content = header?.nextElementSibling;
+            const minimizer = header?.querySelector('.minimizer');
+            
+            if (header && content && minimizer) {
+                // Option-items sempre começam colapsados
+                content.classList.remove('expanded');
+                content.classList.add('collapsed');
+                minimizer.textContent = '+';
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao restaurar estados das seções:', error);
+    }
+}
+
 // Exportar funções globalmente
 window.loadMachines = loadMachines;
 window.populateMachineFilter = populateMachineFilter;
@@ -649,6 +1150,8 @@ window.editMachine = editMachine;
 window.closeMachineDetail = closeMachineDetail;
 window.updateMachineField = updateMachineField;
 window.updateImposto = updateImposto;
+window.updateImpostoKey = updateImpostoKey;
+window.removeImposto = removeImposto;
 window.addImposto = addImposto;
 window.addConfiguracao = addConfiguracao;
 window.updateConfiguracao = updateConfiguracao;
@@ -658,6 +1161,7 @@ window.updateBaseValueKey = updateBaseValueKey;
 window.updateBaseValue = updateBaseValue;
 window.removeBaseValue = removeBaseValue;
 window.addOption = addOption;
+window.addOptionValue = addOptionValue;
 window.updateOption = updateOption;
 window.updateOptionValue = updateOptionValue;
 window.removeOption = removeOption;
@@ -666,3 +1170,8 @@ window.updateVoltage = updateVoltage;
 window.removeVoltage = removeVoltage;
 window.saveMachineChanges = saveMachineChanges;
 window.deleteMachine = deleteMachine;
+
+// Novas funções para toggles
+window.toggleSection = toggleSection;
+window.toggleOptionItem = toggleOptionItem;
+window.restoreSectionStates = restoreSectionStates;

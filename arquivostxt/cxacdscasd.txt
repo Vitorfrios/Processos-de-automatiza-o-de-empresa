@@ -1,254 +1,53 @@
-/* ===== MÁQUINAS - ESTILOS ESPECÍFICOS ===== */
 
-/* ===== AÇÕES DE MÁQUINAS ===== */
-.machine-actions {
-    display: flex;
-    gap: var(--spacing-sm);
-    align-items: center;
-}
-
-.machine-actions select {
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--border-radius);
-    background: var(--color-white);
-    font-size: 0.9rem;
-    min-width: 200px;
-}
-
-/* ===== LISTA DE MÁQUINAS ===== */
-#machinesList {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: var(--spacing-md);
-    padding: var(--spacing-sm);
-}
-
-.machine-card {
-    background: var(--card-bg);
-    border-radius: var(--border-radius-lg);
-    box-shadow: 0 2px 8px var(--card-shadow);
-    padding: var(--spacing-md);
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-}
-
-.machine-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 16px var(--card-hover-shadow);
-    border-color: var(--color-primary);
-}
-
-.machine-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--color-gray-200);
-    min-height: 40px;
-}
-
-.machine-card-header h3 {
-    color: var(--color-gray-800);
-    font-size: 1.1rem;
-    margin: 0;
-    font-weight: 600;
-    line-height: 1.3;
-    flex: 1;
-    word-break: break-word;
-}
-
-.machine-card-actions {
-    display: flex;
-    gap: var(--spacing-xs);
-    flex-shrink: 0;
-}
-
-.machine-card-body {
-    color: var(--color-gray-600);
-    font-size: 0.9rem;
-    flex: 1;
-    padding: var(--spacing-xs) 0;
-}
-
-.machine-card-body p {
-    margin: 0.4rem 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.machine-card-body strong {
-    color: var(--color-gray-700);
-    font-weight: 600;
-    min-width: 120px;
-}
-
-.machine-card-footer {
-    margin-top: var(--spacing-md);
-    padding-top: var(--spacing-sm);
-    border-top: 1px solid var(--color-gray-200);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--color-gray-500);
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-.machine-card-footer span {
-    background: var(--color-gray-100);
-    padding: 0.2rem 0.5rem;
-    border-radius: var(--border-radius-sm);
-}
-
-/* ===== VIZUALIZAÇÃO DETALHADA DE MÁQUINAS ===== */
-.machine-detail-view {
-    background: var(--card-bg);
-    border-radius: var(--border-radius-lg);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-    margin-top: var(--spacing-lg);
-    padding: var(--spacing-xl);
-    animation: slideIn 0.3s ease;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-xl);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 2px solid var(--color-gray-300);
-}
-
-.detail-header h3 {
-    color: var(--color-gray-800);
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.detail-header h3 i {
-    font-size: 1.2em;
-    color: var(--color-primary);
-}
-
-/* ===== FORMULÁRIO DE EDIÇÃO DE MÁQUINA ===== */
-.machine-edit-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xl);
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.form-group label {
-    color: var(--color-gray-700);
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.form-control {
-    padding: 0.75rem 1rem;
-    border: 2px solid var(--color-gray-300);
-    border-radius: var(--border-radius);
-    font-size: 1rem;
-    background: var(--color-white);
-    transition: all 0.2s;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 4px rgba(74, 85, 104, 0.15);
-}
-
-/* ===== SEÇÕES DO FORMULÁRIO ===== */
-.form-section {
-    background: var(--color-gray-50);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-lg);
-    border: 1px solid var(--color-gray-200);
-}
-
-.form-section h4 {
-    color: var(--color-gray-800);
-    font-size: 1.2rem;
-    margin: 0 0 var(--spacing-md) 0;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.form-section h4 i {
-    font-size: 0.9em;
-}
+/* ==== INÍCIO: machines-forms.css ==== */
+/* ===== MÁQUINAS - FORMULÁRIOS E SEÇÕES ===== */
 
 /* ===== IMPOSTOS ===== */
 .impostos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-md);
 }
 
-.form-input-small {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--border-radius);
-    font-size: 0.9rem;
-    background: var(--color-white);
-    width: 100%;
-    box-sizing: border-box;
+/* Impostos com campo de nome editável */
+.impostos-grid .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    position: relative; /* Para posicionar o botão delete */
 }
 
-.form-input-small:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
+
+.impostos-grid .form-group .input-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.impostos-grid .form-group .input-header .form-input-small {
+    flex: 1;
 }
 
 /* ===== CONFIGURAÇÕES DE INSTALAÇÃO ===== */
 .configuracoes-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr); /* Layout 2x2 fixo */
-    gap: var(--spacing-lg); /* Espaçamento aumentado */
+    gap: var(--spacing-lg);
     padding: var(--spacing-sm);
 }
 
 .config-item {
     background: var(--color-white);
     border-radius: var(--border-radius);
-    padding: var(--spacing-lg); /* Padding aumentado */
+    padding: var(--spacing-lg);
     border: 1px solid var(--color-gray-300);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Sombra mais suave */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
-    min-height: 120px; /* Altura mínima para melhor visualização */
+    min-height: 100px;
 }
 
 .config-item:hover {
@@ -261,49 +60,42 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-md); /* Mais espaçamento */
+    margin-bottom: var(--spacing-md);
     padding-bottom: var(--spacing-sm);
     border-bottom: 1px solid var(--color-gray-200);
 }
 
 .config-header span {
-    color: var(--color-gray-800); /* Cor mais escura */
+    color: var(--color-gray-800);
     font-weight: 600;
-    font-size: 1rem; /* Fonte maior */
+    font-size: 1rem;
 }
 
 .config-content {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
-    flex: 1; /* Ocupa espaço disponível */
-}
-
-.config-content label {
-    color: var(--color-gray-700);
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
+    flex: 1;
 }
 
 .config-content .form-input {
-    flex: 1; /* Input ocupa o espaço restante */
-    min-height: 40px; /* Altura mínima para textos longos */
+    flex: 1;
+    min-height: 60px;
+    resize: vertical;
 }
-
 
 /* ===== VALORES BASE ===== */
 .base-values-list {
     display: grid;
     grid-template-columns: repeat(4, 1fr); /* 4x4 em telas grandes */
-    gap: var(--spacing-md); /* Espaçamento ajustado */
+    gap: var(--spacing-md);
     padding: var(--spacing-sm);
 }
 
 .base-value-item {
     background: var(--color-white);
     border-radius: var(--border-radius);
-    padding: var(--spacing-md); /* Padding ajustado */
+    padding: var(--spacing-md);
     border: 1px solid var(--color-gray-300);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
@@ -327,7 +119,7 @@
 
 .base-value-header input {
     flex: 1;
-    padding: 0.5rem 0.75rem; /* Padding ajustado */
+    padding: 0.5rem 0.75rem;
     font-size: 0.9rem;
     border: 1px solid var(--color-gray-300);
     border-radius: var(--border-radius-sm);
@@ -342,7 +134,7 @@
 .options-list {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-lg); /* Mais espaçamento entre itens */
+    gap: var(--spacing-lg);
 }
 
 .option-item {
@@ -351,13 +143,13 @@
     border: 1px solid var(--color-gray-300);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     overflow: hidden;
-    margin-bottom: var(--spacing-md); /* Espaçamento extra */
+    margin-bottom: var(--spacing-md);
 }
 
 .option-content {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-lg); /* Mais espaçamento interno */
+    gap: var(--spacing-lg);
 }
 
 .option-values {
@@ -368,15 +160,22 @@
 
 .option-values h5 {
     color: var(--color-gray-700);
-    font-size: 1rem; /* Fonte maior */
-    margin: 0 0 var(--spacing-md) 0; /* Mais espaçamento */
+    font-size: 1rem;
+    margin: 0 0 var(--spacing-md) 0;
     font-weight: 600;
     text-align: center;
 }
 
+.option-values .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
 .option-values-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 colunas */
+    grid-template-columns: repeat(5, 1fr); /* 5 colunas em telas grandes */
     gap: var(--spacing-sm);
 }
 
@@ -391,6 +190,14 @@
     gap: var(--spacing-xs);
 }
 
+.option-value-item .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: var(--spacing-xs);
+}
+
 .option-value-item label {
     color: var(--color-gray-700);
     font-size: 0.85rem;
@@ -400,6 +207,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex: 1;
 }
 
 .option-value-item input {
@@ -411,19 +219,33 @@
     font-size: 0.9rem;
 }
 
+/* Botão de texto (sem background) */
+.btn-text {
+    background: transparent;
+    border: none;
+    color: var(--color-gray-600);
+    padding: 0.25rem;
+    min-width: auto;
+    cursor: pointer;
+}
+
+.btn-text:hover {
+    background: var(--color-gray-100);
+    color: var(--color-danger);
+}
 
 /* ===== TENSÕES ===== */
 .voltages-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr); /* Layout 2x2 fixo */
-    gap: var(--spacing-lg); /* Mais espaçamento */
+    gap: var(--spacing-lg);
     padding: var(--spacing-sm);
 }
 
 .voltage-item {
     background: var(--color-white);
     border-radius: var(--border-radius);
-    padding: var(--spacing-lg); /* Mesmo padding das configs */
+    padding: var(--spacing-lg);
     border: 1px solid var(--color-gray-300);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: all 0.2s ease;
@@ -441,7 +263,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-md); /* Mesmo espaçamento */
+    margin-bottom: var(--spacing-md);
     padding-bottom: var(--spacing-sm);
     border-bottom: 1px solid var(--color-gray-200);
 }
@@ -449,13 +271,14 @@
 .voltage-header span {
     color: var(--color-gray-800);
     font-weight: 600;
-    font-size: 1rem; /* Mesmo tamanho */
+    font-size: 1rem;
 }
 
 .voltage-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md); /* Mais espaçamento */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Tensão e Valor lado a lado */
+    gap: var(--spacing-md);
+    align-items: end;
     padding-top: var(--spacing-sm);
 }
 
@@ -469,54 +292,16 @@
     color: var(--color-gray-700);
     font-size: 0.9rem;
     font-weight: 600;
+    margin-bottom: 0.25rem;
 }
 
 .voltage-field .form-input {
     width: 100%;
 }
+/* ==== FIM: machines-forms.css ==== */
 
-
-/* ===== AÇÕES DO FORMULÁRIO ===== */
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-xl);
-    padding-top: var(--spacing-lg);
-    border-top: 2px solid var(--color-gray-200);
-}
-
-/* ===== ESTADOS VAZIOS ===== */
-.empty-state {
-    text-align: center;
-    padding: var(--spacing-xl);
-    color: var(--color-gray-500);
-}
-
-.empty-state h3 {
-    color: var(--color-gray-600);
-    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
-}
-
-.empty-message {
-    text-align: center;
-    padding: var(--spacing-lg);
-    color: var(--color-gray-500);
-    font-style: italic;
-    background: var(--color-gray-100);
-    border-radius: var(--border-radius);
-    border: 1px dashed var(--color-gray-300);
-}
-
-/* ===== ANIMAÇÕES ===== */
-.fade-in {
-    animation: fadeInCard 0.3s ease;
-}
-
-@keyframes fadeInCard {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
+/* ==== INÍCIO: machines-toggles.css ==== */
+/* ===== MÁQUINAS - TOGGLES E RESPONSIVIDADE ===== */
 
 /* ===== TOGGLES E COLAPSO DE SEÇÕES ===== */
 .minimizer {
@@ -739,7 +524,7 @@
     }
     
     .impostos-grid {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     }
     
     .base-values-list {
@@ -785,12 +570,16 @@
         gap: var(--spacing-md);
     }
     
+    .voltage-content {
+        grid-template-columns: 1fr; /* Tensão e valor empilhados em mobile */
+        gap: var(--spacing-sm);
+    }
+    
     .option-values-grid {
         grid-template-columns: repeat(3, 1fr); /* 3 colunas em mobile */
     }
     
-    .config-content,
-    .voltage-content {
+    .config-content {
         flex-direction: column;
         gap: var(--spacing-md);
     }
@@ -917,6 +706,268 @@
         margin-top: var(--spacing-xs);
     }
 }
+/* ==== FIM: machines-toggles.css ==== */
+
+/* ==== INÍCIO: machines.css ==== */
+/* ===== MÁQUINAS - ESTILOS ESPECÍFICOS ===== */
+
+/* ===== AÇÕES DE MÁQUINAS ===== */
+.machine-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.machine-actions select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    background: var(--color-white);
+    font-size: 0.9rem;
+    min-width: 200px;
+}
+
+/* ===== LISTA DE MÁQUINAS ===== */
+#machinesList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+}
+
+.machine-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 2px 8px var(--card-shadow);
+    padding: var(--spacing-md);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.machine-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px var(--card-hover-shadow);
+    border-color: var(--color-primary);
+}
+
+.machine-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-gray-200);
+    min-height: 40px;
+}
+
+.machine-card-header h3 {
+    color: var(--color-gray-800);
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.3;
+    flex: 1;
+    word-break: break-word;
+}
+
+.machine-card-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+}
+
+.machine-card-body {
+    color: var(--color-gray-600);
+    font-size: 0.9rem;
+    flex: 1;
+    padding: var(--spacing-xs) 0;
+}
+
+.machine-card-body p {
+    margin: 0.4rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.machine-card-body strong {
+    color: var(--color-gray-700);
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.machine-card-footer {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-gray-500);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.machine-card-footer span {
+    background: var(--color-gray-100);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+}
+
+/* ===== VIZUALIZAÇÃO DETALHADA DE MÁQUINAS ===== */
+.machine-detail-view {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    animation: slideIn 0.3s ease;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--color-gray-300);
+}
+
+.detail-header h3 {
+    color: var(--color-gray-800);
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.detail-header h3 i {
+    font-size: 1.2em;
+    color: var(--color-primary);
+}
+
+/* ===== FORMULÁRIO DE EDIÇÃO DE MÁQUINA ===== */
+.machine-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.form-group label {
+    color: var(--color-gray-700);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background: var(--color-white);
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(74, 85, 104, 0.15);
+}
+
+/* ===== SEÇÕES DO FORMULÁRIO ===== */
+.form-section {
+    background: var(--color-gray-50);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-gray-200);
+}
+
+.form-section h4 {
+    color: var(--color-gray-800);
+    font-size: 1.2rem;
+    margin: 0 0 var(--spacing-md) 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.form-section h4 i {
+    font-size: 0.9em;
+}
+
+/* Container para botões de adicionar */
+.add-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-gray-200);
+}
+
+/* ===== AÇÕES DO FORMULÁRIO ===== */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid var(--color-gray-200);
+}
+
+/* ===== ESTADOS VAZIOS ===== */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-gray-500);
+}
+
+.empty-state h3 {
+    color: var(--color-gray-600);
+    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+}
+
+.empty-message {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--color-gray-500);
+    font-style: italic;
+    background: var(--color-gray-100);
+    border-radius: var(--border-radius);
+    border: 1px dashed var(--color-gray-300);
+}
+
+/* ===== ANIMAÇÕES ===== */
+.fade-in {
+    animation: fadeInCard 0.3s ease;
+}
+
+@keyframes fadeInCard {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
 
 /* ===== UTILITÁRIOS ===== */
 .btn-xs {
@@ -964,9 +1015,172 @@
     box-shadow: 0 0 0 4px rgba(74, 85, 104, 0.15);
 }
 
+.form-input-small {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    background: var(--color-white);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-input-small:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
+}
+
 /* ===== ÍCONES ESPECÍFICOS PARA MÁQUINAS ===== */
 .icon-config::before { content: "⚙️"; }
 .icon-base::before { content: "📊"; }
 .icon-option::before { content: "📋"; }
 .icon-voltage::before { content: "⚡"; }
 .icon-tax::before { content: "💰"; }
+
+
+
+
+/* Adicione ao seu arquivo CSS */
+
+/* ===== IMPOSTOS - NOME EDITÁVEL ===== */
+.impostos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.impostos-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    background: var(--color-white);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-gray-300);
+}
+
+.impostos-item .form-input-small {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ===== CONFIGURAÇÕES - SEM VALOR ===== */
+.config-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    flex: 1;
+}
+
+.config-label {
+    color: var(--color-gray-700);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+/* ===== TENSÕES - MESMA LINHA ===== */
+.voltage-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    align-items: start;
+}
+
+.voltage-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.voltage-label {
+    color: var(--color-gray-700);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+/* ===== OPÇÕES - ADICIONAR CAPACIDADE ===== */
+.option-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+.option-label {
+    color: var(--color-gray-700);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.option-values-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.option-value-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: var(--color-white);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--color-gray-200);
+}
+
+.option-value-item label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-gray-700);
+    text-align: center;
+}
+
+/* ===== BOTÕES CENTRALIZADOS ===== */
+.text-center {
+    text-align: center;
+    margin-top: var(--spacing-md);
+}
+
+/* ===== PREVENIR MOVIMENTO DA TELA ===== */
+body.no-scroll {
+    overflow: hidden;
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+    .voltage-row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .option-values-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .option-values-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .impostos-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .option-values-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .voltage-column {
+        width: 100%;
+    }
+}
+/* ==== FIM: machines.css ==== */

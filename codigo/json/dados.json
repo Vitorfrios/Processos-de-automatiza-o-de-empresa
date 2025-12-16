@@ -138,9 +138,7 @@
         },
         {
           "id": 6,
-          "nome": "Condensadores fixados externamente à sala elétrica",
-          "valor": 3200,
-          "descricao": "Condensadores externos à sala elétrica"
+          "nome": "Condensadores fixados externamente à sala elétrica"
         }
       ],
       "baseValues": {

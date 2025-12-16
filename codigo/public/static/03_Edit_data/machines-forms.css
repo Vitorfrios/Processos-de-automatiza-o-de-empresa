@@ -1,0 +1,339 @@
+/* ===== MÁQUINAS - FORMULÁRIOS E SEÇÕES ===== */
+
+/* ===== IMPOSTOS ===== */
+.impostos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.impostos-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    background: var(--color-white);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.impostos-item:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.impostos-item .input-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.impostos-item .form-input-small {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+}
+
+/* Botão delete dos impostos - CORRIGIDO */
+.impostos-item .btn-danger {
+    margin-top: var(--spacing-xs);
+    padding: 0.75rem 1rem;
+    width: 100%;
+    min-height: 44px;
+    border-radius: var(--border-radius);
+    background: var(--danger-gradient);
+    border: none;
+    color: var(--color-white);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.impostos-item .btn-danger:hover {
+    background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.impostos-item .btn-danger i {
+    font-size: 1rem;
+}
+
+/* ===== CONFIGURAÇÕES DE INSTALAÇÃO ===== */
+.configuracoes-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Layout 2x2 fixo */
+    gap: var(--spacing-lg);
+    padding: var(--spacing-sm);
+}
+
+.config-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 100px;
+}
+
+.config-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    border-color: var(--color-primary-light);
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.config-header span {
+    color: var(--color-gray-800);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.config-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    flex: 1;
+}
+
+.config-content .form-input {
+    flex: 1;
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* ===== VALORES BASE ===== */
+.base-values-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4x4 em telas grandes */
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+}
+
+.base-value-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.base-value-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-primary-light);
+}
+
+.base-value-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.base-value-header input {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius-sm);
+}
+
+.base-value-item .form-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+}
+
+/* ===== OPÇÕES ===== */
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.option-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: var(--spacing-md);
+}
+
+.option-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.option-values {
+    background: var(--color-gray-50);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+}
+
+.option-values h5 {
+    color: var(--color-gray-700);
+    font-size: 1rem;
+    margin: 0 0 var(--spacing-md) 0;
+    font-weight: 600;
+    text-align: center;
+}
+
+.option-values .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.option-values-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5 colunas em telas grandes */
+    gap: var(--spacing-sm);
+}
+
+.option-value-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-gray-200);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.option-value-item .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: var(--spacing-xs);
+}
+
+.option-value-item label {
+    color: var(--color-gray-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.option-value-item input {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius-sm);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* Botão de texto (sem background) */
+.btn-text {
+    background: transparent;
+    border: none;
+    color: var(--color-gray-600);
+    padding: 0.25rem;
+    min-width: auto;
+    cursor: pointer;
+}
+
+.btn-text:hover {
+    background: var(--color-gray-100);
+    color: var(--color-danger);
+}
+
+/* ===== TENSÕES ===== */
+.voltages-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Layout 2x2 fixo */
+    gap: var(--spacing-lg);
+    padding: var(--spacing-sm);
+}
+
+.voltage-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.voltage-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    border-color: var(--color-primary-light);
+}
+
+.voltage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.voltage-header span {
+    color: var(--color-gray-800);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.voltage-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Tensão e Valor lado a lado */
+    gap: var(--spacing-md);
+    align-items: end;
+    padding-top: var(--spacing-sm);
+}
+
+.voltage-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.voltage-field label {
+    color: var(--color-gray-700);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.voltage-field .form-input {
+    width: 100%;
+}
