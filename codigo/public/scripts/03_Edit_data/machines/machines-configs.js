@@ -3,7 +3,6 @@
 
 import { systemData, addPendingChange, getCurrentMachineIndex } from '../state.js';
 import { escapeHtml, showConfirmation, showWarning, showError } from '../ui.js';
-import { ensureTRSuffix, selectTextInLabel } from './machines-core.js';
 
 // ===== FUNÇÕES PARA CONFIGURAÇÕES =====
 
@@ -122,15 +121,18 @@ export function updateBaseValueKey(oldKey, newKey) {
     if (currentIndex !== null && newKey && newKey.trim() !== '') {
         const machine = systemData.machines[currentIndex];
         
-        const formattedKey = ensureTRSuffix(newKey);
+        // NÃO adiciona TR automaticamente
+        const formattedKey = newKey.trim();
         
         if (machine.baseValues && machine.baseValues[oldKey] !== undefined) {
+            // Se a chave realmente mudou
             if (oldKey !== formattedKey) {
                 const value = machine.baseValues[oldKey];
                 delete machine.baseValues[oldKey];
                 machine.baseValues[formattedKey] = value;
                 addPendingChange('machines');
                 
+                // Atualizar visualmente
                 updateBaseValueKeyInDOM(oldKey, formattedKey, value);
             }
         }
@@ -140,18 +142,27 @@ export function updateBaseValueKey(oldKey, newKey) {
 function updateBaseValueKeyInDOM(oldKey, newKey, value) {
     const item = document.querySelector(`.base-value-item[data-key="${oldKey}"]`);
     if (item) {
+        // Atualiza atributo
         item.setAttribute('data-key', newKey);
         
-        const label = item.querySelector('label');
-        if (label) {
-            label.textContent = newKey;
-            label.setAttribute('onblur', `updateBaseValueKey('${newKey}', this.textContent.trim())`);
+        // Atualiza input de capacidade
+        const capacityInput = item.querySelector('input[type="text"]');
+        if (capacityInput) {
+            capacityInput.value = newKey;
+            capacityInput.setAttribute('onchange', `updateBaseValueKey('${newKey}', this.value)`);
         }
         
+        // Atualiza input de valor
         const valueInput = item.querySelector('input[type="number"]');
         if (valueInput) {
             valueInput.value = value;
             valueInput.setAttribute('onchange', `updateBaseValue('${newKey}', this.value)`);
+        }
+        
+        // Atualiza botão de remover
+        const removeBtn = item.querySelector('button.btn-danger');
+        if (removeBtn) {
+            removeBtn.setAttribute('onclick', `removeBaseValue('${newKey}', event)`);
         }
     }
 }
@@ -180,20 +191,13 @@ export function addBaseValue(event) {
             machine.baseValues = {};
         }
 
-        const trValue = prompt('Digite o valor TR (apenas o número):', '1');
-        if (trValue === null) return;
-        
-        const trNumber = parseFloat(trValue.replace(',', '.')) || 1;
-        const capacityKey = `${trNumber}TR`;
-        
-        if (machine.baseValues[capacityKey] !== undefined) {
-            showError(`A capacidade ${capacityKey} já existe!`);
-            return;
-        }
-
-        machine.baseValues[capacityKey] = 0;
+        // Gera uma chave única para novo item
+        const newKey = `NOVA_CAPACIDADE_${Date.now().toString().slice(-4)}`;
+        machine.baseValues[newKey] = 0;
         addPendingChange('machines');
-        addBaseValueToDOM(capacityKey);
+
+        // Adicionar visualmente
+        addBaseValueToDOM(newKey);
     }
 }
 
@@ -205,27 +209,40 @@ function addBaseValueToDOM(capacityKey) {
         newItem.setAttribute('data-key', capacityKey);
         newItem.innerHTML = `
             <div class="base-value-header">
-                <label contenteditable="true" 
-                       onblur="updateBaseValueKey('${capacityKey}', this.textContent.trim())"
-                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }">
-                    ${capacityKey}
-                </label>
+                <span>Valor base de capacidade</span>
                 <button class="btn btn-xs btn-danger" onclick="removeBaseValue('${capacityKey}', event)" title="Remover">
                     <i class="icon-delete"></i>
                 </button>
             </div>
-            <input type="number" value="0" step="1"
-                   placeholder="Valor"
-                   onchange="updateBaseValue('${capacityKey}', this.value)"
-                   class="form-input">
+            <div class="base-value-content">
+            
+                <div class="base-value-field">
+                    <label>Capacidade:</label>
+                    <input type="text" 
+                           value="${capacityKey}" 
+                           placeholder="Ex: 35TR, 3100m³/h"
+                           onchange="updateBaseValueKey('${capacityKey}', this.value)"
+                           class="form-input">
+                </div>
+                <div class="base-value-field">
+                    <label>Valor (R$):</label>
+                    <input type="number" 
+                           value="0" 
+                           step="1"
+                           placeholder="0.00"
+                           onchange="updateBaseValue('${capacityKey}', this.value)"
+                           class="form-input">
+                </div>
+            </div>
         `;
         baseValuesList.appendChild(newItem);
 
+        // Focar no campo de capacidade
         setTimeout(() => {
-            const label = newItem.querySelector('label');
-            if (label) {
-                label.focus();
-                selectTextInLabel(label);
+            const input = newItem.querySelector('input[type="text"]');
+            if (input) {
+                input.focus();
+                input.select();
             }
         }, 50);
     }

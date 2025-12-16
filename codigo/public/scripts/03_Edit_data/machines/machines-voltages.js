@@ -4,6 +4,8 @@
 import { systemData, addPendingChange, getCurrentMachineIndex } from '../state.js';
 import { escapeHtml, showConfirmation, showWarning } from '../ui.js';
 
+
+
 export function addVoltage(event) {
     if (event) {
         event.stopPropagation();
@@ -25,7 +27,58 @@ export function addVoltage(event) {
         });
 
         addPendingChange('machines');
-        window.editMachine(currentIndex);
+
+        // Tentar vários seletores possíveis
+        let voltagesContainer = document.querySelector('.voltages-grid');
+        if (!voltagesContainer) {
+            voltagesContainer = document.querySelector('.voltages-container');
+        }
+        if (!voltagesContainer) {
+            voltagesContainer = document.querySelector('.voltages-list');
+        }
+        
+        if (voltagesContainer) {
+            const newItem = document.createElement('div');
+            newItem.className = 'voltage-card';
+            newItem.setAttribute('data-index', newIndex);
+            newItem.innerHTML = `
+                <div class="voltage-card-header">
+                    <span>Tensão ${newIndex + 1}</span>
+                    <button class="btn btn-xs btn-danger" 
+                            onclick="removeVoltage(${newIndex}, event)" 
+                            title="Remover">
+                        <i class="icon-delete"></i>
+                    </button>
+                </div>
+                <div class="voltage-card-content">
+                    <div class="voltage-field">
+                        <label>Nome:</label>
+                        <input type="text" value="Nova Tensão" 
+                               placeholder="Nome da tensão"
+                               onchange="updateVoltage(${newIndex}, 'name', this.value)"
+                               class="form-input">
+                    </div>
+                    <div class="voltage-field">
+                        <label>Valor (V):</label>
+                        <input type="number" value="0" step="0.01"
+                               onchange="updateVoltage(${newIndex}, 'value', this.value)"
+                               class="form-input">
+                    </div>
+                </div>
+            `;
+            voltagesContainer.appendChild(newItem);
+
+            setTimeout(() => {
+                const input = newItem.querySelector('input[type="text"]');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }, 50);
+        } else {
+            // Se não encontrar o container, recarrega a página
+            window.editMachine(currentIndex);
+        }
     }
 }
 

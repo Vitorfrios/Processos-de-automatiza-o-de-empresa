@@ -14,29 +14,14 @@ import {
 
 // ===== FUNÇÕES UTILITÁRIAS PARA TR =====
 
-// Função para garantir que as chaves terminem com TR
-export function ensureTRSuffix(key) {
-    if (!key || key.trim() === '') return '1TR';
-    const cleanedKey = key.toString().trim().toUpperCase();
-    const normalizedKey = cleanedKey.replace(/\s+/g, '').replace(',', '.');
-    return normalizedKey.endsWith('TR') ? normalizedKey : normalizedKey + 'TR';
-}
 
-// Seleciona texto no label (exceto "TR")
+// Seleciona texto no label
 export function selectTextInLabel(label) {
     const range = document.createRange();
     const textNode = label.firstChild;
     
     if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-        const text = textNode.textContent;
-        const trIndex = text.toUpperCase().indexOf('TR');
-        
-        if (trIndex > 0) {
-            range.setStart(textNode, 0);
-            range.setEnd(textNode, trIndex);
-        } else {
-            range.selectNodeContents(textNode);
-        }
+        range.selectNodeContents(textNode);
         
         const selection = window.getSelection();
         selection.removeAllRanges();
@@ -178,9 +163,6 @@ export function editMachine(index) {
                 <div class="section-header" onclick="toggleSection('impostos', event)">
                     <button class="minimizer">+</button>
                     <h4>Impostos</h4>
-                    <button class="btn btn-small btn-success" onclick="addImposto(event)">
-                        <i class="icon-add"></i> Adicionar
-                    </button>
                 </div>
                 <div id="impostosList" class="section-content collapsed">
                     <div class="impostos-grid">
@@ -218,9 +200,7 @@ export function editMachine(index) {
                 <div class="section-header" onclick="toggleSection('configuracoes', event)">
                     <button class="minimizer">+</button>
                     <h4>Configurações de Instalação</h4>
-                    <button class="btn btn-small btn-success" onclick="addConfiguracao(event)">
-                        <i class="icon-add"></i> Adicionar
-                    </button>
+
                 </div>
                 <div id="configuracoesList" class="section-content collapsed">
                     ${loadConfiguracoesHTML(machine)}
@@ -236,11 +216,11 @@ export function editMachine(index) {
                 <div class="section-header" onclick="toggleSection('valoresbase', event)">
                     <button class="minimizer">+</button>
                     <h4>Valores Base</h4>
-                    <button class="btn btn-small btn-success" onclick="addBaseValue(event)">
-                        <i class="icon-add"></i> Adicionar
-                    </button>
+
                 </div>
                 <div id="baseValuesList" class="section-content collapsed">
+                        <h5>Valores Base por Capacidade:</h5>
+
                     ${loadBaseValuesHTML(machine)}
                     <div class="text-center" style="margin-top: var(--spacing-md);">
                         <button class="btn btn-small btn-info" onclick="addBaseValue(event)">
@@ -254,9 +234,7 @@ export function editMachine(index) {
                 <div class="section-header" onclick="toggleSection('opcoes', event)">
                     <button class="minimizer">+</button>
                     <h4>Opções</h4>
-                    <button class="btn btn-small btn-success" onclick="addOption(event)">
-                        <i class="icon-add"></i> Adicionar
-                    </button>
+
                 </div>
                 <div id="optionsList" class="section-content collapsed">
                     ${loadOptionsHTML(machine)}
@@ -272,9 +250,7 @@ export function editMachine(index) {
                 <div class="section-header" onclick="toggleSection('tensoes', event)">
                     <button class="minimizer">+</button>
                     <h4>Tensões</h4>
-                    <button class="btn btn-small btn-success" onclick="addVoltage(event)">
-                        <i class="icon-add"></i> Adicionar
-                    </button>
+
                 </div>
                 <div id="voltagesList" class="section-content collapsed">
                     ${loadVoltagesHTML(machine)}
@@ -358,5 +334,20 @@ export function updateMachineField(field, value) {
         systemData.machines[currentIndex][field] = value;
         document.getElementById('machineDetailTitle').textContent = value;
         addPendingChange('machines');
+    }
+}
+
+
+
+
+export function preventScroll(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        
+        // Prevenir scroll da página
+        window.scrollTo(window.scrollX, window.scrollY);
+        return false;
     }
 }

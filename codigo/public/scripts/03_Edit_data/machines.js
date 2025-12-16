@@ -15,7 +15,6 @@ import {
     saveMachineChanges,
     deleteMachine,
     updateMachineField,
-    ensureTRSuffix,
     selectTextInLabel
 } from './machines/machines-core.js';
 
@@ -42,6 +41,7 @@ import {
     updateOption,
     updateOptionValue,
     removeOption,
+    removeOptionCapacity, 
     syncOptionName,
     updateOptionCapacityLabel
 } from './machines/machines-options.js';
@@ -78,7 +78,6 @@ export {
     saveMachineChanges,
     deleteMachine,
     updateMachineField,
-    ensureTRSuffix,
     selectTextInLabel,
     
     // Impostos
@@ -102,6 +101,7 @@ export {
     updateOption,
     updateOptionValue,
     removeOption,
+    removeOptionCapacity,
     syncOptionName,
     updateOptionCapacityLabel,
     
@@ -148,6 +148,7 @@ export function exposeToWindow() {
     window.updateOption = updateOption;
     window.updateOptionValue = updateOptionValue;
     window.removeOption = removeOption;
+    window.removeOptionCapacity = removeOptionCapacity;
     window.addVoltage = addVoltage;
     window.updateVoltage = updateVoltage;
     window.removeVoltage = removeVoltage;

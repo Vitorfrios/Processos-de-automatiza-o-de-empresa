@@ -47,22 +47,33 @@ export function loadBaseValuesHTML(machine) {
 
     return `
         <div class="base-values-list">
-            ${entries.map(([key, value]) => `
-                <div class="base-value-item" data-key="${key}">
+            ${entries.map(([key, value], index) => `
+                <div class="base-value-item" data-key="${escapeHtml(key)}">
                     <div class="base-value-header">
-                        <label contenteditable="true" 
-                               onblur="updateBaseValueKey('${key}', this.textContent.trim())"
-                               onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }">
-                            ${key}
-                        </label>
-                        <button class="btn btn-xs btn-danger" onclick="removeBaseValue('${key}', event)" title="Remover">
+                        <span>Valor Base ${index + 1}</span>
+                        <button class="btn btn-xs btn-danger" onclick="removeBaseValue('${escapeHtml(key)}', event)" title="Remover">
                             <i class="icon-delete"></i>
                         </button>
                     </div>
-                    <input type="number" value="${value}" step="1"
-                           placeholder="Valor"
-                           onchange="updateBaseValue('${key}', this.value)"
-                           class="form-input">
+                    <div class="base-value-content">
+                        <div class="base-value-field">
+                            <label>Capacidade:</label>
+                            <input type="text" 
+                                   value="${escapeHtml(key)}" 
+                                   placeholder="Ex: 35TR, 3100m³/h"
+                                   onchange="updateBaseValueKey('${escapeHtml(key)}', this.value)"
+                                   class="form-input">
+                        </div>
+                        <div class="base-value-field">
+                            <label>Valor (R$):</label>
+                            <input type="number" 
+                                   value="${value}" 
+                                   step="1"
+                                   placeholder="0.00"
+                                   onchange="updateBaseValue('${escapeHtml(key)}', this.value)"
+                                   class="form-input">
+                        </div>
+                    </div>
                 </div>
             `).join('')}
         </div>
@@ -78,12 +89,16 @@ export function loadOptionsHTML(machine) {
 
     return `
         <div class="options-list">
-            ${options.map((option, index) => `
-                <div class="option-item" data-index="${index}">
-                    <div class="option-header" onclick="toggleOptionItem(${index}, event)">
+            ${options.map((option, optionIndex) => {
+                const values = option.values || {};
+                const entries = Object.entries(values);
+                
+                return `
+                <div class="option-item" data-index="${optionIndex}">
+                    <div class="option-header" onclick="toggleOptionItem(${optionIndex}, event)">
                         <button class="minimizer">+</button>
-                        <span>Opção ${index + 1}: ${escapeHtml(option.name || '')}</span>
-                        <button class="btn btn-xs btn-danger" onclick="removeOption(${index}, event)" title="Remover">
+                        <span>Opção ${optionIndex + 1}: ${escapeHtml(option.name || '')}</span>
+                        <button class="btn btn-xs btn-danger" onclick="removeOption(${optionIndex}, event)" title="Remover">
                             <i class="icon-delete"></i>
                         </button>
                     </div>
@@ -93,35 +108,55 @@ export function loadOptionsHTML(machine) {
                             <input type="text" 
                                    value="${escapeHtml(option.name || '')}" 
                                    placeholder="Nome da opção"
-                                   oninput="syncOptionName(${index}, this.value)"
-                                   onchange="updateOption(${index}, 'name', this.value)"
+                                   oninput="syncOptionName(${optionIndex}, this.value)"
+                                   onchange="updateOption(${optionIndex}, 'name', this.value)"
                                    class="form-input">
                         </div>
                         <div class="option-values">
                             <h5>Valores por Capacidade:</h5>
                             <div class="option-values-grid">
-                                ${option.values ? Object.entries(option.values).map(([key, val]) => `
-                                    <div class="option-value-item" data-key="${key}">
-                                        <label contenteditable="true" 
-                                               onblur="updateOptionCapacityLabel(${index}, '${key}', this.textContent.trim())"
-                                               onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }">
-                                            ${key}
-                                        </label>
-                                        <input type="number" value="${val}" step="1"
-                                               onchange="updateOptionValue(${index}, '${key}', this.value)"
-                                               class="form-input-small">
+                                ${entries.map(([key, val], capacityIndex) => `
+                                    <div class="option-value-item" data-key="${escapeHtml(key)}">
+                                        <div class="option-value-header">
+                                            <span>Capacidade ${capacityIndex + 1}</span>
+                                            <button class="btn btn-xs btn-danger" 
+                                                    onclick="removeOptionCapacity(${optionIndex}, '${escapeHtml(key)}', event)" 
+                                                    title="Remover capacidade">
+                                                <i class="icon-delete"></i>
+                                            </button>
+                                        </div>
+                                        <div class="option-value-content">
+                                            <div class="option-value-field">
+                                                <label>Capacidade:</label>
+                                                <input type="text" 
+                                                    value="${escapeHtml(key)}" 
+                                                    placeholder="Ex: 35TR, 3100m³/h"
+                                                    onchange="updateOptionCapacityLabel(${optionIndex}, '${escapeHtml(key)}', this.value)"
+                                                    class="form-input-small">
+                                            </div>
+                                            <div class="option-value-field">
+                                                <label>Valor (R$):</label>
+                                                <input type="number" 
+                                                    value="${val}" 
+                                                    step="1"
+                                                    onchange="updateOptionValue(${optionIndex}, '${escapeHtml(key)}', this.value)"
+                                                    class="form-input-small">
+                                            </div>
+                                        </div>
                                     </div>
-                                `).join('') : '<p>Sem valores definidos</p>'}
+                                `).join('')}
+                                ${entries.length === 0 ? '<p>Sem valores definidos</p>' : ''}
                             </div>
                             <div class="text-center" style="margin-top: var(--spacing-md);">
-                                <button class="btn btn-xs btn-info" onclick="addOptionValue(${index}, event)">
+                                <button class="btn btn-xs btn-info" onclick="addOptionValue(${optionIndex}, event)">
                                     <i class="icon-add"></i> Adicionar Capacidade
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 }

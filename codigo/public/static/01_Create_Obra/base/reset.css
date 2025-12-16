@@ -9,7 +9,7 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: var(--body-bg-gradient);
   min-height: 100vh;
-  color: var(--text-primary);
+  /* color: var(--text-primary); */
 }
 
 .container {
