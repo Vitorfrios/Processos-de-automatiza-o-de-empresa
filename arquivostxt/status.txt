@@ -198,21 +198,8 @@ dutos
 ================
 PAGINA 3 ajustes
 
-Impostos: ajustar css do "delete" pois está muito ruim
-Tensão:
-<div class="voltage-content">
-                        <div class="voltage-row">
-                            <div class="voltage-column">
-                                <span class="voltage-label">Tensão:</span>
-                                <input type="text" value="220V/3F" placeholder="Nome (ex: 220V/1F)" onchange="updateVoltage(1, 'name', this.value)" class="form-input">
-                            </div>
-                            <div class="voltage-column">
-                                <span class="voltage-label">Valor (R$):</span>
-                                <input type="number" value="5000" step="0.01" placeholder="Valor" onchange="updateVoltage(1, 'value', this.value)" class="form-input">
-                            </div>
-                        </div>
-                    </div>
-
-Deve ficar assim em forma de tabela (atualmente está em coluna)
-| Tensão | Valor (R$)
-| 220v/3F | 5000 
+ajustar o css das tensões tela maior de um jeito, tela menor de outro, deve permanecer o da tela menor
+arrumar os TR das opções
+veriricicar configuracoes_instalacao de cada arquivo para trocar para acessorios
+arrumar css duplicado
+arrumar css global(todo o css)

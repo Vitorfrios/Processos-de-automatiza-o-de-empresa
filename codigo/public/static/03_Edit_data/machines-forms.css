@@ -1,74 +1,147 @@
 /* ===== MÁQUINAS - FORMULÁRIOS E SEÇÕES ===== */
 
-/* ===== IMPOSTOS ===== */
+/* ===== IMPOSTOS - FORMATO COMPACTO ===== */
 .impostos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-md);
 }
 
-.impostos-item {
+.imposto-item {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-gray-300);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
-    background: var(--color-white);
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius);
-    border: 1px solid var(--color-gray-300);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
-    position: relative;
 }
 
-.impostos-item:hover {
+.imposto-item:hover {
     border-color: var(--color-primary-light);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
-.impostos-item .input-container {
+.imposto-header {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    margin-bottom: var(--spacing-sm);
-}
-
-.impostos-item .form-input-small {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0.75rem;
-    font-size: 0.95rem;
-}
-
-/* Botão delete dos impostos - CORRIGIDO */
-.impostos-item .btn-danger {
-    margin-top: var(--spacing-xs);
-    padding: 0.75rem 1rem;
-    width: 100%;
-    min-height: 44px;
-    border-radius: var(--border-radius);
-    background: var(--danger-gradient);
-    border: none;
-    color: var(--color-white);
-    font-size: 0.9rem;
-    display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
     gap: var(--spacing-xs);
-    transition: all 0.2s ease;
-    cursor: pointer;
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--color-gray-200);
 }
 
-.impostos-item .btn-danger:hover {
-    background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+.imposto-header .form-input-small {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-gray-800);
+    background: var(--color-gray-50);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius-sm);
+    height: 36px;
+    box-sizing: border-box;
+    transition: all 0.15s;
 }
 
-.impostos-item .btn-danger i {
-    font-size: 1rem;
+.imposto-header .form-input-small:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+    background: var(--color-white);
 }
 
+.imposto-header .btn-danger:hover {
+    background: var(--color-danger-dark);
+    transform: scale(1.05);
+}
+
+.imposto-header .btn-danger i {
+    font-size: 0.9rem;
+}
+
+.imposto-value {
+    padding-top: var(--spacing-xs);
+}
+
+.imposto-value .form-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-gray-800);
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius-sm);
+    height: 40px;
+    box-sizing: border-box;
+    transition: all 0.15s;
+}
+
+.imposto-value .form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+.imposto-value .form-input::placeholder {
+    color: var(--color-gray-500);
+    font-weight: 400;
+}
+
+/* Botão "Adicionar Imposto" menor */
+.text-center .btn-info {
+    padding: 0.625rem 1rem;
+    font-size: 0.9rem;
+    min-height: 40px;
+}
+
+/* Responsividade para impostos */
+@media (max-width: 1024px) {
+    .impostos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: var(--spacing-sm);
+    }
+}
+
+@media (max-width: 768px) {
+    .impostos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .imposto-item {
+        padding: var(--spacing-sm);
+    }
+}
+
+@media (max-width: 480px) {
+    .imposto-header {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .imposto-header .form-input-small {
+        padding: 0.5rem;
+        height: 34px;
+        font-size: 0.875rem;
+    }
+    
+    .imposto-header .btn-danger {
+        padding: 0.375rem;
+        min-width: 30px;
+        min-height: 30px;
+    }
+    
+    .imposto-value .form-input {
+        padding: 0.5rem 0.75rem;
+        height: 38px;
+        font-size: 0.9rem;
+    }
+}
 /* ===== CONFIGURAÇÕES DE INSTALAÇÃO ===== */
 .configuracoes-list {
     display: grid;

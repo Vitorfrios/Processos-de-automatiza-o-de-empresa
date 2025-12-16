@@ -7,14 +7,14 @@ import { escapeHtml, showError, showInfo, showWarning, showSuccess, showConfirma
 export function loadMachines() {
     const container = document.getElementById('machinesList');
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
     if (!systemData.machines || !Array.isArray(systemData.machines)) {
         systemData.machines = [];
         return;
     }
-    
+
     if (systemData.machines.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -28,7 +28,7 @@ export function loadMachines() {
         `;
         return;
     }
-    
+
     systemData.machines.forEach((machine, index) => {
         const card = document.createElement('div');
         card.className = 'machine-card';
@@ -66,9 +66,9 @@ export function loadMachines() {
 export function populateMachineFilter() {
     const filter = document.getElementById('machineTypeFilter');
     if (!filter) return;
-    
+
     filter.innerHTML = '<option value="">Todas as máquinas</option>';
-    
+
     systemData.machines.forEach((machine, index) => {
         const option = document.createElement('option');
         option.value = machine.type;
@@ -80,7 +80,7 @@ export function populateMachineFilter() {
 export function filterMachines() {
     const filterValue = document.getElementById('machineTypeFilter').value.toLowerCase();
     const cards = document.querySelectorAll('.machine-card');
-    
+
     cards.forEach(card => {
         const machineType = card.querySelector('h3').textContent.toLowerCase();
         if (!filterValue || machineType.includes(filterValue)) {
@@ -107,7 +107,7 @@ export function addMachine() {
         options: [],
         voltages: []
     };
-    
+
     systemData.machines.push(newMachine);
     loadMachines();
     populateMachineFilter();
@@ -118,13 +118,13 @@ export function addMachine() {
 
 export function editMachine(index) {
     if (index < 0 || index >= systemData.machines.length) return;
-    
+
     const machine = systemData.machines[index];
     setCurrentMachineIndex(index);
-    
+
     // Atualizar título
     document.getElementById('machineDetailTitle').textContent = machine.type || 'Nova Máquina';
-    
+
     // Construir conteúdo de edição com toggles
     let content = `
         <div class="machine-edit-form">
@@ -134,6 +134,7 @@ export function editMachine(index) {
                        class="form-control" onchange="updateMachineField('type', this.value)">
             </div>
             
+            // Na função editMachine, substitua a parte dos impostos por:
             <div class="form-section">
                 <div class="section-header" onclick="toggleSection('impostos', event)">
                     <button class="minimizer">+</button>
@@ -145,22 +146,29 @@ export function editMachine(index) {
                 <div id="impostosList" class="section-content collapsed">
                     <div class="impostos-grid">
                         ${Object.entries(machine.impostos || {}).map(([key, value]) => `
-                            <div class="form-group impostos-item" data-key="${escapeHtml(key)}">
-                                <input type="text" value="${escapeHtml(key)}" class="form-input-small impostos-key"
-                                       onchange="updateImpostoKey('${key}', this.value)"
-                                       placeholder="Nome do imposto">
-                                <input type="text" value="${escapeHtml(value)}"
-                                       onchange="updateImposto('${key}', this.value)"
-                                       class="form-input-small"
-                                       placeholder="Valor">
-                                <button class="btn btn-xs btn-danger" onclick="removeImposto('${key}', event)" title="Remover">
-                                    <i class="icon-delete"></i>
-                                </button>
+                            <div class="imposto-item" data-key="${escapeHtml(key)}">
+                                <div class="imposto-header">
+                                    <input type="text" value="${escapeHtml(key)}" 
+                                        class="form-input-small"
+                                        onchange="updateImpostoKey('${key}', this.value)"
+                                        placeholder="Nome do imposto">
+                                    <button class="btn btn-xs btn-danger" 
+                                            onclick="removeImposto('${key}', event)" 
+                                            title="Remover">
+                                        <i class="icon-delete"></i>
+                                    </button>
+                                </div>
+                                <div class="imposto-value">
+                                    <input type="text" value="${escapeHtml(value)}"
+                                        onchange="updateImposto('${key}', this.value)"
+                                        class="form-input"
+                                        placeholder="Valor do imposto">
+                                </div>
                             </div>
                         `).join('')}
                     </div>
-                    <div class="text-center" style="margin-top: var(--spacing-md);">
-                        <button class="btn btn-small btn-info" onclick="addImposto(event)">
+                    <div class="text-center" style="margin-top: var(--spacing-lg);">
+                        <button class="btn btn-info" onclick="addImposto(event)">
                             <i class="icon-add"></i> Adicionar Imposto
                         </button>
                     </div>
@@ -249,23 +257,23 @@ export function editMachine(index) {
             </div>
         </div>
     `;
-    
+
     document.getElementById('machineDetailContent').innerHTML = content;
     document.getElementById('machineDetailView').style.display = 'block';
-    
+
     // Restaurar estado dos toggles se existir
     restoreSectionStates();
-    
+
     document.getElementById('machineDetailView').scrollIntoView({ behavior: 'smooth' });
 }
 
 function loadConfiguracoesHTML(machine) {
     const configuracoes = machine.configuracoes_instalacao || [];
-    
+
     if (configuracoes.length === 0) {
         return '<p class="empty-message">Nenhuma configuração cadastrada.</p>';
     }
-    
+
     return `
         <div class="configuracoes-list">
             ${configuracoes.map((config, index) => `
@@ -294,11 +302,11 @@ function loadConfiguracoesHTML(machine) {
 function loadBaseValuesHTML(machine) {
     const baseValues = machine.baseValues || {};
     const entries = Object.entries(baseValues);
-    
+
     if (entries.length === 0) {
         return '<p class="empty-message">Nenhum valor base cadastrado.</p>';
     }
-    
+
     return `
         <div class="base-values-list">
             ${entries.map(([key, value], index) => `
@@ -324,11 +332,11 @@ function loadBaseValuesHTML(machine) {
 
 function loadOptionsHTML(machine) {
     const options = machine.options || [];
-    
+
     if (options.length === 0) {
         return '<p class="empty-message">Nenhuma opção cadastrada.</p>';
     }
-    
+
     return `
         <div class="options-list">
             ${options.map((option, index) => `
@@ -375,86 +383,44 @@ function loadOptionsHTML(machine) {
 
 function loadVoltagesHTML(machine) {
     const voltages = machine.voltages || [];
-    
+
     if (voltages.length === 0) {
         return '<p class="empty-message">Nenhuma tensão cadastrada.</p>';
     }
-    
+
     return `
         <div class="voltages-list">
-            <!-- Tabela para desktop -->
-            <table class="voltages-table">
-                <thead>
-                    <tr>
-                        <th>Tensão</th>
-                        <th>Valor (R$)</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${voltages.map((voltage, index) => `
-                        <tr data-index="${index}">
-                            <td>
-                                <input type="text" 
-                                       value="${escapeHtml(voltage.name || '')}" 
-                                       placeholder="Ex: 220V/1F"
-                                       onchange="updateVoltage(${index}, 'name', this.value)"
-                                       class="tensao-input">
-                            </td>
-                            <td>
-                                <input type="number" 
-                                       value="${voltage.value || 0}" 
-                                       step="1"
-                                       placeholder="0.00"
-                                       onchange="updateVoltage(${index}, 'value', this.value)"
-                                       class="valor-input">
-                            </td>
-                            <td>
-                                <button class="delete-tensao-btn" 
-                                        onclick="removeVoltage(${index}, event)" 
-                                        title="Remover tensão">
-                                    <i class="icon-delete"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-            
-            <!-- Grid 2x2 para mobile/tablet -->
-            <div class="voltages-grid">
-                ${voltages.map((voltage, index) => `
-                    <div class="voltage-card" data-index="${index}">
-                        <div class="voltage-card-header">
-                            <span>Tensão ${index + 1}</span>
-                            <button class="btn btn-xs btn-danger" 
-                                    onclick="removeVoltage(${index}, event)" 
-                                    title="Remover">
-                                <i class="icon-delete"></i>
-                            </button>
+            ${voltages.map((voltage, index) => `
+                <div class="voltage-card" data-index="${index}">
+                    <div class="voltage-card-header">
+                        <span>Tensão ${index + 1}</span>
+                        <button class="btn btn-xs btn-danger" 
+                                onclick="removeVoltage(${index}, event)" 
+                                title="Remover">
+                            <i class="icon-delete"></i>
+                        </button>
+                    </div>
+                    <div class="voltage-card-content">
+                        <div class="voltage-card-field">
+                            <label>Tensão:</label>
+                            <input type="text" 
+                                   value="${escapeHtml(voltage.name || '')}" 
+                                   placeholder="Ex: 220V/1F"
+                                   onchange="updateVoltage(${index}, 'name', this.value)"
+                                   class="tensao-input">
                         </div>
-                        <div class="voltage-card-content">
-                            <div class="voltage-card-field">
-                                <label>Tensão:</label>
-                                <input type="text" 
-                                       value="${escapeHtml(voltage.name || '')}" 
-                                       placeholder="Ex: 220V/1F"
-                                       onchange="updateVoltage(${index}, 'name', this.value)"
-                                       class="tensao-input">
-                            </div>
-                            <div class="voltage-card-field">
-                                <label>Valor (R$):</label>
-                                <input type="number" 
-                                       value="${voltage.value || 0}" 
-                                       step="1"
-                                       placeholder="0.00"
-                                       onchange="updateVoltage(${index}, 'value', this.value)"
-                                       class="valor-input">
-                            </div>
+                        <div class="voltage-card-field">
+                            <label>Valor (R$):</label>
+                            <input type="number" 
+                                   value="${voltage.value || 0}" 
+                                   step="1"
+                                   placeholder="0.00"
+                                   onchange="updateVoltage(${index}, 'value', this.value)"
+                                   class="valor-input">
                         </div>
                     </div>
-                `).join('')}
-            </div>
+                </div>
+            `).join('')}
         </div>
     `;
 }
@@ -493,7 +459,7 @@ export function updateImpostoKey(oldKey, newKey) {
             delete machine.impostos[oldKey];
             machine.impostos[newKey] = value;
             addPendingChange('machines');
-            
+
             // Atualizar visualmente
             setTimeout(() => editMachine(currentIndex), 100);
         }
@@ -504,19 +470,22 @@ export function removeImposto(key, event) {
     if (event) event.stopPropagation();
     event.preventDefault();
     
-    const currentIndex = getCurrentMachineIndex();
-    if (currentIndex !== null) {
-        const machine = systemData.machines[currentIndex];
-        if (machine.impostos && machine.impostos[key] !== undefined) {
-            delete machine.impostos[key];
-            addPendingChange('machines');
-            // Não recarregar a tela inteira
-            setTimeout(() => {
-                const section = document.querySelector(`.impostos-item[data-key="${key}"]`);
-                if (section) section.remove();
-            }, 10);
+    showConfirmation(`Deseja remover o imposto "${key}"?`, () => {
+        const currentIndex = getCurrentMachineIndex();
+        if (currentIndex !== null) {
+            const machine = systemData.machines[currentIndex];
+            if (machine.impostos && machine.impostos[key] !== undefined) {
+                delete machine.impostos[key];
+                addPendingChange('machines');
+                
+                // Remover visualmente
+                const item = document.querySelector(`.imposto-item[data-key="${key}"]`);
+                if (item) item.remove();
+                
+                showWarning(`Imposto "${key}" removido.`);
+            }
         }
-    }
+    });
 }
 
 export function addImposto(event) {
@@ -532,30 +501,40 @@ export function addImposto(event) {
         systemData.machines[currentIndex].impostos[newKey] = '';
         addPendingChange('machines');
         
-        // Adicionar visualmente sem recarregar
+        // Adicionar visualmente
         const impostosList = document.querySelector('.impostos-grid');
         if (impostosList) {
             const newItem = document.createElement('div');
-            newItem.className = 'form-group impostos-item';
+            newItem.className = 'imposto-item';
             newItem.setAttribute('data-key', newKey);
             newItem.innerHTML = `
-                <input type="text" value="${newKey}" class="form-input-small impostos-key"
-                       onchange="updateImpostoKey('${newKey}', this.value)"
-                       placeholder="Nome do imposto">
-                <input type="text" value=""
-                       onchange="updateImposto('${newKey}', this.value)"
-                       class="form-input-small"
-                       placeholder="Valor">
-                <button class="btn btn-xs btn-danger" onclick="removeImposto('${newKey}', event)" title="Remover">
-                    <i class="icon-delete"></i>
-                </button>
+                <div class="imposto-header">
+                    <input type="text" value="${newKey}" 
+                           class="form-input-small"
+                           onchange="updateImpostoKey('${newKey}', this.value)"
+                           placeholder="Nome do imposto">
+                    <button class="btn btn-xs btn-danger" 
+                            onclick="removeImposto('${newKey}', event)" 
+                            title="Remover">
+                        <i class="icon-delete"></i>
+                    </button>
+                </div>
+                <div class="imposto-value">
+                    <input type="text" value=""
+                           onchange="updateImposto('${newKey}', this.value)"
+                           class="form-input"
+                           placeholder="Valor do imposto">
+                </div>
             `;
             impostosList.appendChild(newItem);
             
             // Focar no novo campo
             setTimeout(() => {
-                const input = newItem.querySelector('.impostos-key');
-                if (input) input.focus();
+                const input = newItem.querySelector('.imposto-header input');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
             }, 50);
         }
     }
@@ -565,22 +544,22 @@ export function addImposto(event) {
 export function addConfiguracao(event) {
     if (event) event.stopPropagation();
     event.preventDefault();
-    
+
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         const machine = systemData.machines[currentIndex];
         if (!machine.configuracoes_instalacao) {
             machine.configuracoes_instalacao = [];
         }
-        
+
         const newIndex = machine.configuracoes_instalacao.length;
         machine.configuracoes_instalacao.push({
             nome: 'Nova Configuração'
             // Não incluir valor por padrão
         });
-        
+
         addPendingChange('machines');
-        
+
         // Adicionar visualmente sem recarregar tudo
         const configuracoesList = document.querySelector('.configuracoes-list');
         if (configuracoesList) {
@@ -605,7 +584,7 @@ export function addConfiguracao(event) {
                 </div>
             `;
             configuracoesList.appendChild(newItem);
-            
+
             // Focar no novo campo
             setTimeout(() => {
                 const input = newItem.querySelector('input');
@@ -634,7 +613,7 @@ export function updateConfiguracao(index, field, value) {
 export function removeConfiguracao(index, event) {
     if (event) event.stopPropagation();
     event.preventDefault();
-    
+
     showConfirmation('Deseja remover esta configuração?', () => {
         const currentIndex = getCurrentMachineIndex();
         if (currentIndex !== null) {
@@ -642,30 +621,30 @@ export function removeConfiguracao(index, event) {
             if (machine.configuracoes_instalacao) {
                 machine.configuracoes_instalacao.splice(index, 1);
                 addPendingChange('machines');
-                
+
                 // Remover visualmente
                 const item = document.querySelector(`.config-item[data-index="${index}"]`);
                 if (item) item.remove();
-                
+
                 // Renumerar os itens restantes
                 const items = document.querySelectorAll('.config-item');
                 items.forEach((item, newIndex) => {
                     item.setAttribute('data-index', newIndex);
                     const span = item.querySelector('.config-header span');
                     if (span) span.textContent = `Configuração ${newIndex + 1}`;
-                    
+
                     // Atualizar eventos
                     const removeBtn = item.querySelector('button.btn-danger');
                     if (removeBtn) {
                         removeBtn.setAttribute('onclick', `removeConfiguracao(${newIndex}, event)`);
                     }
-                    
+
                     const input = item.querySelector('input');
                     if (input) {
                         input.setAttribute('onchange', `updateConfiguracao(${newIndex}, 'nome', this.value)`);
                     }
                 });
-                
+
                 showWarning('Configuração removida.');
             }
         }
@@ -676,19 +655,19 @@ export function removeConfiguracao(index, event) {
 export function addBaseValue(event) {
     if (event) event.stopPropagation();
     event.preventDefault();
-    
+
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         const machine = systemData.machines[currentIndex];
         if (!machine.baseValues) {
             machine.baseValues = {};
         }
-        
+
         const newKey = `NOVA_CAPACIDADE_${Object.keys(machine.baseValues).length + 1}`;
         machine.baseValues[newKey] = 0;
-        
+
         addPendingChange('machines');
-        
+
         // Adicionar visualmente
         const baseValuesList = document.querySelector('.base-values-list');
         if (baseValuesList) {
@@ -711,7 +690,7 @@ export function addBaseValue(event) {
                        class="form-input">
             `;
             baseValuesList.appendChild(newItem);
-            
+
             // Focar no campo de chave
             setTimeout(() => {
                 const input = newItem.querySelector('.form-input-small');
@@ -753,7 +732,7 @@ export function updateBaseValue(key, value) {
 export function removeBaseValue(key, event) {
     if (event) event.stopPropagation();
     event.preventDefault();
-    
+
     showConfirmation(`Deseja remover o valor base "${key}"?`, () => {
         const currentIndex = getCurrentMachineIndex();
         if (currentIndex !== null) {
@@ -761,11 +740,11 @@ export function removeBaseValue(key, event) {
             if (machine.baseValues && machine.baseValues[key] !== undefined) {
                 delete machine.baseValues[key];
                 addPendingChange('machines');
-                
+
                 // Remover visualmente
                 const item = document.querySelector(`.base-value-item[data-key="${key}"]`);
                 if (item) item.remove();
-                
+
                 showWarning(`Valor base "${key}" removido.`);
             }
         }
@@ -776,21 +755,21 @@ export function removeBaseValue(key, event) {
 export function addOption(event) {
     if (event) event.stopPropagation();
     event.preventDefault();
-    
+
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         const machine = systemData.machines[currentIndex];
         if (!machine.options) {
             machine.options = [];
         }
-        
+
         const newIndex = machine.options.length;
         machine.options.push({
             id: newIndex + 1,
             name: 'Nova Opção',
             values: {}
         });
-        
+
         addPendingChange('machines');
         editMachine(currentIndex); // Recarregar para mostrar o novo item
     }
@@ -799,7 +778,7 @@ export function addOption(event) {
 export function addOptionValue(optionIndex, event) {
     if (event) event.stopPropagation();
     event.preventDefault();
-    
+
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         const machine = systemData.machines[currentIndex];
@@ -807,7 +786,7 @@ export function addOptionValue(optionIndex, event) {
             if (!machine.options[optionIndex].values) {
                 machine.options[optionIndex].values = {};
             }
-            
+
             // Encontrar a próxima capacidade disponível
             const capacities = Object.keys(machine.options[optionIndex].values);
             let newCapacity = '1TR';
@@ -820,10 +799,10 @@ export function addOptionValue(optionIndex, event) {
                 const maxNumber = Math.max(...numbers);
                 newCapacity = `${maxNumber + 1}TR`;
             }
-            
+
             machine.options[optionIndex].values[newCapacity] = 0;
             addPendingChange('machines');
-            
+
             // Adicionar visualmente
             const optionValuesGrid = document.querySelector(`.option-item[data-index="${optionIndex}"] .option-values-grid`);
             if (optionValuesGrid) {
@@ -836,7 +815,7 @@ export function addOptionValue(optionIndex, event) {
                            class="form-input-small">
                 `;
                 optionValuesGrid.appendChild(newItem);
-                
+
                 // Focar no novo campo
                 setTimeout(() => {
                     const input = newItem.querySelector('input');
@@ -878,7 +857,7 @@ export function updateOptionValue(optionIndex, key, value) {
 export function removeOption(index, event) {
     if (event) event.stopPropagation();
     event.preventDefault();
-    
+
     showConfirmation('Deseja remover esta opção?', () => {
         const currentIndex = getCurrentMachineIndex();
         if (currentIndex !== null) {
@@ -897,21 +876,21 @@ export function removeOption(index, event) {
 export function addVoltage(event) {
     if (event) event.stopPropagation();
     event.preventDefault();
-    
+
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         const machine = systemData.machines[currentIndex];
         if (!machine.voltages) {
             machine.voltages = [];
         }
-        
+
         const newIndex = machine.voltages.length;
         machine.voltages.push({
             id: newIndex + 1,
             name: 'Nova Tensão',
             value: 0
         });
-        
+
         addPendingChange('machines');
         editMachine(currentIndex); // Recarregar a view
     }
@@ -935,7 +914,7 @@ export function updateVoltage(index, field, value) {
 export function removeVoltage(index, event) {
     if (event) event.stopPropagation();
     event.preventDefault();
-    
+
     showConfirmation('Deseja remover esta tensão?', () => {
         const currentIndex = getCurrentMachineIndex();
         if (currentIndex !== null) {
@@ -943,14 +922,14 @@ export function removeVoltage(index, event) {
             if (machine.voltages) {
                 machine.voltages.splice(index, 1);
                 addPendingChange('machines');
-                
+
                 // Remover visualmente
                 const tableRow = document.querySelector(`.voltages-table tr[data-index="${index}"]`);
                 const gridCard = document.querySelector(`.voltage-card[data-index="${index}"]`);
-                
+
                 if (tableRow) tableRow.remove();
                 if (gridCard) gridCard.remove();
-                
+
                 // Renumerar os itens restantes
                 document.querySelectorAll('.voltages-table tr[data-index]').forEach((row, newIndex) => {
                     row.setAttribute('data-index', newIndex);
@@ -960,7 +939,7 @@ export function removeVoltage(index, event) {
                     const button = row.querySelector('button');
                     button.setAttribute('onclick', `removeVoltage(${newIndex}, event)`);
                 });
-                
+
                 document.querySelectorAll('.voltage-card[data-index]').forEach((card, newIndex) => {
                     card.setAttribute('data-index', newIndex);
                     card.querySelector('.voltage-card-header span').textContent = `Tensão ${newIndex + 1}`;
@@ -970,7 +949,7 @@ export function removeVoltage(index, event) {
                     const button = card.querySelector('button');
                     button.setAttribute('onclick', `removeVoltage(${newIndex}, event)`);
                 });
-                
+
                 showWarning('Tensão removida.');
             }
         }
@@ -989,7 +968,7 @@ export function saveMachineChanges() {
 export async function deleteMachine(index) {
     const machine = systemData.machines[index];
     const machineType = machine.type || `Máquina ${index + 1}`;
-    
+
     showConfirmation(`Deseja excluir a máquina "${machineType}"?`, async () => {
         try {
             const response = await fetch('/api/delete', {
@@ -997,13 +976,13 @@ export async function deleteMachine(index) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    path: ['machines', index.toString()] 
+                body: JSON.stringify({
+                    path: ['machines', index.toString()]
                 })
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 systemData.machines.splice(index, 1);
                 loadMachines();
@@ -1025,22 +1004,22 @@ export async function deleteMachine(index) {
 
 export function toggleSection(sectionId, event) {
     if (!event) return;
-    
+
     event.stopPropagation();
-    
+
     const header = event.currentTarget;
     const content = header.nextElementSibling;
     const minimizer = header.querySelector('.minimizer');
-    
+
     if (!content || !minimizer) return;
-    
+
     if (content.classList.contains('collapsed')) {
         // Expandir
         content.classList.remove('collapsed');
         content.classList.add('expanded');
         minimizer.textContent = '−'; // Sinal de menos
         minimizer.title = 'Recolher seção';
-        
+
         // Salvar estado como expandido
         saveSectionState(sectionId, 'expanded');
     } else {
@@ -1049,7 +1028,7 @@ export function toggleSection(sectionId, event) {
         content.classList.add('collapsed');
         minimizer.textContent = '+'; // Sinal de mais
         minimizer.title = 'Expandir seção';
-        
+
         // Salvar estado como recolhido
         saveSectionState(sectionId, 'collapsed');
     }
@@ -1057,15 +1036,15 @@ export function toggleSection(sectionId, event) {
 
 export function toggleOptionItem(index, event) {
     if (!event) return;
-    
+
     event.stopPropagation();
-    
+
     const header = event.currentTarget;
     const content = header.nextElementSibling;
     const minimizer = header.querySelector('.minimizer');
-    
+
     if (!content || !minimizer) return;
-    
+
     if (content.classList.contains('collapsed')) {
         content.classList.remove('collapsed');
         content.classList.add('expanded');
@@ -1091,15 +1070,15 @@ export function saveSectionState(sectionId, state) {
 export function restoreSectionStates() {
     try {
         const sectionStates = JSON.parse(localStorage.getItem('machineSectionStates') || '{}');
-        
+
         // Para cada seção no DOM
         document.querySelectorAll('.form-section').forEach(section => {
             const header = section.querySelector('.section-header');
             const content = header?.nextElementSibling;
             const minimizer = header?.querySelector('.minimizer');
-            
+
             if (!header || !content || !minimizer) return;
-            
+
             // Determinar qual seção é baseada no conteúdo
             let sectionId = '';
             if (content.id.includes('impostos')) sectionId = 'impostos';
@@ -1107,7 +1086,7 @@ export function restoreSectionStates() {
             else if (content.id.includes('baseValues')) sectionId = 'valoresbase';
             else if (content.id.includes('options')) sectionId = 'opcoes';
             else if (content.id.includes('voltages')) sectionId = 'tensoes';
-            
+
             if (sectionId && sectionStates[sectionId] === 'expanded') {
                 // Expandir se estava expandida
                 content.classList.remove('collapsed');
@@ -1122,13 +1101,13 @@ export function restoreSectionStates() {
                 minimizer.title = 'Expandir seção';
             }
         });
-        
+
         // Também restaurar estados dos option-items
         document.querySelectorAll('.option-item').forEach(optionItem => {
             const header = optionItem.querySelector('.option-header');
             const content = header?.nextElementSibling;
             const minimizer = header?.querySelector('.minimizer');
-            
+
             if (header && content && minimizer) {
                 // Option-items sempre começam colapsados
                 content.classList.remove('expanded');
