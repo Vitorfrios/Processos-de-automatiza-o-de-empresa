@@ -1,75 +1,98 @@
 /* ==== json-editor.js ==== */
-// json-editor.js - VERSÃO COMPLETA COM SCROLL FUNCIONAL (CORRIGIDO)
+// json-editor.js - VERSÃO OTIMIZADA PARA PERFORMANCE
 
 // ==================== ESTADO GLOBAL ====================
 window.stagingData = null;
 window.hasPendingChanges = false;
 let isInitialized = false;
 
-// ==================== FUNÇÕES PRINCIPAIS ====================
+// ==================== OTIMIZAÇÕES ====================
+let updateTimeout = null;
+let layoutTimeout = null;
+let lastLineCount = 0;
+
+// Cache de elementos DOM
+let domCache = {
+    editor: null,
+    lineNumbers: null,
+    jsonContainer: null,
+    applyButton: null,
+    status: null
+};
 
 /**
- * Atualiza os números das linhas DINAMICAMENTE
+ * Inicializa o cache de elementos DOM
+ */
+function initDomCache() {
+    domCache.editor = document.getElementById('jsonEditor');
+    domCache.lineNumbers = document.getElementById('lineNumbers');
+    domCache.jsonContainer = document.querySelector('.json-container');
+    domCache.applyButton = document.getElementById('applyJsonBtn');
+    domCache.status = document.getElementById('jsonStatus');
+}
+
+// ==================== FUNÇÕES PRINCIPAIS (OTIMIZADAS) ====================
+
+/**
+ * Atualiza os números das linhas com debouncing
  */
 export function updateLineNumbers() {
-    const editor = document.getElementById('jsonEditor');
-    const lineNumbers = document.getElementById('lineNumbers');
-    const jsonContainer = document.querySelector('.json-container'); // Mudado de scrollWrapper para container
+    if (updateTimeout) {
+        clearTimeout(updateTimeout);
+    }
     
-    if (!editor || !lineNumbers || !jsonContainer) {
-        console.warn('Elementos do editor não encontrados');
-        return;
+    updateTimeout = setTimeout(() => {
+        _updateLineNumbers();
+    }, 50); // Debounce de 50ms
+}
+
+/**
+ * Função interna de atualização de números de linha
+ */
+function _updateLineNumbers() {
+    if (!domCache.editor || !domCache.lineNumbers || !domCache.jsonContainer) {
+        initDomCache();
+        if (!domCache.editor || !domCache.lineNumbers) return;
     }
     
     try {
-        // Conta as linhas do texto
-        const text = editor.value;
-        let lines = text.split('\n');
-        
-        // Se o texto terminar com quebra de linha, adiciona linha extra
-        if (text.endsWith('\n')) {
-            lines.push('');
-        }
-        
+        const text = domCache.editor.value;
+        const lines = text.split('\n');
         const totalLines = Math.max(lines.length, 1);
         
-        // Gera os números das linhas
+        // Só atualiza se o número de linhas mudou
+        if (totalLines === lastLineCount && lastLineCount > 0) {
+            return;
+        }
+        
+        lastLineCount = totalLines;
+        
+        // Gera os números das linhas de forma eficiente
         let numbersHTML = '';
         for (let i = 1; i <= totalLines; i++) {
             numbersHTML += `<div data-line="${i}">${i}</div>`;
         }
         
-        // Atualiza o HTML
-        lineNumbers.innerHTML = numbersHTML;
+        // Atualiza o HTML de uma vez
+        domCache.lineNumbers.innerHTML = numbersHTML;
         
-        // Calcula altura baseada no conteúdo
+        // Calcula altura de forma otimizada
         const lineHeight = 20;
         const padding = 32;
-        const minHeight = 200; // Altura mínima
-        
-        // Altura baseada no conteúdo
         const contentHeight = (totalLines * lineHeight) + padding;
-        const finalHeight = Math.max(contentHeight, minHeight);
+        const finalHeight = Math.max(contentHeight, 200);
         
-        // Ajusta alturas
-        editor.style.height = finalHeight + 'px';
-        lineNumbers.style.height = finalHeight + 'px';
+        // Aplica alturas de forma otimizada
+        domCache.editor.style.height = finalHeight + 'px';
+        domCache.lineNumbers.style.height = finalHeight + 'px';
         
-        // Garante que o container tenha conteúdo suficiente
+        // Verificação de container em um timeout separado
         setTimeout(() => {
-            const containerHeight = jsonContainer.clientHeight;
-            
-            // Se o conteúdo for menor que o container, ajusta para preencher
-            if (finalHeight < containerHeight) {
-                editor.style.height = containerHeight + 'px';
-                lineNumbers.style.height = containerHeight + 'px';
+            if (domCache.jsonContainer && finalHeight < domCache.jsonContainer.clientHeight) {
+                const containerHeight = domCache.jsonContainer.clientHeight;
+                domCache.editor.style.height = containerHeight + 'px';
+                domCache.lineNumbers.style.height = containerHeight + 'px';
             }
-            
-            // Debug: verifica status do scroll
-            const shouldScrollVertically = finalHeight > jsonContainer.clientHeight;
-            console.log(`📏 Altura: ${finalHeight}px, Container: ${jsonContainer.clientHeight}px`);
-            console.log(`📊 Scroll vertical necessário: ${shouldScrollVertically}`);
-            
         }, 0);
         
     } catch (error) {
@@ -78,121 +101,363 @@ export function updateLineNumbers() {
 }
 
 /**
- * Ajusta o layout do editor (chamado em eventos)
+ * Ajusta o layout do editor com debouncing
  */
 export function adjustEditorLayout() {
-    updateLineNumbers();
+    if (layoutTimeout) {
+        clearTimeout(layoutTimeout);
+    }
     
-    const editor = document.getElementById('jsonEditor');
-    const jsonContainer = document.querySelector('.json-container'); // Mudado aqui também
+    layoutTimeout = setTimeout(() => {
+        _adjustEditorLayout();
+    }, 100); // Debounce maior para layout (mais pesado)
+}
+
+/**
+ * Função interna de ajuste de layout
+ */
+function _adjustEditorLayout() {
+    // Atualiza números primeiro
+    _updateLineNumbers();
     
-    if (!editor || !jsonContainer) return;
+    if (!domCache.editor || !domCache.jsonContainer) return;
     
     // Verifica se há necessidade de scroll horizontal
-    const lines = editor.value.split('\n');
-    const editorWidth = editor.clientWidth;
+    const lines = domCache.editor.value.split('\n');
+    if (lines.length > 100) {
+        // Para arquivos muito grandes, não verifica largura linha por linha
+        return;
+    }
     
-    // Cria elemento temporário para medir largura do texto
+    // Medição de largura otimizada
     const tempSpan = document.createElement('span');
-    tempSpan.style.fontFamily = "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace";
-    tempSpan.style.fontSize = '13px';
-    tempSpan.style.visibility = 'hidden';
-    tempSpan.style.position = 'absolute';
-    tempSpan.style.whiteSpace = 'pre';
-    tempSpan.style.pointerEvents = 'none';
+    tempSpan.style.cssText = `
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 13px;
+        visibility: hidden;
+        position: absolute;
+        white-space: pre;
+        pointer-events: none;
+    `;
     document.body.appendChild(tempSpan);
     
     let maxLineWidth = 0;
-    for (const line of lines) {
-        tempSpan.textContent = line;
-        const width = tempSpan.offsetWidth;
-        if (width > maxLineWidth) maxLineWidth = width;
+    // Limita a verificação às primeiras 1000 linhas para performance
+    const linesToCheck = Math.min(lines.length, 1000);
+    for (let i = 0; i < linesToCheck; i++) {
+        tempSpan.textContent = lines[i];
+        maxLineWidth = Math.max(maxLineWidth, tempSpan.offsetWidth);
     }
     
     document.body.removeChild(tempSpan);
     
-    // Adiciona padding
-    const totalWidth = maxLineWidth + 32; // 16px padding-left + 16px padding-right
-    
-    // Se alguma linha for mais larga que o editor, ajusta
-    if (totalWidth > editorWidth) {
-        console.log(`📏 Linha larga detectada: ${totalWidth}px > ${editorWidth}px`);
-        
-        // Força o container a mostrar scroll horizontal
-        if (jsonContainer.scrollWidth <= jsonContainer.clientWidth) {
-            // Cria um div fantasma para forçar largura
-            const phantomDiv = document.createElement('div');
-            phantomDiv.style.width = (totalWidth + 100) + 'px';
-            phantomDiv.style.height = '1px';
-            phantomDiv.style.position = 'absolute';
-            phantomDiv.style.visibility = 'hidden';
-            
-            const editorWrapper = document.querySelector('.json-editor-wrapper');
-            if (editorWrapper) {
-                editorWrapper.appendChild(phantomDiv);
-                setTimeout(() => {
-                    if (phantomDiv.parentNode) {
-                        phantomDiv.parentNode.removeChild(phantomDiv);
-                    }
-                }, 100);
-            }
+    // Verifica se precisa de scroll horizontal
+    const totalWidth = maxLineWidth + 32;
+    if (totalWidth > domCache.editor.clientWidth) {
+        // Força scroll horizontal se necessário
+        if (domCache.jsonContainer.scrollWidth <= domCache.jsonContainer.clientWidth) {
+            setTimeout(() => {
+                if (domCache.jsonContainer) {
+                    domCache.jsonContainer.style.overflowX = 'auto';
+                }
+            }, 50);
         }
     }
 }
 
 /**
  * Destaca uma linha específica
- * @param {number} lineNumber - Número da linha a destacar
- * @param {string} type - Tipo de highlight ('error', 'warning', 'info')
  */
 export function highlightLine(lineNumber, type = 'error') {
-    const lineNumbers = document.getElementById('lineNumbers');
-    if (!lineNumbers) return;
+    if (!domCache.lineNumbers) {
+        initDomCache();
+        if (!domCache.lineNumbers) return;
+    }
     
-    // Remove destaque anterior
-    const lines = lineNumbers.querySelectorAll('div');
+    const lines = domCache.lineNumbers.querySelectorAll('div');
+    
+    // Apenas atualiza se necessário
+    let needsUpdate = false;
+    lines.forEach((line, index) => {
+        const shouldBeHighlighted = (index === lineNumber - 1);
+        const isHighlighted = line.classList.contains(`${type}-line`);
+        
+        if (shouldBeHighlighted !== isHighlighted) {
+            needsUpdate = true;
+        }
+    });
+    
+    if (!needsUpdate) return;
+    
+    // Atualiza destaque
     lines.forEach(line => {
         line.className = '';
     });
     
-    // Aplica o novo destaque
     if (lineNumber > 0 && lineNumber <= lines.length) {
         const lineElement = lines[lineNumber - 1];
         lineElement.classList.add(`${type}-line`);
         
-        // Scroll para a linha
         scrollToLine(lineNumber);
     }
 }
 
 /**
  * Faz scroll para uma linha específica
- * @param {number} lineNumber - Número da linha
  */
 function scrollToLine(lineNumber) {
-    const jsonContainer = document.querySelector('.json-container'); // Mudado aqui
-    if (!jsonContainer) return;
+    if (!domCache.jsonContainer) {
+        initDomCache();
+        if (!domCache.jsonContainer) return;
+    }
     
     const lineHeight = 20;
     const scrollPosition = (lineNumber - 1) * lineHeight;
     
-    jsonContainer.scrollTo({ // Mudado aqui
+    domCache.jsonContainer.scrollTo({
         top: Math.max(0, scrollPosition - 100),
         behavior: 'smooth'
     });
 }
 
+// ==================== INICIALIZAÇÃO DO EDITOR (OTIMIZADA) ====================
+
 /**
- * Encontra a linha de um erro no JSON
- * @param {string} jsonString - String JSON com erro
- * @param {Error} error - Objeto de erro
- * @returns {number} Número da linha ou -1 se não encontrado
+ * Inicializa o editor JSON
+ */
+export function initJSONEditor() {
+    console.log('🚀 Inicializando editor JSON (otimizado)...');
+    
+    if (isInitialized) {
+        console.log('⚠️ Editor já inicializado');
+        return;
+    }
+    
+    initDomCache();
+    
+    if (!domCache.editor) {
+        console.error('❌ Elemento #jsonEditor não encontrado!');
+        return;
+    }
+    
+    // Configurações iniciais
+    domCache.editor.spellcheck = false;
+    domCache.editor.autocomplete = 'off';
+    domCache.editor.autocorrect = 'off';
+    domCache.editor.autocapitalize = 'off';
+    
+    // Carrega dados iniciais
+    const systemData = window.systemData || {};
+    let initialContent = '';
+    
+    if (Object.keys(systemData).length > 0) {
+        try {
+            initialContent = JSON.stringify(systemData, null, 2);
+        } catch (error) {
+            initialContent = '{\n  "constants": {},\n  "machines": [],\n  "materials": {},\n  "empresas": []\n}';
+        }
+    } else {
+        initialContent = '{\n  "constants": {},\n  "machines": [],\n  "materials": {},\n  "empresas": []\n}';
+    }
+    
+    domCache.editor.value = initialContent;
+    
+    // Eventos otimizados
+    domCache.editor.addEventListener('input', function() {
+        // Marca que há mudanças pendentes
+        window.hasPendingChanges = true;
+        updateApplyButtonState();
+        
+        // Atualizações otimizadas
+        updateLineNumbers(); // Debounced
+        adjustEditorLayout(); // Debounced
+    });
+    
+    // Evento de teclas para melhor performance
+    let lastKeyTime = 0;
+    domCache.editor.addEventListener('keydown', function(e) {
+        const now = Date.now();
+        const timeSinceLastKey = now - lastKeyTime;
+        lastKeyTime = now;
+        
+        // Para teclas de navegação, não faz update pesado
+        if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
+            if (timeSinceLastKey > 100) { // Se foi uma pausa
+                updateLineNumbers();
+            }
+        }
+    });
+    
+    // Observa redimensionamento com debouncing
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            updateLineNumbers();
+            adjustEditorLayout();
+        }, 200);
+    });
+    
+    // Configura detecção de ativação da tab
+    setupTabActivation();
+    
+    // Inicialização inicial
+    setTimeout(() => {
+        _updateLineNumbers(); // Chamada direta (sem debouncing)
+        adjustEditorLayout(); // Com debouncing
+        
+        updateJSONStatus('✅ Editor JSON pronto. Digite ou cole seu JSON.', 'success');
+        
+        setTimeout(() => {
+            if (domCache.jsonContainer) {
+                const hasScroll = domCache.jsonContainer.scrollHeight > domCache.jsonContainer.clientHeight;
+                console.log(`✅ Scroll verificado: ${hasScroll ? 'ATIVO' : 'INATIVO'}`);
+            }
+        }, 500);
+        
+    }, 100);
+    
+    isInitialized = true;
+    console.log('✅ Editor JSON inicializado com sucesso');
+}
+
+// ==================== FUNÇÕES RESTANTES (OTIMIZADAS) ====================
+
+/**
+ * Configura detecção de ativação da tab
+ */
+function setupTabActivation() {
+    let tabClickTimeout;
+    
+    document.addEventListener('click', function(event) {
+        const target = event.target;
+        const isTab = target.classList.contains('tab');
+        const isTabChild = target.closest('.tab');
+        const tabElement = isTab ? target : (isTabChild ? isTabChild : null);
+        
+        if (tabElement) {
+            const tabText = tabElement.textContent.toLowerCase();
+            if (tabText.includes('json') || tabText.includes('raw') || tabText.includes('bruto')) {
+                if (tabClickTimeout) clearTimeout(tabClickTimeout);
+                tabClickTimeout = setTimeout(() => {
+                    forceLayoutUpdate();
+                }, 100);
+            }
+        }
+    });
+}
+
+/**
+ * Função para forçar atualização de layout
+ */
+export function forceLayoutUpdate() {
+    console.log('🔧 Forçando atualização de layout...');
+    _updateLineNumbers();
+    _adjustEditorLayout();
+}
+
+/**
+ * Atualiza o estado do botão "Aplicar JSON"
+ */
+export function updateApplyButtonState() {
+    if (!domCache.applyButton) {
+        initDomCache();
+        if (!domCache.applyButton) {
+            console.warn('⚠️ Botão applyJsonBtn não encontrado');
+            return;
+        }
+    }
+    
+    if (window.hasPendingChanges) {
+        domCache.applyButton.disabled = false;
+        domCache.applyButton.classList.remove('disabled');
+        domCache.applyButton.innerHTML = '<i class="icon-check"></i> Aplicar JSON';
+        domCache.applyButton.title = 'Aplicar alterações do JSON';
+    } else {
+        domCache.applyButton.disabled = true;
+        domCache.applyButton.classList.add('disabled');
+        domCache.applyButton.innerHTML = '<i class="icon-check"></i> Nada para aplicar';
+        domCache.applyButton.title = 'Nenhuma alteração pendente';
+    }
+}
+
+/**
+ * Atualiza a mensagem de status
+ */
+export function updateJSONStatus(message, type = 'info') {
+    if (!domCache.status) {
+        initDomCache();
+        if (!domCache.status) return;
+    }
+    
+    domCache.status.textContent = message;
+    domCache.status.className = 'json-status';
+    domCache.status.classList.add(type);
+}
+
+// ==================== FUNÇÕES DE FORMATAR/VALIDAR ====================
+
+/**
+ * Formata o JSON no editor
+ */
+export function formatJSON() {
+    if (!domCache.editor) return;
+    
+    try {
+        const parsed = JSON.parse(domCache.editor.value);
+        domCache.editor.value = JSON.stringify(parsed, null, 2);
+        
+        forceLayoutUpdate();
+        highlightLine(-1);
+        updateJSONStatus('✅ JSON formatado com sucesso!', 'success');
+        
+        window.hasPendingChanges = true;
+        updateApplyButtonState();
+        
+    } catch (error) {
+        const errorLine = findErrorLine(domCache.editor.value, error);
+        if (errorLine > 0) {
+            highlightLine(errorLine, 'error');
+        }
+        updateJSONStatus(`❌ Erro de formatação: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Valida o JSON no editor
+ */
+export function validateJSON() {
+    if (!domCache.editor) return false;
+    
+    try {
+        const parsed = JSON.parse(domCache.editor.value);
+        const validation = validateJSONStructure(parsed);
+        
+        if (!validation.valid) {
+            throw new Error(validation.errors.join('; '));
+        }
+        
+        highlightLine(-1);
+        updateJSONStatus('✅ JSON válido e com estrutura correta', 'success');
+        return true;
+        
+    } catch (error) {
+        const errorLine = findErrorLine(domCache.editor.value, error);
+        if (errorLine > 0) {
+            highlightLine(errorLine, 'error');
+        }
+        updateJSONStatus(`❌ JSON inválido: ${error.message}`, 'error');
+        return false;
+    }
+}
+
+/**
+ * Encontra a linha de um erro no JSON (mantida igual)
  */
 export function findErrorLine(jsonString, error) {
     if (!error || !error.message || !jsonString) return -1;
     
     try {
-        // Padrões comuns em mensagens de erro
         const patterns = [
             /position (\d+)/,
             /at line (\d+)/,
@@ -207,7 +472,6 @@ export function findErrorLine(jsonString, error) {
             }
         }
         
-        // Fallback: conta linhas até a posição
         if (error.message.includes('position')) {
             const positionMatch = error.message.match(/position (\d+)/);
             if (positionMatch) {
@@ -223,191 +487,8 @@ export function findErrorLine(jsonString, error) {
     return -1;
 }
 
-// ==================== INICIALIZAÇÃO DO EDITOR ====================
-
 /**
- * Inicializa o editor JSON
- */
-export function initJSONEditor() {
-    console.log('🚀 Inicializando editor JSON...');
-    
-    if (isInitialized) {
-        console.log('⚠️ Editor já inicializado');
-        return;
-    }
-    
-    const editor = document.getElementById('jsonEditor');
-    if (!editor) {
-        console.error('❌ Elemento #jsonEditor não encontrado!');
-        return;
-    }
-    
-    // Configurações iniciais
-    editor.spellcheck = false;
-    editor.autocomplete = 'off';
-    editor.autocorrect = 'off';
-    editor.autocapitalize = 'off';
-    
-    // Carrega dados iniciais
-    const systemData = window.systemData || {};
-    let initialContent = '';
-    
-    if (Object.keys(systemData).length > 0) {
-        // Formata os dados existentes
-        try {
-            initialContent = JSON.stringify(systemData, null, 2);
-            console.log('📁 Dados do sistema carregados');
-        } catch (error) {
-            console.warn('⚠️ Erro ao formatar dados iniciais:', error);
-            initialContent = '{\n  "constants": {},\n  "machines": [],\n  "materials": {},\n  "empresas": []\n}';
-        }
-    } else {
-        // Conteúdo inicial padrão
-        initialContent = '{\n  "constants": {},\n  "machines": [],\n  "materials": {},\n  "empresas": []\n}';
-        console.log('📄 Usando template inicial');
-    }
-    
-    editor.value = initialContent;
-    
-    // Configura eventos
-    editor.addEventListener('input', function() {
-        updateLineNumbers();
-        adjustEditorLayout();
-        
-        // Marca que há mudanças pendentes
-        window.hasPendingChanges = true;
-        updateApplyButtonState();
-    });
-    
-    // Observa redimensionamento da janela
-    window.addEventListener('resize', function() {
-        setTimeout(() => {
-            updateLineNumbers();
-            adjustEditorLayout();
-        }, 100);
-    });
-    
-    // Configura detecção de ativação da tab
-    setupTabActivation();
-    
-    // Inicialização inicial
-    setTimeout(() => {
-        updateLineNumbers();
-        adjustEditorLayout();
-        updateJSONStatus('✅ Editor JSON pronto. Digite ou cole seu JSON.', 'success');
-        
-        // Verificação final do scroll
-        setTimeout(() => {
-            const jsonContainer = document.querySelector('.json-container'); // Mudado aqui
-            if (jsonContainer) {
-                const hasScroll = jsonContainer.scrollHeight > jsonContainer.clientHeight;
-                console.log(`✅ Scroll verificado: ${hasScroll ? 'ATIVO' : 'INATIVO'}`);
-            }
-        }, 500);
-        
-    }, 100);
-    
-    isInitialized = true;
-    console.log('✅ Editor JSON inicializado com sucesso');
-}
-
-/**
- * Configura detecção de ativação da tab
- */
-function setupTabActivation() {
-    // Detecta quando qualquer tab é clicada
-    document.addEventListener('click', function(event) {
-        const target = event.target;
-        const isTab = target.classList.contains('tab');
-        const isTabChild = target.closest('.tab');
-        const tabElement = isTab ? target : (isTabChild ? isTabChild : null);
-        
-        if (tabElement) {
-            const tabText = tabElement.textContent.toLowerCase();
-            if (tabText.includes('json') || tabText.includes('raw') || tabText.includes('bruto')) {
-                console.log('🎯 Tab JSON ativada, ajustando layout...');
-                
-                // Pequeno delay para garantir renderização
-                setTimeout(() => {
-                    updateLineNumbers();
-                    adjustEditorLayout();
-                }, 200);
-            }
-        }
-    });
-}
-
-// ==================== FUNÇÕES DE FORMATAR/VALIDAR ====================
-
-/**
- * Formata o JSON no editor
- */
-export function formatJSON() {
-    const editor = document.getElementById('jsonEditor');
-    if (!editor) return;
-    
-    try {
-        const parsed = JSON.parse(editor.value);
-        editor.value = JSON.stringify(parsed, null, 2);
-        
-        updateLineNumbers();
-        adjustEditorLayout();
-        highlightLine(-1); // Remove highlight
-        updateJSONStatus('✅ JSON formatado com sucesso!', 'success');
-        
-        // Marca que há mudanças
-        window.hasPendingChanges = true;
-        updateApplyButtonState();
-        
-    } catch (error) {
-        const errorLine = findErrorLine(editor.value, error);
-        
-        if (errorLine > 0) {
-            highlightLine(errorLine, 'error');
-        }
-        
-        updateJSONStatus(`❌ Erro de formatação: ${error.message}`, 'error');
-    }
-}
-
-/**
- * Valida o JSON no editor
- * @returns {boolean} true se válido, false se inválido
- */
-export function validateJSON() {
-    const editor = document.getElementById('jsonEditor');
-    if (!editor) return false;
-    
-    try {
-        const parsed = JSON.parse(editor.value);
-        
-        // Valida estrutura básica
-        const validation = validateJSONStructure(parsed);
-        
-        if (!validation.valid) {
-            throw new Error(validation.errors.join('; '));
-        }
-        
-        highlightLine(-1); // Remove highlight
-        updateJSONStatus('✅ JSON válido e com estrutura correta', 'success');
-        return true;
-        
-    } catch (error) {
-        const errorLine = findErrorLine(editor.value, error);
-        
-        if (errorLine > 0) {
-            highlightLine(errorLine, 'error');
-        }
-        
-        updateJSONStatus(`❌ JSON inválido: ${error.message}`, 'error');
-        return false;
-    }
-}
-
-/**
- * Valida a estrutura do JSON
- * @param {object} data - Dados JSON
- * @returns {object} Resultado da validação
+ * Valida a estrutura do JSON (mantida igual)
  */
 export function validateJSONStructure(data) {
     const errors = [];
@@ -434,50 +515,10 @@ export function validateJSONStructure(data) {
     };
 }
 
-// ==================== FUNÇÕES AUXILIARES ====================
-
-/**
- * Atualiza a mensagem de status
- * @param {string} message - Mensagem a mostrar
- * @param {string} type - Tipo ('success', 'error', 'warning', 'info')
- */
-export function updateJSONStatus(message, type = 'info') {
-    const status = document.getElementById('jsonStatus');
-    if (!status) return;
-    
-    status.textContent = message;
-    status.className = 'json-status';
-    status.classList.add(type);
-}
-
-/**
- * Atualiza o estado do botão "Aplicar JSON"
- */
-export function updateApplyButtonState() {
-    const applyButton = document.getElementById('applyJsonBtn');
-    if (!applyButton) {
-        console.warn('⚠️ Botão applyJsonBtn não encontrado');
-        return;
-    }
-    
-    if (window.hasPendingChanges) {
-        applyButton.disabled = false;
-        applyButton.classList.remove('disabled');
-        applyButton.innerHTML = '<i class="icon-check"></i> Aplicar JSON';
-        applyButton.title = 'Aplicar alterações do JSON';
-        console.log('🔄 Botão "Aplicar JSON" ativado');
-    } else {
-        applyButton.disabled = true;
-        applyButton.classList.add('disabled');
-        applyButton.innerHTML = '<i class="icon-check"></i> Nada para aplicar';
-        applyButton.title = 'Nenhuma alteração pendente';
-    }
-}
+// ==================== FUNÇÕES RESTANTES (MANTIDAS) ====================
 
 /**
  * Converte arquivo para base64
- * @param {File} file - Arquivo a converter
- * @returns {Promise<string>} Promise com base64
  */
 export function fileToBase64(file) {
     return new Promise((resolve, reject) => {
@@ -499,30 +540,16 @@ export function resetJSONEditor() {
     
     isInitialized = false;
     
-    const editor = document.getElementById('jsonEditor');
-    if (editor) {
-        editor.value = '{\n  "constants": {},\n  "machines": [],\n  "materials": {},\n  "empresas": []\n}';
+    if (domCache.editor) {
+        domCache.editor.value = '{\n  "constants": {},\n  "machines": [],\n  "materials": {},\n  "empresas": []\n}';
     }
     
-    const lineNumbers = document.getElementById('lineNumbers');
-    if (lineNumbers) {
-        lineNumbers.innerHTML = '';
+    if (domCache.lineNumbers) {
+        domCache.lineNumbers.innerHTML = '';
     }
     
-    // Re-inicializa após um breve delay
     setTimeout(initJSONEditor, 100);
 }
-
-/**
- * Função para forçar atualização de layout (útil para debugging)
- */
-export function forceLayoutUpdate() {
-    console.log('🔧 Forçando atualização de layout...');
-    updateLineNumbers();
-    adjustEditorLayout();
-}
-
-// ==================== FUNÇÕES DE IMPORT/EXPORT ====================
 
 /**
  * Exporta dados para JSON
@@ -568,24 +595,18 @@ export function importFromJSON() {
         reader.onload = function(e) {
             try {
                 const importedData = JSON.parse(e.target.result);
-                
-                // Validar estrutura básica
                 const validation = validateJSONStructure(importedData);
                 
                 if (!validation.valid) {
                     throw new Error(validation.errors.join('; '));
                 }
                 
-                // Armazenar em staging
                 window.stagingData = importedData;
                 window.hasPendingChanges = true;
                 
-                // Exibir no editor JSON Bruto
-                const editor = document.getElementById('jsonEditor');
-                if (editor) {
-                    editor.value = JSON.stringify(importedData, null, 2);
-                    updateLineNumbers();
-                    adjustEditorLayout();
+                if (domCache.editor) {
+                    domCache.editor.value = JSON.stringify(importedData, null, 2);
+                    forceLayoutUpdate();
                 }
                 
                 updateJSONStatus('JSON carregado na área de staging. Clique em "Aplicar JSON" para confirmar.', 'warning');
@@ -614,20 +635,17 @@ export function importFromJSON() {
     }, 100);
 }
 
-// ==================== FUNÇÃO APLICAR JSON ====================
-
 /**
  * Aplica o JSON do editor ao sistema
  */
 export async function applyJSON() {
-    const editor = document.getElementById('jsonEditor');
-    if (!editor) {
+    if (!domCache.editor) {
         updateJSONStatus('❌ Editor JSON não encontrado', 'error');
         return;
     }
     
     try {
-        const proposedData = JSON.parse(editor.value);
+        const proposedData = JSON.parse(domCache.editor.value);
         const validation = validateJSONStructure(proposedData);
         
         if (!validation.valid) {
@@ -635,7 +653,6 @@ export async function applyJSON() {
             return;
         }
         
-        // Confirmação (simplificada)
         const confirmed = confirm('Deseja aplicar as alterações do JSON ao sistema?');
         
         if (!confirmed) {
@@ -643,21 +660,17 @@ export async function applyJSON() {
             return;
         }
         
-        // Aplica os dados
         window.systemData = proposedData;
         window.stagingData = null;
         window.hasPendingChanges = false;
         
-        // Dispara evento de dados aplicados
         window.dispatchEvent(new CustomEvent('dataApplied', { 
             detail: { data: proposedData } 
         }));
         
-        // Atualiza UI
         updateApplyButtonState();
         updateJSONStatus('✅ JSON aplicado ao sistema com sucesso!', 'success');
         
-        // Atualiza outras tabs se as funções existirem
         if (window.loadConstants) window.loadConstants();
         if (window.loadMachines) window.loadMachines();
         if (window.loadMaterials) window.loadMaterials();
@@ -669,51 +682,32 @@ export async function applyJSON() {
     }
 }
 
-// ==================== FUNÇÕES DE DEBUG ====================
+// ==================== DEBUG FUNCTIONS ====================
 
-/**
- * Debug do scroll (chamar no console)
- */
 window.debugScroll = function() {
     console.log('=== DEBUG SCROLL ===');
     
-    const jsonContainer = document.querySelector('.json-container'); // Mudado aqui
-    const editor = document.getElementById('jsonEditor');
-    const lineNumbers = document.getElementById('lineNumbers');
+    initDomCache();
     
-    if (!jsonContainer || !editor || !lineNumbers) {
+    if (!domCache.jsonContainer || !domCache.editor || !domCache.lineNumbers) {
         console.error('❌ Elementos não encontrados');
         return;
     }
     
-    console.log(`📊 jsonContainer: ${jsonContainer.clientWidth}x${jsonContainer.clientHeight}`);
-    console.log(`📊 jsonContainer scroll: ${jsonContainer.scrollWidth}x${jsonContainer.scrollHeight}`);
-    console.log(`📊 Editor: ${editor.clientWidth}x${editor.clientHeight}`);
-    console.log(`📊 Editor scroll: ${editor.scrollWidth}x${editor.scrollHeight}`);
-    console.log(`📊 LineNumbers: ${lineNumbers.clientWidth}x${lineNumbers.clientHeight}`);
+    console.log(`📊 jsonContainer: ${domCache.jsonContainer.clientWidth}x${domCache.jsonContainer.clientHeight}`);
+    console.log(`📊 jsonContainer scroll: ${domCache.jsonContainer.scrollWidth}x${domCache.jsonContainer.scrollHeight}`);
+    console.log(`📊 Editor: ${domCache.editor.clientWidth}x${domCache.editor.clientHeight}`);
+    console.log(`📊 LineNumbers: ${domCache.lineNumbers.clientWidth}x${domCache.lineNumbers.clientHeight}`);
     
-    const hasVerticalScroll = jsonContainer.scrollHeight > jsonContainer.clientHeight;
-    const hasHorizontalScroll = jsonContainer.scrollWidth > jsonContainer.clientWidth;
+    const hasVerticalScroll = domCache.jsonContainer.scrollHeight > domCache.jsonContainer.clientHeight;
+    const hasHorizontalScroll = domCache.jsonContainer.scrollWidth > domCache.jsonContainer.clientWidth;
     
     console.log(`📊 Scroll vertical: ${hasVerticalScroll ? '✅ ATIVO' : '❌ INATIVO'}`);
     console.log(`📊 Scroll horizontal: ${hasHorizontalScroll ? '✅ ATIVO' : '❌ INATIVO'}`);
-    
-    if (!hasVerticalScroll) {
-        console.log('💡 Dica: Adicione mais linhas para ativar scroll vertical');
-    }
-    
-    if (!hasHorizontalScroll) {
-        console.log('💡 Dica: Adicione uma linha longa para ativar scroll horizontal');
-        console.log('💡 Exemplo: "chave_muito_longa": "valor_ainda_mais_longo_que_ultrapassa_a_largura"');
-    }
 };
 
-/**
- * Testa scroll horizontal automaticamente
- */
 window.testHorizontalScroll = function() {
-    const editor = document.getElementById('jsonEditor');
-    if (!editor) return;
+    if (!domCache.editor) return;
     
     const testContent = `{
   "chave_normal": "valor",
@@ -721,15 +715,13 @@ window.testHorizontalScroll = function() {
   "outra_chave": "valor"
 }`;
     
-    editor.value = testContent;
-    updateLineNumbers();
-    adjustEditorLayout();
+    domCache.editor.value = testContent;
+    forceLayoutUpdate();
     console.log('✅ Teste de scroll horizontal aplicado!');
 };
 
 // ==================== EXPORTAÇÃO GLOBAL ====================
 
-// Torna as funções disponíveis globalmente
 window.updateLineNumbers = updateLineNumbers;
 window.highlightLine = highlightLine;
 window.formatJSON = formatJSON;
@@ -742,20 +734,17 @@ window.importFromJSON = importFromJSON;
 window.applyJSON = applyJSON;
 window.initJSONEditor = initJSONEditor;
 
-// Inicialização automática quando o DOM estiver pronto
+// Inicialização automática
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('📄 DOM carregado, inicializando editor...');
         setTimeout(initJSONEditor, 300);
     });
 } else {
-    console.log('📄 DOM já carregado, inicializando editor...');
     setTimeout(initJSONEditor, 300);
 }
 
-// Inicializa quando os dados do sistema são carregados
+// Event listeners otimizados
 window.addEventListener('dataLoaded', function() {
-    console.log('📂 Dados carregados, atualizando editor...');
     setTimeout(() => {
         resetJSONEditor();
         updateApplyButtonState();
@@ -763,7 +752,6 @@ window.addEventListener('dataLoaded', function() {
 });
 
 window.addEventListener('dataImported', function() {
-    console.log('📥 Dados importados, atualizando editor...');
     setTimeout(() => {
         resetJSONEditor();
         updateApplyButtonState();
@@ -771,7 +759,6 @@ window.addEventListener('dataImported', function() {
 });
 
 window.addEventListener('dataApplied', function() {
-    console.log('✅ Dados aplicados, atualizando editor...');
     setTimeout(() => {
         resetJSONEditor();
         updateApplyButtonState();
