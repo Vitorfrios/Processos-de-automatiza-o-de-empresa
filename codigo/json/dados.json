@@ -105,6 +105,7 @@
       "description": "Margem de segurança aplicada à capacidade final"
     }
   },
+  
   "machines": [
     {
       "type": "Wall Mounted",
@@ -1919,6 +1920,7 @@
       ]
     }
   ],
+
   "materials": {
     "COBRE": {
       "value": 99,
@@ -1966,6 +1968,7 @@
       "description": "sdfsdfsdfMaterial genérico cadastrado para uso futuro"
     }
   },
+
   "empresas": [
     {
       "ACT": "ACTEMIUM"
