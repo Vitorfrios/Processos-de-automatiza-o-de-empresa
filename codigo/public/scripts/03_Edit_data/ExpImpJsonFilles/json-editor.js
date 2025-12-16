@@ -1,11 +1,10 @@
-/* ==== INÍCIO: config/ExpImpJsonFilles/json-editor.js ==== */
-// json-editor.js - CÓDIGO COMPLETO E FUNCIONAL - VERSÃO CORRIGIDA
+/* ==== json-editor.js ==== */
+// json-editor.js - VERSÃO COMPLETA COM SCROLL FUNCIONAL
 
 // ==================== ESTADO GLOBAL ====================
 window.stagingData = null;
 window.hasPendingChanges = false;
 let isInitialized = false;
-let resizeObserver = null;
 
 // ==================== FUNÇÕES PRINCIPAIS ====================
 
@@ -13,23 +12,26 @@ let resizeObserver = null;
  * Atualiza os números das linhas DINAMICAMENTE
  */
 export function updateLineNumbers() {
-    console.log('🔄 Atualizando números das linhas...');
-    
     const editor = document.getElementById('jsonEditor');
     const lineNumbers = document.getElementById('lineNumbers');
+    const scrollWrapper = document.querySelector('.json-scroll-wrapper');
     
-    if (!editor || !lineNumbers) {
-        console.warn('❌ Elementos do editor não encontrados');
+    if (!editor || !lineNumbers || !scrollWrapper) {
+        console.warn('Elementos do editor não encontrados');
         return;
     }
     
     try {
         // Conta as linhas do texto
         const text = editor.value;
-        const lines = text.split('\n');
-        const totalLines = lines.length;
+        let lines = text.split('\n');
         
-        console.log(`📊 Total de linhas: ${totalLines}`);
+        // Se o texto terminar com quebra de linha, adiciona linha extra
+        if (text.endsWith('\n')) {
+            lines.push('');
+        }
+        
+        const totalLines = Math.max(lines.length, 1);
         
         // Gera os números das linhas
         let numbersHTML = '';
@@ -40,74 +42,102 @@ export function updateLineNumbers() {
         // Atualiza o HTML
         lineNumbers.innerHTML = numbersHTML;
         
-        // Ajusta as alturas
-        adjustEditorHeights();
+        // Calcula altura baseada no conteúdo
+        const lineHeight = 20;
+        const padding = 32;
+        const minHeight = 200; // Altura mínima
         
-        // Sincroniza o scroll se necessário
-        syncScrollIfNeeded();
+        // Altura baseada no conteúdo
+        const contentHeight = (totalLines * lineHeight) + padding;
+        const finalHeight = Math.max(contentHeight, minHeight);
+        
+        // Ajusta alturas
+        editor.style.height = finalHeight + 'px';
+        lineNumbers.style.height = finalHeight + 'px';
+        
+        // Garante que o scroll wrapper tenha conteúdo suficiente
+        setTimeout(() => {
+            const containerHeight = document.querySelector('.json-container').clientHeight;
+            
+            // Se o conteúdo for menor que o container, ajusta para preencher
+            if (finalHeight < containerHeight) {
+                editor.style.height = containerHeight + 'px';
+                lineNumbers.style.height = containerHeight + 'px';
+            }
+            
+            // Debug: verifica status do scroll
+            const shouldScrollVertically = finalHeight > scrollWrapper.clientHeight;
+            console.log(`📏 Altura: ${finalHeight}px, Container: ${scrollWrapper.clientHeight}px`);
+            console.log(`📊 Scroll vertical necessário: ${shouldScrollVertically}`);
+            
+        }, 0);
         
     } catch (error) {
-        console.error('❌ Erro ao atualizar números das linhas:', error);
+        console.error('Erro ao atualizar números das linhas:', error);
     }
 }
 
 /**
- * Ajusta as alturas do editor e dos números
+ * Ajusta o layout do editor (chamado em eventos)
  */
-function adjustEditorHeights() {
+export function adjustEditorLayout() {
+    updateLineNumbers();
+    
     const editor = document.getElementById('jsonEditor');
-    const lineNumbers = document.getElementById('lineNumbers');
-    const editorWrapper = document.querySelector('.json-editor-wrapper');
+    const scrollWrapper = document.querySelector('.json-scroll-wrapper');
     
-    if (!editor || !lineNumbers || !editorWrapper) return;
+    if (!editor || !scrollWrapper) return;
     
-    try {
-        // Calcula a altura necessária baseada no conteúdo
-        const contentHeight = editor.scrollHeight;
-        
-        // Define alturas mínimas
-        const minHeight = 200;
-        const calculatedHeight = Math.max(contentHeight, minHeight);
-        
-        // Aplica as alturas
-        editor.style.height = calculatedHeight + 'px';
-        lineNumbers.style.height = calculatedHeight + 'px';
-        editorWrapper.style.minHeight = calculatedHeight + 'px';
-        
-        console.log(`📏 Altura ajustada: ${calculatedHeight}px`);
-        
-    } catch (error) {
-        console.error('❌ Erro ao ajustar alturas:', error);
+    // Verifica se há necessidade de scroll horizontal
+    const lines = editor.value.split('\n');
+    const editorWidth = editor.clientWidth;
+    
+    // Cria elemento temporário para medir largura do texto
+    const tempSpan = document.createElement('span');
+    tempSpan.style.fontFamily = "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace";
+    tempSpan.style.fontSize = '13px';
+    tempSpan.style.visibility = 'hidden';
+    tempSpan.style.position = 'absolute';
+    tempSpan.style.whiteSpace = 'pre';
+    tempSpan.style.pointerEvents = 'none';
+    document.body.appendChild(tempSpan);
+    
+    let maxLineWidth = 0;
+    for (const line of lines) {
+        tempSpan.textContent = line;
+        const width = tempSpan.offsetWidth;
+        if (width > maxLineWidth) maxLineWidth = width;
     }
-}
-
-/**
- * Sincroniza o scroll se necessário
- */
-function syncScrollIfNeeded() {
-    const editor = document.getElementById('jsonEditor');
-    const lineNumbersWrapper = document.querySelector('.line-numbers-wrapper');
     
-    if (!editor || !lineNumbersWrapper) return;
+    document.body.removeChild(tempSpan);
     
-    // Remove event listeners anteriores para evitar duplicação
-    editor.removeEventListener('scroll', handleEditorScroll);
+    // Adiciona padding
+    const totalWidth = maxLineWidth + 32; // 16px padding-left + 16px padding-right
     
-    // Adiciona novo listener
-    editor.addEventListener('scroll', handleEditorScroll);
-}
-
-/**
- * Manipula o scroll do editor para sincronizar
- */
-function handleEditorScroll() {
-    const editor = document.getElementById('jsonEditor');
-    const lineNumbersWrapper = document.querySelector('.line-numbers-wrapper');
-    
-    if (!editor || !lineNumbersWrapper) return;
-    
-    // Sincroniza a posição vertical do scroll
-    lineNumbersWrapper.scrollTop = editor.scrollTop;
+    // Se alguma linha for mais larga que o editor, ajusta
+    if (totalWidth > editorWidth) {
+        console.log(`📏 Linha larga detectada: ${totalWidth}px > ${editorWidth}px`);
+        
+        // Força o wrapper a mostrar scroll horizontal
+        if (scrollWrapper.scrollWidth <= scrollWrapper.clientWidth) {
+            // Cria um div fantasma para forçar largura
+            const phantomDiv = document.createElement('div');
+            phantomDiv.style.width = (totalWidth + 100) + 'px';
+            phantomDiv.style.height = '1px';
+            phantomDiv.style.position = 'absolute';
+            phantomDiv.style.visibility = 'hidden';
+            
+            const editorWrapper = document.querySelector('.json-editor-wrapper');
+            if (editorWrapper) {
+                editorWrapper.appendChild(phantomDiv);
+                setTimeout(() => {
+                    if (phantomDiv.parentNode) {
+                        phantomDiv.parentNode.removeChild(phantomDiv);
+                    }
+                }, 100);
+            }
+        }
+    }
 }
 
 /**
@@ -140,13 +170,13 @@ export function highlightLine(lineNumber, type = 'error') {
  * @param {number} lineNumber - Número da linha
  */
 function scrollToLine(lineNumber) {
-    const editor = document.getElementById('jsonEditor');
-    if (!editor) return;
+    const scrollWrapper = document.querySelector('.json-scroll-wrapper');
+    if (!scrollWrapper) return;
     
-    const lineHeight = 20; // Altura de cada linha em pixels
+    const lineHeight = 20;
     const scrollPosition = (lineNumber - 1) * lineHeight;
     
-    editor.scrollTo({
+    scrollWrapper.scrollTo({
         top: Math.max(0, scrollPosition - 100),
         behavior: 'smooth'
     });
@@ -242,26 +272,39 @@ export function initJSONEditor() {
     // Configura eventos
     editor.addEventListener('input', function() {
         updateLineNumbers();
+        adjustEditorLayout();
         
         // Marca que há mudanças pendentes
         window.hasPendingChanges = true;
         updateApplyButtonState();
     });
     
-    editor.addEventListener('scroll', handleEditorScroll);
+    // Observa redimensionamento da janela
+    window.addEventListener('resize', function() {
+        setTimeout(() => {
+            updateLineNumbers();
+            adjustEditorLayout();
+        }, 100);
+    });
     
-    // Observa redimensionamento
-    setupResizeObserver();
+    // Configura detecção de ativação da tab
+    setupTabActivation();
     
     // Inicialização inicial
     setTimeout(() => {
         updateLineNumbers();
+        adjustEditorLayout();
         updateJSONStatus('✅ Editor JSON pronto. Digite ou cole seu JSON.', 'success');
         
-        // Força um redimensionamento após tudo carregar
+        // Verificação final do scroll
         setTimeout(() => {
-            adjustEditorHeights();
-        }, 200);
+            const scrollWrapper = document.querySelector('.json-scroll-wrapper');
+            if (scrollWrapper) {
+                const hasScroll = scrollWrapper.scrollHeight > scrollWrapper.clientHeight;
+                console.log(`✅ Scroll verificado: ${hasScroll ? 'ATIVO' : 'INATIVO'}`);
+            }
+        }, 500);
+        
     }, 100);
     
     isInitialized = true;
@@ -269,30 +312,29 @@ export function initJSONEditor() {
 }
 
 /**
- * Configura o observer para redimensionamento
+ * Configura detecção de ativação da tab
  */
-function setupResizeObserver() {
-    const editor = document.getElementById('jsonEditor');
-    const jsonContainer = document.querySelector('.json-container');
-    
-    if (!editor || !jsonContainer) return;
-    
-    // Remove observer anterior se existir
-    if (resizeObserver) {
-        resizeObserver.disconnect();
-    }
-    
-    // Cria novo observer
-    resizeObserver = new ResizeObserver(() => {
-        requestAnimationFrame(() => {
-            adjustEditorHeights();
-            updateLineNumbers();
-        });
+function setupTabActivation() {
+    // Detecta quando qualquer tab é clicada
+    document.addEventListener('click', function(event) {
+        const target = event.target;
+        const isTab = target.classList.contains('tab');
+        const isTabChild = target.closest('.tab');
+        const tabElement = isTab ? target : (isTabChild ? isTabChild : null);
+        
+        if (tabElement) {
+            const tabText = tabElement.textContent.toLowerCase();
+            if (tabText.includes('json') || tabText.includes('raw') || tabText.includes('bruto')) {
+                console.log('🎯 Tab JSON ativada, ajustando layout...');
+                
+                // Pequeno delay para garantir renderização
+                setTimeout(() => {
+                    updateLineNumbers();
+                    adjustEditorLayout();
+                }, 200);
+            }
+        }
     });
-    
-    // Observa o container e o editor
-    resizeObserver.observe(jsonContainer);
-    resizeObserver.observe(editor);
 }
 
 // ==================== FUNÇÕES DE FORMATAR/VALIDAR ====================
@@ -309,6 +351,7 @@ export function formatJSON() {
         editor.value = JSON.stringify(parsed, null, 2);
         
         updateLineNumbers();
+        adjustEditorLayout();
         highlightLine(-1); // Remove highlight
         updateJSONStatus('✅ JSON formatado com sucesso!', 'success');
         
@@ -466,14 +509,223 @@ export function resetJSONEditor() {
         lineNumbers.innerHTML = '';
     }
     
-    if (resizeObserver) {
-        resizeObserver.disconnect();
-        resizeObserver = null;
-    }
-    
     // Re-inicializa após um breve delay
     setTimeout(initJSONEditor, 100);
 }
+
+/**
+ * Função para forçar atualização de layout (útil para debugging)
+ */
+export function forceLayoutUpdate() {
+    console.log('🔧 Forçando atualização de layout...');
+    updateLineNumbers();
+    adjustEditorLayout();
+}
+
+// ==================== FUNÇÕES DE IMPORT/EXPORT ====================
+
+/**
+ * Exporta dados para JSON
+ */
+export function exportToJSON() {
+    try {
+        const systemData = window.systemData || {};
+        const dataStr = JSON.stringify(systemData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = `sistema_dados_${new Date().toISOString().slice(0,10)}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.style.display = 'none';
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
+        
+        updateJSONStatus('✅ JSON exportado com sucesso!', 'success');
+        
+    } catch (error) {
+        console.error('Erro ao exportar JSON:', error);
+        updateJSONStatus('❌ Erro ao exportar JSON.', 'error');
+    }
+}
+
+/**
+ * Importa dados de JSON
+ */
+export function importFromJSON() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.style.display = 'none';
+    
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                // Validar estrutura básica
+                const validation = validateJSONStructure(importedData);
+                
+                if (!validation.valid) {
+                    throw new Error(validation.errors.join('; '));
+                }
+                
+                // Armazenar em staging
+                window.stagingData = importedData;
+                window.hasPendingChanges = true;
+                
+                // Exibir no editor JSON Bruto
+                const editor = document.getElementById('jsonEditor');
+                if (editor) {
+                    editor.value = JSON.stringify(importedData, null, 2);
+                    updateLineNumbers();
+                    adjustEditorLayout();
+                }
+                
+                updateJSONStatus('JSON carregado na área de staging. Clique em "Aplicar JSON" para confirmar.', 'warning');
+                updateApplyButtonState();
+                
+            } catch (error) {
+                console.error('Erro ao importar JSON:', error);
+                updateJSONStatus(`❌ Erro ao importar JSON: ${error.message}`, 'error');
+            }
+        };
+        
+        reader.onerror = function() {
+            updateJSONStatus('❌ Erro ao ler o arquivo.', 'error');
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    document.body.appendChild(input);
+    input.click();
+    
+    setTimeout(() => {
+        if (document.body.contains(input)) {
+            document.body.removeChild(input);
+        }
+    }, 100);
+}
+
+// ==================== FUNÇÃO APLICAR JSON ====================
+
+/**
+ * Aplica o JSON do editor ao sistema
+ */
+export async function applyJSON() {
+    const editor = document.getElementById('jsonEditor');
+    if (!editor) {
+        updateJSONStatus('❌ Editor JSON não encontrado', 'error');
+        return;
+    }
+    
+    try {
+        const proposedData = JSON.parse(editor.value);
+        const validation = validateJSONStructure(proposedData);
+        
+        if (!validation.valid) {
+            updateJSONStatus('❌ JSON inválido. Corrija os erros antes de aplicar.', 'error');
+            return;
+        }
+        
+        // Confirmação (simplificada)
+        const confirmed = confirm('Deseja aplicar as alterações do JSON ao sistema?');
+        
+        if (!confirmed) {
+            updateJSONStatus('Aplicação cancelada pelo usuário.', 'info');
+            return;
+        }
+        
+        // Aplica os dados
+        window.systemData = proposedData;
+        window.stagingData = null;
+        window.hasPendingChanges = false;
+        
+        // Dispara evento de dados aplicados
+        window.dispatchEvent(new CustomEvent('dataApplied', { 
+            detail: { data: proposedData } 
+        }));
+        
+        // Atualiza UI
+        updateApplyButtonState();
+        updateJSONStatus('✅ JSON aplicado ao sistema com sucesso!', 'success');
+        
+        // Atualiza outras tabs se as funções existirem
+        if (window.loadConstants) window.loadConstants();
+        if (window.loadMachines) window.loadMachines();
+        if (window.loadMaterials) window.loadMaterials();
+        if (window.loadEmpresas) window.loadEmpresas();
+        
+    } catch (error) {
+        console.error('Erro ao aplicar JSON:', error);
+        updateJSONStatus(`❌ Erro ao aplicar JSON: ${error.message}`, 'error');
+    }
+}
+
+// ==================== FUNÇÕES DE DEBUG ====================
+
+/**
+ * Debug do scroll (chamar no console)
+ */
+window.debugScroll = function() {
+    console.log('=== DEBUG SCROLL ===');
+    
+    const scrollWrapper = document.querySelector('.json-scroll-wrapper');
+    const editor = document.getElementById('jsonEditor');
+    const lineNumbers = document.getElementById('lineNumbers');
+    
+    if (!scrollWrapper || !editor || !lineNumbers) {
+        console.error('❌ Elementos não encontrados');
+        return;
+    }
+    
+    console.log(`📊 ScrollWrapper: ${scrollWrapper.clientWidth}x${scrollWrapper.clientHeight}`);
+    console.log(`📊 ScrollWrapper scroll: ${scrollWrapper.scrollWidth}x${scrollWrapper.scrollHeight}`);
+    console.log(`📊 Editor: ${editor.clientWidth}x${editor.clientHeight}`);
+    console.log(`📊 Editor scroll: ${editor.scrollWidth}x${editor.scrollHeight}`);
+    console.log(`📊 LineNumbers: ${lineNumbers.clientWidth}x${lineNumbers.clientHeight}`);
+    
+    const hasVerticalScroll = scrollWrapper.scrollHeight > scrollWrapper.clientHeight;
+    const hasHorizontalScroll = scrollWrapper.scrollWidth > scrollWrapper.clientWidth;
+    
+    console.log(`📊 Scroll vertical: ${hasVerticalScroll ? '✅ ATIVO' : '❌ INATIVO'}`);
+    console.log(`📊 Scroll horizontal: ${hasHorizontalScroll ? '✅ ATIVO' : '❌ INATIVO'}`);
+    
+    if (!hasVerticalScroll) {
+        console.log('💡 Dica: Adicione mais linhas para ativar scroll vertical');
+    }
+    
+    if (!hasHorizontalScroll) {
+        console.log('💡 Dica: Adicione uma linha longa para ativar scroll horizontal');
+        console.log('💡 Exemplo: "chave_muito_longa": "valor_ainda_mais_longo_que_ultrapassa_a_largura"');
+    }
+};
+
+/**
+ * Testa scroll horizontal automaticamente
+ */
+window.testHorizontalScroll = function() {
+    const editor = document.getElementById('jsonEditor');
+    if (!editor) return;
+    
+    const testContent = `{
+  "chave_normal": "valor",
+  "uma_chave_extremamente_longa_que_vai_forcar_o_scroll_horizontal_a_aparecer_quando_voce_digitar_uma_linha_muito_longa": "este_valor_tambem_e_muito_longo_para_garantir_que_o_scroll_horizontal_funcione_corretamente",
+  "outra_chave": "valor"
+}`;
+    
+    editor.value = testContent;
+    updateLineNumbers();
+    adjustEditorLayout();
+    console.log('✅ Teste de scroll horizontal aplicado!');
+};
 
 // ==================== EXPORTAÇÃO GLOBAL ====================
 
@@ -484,6 +736,11 @@ window.formatJSON = formatJSON;
 window.validateJSON = validateJSON;
 window.updateJSONStatus = updateJSONStatus;
 window.resetJSONEditor = resetJSONEditor;
+window.forceLayoutUpdate = forceLayoutUpdate;
+window.exportToJSON = exportToJSON;
+window.importFromJSON = importFromJSON;
+window.applyJSON = applyJSON;
+window.initJSONEditor = initJSONEditor;
 
 // Inicialização automática quando o DOM estiver pronto
 if (document.readyState === 'loading') {
@@ -496,26 +753,7 @@ if (document.readyState === 'loading') {
     setTimeout(initJSONEditor, 300);
 }
 
-// Inicializa quando a tab JSON é ativada
-document.addEventListener('click', function(event) {
-    if (event.target.classList.contains('tab') && 
-        (event.target.textContent.includes('JSON') || 
-         event.target.textContent.includes('Raw') ||
-         event.target.getAttribute('onclick')?.includes('raw'))) {
-        
-        console.log('🔍 Tab JSON ativada, verificando editor...');
-        setTimeout(() => {
-            if (!isInitialized) {
-                initJSONEditor();
-            } else {
-                // Atualiza números das linhas se já inicializado
-                updateLineNumbers();
-            }
-        }, 100);
-    }
-});
-
-// Re-inicializa quando os dados do sistema são carregados
+// Inicializa quando os dados do sistema são carregados
 window.addEventListener('dataLoaded', function() {
     console.log('📂 Dados carregados, atualizando editor...');
     setTimeout(() => {
@@ -540,4 +778,4 @@ window.addEventListener('dataApplied', function() {
     }, 200);
 });
 
-/* ==== FIM: config/ExpImpJsonFilles/json-editor.js ==== */
+/* ==== FIM: json-editor.js ==== */

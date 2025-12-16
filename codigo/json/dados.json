@@ -1856,6 +1856,67 @@
           "value": 300
         }
       ]
+    },
+    {
+      "type": "NOVO_TIPO_3302",
+      "impostos": {
+        "PIS_COFINS": "INCL",
+        "IPI": "ISENTO",
+        "ICMS": "12%",
+        "PRAZO": "45 a 60 dias",
+        "FRETE": "FOB/Cabreúva/SP"
+      },
+      "configuracoes_instalacao": [
+        {
+          "nome": "Nova Configuração"
+        }
+      ],
+      "baseValues": {
+        "NOVA_CAPACIDADE_4796": 0,
+        "NOVA_CAPACIDADE_5832": 0,
+        "NOVA_CAPACIDADE_6390": 0,
+        "NOVA_CAPACIDADE_6565": 0,
+        "NOVA_CAPACIDADE_6720": 0,
+        "NOVA_CAPACIDADE_7018": 0,
+        "NOVA_CAPACIDADE_7179": 0,
+        "NOVA_CAPACIDADE_7335": 0,
+        "NOVA_CAPACIDADE_7521": 0,
+        "NOVA_CAPACIDADE_7674": 0,
+        "NOVA_CAPACIDADE_1181": 0,
+        "NOVA_CAPACIDADE_1349": 0,
+        "NOVA_CAPACIDADE_5432": 0
+      },
+      "options": [
+        {
+          "id": 1,
+          "name": "Nova Opção",
+          "values": {}
+        },
+        {
+          "id": 2,
+          "name": "Nova Opção",
+          "values": {
+            "NOVA_CAPACIDADE_1": 0
+          }
+        }
+      ],
+      "voltages": [
+        {
+          "id": 1,
+          "name": "Nova Tensão",
+          "value": 0
+        },
+        {
+          "id": 2,
+          "name": "Nova Tensão",
+          "value": 0
+        },
+        {
+          "id": 3,
+          "name": "Nova Tensão",
+          "value": 0
+        }
+      ]
     }
   ],
   "materials": {
