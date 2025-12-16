@@ -10,7 +10,6 @@ import time
 import threading
 from pathlib import Path
 
-# from servidor_modules.handlers.empresa_handler import EmpresaHandler  # REMOVA esta linha
 
 
 class RoutesCore:

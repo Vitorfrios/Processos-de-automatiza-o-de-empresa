@@ -1,8 +1,8 @@
 // scripts/03_Edit_data/machines/machines-voltages.js
 // Gerenciamento de tensões
 
-import { systemData, addPendingChange, getCurrentMachineIndex } from '../state.js';
-import { escapeHtml, showConfirmation, showWarning } from '../ui.js';
+import { systemData, addPendingChange, getCurrentMachineIndex } from '../../config/state.js';
+import { escapeHtml, showConfirmation, showWarning } from '../../config/ui.js';
 
 
 

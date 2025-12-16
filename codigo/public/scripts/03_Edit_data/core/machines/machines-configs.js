@@ -1,8 +1,8 @@
 // scripts/03_Edit_data/machines/machines-configs.js
 // Gerenciamento de configurações e valores base
 
-import { systemData, addPendingChange, getCurrentMachineIndex } from '../state.js';
-import { escapeHtml, showConfirmation, showWarning, showError } from '../ui.js';
+import { systemData, addPendingChange, getCurrentMachineIndex } from '../../config/state.js';
+import { escapeHtml, showConfirmation, showWarning, showError } from '../../config/ui.js';
 
 // ===== FUNÇÕES PARA CONFIGURAÇÕES =====
 

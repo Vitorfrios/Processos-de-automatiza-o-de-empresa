@@ -1,8 +1,8 @@
 // scripts/03_Edit_data/constants.js
 // Gerenciamento de constantes
 
-import { systemData, addPendingChange } from './state.js';
-import { escapeHtml, showError, showInfo } from './ui.js';
+import { systemData, addPendingChange } from '../config/state.js';
+import { escapeHtml, showError, showInfo } from '../config/ui.js';
 
 export function loadConstants() {
     const tbody = document.getElementById('constantsTableBody');

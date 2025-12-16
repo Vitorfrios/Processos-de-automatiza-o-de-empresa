@@ -1,8 +1,8 @@
 // scripts/03_Edit_data/machines/machines-core.js
 // Funções principais de carregamento e gerenciamento de máquinas
 
-import { systemData, addPendingChange, getCurrentMachineIndex, setCurrentMachineIndex, clearCurrentMachineIndex } from '../state.js';
-import { escapeHtml, showError, showInfo, showWarning, showSuccess, showConfirmation } from '../ui.js';
+import { systemData, addPendingChange, getCurrentMachineIndex, setCurrentMachineIndex, clearCurrentMachineIndex } from '../../config/state.js';
+import { escapeHtml, showError, showInfo, showWarning, showSuccess, showConfirmation } from '../../config/ui.js';
 
 // Importar funções de renderização
 import {

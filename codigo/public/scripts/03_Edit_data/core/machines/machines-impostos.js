@@ -1,8 +1,8 @@
 // scripts/03_Edit_data/machines/machines-impostos.js
 // Gerenciamento de impostos
 
-import { systemData, addPendingChange, getCurrentMachineIndex } from '../state.js';
-import { escapeHtml, showConfirmation, showWarning } from '../ui.js';
+import { systemData, addPendingChange, getCurrentMachineIndex } from '../../config/state.js';
+import { escapeHtml, showConfirmation, showWarning } from '../../config/ui.js';
 
 export function updateImposto(key, value) {
     const currentIndex = getCurrentMachineIndex();

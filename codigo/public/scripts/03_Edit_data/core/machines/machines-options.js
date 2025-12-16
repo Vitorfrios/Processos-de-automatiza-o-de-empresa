@@ -1,8 +1,8 @@
 // scripts/03_Edit_data/machines/machines-options.js
 // Gerenciamento de opções
 
-import { systemData, addPendingChange, getCurrentMachineIndex } from '../state.js';
-import { escapeHtml, showConfirmation, showWarning, showError } from '../ui.js';
+import { systemData, addPendingChange, getCurrentMachineIndex } from '../../config/state.js';
+import { escapeHtml, showConfirmation, showWarning, showError } from '../../config/ui.js';
 
 export function syncOptionName(index, value) {
     const optionHeader = document.querySelector(`.option-item[data-index="${index}"] .option-header span`);

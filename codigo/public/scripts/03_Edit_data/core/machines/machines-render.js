@@ -1,7 +1,7 @@
 // scripts/03_Edit_data/machines/machines-render.js
 // Funções de renderização HTML para as máquinas
 
-import { escapeHtml } from '../ui.js';
+import { escapeHtml } from '../../config/ui.js';
 
 // ===== FUNÇÕES DE RENDERIZAÇÃO HTML =====
 

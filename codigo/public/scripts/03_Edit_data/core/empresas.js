@@ -1,8 +1,8 @@
 // scripts/03_Edit_data/empresas.js
 // Gerenciamento de empresas
 
-import { systemData, addPendingChange } from './state.js';
-import { escapeHtml, showError, showInfo, showWarning, showConfirmation } from './ui.js';
+import { systemData, addPendingChange } from '../config/state.js';
+import { escapeHtml, showError, showInfo, showWarning, showConfirmation } from '../config/ui.js';
 
 export function loadEmpresas() {
     const tbody = document.getElementById('empresasTableBody');

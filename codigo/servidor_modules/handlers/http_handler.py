@@ -10,6 +10,9 @@ import gzip
 import threading
 import re
 
+from ..PypExelAndJson.simple_converter import converter
+import base64
+
 # IMPORTS
 from servidor_modules.utils.file_utils import FileUtils
 
@@ -76,6 +79,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         # ROTA UNIVERSAL DELETE
         '/api/delete': 'handle_delete_universal',
+        
+        # APIS do json
+        '/api/excel/upload': 'handle_post_excel_upload',
+        '/api/excel/export': 'handle_post_excel_export',
+        '/api/json/validate': 'handle_post_json_validate',
+        '/api/json/normalize': 'handle_post_json_normalize',
+        '/api/system/apply-json': 'handle_post_apply_json',
+        '/api/system/compare': 'handle_post_system_compare',
     }
 
     def __init__(self, *args, **kwargs):
@@ -182,6 +193,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         else:
             # Serve arquivo estático COM HEADERS ANTI-CACHE
             self.serve_static_file_no_cache(path)
+            
     def do_POST(self):
         """POST com todas as rotas necessárias"""
         parsed_path = urlparse(self.path)
@@ -192,8 +204,22 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"📨 POST: {path}")
         
-        # ========== ROTAS PRINCIPAIS - OBRAS ==========
-        if path == '/obras':
+        # ========== NOVAS ROTAS PARA EXCEL/JSON ==========
+        if path == '/api/excel/upload':
+            self.handle_post_excel_upload()
+        elif path == '/api/excel/export':
+            self.handle_post_excel_export()
+        elif path == '/api/json/validate':
+            self.handle_post_json_validate()
+        elif path == '/api/json/normalize':
+            self.handle_post_json_normalize()
+        elif path == '/api/system/apply-json':
+            self.handle_post_system_apply_json()
+        elif path == '/api/system/compare':
+            self.handle_post_system_apply_json()
+        
+        # ========== ROTAS EXISTENTES ==========
+        elif path == '/obras':
             self.route_handler.handle_post_obras(self)
         
         # ========== ROTAS DE SESSÃO ==========
@@ -503,3 +529,364 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "success": False,
                 "error": f"Erro interno: {str(e)}"
             }, status=500)
+            
+            
+            
+    def handle_post_excel_upload(self):
+        """Rota: /api/excel/upload"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            print(f"📤 Recebendo upload de Excel: {data.get('filename', 'desconhecido')}")
+            
+            # Validar
+            if 'file' not in data or 'filename' not in data:
+                return self.send_json_response({
+                    "success": False, 
+                    "error": "Arquivo ou nome não fornecido"
+                }, 400)
+            
+            # Decodificar base64
+            excel_bytes = base64.b64decode(data['file'])
+            
+            # Converter
+            result = converter.excel_to_json(excel_bytes, data['filename'])
+            
+            if result["success"]:
+                print(f"✅ Excel convertido com sucesso: {data['filename']}")
+                self.send_json_response(result, 200)
+            else:
+                print(f"❌ Erro na conversão: {result.get('error', 'desconhecido')}")
+                self.send_json_response({
+                    "success": False, 
+                    "error": result.get("error", "Erro desconhecido")
+                }, 400)
+                
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False, 
+                "error": "JSON inválido"
+            }, 400)
+        except Exception as e:
+            print(f"❌ Erro em handle_post_excel_upload: {e}")
+            self.send_json_response({
+                "success": False, 
+                "error": f"Erro interno: {str(e)}"
+            }, 500)
+
+    def handle_post_excel_export(self):
+        """Rota: /api/excel/export"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            system_data = json.loads(post_data)
+            
+            print(f"📥 Recebendo dados para exportar para Excel")
+            
+            # Converter
+            result = converter.json_to_excel(system_data)
+            
+            if result["success"]:
+                print(f"✅ Excel gerado com sucesso: {result['filename']}")
+                self.send_json_response(result, 200)
+            else:
+                print(f"❌ Erro na geração do Excel: {result.get('error', 'desconhecido')}")
+                self.send_json_response({
+                    "success": False, 
+                    "error": result.get("error", "Erro desconhecido")
+                }, 400)
+                
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False, 
+                "error": "JSON inválido"
+            }, 400)
+        except Exception as e:
+            print(f"❌ Erro em handle_post_excel_export: {e}")
+            self.send_json_response({
+                "success": False, 
+                "error": f"Erro interno: {str(e)}"
+            }, 500)
+
+    def handle_post_system_apply_json(self):
+        """Rota: /api/system/apply-json - Compara JSONs e retorna diferenças"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            current = data.get("current", {})
+            proposed = data.get("proposed", {})
+            
+            print(f"🔍 Comparando JSONs: current={bool(current)}, proposed={bool(proposed)}")
+            
+            # Validação básica
+            for section in ["constants", "machines", "materials", "empresas"]:
+                if section not in proposed:
+                    return self.send_json_response({
+                        "success": False,
+                        "error": f"Seção '{section}' não encontrada no JSON proposto"
+                    }, 400)
+            
+            # Calcular diferenças
+            differences = self._calculate_simple_differences(current, proposed)
+            summary = self._generate_simple_summary(differences)
+            
+            print(f"📊 Comparação concluída: {summary['total_changes']} alterações")
+            
+            self.send_json_response({
+                "success": True,
+                "differences": differences,
+                "summary": summary,
+                "message": "Comparação realizada com sucesso"
+            }, 200)
+            
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False, 
+                "error": "JSON inválido"
+            }, 400)
+        except Exception as e:
+            print(f"❌ Erro em handle_post_system_apply_json: {e}")
+            self.send_json_response({
+                "success": False, 
+                "error": f"Erro interno: {str(e)}"
+            }, 500)
+
+    def handle_post_json_validate(self):
+        """Rota: /api/json/validate - Valida estrutura JSON"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            json_data = json.loads(post_data)
+            
+            print(f"🔍 Validando estrutura JSON")
+            
+            # Validar estrutura básica
+            errors = []
+            
+            if not json_data.get("constants") or not isinstance(json_data["constants"], dict):
+                errors.append("constants deve ser um objeto não vazio")
+            
+            if not json_data.get("machines") or not isinstance(json_data["machines"], list):
+                errors.append("machines deve ser um array não vazio")
+            
+            if not json_data.get("materials") or not isinstance(json_data["materials"], dict):
+                errors.append("materials deve ser um objeto não vazio")
+            
+            if not json_data.get("empresas") or not isinstance(json_data["empresas"], list):
+                errors.append("empresas deve ser um array não vazio")
+            
+            valid = len(errors) == 0
+            
+            print(f"✅ Validação {'bem sucedida' if valid else 'com erros'}")
+            
+            self.send_json_response({
+                "success": True,
+                "valid": valid,
+                "errors": errors if errors else [],
+                "message": "JSON válido" if valid else "JSON inválido"
+            }, 200)
+            
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False, 
+                "error": "JSON inválido"
+            }, 400)
+        except Exception as e:
+            print(f"❌ Erro em handle_post_json_validate: {e}")
+            self.send_json_response({
+                "success": False, 
+                "error": f"Erro interno: {str(e)}"
+            }, 500)
+
+    def handle_post_json_normalize(self):
+        """Rota: /api/json/normalize - Normaliza JSON"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            json_data = json.loads(post_data)
+            
+            print(f"🔄 Normalizando JSON")
+            
+            # Normalização básica
+            normalized = {
+                "constants": {},
+                "machines": [],
+                "materials": {},
+                "empresas": []
+            }
+            
+            # Constants
+            if isinstance(json_data.get("constants"), dict):
+                for key, value in json_data["constants"].items():
+                    if isinstance(value, dict) and "value" in value:
+                        normalized["constants"][key] = value
+                    else:
+                        normalized["constants"][key] = {
+                            "value": value,
+                            "description": ""
+                        }
+            
+            # Machines
+            if isinstance(json_data.get("machines"), list):
+                for machine in json_data["machines"]:
+                    if isinstance(machine, dict):
+                        normalized_machine = {
+                            "type": machine.get("type", ""),
+                            "impostos": machine.get("impostos", {
+                                "PIS_COFINS": "INCL",
+                                "IPI": "ISENTO",
+                                "ICMS": "12%",
+                                "PRAZO": "45 a 60 dias",
+                                "FRETE": "FOB/Cabreúva/SP"
+                            }),
+                            "configuracoes_instalacao": machine.get("configuracoes_instalacao", []),
+                            "baseValues": machine.get("baseValues", {}),
+                            "options": machine.get("options", []),
+                            "voltages": machine.get("voltages", [])
+                        }
+                        normalized["machines"].append(normalized_machine)
+            
+            # Materials
+            if isinstance(json_data.get("materials"), dict):
+                for key, value in json_data["materials"].items():
+                    if isinstance(value, dict) and "value" in value:
+                        normalized["materials"][key] = value
+                    else:
+                        normalized["materials"][key] = {
+                            "value": value,
+                            "unit": "un",
+                            "description": ""
+                        }
+            
+            # Empresas
+            if isinstance(json_data.get("empresas"), list):
+                normalized["empresas"] = json_data["empresas"]
+            
+            print(f"✅ JSON normalizado")
+            
+            self.send_json_response({
+                "success": True,
+                "data": normalized,
+                "message": "JSON normalizado com sucesso"
+            }, 200)
+            
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False, 
+                "error": "JSON inválido"
+            }, 400)
+        except Exception as e:
+            print(f"❌ Erro em handle_post_json_normalize: {e}")
+            self.send_json_response({
+                "success": False, 
+                "error": f"Erro interno: {str(e)}"
+            }, 500)
+
+    def _calculate_simple_differences(self, current, proposed):
+        """Calcula diferenças simples entre JSONs"""
+        diffs = {
+            "constants": {"added": [], "modified": [], "removed": []},
+            "machines": {"added": [], "modified": [], "removed": []},
+            "materials": {"added": [], "modified": [], "removed": []},
+            "empresas": {"added": [], "modified": [], "removed": []}
+        }
+        
+        # Constants
+        current_const = current.get("constants", {})
+        proposed_const = proposed.get("constants", {})
+        
+        for key in proposed_const:
+            if key not in current_const:
+                diffs["constants"]["added"].append(key)
+            elif json.dumps(proposed_const[key]) != json.dumps(current_const[key]):
+                diffs["constants"]["modified"].append(key)
+        
+        for key in current_const:
+            if key not in proposed_const:
+                diffs["constants"]["removed"].append(key)
+        
+        # Machines (por type)
+        current_machines = {m.get("type", ""): m for m in current.get("machines", [])}
+        proposed_machines = {m.get("type", ""): m for m in proposed.get("machines", [])}
+        
+        for type_name in proposed_machines:
+            if type_name not in current_machines:
+                diffs["machines"]["added"].append(type_name)
+            elif json.dumps(proposed_machines[type_name]) != json.dumps(current_machines[type_name]):
+                diffs["machines"]["modified"].append(type_name)
+        
+        for type_name in current_machines:
+            if type_name not in proposed_machines:
+                diffs["machines"]["removed"].append(type_name)
+        
+        # Materials
+        current_materials = current.get("materials", {})
+        proposed_materials = proposed.get("materials", {})
+        
+        for key in proposed_materials:
+            if key not in current_materials:
+                diffs["materials"]["added"].append(key)
+            elif json.dumps(proposed_materials[key]) != json.dumps(current_materials[key]):
+                diffs["materials"]["modified"].append(key)
+        
+        for key in current_materials:
+            if key not in proposed_materials:
+                diffs["materials"]["removed"].append(key)
+        
+        # Empresas (por primeiro campo)
+        def get_empresa_key(empresa):
+            return next(iter(empresa)) if empresa else ""
+        
+        current_empresas_dict = {get_empresa_key(e): e for e in current.get("empresas", [])}
+        proposed_empresas_dict = {get_empresa_key(e): e for e in proposed.get("empresas", [])}
+        
+        for key in proposed_empresas_dict:
+            if key not in current_empresas_dict:
+                diffs["empresas"]["added"].append(key)
+            elif json.dumps(proposed_empresas_dict[key]) != json.dumps(current_empresas_dict[key]):
+                diffs["empresas"]["modified"].append(key)
+        
+        for key in current_empresas_dict:
+            if key not in proposed_empresas_dict:
+                diffs["empresas"]["removed"].append(key)
+        
+        return diffs
+
+    def _generate_simple_summary(self, differences):
+        """Gera resumo simples das diferenças"""
+        total_added = (
+            len(differences["constants"]["added"]) +
+            len(differences["machines"]["added"]) +
+            len(differences["materials"]["added"]) +
+            len(differences["empresas"]["added"])
+        )
+        
+        total_modified = (
+            len(differences["constants"]["modified"]) +
+            len(differences["machines"]["modified"]) +
+            len(differences["materials"]["modified"]) +
+            len(differences["empresas"]["modified"])
+        )
+        
+        total_removed = (
+            len(differences["constants"]["removed"]) +
+            len(differences["machines"]["removed"]) +
+            len(differences["materials"]["removed"]) +
+            len(differences["empresas"]["removed"])
+        )
+        
+        return {
+            "total_changes": total_added + total_modified + total_removed,
+            "total_added": total_added,
+            "total_modified": total_modified,
+            "total_removed": total_removed,
+            "has_changes": (total_added + total_modified + total_removed) > 0
+        }
+                
+                
+                
+                

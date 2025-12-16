@@ -5,14 +5,14 @@ export async function loadModules() {
     try {
         // Carrega os módulos na ordem correta
         const modules = [
-            './state.js',
-            './utils.js',
-            './api.js',
-            './ui.js',
-            './constants.js',
-            './machines.js',
-            './materials.js',
-            './empresas.js'
+            './ExpImpJsonFilles/utils.js',
+            './config/state.js',
+            './config/api.js',
+            './config/ui.js',
+            './core/constants.js',
+            './core/machines.js',
+            './core/materials.js',
+            './core/empresas.js'
         ];
 
         for (const module of modules) {

@@ -1,8 +1,8 @@
 {
   "constants": {
     "TESTE": {
-      "value": 32424523452343,
-      "description": "sdfdfgsdfg"
+      "value": 1.2413412341234124e+43,
+      "description": "sdfafeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeegdfgsdfg"
     },
     "VARIAVEL_PD": {
       "value": 0.0402,
@@ -153,10 +153,7 @@
         "15TR": 85729.62,
         "20TR": 108787.8,
         "25TR": 125451,
-        "30TR": 141800,
-        "NOVA_CAPACIDADE_6876": 0,
-        "NOVA_CAPACIDADE_8097": 0,
-        "NOVA_CAPACIDADE_8653": 0
+        "30TR": 141800
       },
       "options": [
         {
