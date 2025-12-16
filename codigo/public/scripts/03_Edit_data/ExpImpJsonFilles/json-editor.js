@@ -1,5 +1,5 @@
 /* ==== json-editor.js ==== */
-// json-editor.js - VERSÃO COMPLETA COM SCROLL FUNCIONAL
+// json-editor.js - VERSÃO COMPLETA COM SCROLL FUNCIONAL (CORRIGIDO)
 
 // ==================== ESTADO GLOBAL ====================
 window.stagingData = null;
@@ -14,9 +14,9 @@ let isInitialized = false;
 export function updateLineNumbers() {
     const editor = document.getElementById('jsonEditor');
     const lineNumbers = document.getElementById('lineNumbers');
-    const scrollWrapper = document.querySelector('.json-scroll-wrapper');
+    const jsonContainer = document.querySelector('.json-container'); // Mudado de scrollWrapper para container
     
-    if (!editor || !lineNumbers || !scrollWrapper) {
+    if (!editor || !lineNumbers || !jsonContainer) {
         console.warn('Elementos do editor não encontrados');
         return;
     }
@@ -55,9 +55,9 @@ export function updateLineNumbers() {
         editor.style.height = finalHeight + 'px';
         lineNumbers.style.height = finalHeight + 'px';
         
-        // Garante que o scroll wrapper tenha conteúdo suficiente
+        // Garante que o container tenha conteúdo suficiente
         setTimeout(() => {
-            const containerHeight = document.querySelector('.json-container').clientHeight;
+            const containerHeight = jsonContainer.clientHeight;
             
             // Se o conteúdo for menor que o container, ajusta para preencher
             if (finalHeight < containerHeight) {
@@ -66,8 +66,8 @@ export function updateLineNumbers() {
             }
             
             // Debug: verifica status do scroll
-            const shouldScrollVertically = finalHeight > scrollWrapper.clientHeight;
-            console.log(`📏 Altura: ${finalHeight}px, Container: ${scrollWrapper.clientHeight}px`);
+            const shouldScrollVertically = finalHeight > jsonContainer.clientHeight;
+            console.log(`📏 Altura: ${finalHeight}px, Container: ${jsonContainer.clientHeight}px`);
             console.log(`📊 Scroll vertical necessário: ${shouldScrollVertically}`);
             
         }, 0);
@@ -84,9 +84,9 @@ export function adjustEditorLayout() {
     updateLineNumbers();
     
     const editor = document.getElementById('jsonEditor');
-    const scrollWrapper = document.querySelector('.json-scroll-wrapper');
+    const jsonContainer = document.querySelector('.json-container'); // Mudado aqui também
     
-    if (!editor || !scrollWrapper) return;
+    if (!editor || !jsonContainer) return;
     
     // Verifica se há necessidade de scroll horizontal
     const lines = editor.value.split('\n');
@@ -118,8 +118,8 @@ export function adjustEditorLayout() {
     if (totalWidth > editorWidth) {
         console.log(`📏 Linha larga detectada: ${totalWidth}px > ${editorWidth}px`);
         
-        // Força o wrapper a mostrar scroll horizontal
-        if (scrollWrapper.scrollWidth <= scrollWrapper.clientWidth) {
+        // Força o container a mostrar scroll horizontal
+        if (jsonContainer.scrollWidth <= jsonContainer.clientWidth) {
             // Cria um div fantasma para forçar largura
             const phantomDiv = document.createElement('div');
             phantomDiv.style.width = (totalWidth + 100) + 'px';
@@ -170,13 +170,13 @@ export function highlightLine(lineNumber, type = 'error') {
  * @param {number} lineNumber - Número da linha
  */
 function scrollToLine(lineNumber) {
-    const scrollWrapper = document.querySelector('.json-scroll-wrapper');
-    if (!scrollWrapper) return;
+    const jsonContainer = document.querySelector('.json-container'); // Mudado aqui
+    if (!jsonContainer) return;
     
     const lineHeight = 20;
     const scrollPosition = (lineNumber - 1) * lineHeight;
     
-    scrollWrapper.scrollTo({
+    jsonContainer.scrollTo({ // Mudado aqui
         top: Math.max(0, scrollPosition - 100),
         behavior: 'smooth'
     });
@@ -298,9 +298,9 @@ export function initJSONEditor() {
         
         // Verificação final do scroll
         setTimeout(() => {
-            const scrollWrapper = document.querySelector('.json-scroll-wrapper');
-            if (scrollWrapper) {
-                const hasScroll = scrollWrapper.scrollHeight > scrollWrapper.clientHeight;
+            const jsonContainer = document.querySelector('.json-container'); // Mudado aqui
+            if (jsonContainer) {
+                const hasScroll = jsonContainer.scrollHeight > jsonContainer.clientHeight;
                 console.log(`✅ Scroll verificado: ${hasScroll ? 'ATIVO' : 'INATIVO'}`);
             }
         }, 500);
@@ -677,23 +677,23 @@ export async function applyJSON() {
 window.debugScroll = function() {
     console.log('=== DEBUG SCROLL ===');
     
-    const scrollWrapper = document.querySelector('.json-scroll-wrapper');
+    const jsonContainer = document.querySelector('.json-container'); // Mudado aqui
     const editor = document.getElementById('jsonEditor');
     const lineNumbers = document.getElementById('lineNumbers');
     
-    if (!scrollWrapper || !editor || !lineNumbers) {
+    if (!jsonContainer || !editor || !lineNumbers) {
         console.error('❌ Elementos não encontrados');
         return;
     }
     
-    console.log(`📊 ScrollWrapper: ${scrollWrapper.clientWidth}x${scrollWrapper.clientHeight}`);
-    console.log(`📊 ScrollWrapper scroll: ${scrollWrapper.scrollWidth}x${scrollWrapper.scrollHeight}`);
+    console.log(`📊 jsonContainer: ${jsonContainer.clientWidth}x${jsonContainer.clientHeight}`);
+    console.log(`📊 jsonContainer scroll: ${jsonContainer.scrollWidth}x${jsonContainer.scrollHeight}`);
     console.log(`📊 Editor: ${editor.clientWidth}x${editor.clientHeight}`);
     console.log(`📊 Editor scroll: ${editor.scrollWidth}x${editor.scrollHeight}`);
     console.log(`📊 LineNumbers: ${lineNumbers.clientWidth}x${lineNumbers.clientHeight}`);
     
-    const hasVerticalScroll = scrollWrapper.scrollHeight > scrollWrapper.clientHeight;
-    const hasHorizontalScroll = scrollWrapper.scrollWidth > scrollWrapper.clientWidth;
+    const hasVerticalScroll = jsonContainer.scrollHeight > jsonContainer.clientHeight;
+    const hasHorizontalScroll = jsonContainer.scrollWidth > jsonContainer.clientWidth;
     
     console.log(`📊 Scroll vertical: ${hasVerticalScroll ? '✅ ATIVO' : '❌ INATIVO'}`);
     console.log(`📊 Scroll horizontal: ${hasHorizontalScroll ? '✅ ATIVO' : '❌ INATIVO'}`);

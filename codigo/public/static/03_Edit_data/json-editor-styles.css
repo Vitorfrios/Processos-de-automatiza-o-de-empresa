@@ -1,52 +1,49 @@
 /* ==== json-editor-styles.css ==== */
-/* EDITOR JSON COMPLETO - ESTILO VS CODE COM SCROLL FUNCIONAL */
+/* EDITOR JSON COMPLETO - SCROLL FUNCIONAL COMO VS CODE - CORRIGIDO */
 
 /* ============ CONTAINER PRINCIPAL ============ */
-
+/* Container pai com SCROLL - CRÍTICO: Scroll aqui em vez do wrapper interno */
 .json-container {
     display: flex;
     flex-direction: column;
     height: 500px;
     min-height: 400px;
     max-height: 70vh;
+    width: 100%;
     border: 1px solid #e1e4e8;
     border-radius: 8px;
     background: #ffffff;
-    overflow: hidden;
+    overflow: auto; /* SCROLL PRINCIPAL AQUI */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.json-container:focus-within {
-    border-color: #0366d6;
-    box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
-}
-
-/* ============ SCROLL CONTAINER (ÚNICO) ============ */
-
+/* ============ CONTAINER DE CONTEÚDO (SEM SCROLL) ============ */
+/* Este wrapper apenas organiza o conteúdo, SEM scroll */
 .json-scroll-wrapper {
     display: flex;
     flex: 1;
-    min-height: 0; /* CRÍTICO: permite scroll dentro de flex container */
-    overflow: auto; /* SCROLL AQUI - vertical E horizontal */
+    min-width: 0;
+    min-height: min-content; /* CRÍTICO: Altura mínima do conteúdo */
     background: #ffffff;
     position: relative;
-    scrollbar-width: thin;
-    scrollbar-color: #c6cbd1 #f6f8fa;
+    
+    /* SEM scroll aqui - o scroll está no .json-container */
+    overflow: visible !important;
 }
 
-/* ============ NÚMEROS DE LINHA (FIXOS) ============ */
-
+/* ============ NÚMEROS DE LINHA (FIXOS À ESQUERDA) ============ */
 .line-numbers-wrapper {
     flex-shrink: 0;
     width: 60px;
     min-width: 60px;
     background: #f6f8fa;
     border-right: 1px solid #e1e4e8;
-    overflow: hidden; /* SEM scroll próprio */
+    overflow: hidden;
     position: sticky;
     left: 0;
     top: 0;
     z-index: 10;
+    height: fit-content; /* Ajusta à altura do conteúdo */
 }
 
 .line-numbers {
@@ -68,19 +65,20 @@
     position: relative;
 }
 
-/* ============ EDITOR (EXPANSÍVEL) ============ */
-
+/* ============ CONTAINER DO EDITOR (ÁREA EDITÁVEL) ============ */
 .json-editor-wrapper {
     flex: 1;
-    min-width: 0; /* CRÍTICO: permite que o conteúdo ultrapasse */
+    min-width: 0;
     position: relative;
-    overflow: visible; /* IMPORTANTE: conteúdo pode ultrapassar */
+    overflow: visible;
+    background: #ffffff;
 }
 
+/* ============ TEXTAREA (SEM SCROLL PRÓPRIO) ============ */
 #jsonEditor {
     display: block;
     width: 100%;
-    height: auto; /* Altura controlada por JS */
+    height: auto;
     min-height: 100%;
     padding: 16px;
     margin: 0;
@@ -88,22 +86,22 @@
     background: transparent;
     resize: none;
     
-    /* Fonte e texto */
+    /* Fonte e formatação */
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 13px;
     line-height: 20px;
     color: #24292e;
     tab-size: 2;
     
-    /* Comportamento VS Code - TEXTO NÃO QUEBRA */
+    /* COMPORTAMENTO VS CODE: Texto NÃO quebra linha */
     white-space: pre;
     overflow-wrap: normal;
     word-break: keep-all;
     
-    /* SEM SCROLL PRÓPRIO - scroll é do container pai */
+    /* CRÍTICO: SEM SCROLL PRÓPRIO */
     overflow: hidden !important;
     
-    /* Outros */
+    /* Outras propriedades */
     outline: none;
     box-sizing: border-box;
     caret-color: #0366d6;
@@ -119,8 +117,7 @@
     opacity: 0.7;
 }
 
-/* ============ AÇÕES (BOTÕES) ============ */
-
+/* ============ BOTÕES DE AÇÃO ============ */
 .json-actions {
     display: flex;
     gap: 8px;
@@ -129,6 +126,9 @@
     background: #f6f8fa;
     border-bottom: 1px solid #e1e4e8;
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 20;
 }
 
 .json-actions button {
@@ -145,8 +145,6 @@
     cursor: pointer;
     white-space: nowrap;
     outline: none;
-    position: relative;
-    overflow: hidden;
 }
 
 .json-actions button i {
@@ -158,58 +156,16 @@
     justify-content: center;
 }
 
-/* Botões coloridos */
-.btn-info {
-    background: #0366d6;
-    color: white;
-    border-color: #0366d6;
-}
+/* Cores dos botões */
+.btn-info { background: #0366d6; color: white; border-color: #0366d6; }
+.btn-warning { background: #f66a0a; color: white; border-color: #f66a0a; }
+.btn-success { background: #28a745; color: white; border-color: #28a745; }
+.btn-danger { background: #d73a49; color: white; border-color: #d73a49; }
 
-.btn-info:hover {
-    background: #005cc5;
-    border-color: #005cc5;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn-warning {
-    background: #f66a0a;
-    color: white;
-    border-color: #f66a0a;
-}
-
-.btn-warning:hover {
-    background: #e36209;
-    border-color: #e36209;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn-success {
-    background: #28a745;
-    color: white;
-    border-color: #28a745;
-}
-
-.btn-success:hover {
-    background: #22863a;
-    border-color: #22863a;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn-danger {
-    background: #d73a49;
-    color: white;
-    border-color: #d73a49;
-}
-
-.btn-danger:hover {
-    background: #cb2431;
-    border-color: #cb2431;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+.btn-info:hover { background: #005cc5; border-color: #005cc5; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+.btn-warning:hover { background: #e36209; border-color: #e36209; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+.btn-success:hover { background: #22863a; border-color: #22863a; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+.btn-danger:hover { background: #cb2431; border-color: #cb2431; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
 
 /* Botão Apply especial */
 #applyJsonBtn {
@@ -231,12 +187,14 @@
 }
 
 /* ============ STATUS ============ */
-
 .json-status-container {
     padding: 8px 16px;
     background: #f8f9fa;
     border-top: 1px solid #e1e4e8;
     flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
 }
 
 .json-status {
@@ -252,42 +210,16 @@
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-5px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.json-status.success {
-    background-color: #d4edda;
-    color: #155724;
-    border-color: #c3e6cb;
-}
-
-.json-status.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
-}
-
-.json-status.warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border-color: #ffeaa7;
-}
-
-.json-status.info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-    border-color: #bee5eb;
-}
+.json-status.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+.json-status.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.json-status.warning { background-color: #fff3cd; color: #856404; border-color: #ffeaa7; }
+.json-status.info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
 
 /* ============ HIGHLIGHT DE LINHAS ============ */
-
 .line-numbers > div.error-line {
     color: #dc3545 !important;
     font-weight: bold !important;
@@ -319,33 +251,38 @@
 }
 
 /* ============ SCROLLBAR PERSONALIZADA ============ */
-
-.json-scroll-wrapper::-webkit-scrollbar {
+/* Agora aplicada ao .json-container */
+.json-container::-webkit-scrollbar {
     width: 12px;
     height: 12px;
 }
 
-.json-scroll-wrapper::-webkit-scrollbar-track {
+.json-container::-webkit-scrollbar-track {
     background: #f6f8fa;
     border-radius: 6px;
 }
 
-.json-scroll-wrapper::-webkit-scrollbar-thumb {
+.json-container::-webkit-scrollbar-thumb {
     background: #c6cbd1;
     border-radius: 6px;
     border: 3px solid #f6f8fa;
 }
 
-.json-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+.json-container::-webkit-scrollbar-thumb:hover {
     background: #959da5;
 }
 
-.json-scroll-wrapper::-webkit-scrollbar-corner {
+.json-container::-webkit-scrollbar-corner {
     background: #f6f8fa;
 }
 
-/* ============ LOADING OVERLAY ============ */
+/* Firefox */
+.json-container {
+    scrollbar-width: thin;
+    scrollbar-color: #c6cbd1 #f6f8fa;
+}
 
+/* ============ LOADING OVERLAY ============ */
 .json-loading-overlay {
     position: absolute;
     top: 0;
@@ -375,7 +312,6 @@
 }
 
 /* ============ TOOLTIP ============ */
-
 .json-actions button[title]:hover::after {
     content: attr(title);
     position: absolute;
@@ -404,7 +340,6 @@
 }
 
 /* ============ RESPONSIVIDADE ============ */
-
 @media (max-width: 768px) {
     .json-container {
         height: 400px;
@@ -414,6 +349,8 @@
     .json-actions {
         gap: 6px;
         padding: 10px 12px;
+        position: sticky;
+        top: 0;
     }
     
     .json-actions button {
@@ -433,6 +370,8 @@
     .line-numbers-wrapper {
         width: 50px;
         min-width: 50px;
+        position: sticky;
+        left: 0;
     }
     
     .line-numbers {
@@ -453,7 +392,7 @@
     }
     
     /* Scroll suave em mobile */
-    .json-scroll-wrapper {
+    .json-container {
         -webkit-overflow-scrolling: touch;
     }
 }
@@ -467,6 +406,8 @@
     .json-actions {
         flex-direction: column;
         gap: 4px;
+        position: sticky;
+        top: 0;
     }
     
     .json-actions button {
@@ -477,6 +418,8 @@
     .line-numbers-wrapper {
         width: 45px;
         min-width: 45px;
+        position: sticky;
+        left: 0;
     }
     
     .line-numbers {
@@ -498,7 +441,6 @@
 }
 
 /* ============ DARK MODE ============ */
-
 @media (prefers-color-scheme: dark) {
     .json-container {
         background: #1e1e1e;
@@ -533,48 +475,25 @@
         color: #6a737d;
     }
     
-    .json-scroll-wrapper::-webkit-scrollbar-track {
+    .json-container::-webkit-scrollbar-track {
         background: #252526;
     }
     
-    .json-scroll-wrapper::-webkit-scrollbar-thumb {
+    .json-container::-webkit-scrollbar-thumb {
         background: #424242;
         border-color: #252526;
     }
-    
-    .json-actions {
-        background: #252526;
-        border-color: #333;
-    }
+
     
     .json-status-container {
         background: #252526;
         border-color: #333;
     }
     
-    .json-status.success {
-        background-color: #155724;
-        color: #d4edda;
-        border-color: #c3e6cb;
-    }
-    
-    .json-status.error {
-        background-color: #721c24;
-        color: #f8d7da;
-        border-color: #f5c6cb;
-    }
-    
-    .json-status.warning {
-        background-color: #856404;
-        color: #fff3cd;
-        border-color: #ffeaa7;
-    }
-    
-    .json-status.info {
-        background-color: #0c5460;
-        color: #d1ecf1;
-        border-color: #bee5eb;
-    }
+    .json-status.success { background-color: #155724; color: #d4edda; border-color: #c3e6cb; }
+    .json-status.error { background-color: #721c24; color: #f8d7da; border-color: #f5c6cb; }
+    .json-status.warning { background-color: #856404; color: #fff3cd; border-color: #ffeaa7; }
+    .json-status.info { background-color: #0c5460; color: #d1ecf1; border-color: #bee5eb; }
 }
 
 /* ==== FIM: json-editor-styles.css ==== */
