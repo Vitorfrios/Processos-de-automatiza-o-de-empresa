@@ -1225,3 +1225,20 @@ class RoutesCore:
         except Exception as e:
             print(f"❌ Erro em handle_delete_empresa: {e}")
             return {"success": False, "error": str(e)}
+        
+        
+        
+        # Adicionar na classe RoutesCore:
+
+    def handle_get_equipamentos(self):
+        """Compatibilidade - redireciona para handler HTTP"""
+        try:
+            # Esta função apenas garante compatibilidade
+            # O trabalho real é feito no http_handler
+            return {
+                "success": True,
+                "message": "Use os endpoints diretos em /api/equipamentos/*"
+            }
+        except Exception as e:
+            print(f"❌ Erro em handle_get_equipamentos: {str(e)}")
+            return {"success": False, "error": str(e)}

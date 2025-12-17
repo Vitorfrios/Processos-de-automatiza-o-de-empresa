@@ -349,34 +349,8 @@ function fillCapacityData(roomElement, capacityData) {
     console.log(`✅ Dados de capacidade preenchidos para sala ${roomId}`);
 }
 
-/**
- * Preenche as configurações de instalação da sala
- */
-function fillAccessoriesData(roomElement, configData) {
-    if (!roomElement || !configData) {
-        console.error('❌ Elemento da sala ou dados de configuração inválidos');
-        return;
-    }
 
-    const roomId = roomElement.dataset.roomId;
-    console.log(`🔄 Preenchendo configurações para sala ${roomId}:`, configData);
 
-    if (configData.opcoesInstalacao && Array.isArray(configData.opcoesInstalacao)) {
-        configData.opcoesInstalacao.forEach(optionValue => {
-            const checkbox = roomElement.querySelector(`input[name^="opcoesInstalacao-"][value="${optionValue}"]`);
-            if (checkbox) {
-                checkbox.checked = true;
-                console.log(`✅ Checkbox marcado: ${optionValue}`);
-            }
-        });
-    }
-
-    console.log(`✅ Configurações preenchidas para sala ${roomId}`);
-}
-
-/**
- * Garante que todas as seções da sala estão criadas e inicializadas
- */
 async function ensureAllRoomSections(roomElement) {
     if (!roomElement) {
         console.error('❌ Elemento da sala inválido');
@@ -398,9 +372,9 @@ async function ensureAllRoomSections(roomElement) {
     // ✅ CORREÇÃO: Usar as novas funções para verificar seções
     const climatizationSection = findSectionByTitle(roomElement, 'Climatização');
     const machinesSection = findMachinesSection(roomElement);
-    const accessorySection = findSectionByTitle(roomElement, 'Acessorios');
+    const equipamentosSection = findSectionByTitle(roomElement, 'Equipamentos de Difusão e Controle de Ar');
 
-    if (climatizationSection && machinesSection && accessorySection) {
+    if (climatizationSection && machinesSection && equipamentosSection) {
         console.log(`✅ Todas as seções já existem para sala ${roomName}`);
         return true;
     }
@@ -417,11 +391,10 @@ async function ensureAllRoomSections(roomElement) {
         if (!climatizationSection) {
             console.log(`🏗️ Criando todas as seções para sala ${roomName}`);
 
+            // ✅ CORREÇÃO: Verificar TODAS as funções necessárias
             if (typeof window.buildClimatizationSection !== 'function' || 
-                typeof buildMachinesSection !== 'function' ||
-                typeof window.buildAccessoriesSection !== 'function'
-                // aqui falta duto e tubulação
-                ) {
+                typeof window.buildMachinesSection !== 'function' ||
+                typeof window.buildEquipamentosSection !== 'function') {
                 console.error('❌ Funções de construção de seções não disponíveis');
                 return false;
             }
@@ -436,7 +409,7 @@ async function ensureAllRoomSections(roomElement) {
             await new Promise(resolve => setTimeout(resolve, 300));
 
             // Criar seção de máquinas
-            const machinesHTML = await buildMachinesSection(obraId, projectId, roomName, roomId);
+            const machinesHTML = await window.buildMachinesSection(obraId, projectId, roomName, roomId);
             if (machinesHTML) {
                 roomContent.insertAdjacentHTML('beforeend', machinesHTML);
                 console.log(`✅ Seção de máquinas criada`);
@@ -444,32 +417,49 @@ async function ensureAllRoomSections(roomElement) {
 
             await new Promise(resolve => setTimeout(resolve, 300));
 
-            // Criar seção de configuração
-            const configurationHTML = await window.buildAccessoriesSection(obraId, projectId, roomName, roomId);
-            if (configurationHTML) {
-                roomContent.insertAdjacentHTML('beforeend', configurationHTML);
-                console.log(`✅ Seção de configuração criada`);
+            // Criar seção de equipamentos
+            const equipamentosHTML = await window.buildEquipamentosSection(obraId, projectId, roomName, roomId);
+            if (equipamentosHTML) {
+                roomContent.insertAdjacentHTML('beforeend', equipamentosHTML);
+                console.log(`✅ Seção de equipamentos criada`);
             }
 
             await new Promise(resolve => setTimeout(resolve, 500));
+
+            // ✅ CORREÇÃO: Inicializar sistema de equipamentos
+            if (typeof window.initEquipamentosSystem === 'function') {
+                setTimeout(() => {
+                    window.initEquipamentosSystem(roomId);
+                    console.log(`✅ Sistema de equipamentos inicializado`);
+                }, 800);
+            }
 
             console.log(`✅ Todas as seções criadas para sala ${roomName}`);
             return true;
         }
 
         // Criar apenas seções faltantes
-        if (climatizationSection && !machinesSection) {
-            console.log(`🔨 Criando apenas seção de máquinas para sala ${roomName}`);
+        if (climatizationSection && !equipamentosSection) {
+            console.log(`🔨 Criando apenas seção de equipamentos para sala ${roomName}`);
 
-            const machinesHTML = await buildMachinesSection(obraId, projectId, roomName, roomId);
-            if (machinesHTML) {
-                climatizationSection.insertAdjacentHTML('afterend', machinesHTML);
-                console.log(`✅ Seção de máquinas criada`);
+            const equipamentosHTML = await window.buildEquipamentosSection(obraId, projectId, roomName, roomId);
+            if (equipamentosHTML) {
+                climatizationSection.insertAdjacentHTML('afterend', equipamentosHTML);
+                console.log(`✅ Seção de equipamentos criada`);
+                
+                // ✅ CORREÇÃO: Inicializar sistema
+                setTimeout(() => {
+                    if (typeof window.initEquipamentosSystem === 'function') {
+                        window.initEquipamentosSystem(roomId);
+                    }
+                }, 500);
                 
                 await new Promise(resolve => setTimeout(resolve, 500));
                 return true;
             }
         }
+
+        // ✅ CORREÇÃO: Configurar sincronizações
         setTimeout(() => {
             console.log(`🔧 CONFIGURANDO SINCRONIZAÇÕES APÓS CRIAR SEÇÕES: ${roomId}`);
             
@@ -479,6 +469,7 @@ async function ensureAllRoomSections(roomElement) {
             
             console.log(`✅ Sincronizações configuradas após criação de seções: ${roomId}`);
         }, 1000);
+
         console.log(`❌ Não foi possível criar todas as seções para sala ${roomName}`);
         return false;
 
@@ -488,12 +479,29 @@ async function ensureAllRoomSections(roomElement) {
     }
 }
 
+// ✅ CORREÇÃO: Adicionar funções auxiliares faltantes
+function findSectionByTitle(roomElement, title) {
+    const sections = roomElement.querySelectorAll('.section-block');
+    for (let section of sections) {
+        const sectionTitle = section.querySelector('.section-title');
+        if (sectionTitle && sectionTitle.textContent.includes(title)) {
+            return section;
+        }
+    }
+    return null;
+}
+
+function findMachinesSection(roomElement) {
+    return roomElement.querySelector('.machines-section') || 
+           roomElement.querySelector('[id*="machines"]') ||
+           roomElement.querySelector('[class*="machine"]');
+}
+
 // EXPORTS NO FINAL
 export {
     fillClimatizationInputs,
     fillThermalGainsData,
     fillCapacityData,
-    fillAccessoriesData,
     ensureAllRoomSections,
     setupRoomTitleChangeListener
 };

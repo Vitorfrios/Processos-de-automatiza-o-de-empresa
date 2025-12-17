@@ -78,8 +78,8 @@ async function loadSystemConstants() {
     console.log("✅ Constantes carregadas do JSON:", window.systemConstants);
 
     if (!window.systemConstants.VARIAVEL_PD.value
- || !window.systemConstants.VARIAVEL_PS.value
-) {
+      || !window.systemConstants.VARIAVEL_PS.value
+    ) {
       throw new Error("Constantes essenciais não encontradas no JSON");
     }
 
@@ -99,6 +99,7 @@ async function loadAllModules() {
   try {
     console.log("📦 Iniciando carregamento de módulos...");
 
+    // ✅ CORREÇÃO: Todos os módulos importados dentro do Promise.all
     const modules = await Promise.all([
       import('../ui/interface.js'),
       import('../ui/components/edit.js'),
@@ -110,7 +111,7 @@ async function loadAllModules() {
       import('../features/managers/project-manager.js'),
       import('../data/modules/rooms.js'),
       import('../data/modules/climatizacao.js'),
-      import('../data/modules/acessorios.js'),
+      import('../data/modules/equipamentos.js'), // ✅ MANTER aqui
       import('../data/modules/machines/machines-core.js'),
       import('../data/modules/machines/capacity-calculator.js'),
       import('../features/calculations/air-flow.js'),
@@ -118,7 +119,9 @@ async function loadAllModules() {
       import('../data/utils/id-generator.js'),
       import('../data/utils/data-utils.js'),
       import('../data/builders/ui-builders.js'),
-      import('../data/builders/data-builders.js')
+      import('../data/builders/data-builders.js'),
+      import('../data/builders/ui-folder/data-fillers.js'), // ✅ ADICIONAR para funções auxiliares
+      import('../data/builders/ui-folder/room-renderer.js') // ✅ ADICIONAR para renderização
     ]);
 
     const [
@@ -132,7 +135,7 @@ async function loadAllModules() {
       projectManagerModule,
       roomsModule,
       climatizationModule,
-      configuracaoModule,
+      equipamentosModule, // ✅ RECUPERADO
       machinesCoreModule,
       capacityCalculatorModule,
       airFlowModule,
@@ -140,10 +143,14 @@ async function loadAllModules() {
       idGeneratorModule,
       dataUtilsModule,
       uiBuildersModule,
-      dataBuildersModule
+      dataBuildersModule,
+      dataFillersModule, // ✅ NOVO
+      roomRendererModule // ✅ NOVO
     ] = modules;
 
+    // ✅ CORREÇÃO: Juntar TODAS as funções em um objeto
     const allFunctions = {
+      // Interface
       toggleSection: interfaceModule.toggleSection,
       toggleSubsection: interfaceModule.toggleSubsection,
       toggleObra: interfaceModule.toggleObra,
@@ -153,6 +160,7 @@ async function loadAllModules() {
       expandElement: helpersModule.expandElement,
       showSystemStatus: statusModule.showSystemStatus,
 
+      // Obras
       addNewObra: obraManagerModule.addNewObra,
       saveOrUpdateObra: obraManagerModule.saveObra,
       verifyObraData: obraManagerModule.verifyObraData,
@@ -162,55 +170,85 @@ async function loadAllModules() {
       supportFrom_saveObra: obraManagerModule.supportFrom_saveObra,
       atualizarObra: obraManagerModule.atualizarObra,
 
+      // Projetos
       addNewProjectToObra: projectManagerModule.addNewProjectToObra,
       deleteProject: projectManagerModule.deleteProject,
 
+      // Salas
       addNewRoom: roomsModule.addNewRoom,
       deleteRoom: roomsModule.deleteRoom,
       createEmptyRoom: roomsModule.createEmptyRoom,
 
+      // Climatização
       buildClimatizationSection: climatizationModule.buildClimatizationSection,
+
+      // Máquinas
       buildMachinesSection: machinesCoreModule.buildMachinesSection,
-      buildAccessoriesSection: configuracaoModule.buildAccessoriesSection,
-
-      calculateVazaoArAndThermalGains: airFlowModule.calculateVazaoArAndThermalGains,
-      calculateVazaoArAndThermalGainsDebounced: calculationsCoreModule.calculateVazaoArAndThermalGainsDebounced,
-
       calculateCapacitySolution: capacityCalculatorModule.calculateCapacitySolution,
       updateBackupConfiguration: capacityCalculatorModule.updateBackupConfiguration,
       toggleOption: machinesCoreModule.toggleOption,
       addMachine: machinesCoreModule.addMachine,
       deleteMachine: machinesCoreModule.deleteMachine,
 
+      // ✅ CORREÇÃO: EQUIPAMENTOS COMPLETO
+      buildEquipamentosSection: equipamentosModule.buildEquipamentosSection,
+      initEquipamentosSystem: equipamentosModule.initEquipamentosSystem,
+      fillEquipamentosData: equipamentosModule.fillEquipamentosData, // ← AGORA EXISTE!
+      adicionarEquipamentoNaTabela: equipamentosModule.adicionarEquipamentoNaTabela,
+      atualizarTotalEquipamentos: equipamentosModule.atualizarTotalEquipamentos,
+      formatarMoeda: equipamentosModule.formatarMoeda,
+      carregarTiposEquipamentos: equipamentosModule.carregarTiposEquipamentos,
+      loadEquipamentoDimensoes: equipamentosModule.loadEquipamentoDimensoes,
+      adicionarEquipamento: equipamentosModule.adicionarEquipamento,
+      carregarEquipamentos: equipamentosModule.carregarEquipamentos,
+      limparEquipamentos: equipamentosModule.limparEquipamentos,
+
+      // Cálculos
+      calculateVazaoArAndThermalGains: airFlowModule.calculateVazaoArAndThermalGains,
+      calculateVazaoArAndThermalGainsDebounced: calculationsCoreModule.calculateVazaoArAndThermalGainsDebounced,
+
+      // Edição
       makeEditable: editModule.makeEditable,
 
+      // Utilitários
       ensureStringId: idGeneratorModule.ensureStringId,
       getNextObraNumber: dataUtilsModule.getNextObraNumber,
       getNextProjectNumber: dataUtilsModule.getNextProjectNumber,
       getNextRoomNumber: dataUtilsModule.getNextRoomNumber,
 
+      // Modal
       showConfirmationModal: modalModule.showConfirmationModal,
       closeConfirmationModal: modalModule.closeConfirmationModal,
       undoDeletion: modalModule.undoDeletion,
 
+      // Helpers
       removeEmptyObraMessage: helpersModule.removeEmptyObraMessage,
       showEmptyObraMessageIfNeeded: helpersModule.showEmptyObraMessageIfNeeded,
       removeEmptyProjectMessage: helpersModule.removeEmptyProjectMessage,
       showEmptyProjectMessageIfNeeded: helpersModule.showEmptyProjectMessageIfNeeded,
 
+      // ✅ NOVO: Funções de preenchimento de dados
+      fillClimatizationInputs: dataFillersModule.fillClimatizationInputs,
+      fillThermalGainsData: dataFillersModule.fillThermalGainsData,
+      fillCapacityData: dataFillersModule.fillCapacityData,
+      // REMOVER: fillEquipamentosData: dataFillersModule.fillEquipamentosData, ← DUPLICADA
+      ensureAllRoomSections: dataFillersModule.ensureAllRoomSections,
+      setupRoomTitleChangeListener: dataFillersModule.setupRoomTitleChangeListener,
+
+      // ✅ NOVO: Funções de renderização
+      renderRoomFromData: roomRendererModule.renderRoomFromData,
+      populateRoomData: roomRendererModule.populateRoomData,
+      populateRoomInputs: roomRendererModule.populateRoomInputs,
+
+      // UI Builders
       populateObraData: uiBuildersModule.populateObraData,
       renderObraFromData: uiBuildersModule.renderObraFromData,
       renderProjectFromData: uiBuildersModule.renderProjectFromData,
-      renderRoomFromData: uiBuildersModule.renderRoomFromData,
       fillMachinesData: uiBuildersModule.fillMachinesData,
-      fillClimatizationInputs: uiBuildersModule.fillClimatizationInputs,
-      fillThermalGainsData: uiBuildersModule.fillThermalGainsData,
-      fillCapacityData: uiBuildersModule.fillCapacityData,
-      fillAccessoriesData: uiBuildersModule.fillAccessoriesData,
-      ensureAllRoomSections: uiBuildersModule.ensureAllRoomSections,
       ensureMachinesSection: uiBuildersModule.ensureMachinesSection,
       populateMachineData: uiBuildersModule.populateMachineData,
 
+      // Data Builders
       buildObraData: dataBuildersModule.buildObraData,
       buildProjectData: dataBuildersModule.buildProjectData,
       extractRoomData: dataBuildersModule.extractRoomData,
@@ -218,23 +256,55 @@ async function loadAllModules() {
       extractThermalGainsData: dataBuildersModule.extractThermalGainsData,
       extractClimatizationInputs: dataBuildersModule.extractClimatizationInputs,
       extractCapacityData: dataBuildersModule.extractCapacityData,
-      extractAccessoriesData: dataBuildersModule.extractAccessoriesData,
+      extractEquipamentosData: dataBuildersModule.extractEquipamentosData,
 
+      // Adapters
       loadObrasFromServer: loadObrasFromServer
     };
 
     window.systemFunctions = {};
 
+    // ✅ CORREÇÃO: Filtrar funções válidas antes de atribuir
     Object.keys(allFunctions).forEach(funcName => {
-      if (typeof allFunctions[funcName] === 'function') {
-        window[funcName] = allFunctions[funcName];
-        window.systemFunctions[funcName] = allFunctions[funcName];
-        console.log(`✅ ${funcName} atribuída ao window e systemFunctions`);
+      const func = allFunctions[funcName];
+      
+      if (typeof func === 'function') {
+        window[funcName] = func;
+        window.systemFunctions[funcName] = func;
+        console.log(`✅ ${funcName} atribuída ao window`);
+      } else if (func !== undefined) {
+        console.warn(`⚠️ ${funcName} não é uma função:`, typeof func);
+      } else {
+        console.error(`❌ ${funcName} é undefined no módulo`);
+      }
+    });
+
+    // ✅ CORREÇÃO: Verificar funções críticas
+    const criticalFunctions = [
+      'fillEquipamentosData',
+      'buildEquipamentosSection',
+      'initEquipamentosSystem'
+    ];
+    
+    criticalFunctions.forEach(funcName => {
+      if (typeof window[funcName] !== 'function') {
+        console.error(`🚨 CRÍTICO: ${funcName} não está disponível!`);
+      } else {
+        console.log(`👍 ${funcName} OK`);
       }
     });
 
     window.modulesLoaded = true;
     console.log("✅ Todos os módulos foram carregados com sucesso");
+    
+    // ✅ CORREÇÃO: Verificar função específica após carregamento
+    setTimeout(() => {
+      console.log('🔍 Verificação pós-carregamento:');
+      console.log('- fillEquipamentosData:', typeof window.fillEquipamentosData);
+      console.log('- initEquipamentosSystem:', typeof window.initEquipamentosSystem);
+      console.log('- buildEquipamentosSection:', typeof window.buildEquipamentosSection);
+    }, 500);
+
     return true;
 
   } catch (error) {
@@ -272,7 +342,7 @@ async function initializeEmpresaCadastro() {
 export async function initializeSystem() {
   try {
     console.log("🚀 [SYSTEM-INIT] Iniciando sistema completo...");
-    
+
     window.systemLoadingStart = Date.now();
 
     console.log("🔒 [SYSTEM-INIT] Inicializando shutdown manager...");
@@ -297,19 +367,39 @@ export async function initializeSystem() {
     const loadingTime = Date.now() - window.systemLoadingStart;
     window.systemLoaded = true;
     window.systemLoadTime = loadingTime;
-    
+
     console.log(`🎉 [SYSTEM-INIT] Sistema completamente inicializado em ${loadingTime}ms!`);
+
+    // ✅ CORREÇÃO: Verificação final
+    console.log('🔍 Verificação final de funções:');
+    console.log('- fillEquipamentosData:', typeof window.fillEquipamentosData);
+    console.log('- buildEquipamentosSection:', typeof window.buildEquipamentosSection);
     
-    const event = new CustomEvent('systemInitialized', { 
-      detail: { 
+    // ✅ CORREÇÃO: Inicializar fallback manual se necessário
+    if (typeof window.fillEquipamentosData !== 'function') {
+      console.warn('⚠️ fillEquipamentosData não disponível, tentando fallback...');
+      try {
+        const equipamentosModule = await import('../data/modules/equipamentos.js');
+        if (equipamentosModule.fillEquipamentosData) {
+          window.fillEquipamentosData = equipamentosModule.fillEquipamentosData;
+          console.log('✅ fillEquipamentosData atribuída via fallback manual');
+        }
+      } catch (error) {
+        console.error('❌ Fallback manual falhou:', error);
+      }
+    }
+
+    const event = new CustomEvent('systemInitialized', {
+      detail: {
         time: loadingTime,
         timestamp: new Date().toISOString(),
         modules: window.modulesLoaded,
-        constants: !!window.systemConstants
+        constants: !!window.systemConstants,
+        equipamentosReady: typeof window.fillEquipamentosData === 'function'
       }
     });
     document.dispatchEvent(event);
-    
+
     return true;
 
   } catch (error) {

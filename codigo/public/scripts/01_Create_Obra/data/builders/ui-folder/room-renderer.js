@@ -15,8 +15,7 @@ function renderRoomFromData(projectId, projectName, roomData, obraId = null, obr
         maquinas: roomData.maquinas?.length || 0,
         capacidade: Object.keys(roomData.capacidade || {}).length,
         ganhosTermicos: Object.keys(roomData.ganhosTermicos || {}).length,
-        acessorio: Object.keys(roomData.acessorios || {}).length
-        // adicionar aqui tubulação e dutos
+        equipamentos: roomData.equipamentos?.length || 0  
     });
 
     setTimeout(() => {
@@ -81,9 +80,19 @@ async function populateRoomData(roomElement, roomData) {
             fillCapacityData(roomElement, roomData.capacidade);
         }
 
-        if (roomData.acessorios) {
-            console.log(`⚙️ Preenchendo acessorios para sala ${roomName}`);
-            fillAccessoriesData(roomElement, roomData.acessorios);
+        // ✅ CORREÇÃO MELHORADA: Preencher equipamentos com timing correto
+        if (roomData.equipamentos && Array.isArray(roomData.equipamentos)) {
+            console.log(`🔧 Preenchendo ${roomData.equipamentos.length} equipamento(s) para sala ${roomName}`);
+            
+            // ✅ CORREÇÃO: Usar setTimeout para garantir que a seção foi criada
+            setTimeout(() => {
+                if (typeof window.fillEquipamentosData === 'function') {
+                    window.fillEquipamentosData(roomElement, roomData.equipamentos);
+                    console.log(`✅ Equipamentos preenchidos via função global`);
+                } else {
+                    console.error(`❌ Função fillEquipamentosData não disponível no window`);
+                }
+            }, 2000); // ✅ Aumentar para 2 segundos para garantir carregamento
         }
 
         if (roomData.maquinas && Array.isArray(roomData.maquinas)) {
@@ -123,8 +132,19 @@ async function populateRoomData(roomElement, roomData) {
     }
 }
 
+
+function populateRoomInputs(projectId, projectName, roomId, roomName, roomData, obraId, obraName) {
+    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (roomElement) {
+        populateRoomData(roomElement, roomData);
+    } else {
+        console.error(`❌ Elemento da sala ${roomId} não encontrado no DOM`);
+    }
+}
+
 // EXPORTS NO FINAL
 export {
     renderRoomFromData,
-    populateRoomData
+    populateRoomData,
+    populateRoomInputs
 };

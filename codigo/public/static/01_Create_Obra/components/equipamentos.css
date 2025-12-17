@@ -1,0 +1,616 @@
+/* equipamentos.css - Sistema 100% Responsivo Revisado */
+
+/* ===== RESET ===== */
+.equipamento-selector *,
+.equipamentos-table-container * {
+    box-sizing: border-box;
+}
+
+/* ===== CONTAINER DO SELECTOR ===== */
+.equipamento-selector {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+/* ===== GRADE DO SELECTOR - RESPONSIVA ===== */
+.selector-grid {
+    display: grid;
+    gap: 12px;
+    align-items: end;
+    
+    /* Desktop/Tablet: 5 colunas lado a lado */
+    grid-template-columns: repeat(5, 1fr);
+}
+
+/* Cada item do selector */
+.selector-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.selector-item label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Inputs e selects */
+.equipamento-select,
+.equipamento-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    transition: all 0.2s ease;
+    height: 40px;
+}
+
+.equipamento-select:focus,
+.equipamento-input:focus {
+    outline: none;
+    border-color: #228be6;
+    box-shadow: 0 0 0 3px rgba(34, 139, 230, 0.15);
+}
+
+.equipamento-select:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Botão Adicionar */
+.btn-add-equipamento {
+    background: #20c997;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    width: 100%;
+    height: 40px;
+    white-space: nowrap;
+}
+
+.btn-add-equipamento:hover {
+    background: #12b886;
+    transform: translateY(-1px);
+}
+
+.btn-add-equipamento:active {
+    transform: translateY(0);
+}
+
+.btn-icon {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* ===== TABELA RESPONSIVA ===== */
+.equipamentos-table-container {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    position: relative;
+    
+    /* Scroll horizontal */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    
+    /* Indicador visual */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.equipamentos-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    min-width: 800px; /* Força scroll em telas pequenas */
+}
+
+/* Cabeçalho */
+.equipamentos-table thead {
+    background: #495057;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.equipamentos-table th {
+    padding: 12px 15px;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+/* Larguras das colunas */
+.equipamentos-table th:nth-child(1) { width: 30%; } /* Equipamento */
+.equipamentos-table th:nth-child(2) { width: 25%; } /* Dimensão */
+.equipamentos-table th:nth-child(3) { width: 15%; } /* Qtd */
+.equipamentos-table th:nth-child(4) { width: 20%; } /* Valor Unit. */
+.equipamentos-table th:nth-child(5) { width: 10%; } /* Total */
+.equipamentos-table th:nth-child(6) { width: 10%; } /* Ações */
+
+/* Linhas */
+.equipamentos-table tbody tr {
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.equipamentos-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Células */
+.equipamentos-table td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+/* Alinhamentos específicos */
+.equipamentos-table td:nth-child(3) { text-align: center; } /* Qtd */
+.equipamentos-table td:nth-child(4),
+.equipamentos-table td:nth-child(5) { 
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+}
+.equipamentos-table td:nth-child(6) { text-align: center; } /* Ações */
+
+/* Botões na tabela */
+.btn-remove-equipamento,
+.btn-edit-equipamento {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    margin: 0 2px;
+}
+
+.btn-remove-equipamento {
+    color: #e03131;
+    background: rgba(224, 49, 49, 0.1);
+}
+
+.btn-remove-equipamento:hover {
+    background: rgba(224, 49, 49, 0.2);
+}
+
+.btn-edit-equipamento {
+    color: #228be6;
+    background: rgba(34, 139, 230, 0.1);
+}
+
+.btn-edit-equipamento:hover {
+    background: rgba(34, 139, 230, 0.2);
+}
+
+/* ===== BOTÕES DE AÇÃO INFERIORES ===== */
+.form-group.full-width.text-center {
+    display: flex;
+    flex-direction: row; /* Desktop: lado a lado */
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    flex-wrap: wrap;
+}
+
+.btn-load-equipamentos,
+.btn-clear-equipamentos {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 160px;
+    max-width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-load-equipamentos {
+    background: #495057;
+    color: white;
+}
+
+.btn-load-equipamentos:hover {
+    background: #343a40;
+    transform: translateY(-1px);
+}
+
+.btn-clear-equipamentos {
+    background: #e03131;
+    color: white;
+}
+
+.btn-clear-equipamentos:hover {
+    background: #c92a2a;
+    transform: translateY(-1px);
+}
+
+/* Efeito ativo */
+.btn-load-equipamentos:active,
+.btn-clear-equipamentos:active {
+    transform: translateY(0);
+}
+
+/* ===== RESPONSIVIDADE ===== */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+    .selector-grid {
+        grid-template-columns: repeat(3, 1fr); /* 3 colunas */
+        gap: 16px;
+    }
+    
+    .equipamentos-table {
+        min-width: 700px;
+    }
+    
+    .form-group.full-width.text-center {
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .btn-load-equipamentos,
+    .btn-clear-equipamentos {
+        min-width: 140px;
+        padding: 10px 20px;
+    }
+}
+
+/* Tablet Pequeno / Mobile Grande (576px - 768px) */
+@media (max-width: 768px) {
+    .selector-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas */
+        gap: 14px;
+    }
+    
+    .equipamento-selector {
+        padding: 14px;
+    }
+    
+    .equipamentos-table {
+        min-width: 600px;
+        font-size: 13px;
+    }
+    
+    .equipamentos-table th,
+    .equipamentos-table td {
+        padding: 10px 12px;
+    }
+    
+    /* Ajusta botões da tabela */
+    .btn-remove-equipamento,
+    .btn-edit-equipamento {
+        padding: 4px 8px;
+        min-width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+    
+    /* Botões inferiores: coluna em mobile */
+    .form-group.full-width.text-center {
+        flex-direction: column; /* COLUNA em mobile */
+        align-items: stretch; /* Estica para largura total */
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .btn-load-equipamentos,
+    .btn-clear-equipamentos {
+        width: 100%;
+        max-width: none; /* Remove limite máximo */
+        min-width: auto; /* Remove mínimo */
+        padding: 14px;
+    }
+}
+
+/* Mobile Médio (425px - 576px) */
+@media (max-width: 576px) {
+    .selector-grid {
+        grid-template-columns: 1fr; /* 1 COLUNA em mobile */
+        gap: 12px;
+    }
+    
+    .equipamento-selector {
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .selector-item label {
+        font-size: 13px;
+    }
+    
+    .equipamento-select,
+    .equipamento-input {
+        height: 44px; /* Mais alto para toque */
+        font-size: 16px; /* Maior para legibilidade */
+    }
+    
+    .btn-add-equipamento {
+        height: 44px;
+        font-size: 16px;
+    }
+    
+    .equipamentos-table {
+        min-width: 550px;
+        font-size: 12px;
+    }
+    
+    .equipamentos-table th,
+    .equipamentos-table td {
+        padding: 8px 10px;
+    }
+    
+    /* Redistribui larguras para mobile */
+    .equipamentos-table th:nth-child(1) { width: 35%; }
+    .equipamentos-table th:nth-child(2) { width: 20%; }
+    .equipamentos-table th:nth-child(3) { width: 10%; }
+    .equipamentos-table th:nth-child(4) { width: 20%; }
+    .equipamentos-table th:nth-child(5) { width: 10%; }
+    .equipamentos-table th:nth-child(6) { width: 5%; }
+    
+    .equipamentos-table td:nth-child(1) { width: 35%; }
+    .equipamentos-table td:nth-child(2) { width: 20%; }
+    .equipamentos-table td:nth-child(3) { width: 10%; }
+    .equipamentos-table td:nth-child(4) { width: 20%; }
+    .equipamentos-table td:nth-child(5) { width: 10%; }
+    .equipamentos-table td:nth-child(6) { width: 5%; }
+    
+    .btn-remove-equipamento,
+    .btn-edit-equipamento {
+        min-width: 30px;
+        height: 30px;
+        padding: 4px 6px;
+        font-size: 12px;
+        margin: 0 1px;
+    }
+    
+    .form-group.full-width.text-center {
+        margin-top: 16px;
+        padding: 14px;
+        gap: 10px;
+    }
+    
+    .btn-load-equipamentos,
+    .btn-clear-equipamentos {
+        padding: 12px;
+        font-size: 15px;
+    }
+}
+
+/* Mobile Pequeno (iPhone SE - 375px) */
+@media (max-width: 375px) {
+    .equipamento-selector {
+        padding: 10px;
+    }
+    
+    .selector-grid {
+        gap: 10px;
+    }
+    
+    .equipamento-select,
+    .equipamento-input {
+        height: 42px;
+        font-size: 15px;
+        padding: 8px 10px;
+    }
+    
+    .btn-add-equipamento {
+        height: 42px;
+        font-size: 15px;
+        padding: 0 12px;
+    }
+    
+    .equipamentos-table {
+        min-width: 500px;
+        font-size: 11px;
+    }
+    
+    .equipamentos-table th,
+    .equipamentos-table td {
+        padding: 6px 8px;
+    }
+    
+    .equipamentos-table th:nth-child(1) { width: 40%; }
+    .equipamentos-table th:nth-child(2) { width: 18%; }
+    .equipamentos-table th:nth-child(3) { width: 8%; }
+    .equipamentos-table th:nth-child(4) { width: 18%; }
+    .equipamentos-table th:nth-child(5) { width: 10%; }
+    .equipamentos-table th:nth-child(6) { width: 6%; }
+    
+    .equipamentos-table td:nth-child(1) { width: 40%; }
+    .equipamentos-table td:nth-child(2) { width: 18%; }
+    .equipamentos-table td:nth-child(3) { width: 8%; }
+    .equipamentos-table td:nth-child(4) { width: 18%; }
+    .equipamentos-table td:nth-child(5) { width: 10%; }
+    .equipamentos-table td:nth-child(6) { width: 6%; }
+    
+    .btn-remove-equipamento,
+    .btn-edit-equipamento {
+        min-width: 28px;
+        height: 28px;
+        padding: 3px 5px;
+        font-size: 11px;
+    }
+    
+    .form-group.full-width.text-center {
+        padding: 12px;
+    }
+    
+    .btn-load-equipamentos,
+    .btn-clear-equipamentos {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
+
+/* Mobile Muito Pequeno (iPhone SE antigo - 320px) */
+@media (max-width: 320px) {
+    .equipamento-selector {
+        padding: 8px;
+    }
+    
+    .selector-grid {
+        gap: 8px;
+    }
+    
+    .equipamento-select,
+    .equipamento-input {
+        height: 40px;
+        font-size: 14px;
+        padding: 6px 8px;
+    }
+    
+    .btn-add-equipamento {
+        height: 40px;
+        font-size: 14px;
+        padding: 0 10px;
+    }
+    
+    .equipamentos-table {
+        min-width: 480px;
+        font-size: 10px;
+    }
+    
+    .equipamentos-table th,
+    .equipamentos-table td {
+        padding: 5px 6px;
+    }
+    
+    .equipamentos-table th:nth-child(1) { width: 42%; }
+    .equipamentos-table th:nth-child(2) { width: 16%; }
+    .equipamentos-table th:nth-child(3) { width: 7%; }
+    .equipamentos-table th:nth-child(4) { width: 18%; }
+    .equipamentos-table th:nth-child(5) { width: 10%; }
+    .equipamentos-table th:nth-child(6) { width: 7%; }
+    
+    .equipamentos-table td:nth-child(1) { width: 42%; }
+    .equipamentos-table td:nth-child(2) { width: 16%; }
+    .equipamentos-table td:nth-child(3) { width: 7%; }
+    .equipamentos-table td:nth-child(4) { width: 18%; }
+    .equipamentos-table td:nth-child(5) { width: 10%; }
+    .equipamentos-table td:nth-child(6) { width: 7%; }
+    
+    .btn-remove-equipamento,
+    .btn-edit-equipamento {
+        min-width: 26px;
+        height: 26px;
+        padding: 2px 4px;
+        font-size: 10px;
+    }
+    
+    .form-group.full-width.text-center {
+        padding: 10px;
+    }
+    
+    .btn-load-equipamentos,
+    .btn-clear-equipamentos {
+        padding: 8px;
+        font-size: 13px;
+    }
+}
+
+/* ===== SCROLLBAR PERSONALIZADA ===== */
+.equipamentos-table-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.equipamentos-table-container::-webkit-scrollbar-track {
+    background: #f1f3f5;
+    border-radius: 3px;
+}
+
+.equipamentos-table-container::-webkit-scrollbar-thumb {
+    background: #adb5bd;
+    border-radius: 3px;
+}
+
+.equipamentos-table-container::-webkit-scrollbar-thumb:hover {
+    background: #868e96;
+}
+
+/* ===== UTILITÁRIOS PARA DISPOSITIVOS TOUCH ===== */
+@media (hover: none) and (pointer: coarse) {
+    /* Botões maiores para toque */
+    .btn-add-equipamento,
+    .btn-remove-equipamento,
+    .btn-edit-equipamento,
+    .btn-load-equipamentos,
+    .btn-clear-equipamentos {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Inputs maiores */
+    .equipamento-select,
+    .equipamento-input {
+        min-height: 44px;
+        font-size: 16px;
+    }
+    
+    /* Remove hover effects */
+    .btn-add-equipamento:hover,
+    .btn-remove-equipamento:hover,
+    .btn-edit-equipamento:hover,
+    .btn-load-equipamentos:hover,
+    .btn-clear-equipamentos:hover {
+        transform: none;
+    }
+    
+    .equipamentos-table tbody tr:hover {
+        background-color: inherit;
+    }
+}
+
+
+
+/* ===== ESTADOS DE FOCO ===== */
+.btn-add-equipamento:focus,
+.btn-remove-equipamento:focus,
+.btn-edit-equipamento:focus,
+.btn-load-equipamentos:focus,
+.btn-clear-equipamentos:focus,
+.equipamento-select:focus,
+.equipamento-input:focus {
+    outline: 2px solid #228be6;
+    outline-offset: 2px;
+}

@@ -43,6 +43,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         '/obras': 'handle_get_obras',
         '/api/server/uptime': 'handle_get_server_uptime',
 
+        # ========== ROTAS PARA EQUIPAMENTOS ==========
+        '/api/equipamentos': 'handle_get_equipamentos',
+        '/api/equipamentos/types': 'handle_get_equipamento_types',
+        '/api/equipamentos/dimensoes': 'handle_get_equipamento_dimensoes',
+
         # ========== NOVAS ROTAS PARA SISTEMA DE EDIÇÃO ==========
         
         # ROTAS GET - DADOS DO SISTEMA
@@ -189,6 +194,15 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif path.startswith('/api/machines/'):
             self.handle_machine_routes(path)
         
+        # ========== ROTAS PARA EQUIPAMENTOS ==========
+    
+        # Rotas de equipamentos com parâmetros
+        elif path.startswith('/api/equipamentos/type/'):
+            self.handle_get_equipamento_by_type()
+        
+        elif path.startswith('/api/equipamentos/search'):
+            self.handle_get_search_equipamentos()
+            
         # ========== ARQUIVOS ESTÁTICOS ==========
         else:
             # Serve arquivo estático COM HEADERS ANTI-CACHE
@@ -204,8 +218,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         print(f"📨 POST: {path}")
         
-        # ========== NOVAS ROTAS PARA EXCEL/JSON ==========
-        if path == '/api/excel/upload':
+        # ========== ROTAS PARA EQUIPAMENTOS ==========
+        
+        # ROTAS PARA EQUIPAMENTOS
+        if path == '/api/equipamentos/add':
+            self.handle_post_add_equipamento()
+        elif path == '/api/equipamentos/update':
+            self.handle_post_update_equipamento()
+        elif path == '/api/equipamentos/delete':
+            self.handle_post_delete_equipamento()
+        
+        # ========== ROTAS PARA EXCEL/JSON ==========
+        elif path == '/api/excel/upload':
             self.handle_post_excel_upload()
         elif path == '/api/excel/export':
             self.handle_post_excel_export()
@@ -276,7 +300,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         else:
             print(f"❌ POST não implementado: {path}")
             self.send_error(501, f"Método não suportado: POST {path}")
-            
         
     def do_PUT(self):
         """PUT para atualizações"""
@@ -886,7 +909,520 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "total_removed": total_removed,
             "has_changes": (total_added + total_modified + total_removed) > 0
         }
+                    
+    def handle_get_equipamentos(self):
+        """GET /api/equipamentos - Retorna todos os equipamentos"""
+        try:
+            # Carrega dados.json
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo dados.json não encontrado"
+                }, status=404)
+                return
+            
+            with open(dados_file, 'r', encoding='utf-8') as f:
+                dados_data = json.load(f)
+            
+            # Verifica se existe a seção banco_equipamentos
+            banco_equipamentos = dados_data.get("banco_equipamentos", {})
+            
+            self.send_json_response({
+                "success": True,
+                "equipamentos": banco_equipamentos,
+                "count": len(banco_equipamentos)
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_equipamentos: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)
+
+    def handle_get_equipamento_types(self):
+        """GET /api/equipamentos/types - Retorna tipos de equipamentos"""
+        try:
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo dados.json não encontrado"
+                }, status=404)
+                return
+            
+            with open(dados_file, 'r', encoding='utf-8') as f:
+                dados_data = json.load(f)
+            
+            banco_equipamentos = dados_data.get("banco_equipamentos", {})
+            types = list(banco_equipamentos.keys())
+            
+            # Ordenar tipos (opcional)
+            types.sort()
+            
+            self.send_json_response({
+                "success": True,
+                "types": types,
+                "count": len(types)
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_equipamento_types: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)
+
+    def handle_get_equipamento_by_type(self):
+        """GET /api/equipamentos/type/{type} - Retorna equipamentos por tipo"""
+        try:
+            # Extrair tipo da URL
+            path_parts = self.path.split('/')
+            if len(path_parts) < 5:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Tipo não especificado na URL"
+                }, status=400)
+                return
+            
+            tipo = path_parts[-1]
+            
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo dados.json não encontrado"
+                }, status=404)
+                return
+            
+            with open(dados_file, 'r', encoding='utf-8') as f:
+                dados_data = json.load(f)
+            
+            banco_equipamentos = dados_data.get("banco_equipamentos", {})
+            
+            if tipo in banco_equipamentos:
+                equipamento = banco_equipamentos[tipo]
                 
+                # Adicionar estatísticas
+                valores = equipamento.get("valores_padrao", {})
+                dimensoes = list(valores.keys())
                 
+                # Calcular preço médio
+                precos = list(valores.values())
+                preco_medio = sum(precos) / len(precos) if precos else 0
                 
+                self.send_json_response({
+                    "success": True,
+                    "tipo": tipo,
+                    "equipamento": equipamento,
+                    "estatisticas": {
+                        "quantidade_dimensoes": len(dimensoes),
+                        "dimensoes": dimensoes[:10],  # Primeiras 10 dimensões
+                        "preco_medio": round(preco_medio, 2),
+                        "preco_min": min(precos) if precos else 0,
+                        "preco_max": max(precos) if precos else 0
+                    }
+                })
+            else:
+                self.send_json_response({
+                    "success": False,
+                    "error": f"Tipo de equipamento '{tipo}' não encontrado"
+                }, status=404)
                 
+        except Exception as e:
+            print(f"❌ Erro em handle_get_equipamento_by_type: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)
+
+    def handle_post_add_equipamento(self):
+        """POST /api/equipamentos/add - Adiciona novo equipamento"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            # Validar dados
+            required_fields = ['tipo', 'descricao', 'valores']
+            for field in required_fields:
+                if field not in data:
+                    self.send_json_response({
+                        "success": False,
+                        "error": f"Campo obrigatório faltando: {field}"
+                    }, status=400)
+                    return
+            
+            tipo = data['tipo']
+            
+            # Carregar dados.json
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo dados.json não encontrado"
+                }, status=404)
+                return
+            
+            with open(dados_file, 'r', encoding='utf-8') as f:
+                dados_data = json.load(f)
+            
+            # Garantir que existe a seção banco_equipamentos
+            if "banco_equipamentos" not in dados_data:
+                dados_data["banco_equipamentos"] = {}
+            
+            banco_equipamentos = dados_data["banco_equipamentos"]
+            
+            # Verificar se tipo já existe
+            if tipo in banco_equipamentos:
+                self.send_json_response({
+                    "success": False,
+                    "error": f"Tipo '{tipo}' já existe"
+                }, status=400)
+                return
+            
+            # Adicionar novo equipamento
+            novo_equipamento = {
+                "descricao": data['descricao'],
+                "valores_padrao": data['valores']
+            }
+            
+            # Adicionar dimensões se fornecidas
+            if 'dimensoes' in data:
+                novo_equipamento["dimensoes"] = data['dimensoes']
+            
+            # Adicionar unidade se fornecida
+            if 'unidade_valor' in data:
+                novo_equipamento["unidade_valor"] = data['unidade_valor']
+            
+            banco_equipamentos[tipo] = novo_equipamento
+            
+            # Salvar dados atualizados
+            with open(dados_file, 'w', encoding='utf-8') as f:
+                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            
+            self.send_json_response({
+                "success": True,
+                "message": f"Equipamento '{tipo}' adicionado com sucesso",
+                "equipamento": novo_equipamento
+            })
+                
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False,
+                "error": "JSON inválido"
+            }, status=400)
+        except Exception as e:
+            print(f"❌ Erro em handle_post_add_equipamento: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)
+
+    def handle_post_update_equipamento(self):
+        """POST /api/equipamentos/update - Atualiza equipamento existente"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            # Validar dados
+            if 'tipo' not in data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Campo 'tipo' é obrigatório"
+                }, status=400)
+                return
+            
+            tipo = data['tipo']
+            
+            # Carregar dados.json
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo dados.json não encontrado"
+                }, status=404)
+                return
+            
+            with open(dados_file, 'r', encoding='utf-8') as f:
+                dados_data = json.load(f)
+            
+            # Verificar se existe a seção banco_equipamentos
+            if "banco_equipamentos" not in dados_data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Seção 'banco_equipamentos' não encontrada"
+                }, status=404)
+                return
+            
+            banco_equipamentos = dados_data["banco_equipamentos"]
+            
+            # Verificar se tipo existe
+            if tipo not in banco_equipamentos:
+                self.send_json_response({
+                    "success": False,
+                    "error": f"Tipo '{tipo}' não encontrado"
+                }, status=404)
+                return
+            
+            # Atualizar campos
+            equipamento_atual = banco_equipamentos[tipo]
+            
+            if 'descricao' in data:
+                equipamento_atual['descricao'] = data['descricao']
+            
+            if 'valores' in data:
+                equipamento_atual['valores_padrao'] = data['valores']
+            
+            if 'dimensoes' in data:
+                equipamento_atual['dimensoes'] = data['dimensoes']
+            
+            if 'unidade_valor' in data:
+                equipamento_atual['unidade_valor'] = data['unidade_valor']
+            
+            # Salvar dados atualizados
+            with open(dados_file, 'w', encoding='utf-8') as f:
+                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            
+            self.send_json_response({
+                "success": True,
+                "message": f"Equipamento '{tipo}' atualizado com sucesso",
+                "equipamento": equipamento_atual
+            })
+                
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False,
+                "error": "JSON inválido"
+            }, status=400)
+        except Exception as e:
+            print(f"❌ Erro em handle_post_update_equipamento: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)
+
+    def handle_post_delete_equipamento(self):
+        """POST /api/equipamentos/delete - Remove equipamento"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            if 'tipo' not in data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Campo 'tipo' é obrigatório"
+                }, status=400)
+                return
+            
+            tipo = data['tipo']
+            
+            # Carregar dados.json
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo dados.json não encontrado"
+                }, status=404)
+                return
+            
+            with open(dados_file, 'r', encoding='utf-8') as f:
+                dados_data = json.load(f)
+            
+            # Verificar se existe a seção banco_equipamentos
+            if "banco_equipamentos" not in dados_data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Seção 'banco_equipamentos' não encontrada"
+                }, status=404)
+                return
+            
+            banco_equipamentos = dados_data["banco_equipamentos"]
+            
+            # Verificar se tipo existe
+            if tipo not in banco_equipamentos:
+                self.send_json_response({
+                    "success": False,
+                    "error": f"Tipo '{tipo}' não encontrado"
+                }, status=404)
+                return
+            
+            # Remover equipamento
+            equipamento_removido = banco_equipamentos.pop(tipo)
+            
+            # Salvar dados atualizados
+            with open(dados_file, 'w', encoding='utf-8') as f:
+                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            
+            self.send_json_response({
+                "success": True,
+                "message": f"Equipamento '{tipo}' removido com sucesso",
+                "equipamento_removido": equipamento_removido
+            })
+                
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False,
+                "error": "JSON inválido"
+            }, status=400)
+        except Exception as e:
+            print(f"❌ Erro em handle_post_delete_equipamento: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)
+
+    def handle_get_search_equipamentos(self):
+        """GET /api/equipamentos/search?q=termo - Busca equipamentos"""
+        try:
+            # Extrair parâmetro de busca da query string
+            parsed_path = urlparse(self.path)
+            query_params = parse_qs(parsed_path.query)
+            termo = query_params.get('q', [''])[0].lower()
+            
+            if not termo:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Termo de busca não fornecido"
+                }, status=400)
+                return
+            
+            # Carregar dados.json
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo dados.json não encontrado"
+                }, status=404)
+                return
+            
+            with open(dados_file, 'r', encoding='utf-8') as f:
+                dados_data = json.load(f)
+            
+            # Verificar se existe a seção banco_equipamentos
+            if "banco_equipamentos" not in dados_data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Seção 'banco_equipamentos' não encontrada"
+                }, status=404)
+                return
+            
+            banco_equipamentos = dados_data["banco_equipamentos"]
+            
+            resultados = []
+            for tipo, dados in banco_equipamentos.items():
+                # Buscar no tipo
+                if termo in tipo.lower():
+                    resultados.append({
+                        "tipo": tipo,
+                        "descricao": dados.get("descricao", ""),
+                        "match": "tipo",
+                        "valores_count": len(dados.get("valores_padrao", {}))
+                    })
+                    continue
+                
+                # Buscar na descrição
+                descricao = dados.get("descricao", "").lower()
+                if termo in descricao:
+                    resultados.append({
+                        "tipo": tipo,
+                        "descricao": dados.get("descricao", ""),
+                        "match": "descricao",
+                        "valores_count": len(dados.get("valores_padrao", {}))
+                    })
+                    continue
+                
+                # Buscar nas dimensões/valores
+                valores = dados.get("valores_padrao", {})
+                for dimensao, valor in valores.items():
+                    if termo in dimensao.lower():
+                        resultados.append({
+                            "tipo": tipo,
+                            "descricao": dados.get("descricao", ""),
+                            "dimensao_encontrada": dimensao,
+                            "valor": valor,
+                            "match": "dimensao",
+                            "valores_count": len(valores)
+                        })
+                        break
+            
+            self.send_json_response({
+                "success": True,
+                "termo": termo,
+                "resultados": resultados,
+                "count": len(resultados)
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_search_equipamentos: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)
+
+    def handle_get_equipamento_dimensoes(self):
+        """GET /api/equipamentos/dimensoes - Retorna dimensões disponíveis"""
+        try:
+            # Carregar dados.json
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo dados.json não encontrado"
+                }, status=404)
+                return
+            
+            with open(dados_file, 'r', encoding='utf-8') as f:
+                dados_data = json.load(f)
+            
+            # Verificar se existe a seção banco_equipamentos
+            if "banco_equipamentos" not in dados_data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Seção 'banco_equipamentos' não encontrada"
+                }, status=404)
+                return
+            
+            banco_equipamentos = dados_data["banco_equipamentos"]
+            
+            # Coletar todas as dimensões únicas
+            todas_dimensoes = set()
+            dimensoes_por_tipo = {}
+            
+            for tipo, dados in banco_equipamentos.items():
+                valores = dados.get("valores_padrao", {})
+                dimensoes = list(valores.keys())
+                
+                dimensoes_por_tipo[tipo] = {
+                    "descricao": dados.get("descricao", ""),
+                    "dimensoes": dimensoes,
+                    "quantidade": len(dimensoes)
+                }
+                
+                # Adicionar dimensões ao conjunto geral
+                todas_dimensoes.update(dimensoes)
+            
+            self.send_json_response({
+                "success": True,
+                "dimensoes_por_tipo": dimensoes_por_tipo,
+                "todas_dimensoes": sorted(list(todas_dimensoes)),
+                "total_dimensoes": len(todas_dimensoes)
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_equipamento_dimensoes: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)

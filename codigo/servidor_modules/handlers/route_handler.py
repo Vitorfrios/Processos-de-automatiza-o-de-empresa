@@ -399,3 +399,37 @@ class RouteHandler:
         """POST /api/system/compare (alias para apply-json)"""
         # Delegar para o handler HTTP
         handler.handle_post_system_apply_json()
+        
+    # route_handler.py - Adicionar estes métodos:
+
+    def handle_get_equipamentos(self, handler):
+        """GET /api/equipamentos"""
+        handler.handle_get_equipamentos()
+
+    def handle_get_equipamento_types(self, handler):
+        """GET /api/equipamentos/types"""
+        handler.handle_get_equipamento_types()
+
+    def handle_get_equipamento_dimensoes(self, handler):
+        """GET /api/equipamentos/dimensoes"""
+        handler.handle_get_equipamento_dimensoes()
+
+    def handle_get_equipamento_by_type(self, handler):
+        """GET /api/equipamentos/type/{type}"""
+        handler.handle_get_equipamento_by_type()
+
+    def handle_get_search_equipamentos(self, handler):
+        """GET /api/equipamentos/search"""
+        handler.handle_get_search_equipamentos()
+
+    def handle_post_add_equipamento(self, handler):
+        """POST /api/equipamentos/add"""
+        handler.handle_post_add_equipamento()
+
+    def handle_post_update_equipamento(self, handler):
+        """POST /api/equipamentos/update"""
+        handler.handle_post_update_equipamento()
+
+    def handle_post_delete_equipamento(self, handler):
+        """POST /api/equipamentos/delete"""
+        handler.handle_post_delete_equipamento()
