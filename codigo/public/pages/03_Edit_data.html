@@ -81,6 +81,7 @@
             <button class="tab" onclick="switchTab('machines')">Máquinas</button>
             <button class="tab" onclick="switchTab('materials')">Materiais</button>
             <button class="tab" onclick="switchTab('empresas')">Empresas</button>
+            <button class="tab" onclick="switchTab('equipments')">Equipamentos</button>
             <button class="tab" onclick="switchTab('raw')">JSON Bruto</button>
         </div>
 
@@ -186,6 +187,62 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Tab Equipamentos -->
+            <div id="equipmentsTab" class="tab-pane">
+                <div class="tab-header">
+                    <h2><i class="icon-equipment"></i> Equipamentos e Preços</h2>
+                    <div class="equipment-actions-bar">
+                        <select id="equipmentTypeFilter" onchange="filterEquipmentTable()"
+                            class="form-control form-control-sm" style="width: 300px;">
+                            <option value="">Todos os tipos</option>
+                        </select>
+                        <button class="btn btn-sm btn-success" onclick="addNewEquipmentType()">
+                            <i class="icon-add"></i> Novo Tipo
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- Visão em Tabela -->
+                <div id="equipmentTableView">
+                    <div class="equipment-table-wrapper">
+                        <table class="equipment-table">
+                            <thead>
+                                <tr>
+                                    <th width="20%">Código</th>
+                                    <th width="30%">Descrição</th>
+                                    <th width="20%">Dimensão</th>
+                                    <th width="20%">Valor (R$)</th>
+                                    <th width="10%">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="equipmentsTableBody">
+                                <!-- Dados carregados via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Visualização em Detalhes -->
+                <div class="equipment-detail-view" id="equipmentDetailView">
+                    <div class="detail-header">
+                        <h3>Editando: <span id="equipmentDetailTitle"></span></h3>
+                        <div class="detail-header-actions">
+                            <button class="btn btn-sm btn-warning" onclick="resetEquipmentChanges()">
+                                <i class="icon-refresh"></i> Descartar
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="closeEquipmentDetail()">
+                                <i class="icon-close"></i> Fechar
+                            </button>
+                        </div>
+                    </div>
+                    <div id="equipmentDetailContent">
+                        <!-- Formulário carregado dinamicamente -->
+                    </div>
+                </div>
+            </div>
+
 
             <!-- Tab JSON Bruto -->
             <div id="rawTab" class="tab-pane">

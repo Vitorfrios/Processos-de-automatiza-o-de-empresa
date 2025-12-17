@@ -5,7 +5,6 @@ export async function loadModules() {
     try {
         // Carrega os módulos na ordem correta
         const modules = [
-            
             './ExpImpJsonFilles/json-utils.js',
             './config/state.js',
             './config/api.js',
@@ -13,7 +12,8 @@ export async function loadModules() {
             './core/constants.js',
             './core/machines.js',
             './core/materials.js',
-            './core/empresas.js'
+            './core/empresas.js',
+            './core/equipamentos.js'  // Este já está aqui
         ];
 
         for (const module of modules) {

@@ -357,7 +357,6 @@
 }
 
 .delete-tensao-btn:hover {
-    background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
     transform: scale(1.05);
 }
 
@@ -450,7 +449,6 @@
 }
 
 .btn-danger:hover {
-    background: var(--color-danger-dark);
     transform: scale(1.05);
 }
 
@@ -494,7 +492,6 @@
 .voltage-card {
     --header-bg: var(--color-gray-50);
     --border-color: var(--color-gray-300);
-    --hover-border-color: var(--color-primary-light);
 }
 
 .base-value-field label,

@@ -8,6 +8,8 @@
 @import url('machines/machine_toggles_responsive.css');
 @import url('edit-data-responsive.css');
 @import url('json-editor-styles.css');
+@import url('equipaments.css');
+
 
 .edit-data-container {
     padding: var(--spacing-md);

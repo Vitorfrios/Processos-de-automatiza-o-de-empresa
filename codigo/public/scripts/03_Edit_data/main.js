@@ -222,6 +222,8 @@ window.addEventListener('dataApplied', function(event) {
 // Função para switchTab (se não existir)
 if (typeof window.switchTab === 'undefined') {
     window.switchTab = function(tabName) {
+        console.log(`🔄 Alternando para tab: ${tabName}`);
+        
         // Esconder todas as tabs
         document.querySelectorAll('.tab-pane').forEach(tab => {
             tab.classList.remove('active');
@@ -238,6 +240,28 @@ if (typeof window.switchTab === 'undefined') {
         if (tabElement) {
             tabElement.classList.add('active');
             tabElement.style.display = 'block';
+            
+            // Disparar evento personalizado
+            const event = new CustomEvent('tabChanged', {
+                detail: { tab: tabName }
+            });
+            document.dispatchEvent(event);
+            
+            // Ações específicas por tab
+            switch(tabName) {
+                case 'equipments':
+                    console.log('🎯 Tab de equipamentos ativada');
+                    if (typeof window.loadEquipmentsData === 'function') {
+                        setTimeout(window.loadEquipmentsData, 100);
+                    }
+                    break;
+                case 'raw':
+                    console.log('🎯 Tab JSON ativada');
+                    if (typeof window.initJSONEditor === 'function') {
+                        setTimeout(window.initJSONEditor, 100);
+                    }
+                    break;
+            }
         }
         
         // Ativar botão correspondente
