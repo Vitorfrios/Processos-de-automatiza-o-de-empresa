@@ -154,23 +154,23 @@
       ]
     },
     {
-      "id": "obra_n34",
+      "id": "obra_h89",
       "nome": "Obra1",
-      "empresa_id": "empresa_obra_n34",
+      "empresa_id": "empresa_obra_h89",
       "empresaSigla": "AMC",
       "empresaNome": "AMC SOLUÇÕES",
-      "numeroClienteFinal": 1,
-      "clienteFinal": "b",
-      "codigoCliente": "xcb",
-      "dataCadastro": "15/12/2025",
-      "orcamentistaResponsavel": "cxbxcbvx",
+      "numeroClienteFinal": 2,
+      "clienteFinal": "sd",
+      "codigoCliente": "asdf",
+      "dataCadastro": "16/12/2025",
+      "orcamentistaResponsavel": "asdf",
       "projetos": [
         {
-          "id": "obra_n34_proj_d55_2",
+          "id": "obra_h89_proj_n42_2",
           "nome": "Projeto1",
           "salas": [
             {
-              "id": "obra_n34_proj_d55_2_sala_g84_1",
+              "id": "obra_h89_proj_n42_2_sala_t43_1",
               "nome": "Sala1",
               "inputs": {
                 "ambiente": "Sala de Servidores",
@@ -197,36 +197,64 @@
               },
               "maquinas": [
                 {
-                  "nome": "Split System-01A (45TR)",
-                  "tipo": "Split System",
-                  "potencia": "45TR",
-                  "tensao": "220V/3F",
-                  "precoBase": 3,
-                  "opcoesSelecionadas": [
-                    {
-                      "id": 11,
-                      "name": "Pintura Especial",
-                      "value": 7,
-                      "originalName": "Pintura Especial",
-                      "potenciaAplicada": "45TR"
-                    },
-                    {
-                      "id": 12,
-                      "name": "Chaparia em Inox",
-                      "value": 8,
-                      "originalName": "Chaparia em Inox",
-                      "potenciaAplicada": "45TR"
-                    }
-                  ],
-                  "configuracoesSelecionadas": [
-                    {
-                      "id": 1,
-                      "nome": "Unidade interna instalada no forro"
-                    }
-                  ],
-                  "precoTotal": 5018,
-                  "potenciaSelecionada": "45TR",
-                  "tipoSelecionado": "Split System"
+                  "nome": "Wall Mounted-02C (1TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "1TR",
+                  "tensao": "",
+                  "precoBase": 26890,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 26890,
+                  "potenciaSelecionada": "1TR",
+                  "tipoSelecionado": "Wall Mounted"
+                },
+                {
+                  "nome": "Wall Mounted-02B (1TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "1TR",
+                  "tensao": "",
+                  "precoBase": 26890,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 26890,
+                  "potenciaSelecionada": "1TR",
+                  "tipoSelecionado": "Wall Mounted"
+                },
+                {
+                  "nome": "Wall Mounted-02A (1TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "1TR",
+                  "tensao": "",
+                  "precoBase": 26890,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 26890,
+                  "potenciaSelecionada": "1TR",
+                  "tipoSelecionado": "Wall Mounted"
+                },
+                {
+                  "nome": "Wall Mounted-01A (7,5TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "7,5TR",
+                  "tensao": "",
+                  "precoBase": 48283,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 48283,
+                  "potenciaSelecionada": "7,5TR",
+                  "tipoSelecionado": "Wall Mounted"
+                },
+                {
+                  "nome": "Caixa de Ventilação-01A (1500m³/h)",
+                  "tipo": "Caixa de Ventilação",
+                  "potencia": "1500m³/h",
+                  "tensao": "",
+                  "precoBase": 3000,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 3000,
+                  "potenciaSelecionada": "1500m³/h",
+                  "tipoSelecionado": "Caixa de Ventilação"
                 }
               ],
               "capacidade": {
@@ -256,8 +284,7 @@
                   "bocal_acoplado_dutos",
                   "condicionadores_externos_se"
                 ]
-              },
-              "somavaloresmaquinatotal": 5018
+              }
             }
           ]
         }

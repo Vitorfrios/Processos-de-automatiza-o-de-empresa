@@ -1,10 +1,10 @@
 /**
  * acessorios.js - ATUALIZADO COM IDs SEGUROS
- * Constrói a seção de Acessorios de instalação para uma sala
+ * Constrói a seção de Acessórios de Difusão e Controle de Ar para uma sala
  */
 
 /**
- * Constrói a seção de Acessorios de instalação para uma sala
+ * Constrói a seção de Acessórios de Difusão e Controle de Ar para uma sala
  * Inclui opções de instalação de climatização em formato de grid com checkboxes
  * @param {string} obraId - ID único da obra
  * @param {string} projectId - ID único do projeto
@@ -26,7 +26,7 @@ function buildAccessoriesSection(obraId, projectId, roomName, finalRoomId) {
     <div class="section-block">
       <div class="section-header">
         <button class="minimizer" onclick="toggleSection('${roomId}accessory')">+</button>
-        <h4 class="section-title">Acessorios de Instalação</h4>
+        <h4 class="section-title">Acessórios de Difusão e Controle de Ar</h4>
       </div>
       <div class="section-content collapsed" id="section-content-${roomId}accessory">
         <div class="form-grid">

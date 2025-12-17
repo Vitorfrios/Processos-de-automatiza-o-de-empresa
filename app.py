@@ -11,7 +11,7 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.datetime.now().isoformat(),
         'service': 'obra-system',
-        'python_version': '3.11.0'
+        'python_version': '3.11.9'
     }), 200
 
 # Status do servidor
