@@ -1,5 +1,55 @@
 {
   "obras": [
-
+    {
+      "id": "obra_k12",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_k12",
+      "dataCadastro": "17/12/2025",
+      "projetos": [
+        {
+          "id": "obra_k12_proj_d52_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_k12_proj_d52_2_sala_j96_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "equipamentos": []
+            }
+          ]
+        }
+      ]
+    }
   ]
 }

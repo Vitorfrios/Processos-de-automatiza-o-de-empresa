@@ -1,20 +1,17 @@
-/* ==== INÍCIO: features/filters/button-mode-manager.js ==== */
-/**
- * ButtonModeManager - Gerencia o modo dos botões (normal vs filtro)
- * Versão em Classe ES6 para compatibilidade com import/export
- */
+/* ==== INÍCIO: button-mode-manager.js ==== */
 /**
  * ButtonModeManager - Gerencia APENAS a mudança de texto dos botões
  * Versão SIMPLES: muda "Remover" para "Deletar" quando filtro ativo
+ * COM INTEGRAÇÃO com ButtonDeleteUniversal
  */
 class ButtonModeManager {
     constructor() {
         this.state = {
             filterMode: false,
-            originalTexts: new Map() // Guarda textos originais
+            originalTexts: new Map()
         };
         
-        console.log('✅ ButtonModeManager criado (versão SIMPLES)');
+        console.log('✅ ButtonModeManager criado (versão COM INTEGRAÇÃO)');
     }
 
     /**
@@ -23,9 +20,17 @@ class ButtonModeManager {
     enableFilterMode() {
         if (this.state.filterMode) return;
         
-        console.log('🎛️ [BUTTON-MANAGER] Ativando modo filtro (mudando textos)...');
+        console.log('🎛️ [BUTTON-MANAGER] Ativando modo filtro...');
         this.state.filterMode = true;
         this.changeButtonTexts('Deletar');
+        
+        // 🔥 ATIVAR ButtonDeleteUniversal
+        if (window.ButtonDeleteUniversal && window.ButtonDeleteUniversal.setupAllDeleteButtons) {
+            setTimeout(() => {
+                window.ButtonDeleteUniversal.setupAllDeleteButtons();
+                console.log('✅ [BUTTON-MANAGER] ButtonDeleteUniversal ativado');
+            }, 300);
+        }
     }
 
     /**
@@ -34,9 +39,47 @@ class ButtonModeManager {
     disableFilterMode() {
         if (!this.state.filterMode) return;
         
-        console.log('🎛️ [BUTTON-MANAGER] Desativando modo filtro (restaurando textos)...');
+        console.log('🎛️ [BUTTON-MANAGER] Desativando modo filtro...');
         this.state.filterMode = false;
         this.restoreButtonTexts();
+        
+        // 🔥 DESATIVAR ButtonDeleteUniversal
+        this.disableUniversalDeleteButtons();
+    }
+
+    /**
+     * 🔥 NOVO: Desativa botões universais quando filtro desativado
+     */
+    disableUniversalDeleteButtons() {
+        if (window.ButtonDeleteUniversal && window.ButtonDeleteUniversal.restoreOriginalButtons) {
+            const restoredCount = window.ButtonDeleteUniversal.restoreOriginalButtons();
+            console.log(`✅ [BUTTON-MANAGER] ${restoredCount} botões universais desativados`);
+        } else {
+            // Fallback manual
+            const deleteButtons = document.querySelectorAll('.delete-real');
+            
+            deleteButtons.forEach(button => {
+                const originalOnclick = button.getAttribute('data-original-onclick');
+                const originalText = button.getAttribute('data-original-text');
+                
+                if (originalOnclick) {
+                    button.setAttribute('onclick', originalOnclick);
+                }
+                
+                if (originalText) {
+                    button.textContent = originalText;
+                }
+                
+                button.classList.remove('delete-real');
+                button.removeAttribute('data-original-onclick');
+                button.removeAttribute('data-original-text');
+                button.removeAttribute('data-button-type');
+                button.removeAttribute('data-item-id');
+                button.removeAttribute('data-item-name');
+            });
+            
+            console.log(`✅ [BUTTON-MANAGER] ${deleteButtons.length} botões restaurados manualmente`);
+        }
     }
 
     /**
@@ -45,7 +88,6 @@ class ButtonModeManager {
     changeButtonTexts(newText) {
         console.log(`🔄 Mudando textos dos botões para: "${newText}"`);
         
-        // 🔥 BUSCAR TODOS OS BOTÕES COM "Remover"
         const allButtons = document.querySelectorAll('button');
         
         allButtons.forEach(button => {
@@ -59,7 +101,6 @@ class ButtonModeManager {
                     this.state.originalTexts.set(button, text);
                 }
                 
-                // 🔥 MUDAR APENAS O TEXTO, MANTENDO O RESTO
                 if (text === 'Remover') {
                     button.textContent = newText;
                 } else if (text === 'Remover Projeto') {
@@ -68,7 +109,7 @@ class ButtonModeManager {
                     button.textContent = text.replace('Remover', newText);
                 }
                 
-                // 🔥 ADICIONAR CLASSE PARA ESTILO (OPCIONAL)
+                // Adicionar classe para estilo
                 button.classList.add('filter-mode-active');
                 button.style.fontWeight = 'bold';
                 
@@ -131,6 +172,11 @@ class ButtonModeManager {
                     // Se novos botões foram adicionados e estamos no modo filtro
                     setTimeout(() => {
                         this.changeButtonTexts('Deletar');
+                        
+                        // Configurar botões de deleção universal
+                        if (window.ButtonDeleteUniversal && window.ButtonDeleteUniversal.setupAllDeleteButtons) {
+                            window.ButtonDeleteUniversal.setupAllDeleteButtons();
+                        }
                     }, 100);
                 }
             });
@@ -145,7 +191,7 @@ class ButtonModeManager {
      * Inicializa o gerenciador
      */
     initialize() {
-        console.log('🔧 [BUTTON-MANAGER] Inicializando (versão SIMPLES)...');
+        console.log('🔧 [BUTTON-MANAGER] Inicializando (versão COM INTEGRAÇÃO)...');
         
         this.setupMutationObserver();
         setTimeout(() => {
@@ -157,11 +203,9 @@ class ButtonModeManager {
     }
 }
 
-// 🔥 EXPORTAR
 export { ButtonModeManager };
 
-// 🔥 TAMBÉM EXPORTAR PARA WINDOW (para compatibilidade)
 if (typeof window !== 'undefined') {
     window.ButtonModeManager = ButtonModeManager;
 }
-/* ==== FIM: features/filters/button-mode-manager.js ==== */
+/* ==== FIM: button-mode-manager.js ==== */

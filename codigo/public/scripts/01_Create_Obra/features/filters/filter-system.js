@@ -125,15 +125,13 @@ const FilterSystem = (function () {
         state.active = isActive;
         state.endpointMode = isActive ? 'general' : 'session';
         
-        // Atualizar ButtonModeManager
+        // 🔥 ATUALIZADO: Integração com ButtonModeManager
         if (window.ButtonModeManager) {
             if (isActive) {
                 window.ButtonModeManager.enableFilterMode();
-                // Desativar modais quando filtro ativo
                 disableModals();
             } else {
                 window.ButtonModeManager.disableFilterMode();
-                // Reativar modais quando filtro desativado
                 enableModals();
             }
         }
@@ -292,9 +290,6 @@ const FilterSystem = (function () {
             }
 
             console.log('✅ [FILTER-SYSTEM] Obras recarregadas com sucesso');
-            if (window.ButtonModeManager) {
-                window.ButtonModeManager.applyMode();
-            }
 
         } catch (error) {
             console.error('❌ [FILTER-SYSTEM] Erro ao recarregar obras:', error);
@@ -443,7 +438,7 @@ const FilterSystem = (function () {
     }
 
     /**
-     * Carrega uma obra no DOM (reutilizando sistema existente) - SEM FALLBACK
+     * Carrega uma obra no DOM (reutilizando sistema existente)
      */
     async function loadObraIntoDOM(obraData) {
         try {
@@ -485,19 +480,6 @@ const FilterSystem = (function () {
                 const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
                 if (obraElement) {
                     await window.systemFunctions.populateObraData(obraData);
-                    // Aplicar dados da empresa na obra carregada pelo filtro
-                    try {
-                        const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
-                        if (obraElement && window.prepararDadosEmpresaNaObra) {
-                            await window.prepararDadosEmpresaNaObra(obraData, obraElement);
-                            console.log(`🏢 Empresa hidratada para obra ${obraData.id}`);
-                        } else {
-                            console.warn(`⚠️ Obra ${obraData.id} encontrada?`, !!obraElement,
-                                "Função prepararDadosEmpresaNaObra existe?", !!window.prepararDadosEmpresaNaObra);
-                        }
-                    } catch (err) {
-                        console.error("❌ Erro aplicando dados de empresa na obra filtrada:", err);
-                    }
                 }
             }
             else if (typeof window.createEmptyObra === 'function' && typeof window.populateObraData === 'function') {
@@ -512,13 +494,7 @@ const FilterSystem = (function () {
                 }
             }
             else {
-                // 🔥 CRÍTICO: Se não encontrar funções de carregamento
                 console.error(`❌ [FILTER-SYSTEM] NENHUMA função de carregamento disponível para obra ${obraData.id}`);
-                console.error('💡 Verifique se estas funções estão disponíveis:');
-                console.error('   - loadSingleObra');
-                console.error('   - createEmptyObra + populateObraData');
-
-                // Não criar fallback manual - apenas logar erro
                 return;
             }
 
@@ -530,7 +506,7 @@ const FilterSystem = (function () {
     }
 
     /**
-     * Carrega obras da sessão (modo normal) - COM FALLBACKS
+     * Carrega obras da sessão (modo normal)
      */
     async function loadSessionObras() {
         console.log('📁 [FILTER-SYSTEM] Carregando obras da sessão');
@@ -539,7 +515,7 @@ const FilterSystem = (function () {
             // 🔥 IMPORTANTE: Limpar DOM completamente primeiro
             clearCurrentObras();
 
-            // 🔥 VERIFICAÇÃO MELHORADA DAS FUNÇÕES DISPONÍVEIS
+            // 🔥 VERIFICAÇÃO DAS FUNÇÕES DISPONÍVEIS
             let loadFunction = null;
             let functionSource = '';
             
@@ -562,67 +538,12 @@ const FilterSystem = (function () {
                 await loadFunction();
                 console.log('✅ [FILTER-SYSTEM] Obras da sessão carregadas com sucesso');
             } else {
-                console.warn('⚠️ [FILTER-SYSTEM] Nenhuma função encontrada, usando fallback direto...');
-                await loadObrasFallback();
+                console.warn('⚠️ [FILTER-SYSTEM] Nenhuma função encontrada');
+                throw new Error('Função de carregamento não encontrada');
             }
 
         } catch (error) {
             console.error('❌ [FILTER-SYSTEM] ERRO ao carregar sessão:', error);
-            
-            // Tentar fallback
-            try {
-                console.log('🔄 [FILTER-SYSTEM] Tentando fallback após erro...');
-                await loadObrasFallback();
-            } catch (fallbackError) {
-                console.error('❌ [FILTER-SYSTEM] Fallback também falhou:', fallbackError);
-                showErrorMessage('Erro ao carregar obras. Recarregue a página.');
-            }
-        }
-    }
-    
-    /**
-     * Fallback para carregar obras
-     */
-    async function loadObrasFallback() {
-        try {
-            console.log('🔄 [FILTER-SYSTEM] Usando fallback para carregar obras...');
-            
-            const response = await fetch('/api/session-obras');
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            // Adaptar estrutura da resposta
-            let obras = [];
-            if (Array.isArray(data)) {
-                obras = data;
-            } else if (data.obras && Array.isArray(data.obras)) {
-                obras = data.obras;
-            } else if (data.data && Array.isArray(data.data)) {
-                obras = data.data;
-            } else {
-                throw new Error('Estrutura de resposta inesperada');
-            }
-            
-            console.log(`✅ [FILTER-SYSTEM] ${obras.length} obras carregadas via fallback`);
-            
-            // Processar obras manualmente se necessário
-            if (obras.length > 0 && typeof window.createEmptyObra === 'function') {
-                for (const obra of obras) {
-                    await window.createEmptyObra(obra.nome, obra.id);
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
-                    const obraElement = document.querySelector(`[data-obra-id="${obra.id}"]`);
-                    if (obraElement && typeof window.populateObraData === 'function') {
-                        await window.populateObraData(obra);
-                    }
-                }
-            }
-            
-        } catch (error) {
-            console.error('❌ [FILTER-SYSTEM] Fallback falhou:', error);
             throw error;
         }
     }
@@ -678,16 +599,6 @@ const FilterSystem = (function () {
                     obraNomeEmpresa.includes(filtroSigla) ||
                     obraSiglaExtraida === filtroSigla ||
                     obraSiglaExtraida.includes(filtroSigla);
-
-                if (!passaEmpresa) {
-                    console.log(`❌ [FILTRO] Obra ${obra.id} falhou no filtro empresa:`, {
-                        filtro: filtroSigla,
-                        obraSigla,
-                        obraNomeCompleto,
-                        obraNomeEmpresa,
-                        obraSiglaExtraida
-                    });
-                }
             }
 
             // 🔥 FILTRO POR NÚMERO DO CLIENTE
@@ -704,13 +615,6 @@ const FilterSystem = (function () {
                 const numerosValidos = obraNumeros.filter(n => n !== null && !isNaN(n));
 
                 passaNumero = numerosValidos.some(n => n === filtroNumero);
-
-                if (!passaNumero) {
-                    console.log(`❌ [FILTRO] Obra ${obra.id} falhou no filtro número:`, {
-                        filtro: filtroNumero,
-                        obraNumeros: numerosValidos
-                    });
-                }
             }
 
             // 🔥 FILTRO POR NOME DA OBRA
@@ -723,27 +627,9 @@ const FilterSystem = (function () {
                 passaNome = obraNome1.includes(filtroNome) ||
                     obraNome2.includes(filtroNome) ||
                     obraNome3.includes(filtroNome);
-
-                if (!passaNome) {
-                    console.log(`❌ [FILTRO] Obra ${obra.id} falhou no filtro nome:`, {
-                        filtro: filtroNome,
-                        obraNome1,
-                        obraNome2,
-                        obraNome3
-                    });
-                }
             }
 
-            const passaTodos = passaEmpresa && passaNumero && passaNome;
-
-            if (passaTodos) {
-                console.log(`✅ [FILTRO] Obra ${obra.id} passou nos filtros:`, {
-                    nome: obra.nome || obra.titulo,
-                    empresa: obra.empresaSigla || obra.empresa
-                });
-            }
-
-            return passaTodos;
+            return passaEmpresa && passaNumero && passaNome;
         });
     }
 
@@ -839,8 +725,9 @@ const FilterSystem = (function () {
         hasActiveFilters,
         getCurrentEndpoint,
         reloadObrasWithCurrentEndpoint,
-        reloadObras, // Alias para compatibilidade
-        isFilterActive
+        reloadObras,
+        isFilterActive,
+        handleFilterToggleChange // 🔥 EXPORTADO para integração
     };
 })();
 

@@ -1,0 +1,2461 @@
+
+/* ==== INÍCIO: button-delete-universal.js ==== */
+/* ==== INÍCIO: features/filters/button-delete-universal.js ==== */
+
+class ButtonDeleteUniversal {
+    constructor() {
+        this.BUTTON_CONFIGS = {
+            'deleteMachine': {
+                type: 'maquina',
+                extractIds: (onclick) => {
+                    const match = onclick.match(/deleteMachine\('([^']+)'\)/);
+                    return match ? { machineId: match[1] } : null;
+                },
+                buildPath: (ids) => {
+                    const parts = ids.machineId.split('_');
+                    if (parts.length >= 5) {
+                        const obraId = `obra_${parts[1]}`;
+                        const projectId = `${obraId}_proj_${parts[3]}_${parts[4]}`;
+                        const roomId = `${projectId}_sala_${parts[6]}_${parts[7]}`;
+                        
+                        const machineIndexMatch = ids.machineId.match(/maquina_(\d+)$/);
+                        let machineIndex = 0;
+                        
+                        if (machineIndexMatch) {
+                            machineIndex = parseInt(machineIndexMatch[1]);
+                        } else {
+                            for (let i = 0; i < parts.length; i++) {
+                                if (parts[i] === 'maquina' && i + 1 < parts.length) {
+                                    machineIndex = parseInt(parts[i + 1]) || 0;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        return ['obras', obraId, 'projetos', projectId, 'salas', roomId, 'maquinas', machineIndex];
+                    }
+                    return null;
+                },
+                confirmMessage: 'Tem certeza que deseja DELETAR esta MÁQUINA? Esta ação é permanente e não pode ser desfeita.',
+                successMessage: 'Máquina deletada com sucesso',
+                itemType: 'máquina'
+            },
+            'deleteRoom': {
+                type: 'sala',
+                extractIds: (onclick) => {
+                    const match = onclick.match(/deleteRoom\('([^']+)',\s*'([^']+)',\s*'([^']+)'\)/);
+                    return match ? { obraId: match[1], projectId: match[2], roomId: match[3] } : null;
+                },
+                buildPath: (ids) => ids ? ['obras', ids.obraId, 'projetos', ids.projectId, 'salas', ids.roomId] : null,
+                confirmMessage: 'Tem certeza que deseja DELETAR esta SALA? Todas as máquinas serão perdidas. Esta ação é permanente!',
+                successMessage: 'Sala deletada com sucesso',
+                itemType: 'sala'
+            },
+            'deleteProject': {
+                type: 'projeto',
+                extractIds: (onclick) => {
+                    const match = onclick.match(/deleteProject\('([^']+)',\s*'([^']+)'\)/);
+                    return match ? { obraId: match[1], projectId: match[2] } : null;
+                },
+                buildPath: (ids) => ids ? ['obras', ids.obraId, 'projetos', ids.projectId] : null,
+                confirmMessage: 'Tem certeza que deseja DELETAR este PROJETO? Todas as salas e máquinas serão perdidas. Esta ação é permanente!',
+                successMessage: 'Projeto deletado com sucesso',
+                itemType: 'projeto'
+            },
+            'deleteObra': {
+                type: 'obra',
+                extractIds: (onclick) => {
+                    const match = onclick.match(/deleteObra\('([^']+)',\s*'([^']+)'\)/);
+                    return match ? { obraName: match[1], obraId: match[2] } : null;
+                },
+                buildPath: (ids) => ids ? ['obras', ids.obraId] : null,
+                confirmMessage: 'Tem certeza que deseja DELETAR esta OBRA? Todos os projetos, salas e máquinas serão perdidos. Esta ação é permanente!',
+                successMessage: 'Obra deletada com sucesso',
+                itemType: 'obra'
+            }
+        };
+        
+        this.pendingDeletion = null;
+        this.undoTimeout = null;
+        this.toastContainer = null;
+        
+        console.log('✅ ButtonDeleteUniversal configurado (versão COM NOMES)');
+    }
+
+    /**
+     * 🔥 NOVO: Busca o nome do item no DOM baseado no tipo
+     */
+    getItemNameFromDOM(button, itemType, ids) {
+        console.log(`🔍 Buscando nome para ${itemType}...`, ids);
+        
+        let titleElement = null;
+        
+        // Subir na hierarquia para encontrar container
+        let container = button.closest('.item-container, .obra-container, .projeto-container, .sala-container, .maquina-container, .card, tr, li');
+        
+        if (!container) {
+            // Tentar encontrar por ID se não encontrar por classe
+            if (ids.obraId) {
+                container = document.getElementById(ids.obraId) || 
+                           document.querySelector(`[data-obra-id="${ids.obraId}"]`);
+            }
+            if (ids.projectId && !container) {
+                container = document.getElementById(ids.projectId) || 
+                           document.querySelector(`[data-project-id="${ids.projectId}"]`);
+            }
+            if (ids.roomId && !container) {
+                container = document.getElementById(ids.roomId) || 
+                           document.querySelector(`[data-room-id="${ids.roomId}"]`);
+            }
+            if (ids.machineId && !container) {
+                container = document.getElementById(ids.machineId) || 
+                           document.querySelector(`[data-machine-id="${ids.machineId}"]`);
+            }
+        }
+        
+        if (container) {
+            console.log('📦 Container encontrado:', container);
+            
+            // Buscar título baseado no tipo
+            switch(itemType) {
+                case 'obra':
+                    // Procurar título da obra
+                    titleElement = container.querySelector('.obra-title, h2.obra-title, [data-obra-nome]');
+                    if (!titleElement) {
+                        // Se não encontrar classe específica, procurar h2
+                        titleElement = container.querySelector('h2');
+                    }
+                    break;
+                    
+                case 'projeto':
+                    // Procurar título do projeto
+                    titleElement = container.querySelector('.project-title, .projeto-title, h3.project-title');
+                    if (!titleElement) {
+                        titleElement = container.querySelector('h3');
+                    }
+                    break;
+                    
+                case 'sala':
+                    // Procurar título da sala
+                    titleElement = container.querySelector('.room-title, .sala-title, h4.room-title');
+                    if (!titleElement) {
+                        titleElement = container.querySelector('h4');
+                    }
+                    break;
+                    
+                case 'maquina':
+                    // Procurar título da máquina (pode ser input)
+                    titleElement = container.querySelector('.machine-title-editable, input.machine-title-editable');
+                    if (!titleElement) {
+                        titleElement = container.querySelector('input[type="text"][value]');
+                    }
+                    break;
+            }
+            
+            // Se encontrou elemento, extrair o texto
+            if (titleElement) {
+                let itemName = '';
+                
+                if (titleElement.tagName === 'INPUT' || titleElement.tagName === 'TEXTAREA') {
+                    itemName = titleElement.value.trim();
+                } else {
+                    itemName = titleElement.textContent.trim();
+                }
+                
+                if (itemName && itemName.length > 0) {
+                    console.log(`✅ Nome encontrado para ${itemType}: "${itemName}"`);
+                    return itemName;
+                }
+            } else {
+                console.warn(`⚠️ Não encontrou elemento de título para ${itemType}`);
+                
+                // Fallback: buscar qualquer texto que pareça nome
+                const allText = container.textContent || '';
+                const lines = allText.split('\n').map(line => line.trim()).filter(line => 
+                    line.length > 2 && 
+                    !line.includes('Delete') && 
+                    !line.includes('Editar') &&
+                    !line.match(/^[a-z]+_[a-z0-9_]+$/i)
+                );
+                
+                if (lines.length > 0) {
+                    console.log(`✅ Nome encontrado (fallback): "${lines[0].substring(0, 50)}"`);
+                    return lines[0].substring(0, 50); // Limitar tamanho
+                }
+            }
+        } else {
+            console.warn('⚠️ Container não encontrado para buscar nome');
+        }
+        
+        // Último fallback: usar ID formatado
+        console.warn('⚠️ Usando fallback com ID');
+        if (itemType === 'obra' && ids.obraName) {
+            return ids.obraName;
+        }
+        if (ids.machineId) {
+            return `Máquina (${ids.machineId})`;
+        }
+        if (ids.roomId) {
+            return `Sala (${ids.roomId})`;
+        }
+        if (ids.projectId) {
+            return `Projeto (${ids.projectId})`;
+        }
+        
+        return 'Item sem nome';
+    }
+
+    analyzeButton(button) {
+        if (!button || !button.getAttribute) return null;
+        
+        const onclick = button.getAttribute('onclick') || '';
+        const text = button.textContent?.trim() || '';
+        
+        for (const [funcName, config] of Object.entries(this.BUTTON_CONFIGS)) {
+            if (onclick.includes(funcName)) {
+                const ids = config.extractIds(onclick);
+                if (ids) {
+                    const path = config.buildPath(ids);
+                    
+                    // 🔥 AGORA: Buscar o nome correto no DOM
+                    const itemName = this.getItemNameFromDOM(button, config.type, ids);
+                    
+                    return {
+                        button,
+                        funcName,
+                        config,
+                        ids,
+                        path,
+                        itemName, // 🔥 NOVO: nome real do item
+                        originalText: text,
+                        originalOnclick: onclick
+                    };
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    setupButton(button) {
+        const buttonInfo = this.analyzeButton(button);
+        if (!buttonInfo) {
+            console.log('⚠️ Botão não identificado:', button);
+            return;
+        }
+        
+        console.log(`🔧 Configurando botão ${buttonInfo.config.type}:`, buttonInfo.itemName);
+        
+        // Clonar botão para remover event listeners antigos
+        const newButton = button.cloneNode(true);
+        
+        // Remover onclick original
+        newButton.removeAttribute('onclick');
+        
+        // Guardar dados originais + nome
+        newButton.setAttribute('data-original-onclick', buttonInfo.originalOnclick);
+        newButton.setAttribute('data-original-text', buttonInfo.originalText);
+        newButton.setAttribute('data-button-type', buttonInfo.config.type);
+        newButton.setAttribute('data-item-id', JSON.stringify(buttonInfo.ids));
+        newButton.setAttribute('data-item-name', buttonInfo.itemName); // 🔥 Guardar nome
+        
+        // Adicionar classe
+        newButton.classList.add('delete-real');
+        
+        // Adicionar novo evento
+        newButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            await this.showAdvancedConfirmation(buttonInfo);
+        });
+        
+        // Substituir o botão antigo
+        button.parentNode.replaceChild(newButton, button);
+        
+        console.log(`✅ Botão ${buttonInfo.config.type} configurado para "${buttonInfo.itemName}"`);
+        return newButton;
+    }
+
+    /**
+     * 🔥 CORRIGIDO: Mostra confirmação com NOME correto
+     */
+    async showAdvancedConfirmation(buttonInfo) {
+        const { config, ids, itemName } = buttonInfo; // 🔥 Agora usa itemName
+        
+        console.log(`🔔 Mostrando confirmação para deletar ${config.itemType}: "${itemName}"`);
+        
+        // Verificar se o UniversalDeleteModal está disponível
+        if (window.UniversalDeleteModal) {
+            // Usar o UniversalDeleteModal se disponível
+            const confirmed = await UniversalDeleteModal.confirmDelete(
+                config.itemType,
+                itemName,
+                `Tipo: ${config.itemType}\nID: ${JSON.stringify(ids)}`
+            );
+            
+            if (confirmed) {
+                await this.executeRealDeletion(buttonInfo);
+            }
+        } else {
+            // Fallback: usar modal próprio
+            const modalHTML = `
+                <div id="universal-delete-modal" class="universal-modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="warning-icon">⚠️</div>
+                            <h3>DELETAR ${config.itemType.toUpperCase()}</h3>
+                            <p>Esta ação não pode ser desfeita</p>
+                        </div>
+                        
+                        <div class="modal-body">
+                            <div class="warning-message">
+                                <strong>"${itemName}"</strong> será 
+                                <span class="highlight-delete">DELETADO PERMANENTEMENTE</span> 
+                                do sistema.
+                            </div>
+                            
+                            <div class="item-details">
+                                <strong>Tipo:</strong> ${config.itemType}<br>
+                                <strong>Nome:</strong> ${itemName}<br>
+                                <strong>Data:</strong> ${new Date().toLocaleString()}
+                            </div>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button class="btn-cancel">Cancelar (ESC)</button>
+                            <button class="btn-confirm-delete">DELETAR Permanentemente</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior se existir
+            const existingModal = document.getElementById('universal-delete-modal');
+            if (existingModal) existingModal.remove();
+            
+            // Adicionar novo modal ao DOM
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Animar entrada
+            setTimeout(() => {
+                const modal = document.getElementById('universal-delete-modal');
+                const content = modal.querySelector('.modal-content');
+                modal.style.opacity = '1';
+                content.style.transform = 'translateY(0)';
+            }, 10);
+            
+            // Retornar Promise
+            return new Promise((resolve) => {
+                const modal = document.getElementById('universal-delete-modal');
+                const btnCancel = modal.querySelector('.btn-cancel');
+                const btnConfirm = modal.querySelector('.btn-confirm-delete');
+                
+                const closeModal = (confirmed) => {
+                    modal.style.opacity = '0';
+                    const content = modal.querySelector('.modal-content');
+                    content.style.transform = 'translateY(-20px)';
+                    
+                    setTimeout(() => {
+                        modal.remove();
+                        resolve(confirmed);
+                    }, 300);
+                };
+                
+                btnCancel.addEventListener('click', () => {
+                    console.log('❌ Deleção cancelada pelo usuário');
+                    closeModal(false);
+                });
+                
+                btnConfirm.addEventListener('click', async () => {
+                    console.log('✅ Usuário confirmou deleção permanente');
+                    closeModal(true);
+                    
+                    // Executar deleção real
+                    await this.executeRealDeletion(buttonInfo);
+                });
+                
+                // Fechar ao clicar fora
+                modal.addEventListener('click', (e) => {
+                    if (e.target.id === 'universal-delete-modal') {
+                        closeModal(false);
+                    }
+                });
+                
+                // Fechar com ESC
+                const escHandler = (e) => {
+                    if (e.key === 'Escape') closeModal(false);
+                };
+                document.addEventListener('keydown', escHandler);
+            });
+        }
+    }
+
+    async executeRealDeletion(buttonInfo) {
+        const { config, ids, path, button, itemName } = buttonInfo; // 🔥 Agora tem itemName
+        
+        console.log(`🗑️ Executando deleção REAL para ${config.itemType}: "${itemName}"`, path);
+        
+        try {
+            this.showToast(`${config.itemType} "${itemName}" sendo deletado...`, 'processing');
+            
+            const response = await fetch('/api/delete', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    path: path,
+                    itemType: config.type,
+                    itemId: JSON.stringify(ids),
+                    itemName: itemName // 🔥 Enviar nome para API
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                console.log(`✅ [DELETE-REAL] Sucesso: ${result.message}`);
+                
+                this.removeElementFromDOM(buttonInfo);
+                this.showToast(`${config.itemType} "${itemName}" deletado permanentemente`, 'success');
+                
+                if (config.type === 'obra') {
+                    setTimeout(() => {
+                        if (window.FilterSystem) {
+                            window.FilterSystem.reloadObras();
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 1500);
+                }
+                
+                return true;
+            } else {
+                console.error('❌ [DELETE-REAL] Erro:', result.error);
+                this.showToast(`Erro ao deletar ${config.itemType}: ${result.error}`, 'error');
+                return false;
+            }
+
+        } catch (error) {
+            console.error('❌ [DELETE-REAL] Exceção:', error);
+            this.showToast('Erro ao conectar com o servidor', 'error');
+            return false;
+        }
+    }
+
+    removeElementFromDOM(buttonInfo) {
+        const { config, ids, button, itemName } = buttonInfo;
+        
+        let elementToRemove = null;
+        
+        switch(config.type) {
+            case 'obra':
+                const obraId = ids.obraId;
+                elementToRemove = document.querySelector(`[data-obra-id="${obraId}"]`) || 
+                                  document.querySelector(`#${obraId}`);
+                break;
+                
+            case 'projeto':
+                const projectId = ids.projectId;
+                elementToRemove = document.getElementById(projectId) || 
+                                  document.querySelector(`[data-project-id="${projectId}"]`);
+                break;
+                
+            case 'sala':
+                const roomId = ids.roomId;
+                elementToRemove = document.getElementById(roomId) || 
+                                  document.querySelector(`[data-room-id="${roomId}"]`);
+                break;
+                
+            case 'maquina':
+                const machineId = ids.machineId;
+                elementToRemove = document.getElementById(machineId) || 
+                                  document.querySelector(`[data-machine-id="${machineId}"]`);
+                break;
+        }
+        
+        if (elementToRemove) {
+            elementToRemove.style.transition = 'all 0.5s ease';
+            elementToRemove.style.opacity = '0';
+            elementToRemove.style.transform = 'translateX(-100%)';
+            elementToRemove.style.maxHeight = '0';
+            elementToRemove.style.overflow = 'hidden';
+            
+            setTimeout(() => {
+                if (elementToRemove.parentNode) {
+                    elementToRemove.remove();
+                    console.log(`✅ Elemento "${itemName}" removido do DOM`);
+                }
+            }, 500);
+        } else {
+            console.warn(`⚠️ Não encontrou elemento para remover: ${config.type}`, ids);
+            setTimeout(() => window.location.reload(), 1000);
+        }
+    }
+
+    showToast(message, type = 'info') {
+        if (!this.toastContainer) {
+            this.toastContainer = document.createElement('div');
+            this.toastContainer.id = 'universal-toast-container';
+            this.toastContainer.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            `;
+            document.body.appendChild(this.toastContainer);
+        }
+        
+        const colors = {
+            success: '#4CAF50',
+            error: '#f44336',
+            warning: '#ff9800',
+            info: '#2196F3',
+            processing: '#9C27B0'
+        };
+        
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️',
+            processing: '⏳'
+        };
+        
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            background: ${colors[type] || colors.info};
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            max-width: 400px;
+            transform: translateX(100%);
+            opacity: 0;
+            animation: slideIn 0.3s forwards;
+        `;
+        
+        toast.innerHTML = `
+            <span style="font-size: 20px;">${icons[type] || 'ℹ️'}</span>
+            <span>${message}</span>
+        `;
+        
+        if (!document.querySelector('#toast-animation')) {
+            const style = document.createElement('style');
+            style.id = 'toast-animation';
+            style.textContent = `
+                @keyframes slideIn {
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        this.toastContainer.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s forwards';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }, type === 'processing' ? 3000 : 5000);
+    }
+
+    setupAllDeleteButtons() {
+        console.log('🔧 [DELETE-REAL] Buscando botões específicos...');
+        
+        const allButtons = document.querySelectorAll('button');
+        let configuredButtons = 0;
+        
+        allButtons.forEach(button => {
+            const onclick = button.getAttribute('onclick') || '';
+            if (onclick.includes('delete')) {
+                const setup = this.setupButton(button);
+                if (setup) configuredButtons++;
+            }
+        });
+        
+        console.log(`🎯 [DELETE-REAL] ${configuredButtons} botões configurados para deleção REAL`);
+        return configuredButtons;
+    }
+}
+
+export { ButtonDeleteUniversal };
+
+if (typeof window !== 'undefined') {
+    window.ButtonDeleteUniversal = ButtonDeleteUniversal;
+}
+/* ==== FIM: features/filters/button-delete-universal.js ==== */
+/* ==== FIM: button-delete-universal.js ==== */
+
+/* ==== INÍCIO: button-mode-manager.js ==== */
+/* ==== INÍCIO: features/filters/button-mode-manager.js ==== */
+/**
+ * ButtonModeManager - Gerencia o modo dos botões (normal vs filtro)
+ * Versão em Classe ES6 para compatibilidade com import/export
+ */
+/**
+ * ButtonModeManager - Gerencia APENAS a mudança de texto dos botões
+ * Versão SIMPLES: muda "Remover" para "Deletar" quando filtro ativo
+ */
+class ButtonModeManager {
+    constructor() {
+        this.state = {
+            filterMode: false,
+            originalTexts: new Map() // Guarda textos originais
+        };
+        
+        console.log('✅ ButtonModeManager criado (versão SIMPLES)');
+    }
+
+    /**
+     * Ativa o modo filtro (muda textos)
+     */
+    enableFilterMode() {
+        if (this.state.filterMode) return;
+        
+        console.log('🎛️ [BUTTON-MANAGER] Ativando modo filtro (mudando textos)...');
+        this.state.filterMode = true;
+        this.changeButtonTexts('Deletar');
+    }
+
+    /**
+     * Desativa o modo filtro (restaura textos)
+     */
+    disableFilterMode() {
+        if (!this.state.filterMode) return;
+        
+        console.log('🎛️ [BUTTON-MANAGER] Desativando modo filtro (restaurando textos)...');
+        this.state.filterMode = false;
+        this.restoreButtonTexts();
+    }
+
+    /**
+     * Muda textos dos botões
+     */
+    changeButtonTexts(newText) {
+        console.log(`🔄 Mudando textos dos botões para: "${newText}"`);
+        
+        // 🔥 BUSCAR TODOS OS BOTÕES COM "Remover"
+        const allButtons = document.querySelectorAll('button');
+        
+        allButtons.forEach(button => {
+            const text = button.textContent?.trim();
+            const onclick = button.getAttribute('onclick') || '';
+            
+            // Apenas botões que têm "Remover" e onclick com "delete"
+            if (text && text.includes('Remover') && onclick.includes('delete')) {
+                // Guardar texto original se não guardado ainda
+                if (!this.state.originalTexts.has(button)) {
+                    this.state.originalTexts.set(button, text);
+                }
+                
+                // 🔥 MUDAR APENAS O TEXTO, MANTENDO O RESTO
+                if (text === 'Remover') {
+                    button.textContent = newText;
+                } else if (text === 'Remover Projeto') {
+                    button.textContent = 'Deletar Projeto';
+                } else if (text.includes('Remover')) {
+                    button.textContent = text.replace('Remover', newText);
+                }
+                
+                // 🔥 ADICIONAR CLASSE PARA ESTILO (OPCIONAL)
+                button.classList.add('filter-mode-active');
+                button.style.fontWeight = 'bold';
+                
+                console.log(`✅ Texto alterado: "${this.state.originalTexts.get(button)}" → "${button.textContent}"`);
+            }
+        });
+        
+        console.log(`🎯 Textos alterados para modo filtro`);
+    }
+
+    /**
+     * Restaura textos originais
+     */
+    restoreButtonTexts() {
+        console.log('🔄 Restaurando textos originais...');
+        
+        this.state.originalTexts.forEach((originalText, button) => {
+            button.textContent = originalText;
+            button.classList.remove('filter-mode-active');
+            button.style.fontWeight = '';
+            
+            console.log(`✅ Texto restaurado: "${button.textContent}"`);
+        });
+        
+        // Limpar cache
+        this.state.originalTexts.clear();
+        console.log('✅ Textos restaurados para modo normal');
+    }
+
+    /**
+     * Aplica modo atual
+     */
+    applyMode() {
+        console.log('🎛️ [BUTTON-MANAGER] Aplicando modo atual...');
+        
+        if (window.FilterSystem) {
+            try {
+                const filterState = window.FilterSystem.getState();
+                if (filterState && filterState.active) {
+                    this.enableFilterMode();
+                } else {
+                    this.disableFilterMode();
+                }
+            } catch (error) {
+                console.error('❌ Erro ao verificar FilterSystem:', error);
+                this.disableFilterMode();
+            }
+        } else {
+            this.disableFilterMode();
+        }
+    }
+
+    /**
+     * Configura observador para novos botões
+     */
+    setupMutationObserver() {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(mutation => {
+                if (mutation.addedNodes.length > 0 && this.state.filterMode) {
+                    // Se novos botões foram adicionados e estamos no modo filtro
+                    setTimeout(() => {
+                        this.changeButtonTexts('Deletar');
+                    }, 100);
+                }
+            });
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+        console.log('🔍 Observador configurado para novos botões');
+        return observer;
+    }
+
+    /**
+     * Inicializa o gerenciador
+     */
+    initialize() {
+        console.log('🔧 [BUTTON-MANAGER] Inicializando (versão SIMPLES)...');
+        
+        this.setupMutationObserver();
+        setTimeout(() => {
+            this.applyMode();
+        }, 500);
+        
+        console.log('✅ ButtonModeManager inicializado');
+        return true;
+    }
+}
+
+// 🔥 EXPORTAR
+export { ButtonModeManager };
+
+// 🔥 TAMBÉM EXPORTAR PARA WINDOW (para compatibilidade)
+if (typeof window !== 'undefined') {
+    window.ButtonModeManager = ButtonModeManager;
+}
+/* ==== FIM: features/filters/button-mode-manager.js ==== */
+/* ==== FIM: button-mode-manager.js ==== */
+
+/* ==== INÍCIO: filter-autocomplete.js ==== */
+/**
+ * filter-autocomplete.js - Integração do autocomplete no filtro de empresa
+ * REUTILIZA COMPLETAMENTE o sistema existente de autocomplete
+ */
+
+const FilterAutocomplete = (function () {
+    let empresaInput = null;
+    let dropdown = null;
+    let optionsContainer = null;
+    let isInitialized = false;
+    let empresasCache = null;
+
+    /**
+     * Inicializa autocomplete no filtro de empresa
+     */
+    async function initialize() {
+        if (isInitialized) {
+            console.log('⚠️ [FILTER-AUTOCOMPLETE] Já inicializado');
+            return true;
+        }
+
+        console.log('🔧 [FILTER-AUTOCOMPLETE] Inicializando...');
+
+        // Buscar elementos
+        empresaInput = document.getElementById('filter-empresa');
+        if (!empresaInput) {
+            console.error('❌ [FILTER-AUTOCOMPLETE] Input de empresa não encontrado');
+            return false;
+        }
+
+        // Criar dropdown (reutilizando estrutura do sistema existente)
+        createDropdown();
+
+        // Carregar empresas com cache (reutiliza função existente)
+        await loadEmpresas();
+
+        // Configurar eventos
+        setupEventListeners();
+
+        isInitialized = true;
+        console.log('✅ [FILTER-AUTOCOMPLETE] Inicializado com sucesso');
+        return true;
+    }
+
+    /**
+     * Cria dropdown similar ao existente
+     */
+    function createDropdown() {
+        // Criar container do dropdown
+        dropdown = document.createElement('div');
+        dropdown.id = 'filter-empresa-dropdown';
+        dropdown.className = 'empresa-dropdown filter-dropdown';
+        dropdown.style.cssText = `
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: ${empresaInput.offsetWidth}px;
+        `;
+
+        // Container para opções
+        optionsContainer = document.createElement('div');
+        optionsContainer.id = 'filter-empresa-options';
+        optionsContainer.className = 'dropdown-options';
+
+        dropdown.appendChild(optionsContainer);
+        document.body.appendChild(dropdown);
+
+        // Posicionar abaixo do input
+        updateDropdownPosition();
+
+        // Atualizar posição quando redimensionar
+        window.addEventListener('resize', updateDropdownPosition);
+    }
+
+    /**
+     * Atualiza posição do dropdown
+     */
+    function updateDropdownPosition() {
+        if (!dropdown || !empresaInput) return;
+
+        const rect = empresaInput.getBoundingClientRect();
+        dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+        dropdown.style.left = (rect.left + window.scrollX) + 'px';
+        dropdown.style.width = rect.width + 'px';
+    }
+
+    /**
+     * Carrega empresas (reutiliza cache do sistema existente)
+     */
+    async function loadEmpresas() {
+        console.log('📦 [FILTER-AUTOCOMPLETE] Carregando empresas...');
+
+        try {
+            // Tentar usar função existente primeiro
+            if (typeof carregarEmpresasComCache === 'function') {
+                empresasCache = await carregarEmpresasComCache();
+                console.log(`✅ [FILTER-AUTOCOMPLETE] ${empresasCache.length} empresas carregadas (via cache)`);
+            } else {
+                // Fallback: buscar diretamente
+                const response = await fetch('/api/dados/empresas');
+                if (response.ok) {
+                    const data = await response.json();
+                    empresasCache = data.empresas || [];
+                    console.log(`✅ [FILTER-AUTOCOMPLETE] ${empresasCache.length} empresas carregadas (direto)`);
+                } else {
+                    empresasCache = [];
+                    console.warn('⚠️ [FILTER-AUTOCOMPLETE] Nenhuma empresa carregada');
+                }
+            }
+        } catch (error) {
+            console.error('❌ [FILTER-AUTOCOMPLETE] Erro ao carregar empresas:', error);
+            empresasCache = [];
+        }
+    }
+
+    /**
+     * Configura event listeners (reutilizando lógica existente)
+     */
+    function setupEventListeners() {
+        if (!empresaInput || !dropdown) return;
+
+        console.log('🎧 [FILTER-AUTOCOMPLETE] Configurando listeners');
+
+        // Input event (com debounce)
+        let inputTimeout;
+        empresaInput.addEventListener('input', function (e) {
+            clearTimeout(inputTimeout);
+            inputTimeout = setTimeout(() => {
+                handleInput(e.target.value);
+            }, 150);
+        });
+
+        // Focus event
+        empresaInput.addEventListener('focus', function () {
+            if (this.value.trim() === '') {
+                showAllEmpresas();
+            } else {
+                handleInput(this.value);
+            }
+        });
+
+        // Keydown events (navegação)
+        empresaInput.addEventListener('keydown', function (e) {
+            if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) {
+                e.preventDefault();
+                handleKeyDown(e.key);
+            }
+        });
+
+        // Blur event (fechar dropdown com delay)
+        empresaInput.addEventListener('blur', function () {
+            setTimeout(() => {
+                if (dropdown) dropdown.style.display = 'none';
+            }, 200);
+        });
+
+        // Click outside to close
+        document.addEventListener('click', function (e) {
+            if (!empresaInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+
+    /**
+     * Manipula input do usuário
+     */
+    function handleInput(termo) {
+        const termoTrim = termo.trim();
+
+        if (termoTrim.length === 0) {
+            showAllEmpresas();
+            return;
+        }
+
+        const sugestoes = filtrarEmpresas(termoTrim, empresasCache);
+        exibirSugestoes(sugestoes, termoTrim);
+    }
+
+    /**
+     * Filtra empresas (reutilizando lógica existente)
+     */
+    function filtrarEmpresas(termo, empresas) {
+        if (!termo || termo.length < 1 || !empresas) return [];
+
+        const termoNormalizado = termo.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        return empresas.filter(empresaObj => {
+            const [sigla, nome] = Object.entries(empresaObj)[0];
+            const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+            return sigla === termoNormalizado ||
+                sigla.includes(termoNormalizado) ||
+                nomeNormalizado.includes(termoNormalizado);
+        });
+    }
+
+    /**
+     * Exibe todas as empresas
+     */
+    function showAllEmpresas() {
+        if (!empresasCache || empresasCache.length === 0) {
+            showNoResults('Digite para buscar empresas');
+            return;
+        }
+
+        const empresasLimitadas = empresasCache.slice(0, 50);
+        renderOptions(empresasLimitadas);
+    }
+
+    /**
+     * Exibe sugestões
+     */
+    function exibirSugestoes(sugestoes, termo) {
+        if (!sugestoes || sugestoes.length === 0) {
+            showNoResults(`Nenhuma empresa encontrada para "${termo}"`);
+            return;
+        }
+
+        const sugestoesLimitadas = sugestoes.slice(0, 50);
+        renderOptions(sugestoesLimitadas);
+    }
+
+    /**
+     * Renderiza opções no dropdown
+     */
+    function renderOptions(empresas) {
+        if (!optionsContainer) return;
+
+        optionsContainer.innerHTML = empresas.map(empresaObj => {
+            const [sigla, nome] = Object.entries(empresaObj)[0];
+            return `
+                <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
+                    <strong>${sigla}</strong> 
+                    <span class="nome-empresa">- ${nome}</span>
+                </div>
+            `;
+        }).join('');
+
+        // Adicionar event listeners às opções
+        optionsContainer.querySelectorAll('.dropdown-option').forEach(option => {
+            option.addEventListener('click', function () {
+                selectEmpresa(this.dataset.sigla, this.dataset.nome);
+            });
+        });
+
+        // Mostrar dropdown
+        dropdown.style.display = 'block';
+        updateDropdownPosition();
+    }
+
+    /**
+     * Mostra mensagem de "sem resultados"
+     */
+    function showNoResults(message) {
+        if (!optionsContainer) return;
+
+        optionsContainer.innerHTML = `
+            <div class="dropdown-no-results">
+                ${message}
+            </div>
+        `;
+
+        dropdown.style.display = 'block';
+        updateDropdownPosition();
+    }
+
+    /**
+     * Manipula teclas de navegação
+     */
+    function handleKeyDown(key) {
+        const options = optionsContainer.querySelectorAll('.dropdown-option');
+        if (options.length === 0) return;
+
+        const activeOption = optionsContainer.querySelector('.dropdown-option.active');
+        let nextIndex = 0;
+
+        switch (key) {
+            case 'ArrowDown':
+                if (activeOption) {
+                    const currentIndex = Array.from(options).indexOf(activeOption);
+                    nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+                }
+                break;
+
+            case 'ArrowUp':
+                if (activeOption) {
+                    const currentIndex = Array.from(options).indexOf(activeOption);
+                    nextIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+                } else {
+                    nextIndex = options.length - 1;
+                }
+                break;
+
+            case 'Enter':
+                if (activeOption) {
+                    selectEmpresa(activeOption.dataset.sigla, activeOption.dataset.nome);
+                }
+                return;
+
+            case 'Escape':
+                dropdown.style.display = 'none';
+                return;
+        }
+
+        // Atualizar opção ativa
+        options.forEach(opt => opt.classList.remove('active'));
+        if (options[nextIndex]) {
+            options[nextIndex].classList.add('active');
+            options[nextIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    /**
+     * Seleciona uma empresa
+     */
+    /**
+     * Seleciona uma empresa
+     */
+    function selectEmpresa(sigla, nome) {
+        console.log(`🎯 [FILTER-AUTOCOMPLETE] Empresa selecionada: ${sigla} - ${nome}`);
+
+        // Preencher input com formato completo
+        empresaInput.value = `${sigla} - ${nome}`;
+
+        // ✅ IMPORTANTE: Enviar apenas a SIGLA para o sistema de filtros
+        if (window.FilterSystem) {
+            window.FilterSystem.updateFilterValue('empresa', sigla); // Apenas sigla!
+        }
+
+        // Fechar dropdown
+        dropdown.style.display = 'none';
+
+        // Disparar evento change (com delay para evitar duplicação)
+        setTimeout(() => {
+            empresaInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }, 10);
+    }
+
+    /**
+     * Limpa o autocomplete
+     */
+    function clear() {
+        if (empresaInput) {
+            empresaInput.value = '';
+            empresaInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+    }
+
+    /**
+     * Destrói instância
+     */
+    function destroy() {
+        if (dropdown && dropdown.parentNode) {
+            dropdown.parentNode.removeChild(dropdown);
+        }
+
+        window.removeEventListener('resize', updateDropdownPosition);
+        isInitialized = false;
+
+        console.log('🗑️ [FILTER-AUTOCOMPLETE] Destruído');
+    }
+
+    // API pública
+    return {
+        initialize,
+        clear,
+        destroy,
+        isInitialized: () => isInitialized
+    };
+})();
+
+// Exportar para uso global
+window.FilterAutocomplete = FilterAutocomplete;
+/* ==== FIM: filter-autocomplete.js ==== */
+
+/* ==== INÍCIO: filter-dom.js ==== */
+/**
+ * filter-dom.js - Interface gráfica dos filtros
+ * Gerencia DOM, inputs e estados visuais
+ */
+
+const FilterDOM = (function () {
+    // Elementos DOM
+    let filterInputsArea = null;
+    let empresaInput = null;
+    let numeroClienteInput = null;
+    let nomeObraInput = null;
+    let inputsInitialized = false;
+
+    /**
+     * Inicializa o módulo DOM
+     */
+    /**
+     * Inicializa o módulo DOM
+     */
+    function initialize() {
+        console.log('🔧 [FILTER-DOM] Inicializando...');
+
+        // Buscar elementos
+        filterInputsArea = document.getElementById('filtros-inputs');
+        empresaInput = document.getElementById('filter-empresa');
+        numeroClienteInput = document.getElementById('filter-numero-cliente');
+        nomeObraInput = document.getElementById('filter-nome-obra');
+
+        if (!validateElements()) {
+            console.error('❌ [FILTER-DOM] Elementos dos filtros não encontrados');
+            return false;
+        }
+
+        // 🔥 INICIALIZAR OCULTO (não desabilitado, mas invisível)
+        setFiltersEnabled(false);
+
+        console.log('✅ [FILTER-DOM] Inicializado com sucesso (inputs ocultos)');
+        return true;
+    }
+    /**
+     * Valida se elementos existem
+     */
+    function validateElements() {
+        const elements = [filterInputsArea, empresaInput, numeroClienteInput, nomeObraInput];
+        const allExist = elements.every(el => el !== null);
+
+        if (!allExist) {
+            console.warn('⚠️ [FILTER-DOM] Alguns elementos não encontrados:', {
+                filterInputsArea: !!filterInputsArea,
+                empresaInput: !!empresaInput,
+                numeroClienteInput: !!numeroClienteInput,
+                nomeObraInput: !!nomeObraInput
+            });
+        }
+
+        return allExist;
+    }
+
+    /**
+     * Habilita/desabilita os inputs de filtro
+     */
+    /**
+     * Habilita/desabilita os inputs de filtro
+     */
+    function setFiltersEnabled(enabled) {
+        console.log(`🎚️ [FILTER-DOM] ${enabled ? 'Habilitando' : 'Desabilitando'} inputs`);
+
+        // 🔥 CORREÇÃO: Controlar VISIBILIDADE além de habilitação
+        [empresaInput, numeroClienteInput, nomeObraInput].forEach(input => {
+            if (input) {
+                // 🔥 IMPORTANTE: Controlar display/visibility
+                if (enabled) {
+                    // Mostrar e habilitar inputs
+                    input.style.display = 'block';
+                    input.style.visibility = 'visible';
+                    input.style.opacity = '1';
+                    input.disabled = false;
+                    input.style.cursor = 'text';
+                    input.style.height = 'auto';
+                    input.style.marginTop = '4px';
+                    input.style.pointerEvents = 'auto';
+                } else {
+                    // 🔥 OCULTAR COMPLETAMENTE quando desabilitado
+                    input.style.display = 'none';
+                    input.style.visibility = 'hidden';
+                    input.style.opacity = '0';
+                    input.disabled = true;
+                    input.style.cursor = 'default';
+                    input.style.height = '0';
+                    input.style.marginTop = '0';
+                    input.style.pointerEvents = 'none';
+                    input.value = '';
+
+                    // Disparar eventos de limpeza
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        });
+
+        // 🔥 Área de inputs - controlar altura
+        if (filterInputsArea) {
+            if (enabled) {
+                // Mostrar área com transição suave
+                filterInputsArea.style.display = 'flex'; // ou 'flex' dependendo do CSS
+                filterInputsArea.style.visibility = 'visible';
+                filterInputsArea.style.opacity = '1';
+                filterInputsArea.style.height = 'auto';
+                filterInputsArea.style.maxHeight = '200px';
+                filterInputsArea.style.transition = 'all 0.3s ease';
+                filterInputsArea.style.pointerEvents = 'auto';
+                filterInputsArea.style.marginTop = '8px';
+            } else {
+                // Ocultar área completamente
+                filterInputsArea.style.display = 'none';
+                filterInputsArea.style.visibility = 'hidden';
+                filterInputsArea.style.opacity = '0';
+                filterInputsArea.style.height = '0';
+                filterInputsArea.style.maxHeight = '0';
+                filterInputsArea.style.overflow = 'hidden';
+                filterInputsArea.style.pointerEvents = 'none';
+                filterInputsArea.style.marginTop = '0';
+                filterInputsArea.style.padding = '0';
+                filterInputsArea.style.border = 'none';
+            }
+        }
+
+        // 🔥 Configurar listeners apenas quando habilitado pela primeira vez
+        if (enabled && !inputsInitialized) {
+            setupInputListeners();
+            inputsInitialized = true;
+        }
+
+        // 🔥 Se desabilitando, notificar sistema para limpar filtros
+        if (!enabled && window.FilterSystem) {
+            window.FilterSystem.clearFilters();
+        }
+    }
+
+    /**
+     * Retorna placeholder original
+     */
+    function getOriginalPlaceholder(inputId) {
+        const placeholders = {
+            'filter-empresa': 'Empresa',
+            'filter-numero-cliente': 'Nº Cliente',
+            'filter-nome-obra': 'Nome da Obra'
+        };
+        return placeholders[inputId] || '';
+    }
+
+    /**
+     * Limpa todos os inputs
+     */
+    function clearFilterInputs() {
+        console.log('🧹 [FILTER-DOM] Limpando inputs');
+
+        [empresaInput, numeroClienteInput, nomeObraInput].forEach(input => {
+            if (input) {
+                input.value = '';
+
+                // Disparar eventos
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
+
+    /**
+     * Configura listeners nos inputs
+     */
+    function setupInputListeners() {
+        if (!empresaInput || !numeroClienteInput || !nomeObraInput) return;
+
+        console.log('🎧 [FILTER-DOM] Configurando listeners');
+
+        // 🔥 CORREÇÃO: Usar 'input' em vez de 'change' para empresa
+        // Para capturar seleção do autocomplete e digitação manual
+        empresaInput.addEventListener('input', debounce(function (e) {
+            const value = e.target.value.trim();
+            console.log(`🏢 [FILTER-DOM] Empresa alterada: "${value}"`);
+
+            if (window.FilterSystem) {
+                // Enviar valor completo para filtro (o sistema extrairá a sigla)
+                window.FilterSystem.updateFilterValue('empresa', value || null);
+            }
+        }, 500));
+
+        // Listener para número do cliente (com debounce)
+        numeroClienteInput.addEventListener('input', debounce(function (e) {
+            const value = e.target.value.trim();
+            const numValue = value ? parseInt(value) : null;
+
+            console.log(`🔢 [FILTER-DOM] Nº Cliente alterado: ${value}`);
+
+            if (window.FilterSystem) {
+                window.FilterSystem.updateFilterValue('numeroCliente', numValue);
+            }
+        }, 500));
+
+        // Listener para nome da obra (com debounce)
+        nomeObraInput.addEventListener('input', debounce(function (e) {
+            const value = e.target.value.trim();
+
+            console.log(`🏗️ [FILTER-DOM] Nome obra alterado: "${value}"`);
+
+            if (window.FilterSystem) {
+                window.FilterSystem.updateFilterValue('nomeObra', value || null);
+            }
+        }, 500));
+
+        // Clear on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && window.FilterSystem) {
+                window.FilterSystem.clearFilters();
+            }
+        });
+    }
+
+    /**
+     * Debounce helper
+     */
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    /**
+     * Retorna valores atuais dos inputs
+     */
+    function getFilterValues() {
+        return {
+            empresa: empresaInput ? empresaInput.value.trim() : '',
+            numeroCliente: numeroClienteInput ? numeroClienteInput.value.trim() : '',
+            nomeObra: nomeObraInput ? nomeObraInput.value.trim() : ''
+        };
+    }
+
+    /**
+     * Atualiza placeholder dinamicamente (para dicas)
+     */
+    function updatePlaceholders(count) {
+        if (!empresaInput || !nomeObraInput) return;
+
+        if (count > 0) {
+            empresaInput.placeholder = `Empresa (${count} obras)`;
+            nomeObraInput.placeholder = `Nome da Obra (${count} obras)`;
+        } else {
+            empresaInput.placeholder = getOriginalPlaceholder('filter-empresa');
+            nomeObraInput.placeholder = getOriginalPlaceholder('filter-nome-obra');
+        }
+    }
+
+    // API pública
+    return {
+        initialize,
+        setFiltersEnabled,
+        clearFilterInputs,
+        getFilterValues,
+        updatePlaceholders
+    };
+})();
+
+// Exportar para uso global
+window.FilterDOM = FilterDOM;
+/* ==== FIM: filter-dom.js ==== */
+
+/* ==== INÍCIO: filter-system.js ==== */
+/* ==== INÍCIO: features/filters/filter-system.js ==== */
+/**
+ * filter-system.js - Cérebro do sistema de filtros
+ * Gerencia estados, switch e endpoint
+ * TOTALMENTE MODULAR - não altera funções existentes
+ */
+
+const FilterSystem = (function () {
+    // Estado interno do filtro
+    const state = {
+        active: false,
+        endpointMode: 'session', // 'session' | 'general'
+        filterValues: {
+            empresa: null,
+            numeroCliente: null,
+            nomeObra: null
+        },
+        systemReady: false,
+        isLoading: false,
+        currentObras: [], // Cache das obras carregadas
+        modalsDisabled: false // Novo estado para controlar modais
+    };
+
+    // Referências DOM
+    let filterToggle = null;
+    let filterSwitchArea = null;
+
+    /**
+     * Inicializa o sistema de filtros
+     */
+    function initialize() {
+        console.log('🔧 [FILTER-SYSTEM] Inicializando...');
+
+        // Buscar elementos DOM
+        filterToggle = document.getElementById('filter-toggle');
+        filterSwitchArea = document.querySelector('.filtro-switch-area');
+
+        if (!filterToggle) {
+            console.error('❌ [FILTER-SYSTEM] Switch de filtro não encontrado');
+            return false;
+        }
+
+        // Inicializar outros módulos
+        if (window.FilterDOM) {
+            window.FilterDOM.initialize();
+        }
+
+        // Configurar listener do switch (mas switch ainda desabilitado)
+        setupSwitchListener();
+
+        // Aguardar sistema principal carregar (mesma lógica do botão Nova Obra)
+        waitForSystemReady();
+
+        console.log('✅ [FILTER-SYSTEM] Inicializado com sucesso');
+        return true;
+    }
+
+    /**
+     * Aguarda sistema principal carregar para habilitar switch
+     * MESMA LÓGICA DO BOTÃO "NOVA OBRA"
+     */
+    function waitForSystemReady() {
+        console.log('⏳ [FILTER-SYSTEM] Aguardando sistema principal carregar...');
+
+        const checkInterval = setInterval(() => {
+            if (window.systemLoaded) {
+                clearInterval(checkInterval);
+                state.systemReady = true;
+                enableFilterSwitch();
+                console.log('✅ [FILTER-SYSTEM] Sistema carregado - switch habilitado');
+            }
+        }, 500);
+
+        // Timeout de segurança (30 segundos)
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            if (!state.systemReady) {
+                console.warn('⚠️ [FILTER-SYSTEM] Timeout ao aguardar sistema carregar');
+                // Tenta habilitar mesmo assim (fallback)
+                enableFilterSwitch();
+            }
+        }, 30000);
+    }
+
+    /**
+     * Habilita o switch de filtro (MESMA LÓGICA DO BOTÃO "NOVA OBRA")
+     */
+    function enableFilterSwitch() {
+        if (!filterToggle) return;
+
+        filterToggle.disabled = false;
+        filterToggle.title = 'Ativar filtros avançados';
+
+        if (filterSwitchArea) {
+            filterSwitchArea.style.opacity = '1';
+            filterSwitchArea.style.cursor = 'pointer';
+        }
+
+        console.log('✅ [FILTER-SYSTEM] Switch de filtro habilitado');
+    }
+
+    /**
+     * Configura listener para mudança do switch
+     */
+    function setupSwitchListener() {
+        filterToggle.addEventListener('change', function (e) {
+            const isActive = e.target.checked;
+            handleFilterToggleChange(isActive);
+        });
+    }
+
+    /**
+     * Manipula mudança no switch
+     */
+    function handleFilterToggleChange(isActive) {
+        if (state.isLoading) {
+            console.log('⏳ [FILTER-SYSTEM] Sistema ocupado, ignorando toggle');
+            filterToggle.checked = !isActive; // Reverte visualmente
+            return;
+        }
+
+        console.log(`🔀 [FILTER-SYSTEM] Switch ${isActive ? 'ATIVADO' : 'DESATIVADO'}`);
+
+        // Atualizar estado
+        state.active = isActive;
+        state.endpointMode = isActive ? 'general' : 'session';
+        
+        // Atualizar ButtonModeManager
+        if (window.ButtonModeManager) {
+            if (isActive) {
+                window.ButtonModeManager.enableFilterMode();
+                // Desativar modais quando filtro ativo
+                disableModals();
+            } else {
+                window.ButtonModeManager.disableFilterMode();
+                // Reativar modais quando filtro desativado
+                enableModals();
+            }
+        }
+        
+        // Limpar cache quando desativar
+        if (!isActive) {
+            state.currentObras = [];
+        }
+
+        // Notificar outros módulos
+        if (window.FilterDOM) {
+            window.FilterDOM.setFiltersEnabled(isActive);
+        }
+
+        // Inicializar autocomplete se ativado
+        if (window.FilterAutocomplete && isActive) {
+            window.FilterAutocomplete.initialize();
+        }
+
+        // Atualizar UI do switch
+        updateSwitchUI(isActive);
+
+        // Recarregar obras com endpoint correto
+        reloadObrasWithCurrentEndpoint();
+    }
+
+    /**
+     * Desativa modais quando filtro está ativo
+     */
+    function disableModals() {
+        console.log('🚫 [FILTER-SYSTEM] Desativando modais...');
+        state.modalsDisabled = true;
+        
+        // Sobrescrever funções de modal temporariamente
+        if (window.showConfirmationModal) {
+            window._originalShowConfirmationModal = window.showConfirmationModal;
+            window.showConfirmationModal = function(...args) {
+                console.log('🚫 Modal bloqueado - filtro ativo');
+                return null; // Retorna null para indicar que o modal não foi mostrado
+            };
+        }
+        
+        // Sobrescrever função undoDeletion se existir
+        if (window.undoDeletion) {
+            window._originalUndoDeletion = window.undoDeletion;
+            window.undoDeletion = function(...args) {
+                console.log('🚫 Undo deletion bloqueado - filtro ativo');
+                return false;
+            };
+        }
+        
+        // Ocultar modais existentes
+        const modals = document.querySelectorAll('.modal, .confirmation-modal, .exit-modal, [class*="modal"]');
+        modals.forEach(modal => {
+            modal.style.display = 'none';
+            modal.style.visibility = 'hidden';
+        });
+    }
+    
+    /**
+     * Reativa modais quando filtro está desativado
+     */
+    function enableModals() {
+        console.log('✅ [FILTER-SYSTEM] Reativando modais...');
+        state.modalsDisabled = false;
+        
+        // Restaurar funções originais
+        if (window._originalShowConfirmationModal) {
+            window.showConfirmationModal = window._originalShowConfirmationModal;
+            delete window._originalShowConfirmationModal;
+        }
+        
+        if (window._originalUndoDeletion) {
+            window.undoDeletion = window._originalUndoDeletion;
+            delete window._originalUndoDeletion;
+        }
+        
+        // Mostrar modais novamente (se aplicável)
+        const modals = document.querySelectorAll('.modal, .confirmation-modal, .exit-modal, [class*="modal"]');
+        modals.forEach(modal => {
+            modal.style.display = '';
+            modal.style.visibility = '';
+        });
+    }
+
+    /**
+     * Atualiza UI do switch
+     */
+    function updateSwitchUI(isActive) {
+        if (!filterSwitchArea) return;
+
+        const label = filterSwitchArea.querySelector('.switch-label-text');
+        if (label) {
+            label.textContent = isActive
+                ? 'Filtro Ativo (Modo Geral)'
+                : 'Filtro de Obras';
+            label.style.color = isActive ? '#4CAF50' : '#666';
+            label.style.fontWeight = isActive ? 'bold' : 'normal';
+            label.style.transition = 'color 0.3s ease';
+        }
+
+        // Visual feedback no switch
+        if (filterSwitchArea) {
+            filterSwitchArea.style.backgroundColor = isActive
+                ? 'rgba(76, 175, 80, 0.1)'
+                : 'transparent';
+            filterSwitchArea.style.transition = 'background-color 0.3s ease';
+            filterSwitchArea.style.borderRadius = '6px';
+            filterSwitchArea.style.padding = isActive ? '8px' : '4px';
+        }
+
+        // 🔥 ATUALIZAR: Feedback visual no switch toggle
+        const switchElement = document.querySelector('.filter-switch');
+        if (switchElement) {
+            switchElement.style.boxShadow = isActive
+                ? '0 0 10px rgba(76, 175, 80, 0.5)'
+                : 'none';
+        }
+    }
+
+    /**
+     * Retorna endpoint correto baseado no estado
+     */
+    function getCurrentEndpoint() {
+        if (state.active) {
+            console.log('🌐 [FILTER-SYSTEM] Endpoint: /api/backup-completo (TODAS as obras)');
+            return '/api/backup-completo';
+        } else {
+            console.log('🌐 [FILTER-SYSTEM] Endpoint: /api/session-obras (apenas sessão)');
+            return '/api/session-obras';
+        }
+    }
+
+    /**
+     * Recarrega obras com endpoint atual + filtros
+     */
+    async function reloadObrasWithCurrentEndpoint() {
+        if (state.isLoading) {
+            console.log('⏳ [FILTER-SYSTEM] Já recarregando, ignorando...');
+            return;
+        }
+
+        state.isLoading = true;
+        console.log('🔄 [FILTER-SYSTEM] Recarregando obras...');
+
+        try {
+            // Limpar obras atuais (reutiliza função existente)
+            clearCurrentObras();
+
+            if (state.active) {
+                // Modo filtro: carrega TODAS as obras e aplica filtros
+                await loadAndFilterAllObras();
+            } else {
+                // Modo normal: carrega apenas obras da sessão
+                await loadSessionObras();
+            }
+
+            console.log('✅ [FILTER-SYSTEM] Obras recarregadas com sucesso');
+            if (window.ButtonModeManager) {
+                window.ButtonModeManager.applyMode();
+            }
+
+        } catch (error) {
+            console.error('❌ [FILTER-SYSTEM] Erro ao recarregar obras:', error);
+        } finally {
+            state.isLoading = false;
+        }
+    }
+
+    /**
+     * Limpa obras atuais do DOM
+     */
+    function clearCurrentObras() {
+        console.log('🧹 [FILTER-SYSTEM] Limpando obras atuais do DOM');
+
+        // Tentar usar função existente primeiro
+        if (typeof removeBaseObraFromHTML === 'function') {
+            removeBaseObraFromHTML();
+        } else if (typeof window.removeBaseObraFromHTML === 'function') {
+            window.removeBaseObraFromHTML();
+        } else {
+            // Fallback: limpar container manualmente
+            const container = document.getElementById('projects-container');
+            if (container) {
+                container.innerHTML = '';
+                console.log('🗑️ [FILTER-SYSTEM] Container de obras limpo manualmente');
+            }
+        }
+
+        // Resetar contador se existir
+        if (typeof window.resetGeralCount === 'function') {
+            window.resetGeralCount();
+        }
+    }
+
+    /**
+     * Carrega TODAS as obras e aplica filtros
+     */
+    async function loadAndFilterAllObras() {
+        console.log('🔍 [FILTER-SYSTEM] Carregando TODAS as obras...');
+
+        try {
+            // 1. Tentar diferentes endpoints para obter todas as obras
+            let todasObras = [];
+            let endpointUsed = '';
+            
+            // 🔥 ENDPOINTS ESPECÍFICOS PARA TODAS AS OBRAS (conforme sua API)
+            const endpointsToTry = [
+                '/api/backup-completo',  // Primeiro endpoint
+                '/obras',                 // Segundo endpoint
+                '/api/obras',             // Terceiro (fallback)
+                '/all-obras'              // Quarto (fallback)
+            ];
+            
+            for (const endpoint of endpointsToTry) {
+                try {
+                    console.log(`🔍 [FILTER-SYSTEM] Tentando endpoint: ${endpoint}`);
+                    const response = await fetch(endpoint);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // 🔥 ADAPTAÇÃO: Verificar estrutura da resposta
+                        // Pode ser um array direto ou um objeto com propriedade 'obras'
+                        if (Array.isArray(data)) {
+                            todasObras = data;
+                        } else if (data.obras && Array.isArray(data.obras)) {
+                            todasObras = data.obras;
+                        } else if (data.data && Array.isArray(data.data)) {
+                            todasObras = data.data;
+                        } else {
+                            console.warn(`⚠️ [FILTER-SYSTEM] Estrutura inesperada do endpoint ${endpoint}:`, data);
+                            continue;
+                        }
+                        
+                        endpointUsed = endpoint;
+                        console.log(`✅ [FILTER-SYSTEM] ${todasObras.length} obras carregadas de ${endpoint}`);
+                        break;
+                    }
+                } catch (endpointError) {
+                    console.log(`⚠️ [FILTER-SYSTEM] Endpoint ${endpoint} falhou:`, endpointError.message);
+                    continue;
+                }
+            }
+            
+            // Se nenhum endpoint funcionou, lançar erro
+            if (todasObras.length === 0) {
+                throw new Error('Não foi possível carregar obras de nenhum endpoint');
+            }
+
+            // Salvar cache para filtragem
+            state.currentObras = todasObras;
+
+            // 2. Aplicar filtros
+            const obrasFiltradas = aplicarFiltros(todasObras);
+            console.log(`🎯 [FILTER-SYSTEM] ${obrasFiltradas.length} obras após filtros`);
+
+            // 3. Carregar obras filtradas
+            if (obrasFiltradas.length === 0) {
+                console.log('📭 [FILTER-SYSTEM] Nenhuma obra corresponde aos filtros');
+                showNoResultsMessage();
+                return;
+            }
+
+            // 4. Carregar cada obra
+            for (const obraData of obrasFiltradas) {
+                await loadObraIntoDOM(obraData);
+            }
+
+        } catch (error) {
+            console.error('❌ [FILTER-SYSTEM] Erro ao carregar todas as obras:', error);
+            showErrorMessage('Não foi possível carregar as obras. Verifique o servidor.');
+        }
+    }
+    
+    /**
+     * Mostra mensagem quando não há resultados
+     */
+    function showNoResultsMessage() {
+        const container = document.getElementById('projects-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="no-results-message" style="text-align: center; padding: 40px; color: #666;">
+                    <h3>Nenhuma obra encontrada com os filtros aplicados</h3>
+                    <p>Tente ajustar os critérios de busca</p>
+                </div>
+            `;
+        }
+    }
+    
+    /**
+     * Mostra mensagem de erro
+     */
+    function showErrorMessage(message) {
+        const container = document.getElementById('projects-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="error-message" style="text-align: center; padding: 40px; color: #d32f2f;">
+                    <h3>Erro ao carregar obras</h3>
+                    <p>${message}</p>
+                    <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px;">
+                        Tentar novamente
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Carrega uma obra no DOM (reutilizando sistema existente) - SEM FALLBACK
+     */
+    async function loadObraIntoDOM(obraData) {
+        try {
+            console.log(`🔄 [FILTER-SYSTEM] Carregando obra: ${obraData.nome || obraData.id}`);
+
+            // Verificar se já existe no DOM
+            const obraExistente = document.querySelector(`[data-obra-id="${obraData.id}"]`);
+            if (obraExistente) {
+                console.log(`⚠️ [FILTER-SYSTEM] Obra ${obraData.id} já existe, ignorando`);
+                return;
+            }
+
+            // 🔥 OPÇÃO 1: Usar loadSingleObra se disponível
+            if (window.systemFunctions && typeof window.systemFunctions.loadSingleObra === 'function') {
+                console.log(`🔨 [FILTER-SYSTEM] Carregando via loadSingleObra (systemFunctions)`);
+                await window.systemFunctions.loadSingleObra(obraData);
+            }
+            else if (typeof window.loadSingleObra === 'function') {
+                console.log(`🔨 [FILTER-SYSTEM] Carregando via loadSingleObra (window)`);
+                await window.loadSingleObra(obraData);
+            }
+            else if (typeof loadSingleObra === 'function') {
+                console.log(`🔨 [FILTER-SYSTEM] Carregando via loadSingleObra (global)`);
+                await loadSingleObra(obraData);
+            }
+            // 🔥 OPÇÃO 2: Usar createEmptyObra + populateObraData
+            else if (window.systemFunctions &&
+                typeof window.systemFunctions.createEmptyObra === 'function' &&
+                typeof window.systemFunctions.populateObraData === 'function') {
+                console.log(`🔨 [FILTER-SYSTEM] Criando via createEmptyObra + populateObraData`);
+
+                // Criar obra vazia
+                await window.systemFunctions.createEmptyObra(obraData.nome || `Obra ${obraData.id}`, obraData.id);
+
+                // Aguardar criação no DOM
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Preencher dados
+                const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
+                if (obraElement) {
+                    await window.systemFunctions.populateObraData(obraData);
+                    // Aplicar dados da empresa na obra carregada pelo filtro
+                    try {
+                        const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
+                        if (obraElement && window.prepararDadosEmpresaNaObra) {
+                            await window.prepararDadosEmpresaNaObra(obraData, obraElement);
+                            console.log(`🏢 Empresa hidratada para obra ${obraData.id}`);
+                        } else {
+                            console.warn(`⚠️ Obra ${obraData.id} encontrada?`, !!obraElement,
+                                "Função prepararDadosEmpresaNaObra existe?", !!window.prepararDadosEmpresaNaObra);
+                        }
+                    } catch (err) {
+                        console.error("❌ Erro aplicando dados de empresa na obra filtrada:", err);
+                    }
+                }
+            }
+            else if (typeof window.createEmptyObra === 'function' && typeof window.populateObraData === 'function') {
+                console.log(`🔨 [FILTER-SYSTEM] Criando via createEmptyObra (window) + populateObraData`);
+
+                await window.createEmptyObra(obraData.nome || `Obra ${obraData.id}`, obraData.id);
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
+                if (obraElement) {
+                    await window.populateObraData(obraData);
+                }
+            }
+            else {
+                // 🔥 CRÍTICO: Se não encontrar funções de carregamento
+                console.error(`❌ [FILTER-SYSTEM] NENHUMA função de carregamento disponível para obra ${obraData.id}`);
+                console.error('💡 Verifique se estas funções estão disponíveis:');
+                console.error('   - loadSingleObra');
+                console.error('   - createEmptyObra + populateObraData');
+
+                // Não criar fallback manual - apenas logar erro
+                return;
+            }
+
+            console.log(`✅ [FILTER-SYSTEM] Obra "${obraData.nome}" carregada com sucesso`);
+
+        } catch (error) {
+            console.error(`❌ [FILTER-SYSTEM] Erro ao carregar obra ${obraData.id}:`, error);
+        }
+    }
+
+    /**
+     * Carrega obras da sessão (modo normal) - COM FALLBACKS
+     */
+    async function loadSessionObras() {
+        console.log('📁 [FILTER-SYSTEM] Carregando obras da sessão');
+
+        try {
+            // 🔥 IMPORTANTE: Limpar DOM completamente primeiro
+            clearCurrentObras();
+
+            // 🔥 VERIFICAÇÃO MELHORADA DAS FUNÇÕES DISPONÍVEIS
+            let loadFunction = null;
+            let functionSource = '';
+            
+            // Verificar em várias localizações possíveis
+            if (typeof loadObrasFromServer === 'function') {
+                loadFunction = loadObrasFromServer;
+                functionSource = 'escopo global';
+            } else if (window.loadObrasFromServer && typeof window.loadObrasFromServer === 'function') {
+                loadFunction = window.loadObrasFromServer;
+                functionSource = 'window';
+            } else if (window.systemFunctions && window.systemFunctions.loadObrasFromServer && 
+                       typeof window.systemFunctions.loadObrasFromServer === 'function') {
+                loadFunction = window.systemFunctions.loadObrasFromServer;
+                functionSource = 'systemFunctions';
+            }
+
+            if (loadFunction) {
+                console.log(`✅ [FILTER-SYSTEM] Função loadObrasFromServer encontrada no ${functionSource}`);
+                console.log('🔄 [FILTER-SYSTEM] Executando loadObrasFromServer...');
+                await loadFunction();
+                console.log('✅ [FILTER-SYSTEM] Obras da sessão carregadas com sucesso');
+            } else {
+                console.warn('⚠️ [FILTER-SYSTEM] Nenhuma função encontrada, usando fallback direto...');
+                await loadObrasFallback();
+            }
+
+        } catch (error) {
+            console.error('❌ [FILTER-SYSTEM] ERRO ao carregar sessão:', error);
+            
+            // Tentar fallback
+            try {
+                console.log('🔄 [FILTER-SYSTEM] Tentando fallback após erro...');
+                await loadObrasFallback();
+            } catch (fallbackError) {
+                console.error('❌ [FILTER-SYSTEM] Fallback também falhou:', fallbackError);
+                showErrorMessage('Erro ao carregar obras. Recarregue a página.');
+            }
+        }
+    }
+    
+    /**
+     * Fallback para carregar obras
+     */
+    async function loadObrasFallback() {
+        try {
+            console.log('🔄 [FILTER-SYSTEM] Usando fallback para carregar obras...');
+            
+            const response = await fetch('/api/session-obras');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Adaptar estrutura da resposta
+            let obras = [];
+            if (Array.isArray(data)) {
+                obras = data;
+            } else if (data.obras && Array.isArray(data.obras)) {
+                obras = data.obras;
+            } else if (data.data && Array.isArray(data.data)) {
+                obras = data.data;
+            } else {
+                throw new Error('Estrutura de resposta inesperada');
+            }
+            
+            console.log(`✅ [FILTER-SYSTEM] ${obras.length} obras carregadas via fallback`);
+            
+            // Processar obras manualmente se necessário
+            if (obras.length > 0 && typeof window.createEmptyObra === 'function') {
+                for (const obra of obras) {
+                    await window.createEmptyObra(obra.nome, obra.id);
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    const obraElement = document.querySelector(`[data-obra-id="${obra.id}"]`);
+                    if (obraElement && typeof window.populateObraData === 'function') {
+                        await window.populateObraData(obra);
+                    }
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ [FILTER-SYSTEM] Fallback falhou:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Aplica filtros ao array de obras
+     */
+    function aplicarFiltros(obras) {
+        if (!state.active || !obras || obras.length === 0) {
+            return obras; // Se filtro não ativo ou sem obras, retorna todas
+        }
+
+        const { empresa, numeroCliente, nomeObra } = state.filterValues;
+
+        // 🔥 CORREÇÃO: Se NENHUM filtro preenchido, retorna TODAS as obras
+        const hasActiveFilter = empresa || (numeroCliente !== null && numeroCliente !== undefined) || nomeObra;
+
+        if (!hasActiveFilter) {
+            console.log('🔓 [FILTER-SYSTEM] Nenhum filtro ativo - retornando TODAS as obras');
+            return obras;
+        }
+
+        console.log(`🎯 [FILTER-SYSTEM] Aplicando filtros:`, { empresa, numeroCliente, nomeObra });
+
+        return obras.filter(obra => {
+            let passaEmpresa = true;
+            let passaNumero = true;
+            let passaNome = true;
+
+            // 🔥 FILTRO POR EMPRESA - CORREÇÃO CRÍTICA
+            if (empresa) {
+                const empresaFiltro = empresa.toUpperCase().trim();
+
+                // Extrair apenas sigla do filtro (remover " - NOME" se existir)
+                const filtroSigla = empresaFiltro.includes(' - ')
+                    ? empresaFiltro.split(' - ')[0].trim()
+                    : empresaFiltro;
+
+                // Verificar em vários campos da obra
+                const obraSigla = (obra.empresaSigla || '').toUpperCase().trim();
+                const obraNomeCompleto = (obra.empresa || '').toUpperCase().trim();
+                const obraNomeEmpresa = (obra.nomeEmpresa || '').toUpperCase().trim();
+
+                // Tentar extrair sigla do nome completo se existir
+                let obraSiglaExtraida = '';
+                if (obraNomeCompleto.includes(' - ')) {
+                    obraSiglaExtraida = obraNomeCompleto.split(' - ')[0].trim();
+                }
+
+                passaEmpresa = obraSigla === filtroSigla ||
+                    obraSigla.includes(filtroSigla) ||
+                    obraNomeCompleto.includes(filtroSigla) ||
+                    obraNomeEmpresa.includes(filtroSigla) ||
+                    obraSiglaExtraida === filtroSigla ||
+                    obraSiglaExtraida.includes(filtroSigla);
+
+                if (!passaEmpresa) {
+                    console.log(`❌ [FILTRO] Obra ${obra.id} falhou no filtro empresa:`, {
+                        filtro: filtroSigla,
+                        obraSigla,
+                        obraNomeCompleto,
+                        obraNomeEmpresa,
+                        obraSiglaExtraida
+                    });
+                }
+            }
+
+            // 🔥 FILTRO POR NÚMERO DO CLIENTE
+            if (numeroCliente !== null && numeroCliente !== undefined) {
+                const filtroNumero = parseInt(numeroCliente);
+
+                // Verificar em vários campos possíveis
+                const obraNumero1 = obra.numeroClienteFinal ? parseInt(obra.numeroClienteFinal) : null;
+                const obraNumero2 = obra.numeroCliente ? parseInt(obra.numeroCliente) : null;
+                const obraNumero3 = obra.clienteNumero ? parseInt(obra.clienteNumero) : null;
+                const obraNumero4 = obra.numero ? parseInt(obra.numero) : null;
+
+                const obraNumeros = [obraNumero1, obraNumero2, obraNumero3, obraNumero4];
+                const numerosValidos = obraNumeros.filter(n => n !== null && !isNaN(n));
+
+                passaNumero = numerosValidos.some(n => n === filtroNumero);
+
+                if (!passaNumero) {
+                    console.log(`❌ [FILTRO] Obra ${obra.id} falhou no filtro número:`, {
+                        filtro: filtroNumero,
+                        obraNumeros: numerosValidos
+                    });
+                }
+            }
+
+            // 🔥 FILTRO POR NOME DA OBRA
+            if (nomeObra) {
+                const filtroNome = nomeObra.toUpperCase().trim();
+                const obraNome1 = (obra.nome || '').toUpperCase().trim();
+                const obraNome2 = (obra.titulo || '').toUpperCase().trim();
+                const obraNome3 = (obra.nomeObra || '').toUpperCase().trim();
+
+                passaNome = obraNome1.includes(filtroNome) ||
+                    obraNome2.includes(filtroNome) ||
+                    obraNome3.includes(filtroNome);
+
+                if (!passaNome) {
+                    console.log(`❌ [FILTRO] Obra ${obra.id} falhou no filtro nome:`, {
+                        filtro: filtroNome,
+                        obraNome1,
+                        obraNome2,
+                        obraNome3
+                    });
+                }
+            }
+
+            const passaTodos = passaEmpresa && passaNumero && passaNome;
+
+            if (passaTodos) {
+                console.log(`✅ [FILTRO] Obra ${obra.id} passou nos filtros:`, {
+                    nome: obra.nome || obra.titulo,
+                    empresa: obra.empresaSigla || obra.empresa
+                });
+            }
+
+            return passaTodos;
+        });
+    }
+
+    /**
+     * Atualiza valor de um filtro específico
+     */
+    function updateFilterValue(filterName, value) {
+        if (state.filterValues.hasOwnProperty(filterName)) {
+            const oldValue = state.filterValues[filterName];
+
+            // 🔥 CORREÇÃO: Não atualizar se valor for o mesmo (evita loop)
+            if (oldValue === value) {
+                return;
+            }
+
+            state.filterValues[filterName] = value;
+            console.log(`📝 [FILTER-SYSTEM] Filtro "${filterName}" atualizado: ${oldValue} → ${value}`);
+
+            // 🔥 ATUALIZAR: Recarregar SEMPRE que filtro mudar (mesmo que seja null)
+            if (state.active) {
+                console.log('🔄 [FILTER-SYSTEM] Filtro alterado - recarregando obras...');
+
+                // Debounce para evitar múltiplas recargas rápidas
+                clearTimeout(window._filterDebounce);
+                window._filterDebounce = setTimeout(() => {
+                    reloadObrasWithCurrentEndpoint();
+                }, 300);
+            }
+        }
+    }
+
+    /**
+     * Limpa todos os filtros
+     */
+    function clearFilters() {
+        console.log('🧹 [FILTER-SYSTEM] Limpando todos os filtros');
+
+        state.filterValues = {
+            empresa: null,
+            numeroCliente: null,
+            nomeObra: null
+        };
+
+        // Notificar DOM para limpar inputs
+        if (window.FilterDOM) {
+            window.FilterDOM.clearFilterInputs();
+        }
+
+        // Se filtro ativo, recarregar (para mostrar todas as obras)
+        if (state.active) {
+            reloadObrasWithCurrentEndpoint();
+        }
+    }
+
+    /**
+     * Retorna estado atual
+     */
+    function getState() {
+        return { ...state };
+    }
+
+    /**
+     * Verifica se há filtros ativos
+     */
+    function hasActiveFilters() {
+        return state.active && (
+            state.filterValues.empresa !== null ||
+            state.filterValues.numeroCliente !== null ||
+            state.filterValues.nomeObra !== null
+        );
+    }
+    
+    /**
+     * Recarrega obras com endpoint atual (para uso externo)
+     */
+    function reloadObras() {
+        return reloadObrasWithCurrentEndpoint();
+    }
+    
+    /**
+     * Retorna se o filtro está ativo
+     */
+    function isFilterActive() {
+        return state.active;
+    }
+
+    // API pública
+    return {
+        initialize,
+        updateFilterValue,
+        clearFilters,
+        getState,
+        hasActiveFilters,
+        getCurrentEndpoint,
+        reloadObrasWithCurrentEndpoint,
+        reloadObras, // Alias para compatibilidade
+        isFilterActive
+    };
+})();
+
+// Exportar para uso global
+window.FilterSystem = FilterSystem;
+/* ==== FIM: features/filters/filter-system.js ==== */
+/* ==== FIM: filter-system.js ==== */
+
+/* ==== INÍCIO: universal-delete-modal.js ==== */
+/* ==== INÍCIO: features/filters/universal-delete-modal.js ==== */
+/**
+ * UniversalDeleteModal - Modal limpo e direto
+ * Mostra apenas: Tipo, Nome e Data/Hora
+ */
+
+class UniversalDeleteModal {
+    constructor() {
+        this.modal = null;
+        this.modalContent = null;
+        this.currentDeletion = null;
+        this.isShowing = false;
+        this.escHandler = null;
+        this.init();
+    }
+    
+    init() {
+        this.createModalHTML();
+        this.setupEventListeners();
+    }
+    
+    createModalHTML() {
+        if (document.getElementById('universal-delete-modal')) {
+            this.modal = document.getElementById('universal-delete-modal');
+            this.modalContent = this.modal.querySelector('.modal-content');
+            return;
+        }
+        
+        const modalHTML = `
+            <div id="universal-delete-modal" class="universal-delete-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="warning-icon">⚠️</div>
+                        <h2 class="modal-title">DELETAR PERMANENTEMENTE</h2>
+                        <p class="modal-subtitle">Esta ação não pode ser desfeita</p>
+                    </div>
+                    
+                    <div id="universal-delete-message"></div>
+                    <div id="universal-delete-details"></div>
+                    
+                    <div class="action-buttons">
+                        <button id="universal-delete-cancel" class="universal-btn universal-btn-cancel">
+                            Cancelar (ESC)
+                        </button>
+                        <button id="universal-delete-confirm" class="universal-btn universal-btn-confirm">
+                            DELETAR AGORA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        this.modal = document.getElementById('universal-delete-modal');
+        this.modalContent = this.modal.querySelector('.modal-content');
+    }
+    
+    setupEventListeners() {
+        if (!this.modal) return;
+        
+        document.getElementById('universal-delete-cancel').addEventListener('click', () => this.hide());
+        document.getElementById('universal-delete-confirm').addEventListener('click', async () => {
+            if (this.currentDeletion?.callback) await this.currentDeletion.callback();
+            this.hide();
+        });
+        
+        this.modal.addEventListener('click', (e) => {
+            if (e.target.id === 'universal-delete-modal') this.hide();
+        });
+    }
+    
+    show(itemType, itemName, deleteCallback) {
+        if (!this.modal) return false;
+        
+        this.currentDeletion = {
+            itemType,
+            itemName,
+            callback: deleteCallback
+        };
+        
+        // Mensagem principal
+        document.getElementById('universal-delete-message').innerHTML = `
+            <div class="message-content">
+                <span class="message-icon">🗑️</span>
+                <div class="message-text">
+                    <strong>"${itemName}"</strong> será 
+                    <span style="color: #d32f2f; font-weight: bold; text-decoration: underline;">DELETADO PERMANENTEMENTE</span> 
+                    do sistema.
+                    <br><br>
+                    <small>Esta ação não pode ser desfeita.</small>
+                </div>
+            </div>
+        `;
+        
+        // Apenas 3 informações
+        document.getElementById('universal-delete-details').innerHTML = `
+            <div class="details-grid">
+                <strong>Tipo:</strong> <span>${itemType}</span>
+                <strong>Nome:</strong> <span>${itemName}</span>
+                <strong>Data/Hora:</strong> <span>${new Date().toLocaleString()}</span>
+            </div>
+        `;
+        
+        // Mostrar com animação
+        this.modal.style.display = 'flex';
+        this.isShowing = true;
+        
+        setTimeout(() => {
+            this.modal.style.opacity = '1';
+            this.modalContent.style.transform = 'translateY(0)';
+        }, 10);
+        
+        // Configurar ESC
+        this.escHandler = (e) => e.key === 'Escape' && this.isShowing && this.hide();
+        document.addEventListener('keydown', this.escHandler);
+        
+        // Focar no botão de cancelar
+        setTimeout(() => document.getElementById('universal-delete-cancel').focus(), 100);
+        document.body.style.overflow = 'hidden';
+        
+        return true;
+    }
+    
+    hide() {
+        if (!this.modal || !this.isShowing) return;
+        
+        this.modal.style.opacity = '0';
+        this.modalContent.style.transform = 'translateY(-30px)';
+        
+        if (this.escHandler) {
+            document.removeEventListener('keydown', this.escHandler);
+            this.escHandler = null;
+        }
+        
+        document.body.style.overflow = '';
+        
+        setTimeout(() => {
+            this.modal.style.display = 'none';
+            this.isShowing = false;
+            this.currentDeletion = null;
+        }, 300);
+    }
+    
+    static async confirmDelete(itemType, itemName) {
+        return new Promise((resolve) => {
+            if (!window.universalDeleteModalInstance) {
+                window.universalDeleteModalInstance = new UniversalDeleteModal();
+            }
+            
+            const modal = window.universalDeleteModalInstance;
+            const originalHide = modal.hide.bind(modal);
+            
+            modal.hide = function() {
+                originalHide();
+                setTimeout(() => {
+                    resolve(false);
+                    modal.hide = originalHide;
+                }, 350);
+            };
+            
+            const deleteCallback = () => {
+                setTimeout(() => resolve(true), 50);
+            };
+            
+            modal.show(itemType, itemName, deleteCallback);
+        });
+    }
+}
+
+// Exportar
+export { UniversalDeleteModal };
+if (typeof window !== 'undefined') window.UniversalDeleteModal = UniversalDeleteModal;
+/* ==== FIM: features/filters/universal-delete-modal.js ==== */
+/* ==== FIM: universal-delete-modal.js ==== */

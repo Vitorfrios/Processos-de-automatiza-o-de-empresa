@@ -1,4 +1,4 @@
-/* ==== INÍCIO: features/filters/button-delete-universal.js ==== */
+/* ==== INÍCIO: button-delete-universal.js ==== */
 
 class ButtonDeleteUniversal {
     constructor() {
@@ -78,6 +78,24 @@ class ButtonDeleteUniversal {
         this.toastContainer = null;
         
         console.log('✅ ButtonDeleteUniversal configurado (versão COM NOMES)');
+    }
+
+    /**
+     * 🔥 NOVO: Verifica se deve configurar botão (apenas com filtro ativo)
+     */
+    shouldSetupButton() {
+        // Verificar se FilterSystem existe e está ativo
+        if (window.FilterSystem && window.FilterSystem.isFilterActive) {
+            return window.FilterSystem.isFilterActive();
+        }
+        
+        // Fallback: verificar estado do toggle
+        const filterToggle = document.getElementById('filter-toggle');
+        if (filterToggle) {
+            return filterToggle.checked;
+        }
+        
+        return false; // Por padrão, não configurar
     }
 
     /**
@@ -224,7 +242,7 @@ class ButtonDeleteUniversal {
                         config,
                         ids,
                         path,
-                        itemName, // 🔥 NOVO: nome real do item
+                        itemName,
                         originalText: text,
                         originalOnclick: onclick
                     };
@@ -236,6 +254,12 @@ class ButtonDeleteUniversal {
     }
 
     setupButton(button) {
+        // 🔥 VERIFICAR SE FILTRO ESTÁ ATIVO
+        if (!this.shouldSetupButton()) {
+            console.log('⏭️ Botão não configurado - filtro desativado');
+            return;
+        }
+        
         const buttonInfo = this.analyzeButton(button);
         if (!buttonInfo) {
             console.log('⚠️ Botão não identificado:', button);
@@ -255,7 +279,7 @@ class ButtonDeleteUniversal {
         newButton.setAttribute('data-original-text', buttonInfo.originalText);
         newButton.setAttribute('data-button-type', buttonInfo.config.type);
         newButton.setAttribute('data-item-id', JSON.stringify(buttonInfo.ids));
-        newButton.setAttribute('data-item-name', buttonInfo.itemName); // 🔥 Guardar nome
+        newButton.setAttribute('data-item-name', buttonInfo.itemName);
         
         // Adicionar classe
         newButton.classList.add('delete-real');
@@ -279,7 +303,7 @@ class ButtonDeleteUniversal {
      * 🔥 CORRIGIDO: Mostra confirmação com NOME correto
      */
     async showAdvancedConfirmation(buttonInfo) {
-        const { config, ids, itemName } = buttonInfo; // 🔥 Agora usa itemName
+        const { config, ids, itemName } = buttonInfo;
         
         console.log(`🔔 Mostrando confirmação para deletar ${config.itemType}: "${itemName}"`);
         
@@ -390,7 +414,7 @@ class ButtonDeleteUniversal {
     }
 
     async executeRealDeletion(buttonInfo) {
-        const { config, ids, path, button, itemName } = buttonInfo; // 🔥 Agora tem itemName
+        const { config, ids, path, button, itemName } = buttonInfo;
         
         console.log(`🗑️ Executando deleção REAL para ${config.itemType}: "${itemName}"`, path);
         
@@ -404,7 +428,7 @@ class ButtonDeleteUniversal {
                     path: path,
                     itemType: config.type,
                     itemId: JSON.stringify(ids),
-                    itemName: itemName // 🔥 Enviar nome para API
+                    itemName: itemName
                 })
             });
 
@@ -572,7 +596,13 @@ class ButtonDeleteUniversal {
     }
 
     setupAllDeleteButtons() {
-        console.log('🔧 [DELETE-REAL] Buscando botões específicos...');
+        // Verificar se filtro está ativo
+        if (!this.shouldSetupButton()) {
+            console.log('⏭️ [DELETE-REAL] Filtro não está ativo - ignorando configuração de botões');
+            return 0;
+        }
+        
+        console.log('🔧 [DELETE-REAL] Buscando botões específicos (filtro ATIVO)...');
         
         const allButtons = document.querySelectorAll('button');
         let configuredButtons = 0;
@@ -588,6 +618,46 @@ class ButtonDeleteUniversal {
         console.log(`🎯 [DELETE-REAL] ${configuredButtons} botões configurados para deleção REAL`);
         return configuredButtons;
     }
+
+    /**
+     * 🔥 NOVO: Restaura botões para estado original
+     */
+    restoreOriginalButtons() {
+        console.log('🔄 [DELETE-REAL] Restaurando botões originais...');
+        
+        const universalButtons = document.querySelectorAll('.delete-real');
+        let restoredCount = 0;
+        
+        universalButtons.forEach(button => {
+            const originalOnclick = button.getAttribute('data-original-onclick');
+            const originalText = button.getAttribute('data-original-text');
+            
+            if (originalOnclick) {
+                button.setAttribute('onclick', originalOnclick);
+            }
+            
+            if (originalText) {
+                button.textContent = originalText;
+            }
+            
+            // Remover atributos e classes
+            button.classList.remove('delete-real');
+            button.removeAttribute('data-original-onclick');
+            button.removeAttribute('data-original-text');
+            button.removeAttribute('data-button-type');
+            button.removeAttribute('data-item-id');
+            button.removeAttribute('data-item-name');
+            
+            // Remover event listeners
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            
+            restoredCount++;
+        });
+        
+        console.log(`✅ [DELETE-REAL] ${restoredCount} botões restaurados para estado original`);
+        return restoredCount;
+    }
 }
 
 export { ButtonDeleteUniversal };
@@ -595,4 +665,4 @@ export { ButtonDeleteUniversal };
 if (typeof window !== 'undefined') {
     window.ButtonDeleteUniversal = ButtonDeleteUniversal;
 }
-/* ==== FIM: features/filters/button-delete-universal.js ==== */
+/* ==== FIM: button-delete-universal.js ==== */

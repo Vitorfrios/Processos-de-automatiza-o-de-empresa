@@ -1,0 +1,31 @@
+[A]bitola ls (select)
+[B]bitola LL (select)
+
+[C]Espessura LS (select)
+[D]Espessura LL (select)
+
+[E]"Comprimento
+ Interligação" (input) com valor inicial de 10
+
+[F]Tag Equipamento (Input +automatico)
+-- se repetido 
+UE-01
+UE-02
+UD-01
+UD-02
+
+
+[G]N° Circ. (input)	
+[H]N° Curvas	(input)
+[I]C.E. Curva (input)
+
+
+Total Tubulação de Cobre			
+[J]L.S. (m)	
+-Formula((E*G)+(H*I))
+[K]L.S. (kg)	
+- Formula(())
+[L]L.L. (m)	
+-Formula()
+[M]L.L (kg)
+-Formula(*L)
