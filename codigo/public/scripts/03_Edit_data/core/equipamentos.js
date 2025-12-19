@@ -1,5 +1,5 @@
 // scripts/03_Edit_data/core/equipamentos.js
-// Sistema CRUD completo para equipamentos
+// Sistema CRUD para equipamentos com interface estilo opções
 
 export function initEquipments() {
     console.log('🚀 Inicializando sistema de equipamentos...');
@@ -20,8 +20,7 @@ export function initEquipments() {
 function setupEquipmentSystem() {
     // Estado global
     window.equipmentsData = {};
-    window.currentEquipmentType = '';
-    window.equipmentViewMode = 'table';
+    window.currentEquipmentIndex = null;
     
     // Expor funções globais
     exposeGlobalFunctions();
@@ -39,18 +38,17 @@ function setupEquipmentSystem() {
 function exposeGlobalFunctions() {
     window.loadEquipmentsData = loadEquipmentsData;
     window.filterEquipmentTable = filterEquipmentTable;
-    window.editEquipmentType = editEquipmentType;
     window.saveEquipmentChanges = saveEquipmentChanges;
-    window.deleteEquipmentType = deleteEquipmentType;
-    window.addNewEquipmentType = addNewEquipmentType;
-    window.addDimensionToEquipment = addDimensionToEquipment;
-    window.toggleEquipmentView = toggleEquipmentView;
-    window.closeEquipmentDetail = closeEquipmentDetail;
-    window.resetEquipmentChanges = resetEquipmentChanges;
-    window.addNewDimension = addNewDimension;
-    window.removeDimension = removeDimension;
-    window.updateDimensionName = updateDimensionName;
-    window.updateDimensionValue = updateDimensionValue;
+    window.deleteEquipment = deleteEquipment;
+    window.addNewEquipment = addNewEquipment;
+    window.toggleEquipmentItem = toggleEquipmentItem;
+    window.removeEquipmentDimension = removeEquipmentDimension;
+    window.addEquipmentDimension = addEquipmentDimension;
+    window.syncEquipmentName = syncEquipmentName;
+    window.updateEquipment = updateEquipment;
+    window.updateEquipmentDimensionLabel = updateEquipmentDimensionLabel;
+    window.updateEquipmentValue = updateEquipmentValue;
+    window.selectEquipmentCodigo = selectEquipmentCodigo;
 }
 
 // Configurar listeners de eventos
@@ -66,16 +64,6 @@ function setupEventListeners() {
             }, 150);
         });
     }
-    
-    // Enter nos campos de nova dimensão
-    document.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && isEquipmentTabActive()) {
-            const activeElement = document.activeElement;
-            if (activeElement.id === 'newDimensionName' || activeElement.id === 'newDimensionValue') {
-                addNewDimension();
-            }
-        }
-    });
 }
 
 // Verifica se a tab está ativa
@@ -99,8 +87,8 @@ async function loadEquipmentsData() {
         
         if (data.success && data.equipamentos) {
             window.equipmentsData = data.equipamentos;
-            renderEquipmentTable();
-            populateEquipmentTypeFilter();
+            renderEquipmentList();
+            populateCodigosFilter();
             showEquipmentStatus(`${Object.keys(data.equipamentos).length} equipamentos carregados`, 'success');
         } else {
             throw new Error(data.error || 'Dados inválidos');
@@ -113,235 +101,467 @@ async function loadEquipmentsData() {
     }
 }
 
-// Preenche filtro de tipos
-function populateEquipmentTypeFilter() {
-    const filterSelect = document.getElementById('equipmentTypeFilter');
+// Popula filtro de códigos
+function populateCodigosFilter() {
+    const filterSelect = document.getElementById('codigoFilter');
     if (!filterSelect) return;
     
-    filterSelect.innerHTML = '<option value="">Todos os tipos</option>';
+    // Limpar opções existentes
+    filterSelect.innerHTML = '<option value="">Todos os códigos</option>';
     
-    Object.keys(window.equipmentsData).forEach(type => {
-        const equipment = window.equipmentsData[type];
+    // Agrupar por código
+    const codigos = new Set();
+    Object.values(window.equipmentsData).forEach(equipment => {
+        if (equipment.codigo) {
+            codigos.add(equipment.codigo);
+        }
+    });
+    
+    // Ordenar alfabeticamente e adicionar ao select
+    Array.from(codigos).sort().forEach(codigo => {
         const option = document.createElement('option');
-        option.value = type;
-        option.textContent = `${type} - ${equipment.descricao}`;
+        option.value = codigo;
+        option.textContent = codigo;
         filterSelect.appendChild(option);
     });
 }
 
-// Renderiza tabela principal
-function renderEquipmentTable(filterType = '') {
-    const tableBody = document.getElementById('equipmentsTableBody');
-    if (!tableBody) return;
+// Renderiza lista de equipamentos
+function renderEquipmentList(filterCodigo = '') {
+    const equipmentList = document.getElementById('equipmentList');
+    if (!equipmentList) return;
     
-    tableBody.innerHTML = '';
+    equipmentList.innerHTML = '';
     
-    const filteredTypes = filterType 
-        ? [filterType] 
-        : Object.keys(window.equipmentsData);
+    const equipmentEntries = Object.entries(window.equipmentsData);
     
-    filteredTypes.forEach(type => {
-        const equipment = window.equipmentsData[type];
-        if (!equipment) return;
-        
+    if (equipmentEntries.length === 0) {
+        equipmentList.innerHTML = `
+            <div class="empty-state">
+                <i class="icon-empty" style="font-size: 2rem;"></i>
+                <p class="mt-2">Nenhum equipamento cadastrado</p>
+                <button class="btn btn-primary mt-3" onclick="addNewEquipment()">
+                    <i class="icon-add"></i> Adicionar Primeiro Equipamento
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Filtrar por código se necessário
+    const filteredEntries = filterCodigo 
+        ? equipmentEntries.filter(([_, equipment]) => equipment.codigo === filterCodigo)
+        : equipmentEntries;
+    
+    if (filteredEntries.length === 0) {
+        equipmentList.innerHTML = `
+            <div class="empty-state">
+                <i class="icon-empty" style="font-size: 2rem;"></i>
+                <p class="mt-2">Nenhum equipamento encontrado para o código "${filterCodigo}"</p>
+            </div>
+        `;
+        return;
+    }
+    
+    filteredEntries.forEach(([id, equipment], index) => {
         const dimensions = equipment.valores_padrao || {};
         const dimensionKeys = Object.keys(dimensions);
         
-        if (dimensionKeys.length === 0) {
-            // Sem dimensões
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>
-                    <span class="equipment-code">${type}</span>
-                </td>
-                <td>${equipment.descricao}</td>
-                <td colspan="2" class="text-muted">Sem dimensões cadastradas</td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="editEquipmentType('${type}')">
-                        <i class="icon-edit"></i> Editar
-                    </button>
-                </td>
-            `;
-            tableBody.appendChild(row);
-            return;
-        }
+        const equipmentItem = document.createElement('div');
+        equipmentItem.className = 'equipment-item';
+        equipmentItem.setAttribute('data-index', index);
+        equipmentItem.setAttribute('data-id', id);
         
-        // Com dimensões
-        dimensionKeys.forEach((dimension, index) => {
-            const row = document.createElement('tr');
-            
-            if (index === 0) {
-                row.innerHTML = `
-                    <td rowspan="${dimensionKeys.length}">
-                        <span class="equipment-code">${type}</span>
-                        <span class="equipment-desc">${equipment.descricao}</span>
-                    </td>
-                    <td rowspan="${dimensionKeys.length}">
-                        <span class="equipment-desc">
-                            <small>${dimensionKeys.length} dimensões</small>
-                        </span>
-                    </td>
-                    <td class="dimension-cell">${dimension}</td>
-                    <td class="value-cell">${formatCurrency(dimensions[dimension])}</td>
-                    <td rowspan="${dimensionKeys.length}">
-                        <div class="equipment-actions">
-                            <button class="btn btn-sm btn-primary" onclick="editEquipmentType('${type}')">
-                                <i class="icon-edit"></i> Editar
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteEquipmentType('${type}')">
-                                <i class="icon-delete"></i> Excluir
-                            </button>
-                        </div>
-                    </td>
-                `;
-            } else {
-                row.innerHTML = `
-                    <td class="dimension-cell">${dimension}</td>
-                    <td class="value-cell">${formatCurrency(dimensions[dimension])}</td>
-                `;
-            }
-            
-            tableBody.appendChild(row);
-        });
-    });
-    
-    if (tableBody.innerHTML === '') {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center py-4 text-muted">
-                    Nenhum equipamento encontrado
-                </td>
-            </tr>
-        `;
-    }
-}
-
-// Filtra tabela
-function filterEquipmentTable() {
-    const filterSelect = document.getElementById('equipmentTypeFilter');
-    renderEquipmentTable(filterSelect?.value || '');
-}
-
-// Abre editor de equipamento
-function editEquipmentType(type) {
-    if (!window.equipmentsData[type]) return;
-    
-    window.currentEquipmentType = type;
-    const equipment = window.equipmentsData[type];
-    
-    // Mostrar editor
-    document.getElementById('equipmentTableView').style.display = 'none';
-    document.getElementById('equipmentDetailView').style.display = 'block';
-    
-    // Atualizar título
-    document.getElementById('equipmentDetailTitle').textContent = `${type} - ${equipment.descricao}`;
-    
-    // Renderizar formulário
-    renderEquipmentEditForm(equipment);
-}
-
-// Renderiza formulário de edição
-function renderEquipmentEditForm(equipment) {
-    const content = document.getElementById('equipmentDetailContent');
-    const dimensions = equipment.valores_padrao || {};
-    
-    content.innerHTML = `
-        <div class="equipment-edit-form">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Código:</label>
-                        <input type="text" class="form-control" value="${window.currentEquipmentType}" disabled>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Descrição:</label>
-                        <input type="text" id="editEquipmentDesc" class="form-control" 
-                               value="${equipment.descricao}" maxlength="100">
-                    </div>
-                </div>
+        equipmentItem.innerHTML = `
+            <div class="equipment-header" onclick="toggleEquipmentItem(${index}, event)">
+                <button class="minimizer">+</button>
+                <span><strong>${equipment.codigo || 'N/A'}</strong> - ${equipment.descricao || 'Sem descrição'}</span>
+                <button class="btn btn-xs btn-danger" onclick="deleteEquipment('${id}', event)">
+                    <i class="icon-delete"></i>
+                </button>
             </div>
-            
-            <div class="form-section">
-                <h5><i class="icon-list"></i> Dimensões e Valores</h5>
-                <div class="dimensions-table-container">
-                    <table class="dimensions-table">
-                        <thead>
-                            <tr>
-                                <th width="45%">Dimensão</th>
-                                <th width="45%">Valor (R$)</th>
-                                <th width="10%">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dimensionsTableBody">
-                            ${Object.keys(dimensions).map(dim => `
-                                <tr data-dimension="${dim}">
-                                    <td>
-                                        <input type="text" class="dimension-input" 
-                                               value="${dim}" 
-                                               onchange="updateDimensionName('${dim}', this.value)">
-                                    </td>
-                                    <td>
-                                        <input type="number" class="value-input" 
-                                               value="${dimensions[dim]}" step="0.01"
-                                               onchange="updateDimensionValue('${dim}', this.value)">
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-xs btn-danger" 
-                                                onclick="removeDimension('${dim}')"
-                                                title="Remover dimensão">
-                                            <i class="icon-delete"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+            <div class="equipment-content collapsed">
+                <div class="equipment-field">
+                    <span class="equipment-label">Código/Sigla:</span>
+                    <div style="flex: 1;">
+                        <input type="text" id="equipmentCodigo-${index}" 
+                               value="${equipment.codigo || ''}" 
+                               placeholder="Ex: VZ, DSP_15" 
+                               onchange="updateEquipment(${index}, 'codigo', this.value)"
+                               onfocus="selectEquipmentCodigo(${index})"
+                               list="codigosList"
+                               class="form-input">
+                        <small class="text-muted">Código identificador do equipamento (ex: VZ, DSP_15)</small>
+                    </div>
                 </div>
-                
-                <div class="add-dimension-form">
-                    <h6>Adicionar Nova Dimensão</h6>
-                    <div class="form-row">
-                        <input type="text" id="newDimensionName" 
-                               class="form-control" placeholder="Ex: 200x100">
-                        <input type="number" id="newDimensionValue" 
-                               class="form-control" placeholder="Valor" step="0.01">
-                        <button class="btn btn-success" onclick="addNewDimension()">
-                            <i class="icon-add"></i> Adicionar
+                <div class="equipment-field">
+                    <span class="equipment-label">Descrição:</span>
+                    <input type="text" value="${equipment.descricao || ''}" 
+                           placeholder="Descrição detalhada do equipamento" 
+                           oninput="syncEquipmentName(${index}, this.value)" 
+                           onchange="updateEquipment(${index}, 'descricao', this.value)" 
+                           class="form-input">
+                </div>
+                <div class="equipment-dimensions">
+                    <h5>Dimensões e Valores:</h5>
+                    <div class="dimensions-grid" id="dimensionsGrid-${index}">
+                        ${renderDimensionGrid(dimensions, index)}
+                    </div>
+                    <div class="text-center" style="margin-top: var(--spacing-md);">
+                        <button class="btn btn-xs btn-info" onclick="addEquipmentDimension(${index}, event)">
+                            <i class="icon-add"></i> Adicionar Dimensão
                         </button>
                     </div>
                 </div>
             </div>
-            
-            <div class="form-actions mt-4">
-                <button class="btn btn-success" onclick="saveEquipmentChanges()">
-                    <i class="icon-save"></i> Salvar Alterações
-                </button>
-                <button class="btn btn-secondary" onclick="closeEquipmentDetail()">
-                    <i class="icon-close"></i> Cancelar
-                </button>
-            </div>
-        </div>
-    `;
+        `;
+        
+        equipmentList.appendChild(equipmentItem);
+    });
 }
 
-// Salva alterações
+// Renderiza grid de dimensões
+function renderDimensionGrid(dimensions, index) {
+    return Object.entries(dimensions).map(([dimensionKey, value], dimIndex) => `
+        <div class="dimension-item" data-key="${dimensionKey}">
+            <div class="dimension-header">
+                <span>Dimensão ${dimIndex + 1}</span>
+                <button class="btn btn-xs btn-danger" onclick="removeEquipmentDimension(${index}, '${dimensionKey}', event)">
+                    <i class="icon-delete"></i>
+                </button>
+            </div>
+            <div class="dimension-content">
+                <div class="dimension-field">
+                    <label>Dimensão:</label>
+                    <input type="text" value="${dimensionKey}" 
+                           placeholder="Ex: 300x400, 1500x1200" 
+                           onchange="updateEquipmentDimensionLabel(${index}, '${dimensionKey}', this.value)" 
+                           class="form-input-small">
+                </div>
+                <div class="dimension-field">
+                    <label>Valor (R$):</label>
+                    <input type="number" value="${value}" step="0.01" min="0"
+                           onchange="updateEquipmentValue(${index}, '${dimensionKey}', this.value)" 
+                           class="form-input-small">
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Seleciona código para sugestão
+function selectEquipmentCodigo(index) {
+    const input = document.getElementById(`equipmentCodigo-${index}`);
+    if (input) {
+        // Criar datalist se não existir
+        if (!document.getElementById('codigosList')) {
+            const datalist = document.createElement('datalist');
+            datalist.id = 'codigosList';
+            
+            // Adicionar códigos existentes
+            const codigos = new Set();
+            Object.values(window.equipmentsData).forEach(equipment => {
+                if (equipment.codigo) {
+                    codigos.add(equipment.codigo);
+                }
+            });
+            
+            Array.from(codigos).sort().forEach(codigo => {
+                const option = document.createElement('option');
+                option.value = codigo;
+                datalist.appendChild(option);
+            });
+            
+            document.body.appendChild(datalist);
+        }
+        
+        input.setAttribute('list', 'codigosList');
+    }
+}
+
+// Alterna expansão/colapso do item
+function toggleEquipmentItem(index, event) {
+    if (event.target.closest('button')) return; // Não colapsar se clicou em botão
+    
+    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    if (!item) return;
+    
+    const content = item.querySelector('.equipment-content');
+    const minimizer = item.querySelector('.minimizer');
+    
+    content.classList.toggle('collapsed');
+    minimizer.textContent = content.classList.contains('collapsed') ? '+' : '-';
+}
+
+// Adiciona nova dimensão ao equipamento
+function addEquipmentDimension(index, event) {
+    if (event) event.stopPropagation();
+    
+    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    if (!item) return;
+    
+    const id = item.getAttribute('data-id');
+    if (!id || !window.equipmentsData[id]) return;
+    
+    // Gerar chave única para nova dimensão
+    const dimensions = window.equipmentsData[id].valores_padrao || {};
+    let newKey = `300x200`; // Dimensão padrão
+    let counter = 1;
+    while (dimensions[newKey]) {
+        newKey = `300x${200 + counter * 100}`;
+        counter++;
+    }
+    
+    // Adicionar ao objeto
+    dimensions[newKey] = 0;
+    window.equipmentsData[id].valores_padrao = dimensions;
+    
+    // Renderizar novo item
+    const grid = document.getElementById(`dimensionsGrid-${index}`);
+    if (grid) {
+        const dimIndex = Object.keys(dimensions).length;
+        const newItem = document.createElement('div');
+        newItem.className = 'dimension-item';
+        newItem.setAttribute('data-key', newKey);
+        newItem.innerHTML = `
+            <div class="dimension-header">
+                <span>Dimensão ${dimIndex}</span>
+                <button class="btn btn-xs btn-danger" onclick="removeEquipmentDimension(${index}, '${newKey}', event)">
+                    <i class="icon-delete"></i>
+                </button>
+            </div>
+            <div class="dimension-content">
+                <div class="dimension-field">
+                    <label>Dimensão:</label>
+                    <input type="text" value="${newKey}" 
+                           placeholder="Ex: 300x400, 1500x1200" 
+                           onchange="updateEquipmentDimensionLabel(${index}, '${newKey}', this.value)" 
+                           class="form-input-small">
+                </div>
+                <div class="dimension-field">
+                    <label>Valor (R$):</label>
+                    <input type="number" value="0" step="0.01" min="0"
+                           onchange="updateEquipmentValue(${index}, '${newKey}', this.value)" 
+                           class="form-input-small">
+                </div>
+            </div>
+        `;
+        grid.appendChild(newItem);
+        
+        // Focar no campo da nova dimensão
+        setTimeout(() => {
+            const input = newItem.querySelector('input[type="text"]');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 50);
+    }
+}
+
+// Remove dimensão do equipamento
+function removeEquipmentDimension(index, key, event) {
+    if (event) event.stopPropagation();
+    
+    if (!confirm(`Remover dimensão "${key}"?`)) return;
+    
+    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    if (!item) return;
+    
+    const id = item.getAttribute('data-id');
+    if (!id || !window.equipmentsData[id]) return;
+    
+    // Remover do objeto
+    delete window.equipmentsData[id].valores_padrao[key];
+    
+    // Remover do DOM
+    const dimensionItem = document.querySelector(`.dimension-item[data-key="${key}"]`);
+    if (dimensionItem) {
+        dimensionItem.remove();
+    }
+    
+    // Reordenar números das dimensões
+    const grid = document.getElementById(`dimensionsGrid-${index}`);
+    if (grid) {
+        const items = grid.querySelectorAll('.dimension-item');
+        items.forEach((item, idx) => {
+            const header = item.querySelector('.dimension-header span');
+            if (header) {
+                header.textContent = `Dimensão ${idx + 1}`;
+            }
+        });
+    }
+}
+
+// Sincroniza nome no header
+function syncEquipmentName(index, value) {
+    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    if (!item) return;
+    
+    const headerText = item.querySelector('.equipment-header span');
+    if (headerText) {
+        const codigo = window.equipmentsData[item.getAttribute('data-id')]?.codigo || '';
+        headerText.innerHTML = `<strong>${codigo}</strong> - ${value || 'Sem descrição'}`;
+    }
+}
+
+// Atualiza campo do equipamento
+function updateEquipment(index, field, value) {
+    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    if (!item) return;
+    
+    const id = item.getAttribute('data-id');
+    if (!id || !window.equipmentsData[id]) return;
+    
+    const oldValue = window.equipmentsData[id][field];
+    
+    // Validar código
+    if (field === 'codigo') {
+        const newCodigo = value.trim().toUpperCase();
+        if (!newCodigo) {
+            alert('O código/sigla é obrigatório!');
+            return;
+        }
+        
+        // Verificar se código já existe em outro equipamento
+        const existingEquipments = Object.entries(window.equipmentsData);
+        for (const [equipId, equipment] of existingEquipments) {
+            if (equipId !== id && equipment.codigo === newCodigo) {
+                alert(`Código "${newCodigo}" já está em uso por outro equipamento!`);
+                return;
+            }
+        }
+        
+        value = newCodigo;
+        
+        // Atualizar header
+        const headerText = item.querySelector('.equipment-header span');
+        if (headerText) {
+            const descricao = window.equipmentsData[id].descricao || '';
+            headerText.innerHTML = `<strong>${value}</strong> - ${descricao}`;
+        }
+    }
+    
+    // Atualizar valor
+    window.equipmentsData[id][field] = value;
+    
+    // Se for código, atualizar filtro
+    if (field === 'codigo' && oldValue !== value) {
+        setTimeout(() => populateCodigosFilter(), 100);
+    }
+}
+
+// Atualiza label da dimensão
+function updateEquipmentDimensionLabel(index, oldKey, newKey) {
+    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    if (!item) return;
+    
+    const id = item.getAttribute('data-id');
+    if (!id || !window.equipmentsData[id]) return;
+    
+    const dimensions = window.equipmentsData[id].valores_padrao;
+    if (!dimensions) return;
+    
+    if (newKey === oldKey) return;
+    
+    // Validar formato da dimensão
+    if (!isValidDimension(newKey)) {
+        alert('Formato de dimensão inválido! Use: LARGURAxALTURA (ex: 300x400) ou apenas um número para diâmetro (ex: 150)');
+        return;
+    }
+    
+    if (dimensions[newKey]) {
+        alert('Esta dimensão já existe!');
+        return;
+    }
+    
+    // Atualizar chave
+    dimensions[newKey] = dimensions[oldKey];
+    delete dimensions[oldKey];
+    
+    // Atualizar DOM
+    const dimensionItem = document.querySelector(`.dimension-item[data-key="${oldKey}"]`);
+    if (dimensionItem) {
+        dimensionItem.setAttribute('data-key', newKey);
+        const input = dimensionItem.querySelector('input[type="text"]');
+        if (input) input.value = newKey;
+    }
+}
+
+// Valida formato da dimensão
+function isValidDimension(dimension) {
+    // Aceita formatos: 300x400, 1500x1200 ou apenas 150 (para diâmetro)
+    return /^\d+(x\d+)?$/.test(dimension);
+}
+
+// Atualiza valor da dimensão
+function updateEquipmentValue(index, key, value) {
+    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    if (!item) return;
+    
+    const id = item.getAttribute('data-id');
+    if (!id || !window.equipmentsData[id]) return;
+    
+    const dimensions = window.equipmentsData[id].valores_padrao;
+    if (!dimensions) return;
+    
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0) {
+        alert('Informe um valor numérico válido maior ou igual a zero!');
+        return;
+    }
+    
+    dimensions[key] = numValue;
+}
+
+// Salva todas as alterações
 async function saveEquipmentChanges() {
     try {
-        const newDesc = document.getElementById('editEquipmentDesc').value.trim();
-        if (!newDesc) throw new Error('Descrição é obrigatória');
+        showEquipmentStatus('Salvando alterações...', 'info');
         
-        window.equipmentsData[window.currentEquipmentType].descricao = newDesc;
+        // Validar dados antes de enviar
+        let isValid = true;
+        const validationErrors = [];
         
-        const response = await fetch('/api/equipamentos/update', {
+        Object.entries(window.equipmentsData).forEach(([id, equipment]) => {
+            if (!equipment.codigo || equipment.codigo.trim() === '') {
+                isValid = false;
+                validationErrors.push(`Equipamento "${equipment.descricao || id}" não possui código definido`);
+            }
+            
+            // Validar dimensões
+            if (equipment.valores_padrao) {
+                Object.entries(equipment.valores_padrao).forEach(([dimension, value]) => {
+                    if (!isValidDimension(dimension)) {
+                        isValid = false;
+                        validationErrors.push(`Dimensão "${dimension}" inválida no equipamento ${equipment.codigo}`);
+                    }
+                    
+                    if (value < 0) {
+                        isValid = false;
+                        validationErrors.push(`Valor negativo (${value}) para dimensão "${dimension}" no equipamento ${equipment.codigo}`);
+                    }
+                });
+            }
+        });
+        
+        if (!isValid) {
+            const errorMsg = validationErrors.join('\n• ');
+            alert(`❌ Erros de validação:\n\n• ${errorMsg}`);
+            showEquipmentStatus('Corrija os erros antes de salvar', 'error');
+            return;
+        }
+        
+        // Preparar dados para envio
+        const equipmentsArray = Object.entries(window.equipmentsData).map(([id, data]) => ({
+            id: id,
+            ...data
+        }));
+        
+        const response = await fetch('/api/equipamentos/save-all', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                tipo: window.currentEquipmentType,
-                descricao: newDesc,
-                valores: window.equipmentsData[window.currentEquipmentType].valores_padrao
-            })
+            body: JSON.stringify({ equipments: equipmentsArray })
         });
         
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -349,8 +569,10 @@ async function saveEquipmentChanges() {
         const result = await response.json();
         if (!result.success) throw new Error(result.error);
         
-        showEquipmentStatus('Equipamento salvo com sucesso!', 'success');
-        closeEquipmentDetail();
+        showEquipmentStatus('Alterações salvas com sucesso!', 'success');
+        
+        // Recarregar dados
+        setTimeout(() => loadEquipmentsData(), 500);
         
     } catch (error) {
         console.error('❌ Erro ao salvar:', error);
@@ -358,152 +580,52 @@ async function saveEquipmentChanges() {
     }
 }
 
-// Fecha editor
-function closeEquipmentDetail() {
-    document.getElementById('equipmentDetailView').style.display = 'none';
-    document.getElementById('equipmentTableView').style.display = 'block';
-    renderEquipmentTable();
-}
-
-// Adiciona nova dimensão
-function addNewDimension() {
-    const nameInput = document.getElementById('newDimensionName');
-    const valueInput = document.getElementById('newDimensionValue');
+// Adiciona novo equipamento
+function addNewEquipment() {
+    const newId = `equip_${Date.now()}`;
     
-    const name = nameInput.value.trim();
-    const value = parseFloat(valueInput.value);
+    window.equipmentsData[newId] = {
+        codigo: '',
+        descricao: 'Novo Equipamento',
+        valores_padrao: {
+            '300x200': 0
+        }
+    };
     
-    if (!name || !validateDimensionFormat(name)) {
-        alert('Formato de dimensão inválido! Use: LARGURAxALTURA');
-        nameInput.focus();
-        return;
-    }
+    renderEquipmentList();
     
-    if (isNaN(value) || value <= 0) {
-        alert('Informe um valor válido maior que zero!');
-        valueInput.focus();
-        return;
-    }
-    
-    if (window.equipmentsData[window.currentEquipmentType].valores_padrao[name]) {
-        alert('Dimensão já existe!');
-        nameInput.focus();
-        return;
-    }
-    
-    // Adicionar
-    window.equipmentsData[window.currentEquipmentType].valores_padrao[name] = value;
-    
-    // Atualizar tabela
-    const tableBody = document.getElementById('dimensionsTableBody');
-    const newRow = document.createElement('tr');
-    newRow.setAttribute('data-dimension', name);
-    newRow.innerHTML = `
-        <td>
-            <input type="text" class="dimension-input" 
-                   value="${name}" 
-                   onchange="updateDimensionName('${name}', this.value)">
-        </td>
-        <td>
-            <input type="number" class="value-input" 
-                   value="${value}" step="0.01"
-                   onchange="updateDimensionValue('${name}', this.value)">
-        </td>
-        <td>
-            <button class="btn btn-xs btn-danger" 
-                    onclick="removeDimension('${name}')"
-                    title="Remover dimensão">
-                <i class="icon-delete"></i>
-            </button>
-        </td>
-    `;
-    tableBody.appendChild(newRow);
-    
-    // Limpar campos
-    nameInput.value = '';
-    valueInput.value = '';
-    nameInput.focus();
-}
-
-// Remove dimensão
-function removeDimension(dimension) {
-    if (!confirm(`Remover dimensão "${dimension}"?`)) return;
-    
-    delete window.equipmentsData[window.currentEquipmentType].valores_padrao[dimension];
-    
-    const row = document.querySelector(`[data-dimension="${dimension}"]`);
-    if (row) row.remove();
-}
-
-// Valida formato de dimensão
-function validateDimensionFormat(dimension) {
-    return /^\d+x\d+$/.test(dimension);
-}
-
-// ==================== FUNÇÕES UTILITÁRIAS ====================
-
-function formatCurrency(value) {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-        minimumFractionDigits: 2
-    }).format(value);
-}
-
-function showEquipmentStatus(message, type = 'info') {
-    console.log(`📢 ${type.toUpperCase()}: ${message}`);
-    
-    // Pode implementar um sistema de notificação visual aqui
-    if (type === 'error') {
-        alert(`❌ ${message}`);
-    } else if (type === 'success') {
-        // Não alerta para sucesso, apenas log
-    }
-}
-
-function renderEmptyState(error = '') {
-    const tableBody = document.getElementById('equipmentsTableBody');
-    if (!tableBody) return;
-    
-    tableBody.innerHTML = `
-        <tr>
-            <td colspan="5" class="text-center py-5">
-                <div class="text-muted mb-2">
-                    <i class="icon-empty" style="font-size: 2rem;"></i>
-                    <p class="mt-2">Não foi possível carregar os equipamentos</p>
-                    ${error ? `<small class="text-danger">${error}</small>` : ''}
-                </div>
-                <button class="btn btn-primary mt-3" onclick="loadEquipmentsData()">
-                    <i class="icon-refresh"></i> Tentar novamente
-                </button>
-            </td>
-        </tr>
-    `;
-}
-
-// Adiciona dimensão a equipamento existente
-function addDimensionToEquipment() {
-    const types = Object.keys(window.equipmentsData);
-    if (types.length === 0) {
-        alert('Primeiro crie um tipo de equipamento!');
-        return;
-    }
-    
-    const typeList = types.join('\n');
-    const selected = prompt(`Digite o código do equipamento:\n\n${typeList}`);
-    
-    if (selected && window.equipmentsData[selected]) {
-        editEquipmentType(selected);
-        setTimeout(() => {
-            const nameInput = document.getElementById('newDimensionName');
-            if (nameInput) nameInput.focus();
-        }, 100);
-    }
+    // Rolar para o novo item
+    setTimeout(() => {
+        const items = document.querySelectorAll('.equipment-item');
+        const newItem = items[items.length - 1];
+        if (newItem) {
+            newItem.scrollIntoView({ behavior: 'smooth' });
+            
+            // Expandir e focar no campo de código
+            const index = newItem.getAttribute('data-index');
+            if (index) {
+                toggleEquipmentItem(parseInt(index));
+                setTimeout(() => {
+                    const codigoInput = newItem.querySelector('input[id^="equipmentCodigo-"]');
+                    if (codigoInput) {
+                        codigoInput.focus();
+                        codigoInput.select();
+                    }
+                }, 100);
+            }
+        }
+    }, 100);
 }
 
 // Exclui equipamento
-async function deleteEquipmentType(type) {
-    if (!confirm(`Excluir equipamento "${type}"?\n\nEsta ação não pode ser desfeita.`)) {
+async function deleteEquipment(id, event) {
+    if (event) event.stopPropagation();
+    
+    const equipment = window.equipmentsData[id];
+    const codigo = equipment?.codigo || id;
+    const descricao = equipment?.descricao || 'Sem descrição';
+    
+    if (!confirm(`Excluir equipamento "${codigo} - ${descricao}"?\n\nEsta ação não pode ser desfeita.`)) {
         return;
     }
     
@@ -511,7 +633,7 @@ async function deleteEquipmentType(type) {
         const response = await fetch('/api/equipamentos/delete', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ tipo: type })
+            body: JSON.stringify({ id: id })
         });
         
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -519,9 +641,9 @@ async function deleteEquipmentType(type) {
         const result = await response.json();
         if (!result.success) throw new Error(result.error);
         
-        delete window.equipmentsData[type];
-        renderEquipmentTable();
-        populateEquipmentTypeFilter();
+        delete window.equipmentsData[id];
+        renderEquipmentList();
+        populateCodigosFilter();
         showEquipmentStatus('Equipamento excluído com sucesso!', 'success');
         
     } catch (error) {
@@ -530,90 +652,37 @@ async function deleteEquipmentType(type) {
     }
 }
 
-// Adiciona novo tipo
-async function addNewEquipmentType() {
-    const code = prompt('Código do equipamento (ex: VZ, DSP_15):');
-    if (!code) return;
+// Filtra equipamentos por código
+function filterEquipmentTable() {
+    const filterSelect = document.getElementById('codigoFilter');
+    renderEquipmentList(filterSelect?.value || '');
+}
+
+// ==================== FUNÇÕES UTILITÁRIAS ====================
+
+function showEquipmentStatus(message, type = 'info') {
+    console.log(`📢 ${type.toUpperCase()}: ${message}`);
     
-    if (!/^[A-Z0-9_]+$/.test(code)) {
-        alert('Use apenas letras maiúsculas, números e underline!');
-        return;
-    }
-    
-    if (window.equipmentsData[code]) {
-        alert('Código já existe!');
-        return;
-    }
-    
-    const desc = prompt('Descrição do equipamento:');
-    if (!desc) return;
-    
-    try {
-        const response = await fetch('/api/equipamentos/add', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                tipo: code,
-                descricao: desc,
-                valores: {}
-            })
-        });
-        
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const result = await response.json();
-        if (!result.success) throw new Error(result.error);
-        
-        window.equipmentsData[code] = { descricao: desc, valores_padrao: {} };
-        renderEquipmentTable();
-        populateEquipmentTypeFilter();
-        showEquipmentStatus('Equipamento criado! Editando...', 'success');
-        
-        setTimeout(() => editEquipmentType(code), 300);
-        
-    } catch (error) {
-        console.error('❌ Erro ao criar:', error);
-        showEquipmentStatus(`Erro: ${error.message}`, 'error');
+    // Pode implementar um sistema de notificação visual aqui
+    if (type === 'error') {
+        alert(`❌ ${message}`);
     }
 }
 
-// Funções placeholder (para implementação futura)
-function toggleEquipmentView() {
-    alert('Funcionalidade em desenvolvimento!');
-}
-
-function resetEquipmentChanges() {
-    if (confirm('Descartar todas as alterações?')) {
-        closeEquipmentDetail();
-    }
-}
-
-function updateDimensionName(oldName, newName) {
-    if (!newName || oldName === newName) return;
+function renderEmptyState(error = '') {
+    const equipmentList = document.getElementById('equipmentList');
+    if (!equipmentList) return;
     
-    if (!validateDimensionFormat(newName)) {
-        alert('Formato inválido! Use: LARGURAxALTURA');
-        return;
-    }
-    
-    const valores = window.equipmentsData[window.currentEquipmentType].valores_padrao;
-    if (valores[newName]) {
-        alert('Dimensão já existe!');
-        return;
-    }
-    
-    valores[newName] = valores[oldName];
-    delete valores[oldName];
-    
-    const row = document.querySelector(`[data-dimension="${oldName}"]`);
-    if (row) row.setAttribute('data-dimension', newName);
-}
-
-function updateDimensionValue(dimension, newValue) {
-    const value = parseFloat(newValue);
-    if (isNaN(value) || value < 0) return;
-    
-    window.equipmentsData[window.currentEquipmentType].valores_padrao[dimension] = value;
+    equipmentList.innerHTML = `
+        <div class="empty-state">
+            <i class="icon-empty" style="font-size: 2rem;"></i>
+            <p class="mt-2">Não foi possível carregar os equipamentos</p>
+            ${error ? `<small class="text-danger">${error}</small>` : ''}
+            <button class="btn btn-primary mt-3" onclick="loadEquipmentsData()">
+                <i class="icon-refresh"></i> Tentar novamente
+            </button>
+        </div>
+    `;
 }
 
 // Inicialização automática

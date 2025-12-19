@@ -1,7 +1,7 @@
-[A]bitola ls (select)
+[A]bitola LG (select)
 [B]bitola LL (select)
 
-[C]Espessura LS (select)
+[C]Espessura LG (select)
 [D]Espessura LL (select)
 
 [E]"Comprimento
@@ -21,9 +21,9 @@ UD-02
 
 
 Total Tubulação de Cobre			
-[J]L.S. (m)	
+[J]L.G. (m)	
 -Formula((E*G)+(H*I))
-[K]L.S. (kg)	
+[K]L.G. (kg)	
 - Formula(())
 [L]L.L. (m)	
 -Formula()

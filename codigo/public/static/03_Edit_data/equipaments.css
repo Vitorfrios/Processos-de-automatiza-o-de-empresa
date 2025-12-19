@@ -1,4 +1,4 @@
-/* equipamentos.css - Estilos limpos e profissionais */
+/* equipamentos.css - Estilos atualizados para sistema de equipamentos */
 
 /* Ícone */
 .icon-equipment::before {
@@ -13,243 +13,303 @@
     align-items: center;
     margin-bottom: 20px;
     flex-wrap: wrap;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .equipment-actions-bar .form-control {
     min-width: 250px;
 }
 
-/* Tabela de equipamentos */
-.equipment-table-wrapper {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    overflow: hidden;
-}
-
-.equipment-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.equipment-table th {
-    background: #f8f9fa;
-    padding: 12px 15px;
-    text-align: left;
-    font-weight: 600;
-    color: #495057;
-    border-bottom: 2px solid #dee2e6;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.equipment-table td {
-    padding: 10px 15px;
-    border-bottom: 1px solid #e9ecef;
-    vertical-align: top;
-}
-
-.equipment-table tr:hover {
-    background-color: #f8f9fa;
-}
-
-/* Células com rowspan */
-.equipment-table td[rowspan] {
-    background: #f8f9fa;
-    border-right: 1px solid #dee2e6;
-    font-weight: 500;
-}
-
-/* Código do equipamento */
-.equipment-code {
-    font-weight: bold;
-    color: #2c3e50;
-    font-size: 14px;
-    display: block;
-}
-
-.equipment-desc {
-    color: #6c757d;
-    font-size: 12px;
-    margin-top: 2px;
-    display: block;
-}
-
-.equipment-desc small {
-    color: #adb5bd;
-}
-
-/* Dimensões */
-.dimension-cell {
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    color: #495057;
-}
-
-.value-cell {
-    font-weight: 500;
-    color: #28a745;
-    text-align: right;
-}
-
-/* Ações */
-.equipment-actions {
+/* Lista de equipamentos (estilo opções) */
+.equipment-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
+    gap: 15px;
+    margin-top: 20px;
 }
 
-/* Visualização em detalhes */
-.equipment-detail-view {
+.equipment-item {
     background: white;
+    border: 1px solid #e1e5e9;
     border-radius: 8px;
-    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-    padding: 25px;
-    margin-top: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.equipment-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Header do item (expansível) */
+.equipment-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid transparent;
+}
+
+.equipment-header:hover {
+    background: #f1f3f4;
+}
+
+.equipment-header .minimizer {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.equipment-header .minimizer:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.equipment-header span {
+    flex: 1;
+    font-weight: 500;
+    color: #2c3e50;
+    font-size: 15px;
+}
+
+.equipment-header span strong {
+    color: #007bff;
+    font-weight: 600;
+}
+
+/* Conteúdo expansível */
+.equipment-content {
+    padding: 20px;
+    background: white;
+}
+
+.equipment-content.collapsed {
     display: none;
 }
 
-.detail-header {
+/* Campos do equipamento */
+.equipment-field {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #e9ecef;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
-.detail-header h3 {
-    margin: 0;
-    color: #2c3e50;
-    font-size: 18px;
-}
-
-.detail-header-actions {
-    display: flex;
-    gap: 10px;
-}
-
-/* Formulário de edição */
-.equipment-edit-form {
-    display: grid;
-    gap: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
+.equipment-label {
+    min-width: 150px;
     font-weight: 500;
     color: #495057;
-}
-
-.form-control {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
     font-size: 14px;
-    transition: border-color 0.15s ease-in-out;
+    padding-top: 10px;
 }
 
-.form-control:focus {
-    border-color: #80bdff;
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-}
-
-.form-control:disabled {
-    background-color: #e9ecef;
-    cursor: not-allowed;
-}
-
-/* Tabela de dimensões na edição */
-.dimensions-table-container {
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-}
-
-.dimensions-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 600px;
-}
-
-.dimensions-table th {
-    background: #f8f9fa;
-    padding: 10px;
-    text-align: left;
-    font-weight: 600;
-    color: #495057;
-    position: sticky;
-    top: 0;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.dimensions-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.dimensions-table tr:hover {
-    background-color: #f8f9fa;
-}
-
-.dimension-input, .value-input {
-    width: 100%;
-    padding: 6px 8px;
+.equipment-field .form-input {
+    flex: 1;
+    padding: 10px 12px;
     border: 1px solid #ced4da;
-    border-radius: 3px;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.equipment-field .form-input:focus {
+    border-color: #007bff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+}
+
+/* Dimensões */
+.equipment-dimensions {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.equipment-dimensions h5 {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.dimensions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.dimension-item {
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.dimension-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dimension-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.dimension-header span {
+    font-weight: 500;
+    color: #495057;
     font-size: 13px;
 }
 
-/* Formulário para nova dimensão */
-.add-dimension-form {
-    background: #f8f9fa;
+.dimension-content {
     padding: 15px;
-    border-radius: 6px;
-    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
 }
 
-.add-dimension-form h5 {
-    margin: 0 0 10px 0;
-    color: #495057;
+.dimension-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
-.form-row {
+.dimension-field label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.dimension-field .form-input-small {
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.dimension-field .form-input-small:focus {
+    border-color: #007bff;
+    outline: 0;
+    box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, .25);
+}
+
+/* Botões */
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-xs {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Ações principais */
+.actions {
     display: flex;
     gap: 10px;
     align-items: center;
 }
 
-.form-row input {
-    flex: 1;
+/* Campo de código com sugestões */
+input[list] {
+    cursor: pointer;
+}
+
+.text-muted {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 4px;
+    display: block;
 }
 
 /* Status e mensagens */
-.equipment-status {
+.empty-state {
     text-align: center;
-    padding: 20px;
+    padding: 40px 20px;
+    color: #6c757d;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: #adb5bd;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.empty-state small {
+    font-size: 13px;
     color: #6c757d;
 }
 
-.equipment-status.error {
-    color: #dc3545;
-    background: #f8d7da;
-    border-radius: 4px;
+/* Spacing utilities */
+.mt-2 {
+    margin-top: 8px;
 }
 
-.equipment-status.success {
-    color: #28a745;
-    background: #d4edda;
-    border-radius: 4px;
+.mt-3 {
+    margin-top: 12px;
+}
+
+.mt-4 {
+    margin-top: 16px;
+}
+
+.mb-2 {
+    margin-bottom: 8px;
+}
+
+.mb-3 {
+    margin-bottom: 12px;
+}
+
+.mb-4 {
+    margin-bottom: 16px;
 }
 
 /* Responsivo */
@@ -258,32 +318,187 @@
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .equipment-actions-bar .form-control {
         min-width: auto;
     }
-    
-    .equipment-table {
-        display: block;
-        overflow-x: auto;
-    }
-    
-    .dimensions-table-container {
-        max-height: 300px;
-    }
-    
-    .form-row {
+
+    .equipment-field {
         flex-direction: column;
+        align-items: stretch;
         gap: 8px;
     }
+
+    .equipment-label {
+        min-width: auto;
+        margin-bottom: 5px;
+        padding-top: 0;
+    }
+
+    .dimensions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dimension-content {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .actions {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 }
 
-/* Animações */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+@media (max-width: 576px) {
+    .equipment-header {
+        padding: 12px 15px;
+    }
+
+    .equipment-content {
+        padding: 15px;
+    }
+
+    .dimensions-grid {
+        gap: 10px;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
-.equipment-detail-view {
-    animation: fadeIn 0.3s ease-out;
+/* Utilitários */
+.text-muted {
+    color: #6c757d !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.section-header h4 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+/* Formulário inline */
+.form-inline {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-inline .form-control {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Estilos para mensagens de status */
+.equipment-status {
+    text-align: center;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.equipment-status.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.equipment-status.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.equipment-status.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Adicione ao seu arquivo HTML principal */
+#equipmentStatusMessage {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    max-width: 400px;
+}
+
+/* Melhorias de acessibilidade */
+.form-input:focus,
+.form-input-small:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Tooltip para botões - REMOVIDO COMPLETAMENTE */
+/* Nenhuma regra [title]:hover::after existe neste arquivo */
+
+/* Garante que nenhum tooltip apareça */
+*:hover::after {
+    display: none !important;
+}
+
+/* Remove qualquer resquício de tooltip */
+[title] {
+    position: relative;
+}
+
+/* Remove pseudo-elementos de tooltip */
+[title]::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Estilo específico para ícones */
+.icon-delete,
+.icon-add,
+.icon-save,
+.icon-edit,
+.icon-refresh,
+.icon-empty,
+.icon-close {
+    pointer-events: none;
+    /* Previne qualquer interação com o ícone que possa causar tooltip */
+}
+
+/* Remove qualquer comportamento de tooltip em botões */
+.btn[title]::after,
+.btn[title]:hover::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Estilo para o datalist de sugestões */
+datalist {
+    position: absolute;
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+datalist option {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+datalist option:hover {
+    background-color: #f8f9fa;
 }

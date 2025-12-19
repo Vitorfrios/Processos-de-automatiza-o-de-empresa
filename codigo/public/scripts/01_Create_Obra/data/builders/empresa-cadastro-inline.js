@@ -991,18 +991,9 @@ class EmpresaCadastroInline {
     resetHeaderObra(headerSpacer) {
         const button = document.createElement('button');
         button.className = 'btn-empresa-cadastro';
-        button.textContent = 'Adicionar campos de cadastro de empresas';
-        button.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const obraBlock = headerSpacer.closest('.obra-block');
-            if (obraBlock && obraBlock.dataset.obraId) {
-                window.ativarCadastroEmpresa(obraBlock.dataset.obraId);
-            }
-        };
+
         
-        headerSpacer.innerHTML = '';
-        headerSpacer.appendChild(button);
+
     }
 
     /**

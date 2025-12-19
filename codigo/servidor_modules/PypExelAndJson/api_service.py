@@ -33,6 +33,10 @@ class ExcelJsonApiService:
                 # Converter Excel para JSON
                 system_data = self.converter.convert_excel_to_json(temp_path)
                 
+                # ✅ ADICIONADO: Garantir que banco_equipamentos existe
+                if 'banco_equipamentos' not in system_data:
+                    system_data['banco_equipamentos'] = {}
+                
                 # Validar o resultado
                 validation = self.schema.validate(system_data)
                 
@@ -73,6 +77,21 @@ class ExcelJsonApiService:
             Conteúdo binário do arquivo Excel
         """
         try:
+            # ✅ ADICIONADO: Garantir estrutura completa
+            required_keys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos']
+            for key in required_keys:
+                if key not in system_data:
+                    if key == 'banco_equipamentos':
+                        system_data[key] = {}
+                    elif key == 'machines':
+                        system_data[key] = []
+                    elif key == 'empresas':
+                        system_data[key] = []
+                    elif key == 'materials':
+                        system_data[key] = {}
+                    else:
+                        system_data[key] = {}
+            
             # Criar arquivo temporário
             with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
                 temp_path = temp_file.name
@@ -102,6 +121,10 @@ class ExcelJsonApiService:
         Returns:
             Resultado da validação
         """
+        # ✅ ADICIONADO: Garantir que banco_equipamentos existe para validação
+        if 'banco_equipamentos' not in json_data:
+            json_data['banco_equipamentos'] = {}
+        
         validation = self.schema.validate(json_data)
         
         return {
@@ -120,7 +143,13 @@ class ExcelJsonApiService:
         Returns:
             JSON normalizado
         """
-        return self.schema.normalize(json_data)
+        normalized = self.schema.normalize(json_data)
+        
+        # ✅ ADICIONADO: Garantir que banco_equipamentos existe
+        if 'banco_equipamentos' not in normalized:
+            normalized['banco_equipamentos'] = {}
+        
+        return normalized
     
     def _get_timestamp(self) -> str:
         """Retorna timestamp formatado"""

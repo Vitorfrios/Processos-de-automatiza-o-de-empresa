@@ -12,8 +12,8 @@ class SystemSchema:
         errors = []
         warnings = []
         
-        # Estrutura básica
-        required_sections = ['constants', 'machines', 'materials', 'empresas']
+        # ✅ ATUALIZADO: Estrutura básica com banco_equipamentos
+        required_sections = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos']
         for section in required_sections:
             if section not in data:
                 errors.append(f"Seção '{section}' não encontrada")
@@ -67,6 +67,24 @@ class SystemSchema:
                     errors.append(f"empresa[{i}] deve ser um objeto")
                     warnings.append(f"empresa[{i}] deve conter campos ACT, AMC, etc.")
         
+        # ✅ NOVO: Validação de banco_equipamentos
+        if not isinstance(data['banco_equipamentos'], dict):
+            errors.append("'banco_equipamentos' deve ser um objeto")
+        else:
+            for tipo, equipamento in data['banco_equipamentos'].items():
+                if not isinstance(equipamento, dict):
+                    errors.append(f"banco_equipamentos['{tipo}'] deve ser um objeto")
+                    continue
+                
+                # Campos recomendados
+                if 'descricao' not in equipamento:
+                    warnings.append(f"banco_equipamentos['{tipo}'] não tem campo 'descricao'")
+                
+                if 'valores_padrao' not in equipamento:
+                    errors.append(f"banco_equipamentos['{tipo}'] não tem campo 'valores_padrao'")
+                elif not isinstance(equipamento['valores_padrao'], dict):
+                    errors.append(f"banco_equipamentos['{tipo}'].valores_padrao deve ser um objeto")
+        
         return {'errors': errors, 'warnings': warnings}
     
     @staticmethod
@@ -76,7 +94,8 @@ class SystemSchema:
             'constants': {},
             'machines': [],
             'materials': {},
-            'empresas': []
+            'empresas': [],
+            'banco_equipamentos': {}  # ADICIONADO
         }
         
         # Normalizar constants
@@ -116,5 +135,31 @@ class SystemSchema:
         # Normalizar empresas
         if 'empresas' in data and isinstance(data['empresas'], list):
             normalized['empresas'] = data['empresas']
+        
+        # ✅ NOVO: Normalizar banco_equipamentos
+        if 'banco_equipamentos' in data and isinstance(data['banco_equipamentos'], dict):
+            equipamentos = {}
+            for tipo, dados in data['banco_equipamentos'].items():
+                if isinstance(dados, dict):
+                    normalized_equipamento = {
+                        'descricao': dados.get('descricao', tipo),
+                        'valores_padrao': dados.get('valores_padrao', {})
+                    }
+                    
+                    # Campos opcionais
+                    if 'dimensoes' in dados:
+                        normalized_equipamento['dimensoes'] = dados['dimensoes']
+                    if 'unidade_valor' in dados:
+                        normalized_equipamento['unidade_valor'] = dados['unidade_valor']
+                    
+                    equipamentos[tipo] = normalized_equipamento
+                else:
+                    # Se não for dicionário, criar estrutura básica
+                    equipamentos[tipo] = {
+                        'descricao': str(tipo),
+                        'valores_padrao': {}
+                    }
+            
+            normalized['banco_equipamentos'] = equipamentos
         
         return normalized

@@ -1,29 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Criação de Projetos</title>
+    <title>Gerenciamento de Projetos</title>
     <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
     <link rel="stylesheet" href="../static/02_Obras_manager/main.css">
 </head>
-
 <body>
     <header class="header">
         <div class="header-left">
-            <img src="" alt="Logo Esquerda" class="logo">
+            <img src="" alt="Logo" class="logo">
         </div>
         <div class="header-center">
             <h1>Gerenciamento de Projetos</h1>
         </div>
-
-        <button class="shutdown-btn" onclick="shutdownManual()" title="Encerrar Servidor">
+        <button class="shutdown-btn" onclick="shutdownManual()">
             Encerrar Servidor
         </button>
     </header>
 
-    <!-- Barra de Navegação -->
     <nav class="navbar">
         <ul class="nav-list">
             <li><a href="./01_Create_Obras.html">Criar Projetos</a></li>
@@ -35,45 +31,48 @@
     </nav>
 
     <main class="main-content">
-        <!-- Container onde as obras serão renderizadas -->
-        <div id="projects-container">
-            <!-- Filtros (SEMPRE visíveis nesta página) -->
-            <div class="filtro-inputs-area" id="filtros-inputs" style="margin-bottom: 30px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                    <div>
-                        <input type="text" 
-                               id="filter-empresa" 
-                               placeholder="Empresa"
-                               style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-                    </div>
-                    
-                    <div>
-                        <input type="number" 
-                               id="filter-numero-cliente" 
-                               placeholder="Nº Cliente"
-                               style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-                    </div>
-                    
-                    <div>
-                        <input type="text" 
-                               id="filter-nome-obra" 
-                               placeholder="Nome da Obra"
-                               style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-                    </div>
+        <!-- 🔥 FILTROS SEMPRE VISÍVEIS (igual página 1 com filtro ativo) -->
+        <div class="filtro-inputs-area" id="filtros-inputs">
+            <div class="filtro-grid">
+                <div class="filter-group">
+                    <input type="text" id="filter-empresa" placeholder="Empresa">
                 </div>
-                
-                <!-- Botões de ação serão adicionados pelo JS se não existirem -->
+                <div class="filter-group">
+                    <input type="number" id="filter-numero-cliente" placeholder="Nº Cliente">
+                </div>
+                <div class="filter-group">
+                    <input type="text" id="filter-nome-obra" placeholder="Nome da Obra">
+                </div>
             </div>
             
-            <!-- Loading inicial -->
-            <div class="initial-loading" style="text-align: center; padding: 50px;">
+            <!-- Botões de ação -->
+            <div class="filtro-actions">
+                <button id="apply-filters" class="filtro-btn filtro-btn-apply">
+                    🔍 Aplicar Filtros
+                </button>
+                <button id="clear-filters" class="filtro-btn filtro-btn-clear">
+                    🧹 Limpar
+                </button>
+                <button id="reload-obras" class="filtro-btn filtro-btn-reload">
+                    🔄 Recarregar
+                </button>
+            </div>
+        </div>
+
+        <!-- Container onde as obras serão renderizadas EXATAMENTE igual à página 1 -->
+        <div id="projects-container">
+            <!-- As obras serão carregadas aqui via JavaScript -->
+            <div class="loading-obras" style="text-align: center; padding: 50px;">
                 <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
-                <h3>Carregando Sistema de Gerenciamento...</h3>
-                <p>Por favor, aguarde.</p>
+                <h3>Carregando todas as obras do sistema...</h3>
+                <p>Aguarde enquanto buscamos os dados.</p>
             </div>
         </div>
     </main>
 
+    <!-- 🔥 IMPORTANTE: Incluir os MESMOS scripts da página 1 -->
+    <!-- Primeiro os scripts do sistema original -->
+    <script  type="module" src="../scripts/01_Create_Obra/main.js"></script>
     <!-- Scripts -->
     <script type="module" src="../scripts/02_Obras_manager/main.js"></script>
     <script>

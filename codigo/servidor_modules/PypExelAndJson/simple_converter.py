@@ -32,12 +32,13 @@ class SimpleExcelConverter:
                 # Ler Excel
                 xls = pd.ExcelFile(temp_path)
                 
-                # Estrutura básica do sistema
+                # ✅ ATUALIZADO: Estrutura básica do sistema com banco_equipamentos
                 result = {
                     "constants": {},
                     "machines": [],
                     "materials": {},
-                    "empresas": []
+                    "empresas": [],
+                    "banco_equipamentos": {}  # ADICIONADO
                 }
                 
                 print(f"📊 Processando Excel: {filename}")
@@ -66,12 +67,16 @@ class SimpleExcelConverter:
                         # Sheet de empresas/companies
                         elif any(word in sheet_name_lower for word in ['empresa', 'company']):
                             self._process_empresas_sheet(df, result)
+                        
+                        # ✅ NOVO: Sheet de equipamentos
+                        elif any(word in sheet_name_lower for word in ['equipamento', 'equipment', 'banco_equipamentos']):
+                            self._process_equipamentos_sheet(df, result)
                             
                     except Exception as sheet_error:
                         print(f"⚠️  Erro no sheet {sheet_name}: {sheet_error}")
                         continue
                 
-                # Validar estrutura mínima
+                # ✅ ATUALIZADO: Validar estrutura com banco_equipamentos
                 validation = self._validate_structure(result)
                 if not validation["valid"]:
                     return {
@@ -305,12 +310,63 @@ class SimpleExcelConverter:
             import traceback
             traceback.print_exc()
     
+    def _process_equipamentos_sheet(self, df: pd.DataFrame, result: Dict[str, Any]) -> None:
+        """✅ NOVO: Processa sheet de equipamentos"""
+        try:
+            print(f"🔧 Processando sheet de equipamentos: {df.shape[0]} linhas, {df.shape[1]} colunas")
+            
+            current_tipo = None
+            current_equipamento = {}
+            
+            for idx, row in df.iterrows():
+                # Verificar se é uma linha de cabeçalho ou tipo
+                first_cell = str(row.iloc[0]) if pd.notna(row.iloc[0]) else ""
+                
+                # Linha de tipo de equipamento
+                if any(keyword in first_cell.lower() for keyword in ['tipo', 'type', 'equipamento', 'equipment']):
+                    # Salvar equipamento anterior se existir
+                    if current_tipo and current_equipamento:
+                        result["banco_equipamentos"][current_tipo] = current_equipamento
+                    
+                    # Novo tipo
+                    tipo = first_cell.replace('tipo:', '').replace('type:', '').strip()
+                    if tipo:
+                        current_tipo = tipo
+                        current_equipamento = {
+                            "descricao": tipo,
+                            "valores_padrao": {}
+                        }
+                        print(f"🆕 Novo equipamento: {tipo}")
+                
+                # Linha de dimensão/valor
+                elif current_tipo and len(row) >= 2:
+                    dimensao = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
+                    valor = row.iloc[1] if len(row) > 1 and pd.notna(row.iloc[1]) else None
+                    
+                    if dimensao and valor is not None:
+                        try:
+                            current_equipamento["valores_padrao"][dimensao] = float(valor)
+                            print(f"  📐 {dimensao}: {valor}")
+                        except (ValueError, TypeError):
+                            current_equipamento["valores_padrao"][dimensao] = str(valor)
+            
+            # Salvar último equipamento
+            if current_tipo and current_equipamento:
+                result["banco_equipamentos"][current_tipo] = current_equipamento
+            
+            print(f"✅ Equipamentos processados: {len(result['banco_equipamentos'])} tipos")
+            
+        except Exception as e:
+            print(f"⚠️  Erro ao processar equipamentos: {e}")
+            import traceback
+            traceback.print_exc()
+    
     def _validate_structure(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Valida estrutura básica dos dados"""
         errors = []
         
-        # Verificar seções obrigatórias
-        required_sections = ['constants', 'machines', 'materials', 'empresas']
+        # ✅ ATUALIZADO: Verificar seções obrigatórias com banco_equipamentos
+        required_sections = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos']
         for section in required_sections:
             if section not in data:
                 errors.append(f"Seção '{section}' não encontrada")
@@ -331,7 +387,7 @@ class SimpleExcelConverter:
             Dicionário com resultado da conversão
         """
         try:
-            # Validar dados de entrada
+            # ✅ ATUALIZADO: Validar dados com banco_equipamentos
             validation = self._validate_structure(system_data)
             if not validation["valid"]:
                 return {
@@ -433,6 +489,26 @@ class SimpleExcelConverter:
                             df_empresas = df_empresas.sort_values("SIGLA")
                             df_empresas.to_excel(writer, sheet_name="Empresas", index=False)
                             print(f"✅ Empresas exportadas (formato 2 colunas): {len(empresas_list)}")
+                    
+                    # ✅ NOVO: Sheet Equipamentos
+                    if system_data.get("banco_equipamentos"):
+                        equipamentos_list = []
+                        for tipo, dados in system_data["banco_equipamentos"].items():
+                            descricao = dados.get("descricao", tipo)
+                            valores = dados.get("valores_padrao", {})
+                            
+                            for dimensao, valor in valores.items():
+                                equipamentos_list.append({
+                                    "tipo": tipo,
+                                    "descricao": descricao,
+                                    "dimensao": dimensao,
+                                    "valor": valor
+                                })
+                        
+                        if equipamentos_list:
+                            df_equipamentos = pd.DataFrame(equipamentos_list)
+                            df_equipamentos.to_excel(writer, sheet_name="Equipamentos", index=False)
+                            print(f"✅ Equipamentos exportados: {len(equipamentos_list)} registros")
                 
                 # Ler bytes do arquivo gerado
                 with open(temp_path, 'rb') as f:
@@ -444,7 +520,8 @@ class SimpleExcelConverter:
                     "filename": "sistema_export.xlsx",
                     "message": "Excel gerado com sucesso",
                     "metadata": {
-                        "empresas_format": "SIGLA | EMPRESA (2 colunas)"
+                        "empresas_format": "SIGLA | EMPRESA (2 colunas)",
+                        "equipamentos_incluidos": True
                     }
                 }
                 

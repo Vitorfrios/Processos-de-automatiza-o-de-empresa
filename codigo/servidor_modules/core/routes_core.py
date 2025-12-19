@@ -542,7 +542,13 @@ class RoutesCore:
         try:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             dados_data = self.file_utils.load_json_file(
-                dados_file, {"constants": {}, "machines": []}
+                dados_file, {
+                    "constants": {}, 
+                    "machines": [],
+                    "materials": {},
+                    "empresas": [],
+                    "banco_equipamentos": {}  # ADICIONE AQUI
+                }
             )
 
             print("📁 Retornando DADOS.json")
@@ -861,7 +867,13 @@ class RoutesCore:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             dados_data = self.file_utils.load_json_file(
                 dados_file, 
-                {"constants": {}, "machines": [], "materials": {}, "empresas": []}
+                {
+                    "constants": {}, 
+                    "machines": [], 
+                    "materials": {}, 
+                    "empresas": [],
+                    "banco_equipamentos": {}  # ADICIONADO
+                }
             )
             
             print("📊 Retornando todos os dados do sistema")
@@ -869,7 +881,13 @@ class RoutesCore:
             
         except Exception as e:
             print(f"❌ Erro ao carregar system data: {str(e)}")
-            return {"constants": {}, "machines": [], "materials": {}, "empresas": []}
+            return {
+                "constants": {}, 
+                "machines": [], 
+                "materials": {}, 
+                "empresas": [],
+                "banco_equipamentos": {}  # ADICIONADO
+            }
 
     def handle_get_constants_json(self):
         """Retorna apenas as constantes formatadas"""
@@ -948,14 +966,18 @@ class RoutesCore:
         try:
             new_data = json.loads(post_data)
             
-            # Valida estrutura básica
-            if not all(key in new_data for key in ["constants", "machines", "materials", "empresas"]):
-                return {"success": False, "error": "Estrutura de dados inválida"}
+            # Valida estrutura básica ATUALIZADA
+            required_keys = ["constants", "machines", "materials", "empresas", "banco_equipamentos"]
+            if not all(key in new_data for key in required_keys):
+                return {
+                    "success": False, 
+                    "error": "Estrutura de dados inválida. Faltam campos obrigatórios."
+                }
             
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if self.file_utils.save_json_file(dados_file, new_data):
-                print("💾 TODOS os dados do sistema salvos")
+                print("💾 TODOS os dados do sistema salvos (incluindo banco_equipamentos)")
                 return {"success": True, "message": "Dados salvos com sucesso"}
             else:
                 return {"success": False, "error": "Erro ao salvar dados"}
@@ -963,6 +985,7 @@ class RoutesCore:
         except Exception as e:
             print(f"❌ Erro ao salvar system data: {str(e)}")
             return {"success": False, "error": str(e)}
+
 
     def handle_post_save_constants(self, post_data):
         """Salva apenas as constantes"""
@@ -1230,15 +1253,27 @@ class RoutesCore:
         
         # Adicionar na classe RoutesCore:
 
+
+        
+        
     def handle_get_equipamentos(self):
-        """Compatibilidade - redireciona para handler HTTP"""
+        """Retorna todos os equipamentos do banco_equipamentos"""
         try:
-            # Esta função apenas garante compatibilidade
-            # O trabalho real é feito no http_handler
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            equipamentos = dados_data.get("banco_equipamentos", {})
             return {
                 "success": True,
-                "message": "Use os endpoints diretos em /api/equipamentos/*"
+                "equipamentos": equipamentos,
+                "count": len(equipamentos)
             }
+            
         except Exception as e:
-            print(f"❌ Erro em handle_get_equipamentos: {str(e)}")
-            return {"success": False, "error": str(e)}
+            print(f"❌ Erro ao carregar equipamentos: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "equipamentos": {},
+                "count": 0
+            }

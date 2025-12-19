@@ -1,6 +1,13 @@
 // json-import-export.js
 import { showError, showSuccess, showWarning } from '../config/ui.js';
-import { updateLineNumbers, updateJSONStatus, updateApplyButtonState, fileToBase64 } from './json-editor.js';
+import {
+    updateLineNumbers,
+    updateJSONStatus,
+    updateApplyButtonState,
+    fileToBase64,
+    validateJSONStructure
+} from './json-editor.js';
+
 
 // Função para exportar JSON
 export function exportToJSON() {
@@ -231,28 +238,7 @@ function switchTab(tabName) {
     }
 }
 
-// Função auxiliar para validação de estrutura JSON
-function validateJSONStructure(data) {
-    const errors = [];
-    
-    if (!data.constants || typeof data.constants !== 'object') {
-        errors.push('constants deve ser um objeto');
-    }
-    
-    if (!data.machines || !Array.isArray(data.machines)) {
-        errors.push('machines deve ser um array');
-    }
-    
-    if (!data.materials || typeof data.materials !== 'object') {
-        errors.push('materials deve ser um objeto');
-    }
-    
-    if (!data.empresas || !Array.isArray(data.empresas)) {
-        errors.push('empresas deve ser um array');
-    }
-    
-    return {
-        valid: errors.length === 0,
-        errors: errors
-    };
-}
+window.exportToJSON = exportToJSON;
+window.importFromJSON = importFromJSON;
+window.importFromExcel = importFromExcel;
+window.exportToExcel = exportToExcel;

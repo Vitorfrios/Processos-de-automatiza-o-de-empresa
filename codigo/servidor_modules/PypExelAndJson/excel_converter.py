@@ -25,12 +25,13 @@ class ExcelToJsonConverter:
             # Ler todas as sheets do Excel
             excel_data = pd.read_excel(excel_file_path, sheet_name=None)
             
-            # Inicializar estrutura de dados
+            # ✅ ATUALIZADO: Inicializar estrutura de dados com banco_equipamentos
             system_data = {
                 'constants': {},
                 'machines': [],
                 'materials': {},
-                'empresas': []
+                'empresas': [],
+                'banco_equipamentos': {}  # ADICIONADO
             }
             
             # Processar cada sheet
@@ -48,6 +49,9 @@ class ExcelToJsonConverter:
                 
                 elif sheet_name_lower in ['empresas', 'companies']:
                     system_data['empresas'] = self._parse_empresas(df)
+                
+                elif sheet_name_lower in ['equipamentos', 'equipments', 'banco_equipamentos']:
+                    system_data['banco_equipamentos'] = self._parse_equipamentos(df)  # NOVO
                 
                 elif sheet_name_lower in ['constants_raw', 'constants_complete']:
                     # Sheet especial para constants com estrutura completa
@@ -207,6 +211,42 @@ class ExcelToJsonConverter:
                 empresas.append(empresa_dict)
         return empresas
     
+    def _parse_equipamentos(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """✅ NOVO: Parse banco_equipamentos"""
+        equipamentos = {}
+        current_tipo = None
+        current_equipamento = {}
+        
+        for _, row in df.iterrows():
+            # Verificar se é um novo tipo de equipamento
+            if 'tipo' in df.columns and pd.notna(row['tipo']):
+                # Salvar equipamento anterior se existir
+                if current_tipo and current_equipamento:
+                    equipamentos[current_tipo] = current_equipamento
+                
+                # Iniciar novo equipamento
+                current_tipo = str(row['tipo'])
+                current_equipamento = {
+                    'descricao': str(row['descricao']) if 'descricao' in df.columns and pd.notna(row['descricao']) else current_tipo,
+                    'valores_padrao': {}
+                }
+            
+            # Processar valores/dimensões
+            elif current_tipo and 'dimensao' in df.columns and pd.notna(row['dimensao']):
+                dimensao = str(row['dimensao'])
+                if 'valor' in df.columns and pd.notna(row['valor']):
+                    try:
+                        valor = float(row['valor'])
+                        current_equipamento['valores_padrao'][dimensao] = valor
+                    except (ValueError, TypeError):
+                        pass
+        
+        # Salvar último equipamento
+        if current_tipo and current_equipamento:
+            equipamentos[current_tipo] = current_equipamento
+        
+        return equipamentos
+    
     def json_to_excel(self, system_data: Dict[str, Any], output_path: str) -> None:
         """
         Converte JSON do sistema para Excel
@@ -218,10 +258,10 @@ class ExcelToJsonConverter:
         with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
             # Sheet Constants
             constants_data = []
-            for key, value in system_data['constants'].items():
+            for key, value in system_data.get('constants', {}).items():
                 constants_data.append({
                     'key': key,
-                    'value': value['value'],
+                    'value': value.get('value', ''),
                     'description': value.get('description', '')
                 })
             df_constants = pd.DataFrame(constants_data)
@@ -229,27 +269,27 @@ class ExcelToJsonConverter:
             
             # Sheet Machines
             machines_data = []
-            for machine in system_data['machines']:
-                for capacity, value in machine['baseValues'].items():
+            for machine in system_data.get('machines', []):
+                for capacity, value in machine.get('baseValues', {}).items():
                     machines_data.append({
-                        'type': machine['type'],
+                        'type': machine.get('type', ''),
                         'capacidade': capacity,
                         'valor': value,
-                        'PIS_COFINS': machine['impostos'].get('PIS_COFINS', ''),
-                        'IPI': machine['impostos'].get('IPI', ''),
-                        'ICMS': machine['impostos'].get('ICMS', ''),
-                        'PRAZO': machine['impostos'].get('PRAZO', ''),
-                        'FRETE': machine['impostos'].get('FRETE', '')
+                        'PIS_COFINS': machine.get('impostos', {}).get('PIS_COFINS', ''),
+                        'IPI': machine.get('impostos', {}).get('IPI', ''),
+                        'ICMS': machine.get('impostos', {}).get('ICMS', ''),
+                        'PRAZO': machine.get('impostos', {}).get('PRAZO', ''),
+                        'FRETE': machine.get('impostos', {}).get('FRETE', '')
                     })
             df_machines = pd.DataFrame(machines_data)
             df_machines.to_excel(writer, sheet_name='Machines', index=False)
             
             # Sheet Materials
             materials_data = []
-            for key, value in system_data['materials'].items():
+            for key, value in system_data.get('materials', {}).items():
                 materials_data.append({
                     'key': key,
-                    'value': value['value'],
+                    'value': value.get('value', ''),
                     'unit': value.get('unit', ''),
                     'description': value.get('description', '')
                 })
@@ -258,10 +298,28 @@ class ExcelToJsonConverter:
             
             # Sheet Empresas
             empresas_data = []
-            for empresa in system_data['empresas']:
+            for empresa in system_data.get('empresas', []):
                 empresas_data.append(empresa)
             df_empresas = pd.DataFrame(empresas_data)
             df_empresas.to_excel(writer, sheet_name='Empresas', index=False)
+            
+            # ✅ NOVO: Sheet Banco de Equipamentos
+            equipamentos_data = []
+            for tipo, dados in system_data.get('banco_equipamentos', {}).items():
+                descricao = dados.get('descricao', '')
+                valores = dados.get('valores_padrao', {})
+                
+                for dimensao, valor in valores.items():
+                    equipamentos_data.append({
+                        'tipo': tipo,
+                        'descricao': descricao,
+                        'dimensao': dimensao,
+                        'valor': valor
+                    })
+            
+            if equipamentos_data:
+                df_equipamentos = pd.DataFrame(equipamentos_data)
+                df_equipamentos.to_excel(writer, sheet_name='Equipamentos', index=False)
 
 # Instância global do conversor
 excel_converter = ExcelToJsonConverter()

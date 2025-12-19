@@ -1,20 +1,57 @@
 import { loadModules } from './loader.js';
 import { createSmartLogger } from '../01_Create_Obra/core/logger.js';
 
-// // ✅ INICIALIZAR LOGGER
-// window.logger = createSmartLogger();
+// ==================== CONFIGURAÇÃO INICIAL ====================
 
-// // ✅ EXPOR FUNÇÃO GLOBAL PARA CONTROLE DO LOGGER
-// window.toggleSystemLogger = function(enable = null) {
-//     if (window.logger && typeof window.toggleLogger === 'function') {
-//         return window.toggleLogger(enable);
-//     } else {
-//         console.warn('⚠️ Logger não disponível para controle');
-//         return false;
-//     }
-// };
+// Função para garantir que systemData tenha estrutura completa
+function ensureCompleteSystemData(data) {
+    if (!data || typeof data !== 'object') {
+        return {
+            constants: {},
+            machines: [],
+            materials: {},
+            empresas: [],
+            banco_equipamentos: {}
+        };
+    }
+    
+    return {
+        constants: data.constants || {},
+        machines: data.machines || [],
+        materials: data.materials || {},
+        empresas: data.empresas || [],
+        banco_equipamentos: data.banco_equipamentos || {}
+    };
+}
 
-// Inicialização
+// Sobrescrever o setter de window.systemData para garantir estrutura
+Object.defineProperty(window, 'systemData', {
+    get() {
+        return window._systemData;
+    },
+    set(value) {
+        console.log('📥 systemData sendo definido...');
+        
+        // Sempre garante estrutura completa
+        window._systemData = ensureCompleteSystemData(value);
+        
+        console.log('✅ systemData corrigido:', {
+            constants: Object.keys(window._systemData.constants).length,
+            machines: window._systemData.machines.length,
+            materials: Object.keys(window._systemData.materials).length,
+            empresas: window._systemData.empresas.length,
+            banco_equipamentos: Object.keys(window._systemData.banco_equipamentos).length
+        });
+    },
+    configurable: true,
+    enumerable: true
+});
+
+// Inicializar systemData vazio
+window._systemData = ensureCompleteSystemData({});
+
+// ==================== INICIALIZAÇÃO PRINCIPAL ====================
+
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Sistema de Edição de Dados iniciado');
     
@@ -43,19 +80,46 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
     
     // Carregar dados iniciais
-    setTimeout(() => {
+    setTimeout(async () => {
+        console.log('📥 Iniciando carregamento de dados...');
+        
         if (typeof window.loadData === 'function') {
-            window.loadData();
+            try {
+                // Força o carregamento dos dados
+                await window.loadData();
+                
+                // Verifica se os dados foram carregados corretamente
+                console.log('✅ Dados carregados. Verificando estrutura...');
+                console.log('✅ window.systemData:', window.systemData);
+                console.log('✅ Tem banco_equipamentos?', 'banco_equipamentos' in window.systemData);
+                console.log('✅ banco_equipamentos:', window.systemData?.banco_equipamentos);
+                
+                // Inicializa o editor com os dados carregados
+                if (typeof window.initJSONEditor === 'function') {
+                    setTimeout(window.initJSONEditor, 200);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados:', error);
+                
+                // Mesmo com erro, inicializa o editor com estrutura vazia
+                if (typeof window.initJSONEditor === 'function') {
+                    setTimeout(window.initJSONEditor, 200);
+                }
+            }
         } else {
             console.warn('⚠️ Função loadData não encontrada');
-            // Inicializa editor mesmo sem dados
+            // Inicializa editor com estrutura vazia
             if (typeof window.initJSONEditor === 'function') {
                 setTimeout(window.initJSONEditor, 200);
             }
         }
     }, 500);
 });
-// Funções globais para modais (existentes)
+
+// ==================== FUNÇÕES GLOBAIS ====================
+
+// Funções globais para modais
 window.confirmAction = function(confirmed) {
     const modal = document.getElementById('confirmationModal');
     if (modal) modal.style.display = 'none';
@@ -75,13 +139,22 @@ window.saveEdit = function() {
     closeEditModal();
 };
 
-// Arquivo adicional para JSON Editor (existente)
+// ==================== MÓDULO JSON EDITOR ====================
+
 const jsonEditorModule = {
     loadJSONEditor: function() {
+        console.log('📝 Carregando JSON Editor...');
         const editor = document.getElementById('jsonEditor');
-        if (!editor) return;
+        if (!editor) {
+            console.warn('⚠️ Editor não encontrado');
+            return;
+        }
         
         const systemData = window.systemData || {};
+        console.log('📝 Dados para o editor:', {
+            banco_equipamentos: Object.keys(systemData.banco_equipamentos || {}).length
+        });
+        
         editor.value = JSON.stringify(systemData, null, 2);
         this.updateJSONStatus('JSON carregado', 'info');
     },
@@ -102,7 +175,7 @@ const jsonEditorModule = {
         try {
             const parsed = JSON.parse(editor.value);
             
-            const requiredKeys = ['constants', 'machines', 'materials', 'empresas'];
+            const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos'];
             const missingKeys = requiredKeys.filter(key => !(key in parsed));
             
             if (missingKeys.length > 0) {
@@ -120,6 +193,9 @@ const jsonEditorModule = {
             }
             if (!Array.isArray(parsed.empresas)) {
                 throw new Error('empresas deve ser um array');
+            }
+            if (typeof parsed.banco_equipamentos !== 'object') {
+                throw new Error('banco_equipamentos deve ser um objeto');
             }
             
             this.updateJSONStatus('✅ JSON válido e com estrutura correta', 'success');
@@ -154,42 +230,63 @@ const jsonEditorModule = {
     }
 };
 
-// Atribuir funções globais
+// Atribuir funções globais do JSON Editor
 window.loadJSONEditor = jsonEditorModule.loadJSONEditor.bind(jsonEditorModule);
 window.formatJSON = jsonEditorModule.formatJSON.bind(jsonEditorModule);
 window.validateJSON = jsonEditorModule.validateJSON.bind(jsonEditorModule);
 window.updateJSONStatus = jsonEditorModule.updateJSONStatus.bind(jsonEditorModule);
 
+// ==================== EVENT LISTENERS ====================
+
 // Disparar evento quando os dados são carregados
 window.addEventListener('dataLoaded', function(event) {
     const data = event.detail;
     
-    // Atualizar todas as visualizações
-    if (window.loadConstants) window.loadConstants();
-    if (window.loadMachines) window.loadMachines();
-    if (window.loadMaterials) window.loadMaterials();
-    if (window.loadEmpresas) window.loadEmpresas();
-    if (window.populateMachineFilter) window.populateMachineFilter();
-    if (window.loadJSONEditor) window.loadJSONEditor();
+    console.log('🎯 EVENTO dataLoaded recebido na main.js');
+    console.log('🎯 Dados recebidos:', {
+        constants: Object.keys(data.constants || {}).length,
+        machines: data.machines?.length || 0,
+        materials: Object.keys(data.materials || {}).length,
+        empresas: data.empresas?.length || 0,
+        banco_equipamentos: Object.keys(data.banco_equipamentos || {}).length
+    });
     
-    // Limpar staging
-    window.stagingData = null;
-    window.hasPendingChanges = false;
-    if (typeof updateApplyButtonState === 'function') {
-        updateApplyButtonState();
-    }
+    // Atualiza window.systemData com os dados recebidos
+    window.systemData = data;
+    
+    // Carrega todos os componentes
+    setTimeout(() => {
+        if (window.loadConstants) window.loadConstants();
+        if (window.loadMachines) window.loadMachines();
+        if (window.loadMaterials) window.loadMaterials();
+        if (window.loadEmpresas) window.loadEmpresas();
+        if (window.loadEquipamentos) window.loadEquipamentos();
+        if (window.populateMachineFilter) window.populateMachineFilter();
+        if (window.loadJSONEditor) window.loadJSONEditor();
+        
+        // Limpar staging
+        window.stagingData = null;
+        window.hasPendingChanges = false;
+        if (typeof updateApplyButtonState === 'function') {
+            updateApplyButtonState();
+        }
+        
+        console.log('✅ Todos os componentes carregados após dataLoaded');
+    }, 100);
 });
 
 // Disparar evento quando os dados são importados (via staging)
 window.addEventListener('dataImported', function(event) {
     const data = event.detail;
+    
+    console.log('🎯 EVENTO dataImported recebido');
     window.systemData = data;
     
-    // Atualizar todas as visualizações
     if (window.loadConstants) window.loadConstants();
     if (window.loadMachines) window.loadMachines();
     if (window.loadMaterials) window.loadMaterials();
     if (window.loadEmpresas) window.loadEmpresas();
+    if (window.loadEquipamentos) window.loadEquipamentos();
     if (window.populateMachineFilter) window.populateMachineFilter();
     if (window.loadJSONEditor) window.loadJSONEditor();
     
@@ -201,16 +298,24 @@ window.addEventListener('dataImported', function(event) {
     }
 });
 
-// NOVO EVENTO: Dados aplicados via botão "Aplicar JSON"
+// Evento: Dados aplicados via botão "Aplicar JSON"
 window.addEventListener('dataApplied', function(event) {
     const data = event.detail.data;
     const changes = event.detail.changes;
     
-    console.log('Dados aplicados via botão "Aplicar JSON":', changes);
+    console.log('🎯 EVENTO dataApplied recebido:', changes);
+    
+    // Atualizar window.systemData
+    window.systemData = data;
     
     // Atualizar JSON Editor com os novos dados
     if (window.loadJSONEditor) {
         window.loadJSONEditor();
+    }
+    
+    // Atualizar equipamentos também
+    if (window.loadEquipamentos) {
+        window.loadEquipamentos();
     }
     
     // Registrar no logger se disponível
@@ -218,6 +323,64 @@ window.addEventListener('dataApplied', function(event) {
         window.logger.log('Sistema', `JSON aplicado: ${changes.summary.total_changes} alterações`);
     }
 });
+
+// ==================== FUNÇÕES DE DEBUG ====================
+
+// Função de debug para verificar dados
+window.debugSystemData = function() {
+    console.log('=== DEBUG SYSTEMDATA ===');
+    console.log('systemData:', window.systemData);
+    console.log('Tem banco_equipamentos?', 'banco_equipamentos' in window.systemData);
+    console.log('banco_equipamentos:', window.systemData?.banco_equipamentos);
+    console.log('Número de equipamentos:', Object.keys(window.systemData?.banco_equipamentos || {}).length);
+    console.log('Keys de banco_equipamentos:', Object.keys(window.systemData?.banco_equipamentos || {}));
+    
+    // Verifica o editor
+    const editor = document.getElementById('jsonEditor');
+    if (editor && editor.value) {
+        try {
+            const parsed = JSON.parse(editor.value);
+            console.log('Editor tem banco_equipamentos?', 'banco_equipamentos' in parsed);
+            console.log('Equipamentos no editor:', Object.keys(parsed?.banco_equipamentos || {}).length);
+        } catch(e) {
+            console.error('Erro ao parsear editor:', e);
+        }
+    }
+};
+
+// Função para forçar recarregamento correto
+window.reloadCompleteData = async function() {
+    console.log('🔄 Forçando recarregamento completo...');
+    
+    try {
+        // Busca dados diretamente da API
+        const response = await fetch('/api/system-data');
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Dados da API:', {
+                banco_equipamentos: Object.keys(data.banco_equipamentos || {}).length
+            });
+            
+            // Atualiza window.systemData
+            window.systemData = data;
+            
+            // Dispara evento
+            window.dispatchEvent(new CustomEvent('dataLoaded', {
+                detail: data
+            }));
+            
+            console.log('✅ Dados recarregados com sucesso!');
+            return data;
+        } else {
+            throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+    } catch (error) {
+        console.error('❌ Erro ao recarregar dados:', error);
+        throw error;
+    }
+};
+
+// ==================== MANIPULAÇÃO DE TABS ====================
 
 // Função para switchTab (se não existir)
 if (typeof window.switchTab === 'undefined') {
@@ -250,8 +413,11 @@ if (typeof window.switchTab === 'undefined') {
             // Ações específicas por tab
             switch(tabName) {
                 case 'equipments':
+                case 'equipamentos':
                     console.log('🎯 Tab de equipamentos ativada');
-                    if (typeof window.loadEquipmentsData === 'function') {
+                    if (typeof window.loadEquipamentos === 'function') {
+                        setTimeout(window.loadEquipamentos, 100);
+                    } else if (typeof window.loadEquipmentsData === 'function') {
                         setTimeout(window.loadEquipmentsData, 100);
                     }
                     break;
@@ -274,8 +440,6 @@ if (typeof window.switchTab === 'undefined') {
         });
     };
 }
-
-
 
 // Adiciona evento para quando a tab JSON for clicada
 document.addEventListener('DOMContentLoaded', function() {
@@ -300,6 +464,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }, 150);
             }
+            
+            if (tabText.includes('equipamento') || tabText.includes('equipment')) {
+                console.log('🎯 Tab de equipamentos clicada');
+                
+                setTimeout(() => {
+                    if (typeof window.loadEquipamentos === 'function') {
+                        window.loadEquipamentos();
+                    } else if (typeof window.loadEquipmentsData === 'function') {
+                        window.loadEquipmentsData();
+                    }
+                }, 150);
+            }
         });
     });
 });
+
+// ==================== INICIALIZAÇÃO EXTRA ====================
+
+// Adiciona listener para debug quando o sistema está pronto
+setTimeout(() => {
+    console.log('✅ Sistema completamente inicializado');
+    console.log('📊 Estado final do systemData:', {
+        constants: Object.keys(window.systemData?.constants || {}).length,
+        machines: window.systemData?.machines?.length || 0,
+        materials: Object.keys(window.systemData?.materials || {}).length,
+        empresas: window.systemData?.empresas?.length || 0,
+        banco_equipamentos: Object.keys(window.systemData?.banco_equipamentos || {}).length
+    });
+}, 2000);

@@ -1,5 +1,5 @@
 /* ==== json-editor.js ==== */
-// json-editor.js - VERSÃO OTIMIZADA PARA PERFORMANCE
+// json-editor.js - VERSÃO OTIMIZADA E CORRIGIDA
 
 // ==================== ESTADO GLOBAL ====================
 window.stagingData = null;
@@ -20,6 +20,8 @@ let domCache = {
     status: null
 };
 
+// ==================== FUNÇÕES AUXILIARES ====================
+
 /**
  * Inicializa o cache de elementos DOM
  */
@@ -31,138 +33,123 @@ function initDomCache() {
     domCache.status = document.getElementById('jsonStatus');
 }
 
-// ==================== FUNÇÕES PRINCIPAIS (OTIMIZADAS) ====================
+/**
+ * Valida e garante estrutura mínima do systemData
+ */
+function validateAndEnsureStructure(data) {
+    if (!data || typeof data !== 'object') {
+        data = {};
+    }
+    
+    // Garante que todos os campos obrigatórios existam
+    const requiredFields = {
+        constants: {},
+        machines: [],
+        materials: {},
+        empresas: [],
+        banco_equipamentos: {}
+    };
+    
+    Object.keys(requiredFields).forEach(field => {
+        if (data[field] === undefined) {
+            console.log(`🔍 ${field} não encontrado, criando...`);
+            data[field] = Array.isArray(requiredFields[field]) ? [] : {};
+        }
+    });
+    
+    return data;
+}
+
+// ==================== FUNÇÕES PRINCIPAIS ====================
 
 /**
  * Atualiza os números das linhas com debouncing
  */
 export function updateLineNumbers() {
-    if (updateTimeout) {
-        clearTimeout(updateTimeout);
-    }
+    if (updateTimeout) clearTimeout(updateTimeout);
     
     updateTimeout = setTimeout(() => {
-        _updateLineNumbers();
-    }, 50); // Debounce de 50ms
-}
+        if (!domCache.editor || !domCache.lineNumbers) {
+            initDomCache();
+            if (!domCache.editor || !domCache.lineNumbers) return;
+        }
 
-/**
- * Função interna de atualização de números de linha
- */
-function _updateLineNumbers() {
-    if (!domCache.editor || !domCache.lineNumbers || !domCache.jsonContainer) {
-        initDomCache();
-        if (!domCache.editor || !domCache.lineNumbers) return;
-    }
-    
-    try {
-        const text = domCache.editor.value;
-        const lines = text.split('\n');
-        const totalLines = Math.max(lines.length, 1);
-        
-        // Só atualiza se o número de linhas mudou
-        if (totalLines === lastLineCount && lastLineCount > 0) {
-            return;
-        }
-        
-        lastLineCount = totalLines;
-        
-        // Gera os números das linhas de forma eficiente
-        let numbersHTML = '';
-        for (let i = 1; i <= totalLines; i++) {
-            numbersHTML += `<div data-line="${i}">${i}</div>`;
-        }
-        
-        // Atualiza o HTML de uma vez
-        domCache.lineNumbers.innerHTML = numbersHTML;
-        
-        // Calcula altura de forma otimizada
-        const lineHeight = 20;
-        const padding = 32;
-        const contentHeight = (totalLines * lineHeight) + padding;
-        const finalHeight = Math.max(contentHeight, 200);
-        
-        // Aplica alturas de forma otimizada
-        domCache.editor.style.height = finalHeight + 'px';
-        domCache.lineNumbers.style.height = finalHeight + 'px';
-        
-        // Verificação de container em um timeout separado
-        setTimeout(() => {
-            if (domCache.jsonContainer && finalHeight < domCache.jsonContainer.clientHeight) {
-                const containerHeight = domCache.jsonContainer.clientHeight;
-                domCache.editor.style.height = containerHeight + 'px';
-                domCache.lineNumbers.style.height = containerHeight + 'px';
+        try {
+            const text = domCache.editor.value;
+            const lines = text.split('\n');
+            const totalLines = Math.max(lines.length, 1);
+
+            if (totalLines === lastLineCount && lastLineCount > 0) {
+                return;
             }
-        }, 0);
-        
-    } catch (error) {
-        console.error('Erro ao atualizar números das linhas:', error);
-    }
+
+            lastLineCount = totalLines;
+
+            let numbersHTML = '';
+            for (let i = 1; i <= totalLines; i++) {
+                numbersHTML += `<div data-line="${i}">${i}</div>`;
+            }
+
+            domCache.lineNumbers.innerHTML = numbersHTML;
+
+            const lineHeight = 20;
+            const padding = 32;
+            const contentHeight = (totalLines * lineHeight) + padding;
+            const finalHeight = Math.max(contentHeight, 200);
+
+            domCache.editor.style.height = finalHeight + 'px';
+            domCache.lineNumbers.style.height = finalHeight + 'px';
+
+        } catch (error) {
+            console.error('Erro ao atualizar números das linhas:', error);
+        }
+    }, 50);
 }
 
 /**
  * Ajusta o layout do editor com debouncing
  */
 export function adjustEditorLayout() {
-    if (layoutTimeout) {
-        clearTimeout(layoutTimeout);
-    }
+    if (layoutTimeout) clearTimeout(layoutTimeout);
     
     layoutTimeout = setTimeout(() => {
-        _adjustEditorLayout();
-    }, 100); // Debounce maior para layout (mais pesado)
-}
+        updateLineNumbers();
+        
+        if (!domCache.editor || !domCache.jsonContainer) return;
 
-/**
- * Função interna de ajuste de layout
- */
-function _adjustEditorLayout() {
-    // Atualiza números primeiro
-    _updateLineNumbers();
-    
-    if (!domCache.editor || !domCache.jsonContainer) return;
-    
-    // Verifica se há necessidade de scroll horizontal
-    const lines = domCache.editor.value.split('\n');
-    if (lines.length > 100) {
-        // Para arquivos muito grandes, não verifica largura linha por linha
-        return;
-    }
-    
-    // Medição de largura otimizada
-    const tempSpan = document.createElement('span');
-    tempSpan.style.cssText = `
-        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        font-size: 13px;
-        visibility: hidden;
-        position: absolute;
-        white-space: pre;
-        pointer-events: none;
-    `;
-    document.body.appendChild(tempSpan);
-    
-    let maxLineWidth = 0;
-    // Limita a verificação às primeiras 1000 linhas para performance
-    const linesToCheck = Math.min(lines.length, 1000);
-    for (let i = 0; i < linesToCheck; i++) {
-        tempSpan.textContent = lines[i];
-        maxLineWidth = Math.max(maxLineWidth, tempSpan.offsetWidth);
-    }
-    
-    document.body.removeChild(tempSpan);
-    
-    // Verifica se precisa de scroll horizontal
-    const totalWidth = maxLineWidth + 32;
-    if (totalWidth > domCache.editor.clientWidth) {
-        // Força scroll horizontal se necessário
-        if (domCache.jsonContainer.scrollWidth <= domCache.jsonContainer.clientWidth) {
+        const lines = domCache.editor.value.split('\n');
+        if (lines.length > 100) return;
+
+        const tempSpan = document.createElement('span');
+        tempSpan.style.cssText = `
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 13px;
+            visibility: hidden;
+            position: absolute;
+            white-space: pre;
+            pointer-events: none;
+        `;
+        document.body.appendChild(tempSpan);
+
+        let maxLineWidth = 0;
+        const linesToCheck = Math.min(lines.length, 1000);
+        for (let i = 0; i < linesToCheck; i++) {
+            tempSpan.textContent = lines[i];
+            maxLineWidth = Math.max(maxLineWidth, tempSpan.offsetWidth);
+        }
+
+        document.body.removeChild(tempSpan);
+
+        const totalWidth = maxLineWidth + 32;
+        if (totalWidth > domCache.editor.clientWidth && 
+            domCache.jsonContainer.scrollWidth <= domCache.jsonContainer.clientWidth) {
             setTimeout(() => {
                 if (domCache.jsonContainer) {
                     domCache.jsonContainer.style.overflowX = 'auto';
                 }
             }, 50);
         }
-    }
+    }, 100);
 }
 
 /**
@@ -173,31 +160,13 @@ export function highlightLine(lineNumber, type = 'error') {
         initDomCache();
         if (!domCache.lineNumbers) return;
     }
-    
+
     const lines = domCache.lineNumbers.querySelectorAll('div');
-    
-    // Apenas atualiza se necessário
-    let needsUpdate = false;
-    lines.forEach((line, index) => {
-        const shouldBeHighlighted = (index === lineNumber - 1);
-        const isHighlighted = line.classList.contains(`${type}-line`);
-        
-        if (shouldBeHighlighted !== isHighlighted) {
-            needsUpdate = true;
-        }
-    });
-    
-    if (!needsUpdate) return;
-    
-    // Atualiza destaque
-    lines.forEach(line => {
-        line.className = '';
-    });
-    
+    lines.forEach(line => line.className = '');
+
     if (lineNumber > 0 && lineNumber <= lines.length) {
         const lineElement = lines[lineNumber - 1];
         lineElement.classList.add(`${type}-line`);
-        
         scrollToLine(lineNumber);
     }
 }
@@ -210,7 +179,7 @@ function scrollToLine(lineNumber) {
         initDomCache();
         if (!domCache.jsonContainer) return;
     }
-    
+
     const lineHeight = 20;
     const scrollPosition = (lineNumber - 1) * lineHeight;
     
@@ -220,131 +189,86 @@ function scrollToLine(lineNumber) {
     });
 }
 
-// ==================== INICIALIZAÇÃO DO EDITOR (OTIMIZADA) ====================
+// ==================== INICIALIZAÇÃO DO EDITOR ====================
 
 /**
  * Inicializa o editor JSON
  */
 export function initJSONEditor() {
-    console.log('🚀 Inicializando editor JSON (otimizado)...');
-    
+    console.log('🚀 Inicializando editor JSON...');
+
     if (isInitialized) {
         console.log('⚠️ Editor já inicializado');
         return;
     }
-    
+
     initDomCache();
-    
+
     if (!domCache.editor) {
         console.error('❌ Elemento #jsonEditor não encontrado!');
         return;
     }
-    
+
     // Configurações iniciais
     domCache.editor.spellcheck = false;
     domCache.editor.autocomplete = 'off';
     domCache.editor.autocorrect = 'off';
     domCache.editor.autocapitalize = 'off';
-    
+
     // Carrega dados iniciais
-    const systemData = window.systemData || {};
     let initialContent = '';
     
-    if (Object.keys(systemData).length > 0) {
+    console.log('🔍 Verificando window.systemData...');
+    console.log('🔍 systemData:', window.systemData);
+    
+    if (window.systemData && typeof window.systemData === 'object') {
         try {
-            initialContent = JSON.stringify(systemData, null, 2);
+            // Valida e garante estrutura
+            const validatedData = validateAndEnsureStructure(window.systemData);
+            console.log('✅ Dados validados:', {
+                constants: Object.keys(validatedData.constants).length,
+                machines: validatedData.machines.length,
+                materials: Object.keys(validatedData.materials).length,
+                empresas: validatedData.empresas.length,
+                banco_equipamentos: Object.keys(validatedData.banco_equipamentos).length
+            });
+            
+            initialContent = JSON.stringify(validatedData, null, 2);
+            console.log('✅ Conteúdo inicial gerado');
+            
         } catch (error) {
-            initialContent = '{\n  "constants": {},\n  "machines": [],\n  "materials": {},\n  "empresas": []\n}';
+            console.error('❌ Erro ao processar systemData:', error);
+            initialContent = JSON.stringify(validateAndEnsureStructure({}), null, 2);
         }
     } else {
-        initialContent = '{\n  "constants": {},\n  "machines": [],\n  "materials": {},\n  "empresas": []\n}';
+        console.warn('⚠️ window.systemData não encontrado');
+        initialContent = JSON.stringify(validateAndEnsureStructure({}), null, 2);
     }
     
     domCache.editor.value = initialContent;
-    
-    // Eventos otimizados
-    domCache.editor.addEventListener('input', function() {
-        // Marca que há mudanças pendentes
+
+    // Event listeners
+    domCache.editor.addEventListener('input', () => {
         window.hasPendingChanges = true;
         updateApplyButtonState();
-        
-        // Atualizações otimizadas
-        updateLineNumbers(); // Debounced
-        adjustEditorLayout(); // Debounced
+        updateLineNumbers();
+        adjustEditorLayout();
     });
-    
-    // Evento de teclas para melhor performance
-    let lastKeyTime = 0;
-    domCache.editor.addEventListener('keydown', function(e) {
-        const now = Date.now();
-        const timeSinceLastKey = now - lastKeyTime;
-        lastKeyTime = now;
-        
-        // Para teclas de navegação, não faz update pesado
-        if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
-            if (timeSinceLastKey > 100) { // Se foi uma pausa
-                updateLineNumbers();
-            }
-        }
+
+    // Observa redimensionamento
+    window.addEventListener('resize', () => {
+        updateLineNumbers();
+        adjustEditorLayout();
     });
-    
-    // Observa redimensionamento com debouncing
-    let resizeTimeout;
-    window.addEventListener('resize', function() {
-        if (resizeTimeout) clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            updateLineNumbers();
-            adjustEditorLayout();
-        }, 200);
-    });
-    
-    // Configura detecção de ativação da tab
-    setupTabActivation();
-    
+
     // Inicialização inicial
     setTimeout(() => {
-        _updateLineNumbers(); // Chamada direta (sem debouncing)
-        adjustEditorLayout(); // Com debouncing
-        
+        updateLineNumbers();
+        adjustEditorLayout();
         updateJSONStatus('✅ Editor JSON pronto. Digite ou cole seu JSON.', 'success');
-        
-        setTimeout(() => {
-            if (domCache.jsonContainer) {
-                const hasScroll = domCache.jsonContainer.scrollHeight > domCache.jsonContainer.clientHeight;
-                console.log(`✅ Scroll verificado: ${hasScroll ? 'ATIVO' : 'INATIVO'}`);
-            }
-        }, 500);
-        
+        isInitialized = true;
+        console.log('✅ Editor JSON inicializado com sucesso');
     }, 100);
-    
-    isInitialized = true;
-    console.log('✅ Editor JSON inicializado com sucesso');
-}
-
-// ==================== FUNÇÕES RESTANTES (OTIMIZADAS) ====================
-
-/**
- * Configura detecção de ativação da tab
- */
-function setupTabActivation() {
-    let tabClickTimeout;
-    
-    document.addEventListener('click', function(event) {
-        const target = event.target;
-        const isTab = target.classList.contains('tab');
-        const isTabChild = target.closest('.tab');
-        const tabElement = isTab ? target : (isTabChild ? isTabChild : null);
-        
-        if (tabElement) {
-            const tabText = tabElement.textContent.toLowerCase();
-            if (tabText.includes('json') || tabText.includes('raw') || tabText.includes('bruto')) {
-                if (tabClickTimeout) clearTimeout(tabClickTimeout);
-                tabClickTimeout = setTimeout(() => {
-                    forceLayoutUpdate();
-                }, 100);
-            }
-        }
-    });
 }
 
 /**
@@ -352,8 +276,8 @@ function setupTabActivation() {
  */
 export function forceLayoutUpdate() {
     console.log('🔧 Forçando atualização de layout...');
-    _updateLineNumbers();
-    _adjustEditorLayout();
+    updateLineNumbers();
+    adjustEditorLayout();
 }
 
 /**
@@ -362,12 +286,9 @@ export function forceLayoutUpdate() {
 export function updateApplyButtonState() {
     if (!domCache.applyButton) {
         initDomCache();
-        if (!domCache.applyButton) {
-            console.warn('⚠️ Botão applyJsonBtn não encontrado');
-            return;
-        }
+        if (!domCache.applyButton) return;
     }
-    
+
     if (window.hasPendingChanges) {
         domCache.applyButton.disabled = false;
         domCache.applyButton.classList.remove('disabled');
@@ -389,7 +310,7 @@ export function updateJSONStatus(message, type = 'info') {
         initDomCache();
         if (!domCache.status) return;
     }
-    
+
     domCache.status.textContent = message;
     domCache.status.className = 'json-status';
     domCache.status.classList.add(type);
@@ -402,23 +323,21 @@ export function updateJSONStatus(message, type = 'info') {
  */
 export function formatJSON() {
     if (!domCache.editor) return;
-    
+
     try {
         const parsed = JSON.parse(domCache.editor.value);
         domCache.editor.value = JSON.stringify(parsed, null, 2);
-        
+
         forceLayoutUpdate();
         highlightLine(-1);
         updateJSONStatus('✅ JSON formatado com sucesso!', 'success');
-        
+
         window.hasPendingChanges = true;
         updateApplyButtonState();
-        
+
     } catch (error) {
         const errorLine = findErrorLine(domCache.editor.value, error);
-        if (errorLine > 0) {
-            highlightLine(errorLine, 'error');
-        }
+        if (errorLine > 0) highlightLine(errorLine, 'error');
         updateJSONStatus(`❌ Erro de formatação: ${error.message}`, 'error');
     }
 }
@@ -428,35 +347,33 @@ export function formatJSON() {
  */
 export function validateJSON() {
     if (!domCache.editor) return false;
-    
+
     try {
         const parsed = JSON.parse(domCache.editor.value);
         const validation = validateJSONStructure(parsed);
-        
+
         if (!validation.valid) {
             throw new Error(validation.errors.join('; '));
         }
-        
+
         highlightLine(-1);
         updateJSONStatus('✅ JSON válido e com estrutura correta', 'success');
         return true;
-        
+
     } catch (error) {
         const errorLine = findErrorLine(domCache.editor.value, error);
-        if (errorLine > 0) {
-            highlightLine(errorLine, 'error');
-        }
+        if (errorLine > 0) highlightLine(errorLine, 'error');
         updateJSONStatus(`❌ JSON inválido: ${error.message}`, 'error');
         return false;
     }
 }
 
 /**
- * Encontra a linha de um erro no JSON (mantida igual)
+ * Encontra a linha de um erro no JSON
  */
 export function findErrorLine(jsonString, error) {
     if (!error || !error.message || !jsonString) return -1;
-    
+
     try {
         const patterns = [
             /position (\d+)/,
@@ -464,14 +381,14 @@ export function findErrorLine(jsonString, error) {
             /line (\d+)/,
             /linha (\d+)/
         ];
-        
+
         for (const pattern of patterns) {
             const match = error.message.match(pattern);
             if (match && match[1]) {
                 return parseInt(match[1]);
             }
         }
-        
+
         if (error.message.includes('position')) {
             const positionMatch = error.message.match(/position (\d+)/);
             if (positionMatch) {
@@ -483,39 +400,41 @@ export function findErrorLine(jsonString, error) {
     } catch (e) {
         console.error('Erro ao encontrar linha:', e);
     }
-    
+
     return -1;
 }
 
 /**
- * Valida a estrutura do JSON (mantida igual)
+ * Valida a estrutura do JSON
  */
 export function validateJSONStructure(data) {
     const errors = [];
-    
+
     if (!data.constants || typeof data.constants !== 'object') {
         errors.push('"constants" deve ser um objeto');
     }
-    
+
     if (!data.machines || !Array.isArray(data.machines)) {
         errors.push('"machines" deve ser um array');
     }
-    
+
     if (!data.materials || typeof data.materials !== 'object') {
         errors.push('"materials" deve ser um objeto');
     }
-    
+
     if (!data.empresas || !Array.isArray(data.empresas)) {
         errors.push('"empresas" deve ser um array');
     }
-    
+
+    if (!data.banco_equipamentos || typeof data.banco_equipamentos !== 'object') {
+        errors.push('"banco_equipamentos" deve ser um objeto');
+    }
+
     return {
         valid: errors.length === 0,
-        errors: errors
+        errors
     };
 }
-
-// ==================== FUNÇÕES RESTANTES (MANTIDAS) ====================
 
 /**
  * Converte arquivo para base64
@@ -539,185 +458,41 @@ export function resetJSONEditor() {
     console.log('🔄 Reinicializando editor JSON...');
     
     isInitialized = false;
-    
+
     if (domCache.editor) {
-        domCache.editor.value = '{\n  "constants": {},\n  "machines": [],\n  "materials": {},\n  "empresas": []\n}';
+        if (window.systemData && typeof window.systemData === 'object') {
+            const validatedData = validateAndEnsureStructure(window.systemData);
+            domCache.editor.value = JSON.stringify(validatedData, null, 2);
+            console.log('✅ Editor resetado com dados validados');
+        }
     }
-    
+
     if (domCache.lineNumbers) {
         domCache.lineNumbers.innerHTML = '';
     }
-    
-    setTimeout(initJSONEditor, 100);
-}
 
-/**
- * Exporta dados para JSON
- */
-export function exportToJSON() {
-    try {
-        const systemData = window.systemData || {};
-        const dataStr = JSON.stringify(systemData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        
-        const exportFileDefaultName = `sistema_dados_${new Date().toISOString().slice(0,10)}.json`;
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.style.display = 'none';
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-        
-        updateJSONStatus('✅ JSON exportado com sucesso!', 'success');
-        
-    } catch (error) {
-        console.error('Erro ao exportar JSON:', error);
-        updateJSONStatus('❌ Erro ao exportar JSON.', 'error');
-    }
-}
-
-/**
- * Importa dados de JSON
- */
-export function importFromJSON() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.style.display = 'none';
-    
-    input.onchange = function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                const validation = validateJSONStructure(importedData);
-                
-                if (!validation.valid) {
-                    throw new Error(validation.errors.join('; '));
-                }
-                
-                window.stagingData = importedData;
-                window.hasPendingChanges = true;
-                
-                if (domCache.editor) {
-                    domCache.editor.value = JSON.stringify(importedData, null, 2);
-                    forceLayoutUpdate();
-                }
-                
-                updateJSONStatus('JSON carregado na área de staging. Clique em "Aplicar JSON" para confirmar.', 'warning');
-                updateApplyButtonState();
-                
-            } catch (error) {
-                console.error('Erro ao importar JSON:', error);
-                updateJSONStatus(`❌ Erro ao importar JSON: ${error.message}`, 'error');
-            }
-        };
-        
-        reader.onerror = function() {
-            updateJSONStatus('❌ Erro ao ler o arquivo.', 'error');
-        };
-        
-        reader.readAsText(file);
-    };
-    
-    document.body.appendChild(input);
-    input.click();
-    
-    setTimeout(() => {
-        if (document.body.contains(input)) {
-            document.body.removeChild(input);
-        }
-    }, 100);
-}
-
-/**
- * Aplica o JSON do editor ao sistema
- */
-export async function applyJSON() {
-    if (!domCache.editor) {
-        updateJSONStatus('❌ Editor JSON não encontrado', 'error');
-        return;
-    }
-    
-    try {
-        const proposedData = JSON.parse(domCache.editor.value);
-        const validation = validateJSONStructure(proposedData);
-        
-        if (!validation.valid) {
-            updateJSONStatus('❌ JSON inválido. Corrija os erros antes de aplicar.', 'error');
-            return;
-        }
-        
-        const confirmed = confirm('Deseja aplicar as alterações do JSON ao sistema?');
-        
-        if (!confirmed) {
-            updateJSONStatus('Aplicação cancelada pelo usuário.', 'info');
-            return;
-        }
-        
-        window.systemData = proposedData;
-        window.stagingData = null;
-        window.hasPendingChanges = false;
-        
-        window.dispatchEvent(new CustomEvent('dataApplied', { 
-            detail: { data: proposedData } 
-        }));
-        
-        updateApplyButtonState();
-        updateJSONStatus('✅ JSON aplicado ao sistema com sucesso!', 'success');
-        
-        if (window.loadConstants) window.loadConstants();
-        if (window.loadMachines) window.loadMachines();
-        if (window.loadMaterials) window.loadMaterials();
-        if (window.loadEmpresas) window.loadEmpresas();
-        
-    } catch (error) {
-        console.error('Erro ao aplicar JSON:', error);
-        updateJSONStatus(`❌ Erro ao aplicar JSON: ${error.message}`, 'error');
-    }
+    setTimeout(initJSONEditor, 50);
 }
 
 // ==================== DEBUG FUNCTIONS ====================
 
-window.debugScroll = function() {
-    console.log('=== DEBUG SCROLL ===');
+window.debugSystemData = function() {
+    console.log('=== DEBUG SYSTEMDATA ===');
+    console.log('systemData:', window.systemData);
+    console.log('Tem banco_equipamentos?', 'banco_equipamentos' in (window.systemData || {}));
+    console.log('banco_equipamentos:', window.systemData?.banco_equipamentos);
+    console.log('Número de equipamentos:', Object.keys(window.systemData?.banco_equipamentos || {}).length);
     
-    initDomCache();
-    
-    if (!domCache.jsonContainer || !domCache.editor || !domCache.lineNumbers) {
-        console.error('❌ Elementos não encontrados');
-        return;
+    const editor = document.getElementById('jsonEditor');
+    if (editor && editor.value) {
+        try {
+            const parsed = JSON.parse(editor.value);
+            console.log('Editor tem banco_equipamentos?', 'banco_equipamentos' in parsed);
+            console.log('Equipamentos no editor:', Object.keys(parsed?.banco_equipamentos || {}).length);
+        } catch(e) {
+            console.error('Erro ao parsear editor:', e);
+        }
     }
-    
-    console.log(`📊 jsonContainer: ${domCache.jsonContainer.clientWidth}x${domCache.jsonContainer.clientHeight}`);
-    console.log(`📊 jsonContainer scroll: ${domCache.jsonContainer.scrollWidth}x${domCache.jsonContainer.scrollHeight}`);
-    console.log(`📊 Editor: ${domCache.editor.clientWidth}x${domCache.editor.clientHeight}`);
-    console.log(`📊 LineNumbers: ${domCache.lineNumbers.clientWidth}x${domCache.lineNumbers.clientHeight}`);
-    
-    const hasVerticalScroll = domCache.jsonContainer.scrollHeight > domCache.jsonContainer.clientHeight;
-    const hasHorizontalScroll = domCache.jsonContainer.scrollWidth > domCache.jsonContainer.clientWidth;
-    
-    console.log(`📊 Scroll vertical: ${hasVerticalScroll ? '✅ ATIVO' : '❌ INATIVO'}`);
-    console.log(`📊 Scroll horizontal: ${hasHorizontalScroll ? '✅ ATIVO' : '❌ INATIVO'}`);
-};
-
-window.testHorizontalScroll = function() {
-    if (!domCache.editor) return;
-    
-    const testContent = `{
-  "chave_normal": "valor",
-  "uma_chave_extremamente_longa_que_vai_forcar_o_scroll_horizontal_a_aparecer_quando_voce_digitar_uma_linha_muito_longa": "este_valor_tambem_e_muito_longo_para_garantir_que_o_scroll_horizontal_funcione_corretamente",
-  "outra_chave": "valor"
-}`;
-    
-    domCache.editor.value = testContent;
-    forceLayoutUpdate();
-    console.log('✅ Teste de scroll horizontal aplicado!');
 };
 
 // ==================== EXPORTAÇÃO GLOBAL ====================
@@ -729,12 +504,10 @@ window.validateJSON = validateJSON;
 window.updateJSONStatus = updateJSONStatus;
 window.resetJSONEditor = resetJSONEditor;
 window.forceLayoutUpdate = forceLayoutUpdate;
-window.exportToJSON = exportToJSON;
-window.importFromJSON = importFromJSON;
-window.applyJSON = applyJSON;
 window.initJSONEditor = initJSONEditor;
 
-// Inicialização automática
+// ==================== INICIALIZAÇÃO AUTOMÁTICA ====================
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(initJSONEditor, 300);
@@ -743,22 +516,22 @@ if (document.readyState === 'loading') {
     setTimeout(initJSONEditor, 300);
 }
 
-// Event listeners otimizados
-window.addEventListener('dataLoaded', function() {
+// Event listeners para recarregar dados
+window.addEventListener('dataLoaded', () => {
     setTimeout(() => {
         resetJSONEditor();
         updateApplyButtonState();
     }, 200);
 });
 
-window.addEventListener('dataImported', function() {
+window.addEventListener('dataImported', () => {
     setTimeout(() => {
         resetJSONEditor();
         updateApplyButtonState();
     }, 200);
 });
 
-window.addEventListener('dataApplied', function() {
+window.addEventListener('dataApplied', () => {
     setTimeout(() => {
         resetJSONEditor();
         updateApplyButtonState();
