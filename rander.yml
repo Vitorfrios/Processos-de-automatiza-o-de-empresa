@@ -1,14 +1,13 @@
 services:
   - type: web
     name: obra-system
-    env: python
+    runtime: python
     plan: free
+    pythonVersion: "3.11.9"
     buildCommand: |
       pip install --upgrade pip
+      pip install setuptools==68.2.2
       pip install -r requirements.txt
     startCommand: python app.py
     healthCheckPath: /health
     autoDeploy: true
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.11.9"
