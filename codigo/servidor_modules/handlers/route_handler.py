@@ -433,3 +433,35 @@ class RouteHandler:
     def handle_post_delete_equipamento(self, handler):
         """POST /api/equipamentos/delete"""
         handler.handle_post_delete_equipamento()
+        
+    def handle_get_dutos(self, handler):
+        """GET /api/dutos"""
+        handler.handle_get_dutos()
+
+    def handle_get_duto_types(self, handler):
+        """GET /api/dutos/types"""
+        handler.handle_get_duto_types()
+
+    def handle_get_duto_opcionais(self, handler):
+        """GET /api/dutos/opcionais"""
+        handler.handle_get_duto_opcionais()
+
+    def handle_get_duto_by_type(self, handler):
+        """GET /api/dutos/type/{type}"""
+        handler.handle_get_duto_by_type()
+
+    def handle_get_search_dutos(self, handler):
+        """GET /api/dutos/search"""
+        handler.handle_get_search_dutos()
+
+    def handle_post_add_duto(self, handler):
+        """POST /api/dutos/add"""
+        handler.handle_post_add_duto()
+
+    def handle_post_update_duto(self, handler):
+        """POST /api/dutos/update"""
+        handler.handle_post_update_duto()
+
+    def handle_post_delete_duto(self, handler):
+        """POST /api/dutos/delete"""
+        handler.handle_post_delete_duto()

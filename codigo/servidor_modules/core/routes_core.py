@@ -858,12 +858,10 @@ class RoutesCore:
 
 
     # ==========  FUNÇÕES PARA SISTEMA DE EDIÇÃO ==========
-    # ========== NOVOS MÉTODOS PARA SISTEMA DE EDIÇÃO ==========
 
     def handle_get_system_data(self):
         """Retorna TODOS os dados do sistema para a interface de edição"""
         try:
-            # Carrega dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             dados_data = self.file_utils.load_json_file(
                 dados_file, 
@@ -872,7 +870,8 @@ class RoutesCore:
                     "machines": [], 
                     "materials": {}, 
                     "empresas": [],
-                    "banco_equipamentos": {}  # ADICIONADO
+                    "banco_equipamentos": {},
+                    "dutos": []  # ADICIONADO
                 }
             )
             
@@ -886,7 +885,8 @@ class RoutesCore:
                 "machines": [], 
                 "materials": {}, 
                 "empresas": [],
-                "banco_equipamentos": {}  # ADICIONADO
+                "banco_equipamentos": {},
+                "dutos": []  # ADICIONADO
             }
 
     def handle_get_constants_json(self):
@@ -966,8 +966,8 @@ class RoutesCore:
         try:
             new_data = json.loads(post_data)
             
-            # Valida estrutura básica ATUALIZADA
-            required_keys = ["constants", "machines", "materials", "empresas", "banco_equipamentos"]
+            # Valida estrutura básica ATUALIZADA com dutos
+            required_keys = ["constants", "machines", "materials", "empresas", "banco_equipamentos", "dutos"]
             if not all(key in new_data for key in required_keys):
                 return {
                     "success": False, 
@@ -977,7 +977,7 @@ class RoutesCore:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if self.file_utils.save_json_file(dados_file, new_data):
-                print("💾 TODOS os dados do sistema salvos (incluindo banco_equipamentos)")
+                print("💾 TODOS os dados do sistema salvos (incluindo dutos)")
                 return {"success": True, "message": "Dados salvos com sucesso"}
             else:
                 return {"success": False, "error": "Erro ao salvar dados"}
@@ -1277,3 +1277,46 @@ class RoutesCore:
                 "equipamentos": {},
                 "count": 0
             }
+            
+            
+    def handle_get_dutos(self):
+        """Retorna todos os dutos"""
+        try:
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            dutos = dados_data.get("dutos", [])
+            return {
+                "success": True,
+                "dutos": dutos,
+                "count": len(dutos)
+            }
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar dutos: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "dutos": [],
+                "count": 0
+            }
+            
+    def handle_post_save_dutos(self, post_data):
+        """Salva apenas os dutos"""
+        try:
+            new_dutos = json.loads(post_data)
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            dados_data["dutos"] = new_dutos.get("dutos", [])
+            
+            if self.file_utils.save_json_file(dados_file, dados_data):
+                print("💾 Dutos salvos")
+                return {"success": True, "message": "Dutos salvos"}
+            else:
+                return {"success": False, "error": "Erro ao salvar dutos"}
+                
+        except Exception as e:
+            print(f"❌ Erro ao salvar dutos: {str(e)}")
+            return {"success": False, "error": str(e)}

@@ -1,14 +1,15 @@
 /**
  * data/modules/rooms.js
- * 🎯 FUSÃO COMPLETA: room-operations.js + salas.js
- * ⚡ REDUÇÃO: 2 arquivos → 1 arquivo (~350 → ~250 linhas)
+ * ARQUIVO DE BUILDER DE SALA
  */
 
 import { buildClimatizationSection } from './climatizacao.js';
 import { buildMachinesSection } from './machines/machines-core.js';
-import { buildEquipamentosSection, initEquipamentosSystem } from './equipamentos.js';
+import { buildEquipamentosSection } from './equipamentos.js';
+import { buildTubosSection } from './tubos.js';
+import { buildDutosSection } from './dutos.js';
 import { generateRoomId } from '../utils/id-generator.js';
-import { removeEmptyProjectMessage, showEmptyProjectMessageIfNeeded } from '../../ui/helpers.js';
+import { removeEmptyProjectMessage } from '../../ui/helpers.js';
 import { triggerCalculation, syncTitleToAmbienteDirect } from '../../core/shared-utils.js';
 
 // Cache para módulo de máquinas
@@ -58,6 +59,8 @@ function buildRoomHTML(obraId, projectId, roomName, roomId) {
           ${buildClimatizationSection(obraId, projectId, roomName, roomId)}
           ${buildMachinesSection(obraId, projectId, roomName, roomId)}
           ${buildEquipamentosSection(obraId, projectId, roomName, roomId)}
+          ${buildTubosSection(obraId, projectId, roomName, roomId)}
+          ${buildDutosSection(obraId, projectId, roomName, roomId)}
         
         </div>
       </div>

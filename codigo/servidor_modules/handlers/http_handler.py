@@ -96,6 +96,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/api/json/normalize": "handle_post_json_normalize",
         "/api/system/apply-json": "handle_post_apply_json",
         "/api/system/compare": "handle_post_system_compare",
+        
+        # ========== ROTAS PARA DUTOS ==========
+        "/api/dutos": "handle_get_dutos",
+        "/api/dutos/types": "handle_get_duto_types",
+        "/api/dutos/opcionais": "handle_get_duto_opcionais",
     }
 
     def __init__(self, *args, **kwargs):
@@ -202,6 +207,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         elif path.startswith("/api/equipamentos/search"):
             self.handle_get_search_equipamentos()
+            
+        # ========== ROTAS PARA DUTOS ==========
+        elif path.startswith("/api/dutos/type/"):
+            self.handle_get_duto_by_type()
+            
+        elif path.startswith("/api/dutos/search"):
+            self.handle_get_search_dutos()
 
         # ========== ARQUIVOS ESTÁTICOS ==========
         else:
@@ -295,6 +307,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_post_add_machine(self)
         elif path == "/api/machines/update":
             self.route_handler.handle_post_update_machine(self)
+            
+        # ========== ROTAS PARA DUTOS ==========
+        elif path == "/api/dutos/add":
+            self.handle_post_add_duto()
+        elif path == "/api/dutos/update":
+            self.handle_post_update_duto()
+        elif path == "/api/dutos/delete":
+            self.handle_post_delete_duto()
 
         # ========== ROTA NÃO ENCONTRADA ==========
         else:
@@ -701,7 +721,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             content_length = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_length)
             json_data = json.loads(post_data)
-
+            
             print(f"🔍 Validando estrutura JSON")
 
             # Validar estrutura básica atualizada
@@ -747,6 +767,35 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 200,
             )
 
+            if "dutos" in json_data and not isinstance(json_data["dutos"], list):
+                errors.append("dutos deve ser um array se existir")
+            elif "dutos" in json_data and isinstance(json_data["dutos"], list):
+                # Validar estrutura de cada duto
+                for i, duto in enumerate(json_data["dutos"]):
+                    if not isinstance(duto, dict):
+                        errors.append(f"duto no índice {i} deve ser um objeto")
+                        continue
+                        
+                    if "type" not in duto:
+                        errors.append(f"duto no índice {i} não tem campo 'type'")
+                    
+                    if "valor" not in duto:
+                        errors.append(f"duto no índice {i} não tem campo 'valor'")
+                    
+                    if "opcionais" in duto and not isinstance(duto["opcionais"], list):
+                        errors.append(f"duto '{duto.get('type', f'índice {i}')}' tem opcionais inválidos")
+            
+            valid = len(errors) == 0
+            
+            print(f"✅ Validação {'bem sucedida' if valid else 'com erros'}")
+            
+            self.send_json_response({
+                "success": True,
+                "valid": valid,
+                "errors": errors if errors else [],
+                "message": "JSON válido" if valid else "JSON inválido"
+            }, 200)
+            
         except json.JSONDecodeError:
             self.send_json_response(
                 {"success": False, "error": "JSON inválido"}, 400
@@ -766,32 +815,43 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             print(f"🔄 Normalizando JSON")
 
-            # Normalização atualizada com banco_equipamentos
+            # Normalização completa com todas as seções
             normalized = {
                 "constants": {},
                 "machines": [],
                 "materials": {},
                 "empresas": [],
                 "banco_equipamentos": {},
+                "dutos": [],  # ADICIONADO
             }
 
-            # Constants
+            # 1. Constants
             if isinstance(json_data.get("constants"), dict):
                 for key, value in json_data["constants"].items():
                     if isinstance(value, dict) and "value" in value:
-                        normalized["constants"][key] = value
+                        # Já está no formato correto
+                        normalized["constants"][key] = {
+                            "value": value.get("value", 0),
+                            "description": value.get("description", ""),
+                            "unit": value.get("unit", "un"),
+                            "category": value.get("category", ""),
+                        }
                     else:
+                        # Normalizar para formato padrão
                         normalized["constants"][key] = {
                             "value": value,
                             "description": "",
+                            "unit": "un",
+                            "category": "",
                         }
 
-            # Machines
+            # 2. Machines
             if isinstance(json_data.get("machines"), list):
                 for machine in json_data["machines"]:
                     if isinstance(machine, dict):
                         normalized_machine = {
                             "type": machine.get("type", ""),
+                            "description": machine.get("description", ""),
                             "impostos": machine.get(
                                 "impostos",
                                 {
@@ -808,35 +868,153 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             "baseValues": machine.get("baseValues", {}),
                             "options": machine.get("options", []),
                             "voltages": machine.get("voltages", []),
+                            "dimensions": machine.get("dimensions", {}),
+                            "peso": machine.get("peso", 0),
+                            "categoria": machine.get("categoria", ""),
                         }
                         normalized["machines"].append(normalized_machine)
 
-            # Materials
+            # 3. Materials
             if isinstance(json_data.get("materials"), dict):
                 for key, value in json_data["materials"].items():
                     if isinstance(value, dict) and "value" in value:
-                        normalized["materials"][key] = value
+                        # Já está no formato correto
+                        normalized["materials"][key] = {
+                            "value": value.get("value", 0),
+                            "unit": value.get("unit", "un"),
+                            "description": value.get("description", ""),
+                            "category": value.get("category", ""),
+                        }
                     else:
+                        # Normalizar para formato padrão
                         normalized["materials"][key] = {
                             "value": value,
                             "unit": "un",
                             "description": "",
+                            "category": "",
                         }
 
-            # Empresas
+            # 4. Empresas
             if isinstance(json_data.get("empresas"), list):
-                normalized["empresas"] = json_data["empresas"]
+                for empresa in json_data["empresas"]:
+                    if isinstance(empresa, dict):
+                        # Normalizar empresa para formato padrão
+                        normalized_empresa = {}
+                        for empresa_key, empresa_data in empresa.items():
+                            if isinstance(empresa_data, dict):
+                                normalized_empresa[empresa_key] = {
+                                    "nome": empresa_data.get("nome", ""),
+                                    "cnpj": empresa_data.get("cnpj", ""),
+                                    "endereco": empresa_data.get("endereco", ""),
+                                    "contato": empresa_data.get("contato", ""),
+                                    "email": empresa_data.get("email", ""),
+                                    "telefone": empresa_data.get("telefone", ""),
+                                    "responsavel": empresa_data.get("responsavel", ""),
+                                }
+                            else:
+                                normalized_empresa[empresa_key] = {
+                                    "nome": empresa_data,
+                                    "cnpj": "",
+                                    "endereco": "",
+                                    "contato": "",
+                                    "email": "",
+                                    "telefone": "",
+                                    "responsavel": "",
+                                }
+                        normalized["empresas"].append(normalized_empresa)
 
-            # Banco de Equipamentos (se existir)
+            # 5. Banco de Equipamentos
             if isinstance(json_data.get("banco_equipamentos"), dict):
-                normalized["banco_equipamentos"] = json_data["banco_equipamentos"]
+                for equip_type, equip_data in json_data["banco_equipamentos"].items():
+                    if isinstance(equip_data, dict):
+                        normalized["banco_equipamentos"][equip_type] = {
+                            "descricao": equip_data.get("descricao", ""),
+                            "valores_padrao": equip_data.get("valores_padrao", {}),
+                            "unidade_valor": equip_data.get("unidade_valor", "un"),
+                            "dimensoes": equip_data.get("dimensoes", []),
+                            "categoria": equip_data.get("categoria", ""),
+                            "observacoes": equip_data.get("observacoes", ""),
+                        }
+                    else:
+                        # Se não for dict, tratar como valores padrão simples
+                        normalized["banco_equipamentos"][equip_type] = {
+                            "descricao": "",
+                            "valores_padrao": equip_data if isinstance(equip_data, dict) else {},
+                            "unidade_valor": "un",
+                            "dimensoes": [],
+                            "categoria": "",
+                            "observacoes": "",
+                        }
 
-            print(f"✅ JSON normalizado")
+            # 6. Dutos (NOVA SEÇÃO)
+            if isinstance(json_data.get("dutos"), list):
+                for duto in json_data["dutos"]:
+                    if isinstance(duto, dict):
+                        normalized_duto = {
+                            "type": duto.get("type", ""),
+                            "valor": duto.get("valor", 0),
+                            "descricao": duto.get("descricao", ""),
+                            "categoria": duto.get("categoria", ""),
+                            "unidade": duto.get("unidade", "m²"),
+                            "opcionais": duto.get("opcionais", []),
+                        }
+                        
+                        # Normalizar opcionais se existirem
+                        opcionais = duto.get("opcionais", [])
+                        if isinstance(opcionais, list):
+                            normalized_opcionais = []
+                            for opcional in opcionais:
+                                if isinstance(opcional, dict):
+                                    normalized_opcionais.append({
+                                        "id": opcional.get("id", len(normalized_opcionais) + 1),
+                                        "nome": opcional.get("nome", ""),
+                                        "value": opcional.get("value", 0),
+                                        "descricao": opcional.get("descricao", ""),
+                                    })
+                                else:
+                                    # Se opcional não for dict, criar estrutura básica
+                                    normalized_opcionais.append({
+                                        "id": len(normalized_opcionais) + 1,
+                                        "nome": str(opcional),
+                                        "value": 0,
+                                        "descricao": "",
+                                    })
+                            normalized_duto["opcionais"] = normalized_opcionais
+                        
+                        normalized["dutos"].append(normalized_duto)
+                    elif isinstance(duto, str):
+                        # Se duto for string, criar estrutura básica
+                        normalized["dutos"].append({
+                            "type": duto,
+                            "valor": 0,
+                            "descricao": "",
+                            "categoria": "",
+                            "unidade": "m²",
+                            "opcionais": [],
+                        })
+
+            print(f"✅ JSON normalizado - Seções: {list(normalized.keys())}")
 
             self.send_json_response(
                 {
                     "success": True,
                     "data": normalized,
+                    "summary": {
+                        "constants_count": len(normalized["constants"]),
+                        "machines_count": len(normalized["machines"]),
+                        "materials_count": len(normalized["materials"]),
+                        "empresas_count": len(normalized["empresas"]),
+                        "equipamentos_count": len(normalized["banco_equipamentos"]),
+                        "dutos_count": len(normalized["dutos"]),  # ADICIONADO
+                        "total_items": (
+                            len(normalized["constants"]) +
+                            len(normalized["machines"]) +
+                            len(normalized["materials"]) +
+                            len(normalized["empresas"]) +
+                            len(normalized["banco_equipamentos"]) +
+                            len(normalized["dutos"])  # ADICIONADO
+                        )
+                    },
                     "message": "JSON normalizado com sucesso",
                 },
                 200,
@@ -848,6 +1026,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
         except Exception as e:
             print(f"❌ Erro em handle_post_json_normalize: {e}")
+            import traceback
+            traceback.print_exc()
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, 500
             )
@@ -860,6 +1040,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "materials": {"added": [], "modified": [], "removed": []},
             "empresas": {"added": [], "modified": [], "removed": []},
             "banco_equipamentos": {"added": [], "modified": [], "removed": []},
+            "dutos": {"added": [], "modified": [], "removed": []},
         }
 
         # Constants
@@ -908,6 +1089,25 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if key not in proposed_materials:
                 diffs["materials"]["removed"].append(key)
 
+
+        # Dutos (por type)
+        current_dutos = {d.get("type", ""): d for d in current.get("dutos", [])}
+        proposed_dutos = {d.get("type", ""): d for d in proposed.get("dutos", [])}
+        
+        for type_name in proposed_dutos:
+            if type_name not in current_dutos:
+                diffs["dutos"]["added"].append(type_name)
+            elif json.dumps(proposed_dutos[type_name]) != json.dumps(current_dutos[type_name]):
+                diffs["dutos"]["modified"].append(type_name)
+        
+        for type_name in current_dutos:
+            if type_name not in proposed_dutos:
+                diffs["dutos"]["removed"].append(type_name)
+        
+        return diffs
+
+
+
         # Empresas (por primeiro campo)
         def get_empresa_key(empresa):
             return next(iter(empresa)) if empresa else ""
@@ -955,25 +1155,28 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             + len(differences["machines"]["added"])
             + len(differences["materials"]["added"])
             + len(differences["empresas"]["added"])
-            + len(differences["banco_equipamentos"]["added"])  # ADICIONADO
+            + len(differences["banco_equipamentos"]["added"])
+            + len(differences["dutos"]["added"])  # ADICIONADO
         )
-
+        
         total_modified = (
             len(differences["constants"]["modified"])
             + len(differences["machines"]["modified"])
             + len(differences["materials"]["modified"])
             + len(differences["empresas"]["modified"])
-            + len(differences["banco_equipamentos"]["modified"])  # ADICIONADO
+            + len(differences["banco_equipamentos"]["modified"])
+            + len(differences["dutos"]["modified"])  # ADICIONADO
         )
-
+        
         total_removed = (
             len(differences["constants"]["removed"])
             + len(differences["machines"]["removed"])
             + len(differences["materials"]["removed"])
             + len(differences["empresas"]["removed"])
-            + len(differences["banco_equipamentos"]["removed"])  # ADICIONADO
+            + len(differences["banco_equipamentos"]["removed"])
+            + len(differences["dutos"]["removed"])  # ADICIONADO
         )
-
+        
         return {
             "total_changes": total_added + total_modified + total_removed,
             "total_added": total_added,
@@ -1523,4 +1726,515 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             print(f"❌ Erro em handle_get_equipamento_dimensoes: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
+            )
+            
+            
+    def handle_get_dutos(self):
+        """GET /api/dutos - Retorna todos os dutos"""
+        try:
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response(
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
+                    status=404
+                )
+                return
+                
+            with open(dados_file, "r", encoding="utf-8") as f:
+                dados_data = json.load(f)
+            
+            # Verifica se existe a seção dutos
+            dutos = dados_data.get("dutos", [])
+            
+            self.send_json_response({
+                "success": True,
+                "dutos": dutos,
+                "count": len(dutos)
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_dutos: {e}")
+            self.send_json_response(
+                {"success": False, "error": f"Erro interno: {str(e)}"},
+                status=500
+            )
+
+    def handle_get_duto_types(self):
+        """GET /api/dutos/types - Retorna tipos de dutos"""
+        try:
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response(
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
+                    status=404
+                )
+                return
+                
+            with open(dados_file, "r", encoding="utf-8") as f:
+                dados_data = json.load(f)
+            
+            dutos = dados_data.get("dutos", [])
+            types = [duto.get("type", "") for duto in dutos if duto.get("type")]
+            
+            # Ordenar tipos
+            types.sort()
+            
+            self.send_json_response({
+                "success": True,
+                "types": types,
+                "count": len(types)
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_duto_types: {e}")
+            self.send_json_response(
+                {"success": False, "error": f"Erro interno: {str(e)}"},
+                status=500
+            )
+
+    def handle_get_duto_opcionais(self):
+        """GET /api/dutos/opcionais - Retorna opcionais disponíveis"""
+        try:
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response(
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
+                    status=404
+                )
+                return
+                
+            with open(dados_file, "r", encoding="utf-8") as f:
+                dados_data = json.load(f)
+            
+            dutos = dados_data.get("dutos", [])
+            opcionais_por_tipo = {}
+            todos_opcionais = set()
+            
+            for duto in dutos:
+                tipo = duto.get("type", "")
+                opcionais = duto.get("opcionais", [])
+                
+                opcionais_formatados = []
+                for opcional in opcionais:
+                    opcional_info = {
+                        "id": opcional.get("id"),
+                        "nome": opcional.get("nome", ""),
+                        "value": opcional.get("value", 0)
+                    }
+                    opcionais_formatados.append(opcional_info)
+                    todos_opcionais.add(opcional.get("nome", ""))
+                
+                opcionais_por_tipo[tipo] = {
+                    "valor_base": duto.get("valor", 0),
+                    "opcionais": opcionais_formatados,
+                    "quantidade_opcionais": len(opcionais_formatados)
+                }
+            
+            self.send_json_response({
+                "success": True,
+                "opcionais_por_tipo": opcionais_por_tipo,
+                "todos_opcionais": sorted(list(todos_opcionais)),
+                "total_opcionais": len(todos_opcionais)
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_duto_opcionais: {e}")
+            self.send_json_response(
+                {"success": False, "error": f"Erro interno: {str(e)}"},
+                status=500
+            )
+
+    def handle_get_duto_by_type(self):
+        """GET /api/dutos/type/{type} - Retorna duto por tipo"""
+        try:
+            # Extrair tipo da URL
+            path_parts = self.path.split("/")
+            if len(path_parts) < 5:
+                self.send_json_response(
+                    {"success": False, "error": "Tipo não especificado na URL"},
+                    status=400
+                )
+                return
+                
+            tipo = path_parts[-1]
+            
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response(
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
+                    status=404
+                )
+                return
+                
+            with open(dados_file, "r", encoding="utf-8") as f:
+                dados_data = json.load(f)
+            
+            dutos = dados_data.get("dutos", [])
+            
+            for duto in dutos:
+                if duto.get("type") == tipo:
+                    # Calcular valores com opcionais
+                    valor_base = duto.get("valor", 0)
+                    opcionais = duto.get("opcionais", [])
+                    
+                    # Calcular valor máximo (com todos os opcionais)
+                    valor_maximo = valor_base
+                    for opcional in opcionais:
+                        valor_maximo += opcional.get("value", 0)
+                    
+                    self.send_json_response({
+                        "success": True,
+                        "tipo": tipo,
+                        "duto": duto,
+                        "estatisticas": {
+                            "valor_base": valor_base,
+                            "valor_maximo": valor_maximo,
+                            "quantidade_opcionais": len(opcionais),
+                            "opcionais_disponiveis": [op.get("nome", "") for op in opcionais]
+                        }
+                    })
+                    return
+            
+            self.send_json_response({
+                "success": False,
+                "error": f"Tipo de duto '{tipo}' não encontrado"
+            }, status=404)
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_duto_by_type: {e}")
+            self.send_json_response(
+                {"success": False, "error": f"Erro interno: {str(e)}"},
+                status=500
+            )
+
+    def handle_get_search_dutos(self):
+        """GET /api/dutos/search?q=termo - Busca dutos"""
+        try:
+            from urllib.parse import parse_qs
+            
+            parsed_path = urlparse(self.path)
+            query_params = parse_qs(parsed_path.query)
+            termo = query_params.get("q", [""])[0].lower()
+            
+            if not termo:
+                self.send_json_response(
+                    {"success": False, "error": "Termo de busca não fornecido"},
+                    status=400
+                )
+                return
+            
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response(
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
+                    status=404
+                )
+                return
+                
+            with open(dados_file, "r", encoding="utf-8") as f:
+                dados_data = json.load(f)
+            
+            dutos = dados_data.get("dutos", [])
+            resultados = []
+            
+            for duto in dutos:
+                tipo = duto.get("type", "").lower()
+                
+                # Buscar no tipo
+                if termo in tipo:
+                    resultados.append({
+                        "tipo": duto.get("type", ""),
+                        "valor_base": duto.get("valor", 0),
+                        "match": "tipo",
+                        "opcionais_count": len(duto.get("opcionais", []))
+                    })
+                    continue
+                
+                # Buscar nos opcionais
+                opcionais = duto.get("opcionais", [])
+                for opcional in opcionais:
+                    nome_opcional = opcional.get("nome", "").lower()
+                    if termo in nome_opcional:
+                        resultados.append({
+                            "tipo": duto.get("type", ""),
+                            "valor_base": duto.get("valor", 0),
+                            "opcional_encontrado": opcional.get("nome", ""),
+                            "valor_opcional": opcional.get("value", 0),
+                            "match": "opcional",
+                            "opcionais_count": len(opcionais)
+                        })
+                        break
+            
+            self.send_json_response({
+                "success": True,
+                "termo": termo,
+                "resultados": resultados,
+                "count": len(resultados)
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_search_dutos: {e}")
+            self.send_json_response(
+                {"success": False, "error": f"Erro interno: {str(e)}"},
+                status=500
+            )
+
+    def handle_post_add_duto(self):
+        """POST /api/dutos/add - Adiciona novo duto"""
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            # Validar dados
+            required_fields = ["type", "valor"]
+            for field in required_fields:
+                if field not in data:
+                    self.send_json_response({
+                        "success": False,
+                        "error": f"Campo obrigatório faltando: {field}"
+                    }, status=400)
+                    return
+            
+            tipo = data["type"]
+            
+            # Carregar dados.json
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response(
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
+                    status=404
+                )
+                return
+                
+            with open(dados_file, "r", encoding="utf-8") as f:
+                dados_data = json.load(f)
+            
+            # Garantir que existe a seção dutos
+            if "dutos" not in dados_data:
+                dados_data["dutos"] = []
+            
+            dutos = dados_data["dutos"]
+            
+            # Verificar se tipo já existe
+            for duto in dutos:
+                if duto.get("type") == tipo:
+                    self.send_json_response({
+                        "success": False,
+                        "error": f"Tipo '{tipo}' já existe"
+                    }, status=400)
+                    return
+            
+            # Adicionar novo duto
+            novo_duto = {
+                "type": data["type"],
+                "valor": data["valor"]
+            }
+            
+            # Adicionar opcionais se fornecidos
+            if "opcionais" in data:
+                novo_duto["opcionais"] = data["opcionais"]
+            else:
+                novo_duto["opcionais"] = []
+            
+            # Adicionar descrição se fornecida
+            if "descricao" in data:
+                novo_duto["descricao"] = data["descricao"]
+            
+            dutos.append(novo_duto)
+            
+            # Salvar dados atualizados
+            with open(dados_file, "w", encoding="utf-8") as f:
+                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            
+            self.send_json_response({
+                "success": True,
+                "message": f"Duto '{tipo}' adicionado com sucesso",
+                "duto": novo_duto
+            })
+            
+        except json.JSONDecodeError:
+            self.send_json_response(
+                {"success": False, "error": "JSON inválido"},
+                status=400
+            )
+        except Exception as e:
+            print(f"❌ Erro em handle_post_add_duto: {e}")
+            self.send_json_response(
+                {"success": False, "error": f"Erro interno: {str(e)}"},
+                status=500
+            )
+
+    def handle_post_update_duto(self):
+        """POST /api/dutos/update - Atualiza duto existente"""
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            # Validar dados
+            if "type" not in data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Campo 'type' é obrigatório"
+                }, status=400)
+                return
+            
+            tipo = data["type"]
+            
+            # Carregar dados.json
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response(
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
+                    status=404
+                )
+                return
+                
+            with open(dados_file, "r", encoding="utf-8") as f:
+                dados_data = json.load(f)
+            
+            # Verificar se existe a seção dutos
+            if "dutos" not in dados_data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Seção 'dutos' não encontrada"
+                }, status=404)
+                return
+            
+            dutos = dados_data["dutos"]
+            
+            # Verificar se tipo existe
+            duto_encontrado = None
+            duto_index = -1
+            
+            for i, duto in enumerate(dutos):
+                if duto.get("type") == tipo:
+                    duto_encontrado = duto
+                    duto_index = i
+                    break
+            
+            if duto_index == -1:
+                self.send_json_response({
+                    "success": False,
+                    "error": f"Tipo '{tipo}' não encontrado"
+                }, status=404)
+                return
+            
+            # Atualizar campos
+            if "valor" in data:
+                dutos[duto_index]["valor"] = data["valor"]
+            
+            if "opcionais" in data:
+                dutos[duto_index]["opcionais"] = data["opcionais"]
+            
+            if "descricao" in data:
+                dutos[duto_index]["descricao"] = data["descricao"]
+            
+            # Salvar dados atualizados
+            with open(dados_file, "w", encoding="utf-8") as f:
+                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            
+            self.send_json_response({
+                "success": True,
+                "message": f"Duto '{tipo}' atualizado com sucesso",
+                "duto": dutos[duto_index]
+            })
+            
+        except json.JSONDecodeError:
+            self.send_json_response(
+                {"success": False, "error": "JSON inválido"},
+                status=400
+            )
+        except Exception as e:
+            print(f"❌ Erro em handle_post_update_duto: {e}")
+            self.send_json_response(
+                {"success": False, "error": f"Erro interno: {str(e)}"},
+                status=500
+            )
+
+    def handle_post_delete_duto(self):
+        """POST /api/dutos/delete - Remove duto"""
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            if "type" not in data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Campo 'type' é obrigatório"
+                }, status=400)
+                return
+            
+            tipo = data["type"]
+            
+            # Carregar dados.json
+            dados_file = self.project_root / "json" / "dados.json"
+            
+            if not dados_file.exists():
+                self.send_json_response(
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
+                    status=404
+                )
+                return
+                
+            with open(dados_file, "r", encoding="utf-8") as f:
+                dados_data = json.load(f)
+            
+            # Verificar se existe a seção dutos
+            if "dutos" not in dados_data:
+                self.send_json_response({
+                    "success": False,
+                    "error": "Seção 'dutos' não encontrada"
+                }, status=404)
+                return
+            
+            dutos = dados_data["dutos"]
+            
+            # Verificar se tipo existe
+            duto_removido = None
+            novos_dutos = []
+            
+            for duto in dutos:
+                if duto.get("type") == tipo:
+                    duto_removido = duto
+                else:
+                    novos_dutos.append(duto)
+            
+            if duto_removido is None:
+                self.send_json_response({
+                    "success": False,
+                    "error": f"Tipo '{tipo}' não encontrado"
+                }, status=404)
+                return
+            
+            # Salvar dados atualizados
+            dados_data["dutos"] = novos_dutos
+            with open(dados_file, "w", encoding="utf-8") as f:
+                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            
+            self.send_json_response({
+                "success": True,
+                "message": f"Duto '{tipo}' removido com sucesso",
+                "duto_removido": duto_removido
+            })
+            
+        except json.JSONDecodeError:
+            self.send_json_response(
+                {"success": False, "error": "JSON inválido"},
+                status=400
+            )
+        except Exception as e:
+            print(f"❌ Erro em handle_post_delete_duto: {e}")
+            self.send_json_response(
+                {"success": False, "error": f"Erro interno: {str(e)}"},
+                status=500
             )

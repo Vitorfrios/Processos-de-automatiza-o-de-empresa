@@ -1,4 +1,8 @@
-// data/modules/climatizacao/data-fill.js 
+// data/modules/climatizacao/data-fill.js
+
+/*
+* ARQUIVO DE PREENCHER AS salas
+*/
 
 import { calculateVazaoArAndThermalGains } from '../../../features/calculations/air-flow.js';
 import { triggerCalculation } from '../../../core/shared-utils.js';
@@ -349,8 +353,6 @@ function fillCapacityData(roomElement, capacityData) {
     console.log(`✅ Dados de capacidade preenchidos para sala ${roomId}`);
 }
 
-
-
 async function ensureAllRoomSections(roomElement) {
     if (!roomElement) {
         console.error('❌ Elemento da sala inválido');
@@ -373,9 +375,28 @@ async function ensureAllRoomSections(roomElement) {
     const climatizationSection = findSectionByTitle(roomElement, 'Climatização');
     const machinesSection = findMachinesSection(roomElement);
     const equipamentosSection = findSectionByTitle(roomElement, 'Equipamentos de Difusão e Controle de Ar');
+    // const dutosSection = findSectionByTitle(roomElement, 'Dutos'); // ADD Dutos (comentado)
+    const tubosSection = findSectionByTitle(roomElement, 'Tubos e Conexões'); // ADD Tubulação
 
-    if (climatizationSection && machinesSection && equipamentosSection) {
-        console.log(`✅ Todas as seções já existem para sala ${roomName}`);
+    // Verificar quais seções já existem
+    const existingSections = {
+        climatization: !!climatizationSection,
+        machines: !!machinesSection,
+        equipamentos: !!equipamentosSection,
+        // dutos: !!dutosSection, // ADD Dutos (comentado)
+        tubos: !!tubosSection // ADD Tubulação
+    };
+
+    console.log(`📋 Seções existentes:`, existingSections);
+
+    const allRequiredSections = existingSections.climatization && 
+                               existingSections.machines && 
+                               existingSections.equipamentos;
+                               // existingSections.dutos && // ADD Dutos (comentado)
+                               // existingSections.tubos; // ADD Tubulação (opcional)
+
+    if (allRequiredSections) {
+        console.log(`✅ Todas as seções necessárias já existem para sala ${roomName}`);
         return true;
     }
 
@@ -388,74 +409,162 @@ async function ensureAllRoomSections(roomElement) {
             return false;
         }
 
-        if (!climatizationSection) {
+        // Se não temos nenhuma seção, criar todas
+        if (!climatizationSection && !machinesSection && !equipamentosSection) {
             console.log(`🏗️ Criando todas as seções para sala ${roomName}`);
 
             // ✅ CORREÇÃO: Verificar TODAS as funções necessárias
-            if (typeof window.buildClimatizationSection !== 'function' || 
-                typeof window.buildMachinesSection !== 'function' ||
-                typeof window.buildEquipamentosSection !== 'function') {
-                console.error('❌ Funções de construção de seções não disponíveis');
-                return false;
+            const requiredFunctions = [
+                'buildClimatizationSection',
+                'buildMachinesSection', 
+                'buildEquipamentosSection',
+                // 'buildDutosSection', // ADD Dutos (comentado)
+                'buildTubosSection' // ADD Tubulação
+            ];
+
+            for (const funcName of requiredFunctions) {
+                if (typeof window[funcName] !== 'function') {
+                    console.warn(`⚠️ Função ${funcName} não disponível ainda`);
+                }
             }
 
             // Criar seção de climatização
-            const climatizationHTML = await window.buildClimatizationSection(obraId, projectId, roomName, roomId);
-            if (climatizationHTML) {
-                roomContent.insertAdjacentHTML('beforeend', climatizationHTML);
-                console.log(`✅ Seção de climatização criada`);
+            if (typeof window.buildClimatizationSection === 'function') {
+                const climatizationHTML = await window.buildClimatizationSection(obraId, projectId, roomName, roomId);
+                if (climatizationHTML) {
+                    roomContent.insertAdjacentHTML('beforeend', climatizationHTML);
+                    console.log(`✅ Seção de climatização criada`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
-
-            await new Promise(resolve => setTimeout(resolve, 300));
 
             // Criar seção de máquinas
-            const machinesHTML = await window.buildMachinesSection(obraId, projectId, roomName, roomId);
-            if (machinesHTML) {
-                roomContent.insertAdjacentHTML('beforeend', machinesHTML);
-                console.log(`✅ Seção de máquinas criada`);
+            if (typeof window.buildMachinesSection === 'function') {
+                const machinesHTML = await window.buildMachinesSection(obraId, projectId, roomName, roomId);
+                if (machinesHTML) {
+                    roomContent.insertAdjacentHTML('beforeend', machinesHTML);
+                    console.log(`✅ Seção de máquinas criada`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
-
-            await new Promise(resolve => setTimeout(resolve, 300));
 
             // Criar seção de equipamentos
-            const equipamentosHTML = await window.buildEquipamentosSection(obraId, projectId, roomName, roomId);
-            if (equipamentosHTML) {
-                roomContent.insertAdjacentHTML('beforeend', equipamentosHTML);
-                console.log(`✅ Seção de equipamentos criada`);
+            if (typeof window.buildEquipamentosSection === 'function') {
+                const equipamentosHTML = await window.buildEquipamentosSection(obraId, projectId, roomName, roomId);
+                if (equipamentosHTML) {
+                    roomContent.insertAdjacentHTML('beforeend', equipamentosHTML);
+                    console.log(`✅ Seção de equipamentos criada`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
 
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // // Criar seção de dutos (em comentário por enquanto) // ADD Dutos
+            // if (typeof window.buildDutosSection === 'function') {
+            //     const dutosHTML = await window.buildDutosSection(obraId, projectId, roomName, roomId);
+            //     if (dutosHTML) {
+            //         roomContent.insertAdjacentHTML('beforeend', dutosHTML);
+            //         console.log(`✅ Seção de dutos criada`);
+            //     }
+            //     await new Promise(resolve => setTimeout(resolve, 300));
+            // }
 
-            // ✅ CORREÇÃO: Inicializar sistema de equipamentos
-            if (typeof window.initEquipamentosSystem === 'function') {
-                setTimeout(() => {
+            // Criar seção de tubos // ADD Tubulação
+            if (typeof window.buildTubosSection === 'function') {
+                const tubosHTML = await window.buildTubosSection(obraId, projectId, roomName, roomId);
+                if (tubosHTML) {
+                    roomContent.insertAdjacentHTML('beforeend', tubosHTML);
+                    console.log(`✅ Seção de tubos criada`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            // ✅ CORREÇÃO: Inicializar sistemas após criação
+            setTimeout(() => {
+                if (typeof window.initEquipamentosSystem === 'function') {
                     window.initEquipamentosSystem(roomId);
                     console.log(`✅ Sistema de equipamentos inicializado`);
-                }, 800);
-            }
+                }
+                
+                if (typeof window.initTubulacaoSystem === 'function') {
+                    window.initTubulacaoSystem(roomId);
+                    console.log(`✅ Sistema de tubulação inicializado`);
+                }
+                
+                // if (typeof window.initDutosSystem === 'function') { // ADD Dutos (comentado)
+                //     window.initDutosSystem(roomId);
+                //     console.log(`✅ Sistema de dutos inicializado`);
+                // }
+            }, 800);
 
             console.log(`✅ Todas as seções criadas para sala ${roomName}`);
             return true;
         }
 
-        // Criar apenas seções faltantes
-        if (climatizationSection && !equipamentosSection) {
-            console.log(`🔨 Criando apenas seção de equipamentos para sala ${roomName}`);
+        // Se temos algumas seções, criar apenas as faltantes
+        let lastSection = climatizationSection || machinesSection || equipamentosSection || tubosSection;
+        
+        // Criar seção de máquinas se faltar
+        if (!machinesSection && typeof window.buildMachinesSection === 'function') {
+            const machinesHTML = await window.buildMachinesSection(obraId, projectId, roomName, roomId);
+            if (machinesHTML && lastSection) {
+                lastSection.insertAdjacentHTML('afterend', machinesHTML);
+                console.log(`✅ Seção de máquinas criada`);
+                lastSection = document.querySelector(`#section-content-${roomId}machines`)?.parentElement;
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        }
 
+        // Criar seção de equipamentos se faltar
+        if (!equipamentosSection && typeof window.buildEquipamentosSection === 'function') {
             const equipamentosHTML = await window.buildEquipamentosSection(obraId, projectId, roomName, roomId);
-            if (equipamentosHTML) {
-                climatizationSection.insertAdjacentHTML('afterend', equipamentosHTML);
+            if (equipamentosHTML && lastSection) {
+                lastSection.insertAdjacentHTML('afterend', equipamentosHTML);
                 console.log(`✅ Seção de equipamentos criada`);
+                lastSection = document.querySelector(`#section-content-${roomId}equipamentos`)?.parentElement;
                 
-                // ✅ CORREÇÃO: Inicializar sistema
                 setTimeout(() => {
                     if (typeof window.initEquipamentosSystem === 'function') {
                         window.initEquipamentosSystem(roomId);
                     }
                 }, 500);
                 
-                await new Promise(resolve => setTimeout(resolve, 500));
-                return true;
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        }
+
+        // // Criar seção de dutos se faltar (em comentário) // ADD Dutos
+        // if (!dutosSection && typeof window.buildDutosSection === 'function') {
+        //     const dutosHTML = await window.buildDutosSection(obraId, projectId, roomName, roomId);
+        //     if (dutosHTML && lastSection) {
+        //         lastSection.insertAdjacentHTML('afterend', dutosHTML);
+        //         console.log(`✅ Seção de dutos criada`);
+        //         lastSection = document.querySelector(`#section-content-${roomId}dutos`)?.parentElement;
+        //         
+        //         setTimeout(() => {
+        //             if (typeof window.initDutosSystem === 'function') {
+        //                 window.initDutosSystem(roomId);
+        //             }
+        //         }, 500);
+        //         
+        //         await new Promise(resolve => setTimeout(resolve, 300));
+        //     }
+        // }
+
+        // Criar seção de tubos se faltar // ADD Tubulação
+        if (!tubosSection && typeof window.buildTubosSection === 'function') {
+            const tubosHTML = await window.buildTubosSection(obraId, projectId, roomName, roomId);
+            if (tubosHTML && lastSection) {
+                lastSection.insertAdjacentHTML('afterend', tubosHTML);
+                console.log(`✅ Seção de tubos criada`);
+                lastSection = document.querySelector(`#section-content-${roomId}tubos`)?.parentElement;
+                
+                setTimeout(() => {
+                    if (typeof window.initTubulacaoSystem === 'function') {
+                        window.initTubulacaoSystem(roomId);
+                    }
+                }, 500);
+                
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
         }
 
@@ -469,6 +578,16 @@ async function ensureAllRoomSections(roomElement) {
             
             console.log(`✅ Sincronizações configuradas após criação de seções: ${roomId}`);
         }, 1000);
+
+        // Verificar se temos pelo menos as seções principais
+        const hasRequiredSections = !!findSectionByTitle(roomElement, 'Climatização') &&
+                                   !!findMachinesSection(roomElement) &&
+                                   !!findSectionByTitle(roomElement, 'Equipamentos de Difusão e Controle de Ar');
+
+        if (hasRequiredSections) {
+            console.log(`✅ Seções necessárias criadas para sala ${roomName}`);
+            return true;
+        }
 
         console.log(`❌ Não foi possível criar todas as seções para sala ${roomName}`);
         return false;

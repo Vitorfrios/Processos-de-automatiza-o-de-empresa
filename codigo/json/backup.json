@@ -62,6 +62,283 @@
           ]
         }
       ]
+    },
+    {
+      "id": "obra_q57",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_q57",
+      "projetos": [
+        {
+          "id": "obra_q57_proj_l73_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_q57_proj_l73_2_sala_d21_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "equipamentos": [],
+              "tubulacao": {
+                "conjuntos": {
+                  "conjunto1": {
+                    "id": "obra_q57_proj_l73_2_sala_d21_1-1",
+                    "numero": "1",
+                    "linhas": [
+                      {
+                        "id": "1766442200554uwtktb8ki",
+                        "tipo": "LL",
+                        "bitola": "1/2",
+                        "espessura": "1.0",
+                        "comprimento": 12,
+                        "numCirc": 12,
+                        "numCurvas": 12,
+                        "ceCurva": 12,
+                        "pesoKg": 17.28,
+                        "tag": ""
+                      },
+                      {
+                        "id": "17664422019635kbxsy5lx",
+                        "tipo": "LG",
+                        "bitola": "1/2",
+                        "espessura": "0.8",
+                        "comprimento": 1,
+                        "numCirc": 1,
+                        "numCurvas": 1,
+                        "ceCurva": 1,
+                        "pesoKg": 0.36000000000000004,
+                        "tag": ""
+                      }
+                    ],
+                    "totais": {
+                      "totalTubulacaoKg": 17.64,
+                      "parcialLinha1": {
+                        "lsKg": 0,
+                        "llKg": 0
+                      },
+                      "parcialLinha2": {
+                        "lsKg": 0,
+                        "llKg": 0
+                      },
+                      "comprimentos": {
+                        "lsMetros": 0,
+                        "llMetros": 0
+                      },
+                      "parcial2": {
+                        "cabosLinha1": 0,
+                        "cabosLinha2": 0,
+                        "luvasLinha1": 0,
+                        "luvasLinha2": 0,
+                        "reducoesLinha1": 0,
+                        "reducoesLinha2": 0
+                      }
+                    }
+                  }
+                },
+                "totaisGerais": {
+                  "totalLinhas": 2,
+                  "totalLSkg": 0,
+                  "totalLLkg": 0,
+                  "totalTubulacaoKg": 17.64,
+                  "totalLSm": 0,
+                  "totalLLm": 0,
+                  "totalCabos": 0,
+                  "totalLuvas": 0,
+                  "totalReducoes": 0
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obra_m22",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_m22",
+      "projetos": [
+        {
+          "id": "obra_m22_proj_m96_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_m22_proj_m96_2_sala_x10_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "equipamentos": [
+                {
+                  "id": "17665959219635h4jwlgd5",
+                  "tipo": "DSP_30",
+                  "dimensao": "1600x1600",
+                  "quantidade": 1,
+                  "valor_unitario": 132000,
+                  "valor_total": 132000,
+                  "descricao": "DSP_30"
+                }
+              ],
+              "tubulacao": {
+                "conjuntos": []
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obra_s49",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_s49",
+      "projetos": [
+        {
+          "id": "obra_s49_proj_j14_2",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_s49_proj_j14_2_sala_h88_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "equipamentos": [],
+              "tubulacao": {
+                "conjuntos": [
+                  {
+                    "id": "obra_s49_proj_j14_2_sala_h88_1-1",
+                    "numero": 1,
+                    "quantidade": 1,
+                    "cabos": 16,
+                    "luvas": 13.8,
+                    "reducoes": 12,
+                    "totalLSmetros": 34.5,
+                    "totalLSkg": 46.26,
+                    "totalLLmetros": 34.5,
+                    "totalLLkg": 16.32,
+                    "totalKG": 62.58,
+                    "linhas": [
+                      {
+                        "id": "1766598588884voiem2w80",
+                        "tipo": "L.S.",
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 10,
+                        "numC": 3,
+                        "numCu": 15,
+                        "Cee": 0.3,
+                        "Lsm": 34.5,
+                        "LSkg": 46.2645
+                      },
+                      {
+                        "id": "1766598588994nx14plr23",
+                        "tipo": "L.L.",
+                        "pol": "7/8",
+                        "expe": "0,80",
+                        "compr": 10,
+                        "numC": 3,
+                        "numCu": 15,
+                        "Cee": 0.3,
+                        "Lsm": 34.5,
+                        "LSkg": 16.3185
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

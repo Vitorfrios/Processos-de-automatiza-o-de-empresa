@@ -1,4 +1,9 @@
+/*
+* ARQUIVO DE RENDERIZAÇÃO DE salas
+*/
+
 import { ensureStringId } from '../../utils/id-generator.js';
+
 
 /**
  * Renderiza uma sala individual a partir dos dados carregados
@@ -15,15 +20,34 @@ function renderRoomFromData(projectId, projectName, roomData, obraId = null, obr
         maquinas: roomData.maquinas?.length || 0,
         capacidade: Object.keys(roomData.capacidade || {}).length,
         ganhosTermicos: Object.keys(roomData.ganhosTermicos || {}).length,
-        equipamentos: roomData.equipamentos?.length || 0  
+        equipamentos: roomData.equipamentos?.length || 0,
+        conjuntosTubulacao: roomData.tubulacao?.conjuntos?.length || 0 // ✅ ADICIONADO: tubulação
     });
 
     setTimeout(() => {
+        // Criar sala básica
         createEmptyRoom(obraId, projectId, roomName, roomId);
-
+        
+        // Aguardar criação e garantir todas as seções
         setTimeout(() => {
-            populateRoomInputs(projectId, projectName, roomId, roomName, roomData, obraId, obraName);
-        }, 100);
+            const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+            if (roomElement) {
+                // ✅ GARANTIR que TODAS as seções sejam criadas (incluindo tubulação)
+                ensureAllRoomSections(roomElement).then(sectionsReady => {
+                    if (sectionsReady) {
+                        console.log(`✅ Todas as seções criadas para ${roomName} - Iniciando preenchimento`);
+                        populateRoomData(roomElement, roomData);
+                    } else {
+                        console.error(`❌ Falha ao criar seções para ${roomName}`);
+                    }
+                }).catch(error => {
+                    console.error(`❌ Erro ao garantir seções para ${roomName}:`, error);
+                    throw error;
+                });
+            } else {
+                console.error(`❌ Elemento da sala ${roomId} não encontrado após criação`);
+            }
+        }, 300);
         
     }, 100);
 }
@@ -40,23 +64,23 @@ async function populateRoomData(roomElement, roomData) {
     const roomId = roomElement.dataset.roomId;
     const roomName = roomElement.dataset.roomName;
     
-    // ✅ CORREÇÃO: Validar roomId antes de prosseguir
     if (!roomId || roomId === 'undefined' || roomId === 'null') {
         console.error(`❌ Room ID inválido no populateRoomData: "${roomId}"`);
-        console.log('🔍 Elemento da sala:', roomElement);
-        console.log('🔍 Dataset:', roomElement.dataset);
         return false;
     }
     
-    console.log(`🔄 Preenchendo sala "${roomName}" (ID: ${roomId})`, roomData);
+    console.log(`🔄 Preenchendo sala "${roomName}" (ID: ${roomId})`, {
+        equipamentos: roomData.equipamentos?.length || 0,
+        tubulacaoConjuntos: roomData.tubulacao?.conjuntos?.length || 0,
+        maquinas: roomData.maquinas?.length || 0
+    });
 
     try {
         // ✅ CORREÇÃO: Garantir que todas as seções existam antes de preencher
         console.log(`🏗️ Garantindo que todas as seções existem para sala ${roomName}`);
         const sectionsReady = await ensureAllRoomSections(roomElement);
         if (!sectionsReady) {
-            console.error(`❌ Não foi possível garantir seções para sala ${roomName}`);
-            return false;
+            console.warn(`⚠️ Não foi possível garantir todas as seções para ${roomName} - Continuando...`);
         }
 
         const roomTitle = roomElement.querySelector('.room-title');
@@ -80,11 +104,11 @@ async function populateRoomData(roomElement, roomData) {
             fillCapacityData(roomElement, roomData.capacidade);
         }
 
-        // ✅ CORREÇÃO MELHORADA: Preencher equipamentos com timing correto
+        // ✅ Preencher equipamentos
         if (roomData.equipamentos && Array.isArray(roomData.equipamentos)) {
             console.log(`🔧 Preenchendo ${roomData.equipamentos.length} equipamento(s) para sala ${roomName}`);
             
-            // ✅ CORREÇÃO: Usar setTimeout para garantir que a seção foi criada
+            // Aguardar um pouco para garantir que a seção foi criada
             setTimeout(() => {
                 if (typeof window.fillEquipamentosData === 'function') {
                     window.fillEquipamentosData(roomElement, roomData.equipamentos);
@@ -92,23 +116,38 @@ async function populateRoomData(roomElement, roomData) {
                 } else {
                     console.error(`❌ Função fillEquipamentosData não disponível no window`);
                 }
-            }, 2000); // ✅ Aumentar para 2 segundos para garantir carregamento
+            }, 2000);
         }
 
+        // ✅ CORREÇÃO CRÍTICA: Preencher tubulação - CUIDADO COM A ESTRUTURA
+        if (roomData.tubulacao && roomData.tubulacao.conjuntos && Array.isArray(roomData.tubulacao.conjuntos)) {
+            console.log(`🔧 Preenchendo ${roomData.tubulacao.conjuntos.length} conjunto(s) de tubulação para sala ${roomName}`);
+            
+            // Aguardar mais tempo para garantir que a seção de tubulação foi criada
+            setTimeout(() => {
+                if (typeof window.fillTubulacaoData === 'function') {
+                    // ✅ CORREÇÃO: Passar o objeto completo de tubulação
+                    window.fillTubulacaoData(roomElement, roomData.tubulacao);
+                    console.log(`✅ Tubulação preenchida via função global`, {
+                        conjuntos: roomData.tubulacao.conjuntos.length,
+                        estrutura: 'conjuntos array dentro de objeto tubulacao'
+                    });
+                } else {
+                    console.error(`❌ Função fillTubulacaoData não disponível no window - Verifique se tubos.js foi carregado`);
+                }
+            }, 3000);
+        } else if (roomData.tubulacao) {
+            console.warn(`⚠️ Estrutura de tubulação inválida ou vazia para sala ${roomName}:`, roomData.tubulacao);
+        }
+
+        // ✅ Preencher máquinas
         if (roomData.maquinas && Array.isArray(roomData.maquinas)) {
             console.log(`🤖 Agendando preenchimento de ${roomData.maquinas.length} máquina(s) para sala ${roomName}`);
             
-            // ✅ Aumentar o tempo de espera para garantir que tudo esteja carregado
+            // Aguardar mais tempo para garantir que todas as outras seções foram preenchidas
             setTimeout(async () => {
                 try {
                     console.log(`🚀 Iniciando preenchimento de máquinas para sala ${roomName}`);
-                    
-                    // ✅ Verificar novamente se as seções estão prontas
-                    const sectionsReady = await ensureAllRoomSections(roomElement);
-                    if (!sectionsReady) {
-                        console.error(`❌ Seções não prontas para preencher máquinas`);
-                        return;
-                    }
                     
                     const success = await fillMachinesData(roomElement, roomData.maquinas);
                     
@@ -120,7 +159,7 @@ async function populateRoomData(roomElement, roomData) {
                 } catch (error) {
                     console.error(`💥 Erro ao preencher máquinas para sala ${roomName}:`, error);
                 }
-            }, 3000); // ✅ Aumentado para 3 segundos
+            }, 4000);
         }
 
         console.log(`✅ Sala "${roomName}" preenchida com sucesso`);
@@ -132,7 +171,9 @@ async function populateRoomData(roomElement, roomData) {
     }
 }
 
-
+/**
+ * Preenche os inputs de uma sala específica
+ */
 function populateRoomInputs(projectId, projectName, roomId, roomName, roomData, obraId, obraName) {
     const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
     if (roomElement) {

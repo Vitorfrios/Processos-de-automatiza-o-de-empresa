@@ -570,6 +570,7 @@ function setupEquipamentosEvents(roomId) {
 // ✅ CORREÇÃO: Exportar TODAS as funções
 export {
     buildEquipamentosSection,
+    fillEquipamentosData, // ← FUNÇÃO NOVA ADICIONADA
     initEquipamentosSystem,
     carregarTiposEquipamentos,
     loadEquipamentoDimensoes,
@@ -582,7 +583,6 @@ export {
     limparEquipamentos,
     formatarMoeda,
     setupEquipamentosEvents,
-    fillEquipamentosData // ← FUNÇÃO NOVA ADICIONADA
 };
 
 // ✅ CORREÇÃO CRÍTICA: Tornar funções disponíveis globalmente

@@ -257,6 +257,8 @@ async function loadAllModules() {
       extractClimatizationInputs: dataBuildersModule.extractClimatizationInputs,
       extractCapacityData: dataBuildersModule.extractCapacityData,
       extractEquipamentosData: dataBuildersModule.extractEquipamentosData,
+      extractTubulacaoData: dataBuildersModule.extractTubulacaoData,
+      // extractDutosData: dataBuildersModule.extractDutosData,
 
       // Adapters
       loadObrasFromServer: loadObrasFromServer

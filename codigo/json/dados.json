@@ -105,6 +105,7 @@
       "description": "Margem de segurança aplicada à capacidade final"
     }
   },
+  
   "machines": [
     {
       "type": "Wall Mounted",
@@ -1919,6 +1920,7 @@
       ]
     }
   ],
+
   "materials": {
     "COBRE": {
       "value": 99,
@@ -1928,12 +1930,12 @@
     "ISOLANTE_1_1_8": {
       "value": 41.73,
       "unit": "m",
-      "description": "Isolante térmico para tubulação de 1 1/8 polegada"
+      "description": "TUBOS: Isolante térmico para tubulação de 1 1/8 polegada"
     },
     "ISOLANTE_5_8": {
       "value": 29.1,
       "unit": "m",
-      "description": "Isolante térmico para tubulação de 5/8 polegada"
+      "description": "TUBOS: Isolante térmico para tubulação de 5/8 polegada"
     },
     "GAS_R_410A": {
       "value": 43.88,
@@ -1959,13 +1961,9 @@
       "value": 2.88,
       "unit": "un",
       "description": "Chumbador 3/8 por 2 1/2 polegadas"
-    },
-    "NOVO_MATERIAL_276031": {
-      "value": 0.09,
-      "unit": "undfsdfsdf",
-      "description": "sdfsdfsdfMaterial genérico cadastrado para uso futuro"
     }
   },
+
   "empresas": [
     {
       "ACT": "ACTEMIUM"
@@ -2034,6 +2032,7 @@
       "SEG": "segerhgrgergergegr"
     }
   ],
+
   "banco_equipamentos": {
     "VZ": {
       "codigo": "VZ",
@@ -2266,6 +2265,134 @@
         "300x400": 123
       }
     }
-  }
+  },
+
+  "dutos": [
+    {
+      "type": "Chapa de aço galvanizado",
+      "valor": 120.00,
+      "descricao": "Duto de chapa de aço galvanizado padrão",
+      "opcionais": [
+        {
+          "id": 1,
+          "nome": "Com isolamento",
+          "value": 35.00,
+          "descricao": "Isolamento térmico e acústico"
+        },
+        {
+          "id": 2,
+          "nome": "Com isolamento + rechapeamento",
+          "value": 60.00,
+          "descricao": "Isolamento completo com rechapeamento"
+        },
+        {
+          "id": 3,
+          "nome": "Com pintura",
+          "value": 25.00,
+          "descricao": "Pintura anticorrosiva"
+        }
+      ]
+    },
+    {
+      "type": "MPU",
+      "valor": 95.00,
+      "descricao": "Duto de Material Plástico Ultra-resistente",
+      "opcionais": [
+        {
+          "id": 1,
+          "nome": "Com isolamento",
+          "value": 30.00,
+          "descricao": "Isolamento térmico para MPU"
+        },
+        {
+          "id": 2,
+          "nome": "Com isolamento + rechapeamento",
+          "value": 55.00,
+          "descricao": "Isolamento e rechapeamento MPU"
+        },
+        {
+          "id": 3,
+          "nome": "Com pintura",
+          "value": 20.00,
+          "descricao": "Pintura especial para plástico"
+        }
+      ]
+    },
+    {
+      "type": "Fibra de vidro",
+      "valor": 150.00,
+      "descricao": "Duto de fibra de vidro resistente à corrosão",
+      "opcionais": [
+        {
+          "id": 1,
+          "nome": "Revestimento interno liso",
+          "value": 40.00,
+          "descricao": "Revestimento para melhor fluxo de ar"
+        },
+        {
+          "id": 2,
+          "nome": "Proteção UV",
+          "value": 25.00,
+          "descricao": "Proteção contra raios ultravioleta"
+        },
+        {
+          "id": 3,
+          "nome": "Reforço estrutural",
+          "value": 45.00,
+          "descricao": "Reforço adicional para alta pressão"
+        }
+      ]
+    },
+    {
+      "type": "Alumínio",
+      "valor": 135.00,
+      "descricao": "Duto de alumínio leve e resistente",
+      "opcionais": [
+        {
+          "id": 1,
+          "nome": "Anodização",
+          "value": 30.00,
+          "descricao": "Tratamento superficial anodizado"
+        },
+        {
+          "id": 2,
+          "nome": "Isolamento térmico",
+          "value": 40.00,
+          "descricao": "Isolamento para alumínio"
+        },
+        {
+          "id": 3,
+          "nome": "Proteção anti-corrosiva",
+          "value": 25.00,
+          "descricao": "Proteção adicional contra corrosão"
+        }
+      ]
+    },
+    {
+      "type": "PVC Industrial",
+      "valor": 85.00,
+      "descricao": "Duto de PVC para aplicações industriais",
+      "opcionais": [
+        {
+          "id": 1,
+          "nome": "Resistência química",
+          "value": 35.00,
+          "descricao": "Tratamento para resistência química"
+        },
+        {
+          "id": 2,
+          "nome": "Reforço em espiral",
+          "value": 45.00,
+          "descricao": "Reforço estrutural em espiral"
+        },
+        {
+          "id": 3,
+          "nome": "Conectorização especial",
+          "value": 30.00,
+          "descricao": "Conectores especiais para PVC"
+        }
+      ]
+    }
+  ]
 
 }

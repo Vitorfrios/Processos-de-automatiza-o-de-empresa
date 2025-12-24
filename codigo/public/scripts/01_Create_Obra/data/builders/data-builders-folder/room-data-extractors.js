@@ -1,5 +1,10 @@
+/*
+* ARQUIVO DE EXTRAÇÃO DE DADOS DE salas
+*/
+
 import { generateRoomId } from '../../utils/id-generator.js';
 import { extractNumberFromText } from '../../utils/data-utils.js';
+import { extractMachinesData } from './machines-data-extractors.js';
 
 /**
  * Extrai todos os dados de uma sala a partir do elemento HTML
@@ -22,8 +27,8 @@ function extractRoomData(roomElement, projectElement) {
         maquinas: extractMachinesData(roomElement),
         capacidade: extractCapacityData(roomElement),
         ganhosTermicos: extractThermalGainsData(roomElement),
-        equipamentos: extractEquipamentosData(roomElement)
-        //adicionar aqui as sessoes de dutos e tubulação
+        equipamentos: extractEquipamentosData(roomElement),
+        tubulacao: extractTubulacaoData(roomElement)
     };
 
     console.log(`📊 Dados extraídos da sala ${roomId}:`, {
@@ -31,8 +36,8 @@ function extractRoomData(roomElement, projectElement) {
         maquinas: roomData.maquinas.length,
         capacidade: Object.keys(roomData.capacidade).length,
         ganhosTermicos: Object.keys(roomData.ganhosTermicos).length,
-        equipamentos: roomData.equipamentos.length
-        //adicionar aqui sessao de dutos e tubulação
+        equipamentos: roomData.equipamentos.length,
+        conjuntosTubulacao: roomData.tubulacao.conjuntos?.length || 0
     });
     
     return roomData;
@@ -120,8 +125,9 @@ function extractThermalGainsData(roomElement) {
     
     const totalSelectors = {
         'total-ganhos-w': `#total-ganhos-w-${roomId}`,
-        'total-tr-aprox': `#total-tr-aprox-${roomId}`, // ✅ CORREÇÃO: ID atualizado
-        'total-tr-exato': `#total-tr-exato-${roomId}`, // ✅ NOVO: valor exato        'total-externo': `#total-externo-${roomId}`,
+        'total-tr-aprox': `#total-tr-aprox-${roomId}`,
+        'total-tr-exato': `#total-tr-exato-${roomId}`,
+        'total-externo': `#total-externo-${roomId}`,
         'total-divisoes': `#total-divisoes-${roomId}`,
         'total-piso': `#total-piso-${roomId}`,
         'total-iluminacao': `#total-iluminacao-${roomId}`,
@@ -250,11 +256,113 @@ function extractEquipamentosData(roomElement) {
     return equipamentos;
 }
 
-// EXPORTS NO FINAL
+
+function extractTubulacaoData(roomElement) {
+    const resultado = {
+        conjuntos: []
+    };
+    
+    if (!roomElement?.dataset.roomId) {
+        console.error('❌ Elemento da sala inválido para extração de tubulação');
+        return resultado;
+    }
+    
+    const roomId = roomElement.dataset.roomId;
+    console.log(`🔍 Extraindo dados de tubulação para sala ${roomId}`);
+    
+    // Buscar todos os conjuntos de tubulação na sala
+    const conjuntos = roomElement.querySelectorAll(`[data-conjunto-id^="${roomId}-"]`);
+    
+    if (conjuntos.length === 0) {
+        console.log(`ℹ️ Nenhum conjunto de tubulação encontrado para sala ${roomId}`);
+        return resultado;
+    }
+    
+    console.log(`📋 Encontrados ${conjuntos.length} conjunto(s) de tubulação na sala ${roomId}`);
+    
+    conjuntos.forEach((conjuntoElement, index) => {
+        const conjuntoId = conjuntoElement.getAttribute('data-conjunto-id');
+        const conjuntoNum = conjuntoElement.getAttribute('data-conjunto-num') || (index + 1).toString();
+        
+        // Obter quantidade do conjunto
+        const quantidadeInput = document.getElementById(`tubulacao-quantidade-${conjuntoId}`);
+        const quantidade = quantidadeInput ? parseInt(quantidadeInput.value) || 1 : 1;
+        
+        // Buscar totais do conjunto
+        const totalLSmetros = document.getElementById(`total-ls-metros-${conjuntoId}`);
+        const totalLSkg = document.getElementById(`total-ls-kg-${conjuntoId}`);
+        const totalLLmetros = document.getElementById(`total-ll-metros-${conjuntoId}`);
+        const totalLLkg = document.getElementById(`total-ll-kg-${conjuntoId}`);
+        const totalCabos = document.getElementById(`total-cabos-${conjuntoId}`);
+        const totalLuvas = document.getElementById(`total-luvas-${conjuntoId}`);
+        const totalReducoes = document.getElementById(`total-reducoes-${conjuntoId}`);
+        const totalGeralKg = document.getElementById(`total-geral-kg-${conjuntoId}`);
+        
+        // Extrair valores numéricos dos totais
+        const extrairNumero = (element) => {
+            if (!element) return 0;
+            const text = element.textContent || '0';
+            return parseFloat(text.replace(',', '.')) || 0;
+        };
+        
+        const conjuntoData = {
+            id: conjuntoId,
+            numero: parseInt(conjuntoNum),
+            quantidade: quantidade,
+            cabos: Math.round(extrairNumero(totalCabos)),
+            luvas: extrairNumero(totalLuvas),
+            reducoes: Math.round(extrairNumero(totalReducoes)),
+            totalLSmetros: extrairNumero(totalLSmetros),
+            totalLSkg: extrairNumero(totalLSkg),
+            totalLLmetros: extrairNumero(totalLLmetros),
+            totalLLkg: extrairNumero(totalLLkg),
+            totalKG: extrairNumero(totalGeralKg),
+            linhas: []
+        };
+        
+        // Buscar todas as linhas deste conjunto
+        const tbody = document.getElementById(`tubos-list-${conjuntoId}`);
+        if (tbody) {
+            const linhas = tbody.querySelectorAll('.linha-tubulacao');
+            
+            linhas.forEach(row => {
+                try {
+                    const linhaData = JSON.parse(row.getAttribute('data-linha'));
+                    
+                    // Mapear para o formato desejado
+                    const linhaFormatada = {
+                        id: linhaData.id,
+                        tipo: linhaData.tipo,
+                        pol: linhaData.polegadas || '',
+                        expe: linhaData.espessura || '',
+                        compr: parseFloat(linhaData.comprimentoInterligacao || 0),
+                        numC: parseInt(linhaData.numCircuitos || 0),
+                        numCu: parseInt(linhaData.numCurvas || 0),
+                        Cee: parseFloat(linhaData.comprimentoEquivalenteCurva || 0),
+                        Lsm: parseFloat(linhaData.LSmetros || linhaData.LLmetros || 0),
+                        LSkg: parseFloat(linhaData.LSkg || linhaData.LLkg || 0)
+                    };
+                    
+                    conjuntoData.linhas.push(linhaFormatada);
+                } catch (error) {
+                    console.error('❌ Erro ao extrair dados da linha:', error);
+                }
+            });
+        }
+        
+        resultado.conjuntos.push(conjuntoData);
+    });
+    
+    console.log(`✅ ${resultado.conjuntos.length} conjunto(s) de tubulação extraído(s) da sala ${roomId}`);
+    return resultado;
+}
+
+// Exporte todas as funções
 export {
     extractRoomData,
     extractClimatizationInputs,
     extractThermalGainsData,
     extractCapacityData,
-    extractEquipamentosData
+    extractEquipamentosData,
+    extractTubulacaoData
 };

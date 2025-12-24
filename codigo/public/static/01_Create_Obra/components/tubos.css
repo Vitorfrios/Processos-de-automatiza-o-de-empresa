@@ -1,0 +1,349 @@
+/* ==============================================
+   ESTILOS PARA SISTEMA DE TUBULAÇÃO - RESPONSIVO
+   ============================================== */
+
+/* Container principal responsivo */
+.tubos-conjunto {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    overflow: hidden; /* Impede que elementos vazem */
+}
+
+.tubos-empty-message {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Container para tabela com scroll horizontal */
+.tabela-container {
+    width: 100%;
+    overflow-x: auto; /* Scroll horizontal automático */
+    -webkit-overflow-scrolling: touch; /* Scroll suave no mobile */
+    margin: 15px 0;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+/* Tabela de tubulação */
+.tubos-table {
+    min-width: 800px; /* Largura mínima para forçar scroll */
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.tubos-table th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap; /* Impede quebra de cabeçalho */
+}
+
+.tubos-table td {
+    padding: 10px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    min-width: 80px; /* Largura mínima para células */
+}
+
+/* Inputs da tabela - ajuste para mobile */
+.tubos-table input[type="number"],
+.tubos-table select {
+    width: 100%;
+    min-width: 70px; /* Largura mínima para inputs */
+    max-width: 120px; /* Largura máxima para inputs */
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: white;
+    box-sizing: border-box;
+}
+
+/* Cabeçalho do conjunto - mais responsivo */
+.conjunto-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.conjunto-header h5 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+    flex-shrink: 0; /* Impede encolhimento */
+}
+
+/* Informações do conjunto - mais flexível */
+.conjunto-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* Seletor responsivo */
+.selector-conj {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0; /* Não encolhe */
+}
+
+.selector-conj label {
+    font-weight: 500;
+    color: #555;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.quantidade-input {
+    width: 60px;
+    min-width: 60px; /* Largura mínima fixa */
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+/* Botões do conjunto */
+.conjunto-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* Área de totais responsiva */
+.tubos-totais {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    overflow: hidden; /* Garante que não vaze */
+}
+
+.totais-resumo {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.total-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    min-width: 0; /* Permite encolhimento */
+    overflow: hidden; /* Para texto muito longo */
+}
+
+.total-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.total-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.btn-ls {
+    background-color: #2c3e50;
+    color: white;
+}
+
+.btn-ll {
+    background-color: #7f8c8d;
+    color: white;
+}
+
+/* ==============================================
+   RESPONSIVIDADE
+   ============================================== */
+
+/* Tablets e telas menores */
+@media (max-width: 1024px) {
+    .tubos-conjunto {
+        padding: 12px;
+    }
+    
+    .tabela-container {
+        margin: 12px -12px; /* Remove padding do container */
+        border-left: none;
+        border-right: none;
+        border-radius: 0;
+    }
+    
+    .tubos-table {
+        min-width: 900px; /* Aumenta largura mínima para mais conteúdo */
+    }
+    
+    .totais-resumo {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .total-item:last-child {
+        grid-column: span 2;
+    }
+}
+
+/* Tablets pequenos */
+@media (max-width: 768px) {
+    .conjunto-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .conjunto-info {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .selector-conj {
+        order: 1;
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .conjunto-buttons {
+        order: 2;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    
+    .tubos-table th,
+    .tubos-table td {
+        padding: 8px 6px;
+        font-size: 0.85rem;
+    }
+    
+    .tubos-table input[type="number"],
+    .tubos-table select {
+        padding: 5px 6px;
+        font-size: 0.85rem;
+    }
+    
+    .tubos-totais {
+        padding: 12px;
+    }
+}
+
+/* Celulares */
+@media (max-width: 576px) {
+    .tubos-conjunto {
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .conjunto-header h5 {
+        font-size: 1rem;
+    }
+    
+    .conjunto-info {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .selector-conj {
+        width: 100%;
+        min-width: auto;
+        justify-content: space-between;
+    }
+    
+    .quantidade-input {
+        width: 80px;
+    }
+    
+    .conjunto-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .tabela-container {
+        margin: 10px -10px;
+        border: none;
+    }
+    
+    .tubos-table {
+        min-width: 1000px; /* Força scroll em celulares */
+    }
+    
+    .totais-resumo {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .total-item:last-child {
+        grid-column: span 1;
+    }
+    
+    .total-label {
+        font-size: 0.75rem;
+    }
+    
+    .total-value {
+        font-size: 0.9rem;
+    }
+}
+
+/* Telas muito pequenas (menos de 400px) */
+@media (max-width: 400px) {
+    .conjunto-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-small {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    
+    .tubos-table {
+        font-size: 0.8rem;
+    }
+    
+    .tubos-table th,
+    .tubos-table td {
+        padding: 6px 4px;
+    }
+}
