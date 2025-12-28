@@ -7,8 +7,6 @@
     <title>Sistema - Edição de Dados</title>
     <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
     <link rel="stylesheet" href="../static/03_Edit_data/edit_data.css">
-
-
 </head>
 
 <body>
@@ -82,6 +80,7 @@
             <button class="tab" onclick="switchTab('materials')">Materiais</button>
             <button class="tab" onclick="switchTab('empresas')">Empresas</button>
             <button class="tab" onclick="switchTab('equipments')">Equipamentos</button>
+            <button class="tab" onclick="switchTab('dutos')">Dutos</button>
             <button class="tab" onclick="switchTab('raw')">JSON Bruto</button>
         </div>
 
@@ -188,8 +187,8 @@
                 </div>
             </div>
 
-            <!-- Na tab de equipamentos -->
-            <div  id="equipmentsTab" class="tab-pane">
+            <!-- Tab Equipamentos -->
+            <div id="equipmentsTab" class="tab-pane">
                 <div class="section-header">
                     <h4><i class="icon-equipment"></i> Gerenciar Equipamentos</h4>
                     <div class="actions">
@@ -212,6 +211,51 @@
 
                 <div class="equipment-list" id="equipmentList">
                     <!-- Lista de equipamentos será renderizada aqui -->
+                </div>
+            </div>
+
+            <!-- Tab Dutos -->
+            <div id="dutosTab" class="tab-pane">
+                <div class="tab-header">
+                    <h2><i class="icon-duct"></i> Tipos de Dutos</h2>
+                    <div class="dutos-actions">
+                        <button class="btn btn-success" onclick="addDuto()">
+                            <i class="icon-add"></i> Novo Duto
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="40%">Tipo / Descrição</th>
+                                <th width="15%">Valor Base</th>
+                                <th width="20%">Opcionais</th>
+                                <th width="25%">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dutosTableBody">
+                            <!-- Dados serão carregados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="duto-detail-view" id="dutoDetailView" style="display: none;">
+                    <div class="detail-header">
+                        <h3>Editando: <span id="dutoDetailTitle"></span></h3>
+                        <div class="detail-header-actions">
+                            <button class="btn btn-warning btn-sm" onclick="resetDutoChanges()">
+                                <i class="icon-refresh"></i> Cancelar
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="closeDutoDetail()">
+                                <i class="icon-close"></i> Fechar
+                            </button>
+                        </div>
+                    </div>
+                    <div id="dutoDetailContent">
+                        <!-- Conteúdo dinâmico do duto -->
+                    </div>
                 </div>
             </div>
 
@@ -329,7 +373,9 @@
             }, 100);
         });
     </script>
-
+    <!-- Adicione estas bibliotecas no seu HTML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.mini.min.js"></script>
 </body>
 
 </html>

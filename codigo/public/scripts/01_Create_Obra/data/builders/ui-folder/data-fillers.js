@@ -292,8 +292,8 @@ function fillThermalGainsData(roomElement, thermalGainsData) {
     // ✅ CORREÇÃO: Atualizar os seletores para os novos IDs
     const gainSelectors = {
         'total-ganhos-w': `#total-ganhos-w-${roomId}`,
-        'total-tr-aprox': `#total-tr-aprox-${roomId}`, // ✅ NOVO: valor aproximado
-        'total-tr-exato': `#total-tr-exato-${roomId}`, // ✅ NOVO: valor exato
+        'total-tr-aprox': `#total-tr-aprox-${roomId}`,
+        'total-tr-exato': `#total-tr-exato-${roomId}`,
         'total-externo': `#total-externo-${roomId}`,
         'total-divisoes': `#total-divisoes-${roomId}`,
         'total-piso': `#total-piso-${roomId}`,
@@ -375,25 +375,25 @@ async function ensureAllRoomSections(roomElement) {
     const climatizationSection = findSectionByTitle(roomElement, 'Climatização');
     const machinesSection = findMachinesSection(roomElement);
     const equipamentosSection = findSectionByTitle(roomElement, 'Equipamentos de Difusão e Controle de Ar');
-    // const dutosSection = findSectionByTitle(roomElement, 'Dutos'); // ADD Dutos (comentado)
-    const tubosSection = findSectionByTitle(roomElement, 'Tubos e Conexões'); // ADD Tubulação
+    const dutosSection = findSectionByTitle(roomElement, 'Dutos para Climatização'); // ✅ ADICIONADO: Dutos
+    const tubosSection = findSectionByTitle(roomElement, 'Tubos e Conexões');
 
     // Verificar quais seções já existem
     const existingSections = {
         climatization: !!climatizationSection,
         machines: !!machinesSection,
         equipamentos: !!equipamentosSection,
-        // dutos: !!dutosSection, // ADD Dutos (comentado)
-        tubos: !!tubosSection // ADD Tubulação
+        dutos: !!dutosSection, // ✅ ADICIONADO: Dutos
+        tubos: !!tubosSection
     };
 
     console.log(`📋 Seções existentes:`, existingSections);
 
     const allRequiredSections = existingSections.climatization && 
                                existingSections.machines && 
-                               existingSections.equipamentos;
-                               // existingSections.dutos && // ADD Dutos (comentado)
-                               // existingSections.tubos; // ADD Tubulação (opcional)
+                               existingSections.equipamentos &&
+                               existingSections.dutos && // ✅ ADICIONADO: Dutos (agora obrigatório)
+                               existingSections.tubos; // Tubulação (opcional)
 
     if (allRequiredSections) {
         console.log(`✅ Todas as seções necessárias já existem para sala ${roomName}`);
@@ -410,7 +410,7 @@ async function ensureAllRoomSections(roomElement) {
         }
 
         // Se não temos nenhuma seção, criar todas
-        if (!climatizationSection && !machinesSection && !equipamentosSection) {
+        if (!climatizationSection && !machinesSection && !equipamentosSection && !dutosSection) {
             console.log(`🏗️ Criando todas as seções para sala ${roomName}`);
 
             // ✅ CORREÇÃO: Verificar TODAS as funções necessárias
@@ -418,8 +418,8 @@ async function ensureAllRoomSections(roomElement) {
                 'buildClimatizationSection',
                 'buildMachinesSection', 
                 'buildEquipamentosSection',
-                // 'buildDutosSection', // ADD Dutos (comentado)
-                'buildTubosSection' // ADD Tubulação
+                'buildDutosSection', // ✅ ADICIONADO: Dutos
+                'buildTubosSection'
             ];
 
             for (const funcName of requiredFunctions) {
@@ -458,17 +458,17 @@ async function ensureAllRoomSections(roomElement) {
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
 
-            // // Criar seção de dutos (em comentário por enquanto) // ADD Dutos
-            // if (typeof window.buildDutosSection === 'function') {
-            //     const dutosHTML = await window.buildDutosSection(obraId, projectId, roomName, roomId);
-            //     if (dutosHTML) {
-            //         roomContent.insertAdjacentHTML('beforeend', dutosHTML);
-            //         console.log(`✅ Seção de dutos criada`);
-            //     }
-            //     await new Promise(resolve => setTimeout(resolve, 300));
-            // }
+            // ✅ Criar seção de dutos
+            if (typeof window.buildDutosSection === 'function') {
+                const dutosHTML = await window.buildDutosSection(obraId, projectId, roomName, roomId);
+                if (dutosHTML) {
+                    roomContent.insertAdjacentHTML('beforeend', dutosHTML);
+                    console.log(`✅ Seção de dutos criada`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
 
-            // Criar seção de tubos // ADD Tubulação
+            // Criar seção de tubos
             if (typeof window.buildTubosSection === 'function') {
                 const tubosHTML = await window.buildTubosSection(obraId, projectId, roomName, roomId);
                 if (tubosHTML) {
@@ -485,15 +485,15 @@ async function ensureAllRoomSections(roomElement) {
                     console.log(`✅ Sistema de equipamentos inicializado`);
                 }
                 
+                if (typeof window.initDutosSystem === 'function') { // ✅ ADICIONADO: Inicializar dutos
+                    window.initDutosSystem(roomId);
+                    console.log(`✅ Sistema de dutos inicializado`);
+                }
+                
                 if (typeof window.initTubulacaoSystem === 'function') {
                     window.initTubulacaoSystem(roomId);
                     console.log(`✅ Sistema de tubulação inicializado`);
                 }
-                
-                // if (typeof window.initDutosSystem === 'function') { // ADD Dutos (comentado)
-                //     window.initDutosSystem(roomId);
-                //     console.log(`✅ Sistema de dutos inicializado`);
-                // }
             }, 800);
 
             console.log(`✅ Todas as seções criadas para sala ${roomName}`);
@@ -501,7 +501,7 @@ async function ensureAllRoomSections(roomElement) {
         }
 
         // Se temos algumas seções, criar apenas as faltantes
-        let lastSection = climatizationSection || machinesSection || equipamentosSection || tubosSection;
+        let lastSection = climatizationSection || machinesSection || equipamentosSection || dutosSection || tubosSection;
         
         // Criar seção de máquinas se faltar
         if (!machinesSection && typeof window.buildMachinesSection === 'function') {
@@ -532,25 +532,25 @@ async function ensureAllRoomSections(roomElement) {
             }
         }
 
-        // // Criar seção de dutos se faltar (em comentário) // ADD Dutos
-        // if (!dutosSection && typeof window.buildDutosSection === 'function') {
-        //     const dutosHTML = await window.buildDutosSection(obraId, projectId, roomName, roomId);
-        //     if (dutosHTML && lastSection) {
-        //         lastSection.insertAdjacentHTML('afterend', dutosHTML);
-        //         console.log(`✅ Seção de dutos criada`);
-        //         lastSection = document.querySelector(`#section-content-${roomId}dutos`)?.parentElement;
-        //         
-        //         setTimeout(() => {
-        //             if (typeof window.initDutosSystem === 'function') {
-        //                 window.initDutosSystem(roomId);
-        //             }
-        //         }, 500);
-        //         
-        //         await new Promise(resolve => setTimeout(resolve, 300));
-        //     }
-        // }
+        // ✅ Criar seção de dutos se faltar
+        if (!dutosSection && typeof window.buildDutosSection === 'function') {
+            const dutosHTML = await window.buildDutosSection(obraId, projectId, roomName, roomId);
+            if (dutosHTML && lastSection) {
+                lastSection.insertAdjacentHTML('afterend', dutosHTML);
+                console.log(`✅ Seção de dutos criada`);
+                lastSection = document.querySelector(`#section-content-${roomId}dutos`)?.parentElement;
+                
+                setTimeout(() => {
+                    if (typeof window.initDutosSystem === 'function') {
+                        window.initDutosSystem(roomId);
+                    }
+                }, 500);
+                
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        }
 
-        // Criar seção de tubos se faltar // ADD Tubulação
+        // Criar seção de tubos se faltar
         if (!tubosSection && typeof window.buildTubosSection === 'function') {
             const tubosHTML = await window.buildTubosSection(obraId, projectId, roomName, roomId);
             if (tubosHTML && lastSection) {
@@ -582,7 +582,8 @@ async function ensureAllRoomSections(roomElement) {
         // Verificar se temos pelo menos as seções principais
         const hasRequiredSections = !!findSectionByTitle(roomElement, 'Climatização') &&
                                    !!findMachinesSection(roomElement) &&
-                                   !!findSectionByTitle(roomElement, 'Equipamentos de Difusão e Controle de Ar');
+                                   !!findSectionByTitle(roomElement, 'Equipamentos de Difusão e Controle de Ar') &&
+                                   !!findSectionByTitle(roomElement, 'Dutos para Climatização'); // ✅ ADICIONADO: Dutos
 
         if (hasRequiredSections) {
             console.log(`✅ Seções necessárias criadas para sala ${roomName}`);

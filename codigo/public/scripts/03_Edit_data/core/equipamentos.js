@@ -174,8 +174,10 @@ function renderEquipmentList(filterCodigo = '') {
         
         equipmentItem.innerHTML = `
             <div class="equipment-header" onclick="toggleEquipmentItem(${index}, event)">
-                <button class="minimizer">+</button>
-                <span><strong>${equipment.codigo || 'N/A'}</strong> - ${equipment.descricao || 'Sem descrição'}</span>
+                <button class="minimizer" onclick="toggleEquipmentItem(${index}, event)">+</button>
+                <span style="flex: 1; cursor: pointer;">
+                    <strong>${equipment.codigo || 'N/A'}</strong> - ${equipment.descricao || 'Sem descrição'}
+                </span>
                 <button class="btn btn-xs btn-danger" onclick="deleteEquipment('${id}', event)">
                     <i class="icon-delete"></i>
                 </button>
@@ -281,7 +283,18 @@ function selectEquipmentCodigo(index) {
 
 // Alterna expansão/colapso do item
 function toggleEquipmentItem(index, event) {
-    if (event.target.closest('button')) return; // Não colapsar se clicou em botão
+    // Se o evento foi passado, impede propagação dupla
+    if (event) {
+        event.stopPropagation();
+        
+        // Se clicou no botão delete, não faz toggle
+        if (event.target.closest('.btn-danger')) {
+            return;
+        }
+        
+        // Se clicou no botão minimizer, já fazemos o toggle abaixo
+        // Se clicou no header, também fazemos toggle
+    }
     
     const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
     if (!item) return;
@@ -291,6 +304,16 @@ function toggleEquipmentItem(index, event) {
     
     content.classList.toggle('collapsed');
     minimizer.textContent = content.classList.contains('collapsed') ? '+' : '-';
+    
+    // Se estiver expandindo, foca no primeiro campo editável
+    if (!content.classList.contains('collapsed')) {
+        setTimeout(() => {
+            const firstInput = content.querySelector('input');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        }, 50);
+    }
 }
 
 // Adiciona nova dimensão ao equipamento
@@ -302,6 +325,14 @@ function addEquipmentDimension(index, event) {
     
     const id = item.getAttribute('data-id');
     if (!id || !window.equipmentsData[id]) return;
+    
+    // Garantir que o item está expandido
+    const content = item.querySelector('.equipment-content');
+    const minimizer = item.querySelector('.minimizer');
+    if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        minimizer.textContent = '-';
+    }
     
     // Gerar chave única para nova dimensão
     const dimensions = window.equipmentsData[id].valores_padrao || {};
@@ -604,7 +635,13 @@ function addNewEquipment() {
             // Expandir e focar no campo de código
             const index = newItem.getAttribute('data-index');
             if (index) {
-                toggleEquipmentItem(parseInt(index));
+                // Já que estamos expandindo manualmente, também atualize o botão minimizer
+                const content = newItem.querySelector('.equipment-content');
+                const minimizer = newItem.querySelector('.minimizer');
+                
+                content.classList.remove('collapsed');
+                minimizer.textContent = '-';
+                
                 setTimeout(() => {
                     const codigoInput = newItem.querySelector('input[id^="equipmentCodigo-"]');
                     if (codigoInput) {

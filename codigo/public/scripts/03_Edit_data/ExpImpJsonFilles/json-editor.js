@@ -1,5 +1,6 @@
+/* ==== INÍCIO: json-editor.js ==== */
 /* ==== json-editor.js ==== */
-// json-editor.js - VERSÃO OTIMIZADA E CORRIGIDA
+// json-editor.js - VERSÃO CORRIGIDA COM DUTOS COMO ARRAY
 
 // ==================== ESTADO GLOBAL ====================
 window.stagingData = null;
@@ -34,7 +35,7 @@ function initDomCache() {
 }
 
 /**
- * Valida e garante estrutura mínima do systemData
+ * Valida e garante estrutura mínima do systemData (CORRIGIDA - DUTOS COMO ARRAY)
  */
 function validateAndEnsureStructure(data) {
     if (!data || typeof data !== 'object') {
@@ -47,7 +48,8 @@ function validateAndEnsureStructure(data) {
         machines: [],
         materials: {},
         empresas: [],
-        banco_equipamentos: {}
+        banco_equipamentos: {},
+        dutos: []  // CORRIGIDO: campo para dutos como array
     };
     
     Object.keys(requiredFields).forEach(field => {
@@ -230,7 +232,8 @@ export function initJSONEditor() {
                 machines: validatedData.machines.length,
                 materials: Object.keys(validatedData.materials).length,
                 empresas: validatedData.empresas.length,
-                banco_equipamentos: Object.keys(validatedData.banco_equipamentos).length
+                banco_equipamentos: Object.keys(validatedData.banco_equipamentos).length,
+                dutos: validatedData.dutos.length  // CORRIGIDO
             });
             
             initialContent = JSON.stringify(validatedData, null, 2);
@@ -343,7 +346,7 @@ export function formatJSON() {
 }
 
 /**
- * Valida o JSON no editor
+ * Valida o JSON no editor (CORRIGIDA - DUTOS COMO ARRAY)
  */
 export function validateJSON() {
     if (!domCache.editor) return false;
@@ -405,7 +408,7 @@ export function findErrorLine(jsonString, error) {
 }
 
 /**
- * Valida a estrutura do JSON
+ * Valida a estrutura do JSON (CORRIGIDA - DUTOS COMO ARRAY)
  */
 export function validateJSONStructure(data) {
     const errors = [];
@@ -428,6 +431,11 @@ export function validateJSONStructure(data) {
 
     if (!data.banco_equipamentos || typeof data.banco_equipamentos !== 'object') {
         errors.push('"banco_equipamentos" deve ser um objeto');
+    }
+
+    // CORRIGIDO: dutos deve ser um array
+    if (!data.dutos || !Array.isArray(data.dutos)) {
+        errors.push('"dutos" deve ser um array');
     }
 
     return {
@@ -479,16 +487,19 @@ export function resetJSONEditor() {
 window.debugSystemData = function() {
     console.log('=== DEBUG SYSTEMDATA ===');
     console.log('systemData:', window.systemData);
-    console.log('Tem banco_equipamentos?', 'banco_equipamentos' in (window.systemData || {}));
-    console.log('banco_equipamentos:', window.systemData?.banco_equipamentos);
-    console.log('Número de equipamentos:', Object.keys(window.systemData?.banco_equipamentos || {}).length);
+    console.log('Tem dutos?', 'dutos' in (window.systemData || {}));
+    console.log('dutos é array?', Array.isArray(window.systemData?.dutos));
+    console.log('Número de dutos:', (window.systemData?.dutos || []).length);
+    console.log('Dutos detalhados:', window.systemData?.dutos);
     
     const editor = document.getElementById('jsonEditor');
     if (editor && editor.value) {
         try {
             const parsed = JSON.parse(editor.value);
-            console.log('Editor tem banco_equipamentos?', 'banco_equipamentos' in parsed);
-            console.log('Equipamentos no editor:', Object.keys(parsed?.banco_equipamentos || {}).length);
+            console.log('Editor tem dutos?', 'dutos' in parsed);
+            console.log('Editor dutos é array?', Array.isArray(parsed?.dutos));
+            console.log('Dutos no editor:', (parsed?.dutos || []).length);
+            console.log('Detalhes dutos editor:', parsed?.dutos);
         } catch(e) {
             console.error('Erro ao parsear editor:', e);
         }
@@ -505,6 +516,8 @@ window.updateJSONStatus = updateJSONStatus;
 window.resetJSONEditor = resetJSONEditor;
 window.forceLayoutUpdate = forceLayoutUpdate;
 window.initJSONEditor = initJSONEditor;
+window.fileToBase64 = fileToBase64;
+window.validateJSONStructure = validateJSONStructure;
 
 // ==================== INICIALIZAÇÃO AUTOMÁTICA ====================
 

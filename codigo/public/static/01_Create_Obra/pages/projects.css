@@ -225,8 +225,6 @@
     padding: 0 var(--spacing-md);
     margin-bottom: 25px;
     border-radius: var(--border-radius);
-    border: 1px dashed #51575f;
-    padding: var(--spacing-xl);
 
 }
 

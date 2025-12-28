@@ -1,8 +1,8 @@
 {
   "constants": {
     "TESTE": {
-      "value": 12,
-      "description": "sg"
+      "value": 78797987879797,
+      "description": "sjyhiyityufjhjkhlu8yityfjhvbjkjup98yitygg"
     },
     "VARIAVEL_PD": {
       "value": 0.0402,
@@ -105,7 +105,6 @@
       "description": "Margem de segurança aplicada à capacidade final"
     }
   },
-  
   "machines": [
     {
       "type": "Wall Mounted",
@@ -1920,7 +1919,6 @@
       ]
     }
   ],
-
   "materials": {
     "COBRE": {
       "value": 99,
@@ -1963,7 +1961,6 @@
       "description": "Chumbador 3/8 por 2 1/2 polegadas"
     }
   },
-
   "empresas": [
     {
       "ACT": "ACTEMIUM"
@@ -2032,7 +2029,6 @@
       "SEG": "segerhgrgergergegr"
     }
   ],
-
   "banco_equipamentos": {
     "VZ": {
       "codigo": "VZ",
@@ -2181,10 +2177,10 @@
         "225x165": 108.87,
         "225x225": 94.06,
         "325x125": 137.46,
-        "325x165": 153.0,
-        "325x225": 175.0,
-        "325x325": 244.0,
-        "425x125": 153.0
+        "325x165": 153,
+        "325x225": 175,
+        "325x325": 244,
+        "425x125": 153
       }
     },
     "GR": {
@@ -2203,34 +2199,34 @@
       "descricao": "Tomada de Ar Externo",
       "valores_padrao": {
         "200x200": 158.37,
-        "300x200": 205.0,
+        "300x200": 205,
         "300x300": 261.38,
         "400x200": 236.79,
         "400x300": 298.5,
         "400x400": 376.08,
         "500x200": 594.36,
-        "500x300": 680.0,
-        "500x400": 825.0,
-        "500x500": 950.0
+        "500x300": 680,
+        "500x400": 825,
+        "500x500": 950
       }
     },
     "DF": {
       "codigo": "DF",
       "descricao": "Difusores",
       "valores_padrao": {
-        "100": 45.0,
-        "150": 68.0,
-        "200": 95.0,
-        "250": 128.0,
-        "300": 165.0,
-        "350": 210.0,
-        "400": 260.0,
-        "450": 315.0,
-        "500": 375.0,
-        "600": 520.0,
-        "750": 780.0,
-        "900": 1120.0,
-        "1200": 1850.0
+        "100": 45,
+        "150": 68,
+        "200": 95,
+        "250": 128,
+        "300": 165,
+        "350": 210,
+        "400": 260,
+        "450": 315,
+        "500": 375,
+        "600": 520,
+        "750": 780,
+        "900": 1120,
+        "1200": 1850
       }
     },
     "FH": {
@@ -2240,22 +2236,22 @@
         "200x200": 28.5,
         "300x200": 42.8,
         "300x300": 64.2,
-        "400x200": 57.0,
+        "400x200": 57,
         "400x300": 85.5,
-        "400x400": 114.0,
+        "400x400": 114,
         "500x200": 71.25,
         "500x300": 106.88,
         "500x400": 142.5,
         "500x500": 178.13,
         "600x300": 128.25,
-        "600x400": 171.0,
+        "600x400": 171,
         "600x500": 213.75,
         "600x600": 256.5,
-        "800x400": 228.0,
-        "800x600": 342.0,
+        "800x400": 228,
+        "800x600": 342,
         "1000x500": 356.25,
         "1000x600": 427.5,
-        "1200x600": 513.0
+        "1200x600": 513
       }
     },
     "SPCD": {
@@ -2266,133 +2262,131 @@
       }
     }
   },
-
   "dutos": [
     {
-      "type": "Chapa de aço galvanizado",
-      "valor": 120.00,
-      "descricao": "Duto de chapa de aço galvanizado padrão",
+      "type": "Chapa de aco inox",
+      "valor": 180,
+      "descricao": "Duto em aco inox para ambientes agressivos",
       "opcionais": [
         {
           "id": 1,
-          "nome": "Com isolamento",
-          "value": 35.00,
-          "descricao": "Isolamento térmico e acústico"
+          "nome": "Polimento",
+          "value": 45,
+          "descricao": "Acabamento liso para ambientes hospitalares"
         },
         {
           "id": 2,
-          "nome": "Com isolamento + rechapeamento",
-          "value": 60.00,
-          "descricao": "Isolamento completo com rechapeamento"
+          "nome": "Isolamento termico reforcado",
+          "value": 70,
+          "descricao": "Isolamento para altas temperaturas"
         },
         {
           "id": 3,
-          "nome": "Com pintura",
-          "value": 25.00,
-          "descricao": "Pintura anticorrosiva"
+          "nome": "Tratamento anticorrosivo",
+          "value": 55,
+          "descricao": "Protecao extra contra corrosao quimica"
         }
       ]
     },
     {
-      "type": "MPU",
-      "valor": 95.00,
-      "descricao": "Duto de Material Plástico Ultra-resistente",
+      "type": "Chapa preta",
+      "valor": 105,
+      "descricao": "Duto metalico de chapa preta padrao",
       "opcionais": [
         {
           "id": 1,
-          "nome": "Com isolamento",
-          "value": 30.00,
-          "descricao": "Isolamento térmico para MPU"
+          "nome": "Pintura epoxi",
+          "value": 30,
+          "descricao": "Pintura epoxi de alta resistencia"
         },
         {
           "id": 2,
-          "nome": "Com isolamento + rechapeamento",
-          "value": 55.00,
-          "descricao": "Isolamento e rechapeamento MPU"
+          "nome": "Isolamento acustico",
+          "value": 40,
+          "descricao": "Reducao de ruido no sistema"
         },
         {
           "id": 3,
-          "nome": "Com pintura",
-          "value": 20.00,
-          "descricao": "Pintura especial para plástico"
+          "nome": "Reforco estrutural",
+          "value": 35,
+          "descricao": "Reforco para dutos de grande vao"
         }
       ]
     },
     {
-      "type": "Fibra de vidro",
-      "valor": 150.00,
-      "descricao": "Duto de fibra de vidro resistente à corrosão",
+      "type": "Polipropileno (PP)",
+      "valor": 110,
+      "descricao": "Duto plastico resistente a agentes quimicos",
       "opcionais": [
         {
           "id": 1,
-          "nome": "Revestimento interno liso",
-          "value": 40.00,
-          "descricao": "Revestimento para melhor fluxo de ar"
+          "nome": "Soldagem termica",
+          "value": 25,
+          "descricao": "Soldagem especial para vedacao total"
         },
         {
           "id": 2,
-          "nome": "Proteção UV",
-          "value": 25.00,
-          "descricao": "Proteção contra raios ultravioleta"
+          "nome": "Protecao UV",
+          "value": 20,
+          "descricao": "Protecao contra degradacao solar"
         },
         {
           "id": 3,
-          "nome": "Reforço estrutural",
-          "value": 45.00,
-          "descricao": "Reforço adicional para alta pressão"
+          "nome": "Flanges reforcados",
+          "value": 30,
+          "descricao": "Flanges para maior resistencia mecanica"
         }
       ]
     },
     {
-      "type": "Alumínio",
-      "valor": 135.00,
-      "descricao": "Duto de alumínio leve e resistente",
+      "type": "Fibra textil",
+      "valor": 70,
+      "descricao": "Duto textil para distribuicao uniforme de ar",
       "opcionais": [
         {
           "id": 1,
-          "nome": "Anodização",
-          "value": 30.00,
-          "descricao": "Tratamento superficial anodizado"
+          "nome": "Tratamento antibacteriano",
+          "value": 20,
+          "descricao": "Previne proliferacao de fungos e bacterias"
         },
         {
           "id": 2,
-          "nome": "Isolamento térmico",
-          "value": 40.00,
-          "descricao": "Isolamento para alumínio"
+          "nome": "Resistencia ao fogo",
+          "value": 30,
+          "descricao": "Tratamento ignifugo"
         },
         {
           "id": 3,
-          "nome": "Proteção anti-corrosiva",
-          "value": 25.00,
-          "descricao": "Proteção adicional contra corrosão"
+          "nome": "Cor personalizada",
+          "value": 15,
+          "descricao": "Personalizacao de cor do duto"
         }
       ]
     },
     {
-      "type": "PVC Industrial",
-      "valor": 85.00,
-      "descricao": "Duto de PVC para aplicações industriais",
+      "type": "Concreto armado",
+      "valor": 220,
+      "descricao": "Duto pesado para grandes vazoes e infraestrutura",
       "opcionais": [
         {
           "id": 1,
-          "nome": "Resistência química",
-          "value": 35.00,
-          "descricao": "Tratamento para resistência química"
+          "nome": "Impermeabilizacao interna",
+          "value": 50,
+          "descricao": "Revestimento interno impermeavel"
         },
         {
           "id": 2,
-          "nome": "Reforço em espiral",
-          "value": 45.00,
-          "descricao": "Reforço estrutural em espiral"
+          "nome": "Reforco estrutural adicional",
+          "value": 65,
+          "descricao": "Reforco para cargas extremas"
         },
         {
           "id": 3,
-          "nome": "Conectorização especial",
-          "value": 30.00,
-          "descricao": "Conectores especiais para PVC"
+          "nome": "Revestimento acustico",
+          "value": 45,
+          "descricao": "Reducao de ruido em grandes dutos"
         }
       ]
     }
   ]
-
 }

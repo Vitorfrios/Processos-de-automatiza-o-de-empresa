@@ -1,10 +1,7 @@
-import json
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from typing import Dict, List, Any
 
-@dataclass
 class SystemSchema:
-    """Define o schema esperado do sistema"""
+    """Define o schema esperado do sistema - ATUALIZADO"""
     
     @staticmethod
     def validate(data: Dict[str, Any]) -> Dict[str, List[str]]:
@@ -12,8 +9,8 @@ class SystemSchema:
         errors = []
         warnings = []
         
-        # ✅ ATUALIZADO: Estrutura básica com banco_equipamentos
-        required_sections = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos']
+        # ✅ ATUALIZADO: Estrutura básica com dutos como array
+        required_sections = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos']
         for section in required_sections:
             if section not in data:
                 errors.append(f"Seção '{section}' não encontrada")
@@ -34,18 +31,10 @@ class SystemSchema:
                     errors.append(f"machine[{i}] deve ser um objeto")
                     continue
                 
-                required_machine_fields = ['type', 'impostos', 'baseValues']
-                for field in required_machine_fields:
-                    if field not in machine:
-                        errors.append(f"machine[{i}] não tem campo '{field}'")
-                
-                # Validação de opções se existirem
-                if 'options' in machine and not isinstance(machine['options'], list):
-                    errors.append(f"machine[{i}].options deve ser um array")
-                
-                # Validação de voltages se existirem
-                if 'voltages' in machine and not isinstance(machine['voltages'], list):
-                    errors.append(f"machine[{i}].voltages deve ser um array")
+                if 'type' not in machine:
+                    errors.append(f"machine[{i}] não tem campo 'type'")
+                if 'baseValues' not in machine:
+                    errors.append(f"machine[{i}] não tem campo 'baseValues'")
         
         # Validação de materials
         if not isinstance(data['materials'], dict):
@@ -54,20 +43,14 @@ class SystemSchema:
             for key, material in data['materials'].items():
                 if not isinstance(material, dict):
                     errors.append(f"materials['{key}'] deve ser um objeto")
-                else:
-                    if 'value' not in material:
-                        errors.append(f"materials['{key}'] não tem campo 'value'")
+                elif 'value' not in material:
+                    errors.append(f"materials['{key}'] não tem campo 'value'")
         
         # Validação de empresas
         if not isinstance(data['empresas'], list):
             errors.append("'empresas' deve ser um array")
-        else:
-            for i, empresa in enumerate(data['empresas']):
-                if not isinstance(empresa, dict):
-                    errors.append(f"empresa[{i}] deve ser um objeto")
-                    warnings.append(f"empresa[{i}] deve conter campos ACT, AMC, etc.")
         
-        # ✅ NOVO: Validação de banco_equipamentos
+        # Validação de banco_equipamentos
         if not isinstance(data['banco_equipamentos'], dict):
             errors.append("'banco_equipamentos' deve ser um objeto")
         else:
@@ -76,14 +59,40 @@ class SystemSchema:
                     errors.append(f"banco_equipamentos['{tipo}'] deve ser um objeto")
                     continue
                 
-                # Campos recomendados
-                if 'descricao' not in equipamento:
-                    warnings.append(f"banco_equipamentos['{tipo}'] não tem campo 'descricao'")
-                
                 if 'valores_padrao' not in equipamento:
                     errors.append(f"banco_equipamentos['{tipo}'] não tem campo 'valores_padrao'")
                 elif not isinstance(equipamento['valores_padrao'], dict):
                     errors.append(f"banco_equipamentos['{tipo}'].valores_padrao deve ser um objeto")
+        
+        # ✅ ATUALIZADO: Validação de dutos como array
+        if not isinstance(data['dutos'], list):
+            errors.append("'dutos' deve ser um array")
+        else:
+            for i, duto in enumerate(data['dutos']):
+                if not isinstance(duto, dict):
+                    errors.append(f"duto[{i}] deve ser um objeto")
+                    continue
+                
+                if 'type' not in duto:
+                    errors.append(f"duto[{i}] não tem campo 'type'")
+                if 'valor' not in duto:
+                    errors.append(f"duto[{i}] não tem campo 'valor'")
+                
+                # Opcionais podem estar vazios
+                if 'opcionais' in duto and not isinstance(duto['opcionais'], list):
+                    errors.append(f"duto[{i}].opcionais deve ser um array")
+                elif 'opcionais' in duto:
+                    for j, opcional in enumerate(duto['opcionais']):
+                        if not isinstance(opcional, dict):
+                            errors.append(f"duto[{i}].opcional[{j}] deve ser um objeto")
+                            continue
+                        
+                        if 'id' not in opcional:
+                            warnings.append(f"duto[{i}].opcional[{j}] não tem campo 'id' (será auto-gerado)")
+                        if 'nome' not in opcional:
+                            warnings.append(f"duto[{i}].opcional[{j}] não tem campo 'nome'")
+                        if 'value' not in opcional:
+                            errors.append(f"duto[{i}].opcional[{j}] não tem campo 'value'")
         
         return {'errors': errors, 'warnings': warnings}
     
@@ -95,10 +104,10 @@ class SystemSchema:
             'machines': [],
             'materials': {},
             'empresas': [],
-            'banco_equipamentos': {}  # ADICIONADO
+            'banco_equipamentos': {},
+            'dutos': []  # Array
         }
         
-        # Normalizar constants
         if 'constants' in data:
             constants = {}
             for key, value in data['constants'].items():
@@ -108,21 +117,18 @@ class SystemSchema:
                     constants[key] = {'value': value, 'description': ''}
             normalized['constants'] = constants
         
-        # Normalizar machines
         if 'machines' in data and isinstance(data['machines'], list):
             for machine in data['machines']:
                 if isinstance(machine, dict):
                     normalized_machine = {
                         'type': machine.get('type', ''),
                         'impostos': machine.get('impostos', {}),
-                        'configuracoes_instalacao': machine.get('configuracoes_instalacao', []),
                         'baseValues': machine.get('baseValues', {}),
                         'options': machine.get('options', []),
                         'voltages': machine.get('voltages', [])
                     }
                     normalized['machines'].append(normalized_machine)
         
-        # Normalizar materials
         if 'materials' in data:
             materials = {}
             for key, value in data['materials'].items():
@@ -132,11 +138,9 @@ class SystemSchema:
                     materials[key] = {'value': value, 'unit': 'un', 'description': ''}
             normalized['materials'] = materials
         
-        # Normalizar empresas
         if 'empresas' in data and isinstance(data['empresas'], list):
             normalized['empresas'] = data['empresas']
         
-        # ✅ NOVO: Normalizar banco_equipamentos
         if 'banco_equipamentos' in data and isinstance(data['banco_equipamentos'], dict):
             equipamentos = {}
             for tipo, dados in data['banco_equipamentos'].items():
@@ -145,21 +149,26 @@ class SystemSchema:
                         'descricao': dados.get('descricao', tipo),
                         'valores_padrao': dados.get('valores_padrao', {})
                     }
-                    
-                    # Campos opcionais
-                    if 'dimensoes' in dados:
-                        normalized_equipamento['dimensoes'] = dados['dimensoes']
-                    if 'unidade_valor' in dados:
-                        normalized_equipamento['unidade_valor'] = dados['unidade_valor']
-                    
                     equipamentos[tipo] = normalized_equipamento
                 else:
-                    # Se não for dicionário, criar estrutura básica
                     equipamentos[tipo] = {
                         'descricao': str(tipo),
                         'valores_padrao': {}
                     }
             
             normalized['banco_equipamentos'] = equipamentos
+        
+        # ✅ ATUALIZADO: Normalizar dutos como array
+        if 'dutos' in data:
+            if isinstance(data['dutos'], list):
+                # Já é array - usar como está
+                normalized['dutos'] = data['dutos']
+            elif isinstance(data['dutos'], dict):
+                # Converter de formato antigo para novo
+                print("⚠️  Convertendo dutos de formato antigo para array...")
+                if 'tipos' in data['dutos'] and isinstance(data['dutos']['tipos'], list):
+                    normalized['dutos'] = data['dutos']['tipos']
+                else:
+                    normalized['dutos'] = []
         
         return normalized

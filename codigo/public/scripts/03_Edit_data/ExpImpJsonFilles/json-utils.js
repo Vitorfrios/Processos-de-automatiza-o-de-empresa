@@ -1,18 +1,10 @@
-// json-utils.js - Arquivo principal que coordena tudo
-import {
-    initJSONEditor,
-    updateLineNumbers,
-    updateApplyButtonState,
-    updateJSONStatus,
-    validateJSONStructure
-} from './json-editor.js';
-
-import { showError, showSuccess, showWarning } from '../config/ui.js';
+/* ==== INÍCIO: json-utils.js ==== */
+// json-utils.js - Arquivo principal que coordena tudo (CORRIGIDO COM DUTOS COMO ARRAY)
 
 // ==================== FUNÇÕES AUXILIARES ====================
 
 /**
- * Garante estrutura completa dos dados
+ * Garante estrutura completa dos dados (CORRIGIDA - DUTOS COMO ARRAY)
  */
 function ensureCompleteData(data) {
     if (!data || typeof data !== 'object') {
@@ -24,12 +16,13 @@ function ensureCompleteData(data) {
         machines: data.machines || [],
         materials: data.materials || {},
         empresas: data.empresas || [],
-        banco_equipamentos: data.banco_equipamentos || {}
+        banco_equipamentos: data.banco_equipamentos || {},
+        dutos: data.dutos || []  // CORRIGIDO: array vazio
     };
 }
 
 /**
- * Cria dados padrão com estrutura completa
+ * Cria dados padrão com estrutura completa (CORRIGIDA - DUTOS COMO ARRAY)
  */
 function createDefaultData() {
     return {
@@ -37,21 +30,26 @@ function createDefaultData() {
         machines: [],
         materials: {},
         empresas: [],
-        banco_equipamentos: {}
+        banco_equipamentos: {},
+        dutos: []  // CORRIGIDO: array vazio
     };
 }
 
 /**
- * Valida e garante que os dados tenham banco_equipamentos
+ * Valida e garante que os dados tenham estrutura completa
  */
-function validateAndEnsureBancoEquipamentos(data) {
+function validateAndEnsureCompleteData(data) {
     const result = ensureCompleteData(data);
     
     // Log para debug
-    console.log('🔍 Validando dados - banco_equipamentos:', 
-        Object.keys(result.banco_equipamentos).length > 0 ? 
-        `✅ (${Object.keys(result.banco_equipamentos).length} equipamentos)` : 
-        '⚠️ VAZIO');
+    console.log('🔍 Validando dados:', {
+        constants: Object.keys(result.constants).length,
+        machines: result.machines.length,
+        materials: Object.keys(result.materials).length,
+        empresas: result.empresas.length,
+        banco_equipamentos: Object.keys(result.banco_equipamentos).length,
+        dutos: result.dutos.length  // CORRIGIDO
+    });
     
     return result;
 }
@@ -61,17 +59,28 @@ function validateAndEnsureBancoEquipamentos(data) {
 export async function applyJSON() {
     const editor = document.getElementById('jsonEditor');
     if (!editor) {
-        showError('Editor JSON não encontrado');
+        if (window.showError) window.showError('Editor JSON não encontrado');
         return;
     }
 
     try {
         const proposedData = JSON.parse(editor.value);
-        const validation = validateJSONStructure(proposedData);
+        
+        // Usar a função de validação do json-editor.js
+        let validation;
+        if (window.validateJSONStructure) {
+            validation = window.validateJSONStructure(proposedData);
+        } else {
+            // Fallback básico
+            validation = {
+                valid: true,
+                errors: []
+            };
+        }
 
         if (!validation.valid) {
-            showError('JSON inválido. Corrija os erros antes de aplicar.');
-            updateJSONStatus(`❌ JSON inválido: ${validation.errors.join(', ')}`, 'error');
+            if (window.showError) window.showError('JSON inválido. Corrija os erros antes de aplicar.');
+            if (window.updateJSONStatus) window.updateJSONStatus(`❌ JSON inválido: ${validation.errors.join(', ')}`, 'error');
             return;
         }
 
@@ -82,14 +91,14 @@ export async function applyJSON() {
             const comparison = await compareJSONData(currentData, proposedData);
 
             if (!comparison.summary.has_changes) {
-                showWarning('Nenhuma alteração detectada entre os dados atuais e propostos.');
+                if (window.showWarning) window.showWarning('Nenhuma alteração detectada.');
                 return;
             }
 
             const confirmed = await showJsonConfirmationModal(comparison);
 
             if (!confirmed) {
-                showWarning('Aplicação cancelada pelo usuário.');
+                if (window.showWarning) window.showWarning('Aplicação cancelada.');
                 return;
             }
 
@@ -97,7 +106,7 @@ export async function applyJSON() {
 
             if (applied) {
                 // ✅ GARANTIR ESTRUTURA COMPLETA
-                const completeData = validateAndEnsureBancoEquipamentos(currentData);
+                const completeData = validateAndEnsureCompleteData(currentData);
                 
                 window.systemData = completeData;
                 window.stagingData = null;
@@ -111,15 +120,15 @@ export async function applyJSON() {
 
                 updateAllTabsUI();
                 editor.value = JSON.stringify(completeData, null, 2);
-                updateLineNumbers();
+                if (window.updateLineNumbers) window.updateLineNumbers();
 
-                showSuccess('JSON aplicado com sucesso!');
-                updateJSONStatus('✅ JSON aplicado ao sistema.', 'success');
-                updateApplyButtonState();
+                if (window.showSuccess) window.showSuccess('JSON aplicado com sucesso!');
+                if (window.updateJSONStatus) window.updateJSONStatus('✅ JSON aplicado ao sistema.', 'success');
+                if (window.updateApplyButtonState) window.updateApplyButtonState();
             }
         } else {
             // ✅ GARANTIR ESTRUTURA COMPLETA
-            const completeProposedData = validateAndEnsureBancoEquipamentos(proposedData);
+            const completeProposedData = validateAndEnsureCompleteData(proposedData);
             
             window.systemData = completeProposedData;
             window.stagingData = null;
@@ -133,19 +142,19 @@ export async function applyJSON() {
 
             updateAllTabsUI();
 
-            showSuccess('JSON aplicado com sucesso!');
-            updateJSONStatus('✅ JSON aplicado ao sistema.', 'success');
-            updateApplyButtonState();
+            if (window.showSuccess) window.showSuccess('JSON aplicado com sucesso!');
+            if (window.updateJSONStatus) window.updateJSONStatus('✅ JSON aplicado ao sistema.', 'success');
+            if (window.updateApplyButtonState) window.updateApplyButtonState();
         }
 
     } catch (error) {
         console.error('Erro ao aplicar JSON:', error);
-        showError(`Erro ao aplicar JSON: ${error.message}`);
-        updateJSONStatus(`❌ Erro na aplicação: ${error.message}`, 'error');
+        if (window.showError) window.showError(`Erro ao aplicar JSON: ${error.message}`);
+        if (window.updateJSONStatus) window.updateJSONStatus(`❌ Erro na aplicação: ${error.message}`, 'error');
     }
 }
 
-// ==================== FUNÇÕES RESTANTES (mantenha igual) ====================
+// ==================== FUNÇÕES RESTANTES ====================
 
 async function saveSystemData(data) {
     try {
@@ -172,7 +181,7 @@ async function saveSystemData(data) {
 
     } catch (error) {
         console.error('Erro ao salvar dados:', error);
-        showError('Erro ao salvar dados no servidor. As alterações foram aplicadas apenas localmente.');
+        if (window.showError) window.showError('Erro ao salvar dados no servidor. Alterações aplicadas apenas localmente.');
         return false;
     }
 }
@@ -185,6 +194,7 @@ function updateAllTabsUI() {
     if (window.populateMachineFilter) window.populateMachineFilter();
     if (window.loadJSONEditor) window.loadJSONEditor();
     if (window.loadEquipamentos) window.loadEquipamentos();
+    if (window.loadDutos) window.loadDutos();
 }
 
 async function compareJSONData(current, proposed) {
@@ -224,9 +234,11 @@ function performLocalComparison(current, proposed) {
         machines: { added: [], modified: [], removed: [] },
         materials: { added: [], modified: [], removed: [] },
         empresas: { added: [], modified: [], removed: [] },
-        banco_equipamentos: { added: [], modified: [], removed: [] }
+        banco_equipamentos: { added: [], modified: [], removed: [] },
+        dutos: { added: [], modified: [], removed: [] }  // CORRIGIDO: array
     };
 
+    // Comparar constants
     const currentConstKeys = Object.keys(current.constants || {});
     const proposedConstKeys = Object.keys(proposed.constants || {});
 
@@ -247,6 +259,7 @@ function performLocalComparison(current, proposed) {
         }
     }
 
+    // Comparar banco_equipamentos
     const currentEquipKeys = Object.keys(current.banco_equipamentos || {});
     const proposedEquipKeys = Object.keys(proposed.banco_equipamentos || {});
 
@@ -267,26 +280,49 @@ function performLocalComparison(current, proposed) {
         }
     }
 
+    // ✅ CORRIGIDO: Comparar dutos como array
+    const currentDutos = current.dutos || [];
+    const proposedDutos = proposed.dutos || [];
+    
+    for (const duto of proposedDutos) {
+        const currentDuto = currentDutos.find(d => d.type === duto.type);
+        if (!currentDuto) {
+            differences.dutos.added.push(duto.type);
+        } else if (JSON.stringify(currentDuto) !== JSON.stringify(duto)) {
+            differences.dutos.modified.push(duto.type);
+        }
+    }
+    
+    for (const duto of currentDutos) {
+        if (!proposedDutos.some(d => d.type === duto.type)) {
+            differences.dutos.removed.push(duto.type);
+        }
+    }
+
+    // Calcular totais
     const totalAdded =
         differences.constants.added.length +
         differences.machines.added.length +
         differences.materials.added.length +
         differences.empresas.added.length +
-        differences.banco_equipamentos.added.length;
+        differences.banco_equipamentos.added.length +
+        differences.dutos.added.length;
 
     const totalModified =
         differences.constants.modified.length +
         differences.machines.modified.length +
         differences.materials.modified.length +
         differences.empresas.modified.length +
-        differences.banco_equipamentos.modified.length;
+        differences.banco_equipamentos.modified.length +
+        differences.dutos.modified.length;
 
     const totalRemoved =
         differences.constants.removed.length +
         differences.machines.removed.length +
         differences.materials.removed.length +
         differences.empresas.removed.length +
-        differences.banco_equipamentos.removed.length;
+        differences.banco_equipamentos.removed.length +
+        differences.dutos.removed.length;
 
     return {
         success: true,
@@ -308,7 +344,9 @@ function applyChangesIncremental(current, proposed, differences) {
         if (!current.materials) current.materials = {};
         if (!current.empresas) current.empresas = [];
         if (!current.banco_equipamentos) current.banco_equipamentos = {};
+        if (!current.dutos) current.dutos = [];  // CORRIGIDO: array vazio
 
+        // Aplicar constants
         for (const added of differences.constants.added) {
             current.constants[added] = proposed.constants[added];
         }
@@ -316,56 +354,37 @@ function applyChangesIncremental(current, proposed, differences) {
             current.constants[modified] = proposed.constants[modified];
         }
 
-        for (const added of differences.machines.added) {
-            const newMachine = proposed.machines.find(m => m.type === added);
-            if (newMachine) {
-                current.machines.push(newMachine);
-            }
-        }
-        for (const modified of differences.machines.modified) {
-            const updatedMachine = proposed.machines.find(m => m.type === modified);
-            const index = current.machines.findIndex(m => m.type === modified);
-            if (index !== -1 && updatedMachine) {
-                current.machines[index] = updatedMachine;
-            }
-        }
-
-        for (const added of differences.materials.added) {
-            current.materials[added] = proposed.materials[added];
-        }
-        for (const modified of differences.materials.modified) {
-            current.materials[modified] = proposed.materials[modified];
-        }
-
-        for (const added of differences.empresas.added) {
-            const newEmpresa = proposed.empresas.find(e => {
-                const key = Object.keys(e)[0];
-                return key === added;
-            });
-            if (newEmpresa) {
-                current.empresas.push(newEmpresa);
-            }
-        }
-        for (const modified of differences.empresas.modified) {
-            const updatedEmpresa = proposed.empresas.find(e => {
-                const key = Object.keys(e)[0];
-                return key === modified;
-            });
-            const index = current.empresas.findIndex(e => {
-                const key = Object.keys(e)[0];
-                return key === modified;
-            });
-            if (index !== -1 && updatedEmpresa) {
-                current.empresas[index] = updatedEmpresa;
-            }
-        }
-
+        // Aplicar banco_equipamentos
         for (const added of differences.banco_equipamentos.added) {
             current.banco_equipamentos[added] = proposed.banco_equipamentos[added];
         }
 
         for (const modified of differences.banco_equipamentos.modified) {
             current.banco_equipamentos[modified] = proposed.banco_equipamentos[modified];
+        }
+
+        // ✅ CORRIGIDO: Aplicar dutos como array
+        for (const added of differences.dutos.added) {
+            const newDuto = proposed.dutos.find(d => d.type === added);
+            if (newDuto) {
+                current.dutos.push(newDuto);
+            }
+        }
+        
+        for (const modified of differences.dutos.modified) {
+            const updatedDuto = proposed.dutos.find(d => d.type === modified);
+            const index = current.dutos.findIndex(d => d.type === modified);
+            if (index !== -1 && updatedDuto) {
+                current.dutos[index] = updatedDuto;
+            }
+        }
+
+        // Remover dutos que foram removidos
+        for (const removed of differences.dutos.removed) {
+            const index = current.dutos.findIndex(d => d.type === removed);
+            if (index !== -1) {
+                current.dutos.splice(index, 1);
+            }
         }
 
         return true;
@@ -405,9 +424,17 @@ async function showJsonConfirmationModal(comparison) {
                     <li><strong>Removidos:</strong> ${comparison.summary.total_removed}</li>
                 </ul>
                 <p style="margin-top: 10px;"><strong>Total de alterações:</strong> ${comparison.summary.total_changes}</p>
+                <div style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                    <h5 style="margin: 0 0 5px 0;">Detalhes por categoria:</h5>
+                    ${comparison.differences.dutos.added.length > 0 ? 
+                        `<p><strong>Dutos adicionados:</strong> ${comparison.differences.dutos.added.length}</p>` : ''}
+                    ${comparison.differences.dutos.modified.length > 0 ? 
+                        `<p><strong>Dutos modificados:</strong> ${comparison.differences.dutos.modified.length}</p>` : ''}
+                    ${comparison.differences.dutos.removed.length > 0 ? 
+                        `<p><strong>Dutos removidos:</strong> ${comparison.differences.dutos.removed.length}</p>` : ''}
+                </div>
                 <p style="margin-top: 10px; font-size: 12px; color: #666;">
-                    <i class="icon-info"></i> Os itens marcados como "removidos" serão mantidos no sistema.
-                    Para remover itens, edite manualmente.
+                    <i class="icon-info"></i> Os itens removidos serão excluídos do sistema.
                 </p>
             </div>
         `;
@@ -440,7 +467,7 @@ async function showJsonConfirmationModal(comparison) {
 export async function saveData() {
     try {
         if (!window.systemData) {
-            showError('Nenhum dado para salvar');
+            if (window.showError) window.showError('Nenhum dado para salvar');
             return;
         }
 
@@ -453,14 +480,14 @@ export async function saveData() {
         });
 
         if (response.ok) {
-            showSuccess('Dados salvos com sucesso!');
+            if (window.showSuccess) window.showSuccess('Dados salvos com sucesso!');
         } else {
             throw new Error('Erro ao salvar dados');
         }
 
     } catch (error) {
         console.error('Erro ao salvar:', error);
-        showError('Erro ao salvar dados');
+        if (window.showError) window.showError('Erro ao salvar dados');
     }
 }
 
@@ -480,11 +507,12 @@ export async function loadData() {
                 machines: data.machines?.length || 0,
                 materials: Object.keys(data.materials || {}).length,
                 empresas: data.empresas?.length || 0,
-                banco_equipamentos: Object.keys(data.banco_equipamentos || {}).length
+                banco_equipamentos: Object.keys(data.banco_equipamentos || {}).length,
+                dutos: data.dutos?.length || 0  // CORRIGIDO
             });
             
             // ✅ GARANTIR ESTRUTURA COMPLETA
-            const completeData = validateAndEnsureBancoEquipamentos(data);
+            const completeData = validateAndEnsureCompleteData(data);
             
             window.systemData = completeData;
 
@@ -494,11 +522,13 @@ export async function loadData() {
 
             window.stagingData = null;
             window.hasPendingChanges = false;
-            updateApplyButtonState();
+            if (window.updateApplyButtonState) window.updateApplyButtonState();
 
-            showSuccess('Dados carregados com sucesso!');
+            if (window.showSuccess) window.showSuccess('Dados carregados com sucesso!');
             
-            console.log('✅ Dados completos no window.systemData:', completeData);
+            console.log('✅ Dados completos no window.systemData:', {
+                dutos: completeData.dutos
+            });
             return completeData;
 
         } else {
@@ -507,7 +537,7 @@ export async function loadData() {
 
     } catch (error) {
         console.error('❌ Erro ao carregar:', error);
-        showError('Erro ao carregar dados do servidor');
+        if (window.showError) window.showError('Erro ao carregar dados do servidor');
         throw error;
     }
 }
@@ -526,14 +556,59 @@ document.addEventListener('DOMContentLoaded', function () {
     // Adicionar listener para debug
     window.addEventListener('dataLoaded', function (event) {
         console.log('🎯 EVENTO dataLoaded recebido no json-utils.js');
-        console.log('🎯 Dados:', event.detail);
-        console.log('🎯 Tem banco_equipamentos?', 'banco_equipamentos' in event.detail);
-        console.log('🎯 banco_equipamentos:', event.detail.banco_equipamentos);
+        console.log('🎯 Dutos:', event.detail.dutos);
+        console.log('🎯 Dutos é array?', Array.isArray(event.detail.dutos));
+        console.log('🎯 Número de dutos:', event.detail.dutos?.length || 0);
     });
 
     // Inicializar editor após um delay
     setTimeout(() => {
         console.log('⏰ Inicializando editor JSON...');
-        initJSONEditor();
+        if (window.initJSONEditor) {
+            window.initJSONEditor();
+        }
     }, 300);
 });
+
+// ==================== FUNÇÕES DE UTILIDADE ====================
+
+/**
+ * Função para converter dutos de formato antigo para novo
+ * Útil para migração de dados existentes
+ */
+export function convertDutosToArrayFormat(data) {
+    if (!data || typeof data !== 'object') {
+        return data;
+    }
+    
+    // Se dutos já é array, retorna como está
+    if (Array.isArray(data.dutos)) {
+        return data;
+    }
+    
+    // Se dutos é objeto com 'tipos' e 'opcionais', converter para array
+    if (data.dutos && typeof data.dutos === 'object') {
+        const oldFormat = data.dutos;
+        const newDutosArray = [];
+        
+        // Converter tipos
+        if (oldFormat.tipos && Array.isArray(oldFormat.tipos)) {
+            newDutosArray.push(...oldFormat.tipos);
+        }
+        
+        // Se não houver tipos, mas houver opcionais, criar array vazio
+        if (!oldFormat.tipos && oldFormat.opcionais) {
+            // Aqui você pode implementar lógica específica para sua migração
+            console.log('⚠️  Convertendo formato antigo de dutos para array');
+        }
+        
+        data.dutos = newDutosArray;
+    }
+    
+    return data;
+}
+
+// Exportar a função de conversão globalmente
+window.convertDutosToArrayFormat = convertDutosToArrayFormat;
+
+/* ==== FIM: json-utils.js ==== */

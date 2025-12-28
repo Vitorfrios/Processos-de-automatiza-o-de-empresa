@@ -434,6 +434,7 @@ class RouteHandler:
         """POST /api/equipamentos/delete"""
         handler.handle_post_delete_equipamento()
         
+            
     def handle_get_dutos(self, handler):
         """GET /api/dutos"""
         handler.handle_get_dutos()

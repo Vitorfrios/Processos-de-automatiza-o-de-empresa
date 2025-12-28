@@ -1,0 +1,378 @@
+/* styles/03_Edit_data/dutos.css */
+/* Estilos para módulo de dutos - Versão simplificada */
+
+/* Container principal de detalhes do duto */
+.duto-detail-view {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    margin: 24px 0;
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+}
+
+.detail-header {
+    background: #2c3e503d;
+    color: white;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+
+
+.detail-header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Editor de Dutos */
+.duto-editor {
+    background: white;
+}
+
+.editor-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.editor-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.btn-close-editor {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #7f8c8d;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.btn-close-editor:hover {
+    background: #f5f5f5;
+    color: #e74c3c;
+}
+
+.editor-body {
+    padding: 24px;
+}
+
+/* Formulário */
+.form-section {
+    margin-bottom: 24px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #34495e;
+    margin-bottom: 6px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: white;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.form-control:hover {
+    border-color: #bbb;
+}
+
+textarea.form-control {
+    min-height: 80px;
+    resize: vertical;
+}
+
+
+
+/* Seção de Opcionais */
+.opcionais-section {
+    margin-top: 24px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h5 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Botões */
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-add {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+}
+
+.btn-add:hover {
+    background: #219653;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.2);
+}
+
+.btn-outline-primary {
+    background: white;
+    border-color: #3498db;
+    color: #3498db;
+}
+
+.btn-outline-primary:hover {
+    background: #ebf5fb;
+    border-color: #2980b9;
+}
+
+.btn-outline-info {
+    background: white;
+    border-color: #3498db;
+    color: #3498db;
+}
+
+.btn-outline-info:hover {
+    background: #ebf5fb;
+    border-color: #2980b9;
+}
+
+.btn-outline-danger {
+    background: white;
+    border-color: #e74c3c;
+    color: #e74c3c;
+}
+
+.btn-outline-danger:hover {
+    background: #fdf2f2;
+    border-color: #c0392b;
+}
+
+/* Grid de Opcionais */
+.opcionais-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .opcionais-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Card de Opcional */
+.opcional-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.opcional-card:hover {
+    border-color: #3498db;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-title-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    background: white;
+    transition: all 0.2s;
+}
+
+.card-title-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.btn-delete {
+    background: none;
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-delete:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+.card-body {
+    padding: 16px;
+}
+
+/* Estado vazio */
+.empty-opcionais {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    background: #f8f9fa;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+}
+
+.empty-opcionais p {
+    color: #7f8c8d;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.opcional-card {
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Ícones básicos */
+.icon-duct {
+    font-style: normal;
+}
+
+/* Placeholders */
+::placeholder {
+    color: #95a5a6;
+    opacity: 0.8;
+}
+
+/* Responsividade adicional */
+@media (max-width: 480px) {
+    .editor-body {
+        padding: 16px;
+    }
+    
+    .editor-header {
+        padding: 16px;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .section-header h5 {
+        margin-bottom: 0;
+    }
+    
+    .btn-add {
+        width: 100%;
+    }
+    
+    .duto-detail-view {
+        margin: 16px -16px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+}

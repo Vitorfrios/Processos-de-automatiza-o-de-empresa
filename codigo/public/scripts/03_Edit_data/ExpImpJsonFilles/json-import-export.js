@@ -1,18 +1,18 @@
-// json-import-export.js
-import { showError, showSuccess, showWarning } from '../config/ui.js';
-import {
-    updateLineNumbers,
-    updateJSONStatus,
-    updateApplyButtonState,
-    fileToBase64,
-    validateJSONStructure
-} from './json-editor.js';
+// json-import-export.js - Versão simplificada
 
-
-// Função para exportar JSON
 export function exportToJSON() {
+    console.log('📤 Exportando JSON...');
     try {
         const systemData = window.systemData || {};
+        console.log('📊 Dados para exportação:', {
+            constants: Object.keys(systemData.constants || {}).length,
+            machines: systemData.machines?.length || 0,
+            materials: Object.keys(systemData.materials || {}).length,
+            empresas: systemData.empresas?.length || 0,
+            banco_equipamentos: Object.keys(systemData.banco_equipamentos || {}).length,
+            dutos: systemData.dutos?.length || 0
+        });
+        
         const dataStr = JSON.stringify(systemData, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
         
@@ -26,16 +26,28 @@ export function exportToJSON() {
         linkElement.click();
         document.body.removeChild(linkElement);
         
-        showSuccess('JSON exportado com sucesso!');
+        if (window.showSuccess) {
+            window.showSuccess('JSON exportado com sucesso!');
+        } else {
+            alert('JSON exportado com sucesso!');
+        }
+        
+        console.log('✅ JSON exportado com sucesso!');
         
     } catch (error) {
-        console.error('Erro ao exportar JSON:', error);
-        showError('Erro ao exportar JSON.');
+        console.error('❌ Erro ao exportar JSON:', error);
+        
+        if (window.showError) {
+            window.showError('Erro ao exportar JSON.');
+        } else {
+            alert('Erro ao exportar JSON.');
+        }
     }
 }
 
-// Função para importar JSON
 export function importFromJSON() {
+    console.log('📥 Importando JSON...');
+    
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -48,40 +60,81 @@ export function importFromJSON() {
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
+                console.log('📁 Arquivo selecionado:', file.name);
+                
                 const importedData = JSON.parse(e.target.result);
                 
-                // Validar estrutura básica
-                const validation = validateJSONStructure(importedData);
+                // Validar estrutura
+                const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos'];
+                const missingKeys = requiredKeys.filter(key => !(key in importedData));
                 
-                if (!validation.valid) {
-                    throw new Error(validation.errors.join('; '));
+                if (missingKeys.length > 0) {
+                    throw new Error(`Campos ausentes: ${missingKeys.join(', ')}`);
                 }
+                
+                console.log('✅ JSON válido:', {
+                    constants: Object.keys(importedData.constants || {}).length,
+                    machines: importedData.machines?.length || 0,
+                    materials: Object.keys(importedData.materials || {}).length,
+                    empresas: importedData.empresas?.length || 0,
+                    banco_equipamentos: Object.keys(importedData.banco_equipamentos || {}).length,
+                    dutos: importedData.dutos?.length || 0
+                });
                 
                 // Armazenar em staging
                 window.stagingData = importedData;
                 window.hasPendingChanges = true;
                 
-                // Exibir no editor JSON Bruto
+                // Exibir no editor
                 const editor = document.getElementById('jsonEditor');
                 if (editor) {
                     editor.value = JSON.stringify(importedData, null, 2);
-                    updateLineNumbers();
-                    switchTab('raw');
+                    
+                    if (window.updateLineNumbers) {
+                        window.updateLineNumbers();
+                    }
+                    
+                    if (window.switchTab) {
+                        window.switchTab('raw');
+                    }
                 }
                 
-                showWarning('JSON carregado na área de staging. Clique em "Aplicar JSON" para confirmar as alterações.');
-                updateJSONStatus('JSON carregado em staging. Aguardando aplicação.', 'warning');
-                updateApplyButtonState();
+                if (window.showWarning) {
+                    window.showWarning('JSON carregado na área de staging.');
+                }
+                
+                if (window.updateJSONStatus) {
+                    window.updateJSONStatus('JSON carregado em staging.', 'warning');
+                }
+                
+                if (window.updateApplyButtonState) {
+                    window.updateApplyButtonState();
+                }
+                
+                console.log('✅ JSON importado para staging');
                 
             } catch (error) {
-                console.error('Erro ao importar JSON:', error);
-                showError(`Erro ao importar JSON: ${error.message}`);
-                updateJSONStatus(`❌ JSON inválido: ${error.message}`, 'error');
+                console.error('❌ Erro ao importar JSON:', error);
+                
+                if (window.showError) {
+                    window.showError(`Erro ao importar JSON: ${error.message}`);
+                } else {
+                    alert(`Erro ao importar JSON: ${error.message}`);
+                }
+                
+                if (window.updateJSONStatus) {
+                    window.updateJSONStatus(`❌ JSON inválido: ${error.message}`, 'error');
+                }
             }
         };
         
         reader.onerror = function() {
-            showError('Erro ao ler o arquivo.');
+            console.error('❌ Erro ao ler o arquivo');
+            if (window.showError) {
+                window.showError('Erro ao ler o arquivo.');
+            } else {
+                alert('Erro ao ler o arquivo.');
+            }
         };
         
         reader.readAsText(file);
@@ -97,69 +150,208 @@ export function importFromJSON() {
     }, 100);
 }
 
-// Função para importar Excel
+export function exportToExcel() {
+    console.log('📤 Exportando Excel...');
+    
+    try {
+        const systemData = window.systemData || {};
+        
+        // Validar dados
+        const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos'];
+        const missingKeys = requiredKeys.filter(key => !(key in systemData));
+        
+        if (missingKeys.length > 0) {
+            throw new Error(`Dados incompletos: ${missingKeys.join(', ')}`);
+        }
+        
+        console.log('📊 Dados para exportação Excel:', {
+            dutos: systemData.dutos?.length || 0
+        });
+        
+        // Chamar API para gerar Excel
+        fetch('/api/excel/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(systemData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Erro: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                // Decodificar base64
+                const binaryString = atob(result.data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                const blob = new Blob([bytes], { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
+                const url = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = result.filename || 'sistema_export.xlsx';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                console.log('✅ Excel exportado com sucesso!');
+                
+                if (window.showSuccess) {
+                    window.showSuccess('Excel exportado com sucesso!');
+                } else {
+                    alert('Excel exportado com sucesso!');
+                }
+                
+            } else {
+                throw new Error(result.error || 'Erro na geração');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erro ao exportar Excel:', error);
+            
+            if (window.showError) {
+                window.showError(`Erro ao exportar Excel: ${error.message}`);
+            } else {
+                alert(`Erro ao exportar Excel: ${error.message}`);
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro ao exportar Excel:', error);
+        
+        if (window.showError) {
+            window.showError(`Erro ao exportar Excel: ${error.message}`);
+        } else {
+            alert(`Erro ao exportar Excel: ${error.message}`);
+        }
+    }
+}
+
 export function importFromExcel() {
+    console.log('📥 Importando Excel...');
+    
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.xlsx,.xls';
     input.style.display = 'none';
     
-    input.onchange = async function(event) {
+    input.onchange = function(event) {
         const file = event.target.files[0];
         if (!file) return;
         
         if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-            showError('Por favor, selecione um arquivo Excel (.xlsx ou .xls)');
+            const errorMsg = 'Selecione um arquivo Excel (.xlsx ou .xls)';
+            console.error('❌', errorMsg);
+            
+            if (window.showError) {
+                window.showError(errorMsg);
+            } else {
+                alert(errorMsg);
+            }
             return;
         }
         
-        showWarning('Convertendo Excel para JSON...');
+        console.log('📁 Arquivo Excel selecionado:', file.name);
         
-        try {
-            const base64File = await fileToBase64(file);
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(e) {
+            const base64 = e.target.result.split(',')[1];
             
-            const response = await fetch('/api/excel/upload', {
+            fetch('/api/excel/upload', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     filename: file.name,
-                    file: base64File
+                    file: base64
                 })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (!result.success) {
+                    throw new Error(result.error || 'Erro na conversão');
+                }
+                
+                console.log('✅ Excel convertido:', {
+                    dutos: result.data.dutos?.length || 0
+                });
+                
+                // Armazenar em staging
+                window.stagingData = result.data;
+                window.hasPendingChanges = true;
+                
+                // Exibir no editor
+                const editor = document.getElementById('jsonEditor');
+                if (editor) {
+                    editor.value = JSON.stringify(result.data, null, 2);
+                    
+                    if (window.updateLineNumbers) {
+                        window.updateLineNumbers();
+                    }
+                    
+                    if (window.switchTab) {
+                        window.switchTab('raw');
+                    }
+                }
+                
+                console.log('✅ Excel convertido e carregado em staging');
+                
+                if (window.showSuccess) {
+                    window.showSuccess('Excel convertido para JSON!');
+                } else {
+                    alert('Excel convertido para JSON!');
+                }
+                
+                if (window.updateJSONStatus) {
+                    window.updateJSONStatus('✅ Excel convertido.', 'success');
+                }
+                
+                if (window.updateApplyButtonState) {
+                    window.updateApplyButtonState();
+                }
+                
+            })
+            .catch(error => {
+                console.error('❌ Erro ao importar Excel:', error);
+                
+                if (window.showError) {
+                    window.showError(`Erro ao importar Excel: ${error.message}`);
+                } else {
+                    alert(`Erro ao importar Excel: ${error.message}`);
+                }
+                
+                if (window.updateJSONStatus) {
+                    window.updateJSONStatus(`❌ Erro: ${error.message}`, 'error');
+                }
             });
+        };
+        
+        reader.onerror = function() {
+            console.error('❌ Erro ao ler arquivo Excel');
             
-            if (!response.ok) {
-                throw new Error(`Erro na conversão: ${response.statusText}`);
+            if (window.showError) {
+                window.showError('Erro ao ler o arquivo Excel.');
+            } else {
+                alert('Erro ao ler o arquivo Excel.');
             }
-            
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Erro desconhecido na conversão');
-            }
-            
-            // Armazenar em staging
-            window.stagingData = result.data;
-            window.hasPendingChanges = true;
-            
-            // Exibir no editor
-            const editor = document.getElementById('jsonEditor');
-            if (editor) {
-                editor.value = JSON.stringify(result.data, null, 2);
-                updateLineNumbers();
-                switchTab('raw');
-            }
-            
-            showSuccess('Excel convertido para JSON com sucesso!');
-            updateJSONStatus('✅ Excel convertido. Dados em staging.', 'success');
-            updateApplyButtonState();
-            
-        } catch (error) {
-            console.error('Erro ao importar Excel:', error);
-            showError(`Erro ao importar Excel: ${error.message}`);
-            updateJSONStatus(`❌ Erro na conversão: ${error.message}`, 'error');
-        }
+        };
     };
     
     document.body.appendChild(input);
@@ -172,73 +364,12 @@ export function importFromExcel() {
     }, 100);
 }
 
-// Função para exportar Excel
-export async function exportToExcel() {
-    try {
-        const systemData = window.systemData || {};
-        
-        const validation = validateJSONStructure(systemData);
-        if (!validation.valid) {
-            showError('Dados do sistema inválidos para exportação');
-            return;
-        }
-        
-        showWarning('Gerando arquivo Excel...');
-        
-        const response = await fetch('/api/excel/export', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(systemData)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Erro na geração: ${response.statusText}`);
-        }
-        
-        const result = await response.json();
-        
-        if (!result.success) {
-            throw new Error(result.error || 'Erro desconhecido na geração');
-        }
-        
-        // Decodificar base64 e fazer download
-        const binaryString = atob(result.data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        const blob = new Blob([bytes], { 
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-        });
-        const url = window.URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = result.filename || 'sistema_export.xlsx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        showSuccess('Excel exportado com sucesso!');
-        
-    } catch (error) {
-        console.error('Erro ao exportar Excel:', error);
-        showError(`Erro ao exportar Excel: ${error.message}`);
-    }
+// Exportar funções para o escopo global
+if (typeof window !== 'undefined') {
+    window.exportToJSON = exportToJSON;
+    window.importFromJSON = importFromJSON;
+    window.exportToExcel = exportToExcel;
+    window.importFromExcel = importFromExcel;
+    
+    console.log('✅ Funções de import/export expostas globalmente');
 }
-
-// Função auxiliar para mudar de tab
-function switchTab(tabName) {
-    if (typeof window.switchTab === 'function') {
-        window.switchTab(tabName);
-    }
-}
-
-window.exportToJSON = exportToJSON;
-window.importFromJSON = importFromJSON;
-window.importFromExcel = importFromExcel;
-window.exportToExcel = exportToExcel;

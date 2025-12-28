@@ -10,7 +10,7 @@ import gzip
 import threading
 import re
 
-from ..PypExelAndJson.simple_converter import converter
+from ..PypExelAndJson.converter_exel import converter
 import base64
 
 # IMPORTS
@@ -1776,14 +1776,24 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 dados_data = json.load(f)
             
             dutos = dados_data.get("dutos", [])
-            types = [duto.get("type", "") for duto in dutos if duto.get("type")]
+            # Retornar array de objetos com informações completas
+            types = []
+            for duto in dutos:
+                tipo = duto.get("type", "")
+                if tipo:
+                    types.append({
+                        "value": tipo,
+                        "label": tipo,
+                        "descricao": duto.get("descricao", ""),
+                        "valor_base": duto.get("valor", 0)
+                    })
             
             # Ordenar tipos
-            types.sort()
+            types.sort(key=lambda x: x["label"])
             
             self.send_json_response({
                 "success": True,
-                "types": types,
+                "types": types,  # Agora é array de objetos
                 "count": len(types)
             })
             
@@ -1811,21 +1821,35 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             dutos = dados_data.get("dutos", [])
             opcionais_por_tipo = {}
-            todos_opcionais = set()
+            todos_opcionais = []
+            todos_opcionais_dict = {}
             
             for duto in dutos:
                 tipo = duto.get("type", "")
                 opcionais = duto.get("opcionais", [])
+                
+                if not isinstance(opcionais, list):
+                    opcionais = []
                 
                 opcionais_formatados = []
                 for opcional in opcionais:
                     opcional_info = {
                         "id": opcional.get("id"),
                         "nome": opcional.get("nome", ""),
-                        "value": opcional.get("value", 0)
+                        "value": opcional.get("value", 0),
+                        "descricao": opcional.get("descricao", ""),
+                        "tipo_duto": tipo
                     }
                     opcionais_formatados.append(opcional_info)
-                    todos_opcionais.add(opcional.get("nome", ""))
+                    
+                    # Adicionar à lista geral de opcionais
+                    if opcional.get("nome") and opcional.get("nome") not in todos_opcionais_dict:
+                        todos_opcionais_dict[opcional.get("nome")] = True
+                        todos_opcionais.append({
+                            "nome": opcional.get("nome", ""),
+                            "valor_medio": opcional.get("value", 0),
+                            "descricao": opcional.get("descricao", "")
+                        })
                 
                 opcionais_por_tipo[tipo] = {
                     "valor_base": duto.get("valor", 0),
@@ -1836,7 +1860,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response({
                 "success": True,
                 "opcionais_por_tipo": opcionais_por_tipo,
-                "todos_opcionais": sorted(list(todos_opcionais)),
+                "todos_opcionais": todos_opcionais,
                 "total_opcionais": len(todos_opcionais)
             })
             
@@ -1877,26 +1901,39 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             for duto in dutos:
                 if duto.get("type") == tipo:
-                    # Calcular valores com opcionais
-                    valor_base = duto.get("valor", 0)
+                    # Garantir que opcionais é um array
                     opcionais = duto.get("opcionais", [])
+                    if not isinstance(opcionais, list):
+                        opcionais = []
                     
                     # Calcular valor máximo (com todos os opcionais)
+                    valor_base = duto.get("valor", 0)
                     valor_maximo = valor_base
                     for opcional in opcionais:
                         valor_maximo += opcional.get("value", 0)
                     
-                    self.send_json_response({
+                    # Retornar estrutura completa que o frontend espera
+                    response = {
                         "success": True,
                         "tipo": tipo,
-                        "duto": duto,
+                        "duto": {
+                            "type": duto.get("type", ""),
+                            "valor": valor_base,
+                            "descricao": duto.get("descricao", ""),
+                            "categoria": duto.get("categoria", ""),
+                            "unidade": duto.get("unidade", "m²"),
+                            "opcionais": opcionais
+                        },
                         "estatisticas": {
                             "valor_base": valor_base,
                             "valor_maximo": valor_maximo,
                             "quantidade_opcionais": len(opcionais),
                             "opcionais_disponiveis": [op.get("nome", "") for op in opcionais]
                         }
-                    })
+                    }
+                    
+                    print(f"✅ Retornando duto '{tipo}': {len(opcionais)} opcionais")
+                    self.send_json_response(response)
                     return
             
             self.send_json_response({

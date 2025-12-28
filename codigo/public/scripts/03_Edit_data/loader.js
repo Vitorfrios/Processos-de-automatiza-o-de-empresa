@@ -5,6 +5,8 @@ export async function loadModules() {
     try {
         // Carrega os módulos na ordem correta
         const modules = [
+            './ExpImpJsonFilles/json-import-export.js',
+            './ExpImpJsonFilles/json-editor.js',
             './ExpImpJsonFilles/json-utils.js',
             './config/state.js',
             './config/api.js',
@@ -13,7 +15,9 @@ export async function loadModules() {
             './core/machines.js',
             './core/materials.js',
             './core/empresas.js',
-            './core/equipamentos.js'  // Este já está aqui
+            './core/equipamentos.js',
+            './core/dutos.js'  // NOVO: Módulo de dutos adicionado
+
         ];
 
         for (const module of modules) {
@@ -26,7 +30,7 @@ export async function loadModules() {
         }
 
         // Expor funções principais globalmente
-        window.loadData = window.loadData || async function() {
+        window.loadData = window.loadData || async function () {
             console.log('🔧 Sistema de edição de dados inicializado');
             // A função real será definida no main.js
         };

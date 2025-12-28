@@ -32,6 +32,105 @@
     color: var(--color-gray-900);
 }
 
+/* ===== HEADER DO DUTO - LAYOUT EM LINHA DISCRETO ===== */
+.form-group.full-width.duto-header-line {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    flex-wrap: nowrap;
+    width: 100%;
+    flex-direction: row;
+}
+
+.duto-header-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-gray-700);
+    margin: 0;
+    white-space: nowrap;
+    padding-right: 1rem;
+}
+
+.cobre-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.cobre-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-gray-600);
+    white-space: nowrap;
+}
+
+.cobre-input {
+    width: 100px;
+    height: 32px;
+    padding: 0 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border: 1px solid var(--color-gray-300);
+    border-radius: 4px;
+    background: var(--color-white);
+    text-align: center;
+    color: var(--color-gray-800);
+    transition: border-color 0.2s ease;
+}
+
+.cobre-input::-webkit-outer-spin-button,
+.cobre-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.cobre-input:hover {
+    border-color: var(--color-gray-400);
+}
+
+.cobre-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+.btn-cobre-default {
+    height: 32px;
+    padding: 0 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    border: 1px solid var(--color-gray-300);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.btn-cobre-default:hover {
+    background: var(--color-gray-200);
+    border-color: var(--color-gray-400);
+    color: var(--color-gray-900);
+}
+
+.btn-cobre-default:active {
+    transform: translateY(1px);
+}
+
+.btn-cobre-default:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
 /* ===== GRADE DO SELECTOR - RESPONSIVA ===== */
 .selector-grid {
     display: grid;
@@ -205,9 +304,7 @@
     background-color: var(--table-row-hover-bg);
 }
 
-.dutos-table tbody tr:nth-child(even) {
-    background-color: var(--table-cell-bg);
-}
+
 
 .dutos-table tbody tr:nth-child(even):hover {
     background-color: var(--table-row-hover-bg);
@@ -230,7 +327,7 @@
 .dutos-table td:nth-child(4),
 .dutos-table td:nth-child(5),
 .dutos-table td:nth-child(6) { 
-    text-align: right;
+    text-align: center;
     font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
     font-weight: 600;
     color: var(--color-gray-900);
@@ -239,14 +336,7 @@
     text-align: center;
 }
 
-/* Especificação do KG */
-.dutos-table td:nth-child(3)::after {
-    content: " kg";
-    font-size: 0.75rem;
-    color: var(--color-gray-500);
-    margin-left: 2px;
-    font-weight: 400;
-}
+
 
 /* Botões na tabela */
 .btn-remove-duto,
@@ -378,6 +468,30 @@
         gap: var(--spacing-md);
     }
     
+    .form-group.full-width.duto-header-line {
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .duto-header-label {
+        font-size: 0.8125rem;
+        padding-right: 0.75rem;
+    }
+    
+    .cobre-label {
+        font-size: 0.75rem;
+    }
+    
+    .cobre-input {
+        width: 90px;
+        font-size: 0.75rem;
+    }
+    
+    .btn-cobre-default {
+        font-size: 0.7rem;
+        padding: 0 0.5rem;
+    }
+    
     .form-group.full-width.text-center {
         gap: var(--spacing-md);
         padding: var(--spacing-md);
@@ -400,6 +514,29 @@
     .duto-selector {
         padding: var(--spacing-md);
         margin-bottom: var(--spacing-md);
+    }
+    
+    .form-group.full-width.duto-header-line {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .duto-header-label {
+        border-right: none;
+        border-bottom: 1px solid var(--color-gray-300);
+        padding-right: 0;
+        padding-bottom: 0.5rem;
+        width: 100%;
+    }
+    
+    .cobre-inline {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .cobre-input {
+        flex: 1;
+        max-width: 120px;
     }
     
     .dutos-table {
@@ -456,6 +593,30 @@
         margin-bottom: var(--spacing-md);
     }
     
+    .form-group.full-width.duto-header-line {
+        padding: 0.5rem;
+    }
+    
+    .cobre-inline {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .cobre-label {
+        width: 100%;
+    }
+    
+    .cobre-input {
+        width: 100% !important;
+        max-width: none;
+    }
+    
+    .btn-cobre-default {
+        width: 100%;
+        justify-content: center;
+    }
+    
     .kg-info {
         font-size: 0.75rem;
         padding: var(--spacing-sm);
@@ -508,14 +669,18 @@
     }
 }
 
-/* Mobile Pequeno (até 375px) */
-@media (max-width: 375px) {
+/* Mobile Pequeno (até 480px) */
+@media (max-width: 480px) {
     .duto-selector {
         padding: var(--spacing-sm);
     }
     
     .selector-grid {
         gap: var(--spacing-sm);
+    }
+    
+    .form-group.full-width.duto-header-line {
+        padding: 0.5rem;
     }
     
     .kg-info {
@@ -571,13 +736,15 @@
     .btn-remove-duto,
     .btn-edit-duto,
     .btn-load-dutos,
-    .btn-clear-dutos {
+    .btn-clear-dutos,
+    .btn-cobre-default {
         min-height: 48px;
         min-width: 48px;
     }
     
     .duto-select,
-    .duto-input {
+    .duto-input,
+    .cobre-input {
         min-height: 48px;
         font-size: 1rem;
     }
@@ -597,8 +764,10 @@
 .btn-edit-duto:focus,
 .btn-load-dutos:focus,
 .btn-clear-dutos:focus,
+.btn-cobre-default:focus,
 .duto-select:focus,
-.duto-input:focus {
+.duto-input:focus,
+.cobre-input:focus {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
 }
@@ -697,4 +866,27 @@
 .kg-badge.primary {
     background: var(--primary-gradient);
     color: var(--color-white);
+}
+
+
+/* Scroll horizontal APENAS para células específicas */
+.td-scroll-horizontal {
+    max-width: 160px;        /* ajuste conforme necessário */
+    overflow-x: auto;
+    white-space: nowrap;
+    display: block;          /* essencial para o overflow funcionar */
+}
+
+/* Scroll discreto */
+.td-scroll-horizontal::-webkit-scrollbar {
+    height: 4px;
+}
+
+.td-scroll-horizontal::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: 2px;
+}
+
+.td-scroll-horizontal::-webkit-scrollbar-track {
+    background: transparent;
 }

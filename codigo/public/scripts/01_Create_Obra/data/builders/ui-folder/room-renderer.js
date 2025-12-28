@@ -21,7 +21,8 @@ function renderRoomFromData(projectId, projectName, roomData, obraId = null, obr
         capacidade: Object.keys(roomData.capacidade || {}).length,
         ganhosTermicos: Object.keys(roomData.ganhosTermicos || {}).length,
         equipamentos: roomData.equipamentos?.length || 0,
-        conjuntosTubulacao: roomData.tubulacao?.conjuntos?.length || 0 // ✅ ADICIONADO: tubulação
+        dutos: roomData.dutos?.length || 0, // ✅ ADICIONADO: dutos
+        conjuntosTubulacao: roomData.tubulacao?.conjuntos?.length || 0
     });
 
     setTimeout(() => {
@@ -32,7 +33,7 @@ function renderRoomFromData(projectId, projectName, roomData, obraId = null, obr
         setTimeout(() => {
             const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
             if (roomElement) {
-                // ✅ GARANTIR que TODAS as seções sejam criadas (incluindo tubulação)
+                // ✅ GARANTIR que TODAS as seções sejam criadas (incluindo dutos)
                 ensureAllRoomSections(roomElement).then(sectionsReady => {
                     if (sectionsReady) {
                         console.log(`✅ Todas as seções criadas para ${roomName} - Iniciando preenchimento`);
@@ -71,6 +72,7 @@ async function populateRoomData(roomElement, roomData) {
     
     console.log(`🔄 Preenchendo sala "${roomName}" (ID: ${roomId})`, {
         equipamentos: roomData.equipamentos?.length || 0,
+        dutos: roomData.dutos?.length || 0, // ✅ ADICIONADO: dutos
         tubulacaoConjuntos: roomData.tubulacao?.conjuntos?.length || 0,
         maquinas: roomData.maquinas?.length || 0
     });
@@ -117,6 +119,21 @@ async function populateRoomData(roomElement, roomData) {
                     console.error(`❌ Função fillEquipamentosData não disponível no window`);
                 }
             }, 2000);
+        }
+
+        // ✅ Preencher dutos
+        if (roomData.dutos && Array.isArray(roomData.dutos)) {
+            console.log(`📏 Preenchendo ${roomData.dutos.length} duto(s) para sala ${roomName}`);
+            
+            // Aguardar um pouco para garantir que a seção foi criada
+            setTimeout(() => {
+                if (typeof window.fillDutosData === 'function') {
+                    window.fillDutosData(roomElement, roomData.dutos);
+                    console.log(`✅ Dutos preenchidos via função global`);
+                } else {
+                    console.error(`❌ Função fillDutosData não disponível no window`);
+                }
+            }, 2500);
         }
 
         // ✅ CORREÇÃO CRÍTICA: Preencher tubulação - CUIDADO COM A ESTRUTURA

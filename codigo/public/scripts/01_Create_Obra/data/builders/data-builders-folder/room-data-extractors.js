@@ -28,6 +28,7 @@ function extractRoomData(roomElement, projectElement) {
         capacidade: extractCapacityData(roomElement),
         ganhosTermicos: extractThermalGainsData(roomElement),
         equipamentos: extractEquipamentosData(roomElement),
+        dutos: extractDutosData(roomElement), // ✅ ADICIONADO: Extração de dutos
         tubulacao: extractTubulacaoData(roomElement)
     };
 
@@ -37,6 +38,7 @@ function extractRoomData(roomElement, projectElement) {
         capacidade: Object.keys(roomData.capacidade).length,
         ganhosTermicos: Object.keys(roomData.ganhosTermicos).length,
         equipamentos: roomData.equipamentos.length,
+        dutos: roomData.dutos.length, // ✅ ADICIONADO: Contagem de dutos
         conjuntosTubulacao: roomData.tubulacao.conjuntos?.length || 0
     });
     
@@ -256,6 +258,41 @@ function extractEquipamentosData(roomElement) {
     return equipamentos;
 }
 
+/**
+ * Extrai dados dos dutos de uma sala
+ */
+function extractDutosData(roomElement) {
+    const dutos = [];
+    
+    if (!roomElement?.dataset.roomId) {
+        console.error('❌ Elemento da sala inválido para extração de dutos');
+        return dutos;
+    }
+    
+    const roomId = roomElement.dataset.roomId;
+    
+    // Buscar todos os dutos na tabela
+    const tbody = document.getElementById(`dutos-list-${roomId}`);
+    if (!tbody) {
+        console.log(`ℹ️ Nenhum duto encontrado para sala ${roomId}`);
+        return dutos;
+    }
+    
+    // Buscar todas as linhas de dutos (exceto linha vazia)
+    const dutoRows = tbody.querySelectorAll('.duto-row');
+    
+    dutoRows.forEach(row => {
+        try {
+            const dutoData = JSON.parse(row.getAttribute('data-duto'));
+            dutos.push(dutoData);
+        } catch (error) {
+            console.error('❌ Erro ao extrair dados do duto:', error);
+        }
+    });
+    
+    console.log(`📏 ${dutos.length} duto(s) extraído(s) da sala ${roomId}`);
+    return dutos;
+}
 
 function extractTubulacaoData(roomElement) {
     const resultado = {
@@ -364,5 +401,6 @@ export {
     extractThermalGainsData,
     extractCapacityData,
     extractEquipamentosData,
+    extractDutosData, 
     extractTubulacaoData
 };
