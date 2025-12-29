@@ -1,9 +1,5 @@
 {
   "constants": {
-    "TESTE": {
-      "value": 78797987879797,
-      "description": "sjyhiyityufjhjkhlu8yityfjhvbjkjup98yitygg"
-    },
     "VARIAVEL_PD": {
       "value": 0.0402,
       "description": "Coeficiente de perda térmica por densidade"
@@ -2021,12 +2017,6 @@
     },
     {
       "BLC": "BlueLink Consulting"
-    },
-    {
-      "NOV170": "Nova Empresa NOV170"
-    },
-    {
-      "SEG": "segerhgrgergergegr"
     }
   ],
   "banco_equipamentos": {
@@ -2252,13 +2242,6 @@
         "1000x500": 356.25,
         "1000x600": 427.5,
         "1200x600": 513
-      }
-    },
-    "SPCD": {
-      "codigo": "SPCD",
-      "descricao": "seila teste",
-      "valores_padrao": {
-        "300x400": 123
       }
     }
   },
