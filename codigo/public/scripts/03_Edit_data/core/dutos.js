@@ -1,5 +1,8 @@
 // scripts/03_Edit_data/core/dutos.js
-// Módulo de gerenciamento de Dutos - Versão simplificada
+// Módulo de gerenciamento de Dutos - Versão corrigida
+
+// Importar sistema de estado global
+import { systemData, addPendingChange, clearPendingChanges, updateSaveButton } from '../config/state.js';
 
 // Estado do módulo
 let dutosData = [];
@@ -15,25 +18,38 @@ let dutoDetailTitle;
 export async function initDutosModule() {
     console.log('🔧 Inicializando módulo de dutos...');
     
-    // Inicializar elementos DOM
-    dutosTableBody = document.getElementById('dutosTableBody');
-    dutoDetailView = document.getElementById('dutoDetailView');
-    dutoDetailContent = document.getElementById('dutoDetailContent');
-    dutoDetailTitle = document.getElementById('dutoDetailTitle');
-    
-    // Carregar dados iniciais
-    await loadDutosData();
-    
-    // Expor funções globalmente
-    window.loadDutos = loadDutosData;
-    window.addDuto = addDuto;
-    window.editDuto = editDuto;
-    window.deleteDuto = deleteDuto;
-    window.closeDutoDetail = closeDutoDetail;
-    window.addOpcional = addOpcional;
-    window.deleteOpcional = deleteOpcional;
-    
-    console.log('✅ Módulo de dutos inicializado');
+    try {
+        // Inicializar elementos DOM
+        dutosTableBody = document.getElementById('dutosTableBody');
+        dutoDetailView = document.getElementById('dutoDetailView');
+        dutoDetailContent = document.getElementById('dutoDetailContent');
+        dutoDetailTitle = document.getElementById('dutoDetailTitle');
+        
+        // Carregar dados iniciais
+        await loadDutosData();
+        
+        // Expor funções e dados globalmente para acesso do HTML
+        window.dutosData = dutosData;
+        window.loadDutos = loadDutosData;
+        window.addDuto = addDuto;
+        window.editDuto = editDuto;
+        window.deleteDuto = deleteDuto;
+        window.closeDutoDetail = closeDutoDetail;
+        window.addOpcional = addOpcional;
+        window.deleteOpcional = deleteOpcional;
+        window.updateDutoField = updateDutoField;
+        window.updateDutoOpcional = updateDutoOpcional;
+        window.resetDutoChanges = resetDutoChanges;
+        window.viewOpcionais = viewOpcionais;
+        window.saveDutosData = saveDutosData;
+        
+        console.log('✅ Módulo de dutos inicializado');
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao inicializar módulo de dutos:', error);
+        showMessage('error', 'Erro ao inicializar módulo de dutos');
+        return false;
+    }
 }
 
 // ==================== FUNÇÕES DE CARREGAMENTO ====================
@@ -66,10 +82,11 @@ export async function loadDutosData() {
             dutosData = [];
         }
         
-        // Atualizar systemData
-        if (window.systemData) {
-            window.systemData.dutos = dutosData;
-        }
+        // Atualizar systemData (ESTADO GLOBAL)
+        systemData.dutos = dutosData;
+        
+        // Atualizar referência global
+        window.dutosData = dutosData;
         
         renderDutosTable();
         
@@ -81,6 +98,8 @@ export async function loadDutosData() {
         console.error('❌ Erro ao carregar dados dos dutos:', error);
         showMessage('error', 'Erro ao carregar dados dos dutos');
         dutosData = [];
+        systemData.dutos = dutosData; // Atualizar estado global
+        window.dutosData = dutosData;
         renderDutosTable();
         return dutosData;
     }
@@ -127,7 +146,6 @@ function renderDutosTable() {
                     ${opcionaisCount} ${opcionaisCount === 1 ? 'opcional' : 'opcionais'}
                 </span>
             </td>
-
             <td class="text-center">
                 <button class="btn btn-sm btn-outline-info me-1" onclick="editDuto(${index})">
                     Editar
@@ -142,18 +160,57 @@ function renderDutosTable() {
     });
 }
 
+// ==================== FUNÇÕES GLOBAIS DE ACESSO ====================
+
+// Funções para acessar dutosData do HTML
+export function updateDutoField(index, field, value) {
+    if (dutosData[index]) {
+        dutosData[index][field] = value;
+        systemData.dutos = dutosData; // Atualizar estado global
+        
+        // Marcar mudança pendente
+        addPendingChange('dutos');
+        window.hasPendingChanges = true;
+        
+        // Atualizar visualização se necessário
+        if (field === 'type' && dutoDetailTitle) {
+            dutoDetailTitle.textContent = value || 'Editar Duto';
+        }
+    }
+}
+
+export function updateDutoOpcional(dutoIndex, opcionalIndex, field, value) {
+    if (dutosData[dutoIndex] && dutosData[dutoIndex].opcionais) {
+        dutosData[dutoIndex].opcionais[opcionalIndex][field] = value;
+        systemData.dutos = dutosData; // Atualizar estado global
+        
+        // Marcar mudança pendente
+        addPendingChange('dutos');
+        window.hasPendingChanges = true;
+    }
+}
+
 // ==================== CRUD DE DUTOS ====================
 
 export function addDuto() {
-    dutosData.push({
+    const newDuto = {
         type: "Novo Tipo de Duto",
         valor: 0,
         descricao: "",
         opcionais: []
-    });
+    };
+    
+    dutosData.push(newDuto);
+    systemData.dutos = dutosData; // Atualizar estado global
+    window.dutosData = dutosData; // Atualizar referência global
     
     renderDutosTable();
     editDuto(dutosData.length - 1);
+    showMessage('success', 'Novo duto adicionado');
+    
+    // Marcar mudança pendente
+    addPendingChange('dutos');
+    window.hasPendingChanges = true;
 }
 
 export function editDuto(index) {
@@ -181,8 +238,8 @@ export function editDuto(index) {
                             <div class="form-group">
                                 <label>Tipo de Duto</label>
                                 <input type="text" class="form-control" 
-                                       value="${duto.type || ''}" 
-                                       onchange="dutosData[${index}].type = this.value"
+                                       value="${escapeHtml(duto.type || '')}" 
+                                       onchange="updateDutoField(${index}, 'type', this.value)"
                                        placeholder="Ex: Chapa de aço inoxidável">
                             </div>
                             
@@ -190,7 +247,7 @@ export function editDuto(index) {
                                 <label>Valor Base (R$)</label>
                                 <input type="number" class="form-control" step="0.01"
                                        value="${duto.valor || 0}" 
-                                       onchange="dutosData[${index}].valor = parseFloat(this.value) || 0"
+                                       onchange="updateDutoField(${index}, 'valor', parseFloat(this.value) || 0)"
                                        placeholder="0.00">
                             </div>
                         </div>
@@ -198,13 +255,12 @@ export function editDuto(index) {
                         <div class="form-group">
                             <label>Descrição</label>
                             <input type="text" class="form-control"
-                                   value="${duto.descricao || ''}"
-                                   onchange="dutosData[${index}].descricao = this.value"
+                                   value="${escapeHtml(duto.descricao || '')}"
+                                   onchange="updateDutoField(${index}, 'descricao', this.value)"
                                    placeholder="Descrição detalhada do duto">
                         </div>
                     </div>
                     
-
                     <div class="opcionais-section">
                         <div class="section-header">
                             <h5>Lista de Opcionais</h5>
@@ -224,6 +280,7 @@ export function editDuto(index) {
     
     if (dutoDetailView) {
         dutoDetailView.style.display = 'block';
+        dutoDetailView.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
@@ -246,8 +303,8 @@ function renderOpcionaisCards(opcionais, dutoIndex) {
             <div class="opcional-card" data-index="${opcIndex}">
                 <div class="card-header">
                     <input type="text" class="card-title-input" 
-                           value="${opcional.nome || ''}" 
-                           onchange="dutosData[${dutoIndex}].opcionais[${opcIndex}].nome = this.value"
+                           value="${escapeHtml(opcional.nome || '')}" 
+                           onchange="updateDutoOpcional(${dutoIndex}, ${opcIndex}, 'nome', this.value)"
                            placeholder="Nome do opcional">
                     <button class="btn-delete" onclick="deleteOpcional(${dutoIndex}, ${opcIndex})" 
                             title="Excluir opcional">
@@ -260,15 +317,15 @@ function renderOpcionaisCards(opcionais, dutoIndex) {
                         <label>Valor Adicional (R$)</label>
                         <input type="number" class="form-control" step="0.01"
                                value="${opcional.value || 0}" 
-                               onchange="dutosData[${dutoIndex}].opcionais[${opcIndex}].value = parseFloat(this.value) || 0"
+                               onchange="updateDutoOpcional(${dutoIndex}, ${opcIndex}, 'value', parseFloat(this.value) || 0)"
                                placeholder="0.00">
                     </div>
                     
                     <div class="form-group">
                         <label>Descrição</label>
                         <input type="text" class="form-control"
-                               value="${opcional.descricao || ''}" 
-                               onchange="dutosData[${dutoIndex}].opcionais[${opcIndex}].descricao = this.value"
+                               value="${escapeHtml(opcional.descricao || '')}" 
+                               onchange="updateDutoOpcional(${dutoIndex}, ${opcIndex}, 'descricao', this.value)"
                                placeholder="Descrição do opcional">
                     </div>
                 </div>
@@ -283,14 +340,14 @@ export function deleteDuto(index) {
     if (!confirm('Tem certeza que deseja excluir este duto?')) return;
     
     dutosData.splice(index, 1);
+    systemData.dutos = dutosData; // Atualizar estado global
+    window.dutosData = dutosData; // Atualizar referência global
     renderDutosTable();
     closeDutoDetail();
     showMessage('success', 'Duto excluído');
     
-    if (window.systemData) {
-        window.systemData.dutos = dutosData;
-    }
-    
+    // Marcar mudança pendente
+    addPendingChange('dutos');
     window.hasPendingChanges = true;
 }
 
@@ -308,8 +365,14 @@ export function addOpcional(dutoIndex) {
         descricao: ""
     });
     
+    // Atualizar estado global
+    systemData.dutos = dutosData;
+    
     editDuto(dutoIndex);
     showMessage('info', 'Novo opcional adicionado');
+    
+    // Marcar mudança pendente
+    addPendingChange('dutos');
     window.hasPendingChanges = true;
 }
 
@@ -319,8 +382,15 @@ export function deleteOpcional(dutoIndex, opcionalIndex) {
     const duto = dutosData[dutoIndex];
     if (duto && duto.opcionais) {
         duto.opcionais.splice(opcionalIndex, 1);
+        
+        // Atualizar estado global
+        systemData.dutos = dutosData;
+        
         editDuto(dutoIndex);
         showMessage('success', 'Opcional excluído');
+        
+        // Marcar mudança pendente
+        addPendingChange('dutos');
         window.hasPendingChanges = true;
     }
 }
@@ -336,27 +406,68 @@ export function viewOpcionais(index) {
     editDuto(index);
 }
 
+export function resetDutoChanges() {
+    if (confirm('Descartar todas as alterações nos dutos? Esta ação não pode ser desfeita.')) {
+        // Remover mudanças pendentes de dutos
+        if (window.pendingChanges && window.pendingChanges.has) {
+            window.pendingChanges.delete('dutos');
+        }
+        
+        loadDutosData(); // Recarrega os dados originais da API
+        closeDutoDetail();
+        window.hasPendingChanges = false;
+        
+        // Atualizar botão de salvar
+        if (typeof updateSaveButton === 'function') {
+            updateSaveButton();
+        }
+        
+        showMessage('info', 'Alterações nos dutos descartadas');
+    }
+}
+
 // ==================== PERSISTÊNCIA ====================
 
 export async function saveDutosData() {
     try {
+        console.log('💾 Salvando dados dos dutos...');
+        
         const response = await fetch('/api/dutos', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify(dutosData)
         });
         
         if (response.ok) {
-            console.log('✅ Dutos salvos');
+            console.log('✅ Dutos salvos com sucesso');
+            
+            // Remover mudanças pendentes
+            if (window.pendingChanges && window.pendingChanges.has) {
+                window.pendingChanges.delete('dutos');
+            }
+            window.hasPendingChanges = false;
+            
+            // Atualizar botão de salvar
+            if (typeof updateSaveButton === 'function') {
+                updateSaveButton();
+            }
+            
+            showMessage('success', 'Dutos salvos com sucesso');
             return true;
         } else {
-            throw new Error(`Status: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`API retornou status ${response.status}: ${errorText}`);
         }
     } catch (error) {
         console.error('❌ Erro ao salvar dutos:', error);
+        showMessage('error', `Erro ao salvar dutos: ${error.message}`);
         return false;
     }
 }
+
+// ==================== GETTERS E SETTERS ====================
 
 export function getDutosData() {
     return dutosData;
@@ -364,36 +475,114 @@ export function getDutosData() {
 
 export function updateDutosData(newData) {
     dutosData = Array.isArray(newData) ? newData : [];
-    if (window.systemData) window.systemData.dutos = dutosData;
+    systemData.dutos = dutosData; // Atualizar estado global
+    window.dutosData = dutosData; // Atualizar referência global
+    
     renderDutosTable();
 }
 
 // ==================== UTILITÁRIOS ====================
 
-function showMessage(type, text) {
-    console.log(`${type}: ${text}`);
-    
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(text, type);
-    } else {
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed; top: 20px; right: 20px;
-            padding: 12px 20px; background: #28a745; color: white;
-            border-radius: 4px; z-index: 10000;
-        `;
-        toast.textContent = text;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
-// ==================== INICIALIZAÇÃO ====================
-
-setTimeout(() => {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initDutosModule);
-    } else {
-        initDutosModule();
+function showMessage(type, text) {
+    console.log(`${type.toUpperCase()}: ${text}`);
+    
+    // Tentar usar o sistema de notificação global se disponível
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(text, type);
+        return;
     }
-}, 100);
+    
+    // Fallback: criar uma notificação simples
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        background: ${type === 'success' ? '#28a745' : 
+                     type === 'error' ? '#dc3545' : 
+                     type === 'info' ? '#17a2b8' : '#6c757d'};
+        color: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 10000;
+        font-size: 14px;
+        min-width: 250px;
+        max-width: 400px;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    // Adicionar estilo de animação
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast-notification { animation: slideIn 0.3s ease; }
+    `;
+    document.head.appendChild(style);
+    
+    toast.textContent = text;
+    document.body.appendChild(toast);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+            if (style.parentNode) {
+                style.parentNode.removeChild(style);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// ==================== INICIALIZAÇÃO AUTOMÁTICA ====================
+
+// Inicializar quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            if (typeof initDutosModule === 'function') {
+                initDutosModule().catch(error => {
+                    console.error('❌ Falha na inicialização automática do módulo de dutos:', error);
+                });
+            }
+        }, 100);
+    });
+} else {
+    setTimeout(() => {
+        if (typeof initDutosModule === 'function') {
+            initDutosModule().catch(error => {
+                console.error('❌ Falha na inicialização automática do módulo de dutos:', error);
+            });
+        }
+    }, 100);
+}
+
+// Exportar por padrão para facilitar importação
+export default {
+    initDutosModule,
+    loadDutosData,
+    saveDutosData,
+    getDutosData,
+    updateDutosData,
+    addDuto,
+    editDuto,
+    deleteDuto,
+    addOpcional,
+    deleteOpcional,
+    closeDutoDetail,
+    resetDutoChanges
+};

@@ -2,7 +2,7 @@
 /* EDITOR JSON COMPLETO - SCROLL FUNCIONAL COMO VS CODE - CORRIGIDO */
 
 /* ============ CONTAINER PRINCIPAL ============ */
-/* Container pai com SCROLL - CRÍTICO: Scroll aqui em vez do wrapper interno */
+/* Container pai sem scroll */
 .json-container {
     display: flex;
     flex-direction: column;
@@ -13,56 +13,19 @@
     border: 1px solid #e1e4e8;
     border-radius: 8px;
     background: #ffffff;
-    overflow: auto; /* SCROLL PRINCIPAL AQUI */
+    overflow: hidden; /* Sem scroll no container principal */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 15px;
 }
 
-/* ============ CONTAINER DE CONTEÚDO (SEM SCROLL) ============ */
-/* Este wrapper apenas organiza o conteúdo, SEM scroll */
+/* ============ CONTAINER DE CONTEÚDO (COM SCROLL) ============ */
+/* Este wrapper tem o scroll */
 .json-scroll-wrapper {
     display: flex;
     flex: 1;
     min-width: 0;
-    min-height: min-content; /* CRÍTICO: Altura mínima do conteúdo */
+    overflow: auto; /* SCROLL AQUI */
     background: #ffffff;
-    position: relative;
-    
-    /* SEM scroll aqui - o scroll está no .json-container */
-    overflow: visible !important;
-}
-
-/* ============ NÚMEROS DE LINHA (FIXOS À ESQUERDA) ============ */
-.line-numbers-wrapper {
-    flex-shrink: 0;
-    width: 60px;
-    min-width: 60px;
-    background: #f6f8fa;
-    border-right: 1px solid #e1e4e8;
-    overflow: hidden;
-    position: sticky;
-    left: 0;
-    top: 0;
-    z-index: 10;
-    height: fit-content; /* Ajusta à altura do conteúdo */
-}
-
-.line-numbers {
-    padding: 16px 10px;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    color: #586069;
-    text-align: right;
-    user-select: none;
-    box-sizing: border-box;
-    min-height: 100%;
-}
-
-.line-numbers > div {
-    height: 20px;
-    line-height: 20px;
-    padding-right: 8px;
     position: relative;
 }
 
@@ -73,13 +36,14 @@
     position: relative;
     overflow: visible;
     background: #ffffff;
+    padding: 0;
 }
 
-/* ============ TEXTAREA (SEM SCROLL PRÓPRIO) ============ */
+/* ============ TEXTAREA (COM SCROLL) ============ */
 #jsonEditor {
     display: block;
     width: 100%;
-    height: auto;
+    height: 100%;
     min-height: 100%;
     padding: 16px;
     margin: 0;
@@ -99,8 +63,8 @@
     overflow-wrap: normal;
     word-break: keep-all;
     
-    /* CRÍTICO: SEM SCROLL PRÓPRIO */
-    overflow: hidden !important;
+    /* CRÍTICO: COM SCROLL PRÓPRIO */
+    overflow: auto !important;
     
     /* Outras propriedades */
     outline: none;
@@ -221,66 +185,69 @@
 .json-status.info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
 
 /* ============ HIGHLIGHT DE LINHAS ============ */
-.line-numbers > div.error-line {
-    color: #dc3545 !important;
-    font-weight: bold !important;
-    background-color: rgba(220, 53, 69, 0.1);
-    border-radius: 0 3px 3px 0;
+/* Estilos para highlight no textarea */
+#jsonEditor.error-line-highlight {
+    background-color: rgba(220, 53, 69, 0.05);
 }
 
-.line-numbers > div.error-line::before {
-    content: "●";
-    position: absolute;
-    left: 4px;
-    color: #dc3545;
-    font-size: 8px;
-}
-
-.line-numbers > div.warning-line {
-    color: #ffc107 !important;
-    font-weight: bold !important;
-    background-color: rgba(255, 193, 7, 0.1);
-    border-radius: 0 3px 3px 0;
-}
-
-.line-numbers > div.warning-line::before {
-    content: "●";
-    position: absolute;
-    left: 4px;
-    color: #ffc107;
-    font-size: 8px;
+#jsonEditor.warning-line-highlight {
+    background-color: rgba(255, 193, 7, 0.05);
 }
 
 /* ============ SCROLLBAR PERSONALIZADA ============ */
-/* Agora aplicada ao .json-container */
-.json-container::-webkit-scrollbar {
+/* Scrollbar do textarea */
+#jsonEditor::-webkit-scrollbar {
     width: 12px;
     height: 12px;
 }
 
-.json-container::-webkit-scrollbar-track {
+#jsonEditor::-webkit-scrollbar-track {
     background: #f6f8fa;
     border-radius: 6px;
 }
 
-.json-container::-webkit-scrollbar-thumb {
+#jsonEditor::-webkit-scrollbar-thumb {
     background: #c6cbd1;
     border-radius: 6px;
     border: 3px solid #f6f8fa;
 }
 
-.json-container::-webkit-scrollbar-thumb:hover {
+#jsonEditor::-webkit-scrollbar-thumb:hover {
     background: #959da5;
 }
 
-.json-container::-webkit-scrollbar-corner {
+#jsonEditor::-webkit-scrollbar-corner {
     background: #f6f8fa;
 }
 
+/* Scrollbar do wrapper */
+.json-scroll-wrapper::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.json-scroll-wrapper::-webkit-scrollbar-track {
+    background: #ffffff;
+}
+
+.json-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #d1d5da;
+    border-radius: 6px;
+}
+
+.json-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #959da5;
+}
+
 /* Firefox */
-.json-container {
+#jsonEditor {
     scrollbar-width: thin;
     scrollbar-color: #c6cbd1 #f6f8fa;
+}
+
+.json-scroll-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5da #ffffff;
 }
 
 /* ============ LOADING OVERLAY ============ */
@@ -368,24 +335,6 @@
         order: 999;
     }
     
-    .line-numbers-wrapper {
-        width: 50px;
-        min-width: 50px;
-        position: sticky;
-        left: 0;
-    }
-    
-    .line-numbers {
-        font-size: 11px;
-        line-height: 18px;
-        padding: 12px 8px;
-    }
-    
-    .line-numbers > div {
-        height: 18px;
-        line-height: 18px;
-    }
-    
     #jsonEditor {
         font-size: 12px;
         line-height: 18px;
@@ -393,7 +342,11 @@
     }
     
     /* Scroll suave em mobile */
-    .json-container {
+    .json-scroll-wrapper {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #jsonEditor {
         -webkit-overflow-scrolling: touch;
     }
 }
@@ -416,24 +369,6 @@
         min-width: 100%;
     }
     
-    .line-numbers-wrapper {
-        width: 45px;
-        min-width: 45px;
-        position: sticky;
-        left: 0;
-    }
-    
-    .line-numbers {
-        font-size: 10px;
-        padding: 10px 6px;
-        line-height: 16px;
-    }
-    
-    .line-numbers > div {
-        height: 16px;
-        line-height: 16px;
-    }
-    
     #jsonEditor {
         font-size: 11px;
         line-height: 16px;
@@ -441,5 +376,22 @@
     }
 }
 
+/* ============ AJUSTES DE ALTURA DINÂMICA ============ */
+/* Garante que o textarea ocupe todo o espaço disponível */
+.json-editor-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+#jsonEditor {
+    flex: 1;
+}
+
+/* ============ CUSTOMIZAÇÃO PARA LARGO CONTEÚDO ============ */
+/* Quando o conteúdo é muito largo, habilita scroll horizontal */
+#jsonEditor[data-wide="true"] {
+    white-space: pre;
+    overflow-x: auto;
+}
 
 /* ==== FIM: json-editor-styles.css ==== */

@@ -1,6 +1,7 @@
 /* ==== INÍCIO: json-editor.js ==== */
 /* ==== json-editor.js ==== */
 // json-editor.js - VERSÃO CORRIGIDA COM DUTOS COMO ARRAY
+// VERSÃO SEM NÚMEROS DE LINHA
 
 // ==================== ESTADO GLOBAL ====================
 window.stagingData = null;
@@ -10,12 +11,10 @@ let isInitialized = false;
 // ==================== OTIMIZAÇÕES ====================
 let updateTimeout = null;
 let layoutTimeout = null;
-let lastLineCount = 0;
 
 // Cache de elementos DOM
 let domCache = {
     editor: null,
-    lineNumbers: null,
     jsonContainer: null,
     applyButton: null,
     status: null
@@ -28,7 +27,6 @@ let domCache = {
  */
 function initDomCache() {
     domCache.editor = document.getElementById('jsonEditor');
-    domCache.lineNumbers = document.getElementById('lineNumbers');
     domCache.jsonContainer = document.querySelector('.json-container');
     domCache.applyButton = document.getElementById('applyJsonBtn');
     domCache.status = document.getElementById('jsonStatus');
@@ -65,58 +63,12 @@ function validateAndEnsureStructure(data) {
 // ==================== FUNÇÕES PRINCIPAIS ====================
 
 /**
- * Atualiza os números das linhas com debouncing
- */
-export function updateLineNumbers() {
-    if (updateTimeout) clearTimeout(updateTimeout);
-    
-    updateTimeout = setTimeout(() => {
-        if (!domCache.editor || !domCache.lineNumbers) {
-            initDomCache();
-            if (!domCache.editor || !domCache.lineNumbers) return;
-        }
-
-        try {
-            const text = domCache.editor.value;
-            const lines = text.split('\n');
-            const totalLines = Math.max(lines.length, 1);
-
-            if (totalLines === lastLineCount && lastLineCount > 0) {
-                return;
-            }
-
-            lastLineCount = totalLines;
-
-            let numbersHTML = '';
-            for (let i = 1; i <= totalLines; i++) {
-                numbersHTML += `<div data-line="${i}">${i}</div>`;
-            }
-
-            domCache.lineNumbers.innerHTML = numbersHTML;
-
-            const lineHeight = 20;
-            const padding = 32;
-            const contentHeight = (totalLines * lineHeight) + padding;
-            const finalHeight = Math.max(contentHeight, 200);
-
-            domCache.editor.style.height = finalHeight + 'px';
-            domCache.lineNumbers.style.height = finalHeight + 'px';
-
-        } catch (error) {
-            console.error('Erro ao atualizar números das linhas:', error);
-        }
-    }, 50);
-}
-
-/**
  * Ajusta o layout do editor com debouncing
  */
 export function adjustEditorLayout() {
     if (layoutTimeout) clearTimeout(layoutTimeout);
     
     layoutTimeout = setTimeout(() => {
-        updateLineNumbers();
-        
         if (!domCache.editor || !domCache.jsonContainer) return;
 
         const lines = domCache.editor.value.split('\n');
@@ -151,24 +103,32 @@ export function adjustEditorLayout() {
                 }
             }, 50);
         }
+        
+        // Ajusta altura baseada no conteúdo
+        const lineHeight = 20;
+        const padding = 32;
+        const contentHeight = (lines.length * lineHeight) + padding;
+        const finalHeight = Math.max(contentHeight, 200);
+        domCache.editor.style.height = finalHeight + 'px';
+        
     }, 100);
 }
 
 /**
- * Destaca uma linha específica
+ * Destaca uma linha específica (versão simplificada sem números de linha)
  */
 export function highlightLine(lineNumber, type = 'error') {
-    if (!domCache.lineNumbers) {
+    if (!domCache.editor) {
         initDomCache();
-        if (!domCache.lineNumbers) return;
+        if (!domCache.editor) return;
     }
 
-    const lines = domCache.lineNumbers.querySelectorAll('div');
-    lines.forEach(line => line.className = '');
-
-    if (lineNumber > 0 && lineNumber <= lines.length) {
-        const lineElement = lines[lineNumber - 1];
-        lineElement.classList.add(`${type}-line`);
+    // Remove qualquer destaque anterior
+    domCache.editor.classList.remove('error-line-highlight', 'warning-line-highlight');
+    
+    if (lineNumber > 0) {
+        // Adiciona classe para destaque (se necessário implementar no CSS)
+        domCache.editor.classList.add(`${type}-line-highlight`);
         scrollToLine(lineNumber);
     }
 }
@@ -254,19 +214,16 @@ export function initJSONEditor() {
     domCache.editor.addEventListener('input', () => {
         window.hasPendingChanges = true;
         updateApplyButtonState();
-        updateLineNumbers();
         adjustEditorLayout();
     });
 
     // Observa redimensionamento
     window.addEventListener('resize', () => {
-        updateLineNumbers();
         adjustEditorLayout();
     });
 
     // Inicialização inicial
     setTimeout(() => {
-        updateLineNumbers();
         adjustEditorLayout();
         updateJSONStatus('✅ Editor JSON pronto. Digite ou cole seu JSON.', 'success');
         isInitialized = true;
@@ -279,7 +236,6 @@ export function initJSONEditor() {
  */
 export function forceLayoutUpdate() {
     console.log('🔧 Forçando atualização de layout...');
-    updateLineNumbers();
     adjustEditorLayout();
 }
 
@@ -475,10 +431,6 @@ export function resetJSONEditor() {
         }
     }
 
-    if (domCache.lineNumbers) {
-        domCache.lineNumbers.innerHTML = '';
-    }
-
     setTimeout(initJSONEditor, 50);
 }
 
@@ -508,7 +460,6 @@ window.debugSystemData = function() {
 
 // ==================== EXPORTAÇÃO GLOBAL ====================
 
-window.updateLineNumbers = updateLineNumbers;
 window.highlightLine = highlightLine;
 window.formatJSON = formatJSON;
 window.validateJSON = validateJSON;

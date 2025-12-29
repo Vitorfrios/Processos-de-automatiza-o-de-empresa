@@ -120,8 +120,7 @@ export async function applyJSON() {
 
                 updateAllTabsUI();
                 editor.value = JSON.stringify(completeData, null, 2);
-                if (window.updateLineNumbers) window.updateLineNumbers();
-
+                
                 if (window.showSuccess) window.showSuccess('JSON aplicado com sucesso!');
                 if (window.updateJSONStatus) window.updateJSONStatus('✅ JSON aplicado ao sistema.', 'success');
                 if (window.updateApplyButtonState) window.updateApplyButtonState();

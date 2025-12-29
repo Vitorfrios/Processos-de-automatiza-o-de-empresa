@@ -89,11 +89,7 @@ export function importFromJSON() {
                 const editor = document.getElementById('jsonEditor');
                 if (editor) {
                     editor.value = JSON.stringify(importedData, null, 2);
-                    
-                    if (window.updateLineNumbers) {
-                        window.updateLineNumbers();
-                    }
-                    
+                                        
                     if (window.switchTab) {
                         window.switchTab('raw');
                     }
@@ -301,10 +297,6 @@ export function importFromExcel() {
                 const editor = document.getElementById('jsonEditor');
                 if (editor) {
                     editor.value = JSON.stringify(result.data, null, 2);
-                    
-                    if (window.updateLineNumbers) {
-                        window.updateLineNumbers();
-                    }
                     
                     if (window.switchTab) {
                         window.switchTab('raw');
