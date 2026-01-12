@@ -3,7 +3,7 @@
 import http.server
 import json
 import time
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 from pathlib import Path
 import os
 import gzip

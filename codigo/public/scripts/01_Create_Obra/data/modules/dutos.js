@@ -1,6 +1,6 @@
 /**
- * dutos.js - Sistema de seleção de Dutos para Climatização
- * Interface para selecionar e adicionar dutos ao projeto
+ * dutos.js - Sistema de seleção de Dutos para Climatização - VERSÃO FINAL
+ * Opcional depende do tipo MAS é opcional na seleção
  */
 
 /**
@@ -122,7 +122,7 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
                   <label for="duto-tipo-${roomId}">Tipo:</label>
                   <select id="duto-tipo-${roomId}"
                           class="duto-select"
-                          onchange="loadDutoOpcionais('${roomId}')">
+                          onchange="carregarOpcionaisPorTipo('${roomId}')">
                     <option value="">Selecione um tipo...</option>
                   </select>
                 </div>
@@ -132,8 +132,8 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
                   <select id="duto-opcional-${roomId}"
                           class="duto-select"
                           disabled
-                          onchange="calcularValorDuto('${roomId}')">
-                    <option value="">Selecione um opcional...</option>
+                          onchange="atualizarValorOpcionalSelecionado('${roomId}')">
+                    <option value="">Nenhum opcional</option>
                   </select>
                 </div>
 
@@ -232,11 +232,6 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
 
           <!-- BOTÕES INFERIORES -->
           <div class="form-group full-width text-center">
-            <button class="btn-load-dutos"
-                    onclick="carregarDutos('${roomId}')">
-              📋 Carregar Salvos
-            </button>
-
             <button class="btn-clear-dutos"
                     onclick="limparDutos('${roomId}')">
               🗑️ Limpar Tudo
@@ -257,7 +252,7 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
 }
 
 /**
- * Inicializa o sistema de dutos para uma sala
+ * Inicializa o sistema de dutos
  */
 async function initDutosSystem(roomId) {
     console.log(`🚀 Inicializando dutos para sala: ${roomId}`);
@@ -271,39 +266,15 @@ async function initDutosSystem(roomId) {
         return;
     }
     
-    // Garantir que o select de opcionais comece desativado
+    // Opcional começa desabilitado (espera selecionar tipo)
     opcionalSelect.disabled = true;
-    opcionalSelect.innerHTML = '<option value="">Selecione um opcional...</option>';
+    opcionalSelect.innerHTML = '<option value="">Nenhum opcional</option>';
     
-    // Configurar evento no select de tipo para resetar quando mudar
-    tipoSelect.addEventListener('change', () => {
-        if (!tipoSelect.value) {
-            opcionalSelect.disabled = true;
-            opcionalSelect.innerHTML = '<option value="">Selecione um opcional...</option>';
-            document.getElementById(`duto-valor-tipo-${roomId}`).value = 'R$ 0,00';
-            document.getElementById(`duto-valor-opcional-${roomId}`).value = 'R$ 0,00';
-            document.getElementById(`duto-valor-total-${roomId}`).value = 'R$ 0,00';
-        }
-    });
-    
-    // Carregar tipos
+    // Carregar tipos de dutos
     await carregarTiposDutos(roomId);
     
-    // Carregar valor do cobre da API
+    // Carregar valor do cobre
     await carregarValorCobre(roomId);
-    
-    // Configurar evento no input do cobre
-    const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
-    if (cobreInput) {
-        cobreInput.addEventListener('input', () => atualizarValorCobre(roomId));
-        cobreInput.addEventListener('change', () => atualizarValorCobre(roomId));
-    }
-    
-    // Carregar dutos salvos
-    carregarDutos(roomId);
-    
-    // Configurar eventos
-    setupDutosEvents(roomId);
     
     console.log(`✅ Dutos inicializados para sala ${roomId}`);
 }
@@ -320,24 +291,20 @@ async function carregarTiposDutos(roomId) {
         const response = await fetch('/api/dutos');
         
         if (!response.ok) {
-            console.error(`❌ Erro na API: ${response.status} - ${response.statusText}`);
+            console.error(`❌ Erro na API: ${response.status}`);
             return;
         }
         
         const data = await response.json();
-        console.log('📦 Dados recebidos da API /api/dutos:', data);
         
-        // Verificar diferentes estruturas de resposta
+        // Verificar estrutura da resposta
         let tiposDutos = [];
         
         if (Array.isArray(data)) {
-            // Se a API retorna um array direto
             tiposDutos = data;
         } else if (data.dutos && Array.isArray(data.dutos)) {
-            // Se a API retorna { dutos: [...] }
             tiposDutos = data.dutos;
         } else if (data.types && Array.isArray(data.types)) {
-            // Se a API retorna { types: [...] }
             tiposDutos = data.types;
         } else {
             console.error('❌ Estrutura de dados não reconhecida:', data);
@@ -349,7 +316,7 @@ async function carregarTiposDutos(roomId) {
             return;
         }
         
-        // Limpar opções (exceto a primeira)
+        // Limpar opções existentes (exceto a primeira)
         while (select.options.length > 1) {
             select.remove(1);
         }
@@ -357,8 +324,10 @@ async function carregarTiposDutos(roomId) {
         // Adicionar opções
         tiposDutos.forEach(tipo => {
             const option = document.createElement('option');
-            option.value = tipo.type || tipo.value || '';
-            option.textContent = tipo.type || tipo.label || tipo.value || '';
+            option.value = tipo.id || tipo.type || tipo.value || '';
+            option.textContent = tipo.nome || tipo.type || tipo.label || tipo.value || '';
+            // Armazenar dados completos do tipo
+            option.setAttribute('data-duto', JSON.stringify(tipo));
             select.appendChild(option);
         });
         
@@ -370,9 +339,9 @@ async function carregarTiposDutos(roomId) {
 }
 
 /**
- * Carrega os opcionais para o tipo selecionado usando a API completa
+ * Carrega os opcionais para o tipo selecionado
  */
-async function loadDutoOpcionais(roomId) {
+async function carregarOpcionaisPorTipo(roomId) {
     const tipoSelect = document.getElementById(`duto-tipo-${roomId}`);
     const opcionalSelect = document.getElementById(`duto-opcional-${roomId}`);
     const valorTipoInput = document.getElementById(`duto-valor-tipo-${roomId}`);
@@ -381,95 +350,55 @@ async function loadDutoOpcionais(roomId) {
     
     const tipoSelecionado = tipoSelect.value;
     
-    // RESETAR quando não há tipo selecionado
+    // Resetar quando não há tipo selecionado
     if (!tipoSelecionado) {
-        opcionalSelect.innerHTML = '<option value="">Selecione um opcional...</option>';
+        opcionalSelect.innerHTML = '<option value="">Nenhum opcional</option>';
         opcionalSelect.disabled = true;
         valorTipoInput.value = 'R$ 0,00';
         valorOpcionalInput.value = 'R$ 0,00';
         valorTotalInput.value = 'R$ 0,00';
-        
-        // Resetar valores dos inputs
-        document.getElementById(`duto-kg-${roomId}`).value = '1';
-        document.getElementById(`duto-quantidade-${roomId}`).value = '1';
-        
         return;
     }
     
     try {
-        console.log(`📡 Buscando dados de dutos da API...`);
-        const response = await fetch('/api/dutos');
-        
-        if (!response.ok) {
-            console.error(`❌ Erro na API: ${response.status}`);
-            opcionalSelect.disabled = true;
-            return;
-        }
-        
-        const data = await response.json();
-        
-        // Verificar diferentes estruturas de resposta
-        let todosDutos = [];
-        
-        if (Array.isArray(data)) {
-            todosDutos = data;
-        } else if (data.dutos && Array.isArray(data.dutos)) {
-            todosDutos = data.dutos;
-        } else {
-            console.error('❌ Estrutura de dados não reconhecida');
-            opcionalSelect.disabled = true;
-            return;
-        }
-        
-        // Buscar o tipo selecionado nos dados
-        const tipoEncontrado = todosDutos.find(duto => 
-            (duto.type === tipoSelecionado) || 
-            (duto.value === tipoSelecionado)
-        );
-        
-        if (!tipoEncontrado) {
-            console.warn(`⚠️ Tipo "${tipoSelecionado}" não encontrado nos dados da API`);
-            opcionalSelect.innerHTML = '<option value="">Selecione um opcional...</option>';
-            opcionalSelect.disabled = true;
-            valorTipoInput.value = 'R$ 0,00';
-            valorTotalInput.value = 'R$ 0,00';
-            return;
-        }
-        
-        // Limpar opcionais
-        opcionalSelect.innerHTML = '<option value="">Selecione um opcional...</option>';
-        
-        // Adicionar opcionais
-        if (tipoEncontrado.opcionais && Array.isArray(tipoEncontrado.opcionais)) {
-            tipoEncontrado.opcionais.forEach(opcional => {
-                const option = document.createElement('option');
-                // Usar ID como value, mas mostrar nome
-                option.value = opcional.id;
-                option.textContent = opcional.nome || `Opcional ${opcional.id}`;
-                option.setAttribute('data-valor', opcional.value || opcional.valor || 0);
-                option.setAttribute('data-opcional-nome', opcional.nome || '');
-                opcionalSelect.appendChild(option);
-            });
-            
-            opcionalSelect.disabled = false;
-        } else {
-            opcionalSelect.disabled = true;
-        }
+        // Obter dados do tipo selecionado
+        const selectedOption = tipoSelect.options[tipoSelect.selectedIndex];
+        const tipoData = JSON.parse(selectedOption.getAttribute('data-duto'));
         
         // Atualizar valor do tipo
-        const valorTipo = tipoEncontrado.valor || tipoEncontrado.value || 0;
+        const valorTipo = tipoData.valor || tipoData.value || 0;
         valorTipoInput.value = `R$ ${formatarMoeda(valorTipo)}`;
         
-        // Resetar valores
+        // Limpar e carregar opcionais deste tipo
+        opcionalSelect.innerHTML = '<option value="">Nenhum opcional</option>';
+        opcionalSelect.disabled = false;
+        
+        // Verificar se o tipo tem opcionais
+        if (tipoData.opcionais && Array.isArray(tipoData.opcionais) && tipoData.opcionais.length > 0) {
+            tipoData.opcionais.forEach(opcional => {
+                const option = document.createElement('option');
+                option.value = opcional.id || '';
+                option.textContent = opcional.nome || `Opcional ${opcional.id}`;
+                option.setAttribute('data-valor', opcional.valor || opcional.value || 0);
+                opcionalSelect.appendChild(option);
+            });
+            console.log(`✅ ${tipoData.opcionais.length} opcionais carregados para tipo "${tipoSelecionado}"`);
+        } else {
+            console.log(`ℹ️ Tipo "${tipoSelecionado}" não possui opcionais`);
+            // Opcional continua habilitado, mas só tem "Nenhum opcional"
+        }
+        
+        // Resetar valores do opcional e total
         valorOpcionalInput.value = 'R$ 0,00';
         valorTotalInput.value = 'R$ 0,00';
         
-        console.log(`✅ Opcionais carregados para tipo "${tipoSelecionado}"`);
+        // Recalcular
+        calcularValorDuto(roomId);
         
     } catch (error) {
         console.error('❌ Erro ao carregar opcionais:', error);
-        opcionalSelect.innerHTML = '<option value="">Selecione um opcional...</option>';
-        opcionalSelect.disabled = true;
+        opcionalSelect.innerHTML = '<option value="">Nenhum opcional</option>';
+        opcionalSelect.disabled = false;
         valorTipoInput.value = 'R$ 0,00';
         valorOpcionalInput.value = 'R$ 0,00';
         valorTotalInput.value = 'R$ 0,00';
@@ -477,7 +406,25 @@ async function loadDutoOpcionais(roomId) {
 }
 
 /**
- * Carrega valor do cobre da API e atualiza o input
+ * Atualiza valor do opcional selecionado
+ */
+function atualizarValorOpcionalSelecionado(roomId) {
+    const opcionalSelect = document.getElementById(`duto-opcional-${roomId}`);
+    const valorOpcionalInput = document.getElementById(`duto-valor-opcional-${roomId}`);
+    
+    if (!opcionalSelect.value) {
+        valorOpcionalInput.value = 'R$ 0,00';
+    } else {
+        const selectedOption = opcionalSelect.options[opcionalSelect.selectedIndex];
+        const valorOpcional = parseFloat(selectedOption.getAttribute('data-valor')) || 0;
+        valorOpcionalInput.value = `R$ ${formatarMoeda(valorOpcional)}`;
+    }
+    
+    calcularValorDuto(roomId);
+}
+
+/**
+ * Carrega valor do cobre da API
  */
 async function carregarValorCobre(roomId) {
     try {
@@ -485,43 +432,29 @@ async function carregarValorCobre(roomId) {
         const response = await fetch('/api/materials');
         const data = await response.json();
         
-        console.log('📦 Dados recebidos da API:', data);
-        
         let valorCobre = 0;
         
-        // Verificar diferentes estruturas de dados
         if (data.materials) {
             if (Array.isArray(data.materials)) {
-                // Estrutura 1: materials é um array
                 const cobre = data.materials.find(m => m.codigo === 'COBRE');
                 if (cobre && cobre.valor !== undefined) {
                     valorCobre = cobre.valor;
-                    console.log(`✅ Cobre encontrado em array: R$ ${valorCobre}`);
                 }
             } else if (typeof data.materials === 'object' && data.materials.COBRE) {
-                // Estrutura 2: materials é um objeto com COBRE
                 valorCobre = data.materials.COBRE.value || 0;
-                console.log(`✅ Cobre encontrado em objeto: R$ ${valorCobre}`);
             }
         } else if (data.COBRE) {
-            // Estrutura 3: direto no objeto
             valorCobre = data.COBRE.value || 0;
-            console.log(`✅ Cobre encontrado direto: R$ ${valorCobre}`);
         }
         
         if (valorCobre > 0) {
             window.valorCobrePorKg = valorCobre;
             
-            // Atualizar o input com o valor da API
             const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
             if (cobreInput) {
                 cobreInput.value = valorCobre.toFixed(2);
-                console.log(`✅ Input atualizado com valor: R$ ${valorCobre.toFixed(2)}`);
-            } else {
-                console.error(`❌ Input não encontrado: valor-cobre-${roomId}`);
             }
         } else {
-            console.warn('⚠️ Valor do cobre não encontrado ou é zero');
             window.valorCobrePorKg = 0;
         }
         
@@ -532,7 +465,7 @@ async function carregarValorCobre(roomId) {
 }
 
 /**
- * Carrega o valor padrão do cobre da API
+ * Carrega o valor padrão do cobre
  */
 async function carregarValorCobrePadrao(roomId) {
     try {
@@ -542,7 +475,6 @@ async function carregarValorCobrePadrao(roomId) {
         
         let valorCobre = 0;
         
-        // Verificar diferentes estruturas
         if (data.materials) {
             if (Array.isArray(data.materials)) {
                 const cobre = data.materials.find(m => m.codigo === 'COBRE');
@@ -563,7 +495,6 @@ async function carregarValorCobrePadrao(roomId) {
             if (cobreInput) {
                 cobreInput.value = valorCobre.toFixed(2);
                 
-                // Mostrar confirmação visual
                 cobreInput.style.borderColor = '#48BB78';
                 cobreInput.style.boxShadow = '0 0 0 3px rgba(72, 187, 120, 0.1)';
                 
@@ -571,11 +502,8 @@ async function carregarValorCobrePadrao(roomId) {
                     cobreInput.style.borderColor = '';
                     cobreInput.style.boxShadow = '';
                 }, 1500);
-                
-                console.log(`✅ Valor padrão restaurado: R$ ${valorCobre.toFixed(2)}/kg`);
             }
             
-            // Recalcular todos os dutos existentes
             recalcDutosComNovoCobre(roomId);
             
             alert(`✅ Valor do cobre restaurado para R$ ${valorCobre.toFixed(2)}/kg`);
@@ -604,12 +532,7 @@ function atualizarValorCobre(roomId) {
     }
     
     window.valorCobrePorKg = novoValor;
-    console.log(`🔄 Valor do cobre atualizado para: R$ ${novoValor.toFixed(2)}/kg`);
-    
-    // Recalcular todos os dutos existentes
     recalcDutosComNovoCobre(roomId);
-    
-    // Recalcular também o valor total no formulário atual
     calcularValorDuto(roomId);
 }
 
@@ -626,17 +549,14 @@ function recalcDutosComNovoCobre(roomId) {
         try {
             const duto = JSON.parse(row.getAttribute('data-duto'));
             
-            // Recalcular valor total com novo valor do cobre
             const valorCobre = window.valorCobrePorKg || 0;
             const valorKg = duto.kg * valorCobre;
             const valorUnitario = duto.valor_tipo + duto.valor_opcional + valorKg;
             const valorTotal = valorUnitario * duto.quantidade;
             
-            // Atualizar objeto duto
             duto.valor_total = valorTotal;
             row.setAttribute('data-duto', JSON.stringify(duto));
             
-            // Atualizar célula na tabela
             const cells = row.cells;
             if (cells.length >= 7) {
                 cells[6].textContent = `R$ ${formatarMoeda(valorTotal)}`;
@@ -647,15 +567,11 @@ function recalcDutosComNovoCobre(roomId) {
         }
     });
     
-    // Atualizar total geral
     atualizarTotalDutos(roomId);
-    
-    // Salvar alterações
-    salvarDutosLocalStorage(roomId);
 }
 
 /**
- * Calcula o valor do duto baseado nos campos
+ * Calcula o valor do duto
  */
 function calcularValorDuto(roomId) {
     const tipoSelect = document.getElementById(`duto-tipo-${roomId}`);
@@ -667,7 +583,6 @@ function calcularValorDuto(roomId) {
     const valorTotalInput = document.getElementById(`duto-valor-total-${roomId}`);
     const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
     
-    // Se não tem tipo selecionado, não calcular
     if (!tipoSelect.value) {
         valorTotalInput.value = 'R$ 0,00';
         return;
@@ -680,32 +595,26 @@ function calcularValorDuto(roomId) {
     const valorTipoTexto = valorTipoInput.value.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
     const valorTipo = parseFloat(valorTipoTexto) || 0;
     
-    // Obter valor do opcional selecionado
+    // Obter valor do opcional (pode ser zero)
     let valorOpcional = 0;
     if (opcionalSelect.value) {
         const opcionalOption = opcionalSelect.options[opcionalSelect.selectedIndex];
         valorOpcional = parseFloat(opcionalOption.getAttribute('data-valor')) || 0;
     }
     
-    // Obter valor do cobre do input
+    // Obter valor do cobre
     const valorCobre = cobreInput ? parseFloat(cobreInput.value) || 0 : 0;
     
-    // Calcular valor do cobre para este duto
     const valorKg = kg * valorCobre;
-    
-    // Calcular total: Valor Tipo + Valor Opcional + (KG * Valor do Cobre)
     const valorUnitario = valorTipo + valorOpcional + valorKg;
     const valorTotal = valorUnitario * quantidade;
     
-    // Atualizar campos
     valorOpcionalInput.value = `R$ ${formatarMoeda(valorOpcional)}`;
     valorTotalInput.value = `R$ ${formatarMoeda(valorTotal)}`;
-    
-    console.log(`📊 Cálculo: ${valorTipo.toFixed(2)} + ${valorOpcional.toFixed(2)} + (${kg} × ${valorCobre.toFixed(2)}) = ${valorUnitario.toFixed(2)} × ${quantidade} = ${valorTotal.toFixed(2)}`);
 }
 
 /**
- * Adiciona duto à lista
+ * Adiciona duto à lista - OPCIONAL É REALMENTE OPCIONAL
  */
 function adicionarDuto(roomId) {
     const tipoSelect = document.getElementById(`duto-tipo-${roomId}`);
@@ -714,11 +623,11 @@ function adicionarDuto(roomId) {
     const quantidadeInput = document.getElementById(`duto-quantidade-${roomId}`);
     const valorTipoInput = document.getElementById(`duto-valor-tipo-${roomId}`);
     const valorOpcionalInput = document.getElementById(`duto-valor-opcional-${roomId}`);
-    const valorTotalInput = document.getElementById(`duto-valor-total-${roomId}`);
     const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
     
-    if (!tipoSelect.value || !opcionalSelect.value) {
-        alert('Selecione tipo e opcional');
+    // Apenas tipo é obrigatório
+    if (!tipoSelect.value) {
+        alert('Selecione um tipo de duto');
         return;
     }
     
@@ -735,10 +644,17 @@ function adicionarDuto(roomId) {
     const valorTipoTexto = valorTipoInput.value.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
     const valorTipo = parseFloat(valorTipoTexto) || 0;
     
-    // Obter valor do opcional
-    const opcionalOption = opcionalSelect.options[opcionalSelect.selectedIndex];
-    const valorOpcional = parseFloat(opcionalOption.getAttribute('data-valor')) || 0;
-    const opcionalNome = opcionalOption.getAttribute('data-opcional-nome') || opcionalOption.textContent;
+    // Obter dados do opcional (pode ser vazio)
+    let valorOpcional = 0;
+    let opcionalNome = 'Nenhum opcional';
+    let opcionalId = '';
+    
+    if (opcionalSelect.value) {
+        const opcionalOption = opcionalSelect.options[opcionalSelect.selectedIndex];
+        valorOpcional = parseFloat(opcionalOption.getAttribute('data-valor')) || 0;
+        opcionalNome = opcionalOption.textContent;
+        opcionalId = opcionalOption.value;
+    }
     
     // Calcular valor total
     const valorKg = kg * valorCobre;
@@ -750,12 +666,16 @@ function adicionarDuto(roomId) {
         return;
     }
     
+    // Obter descrição do tipo
+    const tipoOption = tipoSelect.options[tipoSelect.selectedIndex];
+    const tipoDescricao = tipoOption.textContent;
+    
     // Criar objeto do duto
     const duto = {
         id: Date.now() + Math.random().toString(36).substr(2, 9),
         tipo: tipoSelect.value,
-        tipo_descricao: tipoSelect.options[tipoSelect.selectedIndex].textContent,
-        opcional_id: opcionalSelect.value,
+        tipo_descricao: tipoDescricao,
+        opcional_id: opcionalId,
         opcional_nome: opcionalNome,
         kg: kg,
         quantidade: quantidade,
@@ -769,15 +689,15 @@ function adicionarDuto(roomId) {
     // Adicionar à tabela
     adicionarDutoNaTabela(roomId, duto);
     
-    // Limpar campos CORRETAMENTE
+    // Limpar campos
     kgInput.value = '1';
     quantidadeInput.value = '1';
     tipoSelect.selectedIndex = 0;
-    opcionalSelect.innerHTML = '<option value="">Selecione um opcional...</option>';
+    opcionalSelect.innerHTML = '<option value="">Nenhum opcional</option>';
     opcionalSelect.disabled = true;
     valorTipoInput.value = 'R$ 0,00';
     valorOpcionalInput.value = 'R$ 0,00';
-    valorTotalInput.value = 'R$ 0,00';
+    document.getElementById(`duto-valor-total-${roomId}`).value = 'R$ 0,00';
     
     console.log(`✅ Duto adicionado na sala ${roomId}`);
 }
@@ -799,7 +719,7 @@ function adicionarDutoNaTabela(roomId, duto) {
     
     row.innerHTML = `
         <td>${duto.tipo_descricao}</td>
-        <td class="td-scroll-horizontal" >${duto.opcional_nome}</td>
+        <td class="td-scroll-horizontal">${duto.opcional_nome}</td>
         <td>${duto.kg.toFixed(2)} kg</td>
         <td>${duto.quantidade}</td>
         <td>R$ ${formatarMoeda(duto.valor_tipo)}</td>
@@ -817,7 +737,6 @@ function adicionarDutoNaTabela(roomId, duto) {
     
     tbody.appendChild(row);
     atualizarTotalDutos(roomId);
-    salvarDutosLocalStorage(roomId);
 }
 
 /**
@@ -830,12 +749,11 @@ async function editarDuto(roomId, dutoId) {
     try {
         const duto = JSON.parse(row.getAttribute('data-duto'));
         
-        // Preencher os campos do formulário com os valores do duto
+        // Preencher os campos do formulário
         const tipoSelect = document.getElementById(`duto-tipo-${roomId}`);
         const opcionalSelect = document.getElementById(`duto-opcional-${roomId}`);
         const kgInput = document.getElementById(`duto-kg-${roomId}`);
         const quantidadeInput = document.getElementById(`duto-quantidade-${roomId}`);
-        const valorTotalInput = document.getElementById(`duto-valor-total-${roomId}`);
         
         // Encontrar e selecionar o tipo
         for (let i = 0; i < tipoSelect.options.length; i++) {
@@ -846,15 +764,17 @@ async function editarDuto(roomId, dutoId) {
         }
         
         // Carregar opcionais para o tipo selecionado
-        await loadDutoOpcionais(roomId);
+        await carregarOpcionaisPorTipo(roomId);
         
-        // Esperar um pouco para os opcionais carregarem
+        // Aguardar carregamento dos opcionais
         setTimeout(() => {
             // Encontrar e selecionar o opcional
-            for (let i = 0; i < opcionalSelect.options.length; i++) {
-                if (opcionalSelect.options[i].value == duto.opcional_id) {
-                    opcionalSelect.selectedIndex = i;
-                    break;
+            if (duto.opcional_id) {
+                for (let i = 0; i < opcionalSelect.options.length; i++) {
+                    if (opcionalSelect.options[i].value == duto.opcional_id) {
+                        opcionalSelect.selectedIndex = i;
+                        break;
+                    }
                 }
             }
             
@@ -895,7 +815,6 @@ function removerDuto(roomId, dutoId) {
     }
     
     atualizarTotalDutos(roomId);
-    salvarDutosLocalStorage(roomId);
 }
 
 /**
@@ -924,50 +843,6 @@ function atualizarTotalDutos(roomId) {
 }
 
 /**
- * Salva no localStorage
- */
-function salvarDutosLocalStorage(roomId) {
-    const tbody = document.getElementById(`dutos-list-${roomId}`);
-    if (!tbody) return;
-    
-    const rows = tbody.querySelectorAll('.duto-row');
-    const dutos = [];
-    
-    rows.forEach(row => {
-        try {
-            dutos.push(JSON.parse(row.getAttribute('data-duto')));
-        } catch (error) {
-            console.error('Erro ao salvar:', error);
-        }
-    });
-    
-    localStorage.setItem(`dutos_${roomId}`, JSON.stringify(dutos));
-}
-
-/**
- * Carrega do localStorage
- */
-function carregarDutos(roomId) {
-    try {
-        const dados = localStorage.getItem(`dutos_${roomId}`);
-        if (!dados) return;
-        
-        const dutos = JSON.parse(dados);
-        const tbody = document.getElementById(`dutos-list-${roomId}`);
-        if (!tbody) return;
-        
-        tbody.innerHTML = '';
-        
-        dutos.forEach(duto => {
-            adicionarDutoNaTabela(roomId, duto);
-        });
-        
-    } catch (error) {
-        console.error('Erro ao carregar:', error);
-    }
-}
-
-/**
  * Limpa tudo
  */
 function limparDutos(roomId) {
@@ -984,7 +859,6 @@ function limparDutos(roomId) {
     tbody.appendChild(emptyRow);
     
     atualizarTotalDutos(roomId);
-    localStorage.removeItem(`dutos_${roomId}`);
 }
 
 /**
@@ -997,37 +871,14 @@ function formatarMoeda(valor) {
     });
 }
 
-/**
- * Configura eventos
- */
-function setupDutosEvents(roomId) {
-    const kgInput = document.getElementById(`duto-kg-${roomId}`);
-    const quantidadeInput = document.getElementById(`duto-quantidade-${roomId}`);
-    const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
-    
-    if (kgInput) {
-        kgInput.addEventListener('input', () => calcularValorDuto(roomId));
-        kgInput.addEventListener('change', () => calcularValorDuto(roomId));
-    }
-    
-    if (quantidadeInput) {
-        quantidadeInput.addEventListener('input', () => calcularValorDuto(roomId));
-        quantidadeInput.addEventListener('change', () => calcularValorDuto(roomId));
-    }
-    
-    if (cobreInput) {
-        cobreInput.addEventListener('input', () => calcularValorDuto(roomId));
-        cobreInput.addEventListener('change', () => calcularValorDuto(roomId));
-    }
-}
-
 // Exportar
 export {
     buildDutosSection,
     fillDutosData,
     initDutosSystem,
     carregarTiposDutos,
-    loadDutoOpcionais,
+    carregarOpcionaisPorTipo,
+    atualizarValorOpcionalSelecionado,
     carregarValorCobre,
     carregarValorCobrePadrao,
     atualizarValorCobre,
@@ -1037,7 +888,6 @@ export {
     removerDuto,
     editarDuto,
     atualizarTotalDutos,
-    carregarDutos,
     limparDutos,
     formatarMoeda
 };
@@ -1048,14 +898,14 @@ if (typeof window !== 'undefined') {
     window.fillDutosData = fillDutosData;
     window.initDutosSystem = initDutosSystem;
     window.carregarTiposDutos = carregarTiposDutos;
-    window.loadDutoOpcionais = loadDutoOpcionais;
     window.carregarValorCobre = carregarValorCobre;
+    window.carregarOpcionaisPorTipo = carregarOpcionaisPorTipo;
+    window.atualizarValorOpcionalSelecionado = atualizarValorOpcionalSelecionado;
     window.carregarValorCobrePadrao = carregarValorCobrePadrao;
     window.atualizarValorCobre = atualizarValorCobre;
     window.calcularValorDuto = calcularValorDuto;
     window.adicionarDuto = adicionarDuto;
     window.editarDuto = editarDuto;
-    window.carregarDutos = carregarDutos;
     window.limparDutos = limparDutos;
     window.removerDuto = removerDuto;
     window.formatarMoeda = formatarMoeda;

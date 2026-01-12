@@ -66,7 +66,7 @@ function atualizarCamposEmpresaForm(obraData, formElement) {
 }
 
 /**
- * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES - COM DATA FORMATADA E DATEPICKER DINÂMICO
+ * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES - COM DATA FORMATADA
  */
 function criarVisualizacaoEmpresa(obraData, container) {
     // Ocultar botão se existir
@@ -78,7 +78,7 @@ function criarVisualizacaoEmpresa(obraData, container) {
     // 🆕 FORMATAR DATA
     const dataFormatada = formatarData(obraData.dataCadastro);
     
-    // Criar formulário
+    // Criar formulário - USANDO O MESMO SISTEMA DE CADASTRO (com autocomplete)
     const formularioHTML = `
     <div class="empresa-formulario-ativo">
         <h4>Dados da Empresa</h4>
@@ -86,8 +86,17 @@ function criarVisualizacaoEmpresa(obraData, container) {
         <div class="empresa-form-grid-horizontal">
             <div class="form-group-horizontal">
                 <label>Empresa</label>
-                <input type="text" class="empresa-input-readonly" 
-                    value="${obraData.empresaSigla || ''} - ${obraData.empresaNome || ''}" readonly>
+                <div class="empresa-input-container">
+                    <input type="text" 
+                           class="empresa-input-cadastro" 
+                           id="empresa-input-${obraData.id}"
+                           value="${obraData.empresaSigla || ''} - ${obraData.empresaNome || ''}" 
+                           placeholder="Digite sigla ou nome ou selecione..."
+                           autocomplete="off">
+                    <div class="empresa-dropdown" id="empresa-dropdown-${obraData.id}">
+                        <div class="dropdown-options" id="empresa-options-${obraData.id}"></div>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group-horizontal">
@@ -99,15 +108,13 @@ function criarVisualizacaoEmpresa(obraData, container) {
             <div class="form-group-horizontal">
                 <label>Cliente Final</label>
                 <input type="text" class="cliente-final-input" 
-                    value="${obraData.clienteFinal || ''}" 
-                    onchange="atualizarDadosEmpresa(this, 'clienteFinal', '${obraData.id}')">
+                    value="${obraData.clienteFinal || ''}">
             </div>
 
             <div class="form-group-horizontal">
                 <label>Código</label>
                 <input type="text" class="codigo-cliente-input" 
-                    value="${obraData.codigoCliente || ''}" 
-                    onchange="atualizarDadosEmpresa(this, 'codigoCliente', '${obraData.id}')">
+                    value="${obraData.codigoCliente || ''}">
             </div>
 
             <!-- 🆕 CAMPO DE DATA COM DATEPICKER DINÂMICO -->
@@ -116,11 +123,10 @@ function criarVisualizacaoEmpresa(obraData, container) {
                 <div class="date-input-container">
                     <input type="text" 
                            class="data-cadastro-input" 
-                           id="data-cadastro-edit-${obraData.id}"
+                           id="data-cadastro-${obraData.id}"
                            value="${dataFormatada}" 
                            placeholder="DD/MM/AAAA"
-                           maxlength="10"
-                           onchange="atualizarDadosEmpresa(this, 'dataCadastro', '${obraData.id}')">
+                           maxlength="10">
                     <span class="calendar-icon" onclick="alternarDatePicker('${obraData.id}', 'edit')">📅</span>
                 </div>
             </div>
@@ -128,8 +134,7 @@ function criarVisualizacaoEmpresa(obraData, container) {
             <div class="form-group-horizontal">
                 <label>Orçamentista</label>
                 <input type="text" class="orcamentista-responsavel-input" 
-                    value="${obraData.orcamentistaResponsavel || ''}" 
-                    onchange="atualizarDadosEmpresa(this, 'orcamentistaResponsavel', '${obraData.id}')">
+                    value="${obraData.orcamentistaResponsavel || ''}">
             </div>
         </div>
 
@@ -144,19 +149,53 @@ function criarVisualizacaoEmpresa(obraData, container) {
     
     container.insertAdjacentHTML('beforeend', formularioHTML);
     
-    // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA
+    // 🆕 INICIALIZAR AUTOCOMPLETE COM A FUNÇÃO EXISTENTE
     setTimeout(() => {
-        const dataCampo = container.querySelector(`#data-cadastro-edit-${obraData.id}`);
+        inicializarInputEmpresaHibrido(obraData.id);
+        
+        // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA
+        const dataCampo = container.querySelector(`#data-cadastro-${obraData.id}`);
         if (dataCampo) {
             configurarCampoDataEspecifico(dataCampo);
         }
+        
+        // 🆕 VINCULAR EVENTOS DE MUDANÇA PARA OS OUTROS CAMPOS
+        vincularEventosMudanca(obraData.id, container);
+        
     }, 100);
     
     console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id} com data: ${dataFormatada}`);
 }
 
 /**
- * 🆕 CRIA FORMULÁRIO VAZIO DE EMPRESA COM DATEPICKER DINÂMICO
+ * 🆕 VINCULAR EVENTOS DE MUDANÇA PARA OS CAMPOS
+ */
+function vincularEventosMudanca(obraId, container) {
+    // Vincular evento change para cada campo editável
+    const campos = [
+        { selector: '.cliente-final-input', campo: 'clienteFinal' },
+        { selector: '.codigo-cliente-input', campo: 'codigoCliente' },
+        { selector: '.orcamentista-responsavel-input', campo: 'orcamentistaResponsavel' }
+    ];
+    
+    campos.forEach(({ selector, campo }) => {
+        const input = container.querySelector(selector);
+        if (input) {
+            // Remover event listener anterior se existir
+            input.removeEventListener('change', input._changeHandler);
+            
+            // Adicionar novo handler
+            input._changeHandler = function() {
+                atualizarDadosEmpresa(this, campo, obraId);
+            };
+            
+            input.addEventListener('change', input._changeHandler);
+        }
+    });
+}
+
+/**
+ * 🆕 CRIA FORMULÁRIO VAZIO DE EMPRESA
  */
 function criarFormularioVazioEmpresa(obraId, container) {
     const dataAtual = new Date().toLocaleDateString('pt-BR');
@@ -166,7 +205,6 @@ function criarFormularioVazioEmpresa(obraId, container) {
         <h4>Cadastro de Empresa</h4>
 
         <div class="empresa-form-grid-horizontal">
-            <!-- Empresa 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Empresa *</label>
                 <div class="empresa-input-container">
@@ -181,28 +219,24 @@ function criarFormularioVazioEmpresa(obraId, container) {
                 </div>
             </div>
 
-            <!-- Nº Cliente 🔴 SOMENTE LEITURA -->
             <div class="form-group-horizontal">
                 <label>Nº Cliente</label>
                 <input type="text" class="numero-cliente-final-cadastro" readonly
                     placeholder="Será gerado automaticamente">
             </div>
 
-            <!-- Cliente Final 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Cliente Final</label>
                 <input type="text" class="cliente-final-cadastro" 
                     placeholder="Nome do cliente final">
             </div>
 
-            <!-- Código 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Código</label>
                 <input type="text" class="codigo-cliente-cadastro" 
                     placeholder="Código do cliente">
             </div>
 
-            <!-- Data 🟢 EDITÁVEL COM DATEPICKER DINÂMICO -->
             <div class="form-group-horizontal">
                 <label>Data</label>
                 <div class="date-input-container">
@@ -216,7 +250,6 @@ function criarFormularioVazioEmpresa(obraId, container) {
                 </div>
             </div>
 
-            <!-- Orçamentista 🟢 EDITÁVEL -->
             <div class="form-group-horizontal">
                 <label>Orçamentista</label>
                 <input type="text" class="orcamentista-responsavel-cadastro" 
@@ -235,7 +268,6 @@ function criarFormularioVazioEmpresa(obraId, container) {
     
     container.insertAdjacentHTML('beforeend', formularioHTML);
     
-    // 🔥 INICIALIZAR COM TIMEOUT
     setTimeout(() => {
         inicializarInputEmpresaHibrido(obraId);
         
@@ -243,179 +275,10 @@ function criarFormularioVazioEmpresa(obraId, container) {
         const dataCampo = container.querySelector(`#data-cadastro-${obraId}`);
         if (dataCampo) {
             configurarCampoDataEspecifico(dataCampo);
-            console.log('✅ Auto-formatação de data configurada');
         }
         
     }, 300);
 }
-
-/**
- * 🆕 ALTERNA ENTRE INPUT TEXT E DATE QUANDO CLICA NO ÍCONE
- */
-function alternarDatePicker(obraId, tipo) {
-    const textInput = document.getElementById(`data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
-    const container = textInput.closest('.date-input-container');
-    
-    if (!textInput) return;
-    
-    // 🆕 NÃO ESCONDE O ÍCONE - apenas o texto
-    textInput.style.display = 'none';
-    
-    // 🆕 CRIA UM INPUT DATE VISÍVEL MAS COM FORMATAÇÃO BRASILEIRA
-    const datePickerHTML = `
-        <div class="date-picker-visible-wrapper" id="date-picker-wrapper-${obraId}">
-            <input type="date" 
-                   class="date-picker-visible"
-                   id="date-picker-temp-${obraId}"
-                   onchange="aplicarDataDoDatePicker('${obraId}', '${tipo}', this.value)"
-                   onblur="restaurarInputTexto('${obraId}', '${tipo}')">
-            <div class="date-display-overlay" id="date-display-${obraId}"></div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', datePickerHTML);
-    
-    const datePicker = container.querySelector('.date-picker-visible');
-    const dateDisplay = container.querySelector(`#date-display-${obraId}`);
-    
-    // Define valor inicial baseado no texto atual
-    let dataInicial = 'DD/MM/AAAA';
-    if (textInput.value && /^\d{2}\/\d{2}\/\d{4}$/.test(textInput.value)) {
-        const [dia, mes, ano] = textInput.value.split('/');
-        datePicker.value = `${ano}-${mes}-${dia}`;
-        dataInicial = textInput.value;
-    }
-    
-    // 🆕 ATUALIZA O DISPLAY VISUAL COM FORMATAÇÃO BRASILEIRA
-    atualizarDisplayData(dateDisplay, dataInicial);
-    
-    // 🆕 OBSERVA MUDANÇAS NO DATE PICKER PARA ATUALIZAR O DISPLAY
-    datePicker.addEventListener('input', function() {
-        if (this.value) {
-            const [ano, mes, dia] = this.value.split('-');
-            const dataBrasileira = `${dia}/${mes}/${ano}`;
-            atualizarDisplayData(dateDisplay, dataBrasileira);
-        } else {
-            atualizarDisplayData(dateDisplay, 'DD/MM/AAAA');
-        }
-    });
-    
-    datePicker.addEventListener('change', function() {
-        if (this.value) {
-            const [ano, mes, dia] = this.value.split('-');
-            const dataBrasileira = `${dia}/${mes}/${ano}`;
-            atualizarDisplayData(dateDisplay, dataBrasileira);
-        }
-    });
-    
-    // Foca e abre o calendário
-    setTimeout(() => {
-        datePicker.focus();
-        datePicker.showPicker();
-    }, 100);
-    
-    console.log('✅ Date picker com formatação brasileira ativado para obra:', obraId);
-}
-
-/**
- * 🆕 APLICA A DATA SELECIONADA NO DATEPICKER AO CAMPO DE TEXTO
- */
-function aplicarDataDoDatePicker(obraId, tipo, dataISO) {
-    const container = document.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`).closest('.date-input-container');
-    const textInput = container.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
-    
-    // 🆕 VERIFICAÇÃO MAIS ROBUSTA PARA REMOVER O DATE PICKER
-    const datePickerWrapper = document.getElementById(`date-picker-wrapper-${obraId}`);
-    if (datePickerWrapper && datePickerWrapper.parentNode) {
-        try {
-            datePickerWrapper.remove();
-            console.log('✅ Date picker removido com sucesso');
-        } catch (error) {
-            console.log('⚠️ Date picker já foi removido:', error.message);
-        }
-    }
-    
-    if (dataISO) {
-        // Converte YYYY-MM-DD para DD/MM/AAAA
-        const [ano, mes, dia] = dataISO.split('-');
-        const dataBrasileira = `${dia}/${mes}/${ano}`;
-        
-        // Aplica ao campo de texto
-        textInput.value = dataBrasileira;
-    }
-    
-    // Restaura a visualização normal
-    if (textInput) {
-        textInput.style.display = 'block';
-        // Foca no campo de texto para continuar a digitação
-        setTimeout(() => {
-            textInput.focus();
-            // Posiciona o cursor no final do texto
-            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
-        }, 50);
-    }
-    
-    // Dispara evento change se houve alteração
-    if (dataISO) {
-        const event = new Event('change', { bubbles: true });
-        textInput.dispatchEvent(event);
-        validarDataInput(textInput);
-        console.log('✅ Data do date picker aplicada:', textInput.value);
-    } else {
-        console.log('✅ Date picker cancelado');
-    }
-}
-
-/**
- * 🆕 RESTAURA O INPUT DE TEXTO SE O USUÁRIO CANCELAR
- */
-function restaurarInputTexto(obraId, tipo) {
-    const container = document.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`).closest('.date-input-container');
-    const textInput = container.querySelector(`#data-cadastro-${tipo === 'edit' ? 'edit-' : ''}${obraId}`);
-    
-    // 🆕 VERIFICAÇÃO MAIS ROBUSTA PARA REMOVER O DATE PICKER
-    const datePickerWrapper = document.getElementById(`date-picker-wrapper-${obraId}`);
-    if (datePickerWrapper && datePickerWrapper.parentNode) {
-        try {
-            datePickerWrapper.remove();
-            console.log('✅ Date picker removido com sucesso (blur)');
-        } catch (error) {
-            console.log('⚠️ Date picker já foi removido (blur):', error.message);
-        }
-    }
-    
-    // Restaura o input de texto
-    if (textInput) {
-        textInput.style.display = 'block';
-        setTimeout(() => {
-            textInput.focus();
-            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
-        }, 50);
-    }
-    
-    console.log('✅ Input de texto restaurado');
-}
-
-
-/**
- * 🆕 ATUALIZA O DISPLAY VISUAL DA DATA
- */
-function atualizarDisplayData(dateDisplay, dataFormatada) {
-    dateDisplay.textContent = dataFormatada;
-    
-    // Destaca visualmente se for uma data válida
-    if (dataFormatada && /^\d{2}\/\d{2}\/\d{4}$/.test(dataFormatada)) {
-        dateDisplay.style.color = '#000';
-        dateDisplay.style.fontWeight = 'normal';
-        dateDisplay.style.fontStyle = 'normal';
-    } else {
-        dateDisplay.style.color = '#999';
-        dateDisplay.style.fontWeight = 'normal';
-        dateDisplay.style.fontStyle = 'italic';
-    }
-}
-
-
 
 /**
  * 🆕 FORMATA AUTOMATICAMENTE O CAMPO DE DATA ENQUANTO DIGITA
@@ -579,6 +442,149 @@ function configurarCampoDataEspecifico(inputElement) {
 }
 
 /**
+ * 🆕 ALTERNA ENTRE INPUT TEXT E DATE QUANDO CLICA NO ÍCONE
+ */
+function alternarDatePicker(obraId, tipo) {
+    const textInput = document.getElementById(`data-cadastro-${tipo === 'edit' ? '' : ''}${obraId}`);
+    const container = textInput.closest('.date-input-container');
+    
+    if (!textInput) return;
+    
+    textInput.style.display = 'none';
+    
+    const datePickerHTML = `
+        <div class="date-picker-visible-wrapper" id="date-picker-wrapper-${obraId}">
+            <input type="date" 
+                   class="date-picker-visible"
+                   id="date-picker-temp-${obraId}"
+                   onchange="aplicarDataDoDatePicker('${obraId}', '${tipo}', this.value)"
+                   onblur="restaurarInputTexto('${obraId}', '${tipo}')">
+            <div class="date-display-overlay" id="date-display-${obraId}"></div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', datePickerHTML);
+    
+    const datePicker = container.querySelector('.date-picker-visible');
+    const dateDisplay = container.querySelector(`#date-display-${obraId}`);
+    
+    let dataInicial = 'DD/MM/AAAA';
+    if (textInput.value && /^\d{2}\/\d{2}\/\d{4}$/.test(textInput.value)) {
+        const [dia, mes, ano] = textInput.value.split('/');
+        datePicker.value = `${ano}-${mes}-${dia}`;
+        dataInicial = textInput.value;
+    }
+    
+    atualizarDisplayData(dateDisplay, dataInicial);
+    
+    datePicker.addEventListener('input', function() {
+        if (this.value) {
+            const [ano, mes, dia] = this.value.split('-');
+            const dataBrasileira = `${dia}/${mes}/${ano}`;
+            atualizarDisplayData(dateDisplay, dataBrasileira);
+        } else {
+            atualizarDisplayData(dateDisplay, 'DD/MM/AAAA');
+        }
+    });
+    
+    datePicker.addEventListener('change', function() {
+        if (this.value) {
+            const [ano, mes, dia] = this.value.split('-');
+            const dataBrasileira = `${dia}/${mes}/${ano}`;
+            atualizarDisplayData(dateDisplay, dataBrasileira);
+        }
+    });
+    
+    setTimeout(() => {
+        datePicker.focus();
+        datePicker.showPicker();
+    }, 100);
+    
+    console.log('✅ Date picker ativado para obra:', obraId);
+}
+
+/**
+ * 🆕 APLICA A DATA SELECIONADA NO DATEPICKER AO CAMPO DE TEXTO
+ */
+function aplicarDataDoDatePicker(obraId, tipo, dataISO) {
+    const container = document.querySelector(`#data-cadastro-${obraId}`).closest('.date-input-container');
+    const textInput = container.querySelector(`#data-cadastro-${obraId}`);
+    
+    const datePickerWrapper = document.getElementById(`date-picker-wrapper-${obraId}`);
+    if (datePickerWrapper && datePickerWrapper.parentNode) {
+        try {
+            datePickerWrapper.remove();
+        } catch (error) {
+            console.log('⚠️ Date picker já foi removido:', error.message);
+        }
+    }
+    
+    if (dataISO) {
+        const [ano, mes, dia] = dataISO.split('-');
+        const dataBrasileira = `${dia}/${mes}/${ano}`;
+        textInput.value = dataBrasileira;
+    }
+    
+    if (textInput) {
+        textInput.style.display = 'block';
+        setTimeout(() => {
+            textInput.focus();
+            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+        }, 50);
+    }
+    
+    if (dataISO) {
+        const event = new Event('change', { bubbles: true });
+        textInput.dispatchEvent(event);
+        console.log('✅ Data do date picker aplicada:', textInput.value);
+    }
+}
+
+/**
+ * 🆕 RESTAURA O INPUT DE TEXTO SE O USUÁRIO CANCELAR
+ */
+function restaurarInputTexto(obraId, tipo) {
+    const container = document.querySelector(`#data-cadastro-${obraId}`).closest('.date-input-container');
+    const textInput = container.querySelector(`#data-cadastro-${obraId}`);
+    
+    const datePickerWrapper = document.getElementById(`date-picker-wrapper-${obraId}`);
+    if (datePickerWrapper && datePickerWrapper.parentNode) {
+        try {
+            datePickerWrapper.remove();
+        } catch (error) {
+            console.log('⚠️ Date picker já foi removido (blur):', error.message);
+        }
+    }
+    
+    if (textInput) {
+        textInput.style.display = 'block';
+        setTimeout(() => {
+            textInput.focus();
+            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+        }, 50);
+    }
+    
+    console.log('✅ Input de texto restaurado');
+}
+
+/**
+ * 🆕 ATUALIZA O DISPLAY VISUAL DA DATA
+ */
+function atualizarDisplayData(dateDisplay, dataFormatada) {
+    dateDisplay.textContent = dataFormatada;
+    
+    if (dataFormatada && /^\d{2}\/\d{2}\/\d{4}$/.test(dataFormatada)) {
+        dateDisplay.style.color = '#000';
+        dateDisplay.style.fontWeight = 'normal';
+        dateDisplay.style.fontStyle = 'normal';
+    } else {
+        dateDisplay.style.color = '#999';
+        dateDisplay.style.fontWeight = 'normal';
+        dateDisplay.style.fontStyle = 'italic';
+    }
+}
+
+/**
  * 🆕 OBTÉM DATA FORMATADA DO CAMPO
  * Retorna no formato DD/MM/AAAA para armazenamento (igual ao JSON)
  */
@@ -644,7 +650,38 @@ function limparCampoData(inputElement) {
     inputElement.placeholder = 'DD/MM/AAAA';
 }
 
-// 🆕 EXPORTA AS FUNÇÕES
+/**
+ * 🆕 OCULTAR FORMULÁRIO DE EMPRESA
+ */
+function ocultarFormularioEmpresa(button, obraId) {
+    const container = button.closest('.empresa-formulario-ativo');
+    if (container) {
+        container.remove();
+    }
+    
+    const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (obraElement) {
+        const btnCadastro = obraElement.querySelector('.btn-empresa-cadastro');
+        if (btnCadastro) {
+            btnCadastro.style.display = 'block';
+        }
+    }
+    
+    console.log(`✅ Formulário de empresa ocultado para obra ${obraId}`);
+}
+
+/**
+ * 🆕 ATUALIZAR DADOS DA EMPRESA (função global para eventos HTML)
+ */
+function atualizarDadosEmpresa(inputElement, campo, obraId) {
+    const valor = inputElement.value.trim();
+    console.log(`📝 Atualizando campo ${campo} para obra ${obraId}: ${valor}`);
+    
+    // Aqui você pode adicionar lógica para salvar os dados
+    // Por exemplo, fazer uma requisição para atualizar no backend
+}
+
+// 🆕 EXPORTA AS FUNÇÕES (TODAS QUE ESTÃO SENDO IMPORTADAS EM OUTROS ARQUIVOS)
 export {
     atualizarInterfaceComEmpresa,
     atualizarCamposEmpresaForm,
@@ -659,10 +696,23 @@ export {
     alternarDatePicker,
     aplicarDataDoDatePicker,
     restaurarInputTexto,
-    atualizarDisplayData
+    atualizarDisplayData,
+    vincularEventosMudanca,
+    ocultarFormularioEmpresa,
+    formatarDataEmTempoReal,
+    validarDataInput,
+    permitirApenasNumerosEControles
 };
 
-// 🆕 TORNA AS FUNÇÕES DISPONÍVEIS GLOBALMENTE PARA OS EVENTOS HTML
+// 🆕 TORNA AS FUNÇÕES DISPONÍVEIS GLOBALMENTE
 window.alternarDatePicker = alternarDatePicker;
 window.aplicarDataDoDatePicker = aplicarDataDoDatePicker;
 window.restaurarInputTexto = restaurarInputTexto;
+window.ocultarFormularioEmpresa = ocultarFormularioEmpresa;
+window.atualizarDadosEmpresa = atualizarDadosEmpresa;
+
+// 🆕 INICIALIZAR CONFIGURAÇÃO DE DATA QUANDO O MÓDULO FOR CARREGADO
+document.addEventListener('DOMContentLoaded', function() {
+    configurarAutoFormatacaoData();
+    console.log('✅ empresa-form-manager.js carregado com sucesso');
+});

@@ -1,107 +1,277 @@
 {
   "obras": [
     {
-      "id": "obra_h99",
-      "nome": "Obra1",
-      "empresa_id": "empresa_obra_h99",
+      "id": "obra_t35",
+      "nome": "Obra2",
+      "empresa_id": "empresa_obra_t35",
+      "empresaSigla": "AMC",
+      "empresaNome": "AMC SOLUÇÕES",
+      "numeroClienteFinal": 1,
+      "clienteFinal": "d",
+      "codigoCliente": "d",
+      "dataCadastro": "12/01/2026",
+      "orcamentistaResponsavel": "d",
       "projetos": [
         {
-          "id": "obra_h99_proj_f61_2",
+          "id": "obra_t35_proj_t18_2",
           "nome": "Projeto1",
           "salas": [
             {
-              "id": "obra_h99_proj_f61_2_sala_n60_1",
+              "id": "obra_t35_proj_t18_2_sala_v96_1",
               "nome": "Sala1",
               "inputs": {
                 "ambiente": "Sala1",
+                "backup": "n+1",
+                "area": 12,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 12,
+                "paredeLeste": 12,
+                "paredeNorte": 12,
+                "paredeSul": 12,
                 "peDireito": 3,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 10,
+                "divisoriaClima2": 10,
+                "dissipacao": 1500,
                 "numPessoas": 1,
-                "pressurizacaoSetpoint": 0,
+                "pressurizacaoSetpoint": 25,
                 "setpointTemp": 25,
-                "pressurizacao": false,
+                "combateIncendio": "fm200",
+                "pressurizacao": true,
                 "numPortasDuplas": 0,
                 "numPortasSimples": 0
               },
-              "maquinas": [],
+              "maquinas": [
+                {
+                  "nome": "Split System-01A (2TR)",
+                  "tipo": "Split System",
+                  "potencia": "2TR",
+                  "tensao": "220V/1F",
+                  "precoBase": 7900,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 5,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 6,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "2 Dampers Manuais",
+                      "value": 7,
+                      "originalName": "2 Dampers Manuais",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
+                      "value": 8,
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 5,
+                      "name": "2 Dampers com atuador on/off",
+                      "value": 9,
+                      "originalName": "2 Dampers com atuador on/off",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 6,
+                      "name": "Ventilador Eletrônico",
+                      "value": 1,
+                      "originalName": "Ventilador Eletrônico",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 7,
+                      "name": "Controle de Condensação Proporcional",
+                      "value": 2,
+                      "originalName": "Controle de Condensação Proporcional",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 8,
+                      "name": "Goldfin",
+                      "value": 3,
+                      "originalName": "Goldfin",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 9,
+                      "name": "Sensor de Filtro Sujo",
+                      "value": 4,
+                      "originalName": "Sensor de Filtro Sujo",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 10,
+                      "name": "Resistencia de Aquecimento",
+                      "value": 5,
+                      "originalName": "Resistencia de Aquecimento",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 11,
+                      "name": "Pintura Especial",
+                      "value": 6,
+                      "originalName": "Pintura Especial",
+                      "potenciaAplicada": "2TR"
+                    },
+                    {
+                      "id": 12,
+                      "name": "Chaparia em Inox",
+                      "value": 7,
+                      "originalName": "Chaparia em Inox",
+                      "potenciaAplicada": "2TR"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 12963,
+                  "potenciaSelecionada": "2TR",
+                  "tipoSelecionado": "Split System"
+                }
+              ],
               "capacidade": {
                 "fatorSeguranca": 10,
                 "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": "-",
-                "solucaoBackup": "-",
-                "totalCapacidade": "-",
-                "folga": "-",
-                "backup": "n"
+                "solucao": 4,
+                "solucaoBackup": 5,
+                "totalCapacidade": 4,
+                "folga": 33.3,
+                "backup": "n+1"
               },
               "ganhosTermicos": {
-                "total-ganhos-w": 0,
-                "total-tr-aprox": 0,
-                "total-tr-exato": 0,
-                "total-externo": 0,
-                "total-divisoes": 0,
-                "total-piso": 0,
-                "total-iluminacao": 0,
-                "total-dissi": 0,
-                "total-pessoas": 0,
+                "total-ganhos-w": 9903,
+                "total-tr-aprox": 3,
+                "total-tr-exato": 2.816,
+                "total-externo": 5717,
+                "total-divisoes": 2139,
+                "total-piso": 244,
+                "total-iluminacao": 84,
+                "total-dissi": 1500,
+                "total-pessoas": 220,
                 "total-ar-sensivel": 0,
                 "total-ar-latente": 0
               },
-              "equipamentos": [],
-              "dutos": [],
+              "equipamentos": [
+                {
+                  "id": "1768250844069w3tte1gam",
+                  "tipo": "DCF_90",
+                  "dimensao": "350x350",
+                  "quantidade": 1,
+                  "valor_unitario": 27500,
+                  "valor_total": 27500,
+                  "descricao": "DCF_90"
+                }
+              ],
+              "dutos": [
+                {
+                  "id": "1768249877886auxxesmhl",
+                  "tipo": "Chapa preta",
+                  "tipo_descricao": "Chapa preta",
+                  "opcional_id": "1",
+                  "opcional_nome": "Pintura epoxi",
+                  "kg": 1,
+                  "quantidade": 1,
+                  "valor_tipo": 105,
+                  "valor_opcional": 30,
+                  "valor_cobre_por_kg": 99,
+                  "valor_unitario": 234,
+                  "valor_total": 234
+                },
+                {
+                  "id": "1768249882321jantq1cq9",
+                  "tipo": "Chapa de aco inox",
+                  "tipo_descricao": "Chapa de aco inox",
+                  "opcional_id": "",
+                  "opcional_nome": "Nenhum opcional",
+                  "kg": 1,
+                  "quantidade": 1,
+                  "valor_tipo": 180,
+                  "valor_opcional": 0,
+                  "valor_cobre_por_kg": 99,
+                  "valor_unitario": 279,
+                  "valor_total": 279
+                }
+              ],
               "tubulacao": {
                 "conjuntos": [
                   {
-                    "id": "obra_h99_proj_f61_2_sala_n60_1-1",
+                    "id": "obra_t35_proj_t18_2_sala_v96_1-1",
                     "numero": 1,
                     "quantidade": 1,
-                    "cabos": 34,
-                    "luvas": 0,
-                    "reducoes": 0,
-                    "totalLSmetros": 0,
-                    "totalLSkg": 0,
-                    "totalLLmetros": 0,
-                    "totalLLkg": 0,
-                    "totalKG": 0,
+                    "cabos": 27,
+                    "luvas": 106.4,
+                    "reducoes": 36,
+                    "totalLSmetros": 266,
+                    "totalLSkg": 356.71,
+                    "totalLLmetros": 257,
+                    "totalLLkg": 121.56,
+                    "totalKG": 478.27,
                     "linhas": [
                       {
-                        "id": "1768247290259fwqia33rt",
+                        "id": "17682498847088sh1ldsjy",
                         "tipo": "L.S.",
                         "pol": "1.1/4",
                         "expe": "1,59",
-                        "compr": 10.1,
-                        "numC": 0,
-                        "numCu": 0,
-                        "Cee": 0,
-                        "Lsm": 0,
-                        "LSkg": 0
+                        "compr": 10,
+                        "numC": 3,
+                        "numCu": 15,
+                        "Cee": 10,
+                        "Lsm": 180,
+                        "LSkg": 241.38
                       },
                       {
-                        "id": "1768247290361wzkuqgb2a",
+                        "id": "1768249884815of6ucvcph",
                         "tipo": "L.L.",
                         "pol": "7/8",
                         "expe": "0,80",
-                        "compr": 10.1,
-                        "numC": 0,
-                        "numCu": 0,
-                        "Cee": 0,
-                        "Lsm": 0,
-                        "LSkg": 0
+                        "compr": 10,
+                        "numC": 3,
+                        "numCu": 15,
+                        "Cee": 10,
+                        "Lsm": 180,
+                        "LSkg": 85.14
                       },
                       {
-                        "id": "1768247297582miyk1sc4k",
+                        "id": "1768249891082ke2dt20m4",
                         "tipo": "L.S.",
                         "pol": "1.1/4",
                         "expe": "1,59",
-                        "compr": 12,
-                        "numC": 0,
-                        "numCu": 0,
-                        "Cee": 0,
-                        "Lsm": 0,
-                        "LSkg": 0
+                        "compr": 5,
+                        "numC": 6,
+                        "numCu": 8,
+                        "Cee": 7,
+                        "Lsm": 86,
+                        "LSkg": 115.326
+                      },
+                      {
+                        "id": "1768249895483kvmm0ae3o",
+                        "tipo": "L.L.",
+                        "pol": "7/8",
+                        "expe": "0,80",
+                        "compr": 15,
+                        "numC": 3,
+                        "numCu": 4,
+                        "Cee": 8,
+                        "Lsm": 77,
+                        "LSkg": 36.421
                       }
                     ]
                   }
                 ]
-              }
+              },
+              "somavaloresmaquinatotal": 12963
             }
           ]
         }

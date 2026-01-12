@@ -277,7 +277,7 @@
 .dutos-table th {
     padding: var(--spacing-md);
     font-weight: 600;
-    text-align: left;
+    text-align: center;
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 0.5px;
