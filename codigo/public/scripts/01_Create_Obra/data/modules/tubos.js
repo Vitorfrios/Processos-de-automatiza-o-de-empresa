@@ -1,3 +1,15 @@
+// data/modules/tubos.js
+// SISTEMA DE TUBULAÇÃO DE COBRE - VERSÃO CORRIGIDA COM SINCRONIZAÇÃO LS↔LL
+
+/**
+ * data/modules/tubos.js
+ * SISTEMA DE TUBULAÇÃO DE COBRE
+ */
+
+// ==============================================
+// CONSTRUÇÃO DA SEÇÃO
+// ==============================================
+
 function buildTubosSection(obraId, projectId, roomName, finalRoomId) {
     // Validação mínima de segurança
     if (!finalRoomId || finalRoomId === 'undefined' || finalRoomId === 'null') {
@@ -124,7 +136,139 @@ function calcularReducoes(numCircuitos) {
 }
 
 // ==============================================
-// FUNÇÕES DO SISTEMA
+// NOVO SISTEMA DE SINCRONIZAÇÃO LS ↔ LL
+// ==============================================
+
+// Objeto para rastrear a sincronização por conjunto
+const sincronizacaoPorConjunto = {};
+
+// 🔄 NOVA FUNÇÃO: Configurar sincronização LS↔LL para um conjunto
+function configurarSincronizacaoLSLL(conjuntoId) {
+    console.log(`🔄 Configurando sincronização LS↔LL para conjunto ${conjuntoId}`);
+    
+    // Inicializar objeto de controle para este conjunto
+    sincronizacaoPorConjunto[conjuntoId] = {
+        lsId: null,  // ID da linha LS principal
+        llId: null,  // ID da linha LL principal
+        adicionalLS: [],  // IDs de linhas LS adicionais (NÃO SINCRONIZAM)
+        adicionalLL: [],  // IDs de linhas LL adicionais (NÃO SINCRONIZAM)
+        syncEnabled: true
+    };
+}
+
+// 🔄 NOVA FUNÇÃO: Sincronizar valores entre LS e LL (bidirecional)
+function sincronizarLSLL(linhaId, campo, valor) {
+    const row = document.getElementById(`linha-${linhaId}`);
+    if (!row) return;
+    
+    const conjuntoId = row.getAttribute('data-conjunto');
+    const tipoLinha = row.getAttribute('data-tipo');
+    const dadosConjunto = sincronizacaoPorConjunto[conjuntoId];
+    
+    if (!dadosConjunto || !dadosConjunto.syncEnabled) return;
+    
+    // Verificar se é uma linha adicional (NÃO DEVE SINCRONIZAR)
+    if (tipoLinha === 'L.S.' && dadosConjunto.adicionalLS.includes(linhaId)) {
+        console.log(`ℹ️ Linha adicional LS ${linhaId} - não sincroniza`);
+        return;
+    }
+    if (tipoLinha === 'L.L.' && dadosConjunto.adicionalLL.includes(linhaId)) {
+        console.log(`ℹ️ Linha adicional LL ${linhaId} - não sincroniza`);
+        return;
+    }
+    
+    // Determinar linha de destino
+    let linhaDestinoId = null;
+    if (tipoLinha === 'L.S.' && dadosConjunto.llId) {
+        linhaDestinoId = dadosConjunto.llId;
+    } else if (tipoLinha === 'L.L.' && dadosConjunto.lsId) {
+        linhaDestinoId = dadosConjunto.lsId;
+    }
+    
+    if (!linhaDestinoId) return;
+    
+    // Encontrar linha de destino
+    const linhaDestino = document.getElementById(`linha-${linhaDestinoId}`);
+    if (!linhaDestino) return;
+    
+    // Mapear campos para seletores CSS
+    const seletorPorCampo = {
+        'comprimento': '.comprimento-input',
+        'circuitos': '.circuitos-input', 
+        'curvas': '.curvas-input',
+        'cecurva': '.ce-curva-input'
+    };
+    
+    const seletor = seletorPorCampo[campo];
+    if (!seletor) return;
+    
+    // Atualizar valor na linha de destino
+    const inputDestino = linhaDestino.querySelector(seletor);
+    if (inputDestino && inputDestino.value !== valor) {
+        inputDestino.value = valor;
+        
+        // Disparar evento para recalcular
+        const event = new Event('change', { bubbles: true });
+        inputDestino.dispatchEvent(event);
+        
+        console.log(`✅ Sincronização LS↔LL: ${tipoLinha} → ${tipoLinha === 'L.S.' ? 'L.L.' : 'L.S.'} [${campo}: ${valor}]`);
+    }
+}
+
+// 🔄 NOVA FUNÇÃO: Atualizar controle de linhas em um conjunto
+function atualizarControleLinhas(conjuntoId) {
+    const tbody = document.getElementById(`tubos-list-${conjuntoId}`);
+    if (!tbody) return;
+    
+    const linhas = tbody.querySelectorAll('.linha-tubulacao');
+    const dadosConjunto = sincronizacaoPorConjunto[conjuntoId];
+    
+    if (!dadosConjunto) return;
+    
+    // Resetar arrays
+    dadosConjunto.lsId = null;
+    dadosConjunto.llId = null;
+    dadosConjunto.adicionalLS = [];
+    dadosConjunto.adicionalLL = [];
+    
+    // Contar linhas por tipo
+    const linhasLS = Array.from(linhas).filter(l => l.getAttribute('data-tipo') === 'L.S.');
+    const linhasLL = Array.from(linhas).filter(l => l.getAttribute('data-tipo') === 'L.L.');
+    
+    // Primeira linha LS é a principal
+    if (linhasLS.length > 0) {
+        const primeiraLS = linhasLS[0];
+        dadosConjunto.lsId = primeiraLS.id.replace('linha-', '');
+        
+        // As demais são adicionais
+        for (let i = 1; i < linhasLS.length; i++) {
+            const adicionalId = linhasLS[i].id.replace('linha-', '');
+            dadosConjunto.adicionalLS.push(adicionalId);
+        }
+    }
+    
+    // Primeira linha LL é a principal
+    if (linhasLL.length > 0) {
+        const primeiraLL = linhasLL[0];
+        dadosConjunto.llId = primeiraLL.id.replace('linha-', '');
+        
+        // As demais são adicionais
+        for (let i = 1; i < linhasLL.length; i++) {
+            const adicionalId = linhasLL[i].id.replace('linha-', '');
+            dadosConjunto.adicionalLL.push(adicionalId);
+        }
+    }
+    
+    console.log(`📊 Controle atualizado para conjunto ${conjuntoId}:`, {
+        lsPrincipal: dadosConjunto.lsId,
+        llPrincipal: dadosConjunto.llId,
+        adicionalLS: dadosConjunto.adicionalLS,
+        adicionalLL: dadosConjunto.adicionalLL
+    });
+}
+
+// ==============================================
+// FUNÇÕES DO SISTEMA (ATUALIZADAS)
 // ==============================================
 
 // Função para preencher dados de tubulação
@@ -148,6 +292,13 @@ function fillTubulacaoData(roomElement, tubulacaoData) {
     if (container) {
         const conjuntosExistentes = container.querySelectorAll('.tubos-conjunto');
         conjuntosExistentes.forEach(conjunto => conjunto.remove());
+        
+        // Limpar controle de sincronização
+        Object.keys(sincronizacaoPorConjunto).forEach(key => {
+            if (key.startsWith(roomId)) {
+                delete sincronizacaoPorConjunto[key];
+            }
+        });
     }
 
     // Verificar se há dados para preencher
@@ -169,68 +320,15 @@ function fillTubulacaoData(roomElement, tubulacaoData) {
     }
 }
 
-// Controle de primeira interação por coluna e por conjunto
-const primeiraInteracaoPorColuna = {};
-
-function verificarPrimeiraInteracao(conjuntoId, coluna) {
-    const chave = `${conjuntoId}_${coluna}`;
-    
-    if (!primeiraInteracaoPorColuna[chave]) {
-        primeiraInteracaoPorColuna[chave] = true;
-        return true;
-    }
-    
-    return false;
-}
-
-function sincronizarPrimeiraInteracao(conjuntoId, coluna, valor, linhaAtualId) {
-    const tbody = document.getElementById(`tubos-list-${conjuntoId}`);
-    if (!tbody) return;
-    
-    const linhas = tbody.querySelectorAll('.linha-tubulacao');
-    let linhaDestino = null;
-    
-    for (let linha of linhas) {
-        const linhaId = linha.id;
-        const linhaTipo = linha.getAttribute('data-tipo');
-        const linhaAtualTipo = document.getElementById(linhaAtualId)?.getAttribute('data-tipo');
-        
-        if (linhaId !== linhaAtualId && linhaTipo !== linhaAtualTipo) {
-            linhaDestino = linha;
-            break;
-        }
-    }
-    
-    if (linhaDestino) {
-        const inputClassMap = {
-            'comprimento': '.comprimento-input',
-            'circuitos': '.circuitos-input',
-            'curvas': '.curvas-input',
-            'cecurva': '.ce-curva-input'
-        };
-        
-        const inputClass = inputClassMap[coluna];
-        if (inputClass) {
-            const inputDestino = linhaDestino.querySelector(inputClass);
-            if (inputDestino) {
-                inputDestino.value = valor;
-                const event = new Event('change', { bubbles: true });
-                inputDestino.dispatchEvent(event);
-            }
-        }
-    }
-}
-
+// Função para processar alterações nas colunas (ATUALIZADA)
 function handleColunaChange(linhaId, coluna, valor) {
     const row = document.getElementById(`linha-${linhaId}`);
     if (!row || valor === '') return;
     
     const conjuntoId = row.getAttribute('data-conjunto');
-    const chave = `${conjuntoId}_${coluna}`;
     
-    if (verificarPrimeiraInteracao(conjuntoId, coluna)) {
-        sincronizarPrimeiraInteracao(conjuntoId, coluna, valor, `linha-${linhaId}`);
-    }
+    // 🔄 ATUALIZAÇÃO: Usar nova sincronização LS↔LL
+    sincronizarLSLL(linhaId, coluna, valor);
     
     calcularLinha(linhaId);
 }
@@ -262,6 +360,11 @@ function addLinhaLS(roomId, conjuntoNum = '1') {
     };
 
     adicionarLinhaNaTabela(conjuntoId, linha);
+    
+    // 🔄 ATUALIZAÇÃO: Atualizar controle após adicionar linha
+    setTimeout(() => {
+        atualizarControleLinhas(conjuntoId);
+    }, 100);
 }
 
 // Adicionar nova linha L.L. - com valores padrão
@@ -288,9 +391,14 @@ function addLinhaLL(roomId, conjuntoNum = '1') {
     };
 
     adicionarLinhaNaTabela(conjuntoId, linha);
+    
+    // 🔄 ATUALIZAÇÃO: Atualizar controle após adicionar linha
+    setTimeout(() => {
+        atualizarControleLinhas(conjuntoId);
+    }, 100);
 }
 
-// Adicionar linha na tabela HTML
+// Adicionar linha na tabela HTML (ATUALIZADA)
 function adicionarLinhaNaTabela(conjuntoId, linha) {
     const tbody = document.getElementById(`tubos-list-${conjuntoId}`);
 
@@ -375,12 +483,15 @@ function adicionarLinhaNaTabela(conjuntoId, linha) {
     }
 }
 
-// Adicionar novo conjunto de tubulação
+// Adicionar novo conjunto de tubulação (ATUALIZADA)
 function addTubulacaoConjunto(roomId, conjuntoData = null) {
     // Contar quantos conjuntos já existem
     const conjuntos = document.querySelectorAll(`[data-conjunto-id^="${roomId}-"]`);
     const novoNum = conjuntos.length + 1;
     const novoConjuntoId = `${roomId}-${novoNum}`;
+
+    // 🔄 NOVO: Configurar sincronização para este conjunto
+    configurarSincronizacaoLSLL(novoConjuntoId);
 
     // Remover mensagem "vazio" se for o primeiro conjunto
     const emptyMessage = document.getElementById(`tubos-empty-${roomId}`);
@@ -475,12 +586,6 @@ function addTubulacaoConjunto(roomId, conjuntoData = null) {
     // Se houver dados para preencher
     if (conjuntoData && conjuntoData.linhas) {
         setTimeout(() => {
-            // Resetar controle de primeira interação para este conjunto
-            ['comprimento', 'circuitos', 'curvas', 'cecurva'].forEach(coluna => {
-                const chave = `${novoConjuntoId}_${coluna}`;
-                delete primeiraInteracaoPorColuna[chave];
-            });
-            
             // Adicionar cada linha
             conjuntoData.linhas.forEach((linha, linhaIndex) => {
                 setTimeout(() => {
@@ -505,9 +610,10 @@ function addTubulacaoConjunto(roomId, conjuntoData = null) {
                     
                     adicionarLinhaNaTabela(novoConjuntoId, linhaCompleta);
                     
-                    // Se for a última linha, atualizar totais
+                    // Se for a última linha, atualizar controle
                     if (linhaIndex === conjuntoData.linhas.length - 1) {
                         setTimeout(() => {
+                            atualizarControleLinhas(novoConjuntoId);
                             atualizarTotaisConjunto(novoConjuntoId);
                         }, 100);
                     }
@@ -520,6 +626,13 @@ function addTubulacaoConjunto(roomId, conjuntoData = null) {
             addLinhaLS(roomId, novoNum);
             setTimeout(() => {
                 addLinhaLL(roomId, novoNum);
+                
+                // 🔄 ATUALIZAÇÃO: Após adicionar ambas as linhas, configurar controle
+                setTimeout(() => {
+                    atualizarControleLinhas(novoConjuntoId);
+                    console.log(`✅ Conjunto ${novoConjuntoId} criado com sincronização LS↔LL ativa`);
+                }, 200);
+                
             }, 100);
         }, 200);
     }
@@ -637,7 +750,7 @@ function atualizarTotaisConjunto(conjuntoId) {
     document.getElementById(`total-geral-kg-${conjuntoId}`).textContent = totalGeralKg.toFixed(2);
 }
 
-// Remover linha
+// Remover linha (ATUALIZADA)
 function removerLinha(linhaId) {
     const row = document.getElementById(`linha-${linhaId}`);
     if (!row) return;
@@ -646,18 +759,28 @@ function removerLinha(linhaId) {
 
     if (confirm('Tem certeza que deseja remover esta linha?')) {
         row.remove();
-        atualizarTotaisConjunto(conjuntoId);
+        
+        // 🔄 ATUALIZAÇÃO: Atualizar controle após remover linha
+        setTimeout(() => {
+            atualizarControleLinhas(conjuntoId);
+            atualizarTotaisConjunto(conjuntoId);
+        }, 50);
+        
         console.log(`🗑️ Linha removida: ${linhaId}`);
     }
 }
 
-// Limpar toda a tubulação
+// Limpar toda a tubulação (ATUALIZADA)
 function limparTubulacao(roomId) {
     if (confirm('Tem certeza que deseja limpar toda a tubulação desta sala?')) {
         const container = document.querySelector(`#section-content-${roomId}tubos .tubos-container`);
         if (container) {
             const conjuntos = container.querySelectorAll('.tubos-conjunto');
-            conjuntos.forEach(conjunto => conjunto.remove());
+            conjuntos.forEach(conjunto => {
+                const conjuntoId = conjunto.getAttribute('data-conjunto-id');
+                delete sincronizacaoPorConjunto[conjuntoId];
+                conjunto.remove();
+            });
 
             const emptyMessage = document.getElementById(`tubos-empty-${roomId}`);
             if (emptyMessage) {
@@ -770,6 +893,8 @@ if (typeof window !== 'undefined') {
     window.buildTubosSection = buildTubosSection;
     window.extractTubulacaoData = extractTubulacaoData;
     window.handleColunaChange = handleColunaChange;
+    window.sincronizarLSLL = sincronizarLSLL;
+    window.atualizarControleLinhas = atualizarControleLinhas;
 }
 
 // Exportar todas as funções
@@ -796,5 +921,8 @@ export {
     bitolasDisponiveis,
     kgm_080mm,
     kgm_159mm,
-    handleColunaChange
+    handleColunaChange,
+    sincronizarLSLL,
+    atualizarControleLinhas,
+    configurarSincronizacaoLSLL
 };

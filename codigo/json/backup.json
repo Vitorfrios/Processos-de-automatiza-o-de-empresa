@@ -1,126 +1,16 @@
 {
   "obras": [
     {
-      "id": "obra_a11",
+      "id": "obra_h99",
       "nome": "Obra1",
-      "empresa_id": "empresa_obra_a11",
+      "empresa_id": "empresa_obra_h99",
       "projetos": [
         {
-          "id": "obra_a11_proj_o58_2",
+          "id": "obra_h99_proj_f61_2",
           "nome": "Projeto1",
           "salas": [
             {
-              "id": "obra_a11_proj_o58_2_sala_q71_1",
-              "nome": "Sala1",
-              "inputs": {
-                "ambiente": "Sala1",
-                "peDireito": 3,
-                "numPessoas": 1,
-                "pressurizacaoSetpoint": 0,
-                "setpointTemp": 25,
-                "pressurizacao": false,
-                "numPortasDuplas": 0,
-                "numPortasSimples": 0
-              },
-              "maquinas": [],
-              "capacidade": {
-                "fatorSeguranca": 10,
-                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": "-",
-                "solucaoBackup": "-",
-                "totalCapacidade": "-",
-                "folga": "-",
-                "backup": "n"
-              },
-              "ganhosTermicos": {
-                "total-ganhos-w": 0,
-                "total-tr-aprox": 0,
-                "total-tr-exato": 0,
-                "total-externo": 0,
-                "total-divisoes": 0,
-                "total-piso": 0,
-                "total-iluminacao": 0,
-                "total-dissi": 0,
-                "total-pessoas": 0,
-                "total-ar-sensivel": 0,
-                "total-ar-latente": 0
-              },
-              "equipamentos": [],
-              "dutos": [
-                {
-                  "id": "17669279945142f618nm80",
-                  "tipo": "Chapa preta",
-                  "tipo_descricao": "Chapa preta",
-                  "opcional_id": "2",
-                  "opcional_nome": "Isolamento acustico",
-                  "kg": 1,
-                  "quantidade": 1,
-                  "valor_tipo": 105,
-                  "valor_opcional": 40,
-                  "valor_cobre_por_kg": 99,
-                  "valor_unitario": 244,
-                  "valor_total": 244
-                }
-              ],
-              "tubulacao": {
-                "conjuntos": [
-                  {
-                    "id": "obra_a11_proj_o58_2_sala_q71_1-1",
-                    "numero": 1,
-                    "quantidade": 1,
-                    "cabos": 16,
-                    "luvas": 13.8,
-                    "reducoes": 12,
-                    "totalLSmetros": 34.5,
-                    "totalLSkg": 46.26,
-                    "totalLLmetros": 34.5,
-                    "totalLLkg": 16.32,
-                    "totalKG": 62.58,
-                    "linhas": [
-                      {
-                        "id": "1766928010490zgwlqp94e",
-                        "tipo": "L.S.",
-                        "pol": "1.1/4",
-                        "expe": "1,59",
-                        "compr": 10,
-                        "numC": 3,
-                        "numCu": 15,
-                        "Cee": 0.3,
-                        "Lsm": 34.5,
-                        "LSkg": 46.2645
-                      },
-                      {
-                        "id": "1766928010598f1hg7jxwq",
-                        "tipo": "L.L.",
-                        "pol": "7/8",
-                        "expe": "0,80",
-                        "compr": 10,
-                        "numC": 3,
-                        "numCu": 15,
-                        "Cee": 0.3,
-                        "Lsm": 34.5,
-                        "LSkg": 16.3185
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "obra_w79",
-      "nome": "Obra2",
-      "empresa_id": "empresa_obra_w79",
-      "projetos": [
-        {
-          "id": "obra_w79_proj_n21_2",
-          "nome": "Projeto1",
-          "salas": [
-            {
-              "id": "obra_w79_proj_n21_2_sala_e52_1",
+              "id": "obra_h99_proj_f61_2_sala_n60_1",
               "nome": "Sala1",
               "inputs": {
                 "ambiente": "Sala1",
@@ -158,7 +48,59 @@
               "equipamentos": [],
               "dutos": [],
               "tubulacao": {
-                "conjuntos": []
+                "conjuntos": [
+                  {
+                    "id": "obra_h99_proj_f61_2_sala_n60_1-1",
+                    "numero": 1,
+                    "quantidade": 1,
+                    "cabos": 34,
+                    "luvas": 0,
+                    "reducoes": 0,
+                    "totalLSmetros": 0,
+                    "totalLSkg": 0,
+                    "totalLLmetros": 0,
+                    "totalLLkg": 0,
+                    "totalKG": 0,
+                    "linhas": [
+                      {
+                        "id": "1768247290259fwqia33rt",
+                        "tipo": "L.S.",
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 10.1,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0
+                      },
+                      {
+                        "id": "1768247290361wzkuqgb2a",
+                        "tipo": "L.L.",
+                        "pol": "7/8",
+                        "expe": "0,80",
+                        "compr": 10.1,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0
+                      },
+                      {
+                        "id": "1768247297582miyk1sc4k",
+                        "tipo": "L.S.",
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 12,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0
+                      }
+                    ]
+                  }
+                ]
               }
             }
           ]

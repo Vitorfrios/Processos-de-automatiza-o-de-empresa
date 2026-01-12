@@ -1,25 +1,35 @@
-1. Banco de dados dos equipamentos VZ, DSP 30 e DCF 120
-Se esses modelos ainda não estiverem no banco, eu preciso de valores padrão para simular os dados reais.
-- algumas dimensões
-- alguns valores técnicos
-Depois, quando o banco final estiver pronto, é só substituir.
+----------
+erros a corrigir
+Parede Oeste (m) e Parede Leste (m): devem ser sempre sincronizadas ate sair do input
+parede norte e sul tmb: devem tmb ser sincronizadas ate sair do input
 
+LS e LL sempre sincronizadas sempre sempre 
+- coloar vaslores relativos 
+- adicionar valores de cada bitolas
+- valot total= total kg*valor cobre+[(valor da bitola LS *comprimento)+(valor da bitola LS *comprimento)]
+-----------------
+corrigir erro de duplicação 
+−
+Remover
++
+Climatização
++
+Tubulação de Cobre
++
+Tubulação de Cobre
++
+Máquinas
++
+Equipamentos de Difusão e Controle de Ar
++
+Tubulação de Cobre
++
+Dutos para Climatização
+----------------
+
+Selecione tipo e opcional remover dos dutos, o proprio nome ja diz, opcional
 ---
-
-2. Máquinas que dependem de tubulação
-Eu já tenho a tabela de bitolas da tubulação etc, porém preciso saber se essa tabela também inclui equipamentos.
-
-- Se sim, e nao tiver no banco, preciso de valores padrão para simulação.
-- E preciso que me fale quais máquinas utilizam tubulação obrigatoriamente.
-
----
-
-3. Dados sobre dutos
-Ainda vou estruturar a tabela de dutos, mas preciso entender se existe algum equipamento relacionado aos dutos.
-
-- Se houver, preciso ao menos dos valores base, dimensões e parâmetros necessários.
-- Também preciso saber se existem máquinas que devam usar duto, como acontece com a tubulação. Ou se você vai adicionar manualmente mesmo, independente da máquina.
-
----
-4- Atualização do banco de dados de maquinas
----
+Cadastro de Empresa
+Empresa *
+Digite sigla ou nome ou selecione...
+ está travada ao carregar a obra 
