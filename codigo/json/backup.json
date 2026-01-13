@@ -215,21 +215,23 @@
                     "reducoes": 36,
                     "totalLSmetros": 266,
                     "totalLSkg": 356.71,
-                    "totalLLmetros": 257,
-                    "totalLLkg": 121.56,
-                    "totalKG": 478.27,
+                    "totalLLmetros": 677,
+                    "totalLLkg": 320.22,
+                    "totalKG": 676.93,
+                    "valorTotal": 44926,
                     "linhas": [
                       {
                         "id": "17682498847088sh1ldsjy",
                         "tipo": "L.S.",
-                        "pol": "1.1/4",
+                        "pol": "1 1/4",
                         "expe": "1,59",
                         "compr": 10,
                         "numC": 3,
                         "numCu": 15,
                         "Cee": 10,
                         "Lsm": 180,
-                        "LSkg": 241.38
+                        "LSkg": 241.38,
+                        "valorTotal": 11160
                       },
                       {
                         "id": "1768249884815of6ucvcph",
@@ -241,37 +243,40 @@
                         "numCu": 15,
                         "Cee": 10,
                         "Lsm": 180,
-                        "LSkg": 85.14
+                        "LSkg": 85.14,
+                        "valorTotal": 7560
                       },
                       {
                         "id": "1768249891082ke2dt20m4",
                         "tipo": "L.S.",
-                        "pol": "1.1/4",
+                        "pol": "1 1/4",
                         "expe": "1,59",
                         "compr": 5,
                         "numC": 6,
                         "numCu": 8,
                         "Cee": 7,
                         "Lsm": 86,
-                        "LSkg": 115.326
+                        "LSkg": 115.326,
+                        "valorTotal": 5332
                       },
                       {
                         "id": "1768249895483kvmm0ae3o",
                         "tipo": "L.L.",
                         "pol": "7/8",
                         "expe": "0,80",
-                        "compr": 15,
+                        "compr": 155,
                         "numC": 3,
                         "numCu": 4,
                         "Cee": 8,
                         "Lsm": 77,
-                        "LSkg": 36.421
+                        "LSkg": 36.421,
+                        "valorTotal": 20874
                       }
                     ]
                   }
-                ]
-              },
-              "somavaloresmaquinatotal": 12963
+                ],
+                "valorTotal": 44926
+              }
             }
           ]
         }

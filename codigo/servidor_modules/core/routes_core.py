@@ -871,7 +871,8 @@ class RoutesCore:
                     "materials": {}, 
                     "empresas": [],
                     "banco_equipamentos": {},
-                    "dutos": []  # ADICIONADO
+                    "dutos": [],
+                    "tubos": []  # ADICIONADO
                 }
             )
             
@@ -886,7 +887,8 @@ class RoutesCore:
                 "materials": {}, 
                 "empresas": [],
                 "banco_equipamentos": {},
-                "dutos": []  # ADICIONADO
+                "dutos": [],
+                "tubos": []  # ADICIONADO
             }
 
     def handle_get_constants_json(self):
@@ -966,8 +968,11 @@ class RoutesCore:
         try:
             new_data = json.loads(post_data)
             
-            # Valida estrutura básica ATUALIZADA com dutos
-            required_keys = ["constants", "machines", "materials", "empresas", "banco_equipamentos", "dutos"]
+            # Valida estrutura básica ATUALIZADA com dutos e tubos
+            required_keys = [
+                "constants", "machines", "materials", "empresas", 
+                "banco_equipamentos", "dutos", "tubos"  # ADICIONADO tubos
+            ]
             if not all(key in new_data for key in required_keys):
                 return {
                     "success": False, 
@@ -977,7 +982,7 @@ class RoutesCore:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if self.file_utils.save_json_file(dados_file, new_data):
-                print("💾 TODOS os dados do sistema salvos (incluindo dutos)")
+                print("💾 TODOS os dados do sistema salvos (incluindo dutos e tubos)")
                 return {"success": True, "message": "Dados salvos com sucesso"}
             else:
                 return {"success": False, "error": "Erro ao salvar dados"}
@@ -1319,4 +1324,47 @@ class RoutesCore:
                 
         except Exception as e:
             print(f"❌ Erro ao salvar dutos: {str(e)}")
+            return {"success": False, "error": str(e)}
+        
+        
+    def handle_get_tubos(self):
+        """Retorna todos os tubos"""
+        try:
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            tubos = dados_data.get("tubos", [])
+            return {
+                "success": True,
+                "tubos": tubos,
+                "count": len(tubos)
+            }
+            
+        except Exception as e:
+            print(f"❌ Erro ao carregar tubos: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "tubos": [],
+                "count": 0
+            }
+
+    def handle_post_save_tubos(self, post_data):
+        """Salva apenas os tubos"""
+        try:
+            new_tubos = json.loads(post_data)
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            dados_data["tubos"] = new_tubos.get("tubos", [])
+            
+            if self.file_utils.save_json_file(dados_file, dados_data):
+                print("💾 Tubos salvos")
+                return {"success": True, "message": "Tubos salvos"}
+            else:
+                return {"success": False, "error": "Erro ao salvar tubos"}
+                
+        except Exception as e:
+            print(f"❌ Erro ao salvar tubos: {str(e)}")
             return {"success": False, "error": str(e)}

@@ -296,7 +296,8 @@ function extractDutosData(roomElement) {
 
 function extractTubulacaoData(roomElement) {
     const resultado = {
-        conjuntos: []
+        conjuntos: [],
+        valorTotal: 0
     };
     
     if (!roomElement?.dataset.roomId) {
@@ -334,12 +335,21 @@ function extractTubulacaoData(roomElement) {
         const totalLuvas = document.getElementById(`total-luvas-${conjuntoId}`);
         const totalReducoes = document.getElementById(`total-reducoes-${conjuntoId}`);
         const totalGeralKg = document.getElementById(`total-geral-kg-${conjuntoId}`);
+        const totalValor = document.getElementById(`total-valor-${conjuntoId}`);
         
         // Extrair valores numéricos dos totais
         const extrairNumero = (element) => {
             if (!element) return 0;
             const text = element.textContent || '0';
             return parseFloat(text.replace(',', '.')) || 0;
+        };
+        
+        // Extrair valor monetário
+        const extrairValor = (element) => {
+            if (!element) return 0;
+            const text = element.textContent || 'R$ 0,00';
+            const valor = parseFloat(text.replace('R$', '').replace(',', '.').trim());
+            return isNaN(valor) ? 0 : valor;
         };
         
         const conjuntoData = {
@@ -354,8 +364,12 @@ function extractTubulacaoData(roomElement) {
             totalLLmetros: extrairNumero(totalLLmetros),
             totalLLkg: extrairNumero(totalLLkg),
             totalKG: extrairNumero(totalGeralKg),
+            valorTotal: extrairValor(totalValor),
             linhas: []
         };
+        
+        // Adicionar ao valor total geral
+        resultado.valorTotal += conjuntoData.valorTotal;
         
         // Buscar todas as linhas deste conjunto
         const tbody = document.getElementById(`tubos-list-${conjuntoId}`);
@@ -377,7 +391,8 @@ function extractTubulacaoData(roomElement) {
                         numCu: parseInt(linhaData.numCurvas || 0),
                         Cee: parseFloat(linhaData.comprimentoEquivalenteCurva || 0),
                         Lsm: parseFloat(linhaData.LSmetros || linhaData.LLmetros || 0),
-                        LSkg: parseFloat(linhaData.LSkg || linhaData.LLkg || 0)
+                        LSkg: parseFloat(linhaData.LSkg || linhaData.LLkg || 0),
+                        valorTotal: parseFloat(linhaData.valorTotal || 0)
                     };
                     
                     conjuntoData.linhas.push(linhaFormatada);
@@ -391,6 +406,7 @@ function extractTubulacaoData(roomElement) {
     });
     
     console.log(`✅ ${resultado.conjuntos.length} conjunto(s) de tubulação extraído(s) da sala ${roomId}`);
+    console.log(`💰 Valor total da tubulação: R$ ${resultado.valorTotal.toFixed(2)}`);
     return resultado;
 }
 

@@ -466,3 +466,33 @@ class RouteHandler:
     def handle_post_delete_duto(self, handler):
         """POST /api/dutos/delete"""
         handler.handle_post_delete_duto()
+        
+            # Adicione estes métodos à classe RouteHandler:
+
+    def handle_get_tubos(self, handler):
+        """GET /api/tubos"""
+        handler.handle_get_tubos()
+
+    def handle_get_tubo_polegadas(self, handler):
+        """GET /api/tubos/polegadas"""
+        handler.handle_get_tubo_polegadas()
+
+    def handle_get_tubo_por_polegada(self, handler):
+        """GET /api/tubos/polegada/{polegada}"""
+        handler.handle_get_tubo_por_polegada()
+
+    def handle_get_search_tubos(self, handler):
+        """GET /api/tubos/search"""
+        handler.handle_get_search_tubos()
+
+    def handle_post_add_tubo(self, handler):
+        """POST /api/tubos/add"""
+        handler.handle_post_add_tubo()
+
+    def handle_post_update_tubo(self, handler):
+        """POST /api/tubos/update"""
+        handler.handle_post_update_tubo()
+
+    def handle_post_delete_tubo(self, handler):
+        """POST /api/tubos/delete"""
+        handler.handle_post_delete_tubo()
