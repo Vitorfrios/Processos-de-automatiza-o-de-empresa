@@ -65,14 +65,7 @@
         width: 100%;
     }
     
-    .toolbar-stack {
-        max-height: none;
-        margin-bottom: var(--spacing-sm);
-    }
-    
-    .toolbar-stack .btn {
-        margin-bottom: 4px;
-    }
+
     
     /* Search box */
     .search-box {

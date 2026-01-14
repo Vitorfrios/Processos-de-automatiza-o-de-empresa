@@ -1,5 +1,5 @@
-/* ==== INÍCIO: json-utils.js ==== */
-// json-utils.js - Arquivo principal que coordena tudo (CORRIGIDO COM DUTOS E TUBOS COMO ARRAYS)
+/* ==== INÍCIO: json-utils.js (REMOVIDO IMPORT/EXPORT) ==== */
+// json-utils.js - Arquivo principal que coordena tudo (SEM FUNÇÕES DE IMPORT/EXPORT)
 
 // ==================== FUNÇÕES AUXILIARES ====================
 
@@ -451,66 +451,242 @@ async function showJsonConfirmationModal(comparison) {
         const modal = document.getElementById('confirmationModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalMessage = document.getElementById('modalMessage');
-
+        
         if (!modal || !modalTitle || !modalMessage) {
             const confirmed = confirm(
                 `Confirmar aplicação de JSON?\n\n` +
-                `Adicionados: ${comparison.summary.total_added}\n` +
-                `Modificados: ${comparison.summary.total_modified}\n` +
-                `Removidos: ${comparison.summary.total_removed}\n\n` +
-                `Total: ${comparison.summary.total_changes} alterações`
+                `Adicionados: ${comparison.summary?.total_added || 0}\n` +
+                `Modificados: ${comparison.summary?.total_modified || 0}\n` +
+                `Removidos: ${comparison.summary?.total_removed || 0}\n\n` +
+                `Total: ${comparison.summary?.total_changes || 0} alterações`
             );
             resolve(confirmed);
             return;
         }
 
-        modalTitle.textContent = 'Confirmar Aplicação de JSON';
+        // Garantir que os dados existem
+        const differences = comparison.differences || {};
+        const categories = {
+            constants: differences.constants || { added: [], modified: [], removed: [] },
+            machines: differences.machines || { added: [], modified: [], removed: [] },
+            materials: differences.materials || { added: [], modified: [], removed: [] },
+            empresas: differences.empresas || { added: [], modified: [], removed: [] },
+            banco_equipamentos: differences.banco_equipamentos || { added: [], modified: [], removed: [] },
+            dutos: differences.dutos || { added: [], modified: [], removed: [] },
+            tubos: differences.tubos || { added: [], modified: [], removed: [] }
+        };
+
+        const totalAdded = Object.values(categories).reduce((sum, cat) => sum + (cat.added?.length || 0), 0);
+        const totalModified = Object.values(categories).reduce((sum, cat) => sum + (cat.modified?.length || 0), 0);
+        const totalRemoved = Object.values(categories).reduce((sum, cat) => sum + (cat.removed?.length || 0), 0);
+        const totalChanges = totalAdded + totalModified + totalRemoved;
+        const hasChanges = totalChanges > 0;
+
+        modalTitle.textContent = 'Resumo de Alterações';
 
         let messageHtml = `
-            <div class="comparison-summary">
-                <h4>Resumo das Alterações:</h4>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li><strong>Adicionados:</strong> ${comparison.summary.total_added}</li>
-                    <li><strong>Modificados:</strong> ${comparison.summary.total_modified}</li>
-                    <li><strong>Removidos:</strong> ${comparison.summary.total_removed}</li>
-                </ul>
-                <p style="margin-top: 10px;"><strong>Total de alterações:</strong> ${comparison.summary.total_changes}</p>
-                <div style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
-                    <h5 style="margin: 0 0 5px 0;">Detalhes por categoria:</h5>
-                    ${comparison.differences.dutos.added.length > 0 ? 
-                        `<p><strong>Dutos adicionados:</strong> ${comparison.differences.dutos.added.length}</p>` : ''}
-                    ${comparison.differences.dutos.modified.length > 0 ? 
-                        `<p><strong>Dutos modificados:</strong> ${comparison.differences.dutos.modified.length}</p>` : ''}
-                    ${comparison.differences.dutos.removed.length > 0 ? 
-                        `<p><strong>Dutos removidos:</strong> ${comparison.differences.dutos.removed.length}</p>` : ''}
-                    ${comparison.differences.tubos.added.length > 0 ? 
-                        `<p><strong>Tubos adicionados:</strong> ${comparison.differences.tubos.added.length}</p>` : ''}
-                    ${comparison.differences.tubos.modified.length > 0 ? 
-                        `<p><strong>Tubos modificados:</strong> ${comparison.differences.tubos.modified.length}</p>` : ''}
-                    ${comparison.differences.tubos.removed.length > 0 ? 
-                        `<p><strong>Tubos removidos:</strong> ${comparison.differences.tubos.removed.length}</p>` : ''}
+            <div class="simple-summary">
+                <!-- Status -->
+                <div class="status-banner ${hasChanges ? 'has-changes' : 'no-changes'}">
+                    <span class="status-icon">${hasChanges ? '📝' : '✅'}</span>
+                    <span class="status-text">
+                        ${hasChanges ? `${totalChanges} alteração${totalChanges !== 1 ? 'ões' : ''} encontrada${totalChanges !== 1 ? 's' : ''}` : 'Nenhuma alteração'}
+                    </span>
                 </div>
-                <p style="margin-top: 10px; font-size: 12px; color: #666;">
-                    <i class="icon-info"></i> Os itens removidos serão excluídos do sistema.
-                </p>
+
+                <!-- Métricas horizontais -->
+                <div class="metrics-row">
+                    <div class="metric-box ${totalAdded > 0 ? 'active' : ''}">
+                        <div class="metric-number">${totalAdded}</div>
+                        <div class="metric-label">Adições</div>
+                    </div>
+                    <div class="metric-box ${totalModified > 0 ? 'active' : ''}">
+                        <div class="metric-number">${totalModified}</div>
+                        <div class="metric-label">Modificações</div>
+                    </div>
+                    <div class="metric-box ${totalRemoved > 0 ? 'active' : ''}">
+                        <div class="metric-number">${totalRemoved}</div>
+                        <div class="metric-label">Exclusões</div>
+                    </div>
+                </div>
+
+                <!-- Detalhes -->
+                <div class="details-panel">
+                    <div class="details-header">
+                        <h4>Detalhamento por Categoria</h4>
+                        <div class="header-actions">
+                            <button class="action-btn" onclick="expandAllDetails()">Expandir</button>
+                            <button class="action-btn" onclick="collapseAllDetails()">Recolher</button>
+                        </div>
+                    </div>
+                    
+                    <div class="categories-list">
+        `;
+
+        // Função para obter detalhes específicos das modificações
+        const getChangeDetails = (categoryName, itemName) => {
+            if (categoryName === 'Constantes' && window.systemData?.constants && window.stagingData?.constants) {
+                const current = window.systemData.constants[itemName];
+                const proposed = window.stagingData.constants[itemName];
+                
+                if (current && proposed) {
+                    const changes = [];
+                    
+                    if (current.value !== proposed.value) {
+                        changes.push(`<strong>valor:</strong> ${current.value} → ${proposed.value}`);
+                    }
+                    
+                    if (current.description !== proposed.description) {
+                        changes.push(`<strong>descrição:</strong> "${current.description}" → "${proposed.description}"`);
+                    }
+                    
+                    if (changes.length > 0) {
+                        return `<div class="change-details">${changes.join('<br>')}</div>`;
+                    }
+                }
+            }
+            return '';
+        };
+
+        // Gerar categorias
+        Object.entries({
+            'Constantes': categories.constants,
+            'Máquinas': categories.machines,
+            'Materiais': categories.materials,
+            'Empresas': categories.empresas,
+            'Equipamentos': categories.banco_equipamentos,
+            'Dutos': categories.dutos,
+            'Tubos': categories.tubos
+        }).forEach(([name, data]) => {
+            const added = data.added || [];
+            const modified = data.modified || [];
+            const removed = data.removed || [];
+            const total = added.length + modified.length + removed.length;
+            
+            if (total === 0) return;
+
+            const categoryId = name.toLowerCase().replace(/\s+/g, '-');
+            
+            messageHtml += `
+                <div class="category-item" data-category="${categoryId}">
+                    <div class="category-header" onclick="toggleCategory('${categoryId}')">
+                        <div class="category-info">
+                            <span class="category-name">${name}</span>
+                            <div class="category-badges">
+                                ${added.length > 0 ? `<span class="badge add">+${added.length}</span>` : ''}
+                                ${modified.length > 0 ? `<span class="badge mod">↻${modified.length}</span>` : ''}
+                                ${removed.length > 0 ? `<span class="badge del">−${removed.length}</span>` : ''}
+                            </div>
+                        </div>
+                        <span class="toggle-arrow">▼</span>
+                    </div>
+                    
+                    <div class="category-content" id="content-${categoryId}">
+                        ${added.length > 0 ? `
+                            <div class="change-section add">
+                                <div class="section-title">Novos itens (${added.length})</div>
+                                <div class="items-grid">
+                                    ${added.map(item => `
+                                        <div class="item">${item}</div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${modified.length > 0 ? `
+                            <div class="change-section mod">
+                                <div class="section-title">Modificações (${modified.length})</div>
+                                <div class="items-grid">
+                                    ${modified.map(item => {
+                                        const details = getChangeDetails(name, item);
+                                        return `
+                                            <div class="item modified">
+                                                <div class="item-name">${item}</div>
+                                                ${details}
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${removed.length > 0 ? `
+                            <div class="change-section del">
+                                <div class="section-title">Remoções (${removed.length})</div>
+                                <div class="items-grid">
+                                    ${removed.map(item => `
+                                        <div class="item removed">${item}</div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        messageHtml += `
+                    </div>
+                </div>
+
+                <!-- Aviso -->
+                ${totalRemoved > 0 ? `
+                    <div class="warning-message">
+                        ⚠️ <strong>Atenção:</strong> ${totalRemoved} item${totalRemoved !== 1 ? 'ns' : ''} será${totalRemoved !== 1 ? 'ão' : ''} permanentemente removido${totalRemoved !== 1 ? 's' : ''}.
+                    </div>
+                ` : ''}
             </div>
         `;
 
         modalMessage.innerHTML = messageHtml;
+        modal.classList.add('active');
         modal.style.display = 'flex';
 
-        const originalCallback = window.confirmCallback;
+        // Funções de controle
+        window.toggleCategory = function(categoryId) {
+            const content = document.getElementById(`content-${categoryId}`);
+            const arrow = content.closest('.category-item').querySelector('.toggle-arrow');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                arrow.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '▼';
+            }
+        };
 
+        window.expandAllDetails = function() {
+            document.querySelectorAll('.category-content').forEach(content => {
+                content.style.display = 'block';
+            });
+            document.querySelectorAll('.toggle-arrow').forEach(arrow => {
+                arrow.textContent = '▲';
+            });
+        };
+
+        window.collapseAllDetails = function() {
+            document.querySelectorAll('.category-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.querySelectorAll('.toggle-arrow').forEach(arrow => {
+                arrow.textContent = '▼';
+            });
+        };
+
+        // Configurar botões do modal
+        const originalCallback = window.confirmCallback;
         window.confirmCallback = function () {
             window.confirmCallback = originalCallback;
+            modal.classList.remove('active');
             modal.style.display = 'none';
             resolve(true);
         };
 
-        const cancelButton = modal.querySelector('.btn-secondary');
+        const cancelButton = modal.querySelector('.btn-secondary, .btn-cancel');
         if (cancelButton) {
-            const originalOnClick = cancelButton.onclick;
             cancelButton.onclick = function () {
+                modal.classList.remove('active');
                 modal.style.display = 'none';
                 resolve(false);
                 return false;
@@ -602,6 +778,8 @@ export async function loadData() {
 }
 
 // ==================== EXPORTAÇÃO GLOBAL ====================
+
+
 
 window.applyJSON = applyJSON;
 window.saveData = saveData;

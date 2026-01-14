@@ -7,9 +7,8 @@ export async function loadModules() {
         
         // Carrega os módulos na ordem correta
         const modules = [
-            './ExpImpJsonFilles/json-import-export.js',
-            './ExpImpJsonFilles/json-editor.js',
-            './ExpImpJsonFilles/json-utils.js',
+            './editorJson/json-editor.js',
+            './editorJson/json-utils.js',
             './config/state.js',
             './config/api.js',
             './config/ui.js',

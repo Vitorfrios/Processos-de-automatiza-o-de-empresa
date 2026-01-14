@@ -11,6 +11,7 @@
 @import url('equipaments.css');
 @import url('dutos.css');
 @import url('tubos.css');
+@import url('confirmjson.css');
 
 
 .edit-data-container {
@@ -39,22 +40,7 @@
     align-items: center;
 }
 
-.toolbar-stack {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-    max-height: 56px;
-    /* mesma altura visual de um botão normal */
-}
 
-.toolbar-stack .btn {
-    padding: 0.35rem 0.9rem;
-    font-size: 0.75rem;
-    line-height: 1.1;
-    height: auto;
-    margin-bottom: 8px;
-}
 
 .search-box {
     display: flex;

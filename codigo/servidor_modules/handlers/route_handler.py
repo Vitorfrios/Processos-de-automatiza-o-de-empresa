@@ -353,36 +353,12 @@ class RouteHandler:
         result = self.routes_core.handle_delete_empresa(index)
         handler.send_json_response(result)
         
-    def handle_post_excel_upload(self, handler):
-        """POST /api/excel/upload"""
-        # Delegar para o handler HTTP
-        handler.handle_post_excel_upload()
-
-    def handle_post_excel_export(self, handler):
-        """POST /api/excel/export"""
-        # Delegar para o handler HTTP
-        handler.handle_post_excel_export()
 
     def handle_post_system_apply_json(self, handler):
         """POST /api/system/apply-json"""
         # Delegar para o handler HTTP
         handler.handle_post_system_apply_json()
 
-    def handle_post_json_validate(self, handler):
-        """POST /api/json/validate"""
-        # Delegar para o handler HTTP
-        handler.handle_post_json_validate()
-
-    def handle_post_json_normalize(self, handler):
-        """POST /api/json/normalize"""
-        # Delegar para o handler HTTP
-        handler.handle_post_json_normalize()
-
-    def handle_post_system_compare(self, handler):
-        """POST /api/system/compare (alias para apply-json)"""
-        # Delegar para o handler HTTP
-        handler.handle_post_system_apply_json()
-        
     # ========== ROTAS PARA EQUIPAMENTOS ==========
 
     def handle_get_equipamentos(self, handler):
