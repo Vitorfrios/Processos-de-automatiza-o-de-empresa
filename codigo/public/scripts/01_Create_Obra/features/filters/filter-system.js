@@ -379,12 +379,32 @@ const FilterSystem = (function () {
                 throw new Error('Não foi possível carregar obras de nenhum endpoint');
             }
 
-            // Salvar cache para filtragem
-            state.currentObras = todasObras;
+            // 🔥 CORREÇÃO: Garantir que os dados completos estão no cache
+            state.currentObras = todasObras.map(obra => ({
+                ...obra,
+                empresaSigla: obra.empresaSigla || obra.empresaSigla || '',
+                empresaNome: obra.empresaNome || obra.empresaNome || '',
+                numeroClienteFinal: obra.numeroClienteFinal || obra.numeroCliente || null,
+                // 🔥 IMPORTANTE: Garantir que empresa_id também está disponível
+                empresa_id: obra.empresa_id || obra.empresa_id || ''
+            }));
 
             // 2. Aplicar filtros
-            const obrasFiltradas = aplicarFiltros(todasObras);
+            const obrasFiltradas = aplicarFiltros(state.currentObras);
             console.log(`🎯 [FILTER-SYSTEM] ${obrasFiltradas.length} obras após filtros`);
+
+            // 🔥 VERIFICAÇÃO: Log das obras filtradas
+            if (obrasFiltradas.length > 0) {
+                console.log('📋 [FILTER-SYSTEM] Obras filtradas (primeiras 3):', 
+                    obrasFiltradas.slice(0, 3).map(o => ({
+                        id: o.id,
+                        nome: o.nome,
+                        empresaSigla: o.empresaSigla,
+                        empresaNome: o.empresaNome,
+                        empresa_id: o.empresa_id
+                    }))
+                );
+            }
 
             // 3. Carregar obras filtradas
             if (obrasFiltradas.length === 0) {
@@ -393,15 +413,75 @@ const FilterSystem = (function () {
                 return;
             }
 
-            // 4. Carregar cada obra
-            for (const obraData of obrasFiltradas) {
-                await loadObraIntoDOM(obraData);
-            }
+            // 🔥 CORREÇÃO CRÍTICA: Usar loadSingleObra para garantir que empresa seja carregada
+            // 4. Carregar obras usando a função otimizada
+            await carregarObrasComEmpresa(obrasFiltradas);
 
         } catch (error) {
             console.error('❌ [FILTER-SYSTEM] Erro ao carregar todas as obras:', error);
             showErrorMessage('Não foi possível carregar as obras. Verifique o servidor.');
         }
+    }
+    
+    /**
+     * 🔥 NOVA FUNÇÃO: Carrega obras garantindo dados da empresa
+     */
+    async function carregarObrasComEmpresa(obrasFiltradas) {
+        console.log(`🏗️ [FILTER-SYSTEM] Carregando ${obrasFiltradas.length} obras com suporte a empresa...`);
+        
+        // Criar todas as estruturas primeiro (em paralelo)
+        if (window.createEmptyObra) {
+            const createPromises = obrasFiltradas.map(obra => 
+                window.createEmptyObra(obra.nome || `Obra ${obra.id}`, obra.id)
+                    .catch(e => {
+                        console.warn(`⚠️ Falha ao criar obra ${obra.id}:`, e.message);
+                        return null;
+                    })
+            );
+            
+            await Promise.allSettled(createPromises);
+            
+            // Aguardar DOM se estabilizar
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // 🔥 CORREÇÃO: Usar loadSingleObra para cada obra (já inclui prepararDadosEmpresaNaObra)
+        for (const obraData of obrasFiltradas) {
+            try {
+                console.log(`🔄 [FILTER-SYSTEM] Carregando obra ${obraData.nome} com dados de empresa...`);
+                
+                // Opção 1: Usar loadSingleObra se disponível (que já chama prepararDadosEmpresaNaObra)
+                if (typeof window.loadSingleObra === 'function') {
+                    const result = await window.loadSingleObra(obraData);
+                    console.log(`✅ [FILTER-SYSTEM] Obra ${obraData.nome} carregada: ${result ? 'sucesso' : 'falha'}`);
+                }
+                // Opção 2: Usar populateObraData + prepararDadosEmpresaNaObra manualmente
+                else if (typeof window.populateObraData === 'function') {
+                    const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
+                    if (obraElement) {
+                        // Primeiro: popular dados básicos
+                        await window.populateObraData(obraData);
+                        
+                        // Segundo: preparar dados da empresa (CRÍTICO)
+                        if (typeof window.prepararDadosEmpresaNaObra === 'function') {
+                            await window.prepararDadosEmpresaNaObra(obraData, obraElement);
+                            console.log(`✅ [FILTER-SYSTEM] Dados de empresa preparados para ${obraData.nome}`);
+                        } else {
+                            console.warn(`⚠️ [FILTER-SYSTEM] prepararDadosEmpresaNaObra não disponível para ${obraData.nome}`);
+                        }
+                    } else {
+                        console.error(`❌ [FILTER-SYSTEM] Elemento não encontrado para obra ${obraData.id}`);
+                    }
+                }
+                else {
+                    console.error(`❌ [FILTER-SYSTEM] Nenhuma função de carregamento disponível para ${obraData.id}`);
+                }
+            } catch (error) {
+                console.error(`❌ [FILTER-SYSTEM] Erro ao carregar obra ${obraData.id}:`, error);
+            }
+        }
+        
+        console.log(`✅ [FILTER-SYSTEM] ${obrasFiltradas.length} obras carregadas com suporte a empresa`);
     }
     
     /**
@@ -438,75 +518,7 @@ const FilterSystem = (function () {
     }
 
     /**
-     * Carrega uma obra no DOM (reutilizando sistema existente)
-     */
-    async function loadObraIntoDOM(obraData) {
-        try {
-            console.log(`🔄 [FILTER-SYSTEM] Carregando obra: ${obraData.nome || obraData.id}`);
-
-            // Verificar se já existe no DOM
-            const obraExistente = document.querySelector(`[data-obra-id="${obraData.id}"]`);
-            if (obraExistente) {
-                console.log(`⚠️ [FILTER-SYSTEM] Obra ${obraData.id} já existe, ignorando`);
-                return;
-            }
-
-            // 🔥 OPÇÃO 1: Usar loadSingleObra se disponível
-            if (window.systemFunctions && typeof window.systemFunctions.loadSingleObra === 'function') {
-                console.log(`🔨 [FILTER-SYSTEM] Carregando via loadSingleObra (systemFunctions)`);
-                await window.systemFunctions.loadSingleObra(obraData);
-            }
-            else if (typeof window.loadSingleObra === 'function') {
-                console.log(`🔨 [FILTER-SYSTEM] Carregando via loadSingleObra (window)`);
-                await window.loadSingleObra(obraData);
-            }
-            else if (typeof loadSingleObra === 'function') {
-                console.log(`🔨 [FILTER-SYSTEM] Carregando via loadSingleObra (global)`);
-                await loadSingleObra(obraData);
-            }
-            // 🔥 OPÇÃO 2: Usar createEmptyObra + populateObraData
-            else if (window.systemFunctions &&
-                typeof window.systemFunctions.createEmptyObra === 'function' &&
-                typeof window.systemFunctions.populateObraData === 'function') {
-                console.log(`🔨 [FILTER-SYSTEM] Criando via createEmptyObra + populateObraData`);
-
-                // Criar obra vazia
-                await window.systemFunctions.createEmptyObra(obraData.nome || `Obra ${obraData.id}`, obraData.id);
-
-                // Aguardar criação no DOM
-                await new Promise(resolve => setTimeout(resolve, 200));
-
-                // Preencher dados
-                const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
-                if (obraElement) {
-                    await window.systemFunctions.populateObraData(obraData);
-                }
-            }
-            else if (typeof window.createEmptyObra === 'function' && typeof window.populateObraData === 'function') {
-                console.log(`🔨 [FILTER-SYSTEM] Criando via createEmptyObra (window) + populateObraData`);
-
-                await window.createEmptyObra(obraData.nome || `Obra ${obraData.id}`, obraData.id);
-                await new Promise(resolve => setTimeout(resolve, 200));
-
-                const obraElement = document.querySelector(`[data-obra-id="${obraData.id}"]`);
-                if (obraElement) {
-                    await window.populateObraData(obraData);
-                }
-            }
-            else {
-                console.error(`❌ [FILTER-SYSTEM] NENHUMA função de carregamento disponível para obra ${obraData.id}`);
-                return;
-            }
-
-            console.log(`✅ [FILTER-SYSTEM] Obra "${obraData.nome}" carregada com sucesso`);
-
-        } catch (error) {
-            console.error(`❌ [FILTER-SYSTEM] Erro ao carregar obra ${obraData.id}:`, error);
-        }
-    }
-
-    /**
-     * Carrega obras da sessão (modo normal)
+     * 🔥 ATUALIZADA: Carrega obras da sessão (modo normal)
      */
     async function loadSessionObras() {
         console.log('📁 [FILTER-SYSTEM] Carregando obras da sessão');
@@ -515,32 +527,27 @@ const FilterSystem = (function () {
             // 🔥 IMPORTANTE: Limpar DOM completamente primeiro
             clearCurrentObras();
 
-            // 🔥 VERIFICAÇÃO DAS FUNÇÕES DISPONÍVEIS
-            let loadFunction = null;
-            let functionSource = '';
-            
-            // Verificar em várias localizações possíveis
+            // 🔥 NOVA ABORDAGEM: Usar loadObrasFromServer importada diretamente
             if (typeof loadObrasFromServer === 'function') {
-                loadFunction = loadObrasFromServer;
-                functionSource = 'escopo global';
-            } else if (window.loadObrasFromServer && typeof window.loadObrasFromServer === 'function') {
-                loadFunction = window.loadObrasFromServer;
-                functionSource = 'window';
-            } else if (window.systemFunctions && window.systemFunctions.loadObrasFromServer && 
-                       typeof window.systemFunctions.loadObrasFromServer === 'function') {
-                loadFunction = window.systemFunctions.loadObrasFromServer;
-                functionSource = 'systemFunctions';
-            }
-
-            if (loadFunction) {
-                console.log(`✅ [FILTER-SYSTEM] Função loadObrasFromServer encontrada no ${functionSource}`);
-                console.log('🔄 [FILTER-SYSTEM] Executando loadObrasFromServer...');
-                await loadFunction();
-                console.log('✅ [FILTER-SYSTEM] Obras da sessão carregadas com sucesso');
-            } else {
+                console.log('✅ [FILTER-SYSTEM] Usando loadObrasFromServer do escopo global');
+                await loadObrasFromServer();
+            } 
+            // Fallback: tentar outras localizações
+            else if (window.loadObrasFromServer && typeof window.loadObrasFromServer === 'function') {
+                console.log('✅ [FILTER-SYSTEM] Usando loadObrasFromServer do window');
+                await window.loadObrasFromServer();
+            } 
+            else if (window.systemFunctions && window.systemFunctions.loadObrasFromServer && 
+                     typeof window.systemFunctions.loadObrasFromServer === 'function') {
+                console.log('✅ [FILTER-SYSTEM] Usando loadObrasFromServer do systemFunctions');
+                await window.systemFunctions.loadObrasFromServer();
+            } 
+            else {
                 console.warn('⚠️ [FILTER-SYSTEM] Nenhuma função encontrada');
                 throw new Error('Função de carregamento não encontrada');
             }
+
+            console.log('✅ [FILTER-SYSTEM] Obras da sessão carregadas com sucesso');
 
         } catch (error) {
             console.error('❌ [FILTER-SYSTEM] ERRO ao carregar sessão:', error);
@@ -584,8 +591,11 @@ const FilterSystem = (function () {
 
                 // Verificar em vários campos da obra
                 const obraSigla = (obra.empresaSigla || '').toUpperCase().trim();
-                const obraNomeCompleto = (obra.empresa || '').toUpperCase().trim();
+                const obraNomeCompleto = (obra.empresaNome || obra.empresa || '').toUpperCase().trim();
                 const obraNomeEmpresa = (obra.nomeEmpresa || '').toUpperCase().trim();
+
+                // 🔥 NOVA VERIFICAÇÃO: Verificar também empresa_id
+                const obraEmpresaId = (obra.empresa_id || '').toUpperCase().trim();
 
                 // Tentar extrair sigla do nome completo se existir
                 let obraSiglaExtraida = '';
@@ -598,7 +608,10 @@ const FilterSystem = (function () {
                     obraNomeCompleto.includes(filtroSigla) ||
                     obraNomeEmpresa.includes(filtroSigla) ||
                     obraSiglaExtraida === filtroSigla ||
-                    obraSiglaExtraida.includes(filtroSigla);
+                    obraSiglaExtraida.includes(filtroSigla) ||
+                    obraEmpresaId.includes(filtroSigla);
+                
+                console.log(`🔍 [FILTER-SYSTEM] Filtro empresa "${filtroSigla}" vs obra "${obraSigla}": ${passaEmpresa}`);
             }
 
             // 🔥 FILTRO POR NÚMERO DO CLIENTE
@@ -615,6 +628,8 @@ const FilterSystem = (function () {
                 const numerosValidos = obraNumeros.filter(n => n !== null && !isNaN(n));
 
                 passaNumero = numerosValidos.some(n => n === filtroNumero);
+                
+                console.log(`🔍 [FILTER-SYSTEM] Filtro número "${filtroNumero}" vs obra "${obraNumero1}": ${passaNumero}`);
             }
 
             // 🔥 FILTRO POR NOME DA OBRA
@@ -627,9 +642,16 @@ const FilterSystem = (function () {
                 passaNome = obraNome1.includes(filtroNome) ||
                     obraNome2.includes(filtroNome) ||
                     obraNome3.includes(filtroNome);
+                    
+                console.log(`🔍 [FILTER-SYSTEM] Filtro nome "${filtroNome}" vs obra "${obraNome1}": ${passaNome}`);
             }
 
-            return passaEmpresa && passaNumero && passaNome;
+            const resultado = passaEmpresa && passaNumero && passaNome;
+            if (resultado) {
+                console.log(`✅ [FILTER-SYSTEM] Obra "${obra.nome}" passou nos filtros`);
+            }
+            
+            return resultado;
         });
     }
 
@@ -656,7 +678,7 @@ const FilterSystem = (function () {
                 clearTimeout(window._filterDebounce);
                 window._filterDebounce = setTimeout(() => {
                     reloadObrasWithCurrentEndpoint();
-                }, 300);
+                }, 500); // 🔥 Aumentado para 500ms para evitar sobrecarga
             }
         }
     }
@@ -715,6 +737,35 @@ const FilterSystem = (function () {
     function isFilterActive() {
         return state.active;
     }
+    
+    /**
+     * 🔥 NOVA FUNÇÃO: Forçar recarregamento de dados da empresa
+     */
+    async function recarregarDadosEmpresa() {
+        if (!state.active || state.currentObras.length === 0) {
+            console.log('📭 [FILTER-SYSTEM] Nenhuma obra para recarregar empresa');
+            return;
+        }
+        
+        console.log('🔄 [FILTER-SYSTEM] Recarregando dados de empresa nas obras visíveis...');
+        
+        const obrasVisiveis = document.querySelectorAll('.obra-block[data-obra-id]');
+        for (const obraElement of obrasVisiveis) {
+            try {
+                const obraId = obraElement.dataset.obraId;
+                
+                // Encontrar dados completos da obra
+                const obraData = state.currentObras.find(o => o.id === obraId || o.id.toString() === obraId);
+                
+                if (obraData && typeof window.prepararDadosEmpresaNaObra === 'function') {
+                    await window.prepararDadosEmpresaNaObra(obraData, obraElement);
+                    console.log(`✅ [FILTER-SYSTEM] Dados de empresa recarregados para obra ${obraId}`);
+                }
+            } catch (error) {
+                console.error(`❌ [FILTER-SYSTEM] Erro ao recarregar empresa:`, error);
+            }
+        }
+    }
 
     // API pública
     return {
@@ -727,10 +778,32 @@ const FilterSystem = (function () {
         reloadObrasWithCurrentEndpoint,
         reloadObras,
         isFilterActive,
-        handleFilterToggleChange // 🔥 EXPORTADO para integração
+        handleFilterToggleChange, // 🔥 EXPORTADO para integração
+        recarregarDadosEmpresa // 🔥 NOVA FUNÇÃO exportada
     };
 })();
 
 // Exportar para uso global
 window.FilterSystem = FilterSystem;
+
+// 🔥 CORREÇÃO FINAL: Adicionar evento para recarregar empresa quando filtro mudar
+document.addEventListener('DOMContentLoaded', function() {
+    // Aguardar um pouco para garantir que tudo está carregado
+    setTimeout(() => {
+        if (window.FilterSystem && window.FilterDOM) {
+            // Monitorar mudanças nos inputs de filtro
+            const inputs = document.querySelectorAll('#filter-empresa, #filter-numero-cliente, #filter-nome-obra');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    // Pequeno delay antes de recarregar empresa
+                    setTimeout(() => {
+                        if (window.FilterSystem.isFilterActive()) {
+                            window.FilterSystem.recarregarDadosEmpresa();
+                        }
+                    }, 1000);
+                });
+            });
+        }
+    }, 2000);
+});
 /* ==== FIM: features/filters/filter-system.js ==== */

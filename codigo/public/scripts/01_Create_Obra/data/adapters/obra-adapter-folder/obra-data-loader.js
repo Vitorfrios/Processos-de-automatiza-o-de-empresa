@@ -1,5 +1,5 @@
 // obra-data-loader.js
-import {atualizarInterfaceComEmpresa } from './empresa-form-manager.js'
+import { atualizarInterfaceComEmpresa } from './empresa-form-manager.js'
 
 /**
  * Remove todas as obras base do container HTML
@@ -13,146 +13,207 @@ function removeBaseObraFromHTML() {
 }
 
 /**
- * Carrega obras salvas do servidor para a sessão atual
+ * Carrega obras do servidor - VERSÃO OTIMIZADA COM SUPORTE A EMPRESA
  */
 async function loadObrasFromServer() {
-    console.log("🔄 [LOAD OBRAS] Carregando OBRAS do servidor...");
+    console.log("🚀 [LOAD OBRAS] Iniciando carregamento com suporte a empresa...");
+    const startTime = performance.now();
     
     try {
-        const sessionResponse = await fetch('/api/session-obras');
-        if (!sessionResponse.ok) {
-            console.log("📭 Nenhuma sessão ativa encontrada");
-            return;
-        }
+        // Buscar dados em paralelo
+        const [sessionResponse, obrasResponse] = await Promise.all([
+            fetch('/api/session-obras'),
+            fetch('/obras')
+        ]);
+        
+        if (!sessionResponse.ok) return;
         
         const sessionData = await sessionResponse.json();
         const obraIds = sessionData.obras || [];
-        
-        console.log(`📊 [LOAD OBRAS] Sessão com ${obraIds.length} obras:`, obraIds);
-        
-        if (obraIds.length === 0) {
-            console.log("📭 [LOAD OBRAS] Nenhuma obra na sessão");
-            return;
-        }
-
-        // Buscar TODAS as obras do servidor
-        const obrasResponse = await fetch('/obras');
-        if (!obrasResponse.ok) {
-            console.error("❌ [LOAD OBRAS] Erro ao buscar dados das obras");
-            return;
-        }
-
         const todasObras = await obrasResponse.json();
-        console.log(`📦 [LOAD OBRAS] ${todasObras.length} obras disponíveis no servidor`);
         
-        // Converter IDs da sessão para string e encontrar correspondências
-        const obrasDaSessao = todasObras.filter(obra => {
-            // Tentar encontrar por ID exato (novo formato)
-            if (obraIds.includes(obra.id)) {
-                return true;
-            }
-            
-            // Tentar encontrar por ID numérico (compatibilidade com sessão antiga)
-            const obraIdNumero = obra.id.toString();
-            if (obraIds.includes(obraIdNumero)) {
-                return true;
-            }
-            
-            return false;
+        if (obraIds.length === 0 || todasObras.length === 0) return;
+        
+        // Filtro rápido com suporte a empresa
+        const lookup = {};
+        todasObras.forEach(obra => {
+            lookup[obra.id] = obra;
+            lookup[obra.id.toString()] = obra;
         });
         
-        console.log(`🎯 [LOAD OBRAS] ${obrasDaSessao.length} obras da sessão encontradas:`, 
-            obrasDaSessao.map(o => ({id: o.id, nome: o.nome})));
-
-        if (obrasDaSessao.length === 0) {
-            console.log("📭 [LOAD OBRAS] Nenhuma obra correspondente encontrada");
-            return;
+        const obrasParaCarregar = [];
+        for (let i = 0; i < obraIds.length; i++) {
+            const obra = lookup[obraIds[i]] || lookup[obraIds[i].toString()];
+            if (obra) obrasParaCarregar.push(obra);
         }
-
-        // Limpar interface antes de carregar
+        
+        console.log(`🎯 ${obrasParaCarregar.length} obras encontradas para carregar`);
+        
+        if (obrasParaCarregar.length === 0) return;
+        
+        // Limpar interface
         removeBaseObraFromHTML();
         
-        // Carregar cada obra individualmente com await
-        let loadedCount = 0;
-        for (const obraData of obrasDaSessao) {
-            const success = await loadSingleObra(obraData);
-            if (success) loadedCount++;
+        // Criar todas as estruturas básicas primeiro
+        if (window.createEmptyObra) {
+            await Promise.allSettled(
+                obrasParaCarregar.map(obra => 
+                    window.createEmptyObra(obra.nome, obra.id)
+                )
+            );
         }
         
-        console.log(`✅ [LOAD OBRAS] ${loadedCount}/${obrasDaSessao.length} obras carregadas com sucesso`);
+        // Aguardar micro-tick para DOM
+        await new Promise(resolve => setTimeout(resolve, 10));
+        
+        // Carregar TODOS os dados em PARALELO ABSOLUTO
+        const loadPromises = obrasParaCarregar.map(obra => 
+            loadSingleObra(obra).catch(e => {
+                console.warn(`⚠️ Falha ao carregar obra ${obra.id}:`, e.message);
+                return 0;
+            })
+        );
+        
+        const results = await Promise.allSettled(loadPromises);
+        const successCount = results.reduce((count, result) => 
+            result.status === 'fulfilled' ? count + result.value : count, 0);
+        
+        const endTime = performance.now();
+        console.log(`✅ ${successCount} obras carregadas em ${Math.round(endTime - startTime)}ms`);
         
     } catch (error) {
-        console.error("❌ [LOAD OBRAS] Erro ao carregar obras da sessão:", error);
+        console.error("❌ Erro ao carregar obras:", error);
     }
 }
 
 /**
- * Função para carregar uma obra individual
+ * Carrega uma ou múltiplas obras com suporte completo a empresa
  */
 async function loadSingleObra(obraData) {
-    if (!obraData || !obraData.id) {
-        console.error('❌ [LOAD OBRAS] Dados de obra inválidos:', obraData);
-        return false;
+    // Modo PARALELO: array de obras
+    if (Array.isArray(obraData)) {
+        console.log(`⚡ Carregando ${obraData.length} obras em PARALELO...`);
+        
+        if (obraData.length === 0) return 0;
+        
+        const startTime = performance.now();
+        
+        // 1. Criar estruturas em paralelo
+        if (window.createEmptyObra) {
+            await Promise.allSettled(
+                obraData.map(obra => window.createEmptyObra(obra.nome, obra.id))
+            );
+        }
+        
+        // 2. Aguardar DOM se estabilizar
+        await new Promise(resolve => setTimeout(resolve, 5));
+        
+        // 3. Carregar TODOS os dados em paralelo
+        const promises = obraData.map(async (obra) => {
+            try {
+                const element = document.querySelector(`[data-obra-id="${obra.id}"]`);
+                if (!element) {
+                    console.warn(`⚠️ Elemento não encontrado para obra ${obra.id}`);
+                    return false;
+                }
+                
+                // 🔥 EXECUTAR EM SEQUÊNCIA PARA GARANTIR QUE EMPRESA SEJA CARREGADA
+                // Primeiro: populateObraData (que pode ter lógica de empresa)
+                if (window.populateObraData) {
+                    await window.populateObraData(obra);
+                }
+                
+                // Segundo: preparar dados da empresa especificamente
+                await prepararDadosEmpresaNaObra(obra, element);
+                
+                return true;
+            } catch (error) {
+                console.warn(`⚠️ Erro ao carregar obra ${obra.id}:`, error.message);
+                return false;
+            }
+        });
+        
+        const results = await Promise.allSettled(promises);
+        const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
+        
+        const endTime = performance.now();
+        console.log(`✅ ${successCount}/${obraData.length} obras em ${Math.round(endTime - startTime)}ms`);
+        
+        return successCount;
     }
-
-    console.log(`🔄 [LOAD OBRAS] Carregando obra: "${obraData.nome}" (ID: ${obraData.id})`);
     
+    // Modo SINGLE: objeto único
     try {
-        // Verificar se a obra já existe no DOM
-        const obraExistente = document.querySelector(`[data-obra-id="${obraData.id}"]`);
-        if (obraExistente) {
-            console.log(`⚠️ [LOAD OBRAS] Obra "${obraData.nome}" já existe no DOM, atualizando...`);
-            
-            if (typeof window.populateObraData === 'function') {
-                await window.populateObraData(obraData);
-                console.log(`✅ [LOAD OBRAS] Obra "${obraData.nome}" atualizada com sucesso`);
-                return true;
-            }
+        const obraId = obraData.id.toString();
+        const obraNome = obraData.nome || `Obra ${obraId}`;
+        
+        console.log(`🔄 Carregando obra individual: "${obraNome}"`);
+        
+        // Verificar se já existe
+        let element = document.querySelector(`[data-obra-id="${obraId}"]`);
+        
+        if (!element && window.createEmptyObra) {
+            await window.createEmptyObra(obraNome, obraId);
+            await new Promise(resolve => setTimeout(resolve, 5));
+            element = document.querySelector(`[data-obra-id="${obraId}"]`);
         }
         
-        // Se não existe, criar nova obra
-        if (typeof window.createEmptyObra === 'function') {
-            console.log(`🔨 [LOAD OBRAS] Criando nova obra: "${obraData.nome}"`);
-            
-            // Criar obra vazia com ID específico
-            await window.createEmptyObra(obraData.nome, obraData.id);
-            
-            // Aguardar criação no DOM
-            await new Promise(resolve => setTimeout(resolve, 150));
-            
-            // Verificar se foi criada
-            const obraCriada = document.querySelector(`[data-obra-id="${obraData.id}"]`);
-            if (obraCriada && typeof window.populateObraData === 'function') {
-                console.log(`🎨 [LOAD OBRAS] Preenchendo dados da obra "${obraData.nome}"...`);
-                await window.populateObraData(obraData);
-                
-                // 🆕 PREPARAR DADOS DE EMPRESA SE EXISTIREM
-                await prepararDadosEmpresaNaObra(obraData, obraCriada);
-                
-                console.log(`✅ [LOAD OBRAS] Obra "${obraData.nome}" carregada com sucesso`);
-                return true;
-            } else {
-                console.error(`❌ [LOAD OBRAS] Falha ao criar obra "${obraData.nome}" no DOM`);
-            }
-        } else {
-            console.error(`❌ [LOAD OBRAS] createEmptyObra não disponível`);
+        if (!element) {
+            console.error(`❌ Elemento da obra "${obraNome}" não encontrado`);
+            return 0;
         }
         
-        return false;
+        // 🔥 EXECUTAR EM SEQUÊNCIA PARA GARANTIR EMPRESA
+        if (window.populateObraData) {
+            await window.populateObraData(obraData);
+        }
+        
+        // Preparar dados da empresa
+        await prepararDadosEmpresaNaObra(obraData, element);
+        
+        return 1;
+        
     } catch (error) {
-        console.error(`💥 [LOAD OBRAS] ERRO ao carregar obra "${obraData.nome}":`, error);
-        return false;
+        console.error(`💥 Erro ao carregar obra individual:`, error);
+        return 0;
     }
 }
 
 /**
- * 🆕 PREPARA DADOS DE EMPRESA NA OBRA CARREGADA
+ * 🆕 PREPARA DADOS DE EMPRESA NA OBRA CARREGADA - VERSÃO CORRIGIDA
  */
-
 async function prepararDadosEmpresaNaObra(obraData, obraElement) {
     try {
-        console.log('🔄 [PREPARAR EMPRESA] INICIANDO preparação para obra:', obraData.nome);
-        console.log('📦 [PREPARAR EMPRESA] Dados recebidos da obra:', {
+        // Verificar se a obra tem dados de empresa
+        const camposEmpresa = [
+            'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
+            'clienteFinal', 'codigoCliente', 'dataCadastro', 
+            'orcamentistaResponsavel', 'idGerado'
+        ];
+        
+        // Log detalhado dos dados recebidos
+        console.log('🏢 [EMPRESA] Preparando dados para obra:', obraData.nome || obraData.id);
+        console.log('📦 [EMPRESA] Dados disponíveis:', {
+            empresaSigla: obraData.empresaSigla,
+            empresaNome: obraData.empresaNome,
+            numeroClienteFinal: obraData.numeroClienteFinal,
+            empresa_id: obraData.empresa_id // 🔥 IMPORTANTE: verificar este campo também
+        });
+        
+        // Verificar se temos dados de empresa
+        const temDadosEmpresa = camposEmpresa.some(campo => 
+            obraData[campo] && obraData[campo].trim() !== ''
+        ) || (obraData.empresa_id && obraData.empresa_id.trim() !== '');
+        
+        if (!temDadosEmpresa) {
+            console.log('📭 [EMPRESA] Obra não possui dados de empresa identificáveis');
+            return;
+        }
+        
+        console.log('✅ [EMPRESA] Dados de empresa detectados, preparando...');
+        
+        // Mapear todos os campos possíveis
+        const mapeamentoCampos = {
             empresaSigla: obraData.empresaSigla,
             empresaNome: obraData.empresaNome,
             numeroClienteFinal: obraData.numeroClienteFinal,
@@ -160,56 +221,26 @@ async function prepararDadosEmpresaNaObra(obraData, obraElement) {
             codigoCliente: obraData.codigoCliente,
             dataCadastro: obraData.dataCadastro,
             orcamentistaResponsavel: obraData.orcamentistaResponsavel,
-            idGerado: obraData.idGerado
-        });
-
-        const camposEmpresa = [
-            'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
-            'clienteFinal', 'codigoCliente', 'dataCadastro', 
-            'orcamentistaResponsavel', 'idGerado'
-        ];
+            idGerado: obraData.idGerado,
+            empresa_id: obraData.empresa_id // 🔥 Adicionar este campo
+        };
         
-        // 🆕 VERIFICAR ANTES DE ATRIBUIR
-        console.log('🔍 [PREPARAR EMPRESA] Data attributes ANTES da preparação:');
-        camposEmpresa.forEach(campo => {
-            console.log(`   ${campo}: "${obraElement.dataset[campo]}"`);
-        });
-
-        const temDadosEmpresa = camposEmpresa.some(campo => obraData[campo]);
-        
-        if (!temDadosEmpresa) {
-            console.log('📭 [PREPARAR EMPRESA] Obra não possui dados de empresa');
-            return;
-        }
-        
-        console.log('🏢 [PREPARAR EMPRESA] Atribuindo dados aos data attributes...');
-        
-        // Preencher dados da empresa nos data attributes da obra
-        camposEmpresa.forEach(campo => {
-            const valorAntigo = obraElement.dataset[campo];
-            const valorNovo = obraData[campo];
-            
-            if (valorNovo) {
-                obraElement.dataset[campo] = valorNovo;
-                console.log(`✅ [PREPARAR EMPRESA] ${campo}: "${valorAntigo || 'vazio'}" → "${valorNovo}"`);
-            } else {
-                console.log(`❌ [PREPARAR EMPRESA] ${campo}: VALOR AUSENTE nos dados da obra`);
+        // Atribuir aos data attributes
+        Object.entries(mapeamentoCampos).forEach(([campo, valor]) => {
+            if (valor && valor.toString().trim() !== '') {
+                const valorAntigo = obraElement.dataset[campo];
+                obraElement.dataset[campo] = valor.toString().trim();
+                console.log(`✅ [EMPRESA] ${campo}: "${valorAntigo || 'vazio'}" → "${valor}"`);
             }
         });
         
-        // 🆕 VERIFICAR DEPOIS DE ATRIBUIR
-        console.log('🔍 [PREPARAR EMPRESA] Data attributes DEPOIS da preparação:');
-        camposEmpresa.forEach(campo => {
-            console.log(`   ${campo}: "${obraElement.dataset[campo]}"`);
-        });
-        
-        // Atualizar interface
+        // 🔥 CHAVE: Atualizar a interface COM OS DADOS DA OBRA
         await atualizarInterfaceComEmpresa(obraElement, obraData);
         
-        console.log('✅ [PREPARAR EMPRESA] Preparação concluída');
+        console.log('✅ [EMPRESA] Preparação concluída com sucesso');
         
     } catch (error) {
-        console.error('❌ [PREPARAR EMPRESA] Erro:', error);
+        console.error('❌ [EMPRESA] Erro ao preparar dados:', error);
     }
 }
 
@@ -227,7 +258,7 @@ function obterDadosEmpresaDaObra(obraId) {
         const camposEmpresa = [
             'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
             'clienteFinal', 'codigoCliente', 'dataCadastro', 
-            'orcamentistaResponsavel', 'idGerado'
+            'orcamentistaResponsavel', 'idGerado', 'empresa_id'
         ];
         
         const dadosEmpresa = {};
@@ -240,6 +271,12 @@ function obterDadosEmpresaDaObra(obraId) {
             }
         });
         
+        if (temDados) {
+            console.log(`✅ [EMPRESA] Dados recuperados para obra ${obraId}:`, dadosEmpresa);
+        } else {
+            console.log(`📭 [EMPRESA] Nenhum dado de empresa encontrado para obra ${obraId}`);
+        }
+        
         return temDados ? dadosEmpresa : null;
         
     } catch (error) {
@@ -248,7 +285,39 @@ function obterDadosEmpresaDaObra(obraId) {
     }
 }
 
-// Função alternativa para debug
+/**
+ * 🔥 FUNÇÃO AUXILIAR: Forçar atualização de empresa em uma obra específica
+ */
+async function forcarAtualizacaoEmpresa(obraId) {
+    try {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [FORÇAR EMPRESA] Obra ${obraId} não encontrada`);
+            return false;
+        }
+        
+        // Obter dados atualizados do servidor
+        const response = await fetch(`/obras/${obraId}`);
+        if (!response.ok) {
+            console.error(`❌ [FORÇAR EMPRESA] Erro ao buscar obra ${obraId}`);
+            return false;
+        }
+        
+        const obraData = await response.json();
+        
+        // Atualizar dados da empresa
+        await prepararDadosEmpresaNaObra(obraData, obraElement);
+        
+        console.log(`✅ [FORÇAR EMPRESA] Empresa atualizada para obra ${obraId}`);
+        return true;
+        
+    } catch (error) {
+        console.error(`❌ [FORÇAR EMPRESA] Erro:`, error);
+        return false;
+    }
+}
+
+// Função para debug
 async function debugLoadObras() {
     console.log("🐛 [DEBUG] Iniciando debug do carregamento...");
     
@@ -256,9 +325,7 @@ async function debugLoadObras() {
     console.log("🔍 [DEBUG] Funções disponíveis:", {
         createEmptyObra: typeof window.createEmptyObra,
         populateObraData: typeof window.populateObraData,
-        createEmptyProject: typeof window.createEmptyProject,
-        createEmptyRoom: typeof window.createEmptyRoom,
-        obterDadosEmpresa: typeof window.obterDadosEmpresa
+        prepararDadosEmpresaNaObra: typeof window.prepararDadosEmpresaNaObra
     });
     
     // Verificar obras no servidor
@@ -266,32 +333,36 @@ async function debugLoadObras() {
         const response = await fetch('/obras');
         if (response.ok) {
             const obras = await response.json();
-            console.log(`📦 [DEBUG] Obras no servidor: ${obras.length}`, obras.map(o => ({
-                id: o.id, 
-                nome: o.nome,
-                empresaSigla: o.empresaSigla,
-                idGerado: o.idGerado
-            })));
+            console.log(`📦 [DEBUG] ${obras.length} obras no servidor`);
+            
+            // Verificar dados de empresa nas obras
+            obras.forEach((obra, index) => {
+                console.log(`   ${index + 1}. ${obra.nome} (${obra.id}):`, {
+                    empresaSigla: obra.empresaSigla,
+                    empresaNome: obra.empresaNome,
+                    empresa_id: obra.empresa_id
+                });
+            });
         }
     } catch (error) {
         console.error("❌ [DEBUG] Erro ao buscar obras:", error);
     }
 }
 
-
+// Adicionar ao objeto global
 if (typeof window !== "undefined") {
     window.prepararDadosEmpresaNaObra = prepararDadosEmpresaNaObra;
     window.obterDadosEmpresaDaObra = obterDadosEmpresaDaObra;
+    window.forcarAtualizacaoEmpresa = forcarAtualizacaoEmpresa;
 }
 
-
-
-// EXPORTS NO FINAL
+// EXPORTS
 export {
     removeBaseObraFromHTML,
     loadObrasFromServer,
     loadSingleObra,
     prepararDadosEmpresaNaObra,
     obterDadosEmpresaDaObra,
+    forcarAtualizacaoEmpresa,
     debugLoadObras
 };

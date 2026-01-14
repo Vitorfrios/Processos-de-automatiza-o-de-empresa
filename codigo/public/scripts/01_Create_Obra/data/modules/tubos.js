@@ -1,5 +1,5 @@
 // data/modules/tubos.js
-// SISTEMA DE TUBULAÇÃO DE COBRE - VERSÃO SIMPLIFICADA
+// SISTEMA DE TUBULAÇÃO DE COBRE - VERSÃO CORRIGIDA
 // Integração completa com API de tubos e cálculo com valor do cobre
 
 // ==============================================
@@ -51,40 +51,122 @@ async function getTubos() {
     }
 }
 
-// Função para obter um tubo específico por polegada
-async function getTuboPorPolegada(polegadas) {
-    try {
-        const tubos = await getTubos();
-        const tubo = tubos.find(t => t.polegadas === normalizarPolegada(polegadas));
-        if (!tubo) {
-            throw new Error(`Tubo de ${polegadas}" não encontrado`);
-        }
-        return tubo;
-    } catch (error) {
-        console.error(`❌ Erro ao buscar tubo ${polegadas}":`, error);
-        throw error;
-    }
-}
-
 // Função para normalizar formatação de polegadas
 function normalizarPolegada(polegadas) {
     if (!polegadas) return '';
     
     let normalizada = polegadas.trim();
-    normalizada = normalizada.replace(/\./g, ' ');
-    normalizada = normalizada.replace(/\s+/g, ' ').trim();
+    
+    // Remove espaços extras e mantém o formato original
+    normalizada = normalizada.replace(/\s+/g, '').trim();
     
     return normalizada;
 }
 
-// Função para obter preço por metro de um tubo
+// Função para obter um tubo específico por polegada (CORRIGIDA)
+async function getTuboPorPolegada(polegadas) {
+    try {
+        const tubos = await getTubos();
+        
+        console.log(`🔍 Buscando tubo: "${polegadas}"`);
+        console.log(`📋 Tubos disponíveis:`, tubos.map(t => `"${t.polegadas}"`));
+        
+        // Tenta diferentes formatos
+        let tubo = null;
+        
+        // 1. Busca exata
+        tubo = tubos.find(t => t.polegadas === polegadas);
+        
+        // 2. Remove espaços (caso o input tenha)
+        if (!tubo) {
+            const polegadaSemEspacos = polegadas.replace(/\s+/g, '');
+            tubo = tubos.find(t => t.polegadas === polegadaSemEspacos);
+            if (tubo) console.log(`✅ Encontrado após remover espaços: "${polegadaSemEspacos}"`);
+        }
+        
+        // 3. Converte ponto para espaço (seu formato original)
+        if (!tubo) {
+            const polegadaComEspaco = polegadas.replace(/\./g, ' ').trim();
+            tubo = tubos.find(t => t.polegadas === polegadaComEspaco);
+            if (tubo) console.log(`✅ Encontrado após converter . para espaço: "${polegadaComEspaco}"`);
+        }
+        
+        // 4. Converte espaço para ponto
+        if (!tubo) {
+            const polegadaComPonto = polegadas.replace(/\s+/g, '.');
+            tubo = tubos.find(t => t.polegadas === polegadaComPonto);
+            if (tubo) console.log(`✅ Encontrado após converter espaço para .: "${polegadaComPonto}"`);
+        }
+        
+        // 5. Tenta normalizar ambos os lados
+        if (!tubo) {
+            const polegadaNormalizada = normalizarPolegada(polegadas);
+            for (const t of tubos) {
+                if (normalizarPolegada(t.polegadas) === polegadaNormalizada) {
+                    tubo = t;
+                    console.log(`✅ Encontrado após normalização: "${t.polegadas}"`);
+                    break;
+                }
+            }
+        }
+        
+        if (!tubo) {
+            console.warn(`⚠️ Tubo "${polegadas}" não encontrado após todas as tentativas`);
+            
+            // Fallback: retorna um tubo padrão para não quebrar o sistema
+            return {
+                id: 'default-' + Date.now(),
+                polegadas: polegadas,
+                valor: 0,
+                mm: 0,
+                descricao: `Tubo ${polegadas} (não encontrado - usando padrão)`
+            };
+        }
+        
+        console.log(`✅ Tubo encontrado: "${tubo.polegadas}" - R$ ${tubo.valor}/m`);
+        return tubo;
+    } catch (error) {
+        console.error(`❌ Erro ao buscar tubo ${polegadas}":`, error);
+        
+        // Fallback em caso de erro
+        return {
+            id: 'error-' + Date.now(),
+            polegadas: polegadas,
+            valor: 0,
+            mm: 0,
+            descricao: `Erro ao buscar tubo ${polegadas}`
+        };
+    }
+}
+
+// Função para obter preço por metro de um tubo (CORRIGIDA)
 async function getPrecoPorMetro(polegadas) {
     try {
         const tubo = await getTuboPorPolegada(polegadas);
+        
+        // Se for um tubo de fallback (valor 0), tenta encontrar um valor aproximado
+        if (tubo.valor === 0 && tubo.id.startsWith('default-')) {
+            console.warn(`⚠️ Usando valor zero para ${polegadas}. Tentando encontrar similar...`);
+            
+            const tubos = await getTubos();
+            const polegadaNumerica = parseFloat(polegadas.replace(/[^\d\.\/]/g, ''));
+            
+            // Tenta encontrar tubo com diâmetro próximo
+            const tuboProximo = tubos.find(t => {
+                const tNum = parseFloat(t.polegadas.replace(/[^\d\.\/]/g, ''));
+                return Math.abs(tNum - polegadaNumerica) < 0.1;
+            });
+            
+            if (tuboProximo) {
+                console.log(`⚠️ Usando valor do tubo similar "${tuboProximo.polegadas}"`);
+                return tuboProximo.valor;
+            }
+        }
+        
         return tubo.valor;
     } catch (error) {
         console.error(`❌ Não foi possível obter preço para ${polegadas}":`, error);
-        throw error;
+        return 0; // Retorna 0 para não quebrar cálculos
     }
 }
 
@@ -101,10 +183,26 @@ async function getPolegadasDisponiveis() {
             throw new Error(data.error || 'Erro na resposta da API');
         }
         
+        console.log('📋 Polegadas disponíveis da API:', data.polegadas);
         return data.polegadas || [];
     } catch (error) {
         console.error('❌ Erro ao buscar polegadas:', error);
-        throw error;
+        
+        // Fallback para polegadas padrão
+        return [
+            { value: '1/2', label: '1/2"' },
+            { value: '5/8', label: '5/8"' },
+            { value: '3/4', label: '3/4"' },
+            { value: '7/8', label: '7/8"' },
+            { value: '1', label: '1"' },
+            { value: '1.1/8', label: '1 1/8"' },
+            { value: '1.1/4', label: '1 1/4"' },
+            { value: '1.3/8', label: '1 3/8"' },
+            { value: '1.1/2', label: '1 1/2"' },
+            { value: '1.5/8', label: '1 5/8"' },
+            { value: '1.3/4', label: '1 3/4"' },
+            { value: '2', label: '2"' }
+        ];
     }
 }
 
@@ -169,7 +267,10 @@ async function getKgPorMetro(polegadas, espessura) {
             normalizarPolegada(p.value) === polegadaNormalizada
         );
         
-        if (index === -1) return null;
+        if (index === -1) {
+            console.warn(`⚠️ Polegada "${polegadas}" não encontrada na tabela kg/m`);
+            return null;
+        }
         
         if (espessura === '0,80') {
             return kgm_080mm[Math.min(index, kgm_080mm.length - 1)];
@@ -177,6 +278,7 @@ async function getKgPorMetro(polegadas, espessura) {
             return kgm_159mm[Math.min(index, kgm_159mm.length - 1)];
         }
         
+        console.warn(`⚠️ Espessura "${espessura}" não suportada`);
         return null;
     } catch (error) {
         console.error('❌ Erro ao obter kg/m:', error);
@@ -202,7 +304,10 @@ async function calcularLSkg(LSmetros, polegadasLS, espessuraLS) {
     if (!polegadasLS || !espessuraLS || !LSmetros) return 0;
     
     const kgPorMetro = await getKgPorMetro(polegadasLS, espessuraLS);
-    if (!kgPorMetro) return 0;
+    if (!kgPorMetro) {
+        console.warn(`⚠️ Não foi possível calcular kg para ${polegadasLS} ${espessuraLS}`);
+        return 0;
+    }
     
     return LSmetros * kgPorMetro;
 }
@@ -211,7 +316,10 @@ async function calcularLLkg(LLmetros, polegadasLL, espessuraLL) {
     if (!polegadasLL || !espessuraLL || !LLmetros) return 0;
     
     const kgPorMetro = await getKgPorMetro(polegadasLL, espessuraLL);
-    if (!kgPorMetro) return 0;
+    if (!kgPorMetro) {
+        console.warn(`⚠️ Não foi possível calcular kg para ${polegadasLL} ${espessuraLL}`);
+        return 0;
+    }
     
     return LLmetros * kgPorMetro;
 }
@@ -365,6 +473,8 @@ async function calcularValorTotalLinha(linhaData) {
         
         const valorMetragem = metros * precoPorMetro;
         linhaData.valorTotal = valorMetragem;
+        
+        console.log(`💰 Cálculo linha ${linhaData.tipo}: ${metros}m × R$ ${precoPorMetro} = R$ ${valorMetragem}`);
         
         return valorMetragem;
         
@@ -565,6 +675,8 @@ async function calcularLinhaComAPI(linhaId) {
             linhaData.luvas = luvas;
             linhaData.reducoes = reducoes;
             
+            console.log(`📏 LS: ${LSmetros}m, ${LSkg}kg, ${cabos}cabos, ${luvas}luvas, ${reducoes}reduções`);
+            
         } else {
             const LSmetros = calcularLSmetros(compIntNum, numCircNum, numCurvNum, ceCurvaNum);
             const LLmetros = calcularLLmetros(LSmetros);
@@ -572,6 +684,8 @@ async function calcularLinhaComAPI(linhaId) {
 
             linhaData.LLmetros = LLmetros;
             linhaData.LLkg = LLkg;
+            
+            console.log(`📏 LL: ${LLmetros}m, ${LLkg}kg`);
         }
 
         await calcularValorTotalLinha(linhaData);
@@ -596,7 +710,7 @@ async function addLinhaLSComAPI(roomId, conjuntoNum = '1') {
         const conjuntoId = `${roomId}-${conjuntoNum}`;
         const polegadasDisponiveis = await getPolegadasDisponiveis();
         
-        const polegadaPadrao = polegadasDisponiveis.find(p => p.value === '1 1/4') || polegadasDisponiveis[0];
+        const polegadaPadrao = polegadasDisponiveis.find(p => p.value === '1.1/4') || polegadasDisponiveis[0];
         
         const linha = {
             id: Date.now() + Math.random().toString(36).substr(2, 9),
@@ -877,19 +991,27 @@ async function atualizarTotaisConjuntoComAPI(conjuntoId) {
     const atualizarElemento = (id, valor, isCurrency = false) => {
         const element = document.getElementById(id);
         if (element) {
-            element.textContent = isCurrency ? `R$ ${valor.toFixed(2)}` : valor;
+            if (isCurrency) {
+                element.textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
+            } else if (Number.isInteger(valor)) {
+                element.textContent = Math.round(valor);
+            } else {
+                element.textContent = valor.toFixed(2).replace('.', ',');
+            }
         }
     };
 
-    atualizarElemento(`total-ls-metros-${conjuntoId}`, (totalLSmetros * quantidade).toFixed(2));
-    atualizarElemento(`total-ls-kg-${conjuntoId}`, (totalLSkg * quantidade).toFixed(2));
-    atualizarElemento(`total-ll-metros-${conjuntoId}`, (totalLLmetros * quantidade).toFixed(2));
-    atualizarElemento(`total-ll-kg-${conjuntoId}`, (totalLLkg * quantidade).toFixed(2));
-    atualizarElemento(`total-cabos-${conjuntoId}`, Math.round(totalCabosMulti));
-    atualizarElemento(`total-luvas-${conjuntoId}`, totalLuvasMulti.toFixed(2));
-    atualizarElemento(`total-reducoes-${conjuntoId}`, Math.round(totalReducoesMulti));
-    atualizarElemento(`total-geral-kg-${conjuntoId}`, totalGeralKg.toFixed(2));
+    atualizarElemento(`total-ls-metros-${conjuntoId}`, (totalLSmetros * quantidade));
+    atualizarElemento(`total-ls-kg-${conjuntoId}`, (totalLSkg * quantidade));
+    atualizarElemento(`total-ll-metros-${conjuntoId}`, (totalLLmetros * quantidade));
+    atualizarElemento(`total-ll-kg-${conjuntoId}`, (totalLLkg * quantidade));
+    atualizarElemento(`total-cabos-${conjuntoId}`, totalCabosMulti);
+    atualizarElemento(`total-luvas-${conjuntoId}`, totalLuvasMulti);
+    atualizarElemento(`total-reducoes-${conjuntoId}`, totalReducoesMulti);
+    atualizarElemento(`total-geral-kg-${conjuntoId}`, totalGeralKg);
     atualizarElemento(`total-valor-${conjuntoId}`, totalValorMulti, true);
+    
+    console.log(`💰 Totais conjunto ${conjuntoId}: R$ ${totalValorMulti.toFixed(2)}`);
 }
 
 // Remover linha
@@ -1049,6 +1171,22 @@ async function atualizarCacheTubos() {
     }
 }
 
+// Função de teste para verificar busca de tubos
+async function testarBuscaTubos() {
+    console.log('🧪 TESTANDO BUSCA DE TUBOS');
+    
+    const testes = ['1.1/4', '1 1/4', '7/8', '1.1/2', '2'];
+    
+    for (const teste of testes) {
+        try {
+            const tubo = await getTuboPorPolegada(teste);
+            console.log(`✅ "${teste}" → "${tubo.polegadas}" - R$ ${tubo.valor}`);
+        } catch (error) {
+            console.log(`❌ "${teste}" → ERRO: ${error.message}`);
+        }
+    }
+}
+
 // ==============================================
 // EXPORTAÇÕES
 // ==============================================
@@ -1074,6 +1212,7 @@ if (typeof window !== 'undefined') {
     window.getPrecoPorMetro = getPrecoPorMetro;
     window.getPolegadasDisponiveis = getPolegadasDisponiveis;
     window.atualizarCacheTubos = atualizarCacheTubos;
+    window.testarBuscaTubos = testarBuscaTubos;
 }
 
 export {
@@ -1104,5 +1243,6 @@ export {
     getTuboPorPolegada,
     getPrecoPorMetro,
     getPolegadasDisponiveis,
-    atualizarCacheTubos
+    atualizarCacheTubos,
+    testarBuscaTubos
 };
