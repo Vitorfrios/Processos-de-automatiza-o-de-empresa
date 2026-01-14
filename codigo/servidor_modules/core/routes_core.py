@@ -1368,3 +1368,68 @@ class RoutesCore:
         except Exception as e:
             print(f"❌ Erro ao salvar tubos: {str(e)}")
             return {"success": False, "error": str(e)}
+        
+        
+        
+        # Adicione este método na classe RoutesCore, depois do método handle_post_update_machine:
+
+    def handle_post_delete_machine(self, post_data):
+        """Deleta uma máquina do sistema"""
+        try:
+            data = json.loads(post_data)
+            
+            # Obtém o tipo da máquina e o índice
+            machine_type = data.get("type")
+            index = data.get("index", None)
+            
+            if not machine_type:
+                return {"success": False, "error": "Tipo de máquina não especificado"}
+            
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
+            
+            machines = dados_data.get("machines", [])
+            
+            # Buscar máquina pelo tipo
+            machine_found = False
+            machine_index = -1
+            
+            for i, machine in enumerate(machines):
+                if machine.get("type") == machine_type:
+                    machine_found = True
+                    machine_index = i
+                    break
+            
+            # Se não encontrar pelo tipo, tenta pelo índice
+            if not machine_found and index is not None:
+                try:
+                    index_int = int(index)
+                    if 0 <= index_int < len(machines):
+                        machine_found = True
+                        machine_index = index_int
+                except (ValueError, TypeError):
+                    pass
+            
+            if not machine_found:
+                return {"success": False, "error": f"Máquina '{machine_type}' não encontrada"}
+            
+            # Remover a máquina
+            machine_removed = machines.pop(machine_index)
+            dados_data["machines"] = machines
+            
+            if self.file_utils.save_json_file(dados_file, dados_data):
+                print(f"🗑️  Máquina '{machine_type}' (índice {machine_index}) removida com sucesso")
+                return {
+                    "success": True, 
+                    "message": f"Máquina '{machine_type}' deletada com sucesso",
+                    "machine_removed": machine_removed,
+                    "index": machine_index
+                }
+            else:
+                return {"success": False, "error": "Erro ao salvar dados após remoção"}
+                
+        except json.JSONDecodeError:
+            return {"success": False, "error": "JSON inválido"}
+        except Exception as e:
+            print(f"❌ Erro ao deletar machine: {str(e)}")
+            return {"success": False, "error": str(e)}

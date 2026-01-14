@@ -1,10 +1,10 @@
 /* ==== INÍCIO: json-utils.js ==== */
-// json-utils.js - Arquivo principal que coordena tudo (CORRIGIDO COM DUTOS COMO ARRAY)
+// json-utils.js - Arquivo principal que coordena tudo (CORRIGIDO COM DUTOS E TUBOS COMO ARRAYS)
 
 // ==================== FUNÇÕES AUXILIARES ====================
 
 /**
- * Garante estrutura completa dos dados (CORRIGIDA - DUTOS COMO ARRAY)
+ * Garante estrutura completa dos dados (COM TUBOS)
  */
 function ensureCompleteData(data) {
     if (!data || typeof data !== 'object') {
@@ -17,12 +17,13 @@ function ensureCompleteData(data) {
         materials: data.materials || {},
         empresas: data.empresas || [],
         banco_equipamentos: data.banco_equipamentos || {},
-        dutos: data.dutos || []  // CORRIGIDO: array vazio
+        dutos: data.dutos || [],   // Array de dutos
+        tubos: data.tubos || []    // Array de tubos
     };
 }
 
 /**
- * Cria dados padrão com estrutura completa (CORRIGIDA - DUTOS COMO ARRAY)
+ * Cria dados padrão com estrutura completa (COM TUBOS)
  */
 function createDefaultData() {
     return {
@@ -31,7 +32,8 @@ function createDefaultData() {
         materials: {},
         empresas: [],
         banco_equipamentos: {},
-        dutos: []  // CORRIGIDO: array vazio
+        dutos: [],   // Array vazio
+        tubos: []    // Array vazio
     };
 }
 
@@ -48,7 +50,8 @@ function validateAndEnsureCompleteData(data) {
         materials: Object.keys(result.materials).length,
         empresas: result.empresas.length,
         banco_equipamentos: Object.keys(result.banco_equipamentos).length,
-        dutos: result.dutos.length  // CORRIGIDO
+        dutos: result.dutos.length,
+        tubos: result.tubos.length  // ✅ Adicionado tubos
     });
     
     return result;
@@ -194,6 +197,7 @@ function updateAllTabsUI() {
     if (window.loadJSONEditor) window.loadJSONEditor();
     if (window.loadEquipamentos) window.loadEquipamentos();
     if (window.loadDutos) window.loadDutos();
+    if (window.loadTubos) window.loadTubos();  // ✅ Adicionado tubos
 }
 
 async function compareJSONData(current, proposed) {
@@ -234,7 +238,8 @@ function performLocalComparison(current, proposed) {
         materials: { added: [], modified: [], removed: [] },
         empresas: { added: [], modified: [], removed: [] },
         banco_equipamentos: { added: [], modified: [], removed: [] },
-        dutos: { added: [], modified: [], removed: [] }  // CORRIGIDO: array
+        dutos: { added: [], modified: [], removed: [] },
+        tubos: { added: [], modified: [], removed: [] }  // ✅ Adicionado tubos
     };
 
     // Comparar constants
@@ -279,7 +284,7 @@ function performLocalComparison(current, proposed) {
         }
     }
 
-    // ✅ CORRIGIDO: Comparar dutos como array
+    // Comparar dutos como array
     const currentDutos = current.dutos || [];
     const proposedDutos = proposed.dutos || [];
     
@@ -298,6 +303,25 @@ function performLocalComparison(current, proposed) {
         }
     }
 
+    // ✅ Comparar tubos como array
+    const currentTubos = current.tubos || [];
+    const proposedTubos = proposed.tubos || [];
+    
+    for (const tubo of proposedTubos) {
+        const currentTubo = currentTubos.find(t => t.polegadas === tubo.polegadas);
+        if (!currentTubo) {
+            differences.tubos.added.push(tubo.polegadas);
+        } else if (JSON.stringify(currentTubo) !== JSON.stringify(tubo)) {
+            differences.tubos.modified.push(tubo.polegadas);
+        }
+    }
+    
+    for (const tubo of currentTubos) {
+        if (!proposedTubos.some(t => t.polegadas === tubo.polegadas)) {
+            differences.tubos.removed.push(tubo.polegadas);
+        }
+    }
+
     // Calcular totais
     const totalAdded =
         differences.constants.added.length +
@@ -305,7 +329,8 @@ function performLocalComparison(current, proposed) {
         differences.materials.added.length +
         differences.empresas.added.length +
         differences.banco_equipamentos.added.length +
-        differences.dutos.added.length;
+        differences.dutos.added.length +
+        differences.tubos.added.length;  // ✅ Adicionado tubos
 
     const totalModified =
         differences.constants.modified.length +
@@ -313,7 +338,8 @@ function performLocalComparison(current, proposed) {
         differences.materials.modified.length +
         differences.empresas.modified.length +
         differences.banco_equipamentos.modified.length +
-        differences.dutos.modified.length;
+        differences.dutos.modified.length +
+        differences.tubos.modified.length;  // ✅ Adicionado tubos
 
     const totalRemoved =
         differences.constants.removed.length +
@@ -321,7 +347,8 @@ function performLocalComparison(current, proposed) {
         differences.materials.removed.length +
         differences.empresas.removed.length +
         differences.banco_equipamentos.removed.length +
-        differences.dutos.removed.length;
+        differences.dutos.removed.length +
+        differences.tubos.removed.length;  // ✅ Adicionado tubos
 
     return {
         success: true,
@@ -343,7 +370,8 @@ function applyChangesIncremental(current, proposed, differences) {
         if (!current.materials) current.materials = {};
         if (!current.empresas) current.empresas = [];
         if (!current.banco_equipamentos) current.banco_equipamentos = {};
-        if (!current.dutos) current.dutos = [];  // CORRIGIDO: array vazio
+        if (!current.dutos) current.dutos = [];
+        if (!current.tubos) current.tubos = [];  // ✅ Adicionado tubos
 
         // Aplicar constants
         for (const added of differences.constants.added) {
@@ -362,7 +390,7 @@ function applyChangesIncremental(current, proposed, differences) {
             current.banco_equipamentos[modified] = proposed.banco_equipamentos[modified];
         }
 
-        // ✅ CORRIGIDO: Aplicar dutos como array
+        // Aplicar dutos como array
         for (const added of differences.dutos.added) {
             const newDuto = proposed.dutos.find(d => d.type === added);
             if (newDuto) {
@@ -383,6 +411,30 @@ function applyChangesIncremental(current, proposed, differences) {
             const index = current.dutos.findIndex(d => d.type === removed);
             if (index !== -1) {
                 current.dutos.splice(index, 1);
+            }
+        }
+
+        // ✅ Aplicar tubos como array
+        for (const added of differences.tubos.added) {
+            const newTubo = proposed.tubos.find(t => t.polegadas === added);
+            if (newTubo) {
+                current.tubos.push(newTubo);
+            }
+        }
+        
+        for (const modified of differences.tubos.modified) {
+            const updatedTubo = proposed.tubos.find(t => t.polegadas === modified);
+            const index = current.tubos.findIndex(t => t.polegadas === modified);
+            if (index !== -1 && updatedTubo) {
+                current.tubos[index] = updatedTubo;
+            }
+        }
+
+        // Remover tubos que foram removidos
+        for (const removed of differences.tubos.removed) {
+            const index = current.tubos.findIndex(t => t.polegadas === removed);
+            if (index !== -1) {
+                current.tubos.splice(index, 1);
             }
         }
 
@@ -431,6 +483,12 @@ async function showJsonConfirmationModal(comparison) {
                         `<p><strong>Dutos modificados:</strong> ${comparison.differences.dutos.modified.length}</p>` : ''}
                     ${comparison.differences.dutos.removed.length > 0 ? 
                         `<p><strong>Dutos removidos:</strong> ${comparison.differences.dutos.removed.length}</p>` : ''}
+                    ${comparison.differences.tubos.added.length > 0 ? 
+                        `<p><strong>Tubos adicionados:</strong> ${comparison.differences.tubos.added.length}</p>` : ''}
+                    ${comparison.differences.tubos.modified.length > 0 ? 
+                        `<p><strong>Tubos modificados:</strong> ${comparison.differences.tubos.modified.length}</p>` : ''}
+                    ${comparison.differences.tubos.removed.length > 0 ? 
+                        `<p><strong>Tubos removidos:</strong> ${comparison.differences.tubos.removed.length}</p>` : ''}
                 </div>
                 <p style="margin-top: 10px; font-size: 12px; color: #666;">
                     <i class="icon-info"></i> Os itens removidos serão excluídos do sistema.
@@ -507,7 +565,8 @@ export async function loadData() {
                 materials: Object.keys(data.materials || {}).length,
                 empresas: data.empresas?.length || 0,
                 banco_equipamentos: Object.keys(data.banco_equipamentos || {}).length,
-                dutos: data.dutos?.length || 0  // CORRIGIDO
+                dutos: data.dutos?.length || 0,
+                tubos: data.tubos?.length || 0  // ✅ Adicionado tubos
             });
             
             // ✅ GARANTIR ESTRUTURA COMPLETA
@@ -526,7 +585,8 @@ export async function loadData() {
             if (window.showSuccess) window.showSuccess('Dados carregados com sucesso!');
             
             console.log('✅ Dados completos no window.systemData:', {
-                dutos: completeData.dutos
+                dutos: completeData.dutos,
+                tubos: completeData.tubos  // ✅ Adicionado tubos
             });
             return completeData;
 
@@ -558,6 +618,9 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('🎯 Dutos:', event.detail.dutos);
         console.log('🎯 Dutos é array?', Array.isArray(event.detail.dutos));
         console.log('🎯 Número de dutos:', event.detail.dutos?.length || 0);
+        console.log('🎯 Tubos:', event.detail.tubos);
+        console.log('🎯 Tubos é array?', Array.isArray(event.detail.tubos));
+        console.log('🎯 Número de tubos:', event.detail.tubos?.length || 0);
     });
 
     // Inicializar editor após um delay
@@ -572,42 +635,42 @@ document.addEventListener('DOMContentLoaded', function () {
 // ==================== FUNÇÕES DE UTILIDADE ====================
 
 /**
- * Função para converter dutos de formato antigo para novo
+ * Função para converter dados de formato antigo para novo
  * Útil para migração de dados existentes
  */
-export function convertDutosToArrayFormat(data) {
+export function convertToArrayFormat(data) {
     if (!data || typeof data !== 'object') {
         return data;
     }
     
-    // Se dutos já é array, retorna como está
-    if (Array.isArray(data.dutos)) {
-        return data;
-    }
-    
-    // Se dutos é objeto com 'tipos' e 'opcionais', converter para array
-    if (data.dutos && typeof data.dutos === 'object') {
+    // Converter dutos se necessário
+    if (data.dutos && !Array.isArray(data.dutos)) {
         const oldFormat = data.dutos;
         const newDutosArray = [];
         
-        // Converter tipos
         if (oldFormat.tipos && Array.isArray(oldFormat.tipos)) {
             newDutosArray.push(...oldFormat.tipos);
         }
         
-        // Se não houver tipos, mas houver opcionais, criar array vazio
-        if (!oldFormat.tipos && oldFormat.opcionais) {
-            // Aqui você pode implementar lógica específica para sua migração
-            console.log('⚠️  Convertendo formato antigo de dutos para array');
+        data.dutos = newDutosArray;
+    }
+    
+    // Converter tubos se necessário
+    if (data.tubos && !Array.isArray(data.tubos)) {
+        const oldFormat = data.tubos;
+        const newTubosArray = [];
+        
+        if (oldFormat.tipos && Array.isArray(oldFormat.tipos)) {
+            newTubosArray.push(...oldFormat.tipos);
         }
         
-        data.dutos = newDutosArray;
+        data.tubos = newTubosArray;
     }
     
     return data;
 }
 
 // Exportar a função de conversão globalmente
-window.convertDutosToArrayFormat = convertDutosToArrayFormat;
+window.convertToArrayFormat = convertToArrayFormat;
 
 /* ==== FIM: json-utils.js ==== */

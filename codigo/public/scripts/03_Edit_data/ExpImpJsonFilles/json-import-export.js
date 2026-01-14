@@ -1,4 +1,4 @@
-// json-import-export.js - Versão simplificada
+// json-import-export.js - Versão simplificada COM TUBOS
 
 export function exportToJSON() {
     console.log('📤 Exportando JSON...');
@@ -10,7 +10,8 @@ export function exportToJSON() {
             materials: Object.keys(systemData.materials || {}).length,
             empresas: systemData.empresas?.length || 0,
             banco_equipamentos: Object.keys(systemData.banco_equipamentos || {}).length,
-            dutos: systemData.dutos?.length || 0
+            dutos: systemData.dutos?.length || 0,
+            tubos: systemData.tubos?.length || 0  // ✅ Adicionado tubos
         });
         
         const dataStr = JSON.stringify(systemData, null, 2);
@@ -64,8 +65,8 @@ export function importFromJSON() {
                 
                 const importedData = JSON.parse(e.target.result);
                 
-                // Validar estrutura
-                const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos'];
+                // Validar estrutura COM TUBOS
+                const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos', 'tubos'];
                 const missingKeys = requiredKeys.filter(key => !(key in importedData));
                 
                 if (missingKeys.length > 0) {
@@ -78,7 +79,8 @@ export function importFromJSON() {
                     materials: Object.keys(importedData.materials || {}).length,
                     empresas: importedData.empresas?.length || 0,
                     banco_equipamentos: Object.keys(importedData.banco_equipamentos || {}).length,
-                    dutos: importedData.dutos?.length || 0
+                    dutos: importedData.dutos?.length || 0,
+                    tubos: importedData.tubos?.length || 0  // ✅ Adicionado tubos
                 });
                 
                 // Armazenar em staging
@@ -152,8 +154,8 @@ export function exportToExcel() {
     try {
         const systemData = window.systemData || {};
         
-        // Validar dados
-        const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos'];
+        // Validar dados COM TUBOS
+        const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos', 'tubos'];
         const missingKeys = requiredKeys.filter(key => !(key in systemData));
         
         if (missingKeys.length > 0) {
@@ -161,7 +163,8 @@ export function exportToExcel() {
         }
         
         console.log('📊 Dados para exportação Excel:', {
-            dutos: systemData.dutos?.length || 0
+            dutos: systemData.dutos?.length || 0,
+            tubos: systemData.tubos?.length || 0  // ✅ Adicionado tubos
         });
         
         // Chamar API para gerar Excel
@@ -286,7 +289,8 @@ export function importFromExcel() {
                 }
                 
                 console.log('✅ Excel convertido:', {
-                    dutos: result.data.dutos?.length || 0
+                    dutos: result.data.dutos?.length || 0,
+                    tubos: result.data.tubos?.length || 0  // ✅ Adicionado tubos
                 });
                 
                 // Armazenar em staging

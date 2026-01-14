@@ -78,6 +78,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/api/machines/save": "handle_post_save_machines",
         "/api/machines/add": "handle_post_add_machine",
         "/api/machines/update": "handle_post_update_machine",
+        "/api/machines/delete": "handle_post_delete_machine",  # NOVA ROTA ADICIONADA
         # ROTAS DE EMPRESAS ESPECÍFICAS
         "/api/dados/empresas/auto": "handle_post_empresas_auto",
         # ROTAS DE SESSÃO
@@ -317,6 +318,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_post_add_machine(self)
         elif path == "/api/machines/update":
             self.route_handler.handle_post_update_machine(self)
+        elif path == "/api/machines/delete":
+            self.route_handler.handle_post_delete_machine(self)
             
         # ========== ROTAS PARA DUTOS ==========
         elif path == "/api/dutos/add":
@@ -594,8 +597,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
-
-            # PYTHON SOBRE JSON
 
     def handle_post_excel_upload(self):
         """Rota: /api/excel/upload"""
@@ -1131,7 +1132,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if key not in proposed_materials:
                 diffs["materials"]["removed"].append(key)
 
-
         # Dutos (por type)
         current_dutos = {d.get("type", ""): d for d in current.get("dutos", [])}
         proposed_dutos = {d.get("type", ""): d for d in proposed.get("dutos", [])}
@@ -1146,8 +1146,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if type_name not in proposed_dutos:
                 diffs["dutos"]["removed"].append(type_name)
         
-        return diffs
-    
         # Tubos (por polegadas)
         current_tubos = {t.get("polegadas", ""): t for t in current.get("tubos", [])}
         proposed_tubos = {t.get("polegadas", ""): t for t in proposed.get("tubos", [])}
@@ -1162,9 +1160,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if polegadas not in proposed_tubos:
                 diffs["tubos"]["removed"].append(polegadas)
         
-        return diffs
-
-
         # Empresas (por primeiro campo)
         def get_empresa_key(empresa):
             return next(iter(empresa)) if empresa else ""
@@ -1188,6 +1183,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if key not in proposed_empresas_dict:
                 diffs["empresas"]["removed"].append(key)
 
+        # Banco de Equipamentos
         current_equipamentos = current.get("banco_equipamentos", {})
         proposed_equipamentos = proposed.get("banco_equipamentos", {})
 
@@ -1244,8 +1240,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "total_removed": total_removed,
             "has_changes": (total_added + total_modified + total_removed) > 0,
         }
-
-    #    FIM DO PY SOBRE JSON
 
     def handle_get_equipamentos(self):
         """GET /api/equipamentos - Retorna todos os equipamentos"""
@@ -2335,8 +2329,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
             )
-
-
 
     def handle_get_tubos(self):
         """GET /api/tubos - Retorna todos os tubos"""

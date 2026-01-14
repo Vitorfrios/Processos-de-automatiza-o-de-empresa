@@ -7,7 +7,7 @@ from .excel_converter import excel_converter
 from .schema_validator import SystemSchema
 
 class ExcelJsonApiService:
-    """Serviço de API para conversão Excel-JSON - ATUALIZADO"""
+    """Serviço de API para conversão Excel-JSON - ATUALIZADO COM TUBOS"""
     
     def __init__(self): 
         self.schema = SystemSchema()
@@ -77,7 +77,8 @@ class ExcelJsonApiService:
                             'materials': len(system_data.get('materials', {})),
                             'empresas': len(system_data.get('empresas', [])),
                             'banco_equipamentos': len(system_data.get('banco_equipamentos', {})),
-                            'dutos': len(system_data.get('dutos', []))
+                            'dutos': len(system_data.get('dutos', [])),
+                            'tubos': len(system_data.get('tubos', []))  # ✅ Adicionado
                         }
                     }
                 }
@@ -135,16 +136,15 @@ class ExcelJsonApiService:
             'materials',
             'empresas',
             'banco_equipamentos',
-            'dutos'
+            'dutos',
+            'tubos'  # ✅ Adicionado
         ]
         
         for section in required_sections:
             if section not in system_data:
                 print(f"   ➕ Criando seção faltante: {section}")
-                if section == 'dutos':
+                if section in ['dutos', 'tubos', 'machines', 'empresas']:
                     system_data[section] = []  # Array vazio
-                elif section in ['machines', 'empresas']:
-                    system_data[section] = []
                 elif section in ['constants', 'materials', 'banco_equipamentos']:
                     system_data[section] = {}
         

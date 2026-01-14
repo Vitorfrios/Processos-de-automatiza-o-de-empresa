@@ -10,6 +10,7 @@
 @import url('json-editor-styles.css');
 @import url('equipaments.css');
 @import url('dutos.css');
+@import url('tubos.css');
 
 
 .edit-data-container {
@@ -84,6 +85,18 @@
     margin-bottom: var(--spacing-lg);
     padding: 0 var(--spacing-sm);
     border-bottom: 2px solid var(--color-gray-200);
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+}
+.tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+    background: var(--color-gray-300);
+    border-radius: 4px;
 }
 
 .tab {
@@ -96,6 +109,8 @@
     cursor: pointer;
     transition: all 0.2s;
     color: var(--color-gray-700);
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .tab:hover {

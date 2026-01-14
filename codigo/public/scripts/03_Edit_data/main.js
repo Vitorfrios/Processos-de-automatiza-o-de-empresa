@@ -1,3 +1,4 @@
+// scripts/03_Edit_data/main.js
 import { loadModules } from './loader.js';
 import { createSmartLogger } from '../01_Create_Obra/core/logger.js';
 
@@ -15,7 +16,8 @@ function ensureCompleteSystemData(data) {
             dutos: {
                 tipos: [],
                 opcionais: []
-            }
+            },
+            tubos: []  // ADICIONADO: estrutura para tubos
         };
     }
     
@@ -28,7 +30,8 @@ function ensureCompleteSystemData(data) {
         dutos: data.dutos || {
             tipos: [],
             opcionais: []
-        }
+        },
+        tubos: Array.isArray(data.tubos) ? data.tubos : []  // ADICIONADO
     };
 }
 
@@ -52,7 +55,8 @@ Object.defineProperty(window, 'systemData', {
             dutos: {
                 tipos: window._systemData.dutos?.tipos?.length || 0,
                 opcionais: window._systemData.dutos?.opcionais?.length || 0
-            }
+            },
+            tubos: window._systemData.tubos?.length || 0  // ADICIONADO
         });
     },
     configurable: true,
@@ -105,8 +109,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.log('✅ window.systemData:', window.systemData);
                 console.log('✅ Tem banco_equipamentos?', 'banco_equipamentos' in window.systemData);
                 console.log('✅ Tem dutos?', 'dutos' in window.systemData);
+                console.log('✅ Tem tubos?', 'tubos' in window.systemData);  // ADICIONADO
                 console.log('✅ banco_equipamentos:', window.systemData?.banco_equipamentos);
                 console.log('✅ dutos:', window.systemData?.dutos);
+                console.log('✅ tubos:', window.systemData?.tubos);  // ADICIONADO
                 
                 // Inicializa o editor com os dados carregados
                 if (typeof window.initJSONEditor === 'function') {
@@ -170,7 +176,8 @@ const jsonEditorModule = {
             dutos: {
                 tipos: systemData.dutos?.tipos?.length || 0,
                 opcionais: systemData.dutos?.opcionais?.length || 0
-            }
+            },
+            tubos: systemData.tubos?.length || 0  // ADICIONADO
         });
         
         editor.value = JSON.stringify(systemData, null, 2);
@@ -193,7 +200,8 @@ const jsonEditorModule = {
         try {
             const parsed = JSON.parse(editor.value);
             
-            const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos'];
+            // ADICIONADO: tubos na lista de campos obrigatórios
+            const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos', 'tubos'];
             const missingKeys = requiredKeys.filter(key => !(key in parsed));
             
             if (missingKeys.length > 0) {
@@ -223,6 +231,10 @@ const jsonEditorModule = {
             }
             if (!Array.isArray(parsed.dutos.opcionais)) {
                 throw new Error('dutos.opcionais deve ser um array');
+            }
+            // ADICIONADO: validação de tubos
+            if (!Array.isArray(parsed.tubos)) {
+                throw new Error('tubos deve ser um array');
             }
             
             this.updateJSONStatus('✅ JSON válido e com estrutura correta', 'success');
@@ -279,7 +291,8 @@ window.addEventListener('dataLoaded', function(event) {
         dutos: {
             tipos: data.dutos?.tipos?.length || 0,
             opcionais: data.dutos?.opcionais?.length || 0
-        }
+        },
+        tubos: data.tubos?.length || 0  // ADICIONADO
     });
     
     // Atualiza window.systemData com os dados recebidos
@@ -293,6 +306,7 @@ window.addEventListener('dataLoaded', function(event) {
         if (window.loadEmpresas) window.loadEmpresas();
         if (window.loadEquipamentos) window.loadEquipamentos();
         if (window.loadDutos) window.loadDutos();
+        if (window.loadTubos) window.loadTubos();  // ADICIONADO
         if (window.populateMachineFilter) window.populateMachineFilter();
         if (window.loadJSONEditor) window.loadJSONEditor();
         
@@ -320,6 +334,7 @@ window.addEventListener('dataImported', function(event) {
     if (window.loadEmpresas) window.loadEmpresas();
     if (window.loadEquipamentos) window.loadEquipamentos();
     if (window.loadDutos) window.loadDutos();
+    if (window.loadTubos) window.loadTubos();  // ADICIONADO
     if (window.populateMachineFilter) window.populateMachineFilter();
     if (window.loadJSONEditor) window.loadJSONEditor();
     
@@ -356,6 +371,11 @@ window.addEventListener('dataApplied', function(event) {
         window.loadDutos();
     }
     
+    // Atualizar tubos também
+    if (window.loadTubos) {
+        window.loadTubos();
+    }
+    
     // Registrar no logger se disponível
     if (window.logger && window.logger.log) {
         window.logger.log('Sistema', `JSON aplicado: ${changes.summary.total_changes} alterações`);
@@ -370,11 +390,14 @@ window.debugSystemData = function() {
     console.log('systemData:', window.systemData);
     console.log('Tem banco_equipamentos?', 'banco_equipamentos' in window.systemData);
     console.log('Tem dutos?', 'dutos' in window.systemData);
+    console.log('Tem tubos?', 'tubos' in window.systemData);  // ADICIONADO
     console.log('banco_equipamentos:', window.systemData?.banco_equipamentos);
     console.log('dutos:', window.systemData?.dutos);
+    console.log('tubos:', window.systemData?.tubos);  // ADICIONADO
     console.log('Número de equipamentos:', Object.keys(window.systemData?.banco_equipamentos || {}).length);
     console.log('Número de tipos de dutos:', window.systemData?.dutos?.tipos?.length || 0);
     console.log('Número de opcionais:', window.systemData?.dutos?.opcionais?.length || 0);
+    console.log('Número de tubos:', window.systemData?.tubos?.length || 0);  // ADICIONADO
     console.log('Keys de banco_equipamentos:', Object.keys(window.systemData?.banco_equipamentos || {}));
     
     // Verifica o editor
@@ -384,8 +407,10 @@ window.debugSystemData = function() {
             const parsed = JSON.parse(editor.value);
             console.log('Editor tem banco_equipamentos?', 'banco_equipamentos' in parsed);
             console.log('Editor tem dutos?', 'dutos' in parsed);
+            console.log('Editor tem tubos?', 'tubos' in parsed);  // ADICIONADO
             console.log('Equipamentos no editor:', Object.keys(parsed?.banco_equipamentos || {}).length);
             console.log('Tipos de dutos no editor:', parsed?.dutos?.tipos?.length || 0);
+            console.log('Tubos no editor:', parsed?.tubos?.length || 0);  // ADICIONADO
         } catch(e) {
             console.error('Erro ao parsear editor:', e);
         }
@@ -406,7 +431,8 @@ window.reloadCompleteData = async function() {
                 dutos: {
                     tipos: data.dutos?.tipos?.length || 0,
                     opcionais: data.dutos?.opcionais?.length || 0
-                }
+                },
+                tubos: data.tubos?.length || 0  // ADICIONADO
             });
             
             // Atualiza window.systemData
@@ -464,6 +490,13 @@ if (typeof window.switchTab === 'undefined') {
                     console.log('🎯 Tab de dutos ativada');
                     if (typeof window.loadDutos === 'function') {
                         setTimeout(window.loadDutos, 100);
+                    }
+                    break;
+                    
+                case 'tubos':  // ADICIONADO
+                    console.log('🎯 Tab de tubos ativada');
+                    if (typeof window.loadTubos === 'function') {
+                        setTimeout(window.loadTubos, 100);
                     }
                     break;
                     
@@ -531,6 +564,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 150);
             }
             
+            if (tabText.includes('tubos') || tabText.includes('tubo')) {  // ADICIONADO
+                console.log('🎯 Tab de tubos clicada');
+                
+                setTimeout(() => {
+                    if (typeof window.loadTubos === 'function') {
+                        window.loadTubos();
+                    }
+                }, 150);
+            }
+            
             if (tabText.includes('equipamento') || tabText.includes('equipment')) {
                 console.log('🎯 Tab de equipamentos clicada');
                 
@@ -560,6 +603,7 @@ setTimeout(() => {
         dutos: {
             tipos: window.systemData?.dutos?.tipos?.length || 0,
             opcionais: window.systemData?.dutos?.opcionais?.length || 0
-        }
+        },
+        tubos: window.systemData?.tubos?.length || 0  // ADICIONADO
     });
 }, 2000);

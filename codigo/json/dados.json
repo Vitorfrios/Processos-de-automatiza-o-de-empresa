@@ -1852,67 +1852,6 @@
           "value": 300
         }
       ]
-    },
-    {
-      "type": "NOVO_TIPO_3302",
-      "impostos": {
-        "PIS_COFINS": "INCL",
-        "IPI": "ISENTO",
-        "ICMS": "12%",
-        "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
-      },
-      "configuracoes_instalacao": [
-        {
-          "nome": "Nova Configuração"
-        }
-      ],
-      "baseValues": {
-        "NOVA_CAPACIDADE_4796": 0,
-        "NOVA_CAPACIDADE_5832": 0,
-        "NOVA_CAPACIDADE_6390": 0,
-        "NOVA_CAPACIDADE_6565": 0,
-        "NOVA_CAPACIDADE_6720": 0,
-        "NOVA_CAPACIDADE_7018": 0,
-        "NOVA_CAPACIDADE_7179": 0,
-        "NOVA_CAPACIDADE_7335": 0,
-        "NOVA_CAPACIDADE_7521": 0,
-        "NOVA_CAPACIDADE_7674": 0,
-        "NOVA_CAPACIDADE_1181": 0,
-        "NOVA_CAPACIDADE_1349": 0,
-        "NOVA_CAPACIDADE_5432": 0
-      },
-      "options": [
-        {
-          "id": 1,
-          "name": "Nova Opção",
-          "values": {}
-        },
-        {
-          "id": 2,
-          "name": "Nova Opção",
-          "values": {
-            "NOVA_CAPACIDADE_1": 0
-          }
-        }
-      ],
-      "voltages": [
-        {
-          "id": 1,
-          "name": "Nova Tensão",
-          "value": 0
-        },
-        {
-          "id": 2,
-          "name": "Nova Tensão",
-          "value": 0
-        },
-        {
-          "id": 3,
-          "name": "Nova Tensão",
-          "value": 0
-        }
-      ]
     }
   ],
   "materials": {
@@ -2373,17 +2312,65 @@
     }
   ],
   "tubos": [
-    { "polegadas": "1/4",   "mm": 6.35,  "valor": 18.50 },
-    { "polegadas": "3/8",   "mm": 9.52,  "valor": 22.00 },
-    { "polegadas": "1/2",   "mm": 12.7,  "valor": 26.50 },
-    { "polegadas": "5/8",   "mm": 15.87, "valor": 31.00 },
-    { "polegadas": "3/4",   "mm": 19.05, "valor": 36.80 },
-    { "polegadas": "7/8",   "mm": 22.22, "valor": 42.00 },
-    { "polegadas": "1",     "mm": 25.4,  "valor": 48.90 },
-    { "polegadas": "1 1/4", "mm": 31.75, "valor": 62.00 },
-    { "polegadas": "1 3/8", "mm": 34.92, "valor": 68.50 },
-    { "polegadas": "1 1/2", "mm": 38.1,  "valor": 75.00 },
-    { "polegadas": "1 5/8", "mm": 41.27, "valor": 82.40 },
-    { "polegadas": "1 7/8", "mm": 47.62, "valor": 96.00 }
+    {
+      "polegadas": "1/4",
+      "mm": 6.35,
+      "valor": 18.5
+    },
+    {
+      "polegadas": "3/8",
+      "mm": 9.52,
+      "valor": 22
+    },
+    {
+      "polegadas": "1/2",
+      "mm": 12.7,
+      "valor": 26.5
+    },
+    {
+      "polegadas": "5/8",
+      "mm": 15.87,
+      "valor": 31
+    },
+    {
+      "polegadas": "3/4",
+      "mm": 19.05,
+      "valor": 36.8
+    },
+    {
+      "polegadas": "7/8",
+      "mm": 22.22,
+      "valor": 42
+    },
+    {
+      "polegadas": "1",
+      "mm": 25.4,
+      "valor": 48.9
+    },
+    {
+      "polegadas": "1.1/4",
+      "mm": 31.75,
+      "valor": 62
+    },
+    {
+      "polegadas": "1.3/8",
+      "mm": 34.92,
+      "valor": 68.5
+    },
+    {
+      "polegadas": "1.1/2",
+      "mm": 38.1,
+      "valor": 75
+    },
+    {
+      "polegadas": "1.5/8",
+      "mm": 41.27,
+      "valor": 82.4
+    },
+    {
+      "polegadas": "1.7/8",
+      "mm": 47.62,
+      "valor": 96
+    }
   ]
 }

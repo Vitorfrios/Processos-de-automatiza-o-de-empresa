@@ -4,11 +4,11 @@ from typing import Dict, List, Any, Optional
 import traceback
 
 class ExcelToJsonConverter:
-    """Converte arquivos Excel para o formato JSON do sistema - ATUALIZADO E CORRIGIDO"""
+    """Converte arquivos Excel para o formato JSON do sistema - ATUALIZADO COM TUBOS"""
     
     def convert_excel_to_json(self, excel_file_path: str) -> Dict[str, Any]:
         """
-        Converte arquivo Excel para JSON estruturado do sistema - CORRIGIDO COM CONTEXTO
+        Converte arquivo Excel para JSON estruturado do sistema - COM TUBOS
         """
         print(f"\n{'='*60}")
         print(f"🔧 CONVERSÃO EXCEL PARA JSON - INICIANDO")
@@ -25,14 +25,15 @@ class ExcelToJsonConverter:
                 
                 print(f"✅ Excel lido. Sheets encontradas: {list(excel_data.keys())}")
                 
-                # ✅ Estrutura atualizada com dutos como array
+                # ✅ Estrutura atualizada com dutos e tubos como arrays
                 system_data = {
                     'constants': {},
                     'machines': [],
                     'materials': {},
                     'empresas': [],
                     'banco_equipamentos': {},
-                    'dutos': []  # Array direto
+                    'dutos': [],   # Array direto
+                    'tubos': []    # Array direto
                 }
                 
                 # Processar cada sheet
@@ -66,6 +67,10 @@ class ExcelToJsonConverter:
                             system_data['dutos'] = self._parse_dutos_novo(df, sheet_name)
                             print(f"   ✅ Dutos: {len(system_data['dutos'])} tipos")
                         
+                        elif sheet_name_lower in ['tubos', 'pipes', 'tubes']:
+                            system_data['tubos'] = self._parse_tubos(df, sheet_name)
+                            print(f"   ✅ Tubos: {len(system_data['tubos'])} tipos")
+                        
                         else:
                             print(f"   ⚠️  Sheet não reconhecida: '{sheet_name}'")
                             
@@ -92,6 +97,7 @@ class ExcelToJsonConverter:
                 print(f"   • Empresas: {len(system_data['empresas'])}")
                 print(f"   • Equipamentos: {len(system_data['banco_equipamentos'])} tipos")
                 print(f"   • Dutos: {len(system_data['dutos'])} tipos")
+                print(f"   • Tubos: {len(system_data['tubos'])} tipos")
                 
                 if system_data['dutos']:
                     print(f"\n🔍 DETALHES DOS DUTOS:")
@@ -99,6 +105,11 @@ class ExcelToJsonConverter:
                         print(f"   {i+1}. {duto.get('type', 'N/A')}: {duto.get('valor', 0)}")
                         if 'opcionais' in duto:
                             print(f"      Opcionais: {len(duto['opcionais'])}")
+                
+                if system_data['tubos']:
+                    print(f"\n🔍 DETALHES DOS TUBOS (primeiros 3):")
+                    for i, tubo in enumerate(system_data['tubos'][:3]):  # Mostrar 3 primeiros
+                        print(f"   {i+1}. {tubo.get('polegadas', 'N/A')}: mm={tubo.get('mm', 0)}, valor={tubo.get('valor', 0)}")
                 
                 print(f"\n{'='*60}")
                 print(f"✅ CONVERSÃO CONCLUÍDA COM SUCESSO!")
@@ -425,7 +436,7 @@ class ExcelToJsonConverter:
     
     def _parse_dutos_novo(self, df: pd.DataFrame, sheet_name: str) -> List[Dict[str, Any]]:
         """
-        ✅ NOVO: Parse dutos no formato atual (com Categoria, ID Opcional, etc.)
+        ✅ Parse dutos no formato atual (com Categoria, ID Opcional, etc.)
         """
         print(f"   🔍 Analisando estrutura Dutos NOVA...")
         print(f"   📝 Colunas: {list(df.columns)}")
@@ -534,8 +545,139 @@ class ExcelToJsonConverter:
         
         return dutos
     
+    def _parse_tubos(self, df: pd.DataFrame, sheet_name: str) -> List[Dict[str, Any]]:
+        """
+        ✅ Parse tubos no formato esperado: polegadas, mm, valor
+        """
+        print(f"   🔍 Analisando estrutura Tubos...")
+        print(f"   📝 Colunas: {list(df.columns)}")
+        print(f"   📊 Dimensões: {df.shape[0]} linhas × {df.shape[1]} colunas")
+        
+        tubos = []
+        
+        # Verificar estrutura
+        col_names = {str(col).lower(): col for col in df.columns}
+        print(f"   🔑 Colunas identificadas: {list(col_names.keys())}")
+        
+        # Mapear colunas para os campos esperados
+        polegadas_col = None
+        mm_col = None
+        valor_col = None
+        
+        for col_lower, col_original in col_names.items():
+            if 'polegada' in col_lower or '"' in col_lower or 'in' in col_lower:
+                polegadas_col = col_original
+            elif 'mm' in col_lower or 'milimetro' in col_lower:
+                mm_col = col_original
+            elif 'valor' in col_lower or 'price' in col_lower or 'custo' in col_lower:
+                valor_col = col_original
+        
+        # Se não encontrou colunas específicas, assumir primeira, segunda e terceira coluna
+        if polegadas_col is None and len(df.columns) > 0:
+            polegadas_col = df.columns[0]
+        if mm_col is None and len(df.columns) > 1:
+            mm_col = df.columns[1]
+        if valor_col is None and len(df.columns) > 2:
+            valor_col = df.columns[2]
+        
+        print(f"   🗺️  Mapeamento:")
+        print(f"     • Polegadas: {polegadas_col}")
+        print(f"     • mm: {mm_col}")
+        print(f"     • Valor: {valor_col}")
+        
+        # Processar linha por linha
+        for idx, row in df.iterrows():
+            # Pular linhas vazias ou linhas de cabeçalho
+            if pd.isna(row.iloc[0]) or str(row.iloc[0]).strip() == '':
+                continue
+            
+            # Verificar se é linha de cabeçalho
+            first_cell = str(row.iloc[0]).lower() if pd.notna(row.iloc[0]) else ""
+            if any(word in first_cell for word in ['polegada', 'in', 'mm', 'valor', 'custo', 'price']):
+                print(f"   ⏭️  Pulando linha de cabeçalho: {first_cell}")
+                continue
+            
+            # Obter valores
+            polegadas = str(row[polegadas_col]).strip() if polegadas_col and pd.notna(row[polegadas_col]) else ""
+            mm = row[mm_col] if mm_col and pd.notna(row[mm_col]) else 0
+            valor = row[valor_col] if valor_col and pd.notna(row[valor_col]) else 0
+            
+            # Converter valores numéricos
+            try:
+                if mm is not None:
+                    mm = float(mm)
+            except (ValueError, TypeError):
+                mm = 0
+            
+            try:
+                if valor is not None:
+                    valor = float(valor)
+            except (ValueError, TypeError):
+                valor = 0
+            
+            # Se tem polegadas definidas, adicionar o tubo
+            if polegadas:
+                tubo = {
+                    'polegadas': polegadas,
+                    'mm': mm,
+                    'valor': valor
+                }
+                tubos.append(tubo)
+                
+                # Debug
+                if idx < 5:  # Mostrar primeiras 5 linhas
+                    print(f"   📋 Linha {idx}: {polegadas} -> mm={mm}, valor={valor}")
+        
+        # Ordenar tubos por polegadas
+        if tubos:
+            try:
+                # Função auxiliar para converter polegadas para valor numérico para ordenação
+                def parse_polegadas(polegadas_str):
+                    try:
+                        str_val = str(polegadas_str).strip()
+                        # Remove aspas se existir
+                        str_val = str_val.replace('"', '').replace("''", '').replace("'", '')
+                        
+                        # Se tem ponto e barra (ex: "1.3/8")
+                        if '.' in str_val and '/' in str_val:
+                            str_val = str_val.replace('.', ' ')
+                        
+                        # Se contém espaço e fração (ex: "1 1/4" ou "1 3/8")
+                        if ' ' in str_val and '/' in str_val:
+                            parts = str_val.split(' ')
+                            if len(parts) == 2:
+                                integer = float(parts[0]) if parts[0] else 0
+                                fraction_parts = parts[1].split('/')
+                                if len(fraction_parts) == 2:
+                                    numerator = float(fraction_parts[0])
+                                    denominator = float(fraction_parts[1])
+                                    return integer + (numerator / denominator)
+                        
+                        # Se é apenas fração (ex: "1/2")
+                        if '/' in str_val and ' ' not in str_val:
+                            fraction_parts = str_val.split('/')
+                            if len(fraction_parts) == 2:
+                                numerator = float(fraction_parts[0])
+                                denominator = float(fraction_parts[1])
+                                return numerator / denominator
+                        
+                        # Se é número decimal
+                        return float(str_val)
+                    except:
+                        return 0
+                
+                tubos.sort(key=lambda x: parse_polegadas(x.get('polegadas', '')))
+                print(f"   📈 Tubos ordenados por polegadas")
+                
+            except Exception as sort_error:
+                print(f"   ⚠️  Não foi possível ordenar tubos: {sort_error}")
+        
+        print(f"   ✅ Total de tubos processados: {len(tubos)}")
+        
+        return tubos
+    
     def _validate_structure(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Valida estrutura básica dos dados"""
+        """Valida estrutura básica dos dados - ATUALIZADA COM TUBOS"""
         errors = []
         
         required_sections = [
@@ -544,7 +686,8 @@ class ExcelToJsonConverter:
             'materials', 
             'empresas', 
             'banco_equipamentos',
-            'dutos'
+            'dutos',
+            'tubos'  # ✅ Adicionado tubos
         ]
         
         for section in required_sections:
@@ -554,6 +697,9 @@ class ExcelToJsonConverter:
         if 'dutos' in data and not isinstance(data['dutos'], list):
             errors.append("'dutos' deve ser um array")
         
+        if 'tubos' in data and not isinstance(data['tubos'], list):
+            errors.append("'tubos' deve ser um array")
+        
         return {
             "valid": len(errors) == 0,
             "errors": errors
@@ -561,7 +707,7 @@ class ExcelToJsonConverter:
     
     def json_to_excel(self, system_data: Dict[str, Any], output_path: str) -> None:
         """
-        Converte JSON do sistema para Excel - ATUALIZADO
+        Converte JSON do sistema para Excel - ATUALIZADO COM TUBOS
         """
         print(f"\n{'='*60}")
         print(f"📤 CONVERTENDO JSON PARA EXCEL")
@@ -653,7 +799,7 @@ class ExcelToJsonConverter:
                         df_equipamentos.to_excel(writer, sheet_name='Equipamentos', index=False)
                         print(f"✅ Equipamentos exportados: {len(equipamentos_data)}")
                 
-                # ✅ Sheet Dutos (formato atualizado)
+                # Sheet Dutos (formato atualizado)
                 if system_data.get('dutos'):
                     dutos_data = []
                     
@@ -693,6 +839,30 @@ class ExcelToJsonConverter:
                         df_dutos = pd.DataFrame(dutos_data)
                         df_dutos.to_excel(writer, sheet_name='Dutos', index=False)
                         print(f"✅ Dutos exportados: {len(system_data['dutos'])} tipos")
+                
+                # ✅ Sheet Tubos
+                if system_data.get('tubos'):
+                    tubos_data = []
+                    
+                    # Adicionar cabeçalho
+                    tubos_data.append({
+                        'Polegadas': 'Polegadas',
+                        'mm': 'Milímetros',
+                        'Valor': 'Valor (R$)'
+                    })
+                    
+                    # Adicionar dados dos tubos
+                    for tubo in system_data['tubos']:
+                        tubos_data.append({
+                            'Polegadas': tubo.get('polegadas', ''),
+                            'mm': tubo.get('mm', 0),
+                            'Valor': tubo.get('valor', 0)
+                        })
+                    
+                    if len(tubos_data) > 1:  # Tem pelo menos um tubo além do cabeçalho
+                        df_tubos = pd.DataFrame(tubos_data)
+                        df_tubos.to_excel(writer, sheet_name='Tubos', index=False)
+                        print(f"✅ Tubos exportados: {len(system_data['tubos'])} tipos")
                 
                 print(f"\n✅ Excel gerado com sucesso: {output_path}")
                 

@@ -15,7 +15,6 @@ import {
 // ===== FUNÇÕES UTILITÁRIAS =====
 let originalMachineState = null;
 
-
 // Seleciona texto no label
 export function selectTextInLabel(label) {
     const range = document.createRange();
@@ -303,28 +302,48 @@ export async function deleteMachine(index) {
 
     showConfirmation(`Deseja excluir a máquina "${machineType}"?`, async () => {
         try {
-            const response = await fetch('/api/delete', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    path: ['machines', index.toString()]
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                systemData.machines.splice(index, 1);
-                loadMachines();
-                populateMachineFilter();
-                closeMachineDetail();
-                addPendingChange('machines');
-                showWarning(`Máquina "${machineType}" excluída.`);
-            } else {
-                throw new Error(result.error || 'Erro ao excluir');
+            // Verificar se a máquina existe
+            if (!systemData.machines || !systemData.machines[index]) {
+                throw new Error(`Máquina não encontrada no índice ${index}`);
             }
+
+            // Primeiro remover localmente para feedback imediato
+            const deletedMachine = systemData.machines.splice(index, 1)[0];
+            loadMachines();
+            populateMachineFilter();
+            closeMachineDetail();
+            addPendingChange('machines');
+            
+            // Tentar excluir no servidor
+            try {
+                const response = await fetch('/api/machines/delete', {
+                    method: 'POST',  // Mude para POST se DELETE não funcionar
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: deletedMachine.type,
+                        index: index
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.warn('Erro na API ao excluir máquina:', errorText);
+                    showWarning(`Máquina "${machineType}" removida localmente, mas houve erro no servidor.`);
+                } else {
+                    const result = await response.json();
+                    if (result.success) {
+                        showSuccess(`Máquina "${machineType}" excluída com sucesso.`);
+                    } else {
+                        showWarning(`Máquina "${machineType}" removida localmente: ${result.error || 'Erro no servidor'}`);
+                    }
+                }
+            } catch (apiError) {
+                console.warn('Erro na API (continuação local):', apiError);
+                showWarning(`Máquina "${machineType}" removida localmente. Erro de conexão com o servidor.`);
+            }
+            
         } catch (error) {
             console.error('Erro ao excluir máquina:', error);
             showError(`Erro ao excluir máquina: ${error.message}`);
@@ -341,9 +360,6 @@ export function updateMachineField(field, value) {
     }
 }
 
-
-
-
 export function preventScroll(event) {
     if (event) {
         event.preventDefault();
@@ -355,8 +371,6 @@ export function preventScroll(event) {
         return false;
     }
 }
-
-
 
 export function resetMachineChanges() {
     const currentIndex = getCurrentMachineIndex();
@@ -381,15 +395,9 @@ export function resetMachineChanges() {
                     typeInput.value = machine.type || '';
                 }
                 
-                // Remove o pending change se houver
-                // Nota: Você pode precisar ajustar isso dependendo de como sua função addPendingChange funciona
-                
                 showWarning('Alterações descartadas. Dados restaurados ao estado original.');
                 
-                // Opcional: Fechar o detalhe após reset
-                closeMachineDetail();
-                
-                // Opcional: Recarregar toda a visualização
+                // Recarregar toda a visualização
                 editMachine(currentIndex);
             },
             'Descartar Alterações',
@@ -399,3 +407,118 @@ export function resetMachineChanges() {
         showWarning('Não há alterações para descartar ou nenhuma máquina está sendo editada.');
     }
 }
+
+// ===== FUNÇÕES AUXILIARES PARA IMPOSTOS =====
+
+export function updateImposto(key, value) {
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        if (!systemData.machines[currentIndex].impostos) {
+            systemData.machines[currentIndex].impostos = {};
+        }
+        systemData.machines[currentIndex].impostos[key] = value;
+        addPendingChange('machines');
+    }
+}
+
+export function updateImpostoKey(oldKey, newKey) {
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null && systemData.machines[currentIndex].impostos) {
+        const value = systemData.machines[currentIndex].impostos[oldKey];
+        delete systemData.machines[currentIndex].impostos[oldKey];
+        systemData.machines[currentIndex].impostos[newKey] = value;
+        addPendingChange('machines');
+    }
+}
+
+export function removeImposto(key, event) {
+    if (event) event.stopPropagation();
+    
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null && systemData.machines[currentIndex].impostos) {
+        delete systemData.machines[currentIndex].impostos[key];
+        addPendingChange('machines');
+        
+        // Recarregar a seção de impostos
+        editMachine(currentIndex);
+    }
+}
+
+export function addImposto(event) {
+    if (event) event.stopPropagation();
+    
+    const currentIndex = getCurrentMachineIndex();
+    if (currentIndex !== null) {
+        if (!systemData.machines[currentIndex].impostos) {
+            systemData.machines[currentIndex].impostos = {};
+        }
+        
+        const newKey = `NOVO_IMPOSTO_${Date.now().toString().slice(-4)}`;
+        systemData.machines[currentIndex].impostos[newKey] = "VALOR";
+        addPendingChange('machines');
+        
+        // Recarregar a seção de impostos
+        editMachine(currentIndex);
+    }
+}
+
+// ===== FUNÇÕES DE GERENCIAMENTO DE SEÇÕES =====
+
+export function toggleSection(sectionId, event) {
+    if (event) event.stopPropagation();
+    
+    const section = document.getElementById(sectionId + 'List');
+    if (section) {
+        const isCollapsed = section.classList.contains('collapsed');
+        section.classList.toggle('collapsed');
+        
+        const minimizer = event?.currentTarget?.querySelector('.minimizer');
+        if (minimizer) {
+            minimizer.textContent = isCollapsed ? '-' : '+';
+        }
+        
+        // Salvar o estado da seção
+        saveSectionState(sectionId, !isCollapsed);
+    }
+}
+
+export function saveSectionState(sectionId, isExpanded) {
+    const sectionStates = JSON.parse(localStorage.getItem('machineSectionStates') || '{}');
+    sectionStates[sectionId] = isExpanded;
+    localStorage.setItem('machineSectionStates', JSON.stringify(sectionStates));
+}
+
+export function restoreSectionStates() {
+    const sectionStates = JSON.parse(localStorage.getItem('machineSectionStates') || '{}');
+    
+    Object.keys(sectionStates).forEach(sectionId => {
+        const section = document.getElementById(sectionId + 'List');
+        if (section) {
+            const isExpanded = sectionStates[sectionId];
+            section.classList.toggle('collapsed', !isExpanded);
+            
+            const minimizer = document.querySelector(`[onclick*="${sectionId}"] .minimizer`);
+            if (minimizer) {
+                minimizer.textContent = isExpanded ? '-' : '+';
+            }
+        }
+    });
+}
+
+// ===== EXPORTAÇÃO GLOBAL =====
+
+window.loadMachines = loadMachines;
+window.populateMachineFilter = populateMachineFilter;
+window.filterMachines = filterMachines;
+window.addMachine = addMachine;
+window.editMachine = editMachine;
+window.closeMachineDetail = closeMachineDetail;
+window.saveMachineChanges = saveMachineChanges;
+window.deleteMachine = deleteMachine;
+window.updateMachineField = updateMachineField;
+window.updateImposto = updateImposto;
+window.updateImpostoKey = updateImpostoKey;
+window.removeImposto = removeImposto;
+window.addImposto = addImposto;
+window.resetMachineChanges = resetMachineChanges;
+window.toggleSection = toggleSection;

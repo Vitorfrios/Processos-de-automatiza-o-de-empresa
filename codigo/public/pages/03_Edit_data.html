@@ -81,6 +81,7 @@
             <button class="tab" onclick="switchTab('empresas')">Empresas</button>
             <button class="tab" onclick="switchTab('equipments')">Equipamentos</button>
             <button class="tab" onclick="switchTab('dutos')">Dutos</button>
+            <button class="tab" onclick="switchTab('tubos')">Tubos</button>
             <button class="tab" onclick="switchTab('raw')">JSON Bruto</button>
         </div>
 
@@ -254,7 +255,34 @@
                     </div>
                 </div>
             </div>
+            <!-- Tab Tubos -->
+            <div id="tubosTab" class="tab-pane">
+                <div class="tab-header">
+                    <h2><i class="icon-tube"></i> Catálogo de Tubos</h2>
+                    <div class="tubos-actions">
+                        <button class="btn btn-success" onclick="addTubo()">
+                            <i class="icon-add"></i> Novo Tubo
+                        </button>
+                    </div>
+                </div>
 
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="30%">Polegadas</th>
+                                <th width="20%">Milímetros</th>
+                                <th width="20%">Valor (R$)</th>
+                                <th width="30%">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tubosTableBody">
+                            <!-- Dados serão carregados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
             <!-- Tab JSON Bruto -->
             <div id="rawTab" class="tab-pane">
                 <div class="tab-header">

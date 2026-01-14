@@ -7,6 +7,7 @@ import json
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import os
+import time
 
 class RouteHandler:
     """Manipula o roteamento de requisições HTTP"""
@@ -234,16 +235,13 @@ class RouteHandler:
         result = self.routes_core.handle_post_empresas_auto(post_data)
         handler.send_json_response(result)
         
-            # ========== ROTA UNIVERSAL DELETE ==========
+    # ========== ROTA UNIVERSAL DELETE ==========
     
     def handle_delete_universal(self, handler):
         """DELETE /api/delete - Rota universal para deletar qualquer item"""
         result = self.routes_core.handle_delete_universal_from_handler(handler)
         handler.send_json_response(result)
         
-        
-        
-    # ========== ROTAS PARA SISTEMA DE EDIÇÃO ==========
     # ========== ROTAS PARA SISTEMA DE EDIÇÃO ==========
 
     def handle_get_system_data(self, handler):
@@ -335,40 +333,25 @@ class RouteHandler:
         result = self.routes_core.handle_post_update_machine(post_data)
         handler.send_json_response(result)
 
-    def handle_post_empresas_auto(self, handler):
-        """POST /api/dados/empresas/auto"""
+    # NOVO MÉTODO ADICIONADO
+    def handle_post_delete_machine(self, handler):
+        """POST /api/machines/delete - Deleta uma máquina"""
         content_length = int(handler.headers['Content-Length'])
         post_data = handler.rfile.read(content_length).decode('utf-8')
         
-        result = self.routes_core.handle_post_empresas_auto(post_data)
+        result = self.routes_core.handle_post_delete_machine(post_data)
         handler.send_json_response(result)
 
     # ========== ROTAS EXISTENTES QUE PODEM FALTAR ==========
 
-    def handle_get_projetos(self, handler):
-        """GET /projetos (legacy)"""
-        projetos = self.routes_core.handle_get_projetos()
-        handler.send_json_response(projetos)
-
-    def handle_get_session_projects(self, handler):
-        """GET /api/session-projects (legacy)"""
-        handler.send_json_response([])
-
     def handle_health_check(self, handler):
         """GET /health-check"""
         handler.send_json_response({"status": "online", "timestamp": time.time()})
-
-    def handle_get_server_uptime(self, handler):
-        """GET /api/server/uptime"""
-        result = self.routes_core.handle_get_server_uptime()
-        handler.send_json_response(result)
-        
         
     def handle_delete_empresa(self, handler, index):
         """DELETE /api/empresas/{index}"""
         result = self.routes_core.handle_delete_empresa(index)
         handler.send_json_response(result)
-        
         
     def handle_post_excel_upload(self, handler):
         """POST /api/excel/upload"""
@@ -400,7 +383,7 @@ class RouteHandler:
         # Delegar para o handler HTTP
         handler.handle_post_system_apply_json()
         
-    # route_handler.py - Adicionar estes métodos:
+    # ========== ROTAS PARA EQUIPAMENTOS ==========
 
     def handle_get_equipamentos(self, handler):
         """GET /api/equipamentos"""
@@ -434,6 +417,7 @@ class RouteHandler:
         """POST /api/equipamentos/delete"""
         handler.handle_post_delete_equipamento()
         
+    # ========== ROTAS PARA DUTOS ==========
             
     def handle_get_dutos(self, handler):
         """GET /api/dutos"""
@@ -467,7 +451,7 @@ class RouteHandler:
         """POST /api/dutos/delete"""
         handler.handle_post_delete_duto()
         
-            # Adicione estes métodos à classe RouteHandler:
+    # ========== ROTAS PARA TUBOS ==========
 
     def handle_get_tubos(self, handler):
         """GET /api/tubos"""

@@ -1,6 +1,6 @@
 /* ==== INÍCIO: json-editor.js ==== */
 /* ==== json-editor.js ==== */
-// json-editor.js - VERSÃO CORRIGIDA COM DUTOS COMO ARRAY
+// json-editor.js - VERSÃO CORRIGIDA COM DUTOS E TUBOS COMO ARRAYS
 // VERSÃO SEM NÚMEROS DE LINHA
 
 // ==================== ESTADO GLOBAL ====================
@@ -33,7 +33,7 @@ function initDomCache() {
 }
 
 /**
- * Valida e garante estrutura mínima do systemData (CORRIGIDA - DUTOS COMO ARRAY)
+ * Valida e garante estrutura mínima do systemData (CORRIGIDA - COM TUBOS)
  */
 function validateAndEnsureStructure(data) {
     if (!data || typeof data !== 'object') {
@@ -47,7 +47,8 @@ function validateAndEnsureStructure(data) {
         materials: {},
         empresas: [],
         banco_equipamentos: {},
-        dutos: []  // CORRIGIDO: campo para dutos como array
+        dutos: [],  // Array de dutos
+        tubos: []   // Array de tubos
     };
     
     Object.keys(requiredFields).forEach(field => {
@@ -193,7 +194,8 @@ export function initJSONEditor() {
                 materials: Object.keys(validatedData.materials).length,
                 empresas: validatedData.empresas.length,
                 banco_equipamentos: Object.keys(validatedData.banco_equipamentos).length,
-                dutos: validatedData.dutos.length  // CORRIGIDO
+                dutos: validatedData.dutos.length,
+                tubos: validatedData.tubos.length  // ✅ Adicionado tubos
             });
             
             initialContent = JSON.stringify(validatedData, null, 2);
@@ -302,7 +304,7 @@ export function formatJSON() {
 }
 
 /**
- * Valida o JSON no editor (CORRIGIDA - DUTOS COMO ARRAY)
+ * Valida o JSON no editor (CORRIGIDA - COM TUBOS)
  */
 export function validateJSON() {
     if (!domCache.editor) return false;
@@ -364,7 +366,7 @@ export function findErrorLine(jsonString, error) {
 }
 
 /**
- * Valida a estrutura do JSON (CORRIGIDA - DUTOS COMO ARRAY)
+ * Valida a estrutura do JSON (CORRIGIDA - COM TUBOS)
  */
 export function validateJSONStructure(data) {
     const errors = [];
@@ -389,9 +391,14 @@ export function validateJSONStructure(data) {
         errors.push('"banco_equipamentos" deve ser um objeto');
     }
 
-    // CORRIGIDO: dutos deve ser um array
+    // Dutos deve ser um array
     if (!data.dutos || !Array.isArray(data.dutos)) {
         errors.push('"dutos" deve ser um array');
+    }
+
+    // Tubos deve ser um array
+    if (!data.tubos || !Array.isArray(data.tubos)) {
+        errors.push('"tubos" deve ser um array');
     }
 
     return {
@@ -443,6 +450,10 @@ window.debugSystemData = function() {
     console.log('dutos é array?', Array.isArray(window.systemData?.dutos));
     console.log('Número de dutos:', (window.systemData?.dutos || []).length);
     console.log('Dutos detalhados:', window.systemData?.dutos);
+    console.log('Tem tubos?', 'tubos' in (window.systemData || {}));
+    console.log('tubos é array?', Array.isArray(window.systemData?.tubos));
+    console.log('Número de tubos:', (window.systemData?.tubos || []).length);
+    console.log('Tubos detalhados:', window.systemData?.tubos);
     
     const editor = document.getElementById('jsonEditor');
     if (editor && editor.value) {
@@ -452,6 +463,10 @@ window.debugSystemData = function() {
             console.log('Editor dutos é array?', Array.isArray(parsed?.dutos));
             console.log('Dutos no editor:', (parsed?.dutos || []).length);
             console.log('Detalhes dutos editor:', parsed?.dutos);
+            console.log('Editor tem tubos?', 'tubos' in parsed);
+            console.log('Editor tubos é array?', Array.isArray(parsed?.tubos));
+            console.log('Tubos no editor:', (parsed?.tubos || []).length);
+            console.log('Detalhes tubos editor:', parsed?.tubos);
         } catch(e) {
             console.error('Erro ao parsear editor:', e);
         }
