@@ -56,9 +56,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/obras": "handle_get_obras",
         "/api/server/uptime": "handle_get_server_uptime",
         # ========== ROTAS PARA EQUIPAMENTOS ==========
-        "/api/equipamentos": "handle_get_equipamentos",
-        "/api/equipamentos/types": "handle_get_equipamento_types",
-        "/api/equipamentos/dimensoes": "handle_get_equipamento_dimensoes",
+        "/api/acessorios": "handle_get_acessorios",
+        "/api/acessorios/types": "handle_get_acessorio_types",
+        "/api/acessorios/dimensoes": "handle_get_acessorio_dimensoes",
         # ========== NOVAS ROTAS PARA SISTEMA DE EDIÇÃO ==========
         # ROTAS GET - DADOS DO SISTEMA
         "/api/system-data": "handle_get_system_data",
@@ -201,12 +201,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         # ========== ROTAS PARA EQUIPAMENTOS ==========
 
-        # Rotas de equipamentos com parâmetros
-        elif path.startswith("/api/equipamentos/type/"):
-            self.handle_get_equipamento_by_type()
+        # Rotas de acessorios com parâmetros
+        elif path.startswith("/api/acessorios/type/"):
+            self.handle_get_acessorio_by_type()
 
-        elif path.startswith("/api/equipamentos/search"):
-            self.handle_get_search_equipamentos()
+        elif path.startswith("/api/acessorios/search"):
+            self.handle_get_search_acessorios()
             
         # ========== ROTAS PARA DUTOS ==========
         elif path.startswith("/api/dutos/type/"):
@@ -239,12 +239,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ========== ROTAS PARA EQUIPAMENTOS ==========
 
         # ROTAS PARA EQUIPAMENTOS
-        if path == "/api/equipamentos/add":
-            self.handle_post_add_equipamento()
-        elif path == "/api/equipamentos/update":
-            self.handle_post_update_equipamento()
-        elif path == "/api/equipamentos/delete":
-            self.handle_post_delete_equipamento()
+        if path == "/api/acessorios/add":
+            self.handle_post_add_acessorio()
+        elif path == "/api/acessorios/update":
+            self.handle_post_update_acessorio()
+        elif path == "/api/acessorios/delete":
+            self.handle_post_delete_acessorio()
 
         # ========== ROTAS PARA JSON ==========
 
@@ -605,7 +605,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "machines", 
                 "materials", 
                 "empresas",
-                "banco_equipamentos"  # ADICIONADO
+                "banco_acessorios"  # ADICIONADO
             ]
             
             for section in required_sections:
@@ -649,7 +649,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "machines": {"added": [], "modified": [], "removed": []},
             "materials": {"added": [], "modified": [], "removed": []},
             "empresas": {"added": [], "modified": [], "removed": []},
-            "banco_equipamentos": {"added": [], "modified": [], "removed": []},
+            "banco_acessorios": {"added": [], "modified": [], "removed": []},
             "dutos": {"added": [], "modified": [], "removed": []},
             "tubos": {"added": [], "modified": [], "removed": []},  # ADICIONADO
         }
@@ -751,21 +751,21 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if key not in proposed_empresas_dict:
                 diffs["empresas"]["removed"].append(key)
 
-        # Banco de Equipamentos
-        current_equipamentos = current.get("banco_equipamentos", {})
-        proposed_equipamentos = proposed.get("banco_equipamentos", {})
+        # Banco de Acessorios
+        current_acessorios = current.get("banco_acessorios", {})
+        proposed_acessorios = proposed.get("banco_acessorios", {})
 
-        for key in proposed_equipamentos:
-            if key not in current_equipamentos:
-                diffs["banco_equipamentos"]["added"].append(key)
-            elif json.dumps(proposed_equipamentos[key]) != json.dumps(
-                current_equipamentos[key]
+        for key in proposed_acessorios:
+            if key not in current_acessorios:
+                diffs["banco_acessorios"]["added"].append(key)
+            elif json.dumps(proposed_acessorios[key]) != json.dumps(
+                current_acessorios[key]
             ):
-                diffs["banco_equipamentos"]["modified"].append(key)
+                diffs["banco_acessorios"]["modified"].append(key)
 
-        for key in current_equipamentos:
-            if key not in proposed_equipamentos:
-                diffs["banco_equipamentos"]["removed"].append(key)
+        for key in current_acessorios:
+            if key not in proposed_acessorios:
+                diffs["banco_acessorios"]["removed"].append(key)
 
         return diffs
 
@@ -776,7 +776,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             len(differences["machines"]["added"]) +
             len(differences["materials"]["added"]) +
             len(differences["empresas"]["added"]) +
-            len(differences["banco_equipamentos"]["added"]) +
+            len(differences["banco_acessorios"]["added"]) +
             len(differences["dutos"]["added"]) +
             len(differences["tubos"]["added"])  # ADICIONADO
         )
@@ -786,7 +786,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             len(differences["machines"]["modified"]) +
             len(differences["materials"]["modified"]) +
             len(differences["empresas"]["modified"]) +
-            len(differences["banco_equipamentos"]["modified"]) +
+            len(differences["banco_acessorios"]["modified"]) +
             len(differences["dutos"]["modified"]) +
             len(differences["tubos"]["modified"])  # ADICIONADO
         )
@@ -796,7 +796,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             len(differences["machines"]["removed"]) +
             len(differences["materials"]["removed"]) +
             len(differences["empresas"]["removed"]) +
-            len(differences["banco_equipamentos"]["removed"]) +
+            len(differences["banco_acessorios"]["removed"]) +
             len(differences["dutos"]["removed"]) +
             len(differences["tubos"]["removed"])  # ADICIONADO
         )
@@ -809,8 +809,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "has_changes": (total_added + total_modified + total_removed) > 0,
         }
 
-    def handle_get_equipamentos(self):
-        """GET /api/equipamentos - Retorna todos os equipamentos"""
+    def handle_get_acessorios(self):
+        """GET /api/acessorios - Retorna todos os acessorios"""
         try:
             # Carrega dados.json
             dados_file = self.project_root / "json" / "dados.json"
@@ -825,25 +825,25 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verifica se existe a seção banco_equipamentos
-            banco_equipamentos = dados_data.get("banco_equipamentos", {})
+            # Verifica se existe a seção banco_acessorios
+            banco_acessorios = dados_data.get("banco_acessorios", {})
 
             self.send_json_response(
                 {
                     "success": True,
-                    "equipamentos": banco_equipamentos,
-                    "count": len(banco_equipamentos),
+                    "acessorios": banco_acessorios,
+                    "count": len(banco_acessorios),
                 }
             )
 
         except Exception as e:
-            print(f"❌ Erro em handle_get_equipamentos: {e}")
+            print(f"❌ Erro em handle_get_acessorios: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
 
-    def handle_get_equipamento_types(self):
-        """GET /api/equipamentos/types - Retorna tipos de equipamentos"""
+    def handle_get_acessorio_types(self):
+        """GET /api/acessorios/types - Retorna tipos de acessorios"""
         try:
             dados_file = self.project_root / "json" / "dados.json"
 
@@ -857,8 +857,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            banco_equipamentos = dados_data.get("banco_equipamentos", {})
-            types = list(banco_equipamentos.keys())
+            banco_acessorios = dados_data.get("banco_acessorios", {})
+            types = list(banco_acessorios.keys())
 
             # Ordenar tipos (opcional)
             types.sort()
@@ -868,13 +868,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
         except Exception as e:
-            print(f"❌ Erro em handle_get_equipamento_types: {e}")
+            print(f"❌ Erro em handle_get_acessorio_types: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
 
-    def handle_get_equipamento_by_type(self):
-        """GET /api/equipamentos/type/{type} - Retorna equipamentos por tipo"""
+    def handle_get_acessorio_by_type(self):
+        """GET /api/acessorios/type/{type} - Retorna acessorios por tipo"""
         try:
             # Extrair tipo da URL
             path_parts = self.path.split("/")
@@ -899,13 +899,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            banco_equipamentos = dados_data.get("banco_equipamentos", {})
+            banco_acessorios = dados_data.get("banco_acessorios", {})
 
-            if tipo in banco_equipamentos:
-                equipamento = banco_equipamentos[tipo]
+            if tipo in banco_acessorios:
+                acessorio = banco_acessorios[tipo]
 
                 # Adicionar estatísticas
-                valores = equipamento.get("valores_padrao", {})
+                valores = acessorio.get("valores_padrao", {})
                 dimensoes = list(valores.keys())
 
                 # Calcular preço médio
@@ -916,7 +916,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     {
                         "success": True,
                         "tipo": tipo,
-                        "equipamento": equipamento,
+                        "acessorio": acessorio,
                         "estatisticas": {
                             "quantidade_dimensoes": len(dimensoes),
                             "dimensoes": dimensoes[:10],  # Primeiras 10 dimensões
@@ -930,19 +930,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": f"Tipo de equipamento '{tipo}' não encontrado",
+                        "error": f"Tipo de acessorio '{tipo}' não encontrado",
                     },
                     status=404,
                 )
 
         except Exception as e:
-            print(f"❌ Erro em handle_get_equipamento_by_type: {e}")
+            print(f"❌ Erro em handle_get_acessorio_by_type: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
 
-    def handle_post_add_equipamento(self):
-        """POST /api/equipamentos/add - Adiciona novo equipamento"""
+    def handle_post_add_acessorio(self):
+        """POST /api/acessorios/add - Adiciona novo acessorio"""
         try:
             content_length = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_length)
@@ -976,34 +976,34 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Garantir que existe a seção banco_equipamentos
-            if "banco_equipamentos" not in dados_data:
-                dados_data["banco_equipamentos"] = {}
+            # Garantir que existe a seção banco_acessorios
+            if "banco_acessorios" not in dados_data:
+                dados_data["banco_acessorios"] = {}
 
-            banco_equipamentos = dados_data["banco_equipamentos"]
+            banco_acessorios = dados_data["banco_acessorios"]
 
             # Verificar se tipo já existe
-            if tipo in banco_equipamentos:
+            if tipo in banco_acessorios:
                 self.send_json_response(
                     {"success": False, "error": f"Tipo '{tipo}' já existe"}, status=400
                 )
                 return
 
-            # Adicionar novo equipamento
-            novo_equipamento = {
+            # Adicionar novo acessorio
+            novo_acessorio = {
                 "descricao": data["descricao"],
                 "valores_padrao": data["valores"],
             }
 
             # Adicionar dimensões se fornecidas
             if "dimensoes" in data:
-                novo_equipamento["dimensoes"] = data["dimensoes"]
+                novo_acessorio["dimensoes"] = data["dimensoes"]
 
             # Adicionar unidade se fornecida
             if "unidade_valor" in data:
-                novo_equipamento["unidade_valor"] = data["unidade_valor"]
+                novo_acessorio["unidade_valor"] = data["unidade_valor"]
 
-            banco_equipamentos[tipo] = novo_equipamento
+            banco_acessorios[tipo] = novo_acessorio
 
             # Salvar dados atualizados
             with open(dados_file, "w", encoding="utf-8") as f:
@@ -1012,8 +1012,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(
                 {
                     "success": True,
-                    "message": f"Equipamento '{tipo}' adicionado com sucesso",
-                    "equipamento": novo_equipamento,
+                    "message": f"Acessorio '{tipo}' adicionado com sucesso",
+                    "acessorio": novo_acessorio,
                 }
             )
 
@@ -1022,13 +1022,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
-            print(f"❌ Erro em handle_post_add_equipamento: {e}")
+            print(f"❌ Erro em handle_post_add_acessorio: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
 
-    def handle_post_update_equipamento(self):
-        """POST /api/equipamentos/update - Atualiza equipamento existente"""
+    def handle_post_update_acessorio(self):
+        """POST /api/acessorios/update - Atualiza acessorio existente"""
         try:
             content_length = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_length)
@@ -1057,21 +1057,21 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verificar se existe a seção banco_equipamentos
-            if "banco_equipamentos" not in dados_data:
+            # Verificar se existe a seção banco_acessorios
+            if "banco_acessorios" not in dados_data:
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": "Seção 'banco_equipamentos' não encontrada",
+                        "error": "Seção 'banco_acessorios' não encontrada",
                     },
                     status=404,
                 )
                 return
 
-            banco_equipamentos = dados_data["banco_equipamentos"]
+            banco_acessorios = dados_data["banco_acessorios"]
 
             # Verificar se tipo existe
-            if tipo not in banco_equipamentos:
+            if tipo not in banco_acessorios:
                 self.send_json_response(
                     {"success": False, "error": f"Tipo '{tipo}' não encontrado"},
                     status=404,
@@ -1079,19 +1079,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             # Atualizar campos
-            equipamento_atual = banco_equipamentos[tipo]
+            acessorio_atual = banco_acessorios[tipo]
 
             if "descricao" in data:
-                equipamento_atual["descricao"] = data["descricao"]
+                acessorio_atual["descricao"] = data["descricao"]
 
             if "valores" in data:
-                equipamento_atual["valores_padrao"] = data["valores"]
+                acessorio_atual["valores_padrao"] = data["valores"]
 
             if "dimensoes" in data:
-                equipamento_atual["dimensoes"] = data["dimensoes"]
+                acessorio_atual["dimensoes"] = data["dimensoes"]
 
             if "unidade_valor" in data:
-                equipamento_atual["unidade_valor"] = data["unidade_valor"]
+                acessorio_atual["unidade_valor"] = data["unidade_valor"]
 
             # Salvar dados atualizados
             with open(dados_file, "w", encoding="utf-8") as f:
@@ -1100,8 +1100,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(
                 {
                     "success": True,
-                    "message": f"Equipamento '{tipo}' atualizado com sucesso",
-                    "equipamento": equipamento_atual,
+                    "message": f"Acessorio '{tipo}' atualizado com sucesso",
+                    "acessorio": acessorio_atual,
                 }
             )
 
@@ -1110,13 +1110,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
-            print(f"❌ Erro em handle_post_update_equipamento: {e}")
+            print(f"❌ Erro em handle_post_update_acessorio: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
 
-    def handle_post_delete_equipamento(self):
-        """POST /api/equipamentos/delete - Remove equipamento"""
+    def handle_post_delete_acessorio(self):
+        """POST /api/acessorios/delete - Remove acessorio"""
         try:
             content_length = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_length)
@@ -1144,29 +1144,29 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verificar se existe a seção banco_equipamentos
-            if "banco_equipamentos" not in dados_data:
+            # Verificar se existe a seção banco_acessorios
+            if "banco_acessorios" not in dados_data:
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": "Seção 'banco_equipamentos' não encontrada",
+                        "error": "Seção 'banco_acessorios' não encontrada",
                     },
                     status=404,
                 )
                 return
 
-            banco_equipamentos = dados_data["banco_equipamentos"]
+            banco_acessorios = dados_data["banco_acessorios"]
 
             # Verificar se tipo existe
-            if tipo not in banco_equipamentos:
+            if tipo not in banco_acessorios:
                 self.send_json_response(
                     {"success": False, "error": f"Tipo '{tipo}' não encontrado"},
                     status=404,
                 )
                 return
 
-            # Remover equipamento
-            equipamento_removido = banco_equipamentos.pop(tipo)
+            # Remover acessorio
+            acessorio_removido = banco_acessorios.pop(tipo)
 
             # Salvar dados atualizados
             with open(dados_file, "w", encoding="utf-8") as f:
@@ -1175,8 +1175,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(
                 {
                     "success": True,
-                    "message": f"Equipamento '{tipo}' removido com sucesso",
-                    "equipamento_removido": equipamento_removido,
+                    "message": f"Acessorio '{tipo}' removido com sucesso",
+                    "acessorio_removido": acessorio_removido,
                 }
             )
 
@@ -1185,13 +1185,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
-            print(f"❌ Erro em handle_post_delete_equipamento: {e}")
+            print(f"❌ Erro em handle_post_delete_acessorio: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
 
-    def handle_get_search_equipamentos(self):
-        """GET /api/equipamentos/search?q=termo - Busca equipamentos"""
+    def handle_get_search_acessorios(self):
+        """GET /api/acessorios/search?q=termo - Busca acessorios"""
         try:
             # Extrair parâmetro de busca da query string
             parsed_path = urlparse(self.path)
@@ -1218,21 +1218,21 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verificar se existe a seção banco_equipamentos
-            if "banco_equipamentos" not in dados_data:
+            # Verificar se existe a seção banco_acessorios
+            if "banco_acessorios" not in dados_data:
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": "Seção 'banco_equipamentos' não encontrada",
+                        "error": "Seção 'banco_acessorios' não encontrada",
                     },
                     status=404,
                 )
                 return
 
-            banco_equipamentos = dados_data["banco_equipamentos"]
+            banco_acessorios = dados_data["banco_acessorios"]
 
             resultados = []
-            for tipo, dados in banco_equipamentos.items():
+            for tipo, dados in banco_acessorios.items():
                 # Buscar no tipo
                 if termo in tipo.lower():
                     resultados.append(
@@ -1284,13 +1284,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
         except Exception as e:
-            print(f"❌ Erro em handle_get_search_equipamentos: {e}")
+            print(f"❌ Erro em handle_get_search_acessorios: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
 
-    def handle_get_equipamento_dimensoes(self):
-        """GET /api/equipamentos/dimensoes - Retorna dimensões disponíveis"""
+    def handle_get_acessorio_dimensoes(self):
+        """GET /api/acessorios/dimensoes - Retorna dimensões disponíveis"""
         try:
             # Carregar dados.json
             dados_file = self.project_root / "json" / "dados.json"
@@ -1305,24 +1305,24 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verificar se existe a seção banco_equipamentos
-            if "banco_equipamentos" not in dados_data:
+            # Verificar se existe a seção banco_acessorios
+            if "banco_acessorios" not in dados_data:
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": "Seção 'banco_equipamentos' não encontrada",
+                        "error": "Seção 'banco_acessorios' não encontrada",
                     },
                     status=404,
                 )
                 return
 
-            banco_equipamentos = dados_data["banco_equipamentos"]
+            banco_acessorios = dados_data["banco_acessorios"]
 
             # Coletar todas as dimensões únicas
             todas_dimensoes = set()
             dimensoes_por_tipo = {}
 
-            for tipo, dados in banco_equipamentos.items():
+            for tipo, dados in banco_acessorios.items():
                 valores = dados.get("valores_padrao", {})
                 dimensoes = list(valores.keys())
 
@@ -1345,7 +1345,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
         except Exception as e:
-            print(f"❌ Erro em handle_get_equipamento_dimensoes: {e}")
+            print(f"❌ Erro em handle_get_acessorio_dimensoes: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )

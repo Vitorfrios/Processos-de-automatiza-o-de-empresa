@@ -16,7 +16,7 @@ export async function loadModules() {
             './core/machines.js',
             './core/materials.js',
             './core/empresas.js',
-            './core/equipamentos.js',
+            './core/acessorios.js',
             './core/dutos.js',
             './core/tubos.js'  // ADICIONADO: Módulo de tubos
         ];
@@ -47,7 +47,7 @@ export async function loadModules() {
                         machines: data.machines?.length || 0,
                         materials: Object.keys(data.materials || {}).length,
                         empresas: data.empresas?.length || 0,
-                        banco_equipamentos: Object.keys(data.banco_equipamentos || {}).length,
+                        banco_acessorios: Object.keys(data.banco_acessorios || {}).length,
                         dutos: data.dutos?.length || 0,
                         tubos: data.tubos?.length || 0  // ADICIONADO
                     });

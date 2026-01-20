@@ -20,7 +20,7 @@ function renderRoomFromData(projectId, projectName, roomData, obraId = null, obr
         maquinas: roomData.maquinas?.length || 0,
         capacidade: Object.keys(roomData.capacidade || {}).length,
         ganhosTermicos: Object.keys(roomData.ganhosTermicos || {}).length,
-        equipamentos: roomData.equipamentos?.length || 0,
+        acessorios: roomData.acessorios?.length || 0,
         dutos: roomData.dutos?.length || 0, // ✅ ADICIONADO: dutos
         conjuntosTubulacao: roomData.tubulacao?.conjuntos?.length || 0
     });
@@ -71,7 +71,7 @@ async function populateRoomData(roomElement, roomData) {
     }
     
     console.log(`🔄 Preenchendo sala "${roomName}" (ID: ${roomId})`, {
-        equipamentos: roomData.equipamentos?.length || 0,
+        acessorios: roomData.acessorios?.length || 0,
         dutos: roomData.dutos?.length || 0, // ✅ ADICIONADO: dutos
         tubulacaoConjuntos: roomData.tubulacao?.conjuntos?.length || 0,
         maquinas: roomData.maquinas?.length || 0
@@ -106,17 +106,17 @@ async function populateRoomData(roomElement, roomData) {
             fillCapacityData(roomElement, roomData.capacidade);
         }
 
-        // ✅ Preencher equipamentos
-        if (roomData.equipamentos && Array.isArray(roomData.equipamentos)) {
-            console.log(`🔧 Preenchendo ${roomData.equipamentos.length} equipamento(s) para sala ${roomName}`);
+        // ✅ Preencher acessorios
+        if (roomData.acessorios && Array.isArray(roomData.acessorios)) {
+            console.log(`🔧 Preenchendo ${roomData.acessorios.length} acessorio(s) para sala ${roomName}`);
             
             // Aguardar um pouco para garantir que a seção foi criada
             setTimeout(() => {
-                if (typeof window.fillEquipamentosData === 'function') {
-                    window.fillEquipamentosData(roomElement, roomData.equipamentos);
-                    console.log(`✅ Equipamentos preenchidos via função global`);
+                if (typeof window.fillAcessoriosData === 'function') {
+                    window.fillAcessoriosData(roomElement, roomData.acessorios);
+                    console.log(`✅ Acessorios preenchidos via função global`);
                 } else {
-                    console.error(`❌ Função fillEquipamentosData não disponível no window`);
+                    console.error(`❌ Função fillAcessoriosData não disponível no window`);
                 }
             }, 2000);
         }

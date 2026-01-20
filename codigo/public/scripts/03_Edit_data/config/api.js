@@ -45,11 +45,11 @@ function debugDataValidation() {
         });
     }
     
-    // Verificar banco_equipamentos
-    if (systemData.banco_equipamentos) {
-        console.log('⚙️ Equipamentos:', Object.keys(systemData.banco_equipamentos).length);
-        Object.entries(systemData.banco_equipamentos).forEach(([id, equip], index) => {
-            console.log(`  Equipamento ${index}:`, {
+    // Verificar banco_acessorios
+    if (systemData.banco_acessorios) {
+        console.log('⚙️ Acessorios:', Object.keys(systemData.banco_acessorios).length);
+        Object.entries(systemData.banco_acessorios).forEach(([id, equip], index) => {
+            console.log(`  Acessorio ${index}:`, {
                 id,
                 codigo: equip.codigo,
                 descricao: equip.descricao,
@@ -58,7 +58,7 @@ function debugDataValidation() {
             
             // Verificar problemas
             if (!equip.codigo || equip.codigo.trim() === '') {
-                console.error(`  ❌ Equipamento ${id} não tem código`);
+                console.error(`  ❌ Acessorio ${id} não tem código`);
             }
         });
     }
@@ -207,9 +207,9 @@ export function fixDataIssues() {
             });
         }
         
-        // Corrigir equipamentos
-        if (systemData.banco_equipamentos && typeof systemData.banco_equipamentos === 'object') {
-            Object.entries(systemData.banco_equipamentos).forEach(([id, equip]) => {
+        // Corrigir acessorios
+        if (systemData.banco_acessorios && typeof systemData.banco_acessorios === 'object') {
+            Object.entries(systemData.banco_acessorios).forEach(([id, equip]) => {
                 // Garantir código
                 if (!equip.codigo || typeof equip.codigo !== 'string') {
                     equip.codigo = `EQP_${Date.now().toString().slice(-6)}`;
@@ -218,7 +218,7 @@ export function fixDataIssues() {
                 
                 // Garantir descrição
                 if (typeof equip.descricao !== 'string') {
-                    equip.descricao = String(equip.descricao || 'Equipamento sem descrição');
+                    equip.descricao = String(equip.descricao || 'Acessorio sem descrição');
                     fixedIssues++;
                 }
                 
@@ -239,8 +239,8 @@ export function fixDataIssues() {
                 window.dutosData = systemData.dutos;
             }
             
-            if (window.equipmentsData && systemData.banco_equipamentos) {
-                window.equipmentsData = systemData.banco_equipamentos;
+            if (window.equipmentsData && systemData.banco_acessorios) {
+                window.equipmentsData = systemData.banco_acessorios;
             }
             
             return true;

@@ -9,6 +9,9 @@ import { triggerCalculation } from '../../../core/shared-utils.js';
 /**
  * Preenche os campos de climatização
  */
+/**
+ * Preenche os campos de climatização
+ */
 function fillClimatizationInputs(roomElement, inputsData) {
     if (!roomElement || !inputsData) {
         console.error('❌ Elemento da sala ou dados inválidos');
@@ -63,9 +66,17 @@ function fillClimatizationInputs(roomElement, inputsData) {
             const field = input.getAttribute('data-field');
             if (!field || inputsData[field] === undefined) return;
 
-            // Pular campos já preenchidos
-            if (field === 'pressurizacaoSetpoint' || field === 'numPortasDuplas' || field === 'numPortasSimples') {
-                return;
+            // Apenas pula pressurizacaoSetpoint se a pressurização não estiver ativa
+            if (field === 'pressurizacaoSetpoint') {
+                // Verificar se a pressurização está ativa
+                const pressurizacaoValue = inputsData.pressurizacao;
+                const isPressurizacaoAtiva = typeof pressurizacaoValue === 'boolean' 
+                    ? pressurizacaoValue 
+                    : pressurizacaoValue === 'true' || pressurizacaoValue === true || pressurizacaoValue === 1;
+                
+                if (!isPressurizacaoAtiva) {
+                    return; // Não preencher setpoint se pressurização não estiver ativa
+                }
             }
             
             let value = inputsData[field];
@@ -248,14 +259,14 @@ async function ensureAllRoomSections(roomElement) {
     // Verificar seções
     const climatizationExists = checkSection('Climatização');
     const machinesExists = checkSection('Máquinas');
-    const equipamentosExists = checkSection('Equipamentos');
+    const acessoriosExists = checkSection('Acessorios');
     const dutosExists = checkSection('Dutos');
     const tubosExists = checkSection('Tubulação');
 
     console.log(`📋 Seções existentes:`, {
         climatization: climatizationExists,
         machines: machinesExists,
-        equipamentos: equipamentosExists,
+        acessorios: acessoriosExists,
         dutos: dutosExists,
         tubos: tubosExists
     });
@@ -276,7 +287,7 @@ async function ensureAllRoomSections(roomElement) {
     }
 
     // Se todas existem, retornar true
-    if (climatizationExists && machinesExists && equipamentosExists && dutosExists && tubosExists) {
+    if (climatizationExists && machinesExists && acessoriosExists && dutosExists && tubosExists) {
         console.log(`✅ Todas as seções já existem`);
         return true;
     }
@@ -298,7 +309,7 @@ async function ensureAllRoomSections(roomElement) {
         
         if (!climatizationExists) sectionsToCreate.push({type: 'climatization', func: window.buildClimatizationSection});
         if (!machinesExists) sectionsToCreate.push({type: 'machines', func: window.buildMachinesSection});
-        if (!equipamentosExists) sectionsToCreate.push({type: 'equipamentos', func: window.buildEquipamentosSection});
+        if (!acessoriosExists) sectionsToCreate.push({type: 'acessorios', func: window.buildAcessoriosSection});
         if (!dutosExists) sectionsToCreate.push({type: 'dutos', func: window.buildDutosSection});
         if (!tubosExists) sectionsToCreate.push({type: 'tubos', func: window.buildTubosSection});
 

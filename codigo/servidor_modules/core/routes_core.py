@@ -547,7 +547,7 @@ class RoutesCore:
                     "machines": [],
                     "materials": {},
                     "empresas": [],
-                    "banco_equipamentos": {}  # ADICIONE AQUI
+                    "banco_acessorios": {}  # ADICIONE AQUI
                 }
             )
 
@@ -870,7 +870,7 @@ class RoutesCore:
                     "machines": [], 
                     "materials": {}, 
                     "empresas": [],
-                    "banco_equipamentos": {},
+                    "banco_acessorios": {},
                     "dutos": [],
                     "tubos": []  # ADICIONADO
                 }
@@ -886,7 +886,7 @@ class RoutesCore:
                 "machines": [], 
                 "materials": {}, 
                 "empresas": [],
-                "banco_equipamentos": {},
+                "banco_acessorios": {},
                 "dutos": [],
                 "tubos": []  # ADICIONADO
             }
@@ -971,7 +971,7 @@ class RoutesCore:
             # Valida estrutura básica ATUALIZADA com dutos e tubos
             required_keys = [
                 "constants", "machines", "materials", "empresas", 
-                "banco_equipamentos", "dutos", "tubos"  # ADICIONADO tubos
+                "banco_acessorios", "dutos", "tubos"  # ADICIONADO tubos
             ]
             if not all(key in new_data for key in required_keys):
                 return {
@@ -1261,25 +1261,25 @@ class RoutesCore:
 
         
         
-    def handle_get_equipamentos(self):
-        """Retorna todos os equipamentos do banco_equipamentos"""
+    def handle_get_acessorios(self):
+        """Retorna todos os acessorios do banco_acessorios"""
         try:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             dados_data = self.file_utils.load_json_file(dados_file, {})
             
-            equipamentos = dados_data.get("banco_equipamentos", {})
+            acessorios = dados_data.get("banco_acessorios", {})
             return {
                 "success": True,
-                "equipamentos": equipamentos,
-                "count": len(equipamentos)
+                "acessorios": acessorios,
+                "count": len(acessorios)
             }
             
         except Exception as e:
-            print(f"❌ Erro ao carregar equipamentos: {str(e)}")
+            print(f"❌ Erro ao carregar acessorios: {str(e)}")
             return {
                 "success": False,
                 "error": str(e),
-                "equipamentos": {},
+                "acessorios": {},
                 "count": 0
             }
             

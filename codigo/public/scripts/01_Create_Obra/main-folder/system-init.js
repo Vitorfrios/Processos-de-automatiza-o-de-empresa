@@ -111,7 +111,7 @@ async function loadAllModules() {
       import('../features/managers/project-manager.js'),
       import('../data/modules/rooms.js'),
       import('../data/modules/climatizacao.js'),
-      import('../data/modules/equipamentos.js'), // ✅ MANTER aqui
+      import('../data/modules/acessorios.js'), // ✅ MANTER aqui
       import('../data/modules/machines/machines-core.js'),
       import('../data/modules/machines/capacity-calculator.js'),
       import('../features/calculations/air-flow.js'),
@@ -135,7 +135,7 @@ async function loadAllModules() {
       projectManagerModule,
       roomsModule,
       climatizationModule,
-      equipamentosModule, // ✅ RECUPERADO
+      acessoriosModule, // ✅ RECUPERADO
       machinesCoreModule,
       capacityCalculatorModule,
       airFlowModule,
@@ -191,17 +191,16 @@ async function loadAllModules() {
       deleteMachine: machinesCoreModule.deleteMachine,
 
       // ✅ CORREÇÃO: EQUIPAMENTOS COMPLETO
-      buildEquipamentosSection: equipamentosModule.buildEquipamentosSection,
-      initEquipamentosSystem: equipamentosModule.initEquipamentosSystem,
-      fillEquipamentosData: equipamentosModule.fillEquipamentosData, // ← AGORA EXISTE!
-      adicionarEquipamentoNaTabela: equipamentosModule.adicionarEquipamentoNaTabela,
-      atualizarTotalEquipamentos: equipamentosModule.atualizarTotalEquipamentos,
-      formatarMoeda: equipamentosModule.formatarMoeda,
-      carregarTiposEquipamentos: equipamentosModule.carregarTiposEquipamentos,
-      loadEquipamentoDimensoes: equipamentosModule.loadEquipamentoDimensoes,
-      adicionarEquipamento: equipamentosModule.adicionarEquipamento,
-      carregarEquipamentos: equipamentosModule.carregarEquipamentos,
-      limparEquipamentos: equipamentosModule.limparEquipamentos,
+      buildAcessoriosSection: acessoriosModule.buildAcessoriosSection,
+      initAcessoriosSystem: acessoriosModule.initAcessoriosSystem,
+      fillAcessoriosData: acessoriosModule.fillAcessoriosData, // ← AGORA EXISTE!
+      adicionarAcessorioNaTabela: acessoriosModule.adicionarAcessorioNaTabela,
+      atualizarTotalAcessorios: acessoriosModule.atualizarTotalAcessorios,
+      formatarMoeda: acessoriosModule.formatarMoeda,
+      carregarTiposAcessorios: acessoriosModule.carregarTiposAcessorios,
+      loadAcessorioDimensoes: acessoriosModule.loadAcessorioDimensoes,
+      adicionarAcessorio: acessoriosModule.adicionarAcessorio,
+      limparAcessorios: acessoriosModule.limparAcessorios,
 
       // Cálculos
       calculateVazaoArAndThermalGains: airFlowModule.calculateVazaoArAndThermalGains,
@@ -231,7 +230,7 @@ async function loadAllModules() {
       fillClimatizationInputs: dataFillersModule.fillClimatizationInputs,
       fillThermalGainsData: dataFillersModule.fillThermalGainsData,
       fillCapacityData: dataFillersModule.fillCapacityData,
-      // REMOVER: fillEquipamentosData: dataFillersModule.fillEquipamentosData, ← DUPLICADA
+      // REMOVER: fillAcessoriosData: dataFillersModule.fillAcessoriosData, ← DUPLICADA
       ensureAllRoomSections: dataFillersModule.ensureAllRoomSections,
       setupRoomTitleChangeListener: dataFillersModule.setupRoomTitleChangeListener,
 
@@ -256,9 +255,9 @@ async function loadAllModules() {
       extractThermalGainsData: dataBuildersModule.extractThermalGainsData,
       extractClimatizationInputs: dataBuildersModule.extractClimatizationInputs,
       extractCapacityData: dataBuildersModule.extractCapacityData,
-      extractEquipamentosData: dataBuildersModule.extractEquipamentosData,
+      extractAcessoriosData: dataBuildersModule.extractAcessoriosData,
       extractTubulacaoData: dataBuildersModule.extractTubulacaoData,
-      // extractDutosData: dataBuildersModule.extractDutosData,
+      extractDutosData: dataBuildersModule.extractDutosData,
 
       // Adapters
       loadObrasFromServer: loadObrasFromServer
@@ -283,9 +282,9 @@ async function loadAllModules() {
 
     // ✅ CORREÇÃO: Verificar funções críticas
     const criticalFunctions = [
-      'fillEquipamentosData',
-      'buildEquipamentosSection',
-      'initEquipamentosSystem'
+      'fillAcessoriosData',
+      'buildAcessoriosSection',
+      'initAcessoriosSystem'
     ];
     
     criticalFunctions.forEach(funcName => {
@@ -302,9 +301,9 @@ async function loadAllModules() {
     // ✅ CORREÇÃO: Verificar função específica após carregamento
     setTimeout(() => {
       console.log('🔍 Verificação pós-carregamento:');
-      console.log('- fillEquipamentosData:', typeof window.fillEquipamentosData);
-      console.log('- initEquipamentosSystem:', typeof window.initEquipamentosSystem);
-      console.log('- buildEquipamentosSection:', typeof window.buildEquipamentosSection);
+      console.log('- fillAcessoriosData:', typeof window.fillAcessoriosData);
+      console.log('- initAcessoriosSystem:', typeof window.initAcessoriosSystem);
+      console.log('- buildAcessoriosSection:', typeof window.buildAcessoriosSection);
     }, 500);
 
     return true;
@@ -374,17 +373,17 @@ export async function initializeSystem() {
 
     // ✅ CORREÇÃO: Verificação final
     console.log('🔍 Verificação final de funções:');
-    console.log('- fillEquipamentosData:', typeof window.fillEquipamentosData);
-    console.log('- buildEquipamentosSection:', typeof window.buildEquipamentosSection);
+    console.log('- fillAcessoriosData:', typeof window.fillAcessoriosData);
+    console.log('- buildAcessoriosSection:', typeof window.buildAcessoriosSection);
     
     // ✅ CORREÇÃO: Inicializar fallback manual se necessário
-    if (typeof window.fillEquipamentosData !== 'function') {
-      console.warn('⚠️ fillEquipamentosData não disponível, tentando fallback...');
+    if (typeof window.fillAcessoriosData !== 'function') {
+      console.warn('⚠️ fillAcessoriosData não disponível, tentando fallback...');
       try {
-        const equipamentosModule = await import('../data/modules/equipamentos.js');
-        if (equipamentosModule.fillEquipamentosData) {
-          window.fillEquipamentosData = equipamentosModule.fillEquipamentosData;
-          console.log('✅ fillEquipamentosData atribuída via fallback manual');
+        const acessoriosModule = await import('../data/modules/acessorios.js');
+        if (acessoriosModule.fillAcessoriosData) {
+          window.fillAcessoriosData = acessoriosModule.fillAcessoriosData;
+          console.log('✅ fillAcessoriosData atribuída via fallback manual');
         }
       } catch (error) {
         console.error('❌ Fallback manual falhou:', error);
@@ -397,7 +396,7 @@ export async function initializeSystem() {
         timestamp: new Date().toISOString(),
         modules: window.modulesLoaded,
         constants: !!window.systemConstants,
-        equipamentosReady: typeof window.fillEquipamentosData === 'function'
+        acessoriosReady: typeof window.fillAcessoriosData === 'function'
       }
     });
     document.dispatchEvent(event);

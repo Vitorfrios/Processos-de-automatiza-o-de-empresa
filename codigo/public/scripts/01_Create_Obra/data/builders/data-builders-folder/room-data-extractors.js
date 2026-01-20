@@ -27,7 +27,7 @@ function extractRoomData(roomElement, projectElement) {
         maquinas: extractMachinesData(roomElement),
         capacidade: extractCapacityData(roomElement),
         ganhosTermicos: extractThermalGainsData(roomElement),
-        equipamentos: extractEquipamentosData(roomElement),
+        acessorios: extractAcessoriosData(roomElement),
         dutos: extractDutosData(roomElement), // ✅ ADICIONADO: Extração de dutos
         tubulacao: extractTubulacaoData(roomElement)
     };
@@ -37,7 +37,7 @@ function extractRoomData(roomElement, projectElement) {
         maquinas: roomData.maquinas.length,
         capacidade: Object.keys(roomData.capacidade).length,
         ganhosTermicos: Object.keys(roomData.ganhosTermicos).length,
-        equipamentos: roomData.equipamentos.length,
+        acessorios: roomData.acessorios.length,
         dutos: roomData.dutos.length, // ✅ ADICIONADO: Contagem de dutos
         conjuntosTubulacao: roomData.tubulacao.conjuntos?.length || 0
     });
@@ -223,39 +223,39 @@ function extractCapacityData(roomElement) {
 }
 
 /**
- * Extrai dados dos equipamentos de uma sala
+ * Extrai dados dos acessorios de uma sala
  */
-function extractEquipamentosData(roomElement) {
-    const equipamentos = [];
+function extractAcessoriosData(roomElement) {
+    const acessorios = [];
     
     if (!roomElement?.dataset.roomId) {
-        console.error('❌ Elemento da sala inválido para extração de equipamentos');
-        return equipamentos;
+        console.error('❌ Elemento da sala inválido para extração de acessorios');
+        return acessorios;
     }
     
     const roomId = roomElement.dataset.roomId;
     
-    // Buscar todos os equipamentos na tabela
-    const tbody = document.getElementById(`equipamentos-list-${roomId}`);
+    // Buscar todos os acessorios na tabela
+    const tbody = document.getElementById(`acessorios-list-${roomId}`);
     if (!tbody) {
-        console.log(`ℹ️ Nenhum equipamento encontrado para sala ${roomId}`);
-        return equipamentos;
+        console.log(`ℹ️ Nenhum acessorio encontrado para sala ${roomId}`);
+        return acessorios;
     }
     
-    // Buscar todas as linhas de equipamentos (exceto linha vazia)
-    const equipamentoRows = tbody.querySelectorAll('.equipamento-row');
+    // Buscar todas as linhas de acessorios (exceto linha vazia)
+    const acessorioRows = tbody.querySelectorAll('.acessorio-row');
     
-    equipamentoRows.forEach(row => {
+    acessorioRows.forEach(row => {
         try {
-            const equipamentoData = JSON.parse(row.getAttribute('data-equipamento'));
-            equipamentos.push(equipamentoData);
+            const acessorioData = JSON.parse(row.getAttribute('data-acessorio'));
+            acessorios.push(acessorioData);
         } catch (error) {
-            console.error('❌ Erro ao extrair dados do equipamento:', error);
+            console.error('❌ Erro ao extrair dados do acessorio:', error);
         }
     });
     
-    console.log(`🔧 ${equipamentos.length} equipamento(s) extraído(s) da sala ${roomId}`);
-    return equipamentos;
+    console.log(`🔧 ${acessorios.length} acessorio(s) extraído(s) da sala ${roomId}`);
+    return acessorios;
 }
 
 /**
@@ -416,7 +416,7 @@ export {
     extractClimatizationInputs,
     extractThermalGainsData,
     extractCapacityData,
-    extractEquipamentosData,
+    extractAcessoriosData,
     extractDutosData, 
     extractTubulacaoData
 };

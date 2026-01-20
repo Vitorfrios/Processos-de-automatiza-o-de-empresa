@@ -361,37 +361,37 @@ class RouteHandler:
 
     # ========== ROTAS PARA EQUIPAMENTOS ==========
 
-    def handle_get_equipamentos(self, handler):
-        """GET /api/equipamentos"""
-        handler.handle_get_equipamentos()
+    def handle_get_acessorios(self, handler):
+        """GET /api/acessorios"""
+        handler.handle_get_acessorios()
 
-    def handle_get_equipamento_types(self, handler):
-        """GET /api/equipamentos/types"""
-        handler.handle_get_equipamento_types()
+    def handle_get_acessorio_types(self, handler):
+        """GET /api/acessorios/types"""
+        handler.handle_get_acessorio_types()
 
-    def handle_get_equipamento_dimensoes(self, handler):
-        """GET /api/equipamentos/dimensoes"""
-        handler.handle_get_equipamento_dimensoes()
+    def handle_get_acessorio_dimensoes(self, handler):
+        """GET /api/acessorios/dimensoes"""
+        handler.handle_get_acessorio_dimensoes()
 
-    def handle_get_equipamento_by_type(self, handler):
-        """GET /api/equipamentos/type/{type}"""
-        handler.handle_get_equipamento_by_type()
+    def handle_get_acessorio_by_type(self, handler):
+        """GET /api/acessorios/type/{type}"""
+        handler.handle_get_acessorio_by_type()
 
-    def handle_get_search_equipamentos(self, handler):
-        """GET /api/equipamentos/search"""
-        handler.handle_get_search_equipamentos()
+    def handle_get_search_acessorios(self, handler):
+        """GET /api/acessorios/search"""
+        handler.handle_get_search_acessorios()
 
-    def handle_post_add_equipamento(self, handler):
-        """POST /api/equipamentos/add"""
-        handler.handle_post_add_equipamento()
+    def handle_post_add_acessorio(self, handler):
+        """POST /api/acessorios/add"""
+        handler.handle_post_add_acessorio()
 
-    def handle_post_update_equipamento(self, handler):
-        """POST /api/equipamentos/update"""
-        handler.handle_post_update_equipamento()
+    def handle_post_update_acessorio(self, handler):
+        """POST /api/acessorios/update"""
+        handler.handle_post_update_acessorio()
 
-    def handle_post_delete_equipamento(self, handler):
-        """POST /api/equipamentos/delete"""
-        handler.handle_post_delete_equipamento()
+    def handle_post_delete_acessorio(self, handler):
+        """POST /api/acessorios/delete"""
+        handler.handle_post_delete_acessorio()
         
     # ========== ROTAS PARA DUTOS ==========
             

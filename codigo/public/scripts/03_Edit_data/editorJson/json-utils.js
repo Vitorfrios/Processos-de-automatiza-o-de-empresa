@@ -16,7 +16,7 @@ function ensureCompleteData(data) {
         machines: data.machines || [],
         materials: data.materials || {},
         empresas: data.empresas || [],
-        banco_equipamentos: data.banco_equipamentos || {},
+        banco_acessorios: data.banco_acessorios || {},
         dutos: data.dutos || [],   // Array de dutos
         tubos: data.tubos || []    // Array de tubos
     };
@@ -31,7 +31,7 @@ function createDefaultData() {
         machines: [],
         materials: {},
         empresas: [],
-        banco_equipamentos: {},
+        banco_acessorios: {},
         dutos: [],   // Array vazio
         tubos: []    // Array vazio
     };
@@ -49,7 +49,7 @@ function validateAndEnsureCompleteData(data) {
         machines: result.machines.length,
         materials: Object.keys(result.materials).length,
         empresas: result.empresas.length,
-        banco_equipamentos: Object.keys(result.banco_equipamentos).length,
+        banco_acessorios: Object.keys(result.banco_acessorios).length,
         dutos: result.dutos.length,
         tubos: result.tubos.length  // ✅ Adicionado tubos
     });
@@ -195,7 +195,7 @@ function updateAllTabsUI() {
     if (window.loadEmpresas) window.loadEmpresas();
     if (window.populateMachineFilter) window.populateMachineFilter();
     if (window.loadJSONEditor) window.loadJSONEditor();
-    if (window.loadEquipamentos) window.loadEquipamentos();
+    if (window.loadAcessorios) window.loadAcessorios();
     if (window.loadDutos) window.loadDutos();
     if (window.loadTubos) window.loadTubos();  // ✅ Adicionado tubos
 }
@@ -237,7 +237,7 @@ function performLocalComparison(current, proposed) {
         machines: { added: [], modified: [], removed: [] },
         materials: { added: [], modified: [], removed: [] },
         empresas: { added: [], modified: [], removed: [] },
-        banco_equipamentos: { added: [], modified: [], removed: [] },
+        banco_acessorios: { added: [], modified: [], removed: [] },
         dutos: { added: [], modified: [], removed: [] },
         tubos: { added: [], modified: [], removed: [] }  // ✅ Adicionado tubos
     };
@@ -263,24 +263,24 @@ function performLocalComparison(current, proposed) {
         }
     }
 
-    // Comparar banco_equipamentos
-    const currentEquipKeys = Object.keys(current.banco_equipamentos || {});
-    const proposedEquipKeys = Object.keys(proposed.banco_equipamentos || {});
+    // Comparar banco_acessorios
+    const currentEquipKeys = Object.keys(current.banco_acessorios || {});
+    const proposedEquipKeys = Object.keys(proposed.banco_acessorios || {});
 
     for (const key of proposedEquipKeys) {
         if (!currentEquipKeys.includes(key)) {
-            differences.banco_equipamentos.added.push(key);
+            differences.banco_acessorios.added.push(key);
         } else if (
-            JSON.stringify(proposed.banco_equipamentos[key]) !==
-            JSON.stringify(current.banco_equipamentos[key])
+            JSON.stringify(proposed.banco_acessorios[key]) !==
+            JSON.stringify(current.banco_acessorios[key])
         ) {
-            differences.banco_equipamentos.modified.push(key);
+            differences.banco_acessorios.modified.push(key);
         }
     }
 
     for (const key of currentEquipKeys) {
         if (!proposedEquipKeys.includes(key)) {
-            differences.banco_equipamentos.removed.push(key);
+            differences.banco_acessorios.removed.push(key);
         }
     }
 
@@ -328,7 +328,7 @@ function performLocalComparison(current, proposed) {
         differences.machines.added.length +
         differences.materials.added.length +
         differences.empresas.added.length +
-        differences.banco_equipamentos.added.length +
+        differences.banco_acessorios.added.length +
         differences.dutos.added.length +
         differences.tubos.added.length;  // ✅ Adicionado tubos
 
@@ -337,7 +337,7 @@ function performLocalComparison(current, proposed) {
         differences.machines.modified.length +
         differences.materials.modified.length +
         differences.empresas.modified.length +
-        differences.banco_equipamentos.modified.length +
+        differences.banco_acessorios.modified.length +
         differences.dutos.modified.length +
         differences.tubos.modified.length;  // ✅ Adicionado tubos
 
@@ -346,7 +346,7 @@ function performLocalComparison(current, proposed) {
         differences.machines.removed.length +
         differences.materials.removed.length +
         differences.empresas.removed.length +
-        differences.banco_equipamentos.removed.length +
+        differences.banco_acessorios.removed.length +
         differences.dutos.removed.length +
         differences.tubos.removed.length;  // ✅ Adicionado tubos
 
@@ -369,7 +369,7 @@ function applyChangesIncremental(current, proposed, differences) {
         if (!current.machines) current.machines = [];
         if (!current.materials) current.materials = {};
         if (!current.empresas) current.empresas = [];
-        if (!current.banco_equipamentos) current.banco_equipamentos = {};
+        if (!current.banco_acessorios) current.banco_acessorios = {};
         if (!current.dutos) current.dutos = [];
         if (!current.tubos) current.tubos = [];  // ✅ Adicionado tubos
 
@@ -381,13 +381,13 @@ function applyChangesIncremental(current, proposed, differences) {
             current.constants[modified] = proposed.constants[modified];
         }
 
-        // Aplicar banco_equipamentos
-        for (const added of differences.banco_equipamentos.added) {
-            current.banco_equipamentos[added] = proposed.banco_equipamentos[added];
+        // Aplicar banco_acessorios
+        for (const added of differences.banco_acessorios.added) {
+            current.banco_acessorios[added] = proposed.banco_acessorios[added];
         }
 
-        for (const modified of differences.banco_equipamentos.modified) {
-            current.banco_equipamentos[modified] = proposed.banco_equipamentos[modified];
+        for (const modified of differences.banco_acessorios.modified) {
+            current.banco_acessorios[modified] = proposed.banco_acessorios[modified];
         }
 
         // Aplicar dutos como array
@@ -471,7 +471,7 @@ async function showJsonConfirmationModal(comparison) {
             machines: differences.machines || { added: [], modified: [], removed: [] },
             materials: differences.materials || { added: [], modified: [], removed: [] },
             empresas: differences.empresas || { added: [], modified: [], removed: [] },
-            banco_equipamentos: differences.banco_equipamentos || { added: [], modified: [], removed: [] },
+            banco_acessorios: differences.banco_acessorios || { added: [], modified: [], removed: [] },
             dutos: differences.dutos || { added: [], modified: [], removed: [] },
             tubos: differences.tubos || { added: [], modified: [], removed: [] }
         };
@@ -554,7 +554,7 @@ async function showJsonConfirmationModal(comparison) {
             'Máquinas': categories.machines,
             'Materiais': categories.materials,
             'Empresas': categories.empresas,
-            'Equipamentos': categories.banco_equipamentos,
+            'Acessorios': categories.banco_acessorios,
             'Dutos': categories.dutos,
             'Tubos': categories.tubos
         }).forEach(([name, data]) => {
@@ -740,7 +740,7 @@ export async function loadData() {
                 machines: data.machines?.length || 0,
                 materials: Object.keys(data.materials || {}).length,
                 empresas: data.empresas?.length || 0,
-                banco_equipamentos: Object.keys(data.banco_equipamentos || {}).length,
+                banco_acessorios: Object.keys(data.banco_acessorios || {}).length,
                 dutos: data.dutos?.length || 0,
                 tubos: data.tubos?.length || 0  // ✅ Adicionado tubos
             });

@@ -5,7 +5,7 @@
 
 import { buildClimatizationSection } from './climatizacao.js';
 import { buildMachinesSection } from './machines/machines-core.js';
-import { buildEquipamentosSection } from './equipamentos.js';
+import { buildAcessoriosSection } from './acessorios.js';
 import { buildTubosSection } from './tubos.js';
 import { buildDutosSection } from './dutos.js';
 import { generateRoomId } from '../utils/id-generator.js';
@@ -58,7 +58,7 @@ function buildRoomHTML(obraId, projectId, roomName, roomId) {
         <div class="room-content collapsed" id="room-content-${roomId}">
           ${buildClimatizationSection(obraId, projectId, roomName, roomId)}
           ${buildMachinesSection(obraId, projectId, roomName, roomId)}
-          ${buildEquipamentosSection(obraId, projectId, roomName, roomId)}
+          ${buildAcessoriosSection(obraId, projectId, roomName, roomId)}
           ${buildTubosSection(obraId, projectId, roomName, roomId)}
           ${buildDutosSection(obraId, projectId, roomName, roomId)}
         
@@ -247,7 +247,7 @@ function initializeRoomComponents(obraId, projectId, roomName, roomId) {
         initializeDefaultValues(roomId, roomName);
 
         // 4. INICIALIZAR SISTEMA DE EQUIPAMENTOS
-        initializeEquipamentosSystem(roomId);
+        initializeAcessoriosSystem(roomId);
 
         console.log(`✅ TODAS AS SINCRONIZAÇÕES CONFIGURADAS PARA: ${roomId}`);
 
@@ -552,28 +552,28 @@ function findAmbienteInput(roomId) {
         roomBlock.querySelector('input[placeholder*="sala" i]');
 }
 
-async function initializeEquipamentosSystem(roomId) {
-    console.log(`🔧 Inicializando sistema de equipamentos para sala: ${roomId}`);
+async function initializeAcessoriosSystem(roomId) {
+    console.log(`🔧 Inicializando sistema de acessorios para sala: ${roomId}`);
 
     try {
         // Verificar se a função está disponível
-        if (typeof window.initEquipamentosSystem === 'function') {
-            await window.initEquipamentosSystem(roomId);
-            console.log(`✅ Sistema de equipamentos inicializado para sala: ${roomId}`);
+        if (typeof window.initAcessoriosSystem === 'function') {
+            await window.initAcessoriosSystem(roomId);
+            console.log(`✅ Sistema de acessorios inicializado para sala: ${roomId}`);
         } else {
-            console.warn(`⚠️ Função initEquipamentosSystem não disponível. Tentando importar...`);
+            console.warn(`⚠️ Função initAcessoriosSystem não disponível. Tentando importar...`);
 
             // Tentar importar dinamicamente
-            const equipamentosModule = await import('./equipamentos.js');
-            if (equipamentosModule && equipamentosModule.initEquipamentosSystem) {
-                equipamentosModule.initEquipamentosSystem(roomId);
-                console.log(`✅ Sistema de equipamentos inicializado via import dinâmico`);
+            const acessoriosModule = await import('./acessorios.js');
+            if (acessoriosModule && acessoriosModule.initAcessoriosSystem) {
+                acessoriosModule.initAcessoriosSystem(roomId);
+                console.log(`✅ Sistema de acessorios inicializado via import dinâmico`);
             } else {
-                console.error(`❌ Não foi possível inicializar sistema de equipamentos`);
+                console.error(`❌ Não foi possível inicializar sistema de acessorios`);
             }
         }
     } catch (error) {
-        console.error(`❌ Erro ao inicializar sistema de equipamentos:`, error);
+        console.error(`❌ Erro ao inicializar sistema de acessorios:`, error);
     }
 }
 

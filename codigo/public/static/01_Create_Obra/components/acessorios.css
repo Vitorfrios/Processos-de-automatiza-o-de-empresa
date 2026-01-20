@@ -1,13 +1,13 @@
-/* equipamentos.css - Sistema 100% Responsivo Revisado */
+/* acessorios.css - Sistema 100% Responsivo Revisado */
 
 /* ===== RESET ===== */
-.equipamento-selector *,
-.equipamentos-table-container * {
+.acessorio-selector *,
+.acessorios-table-container * {
     box-sizing: border-box;
 }
 
 /* ===== CONTAINER DO SELECTOR ===== */
-.equipamento-selector {
+.acessorio-selector {
     background: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 8px;
@@ -43,8 +43,9 @@
 }
 
 /* Inputs e selects */
-.equipamento-select,
-.equipamento-input {
+.acessorio-select,
+.acessorio-input,
+.aplicacao-select {
     width: 100%;
     padding: 8px 12px;
     border: 1px solid #ced4da;
@@ -55,21 +56,21 @@
     height: 40px;
 }
 
-.equipamento-select:focus,
-.equipamento-input:focus {
+.acessorio-select:focus,
+.acessorio-input:focus {
     outline: none;
     border-color: #228be6;
     box-shadow: 0 0 0 3px rgba(34, 139, 230, 0.15);
 }
 
-.equipamento-select:disabled {
+.acessorio-select:disabled {
     background-color: #f8f9fa;
     cursor: not-allowed;
     opacity: 0.7;
 }
 
 /* Botão Adicionar */
-.btn-add-equipamento {
+.btn-add-acessorio {
     background: #20c997;
     color: white;
     border: none;
@@ -88,12 +89,12 @@
     white-space: nowrap;
 }
 
-.btn-add-equipamento:hover {
+.btn-add-acessorio:hover {
     background: #12b886;
     transform: translateY(-1px);
 }
 
-.btn-add-equipamento:active {
+.btn-add-acessorio:active {
     transform: translateY(0);
 }
 
@@ -103,7 +104,7 @@
 }
 
 /* ===== TABELA RESPONSIVA ===== */
-.equipamentos-table-container {
+.acessorios-table-container {
     background: white;
     border: 1px solid #e9ecef;
     border-radius: 8px;
@@ -119,7 +120,7 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.equipamentos-table {
+.acessorios-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
@@ -127,7 +128,7 @@
 }
 
 /* Cabeçalho */
-.equipamentos-table thead {
+.acessorios-table thead {
     background: #495057;
     color: white;
     position: sticky;
@@ -135,7 +136,7 @@
     z-index: 10;
 }
 
-.equipamentos-table th {
+.acessorios-table th {
     padding: 12px 15px;
     font-weight: 600;
     text-align: left;
@@ -143,42 +144,42 @@
 }
 
 /* Larguras das colunas */
-.equipamentos-table th:nth-child(1) { width: 30%; } /* Equipamento */
-.equipamentos-table th:nth-child(2) { width: 25%; } /* Dimensão */
-.equipamentos-table th:nth-child(3) { width: 15%; } /* Qtd */
-.equipamentos-table th:nth-child(4) { width: 20%; } /* Valor Unit. */
-.equipamentos-table th:nth-child(5) { width: 10%; } /* Total */
-.equipamentos-table th:nth-child(6) { width: 10%; } /* Ações */
+.acessorios-table th:nth-child(1) { width: 30%; } /* Acessorio */
+.acessorios-table th:nth-child(2) { width: 25%; } /* Dimensão */
+.acessorios-table th:nth-child(3) { width: 15%; } /* Qtd */
+.acessorios-table th:nth-child(4) { width: 20%; } /* Valor Unit. */
+.acessorios-table th:nth-child(5) { width: 10%; } /* Total */
+.acessorios-table th:nth-child(6) { width: 10%; } /* Ações */
 
 /* Linhas */
-.equipamentos-table tbody tr {
+.acessorios-table tbody tr {
     border-bottom: 1px solid #f1f3f5;
 }
 
-.equipamentos-table tbody tr:hover {
+.acessorios-table tbody tr:hover {
     background-color: #f8f9fa;
 }
 
 /* Células */
-.equipamentos-table td {
+.acessorios-table td {
     padding: 12px 15px;
     vertical-align: middle;
     white-space: nowrap;
 }
 
 /* Alinhamentos específicos */
-.equipamentos-table td:nth-child(3) { text-align: center; } /* Qtd */
-.equipamentos-table td:nth-child(4),
-.equipamentos-table td:nth-child(5) { 
+.acessorios-table td:nth-child(3) { text-align: center; } /* Qtd */
+.acessorios-table td:nth-child(4),
+.acessorios-table td:nth-child(5) { 
     text-align: right;
     font-family: 'Courier New', monospace;
     font-weight: 600;
 }
-.equipamentos-table td:nth-child(6) { text-align: center; } /* Ações */
+.acessorios-table td:nth-child(6) { text-align: center; } /* Ações */
 
 /* Botões na tabela */
-.btn-remove-equipamento,
-.btn-edit-equipamento {
+.btn-remove-acessorio,
+.btn-edit-acessorio {
     background: none;
     border: none;
     cursor: pointer;
@@ -194,21 +195,21 @@
     margin: 0 2px;
 }
 
-.btn-remove-equipamento {
+.btn-remove-acessorio {
     color: #e03131;
     background: rgba(224, 49, 49, 0.1);
 }
 
-.btn-remove-equipamento:hover {
+.btn-remove-acessorio:hover {
     background: rgba(224, 49, 49, 0.2);
 }
 
-.btn-edit-equipamento {
+.btn-edit-acessorio {
     color: #228be6;
     background: rgba(34, 139, 230, 0.1);
 }
 
-.btn-edit-equipamento:hover {
+.btn-edit-acessorio:hover {
     background: rgba(34, 139, 230, 0.2);
 }
 
@@ -227,8 +228,8 @@
     flex-wrap: wrap;
 }
 
-.btn-load-equipamentos,
-.btn-clear-equipamentos {
+.btn-load-acessorios,
+.btn-clear-acessorios {
     padding: 12px 24px;
     border: none;
     border-radius: 6px;
@@ -245,29 +246,29 @@
     gap: 8px;
 }
 
-.btn-load-equipamentos {
+.btn-load-acessorios {
     background: #495057;
     color: white;
 }
 
-.btn-load-equipamentos:hover {
+.btn-load-acessorios:hover {
     background: #343a40;
     transform: translateY(-1px);
 }
 
-.btn-clear-equipamentos {
+.btn-clear-acessorios {
     background: #e03131;
     color: white;
 }
 
-.btn-clear-equipamentos:hover {
+.btn-clear-acessorios:hover {
     background: #c92a2a;
     transform: translateY(-1px);
 }
 
 /* Efeito ativo */
-.btn-load-equipamentos:active,
-.btn-clear-equipamentos:active {
+.btn-load-acessorios:active,
+.btn-clear-acessorios:active {
     transform: translateY(0);
 }
 
@@ -280,7 +281,7 @@
         gap: 16px;
     }
     
-    .equipamentos-table {
+    .acessorios-table {
         min-width: 700px;
     }
     
@@ -289,8 +290,8 @@
         padding: 16px;
     }
     
-    .btn-load-equipamentos,
-    .btn-clear-equipamentos {
+    .btn-load-acessorios,
+    .btn-clear-acessorios {
         min-width: 140px;
         padding: 10px 20px;
     }
@@ -303,23 +304,23 @@
         gap: 14px;
     }
     
-    .equipamento-selector {
+    .acessorio-selector {
         padding: 14px;
     }
     
-    .equipamentos-table {
+    .acessorios-table {
         min-width: 600px;
         font-size: 13px;
     }
     
-    .equipamentos-table th,
-    .equipamentos-table td {
+    .acessorios-table th,
+    .acessorios-table td {
         padding: 10px 12px;
     }
     
     /* Ajusta botões da tabela */
-    .btn-remove-equipamento,
-    .btn-edit-equipamento {
+    .btn-remove-acessorio,
+    .btn-edit-acessorio {
         padding: 4px 8px;
         min-width: 32px;
         height: 32px;
@@ -334,8 +335,8 @@
         padding: 16px;
     }
     
-    .btn-load-equipamentos,
-    .btn-clear-equipamentos {
+    .btn-load-acessorios,
+    .btn-clear-acessorios {
         width: 100%;
         max-width: none; /* Remove limite máximo */
         min-width: auto; /* Remove mínimo */
@@ -350,7 +351,7 @@
         gap: 12px;
     }
     
-    .equipamento-selector {
+    .acessorio-selector {
         padding: 12px;
         margin-bottom: 16px;
     }
@@ -359,44 +360,44 @@
         font-size: 13px;
     }
     
-    .equipamento-select,
-    .equipamento-input {
+    .acessorio-select,
+    .acessorio-input {
         height: 44px; /* Mais alto para toque */
         font-size: 16px; /* Maior para legibilidade */
     }
     
-    .btn-add-equipamento {
+    .btn-add-acessorio {
         height: 44px;
         font-size: 16px;
     }
     
-    .equipamentos-table {
+    .acessorios-table {
         min-width: 550px;
         font-size: 12px;
     }
     
-    .equipamentos-table th,
-    .equipamentos-table td {
+    .acessorios-table th,
+    .acessorios-table td {
         padding: 8px 10px;
     }
     
     /* Redistribui larguras para mobile */
-    .equipamentos-table th:nth-child(1) { width: 35%; }
-    .equipamentos-table th:nth-child(2) { width: 20%; }
-    .equipamentos-table th:nth-child(3) { width: 10%; }
-    .equipamentos-table th:nth-child(4) { width: 20%; }
-    .equipamentos-table th:nth-child(5) { width: 10%; }
-    .equipamentos-table th:nth-child(6) { width: 5%; }
+    .acessorios-table th:nth-child(1) { width: 35%; }
+    .acessorios-table th:nth-child(2) { width: 20%; }
+    .acessorios-table th:nth-child(3) { width: 10%; }
+    .acessorios-table th:nth-child(4) { width: 20%; }
+    .acessorios-table th:nth-child(5) { width: 10%; }
+    .acessorios-table th:nth-child(6) { width: 5%; }
     
-    .equipamentos-table td:nth-child(1) { width: 35%; }
-    .equipamentos-table td:nth-child(2) { width: 20%; }
-    .equipamentos-table td:nth-child(3) { width: 10%; }
-    .equipamentos-table td:nth-child(4) { width: 20%; }
-    .equipamentos-table td:nth-child(5) { width: 10%; }
-    .equipamentos-table td:nth-child(6) { width: 5%; }
+    .acessorios-table td:nth-child(1) { width: 35%; }
+    .acessorios-table td:nth-child(2) { width: 20%; }
+    .acessorios-table td:nth-child(3) { width: 10%; }
+    .acessorios-table td:nth-child(4) { width: 20%; }
+    .acessorios-table td:nth-child(5) { width: 10%; }
+    .acessorios-table td:nth-child(6) { width: 5%; }
     
-    .btn-remove-equipamento,
-    .btn-edit-equipamento {
+    .btn-remove-acessorio,
+    .btn-edit-acessorio {
         min-width: 30px;
         height: 30px;
         padding: 4px 6px;
@@ -410,8 +411,8 @@
         gap: 10px;
     }
     
-    .btn-load-equipamentos,
-    .btn-clear-equipamentos {
+    .btn-load-acessorios,
+    .btn-clear-acessorios {
         padding: 12px;
         font-size: 15px;
     }
@@ -419,7 +420,7 @@
 
 /* Mobile Pequeno (iPhone SE - 375px) */
 @media (max-width: 375px) {
-    .equipamento-selector {
+    .acessorio-selector {
         padding: 10px;
     }
     
@@ -427,45 +428,45 @@
         gap: 10px;
     }
     
-    .equipamento-select,
-    .equipamento-input {
+    .acessorio-select,
+    .acessorio-input {
         height: 42px;
         font-size: 15px;
         padding: 8px 10px;
     }
     
-    .btn-add-equipamento {
+    .btn-add-acessorio {
         height: 42px;
         font-size: 15px;
         padding: 0 12px;
     }
     
-    .equipamentos-table {
+    .acessorios-table {
         min-width: 500px;
         font-size: 11px;
     }
     
-    .equipamentos-table th,
-    .equipamentos-table td {
+    .acessorios-table th,
+    .acessorios-table td {
         padding: 6px 8px;
     }
     
-    .equipamentos-table th:nth-child(1) { width: 40%; }
-    .equipamentos-table th:nth-child(2) { width: 18%; }
-    .equipamentos-table th:nth-child(3) { width: 8%; }
-    .equipamentos-table th:nth-child(4) { width: 18%; }
-    .equipamentos-table th:nth-child(5) { width: 10%; }
-    .equipamentos-table th:nth-child(6) { width: 6%; }
+    .acessorios-table th:nth-child(1) { width: 40%; }
+    .acessorios-table th:nth-child(2) { width: 18%; }
+    .acessorios-table th:nth-child(3) { width: 8%; }
+    .acessorios-table th:nth-child(4) { width: 18%; }
+    .acessorios-table th:nth-child(5) { width: 10%; }
+    .acessorios-table th:nth-child(6) { width: 6%; }
     
-    .equipamentos-table td:nth-child(1) { width: 40%; }
-    .equipamentos-table td:nth-child(2) { width: 18%; }
-    .equipamentos-table td:nth-child(3) { width: 8%; }
-    .equipamentos-table td:nth-child(4) { width: 18%; }
-    .equipamentos-table td:nth-child(5) { width: 10%; }
-    .equipamentos-table td:nth-child(6) { width: 6%; }
+    .acessorios-table td:nth-child(1) { width: 40%; }
+    .acessorios-table td:nth-child(2) { width: 18%; }
+    .acessorios-table td:nth-child(3) { width: 8%; }
+    .acessorios-table td:nth-child(4) { width: 18%; }
+    .acessorios-table td:nth-child(5) { width: 10%; }
+    .acessorios-table td:nth-child(6) { width: 6%; }
     
-    .btn-remove-equipamento,
-    .btn-edit-equipamento {
+    .btn-remove-acessorio,
+    .btn-edit-acessorio {
         min-width: 28px;
         height: 28px;
         padding: 3px 5px;
@@ -476,8 +477,8 @@
         padding: 12px;
     }
     
-    .btn-load-equipamentos,
-    .btn-clear-equipamentos {
+    .btn-load-acessorios,
+    .btn-clear-acessorios {
         padding: 10px;
         font-size: 14px;
     }
@@ -485,7 +486,7 @@
 
 /* Mobile Muito Pequeno (iPhone SE antigo - 320px) */
 @media (max-width: 320px) {
-    .equipamento-selector {
+    .acessorio-selector {
         padding: 8px;
     }
     
@@ -493,45 +494,45 @@
         gap: 8px;
     }
     
-    .equipamento-select,
-    .equipamento-input {
+    .acessorio-select,
+    .acessorio-input {
         height: 40px;
         font-size: 14px;
         padding: 6px 8px;
     }
     
-    .btn-add-equipamento {
+    .btn-add-acessorio {
         height: 40px;
         font-size: 14px;
         padding: 0 10px;
     }
     
-    .equipamentos-table {
+    .acessorios-table {
         min-width: 480px;
         font-size: 10px;
     }
     
-    .equipamentos-table th,
-    .equipamentos-table td {
+    .acessorios-table th,
+    .acessorios-table td {
         padding: 5px 6px;
     }
     
-    .equipamentos-table th:nth-child(1) { width: 42%; }
-    .equipamentos-table th:nth-child(2) { width: 16%; }
-    .equipamentos-table th:nth-child(3) { width: 7%; }
-    .equipamentos-table th:nth-child(4) { width: 18%; }
-    .equipamentos-table th:nth-child(5) { width: 10%; }
-    .equipamentos-table th:nth-child(6) { width: 7%; }
+    .acessorios-table th:nth-child(1) { width: 42%; }
+    .acessorios-table th:nth-child(2) { width: 16%; }
+    .acessorios-table th:nth-child(3) { width: 7%; }
+    .acessorios-table th:nth-child(4) { width: 18%; }
+    .acessorios-table th:nth-child(5) { width: 10%; }
+    .acessorios-table th:nth-child(6) { width: 7%; }
     
-    .equipamentos-table td:nth-child(1) { width: 42%; }
-    .equipamentos-table td:nth-child(2) { width: 16%; }
-    .equipamentos-table td:nth-child(3) { width: 7%; }
-    .equipamentos-table td:nth-child(4) { width: 18%; }
-    .equipamentos-table td:nth-child(5) { width: 10%; }
-    .equipamentos-table td:nth-child(6) { width: 7%; }
+    .acessorios-table td:nth-child(1) { width: 42%; }
+    .acessorios-table td:nth-child(2) { width: 16%; }
+    .acessorios-table td:nth-child(3) { width: 7%; }
+    .acessorios-table td:nth-child(4) { width: 18%; }
+    .acessorios-table td:nth-child(5) { width: 10%; }
+    .acessorios-table td:nth-child(6) { width: 7%; }
     
-    .btn-remove-equipamento,
-    .btn-edit-equipamento {
+    .btn-remove-acessorio,
+    .btn-edit-acessorio {
         min-width: 26px;
         height: 26px;
         padding: 2px 4px;
@@ -542,61 +543,61 @@
         padding: 10px;
     }
     
-    .btn-load-equipamentos,
-    .btn-clear-equipamentos {
+    .btn-load-acessorios,
+    .btn-clear-acessorios {
         padding: 8px;
         font-size: 13px;
     }
 }
 
 /* ===== SCROLLBAR PERSONALIZADA ===== */
-.equipamentos-table-container::-webkit-scrollbar {
+.acessorios-table-container::-webkit-scrollbar {
     height: 6px;
 }
 
-.equipamentos-table-container::-webkit-scrollbar-track {
+.acessorios-table-container::-webkit-scrollbar-track {
     background: #f1f3f5;
     border-radius: 3px;
 }
 
-.equipamentos-table-container::-webkit-scrollbar-thumb {
+.acessorios-table-container::-webkit-scrollbar-thumb {
     background: #adb5bd;
     border-radius: 3px;
 }
 
-.equipamentos-table-container::-webkit-scrollbar-thumb:hover {
+.acessorios-table-container::-webkit-scrollbar-thumb:hover {
     background: #868e96;
 }
 
 /* ===== UTILITÁRIOS PARA DISPOSITIVOS TOUCH ===== */
 @media (hover: none) and (pointer: coarse) {
     /* Botões maiores para toque */
-    .btn-add-equipamento,
-    .btn-remove-equipamento,
-    .btn-edit-equipamento,
-    .btn-load-equipamentos,
-    .btn-clear-equipamentos {
+    .btn-add-acessorio,
+    .btn-remove-acessorio,
+    .btn-edit-acessorio,
+    .btn-load-acessorios,
+    .btn-clear-acessorios {
         min-height: 44px;
         min-width: 44px;
     }
     
     /* Inputs maiores */
-    .equipamento-select,
-    .equipamento-input {
+    .acessorio-select,
+    .acessorio-input {
         min-height: 44px;
         font-size: 16px;
     }
     
     /* Remove hover effects */
-    .btn-add-equipamento:hover,
-    .btn-remove-equipamento:hover,
-    .btn-edit-equipamento:hover,
-    .btn-load-equipamentos:hover,
-    .btn-clear-equipamentos:hover {
+    .btn-add-acessorio:hover,
+    .btn-remove-acessorio:hover,
+    .btn-edit-acessorio:hover,
+    .btn-load-acessorios:hover,
+    .btn-clear-acessorios:hover {
         transform: none;
     }
     
-    .equipamentos-table tbody tr:hover {
+    .acessorios-table tbody tr:hover {
         background-color: inherit;
     }
 }
@@ -604,13 +605,13 @@
 
 
 /* ===== ESTADOS DE FOCO ===== */
-.btn-add-equipamento:focus,
-.btn-remove-equipamento:focus,
-.btn-edit-equipamento:focus,
-.btn-load-equipamentos:focus,
-.btn-clear-equipamentos:focus,
-.equipamento-select:focus,
-.equipamento-input:focus {
+.btn-add-acessorio:focus,
+.btn-remove-acessorio:focus,
+.btn-edit-acessorio:focus,
+.btn-load-acessorios:focus,
+.btn-clear-acessorios:focus,
+.acessorio-select:focus,
+.acessorio-input:focus {
     outline: 2px solid #228be6;
     outline-offset: 2px;
 }

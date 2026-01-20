@@ -12,7 +12,7 @@ function ensureCompleteSystemData(data) {
             machines: [],
             materials: {},
             empresas: [],
-            banco_equipamentos: {},
+            banco_acessorios: {},
             dutos: {
                 tipos: [],
                 opcionais: []
@@ -26,7 +26,7 @@ function ensureCompleteSystemData(data) {
         machines: data.machines || [],
         materials: data.materials || {},
         empresas: data.empresas || [],
-        banco_equipamentos: data.banco_equipamentos || {},
+        banco_acessorios: data.banco_acessorios || {},
         dutos: data.dutos || {
             tipos: [],
             opcionais: []
@@ -51,7 +51,7 @@ Object.defineProperty(window, 'systemData', {
             machines: window._systemData.machines.length,
             materials: Object.keys(window._systemData.materials).length,
             empresas: window._systemData.empresas.length,
-            banco_equipamentos: Object.keys(window._systemData.banco_equipamentos).length,
+            banco_acessorios: Object.keys(window._systemData.banco_acessorios).length,
             dutos: {
                 tipos: window._systemData.dutos?.tipos?.length || 0,
                 opcionais: window._systemData.dutos?.opcionais?.length || 0
@@ -107,10 +107,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 // Verifica se os dados foram carregados corretamente
                 console.log('✅ Dados carregados. Verificando estrutura...');
                 console.log('✅ window.systemData:', window.systemData);
-                console.log('✅ Tem banco_equipamentos?', 'banco_equipamentos' in window.systemData);
+                console.log('✅ Tem banco_acessorios?', 'banco_acessorios' in window.systemData);
                 console.log('✅ Tem dutos?', 'dutos' in window.systemData);
                 console.log('✅ Tem tubos?', 'tubos' in window.systemData);  // ADICIONADO
-                console.log('✅ banco_equipamentos:', window.systemData?.banco_equipamentos);
+                console.log('✅ banco_acessorios:', window.systemData?.banco_acessorios);
                 console.log('✅ dutos:', window.systemData?.dutos);
                 console.log('✅ tubos:', window.systemData?.tubos);  // ADICIONADO
                 
@@ -172,7 +172,7 @@ const jsonEditorModule = {
         
         const systemData = window.systemData || {};
         console.log('📝 Dados para o editor:', {
-            banco_equipamentos: Object.keys(systemData.banco_equipamentos || {}).length,
+            banco_acessorios: Object.keys(systemData.banco_acessorios || {}).length,
             dutos: {
                 tipos: systemData.dutos?.tipos?.length || 0,
                 opcionais: systemData.dutos?.opcionais?.length || 0
@@ -201,7 +201,7 @@ const jsonEditorModule = {
             const parsed = JSON.parse(editor.value);
             
             // ADICIONADO: tubos na lista de campos obrigatórios
-            const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_equipamentos', 'dutos', 'tubos'];
+            const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_acessorios', 'dutos', 'tubos'];
             const missingKeys = requiredKeys.filter(key => !(key in parsed));
             
             if (missingKeys.length > 0) {
@@ -220,8 +220,8 @@ const jsonEditorModule = {
             if (!Array.isArray(parsed.empresas)) {
                 throw new Error('empresas deve ser um array');
             }
-            if (typeof parsed.banco_equipamentos !== 'object') {
-                throw new Error('banco_equipamentos deve ser um objeto');
+            if (typeof parsed.banco_acessorios !== 'object') {
+                throw new Error('banco_acessorios deve ser um objeto');
             }
             if (typeof parsed.dutos !== 'object') {
                 throw new Error('dutos deve ser um objeto');
@@ -287,7 +287,7 @@ window.addEventListener('dataLoaded', function(event) {
         machines: data.machines?.length || 0,
         materials: Object.keys(data.materials || {}).length,
         empresas: data.empresas?.length || 0,
-        banco_equipamentos: Object.keys(data.banco_equipamentos || {}).length,
+        banco_acessorios: Object.keys(data.banco_acessorios || {}).length,
         dutos: {
             tipos: data.dutos?.tipos?.length || 0,
             opcionais: data.dutos?.opcionais?.length || 0
@@ -304,7 +304,7 @@ window.addEventListener('dataLoaded', function(event) {
         if (window.loadMachines) window.loadMachines();
         if (window.loadMaterials) window.loadMaterials();
         if (window.loadEmpresas) window.loadEmpresas();
-        if (window.loadEquipamentos) window.loadEquipamentos();
+        if (window.loadAcessorios) window.loadAcessorios();
         if (window.loadDutos) window.loadDutos();
         if (window.loadTubos) window.loadTubos();  // ADICIONADO
         if (window.populateMachineFilter) window.populateMachineFilter();
@@ -332,7 +332,7 @@ window.addEventListener('dataImported', function(event) {
     if (window.loadMachines) window.loadMachines();
     if (window.loadMaterials) window.loadMaterials();
     if (window.loadEmpresas) window.loadEmpresas();
-    if (window.loadEquipamentos) window.loadEquipamentos();
+    if (window.loadAcessorios) window.loadAcessorios();
     if (window.loadDutos) window.loadDutos();
     if (window.loadTubos) window.loadTubos();  // ADICIONADO
     if (window.populateMachineFilter) window.populateMachineFilter();
@@ -361,9 +361,9 @@ window.addEventListener('dataApplied', function(event) {
         window.loadJSONEditor();
     }
     
-    // Atualizar equipamentos também
-    if (window.loadEquipamentos) {
-        window.loadEquipamentos();
+    // Atualizar acessorios também
+    if (window.loadAcessorios) {
+        window.loadAcessorios();
     }
     
     // Atualizar dutos também
@@ -388,27 +388,27 @@ window.addEventListener('dataApplied', function(event) {
 window.debugSystemData = function() {
     console.log('=== DEBUG SYSTEMDATA ===');
     console.log('systemData:', window.systemData);
-    console.log('Tem banco_equipamentos?', 'banco_equipamentos' in window.systemData);
+    console.log('Tem banco_acessorios?', 'banco_acessorios' in window.systemData);
     console.log('Tem dutos?', 'dutos' in window.systemData);
     console.log('Tem tubos?', 'tubos' in window.systemData);  // ADICIONADO
-    console.log('banco_equipamentos:', window.systemData?.banco_equipamentos);
+    console.log('banco_acessorios:', window.systemData?.banco_acessorios);
     console.log('dutos:', window.systemData?.dutos);
     console.log('tubos:', window.systemData?.tubos);  // ADICIONADO
-    console.log('Número de equipamentos:', Object.keys(window.systemData?.banco_equipamentos || {}).length);
+    console.log('Número de acessorios:', Object.keys(window.systemData?.banco_acessorios || {}).length);
     console.log('Número de tipos de dutos:', window.systemData?.dutos?.tipos?.length || 0);
     console.log('Número de opcionais:', window.systemData?.dutos?.opcionais?.length || 0);
     console.log('Número de tubos:', window.systemData?.tubos?.length || 0);  // ADICIONADO
-    console.log('Keys de banco_equipamentos:', Object.keys(window.systemData?.banco_equipamentos || {}));
+    console.log('Keys de banco_acessorios:', Object.keys(window.systemData?.banco_acessorios || {}));
     
     // Verifica o editor
     const editor = document.getElementById('jsonEditor');
     if (editor && editor.value) {
         try {
             const parsed = JSON.parse(editor.value);
-            console.log('Editor tem banco_equipamentos?', 'banco_equipamentos' in parsed);
+            console.log('Editor tem banco_acessorios?', 'banco_acessorios' in parsed);
             console.log('Editor tem dutos?', 'dutos' in parsed);
             console.log('Editor tem tubos?', 'tubos' in parsed);  // ADICIONADO
-            console.log('Equipamentos no editor:', Object.keys(parsed?.banco_equipamentos || {}).length);
+            console.log('Acessorios no editor:', Object.keys(parsed?.banco_acessorios || {}).length);
             console.log('Tipos de dutos no editor:', parsed?.dutos?.tipos?.length || 0);
             console.log('Tubos no editor:', parsed?.tubos?.length || 0);  // ADICIONADO
         } catch(e) {
@@ -427,7 +427,7 @@ window.reloadCompleteData = async function() {
         if (response.ok) {
             const data = await response.json();
             console.log('✅ Dados da API:', {
-                banco_equipamentos: Object.keys(data.banco_equipamentos || {}).length,
+                banco_acessorios: Object.keys(data.banco_acessorios || {}).length,
                 dutos: {
                     tipos: data.dutos?.tipos?.length || 0,
                     opcionais: data.dutos?.opcionais?.length || 0
@@ -501,10 +501,10 @@ if (typeof window.switchTab === 'undefined') {
                     break;
                     
                 case 'equipments':
-                case 'equipamentos':
-                    console.log('🎯 Tab de equipamentos ativada');
-                    if (typeof window.loadEquipamentos === 'function') {
-                        setTimeout(window.loadEquipamentos, 100);
+                case 'acessorios':
+                    console.log('🎯 Tab de acessorios ativada');
+                    if (typeof window.loadAcessorios === 'function') {
+                        setTimeout(window.loadAcessorios, 100);
                     } else if (typeof window.loadEquipmentsData === 'function') {
                         setTimeout(window.loadEquipmentsData, 100);
                     }
@@ -574,12 +574,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 150);
             }
             
-            if (tabText.includes('equipamento') || tabText.includes('equipment')) {
-                console.log('🎯 Tab de equipamentos clicada');
+            if (tabText.includes('acessorio') || tabText.includes('equipment')) {
+                console.log('🎯 Tab de acessorios clicada');
                 
                 setTimeout(() => {
-                    if (typeof window.loadEquipamentos === 'function') {
-                        window.loadEquipamentos();
+                    if (typeof window.loadAcessorios === 'function') {
+                        window.loadAcessorios();
                     } else if (typeof window.loadEquipmentsData === 'function') {
                         window.loadEquipmentsData();
                     }
@@ -599,7 +599,7 @@ setTimeout(() => {
         machines: window.systemData?.machines?.length || 0,
         materials: Object.keys(window.systemData?.materials || {}).length,
         empresas: window.systemData?.empresas?.length || 0,
-        banco_equipamentos: Object.keys(window.systemData?.banco_equipamentos || {}).length,
+        banco_acessorios: Object.keys(window.systemData?.banco_acessorios || {}).length,
         dutos: {
             tipos: window.systemData?.dutos?.tipos?.length || 0,
             opcionais: window.systemData?.dutos?.opcionais?.length || 0

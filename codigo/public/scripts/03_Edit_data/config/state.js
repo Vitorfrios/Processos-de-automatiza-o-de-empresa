@@ -8,7 +8,7 @@ export let systemData = {
     machines: [],
     materials: {},
     empresas: [],
-    banco_equipamentos: {},
+    banco_acessorios: {},
     dutos: [],
     tubos: [] 
 };
@@ -30,7 +30,7 @@ export function updateSystemData(newData) {
         machines: Array.isArray(newData.machines) ? newData.machines : [],
         materials: newData.materials || {},
         empresas: Array.isArray(newData.empresas) ? newData.empresas : [],
-        banco_equipamentos: newData.banco_equipamentos || {},
+        banco_acessorios: newData.banco_acessorios || {},
         dutos: Array.isArray(newData.dutos) ? newData.dutos : [],
         tubos: Array.isArray(newData.tubos) ? newData.tubos : []  // ADICIONADO
     };
@@ -152,35 +152,35 @@ export function validateDataDebug() {
         }
         console.log('✅ Empresas OK');
         
-        // Validar banco_equipamentos
-        console.log('🔧 Validando equipamentos...');
-        if (systemData.banco_equipamentos && typeof systemData.banco_equipamentos === 'object') {
-            for (const [id, equipamento] of Object.entries(systemData.banco_equipamentos)) {
-                console.log(`  Validando equipamento ${id}...`);
+        // Validar banco_acessorios
+        console.log('🔧 Validando acessorios...');
+        if (systemData.banco_acessorios && typeof systemData.banco_acessorios === 'object') {
+            for (const [id, acessorio] of Object.entries(systemData.banco_acessorios)) {
+                console.log(`  Validando acessorio ${id}...`);
                 
-                if (typeof equipamento !== 'object' || equipamento === null) {
-                    return showValidationError('Equipamentos', `ID ${id}: Estrutura inválida`, equipamento);
+                if (typeof acessorio !== 'object' || acessorio === null) {
+                    return showValidationError('Acessorios', `ID ${id}: Estrutura inválida`, acessorio);
                 }
                 
-                if (!equipamento.codigo || typeof equipamento.codigo !== 'string') {
-                    return showValidationError('Equipamentos', `ID ${id}: Código inválido: "${equipamento.codigo}"`, equipamento);
+                if (!acessorio.codigo || typeof acessorio.codigo !== 'string') {
+                    return showValidationError('Acessorios', `ID ${id}: Código inválido: "${acessorio.codigo}"`, acessorio);
                 }
                 
-                if (!equipamento.descricao || typeof equipamento.descricao !== 'string') {
-                    return showValidationError('Equipamentos', `ID ${id}: Descrição inválida: "${equipamento.descricao}"`, equipamento);
+                if (!acessorio.descricao || typeof acessorio.descricao !== 'string') {
+                    return showValidationError('Acessorios', `ID ${id}: Descrição inválida: "${acessorio.descricao}"`, acessorio);
                 }
                 
                 // Validar valores_padrao
-                if (equipamento.valores_padrao && typeof equipamento.valores_padrao === 'object') {
-                    for (const [tamanho, valor] of Object.entries(equipamento.valores_padrao)) {
+                if (acessorio.valores_padrao && typeof acessorio.valores_padrao === 'object') {
+                    for (const [tamanho, valor] of Object.entries(acessorio.valores_padrao)) {
                         if (typeof valor !== 'number' || isNaN(valor)) {
-                            return showValidationError('Equipamentos', `Equipamento "${equipamento.codigo}": Valor inválido para tamanho "${tamanho}": ${valor}`, {tamanho, valor});
+                            return showValidationError('Acessorios', `Acessorio "${acessorio.codigo}": Valor inválido para tamanho "${tamanho}": ${valor}`, {tamanho, valor});
                         }
                     }
                 }
             }
         }
-        console.log('✅ Equipamentos OK');
+        console.log('✅ Acessorios OK');
         
         // Validar dutos
         console.log('📏 Validando dutos...');
@@ -325,29 +325,29 @@ export function normalizeSystemData() {
         });
     }
     
-    // Normalizar equipamentos
-    if (systemData.banco_equipamentos && typeof systemData.banco_equipamentos === 'object') {
-        Object.entries(systemData.banco_equipamentos).forEach(([id, equipamento]) => {
+    // Normalizar acessorios
+    if (systemData.banco_acessorios && typeof systemData.banco_acessorios === 'object') {
+        Object.entries(systemData.banco_acessorios).forEach(([id, acessorio]) => {
             // Garantir código string
-            if (typeof equipamento.codigo !== 'string') {
-                console.warn(`Normalizando equipamento ${id}: codigo "${equipamento.codigo}" -> string`);
-                equipamento.codigo = String(equipamento.codigo || `EQ${id.slice(-3)}`);
+            if (typeof acessorio.codigo !== 'string') {
+                console.warn(`Normalizando acessorio ${id}: codigo "${acessorio.codigo}" -> string`);
+                acessorio.codigo = String(acessorio.codigo || `EQ${id.slice(-3)}`);
                 changes++;
             }
             
             // Garantir descrição string
-            if (typeof equipamento.descricao !== 'string') {
-                console.warn(`Normalizando equipamento ${id}: descricao "${equipamento.descricao}" -> string`);
-                equipamento.descricao = String(equipamento.descricao || 'Equipamento sem descrição');
+            if (typeof acessorio.descricao !== 'string') {
+                console.warn(`Normalizando acessorio ${id}: descricao "${acessorio.descricao}" -> string`);
+                acessorio.descricao = String(acessorio.descricao || 'Acessorio sem descrição');
                 changes++;
             }
             
             // Normalizar valores_padrao
-            if (equipamento.valores_padrao && typeof equipamento.valores_padrao === 'object') {
-                Object.entries(equipamento.valores_padrao).forEach(([tamanho, valor]) => {
+            if (acessorio.valores_padrao && typeof acessorio.valores_padrao === 'object') {
+                Object.entries(acessorio.valores_padrao).forEach(([tamanho, valor]) => {
                     if (typeof valor !== 'number' || isNaN(valor)) {
-                        console.warn(`Normalizando equipamento ${id} tamanho ${tamanho}: valor "${valor}" -> 0`);
-                        equipamento.valores_padrao[tamanho] = parseFloat(valor) || 0;
+                        console.warn(`Normalizando acessorio ${id} tamanho ${tamanho}: valor "${valor}" -> 0`);
+                        acessorio.valores_padrao[tamanho] = parseFloat(valor) || 0;
                         changes++;
                     }
                 });

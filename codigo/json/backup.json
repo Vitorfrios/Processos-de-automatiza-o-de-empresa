@@ -92,12 +92,12 @@
                 }
               ],
               "capacidade": {
-                "fatorSeguranca": 1.2,
+                "fatorSeguranca": 10,
                 "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": 2,
-                "solucaoBackup": 3,
-                "totalCapacidade": 20,
-                "folga": 42.9,
+                "solucao": 16,
+                "solucaoBackup": 17,
+                "totalCapacidade": 16,
+                "folga": 14.3,
                 "backup": "n+1"
               },
               "ganhosTermicos": {
@@ -113,7 +113,7 @@
                 "total-ar-sensivel": 9241,
                 "total-ar-latente": 20090
               },
-              "equipamentos": [
+              "acessorios": [
                 {
                   "id": "1768932170725h956qeva7",
                   "tipo": "DF",
@@ -122,6 +122,17 @@
                   "valor_unitario": 315,
                   "valor_total": 1575,
                   "descricao": "DF"
+                },
+                {
+                  "id": "1768936212744r9562e03y",
+                  "aplicacao": "exaustao_bateria",
+                  "aplicacao_nome": "Exaustão da sala de bateria",
+                  "tipo": "DCF_90",
+                  "dimensao": "950x950",
+                  "quantidade": 1,
+                  "valor_unitario": 108500,
+                  "valor_total": 108500,
+                  "descricao": "DCF_90"
                 }
               ],
               "dutos": [
@@ -186,8 +197,7 @@
                   }
                 ],
                 "valorTotal": 16224
-              },
-              "somavaloresmaquinatotal": 42255
+              }
             }
           ],
           "servicos": {
@@ -197,17 +207,17 @@
             },
             "adicionais": [
               {
-                "id": "adicional-1768932139131",
+                "id": "adicional-1768936189378",
                 "valor": 15,
                 "descricao": "dsadada"
               },
               {
-                "id": "adicional-1768932145327",
+                "id": "adicional-1768936189545",
                 "valor": 15000,
                 "descricao": ""
               },
               {
-                "id": "adicional-1768932148602",
+                "id": "adicional-1768936189702",
                 "valor": 0,
                 "descricao": "asfsafadsasd"
               }

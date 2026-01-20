@@ -1,4 +1,4 @@
-/* equipamentos.css - Estilos atualizados para sistema de equipamentos */
+/* acessorios.css - Estilos atualizados para sistema de acessorios */
 
 /* Ícone */
 .icon-equipment::before {
@@ -23,7 +23,7 @@
     min-width: 250px;
 }
 
-/* Lista de equipamentos (estilo opções) */
+/* Lista de acessorios (estilo opções) */
 .equipment-list {
     display: flex;
     flex-direction: column;
@@ -100,7 +100,7 @@
     display: none;
 }
 
-/* Campos do equipamento */
+/* Campos do acessorio */
 .equipment-field {
     display: flex;
     align-items: flex-start;

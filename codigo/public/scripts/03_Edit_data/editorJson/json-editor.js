@@ -46,7 +46,7 @@ function validateAndEnsureStructure(data) {
         machines: [],
         materials: {},
         empresas: [],
-        banco_equipamentos: {},
+        banco_acessorios: {},
         dutos: [],  // Array de dutos
         tubos: []   // Array de tubos
     };
@@ -193,7 +193,7 @@ export function initJSONEditor() {
                 machines: validatedData.machines.length,
                 materials: Object.keys(validatedData.materials).length,
                 empresas: validatedData.empresas.length,
-                banco_equipamentos: Object.keys(validatedData.banco_equipamentos).length,
+                banco_acessorios: Object.keys(validatedData.banco_acessorios).length,
                 dutos: validatedData.dutos.length,
                 tubos: validatedData.tubos.length  // ✅ Adicionado tubos
             });
@@ -387,8 +387,8 @@ export function validateJSONStructure(data) {
         errors.push('"empresas" deve ser um array');
     }
 
-    if (!data.banco_equipamentos || typeof data.banco_equipamentos !== 'object') {
-        errors.push('"banco_equipamentos" deve ser um objeto');
+    if (!data.banco_acessorios || typeof data.banco_acessorios !== 'object') {
+        errors.push('"banco_acessorios" deve ser um objeto');
     }
 
     // Dutos deve ser um array
