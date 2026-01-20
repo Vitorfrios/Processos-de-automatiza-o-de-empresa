@@ -239,6 +239,9 @@ async function fillMachinesData(roomElement, machinesData) {
 /**
  * Preenche os dados individuais de uma máquina
  */
+/**
+ * Preenche os dados individuais de uma máquina - COM QUANTIDADE E CONFIGURAÇÕES
+ */
 async function populateMachineData(machineElement, machineData) {
     if (!machineElement || !machineData) {
         console.error('❌ Elemento da máquina ou dados inválidos');
@@ -250,7 +253,14 @@ async function populateMachineData(machineElement, machineData) {
     try {
         const machineId = machineElement.dataset.machineId;
 
-        // 1. DEFINIR TIPO (se disponível)
+        // 1. DEFINIR QUANTIDADE (se disponível)
+        const qntInput = machineElement.querySelector('.machine-qnt-input');
+        if (qntInput && machineData.quantidade !== undefined) {
+            qntInput.value = Math.max(1, parseInt(machineData.quantidade) || 1);
+            console.log(`✅ Quantidade definida: ${qntInput.value}`);
+        }
+
+        // 2. DEFINIR TIPO (se disponível)
         const typeSelect = machineElement.querySelector('.machine-type-select');
         if (typeSelect && machineData.tipo) {
             typeSelect.value = machineData.tipo;
@@ -259,10 +269,10 @@ async function populateMachineData(machineElement, machineData) {
             console.log(`✅ Tipo definido: ${machineData.tipo}`);
             
             // Aguardar processamento do tipo
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 800));
         }
 
-        // 2. DEFINIR CAPACIDADE (se disponível e habilitado)
+        // 3. DEFINIR CAPACIDADE (se disponível e habilitado)
         const powerSelect = machineElement.querySelector('.machine-power-select');
         if (powerSelect && machineData.potencia) {
             // Aguardar até que o select esteja habilitado (máx 3 segundos)
@@ -287,7 +297,7 @@ async function populateMachineData(machineElement, machineData) {
                     console.log(`✅ Capacidade definida: ${powerOption.value}`);
                     
                     // Aguardar processamento da capacidade
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 800));
                 } else {
                     console.log(`⚠️ Capacidade "${machineData.potencia}" não encontrada`);
                 }
@@ -296,7 +306,7 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 3. DEFINIR TENSÃO (se disponível e habilitado)
+        // 4. DEFINIR TENSÃO (se disponível e habilitado)
         const voltageSelect = machineElement.querySelector('.machine-voltage-select');
         if (voltageSelect && machineData.tensao) {
             // Aguardar até que o select esteja habilitado (máx 3 segundos)
@@ -327,10 +337,10 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 4. DEFINIR OPÇÕES SELECIONADAS (se disponíveis)
+        // 5. DEFINIR OPÇÕES SELECIONADAS (se disponíveis)
         if (machineData.opcoesSelecionadas && Array.isArray(machineData.opcoesSelecionadas)) {
             // Aguardar carregamento das opções
-            await new Promise(resolve => setTimeout(resolve, 800));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             const optionsContainer = machineElement.querySelector('.options-grid');
             
@@ -340,7 +350,6 @@ async function populateMachineData(machineElement, machineData) {
 
                 let optionsMarked = 0;
                 machineData.opcoesSelecionadas.forEach(optionObj => {
-                    // ✅ CORREÇÃO: Suporta tanto array de strings quanto array de objetos
                     let optionName;
                     if (typeof optionObj === 'string') {
                         optionName = optionObj;
@@ -396,7 +405,78 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 5. DEFINIR PREÇOS (se disponíveis)
+        // 6. DEFINIR CONFIGURAÇÕES SELECIONADAS (se disponíveis)
+        if (machineData.configuracoesSelecionadas && Array.isArray(machineData.configuracoesSelecionadas)) {
+            console.log(`🎯 Aplicando ${machineData.configuracoesSelecionadas.length} configurações salvas`);
+            
+            // Aguardar carregamento das configurações
+            await new Promise(resolve => setTimeout(resolve, 1200));
+            
+            const configContainer = machineElement.querySelector('.config-grid');
+            
+            if (configContainer) {
+                const allConfigCheckboxes = configContainer.querySelectorAll('input[type="checkbox"]');
+                console.log(`🔍 Encontrados ${allConfigCheckboxes.length} checkboxes de configurações`);
+
+                let configsMarked = 0;
+                machineData.configuracoesSelecionadas.forEach(configObj => {
+                    let configId, configName;
+                    
+                    if (typeof configObj === 'string') {
+                        // Se for string, tentar extrair ID do formato "config-{id}"
+                        const match = configObj.match(/config-(\d+)/);
+                        configId = match ? match[1] : configObj;
+                        configName = configObj;
+                    } else if (typeof configObj === 'object') {
+                        configId = configObj.id || configObj;
+                        configName = configObj.nome || configObj;
+                    }
+                    
+                    if (!configId) {
+                        console.log(`⚠️ Configuração inválida:`, configObj);
+                        return;
+                    }
+
+                    console.log(`Procurando configuração: ID=${configId}, Nome="${configName}"`);
+                    
+                    // Buscar pelo data-config-id
+                    const checkbox = Array.from(allConfigCheckboxes).find(cb => {
+                        const cbConfigId = cb.getAttribute('data-config-id');
+                        return cbConfigId === configId.toString();
+                    });
+                    
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        const checkboxEvent = new Event('change', { bubbles: true });
+                        checkbox.dispatchEvent(checkboxEvent);
+                        configsMarked++;
+                        console.log(`✅ Configuração marcada: ID=${configId}`);
+                    } else {
+                        console.log(`❌ Configuração não encontrada: ID=${configId}`);
+                        
+                        // Tentar encontrar por nome
+                        const foundByName = Array.from(allConfigCheckboxes).find(cb => {
+                            const cbConfigName = cb.getAttribute('data-config-name');
+                            return cbConfigName && cbConfigName.includes(configName);
+                        });
+                        
+                        if (foundByName) {
+                            foundByName.checked = true;
+                            const checkboxEvent = new Event('change', { bubbles: true });
+                            foundByName.dispatchEvent(checkboxEvent);
+                            configsMarked++;
+                            console.log(`✅ Configuração marcada (por nome): ${configName}`);
+                        }
+                    }
+                });
+                
+                console.log(`📊 Configurações marcadas: ${configsMarked}/${machineData.configuracoesSelecionadas.length}`);
+            } else {
+                console.log(`⚠️ Container de configurações não encontrado`);
+            }
+        }
+
+        // 7. DEFINIR PREÇOS (se disponíveis)
         if (machineData.precoBase !== undefined) {
             const basePriceElement = document.getElementById(`base-price-${machineId}`);
             if (basePriceElement) {
@@ -413,7 +493,7 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 6. DEFINIR NOME (se disponível)
+        // 8. DEFINIR NOME (se disponível)
         if (machineData.nome) {
             const nameInput = machineElement.querySelector('.machine-title-editable');
             if (nameInput) {
@@ -422,11 +502,11 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 7. DISPARAR CÁLCULO FINAL
+        // 9. DISPARAR CÁLCULO FINAL
         setTimeout(() => {
             if (typeof calculateMachinePrice === 'function') {
                 calculateMachinePrice(machineId);
-                console.log('✅ Cálculo de preço finalizado');
+                console.log('✅ Cálculo de preço finalizado (com quantidade)');
             }
         }, 500);
 

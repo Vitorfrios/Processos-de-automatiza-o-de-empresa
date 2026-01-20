@@ -1,0 +1,17 @@
+adicionar quantidade em maquinas
+---------------
+equipamentos - > acessório
+adicionar abaixo 
+<div class="selector-item">
+                  <label for="equipamento-tipo-obra_t21_proj_j26_2_sala_z93_1">Aplicação</label>
+                  <select id="equipamento-tipo-obra_t21_proj_j26_2_sala_z93_1" class="equipamento-select" onchange="loadEquipamentoDimensoes('obra_t21_proj_j26_2_sala_z93_1')">
+                    <option value="">Selecione um tipo...</option>
+                    <!-- Tipos serão carregados via JavaScript -->
+                  <option value="DCF_120">Climatização</option><option value="DCF_90">Pressurização</option><option value="DF">Exaustão da sala de bateria</option><option value="DSP_15">Exaustão da sala baia de trafo</option></select>
+                </div>
+            
+-----------
+adsicionar valor total da obra e do projeto e 
+----------------
+corrigir a mostragem de                 "numPortasDuplas": 2,
+                "numPortasSimples": 3, e de cofiguração

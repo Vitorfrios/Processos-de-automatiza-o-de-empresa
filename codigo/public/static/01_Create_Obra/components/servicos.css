@@ -1,0 +1,146 @@
+/* ===== SEÇÃO DE SERVIÇOS COM LAYOUT HORIZONTAL ===== */
+
+.section-content {
+    transition: all 0.3s ease;
+}
+
+.section-content.collapsed {
+    display: none;
+}
+
+.subsection-block {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-gray-300);
+    margin-bottom: var(--spacing-md);
+}
+
+
+.subsection-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-gray-800);
+    flex-grow: 1;
+}
+
+
+
+/* LAYOUT HORIZONTAL PARA ENGENHARIA */
+.subsection-content {
+    padding: var(--spacing-md);
+}
+
+.field-group {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+}
+
+.field-group:last-child {
+    margin-bottom: 0;
+}
+
+.field-group label {
+    width: 80px;
+    font-size: 0.85rem;
+    color: var(--color-gray-700);
+    font-weight: 500;
+    padding-top: 8px;
+    flex-shrink: 0;
+}
+
+.input-valor,
+.input-texto {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    color: var(--color-gray-800);
+    background: var(--color-white);
+    box-sizing: border-box;
+}
+
+.input-valor:focus,
+.input-texto:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+.input-valor::placeholder,
+.input-texto::placeholder {
+    color: var(--color-gray-500);
+}
+
+.input-valor {
+    max-width: 200px;
+}
+
+.input-texto {
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* LAYOUT HORIZONTAL PARA ADICIONAIS */
+.adicional-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--color-gray-50);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-gray-200);
+}
+
+.adicional-item:last-child {
+    margin-bottom: 0;
+}
+
+.adicional-item .input-valor {
+    width: 120px;
+    max-width: 120px;
+    min-width: 120px;
+    margin: 0;
+}
+
+.adicional-item .input-texto {
+    flex: 1;
+    min-height: 40px;
+    margin: 0;
+}
+
+.btn-remove {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-gray-400);
+    background: var(--danger-gradient);
+    color: var(--color-gray-700);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.btn-remove:hover {
+    background: var(--color-gray-100);
+    border-color: var(--color-gray-500);
+}
+
+.adicionais-container {
+    margin-bottom: var(--spacing-md);
+}
+
+.adicionais-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-gray-300);
+}
+

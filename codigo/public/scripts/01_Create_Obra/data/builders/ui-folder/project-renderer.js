@@ -2,7 +2,7 @@ import { ensureStringId } from '../../utils/id-generator.js';
 import { waitForElement } from '../../utils/core-utils.js';
 
 /**
- * Renderiza um projeto completo a partir dos dados carregados
+ * Renderiza um projeto completo a partir dos dados carregados - ATUALIZADO COM REFERÊNCIA A SERVIÇOS
  */
 function renderProjectFromData(projectData, obraId = null, obraName = null) {
     const projectName = projectData.nome;
@@ -48,6 +48,20 @@ function renderProjectFromData(projectData, obraId = null, obraName = null) {
         }
     }
 
+    // ✅ NOVO: Verificar se há serviços para preencher
+    if (projectData.servicos && (projectData.servicos.engenharia || projectData.servicos.adicionais?.length > 0)) {
+        console.log(`💰 Projeto ${projectName} possui dados de serviços, agendando preenchimento...`);
+        
+        // Aguardar um pouco mais para garantir que os serviços foram criados
+        setTimeout(async () => {
+            const projectElement = await waitForElement(`[data-project-id="${projectId}"]`, 2000);
+            if (projectElement && typeof window.populateServicosData === 'function') {
+                console.log(`💰 Preenchendo serviços no projeto ${projectName}`);
+                await window.populateServicosData(projectElement, projectData.servicos);
+            }
+        }, 500);
+    }
+
     if (projectId) {
         updateProjectButton(projectName, true);
     }
@@ -64,6 +78,7 @@ async function populateProjectData(projectElement, projectData, obraId, obraName
     
     console.log(`🎯 Preenchendo projeto: ${projectName}`, { 
         salas: projectData.salas?.length,
+        servicos: projectData.servicos ? 'Sim' : 'Não',
         obraId: obraId,
         projectId: projectId
     });

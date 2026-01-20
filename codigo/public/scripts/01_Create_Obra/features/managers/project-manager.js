@@ -3,21 +3,22 @@
  * Gerenciador de projetos - SISTEMA  COM IDs ÚNICOS
  */
 
+/**
+ * project-manager.js
+ * Gerenciador de projetos - SISTEMA COM IDs ÚNICOS
+ */
+
 import { createEmptyRoom } from '../../data/modules/rooms.js';
 import { generateProjectId } from '../../data/utils/id-generator.js';
 import { getNextProjectNumber } from '../../data/utils/data-utils.js'
 import { removeEmptyObraMessage } from '../../ui/helpers.js';
 import { addNewRoomToProject } from '../../data/modules/rooms.js';
+import { buildServicosInProject } from './servicos.js'; // ✅ NOVA IMPORTAÇÃO
+
 /**
- * Constrói o HTML de um projeto - CORREÇÃO COMPLETA
- * @param {string} obraId - ID único da obra
- * @param {string} obraName - Nome da obra
- * @param {string} projectId - ID único do projeto
- * @param {string} projectName - Nome do projeto
- * @returns {string} HTML do projeto
+ * Constrói o HTML de um projeto - ATUALIZADO COM SERVIÇOS
  */
 function buildProjectHTML(obraId, obraName, projectId, projectName) {
-    // ✅ CORREÇÃO: Validar IDs únicos
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
         console.error(`ERRO FALBACK (buildProjectHTML) project-manager.js [Obra ID inválido: ${obraId}]`)
         return ''
@@ -39,23 +40,22 @@ function buildProjectHTML(obraId, obraName, projectId, projectName) {
              data-obra-id="${obraId}" 
              data-obra-name="${obraName}">
             <div class="project-header">
-                <!-- ✅ CORREÇÃO: usar APENAS projectId para toggle -->
                 <button class="minimizer" onclick="toggleProject('${finalProjectId}', event)">+</button>
                 <h3 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">${projectName}</h3>
                 <div class="project-actions">
-                    <!-- ✅ CORREÇÃO: passar IDs únicos para delete -->
                     <button class="btn btn-delete" onclick="deleteProject('${obraId}', '${finalProjectId}')">Remover Projeto</button>
                 </div>
             </div>
-            <!-- ✅ CORREÇÃO: usar APENAS projectId no conteúdo -->
-            <div class="project-content collapsed" id="project-content-${finalProjectId}">
-
             
+            
+            <div class="project-content collapsed" id="project-content-${finalProjectId}">
+                <!-- ✅ NOVA SEÇÃO: Serviços -->
+                ${buildServicosInProject(finalProjectId)}
+                <!-- Seção de Salas -->
                 <div class="rooms-container">
                     <p class="empty-message">Adicione salas a este projeto...</p>
                 </div>
                 <div class="add-room-section">
-                    <!-- ✅ CORREÇÃO: passar IDs únicos para add room -->
                     <button class="btn btn-add-secondary" onclick="addNewRoom('${obraId}', '${finalProjectId}')">+ Adicionar Sala</button>
                 </div>
             </div>
@@ -133,37 +133,26 @@ async function createEmptyProject(obraId, obraName, projectId, projectName) {
 async function addNewProjectToObra(obraId) {
     console.log(`➕ Adicionando novo projeto à obra: ${obraId}`);
     
-    // ✅ CORREÇÃO: Buscar obra por ID único
     const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
     
     if (!obraBlock) {
         console.error(`❌ Obra com ID ${obraId} não encontrada`);
-        
-        // Debug: listar obras disponíveis com seus IDs
-        console.log('🔍 Obras disponíveis no DOM:');
-        document.querySelectorAll('.obra-block').forEach(obra => {
-            console.log(`  - Obra: "${obra.dataset.obraName}", ID: "${obra.dataset.obraId}"`);
-        });
         return;
     }
     
     const obraName = obraBlock.dataset.obraName;
     const projectNumber = getNextProjectNumber(obraId);
     const projectName = `Projeto${projectNumber}`;
-    
-    // ✅ CORREÇÃO: Gerar ID hierárquico único para projeto
     const projectId = generateProjectId(obraBlock);
 
     await createEmptyProject(obraId, obraName, projectId, projectName);
     console.log(`✅ ${projectName} adicionado à obra ${obraName} (ID: ${obraId})`);
     
-    // ✅✅✅ NOVO: Criar sala automaticamente após criar o projeto
+    // Criar sala automaticamente
     console.log(`🔄 Criando sala automática no projeto ${projectName}`);
     if (typeof window.addNewRoomToProject === 'function') {
         await window.addNewRoomToProject(obraId, projectId);
         console.log(`✅ Sala automática criada no projeto ${projectName}`);
-    } else {
-        console.error('❌ addNewRoomToProject não disponível');
     }
 }
 

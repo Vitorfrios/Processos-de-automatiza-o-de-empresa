@@ -1,10 +1,10 @@
 // data/builders/data-builders-folder/obra-data-builder.js
-// Responsável por montar o objeto completo da obra (incluindo dados de empresa, projetos e salas).
+// Responsável por montar o objeto completo da obra - VERSÃO SIMPLIFICADA
 import { generateObraId, generateProjectId, generateRoomId } from '../../utils/id-generator.js';
 import { extractEmpresaData } from './empresa-data-extractor.js';
 
 /**
- * Constrói o objeto de dados completo de uma obra a partir do HTML - VERSÃO CORRIGIDA
+ * Constrói o objeto de dados completo de uma obra a partir do HTML
  */
 function buildObraData(obraIdOrElement) {
     console.log('🚨 buildObraData INICIADA - buscando elemento...');
@@ -16,14 +16,6 @@ function buildObraData(obraIdOrElement) {
         
         if (!obraElement) {
             console.error('❌ Obra não encontrada pelo ID:', obraIdOrElement);
-            
-            const todasObras = document.querySelectorAll('[data-obra-id]');
-            console.log('📋 Obras disponíveis no DOM:', 
-                Array.from(todasObras).map(o => ({
-                    id: o.dataset.obraId,
-                    name: o.dataset.obraName
-                }))
-            );
             return null;
         }
     } else if (obraIdOrElement instanceof HTMLElement) {
@@ -46,7 +38,7 @@ function buildObraData(obraIdOrElement) {
     const obraName = obraElement.dataset.obraName;
     const obraId = obraElement.dataset.obraId;
 
-    console.log(`📦 Construindo dados da obra: "${obraName}" (ID: ${obraId}) - ELEMENTO NO DOM: ${document.body.contains(obraElement)}`);
+    console.log(`📦 Construindo dados da obra: "${obraName}" (ID: ${obraId})`);
 
     const finalObraId = obraId || generateObraId();
     const empresaData = extractEmpresaData(obraElement);
@@ -56,10 +48,8 @@ function buildObraData(obraIdOrElement) {
         nome: obraName,
         empresa_id: `empresa_${finalObraId}`,
         ...empresaData,
-
         projetos: []
     };
-
 
     const projectElements = obraElement.querySelectorAll('.project-block');
     console.log(`🔍 Encontrados ${projectElements.length} projetos na obra "${obraName}"`);
@@ -89,9 +79,6 @@ function buildObraData(obraIdOrElement) {
         id: obraData.id,
         projetos: `${projetosProcessados}/${projectElements.length} processados`
     });
-    
-    console.log('🔍 VERIFICAÇÃO FINAL - Obra ainda no DOM?:', 
-        document.body.contains(obraElement) ? '✅ SIM' : '❌ NÃO');
     
     return obraData;
 }
@@ -136,6 +123,7 @@ function buildProjectData(projectIdOrElement) {
         id: finalProjectId,
         nome: projectName,
         salas: [],
+        servicos: extractServicosData(projectElement) // ✅ Extrair dados de serviços
     };
 
     const roomElements = projectElement.querySelectorAll('.room-block');
@@ -157,11 +145,78 @@ function buildProjectData(projectIdOrElement) {
     });
 
     console.log(`✅ Projeto "${projectName}" processado: ${salasProcessadas}/${roomElements.length} salas`);
+    console.log(`📊 Serviços extraídos:`, projectData.servicos);
+    
     return projectData;
+}
+
+/**
+ * ✅ FUNÇÃO: Extrai dados dos serviços de um projeto (SIMPLIFICADA)
+ */
+function extractServicosData(projectElement) {
+    const sectionBlock = projectElement.querySelector('.section-block[data-project-id]');
+    if (!sectionBlock) {
+        console.log(`📭 Projeto não possui seção de serviços`);
+        return {
+            engenharia: null,
+            adicionais: []
+        };
+    }
+
+    const servicosData = {
+        engenharia: extractEngenhariaData(sectionBlock),
+        adicionais: extractAdicionaisData(sectionBlock)
+    };
+
+    console.log(`📊 Dados de serviços extraídos:`, servicosData);
+    return servicosData;
+}
+
+/**
+ * ✅ FUNÇÃO: Extrai dados da subseção de Engenharia
+ */
+function extractEngenhariaData(sectionBlock) {
+    const engenhariaBlock = sectionBlock.querySelector('.subsection-block:first-child');
+    if (!engenhariaBlock) return null;
+
+    const valorInput = engenhariaBlock.querySelector('.input-valor');
+    const descricaoTextarea = engenhariaBlock.querySelector('.input-texto');
+
+    return {
+        valor: valorInput ? parseFloat(valorInput.value) || 0 : 0,
+        descricao: descricaoTextarea ? descricaoTextarea.value : ''
+    };
+}
+
+/**
+ * ✅ FUNÇÃO: Extrai dados dos adicionais (SIMPLIFICADA - sem tipo)
+ */
+function extractAdicionaisData(sectionBlock) {
+    const adicionaisContainer = sectionBlock.querySelector('.adicionais-container');
+    if (!adicionaisContainer) return [];
+
+    const adicionais = [];
+    const adicionaisItems = adicionaisContainer.querySelectorAll('.adicional-item');
+
+    adicionaisItems.forEach((item, index) => {
+        const valorInput = item.querySelector('.input-valor');
+        const descricaoTextarea = item.querySelector('.input-texto');
+        
+        const adicionalData = {
+            id: item.dataset.itemId || `adicional-${index}`,
+            valor: valorInput ? parseFloat(valorInput.value) || 0 : 0,
+            descricao: descricaoTextarea ? descricaoTextarea.value : ''
+        };
+
+        adicionais.push(adicionalData);
+    });
+
+    return adicionais;
 }
 
 // EXPORTS NO FINAL
 export {
     buildObraData,
-    buildProjectData
+    buildProjectData,
+    extractServicosData
 };

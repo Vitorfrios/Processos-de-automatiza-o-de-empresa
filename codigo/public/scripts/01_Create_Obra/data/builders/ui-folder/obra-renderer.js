@@ -2,7 +2,7 @@ import { ensureStringId, generateObraId } from '../../utils/id-generator.js';
 import { waitForElement } from '../../utils/core-utils.js';
 
 /**
- * Renderiza uma obra completa a partir dos dados carregados do servidor
+ * Renderiza uma obra completa a partir dos dados carregados do servidor - ATUALIZADO COM SERVIÇOS
  */
 function renderObraFromData(obraData) {
     const obraName = obraData.nome;
@@ -109,8 +109,7 @@ function buildObraHTML(obraName, obraId, isFromServer = false) {
 }
 
 /**
- * Preenche os dados de uma obra a partir do JSON
- * 🔥 ATUALIZADA: Agora inclui suporte a dados da empresa
+ * Preenche os dados de uma obra a partir do JSON - ATUALIZADO COM SERVIÇOS
  */
 async function populateObraData(obraData) {
     if (!obraData || typeof obraData !== 'object') {
@@ -133,7 +132,6 @@ async function populateObraData(obraData) {
         id: obraId, 
         nome: obraName, 
         projetos: obraData.projetos?.length || 0,
-        // 🔥 ADICIONADO: Log dos dados da empresa
         empresaSigla: obraData.empresaSigla,
         empresaNome: obraData.empresaNome,
         empresa_id: obraData.empresa_id
@@ -144,7 +142,6 @@ async function populateObraData(obraData) {
     if (!obraElement) {
         console.log(`🔨 Criando nova obra: "${obraName}"`);
         
-        // 🔥 USAR buildObraHTML com isFromServer = true
         const obraHTML = buildObraHTML(obraName, obraId, true);
         
         const container = document.getElementById("projects-container");
@@ -162,7 +159,6 @@ async function populateObraData(obraData) {
     } else {
         console.log(`✅ Obra já existe no DOM: ${obraName}`, obraElement);
         
-        // 🔥 ATUALIZAR O BOTÃO EXISTENTE
         atualizarTextoBotaoEmpresa(obraId, "Visualizar campos de cadastro de empresas");
         updateObraButtonAfterSave(obraName, obraId);
     }
@@ -177,11 +173,9 @@ async function populateObraData(obraData) {
         dataset: obraElement.dataset
     });
 
-    // 🔥 CORREÇÃO 1: CHAMAR prepararDadosEmpresaNaObra ANTES de processar projetos
     if (obraData.empresaSigla || obraData.empresaNome || obraData.empresa_id) {
         console.log('🏢 [POPULATE OBRA] Dados de empresa detectados, preparando...');
         
-        // Verificar se a função existe
         if (typeof window.prepararDadosEmpresaNaObra === 'function') {
             try {
                 console.log('🔧 [POPULATE OBRA] Chamando prepararDadosEmpresaNaObra...');
@@ -193,7 +187,6 @@ async function populateObraData(obraData) {
         } else {
             console.warn('⚠️ [POPULATE OBRA] Função prepararDadosEmpresaNaObra não encontrada');
             
-            // Fallback: atribuir manualmente os dados da empresa
             const camposEmpresa = ['empresaSigla', 'empresaNome', 'empresa_id'];
             camposEmpresa.forEach(campo => {
                 if (obraData[campo]) {
@@ -206,14 +199,12 @@ async function populateObraData(obraData) {
         console.log('📭 [POPULATE OBRA] Obra não possui dados de empresa');
     }
 
-    // 🔥 CORREÇÃO 2: VERIFICAR FUNÇÕES NECESSÁRIAS
     if (typeof window.createEmptyProject !== 'function' || typeof window.createEmptyRoom !== 'function') {
         console.error('❌ Funções necessárias não disponíveis:', {
             createEmptyProject: typeof window.createEmptyProject,
             createEmptyRoom: typeof window.createEmptyRoom
         });
         
-        // Tentar carregar dinamicamente
         await new Promise(resolve => setTimeout(resolve, 500));
         
         if (typeof window.createEmptyProject !== 'function' || typeof window.createEmptyRoom !== 'function') {
@@ -236,7 +227,6 @@ async function populateObraData(obraData) {
     const projetos = obraData.projetos || [];
     console.log(`📁 Processando ${projetos.length} projeto(s) para a obra "${obraName}"`);
     
-    // 🔥 CORREÇÃO 3: CARREGAR PROJETOS EM PARALELO (mas limitado)
     const projetosPromises = [];
     
     for (let i = 0; i < projetos.length; i++) {
@@ -251,18 +241,15 @@ async function populateObraData(obraData) {
         
         console.log(`📁 [${i + 1}/${projetos.length}] Preparando projeto: ${projectName} (ID: ${projectId})`);
 
-        // 🔥 NOVA ESTRATÉGIA: Processar projetos em grupos para melhor performance
         projetosPromises.push(processProjectAsync(projectData, obraId, obraName, i));
         
-        // Limitar concorrência para não sobrecarregar
         if (projetosPromises.length >= 3) {
             await Promise.allSettled(projetosPromises);
-            projetosPromises.length = 0; // Limpar array
-            await new Promise(resolve => setTimeout(resolve, 100)); // Pequena pausa
+            projetosPromises.length = 0;
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
     }
     
-    // Aguardar projetos restantes
     if (projetosPromises.length > 0) {
         await Promise.allSettled(projetosPromises);
     }
@@ -271,7 +258,7 @@ async function populateObraData(obraData) {
 }
 
 /**
- * 🔥 NOVA FUNÇÃO AUXILIAR: Processa um projeto de forma assíncrona
+ * 🔥 NOVA FUNÇÃO AUXILIAR: Processa um projeto de forma assíncrona - ATUALIZADA COM SERVIÇOS
  */
 async function processProjectAsync(projectData, obraId, obraName, index) {
     const projectName = projectData.nome;
@@ -287,15 +274,13 @@ async function processProjectAsync(projectData, obraId, obraName, index) {
             return false;
         }
 
-        // Aguardar um pouco mais para garantir que o DOM foi atualizado
-        await new Promise(resolve => setTimeout(resolve, 150));
+        await new Promise(resolve => setTimeout(resolve, 200)); // ✅ Aumentado para garantir carregamento dos serviços
         
         const projectElement = await waitForElement(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`, 3000);
         
         if (!projectElement) {
             console.error(`❌ [${index + 1}] Projeto ${projectName} não encontrado no DOM após criação`);
             
-            // Tentar busca alternativa
             const allProjects = document.querySelectorAll('.project-block');
             const foundProject = Array.from(allProjects).find(proj => 
                 proj.dataset.projectId === projectId && proj.dataset.obraId === obraId
@@ -312,12 +297,143 @@ async function processProjectAsync(projectData, obraId, obraName, index) {
 
         console.log(`✅ [${index + 1}] Projeto criado e encontrado: ${projectName}`);
 
+        // ✅ NOVO: Preencher dados de serviços se existirem
+        if (projectData.servicos && (projectData.servicos.engenharia || projectData.servicos.adicionais?.length > 0)) {
+            console.log(`💰 [${index + 1}] Projeto possui dados de serviços, preenchendo...`);
+            setTimeout(() => populateServicosData(projectElement, projectData.servicos), 300);
+        }
+
         await populateProjectData(projectElement, projectData, obraId, obraName);
         return true;
 
     } catch (error) {
         console.error(`❌ [${index + 1}] Erro ao criar projeto ${projectName}:`, error);
         return false;
+    }
+}
+
+/**
+ * Preenche os dados de serviços em um projeto (simplificado)
+ */
+async function populateServicosData(projectElement, servicosData) {
+    try {
+        console.log(`💰 Preenchendo dados de serviços no projeto "${projectElement.dataset.projectName}"`);
+        
+        // Aguardar a seção de serviços estar disponível
+        let sectionBlock = projectElement.querySelector('.section-block[data-project-id]');
+        if (!sectionBlock) {
+            console.log(`🕐 Aguardando seção de serviços...`);
+            await new Promise(resolve => {
+                const checkInterval = setInterval(() => {
+                    sectionBlock = projectElement.querySelector('.section-block[data-project-id]');
+                    if (sectionBlock) {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }
+                }, 100);
+            });
+        }
+
+        if (!sectionBlock) {
+            console.warn(`⚠️ Seção de serviços não encontrada no projeto`);
+            return;
+        }
+
+        // Preencher Engenharia
+        if (servicosData.engenharia) {
+            const engenhariaBlock = sectionBlock.querySelector('.subsection-block:first-child');
+            if (engenhariaBlock) {
+                const valorInput = engenhariaBlock.querySelector('.input-valor');
+                const descricaoTextarea = engenhariaBlock.querySelector('.input-texto');
+                
+                if (valorInput && servicosData.engenharia.valor) {
+                    valorInput.value = servicosData.engenharia.valor;
+                    console.log(`💰 Engenharia: Valor preenchido: ${servicosData.engenharia.valor}`);
+                }
+                
+                if (descricaoTextarea && servicosData.engenharia.descricao) {
+                    descricaoTextarea.value = servicosData.engenharia.descricao;
+                    console.log(`💰 Engenharia: Descrição preenchida`);
+                }
+            }
+        }
+
+        // Preencher Adicionais (SIMPLIFICADO)
+        if (servicosData.adicionais && servicosData.adicionais.length > 0) {
+            const container = sectionBlock.querySelector('.adicionais-container');
+            
+            if (container) {
+                // Limpar container antes de preencher
+                container.innerHTML = '';
+                
+                for (const adicional of servicosData.adicionais) {
+                    console.log(`➕ Preenchendo adicional:`, adicional);
+                    
+                    // Verificar se tem valor OU descrição
+                    const temValor = adicional.valor && adicional.valor > 0;
+                    const temDescricao = adicional.descricao && adicional.descricao.trim() !== '';
+                    
+                    if (temValor && temDescricao) {
+                        // Tem valor e descrição = Conjunto
+                        if (typeof window.addAdicionalConjunto === 'function') {
+                            const projectId = projectElement.dataset.projectId;
+                            window.addAdicionalConjunto(projectId);
+                            
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                            
+                            const ultimoItem = container.querySelector('.adicional-item:last-child');
+                            if (ultimoItem) {
+                                const valorInput = ultimoItem.querySelector('.input-valor');
+                                const descricaoTextarea = ultimoItem.querySelector('.input-texto');
+                                
+                                if (valorInput && adicional.valor) {
+                                    valorInput.value = adicional.valor;
+                                }
+                                if (descricaoTextarea && adicional.descricao) {
+                                    descricaoTextarea.value = adicional.descricao;
+                                }
+                            }
+                        }
+                    } else if (temValor) {
+                        // Só tem valor = Valor
+                        if (typeof window.addAdicionalValor === 'function') {
+                            const projectId = projectElement.dataset.projectId;
+                            window.addAdicionalValor(projectId);
+                            
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                            
+                            const ultimoItem = container.querySelector('.adicional-item:last-child');
+                            if (ultimoItem && adicional.valor) {
+                                const valorInput = ultimoItem.querySelector('.input-valor');
+                                if (valorInput) valorInput.value = adicional.valor;
+                            }
+                        }
+                    } else if (temDescricao) {
+                        // Só tem descrição = Texto
+                        if (typeof window.addAdicionalTexto === 'function') {
+                            const projectId = projectElement.dataset.projectId;
+                            window.addAdicionalTexto(projectId);
+                            
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                            
+                            const ultimoItem = container.querySelector('.adicional-item:last-child');
+                            if (ultimoItem && adicional.descricao) {
+                                const descricaoTextarea = ultimoItem.querySelector('.input-texto');
+                                if (descricaoTextarea) descricaoTextarea.value = adicional.descricao;
+                            }
+                        }
+                    }
+                    
+                    // Pequena pausa entre adicionais
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+        }
+
+        console.log(`✅ Dados de serviços preenchidos com sucesso`);
+        
+    } catch (error) {
+        console.error('❌ Erro ao preencher dados de serviços:', error);
     }
 }
 
@@ -334,7 +450,6 @@ async function atualizarEmpresaEmTodasObras(empresaData) {
         try {
             const obraId = obraElement.dataset.obraId;
             
-            // Verificar se temos dados específicos para esta obra
             if (typeof window.obterDadosEmpresaDaObra === 'function') {
                 const dadosObra = window.obterDadosEmpresaDaObra(obraId);
                 
@@ -356,9 +471,8 @@ if (typeof window !== 'undefined') {
     window.atualizarEmpresaEmTodasObras = atualizarEmpresaEmTodasObras;
     window.atualizarTextoBotaoEmpresa = atualizarTextoBotaoEmpresa;
     window.atualizarTodosBotoesEmpresa = atualizarTodosBotoesEmpresa;
+    window.populateServicosData = populateServicosData; // ✅ NOVA FUNÇÃO GLOBAL
     
-    // 🔥 ADICIONAR EVENTO PARA ATUALIZAR BOTÕES QUANDO O ARQUIVO FOR CARREGADO
-    // Executar após o DOM estar pronto
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             console.log('📄 DOM carregado, atualizando botões de empresa...');
@@ -369,13 +483,11 @@ if (typeof window !== 'undefined') {
         setTimeout(atualizarTodosBotoesEmpresa, 1000);
     }
     
-    // 🔥 ADICIONAR FUNÇÃO PARA CRIAR OBRA (se não existir)
     if (typeof window.createEmptyObra === 'undefined') {
         console.warn('⚠️ Função createEmptyObra não definida, criando stub...');
         window.createEmptyObra = function(obraName, obraId) {
             console.log(`🔄 Criando obra stub: ${obraName} (${obraId})`);
             
-            // Usar a nova buildObraHTML com isFromServer = false (nova obra)
             const obraHTML = buildObraHTML(obraName, obraId, false);
             
             const container = document.getElementById("projects-container");
@@ -391,14 +503,12 @@ if (typeof window !== 'undefined') {
     }
 }
 
-// 🔥 FUNÇÃO PARA ATUALIZAR BOTÕES DINAMICAMENTE (pode ser chamada de outros lugares)
+// 🔥 FUNÇÃO PARA ATUALIZAR BOTÕES DINAMICAMENTE
 function inicializarAtualizacaoBotoesEmpresa() {
     console.log('🚀 Inicializando atualização de botões de empresa...');
     
-    // Atualizar imediatamente
     atualizarTodosBotoesEmpresa();
     
-    // Atualizar periodicamente (útil para SPA)
     let tentativas = 0;
     const maxTentativas = 5;
     
@@ -420,8 +530,8 @@ export {
     renderObraFromData,
     populateObraData,
     processProjectAsync,
+    populateServicosData, // ✅ NOVO EXPORT
     atualizarEmpresaEmTodasObras,
-    // 🔥 NOVAS EXPORTAÇÕES
     atualizarTextoBotaoEmpresa,
     atualizarTodosBotoesEmpresa,
     buildObraHTML,

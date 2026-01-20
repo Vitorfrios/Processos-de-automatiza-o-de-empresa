@@ -43,16 +43,23 @@ function extractClimatizationMachineData(machineElement) {
         tipo: machineElement.querySelector('.machine-type-select')?.value || '',
         potencia: machineElement.querySelector('.machine-power-select')?.value || '',
         tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
+        quantidade: 1, // 🆕 NOVO CAMPO - valor padrão
         precoBase: 0,
         opcoesSelecionadas: [],
-        configuracoesSelecionadas: [], // 🆕 NOVO CAMPO
+        configuracoesSelecionadas: [],
         precoTotal: 0,
         potenciaSelecionada: machineElement.querySelector('.machine-power-select')?.value || '',
         tipoSelecionado: machineElement.querySelector('.machine-type-select')?.value || ''
     };
 
     try {
-        // Preço base
+        // Quantidade
+        const qntInput = machineElement.querySelector('.machine-qnt-input');
+        if (qntInput) {
+            machineData.quantidade = parseInt(qntInput.value) || 1;
+        }
+
+        // Preço base (unitário)
         const basePriceElement = document.getElementById(`base-price-${machineId}`);
         if (basePriceElement) {
             machineData.precoBase = parseMachinePrice(basePriceElement.textContent);
@@ -78,7 +85,7 @@ function extractClimatizationMachineData(machineElement) {
 
         machineData.opcoesSelecionadas = selectedOptions;
 
-        // 🆕 CONFIGURAÇÕES SELECIONADAS (SEM VALORES)
+        // Configurações selecionadas
         const selectedConfigs = [];
         const configCheckboxes = machineElement.querySelectorAll('#config-container-' + machineId + ' input[type="checkbox"]:checked');
         
@@ -99,15 +106,17 @@ function extractClimatizationMachineData(machineElement) {
         if (totalPriceElement) {
             machineData.precoTotal = parseMachinePrice(totalPriceElement.textContent);
         } else {
-            machineData.precoTotal = machineData.precoBase + 
-                selectedOptions.reduce((sum, option) => sum + option.value, 0);
-            // 🆕 CONFIGURAÇÕES NÃO AFETAM O PREÇO
+            // Calcula manualmente se não tiver elemento
+            const basePriceUnitario = machineData.precoBase;
+            const optionsTotal = selectedOptions.reduce((sum, option) => sum + option.value, 0);
+            machineData.precoTotal = (basePriceUnitario + optionsTotal) * machineData.quantidade;
         }
 
         console.log(`✅ Máquina ${machineId} extraída:`, {
             nome: machineData.nome,
             tipo: machineData.tipo,
             potencia: machineData.potencia,
+            quantidade: machineData.quantidade,
             precoBase: machineData.precoBase,
             opcoes: machineData.opcoesSelecionadas.length,
             configuracoes: machineData.configuracoesSelecionadas.length,
