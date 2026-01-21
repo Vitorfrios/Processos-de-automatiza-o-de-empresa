@@ -101,6 +101,15 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ========== ROTAS PARA TUBOS ==========
         "/api/tubos": "handle_get_tubos",
         "/api/tubos/polegadas": "handle_get_tubo_polegadas",
+        
+        
+        # ========= ROTAS PARA WORD ========== #
+        "/api/word/models": "handle_get_word_models",
+        "/api/word/templates": "handle_get_word_templates",
+        "/api/word/generate/proposta-comercial": "handle_generate_word_proposta_comercial",
+        "/api/word/generate/proposta-tecnica": "handle_generate_word_proposta_tecnica",
+        "/api/word/generate/ambos": "handle_generate_word_ambos",
+        "/api/word/download": "handle_download_word",
     }
 
     def __init__(self, *args, **kwargs):
@@ -145,6 +154,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
             self._route_handler.set_routes_core(self.routes_core)
         return self._route_handler
+
 
     def do_GET(self):
         """GET com CACHE BUSTER AUTOMÁTICO para CSS/JS/HTML"""
@@ -235,7 +245,15 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             path = path[7:]
 
         print(f"📨 POST: {path}")
-
+        
+        # ========== ROTAS PARA WORD ==========
+        if path == "/api/word/generate/proposta-comercial":
+            self.handle_generate_word_proposta_comercial()
+        elif path == "/api/word/generate/proposta-tecnica":
+            self.handle_generate_word_proposta_tecnica()
+        elif path == "/api/word/generate/ambos":
+            self.handle_generate_word_ambos()
+            
         # ========== ROTAS PARA EQUIPAMENTOS ==========
 
         # ROTAS PARA EQUIPAMENTOS
@@ -1349,8 +1367,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
-            
-            
+                     
     def handle_get_dutos(self):
         """GET /api/dutos - Retorna todos os dutos"""
         try:
@@ -2364,3 +2381,230 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
             )
+            
+            
+            
+
+    def handle_get_word_models(self):
+        """GET /api/word/models - Retorna modelos de Word disponíveis"""
+        try:
+            from servidor_modules.handlers.word_handler import WordHandler
+            word_handler = WordHandler(self.project_root, self.file_utils)
+            
+            models = [
+                {
+                    "id": "pc",
+                    "name": "Proposta Comercial",
+                    "description": "Documento comercial com valores e condições",
+                    "icon": "📋"
+                },
+                {
+                    "id": "pt", 
+                    "name": "Proposta Técnica",
+                    "description": "Documento técnico com especificações",
+                    "icon": "🔧"
+                },
+                {
+                    "id": "ambos",
+                    "name": "Ambos Documentos",
+                    "description": "Proposta Comercial e Técnica juntos",
+                    "icon": "📄"
+                }
+            ]
+            
+            self.send_json_response({
+                "success": True,
+                "models": models,
+                "templates_available": len(word_handler.get_available_templates()) > 0
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_word_models: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": str(e)
+            }, status=500)
+
+    def handle_get_word_templates(self):
+        """GET /api/word/templates - Retorna templates disponíveis"""
+        try:
+            from servidor_modules.handlers.word_handler import WordHandler
+            word_handler = WordHandler(self.project_root, self.file_utils)
+            
+            templates = word_handler.get_available_templates()
+            
+            self.send_json_response({
+                "success": True,
+                "templates": templates,
+                "templates_dir": str(word_handler.templates_dir)
+            })
+            
+        except Exception as e:
+            print(f"❌ Erro em handle_get_word_templates: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": str(e)
+            }, status=500)
+
+    def handle_generate_word_proposta_comercial(self):
+        """POST /api/word/generate/proposta-comercial"""
+        self.handle_generate_word("comercial")
+
+    def handle_generate_word_proposta_tecnica(self):
+        """POST /api/word/generate/proposta-tecnica"""
+        self.handle_generate_word("tecnica")
+
+    def handle_generate_word_ambos(self):
+        """POST /api/word/generate/ambos"""
+        self.handle_generate_word("ambos")
+
+    def handle_generate_word(self, template_type):
+        """Handler genérico para geração de Word"""
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            obra_id = data.get("obra_id")
+            if not obra_id:
+                self.send_json_response({
+                    "success": False,
+                    "error": "ID da obra não fornecido"
+                }, status=400)
+                return
+            
+            from servidor_modules.handlers.word_handler import WordHandler
+            word_handler = WordHandler(self.project_root, self.file_utils)
+            
+            if template_type == "ambos":
+                file_path, error = word_handler.generate_both_documents(obra_id)
+            elif template_type == "comercial":
+                # Usar o método avançado
+                file_path, error = word_handler.generate_proposta_comercial_avancada(obra_id)
+            elif template_type == "tecnica":
+                # Usar o método avançado
+                file_path, error = word_handler.generate_proposta_tecnica_avancada(obra_id)
+            else:
+                file_path, error = None, f"Tipo de template não suportado: {template_type}"
+            
+            if error:
+                self.send_json_response({
+                    "success": False,
+                    "error": error
+                }, status=500)
+                return
+            
+            # Criar nome de arquivo amigável
+            obra_data = word_handler.get_obra_data(obra_id)
+            obra_nome = obra_data.get("nome", "obra") if obra_data else obra_id
+            safe_name = "".join(c for c in obra_nome if c.isalnum() or c in (' ', '-', '_')).rstrip()
+            
+            from datetime import datetime
+            filename = f"Proposta_{template_type.capitalize()}_{safe_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+            
+            # Salvar informações do arquivo gerado para download posterior
+            download_info = {
+                "file_path": file_path,
+                "filename": filename,
+                "obra_id": obra_id,
+                "obra_nome": obra_nome,
+                "template_type": template_type,
+                "generated_at": datetime.now().isoformat(),
+                "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+            }
+            
+            # Salvar em arquivo temporário de sessão
+            import tempfile
+            download_id = f"word_{int(datetime.now().timestamp())}_{obra_id}"
+            temp_info_file = tempfile.gettempdir() + f"/{download_id}.json"
+            
+            with open(temp_info_file, "w", encoding="utf-8") as f:
+                json.dump(download_info, f)
+            
+            self.send_json_response({
+                "success": True,
+                "download_id": download_id,
+                "filename": filename,
+                "obra_nome": obra_nome,
+                "template_type": template_type,
+                "size": download_info["size"],
+                "message": "Documento gerado com sucesso!"
+            })
+            
+        except json.JSONDecodeError:
+            self.send_json_response({
+                "success": False,
+                "error": "JSON inválido"
+            }, status=400)
+        except Exception as e:
+            print(f"❌ Erro em handle_generate_word: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": f"Erro interno: {str(e)}"
+            }, status=500)
+
+
+    def handle_download_word(self):
+        """GET /api/word/download?id={download_id} - Faz download do arquivo gerado"""
+        try:
+            parsed_path = urlparse(self.path)
+            query_params = parse_qs(parsed_path.query)
+            download_id = query_params.get("id", [""])[0]
+            
+            if not download_id:
+                self.send_json_response({
+                    "success": False,
+                    "error": "ID de download não fornecido"
+                }, status=400)
+                return
+            
+            # Buscar informações do arquivo
+            import tempfile
+            temp_info_file = tempfile.gettempdir() + f"/{download_id}.json"
+            
+            if not os.path.exists(temp_info_file):
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo não encontrado ou expirado"
+                }, status=404)
+                return
+            
+            with open(temp_info_file, "r", encoding="utf-8") as f:
+                download_info = json.load(f)
+            
+            file_path = download_info.get("file_path")
+            filename = download_info.get("filename", "documento.docx")
+            
+            if not file_path or not os.path.exists(file_path):
+                self.send_json_response({
+                    "success": False,
+                    "error": "Arquivo Word não encontrado"
+                }, status=404)
+                return
+            
+            # Enviar arquivo
+            with open(file_path, "rb") as f:
+                file_data = f.read()
+            
+            self.send_response(200)
+            self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+            self.send_header("Content-Length", str(len(file_data)))
+            self.end_headers()
+            self.wfile.write(file_data)
+            
+            # Limpar arquivos temporários após envio
+            try:
+                os.unlink(file_path)
+                os.unlink(temp_info_file)
+            except:
+                pass
+                
+        except Exception as e:
+            print(f"❌ Erro em handle_download_word: {e}")
+            self.send_json_response({
+                "success": False,
+                "error": str(e)
+            }, status=500)
+            
+        

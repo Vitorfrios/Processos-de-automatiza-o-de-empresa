@@ -2,7 +2,7 @@
  * interface.js - CORREÇÃO DO SISTEMA DE TOGGLE
  * SISTEMA  COM IDs ÚNICOS
  */
-
+import {downloadWord} from './download/infodownload.js'
 // ✅ IMPORTS S - CAMINHOS ATUALIZADOS
 import { 
     showSystemStatus,
@@ -273,63 +273,6 @@ function toggleSubsection(subsectionId) {
 // FUNÇÕES DE DOWNLOAD E SALVAMENTO
 // =============================================================================
 
-/**
- * Gera e inicia o download de um PDF para uma obra ou projeto específico
- * @param {string} obraId - ID da obra
- * @param {string|null} projectName - Nome do projeto (opcional)
- * @returns {void}
- * 
- * @example
- * downloadPDF('obra_a64') // Gera PDF para a obra com ID obra_a64
- * downloadPDF('obra_a64', 'ProjetoA') // Gera PDF para o ProjetoA da obra
- */
-function downloadPDF(obraId, projectName = null) {
-    // ✅ CORREÇÃO: Buscar obra por ID em vez de nome
-    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
-    if (!obraBlock) {
-        console.error(`❌ Obra com ID "${obraId}" não encontrada para PDF`);
-        showSystemStatus(`ERRO: Obra não encontrada`, "error");
-        return;
-    }
-
-    const obraName = obraBlock.dataset.obraName;
-    const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
-    
-    console.log(`📄 Gerando PDF para ${target} (ID: ${obraId})`);
-    showSystemStatus(`Gerando PDF para ${target}...`, "info");
-    
-    // ✅ Aqui você implementaria a geração real do PDF
-    // generatePDF(obraId, projectName);
-}
-
-/**
- * Gera e inicia o download de um documento Word para uma obra ou projeto específico
- * @param {string} obraId - ID da obra
- * @param {string|null} projectName - Nome do projeto (opcional)
- * @returns {void}
- * 
- * @example
- * downloadWord('obra_a64') // Gera Word para a obra com ID obra_a64
- * downloadWord('obra_a64', 'ProjetoA') // Gera Word para o ProjetoA da obra
- */
-function downloadWord(obraId, projectName = null) {
-    // ✅ CORREÇÃO: Buscar obra por ID em vez de nome
-    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
-    if (!obraBlock) {
-        console.error(`❌ Obra com ID "${obraId}" não encontrada para Word`);
-        showSystemStatus(`ERRO: Obra não encontrada`, "error");
-        return;
-    }
-
-    const obraName = obraBlock.dataset.obraName;
-    const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
-    
-    console.log(`📝 Gerando Word para ${target} (ID: ${obraId})`);
-    showSystemStatus(`Gerando documento Word para ${target}...`, "info");
-    
-    // ✅ Aqui você implementaria a geração real do Word
-    // generateWord(obraId, projectName);
-}
 
 /**
  * Salva ou atualiza os dados de uma obra no sistema
@@ -414,8 +357,6 @@ export {
     toggleObra,
     toggleProject,
     toggleRoom,
-    downloadPDF,
-    downloadWord,
     saveOrUpdateObra,
     toggleSubsection,
     toggleSection,
@@ -437,7 +378,6 @@ if (typeof window !== 'undefined') {
     window.getNextObraNumber = getNextObraNumber;
     window.deleteObra = deleteObra;
     window.saveOrUpdateObra = saveOrUpdateObra;
-    window.downloadPDF = downloadPDF;
     window.downloadWord = downloadWord;
     window.addNewProject = addNewProject;
     window.createEmptyProject = createEmptyProject;

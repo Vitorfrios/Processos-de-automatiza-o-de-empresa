@@ -456,3 +456,28 @@ class RouteHandler:
     def handle_post_delete_tubo(self, handler):
         """POST /api/tubos/delete"""
         handler.handle_post_delete_tubo()
+        
+    
+    def handle_get_word_models(self, handler):
+        """GET /api/word/models"""
+        handler.handle_get_word_models()
+
+    def handle_get_word_templates(self, handler):
+        """GET /api/word/templates"""
+        handler.handle_get_word_templates()
+
+    def handle_generate_word_proposta_comercial(self, handler):
+        """POST /api/word/generate/proposta-comercial"""
+        handler.handle_generate_word_proposta_comercial()
+
+    def handle_generate_word_proposta_tecnica(self, handler):
+        """POST /api/word/generate/proposta-tecnica"""
+        handler.handle_generate_word_proposta_tecnica()
+
+    def handle_generate_word_ambos(self, handler):
+        """POST /api/word/generate/ambos"""
+        handler.handle_generate_word_ambos()
+
+    def handle_download_word(self, handler):
+        """GET /api/word/download"""
+        handler.handle_download_word()

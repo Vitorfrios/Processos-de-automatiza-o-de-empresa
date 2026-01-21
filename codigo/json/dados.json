@@ -104,6 +104,8 @@
   "machines": [
     {
       "type": "Wall Mounted",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -404,6 +406,8 @@
     },
     {
       "type": "Split System",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -755,6 +759,8 @@
     },
     {
       "type": "Self Contained",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -1107,6 +1113,8 @@
     },
     {
       "type": "Split Piso-Teto",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -1208,6 +1216,8 @@
     },
     {
       "type": "Split Hi-Wall",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -1294,6 +1304,8 @@
     },
     {
       "type": "ACJ",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -1339,6 +1351,8 @@
     },
     {
       "type": "Tubo Axial",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -1540,6 +1554,8 @@
     },
     {
       "type": "Caixa de Ventilação",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -1641,6 +1657,8 @@
     },
     {
       "type": "Filtro Cartucho",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -1694,6 +1712,8 @@
     },
     {
       "type": "Centrífugo",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -1752,6 +1772,8 @@
     },
     {
       "type": "Gabinetes Inline",
+      "especificacao":"",
+
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
@@ -1801,6 +1823,7 @@
     },
     {
       "type": "FH Filtros",
+      "especificacao":"",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",

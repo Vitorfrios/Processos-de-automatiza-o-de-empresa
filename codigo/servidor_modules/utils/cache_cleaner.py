@@ -80,7 +80,7 @@ class CacheCleaner:
             ('.jpeg"', f'.jpeg{cache_param}"'),
             ('.gif"', f'.gif{cache_param}"'),
             ('.svg"', f'.svg{cache_param}"'),
-            ('.ico"', f'.ico{cache_param}"'),
+            ('.docx"', f'.docx{cache_param}"'),
         ]
         
         for old, new in replacements:

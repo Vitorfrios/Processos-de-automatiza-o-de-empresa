@@ -1,3 +1,741 @@
 {
-  "obras": []
+  "obras": [
+    {
+      "id": "obra_b33",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_b33",
+      "empresaSigla": "ART",
+      "empresaNome": "ART - ARTECAL",
+      "numeroClienteFinal": 1,
+      "clienteFinal": "cliente teste",
+      "codigoCliente": "E543f",
+      "orcamentistaResponsavel": "orçamentista teste",
+      "dataCadastro": "21/01/2026",
+      "projetos": [
+        {
+          "id": "obra_b33_proj_g20_3",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_b33_proj_g20_3_sala_y15_1",
+              "nome": "Sala de Servidores",
+              "inputs": {
+                "ambiente": "Sala de Servidores",
+                "backup": "n+1",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 5.5,
+                "paredeLeste": 5.5,
+                "paredeNorte": 8,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "numPortasDuplas": 2,
+                "numPortasSimples": 3,
+                "combateIncendio": "fm200",
+                "pressurizacao": true
+              },
+              "maquinas": [
+                {
+                  "nome": "Wall Mounted-01A (5TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "5TR",
+                  "tensao": "220V/3F",
+                  "quantidade": 2,
+                  "precoBase": 49043,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 5300,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "5TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 200,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "5TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Umidificação",
+                      "value": 9200,
+                      "originalName": "Umidificação",
+                      "potenciaAplicada": "5TR"
+                    },
+                    {
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
+                      "value": 2070,
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "5TR"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [
+                    {
+                      "id": 2,
+                      "nome": "Bocal acoplado à rede de dutos por lona flexível. Distribuição por grelhas"
+                    },
+                    {
+                      "id": 3,
+                      "nome": "Condicionadores fixados externamente à SE, sobre mão-francesa na parede"
+                    },
+                    {
+                      "id": 4,
+                      "nome": "Evaporadoras internas ao ambiente climatizado"
+                    },
+                    {
+                      "id": 6,
+                      "nome": "Condensadores fixados externamente à sala elétrica"
+                    }
+                  ],
+                  "precoTotal": 131626,
+                  "potenciaSelecionada": "5TR",
+                  "tipoSelecionado": "Wall Mounted"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 16,
+                "solucaoBackup": 17,
+                "totalCapacidade": 16,
+                "folga": 14.3,
+                "backup": "n+1"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 46748,
+                "total-tr-aprox": 14,
+                "total-tr-exato": 13.292,
+                "total-externo": 6642,
+                "total-divisoes": 2216,
+                "total-piso": 1013,
+                "total-iluminacao": 350,
+                "total-dissi": 5000,
+                "total-pessoas": 2198,
+                "total-ar-sensivel": 9241,
+                "total-ar-latente": 20090
+              },
+              "acessorios": [
+                {
+                  "id": "1769029749558hrrn1g3gy",
+                  "aplicacao": "climatizacao",
+                  "aplicacao_nome": "Climatização",
+                  "tipo": "DSP_15",
+                  "dimensao": "800x800",
+                  "quantidade": 3,
+                  "valor_unitario": 26500,
+                  "valor_total": 79500,
+                  "descricao": "DSP_15"
+                }
+              ],
+              "dutos": [
+                {
+                  "id": "17690297722833o0xh88vl",
+                  "tipo": "Chapa de aco inox",
+                  "tipo_descricao": "Chapa de aco inox",
+                  "opcional_id": "1",
+                  "opcional_nome": "Polimento",
+                  "kg": 10,
+                  "quantidade": 5,
+                  "valor_tipo": 180,
+                  "valor_opcional": 45,
+                  "valor_cobre_por_kg": 99,
+                  "valor_unitario": 1215,
+                  "valor_total": 6075
+                }
+              ],
+              "tubulacao": {
+                "conjuntos": [
+                  {
+                    "id": "obra_b33_proj_g20_3_sala_y15_1-1",
+                    "numero": 1,
+                    "quantidade": 2,
+                    "cabos": 0,
+                    "luvas": 0,
+                    "reducoes": 0,
+                    "totalLSmetros": 0,
+                    "totalLSkg": 0,
+                    "totalLLmetros": 0,
+                    "totalLLkg": 0,
+                    "totalKG": 0,
+                    "valorTotal": 0,
+                    "linhas": [
+                      {
+                        "id": "LS-obra_b33_proj_g20_3_sala_y15_1-1-1769034838782",
+                        "tipo": "L.S.",
+                        "pol": "",
+                        "expe": "",
+                        "compr": 0,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0,
+                        "valorTotal": 0
+                      },
+                      {
+                        "id": "LL-obra_b33_proj_g20_3_sala_y15_1-1-1769034838782",
+                        "tipo": "L.L.",
+                        "pol": "",
+                        "expe": "",
+                        "compr": 0,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0,
+                        "valorTotal": 0
+                      }
+                    ]
+                  }
+                ],
+                "valorTotalGeralTubos": 0,
+                "valorTotal": null
+              }
+            },
+            {
+              "id": "obra_b33_proj_g20_3_sala_b78_2",
+              "nome": "Sala de maquinas",
+              "inputs": {
+                "ambiente": "Sala de maquinas",
+                "backup": "n",
+                "area": 12,
+                "tipoConstrucao": "Eletrocentro",
+                "paredeOeste": 15,
+                "paredeLeste": 15,
+                "paredeNorte": 12,
+                "paredeSul": 12,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 10,
+                "divisoriaClima2": 10,
+                "dissipacao": 5000,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "numPortasDuplas": 2,
+                "numPortasSimples": 3,
+                "combateIncendio": "fm200",
+                "pressurizacao": true
+              },
+              "maquinas": [
+                {
+                  "nome": "Wall Mounted-01A (30TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "30TR",
+                  "tensao": "220V/3F",
+                  "quantidade": 15,
+                  "precoBase": 146800,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 0,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 200,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Umidificação",
+                      "value": 9200,
+                      "originalName": "Umidificação",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 4,
+                      "name": "1 Damper com atuador on/off",
+                      "value": 2070,
+                      "originalName": "1 Damper com atuador on/off",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 5,
+                      "name": "2 Dampers com atuador on/off",
+                      "value": 4470,
+                      "originalName": "2 Dampers com atuador on/off",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 6,
+                      "name": "Ventilador Eletrônico",
+                      "value": 8000,
+                      "originalName": "Ventilador Eletrônico",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 7,
+                      "name": "Controle de Condensação Proporcional",
+                      "value": 8000,
+                      "originalName": "Controle de Condensação Proporcional",
+                      "potenciaAplicada": "30TR"
+                    },
+                    {
+                      "id": 8,
+                      "name": "Goldfin",
+                      "value": 1400,
+                      "originalName": "Goldfin",
+                      "potenciaAplicada": "30TR"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 2702100,
+                  "potenciaSelecionada": "30TR",
+                  "tipoSelecionado": "Wall Mounted"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 13,
+                "solucaoBackup": 13,
+                "totalCapacidade": 13,
+                "folga": 18.2,
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 38384,
+                "total-tr-aprox": 11,
+                "total-tr-exato": 10.914,
+                "total-externo": 2634,
+                "total-divisoes": 874,
+                "total-piso": 244,
+                "total-iluminacao": 84,
+                "total-dissi": 5000,
+                "total-pessoas": 220,
+                "total-ar-sensivel": 9241,
+                "total-ar-latente": 20090
+              },
+              "acessorios": [
+                {
+                  "id": "1769035009943k5cothtl9",
+                  "aplicacao": "pressurizacao",
+                  "aplicacao_nome": "Pressurização",
+                  "tipo": "DSP_15",
+                  "dimensao": "200x200",
+                  "quantidade": 1,
+                  "valor_unitario": 9500,
+                  "valor_total": 9500,
+                  "descricao": "DSP_15"
+                }
+              ],
+              "dutos": [
+                {
+                  "id": "1769035029061z3rr2kbh8",
+                  "tipo": "Chapa de aco inox",
+                  "tipo_descricao": "Chapa de aco inox",
+                  "opcional_id": "1",
+                  "opcional_nome": "Polimento",
+                  "kg": 15,
+                  "quantidade": 12,
+                  "valor_tipo": 180,
+                  "valor_opcional": 45,
+                  "valor_cobre_por_kg": 99,
+                  "valor_unitario": 1710,
+                  "valor_total": 20520
+                }
+              ],
+              "tubulacao": {
+                "conjuntos": [
+                  {
+                    "id": "obra_b33_proj_g20_3_sala_b78_2-1",
+                    "numero": 1,
+                    "quantidade": 4,
+                    "cabos": 84,
+                    "luvas": 720,
+                    "reducoes": 240,
+                    "totalLSmetros": 1800,
+                    "totalLSkg": 1396.8,
+                    "totalLLmetros": 1800,
+                    "totalLLkg": 1609.2,
+                    "totalKG": 3006,
+                    "valorTotal": 187200,
+                    "linhas": [
+                      {
+                        "id": "LS-obra_b33_proj_g20_3_sala_b78_2-1-1769035013955",
+                        "tipo": "L.S.",
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 15,
+                        "numC": 15,
+                        "numCu": 15,
+                        "Cee": 15,
+                        "Lsm": 450,
+                        "LSkg": 349.2,
+                        "valorTotal": 27900
+                      },
+                      {
+                        "id": "LL-obra_b33_proj_g20_3_sala_b78_2-1-1769035013955",
+                        "tipo": "L.L.",
+                        "pol": "7/8",
+                        "expe": "0,80",
+                        "compr": 15,
+                        "numC": 15,
+                        "numCu": 15,
+                        "Cee": 15,
+                        "Lsm": 450,
+                        "LSkg": 402.3,
+                        "valorTotal": 18900
+                      }
+                    ]
+                  }
+                ],
+                "valorTotalGeralTubos": 0,
+                "valorTotal": null
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 15000,
+              "descricao": "descrição de serviços"
+            },
+            "adicionais": [
+              {
+                "id": "adicional-1769034835751",
+                "valor": 30500,
+                "descricao": "Descrição do adicional "
+              }
+            ]
+          },
+          "valorTotalProjeto": 3182021
+        },
+        {
+          "id": "obra_b33_proj_l91_6",
+          "nome": "Projeto2",
+          "salas": [
+            {
+              "id": "obra_b33_proj_l91_6_sala_t27_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala de paineis",
+                "backup": "n+2",
+                "area": 12,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 12,
+                "paredeLeste": 12,
+                "paredeNorte": 12,
+                "paredeSul": 12,
+                "peDireito": 3,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 12,
+                "divisoriaClima2": 12,
+                "dissipacao": 12,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "combateIncendio": "fm200",
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [
+                {
+                  "nome": "Split Hi-Wall-01A (9BTU/h)",
+                  "tipo": "Split Hi-Wall",
+                  "potencia": "9BTU/h",
+                  "tensao": "220V/1F",
+                  "quantidade": 4,
+                  "precoBase": 3550,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 14200,
+                  "potenciaSelecionada": "9BTU/h",
+                  "tipoSelecionado": "Split Hi-Wall"
+                },
+                {
+                  "nome": "ACJ-01A (7BTU/h)",
+                  "tipo": "ACJ",
+                  "potencia": "7BTU/h",
+                  "tensao": "220V/1F",
+                  "quantidade": 2,
+                  "precoBase": 3300,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 6600,
+                  "potenciaSelecionada": "7BTU/h",
+                  "tipoSelecionado": "ACJ"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 4,
+                "solucaoBackup": 6,
+                "totalCapacidade": 4,
+                "folga": 33.3,
+                "backup": "n+2"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 8659,
+                "total-tr-aprox": 3,
+                "total-tr-exato": 2.462,
+                "total-externo": 5717,
+                "total-divisoes": 2384,
+                "total-piso": 244,
+                "total-iluminacao": 84,
+                "total-dissi": 12,
+                "total-pessoas": 220,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "acessorios": [
+                {
+                  "id": "17690351234865hcx6g2aq",
+                  "aplicacao": "pressurizacao",
+                  "aplicacao_nome": "Pressurização",
+                  "tipo": "DCF_90",
+                  "dimensao": "1000x1000",
+                  "quantidade": 1,
+                  "valor_unitario": 118500,
+                  "valor_total": 118500,
+                  "descricao": "DCF_90"
+                }
+              ],
+              "dutos": [
+                {
+                  "id": "17690351477134l6e1rdx4",
+                  "tipo": "Chapa de aco inox",
+                  "tipo_descricao": "Chapa de aco inox",
+                  "opcional_id": "1",
+                  "opcional_nome": "Polimento",
+                  "kg": 15,
+                  "quantidade": 13,
+                  "valor_tipo": 180,
+                  "valor_opcional": 45,
+                  "valor_cobre_por_kg": 99,
+                  "valor_unitario": 1710,
+                  "valor_total": 22230
+                },
+                {
+                  "id": "1769035162891t29p6etw8",
+                  "tipo": "Chapa preta",
+                  "tipo_descricao": "Chapa preta",
+                  "opcional_id": "1",
+                  "opcional_nome": "Pintura epoxi",
+                  "kg": 2,
+                  "quantidade": 20,
+                  "valor_tipo": 105,
+                  "valor_opcional": 30,
+                  "valor_cobre_por_kg": 99,
+                  "valor_unitario": 333,
+                  "valor_total": 6660
+                }
+              ],
+              "tubulacao": {
+                "conjuntos": [
+                  {
+                    "id": "obra_b33_proj_l91_6_sala_t27_1-1",
+                    "numero": 1,
+                    "quantidade": 3,
+                    "cabos": 81,
+                    "luvas": 294,
+                    "reducoes": 204,
+                    "totalLSmetros": 735,
+                    "totalLSkg": 570.36,
+                    "totalLLmetros": 585,
+                    "totalLLkg": 522.99,
+                    "totalKG": 1093.35,
+                    "valorTotal": 70140,
+                    "linhas": [
+                      {
+                        "id": "LS-obra_b33_proj_l91_6_sala_t27_1-1-1769035125858",
+                        "tipo": "L.S.",
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 10,
+                        "numC": 12,
+                        "numCu": 15,
+                        "Cee": 5,
+                        "Lsm": 195,
+                        "LSkg": 151.32,
+                        "valorTotal": 12090
+                      },
+                      {
+                        "id": "LL-obra_b33_proj_l91_6_sala_t27_1-1-1769035125858",
+                        "tipo": "L.L.",
+                        "pol": "7/8",
+                        "expe": "0,80",
+                        "compr": 10,
+                        "numC": 12,
+                        "numCu": 15,
+                        "Cee": 5,
+                        "Lsm": 195,
+                        "LSkg": 174.33,
+                        "valorTotal": 8190
+                      },
+                      {
+                        "id": "LS-extra-obra_b33_proj_l91_6_sala_t27_1-1-1769035128745",
+                        "tipo": "L.S.",
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 5,
+                        "numC": 5,
+                        "numCu": 5,
+                        "Cee": 5,
+                        "Lsm": 50,
+                        "LSkg": 38.800000000000004,
+                        "valorTotal": 3100
+                      }
+                    ]
+                  }
+                ],
+                "valorTotalGeralTubos": 0,
+                "valorTotal": null
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": ""
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 238330
+        },
+        {
+          "id": "obra_b33_proj_u19_8",
+          "nome": "Projeto3",
+          "salas": [
+            {
+              "id": "obra_b33_proj_u19_8_sala_x10_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "acessorios": [],
+              "dutos": [],
+              "tubulacao": {
+                "conjuntos": [],
+                "valorTotalGeralTubos": 0
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": ""
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 0
+        }
+      ],
+      "valorTotalObra": 3420351
+    },
+    {
+      "id": "obra_h59",
+      "nome": "Obra2",
+      "empresa_id": "empresa_obra_h59",
+      "projetos": [
+        {
+          "id": "obra_h59_proj_v59_3",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_h59_proj_v59_3_sala_k88_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "acessorios": [],
+              "dutos": [],
+              "tubulacao": {
+                "conjuntos": [],
+                "valorTotalGeralTubos": 0
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": ""
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 0
+        }
+      ],
+      "valorTotalObra": 0
+    }
+  ]
 }

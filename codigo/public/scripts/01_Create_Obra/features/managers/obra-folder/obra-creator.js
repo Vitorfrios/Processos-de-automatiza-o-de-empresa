@@ -80,7 +80,6 @@ function buildObraActionsFooter(obraId, _obraName, hasId = false) {
         <button class="btn btn-verify" onclick="verifyObraData('${obraId}')">Verificar Dados</button>
         <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraId}')">${buttonText}</button>
         ${hasIdBool ? `
-        <button class="btn btn-download" onclick="downloadPDF('${obraId}')" style="background-color: red; color: white;">Baixar PDF</button>
         <button class="btn btn-download" onclick="downloadWord('${obraId}')" style="background-color: blue; color: white;">Baixar Word</button>
         ` : ''}
     </div>

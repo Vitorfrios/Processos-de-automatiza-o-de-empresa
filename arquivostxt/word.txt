@@ -1,12 +1,153 @@
------------
-adsicionar valor total da obra e do projeto e 
-----------------
-<div class="all-machines-total-price">
-          <strong>Total de Maquinas: <span id="total-all-machines-price-{obra-id}"></span></strong>
-        </div>
-===
-<td id="acessorios-total-obra_c73_proj_q37_2_sala_c45_1" style="font-weight: bold;">R$ 110.075,00</td>
-===
-<span class="total-geral-value" id="total-geral-valor-obra_c73_proj_q37_2_sala_c45_1">R$ 0,00</span>
-===
-<td id="dutos-total-obra_c73_proj_q37_2_sala_c45_1" style="font-weight: bold;">R$ 17.100,00</td>
+										Belo Horizonte, 05/04/2024
+ *EMPRESA* (nome da empresa)
+
+1 – OBJETIVO –  
+Serviços de projeto de ar-condicionado dos objetos descritos abaixo, a serem executados no padrão do cliente. Para mais detalhes, gentileza consultar a Proposta Técnica (PT) enviada juntamente com esta Proposta Comercial (PC).
+
+•	Projeto do sistema HVAC da(s) Sala(s) de Painéis.
+•	Acompanhamento dos testes nas dependências do cliente na região metropolita de Belo Horizonte/MG (item ofertado como cortesia, não haverá desconto em caso de não realização do serviço).
+	
+2 – PREÇO
+
+	*NOME*:  - Referente ao nome do projeto()
+
+*ESPECIFICADOR*: ( maquinas permitidas de acordo com a sua "especificacao":"")
+
+R$ 0,00 (valor total da maquina (filtrada relacionada a sua "especificacao":"" ) com opcionais quantidade etc...)
+Referentes a (quantidade [escolhida pelo user]) equipamento(s) (tipo da maqina [escolhida pelo user] ) de (quantidade de tr [escolhida pelo user]) da (nome do ambiente/sala [digitada pelo user]) 
+
+Faturamento Direto .(nome do fornecedor[BD]-{automatico})
+Entrega em:  (referente a localização da maquina [BD]-{automatico});
+ICMS: (referente ao imposto da maquina [BD]-{automatico}) ;
+IPI: (referente ao ipi da maquina [BD]-{automatico})
+
+
+*ESPECIFICADOR*: ( maquinas permitidas de acordo com a sua "especificacao":"")
+
+R$ 00,00 (valor total da maquina (filtrada relacionada a sua "especificacao":"") com opcionais etc)
+Referentes a (quantidade [escolhida pelo user])   equipamento(s)   (tipo da maqina [escolhida pelo user] ) para promover pressão positiva. 
+
+Faturamento Direto  .(nome do fornecedor[BD]-{automatico})
+Entrega em:  ( referente a localização da maquina [BD]-{automatico});;
+ICMS: (referente ao imposto da maquina [BD]-{automatico}) ;
+IPI: (referente ao ipi da maquina [BD]-{automatico});
+
+
+*ESPECIFICADOR* ( maquinas permitidas de acordo com a sua "especificacao":"")
+R$ 00,00 (valor total da maquina (filtrada relacionada a sua "especificacao":"") com opcionais etc)
+Referentes ao/à  (maquina selecionada  [escolhida pelo user]) do sistema de  (especifico da maquina) da  (nome do ambiente/sala [digitada pelo user])
+
+Faturamento Direto . .(nome do fornecedor[BD]-{automatico})
+Entrega em: ; ( referente a localização da maquina [BD]-{automatico});
+ICMS: (referente ao imposto da maquina [BD]-{automatico}) ;.
+IPI: (referente ao ipi da maquina [BD]-{automatico});
+
+
+*ESPECIFICADOR* ( maquinas permitidas de acordo com a sua "especificacao":"")
+R$ 00,00 (valor total da maquina (filtrada relacionada a sua "especificacao":"") com opcionais etc)
+Referentes ao à  (maquina selecionada [escolhida pelo user]) do sistema de   (especifico da maquina) da  (nome do ambiente/sala [digitada pelo user])
+
+Faturamento Direto . .(nome do fornecedor[BD]-{automatico})
+Entrega em: ; ( referente a localização da maquina [BD]-{automatico});
+ICMS: (referente ao imposto da maquina [BD]-{automatico}) ;.
+IPI: (referente ao ipi da maquina [BD]-{automatico});
+
+
+
+
+	Serviços:
+
+Engenharia:
+R$ 00,00(valor adicionado pelo user)
+TEXTO BASE (texto salvo pelo user)
+/             "engenharia": {
+              "valor": 15000,
+              "descricao": "descrição de serviços"
+            }, / 
+Adicionais: (somente se existir-se nao existir nao é incluido)
+(preencher com valor e descrição adicionados pelo user)
+/            "adicionais": [
+              {
+                "id": "adicional-1769029704930",
+                "valor": 30500,
+                "descricao": "Descrição do adicional "
+              }
+            ] /
+
+TOTAL: R$ 00,00 (total geral do projeto) /valorTotalProjeto/
+TOTAL GLOBAL: R$ 00,00 (total geral da obra) /valorTotalObra/
+
+Itens em AMARELO: Sofreram revisão.
+
+3 – DADOS:
+
+ESI ENERGIA:
+
+Razão Social: ESI – ENERGIA SOLUÇÕES INTELIGENTES LTDA.
+CNPJ: 20.232.429/0001-11
+
+4 – INFORMAÇÕES PERTINENTES:
+
+ATENÇÃO! Esta proposta foi elaborada de maneira a obter a melhor solução técnica, atendendo às normas vigentes com o menor custo possível. Ao analisar qualquer proposta, certifique-se que ela atende aos requisitos mínimos da norma ABNT 16.401, NR15 e NR10 para mérito de equalização de propostas.
+
+A obediência às normas é imprescindível para estar isento de problemas futuros.
+
+5 – VALIDADE DESTA PROPOSTA: 
+	
+10 (dez) dias. 
+
+6 – FORMA DE PAGAMENTO: 
+	
+Para as máquinas:	50% sinal, 50% contra embarque.
+Serviços:	100% na entrega da REV0 do projeto.
+    			    		
+7 – PRAZO DE PAGAMENTO: 
+
+Para as máquinas: 	30ddl
+Serviços: 	30ddl 
+
+
+Sendo o que temos a apresentar, nos colocamos à disposição para quaisquer esclarecimentos adicionais.
+
+
+		Atenciosamente,
+
+		Matheus Pacheco Herzeberg Gonçalves
+                                                                		Engenheiro Mecânico – ESI Energia
+
+
+
+
+
+
+
+Referencias do word para o sistema backup.json e dads.json, com exemplo incluso
+*EMPRESA* (nome da empresa) / "empresaNome": "ARTECAL" /
+
+*NOME*:  - Referente ao nome do projeto() /  "nome": "Projeto1" /
+
+*ESPECIFICADOR* ex:Climatização : ( maquinas permitidas de acordo com a sua "especificacao":"") /
+ em {BD}-dados.json   "machines": [
+    {
+      "type": "Wall Mounted",
+      "especificacao":"Climatização", /
+
+
+R$ 0,00 (valor total da maquina (filtrada relacionada a sua "especificacao":"" )) /"precoTotal": 131626 /
+
+(quantidade [escolhida pelo user]) / "quantidade": 2 /
+
+(tipo da maqina [escolhida pelo user] ) / "type": "Wall Mounted" /
+
+(quantidade de tr [escolhida pelo user]) / "potencia": "5TR" /
+
+(nome do ambiente/sala [digitada pelo user]) / "nome": "Sala de Servidores" ou  "ambiente": "Sala de Servidores" /
+
+
+Faturamento Direto .(nome do fornecedor[BD]-{automatico})  /"FORNECEDOR": "IPSZ"/
+
+Entrega em:  (referente a localização da maquina [BD]-{automatico}); / "FRETE": "FOB/Cabreúva/SP",/
+
+ICMS: (referente ao imposto da maquina [BD]-{automatico}) ; / "ICMS": "12%",/
+
+IPI: (referente ao ipi da maquina [BD]-{automatico}) / "IPI": "ISENTO" /

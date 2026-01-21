@@ -4,3 +4,10 @@ numpy==1.24.3
 openpyxl==3.1.2
 Werkzeug==2.3.7
 gunicorn==21.2.0
+
+# Word Processing - VERSÕES ATUALIZADAS
+python-docx==1.1.0
+docxtpl==0.20.2  # ⬅️ VERSÃO CORRETA (mais recente)
+Jinja2==3.1.2
+Pillow==10.1.0
+lxml==4.9.3
