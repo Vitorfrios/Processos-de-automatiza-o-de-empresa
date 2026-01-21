@@ -55,7 +55,9 @@ async function findObraBlockWithRetry(obraId, maxAttempts = 10) {
  */
 
 function updateObraButtonAfterSave(obraName, obraId) {
-    console.log(`🔄 Atualizando botão da obra: ${obraName} (${obraId})`);
+    console.log('🔄=== updateObraButtonAfterSave CHAMADO ===');
+    console.log('obraName:', obraName);
+    console.log('obraId:', obraId);
     
     const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
     if (!obraBlock) {
@@ -77,19 +79,20 @@ function updateObraButtonAfterSave(obraName, obraId) {
         return;
     }
 
-    const saveButton = oldFooter.querySelector('.btn-save, .btn-update');
-    if (saveButton) {
-        saveButton.textContent = "Atualizar Obra";
-        saveButton.className = "btn btn-update";
-        saveButton.setAttribute('onclick', `event.preventDefault(); saveOrUpdateObra('${obraId}')`);
-        console.log(`✅ Botão atualizado para: "Atualizar Obra" (ID: ${obraId})`);
+    // REMOVER O FOOTER ANTIGO E ADICIONAR NOVO
+    oldFooter.remove();
+    
+    // Criar novo footer com hasId = true
+    const newFooterHTML = buildObraActionsFooter(obraId, obraName, true);
+    
+    // Inserir antes do fechamento do obra-content
+    const addProjectSection = obraContent.querySelector('.add-project-section');
+    if (addProjectSection) {
+        addProjectSection.insertAdjacentHTML('afterend', newFooterHTML);
+        console.log(`✅ Footer atualizado com botões de download para obra ${obraId}`);
     } else {
-        console.error(`❌ Botão de salvar não encontrado na obra ${obraId}`);
-    }
-
-    const projectsContainer = document.getElementById(`projects-${obraId}`);
-    if (!projectsContainer) {
-        console.error(`❌ CRÍTICO: Container de projetos PERDIDO na obra ${obraId}!`);
+        obraContent.insertAdjacentHTML('beforeend', newFooterHTML);
+        console.log(`✅ Footer atualizado (fallback) para obra ${obraId}`);
     }
 }
 

@@ -262,3 +262,115 @@
     }
 }
 
+
+
+
+
+/* project-total.css */
+.add-room-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    margin-top: 20px;
+    border-radius: 0 0 8px 8px;
+}
+
+.project-total-value,
+.obra-total-value {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: #28a745;
+    color: white;
+    font-weight: bold;
+    border-radius: 20px;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    margin-left: auto;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.project-total-value:hover,
+.obra-total-value:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .add-room-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .project-total-value {
+        margin-left: 0;
+        justify-content: center;
+        order: -1;
+    }
+    
+    .btn-add-secondary {
+        width: 100%;
+    }
+}
+
+/* Animações para atualização de valores */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+
+
+
+/* 🔥 ESTILOS PARA O TOTAL DA OBRA */
+.add-project-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    margin-top: 15px;
+    border-radius: 6px;
+    flex-wrap: nowrap;
+}
+
+
+@keyframes obra-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
+
+/* 🔥 Responsividade */
+@media (max-width: 768px) {
+    .add-project-section {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .obra-total-value {
+        width: 100%;
+        margin-top: 10px;
+        margin-left: 0;
+        justify-content: center;
+        order: -1; /* Coloca o total acima do botão em mobile */
+    }
+    
+    .btn-add-secondary {
+        width: 100%;
+    }
+}

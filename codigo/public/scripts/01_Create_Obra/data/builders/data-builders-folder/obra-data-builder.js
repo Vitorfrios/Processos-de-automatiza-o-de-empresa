@@ -1,5 +1,6 @@
 // data/builders/data-builders-folder/obra-data-builder.js
-// Responsável por montar o objeto completo da obra - VERSÃO SIMPLIFICADA
+// Responsável por montar o objeto completo da obra - VERSÃO ATUALIZADA COM VALOR TOTAL
+
 import { generateObraId, generateProjectId, generateRoomId } from '../../utils/id-generator.js';
 import { extractEmpresaData } from './empresa-data-extractor.js';
 
@@ -43,18 +44,23 @@ function buildObraData(obraIdOrElement) {
     const finalObraId = obraId || generateObraId();
     const empresaData = extractEmpresaData(obraElement);
     
+    // 🔥 NOVO: Extrai o valor total da obra do DOM
+    const valorTotalObra = extractValorTotalObra(obraElement);
+
     const obraData = {
         id: finalObraId,
         nome: obraName,
         empresa_id: `empresa_${finalObraId}`,
         ...empresaData,
-        projetos: []
+        projetos: [],
+        valorTotalObra: valorTotalObra // 🔥 NOVO CAMPO
     };
 
     const projectElements = obraElement.querySelectorAll('.project-block');
     console.log(`🔍 Encontrados ${projectElements.length} projetos na obra "${obraName}"`);
     
     let projetosProcessados = 0;
+    let somaVerificacao = 0;
     
     projectElements.forEach((projectElement, index) => {
         console.log(`📝 Processando projeto ${index + 1}/${projectElements.length}`);
@@ -68,20 +74,56 @@ function buildObraData(obraIdOrElement) {
         if (projectData) {
             obraData.projetos.push(projectData);
             projetosProcessados++;
+            
+            // 🔥 NOVO: Soma para verificação
+            if (projectData.valorTotalProjeto) {
+                somaVerificacao += projectData.valorTotalProjeto;
+            }
+            
             console.log(`✅ Projeto "${projectData.nome}" adicionado à obra "${obraName}"`);
         } else {
             console.error(`❌ Falha ao construir projeto ${index} da obra "${obraName}"`);
         }
     });
 
+    // 🔥 NOVO: Verificação de consistência
+    if (Math.abs(valorTotalObra - somaVerificacao) > 0.01) {
+        console.warn(`⚠️ Diferença encontrada no valor total da obra "${obraName}":`);
+        console.warn(`   - Extraído do DOM: R$ ${valorTotalObra.toLocaleString('pt-BR')}`);
+        console.warn(`   - Soma dos projetos: R$ ${somaVerificacao.toLocaleString('pt-BR')}`);
+        console.warn(`   - Diferença: R$ ${(valorTotalObra - somaVerificacao).toLocaleString('pt-BR')}`);
+        
+        // Usa a soma dos projetos como fallback
+        obraData.valorTotalObra = somaVerificacao;
+    }
+
     console.log('📦 Dados da obra construídos:', {
         obra: obraData.nome,
         id: obraData.id,
+        valorTotalObra: `R$ ${obraData.valorTotalObra.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`,
         projetos: `${projetosProcessados}/${projectElements.length} processados`
     });
     
     return obraData;
 }
+
+/**
+ * Extrai o valor total da obra do DOM
+ */
+function extractValorTotalObra(obraElement) {
+    const obraId = obraElement.dataset.obraId;
+    const totalElement = document.getElementById(`total-obra-valor-${obraId}`);
+    
+    if (totalElement) {
+        const texto = totalElement.textContent || 'R$ 0,00';
+        return parseValorMonetario(texto);
+    }
+    
+    // Se não encontrar, calcula manualmente
+    console.log(`⚠️ Elemento de total não encontrado para obra ${obraId}, calculando manualmente...`);
+}
+
+
 
 /**
  * Constrói o objeto de dados completo de um projeto a partir do HTML
@@ -119,11 +161,14 @@ function buildProjectData(projectIdOrElement) {
 
     const finalProjectId = projectId || generateProjectId(obraElement);
 
+    const valorTotalProjeto = extractValorTotalProjeto(projectElement);
+
     const projectData = {
         id: finalProjectId,
         nome: projectName,
         salas: [],
-        servicos: extractServicosData(projectElement) // ✅ Extrair dados de serviços
+        servicos: extractServicosData(projectElement),
+        valorTotalProjeto: valorTotalProjeto 
     };
 
     const roomElements = projectElement.querySelectorAll('.room-block');
@@ -145,13 +190,55 @@ function buildProjectData(projectIdOrElement) {
     });
 
     console.log(`✅ Projeto "${projectName}" processado: ${salasProcessadas}/${roomElements.length} salas`);
+    console.log(`💰 Valor total do projeto: R$ ${valorTotalProjeto.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`);
     console.log(`📊 Serviços extraídos:`, projectData.servicos);
     
     return projectData;
 }
 
 /**
- * ✅ FUNÇÃO: Extrai dados dos serviços de um projeto (SIMPLIFICADA)
+ * Extrai o valor total do projeto do DOM
+ */
+function extractValorTotalProjeto(projectElement) {
+    const projectId = projectElement.dataset.projectId;
+    const totalElement = document.getElementById(`total-projeto-valor-${projectId}`);
+    
+    if (totalElement) {
+        const texto = totalElement.textContent || 'R$ 0,00';
+        return parseValorMonetario(texto);
+    }
+    
+    // Se não encontrar, calcula manualmente
+    console.log(`⚠️ Elemento de total não encontrado para projeto ${projectId}, calculando manualmente...`);
+}
+
+
+
+/**
+ * Função auxiliar: Converte texto monetário para número
+ */
+function parseValorMonetario(texto) {
+    if (!texto || typeof texto !== 'string') return 0;
+    
+    // Remove "R$" e espaços
+    let limpo = texto.replace(/R\$/g, '').trim();
+    
+    // Se não tem vírgula, assume valor inteiro
+    if (!limpo.includes(',')) {
+        // Remove pontos (separadores de milhar)
+        limpo = limpo.replace(/\./g, '');
+        return parseFloat(limpo) || 0;
+    }
+    
+    // Tem vírgula (formato brasileiro)
+    // Remove pontos (separadores de milhar) e troca vírgula por ponto
+    limpo = limpo.replace(/\./g, '').replace(',', '.');
+    
+    return parseFloat(limpo) || 0;
+}
+
+/**
+ * Extrai dados dos serviços de um projeto (SIMPLIFICADA)
  */
 function extractServicosData(projectElement) {
     const sectionBlock = projectElement.querySelector('.section-block[data-project-id]');
@@ -173,7 +260,7 @@ function extractServicosData(projectElement) {
 }
 
 /**
- * ✅ FUNÇÃO: Extrai dados da subseção de Engenharia
+ * Extrai dados da subseção de Engenharia
  */
 function extractEngenhariaData(sectionBlock) {
     const engenhariaBlock = sectionBlock.querySelector('.subsection-block:first-child');
@@ -189,7 +276,7 @@ function extractEngenhariaData(sectionBlock) {
 }
 
 /**
- * ✅ FUNÇÃO: Extrai dados dos adicionais (SIMPLIFICADA - sem tipo)
+ * Extrai dados dos adicionais (SIMPLIFICADA - sem tipo)
  */
 function extractAdicionaisData(sectionBlock) {
     const adicionaisContainer = sectionBlock.querySelector('.adicionais-container');
@@ -218,5 +305,6 @@ function extractAdicionaisData(sectionBlock) {
 export {
     buildObraData,
     buildProjectData,
-    extractServicosData
+    extractServicosData,
+    extractValorTotalObra
 };

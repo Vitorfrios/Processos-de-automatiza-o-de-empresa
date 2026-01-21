@@ -839,6 +839,22 @@ function atualizarTotalDutos(roomId) {
     const totalElement = document.getElementById(`dutos-total-${roomId}`);
     if (totalElement) {
         totalElement.textContent = `R$ ${formatarMoeda(total)}`;
+        
+        // 🔥 NOVO: Dispara evento de atualização
+        const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+        if (roomElement) {
+            const projectId = roomElement.dataset.projectId;
+            if (projectId) {
+                document.dispatchEvent(new CustomEvent('valorAtualizado', {
+                    detail: { 
+                        tipo: 'duto',
+                        roomId,
+                        projectId,
+                        valor: total
+                    }
+                }));
+            }
+        }
     }
 }
 

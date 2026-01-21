@@ -856,6 +856,9 @@ function calculateAllMachinesTotal(roomId) {
 /**
  * Atualiza display do total geral
  */
+/**
+ * Atualiza display do total geral
+ */
 function updateAllMachinesTotal(roomId) {
     const total = calculateAllMachinesTotal(roomId);
     const display = document.getElementById(`total-all-machines-price-${roomId}`);
@@ -863,6 +866,22 @@ function updateAllMachinesTotal(roomId) {
         display.textContent = `R$ ${total.toLocaleString('pt-BR')}`;
     }
     saveTotalToRoom(roomId, total);
+    
+    // 🔥 NOVO: Dispara evento de atualização
+    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (roomElement) {
+        const projectId = roomElement.dataset.projectId;
+        if (projectId) {
+            document.dispatchEvent(new CustomEvent('valorAtualizado', {
+                detail: { 
+                    tipo: 'maquina',
+                    roomId,
+                    projectId,
+                    valor: total
+                }
+            }));
+        }
+    }
 }
 
 /**

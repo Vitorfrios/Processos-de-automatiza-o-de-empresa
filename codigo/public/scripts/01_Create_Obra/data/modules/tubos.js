@@ -207,7 +207,7 @@ async function getPolegadasDisponiveis() {
 }
 
 // ==============================================
-// CONSTRUÇÃO DA SEÇÃO (SIMPLIFICADA)
+// CONSTRUÇÃO DA SEÇÃO (COM TOTAL GERAL)
 // ==============================================
 
 function buildTubosSection(obraId, projectId, roomName, finalRoomId) {
@@ -229,6 +229,23 @@ function buildTubosSection(obraId, projectId, roomName, finalRoomId) {
         <div class="tubos-container">
           <div class="tubos-empty-message" id="tubos-empty-${roomId}">
             <p>Adicione um sistema de tubulação para começar</p>
+          </div>
+        </div>
+        
+        <!-- Total Geral -->
+        <div class="tubos-total-geral" id="tubos-total-geral-${roomId}" style="display: none;">
+          <div class="total-geral-header">
+            <h5>Total Geral da Sala</h5>
+          </div>
+          <div class="total-geral-content">
+            <div class="total-geral-item">
+              <span class="total-geral-label">Valor Total Geral:</span>
+              <span class="total-geral-value" id="total-geral-valor-${roomId}">R$ 0,00</span>
+            </div>
+            <div class="total-geral-item">
+              <span class="total-geral-label">Total Geral (kg):</span>
+              <span class="total-geral-value" id="total-geral-kg-${roomId}">0,00</span>
+            </div>
           </div>
         </div>
         
@@ -338,7 +355,7 @@ function calcularReducoes(numCircuitos) {
 }
 
 // ==============================================
-// NOVO SISTEMA DE SINCRONIZAÇÃO LS ↔ LL
+// SISTEMA DE SINCRONIZAÇÃO LS ↔ LL (CORRIGIDO)
 // ==============================================
 
 const sincronizacaoPorConjunto = {};
@@ -355,6 +372,7 @@ function configurarSincronizacaoLSLL(conjuntoId) {
     };
 }
 
+// FUNÇÃO DE SINCRONIZAÇÃO CORRIGIDA - Sincroniza coluna por coluna
 function sincronizarLSLL(linhaId, campo, valor) {
     const row = document.getElementById(`linha-${linhaId}`);
     if (!row) return;
@@ -365,15 +383,14 @@ function sincronizarLSLL(linhaId, campo, valor) {
     
     if (!dadosConjunto || !dadosConjunto.syncEnabled) return;
     
-    if (tipoLinha === 'L.S.' && dadosConjunto.adicionalLS.includes(linhaId)) {
-        console.log(`ℹ️ Linha adicional LS ${linhaId} - não sincroniza`);
-        return;
-    }
-    if (tipoLinha === 'L.L.' && dadosConjunto.adicionalLL.includes(linhaId)) {
-        console.log(`ℹ️ Linha adicional LL ${linhaId} - não sincroniza`);
+    // Verificar se é linha principal
+    const linhaData = JSON.parse(row.getAttribute('data-linha') || '{}');
+    if (!linhaData.ehPrincipal) {
+        console.log(`ℹ️ Linha ${tipoLinha} ${linhaId} não é principal - sem sincronização`);
         return;
     }
     
+    // Determinar qual linha deve ser sincronizada
     let linhaDestinoId = null;
     if (tipoLinha === 'L.S.' && dadosConjunto.llId) {
         linhaDestinoId = dadosConjunto.llId;
@@ -381,11 +398,18 @@ function sincronizarLSLL(linhaId, campo, valor) {
         linhaDestinoId = dadosConjunto.lsId;
     }
     
-    if (!linhaDestinoId) return;
+    if (!linhaDestinoId) {
+        console.log(`ℹ️ Linha destino não encontrada para sincronização`);
+        return;
+    }
     
     const linhaDestino = document.getElementById(`linha-${linhaDestinoId}`);
-    if (!linhaDestino) return;
+    if (!linhaDestino) {
+        console.log(`ℹ️ Elemento linha destino ${linhaDestinoId} não encontrado`);
+        return;
+    }
     
+    // Mapear campos para seletores - CORRIGIDO: adicionados todos os campos
     const seletorPorCampo = {
         'comprimento': '.comprimento-input',
         'circuitos': '.circuitos-input', 
@@ -394,16 +418,30 @@ function sincronizarLSLL(linhaId, campo, valor) {
     };
     
     const seletor = seletorPorCampo[campo];
-    if (!seletor) return;
+    if (!seletor) {
+        console.warn(`⚠️ Campo "${campo}" não mapeado para sincronização`);
+        return;
+    }
     
     const inputDestino = linhaDestino.querySelector(seletor);
-    if (inputDestino && inputDestino.value !== valor) {
-        inputDestino.value = valor;
-        
-        const event = new Event('change', { bubbles: true });
-        inputDestino.dispatchEvent(event);
-        
-        console.log(`✅ Sincronização LS↔LL: ${tipoLinha} → ${tipoLinha === 'L.S.' ? 'L.L.' : 'L.S.'} [${campo}: ${valor}]`);
+    if (inputDestino) {
+        // Verificar se o valor atual é diferente
+        if (inputDestino.value !== valor) {
+            console.log(`🔄 Sincronizando ${campo}: ${tipoLinha} → ${tipoLinha === 'L.S.' ? 'L.L.' : 'L.S.'} [${valor}]`);
+            
+            inputDestino.value = valor;
+            
+            // Disparar evento change para recalcular a linha
+            const event = new Event('change', { bubbles: true });
+            inputDestino.dispatchEvent(event);
+            
+            // Forçar cálculo imediato da linha sincronizada
+            setTimeout(() => {
+                calcularLinhaComAPI(linhaDestinoId);
+            }, 50);
+        }
+    } else {
+        console.warn(`⚠️ Input destino não encontrado para campo ${campo} no seletor ${seletor}`);
     }
 }
 
@@ -414,35 +452,36 @@ function atualizarControleLinhas(conjuntoId) {
     const linhas = tbody.querySelectorAll('.linha-tubulacao');
     const dadosConjunto = sincronizacaoPorConjunto[conjuntoId];
     
-    if (!dadosConjunto) return;
+    if (!dadosConjunto) {
+        // Inicializar se não existir
+        configurarSincronizacaoLSLL(conjuntoId);
+        return;
+    }
     
     dadosConjunto.lsId = null;
     dadosConjunto.llId = null;
     dadosConjunto.adicionalLS = [];
     dadosConjunto.adicionalLL = [];
     
-    const linhasLS = Array.from(linhas).filter(l => l.getAttribute('data-tipo') === 'L.S.');
-    const linhasLL = Array.from(linhas).filter(l => l.getAttribute('data-tipo') === 'L.L.');
-    
-    if (linhasLS.length > 0) {
-        const primeiraLS = linhasLS[0];
-        dadosConjunto.lsId = primeiraLS.id.replace('linha-', '');
+    // Encontrar linhas principais
+    linhas.forEach(linha => {
+        const linhaData = JSON.parse(linha.getAttribute('data-linha') || '{}');
+        const linhaId = linha.id.replace('linha-', '');
         
-        for (let i = 1; i < linhasLS.length; i++) {
-            const adicionalId = linhasLS[i].id.replace('linha-', '');
-            dadosConjunto.adicionalLS.push(adicionalId);
+        if (linhaData.ehPrincipal) {
+            if (linhaData.tipo === 'L.S.') {
+                dadosConjunto.lsId = linhaId;
+            } else if (linhaData.tipo === 'L.L.') {
+                dadosConjunto.llId = linhaId;
+            }
+        } else {
+            if (linhaData.tipo === 'L.S.') {
+                dadosConjunto.adicionalLS.push(linhaId);
+            } else if (linhaData.tipo === 'L.L.') {
+                dadosConjunto.adicionalLL.push(linhaId);
+            }
         }
-    }
-    
-    if (linhasLL.length > 0) {
-        const primeiraLL = linhasLL[0];
-        dadosConjunto.llId = primeiraLL.id.replace('linha-', '');
-        
-        for (let i = 1; i < linhasLL.length; i++) {
-            const adicionalId = linhasLL[i].id.replace('linha-', '');
-            dadosConjunto.adicionalLL.push(adicionalId);
-        }
-    }
+    });
     
     console.log(`📊 Controle atualizado para conjunto ${conjuntoId}:`, {
         lsPrincipal: dadosConjunto.lsId,
@@ -532,13 +571,15 @@ function fillTubulacaoData(roomElement, tubulacaoData) {
     }
 }
 
-// Função para processar alterações nas colunas
+// Função para processar alterações nas colunas - CORRIGIDA
 async function handleColunaChangeComAPI(linhaId, coluna, valor) {
     const row = document.getElementById(`linha-${linhaId}`);
     if (!row || valor === '') return;
     
+    // Sincronizar imediatamente ao alterar qualquer campo
     sincronizarLSLL(linhaId, coluna, valor);
     
+    // Calcular a linha atual
     await calcularLinhaComAPI(linhaId);
 }
 
@@ -563,6 +604,11 @@ async function adicionarLinhaNaTabelaComAPI(conjuntoId, linha) {
         const row = document.createElement('tr');
         row.id = `linha-${linha.id}`;
         row.className = 'linha-tubulacao';
+        if (linha.ehPrincipal) {
+            row.classList.add('linha-principal');
+        } else {
+            row.classList.add('linha-extra');
+        }
         row.setAttribute('data-linha', JSON.stringify(linha));
         row.setAttribute('data-conjunto', conjuntoId);
         row.setAttribute('data-tipo', linha.tipo);
@@ -573,8 +619,9 @@ async function adicionarLinhaNaTabelaComAPI(conjuntoId, linha) {
             <option value="1,59" ${linha.espessura === '1,59' ? 'selected' : ''}>1,59 mm</option>
         `;
 
+        // CORRIGIDO: Adicionado evento onchange em TODOS os campos para sincronização
         row.innerHTML = `
-            <td>${linha.tipo}</td>
+            <td>${linha.tipo} ${linha.ehPrincipal ? '' : '(Extra)'}</td>
             <td>
                 <select class="polegadas-select" onchange="calcularLinhaComAPI('${linha.id}')">
                     ${opcoesBitola}
@@ -612,10 +659,48 @@ async function adicionarLinhaNaTabelaComAPI(conjuntoId, linha) {
 
         tbody.appendChild(row);
         
+        // Para linhas principais, configurar sincronização
+        if (linha.ehPrincipal) {
+            // Atualizar controle de sincronização após adicionar a linha
+            setTimeout(() => {
+                atualizarControleLinhas(conjuntoId);
+                
+                // Se já existir a linha parceira, copiar os valores
+                const dadosConjunto = sincronizacaoPorConjunto[conjuntoId];
+                if (dadosConjunto) {
+                    let linhaParceiraId = null;
+                    if (linha.tipo === 'L.S.' && dadosConjunto.llId) {
+                        linhaParceiraId = dadosConjunto.llId;
+                    } else if (linha.tipo === 'L.L.' && dadosConjunto.lsId) {
+                        linhaParceiraId = dadosConjunto.lsId;
+                    }
+                    
+                    if (linhaParceiraId) {
+                        const linhaParceira = document.getElementById(`linha-${linhaParceiraId}`);
+                        if (linhaParceira) {
+                            // Copiar valores dos campos
+                            const campos = ['comprimento', 'circuitos', 'curvas', 'cecurva'];
+                            campos.forEach(campo => {
+                                const seletor = `.${campo === 'cecurva' ? 'ce-curva-input' : campo + '-input'}`;
+                                const inputOrigem = linhaParceira.querySelector(seletor);
+                                if (inputOrigem && inputOrigem.value) {
+                                    const inputDestino = row.querySelector(seletor);
+                                    if (inputDestino && inputDestino.value !== inputOrigem.value) {
+                                        inputDestino.value = inputOrigem.value;
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            }, 100);
+        }
+        
+        // Calcular a linha se houver dados
         if (linha.comprimentoInterligacao || linha.numCircuitos || linha.numCurvas || linha.comprimentoEquivalenteCurva) {
             setTimeout(() => {
                 calcularLinhaComAPI(linha.id);
-            }, 100);
+            }, 150);
         }
         
     } catch (error) {
@@ -633,7 +718,11 @@ async function adicionarLinhaNaTabelaComAPI(conjuntoId, linha) {
     }
 }
 
-// Nova função de cálculo usando API
+// ==============================================
+// FUNÇÃO PARA CALCULAR LINHA (ATUALIZADA)
+// ==============================================
+
+// Nova função de cálculo usando API - CORRIGIDA
 async function calcularLinhaComAPI(linhaId) {
     const row = document.getElementById(`linha-${linhaId}`);
     if (!row) return;
@@ -675,7 +764,7 @@ async function calcularLinhaComAPI(linhaId) {
             linhaData.luvas = luvas;
             linhaData.reducoes = reducoes;
             
-            console.log(`📏 LS: ${LSmetros}m, ${LSkg}kg, ${cabos}cabos, ${luvas}luvas, ${reducoes}reduções`);
+            console.log(`📏 LS ${linhaId}: ${LSmetros}m, ${LSkg}kg, ${cabos}cabos, ${luvas}luvas, ${reducoes}reduções`);
             
         } else {
             const LSmetros = calcularLSmetros(compIntNum, numCircNum, numCurvNum, ceCurvaNum);
@@ -685,18 +774,14 @@ async function calcularLinhaComAPI(linhaId) {
             linhaData.LLmetros = LLmetros;
             linhaData.LLkg = LLkg;
             
-            console.log(`📏 LL: ${LLmetros}m, ${LLkg}kg`);
+            console.log(`📏 LL ${linhaId}: ${LLmetros}m, ${LLkg}kg`);
         }
 
         await calcularValorTotalLinha(linhaData);
 
         row.setAttribute('data-linha', JSON.stringify(linhaData));
 
-        sincronizarLSLL(linhaId, 'comprimento', comprimentoInterligacao);
-        sincronizarLSLL(linhaId, 'circuitos', numCircuitos);
-        sincronizarLSLL(linhaId, 'curvas', numCurvas);
-        sincronizarLSLL(linhaId, 'cecurva', ceCurva);
-
+        // Atualizar totais do conjunto
         await atualizarTotaisConjuntoComAPI(conjuntoId);
         
     } catch (error) {
@@ -704,16 +789,18 @@ async function calcularLinhaComAPI(linhaId) {
     }
 }
 
-// Adicionar nova linha L.S. com API
-async function addLinhaLSComAPI(roomId, conjuntoNum = '1') {
+// ==============================================
+// FUNÇÕES PARA LINHAS EXTRAS
+// ==============================================
+
+// Função para adicionar linha LS EXTRA (não principal)
+async function addLinhaExtraLSComAPI(conjuntoId) {
     try {
-        const conjuntoId = `${roomId}-${conjuntoNum}`;
         const polegadasDisponiveis = await getPolegadasDisponiveis();
-        
         const polegadaPadrao = polegadasDisponiveis.find(p => p.value === '1.1/4') || polegadasDisponiveis[0];
         
         const linha = {
-            id: Date.now() + Math.random().toString(36).substr(2, 9),
+            id: `LS-extra-${conjuntoId}-${Date.now()}`,
             tipo: 'L.S.',
             polegadas: polegadaPadrao?.value || '',
             espessura: '1,59',
@@ -725,31 +812,29 @@ async function addLinhaLSComAPI(roomId, conjuntoNum = '1') {
             LSkg: 0,
             cabos: 0,
             luvas: 0,
-            reducoes: 0
+            reducoes: 0,
+            valorTotal: 0,
+            ehPrincipal: false  // Indica que é linha extra
         };
 
         await adicionarLinhaNaTabelaComAPI(conjuntoId, linha);
         
-        setTimeout(() => {
-            atualizarControleLinhas(conjuntoId);
-        }, 100);
+        console.log(`✅ Linha LS extra adicionada ao conjunto ${conjuntoId}`);
         
     } catch (error) {
-        console.error('❌ Erro ao adicionar linha LS:', error);
-        throw error;
+        console.error('❌ Erro ao adicionar linha LS extra:', error);
+        alert('Erro ao adicionar linha LS extra: ' + error.message);
     }
 }
 
-// Adicionar nova linha L.L. com API
-async function addLinhaLLComAPI(roomId, conjuntoNum = '1') {
+// Função para adicionar linha LL EXTRA (não principal)
+async function addLinhaExtraLLComAPI(conjuntoId) {
     try {
-        const conjuntoId = `${roomId}-${conjuntoNum}`;
         const polegadasDisponiveis = await getPolegadasDisponiveis();
-        
         const polegadaPadrao = polegadasDisponiveis.find(p => p.value === '7/8') || polegadasDisponiveis[0];
         
         const linha = {
-            id: Date.now() + Math.random().toString(36).substr(2, 9),
+            id: `LL-extra-${conjuntoId}-${Date.now()}`,
             tipo: 'L.L.',
             polegadas: polegadaPadrao?.value || '',
             espessura: '0,80',
@@ -758,28 +843,30 @@ async function addLinhaLLComAPI(roomId, conjuntoNum = '1') {
             numCurvas: '',
             comprimentoEquivalenteCurva: '',
             LLmetros: 0,
-            LLkg: 0
+            LLkg: 0,
+            valorTotal: 0,
+            ehPrincipal: false  // Indica que é linha extra
         };
 
         await adicionarLinhaNaTabelaComAPI(conjuntoId, linha);
         
-        setTimeout(() => {
-            atualizarControleLinhas(conjuntoId);
-        }, 100);
+        console.log(`✅ Linha LL extra adicionada ao conjunto ${conjuntoId}`);
         
     } catch (error) {
-        console.error('❌ Erro ao adicionar linha LL:', error);
-        throw error;
+        console.error('❌ Erro ao adicionar linha LL extra:', error);
+        alert('Erro ao adicionar linha LL extra: ' + error.message);
     }
 }
 
-// Adicionar novo conjunto usando API
+// ==============================================
+// FUNÇÃO PARA ADICIONAR CONJUNTO COM LS E LL FIXOS
+// ==============================================
+
+// Adicionar novo conjunto usando API (COM LS E LL FIXOS)
 async function addTubulacaoConjuntoComAPI(roomId, conjuntoData = null) {
     const conjuntos = document.querySelectorAll(`[data-conjunto-id^="${roomId}-"]`);
     const novoNum = conjuntos.length + 1;
     const novoConjuntoId = `${roomId}-${novoNum}`;
-
-    configurarSincronizacaoLSLL(novoConjuntoId);
 
     const emptyMessage = document.getElementById(`tubos-empty-${roomId}`);
     if (emptyMessage) {
@@ -796,19 +883,37 @@ async function addTubulacaoConjuntoComAPI(roomId, conjuntoData = null) {
 
     try {
         const polegadasDisponiveis = await getPolegadasDisponiveis();
-        const totalPolegadas = polegadasDisponiveis.length;
+        
+        // Configurar polegadas padrão para LS e LL
+        const polegadaLS = polegadasDisponiveis.find(p => p.value === '1.1/4') || polegadasDisponiveis[0];
+        const polegadaLL = polegadasDisponiveis.find(p => p.value === '7/8') || polegadasDisponiveis[0];
+        
+        // Criar IDs únicos para as linhas LS e LL FIXAS
+        const linhaLSId = `LS-${novoConjuntoId}-${Date.now()}`;
+        const linhaLLId = `LL-${novoConjuntoId}-${Date.now()}`;
         
         novoConjunto.innerHTML = `
             <div class="conjunto-header">
-                <h5>Conjunto ${novoNum}</h5>
+                <div class="conjunto-title-container">
+                    <h5>Conjunto ${novoNum}</h5>
+                    <button class="btn-remove-conjunto" onclick="removerConjunto('${novoConjuntoId}', '${roomId}')" title="Remover Conjunto">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                </div>
                 <div class="conjunto-info">
                     <div class="selector-conj">
                         <label for="tubulacao-quantidade-${novoConjuntoId}">Qtd:</label>
                         <input type="number" id="tubulacao-quantidade-${novoConjuntoId}" class="quantidade-input" value="${conjuntoData?.quantidade || 1}" min="1" max="100" onchange="atualizarTotaisConjuntoComAPI('${novoConjuntoId}')">
                     </div>
                     <div class="conjunto-buttons">
-                        <button type="button" class="btn btn-small btn-ls" onclick="addLinhaLSComAPI('${roomId}', '${novoNum}')">+ L.S.</button>
-                        <button type="button" class="btn btn-small btn-ll" onclick="addLinhaLLComAPI('${roomId}', '${novoNum}')">+ L.L.</button>
+                        <button type="button" class="btn btn-small btn-ls" onclick="addLinhaExtraLSComAPI('${novoConjuntoId}')">+ L.S.</button>
+                        <button type="button" class="btn btn-small btn-ll" onclick="addLinhaExtraLLComAPI('${novoConjuntoId}')">+ L.L.</button>
                     </div>
                 </div>
             </div>
@@ -820,14 +925,99 @@ async function addTubulacaoConjuntoComAPI(roomId, conjuntoData = null) {
                             <th>Tipo</th>
                             <th>Bitola</th>
                             <th>Espessura</th>
-                            <th>Comp. Interlig. (m)</th>
+                            <th>Comp. Inter.</th>
                             <th>N° Circ.</th>
                             <th>N° Curvas</th>
-                            <th>C.E. Curva (m)</th>
+                            <th>C.E. Curva</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tubos-list-${novoConjuntoId}">
+                        <!-- LINHA L.S. FIXA (PRINCIPAL) -->
+                        <tr id="linha-${linhaLSId}" class="linha-tubulacao linha-principal" data-linha='{"id":"${linhaLSId}","tipo":"L.S.","ehPrincipal":true}' data-conjunto="${novoConjuntoId}" data-tipo="L.S.">
+                            <td>L.S.</td>
+                            <td>
+                                <select class="polegadas-select" onchange="calcularLinhaComAPI('${linhaLSId}')">
+                                    <option value="">-</option>
+                                    ${polegadasDisponiveis.map(p => 
+                                        `<option value="${p.value}" ${p.value === (polegadaLS?.value || '') ? 'selected' : ''}>${p.label}</option>`
+                                    ).join('')}
+                                </select>
+                            </td>
+                            <td>
+                                <select class="espessura-select" onchange="calcularLinhaComAPI('${linhaLSId}')">
+                                    <option value="">-</option>
+                                    <option value="0,80">0,80 mm</option>
+                                    <option value="1,59" selected>1,59 mm</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" class="comprimento-input" min="0" step="0.1" value="${conjuntoData?.linhas?.find(l => l.tipo === 'L.S.' && l.ehPrincipal)?.compr || ''}" 
+                                       onchange="handleColunaChangeComAPI('${linhaLSId}', 'comprimento', this.value)" 
+                                       placeholder="0.0" style="width: 80px;">
+                            </td>
+                            <td>
+                                <input type="number" class="circuitos-input" min="0" value="${conjuntoData?.linhas?.find(l => l.tipo === 'L.S.' && l.ehPrincipal)?.numC || ''}" 
+                                       onchange="handleColunaChangeComAPI('${linhaLSId}', 'circuitos', this.value)" 
+                                       placeholder="0" style="width: 60px;">
+                            </td>
+                            <td>
+                                <input type="number" class="curvas-input" min="0" value="${conjuntoData?.linhas?.find(l => l.tipo === 'L.S.' && l.ehPrincipal)?.numCu || ''}" 
+                                       onchange="handleColunaChangeComAPI('${linhaLSId}', 'curvas', this.value)" 
+                                       placeholder="0" style="width: 60px;">
+                            </td>
+                            <td>
+                                <input type="number" class="ce-curva-input" min="0" step="0.1" value="${conjuntoData?.linhas?.find(l => l.tipo === 'L.S.' && l.ehPrincipal)?.Cee || ''}" 
+                                       onchange="handleColunaChangeComAPI('${linhaLSId}', 'cecurva', this.value)" 
+                                       placeholder="0.0" style="width: 70px;">
+                            </td>
+                            <td>
+                                <button class="btn-remove" onclick="removerLinha('${linhaLSId}')" title="Remover">🗑️</button>
+                            </td>
+                        </tr>
+                        
+                        <!-- LINHA L.L. FIXA (PRINCIPAL) -->
+                        <tr id="linha-${linhaLLId}" class="linha-tubulacao linha-principal" data-linha='{"id":"${linhaLLId}","tipo":"L.L.","ehPrincipal":true}' data-conjunto="${novoConjuntoId}" data-tipo="L.L.">
+                            <td>L.L.</td>
+                            <td>
+                                <select class="polegadas-select" onchange="calcularLinhaComAPI('${linhaLLId}')">
+                                    <option value="">-</option>
+                                    ${polegadasDisponiveis.map(p => 
+                                        `<option value="${p.value}" ${p.value === (polegadaLL?.value || '') ? 'selected' : ''}>${p.label}</option>`
+                                    ).join('')}
+                                </select>
+                            </td>
+                            <td>
+                                <select class="espessura-select" onchange="calcularLinhaComAPI('${linhaLLId}')">
+                                    <option value="">-</option>
+                                    <option value="0,80" selected>0,80 mm</option>
+                                    <option value="1,59">1,59 mm</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" class="comprimento-input" min="0" step="0.1" value="${conjuntoData?.linhas?.find(l => l.tipo === 'L.L.' && l.ehPrincipal)?.compr || ''}" 
+                                       onchange="handleColunaChangeComAPI('${linhaLLId}', 'comprimento', this.value)" 
+                                       placeholder="0.0" style="width: 80px;">
+                            </td>
+                            <td>
+                                <input type="number" class="circuitos-input" min="0" value="${conjuntoData?.linhas?.find(l => l.tipo === 'L.L.' && l.ehPrincipal)?.numC || ''}" 
+                                       onchange="handleColunaChangeComAPI('${linhaLLId}', 'circuitos', this.value)" 
+                                       placeholder="0" style="width: 60px;">
+                            </td>
+                            <td>
+                                <input type="number" class="curvas-input" min="0" value="${conjuntoData?.linhas?.find(l => l.tipo === 'L.L.' && l.ehPrincipal)?.numCu || ''}" 
+                                       onchange="handleColunaChangeComAPI('${linhaLLId}', 'curvas', this.value)" 
+                                       placeholder="0" style="width: 60px;">
+                            </td>
+                            <td>
+                                <input type="number" class="ce-curva-input" min="0" step="0.1" value="${conjuntoData?.linhas?.find(l => l.tipo === 'L.L.' && l.ehPrincipal)?.Cee || ''}" 
+                                       onchange="handleColunaChangeComAPI('${linhaLLId}', 'cecurva', this.value)" 
+                                       placeholder="0.0" style="width: 70px;">
+                            </td>
+                            <td>
+                                <button class="btn-remove" onclick="removerLinha('${linhaLLId}')" title="Remover">🗑️</button>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -874,73 +1064,78 @@ async function addTubulacaoConjuntoComAPI(roomId, conjuntoData = null) {
             </div>
         `;
         
+        tubosContainer.appendChild(novoConjunto);
+        
+        // Configurar sincronização apenas para as linhas principais
+        configurarSincronizacaoLSLL(novoConjuntoId);
+        
+        // Aguardar a renderização e configurar controle
+        setTimeout(() => {
+            atualizarControleLinhas(novoConjuntoId);
+            
+            // Carregar dados existentes se houver
+            if (conjuntoData?.linhas) {
+                conjuntoData.linhas.forEach((linhaData, index) => {
+                    const linhaElement = document.getElementById(`linha-${linhaData.id}`);
+                    if (linhaElement) {
+                        linhaElement.setAttribute('data-linha', JSON.stringify(linhaData));
+                        
+                        // Atualizar campos do formulário com dados existentes
+                        if (linhaData.compr) {
+                            const comprInput = linhaElement.querySelector('.comprimento-input');
+                            if (comprInput) comprInput.value = linhaData.compr;
+                        }
+                        if (linhaData.numC) {
+                            const circInput = linhaElement.querySelector('.circuitos-input');
+                            if (circInput) circInput.value = linhaData.numC;
+                        }
+                        if (linhaData.numCu) {
+                            const curvInput = linhaElement.querySelector('.curvas-input');
+                            if (curvInput) curvInput.value = linhaData.numCu;
+                        }
+                        if (linhaData.Cee) {
+                            const ceeInput = linhaElement.querySelector('.ce-curva-input');
+                            if (ceeInput) ceeInput.value = linhaData.Cee;
+                        }
+                        
+                        // Calcular a linha
+                        setTimeout(() => {
+                            calcularLinhaComAPI(linhaData.id);
+                        }, 50 * index);
+                    }
+                });
+            }
+            
+            // Atualizar totais
+            setTimeout(() => {
+                atualizarTotaisConjuntoComAPI(novoConjuntoId);
+                atualizarTotalGeralTubulacao(roomId);
+            }, 200);
+            
+        }, 100);
+        
     } catch (error) {
         console.error('❌ Erro ao criar conjunto:', error);
         novoConjunto.innerHTML = `
             <div class="conjunto-header">
-                <h5 style="color: red;">Conjunto ${novoNum} ❌ Erro API</h5>
+                <div class="conjunto-title-container">
+                    <h5 style="color: red;">Conjunto ${novoNum} ❌ Erro API</h5>
+                </div>
             </div>
             <div style="padding: 10px; color: red;">
                 Erro ao carregar dados da API: ${error.message}
             </div>
         `;
+        tubosContainer.appendChild(novoConjunto);
     }
 
-    tubosContainer.appendChild(novoConjunto);
-
-    if (conjuntoData && conjuntoData.linhas) {
-        conjuntoData.linhas.forEach((linha, linhaIndex) => {
-            setTimeout(() => {
-                const linhaCompleta = {
-                    id: linha.id || Date.now() + linhaIndex + Math.random().toString(36).substr(2, 9),
-                    tipo: linha.tipo || 'L.S.',
-                    polegadas: linha.pol || '',
-                    espessura: linha.expe || '',
-                    comprimentoInterligacao: linha.compr || '',
-                    numCircuitos: linha.numC || '',
-                    numCurvas: linha.numCu || '',
-                    comprimentoEquivalenteCurva: linha.Cee || '',
-                    LSmetros: linha.Lsm || 0,
-                    LSkg: linha.LSkg || 0,
-                    valorTotal: linha.valorTotal || 0
-                };
-                
-                if (linha.tipo === 'L.L.') {
-                    linhaCompleta.LLmetros = linha.Lsm || 0;
-                    linhaCompleta.LLkg = linha.LSkg || 0;
-                }
-                
-                adicionarLinhaNaTabelaComAPI(novoConjuntoId, linhaCompleta);
-                
-                if (linhaIndex === conjuntoData.linhas.length - 1) {
-                    setTimeout(() => {
-                        atualizarControleLinhas(novoConjuntoId);
-                        atualizarTotaisConjuntoComAPI(novoConjuntoId);
-                    }, 100);
-                }
-            }, linhaIndex * 50);
-        });
-    } else {
-        setTimeout(async () => {
-            try {
-                await addLinhaLSComAPI(roomId, novoNum);
-                setTimeout(async () => {
-                    await addLinhaLLComAPI(roomId, novoNum);
-                    
-                    setTimeout(() => {
-                        atualizarControleLinhas(novoConjuntoId);
-                        console.log(`✅ Conjunto ${novoConjuntoId} criado com API`);
-                    }, 200);
-                    
-                }, 100);
-            } catch (error) {
-                console.error('❌ Erro ao adicionar linhas padrão:', error);
-            }
-        }, 200);
-    }
-
+    console.log(`✅ Conjunto ${novoConjuntoId} criado com LS e LL fixos`);
     return novoConjuntoId;
 }
+
+// ==============================================
+// FUNÇÃO PARA ATUALIZAR TOTAIS DO CONJUNTO
+// ==============================================
 
 // Função para atualizar totais com API
 async function atualizarTotaisConjuntoComAPI(conjuntoId) {
@@ -1012,24 +1207,128 @@ async function atualizarTotaisConjuntoComAPI(conjuntoId) {
     atualizarElemento(`total-valor-${conjuntoId}`, totalValorMulti, true);
     
     console.log(`💰 Totais conjunto ${conjuntoId}: R$ ${totalValorMulti.toFixed(2)}`);
+    
+    // Atualizar total geral da sala
+    const roomId = conjuntoId.split('-')[0];
+    atualizarTotalGeralTubulacao(roomId);
 }
 
-// Remover linha
+// ==============================================
+// FUNÇÃO PARA CALCULAR TOTAL GERAL DA SALA
+// ==============================================
+
+// Função para calcular e atualizar o total geral de tubulação da sala
+function atualizarTotalGeralTubulacao(roomId) {
+    const conjuntos = document.querySelectorAll(`[data-conjunto-id^="${roomId}-"]`);
+    
+    if (conjuntos.length === 0) {
+        const totalGeralElement = document.getElementById(`tubos-total-geral-${roomId}`);
+        if (totalGeralElement) {
+            totalGeralElement.style.display = 'none';
+        }
+        return;
+    }
+    
+    let totalValorGeral = 0;
+    let totalKgGeral = 0;
+    
+    conjuntos.forEach(conjuntoElement => {
+        const conjuntoId = conjuntoElement.getAttribute('data-conjunto-id');
+        
+        // Extrair valor total do conjunto
+        const valorElement = document.getElementById(`total-valor-${conjuntoId}`);
+        if (valorElement) {
+            const valorText = valorElement.textContent || 'R$ 0,00';
+            const valor = parseFloat(valorText.replace('R$', '').replace(',', '.').trim());
+            if (!isNaN(valor)) {
+                totalValorGeral += valor;
+            }
+        }
+        
+        // Extrair total kg do conjunto
+        const kgElement = document.getElementById(`total-geral-kg-${conjuntoId}`);
+        if (kgElement) {
+            const kgText = kgElement.textContent || '0,00';
+            const kg = parseFloat(kgText.replace(',', '.').trim());
+            if (!isNaN(kg)) {
+                totalKgGeral += kg;
+            }
+        }
+    });
+    
+    // Atualizar os elementos de total geral
+    const totalGeralElement = document.getElementById(`tubos-total-geral-${roomId}`);
+    if (totalGeralElement) {
+        totalGeralElement.style.display = 'block';
+        
+        const valorElement = document.getElementById(`total-geral-valor-${roomId}`);
+        if (valorElement) {
+            valorElement.textContent = `R$ ${totalValorGeral.toFixed(2).replace('.', ',')}`;
+        }
+        
+        const kgElement = document.getElementById(`total-geral-kg-${roomId}`);
+        if (kgElement) {
+            kgElement.textContent = totalKgGeral.toFixed(2).replace('.', ',');
+        }
+    }
+    
+    console.log(`💰 Total geral da sala ${roomId}: R$ ${totalValorGeral.toFixed(2)} | ${totalKgGeral.toFixed(2)} kg`);
+    
+    // 🔥 NOVO: Dispara evento de atualização
+    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (roomElement) {
+        const projectId = roomElement.dataset.projectId;
+        if (projectId) {
+            document.dispatchEvent(new CustomEvent('valorAtualizado', {
+                detail: { 
+                    tipo: 'tubulacao',
+                    roomId,
+                    projectId,
+                    valor: totalValorGeral
+                }
+            }));
+        }
+    }
+    
+    return {
+        valorTotal: totalValorGeral,
+        kgTotal: totalKgGeral
+    };
+}
+
+// ==============================================
+// FUNÇÕES DE REMOÇÃO
+// ==============================================
+
+// Remover linha com proteção para linhas principais
 function removerLinha(linhaId) {
     const row = document.getElementById(`linha-${linhaId}`);
     if (!row) return;
 
+    const linhaData = JSON.parse(row.getAttribute('data-linha') || '{}');
     const conjuntoId = row.getAttribute('data-conjunto');
+    
+    // Verificar se é linha principal
+    if (linhaData.ehPrincipal) {
+        alert('As linhas L.S. e L.L. principais não podem ser removidas!');
+        return;
+    }
 
-    if (confirm('Tem certeza que deseja remover esta linha?')) {
+    if (confirm('Tem certeza que deseja remover esta linha extra?')) {
         row.remove();
         
+        // Atualizar controle de sincronização
+        atualizarControleLinhas(conjuntoId);
+        
         setTimeout(() => {
-            atualizarControleLinhas(conjuntoId);
             atualizarTotaisConjuntoComAPI(conjuntoId);
+            
+            // Atualizar total geral da sala
+            const roomId = conjuntoId.split('-')[0];
+            atualizarTotalGeralTubulacao(roomId);
         }, 50);
         
-        console.log(`🗑️ Linha removida: ${linhaId}`);
+        console.log(`🗑️ Linha extra removida: ${linhaId}`);
     }
 }
 
@@ -1051,9 +1350,19 @@ function limparTubulacao(roomId) {
             }
         }
 
+        // Esconder total geral após limpar
+        const totalGeralElement = document.getElementById(`tubos-total-geral-${roomId}`);
+        if (totalGeralElement) {
+            totalGeralElement.style.display = 'none';
+        }
+
         console.log(`🗑️ Todas as tubulações removidas da sala ${roomId}`);
     }
 }
+
+// ==============================================
+// FUNÇÕES DE INICIALIZAÇÃO E EXTRACÇÃO
+// ==============================================
 
 // Inicializar sistema de tubulação
 async function initTubulacaoSystem(roomId) {
@@ -1072,7 +1381,9 @@ async function initTubulacaoSystem(roomId) {
 function extractTubulacaoData(roomElement) {
     const resultado = {
         conjuntos: [],
-        valorTotal: 0
+        valorTotal: 0,
+        kgTotal: 0,
+        totalGeral: 0
     };
     
     if (!roomElement?.dataset.roomId) {
@@ -1080,6 +1391,23 @@ function extractTubulacaoData(roomElement) {
     }
     
     const roomId = roomElement.dataset.roomId;
+    
+    // Extrair total geral da interface
+    const totalGeralElement = document.getElementById(`total-geral-valor-${roomId}`);
+    if (totalGeralElement) {
+        const totalGeralText = totalGeralElement.textContent || 'R$ 0,00';
+        const totalGeral = parseFloat(totalGeralText.replace('R$', '').replace(',', '.').trim());
+        resultado.totalGeral = isNaN(totalGeral) ? 0 : totalGeral;
+    }
+    
+    // Extrair total kg da interface
+    const totalKgElement = document.getElementById(`total-geral-kg-${roomId}`);
+    if (totalKgElement) {
+        const totalKgText = totalKgElement.textContent || '0,00';
+        const totalKg = parseFloat(totalKgText.replace(',', '.').trim());
+        resultado.kgTotal = isNaN(totalKg) ? 0 : totalKg;
+    }
+    
     const conjuntos = roomElement.querySelectorAll(`[data-conjunto-id^="${roomId}-"]`);
     
     conjuntos.forEach((conjuntoElement, index) => {
@@ -1129,6 +1457,7 @@ function extractTubulacaoData(roomElement) {
                     const linhaFormatada = {
                         id: linhaData.id,
                         tipo: linhaData.tipo,
+                        ehPrincipal: linhaData.ehPrincipal || false,
                         pol: linhaData.polegadas || '',
                         expe: linhaData.espessura || '',
                         compr: parseFloat(linhaData.comprimentoInterligacao || 0),
@@ -1156,6 +1485,10 @@ function extractTubulacaoData(roomElement) {
     
     return resultado;
 }
+
+// ==============================================
+// FUNÇÕES AUXILIARES
+// ==============================================
 
 // Forçar atualização do cache da API
 async function atualizarCacheTubos() {
@@ -1187,6 +1520,81 @@ async function testarBuscaTubos() {
     }
 }
 
+// Função para remover um conjunto inteiro
+function removerConjunto(conjuntoId, roomId) {
+    const conjuntoElement = document.getElementById(`conjunto-${conjuntoId}`);
+    if (!conjuntoElement) {
+        console.error(`❌ Conjunto ${conjuntoId} não encontrado`);
+        return;
+    }
+    
+    // Contar quantos conjuntos existem
+    const conjuntosExistentes = document.querySelectorAll(`[data-conjunto-id^="${roomId}-"]`);
+    const totalConjuntos = conjuntosExistentes.length;
+    
+    if (totalConjuntos === 1) {
+        // Se for o único conjunto, não permitir remoção
+        if (confirm('Este é o único conjunto da sala. Deseja realmente removê-lo?\nA sala ficará sem tubulação.')) {
+            realizarRemocaoConjunto(conjuntoId, roomId);
+        }
+    } else {
+        // Se houver mais de um conjunto, permitir remoção normal
+        if (confirm(`Tem certeza que deseja remover este conjunto?\n\nEsta ação removerá todas as linhas do conjunto e não pode ser desfeita.`)) {
+            realizarRemocaoConjunto(conjuntoId, roomId);
+        }
+    }
+}
+
+// Função auxiliar para realizar a remoção do conjunto
+function realizarRemocaoConjunto(conjuntoId, roomId) {
+    const conjuntoElement = document.getElementById(`conjunto-${conjuntoId}`);
+    
+    // Remover da sincronização
+    delete sincronizacaoPorConjunto[conjuntoId];
+    
+    // Remover elemento do DOM
+    conjuntoElement.remove();
+    
+    // Atualizar números dos conjuntos restantes
+    atualizarNumeracaoConjuntos(roomId);
+    
+    // Atualizar total geral
+    atualizarTotalGeralTubulacao(roomId);
+    
+    // Verificar se ficou sem conjuntos
+    const conjuntosRestantes = document.querySelectorAll(`[data-conjunto-id^="${roomId}-"]`);
+    if (conjuntosRestantes.length === 0) {
+        const emptyMessage = document.getElementById(`tubos-empty-${roomId}`);
+        if (emptyMessage) {
+            emptyMessage.style.display = 'block';
+        }
+    }
+    
+    console.log(`🗑️ Conjunto removido: ${conjuntoId}`);
+}
+
+// Função para atualizar a numeração dos conjuntos após remoção
+function atualizarNumeracaoConjuntos(roomId) {
+    const conjuntos = document.querySelectorAll(`[data-conjunto-id^="${roomId}-"]`);
+    
+    conjuntos.forEach((conjunto, index) => {
+        const novoNum = index + 1;
+        const conjuntoId = conjunto.getAttribute('data-conjunto-id');
+        const conjuntoNum = conjunto.getAttribute('data-conjunto-num');
+        
+        // Atualizar atributos
+        conjunto.setAttribute('data-conjunto-num', novoNum);
+        
+        // Atualizar título
+        const tituloElement = conjunto.querySelector('.conjunto-title-container h5');
+        if (tituloElement) {
+            tituloElement.textContent = `Conjunto ${novoNum}`;
+        }
+        
+        console.log(`🔄 Conjunto ${conjuntoId} renumerado para ${novoNum}`);
+    });
+}
+
 // ==============================================
 // EXPORTAÇÕES
 // ==============================================
@@ -1194,12 +1602,12 @@ async function testarBuscaTubos() {
 if (typeof window !== 'undefined') {
     window.fillTubulacaoData = fillTubulacaoData;
     window.addTubulacaoConjuntoComAPI = addTubulacaoConjuntoComAPI;
-    window.addLinhaLSComAPI = addLinhaLSComAPI;
-    window.addLinhaLLComAPI = addLinhaLLComAPI;
     window.calcularLinhaComAPI = calcularLinhaComAPI;
     window.handleColunaChangeComAPI = handleColunaChangeComAPI;
     window.atualizarTotaisConjuntoComAPI = atualizarTotaisConjuntoComAPI;
     window.removerLinha = removerLinha;
+    window.removerConjunto = removerConjunto;
+    window.atualizarNumeracaoConjuntos = atualizarNumeracaoConjuntos;
     window.limparTubulacao = limparTubulacao;
     window.initTubulacaoSystem = initTubulacaoSystem;
     window.buildTubosSection = buildTubosSection;
@@ -1213,14 +1621,16 @@ if (typeof window !== 'undefined') {
     window.getPolegadasDisponiveis = getPolegadasDisponiveis;
     window.atualizarCacheTubos = atualizarCacheTubos;
     window.testarBuscaTubos = testarBuscaTubos;
+    window.atualizarTotalGeralTubulacao = atualizarTotalGeralTubulacao;
+    window.adicionarLinhaNaTabelaComAPI = adicionarLinhaNaTabelaComAPI;
+    window.addLinhaExtraLSComAPI = addLinhaExtraLSComAPI;
+    window.addLinhaExtraLLComAPI = addLinhaExtraLLComAPI;
 }
 
 export {
     buildTubosSection,
     fillTubulacaoData,
     addTubulacaoConjuntoComAPI,
-    addLinhaLSComAPI,
-    addLinhaLLComAPI,
     calcularLinhaComAPI,
     calcularLSmetros,
     calcularLLmetros,
@@ -1232,6 +1642,8 @@ export {
     getKgPorMetro,
     atualizarTotaisConjuntoComAPI,
     removerLinha,
+    removerConjunto,
+    atualizarNumeracaoConjuntos,
     limparTubulacao,
     initTubulacaoSystem,
     extractTubulacaoData,
@@ -1244,5 +1656,9 @@ export {
     getPrecoPorMetro,
     getPolegadasDisponiveis,
     atualizarCacheTubos,
-    testarBuscaTubos
+    testarBuscaTubos,
+    atualizarTotalGeralTubulacao,
+    adicionarLinhaNaTabelaComAPI,
+    addLinhaExtraLSComAPI,
+    addLinhaExtraLLComAPI
 };

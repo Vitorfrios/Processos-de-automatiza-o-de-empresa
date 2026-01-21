@@ -1,7 +1,52 @@
 /**
  * servicos.js
- * Gerenciador dinâmico de seções de serviços - VERSÃO SIMPLIFICADA
+ * Gerenciador dinâmico de seções de serviços - ATUALIZADO (CORRIGIDO)
  */
+
+/**
+ * Calcula o total dos serviços de um projeto
+ */
+function calculateServicosTotal(projectId) {
+    const projectElement = document.querySelector(`[data-project-id="${projectId}"]`);
+    if (!projectElement) return 0;
+    
+    let total = 0;
+    
+    // Engenharia
+    const engenhariaInput = projectElement.querySelector('.subsection-block:first-child .input-valor');
+    if (engenhariaInput) {
+        total += parseFloat(engenhariaInput.value) || 0;
+    }
+    
+    // Adicionais
+    const adicionaisInputs = projectElement.querySelectorAll('.adicionais-container .input-valor');
+    adicionaisInputs.forEach(input => {
+        if (input && input.value) {
+            total += parseFloat(input.value) || 0;
+        }
+    });
+    
+    return total;
+}
+
+/**
+ * Atualiza o total dos serviços e dispara evento
+ */
+function updateServicosTotal(projectId) {
+    // Delay para evitar loops
+    setTimeout(() => {
+        const total = calculateServicosTotal(projectId);
+        
+        // Dispara evento de atualização
+        document.dispatchEvent(new CustomEvent('valorAtualizado', {
+            detail: { 
+                tipo: 'servico',
+                projectId,
+                valor: total
+            }
+        }));
+    }, 100);
+}
 
 /**
  * Constrói o HTML dos serviços para um projeto
@@ -11,8 +56,6 @@ function buildServicosInProject(projectId) {
         console.error('❌ Project ID inválido para construir serviços')
         return ''
     }
-
-    console.log(`🔨 [BUILD SERVICOS] Construindo serviços para projeto: ${projectId}`)
 
     return `
         <div class="section-block" data-project-id="${projectId}">
@@ -32,7 +75,9 @@ function buildServicosInProject(projectId) {
                     <div class="subsection-content" id="subsection-content-engenharia-${projectId}">
                         <div class="field-group">
                             <label>Valor</label>
-                            <input type="number" class="input-valor" placeholder="R$ 0,00">
+                            <input type="number" class="input-valor" 
+                                   placeholder="R$ 0,00"
+                                   oninput="updateServicosTotal('${projectId}')">
                         </div>
                         <div class="field-group">
                             <label>Descrição</label>
@@ -100,7 +145,7 @@ function toggleSubsection(subsectionId) {
 }
 
 /**
- * Adiciona um conjunto de adicional (SIMPLIFICADO - sem nome)
+ * Adiciona um conjunto de adicional
  */
 function addAdicionalConjunto(projectId) {
     const container = document.getElementById(`adicionais-container-${projectId}`)
@@ -111,7 +156,9 @@ function addAdicionalConjunto(projectId) {
         <div class="adicional-item" data-item-id="${itemId}">
             <div class="field-group">
                 <label>Valor</label>
-                <input type="number" class="input-valor" placeholder="R$ 0,00">
+                <input type="number" class="input-valor" 
+                       placeholder="R$ 0,00"
+                       oninput="updateServicosTotal('${projectId}')">
             </div>
             
             <div class="field-group">
@@ -138,7 +185,8 @@ function addAdicionalValor(projectId) {
         <div class="adicional-item" data-item-id="${itemId}">
             <input type="number" 
                    placeholder="Valor" 
-                   class="input-valor">
+                   class="input-valor"
+                   oninput="updateServicosTotal('${projectId}')">
             <button class="btn btn-remove" onclick="removeAdicionalItem('${projectId}', '${itemId}')">×</button>
         </div>
     `
@@ -175,6 +223,10 @@ function removeAdicionalItem(projectId, itemId) {
     const item = container.querySelector(`[data-item-id="${itemId}"]`)
     if (item) {
         item.remove()
+        // Delay para garantir que o DOM foi atualizado
+        setTimeout(() => {
+            updateServicosTotal(projectId);
+        }, 50);
     }
 }
 
@@ -187,6 +239,8 @@ if (typeof window !== 'undefined') {
     window.addAdicionalValor = addAdicionalValor
     window.addAdicionalTexto = addAdicionalTexto
     window.removeAdicionalItem = removeAdicionalItem
+    window.updateServicosTotal = updateServicosTotal
+    window.calculateServicosTotal = calculateServicosTotal
 }
 
 export {
@@ -196,5 +250,7 @@ export {
     addAdicionalConjunto,
     addAdicionalValor,
     addAdicionalTexto,
-    removeAdicionalItem
+    removeAdicionalItem,
+    updateServicosTotal,
+    calculateServicosTotal
 }

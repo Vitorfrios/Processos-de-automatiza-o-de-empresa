@@ -297,7 +297,7 @@ function extractDutosData(roomElement) {
 function extractTubulacaoData(roomElement) {
     const resultado = {
         conjuntos: [],
-        valorTotal: 0
+        valorTotalGeralTubos: 0
     };
     
     if (!roomElement?.dataset.roomId) {

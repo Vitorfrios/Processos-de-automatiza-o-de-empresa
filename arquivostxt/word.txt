@@ -1,3 +1,12 @@
 -----------
 adsicionar valor total da obra e do projeto e 
 ----------------
+<div class="all-machines-total-price">
+          <strong>Total de Maquinas: <span id="total-all-machines-price-{obra-id}"></span></strong>
+        </div>
+===
+<td id="acessorios-total-obra_c73_proj_q37_2_sala_c45_1" style="font-weight: bold;">R$ 110.075,00</td>
+===
+<span class="total-geral-value" id="total-geral-valor-obra_c73_proj_q37_2_sala_c45_1">R$ 0,00</span>
+===
+<td id="dutos-total-obra_c73_proj_q37_2_sala_c45_1" style="font-weight: bold;">R$ 17.100,00</td>
