@@ -183,6 +183,86 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.btn-remove-conjunto {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    color: #dc3545;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-remove-conjunto:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #c82333;
+    transform: scale(1.1);
+}
+
+.btn-remove-conjunto:active {
+    transform: scale(0.95);
+}
+
+.btn-remove-conjunto svg {
+    pointer-events: none;
+}
+.conjunto-title-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+/* Estilos para o total geral */
+.tubos-total-geral {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.total-geral-header {
+    margin-bottom: 15px;
+}
+
+.total-geral-header h5 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.total-geral-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.total-geral-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.total-geral-label {
+    font-weight: 500;
+    color: #495057;
+    font-size: 14px;
+}
+
+.total-geral-value {
+    font-weight: 600;
+    color: #28a745;
+    font-size: 18px;
+    padding: 5px 10px;
+    background-color: white;
+    border: 1px solid #28a745;
+    border-radius: 4px;
+    min-width: 120px;
+    text-align: center;
+}
 .btn-ls {
     background-color: #2c3e50;
     color: white;
