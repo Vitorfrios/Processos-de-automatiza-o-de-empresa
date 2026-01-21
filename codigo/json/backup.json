@@ -2,19 +2,19 @@
   "obras": [
     {
       "id": "obra_b33",
-      "nome": "Obra1",
+      "nome": "bf",
       "empresa_id": "empresa_obra_b33",
       "empresaSigla": "ART",
       "empresaNome": "ART - ARTECAL",
       "numeroClienteFinal": 1,
       "clienteFinal": "cliente teste",
       "codigoCliente": "E543f",
-      "orcamentistaResponsavel": "orçamentista teste",
       "dataCadastro": "21/01/2026",
+      "orcamentistaResponsavel": "orçamentista teste",
       "projetos": [
         {
           "id": "obra_b33_proj_g20_3",
-          "nome": "Projeto1",
+          "nome": "b",
           "salas": [
             {
               "id": "obra_b33_proj_g20_3_sala_y15_1",
@@ -171,7 +171,7 @@
                     "valorTotal": 0,
                     "linhas": [
                       {
-                        "id": "LS-obra_b33_proj_g20_3_sala_y15_1-1-1769034838782",
+                        "id": "LS-obra_b33_proj_g20_3_sala_y15_1-1-1769038905244",
                         "tipo": "L.S.",
                         "pol": "",
                         "expe": "",
@@ -184,7 +184,7 @@
                         "valorTotal": 0
                       },
                       {
-                        "id": "LL-obra_b33_proj_g20_3_sala_y15_1-1-1769034838782",
+                        "id": "LL-obra_b33_proj_g20_3_sala_y15_1-1-1769038905244",
                         "tipo": "L.L.",
                         "pol": "",
                         "expe": "",
@@ -358,41 +358,41 @@
                     "id": "obra_b33_proj_g20_3_sala_b78_2-1",
                     "numero": 1,
                     "quantidade": 4,
-                    "cabos": 84,
-                    "luvas": 720,
-                    "reducoes": 240,
-                    "totalLSmetros": 1800,
-                    "totalLSkg": 1396.8,
-                    "totalLLmetros": 1800,
-                    "totalLLkg": 1609.2,
-                    "totalKG": 3006,
-                    "valorTotal": 187200,
+                    "cabos": 0,
+                    "luvas": 0,
+                    "reducoes": 0,
+                    "totalLSmetros": 0,
+                    "totalLSkg": 0,
+                    "totalLLmetros": 0,
+                    "totalLLkg": 0,
+                    "totalKG": 0,
+                    "valorTotal": 0,
                     "linhas": [
                       {
-                        "id": "LS-obra_b33_proj_g20_3_sala_b78_2-1-1769035013955",
+                        "id": "LS-obra_b33_proj_g20_3_sala_b78_2-1-1769038905812",
                         "tipo": "L.S.",
-                        "pol": "1.1/4",
-                        "expe": "1,59",
-                        "compr": 15,
-                        "numC": 15,
-                        "numCu": 15,
-                        "Cee": 15,
-                        "Lsm": 450,
-                        "LSkg": 349.2,
-                        "valorTotal": 27900
+                        "pol": "",
+                        "expe": "",
+                        "compr": 0,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0,
+                        "valorTotal": 0
                       },
                       {
-                        "id": "LL-obra_b33_proj_g20_3_sala_b78_2-1-1769035013955",
+                        "id": "LL-obra_b33_proj_g20_3_sala_b78_2-1-1769038905812",
                         "tipo": "L.L.",
-                        "pol": "7/8",
-                        "expe": "0,80",
-                        "compr": 15,
-                        "numC": 15,
-                        "numCu": 15,
-                        "Cee": 15,
-                        "Lsm": 450,
-                        "LSkg": 402.3,
-                        "valorTotal": 18900
+                        "pol": "",
+                        "expe": "",
+                        "compr": 0,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0,
+                        "valorTotal": 0
                       }
                     ]
                   }
@@ -409,17 +409,17 @@
             },
             "adicionais": [
               {
-                "id": "adicional-1769034835751",
+                "id": "adicional-1769038902525",
                 "valor": 30500,
                 "descricao": "Descrição do adicional "
               }
             ]
           },
-          "valorTotalProjeto": 3182021
+          "valorTotalProjeto": 2994821
         },
         {
           "id": "obra_b33_proj_l91_6",
-          "nome": "Projeto2",
+          "nome": "h",
           "salas": [
             {
               "id": "obra_b33_proj_l91_6_sala_t27_1",
@@ -442,10 +442,10 @@
                 "numPessoas": 1,
                 "pressurizacaoSetpoint": 0,
                 "setpointTemp": 25,
-                "combateIncendio": "fm200",
-                "pressurizacao": false,
                 "numPortasDuplas": 0,
-                "numPortasSimples": 0
+                "numPortasSimples": 0,
+                "combateIncendio": "fm200",
+                "pressurizacao": false
               },
               "maquinas": [
                 {
@@ -546,54 +546,41 @@
                     "id": "obra_b33_proj_l91_6_sala_t27_1-1",
                     "numero": 1,
                     "quantidade": 3,
-                    "cabos": 81,
-                    "luvas": 294,
-                    "reducoes": 204,
-                    "totalLSmetros": 735,
-                    "totalLSkg": 570.36,
-                    "totalLLmetros": 585,
-                    "totalLLkg": 522.99,
-                    "totalKG": 1093.35,
-                    "valorTotal": 70140,
+                    "cabos": 0,
+                    "luvas": 0,
+                    "reducoes": 0,
+                    "totalLSmetros": 0,
+                    "totalLSkg": 0,
+                    "totalLLmetros": 0,
+                    "totalLLkg": 0,
+                    "totalKG": 0,
+                    "valorTotal": 0,
                     "linhas": [
                       {
-                        "id": "LS-obra_b33_proj_l91_6_sala_t27_1-1-1769035125858",
+                        "id": "LS-obra_b33_proj_l91_6_sala_t27_1-1-1769038905553",
                         "tipo": "L.S.",
-                        "pol": "1.1/4",
-                        "expe": "1,59",
-                        "compr": 10,
-                        "numC": 12,
-                        "numCu": 15,
-                        "Cee": 5,
-                        "Lsm": 195,
-                        "LSkg": 151.32,
-                        "valorTotal": 12090
+                        "pol": "",
+                        "expe": "",
+                        "compr": 0,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0,
+                        "valorTotal": 0
                       },
                       {
-                        "id": "LL-obra_b33_proj_l91_6_sala_t27_1-1-1769035125858",
+                        "id": "LL-obra_b33_proj_l91_6_sala_t27_1-1-1769038905553",
                         "tipo": "L.L.",
-                        "pol": "7/8",
-                        "expe": "0,80",
-                        "compr": 10,
-                        "numC": 12,
-                        "numCu": 15,
-                        "Cee": 5,
-                        "Lsm": 195,
-                        "LSkg": 174.33,
-                        "valorTotal": 8190
-                      },
-                      {
-                        "id": "LS-extra-obra_b33_proj_l91_6_sala_t27_1-1-1769035128745",
-                        "tipo": "L.S.",
-                        "pol": "1.1/4",
-                        "expe": "1,59",
-                        "compr": 5,
-                        "numC": 5,
-                        "numCu": 5,
-                        "Cee": 5,
-                        "Lsm": 50,
-                        "LSkg": 38.800000000000004,
-                        "valorTotal": 3100
+                        "pol": "",
+                        "expe": "",
+                        "compr": 0,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0,
+                        "valorTotal": 0
                       }
                     ]
                   }
@@ -610,45 +597,45 @@
             },
             "adicionais": []
           },
-          "valorTotalProjeto": 238330
+          "valorTotalProjeto": 168190
         },
         {
           "id": "obra_b33_proj_u19_8",
-          "nome": "Projeto3",
+          "nome": "n",
           "salas": [
             {
               "id": "obra_b33_proj_u19_8_sala_x10_1",
-              "nome": "Sala1",
+              "nome": "Sala1mbnnbnb",
               "inputs": {
-                "ambiente": "Sala1",
+                "ambiente": "Sala1mbnnbnb",
                 "peDireito": 3,
                 "numPessoas": 1,
                 "pressurizacaoSetpoint": 0,
                 "setpointTemp": 25,
-                "pressurizacao": false,
                 "numPortasDuplas": 0,
-                "numPortasSimples": 0
+                "numPortasSimples": 0,
+                "pressurizacao": false
               },
               "maquinas": [],
               "capacidade": {
                 "fatorSeguranca": 10,
                 "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": "-",
-                "solucaoBackup": "-",
-                "totalCapacidade": "-",
-                "folga": "-",
+                "solucao": 2,
+                "solucaoBackup": 2,
+                "totalCapacidade": 2,
+                "folga": 100,
                 "backup": "n"
               },
               "ganhosTermicos": {
-                "total-ganhos-w": 0,
-                "total-tr-aprox": 0,
-                "total-tr-exato": 0,
+                "total-ganhos-w": 220,
+                "total-tr-aprox": 1,
+                "total-tr-exato": 0.063,
                 "total-externo": 0,
                 "total-divisoes": 0,
                 "total-piso": 0,
                 "total-iluminacao": 0,
                 "total-dissi": 0,
-                "total-pessoas": 0,
+                "total-pessoas": 220,
                 "total-ar-sensivel": 0,
                 "total-ar-latente": 0
               },
@@ -670,16 +657,16 @@
           "valorTotalProjeto": 0
         }
       ],
-      "valorTotalObra": 3420351
+      "valorTotalObra": 3163011
     },
     {
       "id": "obra_h59",
-      "nome": "Obra2",
+      "nome": "n  bnbnmbnm",
       "empresa_id": "empresa_obra_h59",
       "projetos": [
         {
           "id": "obra_h59_proj_v59_3",
-          "nome": "Projeto1",
+          "nome": "bnmbnm",
           "salas": [
             {
               "id": "obra_h59_proj_v59_3_sala_k88_1",
@@ -690,30 +677,30 @@
                 "numPessoas": 1,
                 "pressurizacaoSetpoint": 0,
                 "setpointTemp": 25,
-                "pressurizacao": false,
                 "numPortasDuplas": 0,
-                "numPortasSimples": 0
+                "numPortasSimples": 0,
+                "pressurizacao": false
               },
               "maquinas": [],
               "capacidade": {
                 "fatorSeguranca": 10,
                 "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": "-",
-                "solucaoBackup": "-",
-                "totalCapacidade": "-",
-                "folga": "-",
+                "solucao": 2,
+                "solucaoBackup": 2,
+                "totalCapacidade": 2,
+                "folga": 100,
                 "backup": "n"
               },
               "ganhosTermicos": {
-                "total-ganhos-w": 0,
-                "total-tr-aprox": 0,
-                "total-tr-exato": 0,
+                "total-ganhos-w": 220,
+                "total-tr-aprox": 1,
+                "total-tr-exato": 0.063,
                 "total-externo": 0,
                 "total-divisoes": 0,
                 "total-piso": 0,
                 "total-iluminacao": 0,
                 "total-dissi": 0,
-                "total-pessoas": 0,
+                "total-pessoas": 220,
                 "total-ar-sensivel": 0,
                 "total-ar-latente": 0
               },

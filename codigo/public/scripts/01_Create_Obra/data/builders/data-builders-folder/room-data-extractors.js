@@ -10,13 +10,30 @@ import { extractMachinesData } from './machines-data-extractors.js';
  * Extrai todos os dados de uma sala a partir do elemento HTML
  */
 function extractRoomData(roomElement, projectElement) {
-    if (!roomElement || !projectElement) {
-        console.error('❌ Elemento da sala ou projeto é nulo');
+    if (!roomElement || !document.body.contains(roomElement)) {
+        console.error('❌ Elemento da sala inválido ou removido do DOM');
         return null;
     }
 
-    const roomId = roomElement.dataset.roomId || generateRoomId(projectElement);
-    const roomName = roomElement.dataset.roomName || `Sala ${roomId}`;
+    // ✅ CORREÇÃO: Sincronizar título da sala
+    const roomTitleElement = roomElement.querySelector('.room-title');
+    if (roomTitleElement) {
+        const currentTitle = roomTitleElement.textContent?.trim();
+        const dataName = roomElement.dataset.roomName;
+        
+        if (currentTitle && currentTitle !== dataName) {
+            console.log(`🔄 Sincronizando sala: data-room-name "${dataName}" → "${currentTitle}"`);
+            roomElement.dataset.roomName = currentTitle;
+        }
+    }
+
+    const roomId = roomElement.dataset.roomId;
+    const roomName = roomElement.dataset.roomName; // ✅ AGORA sincronizado
+
+    if (!roomId || !roomName) {
+        console.error('❌ Sala sem ID ou nome válido:', { roomId, roomName });
+        return null;
+    }
 
     console.log(`🔍 Extraindo dados da sala: "${roomName}" (ID: ${roomId})`);
 

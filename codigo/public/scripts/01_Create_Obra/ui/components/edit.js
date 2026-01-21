@@ -176,31 +176,38 @@ function saveInlineEdit(element, type) {
 function applyNameChange(element, newText, type, originalText) {
     element.textContent = newText;
     
-    // Atualiza data attributes se existirem
-    const entityMap = {
-        'obra': 'obraName',
-        'project': 'projectName', 
-        'room': 'roomName'
-    };
+    // ✅ CORREÇÃO MELHORADA: Atualizar data-attributes de forma mais robusta
+    let parentElement;
     
-    const dataAttribute = entityMap[type];
-    if (dataAttribute && element.closest(`[data-${dataAttribute}]`)) {
-        const parentElement = element.closest(`[data-${dataAttribute}]`);
-        parentElement.dataset[dataAttribute] = newText;
-        
-        // ✅ CORREÇÃO CRÍTICA: Se for uma sala, sincronizar com campo ambiente
-        if (type === 'room') {
+    if (type === 'project') {
+        parentElement = element.closest('.project-block');
+        if (parentElement) {
+            parentElement.dataset.projectName = newText;
+            console.log(`✅ Projeto: data-project-name atualizado para "${newText}"`);
+        }
+    } 
+    else if (type === 'obra') {
+        parentElement = element.closest('.obra-block');
+        if (parentElement) {
+            parentElement.dataset.obraName = newText;
+            console.log(`✅ Obra: data-obra-name atualizado para "${newText}"`);
+        }
+    }
+    else if (type === 'room') {
+        parentElement = element.closest('.room-block');
+        if (parentElement) {
+            parentElement.dataset.roomName = newText;
+            console.log(`✅ Sala: data-room-name atualizado para "${newText}"`);
+            
+            // Sincronizar com campo ambiente
             const roomId = parentElement.dataset.roomId;
             if (roomId) {
-                console.log(`🔄 Título da sala alterado: "${originalText}" → "${newText}" → sincronizando com ambiente`);
-                
-                // ✅ CORREÇÃO: Sincronização imediata e direta
                 syncTitleToAmbienteDirect(roomId, newText);
             }
         }
     }
     
-    // Log apropriado para o tipo
+    // Log apropriado
     const entityNames = {
         'obra': 'Obra',
         'project': 'Projeto',
@@ -208,15 +215,17 @@ function applyNameChange(element, newText, type, originalText) {
     };
     
     const entityName = entityNames[type] || 'Elemento';
-    console.log(`✅ ${entityName} renomeado: "${originalText}" → "${newText}"`);
+    console.log(`✅ ${entityName} renomeado e sincronizado: "${originalText}" → "${newText}"`);
     
-    // Dispara evento customizado para notificar outros sistemas
+    // Dispara evento customizado
     const changeEvent = new CustomEvent('entity:name-changed', {
         detail: {
             type: type,
             element: element,
             oldName: originalText,
             newName: newText,
+            parentElement: parentElement,
+            dataAttributeUpdated: !!parentElement
         }
     });
     element.dispatchEvent(changeEvent);

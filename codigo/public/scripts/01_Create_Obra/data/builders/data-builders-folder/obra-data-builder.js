@@ -36,6 +36,19 @@ function buildObraData(obraIdOrElement) {
         return null;
     }
 
+    // ✅ CORREÇÃO CRÍTICA: SEMPRE sincronizar título com data-attribute antes de usar
+    const obraTitleElement = obraElement.querySelector('.obra-title');
+    if (obraTitleElement) {
+        const currentTitle = obraTitleElement.textContent?.trim();
+        const dataName = obraElement.dataset.obraName;
+        
+        if (currentTitle && currentTitle !== dataName) {
+            console.log(`🔄 Sincronizando: data-obra-name "${dataName}" → "${currentTitle}"`);
+            obraElement.dataset.obraName = currentTitle;
+        }
+    }
+
+    // ✅ Agora pegue o nome SINCERIZADO
     const obraName = obraElement.dataset.obraName;
     const obraId = obraElement.dataset.obraId;
 
@@ -44,7 +57,6 @@ function buildObraData(obraIdOrElement) {
     const finalObraId = obraId || generateObraId();
     const empresaData = extractEmpresaData(obraElement);
     
-    // 🔥 NOVO: Extrai o valor total da obra do DOM
     const valorTotalObra = extractValorTotalObra(obraElement);
 
     const obraData = {
@@ -53,7 +65,7 @@ function buildObraData(obraIdOrElement) {
         empresa_id: `empresa_${finalObraId}`,
         ...empresaData,
         projetos: [],
-        valorTotalObra: valorTotalObra // 🔥 NOVO CAMPO
+        valorTotalObra: valorTotalObra
     };
 
     const projectElements = obraElement.querySelectorAll('.project-block');
@@ -150,6 +162,19 @@ function buildProjectData(projectIdOrElement) {
         return null;
     }
 
+    // ✅ CORREÇÃO CRÍTICA: SEMPRE sincronizar título do projeto
+    const projectTitleElement = projectElement.querySelector('.project-title');
+    if (projectTitleElement) {
+        const currentTitle = projectTitleElement.textContent?.trim();
+        const dataName = projectElement.dataset.projectName;
+        
+        if (currentTitle && currentTitle !== dataName) {
+            console.log(`🔄 Sincronizando projeto: data-project-name "${dataName}" → "${currentTitle}"`);
+            projectElement.dataset.projectName = currentTitle;
+        }
+    }
+
+    // ✅ Agora pegue o nome SINCERIZADO
     const projectName = projectElement.dataset.projectName || projectElement.id;
     const projectId = projectElement.dataset.projectId;
     const obraElement = projectElement.closest('.obra-block');
