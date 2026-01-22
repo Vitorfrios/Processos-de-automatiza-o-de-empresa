@@ -104,7 +104,7 @@
   "machines": [
     {
       "type": "Wall Mounted",
-      "especificacao":"",
+      "aplicacao":"climatizacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -406,7 +406,7 @@
     },
     {
       "type": "Split System",
-      "especificacao":"",
+      "aplicacao":"climatizacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -759,7 +759,7 @@
     },
     {
       "type": "Self Contained",
-      "especificacao":"",
+      "aplicacao":"climatizacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1113,7 +1113,7 @@
     },
     {
       "type": "Split Piso-Teto",
-      "especificacao":"",
+      "aplicacao":"climatizacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1216,7 +1216,7 @@
     },
     {
       "type": "Split Hi-Wall",
-      "especificacao":"",
+      "aplicacao":"climatizacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1304,7 +1304,7 @@
     },
     {
       "type": "ACJ",
-      "especificacao":"",
+      "aplicacao":"climatizacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1351,7 +1351,7 @@
     },
     {
       "type": "Tubo Axial",
-      "especificacao":"",
+      "aplicacao":"exaustao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1554,7 +1554,7 @@
     },
     {
       "type": "Caixa de Ventilação",
-      "especificacao":"",
+      "aplicacao":"pressurizacao_ventilacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1657,7 +1657,7 @@
     },
     {
       "type": "Filtro Cartucho",
-      "especificacao":"",
+      "aplicacao":"pressurizacao_ventilacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1712,7 +1712,7 @@
     },
     {
       "type": "Centrífugo",
-      "especificacao":"",
+      "aplicacao":"pressurizacao_ventilacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1772,7 +1772,7 @@
     },
     {
       "type": "Gabinetes Inline",
-      "especificacao":"",
+      "aplicacao":"pressurizacao_ventilacao",
 
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1823,7 +1823,7 @@
     },
     {
       "type": "FH Filtros",
-      "especificacao":"",
+      "aplicacao":"pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",

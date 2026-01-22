@@ -237,10 +237,7 @@ async function fillMachinesData(roomElement, machinesData) {
 }
 
 /**
- * Preenche os dados individuais de uma máquina
- */
-/**
- * Preenche os dados individuais de uma máquina - COM QUANTIDADE E CONFIGURAÇÕES
+ * Preenche os dados individuais de uma máquina - COM APLICAÇÃO
  */
 async function populateMachineData(machineElement, machineData) {
     if (!machineElement || !machineData) {
@@ -272,7 +269,14 @@ async function populateMachineData(machineElement, machineData) {
             await new Promise(resolve => setTimeout(resolve, 800));
         }
 
-        // 3. DEFINIR CAPACIDADE (se disponível e habilitado)
+        // 3. DEFINIR APLICAÇÃO (se disponível)
+        const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
+        if (aplicacaoSelect && machineData.aplicacao_machines !== undefined) {
+            aplicacaoSelect.value = machineData.aplicacao_machines || '';
+            console.log(`✅ Aplicação definida: ${machineData.aplicacao_machines}`);
+        }
+
+        // 4. DEFINIR CAPACIDADE (se disponível e habilitado)
         const powerSelect = machineElement.querySelector('.machine-power-select');
         if (powerSelect && machineData.potencia) {
             // Aguardar até que o select esteja habilitado (máx 3 segundos)
@@ -306,7 +310,7 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 4. DEFINIR TENSÃO (se disponível e habilitado)
+        // 5. DEFINIR TENSÃO (se disponível e habilitado)
         const voltageSelect = machineElement.querySelector('.machine-voltage-select');
         if (voltageSelect && machineData.tensao) {
             // Aguardar até que o select esteja habilitado (máx 3 segundos)
@@ -337,7 +341,7 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 5. DEFINIR OPÇÕES SELECIONADAS (se disponíveis)
+        // 6. DEFINIR OPÇÕES SELECIONADAS (se disponíveis)
         if (machineData.opcoesSelecionadas && Array.isArray(machineData.opcoesSelecionadas)) {
             // Aguardar carregamento das opções
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -405,7 +409,7 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 6. DEFINIR CONFIGURAÇÕES SELECIONADAS (se disponíveis)
+        // 7. DEFINIR CONFIGURAÇÕES SELECIONADAS (se disponíveis)
         if (machineData.configuracoesSelecionadas && Array.isArray(machineData.configuracoesSelecionadas)) {
             console.log(`🎯 Aplicando ${machineData.configuracoesSelecionadas.length} configurações salvas`);
             
@@ -476,7 +480,7 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 7. DEFINIR PREÇOS (se disponíveis)
+        // 8. DEFINIR PREÇOS (se disponíveis)
         if (machineData.precoBase !== undefined) {
             const basePriceElement = document.getElementById(`base-price-${machineId}`);
             if (basePriceElement) {
@@ -493,7 +497,7 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 8. DEFINIR NOME (se disponível)
+        // 9. DEFINIR NOME (se disponível)
         if (machineData.nome) {
             const nameInput = machineElement.querySelector('.machine-title-editable');
             if (nameInput) {
@@ -502,15 +506,15 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
-        // 9. DISPARAR CÁLCULO FINAL
+        // 10. DISPARAR CÁLCULO FINAL
         setTimeout(() => {
             if (typeof calculateMachinePrice === 'function') {
                 calculateMachinePrice(machineId);
-                console.log('✅ Cálculo de preço finalizado (com quantidade)');
+                console.log('✅ Cálculo de preço finalizado (com aplicação)');
             }
         }, 500);
 
-        console.log(`✅ Dados da máquina preenchidos com sucesso`);
+        console.log(`✅ Dados da máquina preenchidos com sucesso (incluindo aplicação)`);
         return true;
 
     } catch (error) {

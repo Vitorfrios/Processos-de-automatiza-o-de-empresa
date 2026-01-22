@@ -43,7 +43,8 @@ function extractClimatizationMachineData(machineElement) {
         tipo: machineElement.querySelector('.machine-type-select')?.value || '',
         potencia: machineElement.querySelector('.machine-power-select')?.value || '',
         tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
-        quantidade: 1, // 🆕 NOVO CAMPO - valor padrão
+        quantidade: 1,
+        aplicacao_machines: '', // 🆕 NOVO CAMPO PARA APLICAÇÃO
         precoBase: 0,
         opcoesSelecionadas: [],
         configuracoesSelecionadas: [],
@@ -57,6 +58,13 @@ function extractClimatizationMachineData(machineElement) {
         const qntInput = machineElement.querySelector('.machine-qnt-input');
         if (qntInput) {
             machineData.quantidade = parseInt(qntInput.value) || 1;
+        }
+
+        // 🆕 Aplicação da máquina
+        const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
+        if (aplicacaoSelect) {
+            machineData.aplicacao_machines = aplicacaoSelect.value || '';
+            console.log(`✅ Aplicação extraída: ${machineData.aplicacao_machines}`);
         }
 
         // Preço base (unitário)
@@ -115,6 +123,7 @@ function extractClimatizationMachineData(machineElement) {
         console.log(`✅ Máquina ${machineId} extraída:`, {
             nome: machineData.nome,
             tipo: machineData.tipo,
+            aplicacao_machines: machineData.aplicacao_machines,
             potencia: machineData.potencia,
             quantidade: machineData.quantidade,
             precoBase: machineData.precoBase,

@@ -32,20 +32,21 @@ function fillDutosData(roomElement, dutosData) {
                 <table class="dutos-table" id="dutos-table-${roomId}">
                     <thead>
                         <tr>
-                            <th width="20%">Tipo de Duto</th>
-                            <th width="20%">Opcional</th>
-                            <th width="12%">KG</th>
-                            <th width="12%">Qtd</th>
-                            <th width="12%">Valor Tipo</th>
-                            <th width="12%">Valor Opcional</th>
-                            <th width="12%">Valor Total</th>
+                            <th width="18%">Tipo de Duto</th>
+                            <th width="18%">Opcional</th>
+                            <th width="12%">Aplicação</th>
+                            <th width="10%">KG</th>
+                            <th width="8%">Qtd</th>
+                            <th width="10%">Valor Tipo</th>
+                            <th width="10%">Valor Opcional</th>
+                            <th width="10%">Valor Total</th>
                             <th width="10%">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="${tbodyId}"></tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="7" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                            <td colspan="8" style="text-align: right; font-weight: bold;">TOTAL:</td>
                             <td id="dutos-total-${roomId}" style="font-weight: bold;">R$ 0,00</td>
                         </tr>
                     </tfoot>
@@ -117,6 +118,17 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
           <div class="form-group full-width">
             <div class="duto-selector">
               <div class="selector-grid">
+              
+                <div class="selector-item">
+                  <label for="aplicacao-duto-${roomId}">Aplicação:</label>
+                  <select id="aplicacao-duto-${roomId}" class="duto-select">
+                    <option value="">Selecione uma aplicação...</option>
+                    <option value="climatizacao">Climatização</option>
+                    <option value="pressurizacao">Pressurização</option>
+                    <option value="exaustao_bateria">Exaustão da sala de bateria</option>
+                    <option value="exaustao_baia_trafo">Exaustão da sala baia de trafo</option>
+                  </select>
+                </div>
 
                 <div class="selector-item">
                   <label for="duto-tipo-${roomId}">Tipo:</label>
@@ -203,26 +215,27 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
               <table class="dutos-table" id="dutos-table-${roomId}">
                 <thead>
                   <tr>
-                    <th width="20%">Tipo de Duto</th>
-                    <th width="20%">Opcional</th>
-                    <th width="12%">KG</th>
-                    <th width="12%">Qtd</th>
-                    <th width="12%">Valor Tipo</th>
-                    <th width="12%">Valor Opcional</th>
-                    <th width="12%">Valor Total</th>
+                    <th width="18%">Tipo de Duto</th>
+                    <th width="18%">Opcional</th>
+                    <th width="12%">Aplicação</th>
+                    <th width="10%">KG</th>
+                    <th width="8%">Qtd</th>
+                    <th width="10%">Valor Tipo</th>
+                    <th width="10%">Valor Opcional</th>
+                    <th width="10%">Valor Total</th>
                     <th width="10%">Ações</th>
                   </tr>
                 </thead>
 
                 <tbody id="dutos-list-${roomId}">
                   <tr class="empty-row">
-                    <td colspan="8">Nenhum duto adicionado</td>
+                    <td colspan="9">Nenhum duto adicionado</td>
                   </tr>
                 </tbody>
 
                 <tfoot>
                   <tr>
-                    <td colspan="7" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                    <td colspan="8" style="text-align: right; font-weight: bold;">TOTAL:</td>
                     <td id="dutos-total-${roomId}" style="font-weight: bold;">R$ 0,00</td>
                   </tr>
                 </tfoot>
@@ -558,8 +571,8 @@ function recalcDutosComNovoCobre(roomId) {
             row.setAttribute('data-duto', JSON.stringify(duto));
             
             const cells = row.cells;
-            if (cells.length >= 7) {
-                cells[6].textContent = `R$ ${formatarMoeda(valorTotal)}`;
+            if (cells.length >= 8) {
+                cells[7].textContent = `R$ ${formatarMoeda(valorTotal)}`;
             }
             
         } catch (error) {
@@ -619,6 +632,7 @@ function calcularValorDuto(roomId) {
 function adicionarDuto(roomId) {
     const tipoSelect = document.getElementById(`duto-tipo-${roomId}`);
     const opcionalSelect = document.getElementById(`duto-opcional-${roomId}`);
+    const aplicacaoSelect = document.getElementById(`aplicacao-duto-${roomId}`);
     const kgInput = document.getElementById(`duto-kg-${roomId}`);
     const quantidadeInput = document.getElementById(`duto-quantidade-${roomId}`);
     const valorTipoInput = document.getElementById(`duto-valor-tipo-${roomId}`);
@@ -630,6 +644,9 @@ function adicionarDuto(roomId) {
         alert('Selecione um tipo de duto');
         return;
     }
+    
+    // Aplicação é opcional - pega o valor diretamente
+    const aplicacao_Dutos = aplicacaoSelect.value || '';
     
     const kg = parseFloat(kgInput.value) || 0;
     const quantidade = parseInt(quantidadeInput.value) || 1;
@@ -670,6 +687,9 @@ function adicionarDuto(roomId) {
     const tipoOption = tipoSelect.options[tipoSelect.selectedIndex];
     const tipoDescricao = tipoOption.textContent;
     
+    // Obter texto da aplicação para exibição
+    const aplicacaoTexto = aplicacao_Dutos ? aplicacaoSelect.options[aplicacaoSelect.selectedIndex].textContent : 'Não especificada';
+    
     // Criar objeto do duto
     const duto = {
         id: Date.now() + Math.random().toString(36).substr(2, 9),
@@ -677,6 +697,7 @@ function adicionarDuto(roomId) {
         tipo_descricao: tipoDescricao,
         opcional_id: opcionalId,
         opcional_nome: opcionalNome,
+        aplicacao_Dutos: aplicacao_Dutos, 
         kg: kg,
         quantidade: quantidade,
         valor_tipo: valorTipo,
@@ -695,6 +716,7 @@ function adicionarDuto(roomId) {
     tipoSelect.selectedIndex = 0;
     opcionalSelect.innerHTML = '<option value="">Nenhum opcional</option>';
     opcionalSelect.disabled = true;
+    aplicacaoSelect.selectedIndex = 0;
     valorTipoInput.value = 'R$ 0,00';
     valorOpcionalInput.value = 'R$ 0,00';
     document.getElementById(`duto-valor-total-${roomId}`).value = 'R$ 0,00';
@@ -712,6 +734,20 @@ function adicionarDutoNaTabela(roomId, duto) {
     const emptyRow = tbody.querySelector('.empty-row');
     if (emptyRow) emptyRow.remove();
     
+    // Obter texto da aplicação para exibição
+    let aplicacaoTexto = 'Não especificada';
+    if (duto.aplicacao_Dutos) {
+        const aplicacaoSelect = document.getElementById(`aplicacao-duto-${roomId}`);
+        if (aplicacaoSelect) {
+            for (let i = 0; i < aplicacaoSelect.options.length; i++) {
+                if (aplicacaoSelect.options[i].value === duto.aplicacao_Dutos) {
+                    aplicacaoTexto = aplicacaoSelect.options[i].textContent;
+                    break;
+                }
+            }
+        }
+    }
+    
     const row = document.createElement('tr');
     row.id = `duto-${duto.id}`;
     row.className = 'duto-row';
@@ -720,6 +756,7 @@ function adicionarDutoNaTabela(roomId, duto) {
     row.innerHTML = `
         <td>${duto.tipo_descricao}</td>
         <td class="td-scroll-horizontal">${duto.opcional_nome}</td>
+        <td>${aplicacaoTexto}</td>
         <td>${duto.kg.toFixed(2)} kg</td>
         <td>${duto.quantidade}</td>
         <td>R$ ${formatarMoeda(duto.valor_tipo)}</td>
@@ -752,6 +789,7 @@ async function editarDuto(roomId, dutoId) {
         // Preencher os campos do formulário
         const tipoSelect = document.getElementById(`duto-tipo-${roomId}`);
         const opcionalSelect = document.getElementById(`duto-opcional-${roomId}`);
+        const aplicacaoSelect = document.getElementById(`aplicacao-duto-${roomId}`);
         const kgInput = document.getElementById(`duto-kg-${roomId}`);
         const quantidadeInput = document.getElementById(`duto-quantidade-${roomId}`);
         
@@ -778,6 +816,16 @@ async function editarDuto(roomId, dutoId) {
                 }
             }
             
+            // Selecionar aplicação
+            if (duto.aplicacao_Dutos) {
+                for (let i = 0; i < aplicacaoSelect.options.length; i++) {
+                    if (aplicacaoSelect.options[i].value == duto.aplicacao_Dutos) {
+                        aplicacaoSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            
             // Preencher outros campos
             kgInput.value = duto.kg;
             quantidadeInput.value = duto.quantidade;
@@ -798,6 +846,44 @@ async function editarDuto(roomId, dutoId) {
 }
 
 /**
+ * Obtém todos os dados dos dutos para salvar
+ */
+function getDutosData(roomId) {
+    const tbody = document.getElementById(`dutos-list-${roomId}`);
+    if (!tbody) return [];
+    
+    const rows = tbody.querySelectorAll('.duto-row');
+    const dutosData = [];
+    
+    rows.forEach(row => {
+        try {
+            const duto = JSON.parse(row.getAttribute('data-duto'));
+            // Garantir que só temos aplicacao_Dutos
+            const dutoParaSalvar = {
+                id: duto.id,
+                tipo: duto.tipo,
+                tipo_descricao: duto.tipo_descricao,
+                opcional_id: duto.opcional_id,
+                opcional_nome: duto.opcional_nome,
+                aplicacao_Dutos: duto.aplicacao_Dutos, // APENAS ESTE CAMPO
+                kg: duto.kg,
+                quantidade: duto.quantidade,
+                valor_tipo: duto.valor_tipo,
+                valor_opcional: duto.valor_opcional,
+                valor_cobre_por_kg: duto.valor_cobre_por_kg,
+                valor_unitario: duto.valor_unitario,
+                valor_total: duto.valor_total
+            };
+            dutosData.push(dutoParaSalvar);
+        } catch (error) {
+            console.error('Erro ao obter dados do duto:', error);
+        }
+    });
+    
+    return dutosData;
+}
+
+/**
  * Remove duto
  */
 function removerDuto(roomId, dutoId) {
@@ -810,7 +896,7 @@ function removerDuto(roomId, dutoId) {
     if (tbody.children.length === 0) {
         const emptyRow = document.createElement('tr');
         emptyRow.className = 'empty-row';
-        emptyRow.innerHTML = '<td colspan="8">Nenhum duto adicionado</td>';
+        emptyRow.innerHTML = '<td colspan="9">Nenhum duto adicionado</td>';
         tbody.appendChild(emptyRow);
     }
     
@@ -871,7 +957,7 @@ function limparDutos(roomId) {
     
     const emptyRow = document.createElement('tr');
     emptyRow.className = 'empty-row';
-    emptyRow.innerHTML = '<td colspan="8">Nenhum duto adicionado</td>';
+    emptyRow.innerHTML = '<td colspan="9">Nenhum duto adicionado</td>';
     tbody.appendChild(emptyRow);
     
     atualizarTotalDutos(roomId);
@@ -886,6 +972,8 @@ function formatarMoeda(valor) {
         maximumFractionDigits: 2
     });
 }
+
+
 
 // Exportar
 export {
@@ -905,6 +993,7 @@ export {
     editarDuto,
     atualizarTotalDutos,
     limparDutos,
+    getDutosData,
     formatarMoeda
 };
 
@@ -924,5 +1013,6 @@ if (typeof window !== 'undefined') {
     window.editarDuto = editarDuto;
     window.limparDutos = limparDutos;
     window.removerDuto = removerDuto;
+    window.getDutosData = getDutosData;
     window.formatarMoeda = formatarMoeda;
 }
