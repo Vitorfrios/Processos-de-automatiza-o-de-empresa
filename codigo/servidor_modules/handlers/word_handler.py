@@ -206,17 +206,18 @@ class WordHandler:
             # ou criar uma implementação específica
             template_path = self.templates_dir / "proposta_tecnica_template.docx"
             if not template_path.exists():
-                return None, "Template de proposta técnica não encontrado"
+                return None, None, "Template de proposta técnica não encontrado"
             
             # Obter dados da obra
             obra_data = self.get_obra_data(obra_id)
             if not obra_data:
-                return None, "Obra não encontrada"
+                return None, None, "Obra não encontrada"
             
             # Gerar contexto
             context = self.generate_context_for_obra(obra_data, "tecnica")
             
             # Carregar e preencher template
+            from docxtpl import DocxTemplate
             doc = DocxTemplate(str(template_path))
             doc.render(context)
             
@@ -226,12 +227,16 @@ class WordHandler:
                 output_path = tmp.name
                 doc.save(output_path)
             
-            return output_path, None
+            # Gerar nome do arquivo no formato PT_sigla_numero
+            filename = self.generate_pt_filename(obra_data)
+            
+            return output_path, filename, None
             
         except Exception as e:
             print(f"❌ Erro ao gerar proposta técnica: {e}")
+            import traceback
             traceback.print_exc()
-            return None, str(e)
+            return None, None, str(e)
     
     def generate_context_for_obra(self, obra_data, template_type="comercial"):
         """Gera contexto para preenchimento do template (método genérico - mantido para compatibilidade)"""
@@ -296,7 +301,7 @@ class WordHandler:
             print(f"❌ Erro ao gerar contexto: {e}")
             return {}
     
-    
+        
     def generate_proposta_comercial_avancada(self, obra_id):
         """Gera proposta comercial usando o gerador avançado"""
         try:
@@ -314,62 +319,105 @@ class WordHandler:
                 if docx_files:
                     template_path = docx_files[0]
                 else:
-                    return None, "Nenhum template encontrado na pasta word_templates"
+                    return None, None, "Nenhum template encontrado na pasta word_templates"
             
             # Gerar proposta
             output_path = pc_generator.generate_proposta_comercial(obra_id, template_path)
             
             if output_path:
-                return output_path, None
+                # Gerar nome do arquivo no formato PC_sigla_numero
+                obra_data = self.get_obra_data(obra_id)
+                if obra_data:
+                    filename = self.generate_pc_filename(obra_data)
+                else:
+                    # Fallback
+                    from datetime import datetime
+                    filename = f"PC_OBRA_{obra_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+                
+                return output_path, filename, None
             else:
-                return None, "Falha ao gerar documento"
+                return None, None, "Falha ao gerar documento"
                 
         except Exception as e:
             print(f"❌ Erro em generate_proposta_comercial_avancada: {e}")
+            import traceback
             traceback.print_exc()
-            return None, str(e)
+            return None, None, str(e)
+            
+        
     def generate_word_document(self, obra_id, template_type="comercial"):
-        """Gera documento Word baseado no template (método genérico - mantido para compatibilidade)"""
+        """Gera documento Word baseado no template"""
         try:
             # Para Proposta Comercial, usar o método avançado
             if template_type == "comercial":
                 return self.generate_proposta_comercial_avancada(obra_id)
-            # Para Proposta Técnica, usar o método avançado quando disponível
+            # Para Proposta Técnica, usar o método avançado
             elif template_type == "tecnica":
                 return self.generate_proposta_tecnica_avancada(obra_id)
             else:
-                return None, f"Tipo de template não suportado: {template_type}"
-                
+                return None, None, f"Tipo de template não suportado: {template_type}"
+                    
         except Exception as e:
             print(f"❌ Erro na geração do Word: {e}")
+            import traceback
             traceback.print_exc()
-            return None, str(e)
+            return None, None, str(e)
     
     def generate_both_documents(self, obra_id):
         """Gera ambos os documentos (comercial e técnico)"""
         try:
-            # Gerar proposta comercial usando o gerador avançado
-            pc_path, pc_error = self.generate_proposta_comercial_avancada(obra_id)
+            # Gerar proposta comercial
+            pc_path, pc_filename, pc_error = self.generate_proposta_comercial_avancada(obra_id)
             if pc_error:
-                return None, pc_error
+                return None, None, pc_error
             
             # Gerar proposta técnica
-            pt_path, pt_error = self.generate_proposta_tecnica_avancada(obra_id)
+            pt_path, pt_filename, pt_error = self.generate_proposta_tecnica_avancada(obra_id)
             if pt_error:
                 # Limpar arquivo gerado anteriormente
                 if pc_path and os.path.exists(pc_path):
                     os.unlink(pc_path)
-                return None, pt_error
+                return None, None, pt_error
             
             # Para ambos, criar um ZIP com os dois arquivos
-            # Por enquanto, retornamos apenas o comercial
-            # TODO: Implementar criação de ZIP
+            import zipfile
+            import tempfile
+            from datetime import datetime
             
-            return pc_path, None
+            # Criar arquivo ZIP temporário
+            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmp_zip:
+                zip_path = tmp_zip.name
+            
+            # Criar ZIP com os dois documentos
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                # Adicionar PC
+                if pc_path and os.path.exists(pc_path):
+                    zipf.write(pc_path, pc_filename)
+                
+                # Adicionar PT
+                if pt_path and os.path.exists(pt_path):
+                    zipf.write(pt_path, pt_filename)
+            
+            # Limpar arquivos individuais
+            if pc_path and os.path.exists(pc_path):
+                os.unlink(pc_path)
+            if pt_path and os.path.exists(pt_path):
+                os.unlink(pt_path)
+            
+            # Gerar nome do arquivo ZIP
+            obra_data = self.get_obra_data(obra_id)
+            if obra_data:
+                # Extrair base do nome (sigla_numero)
+                base_name = self.extract_filename_base(obra_data)
+                zip_filename = f"PC_PT_{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+            else:
+                zip_filename = f"PC_PT_{obra_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+            
+            return zip_path, zip_filename, None
             
         except Exception as e:
             print(f"❌ Erro ao gerar ambos documentos: {e}")
-            return None, str(e)
+            return None, None, str(e)
     
     def get_machine_types_with_specifications(self):
         """Obtém tipos de máquinas com suas especificações do BD"""
@@ -475,3 +523,108 @@ class WordHandler:
         except Exception as e:
             print(f"❌ Erro ao obter resumo da obra: {e}")
             return {"error": str(e)}
+        
+        
+    def extract_filename_base(self, obra_data):
+        """Extrai base do nome do arquivo (sigla_numero)"""
+        try:
+            import re
+            
+            # Extrair sigla
+            sigla = obra_data.get("empresaSigla", "")
+            if not sigla:
+                empresa_nome = obra_data.get("empresaNome", "")
+                if empresa_nome:
+                    # Extrair sigla entre parênteses
+                    match = re.search(r'\(([^)]+)\)', empresa_nome)
+                    if match:
+                        sigla = match.group(1)
+                    else:
+                        # Usar iniciais (primeiras 3 palavras, máximo 5 caracteres)
+                        palavras = empresa_nome.split()
+                        if palavras:
+                            # Pegar iniciais das primeiras 3 palavras
+                            iniciais = ''.join([p[0].upper() for p in palavras[:3] if p and p[0].isalpha()])
+                            sigla = iniciais[:5] if iniciais else "EMP"
+            
+            if not sigla:
+                sigla = "EMP"
+            
+            # Extrair número do cliente
+            cliente_numero = obra_data.get("clienteNumero", "")
+            if not cliente_numero:
+                # Verificar se tem número no nome do cliente
+                cliente_final = obra_data.get("clienteFinal", "")
+                if cliente_final:
+                    # Procurar por padrões como "Cliente 001" ou "001 - Cliente"
+                    numeros = re.findall(r'\b(\d{2,})\b', cliente_final)
+                    if numeros:
+                        cliente_numero = numeros[0]
+                    else:
+                        # Tentar extrair número da obra_id
+                        obra_id = str(obra_data.get("id", ""))
+                        numeros_obra = re.findall(r'\d+', obra_id)
+                        if numeros_obra:
+                            cliente_numero = numeros_obra[-1]  # Pegar o último número
+            
+            # Se ainda não tiver número, usar "001" como padrão
+            if not cliente_numero:
+                cliente_numero = "001"
+            # Garantir que o número tenha pelo menos 3 dígitos
+            elif len(cliente_numero) < 3:
+                cliente_numero = cliente_numero.zfill(3)
+            
+            # Limpar caracteres não alfanuméricos
+            sigla_limpa = re.sub(r'[^a-zA-Z0-9]', '', sigla)
+            numero_limpo = re.sub(r'[^a-zA-Z0-9]', '', str(cliente_numero))
+            
+            return f"{sigla_limpa}_{numero_limpo}"
+            
+        except Exception as e:
+            print(f"❌ Erro ao extrair base do nome: {e}")
+            return "EMP_001"
+    
+    
+    
+    def generate_pc_filename(self, obra_data):
+        """Gera nome do arquivo para Proposta Comercial no formato PC_Obra_sigla_numero_data"""
+        try:
+            from datetime import datetime
+            
+            # Extrair base do nome (sigla_numero)
+            base_name = self.extract_filename_base(obra_data)
+            
+            # Formatar data como dd-mm-yyyy (sem horas)
+            data_formatada = datetime.now().strftime("%d-%m-%Y")
+            
+            # Gerar nome no formato: PC_Obra_sigla_numero_data
+            return f"PC_Obra_{base_name}_{data_formatada}.docx"
+            
+        except Exception as e:
+            print(f"❌ Erro ao gerar nome PC: {e}")
+            # Fallback: PC_Obra_data
+            from datetime import datetime
+            data_fallback = datetime.now().strftime("%d-%m-%Y")
+            return f"PC_Obra_{data_fallback}.docx"
+    
+    
+    def generate_pt_filename(self, obra_data):
+        """Gera nome do arquivo para Proposta Técnica no formato PT_Obra_sigla_numero_data"""
+        try:
+            from datetime import datetime
+            
+            # Extrair base do nome (sigla_numero)
+            base_name = self.extract_filename_base(obra_data)
+            
+            # Formatar data como dd-mm-yyyy (sem horas)
+            data_formatada = datetime.now().strftime("%d-%m-%Y")
+            
+            # Gerar nome no formato: PT_Obra_sigla_numero_data
+            return f"PT_Obra_{base_name}_{data_formatada}.docx"
+            
+        except Exception as e:
+            print(f"❌ Erro ao gerar nome PT: {e}")
+            # Fallback: PT_Obra_data
+            from datetime import datetime
+            data_fallback = datetime.now().strftime("%d-%m-%Y")
+            return f"PT_Obra_{data_fallback}.docx"

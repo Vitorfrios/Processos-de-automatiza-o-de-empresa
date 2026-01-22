@@ -2476,16 +2476,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             from servidor_modules.handlers.word_handler import WordHandler
             word_handler = WordHandler(self.project_root, self.file_utils)
             
+            file_path = None
+            filename = None
+            error = None
+            
             if template_type == "ambos":
-                file_path, error = word_handler.generate_both_documents(obra_id)
+                file_path, filename, error = word_handler.generate_both_documents(obra_id)
             elif template_type == "comercial":
-                # Usar o método avançado
-                file_path, error = word_handler.generate_proposta_comercial_avancada(obra_id)
+                file_path, filename, error = word_handler.generate_proposta_comercial_avancada(obra_id)
             elif template_type == "tecnica":
-                # Usar o método avançado
-                file_path, error = word_handler.generate_proposta_tecnica_avancada(obra_id)
+                file_path, filename, error = word_handler.generate_proposta_tecnica_avancada(obra_id)
             else:
-                file_path, error = None, f"Tipo de template não suportado: {template_type}"
+                error = f"Tipo de template não suportado: {template_type}"
             
             if error:
                 self.send_json_response({
@@ -2494,15 +2496,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 }, status=500)
                 return
             
-            # Criar nome de arquivo amigável
+            # Obter dados da obra para o response
             obra_data = word_handler.get_obra_data(obra_id)
             obra_nome = obra_data.get("nome", "obra") if obra_data else obra_id
-            safe_name = "".join(c for c in obra_nome if c.isalnum() or c in (' ', '-', '_')).rstrip()
-            
-            from datetime import datetime
-            filename = f"Proposta_{template_type.capitalize()}_{safe_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
             
             # Salvar informações do arquivo gerado para download posterior
+            from datetime import datetime
+            import os
+            
             download_info = {
                 "file_path": file_path,
                 "filename": filename,
@@ -2528,7 +2529,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "obra_nome": obra_nome,
                 "template_type": template_type,
                 "size": download_info["size"],
-                "message": "Documento gerado com sucesso!"
+                "message": f"Documento {template_type} gerado com sucesso!"
             })
             
         except json.JSONDecodeError:

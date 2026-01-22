@@ -362,13 +362,8 @@ class WordPCGenerator:
             print(f"  - Obra: {context.get('obra_nome')}")
             print(f"  - Grupos de máquinas: {len(context.get('machines_spec_groups', []))}")
             
-            # Debug: mostrar grupos e máquinas
-            for i, group in enumerate(context.get('machines_spec_groups', [])):
-                print(f"  Grupo {i+1}: {group['especificacao']} - {len(group['machines'])} máquinas")
-                for j, machine in enumerate(group['machines']):
-                    print(f"    Máquina {j+1}: {machine['quantidade']}x {machine['tipo']} - {machine['fornecedor']}")
-            
             # Carregar e preencher template
+            from docxtpl import DocxTemplate
             doc = DocxTemplate(str(template_path))
             
             try:
@@ -397,8 +392,6 @@ class WordPCGenerator:
                 
             except Exception as template_error:
                 print(f"❌ Erro no template: {template_error}")
-                print("🔍 Contexto enviado ao template:")
-                print(json.dumps({k: v for k, v in context.items() if k != 'machines_list'}, indent=2, default=str))
                 raise
             
             # Salvar arquivo temporário
@@ -412,5 +405,76 @@ class WordPCGenerator:
             
         except Exception as e:
             print(f"❌ Erro ao gerar Proposta Comercial: {e}")
+            import traceback
             traceback.print_exc()
             return None
+        
+        
+        
+    def generate_filename(self, obra_data: Dict, template_type: str) -> str:
+        """Gera nome do arquivo no formato PC/PT_empresaSigla_numeroClienteFinal"""
+        try:
+            # Extrair sigla da empresa
+            empresa_nome = obra_data.get("empresaNome", "")
+            sigla = ""
+            
+            # Método 1: Tentar extrair do campo "empresaSigla" se existir
+            sigla = obra_data.get("empresaSigla", "")
+            
+            # Método 2: Se não tiver campo específico, tentar extrair do nome
+            if not sigla and empresa_nome:
+                import re
+                # Tentar extrair sigla entre parênteses
+                match = re.search(r'\(([^)]+)\)', empresa_nome)
+                if match:
+                    sigla = match.group(1)
+                else:
+                    # Se não houver parênteses, usar as primeiras letras
+                    palavras = empresa_nome.split()
+                    if palavras:
+                        sigla = ''.join([p[0].upper() for p in palavras if p])
+            
+            # Método 3: Sigla padrão
+            if not sigla:
+                sigla = "EMP"
+            
+            # Extrair número do cliente final
+            cliente_numero = obra_data.get("clienteNumero", "")
+            if not cliente_numero:
+                # Tentar extrair do nome do cliente final
+                cliente_final = obra_data.get("clienteFinal", "")
+                if cliente_final:
+                    # Extrair números do nome do cliente
+                    import re
+                    numeros = re.findall(r'\d+', cliente_final)
+                    if numeros:
+                        cliente_numero = numeros[0]
+                    else:
+                        cliente_numero = "001"
+                else:
+                    cliente_numero = "001"
+            
+            # Limpar caracteres especiais
+            sigla_limpa = re.sub(r'[^a-zA-Z0-9]', '', sigla)
+            numero_limpo = re.sub(r'[^a-zA-Z0-9]', '', str(cliente_numero))
+            
+            # Determinar prefixo
+            if template_type.lower() in ["comercial", "pc"]:
+                prefixo = "PC"
+            elif template_type.lower() in ["tecnica", "pt"]:
+                prefixo = "PT"
+            else:
+                prefixo = template_type.upper()
+            
+            # Gerar nome do arquivo
+            from datetime import datetime
+            data_hora = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{prefixo}_{sigla_limpa}_{numero_limpo}_{data_hora}.docx"
+            
+            return filename
+            
+        except Exception as e:
+            print(f"❌ Erro ao gerar nome do arquivo: {e}")
+            # Nome de fallback
+            from datetime import datetime
+            return f"{template_type.upper()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
