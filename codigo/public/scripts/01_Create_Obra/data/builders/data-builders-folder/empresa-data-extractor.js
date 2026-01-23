@@ -4,7 +4,6 @@
  * Extrai dados de empresa cadastrados inline
  */
 
-
 function extractEmpresaData(obraElement) {
     const empresaData = {};
     
@@ -21,24 +20,78 @@ function extractEmpresaData(obraElement) {
         'orcamentistaResponsavel', 'idGerado'
     ];
 
-    // 🆕 ESTRATÉGIA: PRIMEIRO buscar nos INPUTS ATUAIS (valores mais recentes)
     console.log('🔍 [EXTRACT EMPRESA] FASE 1 - Buscando nos INPUTS ATUAIS do formulário...');
     
     const formEmpresa = obraElement.querySelector('.empresa-formulario-ativo');
     if (formEmpresa) {
         console.log('📋 [EXTRACT EMPRESA] Formulário ativo encontrado, extraindo dados atuais...');
         
+        // 🆕 PRIORIDADE 1: Buscar dados do autocomplete (são os mais confiáveis)
+        const empresaInput = formEmpresa.querySelector('.empresa-input-cadastro');
+        if (empresaInput && empresaInput.dataset.siglaSelecionada) {
+            console.log('🎯 [EXTRACT EMPRESA] Dados do autocomplete encontrados:', {
+                sigla: empresaInput.dataset.siglaSelecionada,
+                nome: empresaInput.dataset.nomeSelecionado
+            });
+            
+            empresaData.empresaSigla = empresaInput.dataset.siglaSelecionada;
+            empresaData.empresaNome = empresaInput.dataset.nomeSelecionado || '';
+        }
+        
+        // 🆕 PRIORIDADE 2: Buscar nos campos de empresa (caso autocomplete não tenha dados)
+        if (!empresaData.empresaSigla || !empresaData.empresaNome) {
+            console.log('🔍 [EXTRACT EMPRESA] Buscando em campos de input...');
+            
+            // Buscar em todos os campos de empresa possíveis
+            const empresaInputs = [
+                ...formEmpresa.querySelectorAll('.empresa-input-cadastro, .empresa-input-readonly')
+            ];
+            
+            for (const input of empresaInputs) {
+                if (input && input.value && input.value.trim() !== '') {
+                    const valor = input.value.trim();
+                    console.log(`🏢 [EXTRACT EMPRESA] Campo empresa encontrado: "${valor}"`);
+                    
+                    // Verificar se está no formato "SIGLA - Nome"
+                    if (valor.includes(' - ')) {
+                        const partes = valor.split(' - ');
+                        if (!empresaData.empresaSigla) empresaData.empresaSigla = partes[0].trim();
+                        if (!empresaData.empresaNome) empresaData.empresaNome = partes.slice(1).join(' - ').trim();
+                        console.log(`✅ [EXTRACT EMPRESA] Empresa extraída do formato combinado: ${empresaData.empresaSigla} - ${empresaData.empresaNome}`);
+                    } else {
+                        // Se não tem hífen, verificar se é sigla ou nome
+                        if (!empresaData.empresaSigla && valor.length <= 10) {
+                            // Se for curto, assume que é sigla
+                            empresaData.empresaSigla = valor;
+                            console.log(`🏢 [EXTRACT EMPRESA] Sigla identificada: ${empresaData.empresaSigla}`);
+                        } else if (!empresaData.empresaNome) {
+                            // Se for mais longo, assume que é nome
+                            empresaData.empresaNome = valor;
+                            console.log(`🏢 [EXTRACT EMPRESA] Nome identificado: ${empresaData.empresaNome}`);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        // 🆕 BUSCAR CAMPOS SEPARADOS ESPECÍFICOS (se existirem campos dedicados)
+        console.log('🔍 [EXTRACT EMPRESA] Buscando campos específicos...');
+        
+        // Mapeamento dos outros campos
         const mapeamentoCampos = {
-            // 🆕 PRIORIDADE: Inputs de cadastro/edição (valores mais recentes)
-            'empresa-input-cadastro': ['empresaSigla', 'empresaNome'],
+            // Campos de empresa separados (caso existam)
+            'empresa-sigla-input': ['empresaSigla'],
+            'empresa-nome-input': ['empresaNome'],
+            
+            // Outros campos
             'numero-cliente-final-cadastro': ['numeroClienteFinal'], 
             'cliente-final-cadastro': ['clienteFinal'],
             'codigo-cliente-cadastro': ['codigoCliente'],
             'data-cadastro-cadastro': ['dataCadastro'],
             'orcamentista-responsavel-cadastro': ['orcamentistaResponsavel'],
             
-            // 🆕 Inputs de visualização/readonly
-            'empresa-input-readonly': ['empresaSigla', 'empresaNome'],
+            // Inputs de visualização/readonly
             'numero-cliente-final-readonly': ['numeroClienteFinal'],
             'cliente-final-input': ['clienteFinal'],
             'codigo-cliente-input': ['codigoCliente'], 
@@ -59,42 +112,27 @@ function extractEmpresaData(obraElement) {
                             empresaData[campo] = parseInt(valor) || 0;
                             console.log(`🔢 [EXTRACT EMPRESA] ${campo} convertido para número: ${empresaData[campo]}`);
                         } else if (campo === 'empresaSigla' && valor.includes(' - ')) {
-                            // Extrair sigla e nome do formato "SIGLA - Nome"
+                            // Extrair só a sigla do formato "SIGLA - Nome"
                             const partes = valor.split(' - ');
-                            empresaData.empresaSigla = partes[0];
-                            if (partes[1]) {
-                                empresaData.empresaNome = partes[1];
-                            }
-                            console.log(`🏢 [EXTRACT EMPRESA] Empresa extraída: ${empresaData.empresaSigla} - ${empresaData.empresaNome}`);
-                        } else if (campo === 'empresaNome' && !valor.includes(' - ')) {
-                            // Se for apenas o nome, sem sigla
-                            empresaData[campo] = valor;
-                        } else if (campo !== 'empresaSigla') {
-                            // Para outros campos
+                            empresaData.empresaSigla = partes[0].trim();
+                            console.log(`🏢 [EXTRACT EMPRESA] Sigla extraída de campo combinado: ${empresaData.empresaSigla}`);
+                        } else if (campo === 'empresaNome' && valor.includes(' - ')) {
+                            // Extrair só o nome do formato "SIGLA - Nome"
+                            const partes = valor.split(' - ');
+                            empresaData.empresaNome = partes.slice(1).join(' - ').trim();
+                            console.log(`🏢 [EXTRACT EMPRESA] Nome extraído de campo combinado: ${empresaData.empresaNome}`);
+                        } else {
                             empresaData[campo] = valor;
                         }
                     }
                 });
             }
         });
-
-        // 🆕 BUSCAR DADOS DO AUTOCOMPLETE (prioridade máxima)
-        const empresaInput = formEmpresa.querySelector('.empresa-input-cadastro');
-        if (empresaInput && empresaInput.dataset.siglaSelecionada) {
-            console.log('🎯 [EXTRACT EMPRESA] Dados do autocomplete encontrados:', {
-                sigla: empresaInput.dataset.siglaSelecionada,
-                nome: empresaInput.dataset.nomeSelecionado
-            });
-            
-            // 🆕 SOBRESCREVER com dados do autocomplete (são os mais confiáveis)
-            empresaData.empresaSigla = empresaInput.dataset.siglaSelecionada;
-            empresaData.empresaNome = empresaInput.dataset.nomeSelecionado;
-        }
     } else {
         console.log('❌ [EXTRACT EMPRESA] Formulário ativo não encontrado');
     }
 
-    // 🆕 FASE 2: Só buscar nos data attributes os campos que ainda estão faltando
+    // 🆕 FASE 2: Buscar nos data attributes os campos que ainda estão faltando
     console.log('🔍 [EXTRACT EMPRESA] FASE 2 - Buscando campos faltantes nos data attributes...');
     
     const camposFaltantes = camposEmpresa.filter(campo => !empresaData[campo]);
@@ -102,45 +140,66 @@ function extractEmpresaData(obraElement) {
     
     camposFaltantes.forEach(campo => {
         const valorDataAttr = obraElement.dataset[campo];
-        if (valorDataAttr) {
+        if (valorDataAttr !== undefined && valorDataAttr !== null && valorDataAttr !== '') {
+            console.log(`📦 [EXTRACT EMPRESA] Data-attribute ${campo}: "${valorDataAttr}"`);
+            
             if (campo === 'numeroClienteFinal') {
                 empresaData[campo] = parseInt(valorDataAttr) || 0;
+            } else if (campo === 'empresaSigla') {
+                // Extrair sigla do data-attribute
+                if (valorDataAttr.includes(' - ')) {
+                    const partes = valorDataAttr.split(' - ');
+                    empresaData.empresaSigla = partes[0].trim();
+                    console.log(`🏢 [EXTRACT EMPRESA] Sigla extraída do data-attribute combinado: ${empresaData.empresaSigla}`);
+                    
+                    // Se também precisar do nome e não tiver ainda
+                    if (!empresaData.empresaNome && partes[1]) {
+                        empresaData.empresaNome = partes.slice(1).join(' - ').trim();
+                        console.log(`🏢 [EXTRACT EMPRESA] Nome extraído do data-attribute combinado: ${empresaData.empresaNome}`);
+                    }
+                } else {
+                    empresaData.empresaSigla = valorDataAttr;
+                }
+            } else if (campo === 'empresaNome') {
+                // Extrair nome do data-attribute
+                if (valorDataAttr.includes(' - ')) {
+                    const partes = valorDataAttr.split(' - ');
+                    empresaData.empresaNome = partes.slice(1).join(' - ').trim();
+                    console.log(`🏢 [EXTRACT EMPRESA] Nome extraído do data-attribute combinado: ${empresaData.empresaNome}`);
+                    
+                    // Se também precisar da sigla e não tiver ainda
+                    if (!empresaData.empresaSigla && partes[0]) {
+                        empresaData.empresaSigla = partes[0].trim();
+                        console.log(`🏢 [EXTRACT EMPRESA] Sigla extraída do data-attribute combinado: ${empresaData.empresaSigla}`);
+                    }
+                } else {
+                    empresaData.empresaNome = valorDataAttr;
+                }
             } else {
                 empresaData[campo] = valorDataAttr;
             }
-            console.log(`📦 [EXTRACT EMPRESA] ${campo} extraído do data-attribute: ${empresaData[campo]}`);
         }
     });
 
-    // 🆕 VALIDAÇÃO FINAL E CORREÇÕES
     console.log('🔍 [EXTRACT EMPRESA] FASE 3 - Validação final...');
     
-    // 🆕 CORRIGIR: Se temos empresaSigla mas não temos empresaNome (ou vice-versa)
-    if (empresaData.empresaSigla && !empresaData.empresaNome) {
-        console.log('⚠️ [EXTRACT EMPRESA] Temos sigla mas não nome, buscando nome...');
-        // Tentar buscar o nome de outra fonte
-        const empresaInput = formEmpresa?.querySelector('.empresa-input-cadastro, .empresa-input-readonly');
-        if (empresaInput?.value && empresaInput.value.includes(' - ')) {
-            const partes = empresaInput.value.split(' - ');
-            if (partes[0] === empresaData.empresaSigla && partes[1]) {
-                empresaData.empresaNome = partes[1];
-                console.log(`✅ [EXTRACT EMPRESA] Nome recuperado: ${empresaData.empresaNome}`);
-            }
-        }
-    }
-
-    // 🆕 CORRIGIR: Formatar data se necessário
-    if (empresaData.dataCadastro && !empresaData.dataCadastro.includes('T')) {
-        console.log(`📅 [EXTRACT EMPRESA] Data no formato local: ${empresaData.dataCadastro}`);
-        // Manter formato local se não for ISO
+    // VERIFICAÇÃO FINAL - garantir que temos pelo menos sigla ou nome
+    if (!empresaData.empresaSigla && empresaData.empresaNome) {
+        console.log('⚠️ [EXTRACT EMPRESA] Temos nome mas não sigla');
+    } else if (empresaData.empresaSigla && !empresaData.empresaNome) {
+        console.log('⚠️ [EXTRACT EMPRESA] Temos sigla mas não nome');
+    } else if (empresaData.empresaSigla && empresaData.empresaNome) {
+        console.log(`✅ [EXTRACT EMPRESA] Empresa completa: ${empresaData.empresaSigla} - ${empresaData.empresaNome}`);
+    } else {
+        console.log('❌ [EXTRACT EMPRESA] Nenhum dado de empresa encontrado');
     }
 
     console.log('🏢 [EXTRACT EMPRESA] DADOS FINAIS EXTRAÍDOS:', empresaData);
     
-    // 🆕 VERIFICAÇÃO CRÍTICA
+    // VERIFICAÇÃO CRÍTICA
     const statusCampos = {};
     camposEmpresa.forEach(campo => {
-        statusCampos[campo] = empresaData[campo] 
+        statusCampos[campo] = empresaData[campo] !== undefined 
             ? `✅ ${empresaData[campo]}` 
             : '❌ AUSENTE';
     });

@@ -186,15 +186,15 @@
     },
     {
       "id": "obra_u20",
-      "nome": "ART-001",
+      "nome": "ART-1",
       "empresa_id": "empresa_obra_u20",
-      "empresaSigla": "ART",
-      "empresaNome": "ARTECAL",
+      "empresaSigla": "SRA",
+      "empresaNome": "SRA",
       "numeroClienteFinal": 1,
       "clienteFinal": "gh",
       "codigoCliente": "gh",
       "orcamentistaResponsavel": "gh",
-      "dataCadastro": "22/01/2026",
+      "dataCadastro": "23/01/2026",
       "projetos": [
         {
           "id": "obra_u20_proj_z59_3",
@@ -306,73 +306,19 @@
                       "potenciaAplicada": "45TR"
                     }
                   ],
-                  "configuracoesSelecionadas": [
-                    {
-                      "id": 1,
-                      "nome": "Unidade interna instalada no forro"
-                    },
-                    {
-                      "id": 2,
-                      "nome": "Unidade externa em laje técnica"
-                    },
-                    {
-                      "id": 3,
-                      "nome": "Sistema de drenagem integrado"
-                    }
-                  ],
+                  "configuracoesSelecionadas": [],
                   "precoTotal": 5027,
                   "potenciaSelecionada": "45TR",
                   "tipoSelecionado": "Split System"
-                },
-                {
-                  "nome": "FH Filtros-01A (FH 200 G4+F5 700m³/h)",
-                  "tipo": "FH Filtros",
-                  "potencia": "FH 200 G4+F5 700m³/h",
-                  "tensao": "220V/1F",
-                  "quantidade": 1,
-                  "aplicacao_machines": "pressurizacao",
-                  "precoBase": 303,
-                  "opcoesSelecionadas": [
-                    {
-                      "id": 1,
-                      "name": "com 10mmCA",
-                      "value": 0,
-                      "originalName": "com 10mmCA",
-                      "potenciaAplicada": "FH 200 G4+F5 700m³/h"
-                    },
-                    {
-                      "id": 2,
-                      "name": "com 15mmCA",
-                      "value": 0,
-                      "originalName": "com 15mmCA",
-                      "potenciaAplicada": "FH 200 G4+F5 700m³/h"
-                    },
-                    {
-                      "id": 3,
-                      "name": "com 20mmCA",
-                      "value": 0,
-                      "originalName": "com 20mmCA",
-                      "potenciaAplicada": "FH 200 G4+F5 700m³/h"
-                    }
-                  ],
-                  "configuracoesSelecionadas": [
-                    {
-                      "id": 1,
-                      "nome": "Instalação filtros FH"
-                    }
-                  ],
-                  "precoTotal": 303,
-                  "potenciaSelecionada": "FH 200 G4+F5 700m³/h",
-                  "tipoSelecionado": "FH Filtros"
                 }
               ],
               "capacidade": {
                 "fatorSeguranca": 10,
                 "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": 3,
-                "solucaoBackup": 3,
-                "totalCapacidade": 9,
-                "folga": 50,
+                "solucao": 7,
+                "solucaoBackup": 7,
+                "totalCapacidade": 7,
+                "folga": 16.7,
                 "backup": "n"
               },
               "ganhosTermicos": {
@@ -446,7 +392,7 @@
                 "conjuntos": [],
                 "valorTotalGeralTubos": 0
               },
-              "somavaloresmaquinatotal": 64883
+              "somavaloresmaquinatotal": 64580
             },
             {
               "id": "obra_u20_proj_z59_3_sala_s73_2",
@@ -469,10 +415,10 @@
                 "numPessoas": 1,
                 "pressurizacaoSetpoint": 0,
                 "setpointTemp": 25,
-                "combateIncendio": "manual",
-                "pressurizacao": false,
                 "numPortasDuplas": 0,
-                "numPortasSimples": 0
+                "numPortasSimples": 0,
+                "combateIncendio": "manual",
+                "pressurizacao": false
               },
               "maquinas": [
                 {
@@ -547,12 +493,7 @@
                       "potenciaAplicada": "18200m³/h"
                     }
                   ],
-                  "configuracoesSelecionadas": [
-                    {
-                      "id": 1,
-                      "nome": "Instalação dutos axiais"
-                    }
-                  ],
+                  "configuracoesSelecionadas": [],
                   "precoTotal": 1021,
                   "potenciaSelecionada": "18200m³/h",
                   "tipoSelecionado": "Tubo Axial"
@@ -674,11 +615,11 @@
           "servicos": {
             "engenharia": {
               "valor": 15000,
-              "descricao": "serviço"
+              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
             },
             "adicionais": []
           },
-          "valorTotalProjeto": 242113
+          "valorTotalProjeto": 241810
         },
         {
           "id": "obra_u20_proj_s32_6",
@@ -790,32 +731,19 @@
                       "potenciaAplicada": "4TR"
                     }
                   ],
-                  "configuracoesSelecionadas": [
-                    {
-                      "id": 2,
-                      "nome": "Bocal acoplado à rede de dutos por lona flexível. Distribuição por grelhas"
-                    },
-                    {
-                      "id": 3,
-                      "nome": "Condicionadores fixados externamente à SE, sobre mão-francesa na parede"
-                    },
-                    {
-                      "id": 5,
-                      "nome": "Evaporadoras em casa de máquinas"
-                    }
-                  ],
+                  "configuracoesSelecionadas": [],
                   "precoTotal": 64721.2,
                   "potenciaSelecionada": "4TR",
                   "tipoSelecionado": "Wall Mounted"
                 }
               ],
               "capacidade": {
-                "fatorSeguranca": 1.2,
+                "fatorSeguranca": 10,
                 "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": 2,
-                "solucaoBackup": 3,
-                "totalCapacidade": 20,
-                "folga": 42.9,
+                "solucao": 16,
+                "solucaoBackup": 17,
+                "totalCapacidade": 16,
+                "folga": 14.3,
                 "backup": "n+1"
               },
               "ganhosTermicos": {
@@ -929,7 +857,7 @@
             },
             "adicionais": [
               {
-                "id": "adicional-1769120982958",
+                "id": "adicional-1769143438731",
                 "valor": 13000,
                 "descricao": "ajuste tecnico"
               }
@@ -938,7 +866,76 @@
           "valorTotalProjeto": 251194.2
         }
       ],
-      "valorTotalObra": 493307.2
+      "valorTotalObra": 493004.2
+    },
+    {
+      "id": "obra_f57",
+      "nome": "Obra2",
+      "empresa_id": "empresa_obra_f57",
+      "empresaSigla": "AMC",
+      "empresaNome": "AMC SOLUÇÕES",
+      "numeroClienteFinal": 1,
+      "dataCadastro": "23/01/2026",
+      "projetos": [
+        {
+          "id": "obra_f57_proj_y98_3",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_f57_proj_y98_3_sala_y93_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "acessorios": [],
+              "dutos": [],
+              "tubulacao": {
+                "conjuntos": [],
+                "valorTotalGeralTubos": 0
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 0
+        }
+      ],
+      "valorTotalObra": 0
     }
   ]
 }

@@ -1,6 +1,6 @@
 /**
  * servicos.js
- * Gerenciador dinâmico de seções de serviços - ATUALIZADO (CORRIGIDO)
+ * Gerenciador dinâmico de seções de serviços - ATUALIZADO (COM DESCRIÇÃO PADRÃO)
  */
 
 /**
@@ -57,6 +57,9 @@ function buildServicosInProject(projectId) {
         return ''
     }
 
+    // Descrição padrão da engenharia
+    const descricaoPadraoEngenharia = "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI.";
+
     return `
         <div class="section-block" data-project-id="${projectId}">
             <div class="section-header">
@@ -81,7 +84,7 @@ function buildServicosInProject(projectId) {
                         </div>
                         <div class="field-group">
                             <label>Descrição</label>
-                            <textarea class="input-texto" placeholder="Descreva o serviço de engenharia"></textarea>
+                            <textarea class="input-texto" placeholder="Descreva o serviço de engenharia">${descricaoPadraoEngenharia}</textarea>
                         </div>
                     </div>
                 </div>
