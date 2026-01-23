@@ -1,6 +1,6 @@
-# codigo/servidor_modules/generators/wordPC_generator.py
+# servidor_modules/generators/wordPC_generator.py
 """
-wordPC_generator.py - Gerador de Proposta Comercial (PC)
+wordPC_generator.py - Gerador de Proposta Comercial (PC) - VERSÃO CORRIGIDA FINAL
 """
 
 import json
@@ -9,11 +9,11 @@ from datetime import datetime
 from pathlib import Path
 from docxtpl import DocxTemplate
 import traceback
-from typing import Dict, List, Any, Optional
-
+from typing import Dict, List, Any, Optional, Tuple
+import re
 
 class WordPCGenerator:
-    """Gerador específico para Proposta Comercial"""
+    """Gerador específico para Proposta Comercial - VERSÃO CORRIGIDA FINAL"""
     
     def __init__(self, project_root: Path, file_utils):
         self.project_root = project_root
@@ -69,168 +69,342 @@ class WordPCGenerator:
     
     def format_currency(self, value: float) -> str:
         """Formata valor monetário"""
+        if not value:
+            return "R$ 0,00"
         return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     
-# No método extract_machines_by_specification, atualize a parte que prepara a máquina:
-
-    def extract_machines_by_specification(self, projetos: List[Dict]) -> Dict[str, List[Dict]]:
-        """
-        Extrai máquinas agrupadas por especificação
-        Retorna: {"Climatização": [máquinas], "Pressurização": [máquinas], etc.}
-        """
-        machines_by_spec = {}
+    def group_maquinas_by_type_and_impostos(self, maquinas: List[Dict]) -> List[Tuple[List[Dict], Dict]]:
+        """Agrupa máquinas por tipo e depois mostra impostos após todas as máquinas do mesmo tipo"""
+        grupos = []
+        maquinas_processadas = []
         
-        for projeto in projetos:
+        for maquina in maquinas:
+            # Verificar se esta máquina já foi processada
+            if maquina in maquinas_processadas:
+                continue
+            
+            # Criar chave única para tipo e impostos
+            tipo_maquina = maquina.get("tipo", "")
+            chave_grupo = (
+                tipo_maquina,
+                maquina.get("fornecedor", ""),
+                maquina.get("frete", ""),
+                maquina.get("icms", ""),
+                maquina.get("ipi", "")
+            )
+            
+            # Encontrar todas as máquinas do mesmo tipo com os mesmos impostos
+            grupo_maquinas = []
+            for outra_maquina in maquinas:
+                if outra_maquina in maquinas_processadas:
+                    continue
+                    
+                outra_chave = (
+                    outra_maquina.get("tipo", ""),
+                    outra_maquina.get("fornecedor", ""),
+                    outra_maquina.get("frete", ""),
+                    outra_maquina.get("icms", ""),
+                    outra_maquina.get("ipi", "")
+                )
+                
+                if chave_grupo == outra_chave:
+                    grupo_maquinas.append(outra_maquina)
+                    maquinas_processadas.append(outra_maquina)
+            
+            if grupo_maquinas:
+                # Criar resumo de impostos para o grupo
+                impostos_grupo = {
+                    "tipo_maquina": tipo_maquina,
+                    "fornecedor": maquina.get("fornecedor", ""),
+                    "frete": maquina.get("frete", ""),
+                    "icms": maquina.get("icms", ""),
+                    "ipi": maquina.get("ipi", ""),
+                    "pis_cofins": maquina.get("pis_cofins", ""),
+                    "prazo": maquina.get("prazo", "")
+                }
+                
+                grupos.append((grupo_maquinas, impostos_grupo))
+        
+        return grupos
+    
+    def organize_maquinas_for_template(self, maquinas: List[Dict]) -> List[Dict]:
+        """
+        Organiza máquinas para o template no formato desejado:
+        - Lista de grupos, onde cada grupo tem:
+          - Lista de máquinas do mesmo tipo
+          - Informações de impostos (após todas as máquinas do grupo)
+        """
+        # Primeiro, agrupar todas as máquinas por tipo e impostos
+        grupos_tipo_impostos = self.group_maquinas_by_type_and_impostos(maquinas)
+        
+        # Agora vamos processar cada grupo para o formato final
+        resultado = []
+        
+        for grupo_maquinas, impostos in grupos_tipo_impostos:
+            # Para cada grupo, adicionar as máquinas e depois os impostos
+            grupo_para_template = {
+                "maquinas": grupo_maquinas,
+                "tem_multiplas_maquinas": len(grupo_maquinas) > 1,
+                "impostos": impostos,
+                "tem_impostos": any([
+                    impostos.get("fornecedor"),
+                    impostos.get("frete"),
+                    impostos.get("icms"),
+                    impostos.get("ipi")
+                ])
+            }
+            resultado.append(grupo_para_template)
+        
+        return resultado
+    
+    def extract_items_by_aplicacao_and_projeto(self, projetos: List[Dict]) -> List[Dict]:
+        """
+        Extrai máquinas, dutos e acessórios agrupados por projeto e aplicação
+        ESTRUTURA: Lista de projetos -> cada projeto tem suas aplicações
+        """
+        projetos_resultado = []
+        
+        for projeto_index, projeto in enumerate(projetos):
             if not isinstance(projeto, dict):
                 continue
                 
+            projeto_nome = projeto.get("nome", f"Projeto {projeto_index + 1}")
+            projeto_valor = projeto.get("valorTotalProjeto", 0)
+            
+            # Definição das aplicações na ordem correta
+            aplicacoes = [
+                {"tipo": "climatizacao", "nome": "Climatização", "maquinas": [], "dutos": [], "acessorios": []},
+                {"tipo": "pressurizacao", "nome": "Pressurização/Ventilação", "maquinas": [], "dutos": [], "acessorios": []},
+                {"tipo": "exaustao_bateria", "nome": "Exaustão Sala de Bateria", "maquinas": [], "dutos": [], "acessorios": []},
+                {"tipo": "exaustao_baia_trafo", "nome": "Exaustão Baia de Trafo", "maquinas": [], "dutos": [], "acessorios": []}
+            ]
+            
+            aplicacoes_dict = {app["tipo"]: app for app in aplicacoes}
+            
             salas = projeto.get("salas", [])
             for sala in salas:
                 if not isinstance(sala, dict):
                     continue
-                    
+                
+                ambiente_nome = sala.get("nome", "Ambiente")
+                
+                # Processar máquinas
                 maquinas = sala.get("maquinas", [])
                 for maquina in maquinas:
                     if not isinstance(maquina, dict):
                         continue
                     
-                    # Obter tipo da máquina
-                    tipo_maquina = maquina.get("tipo", "")
-                    machine_data = self.get_machine_data_by_type(tipo_maquina)
-                    
-                    # Obter especificação do BD
-                    especificacao = machine_data.get("especificacao", "Geral") if machine_data else "Geral"
-                    
-                    # Se não tiver especificação, tentar inferir do nome
-                    if not especificacao or especificacao == "":
-                        tipo_lower = tipo_maquina.lower()
-                        if "press" in tipo_lower or "ventil" in tipo_lower or "exaust" in tipo_lower:
-                            especificacao = "Pressurização/Ventilação"
-                        elif "climat" in tipo_lower or "split" in tipo_lower or "wall" in tipo_lower:
-                            especificacao = "Climatização"
-                        elif "filtro" in tipo_lower:
-                            especificacao = "Filtragem"
-                        else:
-                            especificacao = "Equipamentos"
-                    
-                    # Buscar fornecedor nos impostos (CORREÇÃO: usar "FORNECEDOR" se existir, senão buscar em outro lugar)
-                    impostos = machine_data.get("impostos", {}) if machine_data else {}
-                    fornecedor = "Não especificado"
-                    
-                    # Verificar diferentes possíveis nomes para fornecedor
-                    fornecedor_keys = ["FORNECEDOR", "FABRICANTE", "MARCA"]
-                    for key in fornecedor_keys:
-                        if key in impostos:
-                            fornecedor = impostos[key]
-                            break
-                    
-                    # Preparar dados da máquina para o template
-                    maquina_template = {
-                        "tipo": maquina.get("tipo", ""),
-                        "nome": maquina.get("nome", ""),
-                        "potencia": maquina.get("potencia", ""),
-                        "quantidade": maquina.get("quantidade", 1),
-                        "preco_total": maquina.get("precoTotal", 0),
-                        "preco_total_formatado": self.format_currency(maquina.get("precoTotal", 0)),
-                        "ambiente": sala.get("nome", ""),
-                        "opcoes": maquina.get("opcoesSelecionadas", []),
-                        "configuracoes": maquina.get("configuracoesSelecionadas", []),
-                        "fornecedor": fornecedor,
-                        "frete": impostos.get("FRETE", "") if impostos else "",
-                        "icms": impostos.get("ICMS", "") if impostos else "",
-                        "ipi": impostos.get("IPI", "") if impostos else "",
-                        "dados_completos": maquina  # Mantém dados completos para referência
-                    }
-                    
-                    # Adicionar ao grupo correto
-                    if especificacao not in machines_by_spec:
-                        machines_by_spec[especificacao] = []
-                    
-                    machines_by_spec[especificacao].append(maquina_template)
-        
-        return machines_by_spec
-    
-    def calculate_totals(self, obra_data: Dict) -> Dict:
-        """Calcula totais da obra"""
-        total_obra = obra_data.get("valorTotalObra", 0)
-        
-        # Calcular total de máquinas
-        total_maquinas = 0
-        total_servicos = 0
-        
-        projetos = obra_data.get("projetos", [])
-        for projeto in projetos:
-            if isinstance(projeto, dict):
-                # Valor do projeto
-                valor_projeto = projeto.get("valorTotalProjeto", 0)
+                    # Obter aplicação da máquina
+                    aplicacao_tipo = maquina.get("aplicacao_machines", "").lower()
+                    if aplicacao_tipo in aplicacoes_dict:
+                        # Buscar dados da máquina no BD
+                        machine_data = self.get_machine_data_by_type(maquina.get("tipo", ""))
+                        
+                        # Obter impostos específicos desta máquina
+                        impostos = {}
+                        if machine_data:
+                            # Obter impostos das opções selecionadas ou do padrão
+                            opcoes_selecionadas = maquina.get("opcoesSelecionadas", [])
+                            configuracoes_selecionadas = maquina.get("configuracoesSelecionadas", [])
+                            
+                            # Verificar se há impostos nas opções selecionadas
+                            for opcao_nome in opcoes_selecionadas:
+                                opcao_data = next((opt for opt in machine_data.get("options", []) 
+                                                  if opt.get("name") == opcao_nome), {})
+                                if opcao_data.get("impostos"):
+                                    impostos.update(opcao_data["impostos"])
+                            
+                            # Se não encontrou nas opções, usar impostos padrão da máquina
+                            if not impostos and machine_data.get("impostos"):
+                                impostos.update(machine_data["impostos"])
+                        
+                        # Buscar fornecedor
+                        fornecedor = "Não especificado"
+                        fornecedor_keys = ["FORNECEDOR", "FABRICANTE", "MARCA"]
+                        for key in fornecedor_keys:
+                            if key in impostos:
+                                fornecedor = impostos[key]
+                                break
+                        
+                        maquina_template = {
+                            "tipo": maquina.get("tipo", ""),
+                            "nome": maquina.get("nome", ""),
+                            "potencia": maquina.get("potencia", ""),
+                            "quantidade": maquina.get("quantidade", 1),
+                            "preco_total": maquina.get("precoTotal", 0),
+                            "preco_total_formatado": self.format_currency(maquina.get("precoTotal", 0)),
+                            "ambiente": ambiente_nome,
+                            "opcoes": maquina.get("opcoesSelecionadas", []),
+                            "configuracoes": maquina.get("configuracoesSelecionadas", []),
+                            "fornecedor": fornecedor,
+                            "frete": impostos.get("FRETE", ""),
+                            "icms": impostos.get("ICMS", ""),
+                            "ipi": impostos.get("IPI", ""),
+                            "pis_cofins": impostos.get("PIS_COFINS", ""),
+                            "prazo": impostos.get("PRAZO", ""),
+                            "impostos": impostos,
+                            "dados_completos": maquina,
+                            "descricao_completa": f"{maquina.get('tipo', '')} de {maquina.get('potencia', '')}"
+                        }
+                        
+                        aplicacoes_dict[aplicacao_tipo]["maquinas"].append(maquina_template)
                 
-                # Serviços
-                servicos = projeto.get("servicos", {})
-                if isinstance(servicos, dict):
-                    # Engenharia
-                    engenharia = servicos.get("engenharia", {})
-                    if isinstance(engenharia, dict):
-                        total_servicos += engenharia.get("valor", 0)
+                # Processar dutos - SEM dimensão
+                dutos = sala.get("dutos", [])
+                for duto in dutos:
+                    if not isinstance(duto, dict):
+                        continue
                     
-                    # Adicionais
-                    adicionais = servicos.get("adicionais", [])
-                    if isinstance(adicionais, list):
-                        for adicional in adicionais:
-                            if isinstance(adicional, dict):
-                                total_servicos += adicional.get("valor", 0)
+                    aplicacao_tipo = duto.get("aplicacao_Dutos", "").lower()
+                    if aplicacao_tipo in aplicacoes_dict:
+                        tipo_duto = duto.get("tipo_descricao", duto.get("tipo", "Duto"))
+                        
+                        duto_template = {
+                            "tipo": tipo_duto,
+                            "tipo_descricao": tipo_duto,
+                            "dimensao": duto.get("dimensao", ""),  # Mantido para compatibilidade, mas não será usado no template
+                            "quantidade": duto.get("quantidade", 1),
+                            "preco_total": duto.get("valor_total", 0),
+                            "preco_total_formatado": self.format_currency(duto.get("valor_total", 0)),
+                            "ambiente": ambiente_nome,
+                            "material": duto.get("tipo", ""),
+                            "valor_unitario": duto.get("valor_unitario", 0),
+                            "valor_unitario_formatado": self.format_currency(duto.get("valor_unitario", 0)),
+                            "descricao": duto.get("descricao", "")
+                        }
+                        
+                        aplicacoes_dict[aplicacao_tipo]["dutos"].append(duto_template)
+                
+                # Processar acessórios - COM dimensão
+                acessorios = sala.get("acessorios", [])
+                for acessorio in acessorios:
+                    if not isinstance(acessorio, dict):
+                        continue
+                    
+                    aplicacao_tipo = acessorio.get("aplicacao_Acessorio", "").lower()
+                    if aplicacao_tipo in aplicacoes_dict:
+                        acessorio_template = {
+                            "tipo": acessorio.get("tipo", "Acessório"),
+                            "dimensao": acessorio.get("dimensao", ""),
+                            "quantidade": acessorio.get("quantidade", 1),
+                            "descricao": acessorio.get("descricao", ""),
+                            "preco_total": acessorio.get("valor_total", 0),
+                            "preco_total_formatado": self.format_currency(acessorio.get("valor_total", 0)),
+                            "ambiente": ambiente_nome,
+                            "valor_unitario": acessorio.get("valor_unitario", 0),
+                            "valor_unitario_formatado": self.format_currency(acessorio.get("valor_unitario", 0)),
+                            "tem_dimensao": bool(acessorio.get("dimensao", "").strip())
+                        }
+                        
+                        aplicacoes_dict[aplicacao_tipo]["acessorios"].append(acessorio_template)
+            
+            # Calcular totais por aplicação e remover aplicações vazias
+            aplicacoes_com_totais = []
+            for app in aplicacoes:
+                # Calcular totais
+                total_maquinas = sum(m.get("preco_total", 0) for m in app["maquinas"])
+                total_dutos = sum(d.get("preco_total", 0) for d in app["dutos"])
+                total_acessorios = sum(a.get("preco_total", 0) for a in app["acessorios"])
+                total_aplicacao = total_maquinas + total_dutos + total_acessorios
+                
+                # Adicionar apenas se tiver itens
+                if app["maquinas"] or app["dutos"] or app["acessorios"]:
+                    # Organizar máquinas para template
+                    maquinas_organizadas = self.organize_maquinas_for_template(app["maquinas"])
+                    
+                    app.update({
+                        "maquinas_organizadas": maquinas_organizadas,
+                        "tem_maquinas": len(maquinas_organizadas) > 0,
+                        "total_maquinas": total_maquinas,
+                        "total_maquinas_formatado": self.format_currency(total_maquinas),
+                        "total_dutos": total_dutos,
+                        "total_dutos_formatado": self.format_currency(total_dutos),
+                        "total_acessorios": total_acessorios,
+                        "total_acessorios_formatado": self.format_currency(total_acessorios),
+                        "total_aplicacao": total_aplicacao,
+                        "total_aplicacao_formatado": self.format_currency(total_aplicacao),
+                        "quantidade_maquinas": len(app["maquinas"]),
+                        "quantidade_dutos": len(app["dutos"]),
+                        "quantidade_acessorios": len(app["acessorios"])
+                    })
+                    aplicacoes_com_totais.append(app)
+            
+            # Extrair serviços deste projeto
+            servicos = self.extract_servicos_from_projeto(projeto)
+            
+            # Adicionar projeto ao resultado
+            projetos_resultado.append({
+                "nome": projeto_nome,
+                "valor_total_projeto": projeto_valor,
+                "valor_total_projeto_formatado": self.format_currency(projeto_valor),
+                "aplicacoes_groups": aplicacoes_com_totais,
+                "servicos": servicos,
+                "tem_servicos": servicos["tem_engenharia"] or servicos["tem_adicionais"]
+            })
         
-        return {
-            "total_obra": total_obra,
-            "total_obra_formatado": self.format_currency(total_obra),
-            "total_maquinas": total_maquinas,
-            "total_maquinas_formatado": self.format_currency(total_maquinas),
-            "total_servicos": total_servicos,
-            "total_servicos_formatado": self.format_currency(total_servicos)
-        }
+        return projetos_resultado
     
-    def extract_servicos(self, projetos: List[Dict]) -> Dict:
-        """Extrai informações de serviços"""
+    def extract_servicos_from_projeto(self, projeto: Dict) -> Dict:
+        """Extrai informações de serviços de um projeto específico"""
         servicos_info = {
             "engenharia": {
                 "valor": 0,
                 "descricao": "",
-                "valor_formatado": "R$ 0,00"
+                "valor_formatado": "R$ 0,00",
+                "tem_engenharia": False
             },
             "adicionais": [],
-            "tem_adicionais": False
+            "tem_adicionais": False,
+            "tem_engenharia": False
         }
         
-        for projeto in projetos:
-            if not isinstance(projeto, dict):
-                continue
-                
-            servicos = projeto.get("servicos", {})
-            if not isinstance(servicos, dict):
-                continue
+        if not isinstance(projeto, dict):
+            return servicos_info
             
-            # Engenharia
-            engenharia = servicos.get("engenharia", {})
-            if isinstance(engenharia, dict):
-                servicos_info["engenharia"]["valor"] = engenharia.get("valor", 0)
-                servicos_info["engenharia"]["descricao"] = engenharia.get("descricao", "")
-                servicos_info["engenharia"]["valor_formatado"] = self.format_currency(engenharia.get("valor", 0))
-            
-            # Adicionais
-            adicionais = servicos.get("adicionais", [])
-            if isinstance(adicionais, list) and adicionais:
-                servicos_info["tem_adicionais"] = True
-                for adicional in adicionais:
-                    if isinstance(adicional, dict):
-                        servicos_info["adicionais"].append({
-                            "descricao": adicional.get("descricao", ""),
-                            "valor": adicional.get("valor", 0),
-                            "valor_formatado": self.format_currency(adicional.get("valor", 0))
-                        })
+        servicos = projeto.get("servicos", {})
+        if not isinstance(servicos, dict):
+            return servicos_info
+        
+        # Engenharia
+        engenharia = servicos.get("engenharia", {})
+        if isinstance(engenharia, dict) and engenharia.get("valor", 0) > 0:
+            servicos_info["engenharia"]["valor"] = engenharia.get("valor", 0)
+            servicos_info["engenharia"]["descricao"] = engenharia.get("descricao", "")
+            servicos_info["engenharia"]["valor_formatado"] = self.format_currency(engenharia.get("valor", 0))
+            servicos_info["engenharia"]["tem_engenharia"] = True
+            servicos_info["tem_engenharia"] = True
+        
+        # Adicionais
+        adicionais = servicos.get("adicionais", [])
+        if isinstance(adicionais, list) and adicionais:
+            servicos_info["tem_adicionais"] = True
+            for adicional in adicionais:
+                if isinstance(adicional, dict):
+                    servicos_info["adicionais"].append({
+                        "descricao": adicional.get("descricao", ""),
+                        "valor": adicional.get("valor", 0),
+                        "valor_formatado": self.format_currency(adicional.get("valor", 0))
+                    })
         
         return servicos_info
     
+    def calculate_projeto_total(self, projeto: Dict, aplicacoes_groups: List[Dict]) -> float:
+        """Calcula o total real do projeto (soma de itens + serviços)"""
+        total_itens = 0
+        
+        # Somar todos os itens das aplicações
+        for app in aplicacoes_groups:
+            total_itens += app.get("total_aplicacao", 0)
+        
+        # Somar serviços
+        servicos = self.extract_servicos_from_projeto(projeto)
+        total_servicos = servicos["engenharia"]["valor"]
+        total_servicos += sum(adicional.get("valor", 0) for adicional in servicos["adicionais"])
+        
+        return total_itens + total_servicos
+    
     def generate_context_for_pc(self, obra_id: str) -> Dict:
-        """Gera contexto completo para Proposta Comercial"""
+        """Gera contexto completo para Proposta Comercial - VERSÃO CORRIGIDA"""
         try:
             # Obter dados da obra
             obra_data = self.get_obra_by_id(obra_id)
@@ -241,22 +415,49 @@ class WordPCGenerator:
             obra_nome = obra_data.get("nome", "Obra não especificada")
             empresa_nome = obra_data.get("empresaNome", "Empresa não especificada")
             cliente_final = obra_data.get("clienteFinal", "Cliente não especificado")
-            data_cadastro = obra_data.get("dataCadastro", "")
             
             # Projetos
             projetos = obra_data.get("projetos", [])
             
-            # Extrair máquinas por especificação
-            machines_by_spec = self.extract_machines_by_specification(projetos)
+            # Extrair itens por projeto e aplicação (estrutura corrigida)
+            projetos_com_dados = self.extract_items_by_aplicacao_and_projeto(projetos)
             
-            # Calcular totais
-            totals = self.calculate_totals(obra_data)
+            # Data atual - ajustar fuso horário
+            from datetime import datetime
+            import pytz
             
-            # Extrair serviços
-            servicos = self.extract_servicos(projetos)
+            try:
+                tz = pytz.timezone('America/Sao_Paulo')
+                data_atual = datetime.now(tz)
+            except:
+                data_atual = datetime.now()
             
-            # Data atual
-            data_atual = datetime.now()
+            # Calcular total global (soma de todos os projetos)
+            total_global = obra_data.get("valorTotalObra", 0)
+            
+            # Preparar projetos para o template
+            projetos_para_template = []
+            for projeto in projetos_com_dados:
+                # Encontrar projeto original para calcular total real
+                projeto_original = next((p for p in projetos if isinstance(p, dict) and 
+                                       p.get("nome") == projeto["nome"]), {})
+                
+                # Recalcular total do projeto
+                projeto_total_real = self.calculate_projeto_total(
+                    projeto_original,
+                    projeto["aplicacoes_groups"]
+                )
+                
+                projeto_para_template = {
+                    "nome": projeto["nome"],
+                    "aplicacoes_groups": projeto["aplicacoes_groups"],
+                    "valor_total_projeto": projeto_total_real,
+                    "valor_total_projeto_formatado": self.format_currency(projeto_total_real),
+                    "servicos": projeto["servicos"],
+                    "tem_servicos": projeto["tem_servicos"]
+                }
+                
+                projetos_para_template.append(projeto_para_template)
             
             # Contexto para o template
             context = {
@@ -268,74 +469,16 @@ class WordPCGenerator:
                 "cliente_final": cliente_final,
                 
                 # Projetos
-                "projetos": projetos,
-                "projeto_nome": projetos[0].get("nome", "Projeto Principal") if projetos else "Projeto",
+                "projetos": projetos_para_template,
+                "quantidade_projetos": len(projetos_para_template),
                 
-                # Máquinas agrupadas por especificação
-                "machines_by_specification": machines_by_spec,
-                "tem_climatizacao": "Climatização" in machines_by_spec,
-                "tem_pressurizacao": any("press" in spec.lower() for spec in machines_by_spec.keys()),
-                "tem_filtragem": any("filtro" in spec.lower() for spec in machines_by_spec.keys()),
+                # Totais
+                "total_global": self.format_currency(total_global),
+                "valor_total_projeto": self.format_currency(total_global),  # Mantido para compatibilidade
                 
-                # Exemplos específicos para cada especificação
-                "especificador_climatizacao": "Climatização" if "Climatização" in machines_by_spec else "",
-                "especificador_pressurizacao": "Pressurização" if any("press" in spec.lower() for spec in machines_by_spec.keys()) else "",
-                "especificador_filtragem": "Filtragem" if any("filtro" in spec.lower() for spec in machines_by_spec.keys()) else "",
-                
-                # Lista de máquinas para iteração no template
-                "machines_list": [],
-                # Processar cada grupo de especificação
-                "machines_spec_groups": []
+                # Helper functions para template
+                "format_currency": self.format_currency
             }
-            
-            # Processar máquinas por grupo de especificação
-            for spec, machines in machines_by_spec.items():
-                group_total = sum(m.get("preco_total", 0) for m in machines)
-                
-                # Para cada máquina no grupo, adicionar à lista
-                for machine in machines:
-                    context["machines_list"].append({
-                        "especificacao": spec,
-                        **machine
-                    })
-                
-                # Adicionar grupo
-                context["machines_spec_groups"].append({
-                    "especificacao": spec,
-                    "machines": machines,
-                    "total_grupo": group_total,
-                    "total_grupo_formatado": self.format_currency(group_total),
-                    "quantidade_total": len(machines)
-                })
-            
-            # Serviços
-            context.update({
-                "servicos": servicos,
-                "engenharia_valor": servicos["engenharia"]["valor_formatado"],
-                "engenharia_descricao": servicos["engenharia"]["descricao"] or "Serviços de engenharia",
-                "tem_adicionais": servicos["tem_adicionais"],
-                "adicionais": servicos["adicionais"]
-            })
-            
-            # Totais
-            context.update({
-                "valor_total_obra": totals["total_obra_formatado"],
-                "valor_total_projeto": totals["total_obra_formatado"],  # Para o template usar
-                "total_global": totals["total_obra_formatado"]
-            })
-            
-            # Informações da empresa ESI (fixas)
-            context.update({
-                "empresa_esi_razao_social": "ESI – ENERGIA SOLUÇÕES INTELIGENTES LTDA.",
-                "empresa_esi_cnpj": "20.232.429/0001-11",
-                "validade_proposta": "10 (dez) dias",
-                "forma_pagamento_maquinas": "A negociar",
-                "forma_pagamento_servicos": "A negociar",
-                "prazo_pagamento_maquinas": "30ddl",
-                "prazo_pagamento_servicos": "30ddl",
-                "responsavel": "Matheus Pacheco Herzeberg Gonçalves",
-                "cargo": "Engenheiro Mecânico – ESI Energia"
-            })
             
             return context
             
@@ -343,9 +486,9 @@ class WordPCGenerator:
             print(f"❌ Erro ao gerar contexto PC: {e}")
             traceback.print_exc()
             return {}
-        
+    
     def generate_proposta_comercial(self, obra_id: str, template_path: Path) -> Optional[str]:
-        """Gera documento de Proposta Comercial"""
+        """Gera documento de Proposta Comercial - VERSÃO CORRIGIDA"""
         try:
             # Verificar template
             if not template_path.exists():
@@ -360,10 +503,9 @@ class WordPCGenerator:
             print(f"📊 Contexto gerado:")
             print(f"  - Empresa: {context.get('empresa_nome')}")
             print(f"  - Obra: {context.get('obra_nome')}")
-            print(f"  - Grupos de máquinas: {len(context.get('machines_spec_groups', []))}")
+            print(f"  - Projetos: {context.get('quantidade_projetos')}")
             
             # Carregar e preencher template
-            from docxtpl import DocxTemplate
             doc = DocxTemplate(str(template_path))
             
             try:
@@ -373,11 +515,7 @@ class WordPCGenerator:
                     "empresa_nome": context.get("empresa_nome", ""),
                     "obra_nome": context.get("obra_nome", ""),
                     "cliente_final": context.get("cliente_final", ""),
-                    "machines_spec_groups": [],
                     "projetos": [],
-                    "engenharia_valor": context.get("engenharia_valor", ""),
-                    "engenharia_descricao": context.get("engenharia_descricao", ""),
-                    "valor_total_projeto": context.get("valor_total_projeto", ""),
                     "total_global": context.get("total_global", "")
                 }
                 
@@ -408,44 +546,33 @@ class WordPCGenerator:
             import traceback
             traceback.print_exc()
             return None
-        
-        
-        
+    
     def generate_filename(self, obra_data: Dict, template_type: str) -> str:
-        """Gera nome do arquivo no formato PC/PT_empresaSigla_numeroClienteFinal"""
+        """Gera nome do arquivo no formato PC_Obra_empresaSigla_numeroClienteFinal_DD-MM-AAAA"""
         try:
             # Extrair sigla da empresa
             empresa_nome = obra_data.get("empresaNome", "")
-            sigla = ""
-            
-            # Método 1: Tentar extrair do campo "empresaSigla" se existir
             sigla = obra_data.get("empresaSigla", "")
             
-            # Método 2: Se não tiver campo específico, tentar extrair do nome
+            # Se não tiver sigla específica, tentar extrair do nome
             if not sigla and empresa_nome:
-                import re
-                # Tentar extrair sigla entre parênteses
                 match = re.search(r'\(([^)]+)\)', empresa_nome)
                 if match:
                     sigla = match.group(1)
                 else:
-                    # Se não houver parênteses, usar as primeiras letras
                     palavras = empresa_nome.split()
                     if palavras:
                         sigla = ''.join([p[0].upper() for p in palavras if p])
             
-            # Método 3: Sigla padrão
+            # Sigla padrão se ainda não tiver
             if not sigla:
                 sigla = "EMP"
             
             # Extrair número do cliente final
             cliente_numero = obra_data.get("clienteNumero", "")
             if not cliente_numero:
-                # Tentar extrair do nome do cliente final
                 cliente_final = obra_data.get("clienteFinal", "")
                 if cliente_final:
-                    # Extrair números do nome do cliente
-                    import re
                     numeros = re.findall(r'\d+', cliente_final)
                     if numeros:
                         cliente_numero = numeros[0]
@@ -460,16 +587,26 @@ class WordPCGenerator:
             
             # Determinar prefixo
             if template_type.lower() in ["comercial", "pc"]:
-                prefixo = "PC"
+                prefixo = "PC_Obra"
             elif template_type.lower() in ["tecnica", "pt"]:
-                prefixo = "PT"
+                prefixo = "PT_Obra"
             else:
                 prefixo = template_type.upper()
             
-            # Gerar nome do arquivo
+            # Data atual formatada como DD-MM-AAAA
             from datetime import datetime
-            data_hora = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{prefixo}_{sigla_limpa}_{numero_limpo}_{data_hora}.docx"
+            import pytz
+            
+            try:
+                tz = pytz.timezone('America/Sao_Paulo')
+                data_atual = datetime.now(tz)
+            except:
+                data_atual = datetime.now()
+            
+            data_formatada = data_atual.strftime("%d-%m-%Y")
+            
+            # Gerar nome do arquivo
+            filename = f"{prefixo}_{sigla_limpa}_{numero_limpo}_{data_formatada}.docx"
             
             return filename
             
@@ -477,4 +614,5 @@ class WordPCGenerator:
             print(f"❌ Erro ao gerar nome do arquivo: {e}")
             # Nome de fallback
             from datetime import datetime
-            return f"{template_type.upper()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+            data_fallback = datetime.now().strftime("%d-%m-%Y")
+            return f"PC_Obra_{data_fallback}.docx"

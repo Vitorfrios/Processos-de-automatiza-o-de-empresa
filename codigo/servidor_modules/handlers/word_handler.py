@@ -71,7 +71,7 @@ class WordHandler:
                 vars_list.add_run('• {{cliente_final}} - Nome do cliente final\n')
                 vars_list.add_run('• {{valor_total_projeto}} - Valor total do projeto\n')
                 vars_list.add_run('• {{total_global}} - Valor total global\n')
-                vars_list.add_run('• {{machines_spec_groups}} - Lista de máquinas por especificação\n')
+                vars_list.add_run('• {{aplicacoes_groups}} - Lista de aplicações com máquinas, dutos e acessórios\n')
                 vars_list.add_run('• {{engenharia_valor}} - Valor da engenharia\n')
                 vars_list.add_run('• {{engenharia_descricao}} - Descrição da engenharia\n')
                 vars_list.add_run('• {{adicionais}} - Lista de serviços adicionais\n')
@@ -125,6 +125,24 @@ class WordHandler:
             print(f"❌ Erro ao buscar obra: {e}")
             return None
     
+    def generate_context_for_pc(self, obra_id: str) -> Optional[Dict]:
+        """Gera contexto para Proposta Comercial - MÉTODO LEGADO"""
+        try:
+            # Importar o gerador avançado
+            from servidor_modules.generators.wordPC_generator import WordPCGenerator
+            
+            # Criar instância do gerador
+            pc_generator = WordPCGenerator(self.project_root, self.file_utils)
+            
+            # Usar o método do gerador
+            return pc_generator.generate_context_for_pc(obra_id)
+                
+        except Exception as e:
+            print(f"❌ Erro em generate_context_for_pc: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
     def generate_proposta_comercial(self, obra_id: str, template_path: Path) -> Optional[str]:
         """Gera documento de Proposta Comercial com tratamento de erros melhorado"""
         try:
@@ -138,12 +156,16 @@ class WordHandler:
                 print(f"❌ Template está vazio: {template_path}")
                 return None
             
+            # Usar o gerador avançado
+            from servidor_modules.generators.wordPC_generator import WordPCGenerator
+            pc_generator = WordPCGenerator(self.project_root, self.file_utils)
+            
             # Gerar contexto
-            context = self.generate_context_for_pc(obra_id)
+            context = pc_generator.generate_context_for_pc(obra_id)
             if not context:
                 raise ValueError("Não foi possível gerar contexto para a PC")
             
-            print(f"📊 Contexto gerado com {len(context.get('machines_list', []))} máquinas")
+            print(f"📊 Contexto gerado com {len(context.get('aplicacoes_groups', []))} aplicações")
             
             # Testar contexto básico primeiro
             test_context = {
@@ -152,22 +174,13 @@ class WordHandler:
                 "obra_nome": context.get("obra_nome", ""),
                 "cliente_final": context.get("cliente_final", ""),
                 "projeto_nome": context.get("projeto_nome", ""),
-                "machines_spec_groups": [],
+                "aplicacoes_groups": [],
                 "engenharia_valor": context.get("engenharia_valor", ""),
                 "engenharia_descricao": context.get("engenharia_descricao", ""),
                 "tem_adicionais": False,
                 "adicionais": [],
                 "valor_total_projeto": context.get("valor_total_projeto", ""),
-                "total_global": context.get("total_global", ""),
-                "empresa_esi_razao_social": context.get("empresa_esi_razao_social", ""),
-                "empresa_esi_cnpj": context.get("empresa_esi_cnpj", ""),
-                "validade_proposta": context.get("validade_proposta", ""),
-                "forma_pagamento_maquinas": context.get("forma_pagamento_maquinas", ""),
-                "forma_pagamento_servicos": context.get("forma_pagamento_servicos", ""),
-                "prazo_pagamento_maquinas": context.get("prazo_pagamento_maquinas", ""),
-                "prazo_pagamento_servicos": context.get("prazo_pagamento_servicos", ""),
-                "responsavel": context.get("responsavel", ""),
-                "cargo": context.get("cargo", "")
+                "total_global": context.get("total_global", "")
             }
             
             print("🧪 Testando template com contexto básico...")
@@ -197,7 +210,6 @@ class WordHandler:
             print(f"❌ Erro ao gerar Proposta Comercial: {e}")
             traceback.print_exc()
             return None
-
     
     def generate_proposta_tecnica_avancada(self, obra_id):
         """Gera proposta técnica usando método genérico por enquanto"""
@@ -227,7 +239,7 @@ class WordHandler:
                 output_path = tmp.name
                 doc.save(output_path)
             
-            # Gerar nome do arquivo no formato PT_sigla_numero
+            # Gerar nome do arquivo no formato PT_Obra_sigla_numero_data
             filename = self.generate_pt_filename(obra_data)
             
             return output_path, filename, None
@@ -266,14 +278,24 @@ class WordHandler:
             def formatar_valor(valor):
                 return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             
+            # Data atual - usar data de geração, não data de cadastro
+            from datetime import datetime
+            import pytz
+            
+            try:
+                tz = pytz.timezone('America/Sao_Paulo')
+                data_atual = datetime.now(tz)
+            except:
+                data_atual = datetime.now()
+            
             # Contexto base
             context = {
                 "obra_nome": obra_nome,
                 "cliente_nome": cliente_nome,
                 "endereco": endereco_completo,
-                "data_emissao": datetime.now().strftime("%d/%m/%Y"),
-                "data_emissao_completa": datetime.now().strftime("%d de %B de %Y"),
-                "hora_emissao": datetime.now().strftime("%H:%M"),
+                "data_emissao": data_atual.strftime("%d/%m/%Y"),  # Data atual
+                "data_emissao_completa": data_atual.strftime("%d de %B de %Y"),
+                "hora_emissao": data_atual.strftime("%H:%M"),
             }
             
             # Adicionar dados específicos por tipo de template
@@ -282,9 +304,9 @@ class WordHandler:
                     "titulo_documento": "PROPOSTA COMERCIAL",
                     "tipo_proposta": "Comercial",
                     "condicoes_pagamento": "50% na assinatura do contrato, 50% na entrega",
-                    "validade_proposta": "30 dias",
+                    "validade_proposta": "10 dias úteis",
                     "garantia": "12 meses",
-                    "prazo_entrega": "45 dias úteis",
+                    "prazo_entrega": "60 dias úteis",
                 })
             elif template_type == "tecnica":
                 context.update({
@@ -300,10 +322,9 @@ class WordHandler:
         except Exception as e:
             print(f"❌ Erro ao gerar contexto: {e}")
             return {}
-    
         
     def generate_proposta_comercial_avancada(self, obra_id):
-        """Gera proposta comercial usando o gerador avançado"""
+        """Gera proposta comercial usando o gerador avançado - VERSÃO CORRIGIDA"""
         try:
             # Importar o gerador avançado
             from servidor_modules.generators.wordPC_generator import WordPCGenerator
@@ -321,18 +342,36 @@ class WordHandler:
                 else:
                     return None, None, "Nenhum template encontrado na pasta word_templates"
             
+            # Validar obra
+            is_valid, message = self.validate_obra_for_pc(obra_id)
+            if not is_valid:
+                return None, None, message
+            
             # Gerar proposta
             output_path = pc_generator.generate_proposta_comercial(obra_id, template_path)
             
             if output_path:
-                # Gerar nome do arquivo no formato PC_sigla_numero
+                # Gerar nome do arquivo usando o método do gerador
                 obra_data = self.get_obra_data(obra_id)
                 if obra_data:
-                    filename = self.generate_pc_filename(obra_data)
+                    filename = pc_generator.generate_filename(obra_data, "comercial")
                 else:
                     # Fallback
                     from datetime import datetime
-                    filename = f"PC_OBRA_{obra_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+                    import pytz
+                    try:
+                        tz = pytz.timezone('America/Sao_Paulo')
+                        data_atual = datetime.now(tz)
+                    except:
+                        data_atual = datetime.now()
+                    filename = f"PC_Obra_{obra_id}_{data_atual.strftime('%d-%m-%Y')}.docx"
+                
+                # Log de geração
+                obra_summary = self.get_obra_summary(obra_id)
+                print(f"📄 Proposta Comercial gerada para obra: {obra_summary.get('obra_nome')}")
+                print(f"   - Total: {obra_summary.get('valor_total_formatado')}")
+                print(f"   - Máquinas: {obra_summary.get('total_machines')}")
+                print(f"   - Arquivo: {filename}")
                 
                 return output_path, filename, None
             else:
@@ -344,7 +383,6 @@ class WordHandler:
             traceback.print_exc()
             return None, None, str(e)
             
-        
     def generate_word_document(self, obra_id, template_type="comercial"):
         """Gera documento Word baseado no template"""
         try:
@@ -468,20 +506,23 @@ class WordHandler:
             if not projetos:
                 return False, "Obra não tem projetos"
             
-            # Verificar se pelo menos um projeto tem máquinas
-            has_machines = False
+            # Verificar se tem itens (máquinas, dutos ou acessórios)
+            has_items = False
             for projeto in projetos:
                 if isinstance(projeto, dict):
                     salas = projeto.get("salas", [])
                     for sala in salas:
-                        if isinstance(sala, dict) and sala.get("maquinas"):
-                            has_machines = True
-                            break
-                if has_machines:
+                        if isinstance(sala, dict):
+                            if (sala.get("maquinas") or 
+                                sala.get("dutos") or 
+                                sala.get("acessorios")):
+                                has_items = True
+                                break
+                if has_items:
                     break
             
-            if not has_machines:
-                return False, "Nenhuma máquina encontrada nos projetos"
+            if not has_items:
+                return False, "Nenhum item (máquina, duto ou acessório) encontrado nos projetos"
             
             return True, "Obra válida para geração de PC"
             
@@ -498,6 +539,8 @@ class WordHandler:
             
             projetos = obra_data.get("projetos", [])
             total_machines = 0
+            total_dutos = 0
+            total_acessorios = 0
             total_value = obra_data.get("valorTotalObra", 0)
             
             for projeto in projetos:
@@ -506,7 +549,11 @@ class WordHandler:
                     for sala in salas:
                         if isinstance(sala, dict):
                             maquinas = sala.get("maquinas", [])
+                            dutos = sala.get("dutos", [])
+                            acessorios = sala.get("acessorios", [])
                             total_machines += len(maquinas)
+                            total_dutos += len(dutos)
+                            total_acessorios += len(acessorios)
             
             return {
                 "obra_id": obra_id,
@@ -515,15 +562,15 @@ class WordHandler:
                 "cliente_final": obra_data.get("clienteFinal", ""),
                 "numero_projetos": len(projetos),
                 "total_machines": total_machines,
+                "total_dutos": total_dutos,
+                "total_acessorios": total_acessorios,
                 "valor_total": total_value,
                 "valor_total_formatado": f"R$ {total_value:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-                "data_cadastro": obra_data.get("dataCadastro", "")
             }
             
         except Exception as e:
             print(f"❌ Erro ao obter resumo da obra: {e}")
             return {"error": str(e)}
-        
         
     def extract_filename_base(self, obra_data):
         """Extrai base do nome do arquivo (sigla_numero)"""
@@ -584,18 +631,23 @@ class WordHandler:
             print(f"❌ Erro ao extrair base do nome: {e}")
             return "EMP_001"
     
-    
-    
     def generate_pc_filename(self, obra_data):
         """Gera nome do arquivo para Proposta Comercial no formato PC_Obra_sigla_numero_data"""
         try:
             from datetime import datetime
+            import pytz
+            
+            try:
+                tz = pytz.timezone('America/Sao_Paulo')
+                data_atual = datetime.now(tz)
+            except:
+                data_atual = datetime.now()
             
             # Extrair base do nome (sigla_numero)
             base_name = self.extract_filename_base(obra_data)
             
-            # Formatar data como dd-mm-yyyy (sem horas)
-            data_formatada = datetime.now().strftime("%d-%m-%Y")
+            # Formatar data como DD-MM-AAAA
+            data_formatada = data_atual.strftime("%d-%m-%Y")
             
             # Gerar nome no formato: PC_Obra_sigla_numero_data
             return f"PC_Obra_{base_name}_{data_formatada}.docx"
@@ -607,17 +659,23 @@ class WordHandler:
             data_fallback = datetime.now().strftime("%d-%m-%Y")
             return f"PC_Obra_{data_fallback}.docx"
     
-    
     def generate_pt_filename(self, obra_data):
         """Gera nome do arquivo para Proposta Técnica no formato PT_Obra_sigla_numero_data"""
         try:
             from datetime import datetime
+            import pytz
+            
+            try:
+                tz = pytz.timezone('America/Sao_Paulo')
+                data_atual = datetime.now(tz)
+            except:
+                data_atual = datetime.now()
             
             # Extrair base do nome (sigla_numero)
             base_name = self.extract_filename_base(obra_data)
             
-            # Formatar data como dd-mm-yyyy (sem horas)
-            data_formatada = datetime.now().strftime("%d-%m-%Y")
+            # Formatar data como DD-MM-AAAA
+            data_formatada = data_atual.strftime("%d-%m-%Y")
             
             # Gerar nome no formato: PT_Obra_sigla_numero_data
             return f"PT_Obra_{base_name}_{data_formatada}.docx"

@@ -287,7 +287,7 @@ function buildMachineFromSavedData(machineId, savedMachine, allMachines) {
       <div class="machine-content" id="machine-content-${machineId}">
         <div class="climatization-form-grid">
           ${buildFormGroup("Tipo:", buildSelect(allMachines.map(m => m.type), machineId, "machine-type-select", "updateMachineOptions(this)", false, savedMachine.tipo))}
-          ${buildFormGroup("Aplicação:", buildSelect(["climatizacao", "pressurizacao", "exaustao_bateria", "exaustao_baia_trafo"], machineId, "machine-aplicacao-select", `updateAplicacaoMachine('${machineId}')`, false, savedMachine.aplicacao_machines || ''))}
+          ${buildFormGroup("Aplicação:", buildSelect(["climatizacao", "pressurizacao", "exaustao_bateria", "exaustao_baia_trafo"], machineId, "machine-aplicacao-select", false, savedMachine.aplicacao_machines || ''))}
           ${buildFormGroup("Capacidade:", buildSelect(potencies, machineId, "machine-power-select", `handlePowerChange('${machineId}')`, false, savedMachine.potencia))}
           ${buildFormGroup("Tensão:", buildSelect(voltages, machineId, "machine-voltage-select", `calculateMachinePrice('${machineId}')`, false, savedMachine.tensao))}
           ${buildFormGroup("Quantidade:", `<input type="number" class="form-input machine-qnt-input" data-machine-id="${machineId}" min="1" value="${quantidade}" onchange="updateQuantity('${machineId}')">`)}
@@ -328,7 +328,7 @@ function buildMachineHTML(machineId, displayName, machines, roomId) {
       <div class="machine-content" id="machine-content-${machineId}">
         <div class="climatization-form-grid">
           ${buildFormGroup("Tipo:", buildSelect(machineTypes, machineId, "machine-type-select", "updateMachineOptions(this)"))}
-          ${buildFormGroup("Aplicação:", buildSelect(["climatizacao", "pressurizacao", "exaustao_bateria", "exaustao_baia_trafo"], machineId, "machine-aplicacao-select", `updateAplicacaoMachine('${machineId}')`))}
+          ${buildFormGroup("Aplicação:", buildSelect(["climatizacao", "pressurizacao", "exaustao_bateria", "exaustao_baia_trafo"], machineId, "machine-aplicacao-select"))}
           ${buildFormGroup("Capacidade:", buildSelect([], machineId, "machine-power-select", `handlePowerChange('${machineId}')`, true))}
           ${buildFormGroup("Tensão:", buildSelect([], machineId, "machine-voltage-select", `calculateMachinePrice('${machineId}')`, true))}
           ${buildFormGroup("Qnt:", `<input type="number" class="form-input machine-qnt-input" data-machine-id="${machineId}" min="1" value="1" onchange="updateQuantity('${machineId}')">`)}

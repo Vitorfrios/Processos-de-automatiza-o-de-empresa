@@ -359,9 +359,12 @@ function adicionarAcessorio(roomId) {
         return;
     }
     
-    // Obter nome da aplicação selecionada
-    const aplicacaoSelecionada = aplicacaoSelect.value ? 
+    // Obter nome da aplicação selecionada para exibição
+    const aplicacaoNomeDisplay = aplicacaoSelect.value ? 
         aplicacaoSelect.options[aplicacaoSelect.selectedIndex].textContent : 'Outro';
+    
+    // CORREÇÃO: Salvar apenas aplicacao_Acessorio (valor, não nome)
+    const aplicacao_Acessorio = aplicacaoSelect.value || 'outro';
     
     // Obter descrição do tipo
     const descricaoTipo = tipoSelect.value ? 
@@ -376,11 +379,10 @@ function adicionarAcessorio(roomId) {
         }
     }
     
-    // Criar objeto do acessorio
+    // CORREÇÃO: Criar objeto do acessorio apenas com aplicacao_Acessorio
     const acessorio = {
         id: Date.now() + Math.random().toString(36).substr(2, 9),
-        aplicacao: aplicacaoSelect.value || 'outro',
-        aplicacao_nome: aplicacaoSelecionada,
+        aplicacao_Acessorio: aplicacao_Acessorio, // Apenas este campo para aplicação
         tipo: tipo || 'acessorio_personalizado',
         dimensao: dimensao,
         quantidade: quantidade,
@@ -395,7 +397,7 @@ function adicionarAcessorio(roomId) {
     // Limpar TODOS os campos
     limparCamposAcessorio(roomId);
     
-    console.log(`✅ Acessorio adicionado: ${acessorio.aplicacao_nome} - ${acessorio.descricao}`);
+    console.log(`✅ Acessorio adicionado: ${aplicacaoNomeDisplay} - ${acessorio.descricao}`);
 }
 
 /**
@@ -410,6 +412,18 @@ function adicionarAcessorioNaTabela(roomId, acessorio) {
         emptyRow.remove();
     }
     
+    // Mapear valor da aplicação para nome de exibição
+    const aplicacaoDisplayMap = {
+        'climatizacao': 'Climatização',
+        'pressurizacao': 'Pressurização',
+        'exaustao_bateria': 'Exaustão da sala de bateria',
+        'exaustao_baia_trafo': 'Exaustão da sala baia de trafo',
+        'outro': 'Outro'
+    };
+    
+    // Obter nome para exibição
+    const aplicacaoDisplay = aplicacaoDisplayMap[acessorio.aplicacao_Acessorio] || 'Outro';
+    
     // Criar nova linha
     const row = document.createElement('tr');
     row.id = `acessorio-${acessorio.id}`;
@@ -417,7 +431,7 @@ function adicionarAcessorioNaTabela(roomId, acessorio) {
     row.setAttribute('data-acessorio', JSON.stringify(acessorio));
     
     row.innerHTML = `
-        <td>${acessorio.aplicacao_nome}</td>
+        <td>${aplicacaoDisplay}</td>
         <td>${acessorio.descricao}</td>
         <td>${acessorio.dimensao}</td>
         <td>${acessorio.quantidade}</td>
@@ -486,9 +500,9 @@ function editarAcessorio(roomId, acessorioId) {
     const quantidadeInput = document.getElementById(`acessorio-quantidade-${roomId}`);
     const valorInput = document.getElementById(`acessorio-valor-${roomId}`);
     
-    // Selecionar aplicação
+    // CORREÇÃO: Selecionar aplicação usando aplicacao_Acessorio
     for (let i = 0; i < aplicacaoSelect.options.length; i++) {
-        if (aplicacaoSelect.options[i].value === acessorioData.aplicacao) {
+        if (aplicacaoSelect.options[i].value === acessorioData.aplicacao_Acessorio) {
             aplicacaoSelect.selectedIndex = i;
             break;
         }
