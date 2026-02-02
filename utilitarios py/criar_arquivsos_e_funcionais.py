@@ -128,9 +128,7 @@ def vasculhar_arquivos_por_empresa(diretorio_base):
     }
     
     extensoes = [
-        '.js', '.ts', '.jsx', '.tsx', '.vue', '.htm',
-        '.css', '.scss', '.less', '.py',
-        '.php', '.java', '.cs', '.go', '.rb', '.cpp', '.h'
+        '.js'
     ]
     
     print(f"🔍 Iniciando busca por 'empresa' em: {diretorio_base}")
@@ -537,7 +535,7 @@ def main():
     print("⏳ Analisando arquivos... Isso pode levar alguns minutos...\n")
     
     # Define o diretório base
-    diretorio_base = "codigo"
+    diretorio_base = "codigo/public/scripts/01_Create_Obra"
     
     # Verifica se o diretório existe
     if not os.path.exists(diretorio_base):

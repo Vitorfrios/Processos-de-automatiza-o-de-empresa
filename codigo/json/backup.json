@@ -609,7 +609,7 @@
                 "conjuntos": [],
                 "valorTotalGeralTubos": 0
               },
-              "somavaloresmaquinatotal": 5421
+              "somavaloresmaquinatotal": 5417
             }
           ],
           "servicos": {
@@ -883,6 +883,75 @@
           "salas": [
             {
               "id": "obra_f57_proj_y98_3_sala_y93_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 0,
+                "setpointTemp": 25,
+                "pressurizacao": false,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "acessorios": [],
+              "dutos": [],
+              "tubulacao": {
+                "conjuntos": [],
+                "valorTotalGeralTubos": 0
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 0
+        }
+      ],
+      "valorTotalObra": 0
+    },
+    {
+      "id": "obra_r92",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_r92",
+      "empresaSigla": "AMC",
+      "empresaNome": "AMC SOLUÇÕES",
+      "numeroClienteFinal": 2,
+      "dataCadastro": "23/01/2026",
+      "projetos": [
+        {
+          "id": "obra_r92_proj_a88_3",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_r92_proj_a88_3_sala_q47_1",
               "nome": "Sala1",
               "inputs": {
                 "ambiente": "Sala1",

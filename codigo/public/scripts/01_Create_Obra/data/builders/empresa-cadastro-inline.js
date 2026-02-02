@@ -12,7 +12,7 @@ class EmpresaCadastroInline {
         this.obrasExistentes = [];
         this.container = null;
         this.isActive = false;
-        
+
         this.init();
     }
 
@@ -46,17 +46,17 @@ class EmpresaCadastroInline {
     vincularEventos() {
         // Encontrar todos os spans de cadastro de empresas e transformar em botões
         const spansCadastro = document.querySelectorAll('.projetc-header-record.very-dark span');
-        
+
         spansCadastro.forEach(span => {
             // Transformar span em botão
             const button = document.createElement('button');
             button.className = 'btn-empresa-cadastro';
             button.textContent = span.textContent;
             button.setAttribute('type', 'button');
-            
+
             // Substituir span por botão
             span.parentNode.replaceChild(button, span);
-            
+
             // Vincular eventos
             button.addEventListener('click', (e) => this.ativarCadastro(e));
             button.addEventListener('keydown', (e) => {
@@ -73,7 +73,7 @@ class EmpresaCadastroInline {
 
         const span = event.target;
         this.container = span.closest('.projetc-header-record');
-        
+
         if (!this.container) {
             console.error('❌ Container não encontrado');
             return;
@@ -83,7 +83,7 @@ class EmpresaCadastroInline {
         span.style.display = 'none';
         this.renderizarFormulario();
         this.isActive = true;
-        
+
         // Inicializar campo de número do cliente
         const obraElement = this.container.closest('.obra-block');
         if (obraElement) {
@@ -96,10 +96,10 @@ class EmpresaCadastroInline {
     renderizarFormulario() {
         const formHTML = this.criarHTMLFormulario();
         this.container.insertAdjacentHTML('beforeend', formHTML);
-        
+
         this.configurarEstadoCampos();
         this.vincularEventosFormulario();
-        
+
         setTimeout(() => {
             const empresaInput = this.container.querySelector('#empresa-input');
             if (empresaInput) empresaInput.focus();
@@ -109,12 +109,12 @@ class EmpresaCadastroInline {
     configurarEstadoCampos() {
         const camposLiberados = [
             'empresa-input',
-            'cliente-final', 
+            'cliente-final',
             'codigo-cliente',
             'data-cadastro',
             'orcamentista-responsavel'
         ];
-        
+
         camposLiberados.forEach(campoId => {
             const campo = this.container.querySelector(`#${campoId}`);
             if (campo) {
@@ -128,11 +128,11 @@ class EmpresaCadastroInline {
                 campo.style.color = '#000000';
             }
         });
-        
+
         const camposBloqueados = [
             'numero-cliente-final'
         ];
-        
+
         camposBloqueados.forEach(campoId => {
             const campo = this.container.querySelector(`#${campoId}`);
             if (campo) {
@@ -144,7 +144,7 @@ class EmpresaCadastroInline {
                 campo.style.color = '#6c757d';
             }
         });
-        
+
         this.configurarCampoData();
     }
 
@@ -160,11 +160,11 @@ class EmpresaCadastroInline {
             dataCampo.style.borderColor = '#007bff';
             dataCampo.style.cursor = 'text';
             dataCampo.style.color = '#000000';
-            
+
             dataCampo.addEventListener('input', (e) => {
                 this.aplicarMascaraData(e.target);
             });
-            
+
             dataCampo.addEventListener('blur', (e) => {
                 this.validarData(e.target);
             });
@@ -173,57 +173,57 @@ class EmpresaCadastroInline {
 
     aplicarMascaraData(input) {
         let value = input.value.replace(/\D/g, '');
-        
+
         if (value.length > 8) {
             value = value.substring(0, 8);
         }
-        
+
         if (value.length > 4) {
             value = value.substring(0, 2) + '/' + value.substring(2, 4) + '/' + value.substring(4);
         } else if (value.length > 2) {
             value = value.substring(0, 2) + '/' + value.substring(2);
         }
-        
+
         input.value = value;
     }
 
     validarData(input) {
         const valor = input.value.trim();
-        
+
         if (!valor) return true;
-        
+
         const regexData = /^(\d{2})\/(\d{2})\/(\d{4})$/;
         const match = valor.match(regexData);
-        
+
         if (!match) {
             showSystemStatus('Formato de data inválido. Use DD/MM/AAAA', 'warning');
             input.focus();
             return false;
         }
-        
+
         const dia = parseInt(match[1], 10);
         const mes = parseInt(match[2], 10);
         const ano = parseInt(match[3], 10);
-        
+
         if (mes < 1 || mes > 12) {
             showSystemStatus('Mês deve estar entre 01 e 12', 'warning');
             input.focus();
             return false;
         }
-        
+
         if (dia < 1 || dia > 31) {
             showSystemStatus('Dia deve estar entre 01 e 31', 'warning');
             input.focus();
             return false;
         }
-        
+
         const data = new Date(ano, mes - 1, dia);
         if (data.getDate() !== dia || data.getMonth() + 1 !== mes || data.getFullYear() !== ano) {
             showSystemStatus('Data inválida para o mês especificado', 'warning');
             input.focus();
             return false;
         }
-        
+
         return true;
     }
 
@@ -312,7 +312,7 @@ class EmpresaCadastroInline {
             empresaInput.addEventListener('keydown', (e) => this.tratarTecladoAutocomplete(e));
             this.observarMudancasEmpresa();
         }
-        
+
         const dataCampo = this.container.querySelector('#data-cadastro');
         if (dataCampo) {
             dataCampo.addEventListener('change', () => {
@@ -329,7 +329,7 @@ class EmpresaCadastroInline {
 
         const termoNormalizado = this.normalizarTermo(termo);
         const sugestoes = this.filtrarEmpresas(termoNormalizado);
-        
+
         this.exibirSugestoes(sugestoes);
     }
 
@@ -342,10 +342,10 @@ class EmpresaCadastroInline {
             const [sigla, nome] = Object.entries(empresaObj)[0];
             const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const primeiroNome = nome.split(' ')[0].toUpperCase();
-            
-            return sigla === termo || 
-                   nomeNormalizado.includes(termo) ||
-                   primeiroNome.includes(termo);
+
+            return sigla === termo ||
+                nomeNormalizado.includes(termo) ||
+                primeiroNome.includes(termo);
         });
     }
 
@@ -393,7 +393,7 @@ class EmpresaCadastroInline {
         if (sugestoes.length === 0) return;
 
         const sugestaoAtiva = this.container.querySelector('.dropdown-option.active');
-        
+
         switch (event.key) {
             case 'ArrowDown':
                 event.preventDefault();
@@ -419,11 +419,11 @@ class EmpresaCadastroInline {
 
     navegarSugestoes(sugestoes, atual, direcao) {
         let index = Array.from(sugestoes).indexOf(atual);
-        
+
         if (index === -1) index = direcao > 0 ? -1 : sugestoes.length;
-        
+
         index = (index + direcao + sugestoes.length) % sugestoes.length;
-        
+
         sugestoes.forEach(s => s.classList.remove('active'));
         sugestoes[index].classList.add('active');
     }
@@ -437,60 +437,112 @@ class EmpresaCadastroInline {
         }
 
         this.ocultarSugestoes();
-        
+
         this.sincronizarTrocaEmpresa(sigla, empresaInput.dataset.siglaAnterior);
-        
+
         empresaInput.dataset.siglaAnterior = sigla;
     }
 
+    /**
+     * CALCULAR NÚMERO DO CLIENTE FINAL PARA NOVA EMPRESA
+     */
     calcularNumeroClienteFinal(sigla) {
         try {
+            console.log(`🔢 [EMPRESA] Calculando número para empresa: ${sigla}`);
+
+            if (!sigla || !this.obrasExistentes) {
+                console.log('❌ [EMPRESA] Sigla ou obras inválidas');
+                return 0;
+            }
+
+            // 🔥 CORREÇÃO: Buscar obras da empresa específica
             const obrasDaEmpresa = this.obrasExistentes.filter(obra => {
-                return obra.empresaSigla === sigla || 
-                       (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`));
+                // Verificar em múltiplos campos
+                return obra.empresaSigla === sigla ||
+                    obra.empresa_id === sigla ||
+                    (obra.idGerado && obra.idGerado.includes(`_${sigla}_`)) ||
+                    (obra.identificadorObra && obra.identificadorObra.startsWith(`${sigla}-`));
             });
 
+            console.log(`📊 [EMPRESA] Encontradas ${obrasDaEmpresa.length} obras para ${sigla}`);
+
             let maiorNumero = 0;
+
             obrasDaEmpresa.forEach(obra => {
-                if (obra.numeroClienteFinal && obra.numeroClienteFinal > maiorNumero) {
-                    maiorNumero = obra.numeroClienteFinal;
+                // 1. Tentar número do cliente final
+                if (obra.numeroClienteFinal) {
+                    const numero = parseInt(obra.numeroClienteFinal);
+                    if (!isNaN(numero) && numero > maiorNumero) {
+                        maiorNumero = numero;
+                        console.log(`📈 [EMPRESA] Número de cliente final: ${numero}`);
+                    }
                 }
-                
+
+                // 2. Tentar extrair do idGerado
                 if (obra.idGerado) {
-                    const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
-                    if (match) {
+                    const match = obra.idGerado.match(new RegExp(`_${sigla}_(\\d+)`, 'i'));
+                    if (match && match[1]) {
                         const numero = parseInt(match[1]);
-                        if (numero > maiorNumero) maiorNumero = numero;
+                        if (!isNaN(numero) && numero > maiorNumero) {
+                            maiorNumero = numero;
+                            console.log(`📈 [EMPRESA] Número do idGerado: ${numero}`);
+                        }
+                    }
+                }
+
+                // 3. Tentar extrair do identificadorObra
+                if (obra.identificadorObra && obra.identificadorObra.startsWith(`${sigla}-`)) {
+                    const numeroStr = obra.identificadorObra.split('-')[1];
+                    if (numeroStr) {
+                        const numero = parseInt(numeroStr);
+                        if (!isNaN(numero) && numero > maiorNumero) {
+                            maiorNumero = numero;
+                            console.log(`📈 [EMPRESA] Número do identificador: ${numero}`);
+                        }
                     }
                 }
             });
 
             const novoNumero = maiorNumero + 1;
-            
-            const numeroInput = this.container.querySelector('#numero-cliente-final');
+            console.log(`✅ [EMPRESA] Novo número calculado para ${sigla}: ${novoNumero}`);
+
+            // Atualizar campo no formulário
+            const numeroInput = this.container?.querySelector('#numero-cliente-final');
             if (numeroInput) {
                 numeroInput.value = novoNumero;
+                console.log(`✅ [EMPRESA] Campo número atualizado: ${novoNumero}`);
             }
-            
-            this.atualizarNumeroClienteVisivel(sigla, novoNumero);
 
-            console.log(`🔢 Número calculado para ${sigla}: ${novoNumero}`);
-            
+            // Atualizar campo readonly na obra
+            const obraElement = this.container?.closest('.obra-block');
+            if (obraElement) {
+                const numeroReadonly = obraElement.querySelector('.numero-cliente-final-readonly');
+                if (numeroReadonly) {
+                    // 🔥 CORREÇÃO: Para campos readonly, usar setAttribute
+                    numeroReadonly.setAttribute('value', novoNumero);
+                    numeroReadonly.value = novoNumero;
+                    console.log(`✅ [EMPRESA] Campo readonly atualizado: ${novoNumero}`);
+                }
+            }
+
+            return novoNumero;
+
         } catch (error) {
-            console.error('❌ Erro ao calcular número do cliente final:', error);
+            console.error('❌ [EMPRESA] Erro ao calcular número do cliente final:', error);
+            return 0;
         }
     }
 
     atualizarNumeroClienteVisivel(sigla, numero) {
         const obraElement = this.container.closest('.obra-block');
         if (!obraElement) return;
-        
+
         const numeroClienteInput = obraElement.querySelector('.numero-cliente-final-readonly');
-        
+
         if (numeroClienteInput) {
             numeroClienteInput.value = numero;
             numeroClienteInput.setAttribute('data-sigla-empresa', sigla);
-            
+
             obraElement.dataset.numeroClienteFinal = numero;
             obraElement.dataset.empresaSigla = sigla;
         }
@@ -500,11 +552,11 @@ class EmpresaCadastroInline {
         try {
             const obraElement = this.container?.closest('.obra-block');
             if (!obraElement) return;
-            
+
             this.calcularNumeroClienteFinal(novaSigla);
-            
+
             console.log(`🔄 Empresa alterada de ${siglaAnterior || 'nenhuma'} para ${novaSigla}`);
-            
+
         } catch (error) {
             console.error('❌ Erro ao sincronizar troca de empresa:', error);
         }
@@ -513,19 +565,19 @@ class EmpresaCadastroInline {
     observarMudancasEmpresa() {
         const empresaInput = this.container?.querySelector('#empresa-input');
         if (!empresaInput) return;
-        
+
         let valorAnterior = empresaInput.value;
-        
+
         empresaInput.addEventListener('input', () => {
             const valorAtual = empresaInput.value;
-            
+
             if (!valorAtual.trim() && valorAnterior.trim()) {
                 this.limparDadosEmpresa();
             }
-            
+
             valorAnterior = valorAtual;
         });
-        
+
         empresaInput.addEventListener('blur', () => {
             if (!empresaInput.value.trim() && empresaInput.dataset.siglaSelecionada) {
                 this.removerEmpresaSelecionada();
@@ -536,15 +588,15 @@ class EmpresaCadastroInline {
     limparDadosEmpresa() {
         const obraElement = this.container?.closest('.obra-block');
         if (!obraElement) return;
-        
+
         this.resetarNumeroClienteVisivel(obraElement);
         this.limparDadosTemporarios(obraElement);
-        
+
         const headerSpacer = obraElement.querySelector('.obra-header-spacer span');
         if (headerSpacer) {
             this.resetHeaderObra(headerSpacer);
         }
-        
+
         this.restaurarTituloOriginal(obraElement);
     }
 
@@ -555,23 +607,23 @@ class EmpresaCadastroInline {
             delete empresaInput.dataset.nomeSelecionado;
             delete empresaInput.dataset.siglaAnterior;
         }
-        
+
         this.limparDadosEmpresa();
     }
 
     inicializarCampoNumeroCliente(obraElement) {
         const numeroClienteInput = obraElement.querySelector('.numero-cliente-final-readonly');
-        
+
         if (numeroClienteInput) {
             const empresaSigla = obraElement.dataset.empresaSigla;
-            
+
             if (empresaSigla) {
                 this.calcularNumeroClienteFinal(empresaSigla);
             } else {
                 numeroClienteInput.value = '';
                 numeroClienteInput.placeholder = 'Selecione uma empresa';
             }
-            
+
             numeroClienteInput.readOnly = true;
         }
     }
@@ -592,13 +644,13 @@ class EmpresaCadastroInline {
                 const textoHeader = `${dadosEmpresa.empresaSigla}-${dadosEmpresa.numeroClienteFinal}`;
                 span.textContent = textoHeader;
                 span.setAttribute('data-tooltip', this.criarTooltipEmpresa(dadosEmpresa));
-                
+
                 this.inicializarTooltipJavaScript(span);
-                
+
                 headerSpacer.appendChild(span);
-                
+
                 this.sincronizarTituloObra(obraElement, dadosEmpresa);
-                
+
                 console.log(`✅ Header da obra atualizado: ${textoHeader}`);
             } else {
                 this.resetHeaderObra(headerSpacer);
@@ -611,25 +663,25 @@ class EmpresaCadastroInline {
     sincronizarTituloObra(obraElement, dadosEmpresa) {
         try {
             const tituloElement = obraElement.querySelector('.obra-title');
-            
+
             if (!tituloElement) {
                 console.warn('⚠️ Elemento .obra-title não encontrado na obra');
                 return;
             }
 
             const identificadorObra = `${dadosEmpresa.empresaSigla}-${dadosEmpresa.numeroClienteFinal}`;
-            
+
             // APENAS [SIGLA-NUMERO] - conforme solicitado
             tituloElement.textContent = identificadorObra;
-            
+
             if (tituloElement.hasAttribute('data-editable-content')) {
                 tituloElement.setAttribute('data-editable-content', identificadorObra);
             }
-            
+
             this.dispararEventoTituloAtualizado(obraElement, identificadorObra, identificadorObra);
-            
+
             console.log(`✅ Título da obra sincronizado: ${identificadorObra}`);
-            
+
         } catch (error) {
             console.error('❌ Erro ao sincronizar título da obra:', error);
         }
@@ -638,9 +690,9 @@ class EmpresaCadastroInline {
     restaurarTituloOriginal(obraElement) {
         const tituloElement = obraElement.querySelector('.obra-title');
         if (!tituloElement) return;
-        
+
         tituloElement.textContent = 'Nova Obra';
-        
+
         if (tituloElement.hasAttribute('data-editable-content')) {
             tituloElement.setAttribute('data-editable-content', 'Nova Obra');
         }
@@ -656,13 +708,13 @@ class EmpresaCadastroInline {
                 timestamp: new Date().toISOString()
             }
         });
-        
+
         obraElement.dispatchEvent(evento);
     }
 
     criarTooltipEmpresa(dadosEmpresa) {
         const partes = [];
-        
+
         if (dadosEmpresa.empresaNome) {
             partes.push(`Empresa: ${dadosEmpresa.empresaNome}`);
         }
@@ -679,30 +731,30 @@ class EmpresaCadastroInline {
         if (dadosEmpresa.orcamentistaResponsavel) {
             partes.push(`Orçamentista: ${dadosEmpresa.orcamentistaResponsavel}`);
         }
-        
+
         return partes.join('\n');
     }
 
     formatarDataParaTooltip(dataString) {
         if (!dataString) return '';
-        
+
         try {
             if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
                 return dataString;
             }
-            
+
             const data = new Date(dataString);
-            
+
             if (isNaN(data.getTime())) {
                 return dataString;
             }
-            
+
             const dia = String(data.getDate()).padStart(2, '0');
             const mes = String(data.getMonth() + 1).padStart(2, '0');
             const ano = data.getFullYear();
-            
+
             return `${dia}/${mes}/${ano}`;
-            
+
         } catch (error) {
             return dataString;
         }
@@ -713,9 +765,9 @@ class EmpresaCadastroInline {
         button.className = 'btn-empresa-cadastro';
         button.textContent = '+ Cadastrar Empresa';
         button.setAttribute('type', 'button');
-        
+
         button.addEventListener('click', (e) => this.ativarCadastro(e));
-        
+
         headerSpacer.innerHTML = '';
         headerSpacer.appendChild(button);
     }
@@ -728,14 +780,14 @@ class EmpresaCadastroInline {
             obraBlock.dataset.numeroClienteFinal = dados.numeroClienteFinal;
             obraBlock.dataset.clienteFinal = dados.clienteFinal;
             obraBlock.dataset.codigoCliente = dados.codigoCliente;
-            
+
             const dataFormatada = this.formatarData(dados.dataCadastro);
             obraBlock.dataset.dataCadastro = dataFormatada;
-            
+
             obraBlock.dataset.orcamentistaResponsavel = dados.orcamentistaResponsavel;
             obraBlock.dataset.idGerado = `obra_${dados.sigla}_${dados.numeroClienteFinal}`;
             obraBlock.dataset.identificadorObra = `${dados.sigla}-${dados.numeroClienteFinal}`;
-            
+
             this.atualizarHeaderObra(obraBlock, {
                 empresaSigla: dados.sigla,
                 empresaNome: dados.nomeEmpresa,
@@ -750,7 +802,7 @@ class EmpresaCadastroInline {
 
     async prepararDados() {
         const dados = this.coletarDadosFormulario();
-        
+
         if (!this.validarDados(dados)) {
             return;
         }
@@ -761,9 +813,9 @@ class EmpresaCadastroInline {
         }
 
         this.prepararDadosObra(dados);
-        
+
         showSystemStatus('Dados da empresa preparados! Agora salve a obra.', 'success');
-        
+
         this.ocultarFormulario();
     }
 
@@ -771,7 +823,7 @@ class EmpresaCadastroInline {
         const empresaInput = this.container.querySelector('#empresa-input');
         const siglaSelecionada = empresaInput?.dataset.siglaSelecionada;
         const nomeSelecionado = empresaInput?.dataset.nomeSelecionado;
-        
+
         return {
             empresaInput: empresaInput?.value || '',
             sigla: siglaSelecionada,
@@ -793,40 +845,40 @@ class EmpresaCadastroInline {
 
         if (!dados.empresaExistente) {
             const regexSigla = /^[A-Z]{2,6}$/;
-            
+
             if (regexSigla.test(dados.empresaInput)) {
                 const nomeCompleto = prompt(`Você digitou apenas a sigla "${dados.empresaInput}". Por favor, informe o nome completo da empresa:`);
                 if (!nomeCompleto || !nomeCompleto.trim()) {
                     showSystemStatus('Nome completo da empresa é obrigatório', 'error');
                     return false;
                 }
-                
+
                 if (nomeCompleto.trim().length < 3) {
                     showSystemStatus('Nome da empresa deve ter pelo menos 3 caracteres', 'error');
                     return false;
                 }
-                
+
                 dados.nomeEmpresa = nomeCompleto.trim();
                 dados.sigla = dados.empresaInput.toUpperCase();
-                
+
             } else {
                 const primeiraPalavra = dados.empresaInput.split(' ')[0];
                 const siglaSugerida = primeiraPalavra.substring(0, 3).toUpperCase();
-                
+
                 let siglaConfirmada = prompt(`Empresa não encontrada. Sugerimos a sigla "${siglaSugerida}". Confirme ou digite outra sigla (2-6 letras maiúsculas):`, siglaSugerida);
-                
+
                 if (!siglaConfirmada) {
                     showSystemStatus('Sigla é obrigatória', 'error');
                     return false;
                 }
-                
+
                 siglaConfirmada = siglaConfirmada.trim().toUpperCase().replace(/[^A-Z]/g, '');
-                
+
                 if (!regexSigla.test(siglaConfirmada)) {
                     showSystemStatus('Sigla deve conter 2 a 6 letras maiúsculas, sem espaços ou caracteres especiais', 'error');
                     return false;
                 }
-                
+
                 dados.sigla = siglaConfirmada;
                 dados.nomeEmpresa = dados.empresaInput;
             }
@@ -870,44 +922,138 @@ class EmpresaCadastroInline {
         }
     }
 
+    /**
+     * 🔥 CORREÇÃO COMPLETA: CANCELAR CADASTRO
+     */
     cancelarCadastro() {
         try {
-            const obraBlock = this.container.closest('.obra-block');
-            
+            const obraBlock = this.container?.closest('.obra-block');
+
             if (obraBlock) {
-                this.resetarNumeroClienteVisivel(obraBlock);
-                
+                // 🔥 1. PRIMEIRO: Limpar campos readonly usando setAttribute
+                const camposReadonly = obraBlock.querySelectorAll('input[readonly], input:disabled');
+                camposReadonly.forEach(campo => {
+                    campo.setAttribute('value', '');
+                    campo.value = '';
+
+                    // Restaurar placeholder específico
+                    if (campo.classList.contains('numero-cliente-final-readonly')) {
+                        campo.setAttribute('placeholder', 'Número do cliente');
+                    }
+                });
+
+                // 🔥 2. SEGUNDO: Limpar campos editáveis
+                const camposEditaveis = obraBlock.querySelectorAll('input:not([readonly]):not(:disabled)');
+                camposEditaveis.forEach(campo => {
+                    campo.value = '';
+
+                    // Restaurar placeholders específicos
+                    if (campo.classList.contains('empresa-input-cadastro') ||
+                        campo.classList.contains('empresa-input')) {
+                        campo.placeholder = 'Digite sigla ou nome...';
+                    }
+                });
+
+                // 🔥 3. REMOVER VALOR HARDCODED do HTML (se existir)
+                const empresaInputs = obraBlock.querySelectorAll('.empresa-input-cadastro, .empresa-input');
+                empresaInputs.forEach(input => {
+                    // Remove atributo value completamente
+                    input.removeAttribute('value');
+                    // Limpa data attributes do autocomplete
+                    delete input.dataset.siglaSelecionada;
+                    delete input.dataset.nomeSelecionado;
+                });
+
+                // 🔥 4. Limpar dados da obra
+                this.limparDadosTemporarios(obraBlock);
+
                 const tinhaDadosEmpresa = obraBlock.dataset.empresaSigla;
-                
+
                 if (tinhaDadosEmpresa) {
                     this.restaurarTituloOriginal(obraBlock);
-                    this.limparDadosTemporarios(obraBlock);
                 }
             }
-            
+
+            // 🔥 5. Ocultar formulário e mostrar botão
             this.ocultarFormulario();
             this.mostrarSpanOriginal();
-            
-            if (obraBlock) {
-                const headerSpacer = obraBlock.querySelector('.obra-header-spacer span');
-                if (headerSpacer && !obraBlock.dataset.empresaSigla) {
-                    this.resetHeaderObra(headerSpacer);
+
+            if (this.container) {
+                const spanOriginal = this.container.querySelector('span');
+                if (spanOriginal) {
+                    spanOriginal.textContent = '+ Cadastrar Empresa';
                 }
             }
-            
+
+            console.log('✅ Cadastro cancelado - todos os campos limpos');
+
         } catch (error) {
             console.error('❌ Erro ao cancelar cadastro:', error);
         }
     }
 
+    // 🔥 NOVA FUNÇÃO: Resetar todos os campos da empresa
+    resetarTodosCamposEmpresa(obraElement) {
+        // Lista de todos os campos de empresa possíveis
+        const camposEmpresa = [
+            '.empresa-input-cadastro',
+            '.empresa-input',
+            '.numero-cliente-final-cadastro',
+            '.numero-cliente-final-readonly',
+            '.cliente-final-cadastro',
+            '.cliente-final-input',
+            '.codigo-cliente-cadastro',
+            '.codigo-cliente-input',
+            '.data-cadastro-cadastro',
+            '.data-cadastro-input',
+            '.orcamentista-responsavel-cadastro',
+            '.orcamentista-responsavel-input'
+        ];
+
+        camposEmpresa.forEach(selector => {
+            const campo = obraElement.querySelector(selector);
+            if (campo) {
+                // 🔥 CORREÇÃO: Para campos readonly, usar setAttribute
+                if (campo.readOnly || campo.disabled) {
+                    campo.setAttribute('value', '');
+                    campo.value = '';
+
+                    // Restaurar placeholder se existir
+                    if (campo.classList.contains('numero-cliente-final-readonly')) {
+                        campo.setAttribute('placeholder', 'Número do cliente');
+                    }
+                } else {
+                    campo.value = '';
+                }
+
+                // Limpar data attributes específicos
+                if (campo.dataset.siglaSelecionada) {
+                    delete campo.dataset.siglaSelecionada;
+                }
+                if (campo.dataset.nomeSelecionado) {
+                    delete campo.dataset.nomeSelecionado;
+                }
+
+                console.log(`🔄 Campo ${selector} limpo`);
+            }
+        });
+
+        // Resetar campo específico de número do cliente
+        this.resetarNumeroClienteVisivel(obraElement);
+    }
+
+    // 🔥 ATUALIZAR: resetarNumeroClienteVisivel
     resetarNumeroClienteVisivel(obraElement) {
         const numeroClienteInput = obraElement.querySelector('.numero-cliente-final-readonly');
-        
+
         if (numeroClienteInput) {
+            // 🔥 CORREÇÃO: Para readonly, usar setAttribute
+            numeroClienteInput.setAttribute('value', '');
             numeroClienteInput.value = '';
-            numeroClienteInput.placeholder = 'Número do cliente';
+            numeroClienteInput.setAttribute('placeholder', 'Número do cliente');
+            console.log('🔄 Número do cliente resetado (readonly)');
         }
-        
+
         const formNumeroInput = this.container?.querySelector('#numero-cliente-final');
         if (formNumeroInput) {
             formNumeroInput.value = '';
@@ -927,7 +1073,7 @@ class EmpresaCadastroInline {
             'orcamentistaResponsavel',
             'idGerado'
         ];
-        
+
         camposParaLimpar.forEach(campo => {
             delete obraElement.dataset[campo];
         });
@@ -966,24 +1112,24 @@ class EmpresaCadastroInline {
 
     formatarData(dataString) {
         if (!dataString) return '';
-        
+
         try {
             if (typeof dataString === 'string' && dataString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
                 return dataString;
             }
-            
+
             const data = new Date(dataString);
-            
+
             if (isNaN(data.getTime())) {
                 return dataString;
             }
-            
+
             const dia = String(data.getDate()).padStart(2, '0');
             const mes = String(data.getMonth() + 1).padStart(2, '0');
             const ano = data.getFullYear();
-            
+
             return `${dia}/${mes}/${ano}`;
-            
+
         } catch (error) {
             return dataString;
         }
@@ -992,31 +1138,31 @@ class EmpresaCadastroInline {
     inicializarTooltipJavaScript(element) {
         const isMobile = window.innerWidth <= 768;
         let autoCloseTimer = null;
-        
+
         element.style.position = 'relative';
         element.style.overflow = 'visible';
         element.style.zIndex = '100';
-        
+
         const tooltip = document.createElement('div');
         tooltip.className = 'empresa-tooltip';
-        
+
         if (isMobile) {
             tooltip.classList.add('empresa-tooltip-mobile');
-            
+
             const closeButton = document.createElement('button');
             closeButton.className = 'empresa-tooltip-close';
             closeButton.innerHTML = '×';
             closeButton.setAttribute('aria-label', 'Fechar tooltip');
             tooltip.appendChild(closeButton);
-            
+
             closeButton.addEventListener('click', (e) => {
                 e.stopPropagation();
                 esconderTooltip();
             });
         }
-        
+
         document.body.appendChild(tooltip);
-        
+
         const iniciarAutoCloseTimer = () => {
             if (autoCloseTimer) {
                 clearTimeout(autoCloseTimer);
@@ -1025,20 +1171,20 @@ class EmpresaCadastroInline {
                 esconderTooltip();
             }, 5000);
         };
-        
+
         const cancelarAutoCloseTimer = () => {
             if (autoCloseTimer) {
                 clearTimeout(autoCloseTimer);
                 autoCloseTimer = null;
             }
         };
-        
+
         const atualizarPosicaoTooltip = () => {
             const rect = element.getBoundingClientRect();
             const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
             const scrollY = window.pageYOffset || document.documentElement.scrollTop;
             const isMobileNow = window.innerWidth <= 768;
-            
+
             if (isMobileNow) {
                 tooltip.style.position = 'fixed';
                 tooltip.style.left = '50%';
@@ -1061,7 +1207,7 @@ class EmpresaCadastroInline {
                 tooltip.style.maxHeight = 'none';
             }
         };
-        
+
         const mostrarTooltip = () => {
             const tooltipText = element.getAttribute('data-tooltip');
             if (tooltipText) {
@@ -1070,70 +1216,70 @@ class EmpresaCadastroInline {
                 if (closeBtn && isMobile) {
                     tooltip.appendChild(closeBtn);
                 }
-                
+
                 tooltip.classList.add('show');
                 atualizarPosicaoTooltip();
-                
+
                 if (isMobile) {
                     iniciarAutoCloseTimer();
                 }
             }
         };
-        
+
         const esconderTooltip = () => {
             tooltip.classList.remove('show');
             cancelarAutoCloseTimer();
         };
-        
+
         if (isMobile) {
             element.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 if (tooltip.classList.contains('show')) {
                     esconderTooltip();
                 } else {
                     mostrarTooltip();
                 }
             });
-            
+
             document.addEventListener('click', (e) => {
                 if (!element.contains(e.target) && !tooltip.contains(e.target)) {
                     esconderTooltip();
                 }
             });
-            
+
             window.addEventListener('scroll', esconderTooltip);
             window.addEventListener('orientationchange', esconderTooltip);
-            
+
         } else {
             element.addEventListener('mouseenter', mostrarTooltip);
             element.addEventListener('mouseleave', esconderTooltip);
         }
-        
+
         if (isMobile) {
             tooltip.addEventListener('touchstart', () => {
                 cancelarAutoCloseTimer();
                 iniciarAutoCloseTimer();
             });
-            
+
             tooltip.addEventListener('click', () => {
                 cancelarAutoCloseTimer();
                 iniciarAutoCloseTimer();
             });
         }
-        
+
         window.addEventListener('scroll', () => {
             if (tooltip.classList.contains('show')) {
                 atualizarPosicaoTooltip();
             }
         });
-        
+
         window.addEventListener('resize', () => {
             if (tooltip.classList.contains('show')) {
                 atualizarPosicaoTooltip();
             }
-            
+
             const novaCondicaoMobile = window.innerWidth <= 768;
             if (isMobile !== novaCondicaoMobile) {
                 esconderTooltip();
@@ -1141,7 +1287,7 @@ class EmpresaCadastroInline {
                 this.inicializarTooltipJavaScript(element);
             }
         });
-        
+
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.removedNodes.length > 0) {
@@ -1158,7 +1304,7 @@ class EmpresaCadastroInline {
                 }
             });
         });
-        
+
         observer.observe(document.body, { childList: true, subtree: true });
     }
 }
@@ -1167,7 +1313,7 @@ export default EmpresaCadastroInline;
 
 if (typeof window !== 'undefined') {
     window.EmpresaCadastroInline = EmpresaCadastroInline;
-    
+
     document.addEventListener('DOMContentLoaded', () => {
         window.empresaCadastro = new EmpresaCadastroInline();
     });

@@ -84,49 +84,24 @@ window.atualizarDadosEmpresa = function(input, campo, obraId) {
 };
 
 /**
- * 🆕 OCULTAR FORMULÁRIO DE EMPRESA E RESTAURAR BOTÃO
+ * 🆕 OCULTAR FORMULÁRIO DE EMPRESA E LIMPAR CAMPOS
+ * (Função global - simplificada para chamar a função correta)
  */
 window.ocultarFormularioEmpresa = function(button, obraId) {
     try {
-        const formulario = button.closest('.empresa-formulario-ativo');
-        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        console.log(`👁️ [EMPRESA-GLOBAL] Ocultando formulário para obra ${obraId}`);
         
-        if (!obraElement) {
-            console.error(`❌ [EMPRESA] Obra ${obraId} não encontrada`);
-            return;
-        }
-        
-        // Encontrar o container de empresa
-        const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
-        if (!empresaContainer) {
-            console.error(`❌ [EMPRESA] Container de empresa não encontrado`);
-            return;
-        }
-        
-        // Remover formulário se existir
-        if (formulario) {
-            formulario.remove();
-        }
-        
-        // Verificar se já existe botão
-        const botaoExistente = empresaContainer.querySelector('.btn-empresa-cadastro');
-        if (!botaoExistente) {
-            // Criar e adicionar botão
-            const botao = document.createElement('button');
-            botao.className = 'btn-empresa-cadastro';
-            botao.textContent = 'Adicionar campos de cadastro de empresas';
-            botao.onclick = () => window.ativarCadastroEmpresa(obraId);
-            
-            empresaContainer.appendChild(botao);
+        // 🔥 SIMPLESMENTE CHAMAR A FUNÇÃO DO FORM-MANAGER
+        // (a correção completa está no form-manager.js)
+        const formManager = window.empresaFormManager || {};
+        if (typeof formManager.ocultarFormularioEmpresa === 'function') {
+            formManager.ocultarFormularioEmpresa(button, obraId);
         } else {
-            // Garantir que o botão está visível
-            botaoExistente.style.display = 'block';
+            console.error('❌ [EMPRESA-GLOBAL] Função não encontrada no form-manager');
         }
-        
-        console.log(`👁️ [EMPRESA] Formulário ocultado e botão restaurado para obra ${obraId}`);
         
     } catch (error) {
-        console.error('❌ [EMPRESA] Erro ao ocultar formulário:', error);
+        console.error('❌ [EMPRESA-GLOBAL] Erro:', error);
     }
 };
 

@@ -450,79 +450,69 @@ function navegarDropdown(direcao, container, input, dropdown, obraId) {
 }
 
 /**
- * SELECIONAR EMPRESA - COM CONTROLE DE TIPO DE SELEÇÃO
+ * SELECIONAR EMPRESA - COM ATUALIZAÇÃO DO NÚMERO DO CLIENTE
  */
 function selecionarEmpresa(sigla, nome, input, dropdown, obraId, tipoSelecao = 'manual') {
     console.log('🎯 Selecionando empresa:', sigla, nome, 'Tipo:', tipoSelecao);
     
-    // Preenche o input
-    input.value = `${sigla} - ${nome}`;
-    input.dataset.siglaSelecionada = sigla;
-    input.dataset.nomeSelecionado = nome;
+    // 🔥 1. Atualizar o campo da empresa
+    if (input) {
+        // Remover atributo value hardcoded
+        input.removeAttribute('value');
+        
+        // Definir novo valor
+        if (input.readOnly || input.disabled) {
+            input.setAttribute('value', `${sigla} - ${nome}`);
+        }
+        input.value = `${sigla} - ${nome}`;
+        
+        // Definir data attributes
+        input.dataset.siglaSelecionada = sigla;
+        input.dataset.nomeSelecionado = nome;
+    }
     
-    // ✅ CORREÇÃO: SALVAR TODOS OS DADOS NOS DATA ATTRIBUTES DA OBRA
+    // 🔥 2. Atualizar dados da obra
     const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
     if (obraElement) {
-        // Dados básicos da empresa
         obraElement.dataset.empresaSigla = sigla;
         obraElement.dataset.empresaNome = nome;
         obraElement.dataset.dataCadastro = new Date().toLocaleDateString('pt-BR');
-        
-        // ✅ BUSCAR E SALVAR OS DEMAIS CAMPOS DO FORMULÁRIO
-        const formEmpresa = obraElement.querySelector('.empresa-formulario-ativo');
-        if (formEmpresa) {
-            // Buscar número do cliente
-            const numeroClienteInput = formEmpresa.querySelector('.numero-cliente-final-cadastro');
-            if (numeroClienteInput?.value) {
-                obraElement.dataset.numeroClienteFinal = numeroClienteInput.value;
-            }
-            
-            // Buscar cliente final
-            const clienteFinalInput = formEmpresa.querySelector('.cliente-final-cadastro');
-            if (clienteFinalInput?.value) {
-                obraElement.dataset.clienteFinal = clienteFinalInput.value;
-            }
-            
-            // Buscar código do cliente
-            const codigoClienteInput = formEmpresa.querySelector('.codigo-cliente-cadastro');
-            if (codigoClienteInput?.value) {
-                obraElement.dataset.codigoCliente = codigoClienteInput.value;
-            }
-            
-            // Buscar orçamentista
-            const orcamentistaInput = formEmpresa.querySelector('.orcamentista-responsavel-cadastro');
-            if (orcamentistaInput?.value) {
-                obraElement.dataset.orcamentistaResponsavel = orcamentistaInput.value;
-            }
-        }
-        
-        console.log(`💾 TODOS os dados salvos na obra ${obraId}:`, {
-            empresaSigla: sigla,
-            empresaNome: nome,
-            numeroClienteFinal: obraElement.dataset.numeroClienteFinal,
-            clienteFinal: obraElement.dataset.clienteFinal,
-            codigoCliente: obraElement.dataset.codigoCliente,
-            orcamentistaResponsavel: obraElement.dataset.orcamentistaResponsavel
-        });
     }
     
-    // Fecha dropdown
+    // 🔥 3. FECHAR DROPDOWN
     if (dropdown) {
         dropdown.style.display = 'none';
     }
     
-    // Remove foco do input
-    setTimeout(() => {
-        input.blur();
-        
-        // 🔥 MOSTRAR AVISO APENAS SE FOR AUTOCOMPLETE
-        mostrarAvisoAutocompletado(input, tipoSelecao);
-    }, 10);
-    
-    // Calcula o número do cliente
+    // 🔥 4. CALCULAR NOVO NÚMERO DO CLIENTE (CRÍTICO!)
     calcularNumeroClienteFinal(sigla, obraId);
     
-    console.log(`✅ Empresa selecionada e TODOS os dados salvos: ${sigla} - ${nome}`);
+    // 🔥 5. LIMPAR OUTROS CAMPOS DO FORMULÁRIO
+    setTimeout(() => {
+        if (obraElement) {
+            const formEmpresa = obraElement.querySelector('.empresa-formulario-ativo');
+            if (formEmpresa) {
+                // Limpar campos de cliente final, código e orçamentista
+                const camposParaLimpar = [
+                    '.cliente-final-input',
+                    '.codigo-cliente-input',
+                    '.orcamentista-responsavel-input'
+                ];
+                
+                camposParaLimpar.forEach(seletor => {
+                    const campo = formEmpresa.querySelector(seletor);
+                    if (campo) {
+                        campo.value = '';
+                    }
+                });
+            }
+        }
+        
+        // Remover foco do input
+        if (input) input.blur();
+    }, 50);
+    
+    console.log(`✅ Empresa selecionada: ${sigla} - ${nome}`);
 }
 
 /**
