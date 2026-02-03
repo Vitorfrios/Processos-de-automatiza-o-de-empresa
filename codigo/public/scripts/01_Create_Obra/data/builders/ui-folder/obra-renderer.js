@@ -1,10 +1,13 @@
 import { ensureStringId } from '../../utils/id-generator.js';
 import { waitForElement } from '../../utils/core-utils.js';
 import { 
-    buildObraHTML, 
     createEmptyObra,
     createObraFromServer 
 } from '../../../features/managers/obra-folder/obra-creator.js';
+import {
+    atualizarTextoBotaoEmpresa,
+    atualizarTodosBotoesEmpresa
+ } from '../../empresa-system/empresa-core.js';
 
 /**
  * Função auxiliar para remover mensagem vazia de projetos
@@ -44,39 +47,6 @@ function renderObraFromData(obraData) {
     }
 }
 
-/**
- * Atualizar texto do botão de cadastro de empresa
- */
-function atualizarTextoBotaoEmpresa(obraId, texto = "Visualizar campos de cadastro de empresas") {
-    const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
-    if (!obraElement) return false;
-
-    const botao = obraElement.querySelector('.btn-empresa-cadastro');
-    if (botao) {
-        botao.textContent = texto;
-        return true;
-    }
-
-    return false;
-}
-
-/**
- * FUNÇÃO PARA ATUALIZAR TODOS OS BOTÕES DE EMPRESA (para obras existentes)
- */
-function atualizarTodosBotoesEmpresa() {
-    const botoes = document.querySelectorAll('.btn-empresa-cadastro');
-    let atualizados = 0;
-
-    botoes.forEach(botao => {
-        const textoAtual = botao.textContent.trim();
-        if (textoAtual === "Adicionar campos de cadastro de empresas") {
-            botao.textContent = "Visualizar campos de cadastro de empresas";
-            atualizados++;
-        }
-    });
-
-    return atualizados;
-}
 
 /**
  * Preenche os dados de uma obra a partir do JSON
@@ -315,32 +285,9 @@ async function populateServicosData(projectElement, servicosData) {
     } catch (error) {}
 }
 
-/**
- * Atualizar dados da empresa em todas as obras
- */
-async function atualizarEmpresaEmTodasObras(empresaData) {
-    const obras = document.querySelectorAll('.obra-block[data-obra-id]');
-
-    for (const obraElement of obras) {
-        try {
-            const obraId = obraElement.dataset.obraId;
-
-            if (typeof window.obterDadosEmpresaDaObra === 'function') {
-                const dadosObra = window.obterDadosEmpresaDaObra(obraId);
-
-                if (dadosObra && typeof window.prepararDadosEmpresaNaObra === 'function') {
-                    await window.prepararDadosEmpresaNaObra(dadosObra, obraElement);
-                }
-            }
-        } catch (error) {}
-    }
-}
 
 // ADICIONAR FUNÇÕES AUXILIARES AO OBJETO GLOBAL
 if (typeof window !== 'undefined') {
-    window.atualizarEmpresaEmTodasObras = atualizarEmpresaEmTodasObras;
-    window.atualizarTextoBotaoEmpresa = atualizarTextoBotaoEmpresa;
-    window.atualizarTodosBotoesEmpresa = atualizarTodosBotoesEmpresa;
     window.populateServicosData = populateServicosData;
     window.removeProjectEmptyMessage = removeProjectEmptyMessage;
 
@@ -353,33 +300,11 @@ if (typeof window !== 'undefined') {
     }
 }
 
-// FUNÇÃO PARA ATUALIZAR BOTÕES DINAMICAMENTE
-function inicializarAtualizacaoBotoesEmpresa() {
-    atualizarTodosBotoesEmpresa();
-
-    let tentativas = 0;
-    const maxTentativas = 5;
-
-    const intervalId = setInterval(() => {
-        tentativas++;
-        const atualizados = atualizarTodosBotoesEmpresa();
-
-        if (atualizados > 0 || tentativas >= maxTentativas) {
-            clearInterval(intervalId);
-        }
-    }, 2000);
-
-    return intervalId;
-}
-
 // EXPORTS NO FINAL
 export {
     renderObraFromData,
     populateObraData,
     processProjectAsync,
     populateServicosData, 
-    atualizarEmpresaEmTodasObras,
-    atualizarTextoBotaoEmpresa,
-    atualizarTodosBotoesEmpresa,
-    inicializarAtualizacaoBotoesEmpresa
+
 };

@@ -1,6 +1,9 @@
 // obra-data-loader.js
-import { atualizarInterfaceComEmpresa } from './empresa-form-manager.js'
-
+import { obterDadosEmpresaDaObra } from '../../empresa-system/empresa-core.js'
+import {
+    prepararDadosEmpresaNaObra,
+    forcarAtualizacaoEmpresa
+} from '../../empresa-system/empresa-data-extractor.js'
 /**
  * Remove todas as obras base do container HTML
  */
@@ -179,143 +182,6 @@ async function loadSingleObra(obraData) {
     }
 }
 
-/**
- * 🆕 PREPARA DADOS DE EMPRESA NA OBRA CARREGADA - VERSÃO CORRIGIDA
- */
-async function prepararDadosEmpresaNaObra(obraData, obraElement) {
-    try {
-        // Verificar se a obra tem dados de empresa
-        const camposEmpresa = [
-            'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
-            'clienteFinal', 'codigoCliente', 'dataCadastro', 
-            'orcamentistaResponsavel', 'idGerado'
-        ];
-        
-        // Log detalhado dos dados recebidos
-        console.log('🏢 [EMPRESA] Preparando dados para obra:', obraData.nome || obraData.id);
-        console.log('📦 [EMPRESA] Dados disponíveis:', {
-            empresaSigla: obraData.empresaSigla,
-            empresaNome: obraData.empresaNome,
-            numeroClienteFinal: obraData.numeroClienteFinal,
-            empresa_id: obraData.empresa_id // 🔥 IMPORTANTE: verificar este campo também
-        });
-        
-        // Verificar se temos dados de empresa
-        const temDadosEmpresa = camposEmpresa.some(campo => 
-            obraData[campo] && obraData[campo].trim() !== ''
-        ) || (obraData.empresa_id && obraData.empresa_id.trim() !== '');
-        
-        if (!temDadosEmpresa) {
-            console.log('📭 [EMPRESA] Obra não possui dados de empresa identificáveis');
-            return;
-        }
-        
-        console.log('✅ [EMPRESA] Dados de empresa detectados, preparando...');
-        
-        // Mapear todos os campos possíveis
-        const mapeamentoCampos = {
-            empresaSigla: obraData.empresaSigla,
-            empresaNome: obraData.empresaNome,
-            numeroClienteFinal: obraData.numeroClienteFinal,
-            clienteFinal: obraData.clienteFinal,
-            codigoCliente: obraData.codigoCliente,
-            dataCadastro: obraData.dataCadastro,
-            orcamentistaResponsavel: obraData.orcamentistaResponsavel,
-            idGerado: obraData.idGerado,
-            empresa_id: obraData.empresa_id // 🔥 Adicionar este campo
-        };
-        
-        // Atribuir aos data attributes
-        Object.entries(mapeamentoCampos).forEach(([campo, valor]) => {
-            if (valor && valor.toString().trim() !== '') {
-                const valorAntigo = obraElement.dataset[campo];
-                obraElement.dataset[campo] = valor.toString().trim();
-                console.log(`✅ [EMPRESA] ${campo}: "${valorAntigo || 'vazio'}" → "${valor}"`);
-            }
-        });
-        
-        // 🔥 CHAVE: Atualizar a interface COM OS DADOS DA OBRA
-        await atualizarInterfaceComEmpresa(obraElement, obraData);
-        
-        console.log('✅ [EMPRESA] Preparação concluída com sucesso');
-        
-    } catch (error) {
-        console.error('❌ [EMPRESA] Erro ao preparar dados:', error);
-    }
-}
-
-/**
- * 🆕 OBTÉM DADOS DE EMPRESA DE UMA OBRA ESPECÍFICA
- */
-function obterDadosEmpresaDaObra(obraId) {
-    try {
-        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
-        if (!obraElement) {
-            console.error(`❌ [EMPRESA] Obra com ID ${obraId} não encontrada`);
-            return null;
-        }
-        
-        const camposEmpresa = [
-            'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
-            'clienteFinal', 'codigoCliente', 'dataCadastro', 
-            'orcamentistaResponsavel', 'idGerado', 'empresa_id'
-        ];
-        
-        const dadosEmpresa = {};
-        let temDados = false;
-        
-        camposEmpresa.forEach(campo => {
-            if (obraElement.dataset[campo]) {
-                dadosEmpresa[campo] = obraElement.dataset[campo];
-                temDados = true;
-            }
-        });
-        
-        if (temDados) {
-            console.log(`✅ [EMPRESA] Dados recuperados para obra ${obraId}:`, dadosEmpresa);
-        } else {
-            console.log(`📭 [EMPRESA] Nenhum dado de empresa encontrado para obra ${obraId}`);
-        }
-        
-        return temDados ? dadosEmpresa : null;
-        
-    } catch (error) {
-        console.error(`❌ [EMPRESA] Erro ao obter dados de empresa:`, error);
-        return null;
-    }
-}
-
-/**
- * 🔥 FUNÇÃO AUXILIAR: Forçar atualização de empresa em uma obra específica
- */
-async function forcarAtualizacaoEmpresa(obraId) {
-    try {
-        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
-        if (!obraElement) {
-            console.error(`❌ [FORÇAR EMPRESA] Obra ${obraId} não encontrada`);
-            return false;
-        }
-        
-        // Obter dados atualizados do servidor
-        const response = await fetch(`/obras/${obraId}`);
-        if (!response.ok) {
-            console.error(`❌ [FORÇAR EMPRESA] Erro ao buscar obra ${obraId}`);
-            return false;
-        }
-        
-        const obraData = await response.json();
-        
-        // Atualizar dados da empresa
-        await prepararDadosEmpresaNaObra(obraData, obraElement);
-        
-        console.log(`✅ [FORÇAR EMPRESA] Empresa atualizada para obra ${obraId}`);
-        return true;
-        
-    } catch (error) {
-        console.error(`❌ [FORÇAR EMPRESA] Erro:`, error);
-        return false;
-    }
-}
 
 // Função para debug
 async function debugLoadObras() {
@@ -348,12 +214,8 @@ async function debugLoadObras() {
         console.error("❌ [DEBUG] Erro ao buscar obras:", error);
     }
 }
-
-// Adicionar ao objeto global
-if (typeof window !== "undefined") {
-    window.prepararDadosEmpresaNaObra = prepararDadosEmpresaNaObra;
-    window.obterDadosEmpresaDaObra = obterDadosEmpresaDaObra;
-    window.forcarAtualizacaoEmpresa = forcarAtualizacaoEmpresa;
+if (typeof window !== 'undefined') {
+    window.loadObrasFromServer=loadObrasFromServer
 }
 
 // EXPORTS
@@ -361,8 +223,5 @@ export {
     removeBaseObraFromHTML,
     loadObrasFromServer,
     loadSingleObra,
-    prepararDadosEmpresaNaObra,
-    obterDadosEmpresaDaObra,
-    forcarAtualizacaoEmpresa,
     debugLoadObras
 };

@@ -4,7 +4,8 @@
  */
 
 // ✅ IMPORTAR COM CAMINHO CORRETO
-import { loadObrasFromServer } from '../data/adapters/obra-adapter.js';
+import { loadObrasFromServer } from "../data/adapters/obra-adapter-folder/obra-data-loader.js";
+
 
 /**
  * Verifica e carrega sessão existente

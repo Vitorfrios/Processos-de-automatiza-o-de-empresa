@@ -119,7 +119,7 @@ async function initializeSession() {
     console.log("🔄 Verificando sessão...");
     
     const { isSessionActive } = await import('./session-adapter.js');
-    const { loadObrasFromServer } = await import('./obra-adapter.js');
+    const { loadObrasFromServer } = await import('../adapters/obra-adapter-folder/obra-data-loader.js');
     
     if (!isSessionActive()) {
         console.log("📭 Sessão não está ativa - aguardando ação do usuário");

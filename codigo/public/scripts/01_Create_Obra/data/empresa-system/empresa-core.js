@@ -1,12 +1,66 @@
+// empresa-core.js
 /**
- * features/empresa-cadastro-inline.js
- * Sistema de cadastro inline de empresas para Página 1
- * Integração com dados.json (empresas) e backup.json (obras)
+ * EMPRESA-CORE.JS - Núcleo do Sistema de Empresas
+ * Responsabilidade: Inicialização, cache, funções fundamentais, classe principal
  */
+
+/* ==== SEÇÃO 1: SISTEMA DE CACHE DE EMPRESAS ==== */
+
+// 🆕 CACHE DE EMPRESAS - EVITA MÚLTIPLAS REQUISIÇÕES
+window.empresasCache = null;
+window.cacheTimestamp = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+/**
+ * CARREGAR EMPRESAS COM CACHE
+ */
+async function carregarEmpresasComCache() {
+    const agora = Date.now();
+
+    // Se tem cache válido, retorna do cache
+    if (window.empresasCache && window.cacheTimestamp && (agora - window.cacheTimestamp) < CACHE_DURATION) {
+        console.log('📦 [CACHE] Retornando empresas do cache');
+        return window.empresasCache;
+    }
+
+    try {
+        console.log('📦 [CACHE] Carregando empresas do servidor...');
+        const response = await fetch('/api/dados/empresas');
+
+        if (response.ok) {
+            const data = await response.json();
+            const empresas = data.empresas || [];
+
+            // Atualiza cache
+            window.empresasCache = empresas;
+            window.cacheTimestamp = agora;
+
+            console.log(`✅ [CACHE] ${empresas.length} empresas carregadas e cacheadas`);
+            return empresas;
+        } else {
+            console.error('❌ [CACHE] Erro ao carregar empresas:', response.status);
+            return [];
+        }
+    } catch (error) {
+        console.error('❌ [CACHE] Erro no carregamento:', error);
+        return window.empresasCache || []; // Retorna cache antigo se disponível
+    }
+}
+
+/**
+ * LIMPAR CACHE (para ser chamado quando novas empresas forem adicionadas)
+ */
+function limparCacheEmpresas() {
+    window.empresasCache = null;
+    window.cacheTimestamp = null;
+    console.log('🧹 [CACHE] Cache de empresas limpo');
+}
+
+/* ==== SEÇÃO 2: CLASSE PRINCIPAL - EMPRESA CADASTRO INLINE ==== */
 
 import { showSystemStatus } from '../../ui/components/status.js';
 
-class EmpresaCadastroInline {
+export class EmpresaCadastroInline {
     constructor() {
         this.empresas = [];
         this.obrasExistentes = [];
@@ -228,74 +282,77 @@ class EmpresaCadastroInline {
     }
 
     criarHTMLFormulario() {
+        const obraId = this.container?.closest('.obra-block')?.dataset?.obraId || 'temp';
+
         return `
-        <div class="empresa-cadastro-inline" id="empresa-cadastro-inline">
-            <div class="empresa-form-grid">
-                <!-- Empresa EDITÁVEL -->
-                <div class="form-group">
-                    <label for="empresa-input">Empresa *</label>
-                    <input type="text" 
-                        id="empresa-input" 
-                        class="empresa-input" 
-                        placeholder="Digite sigla ou nome..."
-                        autocomplete="off">
-                    <div class="autocomplete-suggestions" id="empresa-suggestions"></div>
+        <div class="empresa-formulario-ativo" id="empresa-formulario-${obraId}">
+            <h4>Cadastro de Empresa</h4>
+
+            <div class="empresa-form-grid-horizontal">
+                <div class="form-group-horizontal">
+                    <label>Empresa *</label>
+                    <div class="empresa-input-container">
+                        <input type="text" 
+                            class="empresa-input-cadastro" 
+                            id="empresa-input-${obraId}"
+                            placeholder="Digite sigla ou nome ou selecione..."
+                            autocomplete="off">
+                        <div class="empresa-dropdown" id="empresa-dropdown-${obraId}">
+                            <div class="dropdown-options" id="empresa-options-${obraId}"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Número Cliente Final SOMENTE LEITURA -->
-                <div class="form-group">
-                    <label for="numero-cliente-final">Número Cliente Final</label>
+                <div class="form-group-horizontal">
+                    <label>Nº Cliente</label>
                     <input type="text" 
-                        id="numero-cliente-final" 
-                        class="numero-cliente-final" 
-                        readonly
-                        placeholder="Será calculado automaticamente">
+                        class="numero-cliente-final-cadastro" 
+                        id="numero-cliente-${obraId}"
+                        placeholder="Será calculado automaticamente (pode editar)">
                 </div>
 
-                <!-- Cliente Final EDITÁVEL -->
-                <div class="form-group">
-                    <label for="cliente-final">Cliente Final</label>
+                <div class="form-group-horizontal">
+                    <label>Cliente Final</label>
                     <input type="text" 
-                        id="cliente-final" 
-                        class="cliente-final" 
+                        class="cliente-final-cadastro" 
+                        id="cliente-final-${obraId}"
                         placeholder="Nome do cliente final">
                 </div>
 
-                <!-- Código Cliente EDITÁVEL -->
-                <div class="form-group">
-                    <label for="codigo-cliente">Código Cliente</label>
+                <div class="form-group-horizontal">
+                    <label>Código</label>
                     <input type="text" 
-                        id="codigo-cliente" 
-                        class="codigo-cliente" 
-                        placeholder="Código interno do cliente">
+                        class="codigo-cliente-cadastro" 
+                        id="codigo-cliente-${obraId}"
+                        placeholder="Código do cliente">
                 </div>
 
-                <!-- Data do Cadastro EDITÁVEL -->
-                <div class="form-group">
-                    <label for="data-cadastro">Data do Cadastro</label>
-                    <input type="text" 
-                        id="data-cadastro" 
-                        class="data-cadastro" 
-                        placeholder="DD/MM/AAAA"
-                        value="${new Date().toLocaleDateString('pt-BR')}">
+                <div class="form-group-horizontal">
+                    <label>Data</label>
+                    <div class="date-input-container">
+                        <input type="text" 
+                            class="data-cadastro-cadastro" 
+                            id="data-cadastro-${obraId}"
+                            placeholder="DD/MM/AAAA"
+                            value="${new Date().toLocaleDateString('pt-BR')}"
+                            maxlength="10">
+                        <span class="calendar-icon" onclick="window.alternarDatePicker('${obraId}', 'cadastro')">📅</span>
+                    </div>
                 </div>
 
-                <!-- Orçamentista Responsável EDITÁVEL -->
-                <div class="form-group">
-                    <label for="orcamentista-responsavel">Orçamentista Responsável</label>
+                <div class="form-group-horizontal">
+                    <label>Orçamentista</label>
                     <input type="text" 
-                        id="orcamentista-responsavel" 
-                        class="orcamentista-responsavel" 
+                        class="orcamentista-responsavel-cadastro" 
+                        id="orcamentista-${obraId}"
                         placeholder="Nome do orçamentista">
                 </div>
             </div>
 
             <div class="empresa-form-actions">
-                <button type="button" class="btn btn-cancel" onclick="window.empresaCadastro.cancelarCadastro()">
+                <button type="button" class="btn-cancel" 
+                        onclick="window.empresaCadastro.cancelarCadastro()">
                     Cancelar
-                </button>
-                <button type="button" class="btn btn-confirm" onclick="window.empresaCadastro.prepararDados()">
-                    Confirmar Dados
                 </button>
             </div>
         </div>
@@ -446,83 +503,38 @@ class EmpresaCadastroInline {
     /**
      * CALCULAR NÚMERO DO CLIENTE FINAL PARA NOVA EMPRESA
      */
-    calcularNumeroClienteFinal(sigla) {
+    calcularNumeroClienteFinal(sigla, obraId = null) {
         try {
-            console.log(`🔢 [EMPRESA] Calculando número para empresa: ${sigla}`);
+            console.log(`🔢 [EMPRESA] Calculando número para empresa: ${sigla}, obra: ${obraId}`);
 
-            if (!sigla || !this.obrasExistentes) {
-                console.log('❌ [EMPRESA] Sigla ou obras inválidas');
+            if (!sigla) {
+                console.log('❌ [EMPRESA] Sigla não fornecida');
                 return 0;
             }
 
-            // 🔥 CORREÇÃO: Buscar obras da empresa específica
+            // 🔥 Buscar obras da empresa específica
             const obrasDaEmpresa = this.obrasExistentes.filter(obra => {
-                // Verificar em múltiplos campos
                 return obra.empresaSigla === sigla ||
-                    obra.empresa_id === sigla ||
-                    (obra.idGerado && obra.idGerado.includes(`_${sigla}_`)) ||
-                    (obra.identificadorObra && obra.identificadorObra.startsWith(`${sigla}-`));
+                    obra.empresa_id === sigla;
             });
 
             console.log(`📊 [EMPRESA] Encontradas ${obrasDaEmpresa.length} obras para ${sigla}`);
 
             let maiorNumero = 0;
-
             obrasDaEmpresa.forEach(obra => {
-                // 1. Tentar número do cliente final
                 if (obra.numeroClienteFinal) {
                     const numero = parseInt(obra.numeroClienteFinal);
                     if (!isNaN(numero) && numero > maiorNumero) {
                         maiorNumero = numero;
-                        console.log(`📈 [EMPRESA] Número de cliente final: ${numero}`);
-                    }
-                }
-
-                // 2. Tentar extrair do idGerado
-                if (obra.idGerado) {
-                    const match = obra.idGerado.match(new RegExp(`_${sigla}_(\\d+)`, 'i'));
-                    if (match && match[1]) {
-                        const numero = parseInt(match[1]);
-                        if (!isNaN(numero) && numero > maiorNumero) {
-                            maiorNumero = numero;
-                            console.log(`📈 [EMPRESA] Número do idGerado: ${numero}`);
-                        }
-                    }
-                }
-
-                // 3. Tentar extrair do identificadorObra
-                if (obra.identificadorObra && obra.identificadorObra.startsWith(`${sigla}-`)) {
-                    const numeroStr = obra.identificadorObra.split('-')[1];
-                    if (numeroStr) {
-                        const numero = parseInt(numeroStr);
-                        if (!isNaN(numero) && numero > maiorNumero) {
-                            maiorNumero = numero;
-                            console.log(`📈 [EMPRESA] Número do identificador: ${numero}`);
-                        }
                     }
                 }
             });
 
             const novoNumero = maiorNumero + 1;
-            console.log(`✅ [EMPRESA] Novo número calculado para ${sigla}: ${novoNumero}`);
 
-            // Atualizar campo no formulário
-            const numeroInput = this.container?.querySelector('#numero-cliente-final');
-            if (numeroInput) {
-                numeroInput.value = novoNumero;
-                console.log(`✅ [EMPRESA] Campo número atualizado: ${novoNumero}`);
-            }
-
-            // Atualizar campo readonly na obra
-            const obraElement = this.container?.closest('.obra-block');
-            if (obraElement) {
-                const numeroReadonly = obraElement.querySelector('.numero-cliente-final-readonly');
-                if (numeroReadonly) {
-                    // 🔥 CORREÇÃO: Para campos readonly, usar setAttribute
-                    numeroReadonly.setAttribute('value', novoNumero);
-                    numeroReadonly.value = novoNumero;
-                    console.log(`✅ [EMPRESA] Campo readonly atualizado: ${novoNumero}`);
-                }
+            // 🔥 Atualizar campo no DOM se tiver obraId
+            if (obraId) {
+                this.atualizarCampoNumeroCliente(obraId, novoNumero);
             }
 
             return novoNumero;
@@ -530,6 +542,20 @@ class EmpresaCadastroInline {
         } catch (error) {
             console.error('❌ [EMPRESA] Erro ao calcular número do cliente final:', error);
             return 0;
+        }
+    }
+
+    // 🔥 NOVO MÉTODO PARA ATUALIZAR O CAMPO
+    atualizarCampoNumeroCliente(obraId, numero) {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) return;
+
+        const numeroInput = obraElement.querySelector('.numero-cliente-final-cadastro');
+        if (numeroInput) {
+            numeroInput.readOnly = false;
+            numeroInput.removeAttribute('readonly');
+            numeroInput.value = numero;
+            console.log(`✅ [EMPRESA] Campo número atualizado: ${numero} (editável)`);
         }
     }
 
@@ -624,7 +650,8 @@ class EmpresaCadastroInline {
                 numeroClienteInput.placeholder = 'Selecione uma empresa';
             }
 
-            numeroClienteInput.readOnly = true;
+            numeroClienteInput.readOnly = false; 
+            numeroClienteInput.removeAttribute('readonly');
         }
     }
 
@@ -761,16 +788,9 @@ class EmpresaCadastroInline {
     }
 
     resetHeaderObra(headerSpacer) {
-        const button = document.createElement('button');
-        button.className = 'btn-empresa-cadastro';
-        button.textContent = '+ Cadastrar Empresa';
-        button.setAttribute('type', 'button');
-
-        button.addEventListener('click', (e) => this.ativarCadastro(e));
-
         headerSpacer.innerHTML = '';
-        headerSpacer.appendChild(button);
     }
+
 
     prepararDadosObra(dados) {
         const obraBlock = this.container.closest('.obra-block');
@@ -1309,12 +1329,262 @@ class EmpresaCadastroInline {
     }
 }
 
-export default EmpresaCadastroInline;
+/* ==== SEÇÃO 3: FUNÇÕES GLOBAIS (ex-obra-adapter.js) ==== */
 
-if (typeof window !== 'undefined') {
-    window.EmpresaCadastroInline = EmpresaCadastroInline;
+/**
+ * 🆕 FUNÇÃO GLOBAL PARA EDITAR DADOS DA EMPRESA
+ */
+window.editarDadosEmpresa = function (button, obraId = null) {
+    try {
+        const visualizacao = button.closest('.empresa-dados-visualizacao');
+        let obraBlock;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        window.empresaCadastro = new EmpresaCadastroInline();
+        if (obraId) {
+            // Se recebeu obraId, buscar por ID
+            obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+        } else {
+            // Buscar pelo DOM
+            obraBlock = visualizacao.closest('.obra-block');
+        }
+
+        if (!obraBlock) {
+            console.error('❌ [EMPRESA] Obra não encontrada para edição');
+            return;
+        }
+
+        // Remover visualização se existir
+        if (visualizacao) {
+            visualizacao.remove();
+        }
+
+        // Mostrar span original para ativar cadastro
+        const spanOriginal = obraBlock.querySelector('.projetc-header-record.very-dark span');
+        if (spanOriginal) {
+            spanOriginal.style.display = 'inline';
+
+            // Simular clique para ativar cadastro
+            if (window.empresaCadastro && typeof window.empresaCadastro.ativarCadastro === 'function') {
+                const event = new Event('click');
+                spanOriginal.dispatchEvent(event);
+            } else {
+                spanOriginal.click();
+            }
+        }
+
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro ao editar dados da empresa:', error);
+    }
+};
+
+/**
+ * 🆕 ATUALIZAR DADOS DA EMPRESA EM TEMPO REAL
+ */
+window.atualizarDadosEmpresa = function (input, campo, obraId) {
+    try {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [EMPRESA] Obra ${obraId} não encontrada`);
+            return;
+        }
+
+        // Atualizar data attribute
+        obraElement.dataset[campo] = input.value;
+
+        console.log(`📝 [EMPRESA] Campo ${campo} atualizado para:`, input.value);
+
+        // Se for cliente final ou orçamentista, atualizar tooltip do header
+        if (campo === 'clienteFinal' || campo === 'orcamentistaResponsavel') {
+            if (window.empresaCadastro && typeof window.empresaCadastro.atualizarHeaderObra === 'function') {
+                const dadosAtuais = obterDadosEmpresaDaObra(obraId);
+                if (dadosAtuais) {
+                    window.empresaCadastro.atualizarHeaderObra(obraElement, dadosAtuais);
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao atualizar campo ${campo}:`, error);
+    }
+};
+
+/**
+ * 🆕 FUNÇÃO GLOBAL PARA ATIVAR CADASTRO DE EMPRESA - CORRIGIDA
+ */
+window.ativarCadastroEmpresa = function (obraId) {
+    try {
+        console.log(`🎯 [EMPRESA] Ativando cadastro para obra: ${obraId}`);
+
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [EMPRESA] Obra ${obraId} não encontrada`);
+            return;
+        }
+
+        // Encontrar container de empresa
+        const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
+        if (!empresaContainer) {
+            console.error(`❌ [EMPRESA] Container de empresa não encontrado`);
+            return;
+        }
+
+        // ✅ CORREÇÃO: Verificar se já existe formulário ativo
+        const formularioExistente = empresaContainer.querySelector('.empresa-formulario-ativo');
+        if (formularioExistente) {
+            console.log(`✅ [EMPRESA] Formulário já está ativo para obra ${obraId}`);
+            return; // ✅ IMPEDE EXECUÇÃO DUPLICADA
+        }
+
+        // Ocultar botão
+        const botao = empresaContainer.querySelector('.btn-empresa-cadastro');
+        if (botao) {
+            botao.style.display = 'none';
+        }
+
+        // Verificar se há dados de empresa existentes
+        const dadosEmpresa = obterDadosEmpresaDaObra(obraId);
+
+        if (dadosEmpresa) {
+            // Se já tem dados, criar formulário com dados existentes
+            console.log(`📊 [EMPRESA] Criando formulário com dados existentes para obra ${obraId}`);
+            // Função será importada de empresa-form-manager.js
+            if (typeof criarVisualizacaoEmpresa === 'function') {
+                criarVisualizacaoEmpresa({ ...dadosEmpresa, id: obraId }, empresaContainer);
+            }
+        } else {
+            // Se não tem dados, criar formulário vazio para cadastro
+            console.log(`🆕 [EMPRESA] Criando novo formulário para obra ${obraId}`);
+            // Função será importada de empresa-form-manager.js
+            if (typeof criarFormularioVazioEmpresa === 'function') {
+                criarFormularioVazioEmpresa(obraId, empresaContainer);
+            }
+        }
+
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao ativar cadastro para obra ${obraId}:`, error);
+    }
+};
+
+/**
+ * 🆕 OBTÉM DADOS DE EMPRESA DE UMA OBRA ESPECÍFICA
+ */
+function obterDadosEmpresaDaObra(obraId) {
+    try {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [EMPRESA] Obra com ID ${obraId} não encontrada`);
+            return null;
+        }
+
+        const camposEmpresa = [
+            'empresaSigla', 'empresaNome', 'numeroClienteFinal',
+            'clienteFinal', 'codigoCliente', 'dataCadastro',
+            'orcamentistaResponsavel', 'idGerado', 'empresa_id'
+        ];
+
+        const dadosEmpresa = {};
+        let temDados = false;
+
+        camposEmpresa.forEach(campo => {
+            if (obraElement.dataset[campo]) {
+                dadosEmpresa[campo] = obraElement.dataset[campo];
+                temDados = true;
+            }
+        });
+
+        if (temDados) {
+            console.log(`✅ [EMPRESA] Dados recuperados para obra ${obraId}:`, dadosEmpresa);
+        } else {
+            console.log(`📭 [EMPRESA] Nenhum dado de empresa encontrado para obra ${obraId}`);
+        }
+
+        return temDados ? dadosEmpresa : null;
+
+    } catch (error) {
+        console.error(`❌ [EMPRESA] Erro ao obter dados de empresa:`, error);
+        return null;
+    }
+}
+
+
+/**
+ * Atualizar texto do botão de cadastro de empresa
+ */
+function atualizarTextoBotaoEmpresa(obraId, texto = "Visualizar campos de cadastro de empresas") {
+    const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraElement) return false;
+
+    const botao = obraElement.querySelector('.btn-empresa-cadastro');
+    if (botao) {
+        botao.textContent = texto;
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * FUNÇÃO PARA ATUALIZAR TODOS OS BOTÕES DE EMPRESA (para obras existentes)
+ */
+function atualizarTodosBotoesEmpresa() {
+    const botoes = document.querySelectorAll('.btn-empresa-cadastro');
+    let atualizados = 0;
+
+    botoes.forEach(botao => {
+        const textoAtual = botao.textContent.trim();
+        if (textoAtual === "Adicionar campos de cadastro de empresas") {
+            botao.textContent = "Visualizar campos de cadastro de empresas";
+            atualizados++;
+        }
     });
+
+    return atualizados;
+}
+
+
+/* ==== SEÇÃO 4: INICIALIZAÇÃO DO SISTEMA ==== */
+
+/**
+ * INICIALIZAR SISTEMA DE EMPRESA
+ */
+function inicializarSistemaEmpresa() {
+    console.log('🏢 [EMPRESA] Inicializando sistema de empresa...');
+
+    try {
+        // Criar instância global da classe
+        window.empresaCadastro = new EmpresaCadastroInline();
+
+        // Configurar evento de DOMContentLoaded se necessário
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('✅ [EMPRESA] Sistema de empresa inicializado após DOM carregado');
+            });
+        } else {
+            console.log('✅ [EMPRESA] Sistema de empresa inicializado');
+        }
+
+        return true;
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro ao inicializar sistema:', error);
+        return false;
+    }
+}
+
+export {
+    carregarEmpresasComCache,
+    limparCacheEmpresas,
+    obterDadosEmpresaDaObra,
+    atualizarTextoBotaoEmpresa,
+    atualizarTodosBotoesEmpresa,
+    inicializarSistemaEmpresa,
+
+}
+
+// Compatibilidade global
+if (typeof window !== 'undefined') {
+    window.carregarEmpresasComCache = carregarEmpresasComCache;
+    window.limparCacheEmpresas = limparCacheEmpresas;
+    window.obterDadosEmpresaDaObra = obterDadosEmpresaDaObra;
+    window.atualizarTextoBotaoEmpresa = atualizarTextoBotaoEmpresa;
+    window.atualizarTodosBotoesEmpresa = atualizarTodosBotoesEmpresa;
+    window.inicializarSistemaEmpresa = inicializarSistemaEmpresa
 }

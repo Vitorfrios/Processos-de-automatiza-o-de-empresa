@@ -5,15 +5,24 @@ import { generateObraId } from '../../../data/utils/id-generator.js';
  * 🏗️ FUNÇÕES DE CONSTRUÇÃO DE INTERFACE - FONTE ÚNICA
  */
 
-function buildObraHTML(obraName, obraId, hasId = false, isFromServer = false) {
+function buildObraHTML(obraName, obraId, hasId = false, isFromServer = false, obraData = null) {
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
         obraId = generateObraId();
     }
 
-    // Determina texto do botão de empresa
-    const buttonText = isFromServer ?
-        "Visualizar campos de cadastro de empresas" :
-        "Adicionar campos de cadastro de empresas";
+    // VERIFICAR SE A OBRA TEM DADOS DE EMPRESA
+    let buttonText = "Adicionar campos de cadastro de empresas";
+    
+    if (isFromServer && obraData) {
+        // Verificar se tem dados de empresa
+        const temDadosEmpresa = obraData.empresaSigla || 
+                                obraData.empresa_id || 
+                                obraData.numeroClienteFinal;
+        
+        if (temDadosEmpresa) {
+            buttonText = "Visualizar campos de cadastro de empresas";
+        }
+    }
 
     return `
     <div class="obra-block" data-obra-id="${obraId}" data-obra-name="${obraName}">

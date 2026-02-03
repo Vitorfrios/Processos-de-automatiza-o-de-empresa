@@ -2,7 +2,7 @@
 // Responsável por montar o objeto completo da obra - VERSÃO ATUALIZADA COM VALOR TOTAL
 
 import { generateObraId, generateProjectId, generateRoomId } from '../../utils/id-generator.js';
-import { extractEmpresaData } from './empresa-data-extractor.js';
+import { extractEmpresaData } from '../../empresa-system/empresa-data-extractor.js';
 
 /**
  * Constrói o objeto de dados completo de uma obra a partir do HTML

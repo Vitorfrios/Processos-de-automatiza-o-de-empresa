@@ -339,7 +339,7 @@ body:has(.confirmation-modal.active) {
     width: 100%;
     margin-top: 0.5rem;
     border-radius: 2px;
-    animation: countdown 10s linear;
+    animation: countdown 5s linear;
 }
 
 .toast.success .countdown-bar {

@@ -36,7 +36,7 @@ console.log("🚀 Variáveis globais inicializadas:", {
 import { initializeSystem } from './main-folder/system-init.js';
 import { checkAndLoadExistingSession } from './main-folder/session-manager-main.js';
 import { showServerOfflineMessage } from './main-folder/error-handler.js';
-import { configurarAutoFormatacaoData } from './data/adapters/obra-adapter-folder/empresa-form-manager.js';
+import { configurarAutoFormatacaoData } from './data/empresa-system/empresa-form-manager.js';
 
 // ✅ IMPORTAR MÓDULOS DE FILTRO
 import './features/filters/filter-system.js';

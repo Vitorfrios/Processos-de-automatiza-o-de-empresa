@@ -220,9 +220,7 @@ function buildProjectHTML(obraId, obraName, projectId, projectName) {
                 </div>
             </div>
             
-            <div class="project-content collapsed" id="project-content-${finalProjectId}">
-                ${buildServicosInProject(finalProjectId)}
-                
+            <div class="project-content collapsed" id="project-content-${finalProjectId}">                
                 <div class="rooms-container">
                     <p class="empty-message">Adicione salas a este projeto...</p>
                 </div>
@@ -238,6 +236,8 @@ function buildProjectHTML(obraId, obraName, projectId, projectName) {
                         R$ 0,00
                     </span>
                 </div>
+                ${buildServicosInProject(finalProjectId)}
+
             </div>
         </div>
     `

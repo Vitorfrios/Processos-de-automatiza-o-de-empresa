@@ -7,14 +7,14 @@
 // Variáveis globais para controle do modal e undo
 let pendingDeletion = {
     obraName: null,
-    obraId: null, 
+    obraId: null,
     obraBlock: null,
     obraHTML: null,
     originalPosition: null
 };
 
 let undoTimeout = null;
-let currentToasts = []; 
+let currentToasts = [];
 
 /* =========================
  * MODAL: abrir / fechar
@@ -29,7 +29,7 @@ export function showConfirmationModal(obraName, obraId, obraBlock) {
         console.error(`ERRO FALBACK (showConfirmationModal) modal.js [ID de obra inválido: ${obraId}]`);
         return;
     }
-    
+
     // Salva a posição original da obra no DOM
     const projectsContainer = document.getElementById("projects-container");
     const obraBlocks = projectsContainer ? Array.from(projectsContainer.children) : [];
@@ -134,7 +134,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
             <div class="toast-content">
                 <div class="toast-title">Obra "${obraName}" removida</div>
                 <div class="toast-message">
-                    <span class="countdown-text">Você tem <span class="countdown-number">8</span> segundos para desfazer esta ação</span>
+                    <span class="countdown-text">Você tem <span class="countdown-number">5</span> segundos para desfazer esta ação</span>
                 </div>
                 <div class="toast-id">ID: ${obraId}</div>
                 <div class="toast-actions">
@@ -148,12 +148,12 @@ function showToast(obraName, type = 'undo', obraId = null) {
         setTimeout(() => {
             const countdownBar = toast.querySelector('.countdown-bar');
             if (countdownBar) {
-                countdownBar.style.animation = 'countdown 8s linear forwards';
+                countdownBar.style.animation = 'countdown 5s linear forwards'; 
             }
-        }, 100);
+        }, 50);
 
         // ✅ NOVO: Contador regressivo dos segundos
-        startCountdown(toast, 8);
+        startCountdown(toast, 5);
 
     } else if (type === 'success') {
         toast.innerHTML = `
@@ -199,12 +199,12 @@ function showToast(obraName, type = 'undo', obraId = null) {
     // Timeouts por tipo
     if (type === 'undo') {
         toastData.timeout = setTimeout(() => {
-            console.log(`⏰ Timeout de 8 segundos completado para obra ${obraName} (ID: ${obraId})`);
+            console.log(`⏰ Timeout de 5 segundos completado para obra ${obraName} (ID: ${obraId})`); // ← Atualize o texto
             // Remove o toast de undo primeiro
             hideSpecificToast(toastId);
             // Em seguida processa remoção definitiva
             completeDeletion(obraId, obraName);
-        }, 8000);
+        }, 5000);
     } else {
         toastData.timeout = setTimeout(() => {
             console.log(`⏰ Removendo toast de ${type} para obra ${obraName} (ID: ${obraId})`);
@@ -221,11 +221,11 @@ function startCountdown(toastElement, seconds) {
     if (!countdownNumber) return;
 
     let timeLeft = seconds;
-    
+
     const countdownInterval = setInterval(() => {
         timeLeft--;
         countdownNumber.textContent = timeLeft;
-        
+
         // Mudar cor quando estiver acabando o tempo
         if (timeLeft <= 3) {
             countdownNumber.style.color = '#ff6b6b';
@@ -233,7 +233,7 @@ function startCountdown(toastElement, seconds) {
         } else if (timeLeft <= 5) {
             countdownNumber.style.color = '#ffa726';
         }
-        
+
         if (timeLeft <= 0) {
             clearInterval(countdownInterval);
         }
@@ -386,7 +386,7 @@ async function completeDeletionImmediate(obraId, obraName) {
 
     // ✅ CORREÇÃO: Verificar se a obra existe no servidor antes de tentar remover
     const obraExisteNoServidor = await verificarObraNoServidor(obraId);
-    
+
     if (obraExisteNoServidor && obraId && obraId !== "" && obraId !== "null" && obraId !== "undefined") {
         try {
             console.log(`🗑️ Obra existe no servidor, removendo ${obraId} da sessão...`);
@@ -424,25 +424,25 @@ async function completeDeletionImmediate(obraId, obraName) {
 async function verificarObraNoServidor(obraId) {
     try {
         console.log(`🔍 Verificando se obra ${obraId} existe no servidor...`);
-        
+
         // Buscar todas as obras do servidor
         const response = await fetch('/api/backup-completo');
         if (!response.ok) {
             console.log('⚠️ Não foi possível verificar obras no servidor');
             return false;
         }
-        
+
         const backupData = await response.json();
         const todasObras = backupData.obras || [];
-        
+
         // Verificar se a obra existe
         const obraExiste = todasObras.some(obra => String(obra.id) === String(obraId));
-        
+
         console.log(`📊 Obra ${obraId} existe no servidor? ${obraExiste}`);
         console.log(`📋 Obras no servidor:`, todasObras.map(o => ({ id: o.id, nome: o.nome })));
-        
+
         return obraExiste;
-        
+
     } catch (error) {
         console.log(`🌐 Erro ao verificar obra no servidor:`, error.message);
         return false;
@@ -454,9 +454,9 @@ async function verificarObraNoServidor(obraId) {
  */
 export async function confirmDeletion() {
     console.log('🎯 confirmDeletion() CHAMADO - Iniciando processo de deleção');
-    
+
     const { obraName, obraId, obraBlock, obraHTML, originalPosition } = pendingDeletion;
-    
+
     if (!obraName || !obraId) {
         console.error('❌ Dados incompletos para deleção');
         return;
@@ -497,7 +497,7 @@ export async function confirmDeletion() {
 
     // Mostra toast com opção de desfazer
     showToast(obraName, 'undo', obraId);
-    
+
     console.log('✅ Deleção confirmada e processo iniciado');
 }
 
@@ -515,7 +515,7 @@ export function getPendingDeletion() {
 // Fecha modal clicando fora (mantido pois funciona bem)
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🔧 Modal system inicializado');
-    
+
     const modal = document.getElementById('confirmationModal');
     if (modal) {
         modal.addEventListener('click', (e) => {

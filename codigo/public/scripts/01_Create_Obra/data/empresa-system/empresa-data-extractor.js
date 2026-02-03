@@ -1,9 +1,17 @@
-// data/builders/data-builders-folder/empresa-data-extractor.js
+// empresa-data-extractor.js
+/**
+ * 📊 EMPRESA-DATA-EXTRACTOR.JS - Extração e Processamento de Dados de Empresa
+ * ✅ Responsabilidade: Extrair dados do DOM, preparar para salvamento, cálculos
+ * ✅ Arquivo 4 de 5 na refatoração do sistema de empresa
+ */
+
+import { calcularNumeroLocal } from './empresa-ui-helpers.js';
+
+/* ==== SEÇÃO 1: EXTRAÇÃO DE DADOS DO DOM ==== */
 
 /**
  * Extrai dados de empresa cadastrados inline
  */
-
 function extractEmpresaData(obraElement) {
     const empresaData = {};
     
@@ -209,9 +217,268 @@ function extractEmpresaData(obraElement) {
     return empresaData;
 }
 
+/* ==== SEÇÃO 2: PREPARAÇÃO DE DADOS PARA SALVAMENTO ==== */
 
+/**
+ * 🆕 VERIFICA E PREPARA EMPRESA PARA SALVAMENTO (APENAS NA HORA DE SALVAR OBRA)
+ * Detecta quando o usuário digitou uma empresa não cadastrada e a prepara para salvar junto com a obra
+ */
+async function prepararEmpresaParaSalvamento(obraElement) {
+    try {
+        console.log('🔍 [EMPRESA] Verificando empresa para salvamento com obra...');
+        
+        // Buscar inputs de empresa
+        const empresaInput = obraElement.querySelector('.empresa-input-cadastro, .empresa-input-readonly');
+        const numeroInput = obraElement.querySelector('.numero-cliente-final-cadastro');
+        
+        if (!empresaInput || !empresaInput.value) {
+            console.log('❌ [EMPRESA] Nenhuma empresa digitada');
+            return false;
+        }
+        
+        // Se já tem sigla selecionada (empresa já cadastrada), não faz nada
+        if (empresaInput.dataset.siglaSelecionada) {
+            console.log('✅ [EMPRESA] Empresa já cadastrada:', empresaInput.dataset.siglaSelecionada);
+            return true;
+        }
+        
+        const nomeEmpresa = empresaInput.value.trim();
+        if (!nomeEmpresa) {
+            console.log('❌ [EMPRESA] Nome da empresa vazio');
+            return false;
+        }
+        
+        console.log('🆕 [EMPRESA] Nova empresa detectada para salvar com obra:', nomeEmpresa);
+        
+        // Extrair sigla (primeiras 3 letras em maiúsculo)
+        let sigla = nomeEmpresa.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '');
+        
+        // Garantir que a sigla tenha pelo menos 2 caracteres
+        if (sigla.length < 2) {
+            sigla = nomeEmpresa.substring(0, 2).toUpperCase() + 'X';
+        }
+        if (sigla.length > 6) {
+            sigla = sigla.substring(0, 6);
+        }
+        
+        console.log(`🆕 [EMPRESA] Preparando empresa: ${sigla} - ${nomeEmpresa}`);
+        
+        // 🆕 NÃO SALVA A EMPRESA AQUI - APENAS PREPARA OS DADOS
+        // A empresa será salva junto com a obra no processo normal
+        
+        // Atualizar a obra com os dados da nova empresa
+        obraElement.dataset.empresaSigla = sigla;
+        obraElement.dataset.empresaNome = nomeEmpresa;
+        obraElement.dataset.numeroClienteFinal = '1'; // Número inicial para empresa nova
+        
+        // Atualizar inputs
+        if (empresaInput) {
+            empresaInput.value = `${sigla} - ${nomeEmpresa}`;
+            empresaInput.dataset.siglaSelecionada = sigla;
+            empresaInput.dataset.nomeSelecionado = nomeEmpresa;
+        }
+        
+        if (numeroInput) {
+            numeroInput.value = '1';
+        }
+        
+        console.log(`✅ [EMPRESA] Empresa preparada para salvamento: ${sigla} - ${nomeEmpresa}`);
+        
+        // Usar showSystemStatus se disponível
+        if (typeof window.showSystemStatus === 'function') {
+            window.showSystemStatus(`Empresa ${sigla} preparada para salvar com a obra!`, 'success');
+        }
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro ao preparar empresa:', error);
+        if (typeof window.showSystemStatus === 'function') {
+            window.showSystemStatus('Erro ao preparar empresa para salvamento', 'error');
+        }
+        return false;
+    }
+}
 
-// EXPORTS NO FINAL
+/**
+ * 🆕 PREPARA DADOS DE EMPRESA NA OBRA CARREGADA - VERSÃO CORRIGIDA
+ */
+async function prepararDadosEmpresaNaObra(obraData, obraElement) {
+    try {
+        // Verificar se a obra tem dados de empresa
+        const camposEmpresa = [
+            'empresaSigla', 'empresaNome', 'numeroClienteFinal', 
+            'clienteFinal', 'codigoCliente', 'dataCadastro', 
+            'orcamentistaResponsavel', 'idGerado'
+        ];
+        
+        // Log detalhado dos dados recebidos
+        console.log('🏢 [EMPRESA] Preparando dados para obra:', obraData.nome || obraData.id);
+        console.log('📦 [EMPRESA] Dados disponíveis:', {
+            empresaSigla: obraData.empresaSigla,
+            empresaNome: obraData.empresaNome,
+            numeroClienteFinal: obraData.numeroClienteFinal,
+            empresa_id: obraData.empresa_id // 🔥 IMPORTANTE: verificar este campo também
+        });
+        
+        // Verificar se temos dados de empresa
+        const temDadosEmpresa = camposEmpresa.some(campo => 
+            obraData[campo] && obraData[campo].trim() !== ''
+        ) || (obraData.empresa_id && obraData.empresa_id.trim() !== '');
+        
+        if (!temDadosEmpresa) {
+            console.log('📭 [EMPRESA] Obra não possui dados de empresa identificáveis');
+            return;
+        }
+        
+        console.log('✅ [EMPRESA] Dados de empresa detectados, preparando...');
+        
+        // Mapear todos os campos possíveis
+        const mapeamentoCampos = {
+            empresaSigla: obraData.empresaSigla,
+            empresaNome: obraData.empresaNome,
+            numeroClienteFinal: obraData.numeroClienteFinal,
+            clienteFinal: obraData.clienteFinal,
+            codigoCliente: obraData.codigoCliente,
+            dataCadastro: obraData.dataCadastro,
+            orcamentistaResponsavel: obraData.orcamentistaResponsavel,
+            idGerado: obraData.idGerado,
+            empresa_id: obraData.empresa_id // 🔥 Adicionar este campo
+        };
+        
+        // Atribuir aos data attributes
+        Object.entries(mapeamentoCampos).forEach(([campo, valor]) => {
+            if (valor && valor.toString().trim() !== '') {
+                const valorAntigo = obraElement.dataset[campo];
+                obraElement.dataset[campo] = valor.toString().trim();
+                console.log(`✅ [EMPRESA] ${campo}: "${valorAntigo || 'vazio'}" → "${valor}"`);
+            }
+        });
+        
+        // 🔥 CHAVE: Atualizar a interface COM OS DADOS DA OBRA
+        // A função será importada de empresa-form-manager.js
+        if (typeof window.atualizarInterfaceComEmpresa === 'function') {
+            await window.atualizarInterfaceComEmpresa(obraElement, obraData);
+        } else if (typeof atualizarInterfaceComEmpresa === 'function') {
+            // Se estiver no escopo local (import direto)
+            await atualizarInterfaceComEmpresa(obraElement, obraData);
+        }
+        
+        console.log('✅ [EMPRESA] Preparação concluída com sucesso');
+        
+    } catch (error) {
+        console.error('❌ [EMPRESA] Erro ao preparar dados:', error);
+    }
+}
+
+/* ==== SEÇÃO 3: CÁLCULO DE NÚMERO DO CLIENTE ==== */
+
+/**
+ * 🆕 ATUALIZAR INPUT DO NÚMERO DO CLIENTE
+ */
+function atualizarNumeroClienteInput(numero, obraId) {
+    const numeroInput = document.querySelector(`[data-obra-id="${obraId}"] .numero-cliente-final-cadastro`);
+    if (numeroInput) {
+        numeroInput.value = numero;
+    }
+}
+
+/* ==== SEÇÃO 4: FUNÇÕES AUXILIARES PARA DEBUG ==== */
+
+/**
+ * 🔥 FUNÇÃO AUXILIAR: Forçar atualização de empresa em uma obra específica
+ */
+async function forcarAtualizacaoEmpresa(obraId) {
+    try {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            console.error(`❌ [FORÇAR EMPRESA] Obra ${obraId} não encontrada`);
+            return false;
+        }
+        
+        // Obter dados atualizados do servidor
+        const response = await fetch(`/obras/${obraId}`);
+        if (!response.ok) {
+            console.error(`❌ [FORÇAR EMPRESA] Erro ao buscar obra ${obraId}`);
+            return false;
+        }
+        
+        const obraData = await response.json();
+        
+        // Atualizar dados da empresa
+        await prepararDadosEmpresaNaObra(obraData, obraElement);
+        
+        console.log(`✅ [FORÇAR EMPRESA] Empresa atualizada para obra ${obraId}`);
+        return true;
+        
+    } catch (error) {
+        console.error(`❌ [FORÇAR EMPRESA] Erro:`, error);
+        return false;
+    }
+}
+
+/**
+ * Atualizar dados da empresa em todas as obras
+ */
+// REMOÇÃO POSSIVEL VERIFICAR DEPOIS
+async function atualizarEmpresaEmTodasObras(empresaData) {
+    const obras = document.querySelectorAll('.obra-block[data-obra-id]');
+
+    for (const obraElement of obras) {
+        try {
+            const obraId = obraElement.dataset.obraId;
+
+            if (typeof window.obterDadosEmpresaDaObra === 'function') {
+                const dadosObra = window.obterDadosEmpresaDaObra(obraId);
+
+                if (dadosObra && typeof window.prepararDadosEmpresaNaObra === 'function') {
+                    await window.prepararDadosEmpresaNaObra(dadosObra, obraElement);
+                }
+            }
+        } catch (error) {
+            console.error(`❌ Erro ao atualizar empresa na obra ${obraId}:`, error);
+        }
+    }
+}
+
+/**
+ * Função para debug
+ */
+async function debugExtractEmpresaData() {
+    console.log("🐛 [DEBUG] Testando extração de dados de empresa...");
+    
+    const obras = document.querySelectorAll('.obra-block');
+    console.log(`🔍 ${obras.length} obras encontradas no DOM`);
+    
+    obras.forEach((obra, index) => {
+        const obraId = obra.dataset.obraId;
+        console.log(`📦 Obra ${index + 1}: ${obraId}`);
+        
+        const dados = extractEmpresaData(obra);
+        console.log(`📊 Dados extraídos:`, dados);
+    });
+}
+
+/* ==== SEÇÃO 5: EXPORTS E INICIALIZAÇÃO ==== */
+
 export {
-    extractEmpresaData
-};
+    extractEmpresaData,
+    prepararEmpresaParaSalvamento,
+    prepararDadosEmpresaNaObra,
+    atualizarNumeroClienteInput,
+    forcarAtualizacaoEmpresa,
+    atualizarEmpresaEmTodasObras,
+    debugExtractEmpresaData
+}
+
+// Compatibilidade global
+if (typeof window !== 'undefined') {
+    window.extractEmpresaData = extractEmpresaData;
+    window.prepararEmpresaParaSalvamento = prepararEmpresaParaSalvamento;
+    window.prepararDadosEmpresaNaObra = prepararDadosEmpresaNaObra;
+    window.atualizarNumeroClienteInput = atualizarNumeroClienteInput;
+    window.forcarAtualizacaoEmpresa = forcarAtualizacaoEmpresa;
+    window.atualizarEmpresaEmTodasObras = atualizarEmpresaEmTodasObras;
+    window.debugExtractEmpresaData = debugExtractEmpresaData;
+}
+console.log('✅ empresa-data-extractor.js carregado com sucesso');

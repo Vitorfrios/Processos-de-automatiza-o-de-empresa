@@ -5,10 +5,11 @@
  */
 
 // ✅ IMPORTAR MÓDULOS COM CAMINHOS CORRETOS
-import { loadObrasFromServer } from '../data/adapters/obra-adapter.js';
+import { loadObrasFromServer } from '../data/adapters/obra-adapter-folder/obra-data-loader.js';
+
 import { getGeralCount } from '../data/adapters/session-adapter.js';
 import { shutdownManual } from '../data/adapters/shutdown-adapter.js';
-import EmpresaCadastroInline from '../data/builders/empresa-cadastro-inline.js';
+import {EmpresaCadastroInline} from '../data/empresa-system/empresa-core.js';
 
 // 🔥 Importar módulo de filtros separado
 import { initializeFilterSystem } from './filter-init.js';

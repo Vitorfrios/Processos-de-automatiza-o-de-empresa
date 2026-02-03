@@ -7,7 +7,6 @@ import { attachModuleToWindow } from '../../core/shared-utils.js';
 export * from './data-builders-folder/obra-data-builder.js';
 export * from './data-builders-folder/room-data-extractors.js';
 export * from './data-builders-folder/machines-data-extractors.js';
-export * from './data-builders-folder/empresa-data-extractor.js';
 
 // 🔥 COMPATIBILIDADE GLOBAL
 if (typeof window !== 'undefined') {
@@ -18,7 +17,6 @@ if (typeof window !== 'undefined') {
         import('./data-builders-folder/obra-data-builder.js'),
         import('./data-builders-folder/room-data-extractors.js'),
         import('./data-builders-folder/machines-data-extractors.js'),
-        import('./data-builders-folder/empresa-data-extractor.js')
     ]).then(modules => {
         modules.forEach(attachModuleToWindow);
         console.log('✅ [data-builders] Módulos carregados no escopo global');
