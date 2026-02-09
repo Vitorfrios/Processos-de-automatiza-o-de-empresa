@@ -46,7 +46,7 @@ function fillDutosData(roomElement, dutosData) {
                     <tbody id="${tbodyId}"></tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="8" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                            <td colspan="8" style=" font-weight: bold;">TOTAL:</td>
                             <td id="dutos-total-${roomId}" style="font-weight: bold;">R$ 0,00</td>
                         </tr>
                     </tfoot>
@@ -97,19 +97,21 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
             <div class="cobre-inline">
               <span class="cobre-label">Valor do Cobre (por KG):</span>
 
-              <input type="number"
-                     id="valor-cobre-${roomId}"
-                     class="cobre-input"
-                     value="0"
-                     min="0"
-                     step="0.01"
-                     onchange="atualizarValorCobre('${roomId}')">
+              <div class="cobre-container">
+                <input type="number"
+                        id="valor-cobre-${roomId}"
+                        class="cobre-input"
+                        value="0"
+                        min="0"
+                        step="0.01"
+                        onchange="atualizarValorCobre('${roomId}')">
 
-              <button class="btn-cobre-default"
-                      onclick="carregarValorCobrePadrao('${roomId}')"
-                      title="Carregar valor padrão da API">
-                🔄 Restaurar
-              </button>
+                <button class="btn-cobre-default"
+                        onclick="carregarValorCobrePadrao('${roomId}')"
+                        title="Carregar valor padrão da API">
+                    🔄 Restaurar
+                </button>
+              </div>
             </div>
 
           </div>
@@ -235,7 +237,7 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
 
                 <tfoot>
                   <tr>
-                    <td colspan="8" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                    <td colspan="8" style="font-weight: bold;">TOTAL:</td>
                     <td id="dutos-total-${roomId}" style="font-weight: bold;">R$ 0,00</td>
                   </tr>
                 </tfoot>

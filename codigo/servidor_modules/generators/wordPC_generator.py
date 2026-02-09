@@ -409,14 +409,46 @@ class WordPCGenerator:
             # Obter dados da obra
             obra_data = self.get_obra_by_id(obra_id)
             if not obra_data:
-                raise ValueError(f"Obra {obra_id} não encontrada")
+                # Se não encontrar obra, ainda pode gerar contexto básico
+                print(f"⚠️ Obra {obra_id} não encontrada - gerando documento com valores padrão")
+                
+                from datetime import datetime
+                import pytz
+                
+                try:
+                    tz = pytz.timezone('America/Sao_Paulo')
+                    data_atual = datetime.now(tz)
+                except:
+                    data_atual = datetime.now()
+                
+                # Retornar contexto básico com valores padrão
+                return {
+                    "data_emissao": data_atual.strftime("%d/%m/%Y"),
+                    "data_emissao_completa": data_atual.strftime("%d de %B de %Y"),
+                    "empresa_nome": "EMPRESA NÃO ESPECIFICADA",  # Valor padrão
+                    "obra_nome": "OBRA NÃO ESPECIFICADA",  # Valor padrão
+                    "cliente_final": "CLIENTE NÃO ESPECIFICADO",  # Valor padrão
+                    "projetos": [],  # Lista vazia
+                    "quantidade_projetos": 0,
+                    "total_global": self.format_currency(0),
+                    "valor_total_projeto": self.format_currency(0),
+                    "format_currency": self.format_currency
+                }
             
-            # Dados básicos
-            obra_nome = obra_data.get("nome", "Obra não especificada")
-            empresa_nome = obra_data.get("empresaNome", "Empresa não especificada")
-            cliente_final = obra_data.get("clienteFinal", "Cliente não especificado")
+            # Dados básicos COM VALORES PADRÃO
+            obra_nome = obra_data.get("nome", "OBRA NÃO ESPECIFICADA")
+            empresa_nome = obra_data.get("empresaNome", "EMPRESA NÃO ESPECIFICADA")
+            cliente_final = obra_data.get("clienteFinal", "CLIENTE NÃO ESPECIFICADO")
             
-            # Projetos
+            # Verificar e aplicar uppercase se necessário
+            if obra_nome == "OBRA NÃO ESPECIFICADA":
+                obra_nome = obra_nome.upper()
+            if empresa_nome == "EMPRESA NÃO ESPECIFICADA":
+                empresa_nome = empresa_nome.upper()
+            if cliente_final == "CLIENTE NÃO ESPECIFICADO":
+                cliente_final = cliente_final.upper()
+            
+            # Projetos (pode ser vazio)
             projetos = obra_data.get("projetos", [])
             
             # Extrair itens por projeto e aplicação (estrutura corrigida)
@@ -432,7 +464,7 @@ class WordPCGenerator:
             except:
                 data_atual = datetime.now()
             
-            # Calcular total global (soma de todos os projetos)
+            # Calcular total global (soma de todos os projetos) ou usar 0
             total_global = obra_data.get("valorTotalObra", 0)
             
             # Preparar projetos para o template
@@ -440,7 +472,7 @@ class WordPCGenerator:
             for projeto in projetos_com_dados:
                 # Encontrar projeto original para calcular total real
                 projeto_original = next((p for p in projetos if isinstance(p, dict) and 
-                                       p.get("nome") == projeto["nome"]), {})
+                                    p.get("nome") == projeto["nome"]), {})
                 
                 # Recalcular total do projeto
                 projeto_total_real = self.calculate_projeto_total(
@@ -459,16 +491,35 @@ class WordPCGenerator:
                 
                 projetos_para_template.append(projeto_para_template)
             
+            # Se não houver projetos na estrutura extraída, criar lista vazia
+            if not projetos_para_template and projetos:
+                # Tentar criar projetos básicos a partir dos dados originais
+                for projeto in projetos:
+                    if isinstance(projeto, dict):
+                        projetos_para_template.append({
+                            "nome": projeto.get("nome", "Projeto não especificado"),
+                            "aplicacoes_groups": [],
+                            "valor_total_projeto": projeto.get("valorTotalProjeto", 0),
+                            "valor_total_projeto_formatado": self.format_currency(projeto.get("valorTotalProjeto", 0)),
+                            "servicos": {
+                                "engenharia": {"valor": 0, "descricao": "", "valor_formatado": "R$ 0,00", "tem_engenharia": False},
+                                "adicionais": [],
+                                "tem_adicionais": False,
+                                "tem_engenharia": False
+                            },
+                            "tem_servicos": False
+                        })
+            
             # Contexto para o template
             context = {
-                # Cabeçalho
+                # Cabeçalho COM VALORES PADRÃO
                 "data_emissao": data_atual.strftime("%d/%m/%Y"),
                 "data_emissao_completa": data_atual.strftime("%d de %B de %Y"),
                 "empresa_nome": empresa_nome.upper(),
                 "obra_nome": obra_nome,
                 "cliente_final": cliente_final,
                 
-                # Projetos
+                # Projetos (pode ser lista vazia)
                 "projetos": projetos_para_template,
                 "quantidade_projetos": len(projetos_para_template),
                 
@@ -480,12 +531,34 @@ class WordPCGenerator:
                 "format_currency": self.format_currency
             }
             
-            return context
+            # Log do contexto gerado
+            print(f"📋 Contexto gerado para PC:")
+            print(f"   - Empresa: {context['empresa_nome']}")
+            print(f"   - Obra: {context['obra_nome']}")
+            print(f"   - Cliente: {context['cliente_final']}")
+            print(f"   - Projetos: {context['quantidade_projetos']}")
+            print(f"   - Total: {context['total_global']}")
             
+            return context
+                
         except Exception as e:
             print(f"❌ Erro ao gerar contexto PC: {e}")
             traceback.print_exc()
-            return {}
+            
+            # Retornar contexto mínimo mesmo em caso de erro
+            from datetime import datetime
+            return {
+                "data_emissao": datetime.now().strftime("%d/%m/%Y"),
+                "data_emissao_completa": datetime.now().strftime("%d de %B de %Y"),
+                "empresa_nome": "EMPRESA NÃO ESPECIFICADA",
+                "obra_nome": "OBRA NÃO ESPECIFICADA",
+                "cliente_final": "CLIENTE NÃO ESPECIFICADO",
+                "projetos": [],
+                "quantidade_projetos": 0,
+                "total_global": self.format_currency(0),
+                "valor_total_projeto": self.format_currency(0),
+                "format_currency": self.format_currency
+            }
     
     def generate_proposta_comercial(self, obra_id: str, template_path: Path) -> Optional[str]:
         """Gera documento de Proposta Comercial - VERSÃO CORRIGIDA"""

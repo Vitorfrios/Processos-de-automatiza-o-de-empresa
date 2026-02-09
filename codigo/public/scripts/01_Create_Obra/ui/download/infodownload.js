@@ -21,7 +21,6 @@ export function downloadWord(obraId, projectName = null) {
     const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
     
     console.log(`📝 Gerando Word para ${target} (ID: ${obraId})`);
-    showSystemStatus(`Selecione o modelo para ${target}...`, "info");
     
     // Mostrar modal de seleção
     showWordModelModal(obraId, obraName);

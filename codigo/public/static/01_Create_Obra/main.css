@@ -269,9 +269,9 @@
     font-size: 1.3rem;
   }
 
-  .form-grid {
+  /* .form-grid {
     grid-template-columns: 1fr;
-  }
+  } */
 
   .clima-row {
     grid-template-columns: 1fr;
@@ -447,6 +447,7 @@
   .nav-list {
     padding: var(--spacing-xs) var(--spacing-sm);
     gap: var(--spacing-xs);
+    justify-content: center;
   }
 
   .nav-list li a {

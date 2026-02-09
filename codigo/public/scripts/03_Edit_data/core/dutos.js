@@ -227,9 +227,6 @@ export function editDuto(index) {
             <div class="duto-editor">
                 <div class="editor-header">
                     <h4>Dados do Duto</h4>
-                    <button class="btn-close-editor" onclick="closeDutoDetail()">
-                        ×
-                    </button>
                 </div>
                 
                 <div class="editor-body">
@@ -262,7 +259,7 @@ export function editDuto(index) {
                     </div>
                     
                     <div class="opcionais-section">
-                        <div class="section-header">
+                        <div class="dutos-dutos-section-header">
                             <h5>Lista de Opcionais</h5>
                             <button class="btn btn-add" onclick="addOpcional(${index})">
                                 + Novo Opcional

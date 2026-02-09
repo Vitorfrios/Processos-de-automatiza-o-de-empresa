@@ -51,18 +51,18 @@ export function addVoltage(event) {
                     </button>
                 </div>
                 <div class="voltage-card-content">
-                    <div class="voltage-field">
-                        <label>Nome:</label>
+                    <div class="voltage-card-field">
+                        <label>Tensão:</label>
                         <input type="text" value="Nova Tensão" 
                                placeholder="Nome da tensão"
                                onchange="updateVoltage(${newIndex}, 'name', this.value)"
-                               class="form-input">
+                               class="tensao-input">
                     </div>
-                    <div class="voltage-field">
-                        <label>Valor (V):</label>
+                    <div class="voltage-card-field">
+                        <label>Valor (R$):</label>
                         <input type="number" value="0" step="0.01"
                                onchange="updateVoltage(${newIndex}, 'value', this.value)"
-                               class="form-input">
+                               class="valor-input">
                     </div>
                 </div>
             `;

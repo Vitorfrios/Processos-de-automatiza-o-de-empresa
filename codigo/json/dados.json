@@ -104,14 +104,14 @@
   "machines": [
     {
       "type": "Wall Mounted",
-      "aplicacao":"climatizacao",
-
+      "aplicacao": "climatizacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -406,14 +406,14 @@
     },
     {
       "type": "Split System",
-      "aplicacao":"climatizacao",
-
+      "aplicacao": "climatizacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -759,14 +759,14 @@
     },
     {
       "type": "Self Contained",
-      "aplicacao":"climatizacao",
-
+      "aplicacao": "climatizacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -1113,14 +1113,14 @@
     },
     {
       "type": "Split Piso-Teto",
-      "aplicacao":"climatizacao",
-
+      "aplicacao": "climatizacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -1216,14 +1216,14 @@
     },
     {
       "type": "Split Hi-Wall",
-      "aplicacao":"climatizacao",
-
+      "aplicacao": "climatizacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -1304,14 +1304,14 @@
     },
     {
       "type": "ACJ",
-      "aplicacao":"climatizacao",
-
+      "aplicacao": "climatizacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -1351,14 +1351,14 @@
     },
     {
       "type": "Tubo Axial",
-      "aplicacao":"exaustao",
-
+      "aplicacao": "exaustao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -1554,14 +1554,14 @@
     },
     {
       "type": "Caixa de Ventilação",
-      "aplicacao":"pressurizacao_ventilacao",
-
+      "aplicacao": "pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -1657,14 +1657,14 @@
     },
     {
       "type": "Filtro Cartucho",
-      "aplicacao":"pressurizacao_ventilacao",
-
+      "aplicacao": "pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -1712,14 +1712,14 @@
     },
     {
       "type": "Centrífugo",
-      "aplicacao":"pressurizacao_ventilacao",
-
+      "aplicacao": "pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -1772,14 +1772,14 @@
     },
     {
       "type": "Gabinetes Inline",
-      "aplicacao":"pressurizacao_ventilacao",
-
+      "aplicacao": "pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {
@@ -1823,13 +1823,14 @@
     },
     {
       "type": "FH Filtros",
-      "aplicacao":"pressurizacao_ventilacao",
+      "aplicacao": "pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
         "IPI": "ISENTO",
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
-        "FRETE": "FOB/Cabreúva/SP"
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
       },
       "configuracoes_instalacao": [
         {

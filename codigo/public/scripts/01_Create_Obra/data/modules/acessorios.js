@@ -56,7 +56,7 @@ function fillAcessoriosData(roomElement, acessoriosData) {
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="5" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                            <td colspan="5" style="font-weight: bold;">TOTAL:</td>
                             <td id="acessorios-total-${roomId}" style="font-weight: bold;">R$ 0,00</td>
                             <td></td>
                         </tr>
@@ -175,7 +175,7 @@ function buildAcessoriosSection(obraId, projectId, roomName, finalRoomId) {
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colspan="5" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                    <td colspan="5" style="font-weight: bold;">TOTAL:</td>
                     <td id="acessorios-total-${roomId}" style="font-weight: bold;">R$ 0,00</td>
                     <td></td>
                   </tr>

@@ -1,13 +1,13 @@
 /* acessorios.css - Estilos atualizados para sistema de acessorios */
 
 /* Ícone */
-.icon-equipment::before {
+.icon-acessorie::before {
     content: "⚙️";
     margin-right: 5px;
 }
 
 /* Layout principal */
-.equipment-actions-bar {
+.acessorie-actions-bar {
     display: flex;
     gap: 10px;
     align-items: center;
@@ -19,19 +19,19 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.equipment-actions-bar .form-control {
+.acessorie-actions-bar .form-control {
     min-width: 250px;
 }
 
 /* Lista de acessorios (estilo opções) */
-.equipment-list {
+.acessorie-list {
     display: flex;
     flex-direction: column;
     gap: 15px;
     margin-top: 20px;
 }
 
-.equipment-item {
+.acessorie-item {
     background: white;
     border: 1px solid #e1e5e9;
     border-radius: 8px;
@@ -39,12 +39,12 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.equipment-item:hover {
+.acessorie-item:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Header do item (expansível) */
-.equipment-header {
+.acessorie-header {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -52,13 +52,15 @@
     cursor: pointer;
     user-select: none;
     border-bottom: 1px solid transparent;
+    min-height: 60px;
+    box-sizing: border-box;
 }
 
-.equipment-header:hover {
+.acessorie-header:hover {
     background: #f1f3f4;
 }
 
-.equipment-header .minimizer {
+.acessorie-header .minimizer {
     width: 24px;
     height: 24px;
     border: 1px solid #ced4da;
@@ -71,44 +73,61 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    flex: 0 0 auto;
 }
 
-.equipment-header .minimizer:hover {
+.acessorie-header .minimizer:hover {
     background: #e9ecef;
     border-color: #adb5bd;
 }
 
-.equipment-header span {
+.acessorie-header span {
     flex: 1;
     font-weight: 500;
     color: #2c3e50;
     font-size: 15px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.equipment-header span strong {
+.acessorie-header span strong {
     color: #007bff;
     font-weight: 600;
 }
 
+/* Botão de deletar no header */
+.acessorie-header .btn.btn-xs.btn-danger {
+    flex-shrink: 0;
+    width: auto;
+    margin: 0;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
 /* Conteúdo expansível */
-.equipment-content {
+.acessorie-content {
     padding: 20px;
     background: white;
 }
 
-.equipment-content.collapsed {
+.acessorie-content.collapsed {
     display: none;
 }
 
 /* Campos do acessorio */
-.equipment-field {
+.acessorie-field {
     display: flex;
     align-items: flex-start;
     gap: 15px;
     margin-bottom: 20px;
 }
 
-.equipment-label {
+.acessorie-label {
     min-width: 150px;
     font-weight: 500;
     color: #495057;
@@ -116,7 +135,7 @@
     padding-top: 10px;
 }
 
-.equipment-field .form-input {
+.acessorie-field .form-input {
     flex: 1;
     padding: 10px 12px;
     border: 1px solid #ced4da;
@@ -124,38 +143,50 @@
     font-size: 14px;
 }
 
-.equipment-field .form-input:focus {
+.acessorie-field .form-input:focus {
     border-color: #007bff;
     outline: 0;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
 }
 
 /* Dimensões */
-.equipment-dimensions {
+.acessorie-dimensions {
     margin-top: 25px;
     padding-top: 20px;
     border-top: 1px solid #e9ecef;
 }
 
-.equipment-dimensions h5 {
+.acessorie-dimensions h5 {
     margin: 0 0 15px 0;
     color: #495057;
     font-size: 16px;
     font-weight: 600;
 }
 
+/* Grid de dimensões - Configuração principal */
 .dimensions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, minmax(280px, 1fr));
     gap: 15px;
     margin-bottom: 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 10px;
+    min-height: 200px;
+    max-height: none;
+    grid-auto-flow: row;
 }
 
+/* Itens do grid */
 .dimension-item {
     border: 1px solid #e1e5e9;
     border-radius: 6px;
     overflow: hidden;
     background: #f8f9fa;
+    min-width: 0;
+    flex-shrink: 0;
+    width: 100%;
+    height: auto;
 }
 
 .dimension-item:hover {
@@ -163,6 +194,16 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Conteúdo interno do dimension-item */
+.dimension-content {
+    padding: 15px;
+    display: flex;
+    gap: 15px;
+    height: calc(100% - 44px);
+    box-sizing: border-box;
+}
+
+/* Header da dimensão */
 .dimension-header {
     display: flex;
     align-items: center;
@@ -170,19 +211,32 @@
     padding: 10px 15px;
     background: #e9ecef;
     border-bottom: 1px solid #dee2e6;
+    min-height: 44px;
+    box-sizing: border-box;
 }
 
 .dimension-header span {
     font-weight: 500;
     color: #495057;
     font-size: 13px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 8px;
 }
 
-.dimension-content {
-    padding: 15px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+/* Botão no dimension-header */
+.dimension-header .btn.btn-xs.btn-danger {
+    flex-shrink: 0;
+    width: auto;
+    padding: 3px 6px;
+    margin: 0;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .dimension-field {
@@ -210,6 +264,25 @@
     box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, .25);
 }
 
+/* Scrollbar personalizada */
+.dimensions-grid::-webkit-scrollbar {
+    height: 6px;
+}
+
+.dimensions-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.dimensions-grid::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.dimensions-grid::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
 /* Botões */
 .btn {
     padding: 8px 16px;
@@ -221,6 +294,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    white-space: nowrap;
 }
 
 .btn:hover {
@@ -312,36 +386,38 @@ input[list] {
     margin-bottom: 16px;
 }
 
-/* Responsivo */
+/* MEDIA QUERIES - ESTRUTURA CORRIGIDA (sem duplicações) */
+@media (max-width: 1200px) {
+    .dimensions-grid {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+    }
+}
+
 @media (max-width: 992px) {
-    .equipment-actions-bar {
+    .acessorie-actions-bar {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .equipment-actions-bar .form-control {
+    .acessorie-actions-bar .form-control {
         min-width: auto;
     }
 
-    .equipment-field {
+    .acessorie-field {
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
     }
 
-    .equipment-label {
+    .acessorie-label {
         min-width: auto;
         margin-bottom: 5px;
         padding-top: 0;
     }
 
     .dimensions-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .dimension-content {
-        grid-template-columns: 1fr;
-        gap: 10px;
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+        gap: 12px;
     }
 
     .form-actions {
@@ -354,22 +430,125 @@ input[list] {
     }
 }
 
-@media (max-width: 576px) {
-    .equipment-header {
+@media (max-width: 768px) {
+    .acessorie-header {
         padding: 12px 15px;
+        gap: 8px;
+        min-height: 56px;
     }
 
-    .equipment-content {
-        padding: 15px;
+    .acessorie-header span {
+        font-size: 14px;
     }
 
     .dimensions-grid {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+        overflow-x: visible;
+    }
+
+    .dimension-content {
+        flex-direction: column;
         gap: 10px;
+    }
+
+    .dimension-item {
+        min-width: 100%;
+    }
+
+    .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .btn-xs {
+        padding: 3px 6px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 576px) {
+    .acessorie-header {
+        padding: 10px 12px;
+        min-height: 52px;
+    }
+
+    .acessorie-header .minimizer {
+        width: 22px;
+        height: 22px;
+        font-size: 13px;
+    }
+
+    .acessorie-header .btn.btn-xs.btn-danger {
+        height: 22px;
+        padding: 3px 5px;
+    }
+
+    .acessorie-content {
+        padding: 15px;
+    }
+
+    .dimension-header {
+        padding: 8px 12px;
+        min-height: 40px;
+    }
+
+    .dimension-header .btn.btn-xs.btn-danger {
+        height: 20px;
+        padding: 2px 4px;
+        font-size: 11px;
+    }
+
+    .dimension-header span {
+        font-size: 12px;
+    }
+
+    .dimensions-grid {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+        gap: 10px;
+    }
+
+    .dimension-content {
+        flex-direction: column;
+        gap: 8px;
     }
 
     .btn {
         width: 100%;
         justify-content: center;
+    }
+
+    .acessorie-actions-bar {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .acessorie-field {
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 375px) {
+    .acessorie-header span {
+        font-size: 13px;
+    }
+
+    .acessorie-header {
+        padding: 8px 10px;
+        gap: 6px;
+    }
+
+    .dimension-header {
+        padding: 6px 10px;
+    }
+
+    .dimension-content {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .dimension-field .form-input-small {
+        padding: 6px 8px;
+        font-size: 12px;
     }
 }
 
@@ -382,7 +561,7 @@ input[list] {
     text-align: center !important;
 }
 
-.section-header h4 {
+.acessorio-section-header h4 {
     margin: 0;
     color: #2c3e50;
     font-size: 20px;
@@ -402,7 +581,7 @@ input[list] {
 }
 
 /* Estilos para mensagens de status */
-.equipment-status {
+.acessorie-status {
     text-align: center;
     padding: 15px;
     margin: 10px 0;
@@ -410,95 +589,20 @@ input[list] {
     font-weight: 500;
 }
 
-.equipment-status.success {
+.acessorie-status.success {
     background-color: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;
 }
 
-.equipment-status.error {
+.acessorie-status.error {
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
 
-.equipment-status.info {
+.acessorie-status.info {
     background-color: #d1ecf1;
     color: #0c5460;
     border: 1px solid #bee5eb;
-}
-
-/* Adicione ao seu arquivo HTML principal */
-#equipmentStatusMessage {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    min-width: 300px;
-    max-width: 400px;
-}
-
-/* Melhorias de acessibilidade */
-.form-input:focus,
-.form-input-small:focus {
-    outline: 2px solid #007bff;
-    outline-offset: 2px;
-}
-
-/* Tooltip para botões - REMOVIDO COMPLETAMENTE */
-/* Nenhuma regra [title]:hover::after existe neste arquivo */
-
-/* Garante que nenhum tooltip apareça */
-*:hover::after {
-    display: none !important;
-}
-
-/* Remove qualquer resquício de tooltip */
-[title] {
-    position: relative;
-}
-
-/* Remove pseudo-elementos de tooltip */
-[title]::after {
-    display: none !important;
-    content: none !important;
-}
-
-/* Estilo específico para ícones */
-.icon-delete,
-.icon-add,
-.icon-save,
-.icon-edit,
-.icon-refresh,
-.icon-empty,
-.icon-close {
-    pointer-events: none;
-    /* Previne qualquer interação com o ícone que possa causar tooltip */
-}
-
-/* Remove qualquer comportamento de tooltip em botões */
-.btn[title]::after,
-.btn[title]:hover::after {
-    display: none !important;
-    content: none !important;
-}
-
-/* Estilo para o datalist de sugestões */
-datalist {
-    position: absolute;
-    background: white;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-}
-
-datalist option {
-    padding: 8px 12px;
-    cursor: pointer;
-}
-
-datalist option:hover {
-    background-color: #f8f9fa;
 }

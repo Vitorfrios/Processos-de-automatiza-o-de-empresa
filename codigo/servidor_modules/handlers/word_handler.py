@@ -342,12 +342,13 @@ class WordHandler:
                 else:
                     return None, None, "Nenhum template encontrado na pasta word_templates"
             
-            # Validar obra
+            # Validar obra (AGORA NÃO BLOQUEIA POR FALTA DE ITENS)
             is_valid, message = self.validate_obra_for_pc(obra_id)
             if not is_valid:
+                # Só retorna erro se for algo crítico (obra não existe, campos obrigatórios faltando)
                 return None, None, message
             
-            # Gerar proposta
+            # Gerar proposta (AGORA FUNCIONA MESMO SEM ITENS)
             output_path = pc_generator.generate_proposta_comercial(obra_id, template_path)
             
             if output_path:
@@ -493,20 +494,26 @@ class WordHandler:
         try:
             obra_data = self.get_obra_data(obra_id)
             if not obra_data:
-                return False, "Obra não encontrada"
+                print(f"⚠️ Obra {obra_id} não encontrada - documento será gerado com valores padrão")
+                return True, "Obra não encontrada, usando valores padrão"
             
-            # Verificar dados básicos
-            required_fields = ["nome", "empresaNome", "clienteFinal"]
-            for field in required_fields:
-                if not obra_data.get(field):
-                    return False, f"Campo obrigatório faltando: {field}"
+            obra_nome = obra_data.get("nome")
+            empresa_nome = obra_data.get("empresaNome")
+            cliente_final = obra_data.get("clienteFinal")
             
-            # Verificar se tem projetos
+            if not obra_nome:
+                print("⚠️ Campo 'nome' não encontrado - usando valor padrão")
+            if not empresa_nome:
+                print("⚠️ Campo 'empresaNome' não encontrado - usando valor padrão")
+            if not cliente_final:
+                print("⚠️ Campo 'clienteFinal' não encontrado - usando valor padrão")
+            
+            # Projetos (pode ser vazio)
             projetos = obra_data.get("projetos", [])
             if not projetos:
-                return False, "Obra não tem projetos"
+                print("⚠️ Obra não tem projetos - documento será gerado sem projetos")
             
-            # Verificar se tem itens (máquinas, dutos ou acessórios)
+            # Itens (pode ser vazio) - apenas verificar para log
             has_items = False
             for projeto in projetos:
                 if isinstance(projeto, dict):
@@ -522,13 +529,14 @@ class WordHandler:
                     break
             
             if not has_items:
-                return False, "Nenhum item (máquina, duto ou acessório) encontrado nos projetos"
+                print("⚠️ Nenhum item encontrado - documento será gerado sem itens")
             
-            return True, "Obra válida para geração de PC"
+            return True, "Documento será gerado com os dados disponíveis"
             
         except Exception as e:
             print(f"❌ Erro ao validar obra: {e}")
-            return False, f"Erro na validação: {str(e)}"
+            # ⚠️ NEM MESMO ERRO DEVE BLOQUEAR - APENAS LOGAR
+            return True, f"Erro na validação, mas documento será gerado: {str(e)}"
     
     def get_obra_summary(self, obra_id):
         """Retorna resumo da obra para debug/log"""

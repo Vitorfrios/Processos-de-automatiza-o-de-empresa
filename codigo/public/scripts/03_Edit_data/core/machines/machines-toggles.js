@@ -64,7 +64,7 @@ export function restoreSectionStates() {
         const sectionStates = JSON.parse(localStorage.getItem('machineSectionStates') || '{}');
 
         document.querySelectorAll('.form-section').forEach(section => {
-            const header = section.querySelector('.section-header');
+            const header = section.querySelector('.machine-section-header');
             const content = header?.nextElementSibling;
             const minimizer = header?.querySelector('.minimizer');
 

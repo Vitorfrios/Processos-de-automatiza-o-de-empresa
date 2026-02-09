@@ -200,6 +200,7 @@ function buildPressurizationRow(roomId) {
             <input type="radio" 
                    name="pressurizacao-${roomId}" 
                    value="sim"
+                   checked
                    onchange="togglePressurizationFields('${roomId}', true)">
             Sim
           </label>
@@ -207,7 +208,6 @@ function buildPressurizationRow(roomId) {
             <input type="radio" 
                    name="pressurizacao-${roomId}" 
                    value="nao" 
-                   checked
                    onchange="togglePressurizationFields('${roomId}', false)">
             Não
           </label>
@@ -219,7 +219,6 @@ function buildPressurizationRow(roomId) {
           placeholder="Ex: 25"
           value="25"
           step="5" 
-          disabled
           onchange="calculateVazaoArAndThermalGains('${roomId}')">
       </div>
       <!-- célula vazia p/ grid 2 colunas -->
@@ -236,8 +235,8 @@ function buildPressurizationRow(roomId) {
       </div>
     </div>
 
-    <!-- Linha 3: portas (mostra somente se Sim) -->
-    <div class="clima-row clima-row-2cols" id="pressurizacao-portas-${roomId}" style="display:none;">
+    <!-- Linha 3: portas (mostra por padrão porque "Sim" está marcado) -->
+    <div class="clima-row clima-row-2cols" id="pressurizacao-portas-${roomId}">
       <div class="clima-cell">
         <label>N° Portas Duplas:</label>
         <input type="number"
@@ -246,7 +245,6 @@ function buildPressurizationRow(roomId) {
               data-room-id="${roomId}"
               placeholder="Ex: 2"
               min="0"
-              disabled
               onchange="calculateVazaoArAndThermalGains('${roomId}')">
       </div>
       
@@ -258,7 +256,6 @@ function buildPressurizationRow(roomId) {
                data-room-id="${roomId}"
                placeholder="Ex: 3"
                min="0"
-               disabled
                onchange="calculateVazaoArAndThermalGains('${roomId}')">
       </div>
     </div>
@@ -774,8 +771,10 @@ function togglePressurizationFields(roomId, enabled) {
         pressurizacaoInput.value = '25';
 
         portasSection.style.display = 'none';
-        portasSimples.disabled = true; portasSimples.value = '';
-        portasDuplas.disabled = true; portasDuplas.value = '';
+        portasSimples.disabled = true; 
+        portasSimples.value = '';
+        portasDuplas.disabled = true; 
+        portasDuplas.value = '';
 
         // mantém o setpoint coerente e o badge formatado
         if (setpointInput && setpointInput.value === '') setpointInput.value = '25';

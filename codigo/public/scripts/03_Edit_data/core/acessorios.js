@@ -4,25 +4,25 @@
 // Importar sistema de estado global
 import { systemData, addPendingChange } from '../config/state.js';
 
-export function initEquipments() {
+export function initAcessories() {
     console.log('🚀 Inicializando sistema de acessorios...');
     
     // Verificar se estamos na página correta
-    if (!document.getElementById('equipmentsTab')) {
+    if (!document.getElementById('acessoriesTab')) {
         console.log('⚠️ Tab de acessorios não encontrada');
         return;
     }
     
     // Inicializar sistema
-    setupEquipmentSystem();
+    setupAcessorieSystem();
     
     console.log('✅ Sistema de acessorios pronto');
 }
 
 // Configuração do sistema
-function setupEquipmentSystem() {
+function setupAcessorieSystem() {
     // Estado global
-    window.equipmentsData = systemData.banco_acessorios || {};
+    window.acessoriesData = systemData.banco_acessorios || {};
     
     // Expor funções globais
     exposeGlobalFunctions();
@@ -31,36 +31,35 @@ function setupEquipmentSystem() {
     setupEventListeners();
     
     // Carregar se tab está ativa
-    if (document.getElementById('equipmentsTab').classList.contains('active')) {
-        setTimeout(loadEquipmentsData, 100);
+    if (document.getElementById('acessoriesTab').classList.contains('active')) {
+        setTimeout(loadAcessoriesData, 100);
     }
 }
 
 // Expor funções globais
 function exposeGlobalFunctions() {
-    window.loadEquipmentsData = loadEquipmentsData;
-    window.filterEquipmentTable = filterEquipmentTable;
-    window.deleteEquipment = deleteEquipment;
-    window.addNewEquipment = addNewEquipment;
-    window.toggleEquipmentItem = toggleEquipmentItem;
-    window.removeEquipmentDimension = removeEquipmentDimension;
-    window.addEquipmentDimension = addEquipmentDimension;
-    window.syncEquipmentName = syncEquipmentName;
-    window.updateEquipment = updateEquipment;
-    window.updateEquipmentDimensionLabel = updateEquipmentDimensionLabel;
-    window.updateEquipmentValue = updateEquipmentValue;
-    window.selectEquipmentCodigo = selectEquipmentCodigo;
+    window.loadAcessoriesData = loadAcessoriesData;
+    window.filterAcessorieTable = filterAcessorieTable;
+    window.deleteAcessorie = deleteAcessorie;
+    window.addNewAcessorie = addNewAcessorie;
+    window.toggleAcessorieItem = toggleAcessorieItem;
+    window.removeAcessorieDimension = removeAcessorieDimension;
+    window.addAcessorieDimension = addAcessorieDimension;
+    window.syncAcessorieName = syncAcessorieName;
+    window.updateAcessorie = updateAcessorie;
+    window.updateAcessorieDimensionLabel = updateAcessorieDimensionLabel;
+    window.updateAcessorieValue = updateAcessorieValue;
 }
 
 // Configurar listeners de eventos
 function setupEventListeners() {
     // Listener para tab de acessorios
-    const equipmentTabBtn = document.querySelector('.tab[onclick*="equipments"]');
-    if (equipmentTabBtn) {
-        equipmentTabBtn.addEventListener('click', () => {
+    const acessorieTabBtn = document.querySelector('.tab[onclick*="acessories"]');
+    if (acessorieTabBtn) {
+        acessorieTabBtn.addEventListener('click', () => {
             setTimeout(() => {
-                if (isEquipmentTabActive()) {
-                    loadEquipmentsData();
+                if (isAcessorieTabActive()) {
+                    loadAcessoriesData();
                 }
             }, 150);
         });
@@ -68,14 +67,14 @@ function setupEventListeners() {
 }
 
 // Verifica se a tab está ativa
-function isEquipmentTabActive() {
-    return document.getElementById('equipmentsTab')?.classList.contains('active');
+function isAcessorieTabActive() {
+    return document.getElementById('acessoriesTab')?.classList.contains('active');
 }
 
 // ==================== FUNÇÕES PRINCIPAIS ====================
 
 // Carrega dados da API
-async function loadEquipmentsData() {
+async function loadAcessoriesData() {
     try {
         const response = await fetch('/api/acessorios');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -83,9 +82,9 @@ async function loadEquipmentsData() {
         const data = await response.json();
         
         if (data.success && data.acessorios) {
-            window.equipmentsData = data.acessorios;
+            window.acessoriesData = data.acessorios;
             systemData.banco_acessorios = data.acessorios;
-            renderEquipmentList();
+            renderAcessorieList();
             populateCodigosFilter();
         } else {
             throw new Error(data.error || 'Dados inválidos');
@@ -105,9 +104,9 @@ function populateCodigosFilter() {
     filterSelect.innerHTML = '<option value="">Todos os códigos</option>';
     
     const codigos = new Set();
-    Object.values(window.equipmentsData).forEach(equipment => {
-        if (equipment.codigo) {
-            codigos.add(equipment.codigo);
+    Object.values(window.acessoriesData).forEach(acessorie => {
+        if (acessorie.codigo) {
+            codigos.add(acessorie.codigo);
         }
     });
     
@@ -120,20 +119,20 @@ function populateCodigosFilter() {
 }
 
 // Renderiza lista de acessorios
-function renderEquipmentList(filterCodigo = '') {
-    const equipmentList = document.getElementById('equipmentList');
-    if (!equipmentList) return;
+function renderAcessorieList(filterCodigo = '') {
+    const acessorieList = document.getElementById('acessorieList');
+    if (!acessorieList) return;
     
-    equipmentList.innerHTML = '';
+    acessorieList.innerHTML = '';
     
-    const equipmentEntries = Object.entries(window.equipmentsData);
+    const acessorieEntries = Object.entries(window.acessoriesData);
     
-    if (equipmentEntries.length === 0) {
-        equipmentList.innerHTML = `
+    if (acessorieEntries.length === 0) {
+        acessorieList.innerHTML = `
             <div class="empty-state">
                 <i class="icon-empty"></i>
                 <p>Nenhum acessorio cadastrado</p>
-                <button class="btn btn-primary mt-2" onclick="addNewEquipment()">
+                <button class="btn btn-primary mt-2" onclick="addNewAcessorie()">
                     Adicionar Primeiro Acessorio
                 </button>
             </div>
@@ -142,11 +141,11 @@ function renderEquipmentList(filterCodigo = '') {
     }
     
     const filteredEntries = filterCodigo 
-        ? equipmentEntries.filter(([_, equipment]) => equipment.codigo === filterCodigo)
-        : equipmentEntries;
+        ? acessorieEntries.filter(([_, acessorie]) => acessorie.codigo === filterCodigo)
+        : acessorieEntries;
     
     if (filteredEntries.length === 0) {
-        equipmentList.innerHTML = `
+        acessorieList.innerHTML = `
             <div class="empty-state">
                 <i class="icon-empty"></i>
                 <p>Nenhum acessorio encontrado para o código "${filterCodigo}"</p>
@@ -155,53 +154,51 @@ function renderEquipmentList(filterCodigo = '') {
         return;
     }
     
-    filteredEntries.forEach(([id, equipment], index) => {
-        const dimensions = equipment.valores_padrao || {};
+    filteredEntries.forEach(([id, acessorie], index) => {
+        const dimensions = acessorie.valores_padrao || {};
         
-        const equipmentItem = document.createElement('div');
-        equipmentItem.className = 'equipment-item';
-        equipmentItem.setAttribute('data-index', index);
-        equipmentItem.setAttribute('data-id', id);
+        const acessorieItem = document.createElement('div');
+        acessorieItem.className = 'acessorie-item';
+        acessorieItem.setAttribute('data-index', index);
+        acessorieItem.setAttribute('data-id', id);
         
-        equipmentItem.innerHTML = `
-            <div class="equipment-header" onclick="toggleEquipmentItem(${index}, event)">
+        acessorieItem.innerHTML = `
+            <div class="acessorie-header" onclick="toggleAcessorieItem(${index}, event)">
                 <button class="minimizer">+</button>
                 <span style="flex: 1; cursor: pointer;">
-                    <strong>${escapeHtml(equipment.codigo || 'N/A')}</strong> - ${escapeHtml(equipment.descricao || 'Sem descrição')}
+                    <strong>${escapeHtml(acessorie.codigo || 'N/A')}</strong> - ${escapeHtml(acessorie.descricao || 'Sem descrição')}
                 </span>
-                <button class="btn btn-xs btn-danger" onclick="deleteEquipment('${id}', event)">
+                <button class="btn btn-xs btn-danger" onclick="deleteAcessorie('${id}', event)">
                     <i class="icon-delete"></i>
                 </button>
             </div>
-            <div class="equipment-content collapsed">
-                <div class="equipment-field">
-                    <span class="equipment-label">Código/Sigla:</span>
+            <div class="acessorie-content collapsed">
+                <div class="acessorie-field">
+                    <span class="acessorie-label">Código/Sigla:</span>
                     <div style="flex: 1;">
-                        <input type="text" id="equipmentCodigo-${index}" 
-                               value="${escapeHtml(equipment.codigo || '')}" 
+                        <input type="text" id="acessorieCodigo-${index}" 
+                               value="${escapeHtml(acessorie.codigo || '')}" 
                                placeholder="Ex: VZ, DSP_15" 
-                               onchange="updateEquipment(${index}, 'codigo', this.value)"
-                               onfocus="selectEquipmentCodigo(${index})"
-                               list="codigosList"
+                               onchange="updateAcessorie(${index}, 'codigo', this.value)"
                                class="form-input">
                         <small class="text-muted">Código identificador do acessorio</small>
                     </div>
                 </div>
-                <div class="equipment-field">
-                    <span class="equipment-label">Descrição:</span>
-                    <input type="text" value="${escapeHtml(equipment.descricao || '')}" 
+                <div class="acessorie-field">
+                    <span class="acessorie-label">Descrição:</span>
+                    <input type="text" value="${escapeHtml(acessorie.descricao || '')}" 
                            placeholder="Descrição detalhada do acessorio" 
-                           oninput="syncEquipmentName(${index}, this.value)" 
-                           onchange="updateEquipment(${index}, 'descricao', this.value)" 
+                           oninput="syncAcessorieName(${index}, this.value)" 
+                           onchange="updateAcessorie(${index}, 'descricao', this.value)" 
                            class="form-input">
                 </div>
-                <div class="equipment-dimensions">
+                <div class="acessorie-dimensions">
                     <h5>Dimensões e Valores:</h5>
                     <div class="dimensions-grid" id="dimensionsGrid-${index}">
                         ${renderDimensionGrid(dimensions, index)}
                     </div>
                     <div class="text-center mt-2">
-                        <button class="btn btn-xs btn-info" onclick="addEquipmentDimension(${index}, event)">
+                        <button class="btn btn-xs btn-info" onclick="addAcessorieDimension(${index}, event)">
                             <i class="icon-add"></i> Adicionar Dimensão
                         </button>
                     </div>
@@ -209,7 +206,7 @@ function renderEquipmentList(filterCodigo = '') {
             </div>
         `;
         
-        equipmentList.appendChild(equipmentItem);
+        acessorieList.appendChild(acessorieItem);
     });
 }
 
@@ -227,7 +224,7 @@ function renderDimensionGrid(dimensions, index) {
         <div class="dimension-item" data-key="${dimensionKey}">
             <div class="dimension-header">
                 <span>Dimensão ${dimIndex + 1}</span>
-                <button class="btn btn-xs btn-danger" onclick="removeEquipmentDimension(${index}, '${dimensionKey}', event)">
+                <button class="btn btn-xs btn-danger" onclick="removeAcessorieDimension(${index}, '${dimensionKey}', event)">
                     <i class="icon-delete"></i>
                 </button>
             </div>
@@ -236,13 +233,13 @@ function renderDimensionGrid(dimensions, index) {
                     <label>Dimensão:</label>
                     <input type="text" value="${escapeHtml(dimensionKey)}" 
                            placeholder="Ex: 300x400" 
-                           onchange="updateEquipmentDimensionLabel(${index}, '${dimensionKey}', this.value)" 
+                           onchange="updateAcessorieDimensionLabel(${index}, '${dimensionKey}', this.value)" 
                            class="form-input-small">
                 </div>
                 <div class="dimension-field">
                     <label>Valor (R$):</label>
                     <input type="number" value="${value}" step="0.01" min="0"
-                           onchange="updateEquipmentValue(${index}, '${dimensionKey}', this.value)" 
+                           onchange="updateAcessorieValue(${index}, '${dimensionKey}', this.value)" 
                            class="form-input-small">
                 </div>
             </div>
@@ -250,45 +247,19 @@ function renderDimensionGrid(dimensions, index) {
     `).join('');
 }
 
-// Seleciona código para sugestão
-function selectEquipmentCodigo(index) {
-    const input = document.getElementById(`equipmentCodigo-${index}`);
-    if (!input) return;
-    
-    if (!document.getElementById('codigosList')) {
-        const datalist = document.createElement('datalist');
-        datalist.id = 'codigosList';
-        
-        const codigos = new Set();
-        Object.values(window.equipmentsData).forEach(equipment => {
-            if (equipment.codigo) {
-                codigos.add(equipment.codigo);
-            }
-        });
-        
-        Array.from(codigos).sort().forEach(codigo => {
-            const option = document.createElement('option');
-            option.value = codigo;
-            datalist.appendChild(option);
-        });
-        
-        document.body.appendChild(datalist);
-    }
-    
-    input.setAttribute('list', 'codigosList');
-}
+
 
 // Alterna expansão/colapso do item
-function toggleEquipmentItem(index, event) {
+function toggleAcessorieItem(index, event) {
     if (event) {
         event.stopPropagation();
         if (event.target.closest('.btn-danger')) return;
     }
     
-    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    const item = document.querySelector(`.acessorie-item[data-index="${index}"]`);
     if (!item) return;
     
-    const content = item.querySelector('.equipment-content');
+    const content = item.querySelector('.acessorie-content');
     const minimizer = item.querySelector('.minimizer');
     
     content.classList.toggle('collapsed');
@@ -303,23 +274,23 @@ function toggleEquipmentItem(index, event) {
 }
 
 // Adiciona nova dimensão ao acessorio
-function addEquipmentDimension(index, event) {
+function addAcessorieDimension(index, event) {
     if (event) event.stopPropagation();
     
-    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    const item = document.querySelector(`.acessorie-item[data-index="${index}"]`);
     if (!item) return;
     
     const id = item.getAttribute('data-id');
-    if (!id || !window.equipmentsData[id]) return;
+    if (!id || !window.acessoriesData[id]) return;
     
-    const content = item.querySelector('.equipment-content');
+    const content = item.querySelector('.acessorie-content');
     const minimizer = item.querySelector('.minimizer');
     if (content.classList.contains('collapsed')) {
         content.classList.remove('collapsed');
         minimizer.textContent = '-';
     }
     
-    const dimensions = window.equipmentsData[id].valores_padrao || {};
+    const dimensions = window.acessoriesData[id].valores_padrao || {};
     let newKey = `300x200`;
     let counter = 1;
     while (dimensions[newKey]) {
@@ -328,8 +299,8 @@ function addEquipmentDimension(index, event) {
     }
     
     dimensions[newKey] = 0;
-    window.equipmentsData[id].valores_padrao = dimensions;
-    systemData.banco_acessorios = window.equipmentsData;
+    window.acessoriesData[id].valores_padrao = dimensions;
+    systemData.banco_acessorios = window.acessoriesData;
     
     addPendingChange('banco_acessorios');
     
@@ -341,7 +312,7 @@ function addEquipmentDimension(index, event) {
         newItem.innerHTML = `
             <div class="dimension-header">
                 <span>Dimensão ${Object.keys(dimensions).length}</span>
-                <button class="btn btn-xs btn-danger" onclick="removeEquipmentDimension(${index}, '${newKey}', event)">
+                <button class="btn btn-xs btn-danger" onclick="removeAcessorieDimension(${index}, '${newKey}', event)">
                     <i class="icon-delete"></i>
                 </button>
             </div>
@@ -350,13 +321,13 @@ function addEquipmentDimension(index, event) {
                     <label>Dimensão:</label>
                     <input type="text" value="${escapeHtml(newKey)}" 
                            placeholder="Ex: 300x400" 
-                           onchange="updateEquipmentDimensionLabel(${index}, '${newKey}', this.value)" 
+                           onchange="updateAcessorieDimensionLabel(${index}, '${newKey}', this.value)" 
                            class="form-input-small">
                 </div>
                 <div class="dimension-field">
                     <label>Valor (R$):</label>
                     <input type="number" value="0" step="0.01" min="0"
-                           onchange="updateEquipmentValue(${index}, '${newKey}', this.value)" 
+                           onchange="updateAcessorieValue(${index}, '${newKey}', this.value)" 
                            class="form-input-small">
                 </div>
             </div>
@@ -374,19 +345,19 @@ function addEquipmentDimension(index, event) {
 }
 
 // Remove dimensão do acessorio
-function removeEquipmentDimension(index, key, event) {
+function removeAcessorieDimension(index, key, event) {
     if (event) event.stopPropagation();
     
     if (!confirm(`Remover dimensão "${key}"?`)) return;
     
-    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+    const item = document.querySelector(`.acessorie-item[data-index="${index}"]`);
     if (!item) return;
     
     const id = item.getAttribute('data-id');
-    if (!id || !window.equipmentsData[id]) return;
+    if (!id || !window.acessoriesData[id]) return;
     
-    delete window.equipmentsData[id].valores_padrao[key];
-    systemData.banco_acessorios = window.equipmentsData;
+    delete window.acessoriesData[id].valores_padrao[key];
+    systemData.banco_acessorios = window.acessoriesData;
     
     addPendingChange('banco_acessorios');
     
@@ -404,26 +375,26 @@ function removeEquipmentDimension(index, key, event) {
 }
 
 // Sincroniza nome no header
-function syncEquipmentName(index, value) {
-    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+function syncAcessorieName(index, value) {
+    const item = document.querySelector(`.acessorie-item[data-index="${index}"]`);
     if (!item) return;
     
-    const headerText = item.querySelector('.equipment-header span');
+    const headerText = item.querySelector('.acessorie-header span');
     if (headerText) {
-        const codigo = window.equipmentsData[item.getAttribute('data-id')]?.codigo || '';
+        const codigo = window.acessoriesData[item.getAttribute('data-id')]?.codigo || '';
         headerText.innerHTML = `<strong>${escapeHtml(codigo)}</strong> - ${escapeHtml(value || 'Sem descrição')}`;
     }
 }
 
 // Atualiza campo do acessorio
-function updateEquipment(index, field, value) {
-    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+function updateAcessorie(index, field, value) {
+    const item = document.querySelector(`.acessorie-item[data-index="${index}"]`);
     if (!item) return;
     
     const id = item.getAttribute('data-id');
-    if (!id || !window.equipmentsData[id]) return;
+    if (!id || !window.acessoriesData[id]) return;
     
-    const oldValue = window.equipmentsData[id][field];
+    const oldValue = window.acessoriesData[id][field];
     
     if (field === 'codigo') {
         const newCodigo = value.trim().toUpperCase();
@@ -432,9 +403,9 @@ function updateEquipment(index, field, value) {
             return;
         }
         
-        const existingEquipments = Object.entries(window.equipmentsData);
-        for (const [equipId, equipment] of existingEquipments) {
-            if (equipId !== id && equipment.codigo === newCodigo) {
+        const existingAcessories = Object.entries(window.acessoriesData);
+        for (const [equipId, acessorie] of existingAcessories) {
+            if (equipId !== id && acessorie.codigo === newCodigo) {
                 alert(`Código "${newCodigo}" já está em uso por outro acessorio!`);
                 return;
             }
@@ -442,15 +413,15 @@ function updateEquipment(index, field, value) {
         
         value = newCodigo;
         
-        const headerText = item.querySelector('.equipment-header span');
+        const headerText = item.querySelector('.acessorie-header span');
         if (headerText) {
-            const descricao = window.equipmentsData[id].descricao || '';
+            const descricao = window.acessoriesData[id].descricao || '';
             headerText.innerHTML = `<strong>${escapeHtml(value)}</strong> - ${escapeHtml(descricao)}`;
         }
     }
     
-    window.equipmentsData[id][field] = value;
-    systemData.banco_acessorios = window.equipmentsData;
+    window.acessoriesData[id][field] = value;
+    systemData.banco_acessorios = window.acessoriesData;
     
     addPendingChange('banco_acessorios');
     
@@ -460,14 +431,14 @@ function updateEquipment(index, field, value) {
 }
 
 // Atualiza label da dimensão
-function updateEquipmentDimensionLabel(index, oldKey, newKey) {
-    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+function updateAcessorieDimensionLabel(index, oldKey, newKey) {
+    const item = document.querySelector(`.acessorie-item[data-index="${index}"]`);
     if (!item) return;
     
     const id = item.getAttribute('data-id');
-    if (!id || !window.equipmentsData[id]) return;
+    if (!id || !window.acessoriesData[id]) return;
     
-    const dimensions = window.equipmentsData[id].valores_padrao;
+    const dimensions = window.acessoriesData[id].valores_padrao;
     if (!dimensions) return;
     
     if (newKey === oldKey) return;
@@ -484,7 +455,7 @@ function updateEquipmentDimensionLabel(index, oldKey, newKey) {
     
     dimensions[newKey] = dimensions[oldKey];
     delete dimensions[oldKey];
-    systemData.banco_acessorios = window.equipmentsData;
+    systemData.banco_acessorios = window.acessoriesData;
     
     addPendingChange('banco_acessorios');
     
@@ -497,14 +468,14 @@ function updateEquipmentDimensionLabel(index, oldKey, newKey) {
 }
 
 // Atualiza valor da dimensão
-function updateEquipmentValue(index, key, value) {
-    const item = document.querySelector(`.equipment-item[data-index="${index}"]`);
+function updateAcessorieValue(index, key, value) {
+    const item = document.querySelector(`.acessorie-item[data-index="${index}"]`);
     if (!item) return;
     
     const id = item.getAttribute('data-id');
-    if (!id || !window.equipmentsData[id]) return;
+    if (!id || !window.acessoriesData[id]) return;
     
-    const dimensions = window.equipmentsData[id].valores_padrao;
+    const dimensions = window.acessoriesData[id].valores_padrao;
     if (!dimensions) return;
     
     const numValue = parseFloat(value);
@@ -514,43 +485,43 @@ function updateEquipmentValue(index, key, value) {
     }
     
     dimensions[key] = numValue;
-    systemData.banco_acessorios = window.equipmentsData;
+    systemData.banco_acessorios = window.acessoriesData;
     
     addPendingChange('banco_acessorios');
 }
 
 // Adiciona novo acessorio
-function addNewEquipment() {
+function addNewAcessorie() {
     const newId = `equip_${Date.now()}`;
     
-    window.equipmentsData[newId] = {
+    window.acessoriesData[newId] = {
         codigo: '',
         descricao: 'Novo Acessorio',
         valores_padrao: { '300x200': 0 }
     };
     
-    systemData.banco_acessorios = window.equipmentsData;
+    systemData.banco_acessorios = window.acessoriesData;
     
     addPendingChange('banco_acessorios');
     
-    renderEquipmentList();
+    renderAcessorieList();
     
     setTimeout(() => {
-        const items = document.querySelectorAll('.equipment-item');
+        const items = document.querySelectorAll('.acessorie-item');
         const newItem = items[items.length - 1];
         if (newItem) {
             newItem.scrollIntoView({ behavior: 'smooth' });
             
             const index = newItem.getAttribute('data-index');
             if (index) {
-                const content = newItem.querySelector('.equipment-content');
+                const content = newItem.querySelector('.acessorie-content');
                 const minimizer = newItem.querySelector('.minimizer');
                 
                 content.classList.remove('collapsed');
                 minimizer.textContent = '-';
                 
                 setTimeout(() => {
-                    const codigoInput = newItem.querySelector('input[id^="equipmentCodigo-"]');
+                    const codigoInput = newItem.querySelector('input[id^="acessorieCodigo-"]');
                     if (codigoInput) {
                         codigoInput.focus();
                         codigoInput.select();
@@ -562,17 +533,17 @@ function addNewEquipment() {
 }
 
 // Exclui acessorio
-async function deleteEquipment(id, event) {
+async function deleteAcessorie(id, event) {
     if (event) event.stopPropagation();
     
-    const equipment = window.equipmentsData[id];
-    if (!equipment) {
+    const acessorie = window.acessoriesData[id];
+    if (!acessorie) {
         alert('Acessorio não encontrado!');
         return;
     }
     
-    const codigo = equipment.codigo;
-    const descricao = equipment.descricao || 'Sem descrição';
+    const codigo = acessorie.codigo;
+    const descricao = acessorie.descricao || 'Sem descrição';
     
     if (!confirm(`Excluir acessorio "${codigo} - ${descricao}"?\n\nEsta ação não pode ser desfeita.`)) {
         return;
@@ -595,12 +566,12 @@ async function deleteEquipment(id, event) {
             throw new Error(result.error || 'Erro ao excluir acessorio');
         }
         
-        delete window.equipmentsData[id];
-        systemData.banco_acessorios = window.equipmentsData;
+        delete window.acessoriesData[id];
+        systemData.banco_acessorios = window.acessoriesData;
         
         addPendingChange('banco_acessorios');
         
-        renderEquipmentList();
+        renderAcessorieList();
         populateCodigosFilter();
         
         showNotification('Acessorio excluído com sucesso!', 'success');
@@ -612,9 +583,9 @@ async function deleteEquipment(id, event) {
 }
 
 // Filtra acessorios por código
-function filterEquipmentTable() {
+function filterAcessorieTable() {
     const filterSelect = document.getElementById('codigoFilter');
-    renderEquipmentList(filterSelect?.value || '');
+    renderAcessorieList(filterSelect?.value || '');
 }
 
 // ==================== FUNÇÕES UTILITÁRIAS ====================
@@ -630,14 +601,14 @@ function showNotification(message, type = 'info') {
 }
 
 function renderEmptyState() {
-    const equipmentList = document.getElementById('equipmentList');
-    if (!equipmentList) return;
+    const acessorieList = document.getElementById('acessorieList');
+    if (!acessorieList) return;
     
-    equipmentList.innerHTML = `
+    acessorieList.innerHTML = `
         <div class="empty-state">
             <i class="icon-empty"></i>
             <p>Não foi possível carregar os acessorios</p>
-            <button class="btn btn-primary mt-2" onclick="loadEquipmentsData()">
+            <button class="btn btn-primary mt-2" onclick="loadAcessoriesData()">
                 Tentar novamente
             </button>
         </div>
@@ -649,23 +620,23 @@ function renderEmptyState() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
-            if (typeof initEquipments === 'function') {
-                initEquipments();
+            if (typeof initAcessories === 'function') {
+                initAcessories();
             }
         }, 100);
     });
 } else {
     setTimeout(() => {
-        if (typeof initEquipments === 'function') {
-            initEquipments();
+        if (typeof initAcessories === 'function') {
+            initAcessories();
         }
     }, 100);
 }
 
 // Exportar por padrão
 export default {
-    initEquipments,
-    loadEquipmentsData,
-    deleteEquipment,
-    addNewEquipment
+    initAcessories,
+    loadAcessoriesData,
+    deleteAcessorie,
+    addNewAcessorie
 };

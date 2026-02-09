@@ -221,6 +221,10 @@
 .btn-remove-conjunto svg {
     pointer-events: none;
 }
+
+.btn.btn-clear{
+    margin: 10px;
+}
 .conjunto-title-container {
     display: flex;
     align-items: center;

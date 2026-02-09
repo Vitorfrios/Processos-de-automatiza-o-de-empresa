@@ -80,16 +80,24 @@ function atualizarCamposEmpresaForm(obraData, formElement) {
 }
 
 /**
- * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES - SEM VALOR HARDCODED
+ * 🆕 CRIA FORMULÁRIO DE EMPRESA COM DADOS EXISTENTES - CORRIGIDO
  */
 function criarVisualizacaoEmpresa(obraData, container) {
-    // Ocultar botão se existir
-    const botao = container.querySelector('.btn-empresa-cadastro');
-    if (botao) {
-        botao.style.display = 'none';
+    console.log(`📋 [EMPRESA] Criando visualização para obra ${obraData.id}`);
+    
+    // 🔥 CORREÇÃO: Remover botão visualizar se existir
+    const botaoVisualizar = container.querySelector('.btn-empresa-visualizar');
+    if (botaoVisualizar) {
+        botaoVisualizar.style.display = 'none';
     }
     
-    // 🔥 CORREÇÃO: NÃO usar valores hardcoded, apenas placeholders
+    // 🔥 CORREÇÃO: Remover formulário anterior se existir
+    const formularioExistente = container.querySelector('.empresa-formulario-ativo');
+    if (formularioExistente) {
+        formularioExistente.remove();
+    }
+    
+    // Criar novo formulário
     const formularioHTML = `
     <div class="empresa-formulario-ativo">
         <h4>Dados da Empresa</h4>
@@ -135,7 +143,6 @@ function criarVisualizacaoEmpresa(obraData, container) {
                        placeholder="Código do cliente">
             </div>
 
-            <!-- 🆕 CAMPO DE DATA COM DATEPICKER DINÂMICO -->
             <div class="form-group-horizontal">
                 <label>Data</label>
                 <div class="date-input-container">
@@ -160,7 +167,7 @@ function criarVisualizacaoEmpresa(obraData, container) {
 
         <div class="empresa-form-actions">
             <button type="button" class="btn-ocultar" 
-                    onclick="window.ocultarFormularioEmpresa(this, '${obraData.id}')">
+                    onclick="window.ocultarFormularioEmpresa('${obraData.id}')">
                 Ocultar
             </button>
         </div>
@@ -169,22 +176,20 @@ function criarVisualizacaoEmpresa(obraData, container) {
     
     container.insertAdjacentHTML('beforeend', formularioHTML);
     
-    // 🆕 INICIALIZAR AUTOCOMPLETE COM A FUNÇÃO EXISTENTE
+    // 🔥 CORREÇÃO: Inicializar autocomplete após inserir HTML
     setTimeout(() => {
-        inicializarInputEmpresaHibrido(obraData.id);
+        if (typeof window.inicializarInputEmpresaHibrido === 'function') {
+            window.inicializarInputEmpresaHibrido(obraData.id);
+        }
         
-        // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA
+        // Configurar campo de data
         const dataCampo = container.querySelector(`#data-cadastro-${obraData.id}`);
         if (dataCampo) {
             configurarCampoDataEspecifico(dataCampo);
         }
         
-        // 🆕 VINCULAR EVENTOS DE MUDANÇA PARA OS OUTROS CAMPOS
-        vincularEventosMudanca(obraData.id, container);
-        
+        console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id}`);
     }, 100);
-    
-    console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id}`);
 }
 
 /**
@@ -657,39 +662,43 @@ function limparCamposEmpresaCompletamente(obraId) {
 }
 
 /**
- * 🆕 OCULTAR FORMULÁRIO SEM LIMPAR DADOS (após salvar)
+ * 🆕 OCULTAR FORMULÁRIO SEM LIMPAR DADOS - CORRIGIDO
  */
-window.ocultarFormularioEmpresa = function(button, obraId) {
+window.ocultarFormularioEmpresa = function(obraId, element = null) {
     try {
-        const formulario = button?.closest('.empresa-formulario-ativo');
         const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
-        
         if (!obraElement) {
             console.error(`❌ [EMPRESA] Obra ${obraId} não encontrada`);
             return;
         }
         
-        // 🔥 APENAS OCULTAR - NÃO LIMPAR DADOS
+        // Encontrar container de empresa
+        const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
+        if (!empresaContainer) {
+            console.error(`❌ [EMPRESA] Container de empresa não encontrado`);
+            return;
+        }
+        
+        // 🔥 CORREÇÃO: Remover formulário se existir
+        const formulario = empresaContainer.querySelector('.empresa-formulario-ativo');
         if (formulario) {
             formulario.remove();
         }
         
-        // 🔥 ATUALIZAR BOTÃO PARA "Visualizar"
-        const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
-        if (empresaContainer) {
-            // Limpar container
-            empresaContainer.innerHTML = '';
-            
-            // Criar botão de visualização
-            const botao = document.createElement('button');
-            botao.className = 'btn-empresa-visualizar';
-            botao.textContent = 'Visualizar campos da empresa';
-            botao.onclick = () => window.ativarCadastroEmpresa(obraId);
-            
-            empresaContainer.appendChild(botao);
+        // 🔥 CORREÇÃO: Mostrar botão de visualizar (se não existir, criar)
+        let botaoVisualizar = empresaContainer.querySelector('.btn-empresa-visualizar');
+        
+        if (!botaoVisualizar) {
+            botaoVisualizar = document.createElement('button');
+            botaoVisualizar.className = 'btn-empresa-visualizar';
+            botaoVisualizar.textContent = 'Visualizar campos da empresa';
+            botaoVisualizar.onclick = () => window.ativarCadastroEmpresa(obraId);
+            empresaContainer.appendChild(botaoVisualizar);
         }
         
-        console.log(`✅ [EMPRESA] Formulário OCULTADO (dados preservados) para obra ${obraId}`);
+        botaoVisualizar.style.display = 'block';
+        
+        console.log(`✅ [EMPRESA] Formulário ocultado, botão visualizar mostrado para obra ${obraId}`);
         
     } catch (error) {
         console.error('❌ [EMPRESA] Erro ao ocultar formulário:', error);

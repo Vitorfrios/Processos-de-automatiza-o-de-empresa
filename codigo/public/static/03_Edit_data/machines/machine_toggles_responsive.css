@@ -1,3 +1,5 @@
+
+/* ==== INÍCIO: machines/machine_toggles_responsive.css ==== */
 /* ==== machine_toggles_responsive.css ==== */
 /* Estilos para toggles, colapsos e responsividade */
 
@@ -29,7 +31,7 @@
     transform: scale(1.1);
 }
 
-.section-header {
+.machine-section-header {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -43,14 +45,14 @@
     user-select: none;
 }
 
-.section-header:hover {
+.machine-section-header:hover {
     background: var(--color-gray-200);
     border-color: var(--color-primary-light);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.section-header h4 {
+.machine-section-header h4 {
     color: var(--color-gray-800);
     font-size: 1.2rem;
     margin: 0;
@@ -93,73 +95,15 @@
     margin-top: var(--spacing-sm);
 }
 
-/* ===== TOGGLES PARA OPTION-ITEMS ===== */
-.option-header {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: 0;
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--color-gray-50);
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-    border: 1px solid var(--color-gray-300);
-    border-bottom: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    user-select: none;
-}
-
-.option-header:hover {
-    background: var(--color-gray-100);
-    border-color: var(--color-primary-light);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.option-header span {
-    color: var(--color-gray-700);
-    font-weight: 600;
-    font-size: 0.95rem;
-    flex: 1;
-}
-
-.option-header .minimizer {
-    margin-right: 0;
-    width: 20px;
-    height: 20px;
-    font-size: 1rem;
-}
-
-.option-content.collapsed {
-    max-height: 0;
-    opacity: 0;
-    padding: 0 !important;
-    margin: 0 !important;
-    visibility: hidden;
-    border: none;
-}
-
-.option-content.expanded {
-    max-height: 2000px;
-    opacity: 1;
-    visibility: visible;
-    padding: var(--spacing-md);
-    background: var(--color-white);
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    border: 1px solid var(--color-gray-300);
-    border-top: none;
-    margin-top: 0;
-}
-
 /* Ajustes para garantir que botões dentro dos headers não ativem o toggle */
-.section-header button:not(.minimizer),
+.machine-section-header button:not(.minimizer),
 .option-header button:not(.minimizer) {
     pointer-events: auto;
     z-index: 10;
     position: relative;
 }
 
-.section-header button:not(.minimizer):hover,
+.machine-section-header button:not(.minimizer):hover,
 .option-header button:not(.minimizer):hover {
     transform: translateY(-1px);
 }
@@ -176,17 +120,6 @@
 }
 
 /* ===== UTILITÁRIOS ===== */
-.btn-xs {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    min-height: 24px;
-    min-width: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* ===== BOTÕES DE AÇÃO ESPECÍFICOS ===== */
 .btn-remove {
     background: linear-gradient(135deg, var(--color-danger-light), var(--color-danger));
     color: var(--color-white);
@@ -223,97 +156,172 @@ body.no-scroll {
     overflow: hidden;
 }
 
-/* ===== RESPONSIVIDADE ===== */
+/* ===== RESPONSIVIDADE - MOBILE FIRST ===== */
 
-/* TELAS MÉDIAS GRANDES (1024px - 1200px) */
-@media (max-width: 1200px) {
-    .base-values-list {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    
-    .voltages-list {
-        grid-template-columns: repeat(3, 1fr); /* 3 colunas */
-    }
-}
-
-/* TABLETS (768px - 1024px) */
-@media (max-width: 1024px) {
-    #machinesList {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    }
-    
-    .impostos-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: var(--spacing-sm);
-    }
-    
-    .base-values-list {
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--spacing-sm);
-    }
-    
-    .configuracoes-list {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-md);
-    }
-    
-    .option-values-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-    
-    .voltages-list {
-        grid-template-columns: repeat(2, 1fr); /* 2 colunas em tablets */
-    }
-}
-
-/* TABLETS PEQUENOS e MOBILE LARGE (480px - 768px) */
-@media (max-width: 768px) {
+/* Dispositivos muito pequenos (iPhone SE, etc. - até 375px) */
+@media (max-width: 375px) {
     #machinesList {
         grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-xs);
+    }
+    
+    .machine-card {
+        padding: var(--spacing-sm);
+    }
+    
+    .machine-card-body {
+        grid-template-columns: 1fr;
+        gap: 0.3rem;
+    }
+    
+    .machine-card-body p {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.1rem;
+        margin: 0.2rem 0;
+    }
+    
+    .machine-card-body strong {
+        min-width: auto;
+        margin-right: 0;
+    }
+    
+    .machine-card-footer {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        align-items: stretch;
+        font-size: 0.75rem;
+    }
+    
+    .machine-card-footer span {
+        width: 100%;
+        text-align: center;
+        padding: 0.2rem 0.3rem;
     }
     
     .machine-detail-view {
-        padding: var(--spacing-md);
-        margin-top: var(--spacing-md);
+        padding: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
     }
     
-    .detail-header {
+    .detail-header-machine {
         flex-direction: column;
         align-items: stretch;
-        gap: var(--spacing-md);
-    }
-    
-    .impostos-grid,
-    .base-values-list {
-        grid-template-columns: 1fr;
-    }
-    
-    .configuracoes-list {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
-    
-    .voltages-list {
-        grid-template-columns: repeat(2, 1fr); /* 2 colunas em mobile */
         gap: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
     }
     
-    .option-values-grid {
-        grid-template-columns: repeat(3, 1fr);
+    .detail-header-machine h3 {
+        font-size: 1.1rem;
+        text-align: center;
     }
     
-    .config-content {
+    .form-section {
+        padding: var(--spacing-sm);
+    }
+    
+    .form-section h4 {
+        font-size: 1rem;
+    }
+    
+    .machine-type-container {
         flex-direction: column;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+    }
+    
+    .machine-type-group,
+    .machine-application-group {
+        min-width: 100%;
+    }
+}
+
+/* Dispositivos móveis pequenos (iPhone 14, etc. - 376px a 480px) */
+@media (max-width: 480px) {
+    .impostos-grid,
+    .base-values-list,
+    .configuracoes-list,
+    .voltages-list,
+    .option-values-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-xs);
+    }
+    
+    .imposto-item,
+    .config-item,
+    .base-value-item,
+    .voltage-card,
+    .option-value-item {
+        padding: var(--spacing-sm);
+    }
+    
+    .imposto-header,
+    .config-header,
+    .base-value-header,
+    .voltage-card-header,
+    .option-header,
+    .option-value-header {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs);
+    }
+    
+    .imposto-header .form-input-small {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.85rem;
+        height: 32px;
+    }
+    
+    .imposto-header .btn-danger {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .config-header .btn-danger,
+    .base-value-header .btn-danger,
+    .voltage-card-header .btn-danger,
+    .option-header .btn-danger {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .config-header span,
+    .base-value-header span,
+    .voltage-card-header span,
+    .option-header span {
+        font-size: 0.85rem;
+    }
+    
+    .config-content .form-input,
+    .base-value-field input,
+    .voltage-card-field input,
+    .option-value-field input {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .base-value-content,
+    .voltage-card-content,
+    .option-value-content {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .option-content {
+        padding: var(--spacing-sm);
         gap: var(--spacing-md);
     }
     
-    .voltage-card-content {
-        grid-template-columns: 1fr; /* Tensão e valor empilhados */
-        gap: var(--spacing-sm);
+    .option-values {
+        padding: var(--spacing-sm);
     }
     
     .form-actions {
         flex-direction: column;
+        gap: var(--spacing-sm);
     }
     
     .form-actions .btn {
@@ -321,13 +329,20 @@ body.no-scroll {
         justify-content: center;
     }
     
-    /* RESPONSIVIDADE PARA TOGGLES */
-    .section-header {
-        padding: var(--spacing-sm);
+    .machine-section-header {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        flex-wrap: wrap;
     }
     
-    .section-header h4 {
-        font-size: 1.1rem;
+    .machine-section-header h4 {
+        order: 2;
+        width: 100%;
+        margin-top: var(--spacing-xs);
+        font-size: 1rem;
+    }
+    
+    .machine-section-header button:not(.minimizer) {
+        order: 3;
     }
     
     .option-header {
@@ -335,130 +350,91 @@ body.no-scroll {
     }
     
     .option-header span {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
     
     .option-content.expanded {
         padding: var(--spacing-sm);
-        padding-left: var(--spacing-lg);
+    }
+    
+    .text-center .btn-info {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+        min-height: 36px;
     }
 }
 
-/* MOBILE PEQUENO (até 480px) */
-@media (max-width: 480px) {
-    .machine-card {
-        padding: var(--spacing-sm);
+/* Tablets pequenos e mobile landscape (481px a 768px) */
+@media (max-width: 768px) {
+    #machinesList {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
     
-    .machine-card-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: var(--spacing-sm);
-    }
-    
-    .machine-card-actions {
-        justify-content: flex-end;
-    }
-    
-    .machine-card-body p {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.2rem;
-    }
-    
-    .machine-card-footer {
-        flex-direction: column;
-        gap: var(--spacing-xs);
-        align-items: stretch;
-    }
-    
-    .form-section {
-        padding: var(--spacing-md);
-    }
-    
-    .config-item,
-    .base-value-item,
-    .voltage-card {
-        padding: var(--spacing-md);
-    }
-    
-    .config-header,
-    .base-value-header,
-    .voltage-card-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
-    }
-    
-    .base-values-list {
-        grid-template-columns: 1fr;
-    }
-    
-    .voltages-list {
-        grid-template-columns: 1fr; /* 1 coluna em mobile muito pequeno */
-    }
-    
-    .option-values-grid {
+    .machine-card-body {
         grid-template-columns: repeat(2, 1fr);
     }
     
-    .option-content {
-        gap: var(--spacing-sm);
-    }
-    
-    .option-values {
-        padding: var(--spacing-sm);
-    }
-    
-    /* RESPONSIVIDADE PARA TOGGLES EM MÓVEL */
-    .section-header {
-        flex-wrap: wrap;
-    }
-    
-    .section-header h4 {
-        order: 2;
-        width: 100%;
-        margin-top: var(--spacing-xs);
-    }
-    
-    .minimizer {
-        order: 1;
-    }
-    
-    .section-header button:not(.minimizer) {
-        order: 3;
-    }
-    
-    .option-header {
-        flex-wrap: wrap;
-    }
-    
-    .option-header span {
-        order: 2;
-        width: 100%;
-        margin-top: var(--spacing-xs);
-    }
-    
-    .imposto-header {
+    .machine-card-footer {
         flex-direction: row;
         align-items: center;
     }
     
-    .imposto-header .form-input-small {
-        padding: 0.5rem;
-        height: 34px;
-        font-size: 0.875rem;
+    .machine-card-footer span {
+        flex: 1;
+        min-width: 0;
     }
     
-    .imposto-header .btn-danger {
-        padding: 0.375rem;
-        min-width: 30px;
-        min-height: 30px;
+    .configuracoes-list,
+    .base-values-list,
+    .voltages-list,
+    .option-values-grid {
+        grid-template-columns: 1fr;
     }
     
-    .imposto-value .form-input {
-        padding: 0.5rem 0.75rem;
-        height: 38px;
-        font-size: 0.9rem;
+    
+    .imposto-header,
+    .config-header,
+    .base-value-header,
+    .voltage-card-header,
+    .option-header {
+        gap: var(--spacing-sm);
     }
 }
+
+/* Tablets (769px a 1024px) */
+@media (max-width: 1024px) {
+    .configuracoes-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .base-values-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .option-values-grid{
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .voltages-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Ajustes gerais para todos os dispositivos móveis */
+@media (hover: none) and (pointer: coarse) {
+    .machine-card:hover {
+        transform: none;
+    }
+    
+    .btn-danger {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    input,
+    select,
+    textarea {
+        font-size: 16px !important; /* Previne zoom no iOS */
+    }
+}
+/* ==== FIM: machines/machine_toggles_responsive.css ==== */

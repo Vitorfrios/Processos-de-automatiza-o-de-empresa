@@ -336,7 +336,12 @@
     text-align: center;
 }
 
-
+.dutos-table tfoot tr{
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
 /* Botões na tabela */
 .btn-remove-duto,
@@ -452,7 +457,6 @@
 }
 
 /* ===== RESPONSIVIDADE ===== */
-
 /* Desktop Grande (1024px - 1200px) */
 @media (max-width: 1200px) {
     .selector-grid {
@@ -539,6 +543,14 @@
         max-width: 120px;
     }
     
+    .cobre-container {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: center;
+        width: 100%;
+    }
+    
     .dutos-table {
         min-width: 700px;
         font-size: 0.8125rem;
@@ -617,6 +629,24 @@
         justify-content: center;
     }
     
+    .cobre-container {
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        gap: 0.5rem;
+    }
+    
+    .cobre-container .cobre-input {
+        flex: 1;
+        min-width: 0; /* Permite que o input encolha */
+    }
+    
+    .cobre-container .btn-cobre-default {
+        width: auto;
+        min-width: 80px;
+        flex-shrink: 0;
+    }
+    
     .kg-info {
         font-size: 0.75rem;
         padding: var(--spacing-sm);
@@ -673,6 +703,7 @@
 @media (max-width: 480px) {
     .duto-selector {
         padding: var(--spacing-sm);
+        /* resolver aqui, está passando do limite da tela */
     }
     
     .selector-grid {
@@ -681,6 +712,22 @@
     
     .form-group.full-width.duto-header-line {
         padding: 0.5rem;
+    }
+    
+    .cobre-container {
+        flex-wrap: wrap;
+        gap: 0.375rem;
+    }
+    
+    .cobre-container .cobre-input {
+        min-width: 100px;
+        height: 36px;
+    }
+    
+    .cobre-container .btn-cobre-default {
+        padding: 0.375rem 0.5rem;
+        height: 36px;
+        min-width: 70px;
     }
     
     .kg-info {
@@ -874,7 +921,6 @@
     max-width: 160px;        /* ajuste conforme necessário */
     overflow-x: auto;
     white-space: nowrap;
-    display: block;          /* essencial para o overflow funcionar */
 }
 
 /* Scroll discreto */

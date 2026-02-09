@@ -1,3 +1,5 @@
+
+/* ==== INÍCIO: machines/machine_components.css ==== */
 /* ==== machine_components.css ==== */
 /* Estilos para os componentes específicos: impostos, configurações, valores base */
 
@@ -47,6 +49,7 @@
     height: 36px;
     box-sizing: border-box;
     transition: all 0.15s;
+    min-width: 0;
 }
 
 .imposto-header .form-input-small:focus {
@@ -56,13 +59,23 @@
     background: var(--color-white);
 }
 
+.imposto-header .btn-danger {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .imposto-header .btn-danger:hover {
     background: var(--color-danger-dark);
     transform: scale(1.05);
 }
 
 .imposto-header .btn-danger i {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .imposto-value {
@@ -100,6 +113,25 @@
     grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-lg);
     padding: var(--spacing-sm);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-gray-400) var(--color-gray-100);
+    padding-bottom: var(--spacing-sm);
+}
+
+.configuracoes-list::-webkit-scrollbar {
+    height: 6px;
+}
+
+.configuracoes-list::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+    border-radius: 3px;
+}
+
+.configuracoes-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-400);
+    border-radius: 3px;
 }
 
 .config-item {
@@ -114,6 +146,7 @@
     min-height: 120px;
 }
 
+
 .config-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -127,12 +160,28 @@
     margin-bottom: var(--spacing-md);
     padding-bottom: var(--spacing-sm);
     border-bottom: 1px solid var(--color-gray-200);
+    gap: var(--spacing-sm);
 }
 
 .config-header span {
     color: var(--color-gray-800);
     font-weight: 600;
     font-size: 1rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.config-header .btn-danger {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .config-content {
@@ -165,9 +214,37 @@
 /* ===== VALORES BASE ===== */
 .base-values-list {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-md);
     padding: var(--spacing-sm);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: auto;
+    scrollbar-color: var(--color-gray-400) var(--color-gray-100);
+    padding-bottom: var(--spacing-md);
+    -ms-overflow-style: scrollbar;
+}
+
+.base-values-list::-webkit-scrollbar {
+    height: 10px;
+    background-color: var(--color-gray-100);
+}
+
+.base-values-list::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+    border-radius: 5px;
+    margin: 2px;
+}
+
+.base-values-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-500);
+    border-radius: 5px;
+    border: 2px solid var(--color-gray-100);
+}
+
+.base-values-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-gray-600);
 }
 
 .base-value-item {
@@ -193,19 +270,84 @@
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
 }
 
-.base-value-header input {
-    flex: 1;
-    padding: 0.5rem 0.75rem;
+.base-value-header span {
+    color: var(--color-gray-700);
+    font-weight: 600;
     font-size: 0.9rem;
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--border-radius-sm);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.base-value-header .btn-danger {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .base-value-item .form-input {
     width: 100%;
     padding: 0.5rem 0.75rem;
+}
+
+.base-value-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    align-items: end;
+}
+
+.base-value-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.base-value-field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-gray-700);
+    margin-bottom: 0.2rem;
+}
+
+.base-value-field input[type="text"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.base-value-field input[type="number"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+}
+
+.base-value-field input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
 }
 
 /* ===== ÍCONES ESPECÍFICOS PARA MÁQUINAS ===== */
@@ -214,3 +356,4 @@
 .icon-option::before { content: "📋"; }
 .icon-voltage::before { content: "⚡"; }
 .icon-tax::before { content: "💰"; }
+/* ==== FIM: machines/machine_components.css ==== */

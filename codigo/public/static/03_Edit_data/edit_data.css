@@ -38,6 +38,7 @@
     display: flex;
     gap: var(--spacing-sm);
     align-items: center;
+    justify-content: center;
 }
 
 
@@ -97,6 +98,7 @@
     color: var(--color-gray-700);
     flex-shrink: 0;
     white-space: nowrap;
+    margin-bottom: 15px;
 }
 
 .tab:hover {
@@ -138,6 +140,7 @@
     align-items: center;
     padding-bottom: var(--spacing-sm);
     border-bottom: 2px solid var(--color-gray-200);
+    flex-direction: row;
 }
 
 .tab-header h2 {
@@ -400,40 +403,28 @@
 
 @media (max-width: 768px) {
     .toolbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .toolbar-left,
-    .toolbar-right {
+        display: flex;
         width: 100%;
+        overflow-x: hidden;
     }
 
-    .search-box {
+    .toolbar-left {
+        display: flex;
+        flex-wrap: nowrap;
         width: 100%;
+        gap: 8px;
+        flex-direction: row;
     }
 
-    .search-box input {
-        min-width: 0;
-        flex: 1;
-    }
-
-    .tabs {
-        overflow-x: auto;
-        padding-bottom: var(--spacing-xs);
-    }
-
-    .tab {
-        white-space: nowrap;
-        padding: var(--spacing-sm) var(--spacing-md);
-    }
-
-    .tab-header {
-        flex-direction: column;
-        gap: var(--spacing-md);
-        align-items: stretch;
+    .toolbar-left .btn {
+        flex: 1 1 100%;
+        max-width: 50%;
+        white-space: normal;
+        text-align: center;
     }
 }
+
+
 
 @media (max-width: 480px) {
     .edit-data-container {

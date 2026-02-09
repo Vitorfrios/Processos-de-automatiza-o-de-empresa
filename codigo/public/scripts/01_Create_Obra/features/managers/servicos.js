@@ -186,6 +186,7 @@ function addAdicionalValor(projectId) {
     const itemId = `adicional-${Date.now()}`
     const html = `
         <div class="adicional-item" data-item-id="${itemId}">
+            <label>Valor</label>            
             <input type="number" 
                    placeholder="Valor" 
                    class="input-valor"
@@ -207,6 +208,7 @@ function addAdicionalTexto(projectId) {
     const itemId = `adicional-${Date.now()}`
     const html = `
         <div class="adicional-item" data-item-id="${itemId}">
+            <label>Descrição</label>
             <textarea placeholder="Descrição" 
                       class="input-texto"></textarea>
             <button class="btn btn-remove" onclick="removeAdicionalItem('${projectId}', '${itemId}')">×</button>

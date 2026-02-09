@@ -210,3 +210,13 @@ export default {
     restoreSectionStates,
     exposeToWindow
 };
+// No final do arquivo machines.js, adicione:
+export const APLICACOES_DISPONIVEIS = [
+    { tipo: "climatizacao", nome: "Climatização" },
+    { tipo: "pressurizacao_ventilacao", nome: "Pressurização/Ventilação" },
+    { tipo: "exaustao_bateria", nome: "Exaustão Sala de Bateria" },
+    { tipo: "exaustao_baia_trafo", nome: "Exaustão Baia de Trafo" }
+];
+
+// Exporte também para window se necessário
+window.APLICACOES_DISPONIVEIS = APLICACOES_DISPONIVEIS;

@@ -239,8 +239,8 @@ export function fixDataIssues() {
                 window.dutosData = systemData.dutos;
             }
             
-            if (window.equipmentsData && systemData.banco_acessorios) {
-                window.equipmentsData = systemData.banco_acessorios;
+            if (window.acessoriesData && systemData.banco_acessorios) {
+                window.acessoriesData = systemData.banco_acessorios;
             }
             
             return true;

@@ -79,7 +79,7 @@
 }
 
 .input-texto {
-    min-height: 60px;
+    min-height: 80px;
     resize: vertical;
 }
 
@@ -144,3 +144,108 @@
     border-top: 1px solid var(--color-gray-300);
 }
 
+
+
+/* ===== RESPONSIVIDADE MOBILE ===== */
+@media (max-width: 768px) {
+    /* Layout vertical para os itens adicionais */
+    .adicional-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        position: relative;
+    }
+    
+    /* Remove a margem entre os itens quando em coluna */
+    .adicional-item {
+        margin-bottom: var(--spacing-md);
+    }
+    
+    /* Ajusta o botão de remover para ficar no canto superior direito */
+    .adicional-item .btn-remove {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+        font-size: 1.1rem;
+    }
+    
+    /* Ajusta os inputs de valor */
+    .adicional-item .input-valor {
+        width: 100%;
+        max-width: 100%;
+        min-width: 100%;
+        margin: 0;
+    }
+    
+    /* Ajusta os textareas */
+    .adicional-item .input-texto {
+        width: 100%;
+        margin: 0;
+        min-height: 50px;
+    }
+    
+    /* Remove o padding-top dos labels quando estiverem em cima dos campos */
+    .adicional-item label {
+        width: 100%;
+        padding-top: 0;
+        margin-bottom: 4px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--color-gray-700);
+    }
+    
+    /* Para itens que têm field-group interno */
+    .adicional-item .field-group {
+        flex-direction: column;
+        width: 100%;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .adicional-item .field-group:last-child {
+        margin-bottom: 0;
+    }
+    
+    .adicional-item .field-group label {
+        width: 100%;
+        margin-bottom: 6px;
+        padding-top: 0;
+    }
+    
+    .adicional-item .field-group .input-valor,
+    .adicional-item .field-group .input-texto {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Ajusta os botões de ação */
+    .adicionais-actions {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .adicionais-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Para telas muito pequenas (celulares menores) */
+@media (max-width: 480px) {
+    .subsection-content {
+        padding: var(--spacing-sm);
+    }
+    
+    .adicional-item {
+        padding: var(--spacing-sm);
+    }
+    
+    .adicional-item .btn-remove {
+        top: 8px;
+        right: 8px;
+        width: 26px;
+        height: 26px;
+    }
+}

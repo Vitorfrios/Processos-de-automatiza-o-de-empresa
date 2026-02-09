@@ -1,3 +1,4 @@
+/* ==== INÍCIO: machines/machine_cards.css ==== */
 /* ==== machine_cards.css ==== */
 /* Estilos para a lista e cards de máquinas */
 
@@ -59,10 +60,13 @@
     font-size: 0.9rem;
     flex: 1;
     padding: var(--spacing-xs) 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
 }
 
 .machine-card-body p {
-    margin: 0.4rem 0;
+    margin: 0.3rem 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -71,7 +75,8 @@
 .machine-card-body strong {
     color: var(--color-gray-700);
     font-weight: 600;
-    min-width: 120px;
+    min-width: 100px;
+    margin-right: 0.5rem;
 }
 
 .machine-card-footer {
@@ -84,12 +89,19 @@
     color: var(--color-gray-500);
     font-size: 0.8rem;
     font-weight: 500;
+    gap: var(--spacing-sm);
 }
 
 .machine-card-footer span {
     background: var(--color-gray-100);
     padding: 0.2rem 0.5rem;
     border-radius: var(--border-radius-sm);
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* ===== VIZUALIZAÇÃO DETALHADA DE MÁQUINAS ===== */
@@ -110,16 +122,18 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-.detail-header {
+.detail-header-machine {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-xl);
     padding-bottom: var(--spacing-md);
     border-bottom: 2px solid var(--color-gray-300);
+    flex-direction: row;
+    gap: var(--spacing-md);
 }
 
-.detail-header h3 {
+.detail-header-machine h3 {
     color: var(--color-gray-800);
     margin: 0;
     font-size: 1.4rem;
@@ -129,7 +143,7 @@
     gap: var(--spacing-sm);
 }
 
-.detail-header h3 i {
+.detail-header-machine h3 i {
     font-size: 1.2em;
     color: var(--color-primary);
 }
@@ -158,4 +172,165 @@
 @keyframes fadeInCard {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
+}
+
+/* CSS para os campos Tipo e Aplicação lado a lado */
+.machine-type-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.machine-type-group,
+.machine-application-group {
+    flex: 1;
+    min-width: 300px;
+}
+
+.machine-type-container .form-group {
+    margin-bottom: 0;
+}
+
+.machine-type-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.machine-type-container .form-control,
+.machine-type-container select.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: all 0.15s ease-in-out;
+    background-color: white;
+    color: #495057;
+}
+
+.machine-type-container select.form-control {
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px;
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+.machine-type-container .form-control:focus,
+.machine-type-container select.form-control:focus {
+    outline: none;
+    border-color: #2196f3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.machine-type-container .form-control:hover,
+.machine-type-container select.form-control:hover {
+    border-color: #adb5bd;
+}
+
+/* Estilo para opções do select */
+.machine-type-container select.form-control option {
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.machine-type-container select.form-control option:hover {
+    background-color: #e9ecef;
+}
+
+/* Placeholder e texto selecionado */
+.machine-type-container select.form-control option[selected] {
+    background-color: #e9ecef;
+    font-weight: 500;
+}
+
+
+.detail-header-machine-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+}
+
+
+/* ==== FIM: machines/machine_cards.css ==== */
+
+
+/* Tablets (768px - 1024px) */
+@media (max-width: 1024px) {
+    .detail-header-machine {
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-sm);
+        gap: var(--spacing-sm);
+    }
+}
+
+/* Tablets pequenos e mobile landscape (600px - 768px) */
+@media (max-width: 768px) {
+    .detail-header-machine {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        padding: var(--spacing-md);
+        padding-bottom: var(--spacing-md);
+        border-bottom-width: 1px;
+    }
+    
+    .detail-header-machine h3 {
+        text-align: center;
+        margin-bottom: var(--spacing-sm);
+        font-size: 1.2rem;
+    }
+
+}
+
+/* Smartphones (480px - 600px) */
+@media (max-width: 600px) {
+    .detail-header-machine {
+        padding: var(--spacing-sm);
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .detail-header-machine h3 {
+        font-size: 1.1rem;
+        margin-bottom: var(--spacing-xs);
+    }
+}
+
+/* Smartphones pequenos (até 480px) */
+@media (max-width: 480px) {
+    .detail-header-machine {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        gap: var(--spacing-xs);
+    }
+    
+    .detail-header-machine h3 {
+        font-size: 1rem;
+        text-align: left;
+        line-height: 1.3;
+    }
+    
+}
+
+/* Smartphones muito pequenos (até 375px - iPhone SE) */
+@media (max-width: 375px) {
+    .detail-header-machine {
+        padding: var(--spacing-xs);
+    }
+    
+    .detail-header-machine h3 {
+        font-size: 0.95rem;
+        word-break: break-word;
+    }
+
 }

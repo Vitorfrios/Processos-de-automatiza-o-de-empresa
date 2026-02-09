@@ -500,13 +500,13 @@ if (typeof window.switchTab === 'undefined') {
                     }
                     break;
                     
-                case 'equipments':
+                case 'acessories':
                 case 'acessorios':
                     console.log('🎯 Tab de acessorios ativada');
                     if (typeof window.loadAcessorios === 'function') {
                         setTimeout(window.loadAcessorios, 100);
-                    } else if (typeof window.loadEquipmentsData === 'function') {
-                        setTimeout(window.loadEquipmentsData, 100);
+                    } else if (typeof window.loadAcessoriesData === 'function') {
+                        setTimeout(window.loadAcessoriesData, 100);
                     }
                     break;
                     
@@ -574,14 +574,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 150);
             }
             
-            if (tabText.includes('acessorio') || tabText.includes('equipment')) {
+            if (tabText.includes('acessorio') || tabText.includes('acessorie')) {
                 console.log('🎯 Tab de acessorios clicada');
                 
                 setTimeout(() => {
                     if (typeof window.loadAcessorios === 'function') {
                         window.loadAcessorios();
-                    } else if (typeof window.loadEquipmentsData === 'function') {
-                        window.loadEquipmentsData();
+                    } else if (typeof window.loadAcessoriesData === 'function') {
+                        window.loadAcessoriesData();
                     }
                 }, 150);
             }

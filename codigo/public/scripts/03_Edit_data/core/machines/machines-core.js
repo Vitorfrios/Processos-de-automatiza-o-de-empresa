@@ -1,3 +1,4 @@
+/* ==== INÍCIO: core/machines/machines-core.js ==== */
 // scripts/03_Edit_data/machines/machines-core.js
 // Funções principais de carregamento e gerenciamento de máquinas
 
@@ -12,8 +13,29 @@ import {
     loadVoltagesHTML
 } from './machines-render.js';
 
+// ===== DEFINIÇÃO DAS APLICAÇÕES DISPONÍVEIS =====
+const APLICACOES_DISPONIVEIS = [
+    { tipo: "climatizacao", nome: "Climatização" },
+    { tipo: "pressurizacao_ventilacao", nome: "Pressurização/Ventilação" },
+    { tipo: "exaustao_bateria", nome: "Exaustão Sala de Bateria" },
+    { tipo: "exaustao_baia_trafo", nome: "Exaustão Baia de Trafo" }
+];
+
 // ===== FUNÇÕES UTILITÁRIAS =====
 let originalMachineState = null;
+
+// Função para garantir que FORNECEDOR sempre exista nos impostos
+function ensureFornecedorExists(machine) {
+    if (!machine.impostos) {
+        machine.impostos = {};
+    }
+    
+    if (!machine.impostos.FORNECEDOR) {
+        machine.impostos.FORNECEDOR = 'TOSI'; // Valor padrão
+    }
+    
+    return machine;
+}
 
 // Seleciona texto no label
 export function selectTextInLabel(label) {
@@ -57,6 +79,13 @@ export function loadMachines() {
     }
 
     systemData.machines.forEach((machine, index) => {
+        // Garantir que FORNECEDOR existe
+        ensureFornecedorExists(machine);
+        
+        // Encontrar o nome da aplicação
+        const aplicacaoInfo = APLICACOES_DISPONIVEIS.find(app => app.tipo === machine.aplicacao);
+        const aplicacaoNome = aplicacaoInfo ? aplicacaoInfo.nome : machine.aplicacao || 'N/A';
+        
         const card = document.createElement('div');
         card.className = 'machine-card';
         card.innerHTML = `
@@ -80,6 +109,7 @@ export function loadMachines() {
                 <p><strong>Opções:</strong> ${machine.options?.length || 0}</p>
                 <p><strong>Tensões:</strong> ${machine.voltages?.length || 0}</p>
                 <p><strong>Valores base:</strong> ${Object.keys(machine.baseValues || {}).length}</p>
+                <p><strong>Aplicação:</strong> ${escapeHtml(aplicacaoNome)}</p>
             </div>
             <div class="machine-card-footer">
                 <span>ID: ${index}</span>
@@ -122,12 +152,14 @@ export function filterMachines() {
 export function addMachine() {
     const newMachine = {
         type: `NOVO_TIPO_${Date.now().toString().slice(-4)}`,
+        aplicacao: 'climatizacao', // Valor padrão
         impostos: {
             "PIS_COFINS": "INCL",
             "IPI": "ISENTO",
             "ICMS": "12%",
             "PRAZO": "45 a 60 dias",
-            "FRETE": "FOB/Cabreúva/SP"
+            "FRETE": "FOB/Cabreúva/SP",
+            "FORNECEDOR": "TOSI"
         },
         configuracoes_instalacao: [],
         baseValues: {},
@@ -148,34 +180,55 @@ export function editMachine(index) {
 
     const machine = systemData.machines[index];
     
+    // Garantir que FORNECEDOR existe
+    ensureFornecedorExists(machine);
+    
     originalMachineState = JSON.parse(JSON.stringify(machine));
     
     setCurrentMachineIndex(index);
 
     document.getElementById('machineDetailTitle').textContent = machine.type || 'Nova Máquina';
 
+    // Gerar options para o select de aplicação
+    const aplicacaoOptions = APLICACOES_DISPONIVEIS.map(app => `
+        <option value="${app.tipo}" ${machine.aplicacao === app.tipo ? 'selected' : ''}>
+            ${app.nome}
+        </option>
+    `).join('');
+
     let content = `
         <div class="machine-edit-form">
-            <div class="form-group">
-                <label>Tipo de Máquina:</label>
-                <input type="text" id="editMachineType" value="${escapeHtml(machine.type || '')}" 
-                       class="form-control" onchange="updateMachineField('type', this.value)">
+            <div class="machine-type-container">
+                <div class="form-group machine-type-group">
+                    <label>Tipo de Máquina:</label>
+                    <input type="text" id="editMachineType" value="${escapeHtml(machine.type || '')}" 
+                           class="form-control" onchange="updateMachineField('type', this.value)">
+                </div>
+                <div class="form-group machine-application-group">
+                    <label>Aplicação:</label>
+                    <select id="editMachineApplication" 
+                            class="form-control" 
+                            onchange="updateMachineField('aplicacao', this.value)">
+                        ${aplicacaoOptions}
+                    </select>
+                </div>
             </div>
             
             <div class="form-section">
-                <div class="section-header" onclick="toggleSection('impostos', event)">
+                <div class="machine-section-header" onclick="toggleSection('impostos', event)">
                     <button class="minimizer">+</button>
-                    <h4>Impostos</h4>
+                    <h4>Detalhes</h4>
                 </div>
                 <div id="impostosList" class="section-content collapsed">
                     <div class="impostos-grid">
                         ${Object.entries(machine.impostos || {}).map(([key, value]) => `
-                            <div class="imposto-item" data-key="${escapeHtml(key)}">
+                            <div class="imposto-item ${key === 'FORNECEDOR' ? 'fornecedor-item' : ''}" data-key="${escapeHtml(key)}">
                                 <div class="imposto-header">
                                     <input type="text" value="${escapeHtml(key)}" 
-                                        class="form-input-small"
+                                        class="form-input-small ${key === 'FORNECEDOR' ? 'fornecedor-input' : ''}"
                                         onchange="updateImpostoKey('${key}', this.value)"
-                                        placeholder="Nome do imposto">
+                                        placeholder="${key === 'FORNECEDOR' ? 'Fornecedor' : 'Nome do imposto'}"
+                                        ${key === 'FORNECEDOR' ? 'readonly' : ''}>
                                     <button class="btn btn-xs btn-danger" 
                                             onclick="removeImposto('${key}', event)" 
                                             title="Remover">
@@ -185,8 +238,8 @@ export function editMachine(index) {
                                 <div class="imposto-value">
                                     <input type="text" value="${escapeHtml(value)}"
                                         onchange="updateImposto('${key}', this.value)"
-                                        class="form-input"
-                                        placeholder="Valor do imposto">
+                                        class="form-input ${key === 'FORNECEDOR' ? 'fornecedor-value-input' : ''}"
+                                        placeholder="${key === 'FORNECEDOR' ? 'Nome do fornecedor' : 'Valor do imposto'}">
                                 </div>
                             </div>
                         `).join('')}
@@ -200,10 +253,9 @@ export function editMachine(index) {
             </div>
             
             <div class="form-section">
-                <div class="section-header" onclick="toggleSection('configuracoes', event)">
+                <div class="machine-section-header" onclick="toggleSection('configuracoes', event)">
                     <button class="minimizer">+</button>
                     <h4>Configurações de Instalação</h4>
-
                 </div>
                 <div id="configuracoesList" class="section-content collapsed">
                     ${loadConfiguracoesHTML(machine)}
@@ -216,14 +268,12 @@ export function editMachine(index) {
             </div>
             
             <div class="form-section">
-                <div class="section-header" onclick="toggleSection('valoresbase', event)">
+                <div class="machine-section-header" onclick="toggleSection('valoresbase', event)">
                     <button class="minimizer">+</button>
                     <h4>Valores Base</h4>
-
                 </div>
                 <div id="baseValuesList" class="section-content collapsed">
-                        <h5>Valores Base por Capacidade:</h5>
-
+                    <h5>Valores Base por Capacidade:</h5>
                     ${loadBaseValuesHTML(machine)}
                     <div class="text-center" style="margin-top: var(--spacing-md);">
                         <button class="btn btn-small btn-info" onclick="addBaseValue(event)">
@@ -234,10 +284,9 @@ export function editMachine(index) {
             </div>
             
             <div class="form-section">
-                <div class="section-header" onclick="toggleSection('opcoes', event)">
+                <div class="machine-section-header" onclick="toggleSection('opcoes', event)">
                     <button class="minimizer">+</button>
                     <h4>Opções</h4>
-
                 </div>
                 <div id="optionsList" class="section-content collapsed">
                     ${loadOptionsHTML(machine)}
@@ -250,10 +299,9 @@ export function editMachine(index) {
             </div>
             
             <div class="form-section">
-                <div class="section-header" onclick="toggleSection('tensoes', event)">
+                <div class="machine-section-header" onclick="toggleSection('tensoes', event)">
                     <button class="minimizer">+</button>
                     <h4>Tensões</h4>
-
                 </div>
                 <div id="voltagesList" class="section-content collapsed">
                     ${loadVoltagesHTML(machine)}
@@ -271,6 +319,9 @@ export function editMachine(index) {
                 </button>
                 <button class="btn btn-secondary" onclick="closeMachineDetail()">
                     <i class="icon-close"></i> Fechar
+                </button>
+                <button class="btn btn-warning" onclick="resetMachineChanges()" style="margin-left: auto;">
+                    <i class="icon-reset"></i> Descartar Alterações
                 </button>
             </div>
         </div>
@@ -355,7 +406,9 @@ export function updateMachineField(field, value) {
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
         systemData.machines[currentIndex][field] = value;
-        document.getElementById('machineDetailTitle').textContent = value;
+        if (field === 'type') {
+            document.getElementById('machineDetailTitle').textContent = value;
+        }
         addPendingChange('machines');
     }
 }
@@ -522,3 +575,4 @@ window.removeImposto = removeImposto;
 window.addImposto = addImposto;
 window.resetMachineChanges = resetMachineChanges;
 window.toggleSection = toggleSection;
+/* ==== FIM: core/machines/machines-core.js ==== */

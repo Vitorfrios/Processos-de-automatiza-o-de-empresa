@@ -216,6 +216,8 @@ async function debugLoadObras() {
 }
 if (typeof window !== 'undefined') {
     window.loadObrasFromServer=loadObrasFromServer
+    window.removeBaseObraFromHTML=removeBaseObraFromHTML
+    window.loadSingleObra=loadSingleObra
 }
 
 // EXPORTS
