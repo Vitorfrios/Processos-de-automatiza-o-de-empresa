@@ -1826,6 +1826,142 @@
         }
       ],
       "valorTotalObra": 21239
+    },
+    {
+      "id": "obra_r28",
+      "nome": "Obra1",
+      "empresa_id": "empresa_obra_r28",
+      "projetos": [
+        {
+          "id": "obra_r28_proj_t73_3",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_r28_proj_t73_3_sala_d38_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala de Servidores",
+                "backup": "n+1",
+                "area": 50,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 5.5,
+                "paredeLeste": 5.5,
+                "paredeNorte": 8,
+                "paredeSul": 8,
+                "peDireito": 3,
+                "volume": "150.00",
+                "divisoriaNaoClima1": 10,
+                "divisoriaNaoClima2": 10,
+                "divisoriaClima1": 15,
+                "divisoriaClima2": 15,
+                "dissipacao": 5000,
+                "numPessoas": 10,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "numPortasDuplas": 2,
+                "numPortasSimples": 3,
+                "combateIncendio": "fm200",
+                "pressurizacao": true
+              },
+              "maquinas": [
+                {
+                  "nome": "Split System-01A (50TR)",
+                  "tipo": "Split System",
+                  "potencia": "50TR",
+                  "tensao": "",
+                  "quantidade": 2,
+                  "aplicacao_machines": "climatizacao",
+                  "precoBase": 8,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 16,
+                  "potenciaSelecionada": "50TR",
+                  "tipoSelecionado": "Split System"
+                },
+                {
+                  "nome": "Filtro Cartucho-02A (2000m³/h)",
+                  "tipo": "Filtro Cartucho",
+                  "potencia": "2000m³/h",
+                  "tensao": "",
+                  "quantidade": 2,
+                  "aplicacao_machines": "pressurizacao",
+                  "precoBase": 17200,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 34400,
+                  "potenciaSelecionada": "2000m³/h",
+                  "tipoSelecionado": "Filtro Cartucho"
+                },
+                {
+                  "nome": "Centrífugo-01A (1500m³/h)",
+                  "tipo": "Centrífugo",
+                  "potencia": "1500m³/h",
+                  "tensao": "",
+                  "quantidade": 2,
+                  "aplicacao_machines": "exaustao_bateria",
+                  "precoBase": 3900,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 7800,
+                  "potenciaSelecionada": "1500m³/h",
+                  "tipoSelecionado": "Centrífugo"
+                },
+                {
+                  "nome": "Gabinetes Inline-01A (1000m³/h)",
+                  "tipo": "Gabinetes Inline",
+                  "potencia": "1000m³/h",
+                  "tensao": "",
+                  "quantidade": 1,
+                  "aplicacao_machines": "exaustao_baia_trafo",
+                  "precoBase": 2300,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 2300,
+                  "potenciaSelecionada": "1000m³/h",
+                  "tipoSelecionado": "Gabinetes Inline"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 1.2,
+                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
+                "solucao": 1,
+                "solucaoBackup": 2,
+                "totalCapacidade": 10,
+                "folga": 25.6,
+                "backup": "n+1"
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 27988,
+                "total-tr-aprox": 8,
+                "total-tr-exato": 7.96,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 7898,
+                "total-ar-latente": 20090
+              },
+              "acessorios": [],
+              "dutos": [],
+              "tubulacao": {
+                "conjuntos": [],
+                "valorTotalGeralTubos": 0
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 0
+        }
+      ],
+      "valorTotalObra": 0
     }
   ]
 }

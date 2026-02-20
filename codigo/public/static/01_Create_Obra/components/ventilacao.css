@@ -1,0 +1,544 @@
+/* ========== ESTILOS PARA TABELAS DE VENTILAÇÃO ========== */
+
+.ventilation-section {
+  margin-bottom: var(--capacity-table-margin);
+  background: var(--capacity-table-bg);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--capacity-table-border);
+}
+
+/* ===== TABELA 1 - VERTICAL (CÁLCULO TÉCNICO) ===== */
+.technical-table {
+  /* padding removido conforme solicitado */
+  border-bottom: 1px solid var(--capacity-table-border);
+}
+
+.technical-table h5 {
+  margin-top: var(--spacing-md) 0; 
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+/* Container da tabela vertical */
+.vertical-table-container {
+  background: var(--table-container-bg);
+  border: 1px solid var(--table-cell-border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.vertical-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--table-container-bg);
+  table-layout: fixed; /* Mantém layout fixo */
+}
+
+.vertical-table tr {
+  border-bottom: 1px solid var(--table-cell-border);
+}
+
+.vertical-table tr:last-child {
+  border-bottom: none;
+}
+
+.vertical-table td {
+  padding: var(--spacing-md);
+  font-size: 0.9rem;
+}
+
+/* Coluna de labels */
+.vertical-table td:first-child {
+  width: 200px;
+  background: var(--table-header-bg);
+  color: var(--table-header-color);
+  font-weight: 600;
+  border-right: 1px solid var(--table-header-border);
+}
+
+/* Coluna de valores/inputs - OCUPA ESPAÇO RESTANTE */
+.vertical-table td:last-child {
+  width: auto; /* Ocupa espaço restante */
+  background: var(--table-cell-bg);
+  color: var(--color-gray-700);
+  text-align: left;
+}
+
+/* Inputs da tabela vertical */
+.vertical-input {
+  width: 100%;
+  max-width: 150px;
+  padding: var(--capacity-input-padding);
+  border: 1px solid var(--capacity-input-border);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  background: var(--color-white);
+  transition: all 0.2s ease;
+}
+
+.vertical-input:focus {
+  outline: none;
+  border-color: var(--capacity-input-focus-border);
+  box-shadow: var(--capacity-input-focus-shadow);
+}
+
+.vertical-input::placeholder {
+  color: var(--color-gray-400);
+  font-size: 0.8rem;
+}
+
+/* Resultados - OCUPAM TODO ESPAÇO RESTANTE */
+.result-venti-value {
+  display: block; /* Muda para block para ocupar toda largura */
+  width: 100%; /* Ocupa 100% do espaço disponível */
+  font-weight: 700;
+  color: var(--table-cell-total-color);
+  background: var(--table-cell-bg);
+  padding: 4px 0px;
+  border-radius: var(--border-radius);
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  box-sizing: border-box; /* Inclui padding no cálculo da largura */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Container para spans que precisam ocupar espaço total */
+.value-container {
+  display: flex;
+  width: 100%;
+}
+
+.value-container span {
+  flex: 1; /* Ocupa todo espaço disponível */
+  min-width: 0; /* Permite que o flex item encolha se necessário */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Valores negativos em vermelho */
+.result-venti-value.negative {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+/* Destaque específico para cada resultado */
+.result-q {
+  color: var(--table-cell-solution-color);
+  font-weight: 700;
+}
+
+.result-delta {
+  color: var(--table-cell-first-color);
+  font-weight: 700;
+}
+
+.result-massa {
+  color: var(--table-cell-total-color);
+  font-weight: 700;
+}
+
+
+
+
+
+/* ===== TABELA 2 - HORIZONTAL COM SCROLL (SOLUÇÃO DAS MÁQUINAS) ===== */
+.solution-table {
+  margin-top: 15px;
+}
+
+.solution-table h5 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+/* Container com scroll horizontal */
+.horizontal-table-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: var(--border-radius-lg);
+  background: var(--table-container-bg);
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  border: 1px solid var(--table-cell-border);
+}
+
+.machines-solution-table {
+  border-collapse: collapse;
+  background: var(--table-container-bg);
+  min-width: 900px; /* Força scroll horizontal em telas menores */
+  font-size: 0.85rem;
+  table-layout: fixed; /* Mantém layout fixo */
+}
+
+.machines-solution-table th {
+  background: var(--table-header-bg);
+  color: var(--table-header-color);
+  padding: var(--table-header-padding);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  border: 1px solid var(--table-header-border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.machines-solution-table td {
+  padding: var(--table-cell-padding);
+  text-align: center;
+  border: 1px solid var(--table-cell-border);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  background: var(--table-cell-bg);
+}
+
+/* Larguras fixas para colunas */
+.machines-solution-table th:nth-child(1),
+.machines-solution-table td:nth-child(1) { width: 180px; } /* Nome */
+
+.machines-solution-table th:nth-child(2),
+.machines-solution-table td:nth-child(2) { width: 140px; } /* Tipo */
+
+.machines-solution-table th:nth-child(3),
+.machines-solution-table td:nth-child(3) { width: 180px; } /* Aplicação */
+
+.machines-solution-table th:nth-child(4),
+.machines-solution-table td:nth-child(4) { width: 120px; } /* Capacidade */
+
+.machines-solution-table th:nth-child(5),
+.machines-solution-table td:nth-child(5) { width: 100px; } /* Solução */
+
+.machines-solution-table th:nth-child(6),
+.machines-solution-table td:nth-child(6) { width: 140px; } /* Vazão */
+
+/* Spans dentro das células - OCUPAM TODO ESPAÇO */
+.machines-solution-table td span {
+  display: block; /* Muda para block para ocupar toda largura */
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* Destaque para células importantes */
+.machines-solution-table td:nth-child(1) { /* Nome */
+  font-weight: 600;
+  color: var(--table-cell-first-color);
+  text-align: left;
+  padding-left: var(--spacing-md);
+}
+
+.machines-solution-table td:nth-child(4) { /* Capacidade */
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+.machines-solution-table td:nth-child(5) { /* Solução */
+  background: var(--table-cell-bg);
+  font-weight: 700;
+  color: var(--table-cell-solution-color);
+  font-size: 1rem;
+}
+
+.machines-solution-table td:nth-child(6) { /* Vazão */
+  background: var(--table-cell-bg);
+  font-weight: 600;
+  color: var(--table-cell-total-color);
+}
+
+/* Valores negativos em vermelho */
+.machines-solution-table td:nth-child(6) span.negative,
+.solution-flow.negative {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+/* Hover effects */
+.machines-solution-table tbody tr:hover td {
+  background: var(--table-row-hover-bg);
+  transition: background 0.2s ease;
+}
+
+/* Scrollbar customizada */
+.horizontal-table-container::-webkit-scrollbar {
+  height: 12px;
+}
+
+.horizontal-table-container::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  border-radius: 0 0 10px 10px;
+}
+
+.horizontal-table-container::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 10px;
+  border: 3px solid var(--scrollbar-track-bg);
+  transition: all 0.3s ease;
+}
+
+.horizontal-table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover-bg);
+}
+
+.horizontal-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) var(--scrollbar-track-bg);
+}
+
+/* ========== RESPONSIVIDADE ========== */
+
+/* Desktop Grande */
+@media (max-width: 1200px) {
+  .vertical-table td:first-child {
+    width: 180px;
+  }
+  
+  .vertical-input {
+    max-width: 130px;
+  }
+}
+
+/* Desktop */
+@media (max-width: 1024px) {
+
+  
+  
+  .vertical-table td {
+    padding: var(--spacing-sm);
+    font-size: 0.85rem;
+  }
+  
+  .vertical-table td:first-child {
+    width: 160px;
+  }
+  
+  .vertical-input {
+    max-width: 120px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Tableta */
+@media (max-width: 768px) {
+  .technical-table h5,
+  .solution-table h5 {
+    font-size: 0.95rem;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .technical-table h5 {
+    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+  }
+  
+  .solution-table {
+    padding: var(--spacing-sm);
+  }
+  
+  /* Ajustes tabela vertical */
+  .vertical-table td:first-child {
+    width: 140px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .vertical-table td:last-child {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .vertical-input {
+    max-width: 100px;
+    padding: 4px 6px;
+    font-size: 0.8rem;
+  }
+  
+  .result-venti-value {
+    padding: 3px 6px;
+
+  }
+  
+  /* Ajustes tabela horizontal */
+  .machines-solution-table {
+    min-width: 800px;
+    font-size: 0.8rem;
+  }
+  
+  .machines-solution-table th,
+  .machines-solution-table td {
+    padding: 8px 6px;
+  }
+  
+  .input-note {
+    font-size: 0.75rem;
+    padding: var(--spacing-xs);
+  }
+}
+
+/* Mobile Grande */
+@media (max-width: 480px) {
+  .ventilation-section {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .technical-table h5 {
+    margin: var(--spacing-sm) 0 var(--spacing-xs) 0;
+  }
+  
+  /* Tabela vertical ainda mais compacta */
+  .vertical-table td:first-child {
+    width: 120px;
+    padding: 6px 8px;
+  }
+  
+  .vertical-table td:last-child {
+    padding: 6px 8px;
+  }
+  
+  .vertical-input {
+    max-width: 90px;
+    padding: 4px 5px;
+  }
+  
+  .result-venti-value {
+    padding: 2px 5px;
+
+  }
+  
+
+  
+  /* Tabela horizontal */
+  .machines-solution-table {
+    min-width: 750px;
+    font-size: 0.75rem;
+  }
+  
+  .machines-solution-table th,
+  .machines-solution-table td {
+    padding: 6px 4px;
+  }
+  
+  .machines-solution-table td:nth-child(5) {
+    font-size: 0.85rem;
+  }
+  
+  .horizontal-table-container::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .input-note {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+}
+
+/* Mobile Pequeno */
+@media (max-width: 375px) {
+  .vertical-table td:first-child {
+    width: 100px;
+    padding: 5px 6px;
+  }
+  
+  .vertical-table td:last-child {
+    padding: 5px 6px;
+  }
+  
+  .vertical-input {
+    max-width: 80px;
+    padding: 3px 4px;
+  }
+  
+  .result-venti-value {
+    padding: 2px 4px;
+    font-size: 0.7rem;
+  }
+  
+  .machines-solution-table {
+    min-width: 700px;
+  }
+  
+  .machines-solution-table th,
+  .machines-solution-table td {
+    padding: 5px 3px;
+  }
+}
+
+/* Mobile Muito Pequeno */
+@media (max-width: 320px) {
+  .vertical-table {
+    display: block;
+  }
+  
+  .vertical-table tr {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid var(--table-cell-border);
+  }
+  
+  .vertical-table td {
+    display: block;
+    width: 100% !important;
+    text-align: left !important;
+    border: none;
+  }
+  
+  .vertical-table td:first-child {
+    background: var(--table-header-bg);
+    color: var(--table-header-color);
+    font-weight: 600;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--table-header-border);
+  }
+  
+  .vertical-table td:last-child {
+    background: var(--table-cell-bg);
+    padding: 10px;
+  }
+  
+  .vertical-input {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .result-venti-value {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .machines-solution-table {
+    min-width: 650px;
+  }
+}
+
+/* Ajustes de acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .vertical-input,
+  .machines-solution-table tbody tr,
+  .horizontal-table-container::-webkit-scrollbar-thumb {
+    transition: none;
+  }
+}
+
+/* Melhorias para touch */
+@media (hover: none) and (pointer: coarse) {
+  .vertical-input:hover,
+  .vertical-input:focus {
+    border-color: var(--capacity-input-focus-border);
+  }
+  
+  .horizontal-table-container {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .machines-solution-table th {
+    position: sticky;
+    top: 0;
+  }
+}

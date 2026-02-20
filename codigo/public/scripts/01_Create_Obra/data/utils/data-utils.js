@@ -314,45 +314,7 @@ function debugThermalGainsElements(roomElement) {
     });
 }
 
-/**
- * Obtém o valor de TR para cálculos (prioriza o valor exato)
- * @param {string} roomId - ID da sala
- * @returns {number} Valor de TR para uso em cálculos
- */
-function getThermalLoadTRForCalculations(roomId) {
-    try {
-        // ✅ NOVA: Priorizar o valor exato se disponível
-        const totalTRExatoElement = document.getElementById(`total-tr-exato-${roomId}`);
-        if (totalTRExatoElement?.textContent) {
-            const value = Number.parseFloat(totalTRExatoElement.textContent) || 0;
-            console.log(`🔢 [TR CALC] Usando valor exato: ${value}`);
-            return value;
-        }
 
-        // Fallback para valor aproximado
-        const totalTRAproxElement = document.getElementById(`total-tr-aprox-${roomId}`);
-        if (totalTRAproxElement?.textContent) {
-            const value = Number.parseFloat(totalTRAproxElement.textContent) || 0;
-            console.log(`🔢 [TR CALC] Usando valor aproximado: ${value}`);
-            return value;
-        }
-
-        // Fallback para cálculo manual
-        const totalGanhosWElement = document.getElementById(`total-ganhos-w-${roomId}`);
-        if (totalGanhosWElement?.textContent) {
-            const totalW = Number.parseFloat(totalGanhosWElement.textContent) || 0;
-            const value = totalW / 3517;
-            console.log(`🔢 [TR CALC] Calculado manualmente: ${value}`);
-            return value;
-        }
-
-        console.warn(`⚠️ [TR CALC] Nenhum valor de TR encontrado para sala ${roomId}`);
-        return 0;
-    } catch (error) {
-        console.error(`❌ [TR CALC] Erro ao obter carga térmica para sala ${roomId}:`, error);
-        return 0;
-    }
-}
 
 /**
  * Verifica se os elementos de TR estão corretamente configurados
@@ -491,7 +453,6 @@ export {
     getMachineName,
     parseMachinePrice,
     debugThermalGainsElements,
-    getThermalLoadTRForCalculations, // ✅ NOVA: Função para obter TR
     validateTRElements, // ✅ NOVA: Validação dos elementos
     
     // Coleta de Dados
@@ -509,6 +470,5 @@ if (typeof window !== 'undefined') {
     // Utilitários
     window.getRoomFullId = getRoomFullId;
     window.debugThermalGainsElements = debugThermalGainsElements;
-    window.getThermalLoadTRForCalculations = getThermalLoadTRForCalculations; // ✅ NOVA
     window.validateTRElements = validateTRElements; // ✅ NOVA
 }

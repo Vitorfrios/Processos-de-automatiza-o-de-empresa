@@ -3,11 +3,12 @@
  * ARQUIVO DE BUILDER DE SALA
  */
 
-import { buildClimatizationSection } from './climatizacao.js';
+import { buildClimatizationSection,buildTableSection } from './climatizate/climatizacao-builder.js';
 import { buildMachinesSection } from './machines/machines-core.js';
 import { buildAcessoriosSection } from './acessorios.js';
 import { buildTubosSection } from './tubos.js';
 import { buildDutosSection } from './dutos.js';
+import { buildVentilacaoSection } from './ventilacao.js';
 import { generateRoomId } from '../utils/id-generator.js';
 import { removeEmptyProjectMessage } from '../../ui/helpers.js';
 import { triggerCalculation, syncTitleToAmbienteDirect } from '../../core/shared-utils.js';
@@ -56,7 +57,15 @@ function buildRoomHTML(obraId, projectId, roomName, roomId) {
           </div>
         </div>
         <div class="room-content collapsed" id="room-content-${roomId}">
-          ${buildClimatizationSection(obraId, projectId, roomName, roomId)}
+          ${buildTableSection(roomId,roomName)}
+            <div class="sections-row">
+                <div class="section-column">
+                ${buildClimatizationSection(obraId, projectId, roomName, roomId)}
+                </div>
+                <div class="section-column">
+                ${buildVentilacaoSection(roomId)}
+                </div>
+            </div>
           ${buildMachinesSection(obraId, projectId, roomName, roomId)}
           ${buildAcessoriosSection(obraId, projectId, roomName, roomId)}
           ${buildTubosSection(obraId, projectId, roomName, roomId)}

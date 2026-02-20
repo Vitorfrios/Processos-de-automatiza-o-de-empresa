@@ -45,7 +45,7 @@
       "description": "Diferença de umidade absoluta do ar externo"
     },
     "Densi_ar": {
-      "value": 1.17,
+      "value": 1,
       "description": "Densidade do ar"
     },
     "AUX_c_ArExterno": {
@@ -99,6 +99,10 @@
     "FATOR_SEGURANCA_CAPACIDADE": {
       "value": 10,
       "description": "Margem de segurança aplicada à capacidade final"
+    },
+    "fatorEspecifico":{
+      "value":0.24,
+      "description":"Varivel referente ao calor específico"
     }
   },
   "machines": [

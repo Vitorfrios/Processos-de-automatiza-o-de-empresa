@@ -1,0 +1,3406 @@
+
+/* ==== INÍCIO: features/calculations/air-flow.js ==== */
+/**
+ * features/calculations/air-flow.js
+ * Sistema unificado de cálculos de vazão de ar - FUSÃO: airFlowCalculations.js + airFlowDisplay.js
+ * Cálculos de fluxo de ar baseados em pressurização e portas
+ */
+
+import { CALCULATION_CONSTANTS } from '../../core/constants.js';
+import {  
+    waitForSystemConstants, 
+    validateSystemConstants, 
+    collectClimatizationInputs,
+    findClimatizationSection,
+    safeNumber 
+} from './calculations-core.js';
+
+// =============================================================================
+// CÁLCULOS DE FLUXO DE AR
+// =============================================================================
+
+/**
+ * Calcula fluxo de ar individual por porta
+ * @param {number} doorCount - Número de portas
+ * @param {number} doorVariable - Variável específica da porta
+ * @param {number} pressure - Pressurização em Pa
+ * @returns {number} Fluxo de ar em m³/h
+ */
+function calculateDoorFlow(doorCount, doorVariable, pressure) {
+    const count = safeNumber(doorCount);
+    const variable = safeNumber(doorVariable);
+    const press = safeNumber(pressure);
+
+    const pressureExponent = press > 0 ? Math.pow(press, CALCULATION_CONSTANTS.PRESSURE_EXPONENT) : 0;
+
+    return CALCULATION_CONSTANTS.FLOW_COEFFICIENT *
+           count *
+           variable *
+           pressureExponent *
+           CALCULATION_CONSTANTS.SECONDS_PER_HOUR;
+}
+
+/**
+ * Calcula vazão total de ar baseada em portas e pressurização
+ * @param {Object} inputData - Dados de entrada
+ * @returns {number} Vazão total em l/s
+ */
+function computeAirFlowRate(inputData) {
+    const numPortasDuplas = safeNumber(inputData.numPortasDuplas);
+    const numPortasSimples = safeNumber(inputData.numPortasSimples);
+    
+    // ✅ CORREÇÃO: Usar pressurizacaoSetpoint em vez de setpointTemp
+    const pressure = inputData.pressurizacao ? safeNumber(inputData.pressurizacaoSetpoint) : 0;
+
+    // Validação de constantes
+    if (!window.systemConstants?.VARIAVEL_PD.value || !window.systemConstants?.VARIAVEL_PS.value) {
+        console.error("Constantes do sistema não disponíveis");
+        return 0;
+    }
+
+    const doubleDoorFlow = calculateDoorFlow(numPortasDuplas, window.systemConstants.VARIAVEL_PD.value
+, pressure);
+    const singleDoorFlow = calculateDoorFlow(numPortasSimples, window.systemConstants.VARIAVEL_PS.value
+, pressure);
+
+    const totalFlow = doubleDoorFlow + singleDoorFlow;
+    const adjustedFlow = totalFlow / CALCULATION_CONSTANTS.FLOW_DIVISOR;
+    const finalFlow = adjustedFlow * CALCULATION_CONSTANTS.SAFETY_FACTOR;
+
+    return Math.ceil(finalFlow);
+}
+
+// =============================================================================
+// ORQUESTRAÇÃO DE CÁLCULOS
+// =============================================================================
+
+/**
+ * Executa cálculo completo de vazão de ar
+ * @param {string} roomId - ID único da sala
+ * @param {boolean} calculateThermal - Calcular ganhos térmicos após
+ * @returns {Promise<number>} Vazão calculada em l/s
+ */
+async function calculateVazaoAr(roomId, calculateThermal = true) {
+    try {
+        if (!roomId) {
+            console.error("ID de sala inválido");
+            return 0;
+        }
+
+        await waitForSystemConstants();
+
+        if (!validateSystemConstants()) {
+            console.error("Constantes do sistema inválidas");
+            return 0;
+        }
+
+        const climaSection = findClimatizationSection(roomId);
+        if (!climaSection) {
+            console.error(`Seção de climatização não encontrada: ${roomId}`);
+            return 0;
+        }
+
+        const inputData = collectClimatizationInputs(climaSection, roomId);
+        const flowRate = computeAirFlowRate(inputData);
+
+        updateFlowRateDisplay(roomId, flowRate);
+
+        // Cálculo de ganhos térmicos se solicitado
+        if (calculateThermal) {
+            const { calculateThermalGains } = await import('./thermal-gains.js');
+            await calculateThermalGains(roomId, flowRate);
+        }
+
+        return flowRate;
+
+    } catch (error) {
+        console.error(`Erro no cálculo de vazão para ${roomId}:`, error);
+        return 0;
+    }
+}
+
+/**
+ * Coordena cálculo sequencial de vazão e ganhos térmicos
+ * @param {string} roomId - ID único da sala
+ * @returns {Promise<void>}
+ */
+async function calculateVazaoArAndThermalGains(roomId) {
+    try {
+        if (!roomId) {
+            console.error("ID de sala inválido");
+            return;
+        }
+        
+        const flowRate = await calculateVazaoAr(roomId, false);
+        
+        const { calculateThermalGains } = await import('./thermal-gains.js');
+        await calculateThermalGains(roomId, flowRate);
+        
+    } catch (error) {
+        console.error(`Erro no cálculo coordenado para ${roomId}:`, error);
+    }
+}
+
+// =============================================================================
+// ATUALIZAÇÃO DE DISPLAY
+// =============================================================================
+
+/**
+ * Atualiza exibição do resultado de vazão na interface
+ * @param {string} roomId - ID da sala
+ * @param {number} flowRate - Vazão calculada
+ */
+function updateFlowRateDisplay(roomId, flowRate) {
+    const resultElement = document.getElementById(`vazao-ar-${roomId}`);
+    if (resultElement) {
+        resultElement.textContent = flowRate;
+        console.log(`✅ Vazão atualizada para ${roomId}: ${flowRate} l/s`);
+    } else {
+        console.error(`Elemento de vazão não encontrado: vazao-ar-${roomId}`);
+    }
+}
+
+// =============================================================================
+// VALIDAÇÕES E UTILITÁRIOS
+// =============================================================================
+
+/**
+ * Valida dados de entrada para cálculo de vazão
+ * @param {Object} inputData - Dados de entrada
+ * @returns {boolean} True se dados são válidos
+ */
+function validateAirFlowInputs(inputData) {
+    const required = ['numPortasDuplas', 'numPortasSimples'];
+    const missing = required.filter(field => 
+        inputData[field] === undefined || inputData[field] === null || inputData[field] === ''
+    );
+    
+    if (missing.length > 0) {
+        console.warn(`Campos obrigatórios faltando: ${missing.join(', ')}`);
+        return false;
+    }
+    
+    // Validações numéricas
+    if (safeNumber(inputData.numPortasDuplas) < 0 || safeNumber(inputData.numPortasSimples) < 0) {
+        console.warn("Quantidade de portas não pode ser negativa");
+        return false;
+    }
+    
+    if (inputData.pressurizacao && safeNumber(inputData.pressurizacaoSetpoint) < 0) {
+        console.warn("Pressurização não pode ser negativa");
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Prepara dados para cálculo de vazão
+ * @param {Object} rawData - Dados brutos
+ * @returns {Object} Dados preparados
+ */
+function prepareAirFlowData(rawData) {
+    const prepared = { ...rawData };
+    
+    // Converter campos numéricos
+    const numericFields = ['numPortasDuplas', 'numPortasSimples', 'pressurizacaoSetpoint'];
+    numericFields.forEach(field => {
+        if (prepared[field] !== undefined) {
+            prepared[field] = safeNumber(prepared[field]);
+        }
+    });
+    
+    // Garantir valores padrão
+    if (prepared.numPortasDuplas === undefined) prepared.numPortasDuplas = 0;
+    if (prepared.numPortasSimples === undefined) prepared.numPortasSimples = 0;
+    if (prepared.pressurizacao === undefined) prepared.pressurizacao = false;
+    if (prepared.pressurizacaoSetpoint === undefined) prepared.pressurizacaoSetpoint = 0;
+    
+    return prepared;
+}
+
+/**
+ * Obtém estatísticas do cálculo de vazão
+ * @param {Object} inputData - Dados de entrada
+ * @param {number} result - Resultado do cálculo
+ * @returns {Object} Estatísticas
+ */
+function getAirFlowStats(inputData, result) {
+    const numPortasDuplas = safeNumber(inputData.numPortasDuplas);
+    const numPortasSimples = safeNumber(inputData.numPortasSimples);
+    const pressure = inputData.pressurizacao ? safeNumber(inputData.pressurizacaoSetpoint) : 0;
+    
+    return {
+        totalPortas: numPortasDuplas + numPortasSimples,
+        portasDuplas: numPortasDuplas,
+        portasSimples: numPortasSimples,
+        pressurizacaoAtiva: inputData.pressurizacao,
+        pressurizacaoValue: pressure,
+        vazaoResultante: result,
+    };
+}
+
+// =============================================================================
+// EXPORTAÇÕES
+// =============================================================================
+
+export {
+    // Cálculos principais
+    calculateDoorFlow,
+    computeAirFlowRate,
+    calculateVazaoAr,
+    calculateVazaoArAndThermalGains,
+    
+    // Display
+    updateFlowRateDisplay,
+    
+    // Validações e utilitários
+    validateAirFlowInputs,
+    prepareAirFlowData,
+    getAirFlowStats
+};
+
+// =============================================================================
+// DISPONIBILIZAÇÃO GLOBAL
+// =============================================================================
+
+if (typeof window !== 'undefined') {
+    window.airFlowCalculations = {
+        calculateVazaoAr,
+        calculateVazaoArAndThermalGains,
+        updateFlowRateDisplay,
+        computeAirFlowRate
+    };
+}
+/* ==== FIM: features/calculations/air-flow.js ==== */
+
+/* ==== INÍCIO: features/calculations/calculations-core.js ==== */
+/**
+ * features/calculations/calculations-core.js
+ * Núcleo de cálculos unificado - FUSÃO OTIMIZADA: calculos-manager.js + helpers.js
+ * Sistema centralizado para cálculos de climatização
+ */
+
+
+import { 
+    safeNumber as coreSafeNumber, 
+    updateElementText as coreUpdateElementText,
+    waitForElement as coreWaitForElement,
+    debounce as coreDebounce
+} from '../../data/utils/core-utils.js';
+
+import {
+    collectClimatizationInputs as dataCollectClimatizationInputs,
+    findClimatizationSection as dataFindClimatizationSection
+} from '../../data/utils/data-utils.js';
+
+// ✅ RE-EXPORTAR funções de data-utils para compatibilidade
+export const collectClimatizationInputs = dataCollectClimatizationInputs;
+export const findClimatizationSection = dataFindClimatizationSection;
+
+// ✅ RE-EXPORTAR funções de core-utils para compatibilidade  
+export const safeNumber = coreSafeNumber;
+export const updateElementText = coreUpdateElementText;
+
+
+// =============================================================================
+// SISTEMA DE DEBOUNCE E PERFORMANCE
+// =============================================================================
+
+const calculationTimeouts = new Map();
+
+/**
+ * Sistema de debounce para otimizar cálculos
+ * @param {string} roomId - ID da sala
+ * @param {Function} calculationFunction - Função a executar
+ * @param {number} delay - Delay em ms (padrão: 300ms)
+ */
+function debouncedCalculation(roomId, calculationFunction, delay = 300) {
+    if (calculationTimeouts.has(roomId)) {
+        clearTimeout(calculationTimeouts.get(roomId));
+    }
+    
+    const timeoutId = setTimeout(() => {
+        calculationFunction(roomId);
+        calculationTimeouts.delete(roomId);
+    }, delay);
+    
+    calculationTimeouts.set(roomId, timeoutId);
+}
+
+/**
+ * Limpa todos os timeouts de cálculo
+ */
+function clearAllCalculationTimeouts() {
+    calculationTimeouts.forEach((timeoutId, roomId) => {
+        clearTimeout(timeoutId);
+        calculationTimeouts.delete(roomId);
+    });
+}
+
+// =============================================================================
+// SISTEMA DE CONSTANTES
+// =============================================================================
+
+/**
+ * Aguarda carregamento das constantes do sistema
+ */
+async function waitForSystemConstants() {
+    let attempts = 0;
+    const maxAttempts = 100;
+    
+    while ((!window.systemConstants || !window.systemConstants.VARIAVEL_PD.value
+) && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        attempts++;
+    }
+    
+    if (attempts >= maxAttempts) {
+        throw new Error("Constantes do sistema não carregadas");
+    }
+    
+    return true;
+}
+
+/**
+ * Valida integridade das constantes necessárias
+ */
+function validateSystemConstants() {
+    if (!window.systemConstants) {
+        console.error("systemConstants não disponível");
+        return false;
+    }
+    
+    const required = [
+        'VARIAVEL_PD', 'VARIAVEL_PS', 'AUX_U_Value_Piso', 'AUX_Fator_Iluminacao',
+        'AUX_Fs_Iluminacao', 'AUX_Fator_Conver_Painel', 'AUX_Fs_Paineis',
+        'AUX_OCp_Csp', 'AUX_OCp_Clp', 'Densi_ar', 'AUX_c_ArExterno',
+        'AUX_deltaT_ArExterno', 'AUX_f_ArExterno', 'AUX_deltaUa_ArExterno',
+        'deltaT_piso', 'deltaT_teto', 'deltaT_parede_Oes', 'deltaT_parede_Les',
+        'deltaT_parede_Nor', 'deltaT_parede_Sul', 'deltaT_divi_N_clim1',
+        'deltaT_divi_N_clim2', 'deltaT_divi_clim1', 'deltaT_divi_clim2'
+    ];
+    
+    const missing = required.filter(constant => 
+        window.systemConstants[constant] === undefined || window.systemConstants[constant] === null
+    );
+    
+    if (missing.length > 0) {
+        console.error("Constantes faltando:", missing);
+        return false;
+    }
+    
+    return true;
+}
+
+// =============================================================================
+// COLETA E PROCESSAMENTO DE DADOS
+// =============================================================================
+
+
+
+
+
+
+// =============================================================================
+// SISTEMA DE CÁLCULOS COORDENADOS
+// =============================================================================
+
+/**
+ * Executa cálculo coordenado de vazão e ganhos térmicos com debounce
+ */
+async function calculateVazaoArAndThermalGainsDebounced(roomId) {
+    debouncedCalculation(roomId, async (id) => {
+        try {
+            // Importação dinâmica para evitar dependência circular
+            const { calculateVazaoAr } = await import('./air-flow.js');
+            const { calculateThermalGains } = await import('./thermal-gains.js');
+            
+            const flowRate = await calculateVazaoAr(id, false);
+            await calculateThermalGains(id, flowRate);
+            
+        } catch (error) {
+            console.error(`Erro em cálculo para ${id}:`, error);
+        }
+    }, 300);
+}
+
+/**
+ * Executa cálculo imediato (sem debounce)
+ */
+async function calculateVazaoArAndThermalGainsImmediate(roomId) {
+    try {
+        const { calculateVazaoAr } = await import('./air-flow.js');
+        const { calculateThermalGains } = await import('./thermal-gains.js');
+        
+        const flowRate = await calculateVazaoAr(roomId, false);
+        await calculateThermalGains(roomId, flowRate);
+        
+    } catch (error) {
+        console.error(`Erro em cálculo imediato para ${roomId}:`, error);
+    }
+}
+
+// =============================================================================
+// FUNÇÕES DE COMPATIBILIDADE
+// =============================================================================
+
+
+
+
+// =============================================================================
+// UTILITÁRIOS DE VALIDAÇÃO
+// =============================================================================
+
+/**
+ * Valida se os dados coletados são suficientes para cálculos
+ */
+function validateCalculationData(inputData) {
+    const requiredFields = ['area', 'altura', 'qtdPessoas', 'qtdEquipamentos'];
+    const missingFields = requiredFields.filter(field => 
+        !inputData[field] || inputData[field] === ''
+    );
+    
+    if (missingFields.length > 0) {
+        console.warn(`Campos obrigatórios faltando: ${missingFields.join(', ')}`);
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Prepara dados para cálculo (conversões e formatações)
+ */
+function prepareCalculationData(rawData) {
+    const prepared = { ...rawData };
+    
+    // Converter números
+    const numericFields = ['area', 'altura', 'qtdPessoas', 'qtdEquipamentos', 'potenciaIluminacao'];
+    numericFields.forEach(field => {
+        if (prepared[field]) {
+            prepared[field] = coreSafeNumber(prepared[field]);
+        }
+    });
+    
+    // Aplicar fatores de segurança
+    if (prepared.fatorSeguranca) {
+        const factor = coreSafeNumber(prepared.fatorSeguranca);
+        if (factor > 1) {
+            prepared.area = prepared.area * factor;
+        }
+    }
+    
+    return prepared;
+}
+
+// =============================================================================
+// EXPORTAÇÕES
+// =============================================================================
+
+export {
+    // Sistema de Performance
+    debouncedCalculation,
+    clearAllCalculationTimeouts,
+    
+    // Sistema de Constantes
+    waitForSystemConstants,
+    validateSystemConstants,
+
+    
+    // Sistema de Cálculos
+    calculateVazaoArAndThermalGainsDebounced,
+    calculateVazaoArAndThermalGainsImmediate,
+    
+    // Validação e Preparação
+    validateCalculationData,
+    prepareCalculationData,
+    
+
+
+};
+
+// =============================================================================
+// INICIALIZAÇÃO E CONFIGURAÇÃO
+// =============================================================================
+
+// Configuração padrão do sistema de cálculos
+const CALCULATION_CONFIG = {
+    debounceDelay: 300,
+    maxRetryAttempts: 3,
+    validationStrict: false,
+    enableLogging: window.location.hostname === 'localhost'
+};
+
+
+// Disponibilização global para compatibilidade
+if (typeof window !== 'undefined') {
+    window.calculationCore = {
+        debouncedCalculation,
+        waitForSystemConstants,
+        collectClimatizationInputs,
+
+        calculateVazaoArAndThermalGainsDebounced
+    };
+}
+
+// Limpeza de timeouts ao descarregar a página
+if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', clearAllCalculationTimeouts);
+}
+/* ==== FIM: features/calculations/calculations-core.js ==== */
+
+/* ==== INÍCIO: data/modules/machines/capacity-calculator.js ==== */
+// capacityCalculator.js
+
+import { updateElementText } from '../../utils/core-utils.js';
+
+/**
+ * Encontra o ID da sala a partir de um elemento dentro dela
+ * @param {HTMLElement} element - Elemento dentro da sala
+ * @returns {string|null} ID da sala ou null se não encontrado
+ */
+function findRoomId(element) {
+    if (!element) return null;
+    
+    // Buscar o elemento room-block mais próximo
+    const roomBlock = element.closest('.room-block');
+    if (roomBlock) {
+        return roomBlock.dataset.roomId || null;
+    }
+    
+    // Tentar extrair do ID do elemento de conteúdo
+    const roomContent = element.closest('[id^="room-content-"]');
+    if (roomContent) {
+        const match = roomContent.id.match(/room-content-(.+)/);
+        if (match) return match[1];
+    }
+    
+    // Tentar extrair de elementos com data-room-id
+    const roomElement = element.closest('[data-room-id]');
+    if (roomElement) {
+        return roomElement.dataset.roomId;
+    }
+    
+    console.warn('❌ Não foi possível encontrar o ID da sala para o elemento:', element);
+    return null;
+}
+
+// Configurações para inicialização do sistema de capacidade
+const capacityConfig = {
+  maxInitAttempts: 5, // Aumentado para mais tentativas
+  initDelay: 800,
+  domCheckDelay: 300
+}
+
+// Estado global para controle de inicialização por sala
+const capacityState = new Map()
+
+/**
+ * Constrói a tabela de cálculo de capacidade de refrigeração para uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {string} HTML da tabela de capacidade
+ */
+function buildCapacityCalculationTable(roomId) {
+  console.log(`[CAPACITY] Construindo tabela para: ${roomId}`);
+  scheduleCapacityInit(roomId);
+  const backupValue = getBackupFromClimaInputs(roomId);
+
+  return `
+    <div class="capacity-calculation-table">
+      <h5 class="table-title">Cálculo de Capacidade de Refrigeração</h5>
+      <div class="table-container">
+        <table class="thermal-capacity-table">
+          <thead>
+            <tr>
+              <th>Carga Estimada (TR)</th>
+              <th>Fator de Seg.</th>
+              <th>Cap. Unit. (TR)</th>
+              <th>Solução</th>
+              <th>Com back-up</th>
+              <th>TOTAL (TR)</th>
+              <th>FOLGA (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td id="carga-estimada-${roomId}">
+                <input
+                  type="number"
+                  class="capacity-input"
+                  min="0"
+                  step="1"
+                  placeholder="Aguardando cálculo..."
+                  onchange="calculateCapacitySolution('${roomId}')"
+                  oninput="calculateCapacitySolution('${roomId}')"
+                >
+              </td>
+              <td>
+                <input type="number" id="fator-seguranca-${roomId}" value="10" step="1" 
+                      class="capacity-input" 
+                      onchange="calculateCapacitySolution('${roomId}')"
+                      oninput="calculateCapacitySolution('${roomId}')">
+              </td>
+              <td>
+                <select id="capacidade-unitaria-${roomId}" class="capacity-select" 
+                        onchange="calculateCapacitySolution('${roomId}')">
+                  ${[1, 2, 3, 4, 5, 7.5, 10, 12.5, 15, 20, 25, 30]
+                    .map((tr) => `<option value="${tr}">${tr} TR</option>`)
+                    .join("")}
+                </select>
+              </td>
+              <td id="solucao-${roomId}">-</td>
+              <td class="backup-cell">
+                <div class="backup-selection">
+                  <select class="backup-select" onchange="updateBackupConfiguration(this)">
+                    ${["n", "n+1", "n+2"]
+                      .map((opt) => `<option value="${opt}" ${backupValue === opt ? "selected" : ""}>${opt}</option>`)
+                      .join("")}
+                  </select>
+                </div>
+                <div class="backup-solution">
+                  <span id="solucao-backup-${roomId}">-</span>
+                </div>
+              </td>
+              <td id="total-capacidade-${roomId}">-</td>
+              <td id="folga-${roomId}">-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    `;
+}
+
+/**
+ * Inicializa a tabela de capacidade estática (para casos específicos)
+ * @returns {void}
+ */
+function initializeStaticCapacityTable() {
+  const staticTable = document.querySelector(".capacity-calculation-table");
+  if (staticTable) {
+    scheduleCapacityInit("Projeto1-Sala1");
+  }
+}
+
+/**
+ * Agenda a inicialização do sistema de capacidade para uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function scheduleCapacityInit(roomId) {
+  if (capacityState.has(roomId)) return;
+
+  capacityState.set(roomId, { initialized: false, attempts: 0 });
+  console.log(`[CAPACITY] Agendando inicialização para: ${roomId}`);
+  setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.initDelay);
+}
+
+/**
+ * Inicializa o sistema de capacidade com tentativas controladas
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function initializeCapacitySystem(roomId) {
+  const state = capacityState.get(roomId);
+  if (!state || state.initialized) return;
+
+  state.attempts++;
+
+  const systemConstantsReady = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE.value !== undefined;
+
+  if (systemConstantsReady || state.attempts >= capacityConfig.maxInitAttempts) {
+    const fatorSeguranca = systemConstantsReady
+      ? window.systemConstants.FATOR_SEGURANCA_CAPACIDADE.value
+      : 10;
+
+    applyFatorSeguranca(roomId, fatorSeguranca);
+
+    // CORREÇÃO: Aguarda o DOM estar pronto antes de tentar buscar a carga térmica
+    setTimeout(() => {
+      const cargaInicial = getThermalLoadTR(roomId);
+      const cargaInput = document.querySelector(`#carga-estimada-${roomId} input`);
+
+      if (cargaInicial > 0 && cargaInput) {
+        console.log(`[CAPACITY] Definindo carga inicial para ${roomId}: ${cargaInicial} TR`);
+        cargaInput.value = Math.round(cargaInicial);
+        calculateCapacitySolution(roomId);
+      } else {
+        console.log(`[CAPACITY] Aguardando cálculo térmico para ${roomId}`);
+        // Agenda nova tentativa se não houver carga térmica ainda
+        if (state.attempts < capacityConfig.maxInitAttempts * 2) {
+          setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.domCheckDelay);
+        }
+      }
+    }, 500);
+
+    state.initialized = true;
+    console.log(`[CAPACITY] Sistema inicializado para: ${roomId}`);
+  } else {
+    setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.initDelay);
+  }
+}
+
+/**
+ * Aplica o fator de segurança ao input correspondente
+ * @param {string} roomId - ID da sala
+ * @param {number} fatorSeguranca - Valor do fator de segurança
+ * @returns {void}
+ */
+function applyFatorSeguranca(roomId, fatorSeguranca) {
+  const inputFator = document.getElementById(`fator-seguranca-${roomId}`);
+  if (!inputFator) return;
+
+  inputFator.value = fatorSeguranca;
+}
+
+/**
+ * Obtém a carga térmica em TR (Tons de Refrigeração) para uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {number} Carga térmica em TR
+ */
+function getThermalLoadTR(roomId) {
+  try {
+    console.log(`[CAPACITY] Buscando carga térmica para: ${roomId}`);
+    
+    // PRIORIDADE 1: Buscar pelo campo TR-aproximado (referência principal)
+    const totalTRaproxElement = document.getElementById(`total-tr-aprox-${roomId}`);
+    if (totalTRaproxElement?.textContent) {
+      const trAprox = Number.parseFloat(totalTRaproxElement.textContent);
+      if (!isNaN(trAprox) && trAprox > 0) {
+        console.log(`[CAPACITY] Usando TR-aproximado: ${trAprox} TR`);
+        return trAprox;
+      }
+    }
+
+    // PRIORIDADE 2: Buscar pelo campo TR-exato
+    const totalTRExatoElement = document.getElementById(`total-tr-exato-${roomId}`);
+    if (totalTRExatoElement?.textContent) {
+      const trExato = Number.parseFloat(totalTRExatoElement.textContent);
+      if (!isNaN(trExato) && trExato > 0) {
+        console.log(`[CAPACITY] Usando TR-exato: ${trExato} TR`);
+        return trExato;
+      }
+    }
+
+    // PRIORIDADE 3: Calcular a partir dos ganhos em Watts
+    const totalGanhosWElement = document.getElementById(`total-ganhos-w-${roomId}`);
+    if (totalGanhosWElement?.textContent) {
+      const totalW = Number.parseFloat(totalGanhosWElement.textContent) || 0;
+      if (totalW > 0) {
+        const trCalculado = totalW / 3517;
+        console.log(`[CAPACITY] Calculado de Watts: ${totalW}W = ${trCalculado} TR`);
+        return trCalculado;
+      }
+    }
+
+    console.log(`[CAPACITY] Nenhuma carga térmica encontrada para ${roomId}`);
+    return 0;
+  } catch (error) {
+    console.error(`Erro ao obter carga térmica para sala ${roomId}:`, error);
+    return 0;
+  }
+}
+
+/**
+ * Calcula a solução de capacidade de refrigeração baseada nos parâmetros
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function calculateCapacitySolution(roomId) {
+  try {
+    console.log(`[CAPACITY] Calculando solução para: ${roomId}`);
+    
+    const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`);
+    const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`);
+    const cargaEstimadaInput = document.querySelector(`#carga-estimada-${roomId} input`);
+
+    if (!fatorSegurancaInput || !capacidadeUnitariaSelect || !cargaEstimadaInput) {
+      console.warn(`[CAPACITY] Elementos não encontrados para: ${roomId}`);
+      return;
+    }
+
+    const rawCarga = cargaEstimadaInput.value.trim();
+
+    // Se usuário não digitou nada → só limpa os resultados
+    if (rawCarga === "" || rawCarga === "0") {
+      updateElementText(`solucao-${roomId}`, "N/A");
+      updateElementText(`solucao-backup-${roomId}`, "N/A");
+      updateElementText(`total-capacidade-${roomId}`, "N/A");
+      updateElementText(`folga-${roomId}`, "N/A");
+      return;
+    }
+
+    const cargaEstimada = Number.parseFloat(rawCarga);
+    if (isNaN(cargaEstimada) || cargaEstimada <= 0) {
+      console.warn(`[CAPACITY] Carga estimada inválida: ${rawCarga}`);
+      return;
+    }
+
+    const fatorSegurancaRaw = Number.parseFloat(fatorSegurancaInput.value);
+    const capacidadeUnitariaRaw = Number.parseFloat(capacidadeUnitariaSelect.value);
+
+    const fatorSeguranca = isNaN(fatorSegurancaRaw) ? 0 : (fatorSegurancaRaw / 100);
+    const capacidadeUnitaria = isNaN(capacidadeUnitariaRaw) ? 1 : capacidadeUnitariaRaw;
+
+    const backupType = getBackupFromClimatization(roomId);
+
+    const capacidadeNecessaria = cargaEstimada * (1 + fatorSeguranca);
+    const unidadesOperacionais = Math.ceil(capacidadeNecessaria / capacidadeUnitaria);
+    const unidadesTotais = applyBackupConfiguration(unidadesOperacionais, backupType);
+
+    const total = unidadesOperacionais * capacidadeUnitaria;
+    const folga = cargaEstimada > 0 ? ((total / cargaEstimada) - 1) * 100 : 0;
+
+    updateCapacityDisplay(roomId, cargaEstimada, unidadesOperacionais, unidadesTotais, total, folga, backupType);
+    
+    console.log(`[CAPACITY] Solução calculada para ${roomId}:`, {
+      cargaEstimada,
+      fatorSeguranca: `${fatorSeguranca * 100}%`,
+      capacidadeUnitaria,
+      unidadesOperacionais,
+      backupType,
+      unidadesTotais,
+      total: `${total.toFixed(1)} TR`,
+      folga: `${folga.toFixed(1)}%`
+    });
+  } catch (error) {
+    console.error(`Erro ao calcular capacidade para sala ${roomId}:`, error);
+  }
+}
+
+/**
+ * Obtém os dados atuais de capacidade de uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {Object|null} Dados de capacidade ou null se não encontrado
+ */
+function getCapacityData(roomId) {
+  const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`);
+  const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`);
+  const backupSelect = document.querySelector(`#room-content-${roomId} .backup-select`);
+
+  if (!fatorSegurancaInput || !capacidadeUnitariaSelect || !backupSelect) return null;
+
+  return {
+    fatorSeguranca: Number.parseFloat(fatorSegurancaInput.value) || 10,
+    capacidadeUnitaria: Number.parseFloat(capacidadeUnitariaSelect.value) || 1,
+    backup: backupSelect.value || "n",
+    cargaEstimada: getThermalLoadTR(roomId),
+    solucao: document.getElementById(`solucao-${roomId}`)?.textContent || "0",
+    solucaoBackup: document.getElementById(`solucao-backup-${roomId}`)?.textContent || "0",
+    totalCapacidade: document.getElementById(`total-capacidade-${roomId}`)?.textContent || "0",
+    folga: document.getElementById(`folga-${roomId}`)?.textContent || "0%"
+  };
+}
+
+/**
+ * Aplica a configuração de backup ao número de unidades
+ * @param {number} unidadesOperacionais - Número de unidades operacionais
+ * @param {string} backupType - Tipo de backup ("n", "n+1", "n+2")
+ * @returns {number} Número total de unidades considerando backup
+ */
+function applyBackupConfiguration(unidadesOperacionais, backupType) {
+  switch (backupType) {
+    case "n+1":
+      return unidadesOperacionais + 1;
+    case "n+2":
+      return unidadesOperacionais + 2;
+    default:
+      return unidadesOperacionais;
+  }
+}
+
+/**
+ * Obtém o tipo de backup configurado para climatização da sala
+ * @param {string} roomId - ID da sala
+ * @returns {string} Tipo de backup ("n", "n+1", "n+2")
+ */
+function getBackupFromClimatization(roomId) {
+  const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+  if (capacityTable) {
+    const backupSelect = capacityTable.querySelector(".backup-select");
+    if (backupSelect) return backupSelect.value;
+  }
+
+  return getBackupFromClimaInputs(roomId);
+}
+
+/**
+ * Obtém o backup dos inputs de clima da sala
+ * @param {string} roomId - ID da sala
+ * @returns {string} Tipo de backup ("n", "n+1", "n+2")
+ */
+function getBackupFromClimaInputs(roomId) {
+  const roomContent = document.getElementById(`room-content-${roomId}`);
+  if (roomContent) {
+    const backupInput = roomContent.querySelector(`.clima-input[data-field="backup"]`);
+    if (backupInput?.value) return backupInput.value;
+  }
+  return "n";
+}
+
+/**
+ * Atualiza a exibição dos resultados de capacidade na tabela
+ * @param {string} roomId - ID da sala
+ * @param {number} cargaEstimada - Carga térmica estimada em TR
+ * @param {number} solucao - Número de unidades da solução
+ * @param {number} solucaoComBackup - Número de unidades com backup
+ * @param {number} total - Capacidade total em TR
+ * @param {number} folga - Percentual de folga
+ * @param {string} backupType - Tipo de backup
+ * @returns {void}
+ */
+function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup, total, folga, backupType) {
+  updateElementText(`solucao-${roomId}`, String(solucao));
+  updateElementText(`solucao-backup-${roomId}`, String(solucaoComBackup));
+
+  if (typeof total === "number" && !Number.isNaN(total)) {
+    updateElementText(`total-capacidade-${roomId}`, total.toFixed(1));
+  }
+
+  if (typeof folga === "number" && !Number.isNaN(folga)) {
+    updateElementText(`folga-${roomId}`, folga.toFixed(1) + "%");
+  }
+
+  const backupSelect = document.querySelector(`#room-content-${roomId} .backup-select`);
+  if (backupSelect && backupSelect.value !== backupType) {
+    backupSelect.value = backupType;
+  }
+}
+
+/**
+ * Atualiza ou cria o input para carga estimada (apenas inteiros)
+ * @param {string} roomId - ID da sala
+ * @param {number} value - Valor a ser definido (inteiro)
+ * @returns {void}
+ */
+function updateCargaEstimadaInput(roomId, value) {
+  const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`);
+  if (!cargaEstimadaElement) return;
+
+  let input = cargaEstimadaElement.querySelector("input");
+  if (!input) {
+    input = document.createElement("input");
+    input.type = "number";
+    input.className = "capacity-input";
+    input.min = "0";
+    input.step = "1";
+    input.onchange = () => calculateCapacitySolution(roomId);
+    input.oninput = () => calculateCapacitySolution(roomId);
+    input.value = Math.round(value);
+
+    cargaEstimadaElement.innerHTML = "";
+    cargaEstimadaElement.appendChild(input);
+  } else {
+    input.value = Math.round(value);
+  }
+}
+
+/**
+ * Atualiza a configuração de backup quando alterada pelo usuário
+ * @param {HTMLSelectElement} selectElement - Elemento select do backup
+ * @returns {void}
+ */
+function updateBackupConfiguration(selectElement) {
+  const roomId = findRoomId(selectElement.closest(".capacity-calculation-table"));
+  if (roomId) {
+    const newBackupValue = selectElement.value;
+    syncBackupWithClimaInputs(roomId, newBackupValue);
+    calculateCapacitySolution(roomId);
+  }
+}
+
+/**
+ * Manipula mudanças no backup provenientes dos inputs de clima
+ * @param {string} roomId - ID da sala
+ * @param {string} newBackupValue - Novo valor de backup
+ * @returns {void}
+ */
+function handleClimaInputBackupChange(roomId, newBackupValue) {
+  const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+
+  if (capacityTable) {
+    const backupSelect = capacityTable.querySelector(".backup-select");
+    if (backupSelect && backupSelect.value !== newBackupValue) {
+      backupSelect.value = newBackupValue;
+      calculateCapacitySolution(roomId);
+    }
+  }
+}
+
+/**
+ * Sincroniza o backup com os inputs de clima da sala
+ * @param {string} roomId - ID da sala
+ * @param {string} backupValue - Valor de backup a ser sincronizado
+ * @returns {void}
+ */
+function syncBackupWithClimaInputs(roomId, backupValue) {
+    const roomContent = document.getElementById(`room-content-${roomId}`);
+    if (roomContent) {
+        const backupInputs = roomContent.querySelectorAll(`.clima-input[data-field="backup"]`);
+
+        backupInputs.forEach((input) => {
+            if (input.value !== backupValue) {
+                // Remove temporariamente o onchange para evitar loop
+                const originalOnChange = input.onchange;
+                input.onchange = null;
+                
+                input.value = backupValue;
+                
+                // Restaura o onchange após um breve delay
+                setTimeout(() => {
+                    input.onchange = originalOnChange;
+                }, 100);
+            }
+        });
+    }
+}
+
+/**
+ * Sincroniza o backup da tabela de capacidade com os valores atuais
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function syncCapacityTableBackup(roomId) {
+  setTimeout(() => {
+    const backupFromInputs = getBackupFromClimaInputs(roomId);
+    const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+
+    if (capacityTable) {
+      const backupSelect = capacityTable.querySelector(".backup-select");
+      if (backupSelect && backupSelect.value !== backupFromInputs) {
+        backupSelect.value = backupFromInputs;
+        calculateCapacitySolution(roomId);
+      }
+    }
+  }, 500);
+}
+
+/**
+ * 🔄 Função global para ser chamada diretamente do HTML - EVITA LOOP
+ * @param {string} roomId - ID da sala
+ * @param {string} newValue - Novo valor do backup
+ * @returns {void}
+ */
+function handleClimaBackupChange(roomId, newValue) {
+    console.log(`🔄 Backup alterado no form: ${newValue} (sala: ${roomId})`);
+    
+    // Atualiza o backup-select SEM disparar eventos de volta
+    const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+    if (capacityTable) {
+        const backupSelect = capacityTable.querySelector(".backup-select");
+        if (backupSelect && backupSelect.value !== newValue) {
+            backupSelect.value = newValue;
+            calculateCapacitySolution(roomId);
+        }
+    }
+    
+    // Mantém o cálculo térmico original
+    if (typeof window.calculateVazaoArAndThermalGains === 'function') {
+        window.calculateVazaoArAndThermalGains(roomId);
+    }
+}
+
+/**
+ * 🔄 WRAPPER: Para ser chamada diretamente do onchange do HTML
+ * @param {HTMLSelectElement} selectElement - Elemento select do form
+ * @returns {void}
+ */
+function handleClimaInputBackupChangeFromEvent(selectElement) {
+    const roomId = findRoomId(selectElement);
+    if (!roomId) {
+        console.warn('❌ Não foi possível encontrar roomId para handleClimaInputBackupChangeFromEvent');
+        return;
+    }
+    
+    const newBackupValue = selectElement.value;
+    console.log(`🔄 Backup alterado no form: ${newBackupValue} (sala: ${roomId})`);
+    
+    // Usa a função existente que já faz todo o trabalho
+    handleClimaInputBackupChange(roomId, newBackupValue);
+    
+    // Também dispara o cálculo térmico (mantém funcionalidade original)
+    if (typeof window.calculateVazaoArAndThermalGains === 'function') {
+        window.calculateVazaoArAndThermalGains(roomId);
+    }
+}
+
+/**
+ * NOVA FUNÇÃO: Atualiza capacidade a partir dos ganhos térmicos
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function updateCapacityFromThermalGains(roomId) {
+  console.log(`[CAPACITY] Atualizando capacidade a partir de ganhos térmicos para ${roomId}`);
+  
+  const cargaEstimada = getThermalLoadTR(roomId);
+  if (cargaEstimada > 0) {
+    updateCargaEstimadaInput(roomId, cargaEstimada);
+    calculateCapacitySolution(roomId);
+    return true;
+  }
+  return false;
+}
+
+// 🔄 Torna as funções globais para serem acessíveis do HTML
+if (typeof window !== 'undefined') {
+  window.handleClimaBackupChange = handleClimaBackupChange;
+  window.handleClimaInputBackupChangeFromEvent = handleClimaInputBackupChangeFromEvent;
+  window.updateBackupConfiguration = updateBackupConfiguration;
+  window.calculateCapacitySolution = calculateCapacitySolution;
+  window.updateCapacityFromThermalGains = updateCapacityFromThermalGains;
+}
+
+// Exportação das funções do módulo
+export {
+  buildCapacityCalculationTable,
+  calculateCapacitySolution,
+  getCapacityData,
+  updateBackupConfiguration,
+  handleClimaInputBackupChange,
+  syncCapacityTableBackup,
+  initializeStaticCapacityTable,
+  handleClimaInputBackupChangeFromEvent,
+  updateCapacityFromThermalGains,
+  getThermalLoadTR
+};
+/* ==== FIM: data/modules/machines/capacity-calculator.js ==== */
+
+/* ==== INÍCIO: data/modules/climatizate/climatizacao-sync.js ==== */
+// data/modules/climatizacao/climatizacao-sync.js
+// VERSÃO COMPLETA COM TODAS AS EXPORTAÇÕES
+
+import { calculateVazaoArAndThermalGains } from '../../../features/calculations/air-flow.js';
+import { triggerCalculation } from '../../../core/shared-utils.js';
+
+// ❌ REMOVER a função local
+// function triggerCalculation(roomId) { ... }
+// =============================================================================
+// SINCRONIZAÇÃO GLOBAL - FUNÇÕES COMPLETAS
+// =============================================================================
+
+// ✅ CORREÇÃO: Exportações corretas
+let handleWallInputSync;
+let syncTitleToAmbiente;
+let syncAmbienteToTitle;
+let setupCompleteRoomSync;
+
+if (typeof window !== 'undefined') {
+    // ============================================
+    // 🔄 SINCRONIZAÇÃO APENAS NA PRIMEIRA INTERAÇÃO PAREDES
+    // ============================================
+    // ✅ CORREÇÃO DA FUNÇÃO DE SINCRONIZAÇÃO DE PAREDES (ATUALIZADA)
+    window.handleWallInputSyncFirstInteraction = function (roomId, field, value) {
+        console.log(`🔄 [PRIMEIRA-INTERAÇÃO] Sincronização de parede: ${field} = ${value}`);
+
+        const numValue = parseFloat(value);
+        if (isNaN(numValue)) return;
+
+        // Buscar referências dos inputs
+        const paredeOeste = document.querySelector(`input[data-field="paredeOeste"][data-room-id="${roomId}"]`);
+        const paredeLeste = document.querySelector(`input[data-field="paredeLeste"][data-room-id="${roomId}"]`);
+        const paredeNorte = document.querySelector(`input[data-field="paredeNorte"][data-room-id="${roomId}"]`);
+        const paredeSul = document.querySelector(`input[data-field="paredeSul"][data-room-id="${roomId}"]`);
+
+        // Verificar se estamos em primeira interação (com base nos atributos data)
+        const isFirstInteraction = () => {
+            const input = document.querySelector(`input[data-field="${field}"][data-room-id="${roomId}"]`);
+            return input && input.getAttribute('data-first-interaction') === 'true';
+        };
+
+        // Sincronizar paredes leste/oeste apenas na primeira interação
+        if (field === 'paredeOeste' || field === 'paredeLeste') {
+            const otherField = field === 'paredeOeste' ? 'paredeLeste' : 'paredeOeste';
+            const otherInput = field === 'paredeOeste' ? paredeLeste : paredeOeste;
+
+            if (otherInput && isFirstInteraction()) {
+                const isPlaceholder = otherInput.value === '' || otherInput.value === 'Ex: 5.5' || otherInput.value === 'Ex: 8.0';
+                const isCurrentlyEditing = document.activeElement === document.querySelector(`input[data-field="${field}"][data-room-id="${roomId}"]`);
+
+                if (isPlaceholder || isCurrentlyEditing) {
+                    otherInput.value = numValue;
+                    console.log(`✅ [PRIMEIRA-INTERAÇÃO] ${field} → ${otherField}: ${numValue} (durante edição)`);
+                    triggerCalculation(roomId);
+                }
+            }
+        }
+
+        // Sincronizar paredes norte/sul apenas na primeira interação
+        if (field === 'paredeNorte' || field === 'paredeSul') {
+            const otherField = field === 'paredeNorte' ? 'paredeSul' : 'paredeNorte';
+            const otherInput = field === 'paredeNorte' ? paredeSul : paredeNorte;
+
+            if (otherInput && isFirstInteraction()) {
+                const isPlaceholder = otherInput.value === '' || otherInput.value === 'Ex: 8.0' || otherInput.value === 'Ex: 5.5';
+                const isCurrentlyEditing = document.activeElement === document.querySelector(`input[data-field="${field}"][data-room-id="${roomId}"]`);
+
+                if (isPlaceholder || isCurrentlyEditing) {
+                    otherInput.value = numValue;
+                    console.log(`✅ [PRIMEIRA-INTERAÇÃO] ${field} → ${otherField}: ${numValue} (durante edição)`);
+                    triggerCalculation(roomId);
+                }
+            }
+        }
+    };
+
+
+    // Usar sincronização apenas na primeira interação
+    window.handleWallInputSync = window.handleWallInputSyncFirstInteraction;
+    console.log('🎯 LÓGICA ATIVA: Sincronização APENAS NA PRIMEIRA INTERAÇÃO');
+
+    // ============================================
+    // SINCRONIZAÇÃO TÍTULO ↔ AMBIENTE
+    // ============================================
+
+    // Função de sincronização título→ambiente
+    window.syncTitleToAmbiente = function (roomId, newTitle) {
+        console.log(`🔄 Título → Ambiente: "${newTitle}" para sala ${roomId}`);
+        const ambienteInput = document.querySelector(`input[data-field="ambiente"][data-room-id="${roomId}"]`);
+        if (ambienteInput && ambienteInput.value !== newTitle) {
+            ambienteInput.value = newTitle;
+            console.log(`✅ Título → Ambiente: "${newTitle}"`);
+            triggerCalculation(roomId);
+        }
+    };
+
+    // Função de sincronização ambiente→título
+    window.syncAmbienteToTitle = function (roomId, newAmbiente) {
+        const roomTitle = document.querySelector(`[data-room-id="${roomId}"] .room-title`);
+        if (roomTitle && roomTitle.textContent !== newAmbiente) {
+            roomTitle.textContent = newAmbiente;
+            const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+            if (roomBlock) {
+                roomBlock.dataset.roomName = newAmbiente;
+            }
+            console.log(`✅ Ambiente → Título: "${newAmbiente}"`);
+        }
+    };
+
+    // ✅ CORREÇÃO: Função setupCompleteRoomSync adicionada de volta
+    window.setupCompleteRoomSync = function (roomId) {
+        console.log(`🎯 CONFIGURANDO SINCRONIZAÇÃO COMPLETA PARA SALA: ${roomId}`);
+
+        // Configurar paredes
+        setupWallEventListenersDirect(roomId);
+
+        // Configurar título↔ambiente
+        setupTitleAmbienteSyncDirect(roomId);
+
+        console.log(`✅ SINCRONIZAÇÃO COMPLETA CONFIGURADA PARA: ${roomId}`);
+    };
+
+    // ✅ FUNÇÃO AUXILIAR PARA CONFIGURAR PAREDES
+    function setupWallEventListenersDirect(roomId) {
+        console.log(`🧱 CONFIGURANDO EVENT LISTENERS PARA PAREDES COM PRIMEIRA INTERAÇÃO: ${roomId}`);
+
+        const setupWallInput = (field, placeholder) => {
+            const input = document.querySelector(`input[data-field="${field}"][data-room-id="${roomId}"]`);
+            if (input) {
+                // Marcar como primeira interação não concluída
+                input.setAttribute('data-first-interaction', 'true');
+
+                input.addEventListener('focus', function () {
+                    this.setAttribute('data-editing', 'true');
+                    console.log(`🎯 Foco em ${field} - primeira interação ativa`);
+                });
+
+                input.addEventListener('input', function () {
+                    const isEditing = this.getAttribute('data-editing') === 'true';
+                    const isFirstInteraction = this.getAttribute('data-first-interaction') === 'true';
+
+                    if (this.value && this.value !== placeholder && isEditing && isFirstInteraction) {
+                        window.handleWallInputSync(roomId, field, this.value);
+                    }
+                });
+
+                input.addEventListener('blur', function () {
+                    this.removeAttribute('data-editing');
+                    this.setAttribute('data-first-interaction', 'false');
+                    console.log(`✅ ${field} - primeira interação concluída, agora independente`);
+                });
+
+                return true;
+            }
+            return false;
+        };
+
+        const walls = [
+            { field: 'paredeOeste', placeholder: 'Ex: 5.5' },
+            { field: 'paredeLeste', placeholder: 'Ex: 5.5' },
+            { field: 'paredeNorte', placeholder: 'Ex: 8.0' },
+            { field: 'paredeSul', placeholder: 'Ex: 8.0' }
+        ];
+
+        walls.forEach(wall => {
+            if (setupWallInput(wall.field, wall.placeholder)) {
+                console.log(`✅ Listener configurado para ${wall.field} (primeira interação)`);
+            }
+        });
+    }
+
+    // ✅ FUNÇÃO AUXILIAR PARA CONFIGURAR TÍTULO↔AMBIENTE
+    function setupTitleAmbienteSyncDirect(roomId) {
+        const roomTitle = document.querySelector(`[data-room-id="${roomId}"] .room-title`);
+        const ambienteInput = document.querySelector(`input[data-field="ambiente"][data-room-id="${roomId}"]`);
+
+        if (roomTitle && ambienteInput) {
+            // Sincronização Ambiente → Título
+            ambienteInput.addEventListener('input', function () {
+                if (this.value && this.value.trim() !== '' && this.value !== roomTitle.textContent) {
+                    roomTitle.textContent = this.value;
+                    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+                    if (roomBlock) {
+                        roomBlock.dataset.roomName = this.value;
+                    }
+                    console.log(`🔄 Ambiente → Título: "${this.value}"`);
+                    triggerCalculation(roomId);
+                }
+            });
+
+            // Sincronização inicial
+            if (!ambienteInput.value || ambienteInput.value.trim() === '') {
+                ambienteInput.value = roomTitle.textContent;
+                console.log(`✅ Sincronização inicial: Título → Ambiente: "${roomTitle.textContent}"`);
+            }
+        }
+    }
+
+
+
+    // Atribuir às variáveis de exportação
+    handleWallInputSync = window.handleWallInputSync;
+    syncTitleToAmbiente = window.syncTitleToAmbiente;
+    syncAmbienteToTitle = window.syncAmbienteToTitle;
+    setupCompleteRoomSync = window.setupCompleteRoomSync;
+}
+
+// =============================================================================
+// EXPORTAÇÕES COMPLETAS
+// =============================================================================
+
+export {
+    handleWallInputSync,
+    syncTitleToAmbiente,
+    syncAmbienteToTitle,
+    setupCompleteRoomSync
+};
+/* ==== FIM: data/modules/climatizate/climatizacao-sync.js ==== */
+
+/* ==== INÍCIO: data/builders/ui-folder/data-fillers.js ==== */
+/**
+ * data/modules/climatizacao/data-fill.js
+ * ARQUIVO DE PREENCHER AS SALAS - VERSÃO CORRIGIDA
+ */
+
+import { calculateVazaoArAndThermalGains } from '../../../features/calculations/air-flow.js';
+import { triggerCalculation } from '../../../core/shared-utils.js';
+
+/**
+ * Preenche os campos de climatização
+ */
+/**
+ * Preenche os campos de climatização
+ */
+function fillClimatizationInputs(roomElement, inputsData) {
+    if (!roomElement || !inputsData) {
+        console.error('❌ Elemento da sala ou dados inválidos');
+        return;
+    }
+
+    const roomId = roomElement.dataset.roomId;
+    const roomName = roomElement.dataset.roomName;
+    
+    // Preencher ambiente com nome da sala se estiver vazio
+    const ambienteInput = roomElement.querySelector(`input[data-field="ambiente"]`);
+    if (ambienteInput && (!inputsData.ambiente || inputsData.ambiente === '') && roomName) {
+        inputsData.ambiente = roomName;
+    }
+    
+    // Processar pressurização
+    if (inputsData.pressurizacao !== undefined) {
+        const isPressurizacaoAtiva = typeof inputsData.pressurizacao === 'boolean' 
+            ? inputsData.pressurizacao 
+            : inputsData.pressurizacao === 'true' || inputsData.pressurizacao === true || inputsData.pressurizacao === 1;
+        
+        const pressurizacaoValue = isPressurizacaoAtiva ? 'sim' : 'nao';
+        
+        const pressurizacaoRadios = roomElement.querySelectorAll(`input[type="radio"][name*="pressurizacao"]`);
+        
+        let radioToCheck = null;
+        pressurizacaoRadios.forEach(radio => {
+            if (radio.value === pressurizacaoValue) {
+                radioToCheck = radio;
+            }
+        });
+
+        if (radioToCheck) {
+            pressurizacaoRadios.forEach(radio => {
+                radio.checked = false;
+            });
+            
+            radioToCheck.checked = true;
+            
+            setTimeout(() => {
+                const event = new Event('change', { bubbles: true });
+                radioToCheck.dispatchEvent(event);
+            }, 100);
+        }
+    }
+
+    // Preencher outros inputs após delay
+    setTimeout(() => {
+        const textInputs = roomElement.querySelectorAll('.clima-input[type="text"], .clima-input[type="number"], .clima-input[data-field]');
+        
+        textInputs.forEach(input => {
+            const field = input.getAttribute('data-field');
+            if (!field || inputsData[field] === undefined) return;
+
+            // Apenas pula pressurizacaoSetpoint se a pressurização não estiver ativa
+            if (field === 'pressurizacaoSetpoint') {
+                // Verificar se a pressurização está ativa
+                const pressurizacaoValue = inputsData.pressurizacao;
+                const isPressurizacaoAtiva = typeof pressurizacaoValue === 'boolean' 
+                    ? pressurizacaoValue 
+                    : pressurizacaoValue === 'true' || pressurizacaoValue === true || pressurizacaoValue === 1;
+                
+                if (!isPressurizacaoAtiva) {
+                    return; // Não preencher setpoint se pressurização não estiver ativa
+                }
+            }
+            
+            let value = inputsData[field];
+            
+            if (input.type === 'number') {
+                if (value === false || value === 'false' || value === null || value === '') {
+                    value = 0;
+                }
+                if (value === true || value === 'true') {
+                    value = 1;
+                }
+                
+                const numericValue = parseFloat(value);
+                value = isNaN(numericValue) ? 0 : numericValue;
+            }
+            
+            input.value = value;
+
+            setTimeout(() => {
+                const event = new Event('change', { bubbles: true });
+                input.dispatchEvent(event);
+            }, 50);
+        });
+
+        // Preencher selects
+        const selectInputs = roomElement.querySelectorAll('select.clima-input[data-field]');
+        selectInputs.forEach(select => {
+            const field = select.getAttribute('data-field');
+            if (!field || inputsData[field] === undefined) return;
+
+            const value = inputsData[field];
+            select.value = value;
+
+            setTimeout(() => {
+                const event = new Event('change', { bubbles: true });
+                select.dispatchEvent(event);
+            }, 50);
+        });
+
+        // Configurar sincronizações
+        setTimeout(() => {
+            setupRoomTitleChangeListener(roomId);
+            
+            if (typeof window.setupCompleteRoomSync === 'function') {
+                window.setupCompleteRoomSync(roomId);
+            }
+        }, 500);
+
+        // Disparar cálculo final
+        if (roomId && typeof calculateVazaoArAndThermalGains === 'function') {
+            setTimeout(() => {
+                calculateVazaoArAndThermalGains(roomId);
+            }, 300);
+        }
+
+    }, 400);
+}
+
+/**
+ * Configura listener de título
+ */
+function setupRoomTitleChangeListener(roomId) {
+    const roomTitle = document.querySelector(`[data-room-id="${roomId}"] .room-title`);
+    const ambienteInput = document.querySelector(`input[data-field="ambiente"][data-room-id="${roomId}"]`);
+    
+    if (roomTitle && ambienteInput) {
+        ambienteInput.addEventListener('input', function() {
+            if (this.value && this.value.trim() !== '' && this.value !== roomTitle.textContent) {
+                if (typeof window.syncAmbienteToTitle === 'function') {
+                    window.syncAmbienteToTitle(roomId, this.value);
+                } else {
+                    roomTitle.textContent = this.value;
+                    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+                    if (roomBlock) {
+                        roomBlock.dataset.roomName = this.value;
+                    }
+                }
+                triggerCalculation(roomId);
+            }
+        });
+    }
+}
+
+/**
+ * Preenche ganhos térmicos
+ */
+function fillThermalGainsData(roomElement, thermalGainsData) {
+    if (!roomElement || !thermalGainsData) {
+        console.error('❌ Elemento da sala ou dados inválidos');
+        return;
+    }
+
+    const roomId = roomElement.dataset.roomId;
+
+    const gainSelectors = {
+        'total-ganhos-w': `#total-ganhos-w-${roomId}`,
+        'total-tr-aprox': `#total-tr-aprox-${roomId}`,
+        'total-tr-exato': `#total-tr-exato-${roomId}`,
+        'total-externo': `#total-externo-${roomId}`,
+        'total-divisoes': `#total-divisoes-${roomId}`,
+        'total-piso': `#total-piso-${roomId}`,
+        'total-iluminacao': `#total-iluminacao-${roomId}`,
+        'total-dissi': `#total-dissi-${roomId}`,
+        'total-pessoas': `#total-pessoas-${roomId}`,
+        'total-ar-sensivel': `#total-ar-sensivel-${roomId}`,
+        'total-ar-latente': `#total-ar-latente-${roomId}`
+    };
+
+    Object.entries(gainSelectors).forEach(([key, selector]) => {
+        const element = document.querySelector(selector);
+        if (element && thermalGainsData[key] !== undefined) {
+            if (key === 'total-tr-exato' && typeof thermalGainsData[key] === 'number') {
+                element.textContent = thermalGainsData[key].toFixed(3);
+            } else {
+                element.textContent = thermalGainsData[key];
+            }
+        }
+    });
+}
+
+/**
+ * Preenche dados de capacidade
+ */
+function fillCapacityData(roomElement, capacityData) {
+    if (!roomElement || !capacityData) {
+        console.error('❌ Elemento da sala ou dados inválidos');
+        return;
+    }
+
+    const roomId = roomElement.dataset.roomId;
+
+    const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`);
+    if (fatorSegurancaInput && capacityData.fatorSeguranca !== undefined) {
+        fatorSegurancaInput.value = capacityData.fatorSeguranca;
+    }
+
+    const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`);
+    if (capacidadeUnitariaSelect && capacityData.capacidadeUnitaria !== undefined) {
+        capacidadeUnitariaSelect.value = capacityData.capacidadeUnitaria;
+    }
+
+    const backupSelect = roomElement.querySelector('.backup-select');
+    if (backupSelect && capacityData.backup !== undefined) {
+        backupSelect.value = capacityData.backup;
+    }
+}
+
+/**
+ * Garante todas as seções da sala - VERSÃO SIMPLIFICADA E CORRETA
+ */
+async function ensureAllRoomSections(roomElement) {
+    if (!roomElement) {
+        console.error('❌ Elemento da sala inválido');
+        return false;
+    }
+
+    const obraId = roomElement.dataset.obraId;
+    const projectId = roomElement.dataset.projectId; 
+    const roomName = roomElement.dataset.roomName;
+    const roomId = roomElement.dataset.roomId;
+
+    if (!roomId) {
+        console.error(`❌ Room ID inválido`);
+        return false;
+    }
+
+    console.log(`🔨 Verificando seções da sala ${roomName}`);
+
+    // Função simples para verificar seção
+    const checkSection = (title) => {
+        const sections = roomElement.querySelectorAll('.section-title');
+        for (let sectionTitle of sections) {
+            if (sectionTitle.textContent.includes(title)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    // Verificar seções
+    const climatizationExists = checkSection('Climatização');
+    const machinesExists = checkSection('Máquinas');
+    const acessoriosExists = checkSection('Acessorios');
+    const dutosExists = checkSection('Dutos');
+    const tubosExists = checkSection('Tubulação');
+
+    console.log(`📋 Seções existentes:`, {
+        climatization: climatizationExists,
+        machines: machinesExists,
+        acessorios: acessoriosExists,
+        dutos: dutosExists,
+        tubos: tubosExists
+    });
+
+    // Verificar se há duplicação de tubos
+    const tubosSections = roomElement.querySelectorAll('.section-title');
+    let tubosCount = 0;
+    tubosSections.forEach(title => {
+        if (title.textContent.includes('Tubulação de Cobre')) {
+            tubosCount++;
+        }
+    });
+
+    if (tubosCount > 1) {
+        console.warn(`⚠️ DUPLICAÇÃO DETECTADA: ${tubosCount} seções de Tubulação`);
+        fixDuplicatedSections(roomElement, 'Tubulação de Cobre');
+        return true; // Já corrigiu, não precisa criar
+    }
+
+    // Se todas existem, retornar true
+    if (climatizationExists && machinesExists && acessoriosExists && dutosExists && tubosExists) {
+        console.log(`✅ Todas as seções já existem`);
+        return true;
+    }
+
+    console.log(`🔄 Criando seções faltantes`);
+
+    try {
+        const roomContent = roomElement.querySelector('.room-content');
+        if (!roomContent) {
+            console.error(`❌ Container de conteúdo da sala não encontrado`);
+            return false;
+        }
+
+        // Obter última seção
+        let lastSection = roomContent.querySelector('.section-block:last-child');
+        
+        // Criar apenas o que falta, na ORDEM CORRETA
+        const sectionsToCreate = [];
+        
+        if (!climatizationExists) sectionsToCreate.push({type: 'climatization', func: window.buildClimatizationSection});
+        if (!machinesExists) sectionsToCreate.push({type: 'machines', func: window.buildMachinesSection});
+        if (!acessoriosExists) sectionsToCreate.push({type: 'acessorios', func: window.buildAcessoriosSection});
+        if (!dutosExists) sectionsToCreate.push({type: 'dutos', func: window.buildDutosSection});
+        if (!tubosExists) sectionsToCreate.push({type: 'tubos', func: window.buildTubosSection});
+
+        console.log(`🏗️ Criando ${sectionsToCreate.length} seções`);
+
+        // Criar seções na ordem correta
+        for (let i = 0; i < sectionsToCreate.length; i++) {
+            const section = sectionsToCreate[i];
+            if (typeof section.func === 'function') {
+                console.log(`📦 Criando seção: ${section.type}`);
+                
+                const html = await section.func(obraId, projectId, roomName, roomId);
+                if (html) {
+                    if (lastSection) {
+                        lastSection.insertAdjacentHTML('afterend', html);
+                    } else {
+                        roomContent.insertAdjacentHTML('beforeend', html);
+                    }
+                    
+                    lastSection = roomContent.querySelector('.section-block:last-child');
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                }
+            }
+        }
+
+        console.log(`✅ Seções criadas para ${roomName}`);
+        return true;
+
+    } catch (error) {
+        console.error(`❌ Erro ao criar seções:`, error);
+        return false;
+    }
+}
+
+/**
+ * Corrige seções duplicadas
+ */
+function fixDuplicatedSections(roomElement, sectionTitle) {
+    const roomContent = roomElement.querySelector('.room-content');
+    if (!roomContent) return;
+    
+    const allSections = roomContent.querySelectorAll('.section-block');
+    const targetSections = [];
+    
+    // Encontrar todas as seções com o título especificado
+    allSections.forEach(section => {
+        const titleElement = section.querySelector('.section-title');
+        if (titleElement && titleElement.textContent.includes(sectionTitle)) {
+            targetSections.push(section);
+        }
+    });
+    
+    // Se tem mais de uma, remover as extras
+    if (targetSections.length > 1) {
+        console.log(`🗑️ Removendo ${targetSections.length - 1} seções duplicadas de "${sectionTitle}"`);
+        
+        // Manter a primeira, remover as outras
+        for (let i = 1; i < targetSections.length; i++) {
+            targetSections[i].remove();
+        }
+        
+        console.log(`✅ Duplicação corrigida`);
+    }
+}
+
+/**
+ * Função auxiliar para encontrar seção
+ */
+function findSectionByTitle(roomElement, title) {
+    const sections = roomElement.querySelectorAll('.section-block');
+    for (let section of sections) {
+        const sectionTitle = section.querySelector('.section-title');
+        if (sectionTitle && sectionTitle.textContent.includes(title)) {
+            return section;
+        }
+    }
+    return null;
+}
+
+/**
+ * Função auxiliar para encontrar seção de máquinas
+ */
+function findMachinesSection(roomElement) {
+    return roomElement.querySelector('.machines-section') || 
+           roomElement.querySelector('[id*="machines"]');
+}
+
+// Exportações
+export {
+    fillClimatizationInputs,
+    fillThermalGainsData,
+    fillCapacityData,
+    ensureAllRoomSections,
+    setupRoomTitleChangeListener,
+    fixDuplicatedSections,
+    findSectionByTitle,
+    findMachinesSection
+};
+
+// Compatibilidade global
+if (typeof window !== 'undefined') {
+    window.setupRoomTitleChangeListener = setupRoomTitleChangeListener;
+    window.fixDuplicatedSections = fixDuplicatedSections;
+}
+/* ==== FIM: data/builders/ui-folder/data-fillers.js ==== */
+
+/* ==== INÍCIO: data/utils/data-utils.js ==== */
+/**
+ * data/utils/data-utils.js
+ * Utilitários de dados unificados - FUSÃO: data-utils-core.js + helpers.js
+ * Sistema completo de IDs, numeração, nomeação e utilitários
+ */
+
+import { 
+    safeNumber} from './core-utils.js';
+
+
+// =============================================================================
+// FUNÇÕES DE NUMERAÇÃO (De data-utils-core.js)
+// =============================================================================
+
+/**
+ * Obtém o próximo número de projeto disponível PARA UMA OBRA ESPECÍFICA - 
+ * @param {string} obraId - ID único da obra
+ * @returns {number} Próximo número disponível para projeto na obra específica
+ */
+function getNextProjectNumber(obraId) {
+    try {
+        // ✅ CORREÇÃO: Buscar apenas projetos DESTA obra específica
+        const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraBlock) {
+            console.warn(`⚠️ Obra ${obraId} não encontrada, usando projeto 1`);
+            return 1;
+        }
+
+        const projectBlocks = obraBlock.querySelectorAll('.project-block');
+        let maxNumber = 0;
+
+        projectBlocks.forEach(project => {
+            const projectName = project.dataset.projectName || 
+                             project.querySelector('.project-title')?.textContent || '';
+            
+            if (projectName) {
+                // Suporta: "Projeto1", "Projeto 2", "Projeto-3", etc.
+                const match = projectName.match(/Projeto\s*[-_]?\s*(\d+)/i);
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (num > maxNumber) maxNumber = num;
+                }
+            }
+        });
+
+        console.log(`🔢 Next project number for obra ${obraId}: ${maxNumber + 1} (max found: ${maxNumber})`);
+        return maxNumber + 1;
+
+    } catch (error) {
+        console.error('❌ Erro em getNextProjectNumber:', error);
+        return 1; // Fallback seguro
+    }
+}
+
+/**
+ * Obtém o próximo número de sala - 
+ * @param {string} projectId - ID do projeto
+ * @returns {number} Próximo número disponível para sala
+ */
+function getNextRoomNumber(projectId) {
+    try {
+        const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`);
+        if (!projectBlock) {
+            console.warn(`⚠️ Projeto ${projectId} não encontrado, usando sala 1`);
+            return 1;
+        }
+
+        const roomBlocks = projectBlock.querySelectorAll('.room-block');
+        let maxNumber = 0;
+
+        roomBlocks.forEach(room => {
+            const roomName = room.dataset.roomName || 
+                          room.querySelector('.room-title')?.textContent || '';
+
+            if (roomName) {
+                // Suporta: "Sala1", "Sala 2", "Sala-3", etc.
+                const match = roomName.match(/Sala\s*[-_]?\s*(\d+)/i);
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (num > maxNumber) maxNumber = num;
+                }
+            }
+        });
+
+        console.log(`🔢 Next room number for project ${projectId}: ${maxNumber + 1}`);
+        return maxNumber + 1;
+
+    } catch (error) {
+        console.error('❌ Erro em getNextRoomNumber:', error);
+        return 1; // Fallback seguro
+    }
+}
+
+/**
+ * Obtém o próximo número de obra disponível
+ * @returns {number} Próximo número disponível para obra
+ */
+function getNextObraNumber() {
+    try {
+        const obraBlocks = document.querySelectorAll('.obra-block');
+        let maxNumber = 0;
+
+        obraBlocks.forEach(obra => {
+            const obraName = obra.dataset.obraName || 
+                          obra.querySelector('.obra-title')?.textContent || '';
+            
+            if (obraName) {
+                // Suporta: "Obra1", "Obra 2", "Obra-3", etc.
+                const match = obraName.match(/Obra\s*[-_]?\s*(\d+)/i);
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (num > maxNumber) maxNumber = num;
+                }
+            }
+        });
+
+        console.log(`🔢 Next obra number: ${maxNumber + 1} (max found: ${maxNumber})`);
+        return maxNumber + 1;
+
+    } catch (error) {
+        console.error('❌ Erro em getNextObraNumber:', error);
+        return 1; // Fallback seguro
+    }
+}
+
+// =============================================================================
+// FUNÇÕES DE NOMEAÇÃO (De data-utils-core.js)
+// =============================================================================
+
+/**
+ * Obtém o ID completo da sala no formato correto
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @returns {string} ID completo da sala
+ */
+function getRoomFullId(roomElement) {
+    const roomId = roomElement.dataset.roomId;
+    
+    if (!roomId || roomId === 'undefined' || roomId === 'null' || roomId.includes('undefined')) {
+        console.error(`ERRO FALBACK (getRoomFullId) [Room ID inválido: ${roomId}]`);
+        return generateSecureId('sala');
+    }
+    
+    console.log(`✅ ID da sala obtido do data attribute: ${roomId}`);
+    return roomId;
+}
+
+/**
+ * Obtém o nome da obra a partir do elemento - 
+ * @param {HTMLElement} obraElement - Elemento da obra
+ * @returns {string} Nome da obra
+ */
+function getObraName(obraElement) {
+    if (!obraElement) {
+        console.error(`ERRO FALBACK (getObraName) [Elemento da obra não fornecido]`);
+        return 'Obra_Erro';
+    }
+
+    const titleElement = obraElement.querySelector('.obra-title');
+    if (titleElement) {
+        const name = titleElement.textContent || titleElement.innerText || '';
+        const trimmedText = name.trim();
+        if (trimmedText && trimmedText !== 'Obra') {
+            return trimmedText;
+        }
+    }
+    
+    const obraNameFromData = obraElement.dataset.obraName;
+    if (obraNameFromData && obraNameFromData !== 'undefined' && obraNameFromData !== 'null') {
+        return obraNameFromData;
+    }
+    
+    console.error(`ERRO FALBACK (getObraName) [Nome da obra não encontrado]`);
+    return 'Obra_Erro';
+}
+
+/**
+ * Obtém o nome do projeto a partir do elemento - 
+ * @param {HTMLElement} projectElement - Elemento do projeto
+ * @returns {string} Nome do projeto
+ */
+function getProjectName(projectElement) {
+    if (!projectElement) {
+        console.error(`ERRO FALBACK (getProjectName) [Elemento do projeto não fornecido]`);
+        return 'Projeto_Erro';
+    }
+
+    const titleElement = projectElement.querySelector('.project-title');
+    if (titleElement) {
+        const titleText = titleElement.textContent || titleElement.innerText || '';
+        const trimmedText = titleText.trim();
+        if (trimmedText && trimmedText !== 'Projeto') {
+            console.log(`📝 Nome do projeto obtido do título: "${trimmedText}"`);
+            return trimmedText;
+        }
+    }
+    
+    const projectNameFromData = projectElement.dataset.projectName;
+    if (projectNameFromData && projectNameFromData !== 'undefined' && projectNameFromData !== 'null' && projectNameFromData !== 'Projeto') {
+        console.log(`📝 Nome do projeto obtido do data attribute: "${projectNameFromData}"`);
+        return projectNameFromData;
+    }
+    
+    console.error(`ERRO FALBACK (getProjectName) [Nome do projeto não encontrado]`);
+    return 'Projeto_Erro';
+}
+
+/**
+ * Obtém o nome da sala a partir do elemento - 
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @returns {string} Nome da sala
+ */
+function getRoomName(roomElement) {
+    if (!roomElement) {
+        console.error(`ERRO FALBACK (getRoomName) [Elemento da sala não fornecido]`);
+        return 'Sala_Erro';
+    }
+
+    const titleElement = roomElement.querySelector('.room-title');
+    if (titleElement) {
+        const name = titleElement.textContent || titleElement.value || titleElement.getAttribute('value') || '';
+        const trimmedName = name.trim();
+        if (trimmedName) return trimmedName;
+    }
+    
+    const roomNameFromData = roomElement.dataset.roomName;
+    if (roomNameFromData && roomNameFromData !== 'undefined' && roomNameFromData !== 'null') {
+        return roomNameFromData;
+    }
+    
+    const roomId = roomElement.dataset.roomId;
+    if (roomId && roomId !== 'undefined' && roomId !== 'null') {
+        return `Sala ${roomId.split('_').pop()}`;
+    }
+    
+    console.error(`ERRO FALBACK (getRoomName) [Nome da sala não encontrado]`);
+    return 'Sala_Erro';
+}
+
+// =============================================================================
+// FUNÇÕES UTILITÁRIAS (De data-utils-core.js)
+// =============================================================================
+
+/**
+ * Extrai número de um texto, convertendo vírgula para ponto decimal
+ * @param {string} text - Texto contendo número
+ * @returns {number|null} Número extraído ou null se não encontrado
+ */
+function extractNumberFromText(text) {
+    if (!text) return null;
+    
+    const numberMatch = text.match(/-?\d+(?:[.,]\d+)?/);
+    if (numberMatch) {
+        const numericString = numberMatch[0].replace(',', '.');
+        const numericValue = parseFloat(numericString);
+        return isNaN(numericValue) ? null : numericValue;
+    }
+    
+    return null;
+}
+
+/**
+ * Obtém o nome da máquina a partir do elemento
+ * @param {HTMLElement} machineElement - Elemento da máquina
+ * @param {string} machineId - ID da máquina
+ * @returns {string} Nome da máquina
+ */
+function getMachineName(machineElement, machineId) {
+    const titleElement = machineElement.querySelector('.machine-title-editable');
+    if (!titleElement) return `Máquina ${machineId}`;
+    
+    const name = titleElement.value || titleElement.textContent || titleElement.getAttribute('value') || `Máquina ${machineId}`;
+    return name.trim() || `Máquina${machineId}`;
+}
+
+/**
+ * Converte texto de preço em número
+ * @param {string} priceText - Texto do preço no formato "R$ X.XXX,XX"
+ * @returns {number} Valor numérico do preço
+ */
+function parseMachinePrice(priceText) {
+    if (!priceText || priceText === 'R$ 0,00') return 0;
+    
+    try {
+        const cleaned = priceText.replace('R$', '')
+                                .replace(/\./g, '')
+                                .replace(',', '.')
+                                .trim();
+        return parseFloat(cleaned) || 0;
+    } catch (error) {
+        console.error('❌ Erro ao converter preço:', priceText, error);
+        return 0;
+    }
+}
+
+/**
+ * Função de debug para mostrar todos os elementos de ganhos térmicos disponíveis
+ * @param {HTMLElement} roomElement - Elemento da sala para debug
+ * @returns {void}
+ */
+function debugThermalGainsElements(roomElement) {
+    const roomFullId = getRoomFullId(roomElement);
+    console.log('🐛 DEBUG: Todos os elementos de ganhos térmicos disponíveis:');
+    
+    // ✅ ATUALIZADO: Incluir os novos IDs de TR
+    const selectors = [
+        'total-ganhos-w', 'total-tr-aprox', 'total-tr-exato', 'total-externo', 'total-divisoes',
+        'total-piso', 'total-iluminacao', 'total-dissi', 'total-pessoas',
+        'total-ar-sensivel', 'total-ar-latente'
+    ];
+    
+    selectors.forEach(selector => {
+        const element = document.querySelector(`#${selector}-${roomFullId}`);
+        console.log(`🔍 ${selector}-${roomFullId}:`, element ? `ENCONTRADO - "${element.textContent}"` : 'NÃO ENCONTRADO');
+    });
+}
+
+/**
+ * Obtém o valor de TR para cálculos (prioriza o valor exato)
+ * @param {string} roomId - ID da sala
+ * @returns {number} Valor de TR para uso em cálculos
+ */
+function getThermalLoadTRForCalculations(roomId) {
+    try {
+        // ✅ NOVA: Priorizar o valor exato se disponível
+        const totalTRExatoElement = document.getElementById(`total-tr-exato-${roomId}`);
+        if (totalTRExatoElement?.textContent) {
+            const value = Number.parseFloat(totalTRExatoElement.textContent) || 0;
+            console.log(`🔢 [TR CALC] Usando valor exato: ${value}`);
+            return value;
+        }
+
+        // Fallback para valor aproximado
+        const totalTRAproxElement = document.getElementById(`total-tr-aprox-${roomId}`);
+        if (totalTRAproxElement?.textContent) {
+            const value = Number.parseFloat(totalTRAproxElement.textContent) || 0;
+            console.log(`🔢 [TR CALC] Usando valor aproximado: ${value}`);
+            return value;
+        }
+
+        // Fallback para cálculo manual
+        const totalGanhosWElement = document.getElementById(`total-ganhos-w-${roomId}`);
+        if (totalGanhosWElement?.textContent) {
+            const totalW = Number.parseFloat(totalGanhosWElement.textContent) || 0;
+            const value = totalW / 3517;
+            console.log(`🔢 [TR CALC] Calculado manualmente: ${value}`);
+            return value;
+        }
+
+        console.warn(`⚠️ [TR CALC] Nenhum valor de TR encontrado para sala ${roomId}`);
+        return 0;
+    } catch (error) {
+        console.error(`❌ [TR CALC] Erro ao obter carga térmica para sala ${roomId}:`, error);
+        return 0;
+    }
+}
+
+/**
+ * Verifica se os elementos de TR estão corretamente configurados
+ * @param {string} roomId - ID da sala
+ * @returns {boolean} True se ambos os elementos existem
+ */
+function validateTRElements(roomId) {
+    const elementAprox = document.getElementById(`total-tr-aprox-${roomId}`);
+    const elementExato = document.getElementById(`total-tr-exato-${roomId}`);
+    
+    const isValid = !!(elementAprox && elementExato);
+    
+    if (!isValid) {
+        console.warn(`⚠️ [TR VALIDATE] Elementos de TR incompletos para sala ${roomId}:`, {
+            aprox: !!elementAprox,
+            exato: !!elementExato
+        });
+    } else {
+        console.log(`✅ [TR VALIDATE] Elementos de TR válidos para sala ${roomId}`);
+    }
+    
+    return isValid;
+}
+
+// =============================================================================
+// FUNÇÕES DE COLETA DE DADOS (De helpers.js)
+// =============================================================================
+
+/**
+ * Coleta dados de entrada da interface para processamento de climatização
+ * @param {HTMLElement} climaSection - Elemento HTML da seção de climatização
+ * @param {string} roomId - ID único da sala (formato: obra_w12_proj_t34_1_sala_r21_1)
+ * @returns {Object} Dados coletados dos inputs
+ */
+function collectClimatizationInputs(climaSection, roomId) {
+    console.log(`📝 [COLLECT] Coletando inputs para sala: ${roomId}`);
+    
+    const inputs = climaSection.querySelectorAll(".clima-input, input[data-field], select[data-field]");
+    const data = {};
+
+    inputs.forEach((input) => {
+        const field = input.dataset.field;
+        let value;
+        
+        // ✅ CORREÇÃO: Tratar diferentes tipos de input
+        if (input.type === 'checkbox') {
+            value = input.checked;
+        } else if (input.type === 'number' || input.type === 'text') {
+            value = input.value !== "" ? (input.type === 'number' ? Number.parseFloat(input.value) : input.value) : "";
+        } else if (input.tagName === 'SELECT') {
+            value = input.value !== "" ? input.value : "";
+        }
+        
+        if (field) {
+            data[field] = value;
+        }
+    });
+
+    // ✅ CORREÇÃO: Coletar estado da pressurização dos RADIO BUTTONS
+    if (data.pressurizacao === undefined) {
+        const radioSim = climaSection.querySelector('input[type="radio"][value="sim"]');
+        const radioNao = climaSection.querySelector('input[type="radio"][value="nao"]');
+        
+        // Se o radio "sim" estiver marcado, pressurização está ativa
+        data.pressurizacao = radioSim ? radioSim.checked : false;
+        
+        console.log(`🎯 [COLLECT] Estado da pressurização:`, {
+            radioSimChecked: radioSim?.checked,
+            radioNaoChecked: radioNao?.checked,
+            pressurizacao: data.pressurizacao
+        });
+    }
+    
+    // ✅ CORREÇÃO: Garantir que setpointTemp esteja presente
+    if (data.setpointTemp === undefined) {
+        const setpointInput = climaSection.querySelector('input[data-field="setpointTemp"]');
+        data.setpointTemp = setpointInput ? safeNumber(setpointInput.value) : 0;
+    }
+
+    // ✅ CORREÇÃO: Garantir que pressurizacaoSetpoint esteja presente
+    if (data.pressurizacaoSetpoint === undefined) {
+        const pressurizacaoInput = climaSection.querySelector('input[data-field="pressurizacaoSetpoint"]');
+        data.pressurizacaoSetpoint = pressurizacaoInput ? safeNumber(pressurizacaoInput.value) : 0;
+        
+        console.log(`🎯 [COLLECT] Valor da pressurização:`, {
+            pressurizacaoSetpoint: data.pressurizacaoSetpoint,
+            inputValue: pressurizacaoInput?.value
+        });
+    }
+
+    console.log(`✅ [COLLECT] ${Object.keys(data).length} dados coletados para ${roomId}:`, data);
+    return data;
+}
+
+/**
+ * Encontra a seção de climatização de uma sala pelo ID único
+ * @param {string} roomId - ID único da sala
+ * @returns {HTMLElement|null} Elemento da seção de climatização
+ */
+function findClimatizationSection(roomId) {
+    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (!roomElement) {
+        console.error(`❌ [FIND] Sala não encontrada: ${roomId}`);
+        return null;
+    }
+    
+    const climaSection = roomElement.querySelector('#section-content-' + roomId + '-clima');
+    if (!climaSection) {
+        console.error(`❌ [FIND] Seção de climatização não encontrada para: ${roomId}`);
+        return null;
+    }
+    
+    console.log(`✅ [FIND] Seção encontrada para: ${roomId}`);
+    return climaSection;
+}
+
+// =============================================================================
+// EXPORTAÇÕES
+// =============================================================================
+
+export {
+    // Sistema de Numeração
+    getNextProjectNumber,
+    getNextRoomNumber,
+    getNextObraNumber,
+    
+    // Funções de Nomeação
+    getRoomFullId,
+    getObraName,
+    getProjectName,
+    getRoomName,
+    
+    // Utilitários Gerais
+    extractNumberFromText,
+    getMachineName,
+    parseMachinePrice,
+    debugThermalGainsElements,
+    getThermalLoadTRForCalculations, // ✅ NOVA: Função para obter TR
+    validateTRElements, // ✅ NOVA: Validação dos elementos
+    
+    // Coleta de Dados
+    collectClimatizationInputs,
+    findClimatizationSection,
+};
+
+// Disponibilização global para compatibilidade
+if (typeof window !== 'undefined') {
+    // Sistema de numeração
+    window.getNextProjectNumber = getNextProjectNumber;
+    window.getNextRoomNumber = getNextRoomNumber;
+    window.getNextObraNumber = getNextObraNumber;
+    
+    // Utilitários
+    window.getRoomFullId = getRoomFullId;
+    window.debugThermalGainsElements = debugThermalGainsElements;
+    window.getThermalLoadTRForCalculations = getThermalLoadTRForCalculations; // ✅ NOVA
+    window.validateTRElements = validateTRElements; // ✅ NOVA
+}
+/* ==== FIM: data/utils/data-utils.js ==== */
+
+/* ==== INÍCIO: data/builders/ui-folder/room-renderer.js ==== */
+/*
+* ARQUIVO DE RENDERIZAÇÃO DE salas
+*/
+
+import { ensureStringId } from '../../utils/id-generator.js';
+
+
+/**
+ * Renderiza uma sala individual a partir dos dados carregados
+ */
+function renderRoomFromData(projectId, projectName, roomData, obraId = null, obraName = null) {
+    const roomName = roomData.nome;
+    const roomId = ensureStringId(roomData.id);
+
+    console.log(`🎯 Renderizando sala: ${roomName} no projeto ${projectName}`, {
+        obra: obraName,
+        projectId: projectId,
+        roomId: roomId,
+        inputs: Object.keys(roomData.inputs || {}).length,
+        maquinas: roomData.maquinas?.length || 0,
+        capacidade: Object.keys(roomData.capacidade || {}).length,
+        ganhosTermicos: Object.keys(roomData.ganhosTermicos || {}).length,
+        acessorios: roomData.acessorios?.length || 0,
+        dutos: roomData.dutos?.length || 0, // ✅ ADICIONADO: dutos
+        conjuntosTubulacao: roomData.tubulacao?.conjuntos?.length || 0
+    });
+
+    setTimeout(() => {
+        // Criar sala básica
+        createEmptyRoom(obraId, projectId, roomName, roomId);
+        
+        // Aguardar criação e garantir todas as seções
+        setTimeout(() => {
+            const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+            if (roomElement) {
+                // ✅ GARANTIR que TODAS as seções sejam criadas (incluindo dutos)
+                ensureAllRoomSections(roomElement).then(sectionsReady => {
+                    if (sectionsReady) {
+                        console.log(`✅ Todas as seções criadas para ${roomName} - Iniciando preenchimento`);
+                        populateRoomData(roomElement, roomData);
+                    } else {
+                        console.error(`❌ Falha ao criar seções para ${roomName}`);
+                    }
+                }).catch(error => {
+                    console.error(`❌ Erro ao garantir seções para ${roomName}:`, error);
+                    throw error;
+                });
+            } else {
+                console.error(`❌ Elemento da sala ${roomId} não encontrado após criação`);
+            }
+        }, 300);
+        
+    }, 100);
+}
+
+/**
+ * Preenche uma sala específica dentro de um projeto
+ */
+async function populateRoomData(roomElement, roomData) {
+    if (!roomElement || !roomData) {
+        console.error('❌ Elemento da sala ou dados inválidos');
+        return false;
+    }
+
+    const roomId = roomElement.dataset.roomId;
+    const roomName = roomElement.dataset.roomName;
+    
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`❌ Room ID inválido no populateRoomData: "${roomId}"`);
+        return false;
+    }
+    
+    console.log(`🔄 Preenchendo sala "${roomName}" (ID: ${roomId})`, {
+        acessorios: roomData.acessorios?.length || 0,
+        dutos: roomData.dutos?.length || 0, // ✅ ADICIONADO: dutos
+        tubulacaoConjuntos: roomData.tubulacao?.conjuntos?.length || 0,
+        maquinas: roomData.maquinas?.length || 0
+    });
+
+    try {
+        // ✅ CORREÇÃO: Garantir que todas as seções existam antes de preencher
+        console.log(`🏗️ Garantindo que todas as seções existem para sala ${roomName}`);
+        const sectionsReady = await ensureAllRoomSections(roomElement);
+        if (!sectionsReady) {
+            console.warn(`⚠️ Não foi possível garantir todas as seções para ${roomName} - Continuando...`);
+        }
+
+        const roomTitle = roomElement.querySelector('.room-title');
+        if (roomTitle && roomData.nome) {
+            roomTitle.textContent = roomData.nome;
+            console.log(`✅ Título da sala atualizado: ${roomData.nome}`);
+        }
+
+        if (roomData.inputs) {
+            console.log(`🌡️ Preenchendo inputs de climatização para sala ${roomName}`);
+            fillClimatizationInputs(roomElement, roomData.inputs);
+        }
+
+        if (roomData.ganhosTermicos) {
+            console.log(`📊 Preenchendo ganhos térmicos para sala ${roomName}`);
+            fillThermalGainsData(roomElement, roomData.ganhosTermicos);
+        }
+
+        if (roomData.capacidade) {
+            console.log(`⚡ Preenchendo dados de capacidade para sala ${roomName}`);
+            fillCapacityData(roomElement, roomData.capacidade);
+        }
+
+        // ✅ Preencher acessorios
+        if (roomData.acessorios && Array.isArray(roomData.acessorios)) {
+            console.log(`🔧 Preenchendo ${roomData.acessorios.length} acessorio(s) para sala ${roomName}`);
+            
+            // Aguardar um pouco para garantir que a seção foi criada
+            setTimeout(() => {
+                if (typeof window.fillAcessoriosData === 'function') {
+                    window.fillAcessoriosData(roomElement, roomData.acessorios);
+                    console.log(`✅ Acessorios preenchidos via função global`);
+                } else {
+                    console.error(`❌ Função fillAcessoriosData não disponível no window`);
+                }
+            }, 2000);
+        }
+
+        // ✅ Preencher dutos
+        if (roomData.dutos && Array.isArray(roomData.dutos)) {
+            console.log(`📏 Preenchendo ${roomData.dutos.length} duto(s) para sala ${roomName}`);
+            
+            // Aguardar um pouco para garantir que a seção foi criada
+            setTimeout(() => {
+                if (typeof window.fillDutosData === 'function') {
+                    window.fillDutosData(roomElement, roomData.dutos);
+                    console.log(`✅ Dutos preenchidos via função global`);
+                } else {
+                    console.error(`❌ Função fillDutosData não disponível no window`);
+                }
+            }, 2500);
+        }
+
+        // ✅ CORREÇÃO CRÍTICA: Preencher tubulação - CUIDADO COM A ESTRUTURA
+        if (roomData.tubulacao && roomData.tubulacao.conjuntos && Array.isArray(roomData.tubulacao.conjuntos)) {
+            console.log(`🔧 Preenchendo ${roomData.tubulacao.conjuntos.length} conjunto(s) de tubulação para sala ${roomName}`);
+            
+            // Aguardar mais tempo para garantir que a seção de tubulação foi criada
+            setTimeout(() => {
+                if (typeof window.fillTubulacaoData === 'function') {
+                    // ✅ CORREÇÃO: Passar o objeto completo de tubulação
+                    window.fillTubulacaoData(roomElement, roomData.tubulacao);
+                    console.log(`✅ Tubulação preenchida via função global`, {
+                        conjuntos: roomData.tubulacao.conjuntos.length,
+                        estrutura: 'conjuntos array dentro de objeto tubulacao'
+                    });
+                } else {
+                    console.error(`❌ Função fillTubulacaoData não disponível no window - Verifique se tubos.js foi carregado`);
+                }
+            }, 3000);
+        } else if (roomData.tubulacao) {
+            console.warn(`⚠️ Estrutura de tubulação inválida ou vazia para sala ${roomName}:`, roomData.tubulacao);
+        }
+
+        // ✅ Preencher máquinas
+        if (roomData.maquinas && Array.isArray(roomData.maquinas)) {
+            console.log(`🤖 Agendando preenchimento de ${roomData.maquinas.length} máquina(s) para sala ${roomName}`);
+            
+            // Aguardar mais tempo para garantir que todas as outras seções foram preenchidas
+            setTimeout(async () => {
+                try {
+                    console.log(`🚀 Iniciando preenchimento de máquinas para sala ${roomName}`);
+                    
+                    const success = await fillMachinesData(roomElement, roomData.maquinas);
+                    
+                    if (success) {
+                        console.log(`🎉 Todas as máquinas preenchidas com sucesso para sala ${roomName}`);
+                    } else {
+                        console.error(`❌ Falha ao preencher máquinas para sala ${roomName}`);
+                    }
+                } catch (error) {
+                    console.error(`💥 Erro ao preencher máquinas para sala ${roomName}:`, error);
+                }
+            }, 4000);
+        }
+
+        console.log(`✅ Sala "${roomName}" preenchida com sucesso`);
+        return true;
+
+    } catch (error) {
+        console.error(`❌ Erro ao preencher sala "${roomName}":`, error);
+        return false;
+    }
+}
+
+/**
+ * Preenche os inputs de uma sala específica
+ */
+function populateRoomInputs(projectId, projectName, roomId, roomName, roomData, obraId, obraName) {
+    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (roomElement) {
+        populateRoomData(roomElement, roomData);
+    } else {
+        console.error(`❌ Elemento da sala ${roomId} não encontrado no DOM`);
+    }
+}
+
+// EXPORTS NO FINAL
+export {
+    renderRoomFromData,
+    populateRoomData,
+    populateRoomInputs
+};
+/* ==== FIM: data/builders/ui-folder/room-renderer.js ==== */
+
+/* ==== INÍCIO: main-folder/system-init.js ==== */
+/* ==== INÍCIO: main-folder/system-init.js ==== */
+/**
+ * system-init.js - INICIALIZAÇÃO DO SISTEMA PRINCIPAL
+ * 🎯 Carrega constantes, módulos e componentes principais
+ */
+
+// ✅ IMPORTAR MÓDULOS COM CAMINHOS CORRETOS
+import { loadObrasFromServer } from '../data/adapters/obra-adapter-folder/obra-data-loader.js';
+
+import { getGeralCount } from '../data/adapters/session-adapter.js';
+import { shutdownManual } from '../data/adapters/shutdown-adapter.js';
+import {EmpresaCadastroInline} from '../data/empresa-system/empresa-core.js';
+
+// 🔥 Importar módulo de filtros separado
+import { initializeFilterSystem } from './filter-init.js';
+
+/**
+ * Sistema de Shutdown Manual
+ */
+class ShutdownManager {
+  constructor() {
+    this.init();
+  }
+
+  init() {
+    console.log('🔒 Sistema de shutdown manual ativado');
+    this.disableAutoShutdown();
+    this.createShutdownButton();
+  }
+
+  disableAutoShutdown() {
+    window.removeEventListener('beforeunload', this.autoShutdown);
+    window.removeEventListener('unload', this.autoShutdown);
+    window.removeEventListener('pagehide', this.autoShutdown);
+  }
+
+  createShutdownButton() {
+    if (document.querySelector('.shutdown-btn')) return;
+
+    const headerRight = document.querySelector('.header-right');
+    if (headerRight) {
+      const shutdownBtn = document.createElement('button');
+      shutdownBtn.className = 'shutdown-btn';
+      shutdownBtn.innerHTML = '⏻';
+      shutdownBtn.title = 'Encerrar Servidor';
+      shutdownBtn.onclick = () => this.shutdownManual();
+
+      headerRight.appendChild(shutdownBtn);
+      console.log('✅ Botão de shutdown adicionado ao header');
+    }
+  }
+
+  async shutdownManual() {
+    if (confirm('Deseja realmente ENCERRAR o servidor?')) {
+      try {
+        console.log('🔄 Executando shutdown COMPLETO...');
+        await shutdownManual();
+      } catch (error) {
+        console.log('🔌 Servidor encerrado ou não responde:', error);
+      }
+    }
+  }
+}
+
+/**
+ * Carrega as constantes do sistema do servidor
+ */
+async function loadSystemConstants() {
+  try {
+    console.log("🔍 Carregando constantes do sistema...");
+    const response = await fetch(`/constants`);
+
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+
+    const constantsData = await response.json();
+    window.systemConstants = constantsData;
+    console.log("✅ Constantes carregadas do JSON:", window.systemConstants);
+
+    if (!window.systemConstants.VARIAVEL_PD.value
+      || !window.systemConstants.VARIAVEL_PS.value
+    ) {
+      throw new Error("Constantes essenciais não encontradas no JSON");
+    }
+
+    return true;
+  } catch (error) {
+    console.error("❌ ERRO CRÍTICO ao carregar constantes:", error);
+    throw error;
+  }
+}
+
+/**
+ * Carrega todos os módulos do sistema dinamicamente
+ */
+async function loadAllModules() {
+  if (window.modulesLoaded) return;
+
+  try {
+    console.log("📦 Iniciando carregamento de módulos...");
+
+    // ✅ CORREÇÃO: Todos os módulos importados dentro do Promise.all
+    const modules = await Promise.all([
+      import('../ui/interface.js'),
+      import('../ui/components/edit.js'),
+      import('../ui/components/status.js'),
+      import('../ui/components/modal/modal.js'),
+      import('../ui/components/modal/exit-modal.js'),
+      import('../ui/helpers.js'),
+      import('../features/managers/obra-manager.js'),
+      import('../features/managers/project-manager.js'),
+      import('../data/modules/rooms.js'),
+      import('../data/modules/climatizacao.js'),
+      import('../data/modules/acessorios.js'), // ✅ MANTER aqui
+      import('../data/modules/machines/machines-core.js'),
+      import('../data/modules/machines/capacity-calculator.js'),
+      import('../features/calculations/air-flow.js'),
+      import('../features/calculations/calculations-core.js'),
+      import('../data/utils/id-generator.js'),
+      import('../data/utils/data-utils.js'),
+      import('../data/builders/ui-builders.js'),
+      import('../data/builders/data-builders.js'),
+      import('../data/builders/ui-folder/data-fillers.js'), // ✅ ADICIONAR para funções auxiliares
+      import('../data/builders/ui-folder/room-renderer.js') // ✅ ADICIONAR para renderização
+    ]);
+
+    const [
+      interfaceModule,
+      editModule,
+      statusModule,
+      modalModule,
+      modalExitModule,
+      helpersModule,
+      obraManagerModule,
+      projectManagerModule,
+      roomsModule,
+      climatizationModule,
+      acessoriosModule, // ✅ RECUPERADO
+      machinesCoreModule,
+      capacityCalculatorModule,
+      airFlowModule,
+      calculationsCoreModule,
+      idGeneratorModule,
+      dataUtilsModule,
+      uiBuildersModule,
+      dataBuildersModule,
+      dataFillersModule, // ✅ NOVO
+      roomRendererModule // ✅ NOVO
+    ] = modules;
+
+    // ✅ CORREÇÃO: Juntar TODAS as funções em um objeto
+    const allFunctions = {
+      // Interface
+      toggleSection: interfaceModule.toggleSection,
+      toggleSubsection: interfaceModule.toggleSubsection,
+      toggleObra: interfaceModule.toggleObra,
+      toggleProject: interfaceModule.toggleProject,
+      toggleRoom: interfaceModule.toggleRoom,
+      collapseElement: helpersModule.collapseElement,
+      expandElement: helpersModule.expandElement,
+      showSystemStatus: statusModule.showSystemStatus,
+
+      // Obras
+      addNewObra: obraManagerModule.addNewObra,
+      saveOrUpdateObra: obraManagerModule.saveObra,
+      verifyObraData: obraManagerModule.verifyObraData,
+      deleteObra: obraManagerModule.deleteObra,
+      saveObra: obraManagerModule.saveObra,
+      fetchObras: obraManagerModule.fetchObras,
+      supportFrom_saveObra: obraManagerModule.supportFrom_saveObra,
+      atualizarObra: obraManagerModule.atualizarObra,
+
+      // Projetos
+      addNewProjectToObra: projectManagerModule.addNewProjectToObra,
+      deleteProject: projectManagerModule.deleteProject,
+
+      // Salas
+      addNewRoom: roomsModule.addNewRoom,
+      deleteRoom: roomsModule.deleteRoom,
+      createEmptyRoom: roomsModule.createEmptyRoom,
+
+      // Climatização
+      buildClimatizationSection: climatizationModule.buildClimatizationSection,
+
+      // Máquinas
+      buildMachinesSection: machinesCoreModule.buildMachinesSection,
+      calculateCapacitySolution: capacityCalculatorModule.calculateCapacitySolution,
+      updateBackupConfiguration: capacityCalculatorModule.updateBackupConfiguration,
+      toggleOption: machinesCoreModule.toggleOption,
+      addMachine: machinesCoreModule.addMachine,
+      deleteMachine: machinesCoreModule.deleteMachine,
+
+      // ✅ CORREÇÃO: EQUIPAMENTOS COMPLETO
+      buildAcessoriosSection: acessoriosModule.buildAcessoriosSection,
+      initAcessoriosSystem: acessoriosModule.initAcessoriosSystem,
+      fillAcessoriosData: acessoriosModule.fillAcessoriosData, // ← AGORA EXISTE!
+      adicionarAcessorioNaTabela: acessoriosModule.adicionarAcessorioNaTabela,
+      atualizarTotalAcessorios: acessoriosModule.atualizarTotalAcessorios,
+      formatarMoeda: acessoriosModule.formatarMoeda,
+      carregarTiposAcessorios: acessoriosModule.carregarTiposAcessorios,
+      loadAcessorioDimensoes: acessoriosModule.loadAcessorioDimensoes,
+      adicionarAcessorio: acessoriosModule.adicionarAcessorio,
+      limparAcessorios: acessoriosModule.limparAcessorios,
+
+      // Cálculos
+      calculateVazaoArAndThermalGains: airFlowModule.calculateVazaoArAndThermalGains,
+      calculateVazaoArAndThermalGainsDebounced: calculationsCoreModule.calculateVazaoArAndThermalGainsDebounced,
+
+      // Edição
+      makeEditable: editModule.makeEditable,
+
+      // Utilitários
+      ensureStringId: idGeneratorModule.ensureStringId,
+      getNextObraNumber: dataUtilsModule.getNextObraNumber,
+      getNextProjectNumber: dataUtilsModule.getNextProjectNumber,
+      getNextRoomNumber: dataUtilsModule.getNextRoomNumber,
+
+      // Modal
+      showConfirmationModal: modalModule.showConfirmationModal,
+      closeConfirmationModal: modalModule.closeConfirmationModal,
+      undoDeletion: modalModule.undoDeletion,
+
+      // Helpers
+      removeEmptyObraMessage: helpersModule.removeEmptyObraMessage,
+      showEmptyObraMessageIfNeeded: helpersModule.showEmptyObraMessageIfNeeded,
+      removeEmptyProjectMessage: helpersModule.removeEmptyProjectMessage,
+      showEmptyProjectMessageIfNeeded: helpersModule.showEmptyProjectMessageIfNeeded,
+
+      // ✅ NOVO: Funções de preenchimento de dados
+      fillClimatizationInputs: dataFillersModule.fillClimatizationInputs,
+      fillThermalGainsData: dataFillersModule.fillThermalGainsData,
+      fillCapacityData: dataFillersModule.fillCapacityData,
+      // REMOVER: fillAcessoriosData: dataFillersModule.fillAcessoriosData, ← DUPLICADA
+      ensureAllRoomSections: dataFillersModule.ensureAllRoomSections,
+      setupRoomTitleChangeListener: dataFillersModule.setupRoomTitleChangeListener,
+
+      // ✅ NOVO: Funções de renderização
+      renderRoomFromData: roomRendererModule.renderRoomFromData,
+      populateRoomData: roomRendererModule.populateRoomData,
+      populateRoomInputs: roomRendererModule.populateRoomInputs,
+
+      // UI Builders
+      populateObraData: uiBuildersModule.populateObraData,
+      renderObraFromData: uiBuildersModule.renderObraFromData,
+      renderProjectFromData: uiBuildersModule.renderProjectFromData,
+      fillMachinesData: uiBuildersModule.fillMachinesData,
+      ensureMachinesSection: uiBuildersModule.ensureMachinesSection,
+      populateMachineData: uiBuildersModule.populateMachineData,
+
+      // Data Builders
+      buildObraData: dataBuildersModule.buildObraData,
+      buildProjectData: dataBuildersModule.buildProjectData,
+      extractRoomData: dataBuildersModule.extractRoomData,
+      extractMachinesData: dataBuildersModule.extractMachinesData,
+      extractThermalGainsData: dataBuildersModule.extractThermalGainsData,
+      extractClimatizationInputs: dataBuildersModule.extractClimatizationInputs,
+      extractCapacityData: dataBuildersModule.extractCapacityData,
+      extractAcessoriosData: dataBuildersModule.extractAcessoriosData,
+      extractTubulacaoData: dataBuildersModule.extractTubulacaoData,
+      extractDutosData: dataBuildersModule.extractDutosData,
+
+      // Adapters
+      loadObrasFromServer: loadObrasFromServer
+    };
+
+    window.systemFunctions = {};
+
+    // ✅ CORREÇÃO: Filtrar funções válidas antes de atribuir
+    Object.keys(allFunctions).forEach(funcName => {
+      const func = allFunctions[funcName];
+      
+      if (typeof func === 'function') {
+        window[funcName] = func;
+        window.systemFunctions[funcName] = func;
+        console.log(`✅ ${funcName} atribuída ao window`);
+      } else if (func !== undefined) {
+        console.warn(`⚠️ ${funcName} não é uma função:`, typeof func);
+      } else {
+        console.error(`❌ ${funcName} é undefined no módulo`);
+      }
+    });
+
+    // ✅ CORREÇÃO: Verificar funções críticas
+    const criticalFunctions = [
+      'fillAcessoriosData',
+      'buildAcessoriosSection',
+      'initAcessoriosSystem'
+    ];
+    
+    criticalFunctions.forEach(funcName => {
+      if (typeof window[funcName] !== 'function') {
+        console.error(`🚨 CRÍTICO: ${funcName} não está disponível!`);
+      } else {
+        console.log(`👍 ${funcName} OK`);
+      }
+    });
+
+    window.modulesLoaded = true;
+    console.log("✅ Todos os módulos foram carregados com sucesso");
+    
+    // ✅ CORREÇÃO: Verificar função específica após carregamento
+    setTimeout(() => {
+      console.log('🔍 Verificação pós-carregamento:');
+      console.log('- fillAcessoriosData:', typeof window.fillAcessoriosData);
+      console.log('- initAcessoriosSystem:', typeof window.initAcessoriosSystem);
+      console.log('- buildAcessoriosSection:', typeof window.buildAcessoriosSection);
+    }, 500);
+
+    return true;
+
+  } catch (error) {
+    console.error("❌ Erro ao carregar módulos:", error);
+    throw error;
+  }
+}
+
+/**
+ * Inicializa o sistema de cadastro de empresas
+ */
+async function initializeEmpresaCadastro() {
+  try {
+    console.log("🏢 Inicializando sistema de cadastro de empresas...");
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    window.empresaCadastro = new EmpresaCadastroInline();
+
+    console.log("✅ Sistema de cadastro de empresas inicializado");
+
+    const spansCadastro = document.querySelectorAll('.projetc-header-record.very-dark span');
+    console.log(`🔍 Encontrados ${spansCadastro.length} elementos de cadastro de empresas`);
+
+    return true;
+  } catch (error) {
+    console.error("❌ Erro ao inicializar sistema de cadastro de empresas:", error);
+    throw error;
+  }
+}
+
+/**
+ * Inicializa o sistema completo
+ */
+export async function initializeSystem() {
+  try {
+    console.log("🚀 [SYSTEM-INIT] Iniciando sistema completo...");
+
+    window.systemLoadingStart = Date.now();
+
+    console.log("🔒 [SYSTEM-INIT] Inicializando shutdown manager...");
+    window.shutdownManager = new ShutdownManager();
+
+    console.log("📊 [SYSTEM-INIT] Carregando constantes do sistema...");
+    await loadSystemConstants();
+    console.log("✅ [SYSTEM-INIT] Constantes carregadas");
+
+    console.log("📦 [SYSTEM-INIT] Carregando módulos do sistema...");
+    await loadAllModules();
+    console.log("✅ [SYSTEM-INIT] Módulos carregados");
+
+    console.log("🏢 [SYSTEM-INIT] Inicializando sistema de empresas...");
+    await initializeEmpresaCadastro();
+    console.log("✅ [SYSTEM-INIT] Sistema de empresas inicializado");
+
+    console.log("🔧 [SYSTEM-INIT] Inicializando sistema de filtros...");
+    await initializeFilterSystem();
+    console.log("✅ [SYSTEM-INIT] Sistema de filtros inicializado");
+
+    const loadingTime = Date.now() - window.systemLoadingStart;
+    window.systemLoaded = true;
+    window.systemLoadTime = loadingTime;
+
+    console.log(`🎉 [SYSTEM-INIT] Sistema completamente inicializado em ${loadingTime}ms!`);
+
+    // ✅ CORREÇÃO: Verificação final
+    console.log('🔍 Verificação final de funções:');
+    console.log('- fillAcessoriosData:', typeof window.fillAcessoriosData);
+    console.log('- buildAcessoriosSection:', typeof window.buildAcessoriosSection);
+    
+    // ✅ CORREÇÃO: Inicializar fallback manual se necessário
+    if (typeof window.fillAcessoriosData !== 'function') {
+      console.warn('⚠️ fillAcessoriosData não disponível, tentando fallback...');
+      try {
+        const acessoriosModule = await import('../data/modules/acessorios.js');
+        if (acessoriosModule.fillAcessoriosData) {
+          window.fillAcessoriosData = acessoriosModule.fillAcessoriosData;
+          console.log('✅ fillAcessoriosData atribuída via fallback manual');
+        }
+      } catch (error) {
+        console.error('❌ Fallback manual falhou:', error);
+      }
+    }
+
+    const event = new CustomEvent('systemInitialized', {
+      detail: {
+        time: loadingTime,
+        timestamp: new Date().toISOString(),
+        modules: window.modulesLoaded,
+        constants: !!window.systemConstants,
+        acessoriosReady: typeof window.fillAcessoriosData === 'function'
+      }
+    });
+    document.dispatchEvent(event);
+
+    return true;
+
+  } catch (error) {
+    console.error("❌ [SYSTEM-INIT] ERRO CRÍTICO na inicialização do sistema:", error);
+    throw error;
+  }
+}
+/* ==== FIM: main-folder/system-init.js ==== */
+/* ==== FIM: main-folder/system-init.js ==== */
+
+/* ==== INÍCIO: features/calculations/thermal-gains.js ==== */
+/**
+ * thermal-gains.js
+ * 🎯 FUSÃO COMPLETA: thermalCalculations + thermalComponents + thermalDisplay
+ * ⚡ REDUÇÃO: 3 arquivos → 1 arquivo (~600 → ~350 linhas)
+ */
+
+
+import { 
+    waitForSystemConstants, 
+    validateSystemConstants,
+    collectClimatizationInputs,
+} from './calculations-core.js'  
+
+import { safeNumber, updateElementText } from '../../data/utils/core-utils.js';
+
+/**
+ * 🔥 CÁLCULOS DE COMPONENTES TÉRMICOS (thermalComponents.js)
+ */
+
+function calculateCeilingGain(area, uValue, deltaT) {
+  const areaNum = safeNumber(area);
+  const uValueNum = safeNumber(uValue);
+  const deltaTNum = safeNumber(deltaT);
+  const result = areaNum * uValueNum * deltaTNum;
+  console.log(`[DEBUG DETAIL] calculateCeilingGain: ${areaNum} * ${uValueNum} * ${deltaTNum} = ${result}`);
+  return result;
+}
+
+function calculateWallGain(comprimento, peDireito, uValue, deltaT) {
+  const compNum = safeNumber(comprimento);
+  const peDireitoNum = safeNumber(peDireito);
+  const uValueNum = safeNumber(uValue);
+  const deltaTNum = safeNumber(deltaT);
+  const area = compNum * peDireitoNum;
+  const result = area * uValueNum * deltaTNum;
+  console.log(`[DEBUG DETAIL] calculateWallGain: (${compNum} * ${peDireitoNum}) = ${area}m² * ${uValueNum} * ${deltaTNum} = ${result}`);
+  return result;
+}
+
+function calculatePartitionGain(inputArea, peDireito, uValue, deltaT) {
+  const area = safeNumber(inputArea) * safeNumber(peDireito);
+  const result = area * uValue * deltaT;
+  return result;
+}
+
+function calculateFloorGain(area, constants) {
+  const uValue = window.systemConstants?.AUX_U_Value_Piso.value || 2.7;
+  const deltaT = window.systemConstants?.deltaT_piso.value || 7.5;
+  const result = safeNumber(area) * uValue * deltaT;
+  return result;
+}
+
+function calculateLightingGain(area, constants) {
+  const fatorIluminacao = window.systemConstants?.AUX_Fator_Iluminacao.value || 7;
+  const fsIluminacao = window.systemConstants?.AUX_Fs_Iluminacao.value || 1;
+  const result = safeNumber(area) * fatorIluminacao * fsIluminacao;
+  return result;
+}
+
+function calculateDissipationGain(dissipacao, constants) {
+  const fatorConversao = window.systemConstants?.AUX_Fator_Conver_Painel.value || 1;
+  const fsPaineis = window.systemConstants?.AUX_Fs_Paineis.value || 100;
+  const result = (fatorConversao * safeNumber(dissipacao) * fsPaineis) / 100;
+  return result;
+}
+
+function calculatePeopleGain(numPessoas, constants) {
+  const csp = window.systemConstants?.AUX_OCp_Csp.value || 86.5;
+  const clp = window.systemConstants?.AUX_OCp_Clp.value || 133.3;
+  const fsPessoas = 100;
+  const pessoas = safeNumber(numPessoas);
+  const ganhoSensivel = (csp * pessoas * fsPessoas) / 100;
+  const ganhoLatente = (clp * pessoas * fsPessoas) / 100;
+  const result = ganhoSensivel + ganhoLatente;
+  return result;
+}
+
+function calculateExternalAirSensibleGain(vazaoArExterno, auxVars, constants) {
+  const c_ArExterno = window.systemConstants?.AUX_c_ArExterno.value || 0.24;
+  const deltaT_ArExterno = window.systemConstants?.AUX_deltaT_ArExterno.value || 10;
+  
+  const calc_Gsens_ArE = auxVars.m_ArExterno * c_ArExterno * deltaT_ArExterno;
+  const resultado = (calc_Gsens_ArE / 1000) * 1.16;
+  
+  return resultado;
+}
+
+function calculateExternalAirLatentGain(vazaoArExterno, constants) {
+  const f_ArExterno = window.systemConstants?.AUX_f_ArExterno.value || 3.01;
+  const deltaUa_ArExterno = window.systemConstants?.AUX_deltaUa_ArExterno.value || 8.47;
+  
+  const vazao = safeNumber(vazaoArExterno);
+  const ganho = vazao * f_ArExterno * deltaUa_ArExterno;
+  
+  return ganho;
+}
+
+/**
+ * 📊 CÁLCULOS DE TOTAIS E DISPLAY (thermalDisplay.js)
+ */
+
+function calculateTotals(gains) {
+  const totalExterno = gains.teto + gains.paredeOeste + gains.paredeLeste + gains.paredeNorte + gains.paredeSul;
+  const totalDivisoes = gains.divisoriaNaoClima1 + gains.divisoriaNaoClima2 + gains.divisoriaClima1 + gains.divisoriaClima2;
+  const totalPiso = gains.piso;
+  const totalIluminacao = gains.iluminacao;
+  const totalEquipamentos = gains.dissipacao;
+  const totalPessoas = gains.pessoas;
+  const totalArSensivel = gains.arSensivel;
+  const totalArLatente = gains.arLatente;
+  const totalArExterno = totalArSensivel + totalArLatente;
+
+  const totalGeralW = totalExterno + totalDivisoes + totalPiso + totalIluminacao + totalEquipamentos + totalPessoas + totalArExterno;
+  const totalGeralTR = totalGeralW / 3517;
+
+  const totals = {
+    externo: Math.ceil(totalExterno),
+    divisoes: Math.ceil(totalDivisoes),
+    piso: Math.ceil(totalPiso),
+    iluminacao: Math.ceil(totalIluminacao),
+    equipamentos: Math.ceil(totalEquipamentos),
+    pessoas: Math.ceil(totalPessoas),
+    arSensivel: Math.ceil(totalArSensivel),
+    arLatente: Math.ceil(totalArLatente),
+    arExterno: Math.ceil(totalArExterno),
+    geralW: Math.ceil(totalGeralW),
+    geralTR: Math.ceil(totalGeralTR),
+    geralTRExato: totalGeralTR //  valor exato sem arredondamento
+  };
+
+  return totals;
+}
+
+function updateWallDisplay(roomId, direction, gain, uValue, inputWidth, peDireito, deltaT) {
+  const area = safeNumber(inputWidth) * safeNumber(peDireito);
+  updateElementText(`area-parede-${direction}-${roomId}`, Math.ceil(area));
+  updateElementText(`uvalue-parede-${direction}-${roomId}`, uValue.toFixed(3));
+  updateElementText(`deltat-parede-${direction}-${roomId}`, deltaT || 0);
+  updateElementText(`ganho-parede-${direction}-${roomId}`, Math.ceil(gain));
+}
+
+function updatePartitionDisplay(roomId, type, gain, uValue, inputArea, peDireito, deltaT) {
+  const areaCalculada = safeNumber(inputArea) * safeNumber(peDireito);
+  updateElementText(`area-divi-${type}-${roomId}`, Math.ceil(areaCalculada));
+  updateElementText(`uvalue-divi-${type}-${roomId}`, uValue.toFixed(3));
+  updateElementText(`deltat-divi-${type}-${roomId}`, deltaT || 0);
+  updateElementText(`ganho-divi-${type}-${roomId}`, Math.ceil(gain));
+}
+
+function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
+  console.log(`🔥 Atualizando display térmico para sala: ${roomId}`);
+  
+  updateElementText(`total-ganhos-w-${roomId}`, totals.geralW);
+
+  updateElementText(`total-tr-aprox-${roomId}`, totals.geralTR); 
+  updateElementText(`total-tr-exato-${roomId}`, (totals.geralW / 3517).toFixed(3)); // Valor exato com 3 casas decimais
+
+  updateElementText(`area-teto-${roomId}`, Math.ceil(inputData.area || 0));
+  updateElementText(`uvalue-teto-${roomId}`, uValues.teto.toFixed(3));
+  updateElementText(`deltat-teto-${roomId}`, window.systemConstants?.deltaT_teto.value || 20);
+  updateElementText(`ganho-teto-${roomId}`, Math.ceil(gains.teto));
+
+  updateWallDisplay(roomId, "oeste", gains.paredeOeste, uValues.parede, inputData.paredeOeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Oes.value || 0);
+  updateWallDisplay(roomId, "leste", gains.paredeLeste, uValues.parede, inputData.paredeLeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Les.value || 0);
+  updateWallDisplay(roomId, "norte", gains.paredeNorte, uValues.parede, inputData.paredeNorte, inputData.peDireito, window.systemConstants?.deltaT_parede_Nor.value || 0);
+  updateWallDisplay(roomId, "sul", gains.paredeSul, uValues.parede, inputData.paredeSul, inputData.peDireito, window.systemConstants?.deltaT_parede_Sul.value || 0);
+
+  updatePartitionDisplay(roomId, "nc1", gains.divisoriaNaoClima1, uValues.parede, inputData.divisoriaNaoClima1, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim1.value || 0);
+  updatePartitionDisplay(roomId, "nc2", gains.divisoriaNaoClima2, uValues.parede, inputData.divisoriaNaoClima2, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim2.value || 0);
+  updatePartitionDisplay(roomId, "c1", gains.divisoriaClima1, uValues.parede, inputData.divisoriaClima1, inputData.peDireito, window.systemConstants?.deltaT_divi_clim1.value || 0);
+  updatePartitionDisplay(roomId, "c2", gains.divisoriaClima2, uValues.parede, inputData.divisoriaClima2, inputData.peDireito, window.systemConstants?.deltaT_divi_clim2.value || 0);
+
+  updateElementText(`area-piso-${roomId}`, Math.ceil(inputData.area || 0));
+  updateElementText(`uvalue-piso-${roomId}`, uValues.piso.toFixed(3));
+  updateElementText(`deltat-piso-${roomId}`, window.systemConstants?.deltaT_piso.value || 5);
+  updateElementText(`ganho-piso-${roomId}`, Math.ceil(gains.piso));
+  updateElementText(`total-piso-${roomId}`, totals.piso);
+
+  updateElementText(`area-iluminacao-${roomId}`, Math.ceil(inputData.area || 0));
+  updateElementText(`fator-iluminacao-${roomId}`, window.systemConstants?.AUX_Fator_Iluminacao.value || 7);
+  updateElementText(`fs-iluminacao-${roomId}`, window.systemConstants?.AUX_Fs_Iluminacao.value || 1);
+  updateElementText(`ganho-iluminacao-${roomId}`, Math.ceil(gains.iluminacao));
+  updateElementText(`total-iluminacao-${roomId}`, totals.iluminacao);
+
+  updateElementText(`fator-conversao-dissi-${roomId}`, window.systemConstants?.AUX_Fator_Conver_Painel.value || 1);
+  updateElementText(`pe-dissi-${roomId}`, inputData.dissipacao || 0);
+  updateElementText(`fs-dissi-${roomId}`, window.systemConstants?.AUX_Fs_Paineis.value || 100);
+  updateElementText(`ganho-dissi-${roomId}`, Math.ceil(gains.dissipacao));
+  updateElementText(`total-dissi-${roomId}`, totals.equipamentos);
+
+  updateElementText(`csp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Csp.value || 86.5);
+  updateElementText(`clp-pessoas-${roomId}`, window.systemConstants?.AUX_OCp_Clp.value || 133.3);
+  updateElementText(`o-pessoas-${roomId}`, inputData.numPessoas || 0);
+  updateElementText(`fs-pessoas-${roomId}`, 100);
+  updateElementText(`ganho-pessoas-${roomId}`, Math.ceil(gains.pessoas));
+  updateElementText(`total-pessoas-${roomId}`, totals.pessoas);
+
+  const densiAr = window.systemConstants?.Densi_ar || 1.17;
+  const m_ArExterno = (inputData.vazaoArExterno || 0) * 3.6 * densiAr * 1000;
+
+  updateElementText(`m-ar-sensivel-${roomId}`, Math.ceil(m_ArExterno));
+  updateElementText(`c-ar-sensivel-${roomId}`, window.systemConstants?.AUX_c_ArExterno.value || 0.24);
+  updateElementText(`deltat-ar-sensivel-${roomId}`, window.systemConstants?.AUX_deltaT_ArExterno.value || 10);
+  updateElementText(`ganho-ar-sensivel-${roomId}`, Math.ceil(gains.arSensivel));
+  updateElementText(`total-ar-sensivel-${roomId}`, totals.arSensivel);
+
+  updateElementText(`var-ar-latente-${roomId}`, inputData.vazaoArExterno || 0);
+  updateElementText(`f-ar-latente-${roomId}`, window.systemConstants?.AUX_f_ArExterno.value || 3.01);
+  updateElementText(`deltaua-ar-latente-${roomId}`, window.systemConstants?.AUX_deltaUa_ArExterno.value || 8.47);
+  updateElementText(`ganho-ar-latente-${roomId}`, Math.ceil(gains.arLatente));
+  updateElementText(`total-ar-latente-${roomId}`, totals.arLatente);
+
+  updateElementText(`total-externo-${roomId}`, totals.externo);
+  updateElementText(`total-divisoes-${roomId}`, totals.divisoes);
+  
+  console.log(`✅ Display térmico atualizado para sala: ${roomId}`);
+}
+
+/**
+ * 🔍 FUNÇÕES AUXILIARES DE BUSCA (thermalCalculations.js)
+ */
+
+function findRoomContentThermal(roomId) {
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (findRoomContentThermal) thermalCalculations.js [ID de sala inválido: ${roomId}]`);
+        return null;
+    }
+    
+    console.log(`🔍 [THERMAL] Procurando sala: "${roomId}"`);
+    
+    let roomContent = document.getElementById(`room-content-${roomId}`);
+    
+    if (roomContent) {
+        console.log(`✅ [THERMAL] Sala encontrada pelo ID: room-content-${roomId}`);
+        return roomContent;
+    }
+    
+    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+    
+    if (roomBlock) {
+        const foundId = roomBlock.dataset.roomId;
+        console.log(`✅ [THERMAL] Sala encontrada pelo data-room-id: ${foundId}`);
+        
+        const finalRoomContent = document.getElementById(`room-content-${foundId}`);
+        if (finalRoomContent) {
+            return finalRoomContent;
+        }
+    }
+  
+    console.error(`❌ [THERMAL] Sala não encontrada: ${roomId}`);
+    const allRooms = document.querySelectorAll('.room-block');
+    console.log('🔍 [THERMAL] Todas as salas disponíveis no DOM:');
+    allRooms.forEach(room => {
+        console.log(`  - ID: "${room.dataset.roomId}", Nome: "${room.dataset.roomName}", Projeto: "${room.dataset.projectId}", Obra: "${room.dataset.obraId}"`);
+    });
+    
+    return null;
+}
+
+function calculateUValues(tipoConstrucao) {
+  const U_VALUE_ALVENARIA_TETO = 3.961;
+  const U_VALUE_ALVENARIA_PAREDE = 2.546;
+  const U_VALUE_LA_ROCHA_TETO = 1.145;
+  const U_VALUE_LA_ROCHA_PAREDE = 1.12;
+
+  console.log(`[THERMAL UVALUES] tipoConstrucao recebido: "${tipoConstrucao}"`);
+
+  let uValueParede, uValueTeto;
+
+  const tipoLower = tipoConstrucao ? tipoConstrucao.toLowerCase() : "";
+  
+  if (tipoLower === "eletrocentro") {
+    uValueParede = U_VALUE_LA_ROCHA_PAREDE;
+    uValueTeto = U_VALUE_LA_ROCHA_TETO;
+  } else if (tipoLower === "alvenaria") {
+    uValueParede = U_VALUE_ALVENARIA_PAREDE;
+    uValueTeto = U_VALUE_ALVENARIA_TETO;
+  } else {
+    uValueParede = 0;
+    uValueTeto = 0;
+  }
+
+  const result = {
+    parede: uValueParede,
+    teto: uValueTeto,
+    piso: window.systemConstants?.AUX_U_Value_Piso.value || 2.7,
+  };
+
+  console.log("[THERMAL UVALUES] UValues calculados:", result);
+  return result;
+}
+
+function calculateAuxiliaryVariables(inputData) {
+  const vazaoArExterno = safeNumber(inputData.vazaoArExterno);
+  const densiAr = window.systemConstants?.Densi_ar.value || 1.17;
+
+  const m_ArExterno = vazaoArExterno * 3.6 * densiAr * 1000;
+
+  return {
+    m_ArExterno: m_ArExterno,
+    vazaoArExterno: vazaoArExterno
+  };
+}
+
+/**
+ * 🎯 FUNÇÃO PRINCIPAL DE CÁLCULO (thermalCalculations.js)
+ */
+
+async function calculateThermalGains(roomId, vazaoArExterno = 0) {
+  try {
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (calculateThermalGains) thermalCalculations.js [ID de sala inválido: ${roomId}]`);
+        return;
+    }
+    
+    console.log(`🔥 [THERMAL] Iniciando cálculos para sala: ${roomId}`);
+    
+    await waitForSystemConstants();
+
+    if (!validateSystemConstants()) {
+      console.error(`[THERMAL] validateSystemConstants FALHOU para ${roomId}`);
+      return;
+    }
+
+    const roomContent = findRoomContentThermal(roomId);
+    if (!roomContent) {
+      console.error(`[THERMAL] room-content-${roomId} NÃO ENCONTRADO`);
+      return;
+    }
+
+    const climaSection = roomContent.querySelector('[id*="-clima"]');
+    if (!climaSection) {
+      console.error(`[THERMAL] Seção clima NÃO ENCONTRADA para ${roomId}`);
+      return;
+    }
+
+    const inputData = collectClimatizationInputs(climaSection, roomId);
+
+    const calcData = {
+      ...inputData,
+      area: safeNumber(inputData.area),
+      paredeOeste: safeNumber(inputData.paredeOeste),
+      paredeLeste: safeNumber(inputData.paredeLeste),
+      paredeNorte: safeNumber(inputData.paredeNorte),
+      paredeSul: safeNumber(inputData.paredeSul),
+      peDireito: safeNumber(inputData.peDireito),
+      divisoriaNaoClima1: safeNumber(inputData.divisoriaNaoClima1),
+      divisoriaNaoClima2: safeNumber(inputData.divisoriaNaoClima2),
+      divisoriaClima1: safeNumber(inputData.divisoriaClima1),
+      divisoriaClima2: safeNumber(inputData.divisoriaClima2),
+      dissipacao: safeNumber(inputData.dissipacao),
+      numPessoas: safeNumber(inputData.numPessoas),
+      vazaoArExterno: vazaoArExterno
+    };
+
+    const uValues = calculateUValues(calcData.tipoConstrucao);
+    const auxVars = calculateAuxiliaryVariables({...calcData, vazaoArExterno});
+
+    const gains = {
+      teto: calculateCeilingGain(calcData.area, uValues.teto, window.systemConstants.deltaT_teto.value),
+      paredeOeste: calculateWallGain(calcData.paredeOeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Oes.value),
+      paredeLeste: calculateWallGain(calcData.paredeLeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Les.value),
+      paredeNorte: calculateWallGain(calcData.paredeNorte, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Nor.value),
+      paredeSul: calculateWallGain(calcData.paredeSul, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Sul.value),
+      divisoriaNaoClima1: calculatePartitionGain(calcData.divisoriaNaoClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim1.value),
+      divisoriaNaoClima2: calculatePartitionGain(calcData.divisoriaNaoClima2, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim2.value),
+      divisoriaClima1: calculatePartitionGain(calcData.divisoriaClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_clim1.value),
+      divisoriaClima2: calculatePartitionGain(calcData.divisoriaClima2, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_clim2.value),
+      piso: calculateFloorGain(calcData.area, window.systemConstants),
+      iluminacao: calculateLightingGain(calcData.area, window.systemConstants),
+      dissipacao: calculateDissipationGain(calcData.dissipacao, window.systemConstants),
+      pessoas: calculatePeopleGain(calcData.numPessoas, window.systemConstants),
+      arSensivel: calculateExternalAirSensibleGain(vazaoArExterno, auxVars, window.systemConstants),
+      arLatente: calculateExternalAirLatentGain(vazaoArExterno, window.systemConstants),
+    };
+
+    const totals = calculateTotals(gains);
+
+    console.log(`🔥 [THERMAL] Ganhos calculados para ${roomId}:`, gains);
+    console.log(`🔥 [THERMAL] Totais para ${roomId}:`, totals);
+    console.log("🔥 [THERMAL] ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====");
+
+    updateThermalGainsDisplay(roomId, gains, totals, uValues, {...inputData, vazaoArExterno});
+
+  console.log(`🔥 [THERMAL] Atualizando capacidade para ${roomId}`);
+  setTimeout(() => {
+    if (typeof window.updateCapacityFromThermalGains === 'function') {
+      const success = window.updateCapacityFromThermalGains(roomId);
+      if (success) {
+        console.log(`✅ [THERMAL] Capacidade atualizada com sucesso para ${roomId}`);
+      } else {
+        console.log(`⚠️ [THERMAL] Aguardando carga térmica para ${roomId}`);
+      }
+    } else {
+      console.log(`ℹ️ [THERMAL] Função de capacidade ainda não disponível para ${roomId}`);
+      // Tenta novamente em 1 segundo
+      setTimeout(() => {
+        if (typeof window.updateCapacityFromThermalGains === 'function') {
+          window.updateCapacityFromThermalGains(roomId);
+        }
+      }, 1000);
+    }
+  }, 500);
+    
+  } catch (error) {
+    console.error(`[THERMAL] Erro em calculateThermalGains para ${roomId}:`, error);
+  }
+}
+
+/**
+ * 🌐 EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
+ */
+
+// Exportações para módulos ES6
+export {
+  calculateThermalGains,
+  calculateUValues,
+  calculateAuxiliaryVariables,
+  findRoomContentThermal,
+  calculateCeilingGain,
+  calculateWallGain,
+  calculatePartitionGain,
+  calculateFloorGain,
+  calculateLightingGain,
+  calculateDissipationGain,
+  calculatePeopleGain,
+  calculateExternalAirSensibleGain,
+  calculateExternalAirLatentGain,
+  calculateTotals,
+  updateThermalGainsDisplay,
+  updateWallDisplay,
+  updatePartitionDisplay
+};
+
+// Compatibilidade global para scripts legados
+if (typeof window !== 'undefined') {
+  window.calculateThermalGains = calculateThermalGains;
+  window.calculateUValues = calculateUValues;
+  window.calculateAuxiliaryVariables = calculateAuxiliaryVariables;
+  window.findRoomContentThermal = findRoomContentThermal;
+  window.calculateCeilingGain = calculateCeilingGain;
+  window.calculateWallGain = calculateWallGain;
+  window.calculatePartitionGain = calculatePartitionGain;
+  window.calculateFloorGain = calculateFloorGain;
+  window.calculateLightingGain = calculateLightingGain;
+  window.calculateDissipationGain = calculateDissipationGain;
+  window.calculatePeopleGain = calculatePeopleGain;
+  window.calculateExternalAirSensibleGain = calculateExternalAirSensibleGain;
+  window.calculateExternalAirLatentGain = calculateExternalAirLatentGain;
+  window.calculateTotals = calculateTotals;
+  window.updateThermalGainsDisplay = updateThermalGainsDisplay;
+  window.updateWallDisplay = updateWallDisplay;
+  window.updatePartitionDisplay = updatePartitionDisplay;
+}
+/* ==== FIM: features/calculations/thermal-gains.js ==== */

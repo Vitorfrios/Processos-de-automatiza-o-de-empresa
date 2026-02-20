@@ -76,7 +76,7 @@ function buildCapacityCalculationTable(roomId) {
                   type="number"
                   class="capacity-input"
                   min="0"
-                  step="1"
+                  step="any"
                   placeholder="Aguardando cálculo..."
                   onchange="calculateCapacitySolution('${roomId}')"
                   oninput="calculateCapacitySolution('${roomId}')"
@@ -210,36 +210,37 @@ function getThermalLoadTR(roomId) {
   try {
     console.log(`[CAPACITY] Buscando carga térmica para: ${roomId}`);
     
-    // PRIORIDADE 1: Buscar pelo campo TR-aproximado (referência principal)
-    const totalTRaproxElement = document.getElementById(`total-tr-aprox-${roomId}`);
-    if (totalTRaproxElement?.textContent) {
-      const trAprox = Number.parseFloat(totalTRaproxElement.textContent);
-      if (!isNaN(trAprox) && trAprox > 0) {
-        console.log(`[CAPACITY] Usando TR-aproximado: ${trAprox} TR`);
-        return trAprox;
-      }
-    }
-
-    // PRIORIDADE 2: Buscar pelo campo TR-exato
+    // PRIORIDADE 1: Buscar pelo campo TR-exato
     const totalTRExatoElement = document.getElementById(`total-tr-exato-${roomId}`);
-    if (totalTRExatoElement?.textContent) {
-      const trExato = Number.parseFloat(totalTRExatoElement.textContent);
-      if (!isNaN(trExato) && trExato > 0) {
-        console.log(`[CAPACITY] Usando TR-exato: ${trExato} TR`);
+
+    if (totalTRExatoElement && totalTRExatoElement.textContent !== '') {
+      const trExato = Number(totalTRExatoElement.textContent);
+      if (Number.isFinite(trExato) && trExato > 0) {
+        console.log(`[CAPACITY] Usando TR-exato (sem aproximação): ${trExato} TR`);
         return trExato;
       }
     }
+    
+    // // PRIORIDADE 2: Buscar pelo campo TR-aproximado (referência principal)
+    // const totalTRaproxElement = document.getElementById(`total-tr-aprox-${roomId}`);
+    // if (totalTRaproxElement?.textContent) {
+    //   const trAprox = Number.parseFloat(totalTRaproxElement.textContent);
+    //   if (!isNaN(trAprox) && trAprox > 0) {
+    //     console.log(`[CAPACITY] Usando TR-aproximado: ${trAprox} TR`);
+    //     return trAprox;
+    //   }
+    // }
 
-    // PRIORIDADE 3: Calcular a partir dos ganhos em Watts
-    const totalGanhosWElement = document.getElementById(`total-ganhos-w-${roomId}`);
-    if (totalGanhosWElement?.textContent) {
-      const totalW = Number.parseFloat(totalGanhosWElement.textContent) || 0;
-      if (totalW > 0) {
-        const trCalculado = totalW / 3517;
-        console.log(`[CAPACITY] Calculado de Watts: ${totalW}W = ${trCalculado} TR`);
-        return trCalculado;
-      }
-    }
+    // // PRIORIDADE 3: Calcular a partir dos ganhos em Watts
+    // const totalGanhosWElement = document.getElementById(`total-ganhos-w-${roomId}`);
+    // if (totalGanhosWElement?.textContent) {
+    //   const totalW = Number.parseFloat(totalGanhosWElement.textContent) || 0;
+    //   if (totalW > 0) {
+    //     const trCalculado = totalW / 3517;
+    //     console.log(`[CAPACITY] Calculado de Watts: ${totalW}W = ${trCalculado} TR`);
+    //     return trCalculado;
+    //   }
+    // }
 
     console.log(`[CAPACITY] Nenhuma carga térmica encontrada para ${roomId}`);
     return 0;
@@ -332,7 +333,7 @@ function getCapacityData(roomId) {
     fatorSeguranca: Number.parseFloat(fatorSegurancaInput.value) || 10,
     capacidadeUnitaria: Number.parseFloat(capacidadeUnitariaSelect.value) || 1,
     backup: backupSelect.value || "n",
-    cargaEstimada: getThermalLoadTR(roomId),
+    cargaEstimada:  document.getElementById(`total-tr-exato-${roomId}`),
     solucao: document.getElementById(`solucao-${roomId}`)?.textContent || "0",
     solucaoBackup: document.getElementById(`solucao-backup-${roomId}`)?.textContent || "0",
     totalCapacidade: document.getElementById(`total-capacidade-${roomId}`)?.textContent || "0",
@@ -416,9 +417,9 @@ function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup,
 }
 
 /**
- * Atualiza ou cria o input para carga estimada (apenas inteiros)
+ * Atualiza ou cria o input para carga estimada 
  * @param {string} roomId - ID da sala
- * @param {number} value - Valor a ser definido (inteiro)
+ * @param {number} value - Valor a ser definido 
  * @returns {void}
  */
 function updateCargaEstimadaInput(roomId, value) {
@@ -431,15 +432,16 @@ function updateCargaEstimadaInput(roomId, value) {
     input.type = "number";
     input.className = "capacity-input";
     input.min = "0";
-    input.step = "1";
+    input.step = "any";
     input.onchange = () => calculateCapacitySolution(roomId);
     input.oninput = () => calculateCapacitySolution(roomId);
-    input.value = Math.round(value);
+    input.value = value;
 
     cargaEstimadaElement.innerHTML = "";
     cargaEstimadaElement.appendChild(input);
   } else {
-    input.value = Math.round(value);
+    input.value = value;
+
   }
 }
 

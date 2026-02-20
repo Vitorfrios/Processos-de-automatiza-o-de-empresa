@@ -1,0 +1,22 @@
+input potencia 
+input temperatura interna (bydefout 45)
+input temperatura externa (bydefout 35)
+
+
+quando for wallmounted e maquinas de climatização "travar a seleção readonlyu
+da aplicaçãio" quando for tubo axial liberar mas nao mostrar climatização sem readonly , mas sem climatização 
+quando for maquinas de pressurização trava em presusrização readonly
+
+---
+para aplicação de pressurização puxar o campo vazão de ar externo * 3,6 = m³/h 
+
+se selecionar uma capacidade maior que o resultado, a solução é um se for menor calcular para dar a solução
+
+
+se vazão for 18000 e eu seleciono a maquina de 9100, a solução é 2 
+se a vazão for 10000 e a maquina é 9100 a solução é 1 
+
+se for exaustão sala de baia de trafo puxar com calculos do exel
+-------
+volume da sala = area * pe direito
+vazão da baterias = volume * 12 

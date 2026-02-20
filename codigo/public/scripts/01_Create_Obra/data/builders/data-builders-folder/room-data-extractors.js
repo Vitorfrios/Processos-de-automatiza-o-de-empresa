@@ -43,6 +43,7 @@ function extractRoomData(roomElement, projectElement) {
         inputs: extractClimatizationInputs(roomElement),
         maquinas: extractMachinesData(roomElement),
         capacidade: extractCapacityData(roomElement),
+        //adicionar a ventilacao
         ganhosTermicos: extractThermalGainsData(roomElement),
         acessorios: extractAcessoriosData(roomElement),
         dutos: extractDutosData(roomElement), // ✅ ADICIONADO: Extração de dutos

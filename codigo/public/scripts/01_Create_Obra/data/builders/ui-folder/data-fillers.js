@@ -27,6 +27,15 @@ function fillClimatizationInputs(roomElement, inputsData) {
         inputsData.ambiente = roomName;
     }
     
+    // ✅ CORREÇÃO: Encontrar a SEÇÃO DA TABELA, não a seção de climatização
+    const tableSection = roomElement.querySelector(`#section-content-${roomId}-input-table`);
+    const inputsContainer = tableSection || roomElement; // Fallback para o elemento da sala
+    
+    console.log(`📝 Preenchendo inputs para sala ${roomName} (ID: ${roomId})`, {
+        possuiTabela: !!tableSection,
+        container: tableSection ? 'tabela' : 'sala'
+    });
+    
     // Processar pressurização
     if (inputsData.pressurizacao !== undefined) {
         const isPressurizacaoAtiva = typeof inputsData.pressurizacao === 'boolean' 
@@ -35,7 +44,8 @@ function fillClimatizationInputs(roomElement, inputsData) {
         
         const pressurizacaoValue = isPressurizacaoAtiva ? 'sim' : 'nao';
         
-        const pressurizacaoRadios = roomElement.querySelectorAll(`input[type="radio"][name*="pressurizacao"]`);
+        // ✅ CORREÇÃO: Buscar radios dentro do container correto
+        const pressurizacaoRadios = inputsContainer.querySelectorAll(`input[type="radio"][name*="pressurizacao"]`);
         
         let radioToCheck = null;
         pressurizacaoRadios.forEach(radio => {
@@ -60,7 +70,8 @@ function fillClimatizationInputs(roomElement, inputsData) {
 
     // Preencher outros inputs após delay
     setTimeout(() => {
-        const textInputs = roomElement.querySelectorAll('.clima-input[type="text"], .clima-input[type="number"], .clima-input[data-field]');
+        // ✅ CORREÇÃO: Buscar inputs dentro do container correto
+        const textInputs = inputsContainer.querySelectorAll('.clima-input[type="text"], .clima-input[type="number"], .clima-input[data-field]');
         
         textInputs.forEach(input => {
             const field = input.getAttribute('data-field');
@@ -102,7 +113,7 @@ function fillClimatizationInputs(roomElement, inputsData) {
         });
 
         // Preencher selects
-        const selectInputs = roomElement.querySelectorAll('select.clima-input[data-field]');
+        const selectInputs = inputsContainer.querySelectorAll('select.clima-input[data-field]');
         selectInputs.forEach(select => {
             const field = select.getAttribute('data-field');
             if (!field || inputsData[field] === undefined) return;
@@ -134,7 +145,40 @@ function fillClimatizationInputs(roomElement, inputsData) {
 
     }, 400);
 }
-
+function ensureTableSectionExists(roomElement) {
+    const roomId = roomElement.dataset.roomId;
+    if (!roomId) return false;
+    
+    // Verificar se a tabela já existe
+    const existingTable = roomElement.querySelector(`#subsection-content-${roomId}-clima-table`);
+    if (existingTable) return true;
+    
+    // Se não existir, criar
+    console.log(`📋 Criando tabela de inputs para sala ${roomElement.dataset.roomName}`);
+    
+    // Encontrar onde inserir (logo após o título da sala ou no início do conteúdo)
+    const roomContent = roomElement.querySelector('.room-content');
+    if (!roomContent) return false;
+    
+    const roomName = roomElement.dataset.roomName;
+    
+    // Verificar se buildTableSection está disponível
+    if (typeof window.buildTableSection === 'function') {
+        const tableHTML = window.buildTableSection(roomId, roomName);
+        
+        // Inserir no início do conteúdo da sala
+        const firstSection = roomContent.querySelector('.section-block');
+        if (firstSection) {
+            firstSection.insertAdjacentHTML('beforebegin', tableHTML);
+        } else {
+            roomContent.insertAdjacentHTML('afterbegin', tableHTML);
+        }
+        
+        return true;
+    }
+    
+    return false;
+}
 /**
  * Configura listener de título
  */
@@ -196,6 +240,8 @@ function fillThermalGainsData(roomElement, thermalGainsData) {
         }
     });
 }
+
+//adicionar fill de ventilação
 
 /**
  * Preenche dados de capacidade
@@ -406,11 +452,13 @@ export {
     setupRoomTitleChangeListener,
     fixDuplicatedSections,
     findSectionByTitle,
-    findMachinesSection
+    findMachinesSection,
+    ensureTableSectionExists 
 };
 
 // Compatibilidade global
 if (typeof window !== 'undefined') {
     window.setupRoomTitleChangeListener = setupRoomTitleChangeListener;
     window.fixDuplicatedSections = fixDuplicatedSections;
+    window.ensureTableSectionExists  = ensureTableSectionExists ;
 }

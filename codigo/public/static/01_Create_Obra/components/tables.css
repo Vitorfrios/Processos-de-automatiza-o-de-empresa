@@ -6,6 +6,8 @@
   padding: var(--spacing-lg);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--color-gray-light);
+    overflow-x: auto;
+
 }
 
 .thermal-table-title {
@@ -21,6 +23,7 @@
 
 .thermal-table {
   width: 100%;
+  min-width: 300px;
   border-collapse: collapse;
   font-size: 0.9rem;
 }

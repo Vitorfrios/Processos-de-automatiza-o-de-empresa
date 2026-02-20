@@ -2,6 +2,7 @@
 // 🏗️ FUNÇÕES DE CONSTRUÇÃO HTML
 
 import { calculateVazaoArAndThermalGains } from '../../../features/calculations/air-flow.js';
+import { buildCapacityCalculationTable } from '../machines/capacity-calculator.js';
 
 /**
  * Constrói seção completa de climatização para uma sala específica
@@ -23,16 +24,32 @@ function buildClimatizationSection(obraId, projectId, roomName, finalRoomId) {
         <h4 class="section-title">Climatização</h4>
       </div>
       <div class="section-content collapsed" id="section-content-${roomId}-clima">
-        <div class="subsection-block">
-          <div class="subsection-header">
-            <button class="minimizer" onclick="toggleSubsection('${roomId}-clima-table')">+</button>
-            <h5 class="subsection-title">Tabela de Inputs</h5>
-          </div>
-          <div class="subsection-content collapsed" id="subsection-content-${roomId}-clima-table">
-            ${buildClimatizationTable(roomId, roomName)}
-          </div>
-        </div>
         ${buildThermalGainsSection(roomId)}
+        ${buildThermalSummaryRow(roomId)}
+        ${buildCapacityCalculationTable(finalRoomId)}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Constrói seção da tabela de inputs de climatização
+ */
+function buildTableSection(roomId, roomName = 'Sala') {
+    // ✅ CORREÇÃO: Validar ID único
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`ERRO FALBACK (buildTableSection) [Room ID inválido: ${roomId}]`);
+        return '';
+    }
+    
+    return `
+    <div class="section-block">
+      <div class="section-header">
+        <button class="minimizer" onclick="toggleSection('${roomId}-input-table')">+</button>
+        <h5 class="section-title">Tabela de Inputs</h5>
+      </div>
+      <div class="section-content collapsed" id="section-content-${roomId}-input-table">
+        ${buildClimatizationTable(roomId, roomName)}
       </div>
     </div>
   `;
@@ -118,10 +135,17 @@ function buildClimatizationTable(roomId, roomName = 'Sala') {
         field: "peDireito", 
         type: "number", 
         placeholder: "Ex: 3.0",
-        value: "3.0", // ✅ Valor base 3
-        step: "0.1"   // ✅ Aumento de 0.1 em 0.1
-      }, 
-      null
+        value: "3.0",
+        step: "0.1"
+      },
+      { 
+        label: "Volume (m³):", 
+        field: "volume", 
+        type: "text", 
+        readonly: true,
+        value: "0",
+        id: `volume-${roomId}`
+      }
     ],
     roomId,
   )}
@@ -167,15 +191,14 @@ function buildClimatizationTable(roomId, roomName = 'Sala') {
         field: "numPessoas", 
         type: "number", 
         placeholder: "Ex: 10",
-        value: "1", // ✅ Valor base 1
-        min: "1"    // ✅ Valor mínimo 1
+        value: "1",
+        min: "1"
       },
     ],
     roomId,
   )}
       ${buildPressurizationRow(roomId)}
       ${buildResultRow(roomId)}
-      ${buildThermalSummaryRow(roomId)}
     </div>
   `;
 }
@@ -327,6 +350,7 @@ function buildSelectInput(field, roomId) {
     </select>
   `;
 }
+
 /**
  * Constrói campo de input textual ou numérico
  */
@@ -339,14 +363,32 @@ function buildTextInput(field, roomId) {
     
     // ✅ CORREÇÃO: Suportar step customizado
     const step = field.step ? `step="${field.step}"` : (field.type === "number" ? 'step="1"' : "");
-    const min = field.min ? `min="${field.min}"` : (field.field.includes("num") ? 'min="0"' : "");
+    const min = field.min ? `min="${field.min}"` : (field.field && field.field.includes("num") ? 'min="0"' : "");
     const value = field.value ? `value="${field.value}"` : "";
-
-    // ✅ CORREÇÃO: Eventos de sincronização SIMPLIFICADOS
-    let onInputEvents = `onchange="calculateVazaoArAndThermalGains('${roomId}')"`;
+    const id = field.id ? `id="${field.id}"` : "";
+    const readonly = field.readonly ? 'readonly' : '';
+    
+    // Determinar eventos onchange
+    let onInputEvents = '';
+    
+    // Para campo de volume, não adicionar eventos de cálculo
+    if (field.field === 'volume') {
+        onInputEvents = '';
+    }
+    // Para campo de pé direito, adicionar evento específico para atualizar volume
+    else if (field.field === 'peDireito') {
+        onInputEvents = `onchange="updateRoomVolume(this); calculateVazaoArAndThermalGains('${roomId}')" oninput="updateRoomVolume(this)"`;
+    }
+    // Para campo de área, adicionar evento para atualizar volume
+    else if (field.field === 'area') {
+        onInputEvents = `onchange="updateRoomVolumeFromArea(this); calculateVazaoArAndThermalGains('${roomId}')"`;
+    }
+    else if (field.field && field.type !== "text") {
+        onInputEvents = `onchange="calculateVazaoArAndThermalGains('${roomId}')"`;
+    }
     
     // Sincronização para paredes
-    if (field.field.includes('parede')) {
+    if (field.field && field.field.includes('parede')) {
         onInputEvents += ` oninput="if(window.handleWallInputSync) window.handleWallInputSync('${roomId}', '${field.field}', this.value)"`;
     }
     
@@ -359,11 +401,14 @@ function buildTextInput(field, roomId) {
     <input
       type="${field.type}"
       class="form-input clima-input"
-      data-field="${field.field}"
-      placeholder="${field.placeholder}"
+      data-field="${field.field || ''}"
+      data-room-id="${roomId}"
+      placeholder="${field.placeholder || ''}"
       ${step}
       ${min}
       ${value}
+      ${id}
+      ${readonly}
       ${onInputEvents}
     >
   `;
@@ -432,7 +477,6 @@ function buildResultRow(roomId) {
     </div>
   `;
 }
-
 
 // =============================================================================
 // SEÇÃO: CONSTRUÇÃO DA INTERFACE DE RESULTADOS TÉRMICOS
@@ -744,6 +788,99 @@ function buildThermalGainsSection(roomId) {
   `
 }
 
+// =============================================================================
+// SEÇÃO: FUNÇÕES DE CÁLCULO DE VOLUME
+// =============================================================================
+
+/**
+ * Atualiza o campo de volume baseado na área e pé direito
+ * @param {HTMLElement} inputElement - Elemento do input de pé direito
+ */
+function updateRoomVolume(inputElement) {
+    // Obter o roomId do elemento
+    const roomId = inputElement.dataset.roomId;
+    if (!roomId) return;
+    
+    // Obter o valor do pé direito
+    const peDireito = parseFloat(inputElement.value) || 0;
+    
+    // Obter o valor da área
+    const areaInput = document.querySelector(`input[data-field="area"][data-room-id="${roomId}"]`);
+    const area = areaInput ? parseFloat(areaInput.value) || 0 : 0;
+    
+    // Calcular volume
+    const volume = area * peDireito;
+    
+    // Atualizar campo de volume
+    const volumeInput = document.querySelector(`input[data-field="volume"][data-room-id="${roomId}"]`);
+    if (volumeInput) {
+        volumeInput.value = volume.toFixed(2);
+    }
+}
+
+/**
+ * Atualiza o volume quando a área é modificada
+ * @param {HTMLElement} inputElement - Elemento do input de área
+ */
+function updateRoomVolumeFromArea(inputElement) {
+    const roomId = inputElement.dataset.roomId;
+    if (!roomId) return;
+    
+    const peDireitoInput = document.querySelector(`input[data-field="peDireito"][data-room-id="${roomId}"]`);
+    if (peDireitoInput) {
+        updateRoomVolume(peDireitoInput);
+    }
+}
+
+/**
+ * Inicializa os listeners para atualização automática do volume
+ * @param {string} roomId - ID da sala
+ */
+function initVolumeListeners(roomId) {
+    if (!roomId) return;
+    
+    // Listener para mudanças na área
+    const areaInput = document.querySelector(`input[data-field="area"][data-room-id="${roomId}"]`);
+    if (areaInput) {
+        // Remover listener anterior se existir
+        areaInput.removeEventListener('change', handleAreaChange);
+        areaInput.removeEventListener('input', handleAreaChange);
+        
+        // Adicionar novo listener
+        areaInput.addEventListener('change', function() {
+            updateRoomVolumeFromArea(this);
+        });
+    }
+    
+    // Listener para mudanças no pé direito
+    const peDireitoInput = document.querySelector(`input[data-field="peDireito"][data-room-id="${roomId}"]`);
+    if (peDireitoInput) {
+        // Remover listener anterior se existir
+        peDireitoInput.removeEventListener('input', handlePeDireitoInput);
+        peDireitoInput.removeEventListener('change', handlePeDireitoChange);
+        
+        // Adicionar novo listener
+        peDireitoInput.addEventListener('input', function() {
+            updateRoomVolume(this);
+        });
+        peDireitoInput.addEventListener('change', function() {
+            updateRoomVolume(this);
+        });
+    }
+}
+
+// Handlers auxiliares para remoção de listeners
+function handleAreaChange(e) {
+    updateRoomVolumeFromArea(e.target);
+}
+
+function handlePeDireitoInput(e) {
+    updateRoomVolume(e.target);
+}
+
+function handlePeDireitoChange(e) {
+    updateRoomVolume(e.target);
+}
 
 /**
  * Controla a exibição e estado dos campos de pressurização
@@ -786,6 +923,7 @@ function togglePressurizationFields(roomId, enabled) {
 // Exportar funções de construção
 export {
     buildClimatizationSection,
+    buildTableSection,
     buildClimatizationTable,
     buildClimaRow,
     buildClimaCell,
@@ -794,5 +932,12 @@ export {
     buildResultRow,
     buildThermalGainsSection,
     buildPressurizationRow,
-    togglePressurizationFields
+    togglePressurizationFields,
+    updateRoomVolume,
+    updateRoomVolumeFromArea,
+    initVolumeListeners
 };
+
+window.updateRoomVolume= updateRoomVolume,  
+window.updateRoomVolumeFromArea=updateRoomVolumeFromArea,
+window.initVolumeListeners= initVolumeListeners

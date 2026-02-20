@@ -3,7 +3,7 @@
 */
 
 import { ensureStringId } from '../../utils/id-generator.js';
-
+import { ensureTableSectionExists } from './data-fillers.js';
 
 /**
  * Renderiza uma sala individual a partir dos dados carregados
@@ -70,19 +70,14 @@ async function populateRoomData(roomElement, roomData) {
         return false;
     }
     
-    console.log(`🔄 Preenchendo sala "${roomName}" (ID: ${roomId})`, {
-        acessorios: roomData.acessorios?.length || 0,
-        dutos: roomData.dutos?.length || 0, // ✅ ADICIONADO: dutos
-        tubulacaoConjuntos: roomData.tubulacao?.conjuntos?.length || 0,
-        maquinas: roomData.maquinas?.length || 0
-    });
+    console.log(`🔄 Preenchendo sala "${roomName}" (ID: ${roomId})`);
 
     try {
-        // ✅ CORREÇÃO: Garantir que todas as seções existam antes de preencher
-        console.log(`🏗️ Garantindo que todas as seções existem para sala ${roomName}`);
-        const sectionsReady = await ensureAllRoomSections(roomElement);
-        if (!sectionsReady) {
-            console.warn(`⚠️ Não foi possível garantir todas as seções para ${roomName} - Continuando...`);
+        const tableExists = ensureTableSectionExists(roomElement);
+        if (!tableExists) {
+            setTimeout(() => {
+                console.warn(`⚠️ Tabela de inputs não encontrada para ${roomName}, criando...`);
+            }, 400);
         }
 
         const roomTitle = roomElement.querySelector('.room-title');
@@ -105,7 +100,7 @@ async function populateRoomData(roomElement, roomData) {
             console.log(`⚡ Preenchendo dados de capacidade para sala ${roomName}`);
             fillCapacityData(roomElement, roomData.capacidade);
         }
-
+        //adicionar ventilação
         // ✅ Preencher acessorios
         if (roomData.acessorios && Array.isArray(roomData.acessorios)) {
             console.log(`🔧 Preenchendo ${roomData.acessorios.length} acessorio(s) para sala ${roomName}`);

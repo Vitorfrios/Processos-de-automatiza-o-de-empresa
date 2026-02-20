@@ -92,13 +92,31 @@ async function calculateVazaoAr(roomId, calculateThermal = true) {
             return 0;
         }
 
-        const climaSection = findClimatizationSection(roomId);
-        if (!climaSection) {
-            console.error(`Seção de climatização não encontrada: ${roomId}`);
+        const tableSection = document.getElementById(`section-content-${roomId}-input-table`);
+        
+        // Fallback: se não encontrar a tabela, buscar inputs globalmente
+        let inputContainer = tableSection;
+        if (!tableSection) {
+            console.warn(`⚠️ Tabela de inputs não encontrada para ${roomId}, buscando inputs globalmente`);
+            inputContainer = document.querySelector(`[data-room-id="${roomId}"]`);
+        }
+
+        if (!inputContainer) {
+            console.error(`Seção não encontrada para sala: ${roomId}`);
             return 0;
         }
 
-        const inputData = collectClimatizationInputs(climaSection, roomId);
+        // ✅ CORREÇÃO: Coletar inputs do container correto
+        const inputData = collectClimatizationInputs(inputContainer, roomId);
+        
+        // Debug: verificar dados coletados
+        console.log(`📥 Dados coletados para cálculo de airflow (${roomId}):`, {
+            numPortasDuplas: inputData.numPortasDuplas,
+            numPortasSimples: inputData.numPortasSimples,
+            pressurizacao: inputData.pressurizacao,
+            pressurizacaoSetpoint: inputData.pressurizacaoSetpoint
+        });
+        
         const flowRate = computeAirFlowRate(inputData);
 
         updateFlowRateDisplay(roomId, flowRate);
@@ -116,6 +134,7 @@ async function calculateVazaoAr(roomId, calculateThermal = true) {
         return 0;
     }
 }
+
 
 /**
  * Coordena cálculo sequencial de vazão e ganhos térmicos

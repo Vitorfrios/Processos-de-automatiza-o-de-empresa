@@ -566,7 +566,6 @@ function exportSystemFunctionsForFilters() {
     
     // Funções que PRECISAM ser acessadas pelos filtros
     const criticalFunctions = [
-        'obra_m44_proj_z17_3_sala_w86_1_maq_q41 ', 
         'createEmptyObra',
         'populateObraData',
         'removeBaseObraFromHTML'
