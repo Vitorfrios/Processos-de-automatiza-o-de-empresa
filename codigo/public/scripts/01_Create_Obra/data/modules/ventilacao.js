@@ -1,6 +1,9 @@
 /**
  * MÓDULO DE VENTILAÇÃO - INTEGRAÇÃO COM SISTEMA DE MÁQUINAS EXISTENTE
  * @module data/modules/ventilacao.js
+ * 
+ * CORRIGIDO: Agora recalcula a solução sempre que os parâmetros mudam,
+ * mas respeita as edições manuais do usuário
  */
 
 // =============================================================================
@@ -84,35 +87,21 @@ function collectRoomInputs(roomId) {
     const tempInternaElement = document.getElementById(`temp-interna-${roomId}`);
     const tempExternaElement = document.getElementById(`temp-externa-${roomId}`);
     
-    console.log(`   - Elemento vazao-ar-${roomId}:`, vazaoArElement ? 'Encontrado' : 'NÃO ENCONTRADO');
-    console.log(`   - Elemento volume-${roomId}:`, volumeElement ? 'Encontrado' : 'NÃO ENCONTRADO');
-    console.log(`   - Elemento potencia-${roomId}:`, potenciaElement ? 'Encontrado' : 'NÃO ENCONTRADO');
-    
     // Para vazaoAr, pode ser um div com textContent ou um input
     if (vazaoArElement) {
         if (vazaoArElement.tagName === 'DIV' || vazaoArElement.classList.contains('result-value-inline')) {
             inputs.vazaoAr = parseFloat(vazaoArElement.textContent);
-            console.log(`   - vazaoAr (de div.textContent) = ${vazaoArElement.textContent} → ${inputs.vazaoAr}`);
         } else if (vazaoArElement.tagName === 'INPUT') {
             inputs.vazaoAr = parseFloat(vazaoArElement.value);
-            console.log(`   - vazaoAr (de input.value) = ${vazaoArElement.value} → ${inputs.vazaoAr}`);
         }
     } else {
         inputs.vazaoAr = null;
-        console.log(`   - vazaoAr = null (elemento não encontrado)`);
     }
     
     inputs.volume = volumeElement ? parseFloat(volumeElement.value) : null;
     inputs.potencia = potenciaElement ? parseFloat(potenciaElement.value) : null;
     inputs.tempInterna = tempInternaElement ? parseFloat(tempInternaElement.value) : 45;
     inputs.tempExterna = tempExternaElement ? parseFloat(tempExternaElement.value) : 35;
-    
-    console.log(`   - volume = ${inputs.volume}`);
-    console.log(`   - potencia = ${inputs.potencia}`);
-    console.log(`   - tempInterna = ${inputs.tempInterna}`);
-    console.log(`   - tempExterna = ${inputs.tempExterna}`);
-    
-    console.log(`📦 [collectRoomInputs] Inputs coletados:`, inputs);
     
     return inputs;
 }
@@ -125,108 +114,43 @@ function collectRoomInputs(roomId) {
  * CALCULA VAZÃO POR APLICAÇÃO
  */
 function calculateVazaoByAplicacao(aplicacao, roomId, inputs) {
-    console.log(`🔢 [calculateVazaoByAplicacao] Iniciando cálculo para:`);
-    console.log(`   - Aplicação: ${aplicacao}`);
-    console.log(`   - RoomId: ${roomId}`);
-    console.log(`   - Inputs recebidos:`, JSON.stringify(inputs, null, 2));
-    
     switch (aplicacao) {
         case 'pressurizacao': {
-            console.log(`📊 [PRESSURIZAÇÃO] Verificando inputs.vazaoAr:`);
-            console.log(`   - inputs.vazaoAr = ${inputs.vazaoAr} (tipo: ${typeof inputs.vazaoAr})`);
-            console.log(`   - isNaN(inputs.vazaoAr) = ${isNaN(inputs.vazaoAr)}`);
-            
             if (!inputs.vazaoAr || isNaN(inputs.vazaoAr)) {
-                console.warn(`⚠️ [PRESSURIZAÇÃO] Vazão de ar inválida ou não disponível`);
-                console.warn(`   - Valor: ${inputs.vazaoAr}`);
-                console.warn(`   - Elemento vazao-ar-${roomId} existe?`, 
-                    document.getElementById(`vazao-ar-${roomId}`) ? 'Sim' : 'Não');
                 return null;
             }
-            
-            const resultado = inputs.vazaoAr * FATOR_PRESSURIZACAO;
-            console.log(`✅ [PRESSURIZAÇÃO] Cálculo realizado:`);
-            console.log(`   - inputs.vazaoAr = ${inputs.vazaoAr}`);
-            console.log(`   - FATOR_PRESSURIZACAO = ${FATOR_PRESSURIZACAO}`);
-            console.log(`   - RESULTADO = ${resultado} m³/h`);
-            return resultado;
+            return inputs.vazaoAr * FATOR_PRESSURIZACAO;
         }
         
         case 'exaustao_bateria': {
-            console.log(`📊 [EXAUSTÃO BATERIA] Verificando inputs.volume:`);
-            console.log(`   - inputs.volume = ${inputs.volume} (tipo: ${typeof inputs.volume})`);
-            console.log(`   - isNaN(inputs.volume) = ${isNaN(inputs.volume)}`);
-            
             if (!inputs.volume || isNaN(inputs.volume)) {
-                console.warn(`⚠️ [EXAUSTÃO BATERIA] Volume inválido ou não disponível`);
-                console.warn(`   - Valor: ${inputs.volume}`);
-                console.warn(`   - Elemento volume-${roomId} existe?`, 
-                    document.getElementById(`volume-${roomId}`) ? 'Sim' : 'Não');
                 return null;
             }
-            
-            const resultado = inputs.volume * 12;
-            console.log(`✅ [EXAUSTÃO BATERIA] Cálculo realizado:`);
-            console.log(`   - inputs.volume = ${inputs.volume}`);
-            console.log(`   - RESULTADO = ${resultado} m³/h`);
-            return resultado;
+            return inputs.volume * 12;
         }
         
         case 'exaustao_baia_trafo': {
-            console.log(`📊 [EXAUSTÃO TRAFO] Verificando inputs:`);
-            console.log(`   - inputs.potencia = ${inputs.potencia} (tipo: ${typeof inputs.potencia})`);
-            console.log(`   - inputs.tempInterna = ${inputs.tempInterna}`);
-            console.log(`   - inputs.tempExterna = ${inputs.tempExterna}`);
-            
             if (!inputs.potencia || isNaN(inputs.potencia)) {
-                console.warn(`⚠️ [EXAUSTÃO TRAFO] Potência inválida ou não disponível`);
-                console.warn(`   - Valor: ${inputs.potencia}`);
-                console.warn(`   - Elemento potencia-${roomId} existe?`, 
-                    document.getElementById(`potencia-${roomId}`) ? 'Sim' : 'Não');
                 return null;
             }
             
             const deltaT = inputs.tempInterna - inputs.tempExterna;
             const deltaTAbs = Math.abs(deltaT);
             
-            console.log(`   - deltaT calculado = ${deltaT}`);
-            console.log(`   - deltaTAbs = ${deltaTAbs}`);
-            
             if (deltaTAbs === 0) {
-                console.warn(`⚠️ [EXAUSTÃO TRAFO] Delta T é zero, não é possível calcular`);
                 return null;
             }
             
             const constants = getSystemConstants();
-            console.log(`   - Constantes obtidas:`, constants);
-            
-            if (!constants) {
-                console.error(`❌ [EXAUSTÃO TRAFO] Não foi possível obter constantes do sistema`);
-                return null;
-            }
-            
             const Q = inputs.potencia * FATOR_CONVERSAO_W_CAL;
-            console.log(`   - Q (cal/h) = ${inputs.potencia} * ${FATOR_CONVERSAO_W_CAL} = ${Q}`);
-            
             const massaGR = Q / (constants.fatorEspecifico * deltaTAbs);
-            console.log(`   - massaGR = ${Q} / (${constants.fatorEspecifico} * ${deltaTAbs}) = ${massaGR} g/h`);
-            
             const massaAr = massaGR / 1000;
-            console.log(`   - massaAr = ${massaGR} / 1000 = ${massaAr} kg/h`);
-            
             const vazao = massaAr / constants.Densi_ar;
-            console.log(`   - vazao = ${massaAr} / ${constants.Densi_ar} = ${vazao} m³/h`);
             
-            const resultado = deltaT < 0 ? -vazao : vazao;
-            console.log(`✅ [EXAUSTÃO TRAFO] Resultado final:`);
-            console.log(`   - deltaT < 0? ${deltaT < 0}`);
-            console.log(`   - RESULTADO = ${resultado} m³/h`);
-            
-            return resultado;
+            return deltaT < 0 ? -vazao : vazao;
         }
         
         default:
-            console.warn(`⚠️ [calculateVazaoByAplicacao] Aplicação desconhecida: ${aplicacao}`);
             return null;
     }
 }
@@ -235,9 +159,6 @@ function calculateVazaoByAplicacao(aplicacao, roomId, inputs) {
 // ATUALIZAÇÃO DAS TABELAS
 // =============================================================================
 
-/**
- * ATUALIZA TABELA 1 - Cálculo Técnico
- */
 /**
  * ATUALIZA TABELA 1 - Cálculo Técnico
  */
@@ -255,7 +176,7 @@ function updateTechnicalTable(roomId, inputs) {
         Object.values(elements).forEach(el => {
             if (el) {
                 el.textContent = '-';
-                el.classList.remove('negative'); // Remove classe negativa se existir
+                el.classList.remove('negative');
             }
         });
         return;
@@ -287,13 +208,11 @@ function updateTechnicalTable(roomId, inputs) {
             vazao = 0;
         }
         
-        // Atualiza Q (cal/h) - sempre positivo
         if (elements.q) {
             elements.q.textContent = formatNumber(Q);
             elements.q.classList.remove('negative');
         }
         
-        // Atualiza ΔT com classe negativa se necessário
         if (elements.deltaT) {
             elements.deltaT.textContent = formatNumber(deltaT, 1);
             if (deltaT < 0) {
@@ -303,7 +222,6 @@ function updateTechnicalTable(roomId, inputs) {
             }
         }
         
-        // Atualiza Massa (gramas) com classe negativa se necessário
         if (elements.massaGrama) {
             elements.massaGrama.textContent = formatNumber(massaGR);
             if (massaGR < 0) {
@@ -313,7 +231,6 @@ function updateTechnicalTable(roomId, inputs) {
             }
         }
         
-        // Atualiza Massa de Ar (kg/h) com classe negativa se necessário
         if (elements.massa) {
             elements.massa.textContent = formatNumber(massaAr);
             if (massaAr < 0) {
@@ -323,7 +240,6 @@ function updateTechnicalTable(roomId, inputs) {
             }
         }
         
-        // Atualiza Vazão (m³/h) com classe negativa se necessário
         if (elements.vazao) {
             elements.vazao.textContent = formatNumber(vazao);
             if (vazao < 0) {
@@ -344,7 +260,6 @@ function updateTechnicalTable(roomId, inputs) {
 function updateSolutionTable(roomId, inputs) {
     const machinesContainer = document.getElementById(`machines-${roomId}`);
     if (!machinesContainer) {
-        // Agenda retry se container não existir
         setTimeout(() => updateSolutionTable(roomId, inputs), 500);
         return;
     }
@@ -359,13 +274,11 @@ function updateSolutionTable(roomId, inputs) {
     
     let hasVentilationMachines = false;
     
-    // 🔥 PRIMEIRO: Calcula a vazão necessária para a sala (independente das máquinas)
+    // Calcula a vazão necessária para a sala
     let vazaoNecessaria = null;
     let vazaoNecessariaAbs = null;
-    let aplicacaoSala = null;
     
     // Pega a primeira máquina de ventilação para determinar a aplicação da sala
-    // (assumimos que todas as máquinas na sala têm a mesma aplicação de ventilação)
     for (const machine of machines) {
         const machineId = machine.dataset.machineId;
         const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
@@ -373,7 +286,6 @@ function updateSolutionTable(roomId, inputs) {
         
         const aplicacao = aplicacaoSelect.value;
         if (VALID_APPLICATIONS.includes(aplicacao)) {
-            aplicacaoSala = aplicacao;
             vazaoNecessaria = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
             if (vazaoNecessaria !== null && !isNaN(vazaoNecessaria)) {
                 vazaoNecessariaAbs = Math.abs(vazaoNecessaria);
@@ -382,10 +294,7 @@ function updateSolutionTable(roomId, inputs) {
         }
     }
     
-    // Formata a vazão necessária para exibição (usada como referência)
-    const vazaoNecessariaDisplay = vazaoNecessariaAbs ? formatNumber(vazaoNecessariaAbs) : '-';
-    
-    // Itera sobre TODAS as máquinas
+    // Itera sobre todas as máquinas
     machines.forEach(machine => {
         const machineId = machine.dataset.machineId;
         
@@ -393,96 +302,127 @@ function updateSolutionTable(roomId, inputs) {
         const tipoSelect = document.getElementById(`tipo-${machineId}`);
         const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
         const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
-        const qntInput = document.getElementById(`solution-${machineId}`); // Input de quantidade da máquina
+        const qntInput = document.getElementById(`solution-${machineId}`);
         
         if (!titleInput || !tipoSelect || !aplicacaoSelect || !capacidadeSelect || !qntInput) return;
         
         const aplicacao = aplicacaoSelect.value;
         
-        // 🚫 SE FOR CLIMATIZAÇÃO OU APLICAÇÃO VAZIA, PULA COMPLETAMENTE (NÃO MOSTRA NA TABELA)
+        // Pula se for climatização ou aplicação vazia
         if (aplicacao === 'climatizacao' || !aplicacao) {
             return;
         }
         
-        const aplicacaoTexto = APPLICATION_TEXT_MAP[aplicacao] || aplicacao || 'Não definido';
+        const aplicacaoTexto = APPLICATION_TEXT_MAP[aplicacao] || aplicacao;
         const titulo = titleInput.value || 'Máquina sem nome';
         const tipo = tipoSelect.options[tipoSelect.selectedIndex]?.text || 'Não definido';
         
-        // Extrai capacidade se existir
+        // Extrai capacidade
         const capacidadeValue = extractCapacidadeValue(capacidadeSelect.value);
         const capacidadeDisplay = capacidadeValue ? formatNumber(capacidadeValue) : '-';
         
-        // 🔥 CÁLCULOS SEPARADOS:
-        // 1. VAZÃO: depende apenas da aplicação e inputs (independente da capacidade)
-        // 2. SOLUÇÃO/PERDA/DISSIPAÇÃO: dependem da capacidade selecionada
-        
-        // Sempre calcula a vazão para esta máquina (baseado na aplicação)
-        // Só calcula se for uma aplicação válida
-        let vazaoMaquinaAbs = null;
+        // Calcula vazão da máquina
         let vazaoMaquinaDisplay = '-';
-        
         if (VALID_APPLICATIONS.includes(aplicacao)) {
             const vazaoMaquina = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
             if (vazaoMaquina !== null && !isNaN(vazaoMaquina)) {
-                vazaoMaquinaAbs = Math.abs(vazaoMaquina);
-                vazaoMaquinaDisplay = formatNumber(vazaoMaquinaAbs);
+                vazaoMaquinaDisplay = formatNumber(Math.abs(vazaoMaquina));
             }
         }
         
-        // Variáveis para solução, perda e dissipação (dependem da capacidade)
-        let solucaoValue = '-';
+        // 🔥 SISTEMA DE CONTROLE DE EDIÇÃO DO USUÁRIO - CORRIGIDO
+        // Inicializa o atributo se não existir
+        if (!qntInput.hasAttribute('data-user-edited')) {
+            qntInput.setAttribute('data-user-edited', 'false');
+        }
+        
+        // 🔥 CALCULA A SOLUÇÃO (valor teórico)
+        let solucaoNumerica = 1;
+        if (capacidadeValue && vazaoNecessariaAbs) {
+            solucaoNumerica = Math.ceil(vazaoNecessariaAbs / capacidadeValue);
+        }
+        
+        // 🔥 REGRA DE NEGÓCIO CORRIGIDA PARA QUANTIDADE:
+        // - Se NUNCA foi editado OU se os parâmetros mudaram: QUANTIDADE = SOLUÇÃO
+        // - Se JÁ foi editado E os parâmetros NÃO mudaram: MANTÉM valor manual
+        
+        // Verifica se os parâmetros críticos mudaram
+        const lastParams = qntInput.getAttribute('data-last-params') || '';
+        const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
+        
+        const userEdited = qntInput.getAttribute('data-user-edited') === 'true';
+        const paramsChanged = lastParams !== currentParams;
+        
+        // Se os parâmetros mudaram, o usuário precisa re-editar para manter o valor manual
+        if (paramsChanged) {
+            // 🔥 RESETA O FLAG DE EDIÇÃO QUANDO OS PARÂMETROS MUDAM
+            qntInput.setAttribute('data-user-edited', 'false');
+            
+            // Atualiza a quantidade para a nova solução
+            qntInput.value = solucaoNumerica;
+            
+            // Salva os novos parâmetros
+            qntInput.setAttribute('data-last-params', currentParams);
+            
+            console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} resetada para ${solucaoNumerica}`);
+            
+            // Recalcula preço
+            if (window.calculateMachinePrice) {
+                window.calculateMachinePrice(machineId);
+            }
+        } else if (!userEdited) {
+            // Se nunca foi editado e parâmetros não mudaram, usa a solução
+            const currentValue = parseInt(qntInput.value) || 1;
+            if (currentValue !== solucaoNumerica) {
+                qntInput.value = solucaoNumerica;
+                
+                if (window.calculateMachinePrice) {
+                    window.calculateMachinePrice(machineId);
+                }
+                
+                console.log(`📊 [Ventilação] Quantidade da máquina ${machineId} inicializada para ${solucaoNumerica}`);
+            }
+        }
+        
+        // Salva os parâmetros atuais se ainda não existirem
+        if (!qntInput.hasAttribute('data-last-params')) {
+            qntInput.setAttribute('data-last-params', currentParams);
+        }
+        
+        // Obtém a quantidade ATUAL (pode ser automática ou manual)
+        const quantidadeAtual = parseInt(qntInput.value) || 1;
+        
+        // 🔥 CALCULA PERDA E DISSIPAÇÃO com a quantidade ATUAL
         let perdaDisplay = '-';
         let dissipacaoDisplay = '-';
+        let dissipacaoClass = '';
         
-        // Só calcula solução/perda/dissipação se tiver capacidade E vazão necessária
         if (capacidadeValue && vazaoNecessariaAbs) {
-            // Solução = Vazão Necessária / Capacidade (arredondado para cima)
-            solucaoValue = Math.ceil(vazaoNecessariaAbs / capacidadeValue);
-            
-            // Perda = Capacidade * Quantidade
-            const perdaValue = capacidadeValue * solucaoValue;
+            // Perda = Capacidade * Quantidade ATUAL
+            const perdaValue = capacidadeValue * quantidadeAtual;
             perdaDisplay = formatNumber(perdaValue);
             
             // Dissipação = Perda - Vazão Necessária
             const dissipacaoValue = perdaValue - vazaoNecessariaAbs;
             dissipacaoDisplay = formatNumber(dissipacaoValue);
             
-            // 🔥 ATUALIZA O CAMPO QUANTIDADE DA MÁQUINA COM O VALOR DA SOLUÇÃO
-            if (qntInput) {
-                const currentValue = parseInt(qntInput.value) || 1;
-                if (currentValue !== solucaoValue) {
-                    qntInput.value = solucaoValue;
-                    
-                    if (window.calculateMachinePrice) {
-                        window.calculateMachinePrice(machineId);
-                    }
-                    
-                    console.log(`📊 [Ventilação] Quantidade da máquina ${machineId} atualizada para ${solucaoValue} (solução calculada)`);
-                }
-            }
-        }
-        
-        // ✅ MOSTRA APENAS MÁQUINAS DE VENTILAÇÃO
-        const row = document.createElement('tr');
-        row.dataset.machineId = machine.machineId;
-        
-        // Calcula se dissipação é negativa (se tivermos o valor)
-        let dissipacaoClass = '';
-        if (dissipacaoDisplay !== '-') {
-            // Converte de volta para número (considerando formato brasileiro)
-            const dissipacaoNum = parseFloat(dissipacaoDisplay.replace(/\./g, '').replace(',', '.'));
-            if (dissipacaoNum < 0) {
+            if (dissipacaoValue < 0) {
                 dissipacaoClass = 'class="negative"';
             }
         }
+        
+        // Cria a linha da tabela - AGORA COM COLUNA "Qtd. Atual"
+        const row = document.createElement('tr');
+        row.dataset.machineId = machine.machineId;
         
         row.innerHTML = `
             <td><span id="solucao-title-${machine.machineId}" class="solution-title">${titulo}</span></td>
             <td><span id="solucao-tipo-${machine.machineId}" class="solution-type">${tipo}</span></td>
             <td><span id="solucao-aplicacao-${machine.machineId}" class="solution-application">${aplicacaoTexto}</span></td>
             <td><span id="solucao-capacidade-${machine.machineId}" class="solution-capacity">${capacidadeDisplay}</span></td>
-            <td><span id="solucao-qtd-${machine.machineId}" class="solution-quantity">${solucaoValue}</span></td>
+            <td><span id="solucao-qtd-${machine.machineId}" class="solution-quantity">${solucaoNumerica}</span></td>
             <td><span id="solucao-vazao-${machine.machineId}" class="solution-flow">${vazaoMaquinaDisplay}</span></td>
+            <td><span id="solucao-qtd-atual-${machine.machineId}" class="solution-current-quantity" style="font-weight: bold; color: #2563eb;">${quantidadeAtual}</span></td>
             <td><span id="solucao-perda-${machine.machineId}" class="solution-loss">${perdaDisplay}</span></td>
             <td><span id="solucao-dissipacao-${machine.machineId}" class="solution-dissipation" ${dissipacaoClass}>${dissipacaoDisplay}</span></td>
         `;
@@ -491,113 +431,109 @@ function updateSolutionTable(roomId, inputs) {
         hasVentilationMachines = true;
     });
     
-    // Se não há nenhuma máquina de ventilação, mostra mensagem
+    // Mensagem se não há máquinas de ventilação
     if (!hasVentilationMachines) {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td colspan="8" style="text-align: center; padding: 20px; color: var(--color-gray-500);">
+            <td colspan="9" style="text-align: center; padding: 20px; color: var(--color-gray-500);">
                 Nenhuma máquina com aplicação válida para ventilação
             </td>
         `;
         tableBody.appendChild(row);
     }
     
-    // 🔥 Atualiza o total de todas as máquinas após as mudanças nas quantidades
     if (window.updateAllMachinesTotal) {
         window.updateAllMachinesTotal(roomId);
     }
 }
 
 // =============================================================================
-// HANDLERS DE EVENTOS (GLOBAIS)
+// HANDLER DE EDIÇÃO MANUAL
 // =============================================================================
 
 /**
- * Handler para mudança na aplicação
+ * Handler para quando o usuário edita manualmente a quantidade
  */
-window.handleVentilacaoAplicacaoChange = function(machineId) {
-    const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
-    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
-    const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
-    const roomId = machine?.dataset.roomId;
-    
-    if (!roomId) return;
-    
-    const aplicacao = aplicacaoSelect?.value;
-    
-    // Habilita/desabilita select de capacidade baseado na aplicação
-    if (capacidadeSelect) {
-        capacidadeSelect.disabled = !VALID_APPLICATIONS.includes(aplicacao);
-        if (capacidadeSelect.disabled) {
-            capacidadeSelect.value = '';
+window.handleManualQuantityEdit = function(machineId) {
+    const qntInput = document.getElementById(`solution-${machineId}`);
+    if (qntInput) {
+        // Marca que o usuário editou manualmente
+        qntInput.setAttribute('data-user-edited', 'true');
+        
+        // 🔥 SALVA OS PARÂMETROS ATUAIS PARA REFERÊNCIA FUTURA
+        const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
+        const roomId = machine?.dataset.roomId;
+        
+        if (roomId) {
+            const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
+            const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
+            
+            const aplicacao = aplicacaoSelect?.value || '';
+            const capacidadeValue = extractCapacidadeValue(capacidadeSelect?.value);
+            
+            // Calcula vazão necessária
+            const inputs = collectRoomInputs(roomId);
+            let vazaoNecessariaAbs = null;
+            
+            if (VALID_APPLICATIONS.includes(aplicacao)) {
+                const vazaoNecessaria = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
+                if (vazaoNecessaria !== null && !isNaN(vazaoNecessaria)) {
+                    vazaoNecessariaAbs = Math.abs(vazaoNecessaria);
+                }
+            }
+            
+            const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
+            qntInput.setAttribute('data-last-params', currentParams);
+        }
+        
+        console.log(`📝 [Ventilação] Usuário editou manualmente quantidade da máquina ${machineId}`);
+        
+        // Dispara o recalculo da ventilação para atualizar perda/dissipação
+        if (roomId) {
+            setTimeout(() => {
+                refreshVentilationForRoom(roomId);
+            }, 50);
+        }
+        
+        if (window.calculateMachinePrice) {
+            window.calculateMachinePrice(machineId);
         }
     }
-    
-    // Atualiza ventilação
-    refreshVentilationForRoom(roomId);
-};
-
-/**
- * Handler para mudança na capacidade
- */
-window.handleVentilacaoPowerChange = function(machineId) {
-    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
-    const machine = capacidadeSelect?.closest('.climatization-machine');
-    const roomId = machine?.dataset.roomId;
-    
-    if (roomId) {
-        refreshVentilationForRoom(roomId);
-    }
-};
-
-/**
- * Handler para mudança no tipo
- */
-window.handleVentilacaoTipoChange = function(machineId) {
-    const tipoSelect = document.getElementById(`tipo-${machineId}`);
-    const machine = tipoSelect?.closest('.climatization-machine');
-    const roomId = machine?.dataset.roomId;
-    
-    if (roomId) {
-        refreshVentilationForRoom(roomId);
-    }
-};
-
-// =============================================================================
-// FUNÇÃO PRINCIPAL DE REFRESH
-// =============================================================================
-
-/**
- * REFRESH COMPLETO DA SEÇÃO DE VENTILAÇÃO
- */
-window.refreshVentilationForRoom = function(roomId) {
-    // Só processa se for um ID de sala válido
-    if (!roomId || !roomId.includes('_proj_') || !roomId.includes('_sala_')) {
-        return;
-    }
-    
-    // Aguarda constantes do sistema
-    if (!window.systemConstants) {
-        setTimeout(() => refreshVentilationForRoom(roomId), 500);
-        return;
-    }
-    
-    // Usa requestAnimationFrame para evitar múltiplas atualizações
-    if (window[`_vent_frame_${roomId}`]) {
-        cancelAnimationFrame(window[`_vent_frame_${roomId}`]);
-    }
-    
-    window[`_vent_frame_${roomId}`] = requestAnimationFrame(() => {
-        const inputs = collectRoomInputs(roomId);
-        updateTechnicalTable(roomId, inputs);
-        updateSolutionTable(roomId, inputs);
-        delete window[`_vent_frame_${roomId}`];
-    });
 };
 
 // =============================================================================
 // CONFIGURAÇÃO DE LISTENERS
 // =============================================================================
+
+/**
+ * Configura listener para input de quantidade
+ */
+function setupQuantityInputListener(machineId) {
+    const qntInput = document.getElementById(`solution-${machineId}`);
+    if (qntInput) {
+        // Remove listener antigo
+        if (qntInput._manualEditHandler) {
+            qntInput.removeEventListener('change', qntInput._manualEditHandler);
+            qntInput.removeEventListener('input', qntInput._manualEditHandler);
+        }
+        
+        // Adiciona novo handler
+        qntInput._manualEditHandler = function() {
+            window.handleManualQuantityEdit(machineId);
+        };
+        
+        qntInput.addEventListener('change', qntInput._manualEditHandler);
+        qntInput.addEventListener('input', qntInput._manualEditHandler);
+        
+        // Inicializa os atributos
+        if (!qntInput.hasAttribute('data-user-edited')) {
+            qntInput.setAttribute('data-user-edited', 'false');
+        }
+        if (!qntInput.hasAttribute('data-last-params')) {
+            qntInput.setAttribute('data-last-params', '');
+        }
+    }
+}
 
 /**
  * Configura listeners para inputs técnicos
@@ -614,16 +550,23 @@ function setupTechnicalListeners(roomId) {
     inputIds.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
-            // Remove listener antigo se existir
             if (element._ventListener) {
                 element.removeEventListener('input', element._ventListener);
                 element.removeEventListener('change', element._ventListener);
             }
             
-            // Cria novo listener
             element._ventListener = () => refreshVentilationForRoom(roomId);
             element.addEventListener('input', element._ventListener);
             element.addEventListener('change', element._ventListener);
+        }
+    });
+    
+    // Configura listeners para inputs de quantidade
+    const machines = document.querySelectorAll(`[data-room-id="${roomId}"]`);
+    machines.forEach(container => {
+        const machineId = container.dataset.machineId;
+        if (machineId) {
+            setupQuantityInputListener(machineId);
         }
     });
 }
@@ -632,21 +575,33 @@ function setupTechnicalListeners(roomId) {
  * Configura observer para novas máquinas
  */
 function setupMachinesObserver(roomId) {
-    // Se já tem observer para esta sala, não cria outro
     if (ventilationState.get(roomId)?.observer) return;
     
     const observer = new MutationObserver((mutations) => {
         let shouldRefresh = false;
         
         mutations.forEach(mutation => {
-            // Verifica se foram adicionadas/removidas máquinas
             if (mutation.type === 'childList') {
                 if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
                     shouldRefresh = true;
+                    
+                    // Configura listeners para novas máquinas
+                    if (mutation.addedNodes.length > 0) {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === 1) {
+                                const newMachines = node.querySelectorAll('[data-machine-id]');
+                                newMachines.forEach(machine => {
+                                    const machineId = machine.dataset.machineId;
+                                    if (machineId) {
+                                        setupQuantityInputListener(machineId);
+                                    }
+                                });
+                            }
+                        });
+                    }
                 }
             }
             
-            // Verifica se foram alterados atributos (como value de selects)
             if (mutation.type === 'attributes') {
                 const target = mutation.target;
                 if (target.id?.startsWith('aplicacao-') || 
@@ -662,7 +617,6 @@ function setupMachinesObserver(roomId) {
         }
     });
     
-    // Observa o container de máquinas e toda a árvore abaixo
     const machinesContainer = document.getElementById(`machines-${roomId}`);
     if (machinesContainer) {
         observer.observe(machinesContainer, {
@@ -676,40 +630,104 @@ function setupMachinesObserver(roomId) {
     }
 }
 
-/**
- * Configura tudo para uma sala
- */
-function setupVentilationForRoom(roomId) {
-    // Só configura se for ID de sala válido
+// =============================================================================
+// FUNÇÃO PRINCIPAL DE REFRESH
+// =============================================================================
+
+window.refreshVentilationForRoom = function(roomId) {
     if (!roomId || !roomId.includes('_proj_') || !roomId.includes('_sala_')) {
         return;
     }
     
-    // Evita configurar múltiplas vezes
+    if (!window.systemConstants) {
+        setTimeout(() => refreshVentilationForRoom(roomId), 500);
+        return;
+    }
+    
+    if (window[`_vent_frame_${roomId}`]) {
+        cancelAnimationFrame(window[`_vent_frame_${roomId}`]);
+    }
+    
+    window[`_vent_frame_${roomId}`] = requestAnimationFrame(() => {
+        const inputs = collectRoomInputs(roomId);
+        updateTechnicalTable(roomId, inputs);
+        updateSolutionTable(roomId, inputs);
+        delete window[`_vent_frame_${roomId}`];
+    });
+};
+
+// =============================================================================
+// HANDLERS DE EVENTOS (GLOBAIS)
+// =============================================================================
+
+window.handleVentilacaoAplicacaoChange = function(machineId) {
+    const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
+    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
+    const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
+    const roomId = machine?.dataset.roomId;
+    
+    if (!roomId) return;
+    
+    const aplicacao = aplicacaoSelect?.value;
+    
+    if (capacidadeSelect) {
+        capacidadeSelect.disabled = !VALID_APPLICATIONS.includes(aplicacao);
+        if (capacidadeSelect.disabled) {
+            capacidadeSelect.value = '';
+        }
+    }
+    
+    refreshVentilationForRoom(roomId);
+};
+
+window.handleVentilacaoPowerChange = function(machineId) {
+    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
+    const machine = capacidadeSelect?.closest('.climatization-machine');
+    const roomId = machine?.dataset.roomId;
+    
+    if (roomId) {
+        refreshVentilationForRoom(roomId);
+    }
+};
+
+window.handleVentilacaoTipoChange = function(machineId) {
+    const tipoSelect = document.getElementById(`tipo-${machineId}`);
+    const machine = tipoSelect?.closest('.climatization-machine');
+    const roomId = machine?.dataset.roomId;
+    
+    if (roomId) {
+        refreshVentilationForRoom(roomId);
+    }
+};
+
+// =============================================================================
+// CONFIGURAÇÃO INICIAL
+// =============================================================================
+
+function setupVentilationForRoom(roomId) {
+    if (!roomId || !roomId.includes('_proj_') || !roomId.includes('_sala_')) {
+        return;
+    }
+    
     if (ventilationState.get(roomId)?.configured) return;
     
-    // Configura listeners dos inputs técnicos
     setupTechnicalListeners(roomId);
     
-    // Tenta configurar observer para máquinas
     const checkContainer = setInterval(() => {
         const container = document.getElementById(`machines-${roomId}`);
         if (container) {
             clearInterval(checkContainer);
             setupMachinesObserver(roomId);
             
-            // Marca como configurado
             ventilationState.set(roomId, { 
                 ...ventilationState.get(roomId),
                 configured: true 
             });
             
-            // Faz primeira atualização
             refreshVentilationForRoom(roomId);
         }
     }, 500);
     
-    // Guarda o intervalo para poder limpar depois
     ventilationState.set(roomId, { 
         ...ventilationState.get(roomId),
         checkInterval: checkContainer 
@@ -720,30 +738,23 @@ function setupVentilationForRoom(roomId) {
 // FUNÇÃO PRINCIPAL EXPORTADA
 // =============================================================================
 
-/**
- * CONSTRÓI SEÇÃO DE VENTILAÇÃO
- * @param {string} roomId - ID completo da sala (ex: obra_t33_proj_e71_3_sala_1)
- * @returns {string} HTML da seção
- */
 export function buildVentilacaoSection(roomId) {
     if (!roomId || roomId === 'undefined' || roomId === 'null') {
         console.error(`❌ buildVentilacaoSection: Room ID inválido`);
         return '';
     }
     
-    // Valida formato do ID
     if (!roomId.includes('_proj_') || !roomId.includes('_sala_')) {
         console.warn(`⚠️ ID não parece ser de sala: ${roomId}`);
         return '';
     }
     
-    // Agenda configuração após inserção no DOM
     setTimeout(() => {
         setupVentilationForRoom(roomId);
     }, 100);
     
     return `
-    <div class="section-block ventilation-section" id="ventilacao-section-${roomId}">
+    <div class="section-block ventilation-section" id="ventilacao-section-${roomId}" data-room-id="${roomId}">
       <div class="section-header">
         <button class="minimizer" onclick="toggleSection('${roomId}ventilacao')">+</button>
         <h4 class="section-title">Ventilação</h4>
@@ -819,27 +830,30 @@ export function buildVentilacaoSection(roomId) {
               <thead>
                 <tr>
                   <th>Nome da Máquina</th>
-                  <th>Tipo</th>
+                  <th>Tipo de Ventilador / Filtro</th>
                   <th>Aplicação</th>
-                  <th>Capacidade (m³/h)</th>
+                  <th>Capacidade Unitária (m³/h)</th>
                   <th>Solução (Qtd)</th>
                   <th>Vazão da Máquina (m³/h)</th>
-                  <th>Perda (m³/h)</th>
-                  <th>Dissipação (m³/h)</th>
+                  <th>Qnt Instalada</th>
+                  <th>Capacidade Total Instalada (m³/h)</th>
+                  <th>Saldo de Vazão (m³/h)</th>
                 </tr>
               </thead>
               <tbody id="solucao-body-${roomId}">
                 <tr>
-                  <td colspan="6" style="text-align: center; padding: 20px; color: var(--color-gray-500);">
+                  <td colspan="9" style="text-align: center; padding: 20px; color: var(--color-gray-500);">
                     Aguardando máquinas...
                   </td>
                 </tr>
               </tbody>
             </table>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px; font-style: italic;">
+              * Quantidade atual utilizada nos cálculos de Perda e Dissipação
+            </p>
           </div>
         </div>
       </div>
     </div>
   `;
 }
-
