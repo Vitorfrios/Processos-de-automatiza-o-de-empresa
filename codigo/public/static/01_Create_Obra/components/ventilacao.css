@@ -249,16 +249,23 @@
   font-size: 1rem;
 }
 
-.machines-solution-table td:nth-child(6) { /* Vazão */
+.machines-solution-table td:nth-child(7) { /* Vazão */
   background: var(--table-cell-bg);
   font-weight: 600;
   color: var(--table-cell-total-color);
 }
 
-/* Valores negativos em vermelho */
-.machines-solution-table td:nth-child(6) span.negative,
-.solution-flow.negative {
+/* VALORES NEGATIVOS (Déficit) - Vermelho */
+.machines-solution-table td:nth-child(9) span.solution-balance.negative,
+.solution-balance.negative {
   color: #dc3545;
+  font-weight: 700;
+}
+
+/* VALORES POSITIVOS (Excedente) - Verde */
+.machines-solution-table td:nth-child(9) span.solution-balance.positive,
+.solution-balance.positive {
+  color: #10b981;
   font-weight: 700;
 }
 

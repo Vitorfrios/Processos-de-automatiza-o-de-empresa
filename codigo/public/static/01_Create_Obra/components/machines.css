@@ -242,7 +242,7 @@
   background: var(--price-display-bg);
   border: 2px solid var(--price-display-border);
   border-radius: var(--border-radius);
-  padding: var(--price-display-padding);
+  padding: 0.6rem;
   font-weight: 600;
   color: var(--price-display-color);
   text-align: center;
