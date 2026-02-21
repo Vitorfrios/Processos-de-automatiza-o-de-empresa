@@ -202,7 +202,7 @@ function getGenericCapacityValue(powerText) {
 /**
  * 🆕 ATUALIZA QUANTIDADE COM BASE NA APLICAÇÃO
  * Se aplicação for "climatizacao" → preenche com valor do backup
- * Se não → muda para 1
+ * Se não → MANTÉM a quantidade atual (não altera)
  */
 function handleAplicacaoChange(machineId) {
     console.log(`🔄 Aplicação alterada na máquina ${machineId}`);
@@ -217,8 +217,13 @@ function handleAplicacaoChange(machineId) {
     if (!aplicacaoSelect || !qntInput || !roomId) return;
     
     const aplicacao = aplicacaoSelect.value;
+    const quantidadeAtual = qntInput.value;
+    
+    console.log(`   - Aplicação selecionada: ${aplicacao}`);
+    console.log(`   - Quantidade atual: ${quantidadeAtual}`);
     
     if (aplicacao === "climatizacao") {
+        // Para climatização, tenta pegar do backup
         const backupElement = document.getElementById(`solucao-backup-${roomId}`);
         if (backupElement) {
             const backupText = backupElement.textContent.trim();
@@ -228,18 +233,14 @@ function handleAplicacaoChange(machineId) {
                 if (backupValue > 0) {
                     qntInput.value = backupValue;
                     console.log(`✅ Quantidade atualizada para ${backupValue} (backup: ${backupText})`);
-                } else {
-                    qntInput.value = 1;
                 }
-            } else {
-                qntInput.value = 1;
             }
-        } else {
-            qntInput.value = 1;
         }
     } else {
-        qntInput.value = 1;
-        console.log(`✅ Quantidade definida como 1 (aplicação: ${aplicacao})`);
+        // 🔥 IMPORTANTE: Para ventilação, NÃO ALTERA a quantidade
+        // A quantidade será controlada pelo módulo de ventilação
+        console.log(`🔧 É ventilação (${aplicacao}) - MANTENDO quantidade: ${quantidadeAtual}`);
+        // Não faz nada, mantém o valor atual
     }
     
     calculateMachinePrice(machineId);

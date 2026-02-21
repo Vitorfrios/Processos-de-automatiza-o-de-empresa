@@ -406,8 +406,13 @@ function updateSolutionTable(roomId, inputs) {
             const dissipacaoValue = perdaValue - vazaoNecessariaAbs;
             dissipacaoDisplay = formatNumber(dissipacaoValue);
             
+            // 🔥 CORREÇÃO: Aplica classe CSS baseada no valor (negativo ou positivo)
             if (dissipacaoValue < 0) {
-                dissipacaoClass = 'class="negative"';
+                dissipacaoClass = 'negative';
+            } else if (dissipacaoValue > 0) {
+                dissipacaoClass = 'positive';
+            } else {
+                dissipacaoClass = '';
             }
         }
         
@@ -424,7 +429,7 @@ function updateSolutionTable(roomId, inputs) {
             <td><span id="solucao-vazao-${machine.machineId}" class="solution-flow">${vazaoMaquinaDisplay}</span></td>
             <td><span id="solucao-qtd-atual-${machine.machineId}" class="solution-current-quantity" style="font-weight: bold; color: #2563eb;">${quantidadeAtual}</span></td>
             <td><span id="solucao-perda-${machine.machineId}" class="solution-loss">${perdaDisplay}</span></td>
-            <td><span id="solucao-dissipacao-${machine.machineId}" class="solution-dissipation" ${dissipacaoClass}>${dissipacaoDisplay}</span></td>
+            <td><span id="solucao-dissipacao-${machine.machineId}" class="solution-balance ${dissipacaoClass}">${dissipacaoDisplay}</span></td>
         `;
         
         tableBody.appendChild(row);
@@ -832,12 +837,12 @@ export function buildVentilacaoSection(roomId) {
                   <th>Nome da Máquina</th>
                   <th>Tipo de Ventilador / Filtro</th>
                   <th>Aplicação</th>
-                  <th>Capacidade Unitária (m³/h)</th>
-                  <th>Solução (Qtd)</th>
-                  <th>Vazão da Máquina (m³/h)</th>
-                  <th>Qnt Instalada</th>
-                  <th>Capacidade Total Instalada (m³/h)</th>
-                  <th>Saldo de Vazão (m³/h)</th>
+                  <th>Cap. Unit. (m³/h)</th>
+                  <th>Solução</th>
+                  <th>Vazão (m³/h)</th>
+                  <th>Qtd. Inst.</th>
+                  <th>Cap. Total (m³/h)</th>
+                  <th>Saldo (m³/h)</th>
                 </tr>
               </thead>
               <tbody id="solucao-body-${roomId}">
@@ -848,9 +853,6 @@ export function buildVentilacaoSection(roomId) {
                 </tr>
               </tbody>
             </table>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px; font-style: italic;">
-              * Quantidade atual utilizada nos cálculos de Perda e Dissipação
-            </p>
           </div>
         </div>
       </div>
