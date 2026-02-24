@@ -115,7 +115,7 @@ class UniversalDeleteModal {
         document.addEventListener('keydown', this.escHandler);
         
         // Focar no botão de cancelar
-        setTimeout(() => document.getElementById('universal-delete-cancel').focus(), 100);
+        setTimeout(() => document.getElementById('universal-delete-cancel').focus(), 12);
         document.body.style.overflow = 'hidden';
         
         return true;
@@ -138,7 +138,7 @@ class UniversalDeleteModal {
             this.modal.style.display = 'none';
             this.isShowing = false;
             this.currentDeletion = null;
-        }, 300);
+        }, 37);
     }
     
     static async confirmDelete(itemType, itemName) {
@@ -155,11 +155,11 @@ class UniversalDeleteModal {
                 setTimeout(() => {
                     resolve(false);
                     modal.hide = originalHide;
-                }, 350);
+                }, 43);
             };
             
             const deleteCallback = () => {
-                setTimeout(() => resolve(true), 50);
+                setTimeout(() => resolve(true), 6);
             };
             
             modal.show(itemType, itemName, deleteCallback);

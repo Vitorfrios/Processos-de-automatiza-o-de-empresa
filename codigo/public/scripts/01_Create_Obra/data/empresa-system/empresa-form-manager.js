@@ -189,7 +189,7 @@ function criarVisualizacaoEmpresa(obraData, container) {
         }
         
         console.log(`✅ [EMPRESA] Formulário criado para obra ${obraData.id}`);
-    }, 100);
+    }, 12);
 }
 
 /**
@@ -302,7 +302,7 @@ function criarFormularioVazioEmpresa(obraId, container) {
             configurarCampoDataEspecifico(dataCampo);
         }
         
-    }, 300);
+    }, 37);
 }
 
 /* ==== SEÇÃO 2: SISTEMA DE DATEPICKER E FORMATAÇÃO DE DATA ==== */
@@ -419,7 +419,7 @@ window.alternarDatePicker = function(obraId, tipo) {
     setTimeout(() => {
         datePicker.focus();
         datePicker.showPicker();
-    }, 100);
+    }, 12);
     
     console.log('✅ Date picker ativado para obra:', obraId);
 };

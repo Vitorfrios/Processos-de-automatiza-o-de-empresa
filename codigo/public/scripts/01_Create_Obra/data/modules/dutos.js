@@ -261,7 +261,7 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
     // Inicialização pós-render
     setTimeout(() => {
         initDutosSystem(roomId);
-    }, 100);
+    }, 12);
 
     return html;
 }
@@ -516,7 +516,7 @@ async function carregarValorCobrePadrao(roomId) {
                 setTimeout(() => {
                     cobreInput.style.borderColor = '';
                     cobreInput.style.boxShadow = '';
-                }, 1500);
+                }, 187);
             }
             
             recalcDutosComNovoCobre(roomId);

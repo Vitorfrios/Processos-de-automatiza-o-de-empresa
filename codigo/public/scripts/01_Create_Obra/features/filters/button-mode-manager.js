@@ -29,7 +29,7 @@ class ButtonModeManager {
             setTimeout(() => {
                 window.ButtonDeleteUniversal.setupAllDeleteButtons();
                 console.log('✅ [BUTTON-MANAGER] ButtonDeleteUniversal ativado');
-            }, 300);
+            }, 37);
         }
     }
 
@@ -177,7 +177,7 @@ class ButtonModeManager {
                         if (window.ButtonDeleteUniversal && window.ButtonDeleteUniversal.setupAllDeleteButtons) {
                             window.ButtonDeleteUniversal.setupAllDeleteButtons();
                         }
-                    }, 100);
+                    }, 12);
                 }
             });
         });
@@ -196,7 +196,7 @@ class ButtonModeManager {
         this.setupMutationObserver();
         setTimeout(() => {
             this.applyMode();
-        }, 500);
+        }, 62);
         
         console.log('✅ ButtonModeManager inicializado');
         return true;

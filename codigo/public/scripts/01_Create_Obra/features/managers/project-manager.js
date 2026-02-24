@@ -59,7 +59,7 @@ class ProjectTotalManager {
         clearTimeout(this[`timeout_${projectId}`]);
         this[`timeout_${projectId}`] = setTimeout(() => {
             this.updateProjectTotal(projectId);
-        }, 300);
+        }, 37);
     }
 
     calculateProjectTotal(projectId) {
@@ -172,7 +172,7 @@ class ProjectTotalManager {
         displayElement.classList.add('updating');
         setTimeout(() => {
             displayElement.classList.remove('updating');
-        }, 500);
+        }, 62);
     }
 
     registerObserver(projectId, callback) {
@@ -278,7 +278,7 @@ async function createEmptyProject(obraId, obraName, projectId, projectName) {
 
     setTimeout(() => {
         totalManager.updateProjectTotal(finalProjectId);
-    }, 1000);
+    }, 125);
 
     return true
 }
@@ -347,7 +347,7 @@ function initializeExistingProjectTotals() {
 
             setTimeout(() => {
                 totalManager.updateProjectTotal(projectId);
-            }, 1000);
+            }, 125);
         }
     });
 }
@@ -369,7 +369,7 @@ if (typeof window !== 'undefined') {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeExistingProjectTotals);
 } else {
-    setTimeout(initializeExistingProjectTotals, 1000);
+    setTimeout(initializeExistingProjectTotals, 125);
 }
 
 export {

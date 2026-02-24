@@ -30,7 +30,7 @@ function waitForElement(selector, timeout = 3000) {
                 return;
             }
             
-            setTimeout(check, 100);
+            setTimeout(check, 12);
         }
         
         check();

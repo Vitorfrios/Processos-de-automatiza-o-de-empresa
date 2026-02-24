@@ -211,7 +211,7 @@ function collapseElementWithAnimation(element, minimizerElement) {
         minimizerElement.textContent = "+";
         
         console.log(`📁 Elemento recolhido com animação: ${element.id}`);
-    }, 300);
+    }, 37);
 }
 
 /**
@@ -240,7 +240,7 @@ function expandElementWithAnimation(element, minimizerElement) {
             minimizerElement.textContent = "−";
             
             console.log(`📂 Elemento expandido com animação: ${element.id}`);
-        }, 300);
+        }, 37);
     }, 10);
 }
 

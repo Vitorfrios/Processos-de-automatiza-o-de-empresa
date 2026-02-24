@@ -95,7 +95,7 @@ async function inicializarInputEmpresaHibrido(obraId) {
             if (dropdown) {
                 dropdown.style.display = 'none';
             }
-        }, 200);
+        }, 25);
     });
 
     // 🔥 EVENTO DE TECLADO OTIMIZADO
@@ -169,7 +169,7 @@ function processarInputEmpresa(termo, input, dropdown, optionsContainer, obraId,
 
         setTimeout(() => {
             window.usuarioEstaApagando = false;
-        }, 100);
+        }, 12);
         return;
     }
 

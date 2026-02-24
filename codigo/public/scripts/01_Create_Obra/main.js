@@ -128,7 +128,7 @@ function showSystemNotLoadedMessage() {
         if (tempMessage.parentNode) {
             tempMessage.parentNode.removeChild(tempMessage);
         }
-    }, 2500);
+    }, 156);
 }
 
 /**
@@ -138,7 +138,7 @@ function showSystemNotLoadedMessage() {
 function setupAddObraButtonProtection() {
     if (typeof window.addNewObra !== 'function') {
         console.log('⏳ addNewObra ainda não disponível - aguardando...');
-        setTimeout(setupAddObraButtonProtection, 1000);
+        setTimeout(setupAddObraButtonProtection, 62);
         return;
     }
     
@@ -187,11 +187,11 @@ function setupDirectButtonProtection() {
             
             clearInterval(checkButton);
         }
-    }, 500);
+    }, 250);
     
     setTimeout(() => {
         clearInterval(checkButton);
-    }, 10000);
+    }, 400);
 }
 
 /**
@@ -222,7 +222,7 @@ function setupSystemLoadObserver() {
             clearInterval(intervalCheck);
             console.log('✅ Verificação periódica do sistema - concluída');
         }
-    }, 500);
+    }, 250);
     
     setTimeout(() => {
         clearInterval(intervalCheck);
@@ -230,7 +230,7 @@ function setupSystemLoadObserver() {
             console.warn('⚠️ Timeout do carregamento do sistema - verificando estado atual');
             checkSystemLoaded();
         }
-    }, 30000);
+    }, 5000);
 }
 
 /**
@@ -252,7 +252,7 @@ function initializeFilterSystem() {
         console.warn('⚠️ [MAIN] Módulos de filtro não carregados, tentando novamente em 1s...');
         
         // Tentar novamente após 1 segundo
-        setTimeout(initializeFilterSystem, 1000);
+        setTimeout(initializeFilterSystem, 62);
         return;
     }
     
@@ -271,7 +271,7 @@ function initializeFilterSystem() {
                 // Tentar novamente em caso de falha
                 setTimeout(() => {
                     initializeFilterSystem();
-                }, 2000);
+                }, 125);
             }
         } else {
             console.error('❌ [MAIN] FilterSystem.initialize não é uma função');
@@ -282,7 +282,7 @@ function initializeFilterSystem() {
         // Tentar novamente em caso de erro
         setTimeout(() => {
             initializeFilterSystem();
-        }, 2000);
+        }, 125);
     }
 }
 
@@ -372,7 +372,7 @@ function finalSystemDebug() {
 async function verifyAndCreateBaseObra() {
   console.log("🔍 Verificando obras existentes...");
   
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 31));
   
   const currentCount = window.getGeralCount ? window.getGeralCount() : 0;
   const obrasInDOM = document.querySelectorAll('.obra-block').length;
@@ -404,7 +404,7 @@ function handleInitializationError(error) {
       if (window.showSystemStatus) {
         window.showSystemStatus("Sistema carregado com avisos", "error");
       }
-    }, 1000);
+    }, 250);
   }
 }
 
@@ -419,7 +419,7 @@ function showSystemStatusMessage(hasExistingSession) {
         : "Sistema carregado. Clique em 'Nova Obra' para começar.";
       window.showSystemStatus(message, "success");
     }
-  }, 500);
+  }, 200);
 }
 
 /**
@@ -515,7 +515,7 @@ function inicializarSistemaData() {
                     campo.maxLength = 10;
                 });
             }
-        }, 1000);
+        }, 200);
     } catch (error) {
         console.warn('⚠️ Erro ao inicializar sistema de auto-formatação de data:', error);
     }
@@ -691,16 +691,16 @@ window.addEventListener("DOMContentLoaded", async () => {
     setTimeout(() => {
         checkSystemLoaded();
         finalSystemDebug();
-    }, 1000);
+    }, 62);
     
     // ✅ Verificar funções críticas após inicialização completa
-    setTimeout(verifyCriticalFunctions, 2000);
+    setTimeout(verifyCriticalFunctions, 125);
     
     // ✅ INICIALIZAR SISTEMA DE FILTROS
     // Aguardar 500ms para garantir que o DOM está pronto e outros módulos carregaram
     setTimeout(() => {
         initializeFilterSystem();
-    }, 500);
+    }, 31);
     
   } catch (error) {
     handleInitializationError(error);

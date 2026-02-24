@@ -131,7 +131,7 @@ async function insertObraIntoDOM(obraHTML, obraId, hasProjects = false) {
                 if (window.obraTotalManager && typeof window.obraTotalManager.initializeObraTotal === 'function') {
                     setTimeout(() => {
                         window.obraTotalManager.initializeObraTotal(obraId);
-                    }, 300);
+                    }, 37);
                 }
             }
         }, 50);
@@ -188,10 +188,10 @@ async function addNewObra() {
                 if (window.obraTotalManager && typeof window.obraTotalManager.updateObraTotal === 'function') {
                     setTimeout(() => {
                         window.obraTotalManager.updateObraTotal(obraId);
-                    }, 500);
+                    }, 62);
                 }
             }
-        }, 300);
+        }, 150);
 
     } catch (error) {
         alert("Erro ao criar nova obra.");
@@ -377,7 +377,7 @@ class ObraTotalManager {
         this.timeouts[obraId] = setTimeout(() => {
             this.updateObraTotal(obraId);
             delete this.timeouts[obraId];
-        }, 300);
+        }, 37);
     }
 
     calculateObraTotal(obraId) {
@@ -552,7 +552,7 @@ class ObraTotalManager {
         });
 
         // Atualização periódica
-        setTimeout(() => this.updateAllObraTotals(), 2000);
+        setTimeout(() => this.updateAllObraTotals(), 250);
     }
 
     updateAllObraTotals() {
@@ -670,14 +670,14 @@ if (document.readyState === 'loading') {
             if (window.obraTotalManager) {
                 window.obraTotalManager.initializeExistingObraTotals();
             }
-        }, 1000);
+        }, 125);
     });
 } else {
     setTimeout(() => {
         if (window.obraTotalManager) {
             window.obraTotalManager.initializeExistingObraTotals();
         }
-    }, 1000);
+    }, 125);
 }
 
 // EXPORTS NO FINAL

@@ -48,7 +48,7 @@ function renderRoomFromData(projectId, projectName, roomData, obraId = null, obr
             } else {
                 console.error(`❌ Elemento da sala ${roomId} não encontrado após criação`);
             }
-        }, 300);
+        }, 150);
         
     }, 100);
 }
@@ -77,7 +77,7 @@ async function populateRoomData(roomElement, roomData) {
         if (!tableExists) {
             setTimeout(() => {
                 console.warn(`⚠️ Tabela de inputs não encontrada para ${roomName}, criando...`);
-            }, 400);
+            }, 200);
         }
 
         const roomTitle = roomElement.querySelector('.room-title');
@@ -113,7 +113,7 @@ async function populateRoomData(roomElement, roomData) {
                 } else {
                     console.error(`❌ Função fillAcessoriosData não disponível no window`);
                 }
-            }, 2000);
+            }, 400);
         }
 
         // ✅ Preencher dutos
@@ -128,7 +128,7 @@ async function populateRoomData(roomElement, roomData) {
                 } else {
                     console.error(`❌ Função fillDutosData não disponível no window`);
                 }
-            }, 2500);
+            }, 500);
         }
 
         // ✅ CORREÇÃO CRÍTICA: Preencher tubulação - CUIDADO COM A ESTRUTURA
@@ -147,7 +147,7 @@ async function populateRoomData(roomElement, roomData) {
                 } else {
                     console.error(`❌ Função fillTubulacaoData não disponível no window - Verifique se tubos.js foi carregado`);
                 }
-            }, 3000);
+            }, 750);
         } else if (roomData.tubulacao) {
             console.warn(`⚠️ Estrutura de tubulação inválida ou vazia para sala ${roomName}:`, roomData.tubulacao);
         }
@@ -171,7 +171,7 @@ async function populateRoomData(roomElement, roomData) {
                 } catch (error) {
                     console.error(`💥 Erro ao preencher máquinas para sala ${roomName}:`, error);
                 }
-            }, 4000);
+            }, 800);
         }
 
         console.log(`✅ Sala "${roomName}" preenchida com sucesso`);

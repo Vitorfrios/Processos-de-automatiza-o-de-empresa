@@ -535,7 +535,7 @@ function editarAcessorio(roomId, acessorioId) {
                 removerAcessorio(roomId, acessorioId);
                 
                 console.log(`✏️ Acessorio em edição: ${acessorioId}`);
-            }, 500);
+            }, 250);
         });
     } else {
         // Para acessorios personalizados, apenas preencher campos básicos

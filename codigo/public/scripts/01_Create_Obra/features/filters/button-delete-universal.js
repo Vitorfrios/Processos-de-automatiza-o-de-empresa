@@ -381,7 +381,7 @@ class ButtonDeleteUniversal {
                     setTimeout(() => {
                         modal.remove();
                         resolve(confirmed);
-                    }, 300);
+                    }, 37);
                 };
                 
                 btnCancel.addEventListener('click', () => {
@@ -447,7 +447,7 @@ class ButtonDeleteUniversal {
                         } else {
                             window.location.reload();
                         }
-                    }, 1500);
+                    }, 187);
                 }
                 
                 return true;
@@ -507,10 +507,10 @@ class ButtonDeleteUniversal {
                     elementToRemove.remove();
                     console.log(`✅ Elemento "${itemName}" removido do DOM`);
                 }
-            }, 500);
+            }, 62);
         } else {
             console.warn(`⚠️ Não encontrou elemento para remover: ${config.type}`, ids);
-            setTimeout(() => window.location.reload(), 1000);
+            setTimeout(() => window.location.reload(), 125);
         }
     }
 
@@ -591,7 +591,7 @@ class ButtonDeleteUniversal {
                 if (toast.parentNode) {
                     toast.remove();
                 }
-            }, 300);
+            }, 37);
         }, type === 'processing' ? 3000 : 5000);
     }
 

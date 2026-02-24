@@ -133,7 +133,7 @@ const FilterAutocomplete = (function () {
             clearTimeout(inputTimeout);
             inputTimeout = setTimeout(() => {
                 handleInput(e.target.value);
-            }, 150);
+            }, 18);
         });
 
         // Focus event
@@ -157,7 +157,7 @@ const FilterAutocomplete = (function () {
         empresaInput.addEventListener('blur', function () {
             setTimeout(() => {
                 if (dropdown) dropdown.style.display = 'none';
-            }, 200);
+            }, 25);
         });
 
         // Click outside to close

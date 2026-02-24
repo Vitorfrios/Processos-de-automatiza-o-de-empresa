@@ -54,12 +54,12 @@ function renderProjectFromData(projectData, obraId = null, obraName = null) {
         
         // Aguardar um pouco mais para garantir que os serviços foram criados
         setTimeout(async () => {
-            const projectElement = await waitForElement(`[data-project-id="${projectId}"]`, 2000);
+            const projectElement = await waitForElement(`[data-project-id="${projectId}"]`, 250);
             if (projectElement && typeof window.populateServicosData === 'function') {
                 console.log(`💰 Preenchendo serviços no projeto ${projectName}`);
                 await window.populateServicosData(projectElement, projectData.servicos);
             }
-        }, 500);
+        }, 250);
     }
 
     if (projectId) {
@@ -146,7 +146,7 @@ async function populateProjectData(projectElement, projectData, obraId, obraName
             console.error(`❌ Falha ao criar sala ${roomName}:`, error);
         }
         
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 37));
     }
 
     console.log(`✅ Projeto "${projectName}" preenchido com sucesso - ${salas.length} sala(s) processada(s)`);

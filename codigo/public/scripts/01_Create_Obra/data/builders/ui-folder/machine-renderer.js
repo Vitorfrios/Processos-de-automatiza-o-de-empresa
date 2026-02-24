@@ -99,7 +99,7 @@ async function ensureMachinesSection(roomElement) {
         }
 
         lastSection.insertAdjacentHTML('afterend', machinesHTML);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 12));
         
         // ✅ CORREÇÃO: Usar a nova função para encontrar a seção
         machinesSection = findMachinesSection(roomElement);
@@ -183,7 +183,7 @@ async function fillMachinesData(roomElement, machinesData) {
                     if (!machineAdded) {
                         retryCount++;
                         console.log(`🔄 Tentativa ${retryCount}/3 para adicionar máquina ${machineData.tipo}`);
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        await new Promise(resolve => setTimeout(resolve, 12));
                     }
                 }
                 
@@ -195,7 +195,7 @@ async function fillMachinesData(roomElement, machinesData) {
                 console.log(`✅ Máquina ${machineData.tipo} adicionada, aguardando renderização...`);
 
                 // Aguardar renderização completa
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 18));
 
                 // Encontrar a máquina mais recente
                 const machineElements = machinesContainer.querySelectorAll('.climatization-machine');
@@ -222,7 +222,7 @@ async function fillMachinesData(roomElement, machinesData) {
             }
 
             // Pequena pausa entre máquinas
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 12));
         }
 
         console.log(`✅ ${successCount}/${machinesData.length} máquina(s) preenchida(s) com sucesso para sala ${roomName}`);
@@ -290,7 +290,7 @@ async function populateMachineData(machineElement, machineData) {
             typeSelect.dispatchEvent(changeEvent);
             
             // Aguarda o sistema carregar as capacidades
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await new Promise(resolve => setTimeout(resolve, 31));
         }
 
         // =========================================================
@@ -304,7 +304,7 @@ async function populateMachineData(machineElement, machineData) {
             const changeEvent = new Event('change', { bubbles: true });
             aplicacaoSelect.dispatchEvent(changeEvent);
             
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 18));
         }
 
         // =========================================================
@@ -319,7 +319,7 @@ async function populateMachineData(machineElement, machineData) {
             const maxAttempts = 10;
             
             while (powerSelect.disabled && attempts < maxAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 500));
+                await new Promise(resolve => setTimeout(resolve, 18));
                 attempts++;
                 console.log(`⏳ Aguardando habilitação da capacidade... (${attempts}/${maxAttempts})`);
             }
@@ -344,7 +344,7 @@ async function populateMachineData(machineElement, machineData) {
                     const powerEvent = new Event('change', { bubbles: true });
                     powerSelect.dispatchEvent(powerEvent);
                     
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 31));
                 }
             }
         }
@@ -360,7 +360,7 @@ async function populateMachineData(machineElement, machineData) {
             const maxAttempts = 6;
             
             while (voltageSelect.disabled && attempts < maxAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 500));
+                await new Promise(resolve => setTimeout(resolve, 15));
                 attempts++;
             }
             
@@ -419,7 +419,7 @@ async function populateMachineData(machineElement, machineData) {
         // PASSO 7: DEFINIR OPÇÕES E CONFIGURAÇÕES
         // =========================================================
         if (machineData.opcoesSelecionadas?.length) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 31));
             
             const optionsContainer = machineElement.querySelector('.options-grid');
             if (optionsContainer) {
@@ -439,7 +439,7 @@ async function populateMachineData(machineElement, machineData) {
         }
 
         if (machineData.configuracoesSelecionadas?.length) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 31));
             
             const configContainer = machineElement.querySelector('.config-grid');
             if (configContainer) {
@@ -489,7 +489,7 @@ async function populateMachineData(machineElement, machineData) {
                 } else {
                     console.log(`✅ Quantidade mantida: ${currentValue}`);
                 }
-            }, 2000);
+            }, 150);
         }
 
         console.log(`✅ Máquina preenchida com sucesso - quantidade manual: ${machineData.quantidade}`);
@@ -510,14 +510,6 @@ async function populateMachineData(machineElement, machineData) {
     }
 }
 
-/**
- * Função auxiliar para extrair valor numérico da capacidade
- */
-function extractCapacidadeValue(capacidadeValue) {
-    if (!capacidadeValue) return null;
-    const match = capacidadeValue.toString().match(/^(\d+(?:\.\d+)?)/);
-    return match ? parseFloat(match[1]) : null;
-}
 
 // EXPORTS NO FINAL
 export {

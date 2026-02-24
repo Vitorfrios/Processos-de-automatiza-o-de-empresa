@@ -67,7 +67,7 @@ async function loadObrasFromServer() {
         }
         
         // Aguardar micro-tick para DOM
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, 5));
         
         // Carregar TODOS os dados em PARALELO ABSOLUTO
         const loadPromises = obrasParaCarregar.map(obra => 

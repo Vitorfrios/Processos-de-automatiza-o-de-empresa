@@ -157,7 +157,7 @@ export class EmpresaCadastroInline {
         setTimeout(() => {
             const empresaInput = this.container.querySelector('#empresa-input');
             if (empresaInput) empresaInput.focus();
-        }, 100);
+        }, 12);
     }
 
     configurarEstadoCampos() {
@@ -364,7 +364,7 @@ export class EmpresaCadastroInline {
         if (empresaInput) {
             empresaInput.addEventListener('input', (e) => this.buscarEmpresas(e.target.value));
             empresaInput.addEventListener('blur', () => {
-                setTimeout(() => this.ocultarSugestoes(), 200);
+                setTimeout(() => this.ocultarSugestoes(), 25);
             });
             empresaInput.addEventListener('keydown', (e) => this.tratarTecladoAutocomplete(e));
             this.observarMudancasEmpresa();
@@ -1189,7 +1189,7 @@ export class EmpresaCadastroInline {
             }
             autoCloseTimer = setTimeout(() => {
                 esconderTooltip();
-            }, 5000);
+            }, 400);
         };
 
         const cancelarAutoCloseTimer = () => {

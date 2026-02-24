@@ -28,7 +28,7 @@ function triggerCalculation(roomId) {
         } else {
             console.warn('⚠️ calculateVazaoArAndThermalGains não disponível');
         }
-    }, 100);
+    }, 12);
 }
 
 /**

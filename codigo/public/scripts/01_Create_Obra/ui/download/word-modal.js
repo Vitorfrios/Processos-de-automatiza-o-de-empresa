@@ -276,7 +276,7 @@ function closeModal(overlay) {
             overlay.parentNode.removeChild(overlay);
         }
         document.body.style.overflow = '';
-    }, 300);
+    }, 37);
 }
 
 /**

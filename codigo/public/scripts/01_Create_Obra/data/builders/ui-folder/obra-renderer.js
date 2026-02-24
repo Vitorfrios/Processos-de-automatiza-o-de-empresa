@@ -69,7 +69,7 @@ async function populateObraData(obraData) {
         
         if (!obraCriada) return;
 
-        await new Promise(resolve => setTimeout(resolve, 150));
+        await new Promise(resolve => setTimeout(resolve, 18));
 
         obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
     } else {
@@ -98,7 +98,7 @@ async function populateObraData(obraData) {
     }
 
     if (typeof window.createEmptyProject !== 'function' || typeof window.createEmptyRoom !== 'function') {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 62));
 
         if (typeof window.createEmptyProject !== 'function' || typeof window.createEmptyRoom !== 'function') {
             return;
@@ -129,7 +129,7 @@ async function populateObraData(obraData) {
         if (projetosPromises.length >= 3) {
             await Promise.allSettled(projetosPromises);
             projetosPromises.length = 0;
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 12));
         }
     }
 
@@ -153,7 +153,7 @@ async function processProjectAsync(projectData, obraId, obraName, index) {
 
         if (!projectCreated) return false;
 
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 25));
 
         const projectElement = await waitForElement(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`, 3000);
 
@@ -172,7 +172,7 @@ async function processProjectAsync(projectData, obraId, obraName, index) {
         }
 
         if (projectData.servicos && (projectData.servicos.engenharia || projectData.servicos.adicionais?.length > 0)) {
-            setTimeout(() => populateServicosData(projectElement, projectData.servicos), 300);
+            setTimeout(() => populateServicosData(projectElement, projectData.servicos), 150);
         }
 
         await populateProjectData(projectElement, projectData, obraId, obraName);
@@ -234,7 +234,7 @@ async function populateServicosData(projectElement, servicosData) {
                             const projectId = projectElement.dataset.projectId;
                             window.addAdicionalConjunto(projectId);
 
-                            await new Promise(resolve => setTimeout(resolve, 50));
+                            await new Promise(resolve => setTimeout(resolve, 6));
 
                             const ultimoItem = container.querySelector('.adicional-item:last-child');
                             if (ultimoItem) {
@@ -254,7 +254,7 @@ async function populateServicosData(projectElement, servicosData) {
                             const projectId = projectElement.dataset.projectId;
                             window.addAdicionalValor(projectId);
 
-                            await new Promise(resolve => setTimeout(resolve, 50));
+                            await new Promise(resolve => setTimeout(resolve, 6));
 
                             const ultimoItem = container.querySelector('.adicional-item:last-child');
                             if (ultimoItem && adicional.valor) {
@@ -267,7 +267,7 @@ async function populateServicosData(projectElement, servicosData) {
                             const projectId = projectElement.dataset.projectId;
                             window.addAdicionalTexto(projectId);
 
-                            await new Promise(resolve => setTimeout(resolve, 50));
+                            await new Promise(resolve => setTimeout(resolve, 6));
 
                             const ultimoItem = container.querySelector('.adicional-item:last-child');
                             if (ultimoItem && adicional.descricao) {
@@ -277,7 +277,7 @@ async function populateServicosData(projectElement, servicosData) {
                         }
                     }
 
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await new Promise(resolve => setTimeout(resolve, 12));
                 }
             }
         }
@@ -293,10 +293,10 @@ if (typeof window !== 'undefined') {
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(atualizarTodosBotoesEmpresa, 1000);
+            setTimeout(atualizarTodosBotoesEmpresa, 125);
         });
     } else {
-        setTimeout(atualizarTodosBotoesEmpresa, 1000);
+        setTimeout(atualizarTodosBotoesEmpresa, 125);
     }
 }
 

@@ -68,7 +68,7 @@ export function showConfirmationModal(obraName, obraId, obraBlock) {
     setTimeout(() => {
         const btn = document.querySelector('.btn-cancel');
         if (btn) btn.focus();
-    }, 100);
+    }, 12);
 }
 
 /**
@@ -150,7 +150,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
             if (countdownBar) {
                 countdownBar.style.animation = 'countdown 5s linear forwards'; 
             }
-        }, 50);
+        }, 6);
 
         // ✅ NOVO: Contador regressivo dos segundos
         startCountdown(toast, 5);
@@ -204,12 +204,12 @@ function showToast(obraName, type = 'undo', obraId = null) {
             hideSpecificToast(toastId);
             // Em seguida processa remoção definitiva
             completeDeletion(obraId, obraName);
-        }, 5000);
+        }, 2500);
     } else {
         toastData.timeout = setTimeout(() => {
             console.log(`⏰ Removendo toast de ${type} para obra ${obraName} (ID: ${obraId})`);
             hideSpecificToast(toastId);
-        }, 3500);
+        }, 437);
     }
 }
 
@@ -252,7 +252,7 @@ function startCountdown(toastElement, seconds) {
 function animateAndRemove(el) {
     try {
         el.classList.add('hiding'); // se existir CSS de transição
-        setTimeout(() => { if (el && el.parentNode) el.remove(); }, 300);
+        setTimeout(() => { if (el && el.parentNode) el.remove(); }, 37);
     } catch (_) {
         if (el && el.parentNode) el.parentNode.removeChild(el);
     }
@@ -492,7 +492,7 @@ export async function confirmDeletion() {
                 obraBlock.remove();
                 console.log(`🗑️ Obra ${obraName} (ID: ${obraId}) removida do DOM (aguardando undo)`);
             }
-        }, 500);
+        }, 62);
     }
 
     // Mostra toast com opção de desfazer

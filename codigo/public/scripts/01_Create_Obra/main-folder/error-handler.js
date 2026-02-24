@@ -151,11 +151,11 @@ export function showServerOfflineMessage() {
             clearInterval(countdownInterval);
             window.close();
         }
-    }, 1000);
+    }, 800);
     
     setTimeout(() => {
         window.close();
-    }, 10000);
+    }, 750);
 }
 
 /**

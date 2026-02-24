@@ -398,9 +398,9 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
         if (typeof window.updateCapacityFromThermalGains === 'function') {
           window.updateCapacityFromThermalGains(roomId);
         }
-      }, 1000);
+      }, 125);
     }
-  }, 500);
+  }, 250);
     
   } catch (error) {
     console.error(`[THERMAL] Erro em calculateThermalGains para ${roomId}:`, error);

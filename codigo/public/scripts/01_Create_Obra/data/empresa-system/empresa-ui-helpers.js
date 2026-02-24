@@ -25,7 +25,7 @@ function criarSistemaBackspaceDetector(input) {
             timeoutBackspace = setTimeout(() => {
                 pressionandoBackspace = false;
                 window.usuarioEstaApagando = false;
-            }, 500);
+            }, 62);
 
             console.log('⌫ Tecla de apagar pressionada');
         }
@@ -38,7 +38,7 @@ function criarSistemaBackspaceDetector(input) {
                 if (!pressionandoBackspace) {
                     window.usuarioEstaApagando = false;
                 }
-            }, 50);
+            }, 6);
         }
     });
 
@@ -75,7 +75,7 @@ function inicializarDetectorBackspace(input, obraId) {
                 pressionandoBackspace = false;
                 window.usuarioEstaApagando = false;
                 console.log('🔄 Resetando flag de apagamento');
-            }, 500);
+            }, 62);
         }
 
         // Salvar valor atual para comparação
@@ -90,7 +90,7 @@ function inicializarDetectorBackspace(input, obraId) {
                     window.usuarioEstaApagando = false;
                     console.log('🔄 Tecla de apagar liberada');
                 }
-            }, 50);
+            }, 6);
         }
     });
 
@@ -173,13 +173,13 @@ function mostrarAvisoAutocompletado(input, tipoSelecao = 'manual') {
     container.appendChild(aviso);
 
     // Animação
-    setTimeout(() => aviso.classList.add('show'), 50);
+    setTimeout(() => aviso.classList.add('show'), 6);
 
     // Remover
     setTimeout(() => {
         aviso.classList.remove('show');
-        setTimeout(() => aviso.remove(), 300);
-    }, 1200);
+        setTimeout(() => aviso.remove(), 37);
+    }, 600);
 }
 
 /* ==== SEÇÃO 4: FORMATAÇÃO E VALIDAÇÃO DE DATA ==== */
@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         console.log('✅ [EMPRESA-UI-HELPERS] Sistema de backspace inicializado');
-    }, 1000);
+    }, 125);
 });
 
 export {

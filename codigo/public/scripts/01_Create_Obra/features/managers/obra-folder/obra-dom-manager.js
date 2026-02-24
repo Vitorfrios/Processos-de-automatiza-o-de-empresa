@@ -42,7 +42,7 @@ async function findObraBlockWithRetry(obraId, maxAttempts = 10) {
         console.log(`⏳ Tentativa ${attempt}/${maxAttempts} - obra não encontrada, aguardando...`);
         
         if (attempt < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 25));
         }
     }
     

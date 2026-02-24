@@ -134,16 +134,16 @@ function fillClimatizationInputs(roomElement, inputsData) {
             if (typeof window.setupCompleteRoomSync === 'function') {
                 window.setupCompleteRoomSync(roomId);
             }
-        }, 500);
+        }, 62);
 
         // Disparar cálculo final
         if (roomId && typeof calculateVazaoArAndThermalGains === 'function') {
             setTimeout(() => {
                 calculateVazaoArAndThermalGains(roomId);
-            }, 300);
+            }, 37);
         }
 
-    }, 400);
+    }, 200);
 }
 function ensureTableSectionExists(roomElement) {
     const roomId = roomElement.dataset.roomId;
@@ -376,7 +376,7 @@ async function ensureAllRoomSections(roomElement) {
                     }
                     
                     lastSection = roomContent.querySelector('.section-block:last-child');
-                    await new Promise(resolve => setTimeout(resolve, 150));
+                    await new Promise(resolve => setTimeout(resolve, 18));
                 }
             }
         }

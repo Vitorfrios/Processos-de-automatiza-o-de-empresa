@@ -438,7 +438,7 @@ function sincronizarLSLL(linhaId, campo, valor) {
             // Forçar cálculo imediato da linha sincronizada
             setTimeout(() => {
                 calcularLinhaComAPI(linhaDestinoId);
-            }, 50);
+            }, 6);
         }
     } else {
         console.warn(`⚠️ Input destino não encontrado para campo ${campo} no seletor ${seletor}`);
@@ -700,7 +700,7 @@ async function adicionarLinhaNaTabelaComAPI(conjuntoId, linha) {
         if (linha.comprimentoInterligacao || linha.numCircuitos || linha.numCurvas || linha.comprimentoEquivalenteCurva) {
             setTimeout(() => {
                 calcularLinhaComAPI(linha.id);
-            }, 150);
+            }, 18);
         }
         
     } catch (error) {
@@ -1110,7 +1110,7 @@ async function addTubulacaoConjuntoComAPI(roomId, conjuntoData = null) {
             setTimeout(() => {
                 atualizarTotaisConjuntoComAPI(novoConjuntoId);
                 atualizarTotalGeralTubulacao(roomId);
-            }, 200);
+            }, 25);
             
         }, 100);
         
@@ -1326,7 +1326,7 @@ function removerLinha(linhaId) {
             // Atualizar total geral da sala
             const roomId = conjuntoId.split('-')[0];
             atualizarTotalGeralTubulacao(roomId);
-        }, 50);
+        }, 6);
         
         console.log(`🗑️ Linha extra removida: ${linhaId}`);
     }

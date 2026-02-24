@@ -179,7 +179,7 @@ function initializeCapacitySystem(roomId) {
           setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.domCheckDelay);
         }
       }
-    }, 500);
+    }, 250);
 
     state.initialized = true;
     console.log(`[CAPACITY] Sistema inicializado para: ${roomId}`);
@@ -499,7 +499,7 @@ function syncBackupWithClimaInputs(roomId, backupValue) {
                 // Restaura o onchange após um breve delay
                 setTimeout(() => {
                     input.onchange = originalOnChange;
-                }, 100);
+                }, 12);
             }
         });
     }
@@ -522,7 +522,7 @@ function syncCapacityTableBackup(roomId) {
         calculateCapacitySolution(roomId);
       }
     }
-  }, 500);
+  }, 62);
 }
 
 /**

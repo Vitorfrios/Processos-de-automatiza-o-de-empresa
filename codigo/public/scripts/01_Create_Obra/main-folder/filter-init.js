@@ -163,7 +163,7 @@ const removeElementFromDOM = (itemType, itemId, additionalIds = {}) => {
         element.remove();
         console.log(`✅ Elemento ${itemType} removido do DOM`);
       }
-    }, 400);
+    }, 50);
   } else {
     console.warn(`⚠️ Não encontrou elemento ${itemType} ${itemId} no DOM`);
   }
@@ -401,7 +401,7 @@ function setupUniversalDeletionOverride() {
                     if (window.FilterSystem) {
                         window.FilterSystem.reloadObras();
                     }
-                }, 1500);
+                }, 187);
             }
 
             return true;
@@ -434,7 +434,7 @@ function setupUniversalDeletionOverride() {
     }
 
     // Inicializar listener
-    setTimeout(() => setupFilterListener(), 1000);
+    setTimeout(() => setupFilterListener(), 125);
 
     console.log("✅ Sistema de sobrescrita condicional configurado");
 }
@@ -491,7 +491,7 @@ function setupInitialButtonConfiguration() {
             setTimeout(() => {
                 const buttonsConfigured = window.ButtonDeleteUniversal.setupAllDeleteButtons();
                 console.log(`✅ [FILTER-INIT] ${buttonsConfigured} botões de deleção REAL configurados`);
-            }, 500);
+            }, 62);
         }
     }
 
@@ -499,7 +499,7 @@ function setupInitialButtonConfiguration() {
         setTimeout(() => {
             window.ButtonModeManager.applyMode();
             console.log("✅ [FILTER-INIT] Modo inicial aplicado aos botões");
-        }, 600);
+        }, 75);
     }
 }
 
@@ -531,7 +531,7 @@ function setupDynamicButtonConfiguration() {
                                 window.ButtonDeleteUniversal.setupAllDeleteButtons();
                             }
                         }
-                    }, 500);
+                    }, 62);
                 }
             }
         });
@@ -565,7 +565,7 @@ function waitForSystemLoad() {
         setTimeout(() => {
             clearInterval(checkInterval);
             resolve();
-        }, 5000);
+        }, 500);
     });
 }
 

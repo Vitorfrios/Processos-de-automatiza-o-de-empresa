@@ -231,7 +231,7 @@ function removeAdicionalItem(projectId, itemId) {
         // Delay para garantir que o DOM foi atualizado
         setTimeout(() => {
             updateServicosTotal(projectId);
-        }, 50);
+        }, 6);
     }
 }
 

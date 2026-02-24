@@ -260,7 +260,7 @@ function initializeRoomComponents(obraId, projectId, roomName, roomId) {
 
         console.log(`✅ TODAS AS SINCRONIZAÇÕES CONFIGURADAS PARA: ${roomId}`);
 
-    }, 1000);
+    }, 500);
 
     // Outras inicializações...
     setTimeout(async () => {
@@ -273,18 +273,18 @@ function initializeRoomComponents(obraId, projectId, roomName, roomId) {
         } catch (error) {
             console.log(`ℹ️ Não foi possível pré-carregar dados das máquinas para ${roomId}`);
         }
-    }, 800);
+    }, 100);
 
     // ✅ INICIALIZAÇÃO DE FATOR DE SEGURANÇA
     setTimeout(() => {
         safeInitializeFatorSeguranca(roomId);
-    }, 1200);
+    }, 150);
 
     // ✅ VERIFICAÇÃO FINAL
     setTimeout(() => {
         console.log(`🔍 VERIFICAÇÃO FINAL DA SALA: ${roomName} (ID: ${roomId})`);
         verifyRoomSetupComplete(roomId);
-    }, 2000);
+    }, 250);
 }
 
 // ✅ FUNÇÃO PARA SINCRONIZAÇÃO BIDIRECIONAL TÍTULO ↔ AMBIENTE
@@ -848,7 +848,7 @@ function fixExistingCapacityInputs() {
 
 // Executar quando o projeto for carregado
 document.addEventListener('DOMContentLoaded', function () {
-    setTimeout(fixExistingCapacityInputs, 2000);
+    setTimeout(fixExistingCapacityInputs, 250);
 });
 
 /**

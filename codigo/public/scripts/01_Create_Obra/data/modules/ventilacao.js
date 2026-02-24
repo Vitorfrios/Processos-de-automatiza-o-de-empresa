@@ -69,7 +69,7 @@ export function finishRoomLoading(roomId, triggerRefresh = true) {
     if (triggerRefresh && window.refreshVentilationForRoom) {
         setTimeout(() => {
             window.refreshVentilationForRoom(roomId);
-        }, 100);
+        }, 12);
     }
 }
 
@@ -567,7 +567,7 @@ window.handleManualQuantityEdit = function(machineId) {
     if (roomId) {
         setTimeout(() => {
             refreshVentilationForRoom(roomId);
-        }, 50);
+        }, 6);
     }
     
     if (window.calculateMachinePrice) {
@@ -720,7 +720,7 @@ window.refreshVentilationForRoom = function(roomId) {
     }
     
     if (!window.systemConstants) {
-        setTimeout(() => refreshVentilationForRoom(roomId), 500);
+        setTimeout(() => refreshVentilationForRoom(roomId), 62);
         return;
     }
     
@@ -850,7 +850,7 @@ export function buildVentilacaoSection(roomId) {
     
     setTimeout(() => {
         setupVentilationForRoom(roomId);
-    }, 100);
+    }, 12);
     
     return `
     <div class="section-block ventilation-section" id="ventilacao-section-${roomId}" data-room-id="${roomId}">

@@ -82,7 +82,7 @@ function setupModalEvents(modalElement, resolve) {
                 if (modalElement.parentNode) {
                     modalElement.remove();
                 }
-            }, 300);
+            }, 37);
         }
     };
 

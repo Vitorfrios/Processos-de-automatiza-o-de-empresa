@@ -7,7 +7,6 @@
 // ✅ IMPORTAR MÓDULOS COM CAMINHOS CORRETOS
 import { loadObrasFromServer } from '../data/adapters/obra-adapter-folder/obra-data-loader.js';
 
-import { getGeralCount } from '../data/adapters/session-adapter.js';
 import { shutdownManual } from '../data/adapters/shutdown-adapter.js';
 import {EmpresaCadastroInline} from '../data/empresa-system/empresa-core.js';
 
@@ -305,7 +304,7 @@ async function loadAllModules() {
       console.log('- fillAcessoriosData:', typeof window.fillAcessoriosData);
       console.log('- initAcessoriosSystem:', typeof window.initAcessoriosSystem);
       console.log('- buildAcessoriosSection:', typeof window.buildAcessoriosSection);
-    }, 500);
+    }, 125);
 
     return true;
 
@@ -322,7 +321,7 @@ async function initializeEmpresaCadastro() {
   try {
     console.log("🏢 Inicializando sistema de cadastro de empresas...");
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 62));
 
     window.empresaCadastro = new EmpresaCadastroInline();
 

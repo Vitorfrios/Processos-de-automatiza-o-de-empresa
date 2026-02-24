@@ -79,7 +79,7 @@ const FilterSystem = (function () {
                 // Tenta habilitar mesmo assim (fallback)
                 enableFilterSwitch();
             }
-        }, 30000);
+        }, 3750);
     }
 
     /**
@@ -442,7 +442,7 @@ const FilterSystem = (function () {
             await Promise.allSettled(createPromises);
             
             // Aguardar DOM se estabilizar
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 12));
         }
         
         // 🔥 CORREÇÃO: Usar loadSingleObra para cada obra (já inclui prepararDadosEmpresaNaObra)
@@ -678,7 +678,7 @@ const FilterSystem = (function () {
                 clearTimeout(window._filterDebounce);
                 window._filterDebounce = setTimeout(() => {
                     reloadObrasWithCurrentEndpoint();
-                }, 500); // 🔥 Aumentado para 500ms para evitar sobrecarga
+                }, 62); // 🔥 Aumentado para 500ms para evitar sobrecarga
             }
         }
     }
@@ -800,10 +800,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (window.FilterSystem.isFilterActive()) {
                             window.FilterSystem.recarregarDadosEmpresa();
                         }
-                    }, 1000);
+                    }, 125);
                 });
             });
         }
-    }, 2000);
+    }, 750);
 });
 /* ==== FIM: features/filters/filter-system.js ==== */
