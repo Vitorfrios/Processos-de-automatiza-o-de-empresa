@@ -27,6 +27,62 @@ const FATOR_PRESSURIZACAO = 3.6;
 // Store para controle por sala
 const ventilationState = new Map();
 
+
+// =============================================================================
+// CONTROLE DE CARREGAMENTO - EVITA RECÁLCULOS DURANTE PREENCHIMENTO
+// =============================================================================
+
+// Flag global para indicar que está em processo de carregamento
+window._isLoadingData = false;
+
+// Contador para rastrear quantas salas estão sendo carregadas
+window._loadingRooms = new Set();
+
+/**
+ * Inicia o modo de carregamento para uma sala específica
+ * @param {string} roomId - ID da sala
+ */
+export function startRoomLoading(roomId) {
+    if (!window._loadingRooms) window._loadingRooms = new Set();
+    window._loadingRooms.add(roomId);
+    window._isLoadingData = true;
+    console.log(`🔄 [MODO CARREGAMENTO] Ativado para sala ${roomId}`);
+}
+
+/**
+ * Finaliza o modo de carregamento para uma sala específica
+ * @param {string} roomId - ID da sala
+ * @param {boolean} triggerRefresh - Se deve disparar refresh após finalizar
+ */
+export function finishRoomLoading(roomId, triggerRefresh = true) {
+    if (!window._loadingRooms) return;
+    
+    window._loadingRooms.delete(roomId);
+    
+    // Se não há mais salas carregando, desativa o flag global
+    if (window._loadingRooms.size === 0) {
+        window._isLoadingData = false;
+        console.log('🔄 [MODO CARREGAMENTO] Finalizado - todas as salas carregadas');
+    }
+    
+    // Dispara refresh se solicitado
+    if (triggerRefresh && window.refreshVentilationForRoom) {
+        setTimeout(() => {
+            window.refreshVentilationForRoom(roomId);
+        }, 100);
+    }
+}
+
+/**
+ * Verifica se está em modo de carregamento para uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {boolean}
+ */
+export function isLoadingForRoom(roomId) {
+    return window._isLoadingData === true || 
+           (window._loadingRooms && window._loadingRooms.has(roomId));
+}
+
 // =============================================================================
 // FUNÇÕES UTILITÁRIAS
 // =============================================================================
@@ -55,7 +111,7 @@ function getSystemConstants() {
 /**
  * EXTRAI VALOR NUMÉRICO DO SELECT DE CAPACIDADE
  */
-function extractCapacidadeValue(capacidadeValue) {
+export function extractCapacidadeValue(capacidadeValue) {
     if (!capacidadeValue) return null;
     const match = capacidadeValue.match(/^(\d+(?:\.\d+)?)/);
     return match ? parseFloat(match[1]) : null;
@@ -258,11 +314,18 @@ function updateTechnicalTable(roomId, inputs) {
  * ATUALIZA TABELA 2 - Solução das Máquinas
  */
 function updateSolutionTable(roomId, inputs) {
+    // 🚫 BLOQUEIA SE ESTIVER CARREGANDO
+    if (window.isLoadingForRoom && window.isLoadingForRoom(roomId)) {
+        console.log(`⏸️ [updateSolutionTable] Bloqueado - sala ${roomId} em carregamento`);
+        return;
+    }
+    
     const machinesContainer = document.getElementById(`machines-${roomId}`);
     if (!machinesContainer) {
         setTimeout(() => updateSolutionTable(roomId, inputs), 500);
         return;
     }
+    
     
     const tableBody = document.getElementById(`solucao-body-${roomId}`);
     if (!tableBody) return;
@@ -461,48 +524,54 @@ function updateSolutionTable(roomId, inputs) {
  */
 window.handleManualQuantityEdit = function(machineId) {
     const qntInput = document.getElementById(`solution-${machineId}`);
-    if (qntInput) {
-        // Marca que o usuário editou manualmente
-        qntInput.setAttribute('data-user-edited', 'true');
+    const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
+    const roomId = machine?.dataset.roomId;
+    
+    if (!qntInput) return;
+    
+    // 🚫 SE ESTIVER CARREGANDO, NÃO MARCA COMO EDIÇÃO MANUAL
+    if (roomId && isLoadingForRoom(roomId)) {
+        console.log(`⏸️ [VENTILAÇÃO] Edição manual ignorada - sala ${roomId} em carregamento`);
+        return;
+    }
+    
+    // Marca que o usuário editou manualmente
+    qntInput.setAttribute('data-user-edited', 'true');
+    
+    // 🔥 SALVA OS PARÂMETROS ATUAIS PARA REFERÊNCIA FUTURA
+    if (roomId) {
+        const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
+        const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
         
-        // 🔥 SALVA OS PARÂMETROS ATUAIS PARA REFERÊNCIA FUTURA
-        const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
-        const roomId = machine?.dataset.roomId;
+        const aplicacao = aplicacaoSelect?.value || '';
+        const capacidadeValue = extractCapacidadeValue(capacidadeSelect?.value);
         
-        if (roomId) {
-            const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
-            const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
-            
-            const aplicacao = aplicacaoSelect?.value || '';
-            const capacidadeValue = extractCapacidadeValue(capacidadeSelect?.value);
-            
-            // Calcula vazão necessária
-            const inputs = collectRoomInputs(roomId);
-            let vazaoNecessariaAbs = null;
-            
-            if (VALID_APPLICATIONS.includes(aplicacao)) {
-                const vazaoNecessaria = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
-                if (vazaoNecessaria !== null && !isNaN(vazaoNecessaria)) {
-                    vazaoNecessariaAbs = Math.abs(vazaoNecessaria);
-                }
+        // Calcula vazão necessária
+        const inputs = collectRoomInputs(roomId);
+        let vazaoNecessariaAbs = null;
+        
+        if (VALID_APPLICATIONS.includes(aplicacao)) {
+            const vazaoNecessaria = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
+            if (vazaoNecessaria !== null && !isNaN(vazaoNecessaria)) {
+                vazaoNecessariaAbs = Math.abs(vazaoNecessaria);
             }
-            
-            const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
-            qntInput.setAttribute('data-last-params', currentParams);
         }
         
-        console.log(`📝 [Ventilação] Usuário editou manualmente quantidade da máquina ${machineId}`);
-        
-        // Dispara o recalculo da ventilação para atualizar perda/dissipação
-        if (roomId) {
-            setTimeout(() => {
-                refreshVentilationForRoom(roomId);
-            }, 50);
-        }
-        
-        if (window.calculateMachinePrice) {
-            window.calculateMachinePrice(machineId);
-        }
+        const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
+        qntInput.setAttribute('data-last-params', currentParams);
+    }
+    
+    console.log(`📝 [Ventilação] Usuário editou manualmente quantidade da máquina ${machineId}`);
+    
+    // Dispara o recalculo da ventilação para atualizar perda/dissipação
+    if (roomId) {
+        setTimeout(() => {
+            refreshVentilationForRoom(roomId);
+        }, 50);
+    }
+    
+    if (window.calculateMachinePrice) {
+        window.calculateMachinePrice(machineId);
     }
 };
 
@@ -640,6 +709,12 @@ function setupMachinesObserver(roomId) {
 // =============================================================================
 
 window.refreshVentilationForRoom = function(roomId) {
+    // 🚫 BLOQUEIA CÁLCULOS DURANTE CARREGAMENTO
+    if (isLoadingForRoom(roomId)) {
+        console.log(`⏸️ [VENTILAÇÃO] Cálculo bloqueado - sala ${roomId} em carregamento`);
+        return;
+    }
+    
     if (!roomId || !roomId.includes('_proj_') || !roomId.includes('_sala_')) {
         return;
     }
@@ -666,10 +741,17 @@ window.refreshVentilationForRoom = function(roomId) {
 // =============================================================================
 
 window.handleVentilacaoAplicacaoChange = function(machineId) {
-    const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
-    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
     const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
     const roomId = machine?.dataset.roomId;
+    
+    // 🚫 BLOQUEIA DURANTE CARREGAMENTO
+    if (roomId && isLoadingForRoom(roomId)) {
+        console.log(`⏸️ [VENTILAÇÃO] Aplicação alterada ignorada - sala ${roomId} em carregamento`);
+        return;
+    }
+    
+    const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
+    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
     
     if (!roomId) return;
     
@@ -690,6 +772,12 @@ window.handleVentilacaoPowerChange = function(machineId) {
     const machine = capacidadeSelect?.closest('.climatization-machine');
     const roomId = machine?.dataset.roomId;
     
+    // 🚫 BLOQUEIA DURANTE CARREGAMENTO
+    if (roomId && isLoadingForRoom(roomId)) {
+        console.log(`⏸️ [VENTILAÇÃO] Capacidade alterada ignorada - sala ${roomId} em carregamento`);
+        return;
+    }
+    
     if (roomId) {
         refreshVentilationForRoom(roomId);
     }
@@ -699,6 +787,12 @@ window.handleVentilacaoTipoChange = function(machineId) {
     const tipoSelect = document.getElementById(`tipo-${machineId}`);
     const machine = tipoSelect?.closest('.climatization-machine');
     const roomId = machine?.dataset.roomId;
+    
+    // 🚫 BLOQUEIA DURANTE CARREGAMENTO
+    if (roomId && isLoadingForRoom(roomId)) {
+        console.log(`⏸️ [VENTILAÇÃO] Tipo alterado ignorado - sala ${roomId} em carregamento`);
+        return;
+    }
     
     if (roomId) {
         refreshVentilationForRoom(roomId);

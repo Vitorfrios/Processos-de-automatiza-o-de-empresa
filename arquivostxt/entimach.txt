@@ -1,0 +1,3063 @@
+
+/* ==== INÍCIO: data/modules/machines/capacity-calculator.js ==== */
+// capacityCalculator.js
+
+import { updateElementText } from '../../utils/core-utils.js';
+
+/**
+ * Encontra o ID da sala a partir de um elemento dentro dela
+ * @param {HTMLElement} element - Elemento dentro da sala
+ * @returns {string|null} ID da sala ou null se não encontrado
+ */
+function findRoomId(element) {
+    if (!element) return null;
+    
+    // Buscar o elemento room-block mais próximo
+    const roomBlock = element.closest('.room-block');
+    if (roomBlock) {
+        return roomBlock.dataset.roomId || null;
+    }
+    
+    // Tentar extrair do ID do elemento de conteúdo
+    const roomContent = element.closest('[id^="room-content-"]');
+    if (roomContent) {
+        const match = roomContent.id.match(/room-content-(.+)/);
+        if (match) return match[1];
+    }
+    
+    // Tentar extrair de elementos com data-room-id
+    const roomElement = element.closest('[data-room-id]');
+    if (roomElement) {
+        return roomElement.dataset.roomId;
+    }
+    
+    console.warn('❌ Não foi possível encontrar o ID da sala para o elemento:', element);
+    return null;
+}
+
+// Configurações para inicialização do sistema de capacidade
+const capacityConfig = {
+  maxInitAttempts: 5, // Aumentado para mais tentativas
+  initDelay: 800,
+  domCheckDelay: 300
+}
+
+// Estado global para controle de inicialização por sala
+const capacityState = new Map()
+
+/**
+ * Constrói a tabela de cálculo de capacidade de refrigeração para uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {string} HTML da tabela de capacidade
+ */
+function buildCapacityCalculationTable(roomId) {
+  console.log(`[CAPACITY] Construindo tabela para: ${roomId}`);
+  scheduleCapacityInit(roomId);
+  const backupValue = getBackupFromClimaInputs(roomId);
+
+  return `
+    <div class="capacity-calculation-table">
+      <h5 class="table-title">Cálculo de Capacidade de Refrigeração</h5>
+      <div class="table-container">
+        <table class="thermal-capacity-table">
+          <thead>
+            <tr>
+              <th>Carga Estimada (TR)</th>
+              <th>Fator de Seg.</th>
+              <th>Cap. Unit. (TR)</th>
+              <th>Solução</th>
+              <th>Com back-up</th>
+              <th>TOTAL (TR)</th>
+              <th>FOLGA (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td id="carga-estimada-${roomId}">
+                <input
+                  type="number"
+                  class="capacity-input"
+                  min="0"
+                  step="any"
+                  placeholder="Aguardando cálculo..."
+                  onchange="calculateCapacitySolution('${roomId}')"
+                  oninput="calculateCapacitySolution('${roomId}')"
+                >
+              </td>
+              <td>
+                <input type="number" id="fator-seguranca-${roomId}" value="10" step="1" 
+                      class="capacity-input" 
+                      onchange="calculateCapacitySolution('${roomId}')"
+                      oninput="calculateCapacitySolution('${roomId}')">
+              </td>
+              <td>
+                <select id="capacidade-unitaria-${roomId}" class="capacity-select" 
+                        onchange="calculateCapacitySolution('${roomId}')">
+                  ${[1, 2, 3, 4, 5, 7.5, 10, 12.5, 15, 20, 25, 30]
+                    .map((tr) => `<option value="${tr}">${tr} TR</option>`)
+                    .join("")}
+                </select>
+              </td>
+              <td id="solucao-${roomId}">-</td>
+              <td class="backup-cell">
+                <div class="backup-selection">
+                  <select class="backup-select" onchange="updateBackupConfiguration(this)">
+                    ${["n", "n+1", "n+2"]
+                      .map((opt) => `<option value="${opt}" ${backupValue === opt ? "selected" : ""}>${opt}</option>`)
+                      .join("")}
+                  </select>
+                </div>
+                <div class="backup-solution">
+                  <span id="solucao-backup-${roomId}">-</span>
+                </div>
+              </td>
+              <td id="total-capacidade-${roomId}">-</td>
+              <td id="folga-${roomId}">-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    `;
+}
+
+/**
+ * Inicializa a tabela de capacidade estática (para casos específicos)
+ * @returns {void}
+ */
+function initializeStaticCapacityTable() {
+  const staticTable = document.querySelector(".capacity-calculation-table");
+  if (staticTable) {
+    scheduleCapacityInit("Projeto1-Sala1");
+  }
+}
+
+/**
+ * Agenda a inicialização do sistema de capacidade para uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function scheduleCapacityInit(roomId) {
+  if (capacityState.has(roomId)) return;
+
+  capacityState.set(roomId, { initialized: false, attempts: 0 });
+  console.log(`[CAPACITY] Agendando inicialização para: ${roomId}`);
+  setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.initDelay);
+}
+
+/**
+ * Inicializa o sistema de capacidade com tentativas controladas
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function initializeCapacitySystem(roomId) {
+  const state = capacityState.get(roomId);
+  if (!state || state.initialized) return;
+
+  state.attempts++;
+
+  const systemConstantsReady = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE.value !== undefined;
+
+  if (systemConstantsReady || state.attempts >= capacityConfig.maxInitAttempts) {
+    const fatorSeguranca = systemConstantsReady
+      ? window.systemConstants.FATOR_SEGURANCA_CAPACIDADE.value
+      : 10;
+
+    applyFatorSeguranca(roomId, fatorSeguranca);
+
+    // CORREÇÃO: Aguarda o DOM estar pronto antes de tentar buscar a carga térmica
+    setTimeout(() => {
+      const cargaInicial = getThermalLoadTR(roomId);
+      const cargaInput = document.querySelector(`#carga-estimada-${roomId} input`);
+
+      if (cargaInicial > 0 && cargaInput) {
+        console.log(`[CAPACITY] Definindo carga inicial para ${roomId}: ${cargaInicial} TR`);
+        cargaInput.value = Math.round(cargaInicial);
+        calculateCapacitySolution(roomId);
+      } else {
+        console.log(`[CAPACITY] Aguardando cálculo térmico para ${roomId}`);
+        // Agenda nova tentativa se não houver carga térmica ainda
+        if (state.attempts < capacityConfig.maxInitAttempts * 2) {
+          setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.domCheckDelay);
+        }
+      }
+    }, 500);
+
+    state.initialized = true;
+    console.log(`[CAPACITY] Sistema inicializado para: ${roomId}`);
+  } else {
+    setTimeout(() => initializeCapacitySystem(roomId), capacityConfig.initDelay);
+  }
+}
+
+/**
+ * Aplica o fator de segurança ao input correspondente
+ * @param {string} roomId - ID da sala
+ * @param {number} fatorSeguranca - Valor do fator de segurança
+ * @returns {void}
+ */
+function applyFatorSeguranca(roomId, fatorSeguranca) {
+  const inputFator = document.getElementById(`fator-seguranca-${roomId}`);
+  if (!inputFator) return;
+
+  inputFator.value = fatorSeguranca;
+}
+
+/**
+ * Obtém a carga térmica em TR (Tons de Refrigeração) para uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {number} Carga térmica em TR
+ */
+function getThermalLoadTR(roomId) {
+  try {
+    console.log(`[CAPACITY] Buscando carga térmica para: ${roomId}`);
+    
+    // PRIORIDADE 1: Buscar pelo campo TR-exato
+    const totalTRExatoElement = document.getElementById(`total-tr-exato-${roomId}`);
+
+    if (totalTRExatoElement && totalTRExatoElement.textContent !== '') {
+      const trExato = Number(totalTRExatoElement.textContent);
+      if (Number.isFinite(trExato) && trExato > 0) {
+        console.log(`[CAPACITY] Usando TR-exato (sem aproximação): ${trExato} TR`);
+        return trExato;
+      }
+    }
+    
+    // // PRIORIDADE 2: Buscar pelo campo TR-aproximado (referência principal)
+    // const totalTRaproxElement = document.getElementById(`total-tr-aprox-${roomId}`);
+    // if (totalTRaproxElement?.textContent) {
+    //   const trAprox = Number.parseFloat(totalTRaproxElement.textContent);
+    //   if (!isNaN(trAprox) && trAprox > 0) {
+    //     console.log(`[CAPACITY] Usando TR-aproximado: ${trAprox} TR`);
+    //     return trAprox;
+    //   }
+    // }
+
+    // // PRIORIDADE 3: Calcular a partir dos ganhos em Watts
+    // const totalGanhosWElement = document.getElementById(`total-ganhos-w-${roomId}`);
+    // if (totalGanhosWElement?.textContent) {
+    //   const totalW = Number.parseFloat(totalGanhosWElement.textContent) || 0;
+    //   if (totalW > 0) {
+    //     const trCalculado = totalW / 3517;
+    //     console.log(`[CAPACITY] Calculado de Watts: ${totalW}W = ${trCalculado} TR`);
+    //     return trCalculado;
+    //   }
+    // }
+
+    console.log(`[CAPACITY] Nenhuma carga térmica encontrada para ${roomId}`);
+    return 0;
+  } catch (error) {
+    console.error(`Erro ao obter carga térmica para sala ${roomId}:`, error);
+    return 0;
+  }
+}
+
+/**
+ * Calcula a solução de capacidade de refrigeração baseada nos parâmetros
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function calculateCapacitySolution(roomId) {
+  try {
+    console.log(`[CAPACITY] Calculando solução para: ${roomId}`);
+    
+    const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`);
+    const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`);
+    const cargaEstimadaInput = document.querySelector(`#carga-estimada-${roomId} input`);
+
+    if (!fatorSegurancaInput || !capacidadeUnitariaSelect || !cargaEstimadaInput) {
+      console.warn(`[CAPACITY] Elementos não encontrados para: ${roomId}`);
+      return;
+    }
+
+    const rawCarga = cargaEstimadaInput.value.trim();
+
+    // Se usuário não digitou nada → só limpa os resultados
+    if (rawCarga === "" || rawCarga === "0") {
+      updateElementText(`solucao-${roomId}`, "N/A");
+      updateElementText(`solucao-backup-${roomId}`, "N/A");
+      updateElementText(`total-capacidade-${roomId}`, "N/A");
+      updateElementText(`folga-${roomId}`, "N/A");
+      return;
+    }
+
+    const cargaEstimada = Number.parseFloat(rawCarga);
+    if (isNaN(cargaEstimada) || cargaEstimada <= 0) {
+      console.warn(`[CAPACITY] Carga estimada inválida: ${rawCarga}`);
+      return;
+    }
+
+    const fatorSegurancaRaw = Number.parseFloat(fatorSegurancaInput.value);
+    const capacidadeUnitariaRaw = Number.parseFloat(capacidadeUnitariaSelect.value);
+
+    const fatorSeguranca = isNaN(fatorSegurancaRaw) ? 0 : (fatorSegurancaRaw / 100);
+    const capacidadeUnitaria = isNaN(capacidadeUnitariaRaw) ? 1 : capacidadeUnitariaRaw;
+
+    const backupType = getBackupFromClimatization(roomId);
+
+    const capacidadeNecessaria = cargaEstimada * (1 + fatorSeguranca);
+    const unidadesOperacionais = Math.ceil(capacidadeNecessaria / capacidadeUnitaria);
+    const unidadesTotais = applyBackupConfiguration(unidadesOperacionais, backupType);
+
+    const total = unidadesOperacionais * capacidadeUnitaria;
+    const folga = cargaEstimada > 0 ? ((total / cargaEstimada) - 1) * 100 : 0;
+
+    updateCapacityDisplay(roomId, cargaEstimada, unidadesOperacionais, unidadesTotais, total, folga, backupType);
+    
+    console.log(`[CAPACITY] Solução calculada para ${roomId}:`, {
+      cargaEstimada,
+      fatorSeguranca: `${fatorSeguranca * 100}%`,
+      capacidadeUnitaria,
+      unidadesOperacionais,
+      backupType,
+      unidadesTotais,
+      total: `${total.toFixed(1)} TR`,
+      folga: `${folga.toFixed(1)}%`
+    });
+  } catch (error) {
+    console.error(`Erro ao calcular capacidade para sala ${roomId}:`, error);
+  }
+}
+
+/**
+ * Obtém os dados atuais de capacidade de uma sala
+ * @param {string} roomId - ID da sala
+ * @returns {Object|null} Dados de capacidade ou null se não encontrado
+ */
+function getCapacityData(roomId) {
+  const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`);
+  const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`);
+  const backupSelect = document.querySelector(`#room-content-${roomId} .backup-select`);
+
+  if (!fatorSegurancaInput || !capacidadeUnitariaSelect || !backupSelect) return null;
+
+  return {
+    fatorSeguranca: Number.parseFloat(fatorSegurancaInput.value) || 10,
+    capacidadeUnitaria: Number.parseFloat(capacidadeUnitariaSelect.value) || 1,
+    backup: backupSelect.value || "n",
+    cargaEstimada:  document.getElementById(`total-tr-exato-${roomId}`),
+    solucao: document.getElementById(`solucao-${roomId}`)?.textContent || "0",
+    solucaoBackup: document.getElementById(`solucao-backup-${roomId}`)?.textContent || "0",
+    totalCapacidade: document.getElementById(`total-capacidade-${roomId}`)?.textContent || "0",
+    folga: document.getElementById(`folga-${roomId}`)?.textContent || "0%"
+  };
+}
+
+/**
+ * Aplica a configuração de backup ao número de unidades
+ * @param {number} unidadesOperacionais - Número de unidades operacionais
+ * @param {string} backupType - Tipo de backup ("n", "n+1", "n+2")
+ * @returns {number} Número total de unidades considerando backup
+ */
+function applyBackupConfiguration(unidadesOperacionais, backupType) {
+  switch (backupType) {
+    case "n+1":
+      return unidadesOperacionais + 1;
+    case "n+2":
+      return unidadesOperacionais + 2;
+    default:
+      return unidadesOperacionais;
+  }
+}
+
+/**
+ * Obtém o tipo de backup configurado para climatização da sala
+ * @param {string} roomId - ID da sala
+ * @returns {string} Tipo de backup ("n", "n+1", "n+2")
+ */
+function getBackupFromClimatization(roomId) {
+  const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+  if (capacityTable) {
+    const backupSelect = capacityTable.querySelector(".backup-select");
+    if (backupSelect) return backupSelect.value;
+  }
+
+  return getBackupFromClimaInputs(roomId);
+}
+
+/**
+ * Obtém o backup dos inputs de clima da sala
+ * @param {string} roomId - ID da sala
+ * @returns {string} Tipo de backup ("n", "n+1", "n+2")
+ */
+function getBackupFromClimaInputs(roomId) {
+  const roomContent = document.getElementById(`room-content-${roomId}`);
+  if (roomContent) {
+    const backupInput = roomContent.querySelector(`.clima-input[data-field="backup"]`);
+    if (backupInput?.value) return backupInput.value;
+  }
+  return "n";
+}
+
+/**
+ * Atualiza a exibição dos resultados de capacidade na tabela
+ * @param {string} roomId - ID da sala
+ * @param {number} cargaEstimada - Carga térmica estimada em TR
+ * @param {number} solucao - Número de unidades da solução
+ * @param {number} solucaoComBackup - Número de unidades com backup
+ * @param {number} total - Capacidade total em TR
+ * @param {number} folga - Percentual de folga
+ * @param {string} backupType - Tipo de backup
+ * @returns {void}
+ */
+function updateCapacityDisplay(roomId, cargaEstimada, solucao, solucaoComBackup, total, folga, backupType) {
+  updateElementText(`solucao-${roomId}`, String(solucao));
+  updateElementText(`solucao-backup-${roomId}`, String(solucaoComBackup));
+
+  if (typeof total === "number" && !Number.isNaN(total)) {
+    updateElementText(`total-capacidade-${roomId}`, total.toFixed(1));
+  }
+
+  if (typeof folga === "number" && !Number.isNaN(folga)) {
+    updateElementText(`folga-${roomId}`, folga.toFixed(1) + "%");
+  }
+
+  const backupSelect = document.querySelector(`#room-content-${roomId} .backup-select`);
+  if (backupSelect && backupSelect.value !== backupType) {
+    backupSelect.value = backupType;
+  }
+}
+
+/**
+ * Atualiza ou cria o input para carga estimada 
+ * @param {string} roomId - ID da sala
+ * @param {number} value - Valor a ser definido 
+ * @returns {void}
+ */
+function updateCargaEstimadaInput(roomId, value) {
+  const cargaEstimadaElement = document.getElementById(`carga-estimada-${roomId}`);
+  if (!cargaEstimadaElement) return;
+
+  let input = cargaEstimadaElement.querySelector("input");
+  if (!input) {
+    input = document.createElement("input");
+    input.type = "number";
+    input.className = "capacity-input";
+    input.min = "0";
+    input.step = "any";
+    input.onchange = () => calculateCapacitySolution(roomId);
+    input.oninput = () => calculateCapacitySolution(roomId);
+    input.value = value;
+
+    cargaEstimadaElement.innerHTML = "";
+    cargaEstimadaElement.appendChild(input);
+  } else {
+    input.value = value;
+
+  }
+}
+
+/**
+ * Atualiza a configuração de backup quando alterada pelo usuário
+ * @param {HTMLSelectElement} selectElement - Elemento select do backup
+ * @returns {void}
+ */
+function updateBackupConfiguration(selectElement) {
+  const roomId = findRoomId(selectElement.closest(".capacity-calculation-table"));
+  if (roomId) {
+    const newBackupValue = selectElement.value;
+    syncBackupWithClimaInputs(roomId, newBackupValue);
+    calculateCapacitySolution(roomId);
+  }
+}
+
+/**
+ * Manipula mudanças no backup provenientes dos inputs de clima
+ * @param {string} roomId - ID da sala
+ * @param {string} newBackupValue - Novo valor de backup
+ * @returns {void}
+ */
+function handleClimaInputBackupChange(roomId, newBackupValue) {
+  const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+
+  if (capacityTable) {
+    const backupSelect = capacityTable.querySelector(".backup-select");
+    if (backupSelect && backupSelect.value !== newBackupValue) {
+      backupSelect.value = newBackupValue;
+      calculateCapacitySolution(roomId);
+    }
+  }
+}
+
+/**
+ * Sincroniza o backup com os inputs de clima da sala
+ * @param {string} roomId - ID da sala
+ * @param {string} backupValue - Valor de backup a ser sincronizado
+ * @returns {void}
+ */
+function syncBackupWithClimaInputs(roomId, backupValue) {
+    const roomContent = document.getElementById(`room-content-${roomId}`);
+    if (roomContent) {
+        const backupInputs = roomContent.querySelectorAll(`.clima-input[data-field="backup"]`);
+
+        backupInputs.forEach((input) => {
+            if (input.value !== backupValue) {
+                // Remove temporariamente o onchange para evitar loop
+                const originalOnChange = input.onchange;
+                input.onchange = null;
+                
+                input.value = backupValue;
+                
+                // Restaura o onchange após um breve delay
+                setTimeout(() => {
+                    input.onchange = originalOnChange;
+                }, 100);
+            }
+        });
+    }
+}
+
+/**
+ * Sincroniza o backup da tabela de capacidade com os valores atuais
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function syncCapacityTableBackup(roomId) {
+  setTimeout(() => {
+    const backupFromInputs = getBackupFromClimaInputs(roomId);
+    const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+
+    if (capacityTable) {
+      const backupSelect = capacityTable.querySelector(".backup-select");
+      if (backupSelect && backupSelect.value !== backupFromInputs) {
+        backupSelect.value = backupFromInputs;
+        calculateCapacitySolution(roomId);
+      }
+    }
+  }, 500);
+}
+
+/**
+ * 🔄 Função global para ser chamada diretamente do HTML - EVITA LOOP
+ * @param {string} roomId - ID da sala
+ * @param {string} newValue - Novo valor do backup
+ * @returns {void}
+ */
+function handleClimaBackupChange(roomId, newValue) {
+    console.log(`🔄 Backup alterado no form: ${newValue} (sala: ${roomId})`);
+    
+    // Atualiza o backup-select SEM disparar eventos de volta
+    const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);
+    if (capacityTable) {
+        const backupSelect = capacityTable.querySelector(".backup-select");
+        if (backupSelect && backupSelect.value !== newValue) {
+            backupSelect.value = newValue;
+            calculateCapacitySolution(roomId);
+        }
+    }
+    
+    // Mantém o cálculo térmico original
+    if (typeof window.calculateVazaoArAndThermalGains === 'function') {
+        window.calculateVazaoArAndThermalGains(roomId);
+    }
+}
+
+/**
+ * 🔄 WRAPPER: Para ser chamada diretamente do onchange do HTML
+ * @param {HTMLSelectElement} selectElement - Elemento select do form
+ * @returns {void}
+ */
+function handleClimaInputBackupChangeFromEvent(selectElement) {
+    const roomId = findRoomId(selectElement);
+    if (!roomId) {
+        console.warn('❌ Não foi possível encontrar roomId para handleClimaInputBackupChangeFromEvent');
+        return;
+    }
+    
+    const newBackupValue = selectElement.value;
+    console.log(`🔄 Backup alterado no form: ${newBackupValue} (sala: ${roomId})`);
+    
+    // Usa a função existente que já faz todo o trabalho
+    handleClimaInputBackupChange(roomId, newBackupValue);
+    
+    // Também dispara o cálculo térmico (mantém funcionalidade original)
+    if (typeof window.calculateVazaoArAndThermalGains === 'function') {
+        window.calculateVazaoArAndThermalGains(roomId);
+    }
+}
+
+/**
+ * NOVA FUNÇÃO: Atualiza capacidade a partir dos ganhos térmicos
+ * @param {string} roomId - ID da sala
+ * @returns {void}
+ */
+function updateCapacityFromThermalGains(roomId) {
+  console.log(`[CAPACITY] Atualizando capacidade a partir de ganhos térmicos para ${roomId}`);
+  
+  const cargaEstimada = getThermalLoadTR(roomId);
+  if (cargaEstimada > 0) {
+    updateCargaEstimadaInput(roomId, cargaEstimada);
+    calculateCapacitySolution(roomId);
+    return true;
+  }
+  return false;
+}
+
+// 🔄 Torna as funções globais para serem acessíveis do HTML
+if (typeof window !== 'undefined') {
+  window.handleClimaBackupChange = handleClimaBackupChange;
+  window.handleClimaInputBackupChangeFromEvent = handleClimaInputBackupChangeFromEvent;
+  window.updateBackupConfiguration = updateBackupConfiguration;
+  window.calculateCapacitySolution = calculateCapacitySolution;
+  window.updateCapacityFromThermalGains = updateCapacityFromThermalGains;
+}
+
+// Exportação das funções do módulo
+export {
+  buildCapacityCalculationTable,
+  calculateCapacitySolution,
+  getCapacityData,
+  updateBackupConfiguration,
+  handleClimaInputBackupChange,
+  syncCapacityTableBackup,
+  initializeStaticCapacityTable,
+  handleClimaInputBackupChangeFromEvent,
+  updateCapacityFromThermalGains,
+  getThermalLoadTR
+};
+/* ==== FIM: data/modules/machines/capacity-calculator.js ==== */
+
+/* ==== INÍCIO: data/builders/ui-folder/machine-renderer.js ==== */
+import { buildMachinesSection, addMachine } from '../../modules/machines/machines-core.js';
+
+/**
+ * Encontra seção de máquinas pelo título
+ */
+function findMachinesSection(roomElement) {
+    if (!roomElement) return null;
+    
+    // Buscar todas as seções .section-block
+    const allSections = roomElement.querySelectorAll('.section-block');
+    
+    // Encontrar a que tem "Máquinas" no título
+    for (let section of allSections) {
+        const title = section.querySelector('.section-title');
+        if (title && title.textContent.includes('Máquinas')) {
+            return section;
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * ✅ FUNÇÃO AUXILIAR: Encontrar seção por título
+ */
+function findSectionByTitle(roomElement, titleText) {
+    if (!roomElement) return null;
+    
+    const allSections = roomElement.querySelectorAll('.section-block');
+    
+    for (let section of allSections) {
+        const title = section.querySelector('.section-title');
+        if (title && title.textContent.includes(titleText)) {
+            return section;
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Garante que a seção de máquinas existe e está inicializada - VERSÃO CORRIGIDA
+ */
+async function ensureMachinesSection(roomElement) {
+    if (!roomElement) {
+        console.error('❌ Elemento da sala inválido');
+        return null;
+    }
+
+    const obraId = roomElement.dataset.obraId;
+    const projectId = roomElement.dataset.projectId;
+    const roomName = roomElement.dataset.roomName;
+    const roomId = roomElement.dataset.roomId;
+
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`❌ Room ID inválido: "${roomId}" para sala ${roomName}`);
+        return null;
+    }
+
+    console.log(`🔨 Garantindo seção de máquinas para sala ${roomName} (ID: ${roomId})`);
+
+    // Primeiro garantir que todas as seções existem
+    const sectionsReady = await ensureAllRoomSections(roomElement);
+    if (!sectionsReady) {
+        console.error(`❌ Não foi possível garantir todas as seções para sala ${roomName}`);
+        return null;
+    }
+
+    // ✅ CORREÇÃO: Buscar por .section-block que contenha "Máquinas" no título
+    let machinesSection = findMachinesSection(roomElement);
+    
+    if (machinesSection) {
+        console.log(`✅ Seção de máquinas encontrada para sala ${roomName}`);
+        return machinesSection;
+    }
+
+    // Se ainda não existe, tentar criar apenas a seção de máquinas
+    console.log(`🔄 Tentando criar apenas seção de máquinas para sala ${roomName}`);
+
+    // Encontrar a última seção para inserir após ela
+    const lastSection = roomElement.querySelector('.section-block:last-child') || 
+                       roomElement.querySelector('.room-content > :last-child');
+
+    if (!lastSection) {
+        console.error(`❌ Nenhuma seção encontrada para inserir máquinas`);
+        return null;
+    }
+
+    if (typeof buildMachinesSection !== 'function') {
+        console.error('❌ Função buildMachinesSection não disponível');
+        return null;
+    }
+
+    try {
+        const machinesHTML = await buildMachinesSection(obraId, projectId, roomName, roomId);
+        if (!machinesHTML) {
+            console.error('❌ HTML da seção de máquinas não gerado');
+            return null;
+        }
+
+        lastSection.insertAdjacentHTML('afterend', machinesHTML);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // ✅ CORREÇÃO: Usar a nova função para encontrar a seção
+        machinesSection = findMachinesSection(roomElement);
+        if (machinesSection) {
+            console.log(`✅ Seção de máquinas criada com sucesso para sala ${roomName}`);
+            return machinesSection;
+        } else {
+            console.error(`❌ Seção de máquinas não encontrada após criação`);
+            return null;
+        }
+
+    } catch (error) {
+        console.error(`❌ Erro ao criar seção de máquinas:`, error);
+        return null;
+    }
+}
+
+/**
+ * Preenche os dados das máquinas de uma sala - VERSÃO CORRIGIDA
+ */
+async function fillMachinesData(roomElement, machinesData) {
+    if (!roomElement || !machinesData || !Array.isArray(machinesData)) {
+        console.error('❌ Elemento da sala ou dados de máquinas inválidos');
+        return false;
+    }
+
+    const roomId = roomElement.dataset.roomId;
+    const roomName = roomElement.dataset.roomName;
+    
+    console.log(`🔄 Preenchendo ${machinesData.length} máquina(s) para sala ${roomName} (ID: ${roomId})`);
+
+    // ✅ CORREÇÃO: Verificar se há máquinas para preencher
+    if (machinesData.length === 0) {
+        console.log(`ℹ️ Nenhuma máquina para preencher na sala ${roomName}`);
+        return true; // Retorna true porque não há erro, só não há máquinas
+    }
+
+    try {
+        const machinesSection = await ensureMachinesSection(roomElement);
+        if (!machinesSection) {
+            console.error(`❌ Não foi possível criar/obter seção de máquinas para sala ${roomName}`);
+            return false;
+        }
+
+        const machinesContainer = machinesSection.querySelector('.machines-container');
+        if (!machinesContainer) {
+            console.error(`❌ Container de máquinas não encontrado para sala ${roomName}`);
+            return false;
+        }
+
+        console.log(`✅ Container de máquinas encontrado`);
+
+        // Limpar máquinas existentes
+        const existingMachines = machinesContainer.querySelectorAll('.climatization-machine, .machine-block');
+        if (existingMachines.length > 0) {
+            console.log(`🗑️ Removendo ${existingMachines.length} máquina(s) existente(s)`);
+            existingMachines.forEach(machine => machine.remove());
+        }
+
+        let successCount = 0;
+
+        // Adicionar cada máquina
+        for (let i = 0; i < machinesData.length; i++) {
+            const machineData = machinesData[i];
+            
+            if (!machineData || !machineData.tipo) {
+                console.warn(`⚠️ Dados da máquina ${i} inválidos:`, machineData);
+                continue;
+            }
+
+            console.log(`🤖 [${i + 1}/${machinesData.length}] Adicionando máquina: ${machineData.tipo}`);
+
+            try {
+                // ✅ CORREÇÃO: Usar addMachine com retry
+                let machineAdded = false;
+                let retryCount = 0;
+                
+                while (!machineAdded && retryCount < 3) {
+                    machineAdded = await addMachine(roomId, machineData.tipo);
+                    
+                    if (!machineAdded) {
+                        retryCount++;
+                        console.log(`🔄 Tentativa ${retryCount}/3 para adicionar máquina ${machineData.tipo}`);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+                
+                if (!machineAdded) {
+                    console.error(`❌ Falha ao adicionar máquina ${machineData.tipo} após ${retryCount} tentativas`);
+                    continue;
+                }
+
+                console.log(`✅ Máquina ${machineData.tipo} adicionada, aguardando renderização...`);
+
+                // Aguardar renderização completa
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Encontrar a máquina mais recente
+                const machineElements = machinesContainer.querySelectorAll('.climatization-machine');
+                const lastMachine = machineElements[machineElements.length - 1];
+                
+                if (!lastMachine) {
+                    console.error(`❌ Elemento da máquina não encontrado após adição`);
+                    continue;
+                }
+
+                console.log(`✅ Elemento da máquina encontrado, preenchendo dados...`);
+
+                // Preencher dados da máquina
+                const populated = await populateMachineData(lastMachine, machineData);
+                if (populated) {
+                    successCount++;
+                    console.log(`🎉 Máquina ${machineData.tipo} preenchida com sucesso`);
+                } else {
+                    console.error(`❌ Falha ao preencher dados da máquina ${machineData.tipo}`);
+                }
+
+            } catch (error) {
+                console.error(`❌ Erro ao processar máquina ${machineData.tipo}:`, error);
+            }
+
+            // Pequena pausa entre máquinas
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        console.log(`✅ ${successCount}/${machinesData.length} máquina(s) preenchida(s) com sucesso para sala ${roomName}`);
+        
+        // ✅ CORREÇÃO: Retorna true se pelo menos uma máquina foi preenchida, ou se não havia máquinas
+        return successCount > 0 || machinesData.length === 0;
+
+    } catch (error) {
+        console.error(`❌ Erro crítico ao preencher máquinas para sala ${roomName}:`, error);
+        return false;
+    }
+}
+
+/**
+ * Preenche os dados individuais de uma máquina - COM APLICAÇÃO
+ */
+async function populateMachineData(machineElement, machineData) {
+    if (!machineElement || !machineData) {
+        console.error('❌ Elemento da máquina ou dados inválidos');
+        return false;
+    }
+
+    console.log(`🔧 Preenchendo dados da máquina:`, machineData);
+
+    try {
+        const machineId = machineElement.dataset.machineId;
+
+        // 1. DEFINIR QUANTIDADE (se disponível)
+        const qntInput = machineElement.querySelector('.machine-qnt-input');
+        if (qntInput && machineData.quantidade !== undefined) {
+            qntInput.value = Math.max(1, parseInt(machineData.quantidade) || 1);
+            console.log(`✅ Quantidade definida: ${qntInput.value}`);
+        }
+
+        // 2. DEFINIR TIPO (se disponível)
+        const typeSelect = machineElement.querySelector('.machine-type-select');
+        if (typeSelect && machineData.tipo) {
+            typeSelect.value = machineData.tipo;
+            const typeEvent = new Event('change', { bubbles: true });
+            typeSelect.dispatchEvent(typeEvent);
+            console.log(`✅ Tipo definido: ${machineData.tipo}`);
+            
+            // Aguardar processamento do tipo
+            await new Promise(resolve => setTimeout(resolve, 800));
+        }
+
+        // 3. DEFINIR APLICAÇÃO (se disponível)
+        const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
+        if (aplicacaoSelect && machineData.aplicacao_machines !== undefined) {
+            aplicacaoSelect.value = machineData.aplicacao_machines || '';
+            console.log(`✅ Aplicação definida: ${machineData.aplicacao_machines}`);
+        }
+
+        // 4. DEFINIR CAPACIDADE (se disponível e habilitado)
+        const powerSelect = machineElement.querySelector('.machine-power-select');
+        if (powerSelect && machineData.potencia) {
+            // Aguardar até que o select esteja habilitado (máx 3 segundos)
+            let attempts = 0;
+            while (powerSelect.disabled && attempts < 6) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+                console.log(`⏳ Aguardando habilitação da capacidade... (${attempts}/6)`);
+            }
+            
+            if (!powerSelect.disabled) {
+                const powerOption = Array.from(powerSelect.options).find(opt => 
+                    opt.text.includes(machineData.potencia) || 
+                    opt.value.includes(machineData.potencia) ||
+                    opt.text.toLowerCase().includes(machineData.potencia.toLowerCase())
+                );
+                
+                if (powerOption) {
+                    powerSelect.value = powerOption.value;
+                    const powerEvent = new Event('change', { bubbles: true });
+                    powerSelect.dispatchEvent(powerEvent);
+                    console.log(`✅ Capacidade definida: ${powerOption.value}`);
+                    
+                    // Aguardar processamento da capacidade
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                } else {
+                    console.log(`⚠️ Capacidade "${machineData.potencia}" não encontrada`);
+                }
+            } else {
+                console.log(`⚠️ Select de capacidade permanece desabilitado`);
+            }
+        }
+
+        // 5. DEFINIR TENSÃO (se disponível e habilitado)
+        const voltageSelect = machineElement.querySelector('.machine-voltage-select');
+        if (voltageSelect && machineData.tensao) {
+            // Aguardar até que o select esteja habilitado (máx 3 segundos)
+            let attempts = 0;
+            while (voltageSelect.disabled && attempts < 6) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+                console.log(`⏳ Aguardando habilitação da tensão... (${attempts}/6)`);
+            }
+            
+            if (!voltageSelect.disabled) {
+                const voltageOption = Array.from(voltageSelect.options).find(opt => 
+                    opt.text.includes(machineData.tensao) || 
+                    opt.value.includes(machineData.tensao) ||
+                    opt.text.toLowerCase().includes(machineData.tensao.toLowerCase())
+                );
+                
+                if (voltageOption) {
+                    voltageSelect.value = voltageOption.value;
+                    const voltageEvent = new Event('change', { bubbles: true });
+                    voltageSelect.dispatchEvent(voltageEvent);
+                    console.log(`✅ Tensão definida: ${voltageOption.value}`);
+                } else {
+                    console.log(`⚠️ Tensão "${machineData.tensao}" não encontrada`);
+                }
+            } else {
+                console.log(`⚠️ Select de tensão permanece desabilitado`);
+            }
+        }
+
+        // 6. DEFINIR OPÇÕES SELECIONADAS (se disponíveis)
+        if (machineData.opcoesSelecionadas && Array.isArray(machineData.opcoesSelecionadas)) {
+            // Aguardar carregamento das opções
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const optionsContainer = machineElement.querySelector('.options-grid');
+            
+            if (optionsContainer) {
+                const allCheckboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+                console.log(`🔍 Encontrados ${allCheckboxes.length} checkboxes de opções`);
+
+                let optionsMarked = 0;
+                machineData.opcoesSelecionadas.forEach(optionObj => {
+                    let optionName;
+                    if (typeof optionObj === 'string') {
+                        optionName = optionObj;
+                    } else if (typeof optionObj === 'object') {
+                        optionName = optionObj.name || optionObj.originalName;
+                    }
+                    
+                    if (!optionName) {
+                        console.log(`⚠️ Opção inválida:`, optionObj);
+                        return;
+                    }
+
+                    console.log(`Procurando opção: "${optionName}"`);
+                    
+                    // Buscar pelo data-option-name (mais confiável)
+                    const checkbox = Array.from(allCheckboxes).find(cb => {
+                        const dataName = cb.getAttribute('data-option-name');
+                        return dataName === optionName;
+                    });
+                    
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        const checkboxEvent = new Event('change', { bubbles: true });
+                        checkbox.dispatchEvent(checkboxEvent);
+                        optionsMarked++;
+                        console.log(`✅ Opção marcada: ${optionName}`);
+                    } else {
+                        console.log(`❌ Opção não encontrada: "${optionName}"`);
+                        
+                        // Debug: tentar encontrar por texto do label
+                        const allOptions = optionsContainer.querySelectorAll('.option-item');
+                        const foundByText = Array.from(allOptions).find(optionItem => {
+                            const nameElement = optionItem.querySelector('.option-name');
+                            return nameElement && nameElement.textContent.includes(optionName);
+                        });
+                        
+                        if (foundByText) {
+                            const checkboxInItem = foundByText.querySelector('input[type="checkbox"]');
+                            if (checkboxInItem) {
+                                checkboxInItem.checked = true;
+                                const checkboxEvent = new Event('change', { bubbles: true });
+                                checkboxInItem.dispatchEvent(checkboxEvent);
+                                optionsMarked++;
+                                console.log(`✅ Opção marcada (por texto): ${optionName}`);
+                            }
+                        }
+                    }
+                });
+                
+                console.log(`📊 Opções marcadas: ${optionsMarked}/${machineData.opcoesSelecionadas.length}`);
+            } else {
+                console.log(`⚠️ Container de opções não encontrado`);
+            }
+        }
+
+        // 7. DEFINIR CONFIGURAÇÕES SELECIONADAS (se disponíveis)
+        if (machineData.configuracoesSelecionadas && Array.isArray(machineData.configuracoesSelecionadas)) {
+            console.log(`🎯 Aplicando ${machineData.configuracoesSelecionadas.length} configurações salvas`);
+            
+            // Aguardar carregamento das configurações
+            await new Promise(resolve => setTimeout(resolve, 1200));
+            
+            const configContainer = machineElement.querySelector('.config-grid');
+            
+            if (configContainer) {
+                const allConfigCheckboxes = configContainer.querySelectorAll('input[type="checkbox"]');
+                console.log(`🔍 Encontrados ${allConfigCheckboxes.length} checkboxes de configurações`);
+
+                let configsMarked = 0;
+                machineData.configuracoesSelecionadas.forEach(configObj => {
+                    let configId, configName;
+                    
+                    if (typeof configObj === 'string') {
+                        // Se for string, tentar extrair ID do formato "config-{id}"
+                        const match = configObj.match(/config-(\d+)/);
+                        configId = match ? match[1] : configObj;
+                        configName = configObj;
+                    } else if (typeof configObj === 'object') {
+                        configId = configObj.id || configObj;
+                        configName = configObj.nome || configObj;
+                    }
+                    
+                    if (!configId) {
+                        console.log(`⚠️ Configuração inválida:`, configObj);
+                        return;
+                    }
+
+                    console.log(`Procurando configuração: ID=${configId}, Nome="${configName}"`);
+                    
+                    // Buscar pelo data-config-id
+                    const checkbox = Array.from(allConfigCheckboxes).find(cb => {
+                        const cbConfigId = cb.getAttribute('data-config-id');
+                        return cbConfigId === configId.toString();
+                    });
+                    
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        const checkboxEvent = new Event('change', { bubbles: true });
+                        checkbox.dispatchEvent(checkboxEvent);
+                        configsMarked++;
+                        console.log(`✅ Configuração marcada: ID=${configId}`);
+                    } else {
+                        console.log(`❌ Configuração não encontrada: ID=${configId}`);
+                        
+                        // Tentar encontrar por nome
+                        const foundByName = Array.from(allConfigCheckboxes).find(cb => {
+                            const cbConfigName = cb.getAttribute('data-config-name');
+                            return cbConfigName && cbConfigName.includes(configName);
+                        });
+                        
+                        if (foundByName) {
+                            foundByName.checked = true;
+                            const checkboxEvent = new Event('change', { bubbles: true });
+                            foundByName.dispatchEvent(checkboxEvent);
+                            configsMarked++;
+                            console.log(`✅ Configuração marcada (por nome): ${configName}`);
+                        }
+                    }
+                });
+                
+                console.log(`📊 Configurações marcadas: ${configsMarked}/${machineData.configuracoesSelecionadas.length}`);
+            } else {
+                console.log(`⚠️ Container de configurações não encontrado`);
+            }
+        }
+
+        // 8. DEFINIR PREÇOS (se disponíveis)
+        if (machineData.precoBase !== undefined) {
+            const basePriceElement = document.getElementById(`base-price-${machineId}`);
+            if (basePriceElement) {
+                basePriceElement.textContent = `R$ ${machineData.precoBase.toLocaleString('pt-BR')}`;
+                console.log(`✅ Preço base definido: R$ ${machineData.precoBase}`);
+            }
+        }
+
+        if (machineData.precoTotal !== undefined) {
+            const totalPriceElement = document.getElementById(`total-price-${machineId}`);
+            if (totalPriceElement) {
+                totalPriceElement.textContent = `R$ ${machineData.precoTotal.toLocaleString('pt-BR')}`;
+                console.log(`✅ Preço total definido: R$ ${machineData.precoTotal}`);
+            }
+        }
+
+        // 9. DEFINIR NOME (se disponível)
+        if (machineData.nome) {
+            const nameInput = machineElement.querySelector('.machine-title-editable');
+            if (nameInput) {
+                nameInput.value = machineData.nome;
+                console.log(`✅ Nome definido: ${machineData.nome}`);
+            }
+        }
+
+        // 10. DISPARAR CÁLCULO FINAL
+        setTimeout(() => {
+            if (typeof calculateMachinePrice === 'function') {
+                calculateMachinePrice(machineId);
+                console.log('✅ Cálculo de preço finalizado (com aplicação)');
+            }
+        }, 500);
+
+        console.log(`✅ Dados da máquina preenchidos com sucesso (incluindo aplicação)`);
+        return true;
+
+    } catch (error) {
+        console.error(`❌ Erro ao preencher dados da máquina:`, error);
+        return false;
+    }
+}
+
+// EXPORTS NO FINAL
+export {
+    findMachinesSection,
+    findSectionByTitle,
+    ensureMachinesSection,
+    fillMachinesData,
+    populateMachineData
+};
+/* ==== FIM: data/builders/ui-folder/machine-renderer.js ==== */
+
+/* ==== INÍCIO: data/modules/machines/machines-core.js ==== */
+/**
+ * data/modules/machines/machines-core.js
+ * Sistema unificado de máquinas - COM NOMENCLATURA AUTOMÁTICA
+ * Versão SIMPLIFICADA com preenchimento automático de quantidade
+ */
+
+import { updateElementText, safeNumber } from '../../utils/core-utils.js';
+import { generateMachineId } from '../../utils/id-generator.js';
+
+// =============================================================================
+// CACHE E ESTADO GLOBAL
+// =============================================================================
+
+if (typeof window !== 'undefined' && !window.machinesDataCache) {
+    window.machinesDataCache = null;
+}
+
+// =============================================================================
+// FUNÇÕES CORE UNIFICADAS
+// =============================================================================
+
+/**
+ * Carrega dados das máquinas com cache
+ */
+async function loadMachinesData() {
+    if (window.machinesDataCache?.machines?.length) {
+        return window.machinesDataCache;
+    }
+
+    try {
+        const response = await fetch('/machines');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        const machinesData = { machines: Array.isArray(data) ? data : data.machines };
+
+        window.machinesDataCache = machinesData;
+        window.machinesData = machinesData.machines;
+        return machinesData;
+
+    } catch (error) {
+        console.error("❌ Erro ao carregar máquinas:", error);
+        return window.machinesDataCache || { machines: [] };
+    }
+}
+
+    // =============================================================================
+// HANDLERS DE EVENTOS PARA VENTILAÇÃO
+// =============================================================================
+
+/**
+ * DISPARA EVENTO QUANDO UM CAMPO DE MÁQUINA É ALTERADO
+ */
+function notifyMachineFieldChange(machineId, fieldType) {
+    // Chama diretamente o handler se disponível
+    if (window.handleMachineFieldChange) {
+        window.handleMachineFieldChange(machineId, fieldType);
+    }
+    
+    // Também dispara evento customizado
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    const roomId = machineElement?.dataset.roomId;
+    
+    if (roomId) {
+        const event = new CustomEvent('machineFieldChanged', { 
+            detail: { 
+                machineId: machineId, 
+                roomId: roomId,
+                fieldType: fieldType
+            } 
+        });
+        window.dispatchEvent(event);
+    }
+}
+
+
+
+
+// =============================================================================
+// SISTEMA DE NOMENCLATURA AUTOMÁTICA
+// =============================================================================
+
+/**
+ * 🆕 GERA NOME AUTOMÁTICO APENAS QUANDO TIPO E CAPACIDADE ESTÃO SELECIONADOS
+ */
+function generateMachineName(machineType, roomId, currentMachineId = null) {
+    console.log(`🔤 Gerando nome automático para ${machineType} na sala ${roomId}`);
+
+    const container = document.getElementById(`machines-${roomId}`);
+    if (!container) return machineType;
+
+    const existingMachines = Array.from(container.querySelectorAll('.climatization-machine'));
+    const allMachinesData = [];
+
+    existingMachines.forEach(machine => {
+        const machineId = machine.dataset.machineId;
+        const typeSelect = machine.querySelector('.machine-type-select');
+        const powerSelect = machine.querySelector('.machine-power-select');
+
+        if (typeSelect && typeSelect.value === machineType && powerSelect && powerSelect.value) {
+            allMachinesData.push({
+                machineId: machineId,
+                type: typeSelect.value,
+                power: powerSelect.value,
+                capacityValue: getGenericCapacityValue(powerSelect.value)
+            });
+        }
+    });
+
+    if (currentMachineId && machineType) {
+        const currentMachineElement = document.querySelector(`[data-machine-id="${currentMachineId}"]`);
+        const powerSelect = currentMachineElement?.querySelector('.machine-power-select');
+        const currentPower = powerSelect ? powerSelect.value : '';
+
+        if (currentPower) {
+            allMachinesData.push({
+                machineId: currentMachineId,
+                type: machineType,
+                power: currentPower,
+                capacityValue: getGenericCapacityValue(currentPower),
+                isNew: true
+            });
+        } else {
+            return machineType;
+        }
+    }
+
+    if (allMachinesData.length === 0) {
+        return machineType;
+    }
+
+    allMachinesData.sort((a, b) => b.capacityValue - a.capacityValue);
+
+    const capacityGroups = {};
+    allMachinesData.forEach(machine => {
+        const capacityKey = machine.power;
+        if (!capacityGroups[capacityKey]) {
+            capacityGroups[capacityKey] = [];
+        }
+        capacityGroups[capacityKey].push(machine);
+    });
+
+    const sortedGroups = Object.entries(capacityGroups)
+        .sort(([, groupA], [, groupB]) => {
+            const capacityA = groupA[0].capacityValue;
+            const capacityB = groupB[0].capacityValue;
+            return capacityB - capacityA;
+        });
+
+    let groupNumber = 1;
+    const newNames = {};
+
+    sortedGroups.forEach(([capacityKey, machines]) => {
+        machines.sort((a, b) => a.machineId.localeCompare(b.machineId));
+
+        machines.forEach((machine, index) => {
+            const letter = String.fromCharCode(65 + index);
+            const newName = `${machineType}-${groupNumber.toString().padStart(2, '0')}${letter} (${machine.power})`;
+            newNames[machine.machineId] = newName;
+        });
+
+        groupNumber++;
+    });
+
+    if (currentMachineId) {
+        return newNames[currentMachineId] || machineType;
+    } else {
+        Object.entries(newNames).forEach(([machineId, newName]) => {
+            const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+            if (machineElement) {
+                const titleInput = machineElement.querySelector('.machine-title-editable');
+                if (titleInput && titleInput.value !== newName) {
+                    titleInput.value = newName;
+                }
+            }
+        });
+    }
+}
+
+/**
+ * 🆕 OBTÉM VALOR NUMÉRICO DA CAPACIDADE PARA ORDENAÇÃO
+ */
+function getGenericCapacityValue(powerText) {
+    if (!powerText) return 0;
+
+    try {
+        const numericMatch = powerText.match(/(\d+[.,]?\d*)/);
+        if (numericMatch) {
+            return parseFloat(numericMatch[0].replace(',', '.'));
+        }
+        return 0;
+    } catch (error) {
+        console.error('Erro ao obter capacidade:', error);
+        return 0;
+    }
+}
+
+// =============================================================================
+// FUNÇÃO PRINCIPAL PARA CONTROLE DE QUANTIDADE
+// =============================================================================
+
+/**
+ * 🆕 ATUALIZA QUANTIDADE COM BASE NA APLICAÇÃO
+ * Se aplicação for "climatizacao" → preenche com valor do backup
+ * Se não → MANTÉM a quantidade atual (não altera)
+ */
+function handleAplicacaoChange(machineId) {
+    console.log(`🔄 Aplicação alterada na máquina ${machineId}`);
+    
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (!machineElement) return;
+    
+    const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
+    const qntInput = machineElement.querySelector('.machine-qnt-input');
+    const roomId = machineElement.dataset.roomId;
+    
+    if (!aplicacaoSelect || !qntInput || !roomId) return;
+    
+    const aplicacao = aplicacaoSelect.value;
+    const quantidadeAtual = qntInput.value;
+    
+    console.log(`   - Aplicação selecionada: ${aplicacao}`);
+    console.log(`   - Quantidade atual: ${quantidadeAtual}`);
+    
+    if (aplicacao === "climatizacao") {
+        // Para climatização, tenta pegar do backup
+        const backupElement = document.getElementById(`solucao-backup-${roomId}`);
+        if (backupElement) {
+            const backupText = backupElement.textContent.trim();
+            const match = backupText.match(/(\d+)/);
+            if (match) {
+                const backupValue = parseInt(match[1]);
+                if (backupValue > 0) {
+                    qntInput.value = backupValue;
+                    console.log(`✅ Quantidade atualizada para ${backupValue} (backup: ${backupText})`);
+                }
+            }
+        }
+    } else {
+        // 🔥 IMPORTANTE: Para ventilação, NÃO ALTERA a quantidade
+        // A quantidade será controlada pelo módulo de ventilação
+        console.log(`🔧 É ventilação (${aplicacao}) - MANTENDO quantidade: ${quantidadeAtual}`);
+        // Não faz nada, mantém o valor atual
+    }
+    
+    calculateMachinePrice(machineId);
+    
+    // NOTIFICAR MUDANÇA
+    notifyMachineFieldChange(machineId, 'aplicacao');
+    
+    // DISPARA EVENTO PARA O MÓDULO DE VENTILAÇÃO
+    const event = new CustomEvent('machineChanged', { 
+        detail: { 
+            machineId: machineId, 
+            roomId: roomId,
+            changeType: 'aplicacao',
+            aplicacao: aplicacao
+        } 
+    });
+    window.dispatchEvent(event);
+}
+
+// =============================================================================
+// CONSTRUÇÃO DE UI UNIFICADA
+// =============================================================================
+
+/**
+ * Constrói seção completa de máquinas
+ */
+function buildMachinesSection(obraId, projectId, roomName, finalRoomId) {
+    if (!finalRoomId) return '';
+
+    return `
+    <div class="section-block">
+      <div class="section-header-machine">
+        <button class="minimizer" onclick="toggleSection('${finalRoomId}-maquinas')">+</button>
+        <h4 class="section-title">Máquinas</h4>
+      </div>
+      <div class="section-content collapsed" id="section-content-${finalRoomId}-maquinas">
+        <div class="machines-container" id="machines-${finalRoomId}">
+          <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
+        </div>
+        <div class="add-machine">
+            <button class="btn btn-add-secondary" onclick="addMachine('${finalRoomId}')">+ Adicionar Máquina</button> 
+        </div>
+        <div class="all-machines-total-price">
+          <strong>Total de Maquinas: <span id="total-all-machines-price-${finalRoomId}">R$ 0,00</span></strong>
+        </div>
+      </div>
+    </div>`;
+}
+
+
+/**
+ * Constrói HTML de máquina individual (modificado para incluir notificações)
+ */
+function buildMachineHTML(machineId, displayName, machines, roomId) {
+    const machineTypes = machines.map(m => m.type);
+
+    return `
+    <div class="climatization-machine" data-machine-id="${machineId}" data-room-id="${roomId}">
+      <div class="machine-header">
+        <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
+        <input type="text" class="machine-title-editable" id="title-${machineId}" value="${displayName}" 
+               onchange="updateMachineTitle(this, '${machineId}')" onclick="this.select()">
+        <button class="btn btn-delete-small" onclick="deleteMachine('${machineId}')">Remover</button>
+      </div>
+      <div class="machine-content" id="machine-content-${machineId}">
+        <div class="climatization-form-grid">
+          
+          ${buildFormGroup("Tipo:", `<select id="tipo-${machineId}" class="form-input machine-type-select" data-machine-id="${machineId}" onchange="updateMachineOptions(this)"><option value="">Selecionar</option>${machineTypes.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select>`)}
+          ${buildFormGroup("Aplicação:", `<select id="aplicacao-${machineId}" class="form-input machine-aplicacao-select" data-machine-id="${machineId}" onchange="handleAplicacaoChange('${machineId}')"><option value="">Selecionar</option><option value="climatizacao">Climatização</option><option value="pressurizacao">Pressurização</option><option value="exaustao_bateria">Exaustão da sala de bateria</option><option value="exaustao_baia_trafo">Exaustão da sala baia de trafo</option></select>`)}
+          ${buildFormGroup("Capacidade:", `<select id="capacidade-${machineId}" class="form-input machine-power-select" data-machine-id="${machineId}" onchange="handlePowerChange('${machineId}')" disabled><option value="">Selecionar</option></select>`)}
+          ${buildFormGroup("Tensão:", buildSelect([], machineId, "machine-voltage-select", `calculateMachinePrice('${machineId}')`, true))}
+          ${buildFormGroup("Qnt:", `<input id="solution-${machineId}" type="number" class="form-input machine-qnt-input" data-machine-id="${machineId}" min="1" value="1" onchange="updateQuantity('${machineId}')">`)}
+          ${buildFormGroup("Preço Base:", `<div class="price-display" id="base-price-${machineId}">R$ 0,00</div>`)}
+          ${buildFormGroup("Preço Total:", `<div class="price-display" id="total-price-${machineId}">R$ 0,00</div>`)}
+        </div>
+        <div class="machine-options-section">
+          <h6>Opções Adicionais:</h6>
+          <div class="options-grid" id="options-container-${machineId}">
+            <p class="empty-options-message">Selecione tipo e capacidade</p>
+          </div>
+        </div>
+        <div class="machine-config-section">
+            <h6>Configurações de Instalação:</h6>
+            <div class="config-grid" id="config-container-${machineId}">
+                <p class="empty-config-message">Selecione tipo e capacidade</p>
+            </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// =============================================================================
+// COMPONENTES UI REUTILIZÁVEIS
+// =============================================================================
+
+/**
+ * Constrói grupo de formulário
+ */
+function buildFormGroup(label, content) {
+    return `<div class="form-group"><label>${label}</label>${content}</div>`;
+}
+
+/**
+ * Constrói elemento select
+ */
+function buildSelect(options, machineId, className, onchangeHandler, disabled = false, selectedValue = '') {
+    const disabledAttr = disabled ? 'disabled' : '';
+    
+    const getOptionText = (value) => {
+        const mapping = {
+            "climatizacao": "Climatização",
+            "pressurizacao": "Pressurização",
+            "exaustao_bateria": "Exaustão da sala de bateria",
+            "exaustao_baia_trafo": "Exaustão da sala baia de trafo"
+        };
+        return mapping[value] || value;
+    };
+
+    const optionsHTML = options.map(opt => {
+        const optionText = getOptionText(opt);
+        return `<option value="${opt}" ${opt === selectedValue ? 'selected' : ''}>${optionText}</option>`;
+    }).join('');
+
+    return `
+    <select class="form-input ${className}" data-machine-id="${machineId}" 
+            onchange="${onchangeHandler}" ${disabledAttr}>
+      <option value="">Selecionar</option>${optionsHTML}
+    </select>`;
+}
+
+/**
+ * Constrói opções da máquina
+ */
+function buildOptionsHTML(options, machineId, selectedOptions = [], selectedPower = null) {
+    if (!options?.length) return '<p class="empty-options-message">Nenhuma opção disponível</p>';
+
+    return options.map(option => {
+        const isChecked = selectedOptions.some(selected => selected.id === option.id);
+        const optionValue = selectedPower && option.values?.[selectedPower] || 0;
+        const displayValue = `+R$ ${optionValue.toLocaleString("pt-BR")}`;
+
+        return `
+        <div class="option-item ${isChecked ? 'option-selected' : ''}" onclick="toggleOption('${machineId}', ${option.id})">
+          <div class="option-checkbox">
+            <input type="checkbox" value="${optionValue}" data-option-id="${option.id}" 
+                   data-option-name="${option.name}" id="option-${machineId}-${option.id}"
+                   onchange="updateOptionSelection('${machineId}', ${option.id}); calculateMachinePrice('${machineId}')"
+                   ${isChecked ? 'checked' : ''}>
+            <div class="option-content">
+              <div class="option-name">${option.name}</div>
+              <div class="option-price">${displayValue}</div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+}
+
+/**
+ * CONSTRÓI HTML DAS CONFIGURAÇÕES DE INSTALAÇÃO
+ */
+function buildConfigHTML(configuracoes, machineId, configuracoesSelecionadas = [], potencia = '') {
+    if (!configuracoes || !Array.isArray(configuracoes) || configuracoes.length === 0) {
+        return '<p class="empty-config-message">Nenhuma configuração disponível</p>';
+    }
+
+    return configuracoes.map(config => {
+        const isSaved = configuracoesSelecionadas.some(savedConfig => {
+            if (typeof savedConfig === 'object') {
+                return savedConfig.id === config.id || savedConfig.nome === config.nome;
+            }
+            return savedConfig === config.id || savedConfig === config.nome;
+        });
+
+        const isChecked = isSaved;
+        const configName = config.nome;
+        const isBocalInsuflamento = configName === "Bocal de insuflamento protegido por grelha diretamente no ambiente";
+        const isBocalAcoplado = configName === "Bocal acoplado à rede de dutos por lona flexível. Distribuição por grelhas";
+        const isExclusiveGroup = isBocalInsuflamento || isBocalAcoplado;
+
+        return `
+        <div class="config-option ${isChecked ? 'config-selected' : ''} ${isExclusiveGroup ? 'exclusive-group' : ''}" 
+             onclick="toggleConfig('${machineId}', ${config.id})">
+            <div class="config-checkbox">
+                <input type="checkbox" data-config-id="${config.id}" 
+                       data-config-name="${configName}" 
+                       data-exclusive-group="${isExclusiveGroup ? 'bocal-distribuicao' : ''}"
+                       id="config-${machineId}-${config.id}"
+                       onchange="handleConfigChange('${machineId}', ${config.id})"
+                       ${isChecked ? 'checked' : ''}>
+                <div class="config-content">
+                    <div class="config-name">${configName}</div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// =============================================================================
+// GERENCIAMENTO DE MÁQUINAS
+// =============================================================================
+
+/**
+ * Adiciona nova máquina COM NOME SIMPLES INICIAL
+ */
+async function addMachine(roomId) {
+    const container = document.getElementById(`machines-${roomId}`);
+    if (!container) return;
+
+    const machineId = generateMachineId(roomId);
+    const machineCount = container.querySelectorAll(".climatization-machine").length;
+
+    try {
+        const machinesData = await loadMachinesData();
+        if (!machinesData.machines.length) throw new Error("Nenhum dado disponível");
+
+        const autoName = `Maquina ${machineCount + 1}`;
+        const machineHTML = buildMachineHTML(machineId, autoName, machinesData.machines, roomId);
+        container.insertAdjacentHTML("beforeend", machineHTML);
+
+        const emptyMsg = container.querySelector('.empty-message');
+        if (emptyMsg) emptyMsg.remove();
+
+        updateAllMachinesTotal(roomId);
+        
+        console.log(`✅ Máquina ${autoName} adicionada à sala ${roomId}`);
+        
+        // 🆕 DISPARA EVENTO PARA O MÓDULO DE VENTILAÇÃO
+        const event = new CustomEvent('machineAdded', { 
+            detail: { 
+                machineId: machineId, 
+                roomId: roomId,
+                machineName: autoName 
+            } 
+        });
+        window.dispatchEvent(event);
+        
+        return true;
+    } catch (error) {
+        console.error("❌ Erro ao adicionar máquina:", error);
+        showEmptyMessage(container, "Erro ao carregar dados");
+    }
+}
+
+
+// =============================================================================
+// ATUALIZAÇÃO DE UI
+// =============================================================================
+
+/**
+ * Atualiza opções da máquina
+ */
+async function updateMachineOptions(selectElement) {
+    const machineId = selectElement.dataset.machineId;
+    const selectedType = selectElement.value;
+
+    if (!selectedType) {
+        resetMachineFields(machineId);
+        
+        const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+        if (machineElement) {
+            const titleInput = machineElement.querySelector('.machine-title-editable');
+            const container = document.getElementById(`machines-${machineElement.dataset.roomId}`);
+            const machineCount = container ? container.querySelectorAll(".climatization-machine").length : 1;
+            
+            if (titleInput && !titleInput.value.includes('Maquina')) {
+                titleInput.value = `Maquina ${machineCount}`;
+            }
+        }
+        
+        // NOTIFICAR MUDANÇA
+        notifyMachineFieldChange(machineId, 'tipo');
+        return;
+    }
+
+    try {
+        const machinesData = window.machinesData || [];
+        const machine = machinesData.find(m => m.type === selectedType);
+
+        if (machine) {
+            updateMachineUI(machineId, machine);
+            
+            const aplicacaoSelect = document.querySelector(`.machine-aplicacao-select[data-machine-id="${machineId}"]`);
+            if (aplicacaoSelect) {
+                if (machine.type === "Tubo Axial") {
+                    aplicacaoSelect.value = "";
+                } else {
+                    const aplicacaoValue = machine.aplicacao;
+                    let mappedValue = aplicacaoValue;
+                    
+                    if (aplicacaoValue === "pressurizacao_ventilacao") {
+                        mappedValue = "pressurizacao";
+                    } else if (aplicacaoValue === "climatizacao") {
+                        mappedValue = "climatizacao";
+                    } else if (aplicacaoValue === "exaustao") {
+                        mappedValue = "";
+                    }
+                    
+                    const option = Array.from(aplicacaoSelect.options).find(opt => opt.value === mappedValue);
+                    if (option) {
+                        aplicacaoSelect.value = mappedValue;
+                        // SE FOR CLIMATIZAÇÃO, ATUALIZAR QUANTIDADE
+                        if (mappedValue === "climatizacao") {
+                            handleAplicacaoChange(machineId);
+                        }
+                    }
+                }
+            }
+            
+            const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+            if (machineElement) {
+                const powerSelect = machineElement.querySelector('.machine-power-select');
+                if (powerSelect && powerSelect.value) {
+                    const roomId = machineElement.dataset.roomId;
+                    const newName = generateMachineName(selectedType, roomId, machineId);
+                    
+                    const titleInput = machineElement.querySelector('.machine-title-editable');
+                    if (titleInput) {
+                        titleInput.value = newName;
+                    }
+                } else {
+                    const titleInput = machineElement.querySelector('.machine-title-editable');
+                    if (titleInput) {
+                        titleInput.value = selectedType;
+                    }
+                }
+            }
+            
+        } else {
+            resetMachineFields(machineId);
+        }
+    } catch (error) {
+        console.error("❌ Erro em updateMachineOptions:", error);
+        resetMachineFields(machineId);
+    }
+    
+    // NOTIFICAR MUDANÇA
+    notifyMachineFieldChange(machineId, 'tipo');
+}
+
+/**
+ * ATUALIZA UI COMPLETA DA MÁQUINA
+ */
+function updateMachineUI(machineId, machine) {
+    const potencies = Object.keys(machine.baseValues || {});
+    const voltages = (machine.voltages || []).map(v => v.name);
+
+    updateSelectUI(`.machine-power-select[data-machine-id="${machineId}"]`, potencies, false);
+    updateSelectUI(`.machine-voltage-select[data-machine-id="${machineId}"]`, voltages, false);
+
+    const optionsContainer = document.getElementById(`options-container-${machineId}`);
+    if (optionsContainer) {
+        optionsContainer.innerHTML = machine.options?.length
+            ? buildOptionsHTML(machine.options, machineId)
+            : '<p class="empty-options-message">Nenhuma opção disponível</p>';
+    }
+
+    const configContainer = document.getElementById(`config-container-${machineId}`);
+    if (configContainer) {
+        if (machine.configuracoes_instalacao?.length) {
+            const configHTML = buildConfigHTML(machine.configuracoes_instalacao, machineId);
+            configContainer.innerHTML = '';
+            configContainer.insertAdjacentHTML('beforeend', configHTML);
+        } else {
+            configContainer.innerHTML = '<p class="empty-config-message">Nenhuma configuração disponível</p>';
+        }
+    }
+
+    updateElementText(`base-price-${machineId}`, 'R$ 0,00');
+    updateElementText(`total-price-${machineId}`, 'R$ 0,00');
+}
+
+/**
+ * Atualiza select na UI
+ */
+function updateSelectUI(selector, options, disabled = false) {
+    const select = document.querySelector(selector);
+    if (select) {
+        const getOptionText = (value) => {
+            const mapping = {
+                "climatizacao": "Climatização",
+                "pressurizacao": "Pressurização",
+                "exaustao_bateria": "Exaustão da sala de bateria",
+                "exaustao_baia_trafo": "Exaustão da sala baia de trafo"
+            };
+            return mapping[value] || value;
+        };
+
+        const optionsHTML = options.map(opt => {
+            const optionText = getOptionText(opt);
+            return `<option value="${opt}">${optionText}</option>`;
+        }).join('');
+        
+        select.innerHTML = `<option value="">Selecionar</option>${optionsHTML}`;
+        select.disabled = disabled;
+    }
+}
+
+/**
+ * RESETA CAMPOS DA MÁQUINA
+ */
+function resetMachineFields(machineId) {
+    updateSelectUI(`.machine-power-select[data-machine-id="${machineId}"]`, [], true);
+    updateSelectUI(`.machine-voltage-select[data-machine-id="${machineId}"]`, [], true);
+    
+    const aplicacaoSelect = document.querySelector(`.machine-aplicacao-select[data-machine-id="${machineId}"]`);
+    if (aplicacaoSelect) {
+        aplicacaoSelect.value = "";
+    }
+
+    const optionsContainer = document.getElementById(`options-container-${machineId}`);
+    if (optionsContainer) {
+        optionsContainer.innerHTML = '<p class="empty-options-message">Selecione um tipo de máquina</p>';
+    }
+
+    const configContainer = document.getElementById(`config-container-${machineId}`);
+    if (configContainer) {
+        configContainer.innerHTML = '<p class="empty-config-message">Selecione um tipo de máquina</p>';
+    }
+
+    updateElementText(`base-price-${machineId}`, 'R$ 0,00');
+    updateElementText(`total-price-${machineId}`, 'R$ 0,00');
+}
+
+// =============================================================================
+// CÁLCULOS DE PREÇO
+// =============================================================================
+
+/**
+ * Atualiza a quantidade e recalcula o preço
+ */
+function updateQuantity(machineId) {
+    const qntInput = document.querySelector(`.machine-qnt-input[data-machine-id="${machineId}"]`);
+    if (!qntInput) return;
+
+    const quantidade = Math.max(1, parseInt(qntInput.value) || 1);
+    qntInput.value = quantidade;
+
+    calculateMachinePrice(machineId);
+}
+
+/**
+ * Calcula preço da máquina
+ */
+function calculateMachinePrice(machineId) {
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (!machineElement) return;
+
+    const typeSelect = machineElement.querySelector('.machine-type-select');
+    const powerSelect = machineElement.querySelector('.machine-power-select');
+    const voltageSelect = machineElement.querySelector('.machine-voltage-select');
+    const qntInput = machineElement.querySelector('.machine-qnt-input');
+
+    const selectedType = typeSelect?.value;
+    const selectedPower = powerSelect?.value;
+    const selectedVoltage = voltageSelect?.value;
+    const quantidade = qntInput ? parseInt(qntInput.value) || 1 : 1;
+
+    let basePrice = 0, voltageValue = 0;
+
+    if (selectedType && selectedPower && window.machinesData) {
+        const machine = window.machinesData.find(m => m.type === selectedType);
+        basePrice = machine?.baseValues?.[selectedPower] || 0;
+    }
+
+    if (selectedType && selectedVoltage && window.machinesData) {
+        const machine = window.machinesData.find(m => m.type === selectedType);
+        const voltageObj = machine?.voltages?.find(v => v.name === selectedVoltage);
+        voltageValue = voltageObj?.value || 0;
+    }
+
+    let optionsTotal = 0;
+    const optionsContainer = document.getElementById(`options-container-${machineId}`);
+    if (optionsContainer) {
+        optionsContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(option => {
+            optionsTotal += safeNumber(option.value);
+        });
+    }
+
+    const basePriceUnitario = basePrice + voltageValue;
+    const totalPriceUnitario = basePriceUnitario + optionsTotal;
+    const totalPriceFinal = totalPriceUnitario * quantidade;
+
+    updateElementText(`base-price-${machineId}`, `R$ ${basePriceUnitario.toLocaleString("pt-BR")}`);
+    updateElementText(`total-price-${machineId}`, `R$ ${totalPriceFinal.toLocaleString("pt-BR")}`);
+
+    const roomId = machineElement.dataset.roomId;
+    if (roomId) updateAllMachinesTotal(roomId);
+}
+
+/**
+ * Atualiza valores das opções
+ */
+function updateOptionValues(machineId) {
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (!machineElement) return;
+
+    const typeSelect = machineElement.querySelector('.machine-type-select');
+    const powerSelect = machineElement.querySelector('.machine-power-select');
+
+    const selectedType = typeSelect?.value;
+    const selectedPower = powerSelect?.value;
+
+    if (!selectedType || !selectedPower || !window.machinesData) return;
+
+    const machine = window.machinesData.find(m => m.type === selectedType);
+    if (!machine?.options) return;
+
+    machine.options.forEach(option => {
+        const checkbox = document.getElementById(`option-${machineId}-${option.id}`);
+        if (checkbox) {
+            const optionValue = selectedPower && option.values?.[selectedPower] || 0;
+            checkbox.value = optionValue;
+
+            const priceDisplay = checkbox.closest('.option-item')?.querySelector('.option-price');
+            if (priceDisplay) {
+                priceDisplay.textContent = `+R$ ${optionValue.toLocaleString("pt-BR")}`;
+            }
+        }
+    });
+
+    calculateMachinePrice(machineId);
+}
+
+// =============================================================================
+// FUNÇÕES DE INTERAÇÃO DO USUÁRIO
+// =============================================================================
+
+function toggleMachineSection(button) {
+    const content = button.closest(".climatization-machine").querySelector(".machine-content");
+    const isCollapsed = content.classList.toggle("collapsed");
+    button.textContent = isCollapsed ? "+" : "−";
+}
+
+function updateMachineTitle(input, machineId) {
+    if (!input.value.trim()) {
+        const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+        const container = document.getElementById(`machines-${machineElement.dataset.roomId}`);
+        const machineCount = container ? container.querySelectorAll(".climatization-machine").length : 1;
+        
+        if (input && !input.value.includes('Maquina')) {
+            input.value = `Maquina ${machineCount}`;
+        }
+        
+        // NOTIFICAR MUDANÇA
+        notifyMachineFieldChange(machineId, 'title');
+    }
+}
+
+function toggleOption(machineId, optionId) {
+    const checkbox = document.getElementById(`option-${machineId}-${optionId}`);
+    if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+function updateOptionSelection(machineId, optionId) {
+    const checkbox = document.getElementById(`option-${machineId}-${optionId}`);
+    const item = checkbox?.closest('.option-item');
+    if (item) {
+        item.classList.toggle('option-selected', checkbox.checked);
+    }
+}
+
+function handlePowerChange(machineId) {
+    calculateMachinePrice(machineId);
+    updateOptionValues(machineId);
+
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (machineElement) {
+        const typeSelect = machineElement.querySelector('.machine-type-select');
+        const powerSelect = machineElement.querySelector('.machine-power-select');
+        const roomId = machineElement.dataset.roomId;
+
+        if (typeSelect && typeSelect.value && powerSelect && powerSelect.value) {
+            generateMachineName(typeSelect.value, roomId);
+        } else if (typeSelect && typeSelect.value && (!powerSelect || !powerSelect.value)) {
+            const titleInput = machineElement.querySelector('.machine-title-editable');
+            if (titleInput) {
+                titleInput.value = typeSelect.value;
+            }
+        }
+    }
+    
+    // NOTIFICAR MUDANÇA
+    notifyMachineFieldChange(machineId, 'capacidade');
+    
+    // DISPARA EVENTO PARA O MÓDULO DE VENTILAÇÃO
+    if (machineElement) {
+        const roomId = machineElement.dataset.roomId;
+        const event = new CustomEvent('machineChanged', { 
+            detail: { 
+                machineId: machineId, 
+                roomId: roomId,
+                changeType: 'power'
+            } 
+        });
+        window.dispatchEvent(event);
+    }
+}
+
+function deleteMachine(machineId) {
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (!machineElement) return;
+
+    const roomId = machineElement.dataset.roomId;
+    const container = machineElement.closest(".machines-container");
+    const machineName = machineElement.querySelector('.machine-title-editable')?.value || 'Máquina';
+
+    machineElement.remove();
+
+    if (roomId) {
+        updateAllMachineNamesInRoom(roomId);
+        updateAllMachinesTotal(roomId);
+        
+        // NOTIFICAR MUDANÇA PARA ATUALIZAR VENTILAÇÃO
+        if (window.refreshVentilationForRoom) {
+            window.refreshVentilationForRoom(roomId);
+        }
+        
+        // DISPARA EVENTO PARA O MÓDULO DE VENTILAÇÃO
+        const event = new CustomEvent('machineRemoved', { 
+            detail: { 
+                machineId: machineId, 
+                roomId: roomId,
+                machineName: machineName 
+            } 
+        });
+        window.dispatchEvent(event);
+    }
+
+    if (container && container.querySelectorAll('.climatization-machine').length === 0) {
+        showEmptyMessage(container, "Nenhuma máquina adicionada ainda.");
+    }
+}
+
+
+function toggleConfig(machineId, configId) {
+    const checkbox = document.getElementById(`config-${machineId}-${configId}`);
+    if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        handleConfigChange(machineId, configId);
+    }
+}
+
+function updateConfigSelection(machineId, configId) {
+    const checkbox = document.getElementById(`config-${machineId}-${configId}`);
+    const item = checkbox?.closest('.config-option');
+    if (item) {
+        item.classList.toggle('config-selected', checkbox.checked);
+    }
+}
+
+function handleConfigChange(machineId, configId) {
+    const checkbox = document.getElementById(`config-${machineId}-${configId}`);
+    if (!checkbox) return;
+
+    updateConfigSelection(machineId, configId);
+
+    const isExclusiveGroup = checkbox.getAttribute('data-exclusive-group') === 'bocal-distribuicao';
+    if (isExclusiveGroup && checkbox.checked) {
+        deselectOtherBocalOptions(machineId, configId);
+    }
+
+    calculateMachinePrice(machineId);
+}
+
+function deselectOtherBocalOptions(machineId, selectedConfigId) {
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (!machineElement) return;
+
+    const bocalCheckboxes = machineElement.querySelectorAll('input[data-exclusive-group="bocal-distribuicao"]');
+
+    bocalCheckboxes.forEach(checkbox => {
+        const configId = parseInt(checkbox.getAttribute('data-config-id'));
+        if (configId !== selectedConfigId && checkbox.checked) {
+            checkbox.checked = false;
+            updateConfigSelection(machineId, configId);
+        }
+    });
+}
+
+// =============================================================================
+// FUNÇÕES AUXILIARES
+// =============================================================================
+
+function showEmptyMessage(container, message) {
+    const existing = container.querySelector('.empty-message');
+    if (existing) existing.remove();
+    container.insertAdjacentHTML('beforeend', `<p class="empty-message">${message}</p>`);
+}
+
+function removeEmptyMessage(container) {
+    const emptyMsg = container.querySelector('.empty-message');
+    if (emptyMsg) emptyMsg.remove();
+}
+
+function calculateAllMachinesTotal(roomId) {
+    const container = document.getElementById(`machines-${roomId}`);
+    if (!container) return 0;
+
+    let total = 0;
+    container.querySelectorAll('.climatization-machine').forEach(machineElement => {
+        const machineId = machineElement.dataset.machineId;
+        const priceElement = document.getElementById(`total-price-${machineId}`);
+        if (priceElement) {
+            const priceText = priceElement.textContent;
+            const cleanText = priceText.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+            total += safeNumber(cleanText);
+        }
+    });
+
+    return total;
+}
+
+function updateAllMachinesTotal(roomId) {
+    const total = calculateAllMachinesTotal(roomId);
+    const display = document.getElementById(`total-all-machines-price-${roomId}`);
+    if (display) {
+        display.textContent = `R$ ${total.toLocaleString('pt-BR')}`;
+    }
+}
+
+function updateAllMachineNamesInRoom(roomId) {
+    const container = document.getElementById(`machines-${roomId}`);
+    if (!container) return;
+
+    const machines = Array.from(container.querySelectorAll('.climatization-machine'));
+    const machineTypes = new Set();
+
+    machines.forEach(machine => {
+        const typeSelect = machine.querySelector('.machine-type-select');
+        if (typeSelect && typeSelect.value) {
+            machineTypes.add(typeSelect.value);
+        }
+    });
+
+    machineTypes.forEach(type => {
+        generateMachineName(type, roomId);
+    });
+}
+
+// =============================================================================
+// EXPORTAÇÕES E GLOBAIS
+// =============================================================================
+
+export {
+    buildMachinesSection,
+    loadMachinesData,
+    addMachine,
+    buildMachineHTML,
+    toggleMachineSection,
+    updateMachineTitle,
+    updateMachineOptions,
+    updateMachineUI,
+    resetMachineFields,
+    calculateMachinePrice,
+    deleteMachine,
+    toggleOption,
+    updateOptionSelection,
+    updateOptionValues,
+    handlePowerChange,
+    calculateAllMachinesTotal,
+    updateAllMachinesTotal,
+    generateMachineId,
+    buildConfigHTML,
+    toggleConfig,
+    updateConfigSelection,
+    handleConfigChange,
+    deselectOtherBocalOptions,
+    buildOptionsHTML,
+    updateSelectUI,
+    showEmptyMessage,
+    removeEmptyMessage,
+    updateQuantity,
+    generateMachineName,
+    getGenericCapacityValue,
+    updateAllMachineNamesInRoom,
+    handleAplicacaoChange,
+    notifyMachineFieldChange
+};
+
+// 🆕 DISPONIBILIZAÇÃO GLOBAL SIMPLIFICADA
+if (typeof window !== 'undefined') {
+    window.handleAplicacaoChange = handleAplicacaoChange;
+    window.updateMachineOptions = updateMachineOptions;
+    window.calculateMachinePrice = calculateMachinePrice;
+    window.updateQuantity = updateQuantity;
+    window.deleteMachine = deleteMachine;
+    window.addMachine = addMachine;
+    window.toggleMachineSection = toggleMachineSection;
+    window.handlePowerChange = handlePowerChange;
+    window.generateMachineName = generateMachineName;
+    window.notifyMachineFieldChange = notifyMachineFieldChange;
+    window.updateMachineTitle = updateMachineTitle;
+
+    console.log('✅ Funções principais carregadas no escopo global');
+    
+}
+/* ==== FIM: data/modules/machines/machines-core.js ==== */
+
+/* ==== INÍCIO: data/modules/ventilacao.js ==== */
+/**
+ * MÓDULO DE VENTILAÇÃO - INTEGRAÇÃO COM SISTEMA DE MÁQUINAS EXISTENTE
+ * @module data/modules/ventilacao.js
+ * 
+ * CORRIGIDO: Agora recalcula a solução sempre que os parâmetros mudam,
+ * mas respeita as edições manuais do usuário
+ */
+
+// =============================================================================
+// CONSTANTES E CONFIGURAÇÕES
+// =============================================================================
+
+// Mapeamento aplicação → texto legível
+const APPLICATION_TEXT_MAP = {
+    'pressurizacao': 'Pressurização',
+    'exaustao_bateria': 'Exaustão da Sala de Bateria',
+    'exaustao_baia_trafo': 'Exaustão da Baia de Trafo'
+};
+
+// Aplicações válidas que disparam cálculos
+const VALID_APPLICATIONS = ['pressurizacao', 'exaustao_bateria', 'exaustao_baia_trafo'];
+
+// Fatores de conversão
+const FATOR_CONVERSAO_W_CAL = 859.85;
+const FATOR_PRESSURIZACAO = 3.6;
+
+// Store para controle por sala
+const ventilationState = new Map();
+
+// =============================================================================
+// FUNÇÕES UTILITÁRIAS
+// =============================================================================
+
+/**
+ * OBTÉM CONSTANTES DO SISTEMA
+ */
+function getSystemConstants() {
+    if (!window.systemConstants) {
+        throw new Error('window.systemConstants não disponível');
+    }
+
+    const Densi_ar = window.systemConstants.Densi_ar?.value;
+    const fatorEspecifico = window.systemConstants.fatorEspecifico?.value;
+
+    if (!Densi_ar || typeof Densi_ar !== 'number') {
+        throw new Error('Constante Densi_ar não encontrada');
+    }
+    if (!fatorEspecifico || typeof fatorEspecifico !== 'number') {
+        throw new Error('Constante fatorEspecifico não encontrada');
+    }
+
+    return { Densi_ar, fatorEspecifico };
+}
+
+/**
+ * EXTRAI VALOR NUMÉRICO DO SELECT DE CAPACIDADE
+ */
+function extractCapacidadeValue(capacidadeValue) {
+    if (!capacidadeValue) return null;
+    const match = capacidadeValue.match(/^(\d+(?:\.\d+)?)/);
+    return match ? parseFloat(match[1]) : null;
+}
+
+/**
+ * FORMATA NÚMERO PARA EXIBIÇÃO
+ */
+function formatNumber(value, decimals = 2) {
+    if (value === null || value === undefined || isNaN(value)) return '-';
+    const formatted = value.toFixed(decimals).replace('.', ',');
+    const parts = formatted.split(',');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return parts.join(',');
+}
+
+/**
+ * COLETA INPUTS TÉCNICOS DA SALA
+ */
+function collectRoomInputs(roomId) {
+    console.log(`📊 [collectRoomInputs] Coletando inputs para sala ${roomId}`);
+    
+    const inputs = {};
+    
+    // Busca pelos elementos específicos
+    const vazaoArElement = document.getElementById(`vazao-ar-${roomId}`);
+    const volumeElement = document.getElementById(`volume-${roomId}`);
+    const potenciaElement = document.getElementById(`potencia-${roomId}`);
+    const tempInternaElement = document.getElementById(`temp-interna-${roomId}`);
+    const tempExternaElement = document.getElementById(`temp-externa-${roomId}`);
+    
+    // Para vazaoAr, pode ser um div com textContent ou um input
+    if (vazaoArElement) {
+        if (vazaoArElement.tagName === 'DIV' || vazaoArElement.classList.contains('result-value-inline')) {
+            inputs.vazaoAr = parseFloat(vazaoArElement.textContent);
+        } else if (vazaoArElement.tagName === 'INPUT') {
+            inputs.vazaoAr = parseFloat(vazaoArElement.value);
+        }
+    } else {
+        inputs.vazaoAr = null;
+    }
+    
+    inputs.volume = volumeElement ? parseFloat(volumeElement.value) : null;
+    inputs.potencia = potenciaElement ? parseFloat(potenciaElement.value) : null;
+    inputs.tempInterna = tempInternaElement ? parseFloat(tempInternaElement.value) : 45;
+    inputs.tempExterna = tempExternaElement ? parseFloat(tempExternaElement.value) : 35;
+    
+    return inputs;
+}
+
+// =============================================================================
+// FUNÇÕES DE CÁLCULO
+// =============================================================================
+
+/**
+ * CALCULA VAZÃO POR APLICAÇÃO
+ */
+function calculateVazaoByAplicacao(aplicacao, roomId, inputs) {
+    switch (aplicacao) {
+        case 'pressurizacao': {
+            if (!inputs.vazaoAr || isNaN(inputs.vazaoAr)) {
+                return null;
+            }
+            return inputs.vazaoAr * FATOR_PRESSURIZACAO;
+        }
+        
+        case 'exaustao_bateria': {
+            if (!inputs.volume || isNaN(inputs.volume)) {
+                return null;
+            }
+            return inputs.volume * 12;
+        }
+        
+        case 'exaustao_baia_trafo': {
+            if (!inputs.potencia || isNaN(inputs.potencia)) {
+                return null;
+            }
+            
+            const deltaT = inputs.tempInterna - inputs.tempExterna;
+            const deltaTAbs = Math.abs(deltaT);
+            
+            if (deltaTAbs === 0) {
+                return null;
+            }
+            
+            const constants = getSystemConstants();
+            const Q = inputs.potencia * FATOR_CONVERSAO_W_CAL;
+            const massaGR = Q / (constants.fatorEspecifico * deltaTAbs);
+            const massaAr = massaGR / 1000;
+            const vazao = massaAr / constants.Densi_ar;
+            
+            return deltaT < 0 ? -vazao : vazao;
+        }
+        
+        default:
+            return null;
+    }
+}
+
+// =============================================================================
+// ATUALIZAÇÃO DAS TABELAS
+// =============================================================================
+
+/**
+ * ATUALIZA TABELA 1 - Cálculo Técnico
+ */
+function updateTechnicalTable(roomId, inputs) {
+    const elements = {
+        q: document.getElementById(`q-cal-${roomId}`),
+        deltaT: document.getElementById(`delta-t-${roomId}`),
+        massaGrama: document.getElementById(`massa-gramas-${roomId}`),
+        massa: document.getElementById(`massa-ar-${roomId}`),
+        vazao: document.getElementById(`vazao-${roomId}`)
+    };
+    
+    // Se não tem potência, limpa resultados
+    if (!inputs.potencia || isNaN(inputs.potencia)) {
+        Object.values(elements).forEach(el => {
+            if (el) {
+                el.textContent = '-';
+                el.classList.remove('negative');
+            }
+        });
+        return;
+    }
+    
+    const deltaT = inputs.tempInterna - inputs.tempExterna;
+    const isDeltaTNegative = deltaT < 0;
+    const deltaTAbs = Math.abs(deltaT);
+    
+    try {
+        const constants = getSystemConstants();
+        const Q = inputs.potencia * FATOR_CONVERSAO_W_CAL;
+        
+        let massaGR, massaAr, vazao;
+        
+        if (deltaTAbs > 0) {
+            massaGR = Q / (constants.fatorEspecifico * deltaTAbs);
+            massaAr = massaGR / 1000;
+            vazao = massaAr / constants.Densi_ar;
+            
+            if (isDeltaTNegative) {
+                massaGR = -massaGR;
+                massaAr = -massaAr;
+                vazao = -vazao;
+            }
+        } else {
+            massaGR = 0;
+            massaAr = 0;
+            vazao = 0;
+        }
+        
+        if (elements.q) {
+            elements.q.textContent = formatNumber(Q);
+            elements.q.classList.remove('negative');
+        }
+        
+        if (elements.deltaT) {
+            elements.deltaT.textContent = formatNumber(deltaT, 1);
+            if (deltaT < 0) {
+                elements.deltaT.classList.add('negative');
+            } else {
+                elements.deltaT.classList.remove('negative');
+            }
+        }
+        
+        if (elements.massaGrama) {
+            elements.massaGrama.textContent = formatNumber(massaGR);
+            if (massaGR < 0) {
+                elements.massaGrama.classList.add('negative');
+            } else {
+                elements.massaGrama.classList.remove('negative');
+            }
+        }
+        
+        if (elements.massa) {
+            elements.massa.textContent = formatNumber(massaAr);
+            if (massaAr < 0) {
+                elements.massa.classList.add('negative');
+            } else {
+                elements.massa.classList.remove('negative');
+            }
+        }
+        
+        if (elements.vazao) {
+            elements.vazao.textContent = formatNumber(vazao);
+            if (vazao < 0) {
+                elements.vazao.classList.add('negative');
+            } else {
+                elements.vazao.classList.remove('negative');
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar tabela técnica:', error);
+    }
+}
+
+/**
+ * ATUALIZA TABELA 2 - Solução das Máquinas
+ */
+function updateSolutionTable(roomId, inputs) {
+    const machinesContainer = document.getElementById(`machines-${roomId}`);
+    if (!machinesContainer) {
+        setTimeout(() => updateSolutionTable(roomId, inputs), 500);
+        return;
+    }
+    
+    const tableBody = document.getElementById(`solucao-body-${roomId}`);
+    if (!tableBody) return;
+    
+    const machines = machinesContainer.querySelectorAll('.climatization-machine');
+    
+    // Limpa tabela
+    tableBody.innerHTML = '';
+    
+    let hasVentilationMachines = false;
+    
+    // Calcula a vazão necessária para a sala
+    let vazaoNecessaria = null;
+    let vazaoNecessariaAbs = null;
+    
+    // Pega a primeira máquina de ventilação para determinar a aplicação da sala
+    for (const machine of machines) {
+        const machineId = machine.dataset.machineId;
+        const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
+        if (!aplicacaoSelect) continue;
+        
+        const aplicacao = aplicacaoSelect.value;
+        if (VALID_APPLICATIONS.includes(aplicacao)) {
+            vazaoNecessaria = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
+            if (vazaoNecessaria !== null && !isNaN(vazaoNecessaria)) {
+                vazaoNecessariaAbs = Math.abs(vazaoNecessaria);
+            }
+            break;
+        }
+    }
+    
+    // Itera sobre todas as máquinas
+    machines.forEach(machine => {
+        const machineId = machine.dataset.machineId;
+        
+        const titleInput = document.getElementById(`title-${machineId}`);
+        const tipoSelect = document.getElementById(`tipo-${machineId}`);
+        const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
+        const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
+        const qntInput = document.getElementById(`solution-${machineId}`);
+        
+        if (!titleInput || !tipoSelect || !aplicacaoSelect || !capacidadeSelect || !qntInput) return;
+        
+        const aplicacao = aplicacaoSelect.value;
+        
+        // Pula se for climatização ou aplicação vazia
+        if (aplicacao === 'climatizacao' || !aplicacao) {
+            return;
+        }
+        
+        const aplicacaoTexto = APPLICATION_TEXT_MAP[aplicacao] || aplicacao;
+        const titulo = titleInput.value || 'Máquina sem nome';
+        const tipo = tipoSelect.options[tipoSelect.selectedIndex]?.text || 'Não definido';
+        
+        // Extrai capacidade
+        const capacidadeValue = extractCapacidadeValue(capacidadeSelect.value);
+        const capacidadeDisplay = capacidadeValue ? formatNumber(capacidadeValue) : '-';
+        
+        // Calcula vazão da máquina
+        let vazaoMaquinaDisplay = '-';
+        if (VALID_APPLICATIONS.includes(aplicacao)) {
+            const vazaoMaquina = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
+            if (vazaoMaquina !== null && !isNaN(vazaoMaquina)) {
+                vazaoMaquinaDisplay = formatNumber(Math.abs(vazaoMaquina));
+            }
+        }
+        
+        // 🔥 SISTEMA DE CONTROLE DE EDIÇÃO DO USUÁRIO - CORRIGIDO
+        // Inicializa o atributo se não existir
+        if (!qntInput.hasAttribute('data-user-edited')) {
+            qntInput.setAttribute('data-user-edited', 'false');
+        }
+        
+        // 🔥 CALCULA A SOLUÇÃO (valor teórico)
+        let solucaoNumerica = 1;
+        if (capacidadeValue && vazaoNecessariaAbs) {
+            solucaoNumerica = Math.ceil(vazaoNecessariaAbs / capacidadeValue);
+        }
+        
+        // 🔥 REGRA DE NEGÓCIO CORRIGIDA PARA QUANTIDADE:
+        // - Se NUNCA foi editado OU se os parâmetros mudaram: QUANTIDADE = SOLUÇÃO
+        // - Se JÁ foi editado E os parâmetros NÃO mudaram: MANTÉM valor manual
+        
+        // Verifica se os parâmetros críticos mudaram
+        const lastParams = qntInput.getAttribute('data-last-params') || '';
+        const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
+        
+        const userEdited = qntInput.getAttribute('data-user-edited') === 'true';
+        const paramsChanged = lastParams !== currentParams;
+        
+        // Se os parâmetros mudaram, o usuário precisa re-editar para manter o valor manual
+        if (paramsChanged) {
+            // 🔥 RESETA O FLAG DE EDIÇÃO QUANDO OS PARÂMETROS MUDAM
+            qntInput.setAttribute('data-user-edited', 'false');
+            
+            // Atualiza a quantidade para a nova solução
+            qntInput.value = solucaoNumerica;
+            
+            // Salva os novos parâmetros
+            qntInput.setAttribute('data-last-params', currentParams);
+            
+            console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} resetada para ${solucaoNumerica}`);
+            
+            // Recalcula preço
+            if (window.calculateMachinePrice) {
+                window.calculateMachinePrice(machineId);
+            }
+        } else if (!userEdited) {
+            // Se nunca foi editado e parâmetros não mudaram, usa a solução
+            const currentValue = parseInt(qntInput.value) || 1;
+            if (currentValue !== solucaoNumerica) {
+                qntInput.value = solucaoNumerica;
+                
+                if (window.calculateMachinePrice) {
+                    window.calculateMachinePrice(machineId);
+                }
+                
+                console.log(`📊 [Ventilação] Quantidade da máquina ${machineId} inicializada para ${solucaoNumerica}`);
+            }
+        }
+        
+        // Salva os parâmetros atuais se ainda não existirem
+        if (!qntInput.hasAttribute('data-last-params')) {
+            qntInput.setAttribute('data-last-params', currentParams);
+        }
+        
+        // Obtém a quantidade ATUAL (pode ser automática ou manual)
+        const quantidadeAtual = parseInt(qntInput.value) || 1;
+        
+        // 🔥 CALCULA PERDA E DISSIPAÇÃO com a quantidade ATUAL
+        let perdaDisplay = '-';
+        let dissipacaoDisplay = '-';
+        let dissipacaoClass = '';
+        
+        if (capacidadeValue && vazaoNecessariaAbs) {
+            // Perda = Capacidade * Quantidade ATUAL
+            const perdaValue = capacidadeValue * quantidadeAtual;
+            perdaDisplay = formatNumber(perdaValue);
+            
+            // Dissipação = Perda - Vazão Necessária
+            const dissipacaoValue = perdaValue - vazaoNecessariaAbs;
+            dissipacaoDisplay = formatNumber(dissipacaoValue);
+            
+            // 🔥 CORREÇÃO: Aplica classe CSS baseada no valor (negativo ou positivo)
+            if (dissipacaoValue < 0) {
+                dissipacaoClass = 'negative';
+            } else if (dissipacaoValue > 0) {
+                dissipacaoClass = 'positive';
+            } else {
+                dissipacaoClass = '';
+            }
+        }
+        
+        // Cria a linha da tabela - AGORA COM COLUNA "Qtd. Atual"
+        const row = document.createElement('tr');
+        row.dataset.machineId = machine.machineId;
+        
+        row.innerHTML = `
+            <td><span id="solucao-title-${machine.machineId}" class="solution-title">${titulo}</span></td>
+            <td><span id="solucao-tipo-${machine.machineId}" class="solution-type">${tipo}</span></td>
+            <td><span id="solucao-aplicacao-${machine.machineId}" class="solution-application">${aplicacaoTexto}</span></td>
+            <td><span id="solucao-capacidade-${machine.machineId}" class="solution-capacity">${capacidadeDisplay}</span></td>
+            <td><span id="solucao-qtd-${machine.machineId}" class="solution-quantity">${solucaoNumerica}</span></td>
+            <td><span id="solucao-vazao-${machine.machineId}" class="solution-flow">${vazaoMaquinaDisplay}</span></td>
+            <td><span id="solucao-qtd-atual-${machine.machineId}" class="solution-current-quantity" style="font-weight: bold; color: #2563eb;">${quantidadeAtual}</span></td>
+            <td><span id="solucao-perda-${machine.machineId}" class="solution-loss">${perdaDisplay}</span></td>
+            <td><span id="solucao-dissipacao-${machine.machineId}" class="solution-balance ${dissipacaoClass}">${dissipacaoDisplay}</span></td>
+        `;
+        
+        tableBody.appendChild(row);
+        hasVentilationMachines = true;
+    });
+    
+    // Mensagem se não há máquinas de ventilação
+    if (!hasVentilationMachines) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="9" style="text-align: center; padding: 20px; color: var(--color-gray-500);">
+                Nenhuma máquina com aplicação válida para ventilação
+            </td>
+        `;
+        tableBody.appendChild(row);
+    }
+    
+    if (window.updateAllMachinesTotal) {
+        window.updateAllMachinesTotal(roomId);
+    }
+}
+
+// =============================================================================
+// HANDLER DE EDIÇÃO MANUAL
+// =============================================================================
+
+/**
+ * Handler para quando o usuário edita manualmente a quantidade
+ */
+window.handleManualQuantityEdit = function(machineId) {
+    const qntInput = document.getElementById(`solution-${machineId}`);
+    if (qntInput) {
+        // Marca que o usuário editou manualmente
+        qntInput.setAttribute('data-user-edited', 'true');
+        
+        // 🔥 SALVA OS PARÂMETROS ATUAIS PARA REFERÊNCIA FUTURA
+        const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
+        const roomId = machine?.dataset.roomId;
+        
+        if (roomId) {
+            const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
+            const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
+            
+            const aplicacao = aplicacaoSelect?.value || '';
+            const capacidadeValue = extractCapacidadeValue(capacidadeSelect?.value);
+            
+            // Calcula vazão necessária
+            const inputs = collectRoomInputs(roomId);
+            let vazaoNecessariaAbs = null;
+            
+            if (VALID_APPLICATIONS.includes(aplicacao)) {
+                const vazaoNecessaria = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
+                if (vazaoNecessaria !== null && !isNaN(vazaoNecessaria)) {
+                    vazaoNecessariaAbs = Math.abs(vazaoNecessaria);
+                }
+            }
+            
+            const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
+            qntInput.setAttribute('data-last-params', currentParams);
+        }
+        
+        console.log(`📝 [Ventilação] Usuário editou manualmente quantidade da máquina ${machineId}`);
+        
+        // Dispara o recalculo da ventilação para atualizar perda/dissipação
+        if (roomId) {
+            setTimeout(() => {
+                refreshVentilationForRoom(roomId);
+            }, 50);
+        }
+        
+        if (window.calculateMachinePrice) {
+            window.calculateMachinePrice(machineId);
+        }
+    }
+};
+
+// =============================================================================
+// CONFIGURAÇÃO DE LISTENERS
+// =============================================================================
+
+/**
+ * Configura listener para input de quantidade
+ */
+function setupQuantityInputListener(machineId) {
+    const qntInput = document.getElementById(`solution-${machineId}`);
+    if (qntInput) {
+        // Remove listener antigo
+        if (qntInput._manualEditHandler) {
+            qntInput.removeEventListener('change', qntInput._manualEditHandler);
+            qntInput.removeEventListener('input', qntInput._manualEditHandler);
+        }
+        
+        // Adiciona novo handler
+        qntInput._manualEditHandler = function() {
+            window.handleManualQuantityEdit(machineId);
+        };
+        
+        qntInput.addEventListener('change', qntInput._manualEditHandler);
+        qntInput.addEventListener('input', qntInput._manualEditHandler);
+        
+        // Inicializa os atributos
+        if (!qntInput.hasAttribute('data-user-edited')) {
+            qntInput.setAttribute('data-user-edited', 'false');
+        }
+        if (!qntInput.hasAttribute('data-last-params')) {
+            qntInput.setAttribute('data-last-params', '');
+        }
+    }
+}
+
+/**
+ * Configura listeners para inputs técnicos
+ */
+function setupTechnicalListeners(roomId) {
+    const inputIds = [
+        `potencia-${roomId}`,
+        `temp-interna-${roomId}`,
+        `temp-externa-${roomId}`,
+        `vazao-ar-${roomId}`,
+        `volume-${roomId}`
+    ];
+    
+    inputIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            if (element._ventListener) {
+                element.removeEventListener('input', element._ventListener);
+                element.removeEventListener('change', element._ventListener);
+            }
+            
+            element._ventListener = () => refreshVentilationForRoom(roomId);
+            element.addEventListener('input', element._ventListener);
+            element.addEventListener('change', element._ventListener);
+        }
+    });
+    
+    // Configura listeners para inputs de quantidade
+    const machines = document.querySelectorAll(`[data-room-id="${roomId}"]`);
+    machines.forEach(container => {
+        const machineId = container.dataset.machineId;
+        if (machineId) {
+            setupQuantityInputListener(machineId);
+        }
+    });
+}
+
+/**
+ * Configura observer para novas máquinas
+ */
+function setupMachinesObserver(roomId) {
+    if (ventilationState.get(roomId)?.observer) return;
+    
+    const observer = new MutationObserver((mutations) => {
+        let shouldRefresh = false;
+        
+        mutations.forEach(mutation => {
+            if (mutation.type === 'childList') {
+                if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
+                    shouldRefresh = true;
+                    
+                    // Configura listeners para novas máquinas
+                    if (mutation.addedNodes.length > 0) {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === 1) {
+                                const newMachines = node.querySelectorAll('[data-machine-id]');
+                                newMachines.forEach(machine => {
+                                    const machineId = machine.dataset.machineId;
+                                    if (machineId) {
+                                        setupQuantityInputListener(machineId);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+            
+            if (mutation.type === 'attributes') {
+                const target = mutation.target;
+                if (target.id?.startsWith('aplicacao-') || 
+                    target.id?.startsWith('capacidade-') ||
+                    target.id?.startsWith('tipo-')) {
+                    shouldRefresh = true;
+                }
+            }
+        });
+        
+        if (shouldRefresh) {
+            refreshVentilationForRoom(roomId);
+        }
+    });
+    
+    const machinesContainer = document.getElementById(`machines-${roomId}`);
+    if (machinesContainer) {
+        observer.observe(machinesContainer, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['value']
+        });
+        
+        ventilationState.set(roomId, { observer });
+    }
+}
+
+// =============================================================================
+// FUNÇÃO PRINCIPAL DE REFRESH
+// =============================================================================
+
+window.refreshVentilationForRoom = function(roomId) {
+    if (!roomId || !roomId.includes('_proj_') || !roomId.includes('_sala_')) {
+        return;
+    }
+    
+    if (!window.systemConstants) {
+        setTimeout(() => refreshVentilationForRoom(roomId), 500);
+        return;
+    }
+    
+    if (window[`_vent_frame_${roomId}`]) {
+        cancelAnimationFrame(window[`_vent_frame_${roomId}`]);
+    }
+    
+    window[`_vent_frame_${roomId}`] = requestAnimationFrame(() => {
+        const inputs = collectRoomInputs(roomId);
+        updateTechnicalTable(roomId, inputs);
+        updateSolutionTable(roomId, inputs);
+        delete window[`_vent_frame_${roomId}`];
+    });
+};
+
+// =============================================================================
+// HANDLERS DE EVENTOS (GLOBAIS)
+// =============================================================================
+
+window.handleVentilacaoAplicacaoChange = function(machineId) {
+    const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
+    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
+    const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
+    const roomId = machine?.dataset.roomId;
+    
+    if (!roomId) return;
+    
+    const aplicacao = aplicacaoSelect?.value;
+    
+    if (capacidadeSelect) {
+        capacidadeSelect.disabled = !VALID_APPLICATIONS.includes(aplicacao);
+        if (capacidadeSelect.disabled) {
+            capacidadeSelect.value = '';
+        }
+    }
+    
+    refreshVentilationForRoom(roomId);
+};
+
+window.handleVentilacaoPowerChange = function(machineId) {
+    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
+    const machine = capacidadeSelect?.closest('.climatization-machine');
+    const roomId = machine?.dataset.roomId;
+    
+    if (roomId) {
+        refreshVentilationForRoom(roomId);
+    }
+};
+
+window.handleVentilacaoTipoChange = function(machineId) {
+    const tipoSelect = document.getElementById(`tipo-${machineId}`);
+    const machine = tipoSelect?.closest('.climatization-machine');
+    const roomId = machine?.dataset.roomId;
+    
+    if (roomId) {
+        refreshVentilationForRoom(roomId);
+    }
+};
+
+// =============================================================================
+// CONFIGURAÇÃO INICIAL
+// =============================================================================
+
+function setupVentilationForRoom(roomId) {
+    if (!roomId || !roomId.includes('_proj_') || !roomId.includes('_sala_')) {
+        return;
+    }
+    
+    if (ventilationState.get(roomId)?.configured) return;
+    
+    setupTechnicalListeners(roomId);
+    
+    const checkContainer = setInterval(() => {
+        const container = document.getElementById(`machines-${roomId}`);
+        if (container) {
+            clearInterval(checkContainer);
+            setupMachinesObserver(roomId);
+            
+            ventilationState.set(roomId, { 
+                ...ventilationState.get(roomId),
+                configured: true 
+            });
+            
+            refreshVentilationForRoom(roomId);
+        }
+    }, 500);
+    
+    ventilationState.set(roomId, { 
+        ...ventilationState.get(roomId),
+        checkInterval: checkContainer 
+    });
+}
+
+// =============================================================================
+// FUNÇÃO PRINCIPAL EXPORTADA
+// =============================================================================
+
+export function buildVentilacaoSection(roomId) {
+    if (!roomId || roomId === 'undefined' || roomId === 'null') {
+        console.error(`❌ buildVentilacaoSection: Room ID inválido`);
+        return '';
+    }
+    
+    if (!roomId.includes('_proj_') || !roomId.includes('_sala_')) {
+        console.warn(`⚠️ ID não parece ser de sala: ${roomId}`);
+        return '';
+    }
+    
+    setTimeout(() => {
+        setupVentilationForRoom(roomId);
+    }, 100);
+    
+    return `
+    <div class="section-block ventilation-section" id="ventilacao-section-${roomId}" data-room-id="${roomId}">
+      <div class="section-header">
+        <button class="minimizer" onclick="toggleSection('${roomId}ventilacao')">+</button>
+        <h4 class="section-title">Ventilação</h4>
+      </div>
+      <div class="section-content collapsed" id="section-content-${roomId}ventilacao">
+        
+        <!-- TABELA 1 - CÁLCULO TÉCNICO -->
+        <div class="technical-table">
+          <h5>Cálculo Técnico</h5>
+          <div class="vertical-table-container">
+            <table class="vertical-table">
+              <tr>
+                <td>Potência (kW)</td>
+                <td>
+                  <input type="number" 
+                         id="potencia-${roomId}" 
+                         class="vertical-input" 
+                         step="any" 
+                         placeholder="Ex: 100">
+                </td>
+              </tr>
+              <tr>
+                <td>Temp. Int. (°C)</td>
+                <td>
+                  <input type="number" 
+                         id="temp-interna-${roomId}" 
+                         class="vertical-input" 
+                         step="any" 
+                         value="45"
+                         placeholder="°C">
+                </td>
+              </tr>
+              <tr>
+                <td>Temp. Ext. (°C)</td>
+                <td>
+                  <input type="number" 
+                         id="temp-externa-${roomId}" 
+                         class="vertical-input" 
+                         step="any" 
+                         value="35"
+                         placeholder="°C">
+                </td>
+              </tr>
+              <tr>
+                <td>Q (cal/h)</td>
+                <td><span id="q-cal-${roomId}" class="result-venti-value">-</span></td>
+              </tr>
+              <tr>
+                <td>Massa (gramas)</td>
+                <td><span id="massa-gramas-${roomId}" class="result-venti-value">-</span></td>
+              </tr>
+              <tr>
+                <td>ΔT (°C)</td>
+                <td><span id="delta-t-${roomId}" class="result-venti-value">-</span></td>
+              </tr>
+              <tr>
+                <td>Massa de Ar (kg/h)</td>
+                <td><span id="massa-ar-${roomId}" class="result-venti-value">-</span></td>
+              </tr>
+              <tr>
+                <td>Vaz. Vol. (m³/h)</td>
+                <td><span id="vazao-${roomId}" class="result-venti-value">-</span></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- TABELA 2 - SOLUÇÃO DAS MÁQUINAS -->
+        <div class="solution-table">
+          <h5>Solução das Máquinas</h5>
+          <div class="horizontal-table-container">
+            <table class="machines-solution-table">
+              <thead>
+                <tr>
+                  <th>Nome da Máquina</th>
+                  <th>Tipo de Ventilador / Filtro</th>
+                  <th>Aplicação</th>
+                  <th>Cap. Unit. (m³/h)</th>
+                  <th>Solução</th>
+                  <th>Vazão (m³/h)</th>
+                  <th>Qtd. Inst.</th>
+                  <th>Cap. Total (m³/h)</th>
+                  <th>Saldo (m³/h)</th>
+                </tr>
+              </thead>
+              <tbody id="solucao-body-${roomId}">
+                <tr>
+                  <td colspan="9" style="text-align: center; padding: 20px; color: var(--color-gray-500);">
+                    Aguardando máquinas...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+/* ==== FIM: data/modules/ventilacao.js ==== */
