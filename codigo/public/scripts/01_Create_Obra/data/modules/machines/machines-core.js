@@ -290,50 +290,6 @@ function buildMachinesSection(obraId, projectId, roomName, finalRoomId) {
     </div>`;
 }
 
-/**
- * Constrói máquina a partir de dados salvos (modificado para incluir notificações)
- */
-function buildMachineFromSavedData(machineId, savedMachine, allMachines) {
-    const machineType = allMachines.find(m => m.type === savedMachine.tipo);
-    if (!machineType) return '';
-
-    const potencies = Object.keys(machineType.baseValues || {});
-    const voltages = (machineType.voltages || []).map(v => v.name);
-    
-    const quantidade = savedMachine.quantidade || 1;
-
-    return `
-    <div class="climatization-machine" data-machine-id="${machineId}" data-room-id="${savedMachine.roomId || ''}">
-      <div class="machine-header">
-        <input type="text" class="machine-title-editable" id="title-${machineId}" value="${savedMachine.nome || 'Maquina'}"
-               onchange="updateMachineTitle(this, '${machineId}')" onclick="this.select()">
-        <button class="btn btn-delete-small" onclick="deleteMachine('${machineId}')">Remover</button>
-      </div>
-      <div class="machine-content" id="machine-content-${machineId}">
-        <div class="climatization-form-grid">
-          ${buildFormGroup("Tipo:", `<select id="tipo-${machineId}" class="form-input machine-type-select" data-machine-id="${machineId}" onchange="updateMachineOptions(this)"><option value="">Selecionar</option>${machineTypes.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select>`)}
-          ${buildFormGroup("Aplicação:", `<select id="aplicacao-${machineId}" class="form-input machine-aplicacao-select" data-machine-id="${machineId}" onchange="handleAplicacaoChange('${machineId}')"><option value="">Selecionar</option><option value="climatizacao">Climatização</option><option value="pressurizacao">Pressurização</option><option value="exaustao_bateria">Exaustão da sala de bateria</option><option value="exaustao_baia_trafo">Exaustão da sala baia de trafo</option></select>`)}
-          ${buildFormGroup("Capacidade:", `<select id="capacidade-${machineId}" class="form-input machine-power-select" data-machine-id="${machineId}" onchange="handlePowerChange('${machineId}')" disabled><option value="">Selecionar</option></select>`)}
-          ${buildFormGroup("Tensão:", buildSelect(voltages, machineId, "machine-voltage-select", `calculateMachinePrice('${machineId}')`, false, savedMachine.tensao))}
-          ${buildFormGroup("Qnt:", `<input id="solution-${machineId}" type="number" class="form-input machine-qnt-input" data-machine-id="${machineId}" min="1" value="${quantidade}" onchange="updateQuantity('${machineId}')">`)}
-          ${buildFormGroup("Preço Base:", `<div class="price-display" id="base-price-${machineId}">R$ ${(savedMachine.precoBase || 0).toLocaleString("pt-BR") || '0,00'}</div>`)}
-          ${buildFormGroup("Preço Total:", `<div class="price-display" id="total-price-${machineId}">R$ ${(savedMachine.precoTotal || 0).toLocaleString("pt-BR") || '0,00'}</div>`)}
-        </div>
-        <div class="machine-options-section">
-          <h6>Opções Adicionais:</h6>
-          <div class="options-grid" id="options-container-${machineId}">
-            ${buildOptionsHTML(machineType.options, machineId, savedMachine.opcoesSelecionadas || [], savedMachine.potencia)}
-          </div>
-        </div>
-        <div class="machine-config-section">
-          <h6>Configurações de Instalação:</h6>
-          <div class="config-grid" id="config-container-${machineId}">
-            ${buildConfigHTML(machineType.configuracoes_instalacao, machineId, savedMachine.configuracoesSelecionadas || [], savedMachine.potencia)}
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
 
 /**
  * Constrói HTML de máquina individual (modificado para incluir notificações)
@@ -528,73 +484,6 @@ async function addMachine(roomId) {
     }
 }
 
-/**
- * Carrega máquinas salvas
- */
-async function loadSavedMachines(roomId, savedMachines) {
-    if (!savedMachines?.length || !roomId) return;
-
-    const container = document.getElementById(`machines-${roomId}`);
-    if (!container) return;
-
-    try {
-        const machinesData = await loadMachinesData();
-
-        savedMachines.forEach((savedMachine, index) => {
-            const machineId = generateMachineId(roomId);
-            const machineHTML = buildMachineFromSavedData(machineId, savedMachine, machinesData.machines);
-            container.insertAdjacentHTML("beforeend", machineHTML);
-
-            setTimeout(() => {
-                const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-                if (machineElement && savedMachine.configuracoesSelecionadas) {
-                    applySavedConfigurations(machineId, savedMachine.configuracoesSelecionadas);
-                }
-            }, 100);
-        });
-
-        setTimeout(() => {
-            container.querySelectorAll('.climatization-machine').forEach((element, index) => {
-                const machineId = element.dataset.machineId;
-                const savedMachine = savedMachines[index];
-
-                if (savedMachine?.potencia) {
-                    updateOptionValues(machineId);
-                    calculateMachinePrice(machineId);
-                }
-
-                if (savedMachine?.configuracoesSelecionadas) {
-                    applySavedConfigurations(machineId, savedMachine.configuracoesSelecionadas);
-                }
-            });
-            updateAllMachinesTotal(roomId);
-        }, 300);
-
-    } catch (error) {
-        console.error("❌ Erro ao carregar máquinas salvas:", error);
-    }
-}
-
-/**
- * Aplica configurações salvas a uma máquina
- */
-function applySavedConfigurations(machineId, configuracoesSelecionadas) {
-    if (!configuracoesSelecionadas || !Array.isArray(configuracoesSelecionadas)) return;
-
-    const configContainer = document.getElementById(`config-container-${machineId}`);
-    if (!configContainer) return;
-
-    setTimeout(() => {
-        configuracoesSelecionadas.forEach(config => {
-            const configId = config.id || config;
-            const checkbox = document.getElementById(`config-${machineId}-${configId}`);
-            if (checkbox) {
-                checkbox.checked = true;
-                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-        });
-    }, 200);
-}
 
 // =============================================================================
 // ATUALIZAÇÃO DE UI
@@ -1101,7 +990,6 @@ function updateAllMachineNamesInRoom(roomId) {
 export {
     buildMachinesSection,
     loadMachinesData,
-    loadSavedMachines,
     addMachine,
     buildMachineHTML,
     toggleMachineSection,
