@@ -2,8 +2,9 @@
  * MÓDULO DE VENTILAÇÃO - INTEGRAÇÃO COM SISTEMA DE MÁQUINAS EXISTENTE
  * @module data/modules/ventilacao.js
  * 
- * CORRIGIDO: Agora recalcula a solução sempre que os parâmetros mudam,
- * mas respeita as edições manuais do usuário
+ * CORRIGIDO: 
+ * - Quantidade NUNCA reseta após edição manual
+ * - Só recalcula se tipo/aplicação/capacidade mudarem
  */
 
 // =============================================================================
@@ -393,63 +394,76 @@ function updateSolutionTable(roomId, inputs) {
             }
         }
         
-        // 🔥 SISTEMA DE CONTROLE DE EDIÇÃO DO USUÁRIO - CORRIGIDO
-        // Inicializa o atributo se não existir
+        // 🔥 SISTEMA DE CONTROLE DE QUANTIDADE - CORRIGIDO
+        // Inicializa os atributos se não existirem
         if (!qntInput.hasAttribute('data-user-edited')) {
             qntInput.setAttribute('data-user-edited', 'false');
+        }
+        if (!qntInput.hasAttribute('data-last-params')) {
+            qntInput.setAttribute('data-last-params', '');
         }
         
         // 🔥 CALCULA A SOLUÇÃO (valor teórico)
         let solucaoNumerica = 1;
-        if (capacidadeValue && vazaoNecessariaAbs) {
+        if (
+            capacidadeValue > 0 &&
+            vazaoNecessariaAbs > 0 &&
+            VALID_APPLICATIONS.includes(aplicacao)
+        ){
             solucaoNumerica = Math.ceil(vazaoNecessariaAbs / capacidadeValue);
         }
         
-        // 🔥 REGRA DE NEGÓCIO CORRIGIDA PARA QUANTIDADE:
-        // - Se NUNCA foi editado OU se os parâmetros mudaram: QUANTIDADE = SOLUÇÃO
-        // - Se JÁ foi editado E os parâmetros NÃO mudaram: MANTÉM valor manual
-        
         // Verifica se os parâmetros críticos mudaram
         const lastParams = qntInput.getAttribute('data-last-params') || '';
-        const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
+        
+        // 🔥 IMPORTANTE: Inclui o tipo na chave de parâmetros
+        // Porque se mudar de Tubo Axial para outro tipo, deve recalcular
+        const currentParams = `${tipo}_${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
         
         const userEdited = qntInput.getAttribute('data-user-edited') === 'true';
         const paramsChanged = lastParams !== currentParams;
         
-        // Se os parâmetros mudaram, o usuário precisa re-editar para manter o valor manual
-        if (paramsChanged) {
-            // 🔥 RESETA O FLAG DE EDIÇÃO QUANDO OS PARÂMETROS MUDAM
-            qntInput.setAttribute('data-user-edited', 'false');
-            
-            // Atualiza a quantidade para a nova solução
-            qntInput.value = solucaoNumerica;
-            
-            // Salva os novos parâmetros
-            qntInput.setAttribute('data-last-params', currentParams);
-            
-            console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} resetada para ${solucaoNumerica}`);
-            
-            // Recalcula preço
-            if (window.calculateMachinePrice) {
-                window.calculateMachinePrice(machineId);
-            }
-        } else if (!userEdited) {
-            // Se nunca foi editado e parâmetros não mudaram, usa a solução
-            const currentValue = parseInt(qntInput.value) || 1;
-            if (currentValue !== solucaoNumerica) {
+        console.log(`🔍 [Quantidade] machineId=${machineId}, userEdited=${userEdited}, paramsChanged=${paramsChanged}`);
+        console.log(`   lastParams: ${lastParams}`);
+        console.log(`   currentParams: ${currentParams}`);
+        
+        // 🔥 REGRA DE QUANTIDADE CORRIGIDA:
+        // - Se NUNCA foi editado: usa solução
+        // - Se JÁ foi editado: MANTÉM valor manual, mesmo se parâmetros mudaram
+        // - Só recalcula se parâmetros mudaram E nunca foi editado
+        
+        if (!userEdited) {
+            // Nunca foi editado - pode atualizar
+            if (paramsChanged) {
+                // Parâmetros mudaram - atualiza para nova solução
                 qntInput.value = solucaoNumerica;
+                qntInput.setAttribute('data-last-params', currentParams);
+                
+                console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} atualizada para ${solucaoNumerica}`);
                 
                 if (window.calculateMachinePrice) {
                     window.calculateMachinePrice(machineId);
                 }
-                
-                console.log(`📊 [Ventilação] Quantidade da máquina ${machineId} inicializada para ${solucaoNumerica}`);
+            } else {
+                // Parâmetros iguais - verifica se precisa atualizar
+                const currentValue = parseInt(qntInput.value) || 1;
+                if (currentValue !== solucaoNumerica) {
+                    qntInput.value = solucaoNumerica;
+                    qntInput.setAttribute('data-last-params', currentParams);
+                    
+                    if (window.calculateMachinePrice) {
+                        window.calculateMachinePrice(machineId);
+                    }
+                }
             }
-        }
-        
-        // Salva os parâmetros atuais se ainda não existirem
-        if (!qntInput.hasAttribute('data-last-params')) {
-            qntInput.setAttribute('data-last-params', currentParams);
+        } else {
+            // 🔥 JÁ FOI EDITADO - NUNCA RESETA!
+            // Só atualiza os parâmetros salvos se mudaram, mas MANTÉM o valor manual
+            if (paramsChanged) {
+                // Atualiza os parâmetros salvos, mas NÃO altera o valor
+                qntInput.setAttribute('data-last-params', currentParams);
+                console.log(`📝 [Ventilação] Parâmetros mudaram, mas quantidade manual da máquina ${machineId} foi PRESERVADA: ${qntInput.value}`);
+            }
         }
         
         // Obtém a quantidade ATUAL (pode ser automática ou manual)
@@ -469,17 +483,14 @@ function updateSolutionTable(roomId, inputs) {
             const dissipacaoValue = perdaValue - vazaoNecessariaAbs;
             dissipacaoDisplay = formatNumber(dissipacaoValue);
             
-            // 🔥 CORREÇÃO: Aplica classe CSS baseada no valor (negativo ou positivo)
             if (dissipacaoValue < 0) {
                 dissipacaoClass = 'negative';
             } else if (dissipacaoValue > 0) {
                 dissipacaoClass = 'positive';
-            } else {
-                dissipacaoClass = '';
             }
         }
         
-        // Cria a linha da tabela - AGORA COM COLUNA "Qtd. Atual"
+        // Cria a linha da tabela
         const row = document.createElement('tr');
         row.dataset.machineId = machine.machineId;
         
@@ -540,9 +551,11 @@ window.handleManualQuantityEdit = function(machineId) {
     
     // 🔥 SALVA OS PARÂMETROS ATUAIS PARA REFERÊNCIA FUTURA
     if (roomId) {
+        const tipoSelect = document.getElementById(`tipo-${machineId}`);
         const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
         const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
         
+        const tipo = tipoSelect?.value || '';
         const aplicacao = aplicacaoSelect?.value || '';
         const capacidadeValue = extractCapacidadeValue(capacidadeSelect?.value);
         
@@ -557,11 +570,11 @@ window.handleManualQuantityEdit = function(machineId) {
             }
         }
         
-        const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
+        const currentParams = `${tipo}_${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
         qntInput.setAttribute('data-last-params', currentParams);
     }
     
-    console.log(`📝 [Ventilação] Usuário editou manualmente quantidade da máquina ${machineId}`);
+    console.log(`📝 [Ventilação] Usuário editou manualmente quantidade da máquina ${machineId} para ${qntInput.value}`);
     
     // Dispara o recalculo da ventilação para atualizar perda/dissipação
     if (roomId) {
@@ -696,8 +709,7 @@ function setupMachinesObserver(roomId) {
         observer.observe(machinesContainer, {
             childList: true,
             subtree: true,
-            attributes: true,
-            attributeFilter: ['value']
+            attributes: false
         });
         
         ventilationState.set(roomId, { observer });
