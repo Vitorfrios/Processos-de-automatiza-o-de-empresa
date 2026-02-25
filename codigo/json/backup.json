@@ -26,60 +26,18 @@
               },
               "maquinas": [
                 {
-                  "nome": "Caixa de Ventilação-01A (1200m³/h)",
-                  "tipo": "Caixa de Ventilação",
-                  "potencia": "1200m³/h",
+                  "nome": "Filtro Cartucho-01A (2000m³/h)",
+                  "tipo": "Filtro Cartucho",
+                  "potencia": "2000m³/h",
                   "tensao": "",
-                  "quantidade": 4,
+                  "quantidade": 5,
                   "aplicacao_machines": "pressurizacao",
-                  "precoBase": 2900,
+                  "precoBase": 17200,
                   "opcoesSelecionadas": [],
                   "configuracoesSelecionadas": [],
-                  "precoTotal": 11600,
-                  "potenciaSelecionada": "1200m³/h",
-                  "tipoSelecionado": "Caixa de Ventilação"
-                },
-                {
-                  "nome": "Tubo Axial-02A (1400m³/h)",
-                  "tipo": "Tubo Axial",
-                  "potencia": "1400m³/h",
-                  "tensao": "",
-                  "quantidade": 1,
-                  "aplicacao_machines": "exaustao_baia_trafo",
-                  "precoBase": 2400,
-                  "opcoesSelecionadas": [],
-                  "configuracoesSelecionadas": [],
-                  "precoTotal": 2400,
-                  "potenciaSelecionada": "1400m³/h",
-                  "tipoSelecionado": "Tubo Axial"
-                },
-                {
-                  "nome": "Tubo Axial-01A (5500m³/h)",
-                  "tipo": "Tubo Axial",
-                  "potencia": "5500m³/h",
-                  "tensao": "",
-                  "quantidade": 4,
-                  "aplicacao_machines": "exaustao_bateria",
-                  "precoBase": 5,
-                  "opcoesSelecionadas": [],
-                  "configuracoesSelecionadas": [],
-                  "precoTotal": 20,
-                  "potenciaSelecionada": "5500m³/h",
-                  "tipoSelecionado": "Tubo Axial"
-                },
-                {
-                  "nome": "Centrífugo-01A (1500m³/h)",
-                  "tipo": "Centrífugo",
-                  "potencia": "1500m³/h",
-                  "tensao": "",
-                  "quantidade": 3,
-                  "aplicacao_machines": "pressurizacao",
-                  "precoBase": 3900,
-                  "opcoesSelecionadas": [],
-                  "configuracoesSelecionadas": [],
-                  "precoTotal": 11700,
-                  "potenciaSelecionada": "1500m³/h",
-                  "tipoSelecionado": "Centrífugo"
+                  "precoTotal": 86000,
+                  "potenciaSelecionada": "2000m³/h",
+                  "tipoSelecionado": "Filtro Cartucho"
                 }
               ],
               "capacidade": {

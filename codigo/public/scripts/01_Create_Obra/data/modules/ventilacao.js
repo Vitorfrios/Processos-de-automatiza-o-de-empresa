@@ -3,8 +3,9 @@
  * @module data/modules/ventilacao.js
  * 
  * CORRIGIDO: 
- * - Quantidade NUNCA reseta após edição manual
- * - Só recalcula se tipo/aplicação/capacidade mudarem
+ * - Quantidade SEMPRE atualiza quando parâmetros mudam (tipo/aplicação/capacidade)
+ * - Quantidade mantém valor manual apenas quando parâmetros não mudam
+ * - Seleção automática de capacidade para todas máquinas com aplicação de ventilação
  */
 
 // =============================================================================
@@ -402,7 +403,7 @@ function updateSolutionTable(roomId, inputs) {
         if (!qntInput.hasAttribute('data-last-params')) {
             qntInput.setAttribute('data-last-params', '');
         }
-        
+
         // 🔥 CALCULA A SOLUÇÃO (valor teórico)
         let solucaoNumerica = 1;
         if (
@@ -412,57 +413,61 @@ function updateSolutionTable(roomId, inputs) {
         ){
             solucaoNumerica = Math.ceil(vazaoNecessariaAbs / capacidadeValue);
         }
-        
+
         // Verifica se os parâmetros críticos mudaram
         const lastParams = qntInput.getAttribute('data-last-params') || '';
-        
+
         // 🔥 IMPORTANTE: Inclui o tipo na chave de parâmetros
-        // Porque se mudar de Tubo Axial para outro tipo, deve recalcular
         const currentParams = `${tipo}_${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
-        
+
         const userEdited = qntInput.getAttribute('data-user-edited') === 'true';
         const paramsChanged = lastParams !== currentParams;
-        
+
         console.log(`🔍 [Quantidade] machineId=${machineId}, userEdited=${userEdited}, paramsChanged=${paramsChanged}`);
         console.log(`   lastParams: ${lastParams}`);
         console.log(`   currentParams: ${currentParams}`);
-        
+        console.log(`   solucaoNumerica: ${solucaoNumerica}, valorAtual: ${qntInput.value}`);
+
         // 🔥 REGRA DE QUANTIDADE CORRIGIDA:
-        // - Se NUNCA foi editado: usa solução
-        // - Se JÁ foi editado: MANTÉM valor manual, mesmo se parâmetros mudaram
-        // - Só recalcula se parâmetros mudaram E nunca foi editado
-        
-        if (!userEdited) {
-            // Nunca foi editado - pode atualizar
-            if (paramsChanged) {
-                // Parâmetros mudaram - atualiza para nova solução
-                qntInput.value = solucaoNumerica;
-                qntInput.setAttribute('data-last-params', currentParams);
-                
-                console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} atualizada para ${solucaoNumerica}`);
-                
-                if (window.calculateMachinePrice) {
-                    window.calculateMachinePrice(machineId);
-                }
-            } else {
-                // Parâmetros iguais - verifica se precisa atualizar
+        // - Se parâmetros mudaram (tipo, aplicação, capacidade, vazão):
+        //   → SEMPRE atualiza para a nova solução (independente de edição manual)
+        // - Se parâmetros NÃO mudaram:
+        //   → Se NUNCA foi editado: mantém ou ajusta para solução
+        //   → Se JÁ foi editado: MANTÉM valor manual
+
+        if (paramsChanged) {
+            // 🔥 PARÂMETROS MUDARAM - SEMPRE atualiza para a nova solução
+            qntInput.value = solucaoNumerica;
+            
+            // Se já tinha sido editado, mantém a flag, mas atualiza o valor
+            if (!userEdited) {
+                qntInput.setAttribute('data-user-edited', 'false');
+            }
+            
+            qntInput.setAttribute('data-last-params', currentParams);
+            
+            console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} ATUALIZADA para ${solucaoNumerica} (userEdited=${userEdited})`);
+            
+            if (window.calculateMachinePrice) {
+                window.calculateMachinePrice(machineId);
+            }
+            
+        } else {
+            // Parâmetros NÃO mudaram
+            if (!userEdited) {
+                // Nunca foi editado - verifica se precisa atualizar para a solução
                 const currentValue = parseInt(qntInput.value) || 1;
                 if (currentValue !== solucaoNumerica) {
                     qntInput.value = solucaoNumerica;
-                    qntInput.setAttribute('data-last-params', currentParams);
+                    console.log(`📊 [Ventilação] Quantidade da máquina ${machineId} ajustada para solução: ${solucaoNumerica}`);
                     
                     if (window.calculateMachinePrice) {
                         window.calculateMachinePrice(machineId);
                     }
                 }
-            }
-        } else {
-            // 🔥 JÁ FOI EDITADO - NUNCA RESETA!
-            // Só atualiza os parâmetros salvos se mudaram, mas MANTÉM o valor manual
-            if (paramsChanged) {
-                // Atualiza os parâmetros salvos, mas NÃO altera o valor
-                qntInput.setAttribute('data-last-params', currentParams);
-                console.log(`📝 [Ventilação] Parâmetros mudaram, mas quantidade manual da máquina ${machineId} foi PRESERVADA: ${qntInput.value}`);
+            } else {
+                // Já foi editado - MANTÉM o valor manual
+                console.log(`✅ [Ventilação] Quantidade manual da máquina ${machineId} preservada: ${qntInput.value}`);
             }
         }
         
