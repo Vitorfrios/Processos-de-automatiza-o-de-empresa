@@ -230,7 +230,6 @@ async function loadAllModules() {
       fillClimatizationInputs: dataFillersModule.fillClimatizationInputs,
       fillThermalGainsData: dataFillersModule.fillThermalGainsData,
       fillCapacityData: dataFillersModule.fillCapacityData,
-      // REMOVER: fillAcessoriosData: dataFillersModule.fillAcessoriosData, ← DUPLICADA
       ensureAllRoomSections: dataFillersModule.ensureAllRoomSections,
       setupRoomTitleChangeListener: dataFillersModule.setupRoomTitleChangeListener,
 

@@ -119,7 +119,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         # Timestamp único para TODOS os arquivos (muda a cada execução do servidor)
         self.CACHE_BUSTER = f"v{int(time.time())}"
-        print(f"🔄 CACHE BUSTER INICIADO: {self.CACHE_BUSTER}")
+        # print(f"🔄 CACHE BUSTER INICIADO: {self.CACHE_BUSTER}")
 
         # Inicialização Preguiçosa - só quando necessário
         self._routes_core = None
@@ -174,7 +174,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if any(path.endswith(ext) for ext in [".css", ".js", ".html", ".htm"]):
             new_path = self._add_cache_buster(original_path)
             if new_path != original_path:
-                print(f"🔄 AUTO CACHE BUSTER: {original_path} -> {new_path}")
+                # print(f"🔄 AUTO CACHE BUSTER: {original_path} -> {new_path}")
                 self.path = new_path
 
         # ========== ROTEAMENTO RÁPIDO PARA APIs ==========
@@ -568,7 +568,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             keyword in message
             for keyword in [" 404", " 500", " 403", "/api/", "/obras", "/empresas"]
         ):
-            print(f"🌐 {self.address_string()} - {message}")
+            print(f"Local Host {self.address_string()} - {message}")
 
     def handle_machine_routes(self, path):
         """Rotas específicas para máquinas"""

@@ -20,8 +20,6 @@ class SessionsManager:
         project_root = current_file.parent.parent.parent  # sobe para pasta codigo
         self.sessions_dir = project_root / "json"  # pasta json dentro de codigo
         self.sessions_file = self.sessions_dir / "sessions.json"
-        
-        print(f"SessionsManager: Inicializando em {self.sessions_dir}")
         self.ensure_sessions_file()
     
     def ensure_sessions_file(self):
@@ -29,13 +27,11 @@ class SessionsManager:
         try:
             # Cria diretório se não existir
             self.sessions_dir.mkdir(parents=True, exist_ok=True)
-            print(f"SessionsManager: Pasta json verificada: {self.sessions_dir.exists()}")
+            # print(f"SessionsManager: Pasta json verificada: {self.sessions_dir.exists()}")
             
             if not self.sessions_file.exists():
                 print("SessionsManager: Criando arquivo sessions.json vazio")
                 self._initialize_sessions_file()
-            else:
-                print("SessionsManager: Arquivo sessions.json já existe")
                 
         except Exception as e:
             print(f"ERRO em ensure_sessions_file: {e}")
@@ -276,7 +272,7 @@ class SessionsManager:
             }
         }
         
-        print(f"✅ Sessão única garantida: {current_session_id} com {len(current_obras)} obras")
+        # print(f"✅ Sessão única garantida: {current_session_id} com {len(current_obras)} obras")
         return self._save_sessions_data(data)
     
     def _load_sessions_data(self) -> dict:
@@ -320,7 +316,7 @@ class SessionsManager:
             
             # Verifica se o arquivo foi realmente criado/atualizado
             if self.sessions_file.exists():
-                print(f"✅ Arquivo sessions.json salvo com sucesso: {self.sessions_file}")
+                # print(f"✅ Arquivo sessions.json salvo com sucesso: {self.sessions_file}")
                 return True
             else:
                 print(f"❌ ERRO: Arquivo sessions.json não foi criado: {self.sessions_file}")
@@ -354,7 +350,7 @@ class SessionsManager:
 # Instância global com tratamento de erro
 try:
     sessions_manager = SessionsManager()
-    print("✅ SessionsManager  inicializado com sucesso!")
+    # print("✅ SessionsManager  inicializado com sucesso!")
     
     # Força sessão única na inicialização
     sessions_manager.ensure_single_session()

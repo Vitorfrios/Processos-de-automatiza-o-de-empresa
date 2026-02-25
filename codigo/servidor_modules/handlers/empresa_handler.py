@@ -29,7 +29,7 @@ class EmpresaHandler:
             
             # 🎯 RETORNA NO FORMATO: [{ "SIGLA": "Nome Completo" }, ...]
             empresas = dados.get('empresas', [])
-            print(f"📊 [EMPRESAS] Carregadas {len(empresas)} empresas do dados.json")
+            # print(f"📊 [EMPRESAS] Carregadas {len(empresas)} empresas do dados.json")
             
             return empresas
             

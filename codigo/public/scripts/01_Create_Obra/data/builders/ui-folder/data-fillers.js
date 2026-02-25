@@ -241,7 +241,6 @@ function fillThermalGainsData(roomElement, thermalGainsData) {
     });
 }
 
-//adicionar fill de ventilação
 
 /**
  * Preenche dados de capacidade
@@ -268,6 +267,61 @@ function fillCapacityData(roomElement, capacityData) {
     if (backupSelect && capacityData.backup !== undefined) {
         backupSelect.value = capacityData.backup;
     }
+}
+
+/**
+ * Preenche os campos de ventilação da sala (apenas potência, temp interna e temp externa)
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @param {Object} ventilacaoData - Dados de ventilação para preencher
+ */
+function fillVentilacaoInputs(roomElement, ventilacaoData) {
+    if (!roomElement || !ventilacaoData) {
+        console.error('❌ Elemento da sala ou dados de ventilação inválidos');
+        return;
+    }
+
+    const roomId = roomElement.dataset.roomId;
+    if (!roomId) {
+        console.error('❌ ID da sala não encontrado');
+        return;
+    }
+
+    console.log(`🌬️ Preenchendo ventilação para sala ${roomId}:`, ventilacaoData);
+
+    // Preencher potência
+    if (ventilacaoData.potencia !== undefined) {
+        const input = document.getElementById(`potencia-${roomId}`);
+        if (input) {
+            input.value = ventilacaoData.potencia;
+            setTimeout(() => {
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }, 10);
+        }
+    }
+
+    // Preencher temperatura interna
+    if (ventilacaoData.tempInterna !== undefined) {
+        const input = document.getElementById(`temp-interna-${roomId}`);
+        if (input) {
+            input.value = ventilacaoData.tempInterna;
+            setTimeout(() => {
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }, 10);
+        }
+    }
+
+    // Preencher temperatura externa
+    if (ventilacaoData.tempExterna !== undefined) {
+        const input = document.getElementById(`temp-externa-${roomId}`);
+        if (input) {
+            input.value = ventilacaoData.tempExterna;
+            setTimeout(() => {
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }, 10);
+        }
+    }
+
+
 }
 
 /**
@@ -448,6 +502,7 @@ export {
     fillClimatizationInputs,
     fillThermalGainsData,
     fillCapacityData,
+    fillVentilacaoInputs,
     ensureAllRoomSections,
     setupRoomTitleChangeListener,
     fixDuplicatedSections,

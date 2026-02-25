@@ -833,6 +833,61 @@ function setupVentilationForRoom(roomId) {
     });
 }
 
+
+/**
+ * PREENCHE OS INPUTS DE VENTILAÇÃO
+ * Função para preencher os campos de ventilação com dados salvos
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @param {Object} ventilacaoData - Dados de ventilação { potencia, tempInterna, tempExterna }
+ */
+export function fillVentilacaoInputs(roomElement, ventilacaoData) {
+    if (!roomElement || !ventilacaoData) {
+        console.error('❌ Elemento da sala ou dados de ventilação inválidos');
+        return;
+    }
+
+    const roomId = roomElement.dataset.roomId;
+    if (!roomId) {
+        console.error('❌ Room ID não encontrado');
+        return;
+    }
+
+    console.log(`🌬️ Preenchendo inputs de ventilação para sala ${roomId}`, ventilacaoData);
+
+    // Mapeamento dos campos
+    const fieldMappings = [
+        { id: `potencia-${roomId}`, field: 'potencia' },
+        { id: `temp-interna-${roomId}`, field: 'tempInterna' },
+        { id: `temp-externa-${roomId}`, field: 'tempExterna' }
+    ];
+
+    // Preencher cada campo
+    fieldMappings.forEach(mapping => {
+        const element = document.getElementById(mapping.id);
+        if (element && ventilacaoData[mapping.field] !== undefined) {
+            const value = ventilacaoData[mapping.field];
+            
+            // Garantir que é número
+            const numericValue = parseFloat(value);
+            element.value = isNaN(numericValue) ? '' : numericValue;
+            
+            console.log(`  ✅ Campo ${mapping.field} = ${element.value}`);
+            
+            // Disparar evento change para ativar cálculos
+            setTimeout(() => {
+                const event = new Event('change', { bubbles: true });
+                element.dispatchEvent(event);
+            }, 50);
+        }
+    });
+}
+
+// Adicione ao objeto window para compatibilidade global
+if (typeof window !== 'undefined') {
+    window.fillVentilacaoInputs = fillVentilacaoInputs;
+}
+
+
 // =============================================================================
 // FUNÇÃO PRINCIPAL EXPORTADA
 // =============================================================================

@@ -355,7 +355,7 @@ class RoutesCore:
             current_session_id = self.sessions_manager.get_current_session_id()
 
             print(
-                f"📋 [SESSION-OBRAS] Sessão {current_session_id} - Obras: {session_obras}"
+                # f"📋 [SESSION-OBRAS] Sessão {current_session_id} - Obras: {session_obras}"
             )
 
             return {"session_id": current_session_id, "obras": session_obras}

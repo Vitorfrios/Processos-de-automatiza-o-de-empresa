@@ -100,7 +100,20 @@ async function populateRoomData(roomElement, roomData) {
             console.log(`⚡ Preenchendo dados de capacidade para sala ${roomName}`);
             fillCapacityData(roomElement, roomData.capacidade);
         }
-        //adicionar ventilação
+        
+        if (roomData.ventilacao && Object.keys(roomData.ventilacao).length > 0) {
+            console.log(`🌬️ Preenchendo dados de ventilação para sala ${roomName}`);
+            
+            setTimeout(() => {
+                if (typeof window.fillVentilacaoInputs === 'function') {
+                    window.fillVentilacaoInputs(roomElement, roomData.ventilacao);
+                    console.log(`✅ Ventilação preenchida via função global`);
+                } else {
+                    console.error(`❌ Função fillVentilacaoInputs não disponível no window`);
+                }
+            }, 350); // Delay apropriado
+        }
+
         // ✅ Preencher acessorios
         if (roomData.acessorios && Array.isArray(roomData.acessorios)) {
             console.log(`🔧 Preenchendo ${roomData.acessorios.length} acessorio(s) para sala ${roomName}`);

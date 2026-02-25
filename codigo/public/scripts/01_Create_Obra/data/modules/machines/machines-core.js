@@ -1036,6 +1036,8 @@ if (typeof window !== 'undefined') {
     window.generateMachineName = generateMachineName;
     window.notifyMachineFieldChange = notifyMachineFieldChange;
     window.updateMachineTitle = updateMachineTitle;
+    window.handleConfigChange = handleConfigChange;
+    window.updateOptionSelection = updateOptionSelection;
 
     console.log('✅ Funções principais carregadas no escopo global');
     

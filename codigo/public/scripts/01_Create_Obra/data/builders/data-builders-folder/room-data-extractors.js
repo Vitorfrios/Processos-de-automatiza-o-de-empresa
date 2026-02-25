@@ -43,7 +43,7 @@ function extractRoomData(roomElement, projectElement) {
         inputs: extractClimatizationInputs(roomElement),
         maquinas: extractMachinesData(roomElement),
         capacidade: extractCapacityData(roomElement),
-        //adicionar a ventilacao
+        ventilacao: extractVentilacaoData(roomElement),
         ganhosTermicos: extractThermalGainsData(roomElement),
         acessorios: extractAcessoriosData(roomElement),
         dutos: extractDutosData(roomElement), // ✅ ADICIONADO: Extração de dutos
@@ -241,6 +241,44 @@ function extractCapacityData(roomElement) {
 }
 
 /**
+ * Extrai dados de ventilação da sala (apenas potência, temp interna e temp externa)
+ * @param {HTMLElement} roomElement - Elemento da sala
+ * @returns {Object} Dados de ventilação
+ */
+function extractVentilacaoData(roomElement) {
+    const ventilacaoData = {};
+    
+    if (!roomElement?.dataset.roomId) {
+        console.error('❌ Elemento da sala inválido para extração de ventilação');
+        return ventilacaoData;
+    }
+    
+    const roomId = roomElement.dataset.roomId;
+    
+    // Mapeamento dos campos de ventilação
+    const fieldMappings = [
+        { id: `potencia-${roomId}`, field: 'potencia' },
+        { id: `temp-interna-${roomId}`, field: 'tempInterna' },
+        { id: `temp-externa-${roomId}`, field: 'tempExterna' }
+    ];
+    
+    fieldMappings.forEach(mapping => {
+        const element = document.getElementById(mapping.id);
+        if (element) {
+            const value = element.value;
+            if (value !== undefined && value !== '') {
+                ventilacaoData[mapping.field] = parseFloat(value) || 0;
+            }
+        }
+    });
+    
+    console.log(`🌬️ Dados de ventilação extraídos da sala ${roomId}:`, ventilacaoData);
+    return ventilacaoData;
+}
+
+
+
+/**
  * Extrai dados dos acessorios de uma sala
  */
 function extractAcessoriosData(roomElement) {
@@ -434,6 +472,7 @@ export {
     extractClimatizationInputs,
     extractThermalGainsData,
     extractCapacityData,
+    extractVentilacaoData,
     extractAcessoriosData,
     extractDutosData, 
     extractTubulacaoData
