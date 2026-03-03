@@ -1888,6 +1888,11 @@
       "unit": "kg",
       "description": "Cobre utilizado na instalação"
     },
+    "Material_Duto": {
+      "value": 99,
+      "unit": "kg",
+      "description": "Material utilizado no duto"
+    },
     "ISOLANTE_1_1_8": {
       "value": 41.73,
       "unit": "m",

@@ -1,68 +1,151 @@
 {
   "obras": [
     {
-      "id": "obra_q44",
+      "id": "obra_p43",
       "nome": "Obra1",
-      "empresa_id": "empresa_obra_q44",
+      "empresa_id": "empresa_obra_p43",
+      "empresaSigla": "ACT",
+      "empresaNome": "ACTEMIUM",
+      "clienteFinal": "asfd",
+      "codigoCliente": "sdfg",
+      "dataCadastro": "03/03/2026",
       "projetos": [
         {
-          "id": "obra_q44_proj_r79_3",
+          "id": "obra_p43_proj_i63_3",
           "nome": "Projeto1",
           "salas": [
             {
-              "id": "obra_q44_proj_r79_3_sala_n18_1",
-              "nome": "Sala1",
+              "id": "obra_p43_proj_i63_3_sala_n37_1",
+              "nome": "Sala de ambiente",
               "inputs": {
-                "ambiente": "Sala1",
-                "area": 150,
+                "ambiente": "Sala de ambiente",
+                "backup": "n+1",
+                "area": 143,
+                "tipoConstrucao": "Alvenaria",
+                "paredeOeste": 11,
+                "paredeLeste": 11,
+                "paredeNorte": 11,
+                "paredeSul": 11,
                 "peDireito": 3,
-                "volume": "450.00",
-                "dissipacao": 1500,
+                "volume": "429.00",
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 12,
+                "divisoriaClima2": 12,
+                "dissipacao": 12333,
                 "numPessoas": 1,
                 "pressurizacaoSetpoint": 25,
                 "setpointTemp": 25,
                 "numPortasDuplas": 1,
                 "numPortasSimples": 1,
+                "combateIncendio": "manual",
                 "pressurizacao": true
               },
               "maquinas": [
-                {
-                  "nome": "Filtro Cartucho-01A (4200m³/h)",
-                  "tipo": "Filtro Cartucho",
-                  "potencia": "4200m³/h",
-                  "tensao": "",
-                  "quantidade": 1,
-                  "aplicacao_machines": "pressurizacao",
-                  "precoBase": 28400,
-                  "opcoesSelecionadas": [],
-                  "configuracoesSelecionadas": [],
-                  "precoTotal": 28400,
-                  "potenciaSelecionada": "4200m³/h",
-                  "tipoSelecionado": "Filtro Cartucho"
-                },
                 {
                   "nome": "Wall Mounted-01A (2TR)",
                   "tipo": "Wall Mounted",
                   "potencia": "2TR",
                   "tensao": "",
-                  "quantidade": 234,
+                  "quantidade": 2,
                   "aplicacao_machines": "climatizacao",
                   "precoBase": 28503.4,
-                  "opcoesSelecionadas": [],
-                  "configuracoesSelecionadas": [],
-                  "precoTotal": 6669795.6,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 9,
+                      "name": "Sensor de Filtro Sujo",
+                      "value": 1100,
+                      "originalName": "Sensor de Filtro Sujo",
+                      "potenciaAplicada": "2TR"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [
+                    {
+                      "id": 5,
+                      "nome": "Evaporadoras em casa de máquinas"
+                    }
+                  ],
+                  "precoTotal": 59206.8,
                   "potenciaSelecionada": "2TR",
                   "tipoSelecionado": "Wall Mounted"
+                },
+                {
+                  "nome": "Tubo Axial-01A (4900m³/h)",
+                  "tipo": "Tubo Axial",
+                  "potencia": "4900m³/h",
+                  "tensao": "220V/3F",
+                  "quantidade": 2,
+                  "aplicacao_machines": "exaustao_bateria",
+                  "precoBase": 1002,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 2,
+                      "name": "com 15mmCA",
+                      "value": 1,
+                      "originalName": "com 15mmCA",
+                      "potenciaAplicada": "4900m³/h"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "nome": "Instalação dutos axiais"
+                    }
+                  ],
+                  "precoTotal": 2006,
+                  "potenciaSelecionada": "4900m³/h",
+                  "tipoSelecionado": "Tubo Axial"
+                },
+                {
+                  "nome": "Caixa de Ventilação-01A (1200m³/h)",
+                  "tipo": "Caixa de Ventilação",
+                  "potencia": "1200m³/h",
+                  "tensao": "220V/1F",
+                  "quantidade": 5,
+                  "aplicacao_machines": "pressurizacao",
+                  "precoBase": 3700,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "com 10mmCA",
+                      "value": 8,
+                      "originalName": "com 10mmCA",
+                      "potenciaAplicada": "1200m³/h"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "nome": "Instalação caixa ventilação"
+                    }
+                  ],
+                  "precoTotal": 18540,
+                  "potenciaSelecionada": "1200m³/h",
+                  "tipoSelecionado": "Caixa de Ventilação"
+                },
+                {
+                  "nome": "Tubo Axial-02A (1400m³/h)",
+                  "tipo": "Tubo Axial",
+                  "potencia": "1400m³/h",
+                  "tensao": "220V/3F",
+                  "quantidade": 4,
+                  "aplicacao_machines": "exaustao_baia_trafo",
+                  "precoBase": 3400,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 13600,
+                  "potenciaSelecionada": "1400m³/h",
+                  "tipoSelecionado": "Tubo Axial"
                 }
               ],
               "capacidade": {
                 "fatorSeguranca": 10,
-                "capacidadeUnitaria": 2,
-                "solucao": 2,
+                "capacidadeUnitaria": 5,
+                "solucao": 1,
                 "solucaoBackup": 2,
-                "totalCapacidade": 4,
-                "folga": 33.3,
-                "backup": "n"
+                "totalCapacidade": 5,
+                "folga": 49.3,
+                "backup": "n+1"
               },
               "ventilacao": {
                 "potencia": 1500,
@@ -84,66 +167,162 @@
               },
               "acessorios": [
                 {
-                  "id": "1772476126339r0xbqn88r",
+                  "id": "1772565658014z1kpu6hdh",
                   "aplicacao_Acessorio": "climatizacao",
-                  "tipo": "DF",
-                  "dimensao": "250",
+                  "tipo": "DCF_90",
+                  "dimensao": "950x950",
                   "quantidade": 1,
-                  "valor_unitario": 128,
-                  "valor_total": 128,
-                  "descricao": "DF"
+                  "valor_unitario": 108500,
+                  "valor_total": 108500,
+                  "descricao": "DCF_90"
                 },
                 {
-                  "id": "1772476890467ddetlvox4",
+                  "id": "1772565662073bl9j8p4ij",
+                  "aplicacao_Acessorio": "pressurizacao",
+                  "tipo": "DCF_90",
+                  "dimensao": "700x700",
+                  "quantidade": 1,
+                  "valor_unitario": 66000,
+                  "valor_total": 66000,
+                  "descricao": "DCF_90"
+                },
+                {
+                  "id": "1772565666191pkfcdtiz8",
                   "aplicacao_Acessorio": "exaustao_bateria",
-                  "tipo": "DF",
-                  "dimensao": "300",
-                  "quantidade": 100,
-                  "valor_unitario": 165,
-                  "valor_total": 16500,
-                  "descricao": "DF"
+                  "tipo": "DCF_90",
+                  "dimensao": "250x250",
+                  "quantidade": 1,
+                  "valor_unitario": 21000,
+                  "valor_total": 21000,
+                  "descricao": "DCF_90"
+                },
+                {
+                  "id": "17725656697891sdjoi15l",
+                  "aplicacao_Acessorio": "exaustao_baia_trafo",
+                  "tipo": "DSP_30",
+                  "dimensao": "250x250",
+                  "quantidade": 1,
+                  "valor_unitario": 15000,
+                  "valor_total": 15000,
+                  "descricao": "DSP_30"
                 }
               ],
-              "dutos": [],
+              "dutos": [
+                {
+                  "id": "17725657349229e7b64sos",
+                  "tipo": "Chapa preta",
+                  "tipo_descricao": "Chapa preta",
+                  "opcional_id": "2",
+                  "opcional_nome": "Isolamento acustico",
+                  "aplicacao_Dutos": "climatizacao",
+                  "kg": 1,
+                  "quantidade": 1,
+                  "valor_tipo": 105,
+                  "valor_opcional": 40,
+                  "valor_material_por_kg": 99,
+                  "valor_unitario": 244,
+                  "valor_total": 244
+                },
+                {
+                  "id": "1772565738207sk1ztmrvm",
+                  "tipo": "Chapa preta",
+                  "tipo_descricao": "Chapa preta",
+                  "opcional_id": "2",
+                  "opcional_nome": "Isolamento acustico",
+                  "aplicacao_Dutos": "pressurizacao",
+                  "kg": 1,
+                  "quantidade": 1,
+                  "valor_tipo": 105,
+                  "valor_opcional": 40,
+                  "valor_material_por_kg": 99,
+                  "valor_unitario": 244,
+                  "valor_total": 244
+                },
+                {
+                  "id": "1772565744990cpsqqob73",
+                  "tipo": "Chapa preta",
+                  "tipo_descricao": "Chapa preta",
+                  "opcional_id": "1",
+                  "opcional_nome": "Pintura epoxi",
+                  "aplicacao_Dutos": "exaustao_bateria",
+                  "kg": 2.1,
+                  "quantidade": 1,
+                  "valor_tipo": 105,
+                  "valor_opcional": 30,
+                  "valor_material_por_kg": 99,
+                  "valor_unitario": 342.9,
+                  "valor_total": 342.9
+                },
+                {
+                  "id": "1772565749522ob1vin44q",
+                  "tipo": "Chapa preta",
+                  "tipo_descricao": "Chapa preta",
+                  "opcional_id": "2",
+                  "opcional_nome": "Isolamento acustico",
+                  "aplicacao_Dutos": "exaustao_baia_trafo",
+                  "kg": 1,
+                  "quantidade": 1,
+                  "valor_tipo": 105,
+                  "valor_opcional": 40,
+                  "valor_material_por_kg": 99,
+                  "valor_unitario": 244,
+                  "valor_total": 244
+                }
+              ],
               "tubulacao": {
-                "conjuntos": [],
-                "valorTotalGeralTubos": 0
+                "conjuntos": [
+                  {
+                    "id": "obra_p43_proj_i63_3_sala_n37_1-1",
+                    "numero": 1,
+                    "quantidade": 1,
+                    "cabos": 18,
+                    "luvas": 115.2,
+                    "reducoes": 48,
+                    "totalLSmetros": 288,
+                    "totalLSkg": 223.49,
+                    "totalLLmetros": 288,
+                    "totalLLkg": 257.47,
+                    "totalKG": 480.96,
+                    "valorTotal": 29952,
+                    "linhas": [
+                      {
+                        "id": "LS-obra_p43_proj_i63_3_sala_n37_1-1-1772565687142",
+                        "tipo": "L.S.",
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 12,
+                        "numC": 12,
+                        "numCu": 12,
+                        "Cee": 12,
+                        "Lsm": 288,
+                        "LSkg": 223.488,
+                        "valorTotal": 17856
+                      },
+                      {
+                        "id": "LL-obra_p43_proj_i63_3_sala_n37_1-1-1772565687142",
+                        "tipo": "L.L.",
+                        "pol": "7/8",
+                        "expe": "0,80",
+                        "compr": 12,
+                        "numC": 12,
+                        "numCu": 12,
+                        "Cee": 12,
+                        "Lsm": 288,
+                        "LSkg": 257.472,
+                        "valorTotal": 12096
+                      }
+                    ]
+                  }
+                ],
+                "valorTotalGeralTubos": 0,
+                "valorTotal": null
               }
-            }
-          ],
-          "servicos": {
-            "engenharia": {
-              "valor": 0,
-              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
             },
-            "adicionais": []
-          },
-          "valorTotalProjeto": 0
-        }
-      ],
-      "valorTotalObra": 0
-    },
-    {
-      "id": "obra_g35",
-      "nome": "Obra2",
-      "empresa_id": "empresa_obra_g35",
-      "empresaSigla": "ACT",
-      "empresaNome": "ACTEMIUM",
-      "numeroClienteFinal": 1,
-      "clienteFinal": "df",
-      "codigoCliente": "dfg",
-      "dataCadastro": "03/03/2026",
-      "orcamentistaResponsavel": "df",
-      "projetos": [
-        {
-          "id": "obra_g35_proj_k72_3",
-          "nome": "Projeto1",
-          "salas": [
             {
-              "id": "obra_g35_proj_k72_3_sala_t70_1",
-              "nome": "Sala1",
+              "id": "obra_p43_proj_i63_3_sala_g61_2",
+              "nome": "Sala2",
               "inputs": {
-                "ambiente": "Sala1",
+                "ambiente": "Sala2",
                 "peDireito": 3,
                 "volume": "0",
                 "numPessoas": 1,
@@ -153,7 +332,22 @@
                 "numPortasDuplas": 0,
                 "numPortasSimples": 0
               },
-              "maquinas": [],
+              "maquinas": [
+                {
+                  "nome": "Wall Mounted-01A (30TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "30TR",
+                  "tensao": "220V/1F",
+                  "quantidade": 10,
+                  "aplicacao_machines": "climatizacao",
+                  "precoBase": 146800,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 1468000,
+                  "potenciaSelecionada": "30TR",
+                  "tipoSelecionado": "Wall Mounted"
+                }
+              ],
               "capacidade": {
                 "fatorSeguranca": 10,
                 "capacidadeUnitaria": 1,
@@ -190,15 +384,92 @@
           ],
           "servicos": {
             "engenharia": {
-              "valor": 0,
+              "valor": 45634563456,
               "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
             },
             "adicionais": []
           },
-          "valorTotalProjeto": 0
+          "valorTotalProjeto": 1802879.7
+        },
+        {
+          "id": "obra_p43_proj_x59_6",
+          "nome": "Projeto2",
+          "salas": [
+            {
+              "id": "obra_p43_proj_x59_6_sala_p92_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "volume": "0",
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "pressurizacao": true,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [
+                {
+                  "nome": "Split System-01A (35TR)",
+                  "tipo": "Split System",
+                  "potencia": "35TR",
+                  "tensao": "",
+                  "quantidade": 160,
+                  "aplicacao_machines": "climatizacao",
+                  "precoBase": 62500,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 10000000,
+                  "potenciaSelecionada": "35TR",
+                  "tipoSelecionado": "Split System"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ventilacao": {
+                "tempInterna": 45,
+                "tempExterna": 35
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "acessorios": [],
+              "dutos": [],
+              "tubulacao": {
+                "conjuntos": [],
+                "valorTotalGeralTubos": 0
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 345634563456,
+              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 10000000
         }
       ],
-      "valorTotalObra": 0
+      "valorTotalObra": 11802879.7
     }
   ]
 }

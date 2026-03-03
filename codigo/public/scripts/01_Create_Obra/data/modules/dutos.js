@@ -3,6 +3,9 @@
  * Opcional depende do tipo MAS é opcional na seleção
  */
 
+// Variável global para armazenar a descrição do material
+let descricaoMaterialDuto = 'Material do Duto';
+
 /**
  * Função para preenchimento de dados
  */
@@ -87,27 +90,27 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
       <div class="section-content collapsed" id="section-content-${roomId}dutos">
         <div class="form-grid">
 
-          <!-- LINHA SUPERIOR: ADICIONAR DUTO + VALOR DO COBRE -->
+          <!-- LINHA SUPERIOR: ADICIONAR DUTO + VALOR DO MATERIAL DO DUTO -->
           <div class="form-group full-width duto-header-line">
 
             <label class="acess-label duto-header-label">
               Adicionar duto:
             </label>
 
-            <div class="cobre-inline">
-              <span class="cobre-label">Valor do Cobre (por KG):</span>
+            <div class="material-inline">
+              <span class="material-label" id="material-label-${roomId}">Valor do Material do Duto (por KG):</span>
 
-              <div class="cobre-container">
+              <div class="material-container">
                 <input type="number"
-                        id="valor-cobre-${roomId}"
-                        class="cobre-input"
+                        id="valor-material-duto-${roomId}"
+                        class="material-input"
                         value="0"
                         min="0"
                         step="0.01"
-                        onchange="atualizarValorCobre('${roomId}')">
+                        onchange="atualizarValorMaterialDuto('${roomId}')">
 
-                <button class="btn-cobre-default"
-                        onclick="carregarValorCobrePadrao('${roomId}')"
+                <button class="btn-material-default"
+                        onclick="carregarValorMaterialDutoPadrao('${roomId}')"
                         title="Carregar valor padrão da API">
                     🔄 Restaurar
                 </button>
@@ -288,8 +291,8 @@ async function initDutosSystem(roomId) {
     // Carregar tipos de dutos
     await carregarTiposDutos(roomId);
     
-    // Carregar valor do cobre
-    await carregarValorCobre(roomId);
+    // Carregar valor do material do duto
+    await carregarValorMaterialDuto(roomId);
     
     console.log(`✅ Dutos inicializados para sala ${roomId}`);
 }
@@ -439,122 +442,152 @@ function atualizarValorOpcionalSelecionado(roomId) {
 }
 
 /**
- * Carrega valor do cobre da API
+ * Carrega valor do material do duto da API e atualiza a descrição
  */
-async function carregarValorCobre(roomId) {
+async function carregarValorMaterialDuto(roomId) {
     try {
-        console.log('📡 Buscando valor do cobre da API...');
+        console.log('📡 Buscando valor do material do duto da API...');
         const response = await fetch('/api/materials');
         const data = await response.json();
         
-        let valorCobre = 0;
+        let valorMaterialDuto = 0;
+        let descricao = 'Material do Duto';
         
+        // Procurar por Material_Duto nos dados
         if (data.materials) {
             if (Array.isArray(data.materials)) {
-                const cobre = data.materials.find(m => m.codigo === 'COBRE');
-                if (cobre && cobre.valor !== undefined) {
-                    valorCobre = cobre.valor;
+                const materialDuto = data.materials.find(m => m.codigo === 'Material_Duto');
+                if (materialDuto) {
+                    valorMaterialDuto = materialDuto.valor || 0;
+                    descricao = materialDuto.descricao || materialDuto.description || materialDuto.nome || 'Material do Duto';
                 }
-            } else if (typeof data.materials === 'object' && data.materials.COBRE) {
-                valorCobre = data.materials.COBRE.value || 0;
+            } else if (typeof data.materials === 'object' && data.materials.Material_Duto) {
+                valorMaterialDuto = data.materials.Material_Duto.value || 0;
+                descricao = data.materials.Material_Duto.description || data.materials.Material_Duto.descricao || 'Material do Duto';
             }
-        } else if (data.COBRE) {
-            valorCobre = data.COBRE.value || 0;
+        } else if (data.Material_Duto) {
+            valorMaterialDuto = data.Material_Duto.value || 0;
+            descricao = data.Material_Duto.description || data.Material_Duto.descricao || 'Material do Duto';
         }
         
-        if (valorCobre > 0) {
-            window.valorCobrePorKg = valorCobre;
+        // Atualizar a variável global com a descrição
+        descricaoMaterialDuto = descricao;
+        
+        // Atualizar o label do material
+        const materialLabel = document.getElementById(`material-label-${roomId}`);
+        if (materialLabel) {
+            materialLabel.textContent = `Valor do ${descricao} (por KG):`;
+        }
+        
+        if (valorMaterialDuto > 0) {
+            window.valorMaterialDutoPorKg = valorMaterialDuto;
             
-            const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
-            if (cobreInput) {
-                cobreInput.value = valorCobre.toFixed(2);
+            const materialInput = document.getElementById(`valor-material-duto-${roomId}`);
+            if (materialInput) {
+                materialInput.value = valorMaterialDuto.toFixed(2);
             }
         } else {
-            window.valorCobrePorKg = 0;
+            window.valorMaterialDutoPorKg = 0;
         }
         
+        console.log(`✅ Material do duto: ${descricao} - R$ ${valorMaterialDuto}/kg`);
+        
     } catch (error) {
-        console.error('❌ Erro ao carregar cobre:', error);
-        window.valorCobrePorKg = 0;
+        console.error('❌ Erro ao carregar material do duto:', error);
+        window.valorMaterialDutoPorKg = 0;
     }
 }
 
 /**
- * Carrega o valor padrão do cobre
+ * Carrega o valor padrão do material do duto
  */
-async function carregarValorCobrePadrao(roomId) {
+async function carregarValorMaterialDutoPadrao(roomId) {
     try {
-        console.log('🔄 Restaurando valor padrão do cobre...');
+        console.log('🔄 Restaurando valor padrão do material do duto...');
         const response = await fetch('/api/materials');
         const data = await response.json();
         
-        let valorCobre = 0;
+        let valorMaterialDuto = 0;
+        let descricao = 'Material do Duto';
         
+        // Procurar por Material_Duto nos dados
         if (data.materials) {
             if (Array.isArray(data.materials)) {
-                const cobre = data.materials.find(m => m.codigo === 'COBRE');
-                if (cobre && cobre.valor !== undefined) {
-                    valorCobre = cobre.valor;
+                const materialDuto = data.materials.find(m => m.codigo === 'Material_Duto');
+                if (materialDuto) {
+                    valorMaterialDuto = materialDuto.valor || 0;
+                    descricao = materialDuto.descricao || materialDuto.description || materialDuto.nome || 'Material do Duto';
                 }
-            } else if (typeof data.materials === 'object' && data.materials.COBRE) {
-                valorCobre = data.materials.COBRE.value || 0;
+            } else if (typeof data.materials === 'object' && data.materials.Material_Duto) {
+                valorMaterialDuto = data.materials.Material_Duto.value || 0;
+                descricao = data.materials.Material_Duto.description || data.materials.Material_Duto.descricao || 'Material do Duto';
             }
-        } else if (data.COBRE) {
-            valorCobre = data.COBRE.value || 0;
+        } else if (data.Material_Duto) {
+            valorMaterialDuto = data.Material_Duto.value || 0;
+            descricao = data.Material_Duto.description || data.Material_Duto.descricao || 'Material do Duto';
         }
         
-        if (valorCobre > 0) {
-            window.valorCobrePorKg = valorCobre;
+        // Atualizar a variável global com a descrição
+        descricaoMaterialDuto = descricao;
+        
+        // Atualizar o label do material
+        const materialLabel = document.getElementById(`material-label-${roomId}`);
+        if (materialLabel) {
+            materialLabel.textContent = `Valor do ${descricao} (por KG):`;
+        }
+        
+        if (valorMaterialDuto > 0) {
+            window.valorMaterialDutoPorKg = valorMaterialDuto;
             
-            const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
-            if (cobreInput) {
-                cobreInput.value = valorCobre.toFixed(2);
+            const materialInput = document.getElementById(`valor-material-duto-${roomId}`);
+            if (materialInput) {
+                materialInput.value = valorMaterialDuto.toFixed(2);
                 
-                cobreInput.style.borderColor = '#48BB78';
-                cobreInput.style.boxShadow = '0 0 0 3px rgba(72, 187, 120, 0.1)';
+                materialInput.style.borderColor = '#48BB78';
+                materialInput.style.boxShadow = '0 0 0 3px rgba(72, 187, 120, 0.1)';
                 
                 setTimeout(() => {
-                    cobreInput.style.borderColor = '';
-                    cobreInput.style.boxShadow = '';
+                    materialInput.style.borderColor = '';
+                    materialInput.style.boxShadow = '';
                 }, 187);
             }
             
-            recalcDutosComNovoCobre(roomId);
+            recalcDutosComNovoMaterial(roomId);
             
-            alert(`✅ Valor do cobre restaurado para R$ ${valorCobre.toFixed(2)}/kg`);
+            alert(`✅ Valor do ${descricao} restaurado para R$ ${valorMaterialDuto.toFixed(2)}/kg`);
         } else {
-            alert('⚠️ Valor do cobre não encontrado na API');
+            alert(`⚠️ Valor do ${descricao} não encontrado na API`);
         }
     } catch (error) {
-        console.error('❌ Erro ao carregar cobre padrão:', error);
-        alert('❌ Erro ao carregar valor padrão do cobre');
+        console.error('❌ Erro ao carregar material do duto padrão:', error);
+        alert('❌ Erro ao carregar valor padrão do material do duto');
     }
 }
 
 /**
- * Atualiza o valor do cobre manualmente
+ * Atualiza o valor do material do duto manualmente
  */
-function atualizarValorCobre(roomId) {
-    const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
-    if (!cobreInput) return;
+function atualizarValorMaterialDuto(roomId) {
+    const materialInput = document.getElementById(`valor-material-duto-${roomId}`);
+    if (!materialInput) return;
     
-    const novoValor = parseFloat(cobreInput.value);
+    const novoValor = parseFloat(materialInput.value);
     
     if (isNaN(novoValor) || novoValor < 0) {
-        alert('❌ Por favor, insira um valor válido para o cobre');
-        cobreInput.value = window.valorCobrePorKg ? window.valorCobrePorKg.toFixed(2) : '0.00';
+        alert(`❌ Por favor, insira um valor válido para o ${descricaoMaterialDuto}`);
+        materialInput.value = window.valorMaterialDutoPorKg ? window.valorMaterialDutoPorKg.toFixed(2) : '0.00';
         return;
     }
     
-    window.valorCobrePorKg = novoValor;
-    recalcDutosComNovoCobre(roomId);
+    window.valorMaterialDutoPorKg = novoValor;
+    recalcDutosComNovoMaterial(roomId);
     calcularValorDuto(roomId);
 }
 
 /**
- * Recalcula todos os dutos com o novo valor do cobre
+ * Recalcula todos os dutos com o novo valor do material do duto
  */
-function recalcDutosComNovoCobre(roomId) {
+function recalcDutosComNovoMaterial(roomId) {
     const tbody = document.getElementById(`dutos-list-${roomId}`);
     if (!tbody) return;
     
@@ -564,12 +597,13 @@ function recalcDutosComNovoCobre(roomId) {
         try {
             const duto = JSON.parse(row.getAttribute('data-duto'));
             
-            const valorCobre = window.valorCobrePorKg || 0;
-            const valorKg = duto.kg * valorCobre;
+            const valorMaterial = window.valorMaterialDutoPorKg || 0;
+            const valorKg = duto.kg * valorMaterial;
             const valorUnitario = duto.valor_tipo + duto.valor_opcional + valorKg;
             const valorTotal = valorUnitario * duto.quantidade;
             
             duto.valor_total = valorTotal;
+            duto.valor_material_por_kg = valorMaterial; // Atualizar o valor do material
             row.setAttribute('data-duto', JSON.stringify(duto));
             
             const cells = row.cells;
@@ -596,7 +630,7 @@ function calcularValorDuto(roomId) {
     const valorTipoInput = document.getElementById(`duto-valor-tipo-${roomId}`);
     const valorOpcionalInput = document.getElementById(`duto-valor-opcional-${roomId}`);
     const valorTotalInput = document.getElementById(`duto-valor-total-${roomId}`);
-    const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
+    const materialInput = document.getElementById(`valor-material-duto-${roomId}`);
     
     if (!tipoSelect.value) {
         valorTotalInput.value = 'R$ 0,00';
@@ -617,10 +651,10 @@ function calcularValorDuto(roomId) {
         valorOpcional = parseFloat(opcionalOption.getAttribute('data-valor')) || 0;
     }
     
-    // Obter valor do cobre
-    const valorCobre = cobreInput ? parseFloat(cobreInput.value) || 0 : 0;
+    // Obter valor do material do duto
+    const valorMaterial = materialInput ? parseFloat(materialInput.value) || 0 : 0;
     
-    const valorKg = kg * valorCobre;
+    const valorKg = kg * valorMaterial;
     const valorUnitario = valorTipo + valorOpcional + valorKg;
     const valorTotal = valorUnitario * quantidade;
     
@@ -639,7 +673,7 @@ function adicionarDuto(roomId) {
     const quantidadeInput = document.getElementById(`duto-quantidade-${roomId}`);
     const valorTipoInput = document.getElementById(`duto-valor-tipo-${roomId}`);
     const valorOpcionalInput = document.getElementById(`duto-valor-opcional-${roomId}`);
-    const cobreInput = document.getElementById(`valor-cobre-${roomId}`);
+    const materialInput = document.getElementById(`valor-material-duto-${roomId}`);
     
     // Apenas tipo é obrigatório
     if (!tipoSelect.value) {
@@ -652,7 +686,7 @@ function adicionarDuto(roomId) {
     
     const kg = parseFloat(kgInput.value) || 0;
     const quantidade = parseInt(quantidadeInput.value) || 1;
-    const valorCobre = cobreInput ? parseFloat(cobreInput.value) || 0 : 0;
+    const valorMaterial = materialInput ? parseFloat(materialInput.value) || 0 : 0;
     
     if (kg <= 0 || quantidade <= 0) {
         alert('KG e Quantidade devem ser maiores que zero');
@@ -676,7 +710,7 @@ function adicionarDuto(roomId) {
     }
     
     // Calcular valor total
-    const valorKg = kg * valorCobre;
+    const valorKg = kg * valorMaterial;
     const valorUnitario = valorTipo + valorOpcional + valorKg;
     const valorTotal = valorUnitario * quantidade;
     
@@ -704,7 +738,7 @@ function adicionarDuto(roomId) {
         quantidade: quantidade,
         valor_tipo: valorTipo,
         valor_opcional: valorOpcional,
-        valor_cobre_por_kg: valorCobre,
+        valor_material_por_kg: valorMaterial,
         valor_unitario: valorUnitario,
         valor_total: valorTotal
     };
@@ -872,7 +906,7 @@ function getDutosData(roomId) {
                 quantidade: duto.quantidade,
                 valor_tipo: duto.valor_tipo,
                 valor_opcional: duto.valor_opcional,
-                valor_cobre_por_kg: duto.valor_cobre_por_kg,
+                valor_material_por_kg: duto.valor_material_por_kg,
                 valor_unitario: duto.valor_unitario,
                 valor_total: duto.valor_total
             };
@@ -975,8 +1009,6 @@ function formatarMoeda(valor) {
     });
 }
 
-
-
 // Exportar
 export {
     buildDutosSection,
@@ -985,9 +1017,9 @@ export {
     carregarTiposDutos,
     carregarOpcionaisPorTipo,
     atualizarValorOpcionalSelecionado,
-    carregarValorCobre,
-    carregarValorCobrePadrao,
-    atualizarValorCobre,
+    carregarValorMaterialDuto,
+    carregarValorMaterialDutoPadrao,
+    atualizarValorMaterialDuto,
     calcularValorDuto,
     adicionarDuto,
     adicionarDutoNaTabela,
@@ -1005,11 +1037,11 @@ if (typeof window !== 'undefined') {
     window.fillDutosData = fillDutosData;
     window.initDutosSystem = initDutosSystem;
     window.carregarTiposDutos = carregarTiposDutos;
-    window.carregarValorCobre = carregarValorCobre;
+    window.carregarValorMaterialDuto = carregarValorMaterialDuto;
+    window.carregarValorMaterialDutoPadrao = carregarValorMaterialDutoPadrao;
     window.carregarOpcionaisPorTipo = carregarOpcionaisPorTipo;
     window.atualizarValorOpcionalSelecionado = atualizarValorOpcionalSelecionado;
-    window.carregarValorCobrePadrao = carregarValorCobrePadrao;
-    window.atualizarValorCobre = atualizarValorCobre;
+    window.atualizarValorMaterialDuto = atualizarValorMaterialDuto;
     window.calcularValorDuto = calcularValorDuto;
     window.adicionarDuto = adicionarDuto;
     window.editarDuto = editarDuto;
