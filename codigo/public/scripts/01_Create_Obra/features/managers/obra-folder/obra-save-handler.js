@@ -212,12 +212,6 @@ async function saveObra(obraId, event) {
         console.log('🔄 [HEADER] Chamando atualização do header após salvamento...');
         await atualizarHeaderObraAposSalvamento(finalId);
 
-        console.log('🔄 [EMPRESA] Atualizando botão de empresa após salvamento...');
-        if (typeof window.atualizarBotaoEmpresaAposSalvar === 'function') {
-            await window.atualizarBotaoEmpresaAposSalvar(finalId);
-        } else {
-            console.warn('⚠️ Função window.atualizarBotaoEmpresaAposSalvar não encontrada');
-        }
 
         // 🆕 MINIMIZAR TOGGLES APÓS SALVAMENTO BEM-SUCEDIDO
         console.log('📁 [SALVAMENTO] Minimizando toggles automaticamente...');

@@ -155,25 +155,28 @@ async function inicializarInputEmpresaHibrido(obraId) {
 function processarInputEmpresa(termo, input, dropdown, optionsContainer, obraId, empresas) {
     console.log(`🔍 [INPUT] Processando: "${termo}" | Apagando: ${window.usuarioEstaApagando}`);
 
-    // 🔥 SE USUÁRIO ESTÁ APAGANDO, NÃO FAZER AUTOCOMPLETE
+    // 🔥 PRIORIDADE MÁXIMA: Se usuário está apagando, NUNCA fazer autocomplete
     if (window.usuarioEstaApagando) {
         console.log('🚫 Autocomplete bloqueado - usuário apagando');
-
+        
+        // Se o termo está vazio, exibir todas empresas (para seleção)
         if (termo.length === 0) {
             limparDadosSelecao(input, obraId);
             exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
         } else {
+            // Apenas filtrar, nunca autocompletar
             const sugestoes = filtrarEmpresas(termo, empresas);
             exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
         }
 
+        // Resetar flag após um tempo
         setTimeout(() => {
             window.usuarioEstaApagando = false;
-        }, 12);
+        }, 200); // ✅ Aumentar tempo para evitar recompletação
         return;
     }
 
-    // 🔥 COMPORTAMENTO NORMAL
+    // 🔥 COMPORTAMENTO NORMAL (apenas quando NÃO está apagando)
     if (termo.length === 0) {
         limparDadosSelecao(input, obraId);
         exibirTodasEmpresas(empresas, optionsContainer, input, dropdown, obraId);
@@ -182,12 +185,12 @@ function processarInputEmpresa(termo, input, dropdown, optionsContainer, obraId,
 
     const sugestoes = filtrarEmpresas(termo, empresas);
 
-    // 🔥 AUTOCOMPLETE SÓ SE NÃO ESTIVER APAGANDO
-    if (sugestoes.length === 1 && termo.length > 0 && !window.usuarioEstaApagando) {
+    // 🔥 AUTOCOMPLETE MAIS CONSERVADOR
+    if (sugestoes.length === 1 && termo.length >= 3) { // ✅ Mínimo 3 caracteres
         const [sigla, nome] = Object.entries(sugestoes[0])[0];
-        const matchForte = termo === sigla || termo.length >= 3;
-
-        if (matchForte) {
+        
+        // Verificar se é um match exato da sigla
+        if (sigla === termo.toUpperCase()) {
             selecionarEmpresa(sigla, nome, input, dropdown, obraId, 'autocomplete');
             return;
         }
@@ -386,16 +389,8 @@ function selecionarEmpresa(sigla, nome, input, dropdown, obraId, tipoSelecao = '
 
     // 🔥 1. Atualizar o campo da empresa
     if (input) {
-        // Remover atributo value hardcoded
         input.removeAttribute('value');
-
-        // Definir novo valor
-        if (input.readOnly || input.disabled) {
-            input.setAttribute('value', `${sigla} - ${nome}`);
-        }
         input.value = `${sigla} - ${nome}`;
-
-        // Definir data attributes
         input.dataset.siglaSelecionada = sigla;
         input.dataset.nomeSelecionado = nome;
     }
@@ -413,38 +408,37 @@ function selecionarEmpresa(sigla, nome, input, dropdown, obraId, tipoSelecao = '
         dropdown.style.display = 'none';
     }
 
-    // 🔥 4. CALCULAR NOVO NÚMERO DO CLIENTE (CRÍTICO!)
-    if (window.empresaCadastro && typeof window.empresaCadastro.calcularNumeroClienteFinal === 'function') {
-        window.empresaCadastro.calcularNumeroClienteFinal(sigla, obraId);
-    } else {
-        const empresaCadastro = new EmpresaCadastroInline();
-        empresaCadastro.calcularNumeroClienteFinal(sigla, obraId);
-    }
+    // 🔥 4. CALCULAR NÚMERO DO CLIENTE
+    setTimeout(() => {
+        if (window.empresaCadastro && typeof window.empresaCadastro.calcularNumeroClienteFinal === 'function') {
+            window.empresaCadastro.calcularNumeroClienteFinal(sigla, obraId);
+        } else {
+            // Fallback: calcular localmente
+            import('./empresa-ui-helpers.js').then(helpers => {
+                helpers.calcularNumeroLocal(sigla, obraId);
+            });
+        }
+    }, 50); // ✅ Delay para garantir que o DOM atualizou
 
-    // 🔥 5. LIMPAR OUTROS CAMPOS DO FORMULÁRIO
+    // 🔥 5. LIMPAR OUTROS CAMPOS
     setTimeout(() => {
         if (obraElement) {
             const formEmpresa = obraElement.querySelector('.empresa-formulario-ativo');
             if (formEmpresa) {
-                // Limpar campos de cliente final, código e orçamentista
                 const camposParaLimpar = [
-                    '.cliente-final-input',
-                    '.codigo-cliente-input',
-                    '.orcamentista-responsavel-input'
+                    '.cliente-final-cadastro',
+                    '.codigo-cliente-cadastro',
+                    '.orcamentista-responsavel-cadastro'
                 ];
 
                 camposParaLimpar.forEach(seletor => {
                     const campo = formEmpresa.querySelector(seletor);
-                    if (campo) {
-                        campo.value = '';
-                    }
+                    if (campo) campo.value = '';
                 });
             }
         }
-
-        // Remover foco do input
         if (input) input.blur();
-    }, 50);
+    }, 100);
 
     console.log(`✅ Empresa selecionada: ${sigla} - ${nome}`);
 }

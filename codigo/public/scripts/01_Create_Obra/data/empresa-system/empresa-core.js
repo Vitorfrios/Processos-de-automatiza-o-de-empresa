@@ -515,24 +515,35 @@ export class EmpresaCadastroInline {
             // 🔥 Buscar obras da empresa específica
             const obrasDaEmpresa = this.obrasExistentes.filter(obra => {
                 return obra.empresaSigla === sigla ||
-                    obra.empresa_id === sigla;
+                    obra.empresa_id === sigla ||
+                    (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`));
             });
 
             console.log(`📊 [EMPRESA] Encontradas ${obrasDaEmpresa.length} obras para ${sigla}`);
 
             let maiorNumero = 0;
             obrasDaEmpresa.forEach(obra => {
+                // Verificar númeroClienteFinal
                 if (obra.numeroClienteFinal) {
                     const numero = parseInt(obra.numeroClienteFinal);
                     if (!isNaN(numero) && numero > maiorNumero) {
                         maiorNumero = numero;
                     }
                 }
+                
+                // Verificar no idGerado (formato: obra_SIGLA_NUMERO)
+                if (obra.idGerado) {
+                    const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
+                    if (match) {
+                        const numero = parseInt(match[1]);
+                        if (numero > maiorNumero) maiorNumero = numero;
+                    }
+                }
             });
 
             const novoNumero = maiorNumero + 1;
 
-            // 🔥 Atualizar campo no DOM se tiver obraId
+            // 🔥 Atualizar campo no DOM
             if (obraId) {
                 this.atualizarCampoNumeroCliente(obraId, novoNumero);
             }
@@ -541,36 +552,43 @@ export class EmpresaCadastroInline {
 
         } catch (error) {
             console.error('❌ [EMPRESA] Erro ao calcular número do cliente final:', error);
-            return 0;
+            return 1; // ✅ Para empresa nova, retorna 1 como fallback
         }
     }
 
-    // 🔥 NOVO MÉTODO PARA ATUALIZAR O CAMPO
     atualizarCampoNumeroCliente(obraId, numero) {
         const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
         if (!obraElement) return;
 
-        const numeroInput = obraElement.querySelector('.numero-cliente-final-cadastro');
+        // Tentar encontrar o campo de número do cliente em qualquer formato
+        const numeroInput = obraElement.querySelector(
+            '.numero-cliente-final-cadastro, ' +
+            '.numero-cliente-final-readonly, ' +
+            '#numero-cliente-' + obraId
+        );
+        
         if (numeroInput) {
-            numeroInput.readOnly = false;
+            // 🔥 Garantir que o campo seja editável
             numeroInput.removeAttribute('readonly');
+            numeroInput.readOnly = false;
+            numeroInput.disabled = false;
+            
+            // Remover qualquer atributo value hardcoded
+            numeroInput.removeAttribute('value');
+            
+            // Definir o novo valor
             numeroInput.value = numero;
+            
+            // Se for empresa nova (número 1), destacar visualmente
+            if (numero === 1) {
+                numeroInput.style.backgroundColor = '#e8f5e8';
+                numeroInput.style.borderColor = '#4CAF50';
+            } else {
+                numeroInput.style.backgroundColor = '';
+                numeroInput.style.borderColor = '';
+            }
+            
             console.log(`✅ [EMPRESA] Campo número atualizado: ${numero} (editável)`);
-        }
-    }
-
-    atualizarNumeroClienteVisivel(sigla, numero) {
-        const obraElement = this.container.closest('.obra-block');
-        if (!obraElement) return;
-
-        const numeroClienteInput = obraElement.querySelector('.numero-cliente-final-readonly');
-
-        if (numeroClienteInput) {
-            numeroClienteInput.value = numero;
-            numeroClienteInput.setAttribute('data-sigla-empresa', sigla);
-
-            obraElement.dataset.numeroClienteFinal = numero;
-            obraElement.dataset.empresaSigla = sigla;
         }
     }
 
@@ -1410,9 +1428,9 @@ window.atualizarDadosEmpresa = function (input, campo, obraId) {
 /**
  * 🆕 FUNÇÃO GLOBAL PARA ATIVAR CADASTRO DE EMPRESA - CORRIGIDA
  */
-window.ativarCadastroEmpresa = function (obraId) {
+window.ativarCadastroEmpresa = function(obraId) {
     try {
-        console.log(`🎯 [EMPRESA] Ativando cadastro para obra: ${obraId}`);
+        console.log(`🎯 [EMPRESA] Ativando formulário para obra: ${obraId}`);
 
         const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
         if (!obraElement) {
@@ -1420,47 +1438,41 @@ window.ativarCadastroEmpresa = function (obraId) {
             return;
         }
 
-        // Encontrar container de empresa
         const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
         if (!empresaContainer) {
             console.error(`❌ [EMPRESA] Container de empresa não encontrado`);
             return;
         }
 
-        // ✅ CORREÇÃO: Verificar se já existe formulário ativo
+        // 🔥 SEMPRE OCULTAR O BOTÃO DE CADASTRO
+        const botaoCadastro = empresaContainer.querySelector('.btn-empresa-cadastro');
+        if (botaoCadastro) {
+            botaoCadastro.style.display = 'none';
+        }
+
+        // 🔥 SEMPRE OCULTAR BOTÃO VISUALIZAR (se existir)
+        const botaoVisualizar = empresaContainer.querySelector('.btn-empresa-visualizar');
+        if (botaoVisualizar) {
+            botaoVisualizar.style.display = 'none';
+        }
+
+        // Verificar se já existe formulário
         const formularioExistente = empresaContainer.querySelector('.empresa-formulario-ativo');
         if (formularioExistente) {
-            console.log(`✅ [EMPRESA] Formulário já está ativo para obra ${obraId}`);
-            return; // ✅ IMPEDE EXECUÇÃO DUPLICADA
+            // Se já existe, apenas garantir que está visível
+            formularioExistente.style.display = 'block';
+            console.log(`✅ [EMPRESA] Formulário já existe, apenas exibindo`);
+            return;
         }
 
-        // Ocultar botão
-        const botao = empresaContainer.querySelector('.btn-empresa-cadastro');
-        if (botao) {
-            botao.style.display = 'none';
-        }
-
-        // Verificar se há dados de empresa existentes
+        // Verificar se há dados salvos
         const dadosEmpresa = obterDadosEmpresaDaObra(obraId);
-
-        if (dadosEmpresa) {
-            // Se já tem dados, criar formulário com dados existentes
-            console.log(`📊 [EMPRESA] Criando formulário com dados existentes para obra ${obraId}`);
-            // Função será importada de empresa-form-manager.js
-            if (typeof criarVisualizacaoEmpresa === 'function') {
-                criarVisualizacaoEmpresa({ ...dadosEmpresa, id: obraId }, empresaContainer);
-            }
-        } else {
-            // Se não tem dados, criar formulário vazio para cadastro
-            console.log(`🆕 [EMPRESA] Criando novo formulário para obra ${obraId}`);
-            // Função será importada de empresa-form-manager.js
-            if (typeof criarFormularioVazioEmpresa === 'function') {
-                criarFormularioVazioEmpresa(obraId, empresaContainer);
-            }
-        }
+        
+        // Criar formulário
+        criarFormularioEmpresa(obraId, empresaContainer, dadosEmpresa);
 
     } catch (error) {
-        console.error(`❌ [EMPRESA] Erro ao ativar cadastro para obra ${obraId}:`, error);
+        console.error(`❌ [EMPRESA] Erro ao ativar cadastro:`, error);
     }
 };
 
@@ -1493,11 +1505,11 @@ function obterDadosEmpresaDaObra(obraId) {
 
         if (temDados) {
             console.log(`✅ [EMPRESA] Dados recuperados para obra ${obraId}:`, dadosEmpresa);
-        } else {
-            console.log(`📭 [EMPRESA] Nenhum dado de empresa encontrado para obra ${obraId}`);
+            return dadosEmpresa;
         }
 
-        return temDados ? dadosEmpresa : null;
+        console.log(`📭 [EMPRESA] Nenhum dado de empresa encontrado para obra ${obraId}`);
+        return null;
 
     } catch (error) {
         console.error(`❌ [EMPRESA] Erro ao obter dados de empresa:`, error);

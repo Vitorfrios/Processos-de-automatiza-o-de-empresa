@@ -59,42 +59,35 @@ function inicializarDetectorBackspace(input, obraId) {
 
     let pressionandoBackspace = false;
     let timeoutBackspace;
+    let ultimoValor = '';
 
     input.addEventListener('keydown', function (e) {
         if (e.key === 'Backspace' || e.key === 'Delete') {
             window.usuarioEstaApagando = true;
             pressionandoBackspace = true;
+            
+            // Guardar valor antes da tecla
+            ultimoValor = this.value;
 
             console.log('⌫ Tecla de apagar pressionada - bloqueando autocomplete');
 
             // Limpar timeout anterior
             if (timeoutBackspace) clearTimeout(timeoutBackspace);
-
-            // Timeout para resetar se parou de apertar
-            timeoutBackspace = setTimeout(() => {
-                pressionandoBackspace = false;
-                window.usuarioEstaApagando = false;
-                console.log('🔄 Resetando flag de apagamento');
-            }, 62);
         }
-
-        // Salvar valor atual para comparação
-        window.ultimoValorInput = this.value;
     });
 
     input.addEventListener('keyup', function (e) {
         if (e.key === 'Backspace' || e.key === 'Delete') {
-            // Pequeno delay para garantir que o input foi processado
-            setTimeout(() => {
-                if (!pressionandoBackspace) {
-                    window.usuarioEstaApagando = false;
-                    console.log('🔄 Tecla de apagar liberada');
-                }
-            }, 6);
+            // Resetar flag após um tempo maior
+            timeoutBackspace = setTimeout(() => {
+                pressionandoBackspace = false;
+                window.usuarioEstaApagando = false;
+                console.log('🔄 Resetando flag de apagamento');
+            }, 300); // ✅ Aumentar para 300ms
         }
     });
 
-    // Detectar seleção total (Ctrl+A) + Backspace
+    // Detectar seleção total + backspace
     input.addEventListener('input', function (e) {
         if (pressionandoBackspace && this.value.length === 0) {
             console.log('🎯 Usuário apagou tudo - reset completo');
