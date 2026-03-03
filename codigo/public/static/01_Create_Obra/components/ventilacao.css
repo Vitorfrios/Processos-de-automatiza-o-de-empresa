@@ -1,11 +1,6 @@
 /* ========== ESTILOS PARA TABELAS DE VENTILAÇÃO ========== */
 
-.ventilation-section {
-  margin-bottom: var(--capacity-table-margin);
-  background: var(--capacity-table-bg);
-  border-radius: var(--border-radius-lg);
-  border: 1px solid var(--capacity-table-border);
-}
+
 
 /* ===== TABELA 1 - VERTICAL (CÁLCULO TÉCNICO) ===== */
 .technical-table {
@@ -390,9 +385,6 @@
 
 /* Mobile Grande */
 @media (max-width: 480px) {
-  .ventilation-section {
-    margin-bottom: var(--spacing-md);
-  }
   
   .technical-table h5 {
     margin: var(--spacing-sm) 0 var(--spacing-xs) 0;

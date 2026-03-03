@@ -44,7 +44,7 @@ async function shutdownManual() {
         window.GeralCount = 0;
         
         // APENAS 1 SEGUNDO DE ESPERA ENTRE AS ETAPAS
-        await new Promise(resolve => setTimeout(resolve, 125));
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         // 3. Encerra servidor
         console.log("🔄 Encerrando servidor...");
@@ -73,7 +73,7 @@ async function shutdownManual() {
                     if (!window.closed) {
                         showFinalMessageWithManualClose();
                     }
-                }, 125);
+                }, 500);
             }, closeDelay);
         } else {
             throw new Error('Falha ao encerrar servidor');
@@ -86,7 +86,7 @@ async function shutdownManual() {
         showShutdownMessage("🔄 Ação: Reexecute o servidor para continuar");
         setTimeout(() => {
             window.close();
-        }, 375);
+        }, 5000);
     }
 }
 

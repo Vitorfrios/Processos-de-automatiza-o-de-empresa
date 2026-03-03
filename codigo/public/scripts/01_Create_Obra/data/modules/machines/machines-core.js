@@ -203,9 +203,8 @@ function getGenericCapacityValue(powerText) {
 // =============================================================================
 
 /**
- * ATUALIZA QUANTIDADE COM BASE NA APLICAÇÃO
- * Se aplicação for "climatizacao" → preenche com valor do backup
- * Se não → MANTÉM a quantidade atual (não altera)
+ * ATUALIZA QUANTIDADE COM BASE NA APLICAÇÃO - CORRIGIDO
+ * Respeita data-user-edited para QUALQUER aplicação
  */
 function handleAplicacaoChange(machineId) {
     console.log(`🔄 Aplicação alterada na máquina ${machineId}`);
@@ -221,27 +220,40 @@ function handleAplicacaoChange(machineId) {
     
     const aplicacao = aplicacaoSelect.value;
     const quantidadeAtual = qntInput.value;
+    const isUserEdited = qntInput.getAttribute('data-user-edited') === 'true';
     
     console.log(`   - Aplicação selecionada: ${aplicacao}`);
     console.log(`   - Quantidade atual: ${quantidadeAtual}`);
+    console.log(`   - Editada pelo usuário: ${isUserEdited}`);
     
-    if (aplicacao === "climatizacao") {
-        // Para climatização, tenta pegar do backup
-        const backupElement = document.getElementById(`solucao-backup-${roomId}`);
-        if (backupElement) {
-            const backupText = backupElement.textContent.trim();
-            const match = backupText.match(/(\d+)/);
-            if (match) {
-                const backupValue = parseInt(match[1]);
-                if (backupValue > 0) {
-                    qntInput.value = backupValue;
-                    console.log(`✅ Quantidade atualizada para ${backupValue} (backup: ${backupText})`);
+    // ✅ REGRA ÚNICA: Se foi editado pelo usuário, NUNCA alterar automaticamente
+    if (isUserEdited) {
+        console.log(`⏭️ Quantidade marcada como manual (${quantidadeAtual}), ignorando alteração automática para TODAS as aplicações.`);
+    } 
+    else {
+        // ✅ Só executa lógica automática se NÃO foi editado pelo usuário
+        console.log(`🔄 Quantidade automática permitida (não foi editada manualmente)`);
+        
+        if (aplicacao === "climatizacao") {
+            // Para climatização, tenta pegar do backup
+            const backupElement = document.getElementById(`solucao-backup-${roomId}`);
+            if (backupElement) {
+                const backupText = backupElement.textContent.trim();
+                const match = backupText.match(/(\d+)/);
+                if (match) {
+                    const backupValue = parseInt(match[1]);
+                    if (backupValue > 0 && backupValue !== parseInt(quantidadeAtual)) {
+                        qntInput.value = backupValue;
+                        console.log(`✅ Quantidade climatização atualizada para ${backupValue} (backup: ${backupText})`);
+                    }
                 }
             }
+        } 
+        else if (['pressurizacao', 'exaustao_bateria', 'exaustao_baia_trafo'].includes(aplicacao)) {
+            // Para ventilação, pode ter lógica específica se necessário
+            console.log(`🌬️ Aplicação de ventilação (${aplicacao}) - mantendo quantidade atual: ${quantidadeAtual}`);
+            // Aqui você pode adicionar lógica específica para ventilação se necessário
         }
-    } else {
-        // Para ventilação, NÃO ALTERA a quantidade
-        console.log(`🔧 É ventilação (${aplicacao}) - MANTENDO quantidade: ${quantidadeAtual}`);
     }
     
     calculateMachinePrice(machineId);
@@ -252,7 +264,8 @@ function handleAplicacaoChange(machineId) {
             machineId: machineId, 
             roomId: roomId,
             changeType: 'aplicacao',
-            aplicacao: aplicacao
+            aplicacao: aplicacao,
+            userEdited: isUserEdited
         } 
     });
     window.dispatchEvent(event);
@@ -1232,6 +1245,17 @@ function updateAllMachinesTotal(roomId) {
     const display = document.getElementById(`total-all-machines-price-${roomId}`);
     if (display) {
         display.textContent = `R$ ${total.toLocaleString('pt-BR')}`;
+
+        // 🔥 Disparar evento
+        const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+        if (roomElement) {
+            const projectId = roomElement.dataset.projectId;
+            if (projectId) {
+                document.dispatchEvent(new CustomEvent('valorAtualizado', {
+                    detail: { tipo: 'maquina', roomId, projectId, valor: total }
+                }));
+            }
+        }
     }
 }
 
@@ -1309,6 +1333,7 @@ if (typeof window !== 'undefined') {
     window.updateMachineTitle = updateMachineTitle;
     window.handleConfigChange = handleConfigChange;
     window.updateOptionSelection = updateOptionSelection;
+    window.toggleConfig = toggleConfig;
 
     console.log('✅ Funções principais carregadas no escopo global');
 }

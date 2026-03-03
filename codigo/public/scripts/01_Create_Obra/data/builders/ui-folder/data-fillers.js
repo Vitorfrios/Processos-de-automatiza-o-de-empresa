@@ -149,9 +149,14 @@ function ensureTableSectionExists(roomElement) {
     const roomId = roomElement.dataset.roomId;
     if (!roomId) return false;
     
-    // Verificar se a tabela já existe
-    const existingTable = roomElement.querySelector(`#subsection-content-${roomId}-clima-table`);
-    if (existingTable) return true;
+    // Verificar se a tabela já existe (mais rigoroso)
+    const existingTable = roomElement.querySelector(`#subsection-content-${roomId}-input-table`);
+    const existingClimaTable = roomElement.querySelector('.clima-table');
+    
+    if (existingTable || existingClimaTable) {
+        console.log(`📋 Tabela de inputs já existe para sala ${roomElement.dataset.roomName}, ignorando criação`);
+        return true;
+    }
     
     // Se não existir, criar
     console.log(`📋 Criando tabela de inputs para sala ${roomElement.dataset.roomName}`);
@@ -163,8 +168,8 @@ function ensureTableSectionExists(roomElement) {
     const roomName = roomElement.dataset.roomName;
     
     // Verificar se buildTableSection está disponível
-    if (typeof window.buildTableSection === 'function') {
-        const tableHTML = window.buildTableSection(roomId, roomName);
+    if (typeof buildTableSection === 'function') {  
+        const tableHTML = buildTableSection(roomId, roomName);
         
         // Inserir no início do conteúdo da sala
         const firstSection = roomContent.querySelector('.section-block');
@@ -260,7 +265,7 @@ function fillCapacityData(roomElement, capacityData) {
 
     const capacidadeUnitariaSelect = document.getElementById(`capacidade-unitaria-${roomId}`);
     if (capacidadeUnitariaSelect && capacityData.capacidadeUnitaria !== undefined) {
-        capacidadeUnitariaSelect.value = capacityData.capacidadeUnitaria;
+        capacidadeUnitariaSelect.value = String(capacityData.capacidadeUnitaria);
     }
 
     const backupSelect = roomElement.querySelector('.backup-select');
@@ -269,60 +274,7 @@ function fillCapacityData(roomElement, capacityData) {
     }
 }
 
-/**
- * Preenche os campos de ventilação da sala (apenas potência, temp interna e temp externa)
- * @param {HTMLElement} roomElement - Elemento da sala
- * @param {Object} ventilacaoData - Dados de ventilação para preencher
- */
-function fillVentilacaoInputs(roomElement, ventilacaoData) {
-    if (!roomElement || !ventilacaoData) {
-        console.error('❌ Elemento da sala ou dados de ventilação inválidos');
-        return;
-    }
 
-    const roomId = roomElement.dataset.roomId;
-    if (!roomId) {
-        console.error('❌ ID da sala não encontrado');
-        return;
-    }
-
-    console.log(`🌬️ Preenchendo ventilação para sala ${roomId}:`, ventilacaoData);
-
-    // Preencher potência
-    if (ventilacaoData.potencia !== undefined) {
-        const input = document.getElementById(`potencia-${roomId}`);
-        if (input) {
-            input.value = ventilacaoData.potencia;
-            setTimeout(() => {
-                input.dispatchEvent(new Event('change', { bubbles: true }));
-            }, 10);
-        }
-    }
-
-    // Preencher temperatura interna
-    if (ventilacaoData.tempInterna !== undefined) {
-        const input = document.getElementById(`temp-interna-${roomId}`);
-        if (input) {
-            input.value = ventilacaoData.tempInterna;
-            setTimeout(() => {
-                input.dispatchEvent(new Event('change', { bubbles: true }));
-            }, 10);
-        }
-    }
-
-    // Preencher temperatura externa
-    if (ventilacaoData.tempExterna !== undefined) {
-        const input = document.getElementById(`temp-externa-${roomId}`);
-        if (input) {
-            input.value = ventilacaoData.tempExterna;
-            setTimeout(() => {
-                input.dispatchEvent(new Event('change', { bubbles: true }));
-            }, 10);
-        }
-    }
-
-
-}
 
 /**
  * Garante todas as seções da sala - VERSÃO SIMPLIFICADA E CORRETA
@@ -502,7 +454,6 @@ export {
     fillClimatizationInputs,
     fillThermalGainsData,
     fillCapacityData,
-    fillVentilacaoInputs,
     ensureAllRoomSections,
     setupRoomTitleChangeListener,
     fixDuplicatedSections,

@@ -3,7 +3,7 @@
  * ARQUIVO DE BUILDER DE SALA
  */
 
-import { buildClimatizationSection,buildTableSection } from './climatizate/climatizacao-builder.js';
+import { buildClimatizationSection, buildTableSection } from './climatizate/climatizacao-builder.js';
 import { buildMachinesSection } from './machines/machines-core.js';
 import { buildAcessoriosSection } from './acessorios.js';
 import { buildTubosSection } from './tubos.js';
@@ -12,22 +12,15 @@ import { buildVentilacaoSection } from './ventilacao.js';
 import { generateRoomId } from '../utils/id-generator.js';
 import { removeEmptyProjectMessage } from '../../ui/helpers.js';
 import { triggerCalculation, syncTitleToAmbienteDirect } from '../../core/shared-utils.js';
-
+import { parseCurrency,formatCurrency } from '../../features/managers/project-manager.js';
 // Cache para módulo de máquinas
 let machinesPreloadModule = null;
 
-/**
- * 🏗️ FUNÇÕES DE CONSTRUÇÃO DE HTML (salas.js)
- */
 
 /**
- * Constrói o HTML completo de uma sala com todas as seções
- * @param {string} obraId - ID único da obra
- * @param {string} projectId - ID único do projeto
- * @param {string} roomName - Nome da sala
- * @param {string} roomId - ID único da sala
- * @returns {string} HTML completo da sala
+ * 🏗️ FUNÇÕES DE CONSTRUÇÃO DE HTML
  */
+
 function buildRoomHTML(obraId, projectId, roomName, roomId) {
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
         console.error(`ERRO FALBACK (buildRoomHTML) [Obra ID inválido: ${obraId}]`);
@@ -44,9 +37,6 @@ function buildRoomHTML(obraId, projectId, roomName, roomId) {
         return '';
     }
 
-    console.log(`[BUILD ROOM] Parâmetros:`, { obraId, projectId, roomName, roomId });
-    console.log(`[BUILD ROOM] ID ÚNICO: ${roomId}`);
-
     return `
       <div class="room-block" data-room-id="${roomId}" data-room-name="${roomName}" data-project-id="${projectId}" data-obra-id="${obraId}">
         <div class="room-header">
@@ -57,7 +47,7 @@ function buildRoomHTML(obraId, projectId, roomName, roomId) {
           </div>
         </div>
         <div class="room-content collapsed" id="room-content-${roomId}">
-          ${buildTableSection(roomId,roomName)}
+          ${buildTableSection(roomId, roomName)}
             <div class="sections-row">
                 <div class="section-column">
                 ${buildClimatizationSection(obraId, projectId, roomName, roomId)}
@@ -70,7 +60,9 @@ function buildRoomHTML(obraId, projectId, roomName, roomId) {
           ${buildAcessoriosSection(obraId, projectId, roomName, roomId)}
           ${buildTubosSection(obraId, projectId, roomName, roomId)}
           ${buildDutosSection(obraId, projectId, roomName, roomId)}
-        
+          <div class="room-total-container">
+            <span id="room-total-${roomId}" class="room-total-value" title= "Valor total da sala" >R$ 0,00</span>
+          </div>
         </div>
       </div>
     `;
@@ -99,17 +91,10 @@ function buildRoomHeader(obraId, projectId, roomName, roomId) {
   `;
 }
 
-/**
- * Constrói a seção de ações da sala (reservado para futuras implementações)
- * @param {string} roomId - ID único da sala
- * @returns {string} HTML vazio
- */
-function buildRoomActions(roomId) {
-    return "";
-}
+
 
 /**
- * 🔧 FUNÇÕES DE OPERAÇÕES (room-operations.js)
+ * 🔧 FUNÇÕES DE OPERAÇÕES
  */
 
 /**
@@ -153,18 +138,8 @@ async function createEmptyRoom(obraId, projectId, roomName, roomId) {
 
     if (!projectElement) {
         console.error(`❌ Projeto ${projectId} não encontrado na obra ${obraId}`);
-
-        console.log('🔍 Projetos disponíveis no DOM:');
-        document.querySelectorAll('.project-block').forEach(proj => {
-            console.log(`  - Projeto: ${proj.dataset.projectName}, 
-                         ProjectID: ${proj.dataset.projectId}, 
-                         ObraID: ${proj.dataset.obraId}, 
-                         ObraName: ${proj.dataset.obraName}`);
-        });
         return false;
     }
-
-    console.log(`✅ Projeto encontrado:`, projectElement.dataset);
 
     let finalRoomId;
 
@@ -179,8 +154,6 @@ async function createEmptyRoom(obraId, projectId, roomName, roomId) {
         .replace(/-undefined/g, '')
         .replace(/-null/g, '')
         .trim();
-
-    console.log(`📝 ID SEGURO DEFINITIVO DA SALA: "${finalRoomId}"`);
 
     try {
         const machinesModule = await loadMachinesPreloadModule();
@@ -231,104 +204,113 @@ function getRoomCountInProject(obraId, projectId) {
 }
 
 /**
- * Inicializa todos os componentes da sala após criação
- * @param {string} obraId - ID único da obra
- * @param {string} projectId - ID único do projeto
- * @param {string} roomName - Nome da sala
- * @param {string} roomId - ID único da sala
- * @returns {void}
+ * ATUALIZAÇÃO DO TOTAL DA SALA (NÍVEL 2)
+ * Escuta eventos dos módulos e dispara evento para o projeto
  */
+function updateRoomTotal(roomId) {
+    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (!roomBlock) return;
 
+    let total = 0;
+
+    // Máquinas
+    const machinesEl = document.getElementById(`total-all-machines-price-${roomId}`);
+    if (machinesEl) total += parseCurrency(machinesEl.textContent);
+
+    // Acessórios
+    const acessoriosEl = document.getElementById(`acessorios-total-${roomId}`);
+    if (acessoriosEl) total += parseCurrency(acessoriosEl.textContent);
+
+    // Dutos
+    const dutosEl = document.getElementById(`dutos-total-${roomId}`);
+    if (dutosEl) total += parseCurrency(dutosEl.textContent);
+
+    // Tubulação
+    const tubosEl = document.getElementById(`total-geral-valor-${roomId}`);
+    if (tubosEl) total += parseCurrency(tubosEl.textContent);
+
+    // Atualiza o display
+    const roomTotalSpan = document.getElementById(`room-total-${roomId}`);
+    if (roomTotalSpan) {
+        roomTotalSpan.textContent = formatCurrency(total);
+        
+        // 🔥 DISPARA EVENTO PARA O PROJETO (NÍVEL 3)
+        const projectId = roomBlock.dataset.projectId;
+        if (projectId) {
+            document.dispatchEvent(new CustomEvent('salaAtualizada', {
+                detail: { 
+                    roomId, 
+                    projectId, 
+                    total 
+                }
+            }));
+        }
+    }
+}
+
+/**
+ * INICIALIZAÇÃO DA SALA
+ */
 function initializeRoomComponents(obraId, projectId, roomName, roomId) {
     console.log(`🔧 INICIALIZAÇÃO COMPLETA DA SALA: ${roomName} (ID: ${roomId})`);
 
-    // ✅ CONFIGURAÇÃO COM TIMING CORRETO
     setTimeout(() => {
-        console.log(`🎯 CONFIGURANDO TODAS AS SINCRONIZAÇÕES PARA: ${roomId}`);
-
-        // 1. SINCRONIZAÇÃO TÍTULO ↔ AMBIENTE (BIDIRECIONAL)
         setupBidirectionalTitleAmbienteSync(roomId, roomName);
-
-        // 2. SINCRONIZAÇÃO PAREDES (APENAS PRIMEIRA INTERAÇÃO)
         setupFirstInteractionWallSync(roomId);
-
-        // 3. SINCRONIZAÇÃO INICIAL DOS VALORES
         initializeDefaultValues(roomId, roomName);
-
-        // 4. INICIALIZAR SISTEMA DE EQUIPAMENTOS
         initializeAcessoriosSystem(roomId);
+        
+        // Atualiza total inicial
+        updateRoomTotal(roomId);
 
         console.log(`✅ TODAS AS SINCRONIZAÇÕES CONFIGURADAS PARA: ${roomId}`);
-
     }, 500);
 
-    // Outras inicializações...
     setTimeout(async () => {
         try {
             const machinesModule = await import('./machines/machines-core.js');
             if (machinesModule.preloadMachinesDataForRoom) {
                 await machinesModule.preloadMachinesDataForRoom(roomId);
-                console.log(`✅ Dados das máquinas pré-carregados para ${roomId}`);
             }
         } catch (error) {
             console.log(`ℹ️ Não foi possível pré-carregar dados das máquinas para ${roomId}`);
         }
     }, 100);
 
-    // ✅ INICIALIZAÇÃO DE FATOR DE SEGURANÇA
-    setTimeout(() => {
-        safeInitializeFatorSeguranca(roomId);
-    }, 150);
-
-    // ✅ VERIFICAÇÃO FINAL
-    setTimeout(() => {
-        console.log(`🔍 VERIFICAÇÃO FINAL DA SALA: ${roomName} (ID: ${roomId})`);
-        verifyRoomSetupComplete(roomId);
-    }, 250);
+    setTimeout(() => safeInitializeFatorSeguranca(roomId), 150);
+    setTimeout(() => verifyRoomSetupComplete(roomId), 250);
 }
 
-// ✅ FUNÇÃO PARA SINCRONIZAÇÃO BIDIRECIONAL TÍTULO ↔ AMBIENTE
-function setupBidirectionalTitleAmbienteSync(roomId, roomName) {
-    console.log(`🔧 CONFIGURANDO SINCRONIZAÇÃO BIDIRECIONAL TÍTULO↔AMBIENTE: ${roomId}`);
-
-    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
-    if (!roomBlock) {
-        console.error(`❌ Room block não encontrado: ${roomId}`);
-        return;
+// 🔥 ESCUTA EVENTOS DOS MÓDULOS (NÍVEL 1)
+document.addEventListener('valorAtualizado', (e) => {
+    const { roomId } = e.detail;
+    if (roomId) {
+        setTimeout(() => updateRoomTotal(roomId), 10);
     }
+});
+
+// ✅ FUNÇÕES DE SINCRONIZAÇÃO (mantidas como estão)
+function setupBidirectionalTitleAmbienteSync(roomId, roomName) {
+    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (!roomBlock) return;
 
     const roomTitle = roomBlock.querySelector('.room-title');
     const ambienteInput = findAmbienteInput(roomId);
 
     if (roomTitle && ambienteInput) {
-        console.log(`✅ Elementos encontrados para sincronização bidirecional`);
-
-        // ✅ SINCRONIZAÇÃO INICIAL: Título → Ambiente
         if (!ambienteInput.value || ambienteInput.value.trim() === '' || ambienteInput.value === 'Sala1') {
             ambienteInput.value = roomTitle.textContent || roomName;
-            console.log(`✅ Sincronização inicial: Título → Ambiente: "${ambienteInput.value}"`);
         }
 
-        // ✅ SINCRONIZAÇÃO CONTÍNUA: Ambiente → Título
         ambienteInput.addEventListener('input', function () {
             if (this.value && this.value.trim() !== '' && this.value !== roomTitle.textContent) {
                 roomTitle.textContent = this.value;
                 roomBlock.dataset.roomName = this.value;
-                console.log(`🔄 Ambiente → Título: "${this.value}"`);
                 triggerCalculation(roomId);
             }
         });
 
-        // ✅ SINCRONIZAÇÃO CONTÍNUA: Título → Ambiente (via Observer para edição inline)
         setupTitleChangeObserver(roomTitle, roomId);
-
-        console.log(`✅ Sincronização bidirecional Título↔Ambiente configurada`);
-
-    } else {
-        console.error(`❌ Elementos não encontrados para sincronização:`, {
-            roomTitle: !!roomTitle,
-            ambienteInput: !!ambienteInput
-        });
     }
 }
 
@@ -336,13 +318,10 @@ function setupBidirectionalTitleAmbienteSync(roomId, roomName) {
 function setupTitleChangeObserver(roomTitle, roomId) {
     let isEditing = false;
 
-    // Observar quando entra em modo de edição
     roomTitle.addEventListener('click', function () {
         isEditing = true;
-        console.log(`✏️ Título em modo de edição: ${roomId}`);
     });
 
-    // Observar mudanças no conteúdo do título
     const observer = new MutationObserver((mutations) => {
         if (!isEditing) return;
 
@@ -350,19 +329,16 @@ function setupTitleChangeObserver(roomTitle, roomId) {
             if (mutation.type === 'characterData' || mutation.type === 'childList') {
                 const newTitle = roomTitle.textContent.trim();
                 if (newTitle && newTitle !== mutation.oldValue) {
-                    console.log(`🎯 Título alterado via edição inline: "${mutation.oldValue}" → "${newTitle}"`);
                     syncTitleToAmbienteDirect(roomId, newTitle);
                 }
             }
         });
     });
 
-    // Observar quando sai do modo de edição (blur)
     roomTitle.addEventListener('blur', function () {
         isEditing = false;
         const newTitle = roomTitle.textContent.trim();
         if (newTitle) {
-            console.log(`💾 Edição concluída: "${newTitle}"`);
             syncTitleToAmbienteDirect(roomId, newTitle);
         }
     });
@@ -373,52 +349,29 @@ function setupTitleChangeObserver(roomTitle, roomId) {
         subtree: true,
         characterDataOldValue: true
     });
-
-    console.log(`✅ Observer configurado para título da sala ${roomId}`);
 }
 
 // ✅ FUNÇÃO PARA SINCRONIZAÇÃO DE PAREDES (APENAS PRIMEIRA INTERAÇÃO)
 function setupFirstInteractionWallSync(roomId) {
-    console.log(`🧱 CONFIGURANDO SINCRONIZAÇÃO PAREDES (PRIMEIRA INTERAÇÃO): ${roomId}`);
-
     const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
-    if (!roomBlock) {
-        console.error(`❌ Room block não encontrado: ${roomId}`);
-        return;
-    }
+    if (!roomBlock) return;
 
-    // Buscar inputs de parede
     const paredeOeste = roomBlock.querySelector('input[data-field="paredeOeste"]');
     const paredeLeste = roomBlock.querySelector('input[data-field="paredeLeste"]');
     const paredeNorte = roomBlock.querySelector('input[data-field="paredeNorte"]');
     const paredeSul = roomBlock.querySelector('input[data-field="paredeSul"]');
 
-    console.log(`📊 Elementos de parede encontrados:`, {
-        paredeOeste: !!paredeOeste,
-        paredeLeste: !!paredeLeste,
-        paredeNorte: !!paredeNorte,
-        paredeSul: !!paredeSul
-    });
-
-    // ✅ SINCRONIZAÇÃO LESTE/OESTE (apenas primeira interação)
     if (paredeOeste && paredeLeste) {
         setupFirstInteractionWallPair(paredeOeste, paredeLeste, roomId, 'Oeste', 'Leste');
-    } else {
-        console.warn(`⚠️ Par Leste/Oeste incompleto para ${roomId}`);
     }
 
-    // ✅ SINCRONIZAÇÃO NORTE/SUL (apenas primeira interação)
     if (paredeNorte && paredeSul) {
         setupFirstInteractionWallPair(paredeNorte, paredeSul, roomId, 'Norte', 'Sul');
-    } else {
-        console.warn(`⚠️ Par Norte/Sul incompleto para ${roomId}`);
     }
 }
 
 // ✅ FUNÇÃO PARA SINCRONIZAÇÃO DE PAR DE PAREDES (APENAS PRIMEIRA INTERAÇÃO)
 function setupFirstInteractionWallPair(input1, input2, roomId, name1, name2) {
-    console.log(`🔧 Configurando par ${name1}/${name2} (primeira interação) para ${roomId}`);
-
     let isFirstInteraction1 = true;
     let isFirstInteraction2 = true;
     let isEditing1 = false;
@@ -426,91 +379,64 @@ function setupFirstInteractionWallPair(input1, input2, roomId, name1, name2) {
     
     const placeholderValues = ['Ex: 5.5', 'Ex: 8.0', ''];
 
-    // Função para sincronizar durante a primeira edição
     function syncDuringFirstEdit(editingInput, otherInput, value) {
         if (!value || placeholderValues.includes(value)) return;
         
         if (editingInput === input1 && isFirstInteraction1 && isEditing1) {
-            // Primeira interação - sincronizar enquanto está editando
             otherInput.value = value;
-            console.log(`🔄 Primeira interação (editando): ${name1} → ${name2}: ${value}`);
             triggerCalculation(roomId);
         } else if (editingInput === input2 && isFirstInteraction2 && isEditing2) {
-            // Primeira interação - sincronizar enquanto está editando
             otherInput.value = value;
-            console.log(`🔄 Primeira interação (editando): ${name2} → ${name1}: ${value}`);
             triggerCalculation(roomId);
         }
     }
 
-    // Input 1
     input1.addEventListener('focus', function() {
-        if (isFirstInteraction1) {
-            isEditing1 = true;
-            console.log(`🎯 Primeira interação iniciada para ${name1}`);
-        }
+        if (isFirstInteraction1) isEditing1 = true;
     });
 
     input1.addEventListener('input', function() {
-        if (isEditing1) {
-            syncDuringFirstEdit(input1, input2, this.value);
-        }
+        if (isEditing1) syncDuringFirstEdit(input1, input2, this.value);
     });
 
     input1.addEventListener('blur', function() {
         if (isFirstInteraction1) {
             isFirstInteraction1 = false;
             isEditing1 = false;
-            console.log(`✅ Primeira interação concluída para ${name1} - campos agora independentes`);
         }
     });
 
-    // Input 2
     input2.addEventListener('focus', function() {
-        if (isFirstInteraction2) {
-            isEditing2 = true;
-            console.log(`🎯 Primeira interação iniciada para ${name2}`);
-        }
+        if (isFirstInteraction2) isEditing2 = true;
     });
 
     input2.addEventListener('input', function() {
-        if (isEditing2) {
-            syncDuringFirstEdit(input2, input1, this.value);
-        }
+        if (isEditing2) syncDuringFirstEdit(input2, input1, this.value);
     });
 
     input2.addEventListener('blur', function() {
         if (isFirstInteraction2) {
             isFirstInteraction2 = false;
             isEditing2 = false;
-            console.log(`✅ Primeira interação concluída para ${name2} - campos agora independentes`);
         }
     });
 
-    // Sincronização inicial apenas se um campo tiver valor e o outro estiver vazio/placeholder
     if (input1.value && !placeholderValues.includes(input1.value)) {
         if (!input2.value || placeholderValues.includes(input2.value)) {
             input2.value = input1.value;
-            console.log(`✅ Sincronização inicial: ${name1} → ${name2}: ${input1.value}`);
         }
     } else if (input2.value && !placeholderValues.includes(input2.value)) {
         if (!input1.value || placeholderValues.includes(input1.value)) {
             input1.value = input2.value;
-            console.log(`✅ Sincronização inicial: ${name2} → ${name1}: ${input2.value}`);
         }
     }
-
-    console.log(`✅ Sincronização ${name1}/${name2} (primeira interação) configurada`);
 }
 
 // ✅ FUNÇÃO PARA INICIALIZAÇÃO DOS VALORES PADRÃO
 function initializeDefaultValues(roomId, roomName) {
-    console.log(`⚡ INICIALIZANDO VALORES PADRÃO PARA: ${roomId}`);
-
     const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
     if (!roomBlock) return;
 
-    // Verificar e sincronizar valores iniciais das paredes
     const walls = [
         { field: 'paredeOeste', selector: 'input[data-field="paredeOeste"]' },
         { field: 'paredeLeste', selector: 'input[data-field="paredeLeste"]' },
@@ -544,7 +470,6 @@ function syncOppositeWallInitial(roomId, field, value) {
             const oppositeInput = roomBlock.querySelector(`input[data-field="${oppositeField}"]`);
             if (oppositeInput && (!oppositeInput.value || oppositeInput.value === 'Ex: 5.5' || oppositeInput.value === 'Ex: 8.0')) {
                 oppositeInput.value = value;
-                console.log(`✅ Sincronização inicial ${field} → ${oppositeField}: ${value}`);
             }
         }
     }
@@ -555,30 +480,19 @@ function findAmbienteInput(roomId) {
     const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
     if (!roomBlock) return null;
 
-    // Estratégias de busca em ordem de prioridade
     return roomBlock.querySelector('input[data-field="ambiente"]') ||
         roomBlock.querySelector('input[placeholder*="ambiente" i]') ||
         roomBlock.querySelector('input[placeholder*="sala" i]');
 }
 
 async function initializeAcessoriosSystem(roomId) {
-    console.log(`🔧 Inicializando sistema de acessorios para sala: ${roomId}`);
-
     try {
-        // Verificar se a função está disponível
         if (typeof window.initAcessoriosSystem === 'function') {
             await window.initAcessoriosSystem(roomId);
-            console.log(`✅ Sistema de acessorios inicializado para sala: ${roomId}`);
         } else {
-            console.warn(`⚠️ Função initAcessoriosSystem não disponível. Tentando importar...`);
-
-            // Tentar importar dinamicamente
             const acessoriosModule = await import('./acessorios.js');
             if (acessoriosModule && acessoriosModule.initAcessoriosSystem) {
                 acessoriosModule.initAcessoriosSystem(roomId);
-                console.log(`✅ Sistema de acessorios inicializado via import dinâmico`);
-            } else {
-                console.error(`❌ Não foi possível inicializar sistema de acessorios`);
             }
         }
     } catch (error) {
@@ -590,13 +504,8 @@ async function initializeAcessoriosSystem(roomId) {
 
 // ✅ FUNÇÃO PARA VERIFICAÇÃO COMPLETA DO SETUP
 function verifyRoomSetupComplete(roomId) {
-    console.log(`🔍 VERIFICAÇÃO COMPLETA DA SALA: ${roomId}`);
-
     const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
-    if (!roomBlock) {
-        console.error(`❌ Room block não encontrado: ${roomId}`);
-        return false;
-    }
+    if (!roomBlock) return false;
 
     const elements = {
         'Título': roomBlock.querySelector('.room-title'),
@@ -608,25 +517,13 @@ function verifyRoomSetupComplete(roomId) {
     };
 
     let allFound = true;
-    let foundCount = 0;
-
     Object.entries(elements).forEach(([name, element]) => {
-        const found = !!element;
-        if (!found) allFound = false;
-        if (found) foundCount++;
-        console.log(`📊 ${name}: ${found ? '✅ Encontrado' : '❌ Não encontrado'}`);
+        if (!element) allFound = false;
     });
-
-    if (allFound) {
-        console.log(`🎉 TODOS OS ${foundCount} ELEMENTOS ENCONTRADOS PARA: ${roomId}`);
-    } else {
-        console.warn(`⚠️ ${foundCount}/6 ELEMENTOS ENCONTRADOS PARA: ${roomId}`);
-    }
 
     return allFound;
 }
 
-// ✅ ADICIONAR FUNÇÃO GLOBAL PARA DEBUG
 if (typeof window !== 'undefined') {
     window.debugRoomSync = function (roomId) {
         console.log(`🐛 DEBUG COMPLETO DA SALA: ${roomId}`);
@@ -639,13 +536,6 @@ if (typeof window !== 'undefined') {
             console.log('- Parede Leste:', roomBlock.querySelector('input[data-field="paredeLeste"]')?.value);
             console.log('- Parede Norte:', roomBlock.querySelector('input[data-field="paredeNorte"]')?.value);
             console.log('- Parede Sul:', roomBlock.querySelector('input[data-field="paredeSul"]')?.value);
-
-            // Testar sincronização manual
-            const roomTitle = roomBlock.querySelector('.room-title');
-            if (roomTitle) {
-                console.log('🔄 Testando sincronização título → ambiente...');
-                syncTitleToAmbienteDirect(roomId, roomTitle.textContent);
-            }
         }
     };
 }
@@ -661,12 +551,9 @@ function safeInitializeFatorSeguranca(roomId) {
     if (typeof window.initializeFatorSeguranca === 'function') {
         try {
             window.initializeFatorSeguranca(roomId);
-            console.log(`✅ Fator de segurança inicializado para ${roomId}`);
         } catch (error) {
             console.log(`ℹ️ Erro ao inicializar fator de segurança para ${roomId}:`, error.message);
         }
-    } else {
-        console.log(`ℹ️ initializeFatorSeguranca não disponível - aguardando carregamento`);
     }
 }
 
@@ -699,20 +586,10 @@ function insertRoomIntoProject(obraId, projectId, roomHTML, roomId) {
     }
 
     removeEmptyProjectMessage(projectContent);
-    console.log(`✅ Sala inserida no projeto ${projectId} (ID único: ${roomId})`);
 }
 
-/**
- * Adiciona uma nova sala ao projeto
- * @param {string} obraId - ID único da obra
- * @param {string} projectId - ID único do projeto
- * @returns {Promise<void>}
- */
 async function addNewRoom(obraId, projectId) {
-    console.log(`➕ Adicionando nova sala à obra "${obraId}", projeto "${projectId}"`);
-
     const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`);
-
     if (!projectElement) {
         console.error(`❌ Projeto ${projectId} não encontrado na obra ${obraId}`);
         return;
@@ -722,48 +599,13 @@ async function addNewRoom(obraId, projectId) {
     const roomName = `Sala${roomCount + 1}`;
 
     await createEmptyRoom(obraId, projectId, roomName, null);
-    console.log(`✅ ${roomName} adicionada à obra "${obraId}", projeto "${projectId}"`);
 }
 
-/**
- * Adiciona uma nova sala ao projeto (alias para compatibilidade)
- * @param {string} obraId - ID único da obra
- * @param {string} projectId - ID único do projeto
- * @returns {Promise<void>}
- */
 async function addNewRoomToProject(obraId, projectId) {
-    console.log(`➕ Adicionando nova sala à obra "${obraId}", projeto "${projectId}"`);
-
-    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`);
-
-    if (!projectElement) {
-        console.error(`❌ Projeto ${projectId} não encontrado na obra ${obraId}`);
-        return;
-    }
-
-    const roomCount = getRoomCountInProject(obraId, projectId);
-    const roomName = `Sala${roomCount + 1}`;
-
-    await createEmptyRoom(obraId, projectId, roomName, null);
-    console.log(`✅ ${roomName} adicionada à obra "${obraId}", projeto "${projectId}"`);
+    return addNewRoom(obraId, projectId);
 }
 
-/**
- * Função de compatibilidade para código existente que usa apenas projectName
- * @param {string} projectName - Nome do projeto
- * @returns {Promise<void>}
- */
-async function addNewRoomLegacy(projectName) {
-    const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
-    const obraId = projectBlock?.dataset.obraId;
-    const projectId = projectBlock?.dataset.projectId;
 
-    if (obraId && projectId) {
-        return addNewRoomToProject(obraId, projectId);
-    } else {
-        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
-    }
-}
 
 /**
  * Remove uma sala do projeto após confirmação do usuário
@@ -776,28 +618,23 @@ function deleteRoom(obraId, projectId, roomId) {
     const roomBlock = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"][data-room-id="${roomId}"]`);
 
     if (!roomBlock) {
-        console.error(`❌ Sala com ID ${roomId} não encontrada no projeto ${projectId}, obra ${obraId}`);
+        console.error(`❌ Sala com ID ${roomId} não encontrada`);
         return;
     }
 
-    const roomName = roomBlock.dataset.roomName;
     const projectContent = roomBlock.closest(".project-content");
-
     roomBlock.remove();
+
+    // Dispara evento para o projeto
+    document.dispatchEvent(new CustomEvent('salaAtualizada', {
+        detail: { projectId, roomId, total: 0 }
+    }));
 
     if (projectContent && typeof window.showEmptyProjectMessageIfNeeded === 'function') {
         window.showEmptyProjectMessageIfNeeded(projectContent);
     }
-
-    console.log(`🗑️ Sala ${roomName} (ID: ${roomId}) removida da obra "${obraId}", projeto "${projectId}"`);
 }
 
-/**
- * Função de compatibilidade para código existente que usa apenas projectName e roomName
- * @param {string} projectName - Nome do projeto
- * @param {string} roomName - Nome da sala
- * @returns {void}
- */
 function deleteRoomLegacy(projectName, roomName) {
     const projectBlock = document.querySelector(`[data-project-name="${projectName}"]`);
     const obraId = projectBlock?.dataset.obraId;
@@ -809,11 +646,7 @@ function deleteRoomLegacy(projectName, roomName) {
 
         if (roomId) {
             return deleteRoom(obraId, projectId, roomId);
-        } else {
-            console.error(`❌ ID da sala ${roomName} não encontrado`);
         }
-    } else {
-        console.error('❌ Não foi possível determinar a obra do projeto:', projectName);
     }
 }
 
@@ -823,46 +656,30 @@ function deleteRoomLegacy(projectName, roomName) {
  * @returns {void}
  */
 function fixExistingCapacityInputs() {
-    console.log('🔄 Verificando inputs de capacidade existentes...');
-
     const roomBlocks = document.querySelectorAll('.room-block');
 
     roomBlocks.forEach(roomBlock => {
         const roomId = roomBlock.dataset.roomId;
-        const roomName = roomBlock.dataset.roomName;
-        const projectBlock = roomBlock.closest('.project-block');
-        const projectId = projectBlock?.dataset.projectId;
-        const obraId = projectBlock?.dataset.obraId;
-
         if (roomId) {
             const input = document.getElementById(`fator-seguranca-${roomId}`);
-
             if (input && input.value === '') {
                 const valor = window.systemConstants?.FATOR_SEGURANCA_CAPACIDADE.value || 10;
                 input.value = valor;
-                console.log(`✅ Input ${roomId} : ${valor}% (Obra: ${obraId}, Projeto: ${projectId})`);
             }
         }
     });
 }
 
-// Executar quando o projeto for carregado
 document.addEventListener('DOMContentLoaded', function () {
     setTimeout(fixExistingCapacityInputs, 250);
 });
 
 /**
- * 🌐 EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
+ * 🌐 EXPORTAÇÕES
  */
-
-// Exportações para módulos ES6
 export {
-    // Construção
     buildRoomHTML,
     buildRoomHeader,
-    buildRoomActions,
-
-    // Operações
     createEmptyRoom,
     insertRoomIntoProject,
     addNewRoom,
@@ -870,15 +687,14 @@ export {
     deleteRoomLegacy,
     safeInitializeFatorSeguranca,
     addNewRoomToProject,
-
-    // Utilitários
     getRoomCountInProject,
     initializeRoomComponents,
     fixExistingCapacityInputs,
     loadMachinesPreloadModule,
-
-
+    updateRoomTotal,
     triggerCalculation,
+    parseCurrency,
+    formatCurrency
 };
 
 // Compatibilidade global para scripts legados
@@ -889,4 +705,5 @@ if (typeof window !== 'undefined') {
     window.createEmptyRoom = createEmptyRoom;
     window.safeInitializeFatorSeguranca = safeInitializeFatorSeguranca;
     window.buildRoomHTML = buildRoomHTML;
+    window.updateRoomTotal = updateRoomTotal;
 }

@@ -263,7 +263,10 @@
 }
 
 
-
+.room-total-container{
+  display: flex;
+  justify-content: flex-end;
+}
 
 
 /* project-total.css */
@@ -272,12 +275,12 @@
     align-items: center;
     gap: 15px;
     padding: 15px;
-    background-color: #f8f9fa;
     border-top: 1px solid #e9ecef;
     margin-top: 20px;
     border-radius: 0 0 8px 8px;
 }
 
+.room-total-value,
 .project-total-value,
 .obra-total-value {
     display: inline-flex;
@@ -295,6 +298,7 @@
     justify-content: center;
 }
 
+.room-total-value:hover,
 .project-total-value:hover,
 .obra-total-value:hover {
     background-color: #218838;
@@ -312,6 +316,7 @@
         gap: 10px;
     }
     
+    .room-total-value,
     .project-total-value {
         margin-left: 0;
         justify-content: center;

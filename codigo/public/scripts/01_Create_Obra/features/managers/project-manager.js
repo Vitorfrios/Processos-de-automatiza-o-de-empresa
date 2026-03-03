@@ -1,209 +1,98 @@
 import { createEmptyRoom } from '../../data/modules/rooms.js';
 import { generateProjectId } from '../../data/utils/id-generator.js';
-import { getNextProjectNumber } from '../../data/utils/data-utils.js'
+import { getNextProjectNumber } from '../../data/utils/data-utils.js';
 import { removeEmptyObraMessage } from '../../ui/helpers.js';
 import { addNewRoomToProject } from '../../data/modules/rooms.js';
 import { buildServicosInProject } from './servicos.js';
 
-// Cache de totais por projeto
-const projectTotals = new Map();
-
 /**
- * Converte texto monetário para número
+ * Utilitário: converte texto monetário para número
  */
 function parseCurrency(text) {
     if (!text || typeof text !== 'string') return 0;
-    
-    // Remove "R$" e espaços
-    let cleaned = text.replace(/R\$/g, '').trim();
-    
-    // Se não tem vírgula, assume que é valor inteiro
-    if (!cleaned.includes(',')) {
-        // Remove pontos (separadores de milhar)
-        cleaned = cleaned.replace(/\./g, '');
-        const result = parseFloat(cleaned);
-        return isNaN(result) ? 0 : result;
-    }
-    
-    // Tem vírgula (formato brasileiro)
-    // Remove todos os pontos (separadores de milhar)
-    cleaned = cleaned.replace(/\./g, '');
-    
-    // Troca vírgula por ponto para parseFloat
-    cleaned = cleaned.replace(',', '.');
-    
-    const result = parseFloat(cleaned);
-    return isNaN(result) ? 0 : result;
+    let cleaned = text.replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+    return parseFloat(cleaned) || 0;
 }
 
 /**
- * Sistema de Eventos para total do projeto
+ * Utilitário: formata número para moeda brasileira
  */
-class ProjectTotalManager {
-    constructor() {
-        this.observers = new Map();
-        this.updating = new Set();
-        this.setupEventListeners();
-    }
+function formatCurrency(value) {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
 
-    setupEventListeners() {
-        document.addEventListener('valorAtualizado', (event) => {
-            const { projectId } = event.detail;
-            if (projectId && !this.updating.has(projectId)) {
-                this.scheduleUpdate(projectId);
-            }
-        });
-    }
+/**
+ * ATUALIZA O TOTAL DO PROJETO (NÍVEL 3)
+ * Escuta eventos das salas e dispara evento para a obra
+ */
+function updateProjectTotal(projectId) {
+    const projectElement = document.querySelector(`[data-project-id="${projectId}"]`);
+    if (!projectElement) return;
 
-    scheduleUpdate(projectId) {
-        clearTimeout(this[`timeout_${projectId}`]);
-        this[`timeout_${projectId}`] = setTimeout(() => {
-            this.updateProjectTotal(projectId);
-        }, 37);
-    }
+    let total = 0;
 
-    calculateProjectTotal(projectId) {
-        const projectElement = document.querySelector(`[data-project-id="${projectId}"]`);
-        if (!projectElement) return 0;
-
-        let total = 0;
-
-        // 1. Serviços
-        try {
-            if (typeof calculateServicosTotal === 'function') {
-                const servicosTotal = calculateServicosTotal(projectId);
-                total += servicosTotal;
-            }
-        } catch (error) {}
-
-        // 2. Salas
-        const rooms = projectElement.querySelectorAll('.room-block');
-
-        rooms.forEach(room => {
-            const roomId = room.dataset.roomId;
-
-            // Máquinas
-            const machinesElement = this.findMachinesTotalElement(roomId);
-            if (machinesElement) {
-                const machinesText = machinesElement.textContent.trim();
-                const machinesValue = parseCurrency(machinesText);
-                total += machinesValue;
-            }
-
-            // Acessórios
-            const acessoriosElement = document.getElementById(`acessorios-total-${roomId}`);
-            if (acessoriosElement) {
-                const acessoriosText = acessoriosElement.textContent.trim();
-                const acessoriosValue = parseCurrency(acessoriosText);
-                total += acessoriosValue;
-            }
-
-            // Dutos
-            const dutosElement = document.getElementById(`dutos-total-${roomId}`);
-            if (dutosElement) {
-                const dutosText = dutosElement.textContent.trim();
-                const dutosValue = parseCurrency(dutosText);
-                total += dutosValue;
-            }
-
-            // Tubulação
-            const tubulacaoElement = document.getElementById(`total-geral-valor-${roomId}`);
-            if (tubulacaoElement) {
-                const tubulacaoText = tubulacaoElement.textContent.trim();
-                const tubulacaoValue = parseCurrency(tubulacaoText);
-                total += tubulacaoValue;
-            }
-        });
-
-        return total;
-    }
-
-    /**
-     * Encontra o elemento de total de máquinas
-     */
-    findMachinesTotalElement(roomId) {
-        // Tenta primeiro pelo formato direto
-        let element = document.getElementById(`total-all-machines-price-${roomId}`);
-
-        if (element) return element;
-
-        // Se não encontrar, busca por elementos que contenham o padrão
-        const allElements = document.querySelectorAll('[id*="total-all-machines-price-"]');
-
-        for (const el of allElements) {
-            // Verifica se o ID termina com o roomId ou contém o roomId
-            if (el.id.includes(roomId) ||
-                el.id.endsWith(roomId) ||
-                el.id.includes(`sala_${roomId.split('_').pop()}`)) {
-                return el;
-            }
+    // Soma os totais das salas
+    projectElement.querySelectorAll('.room-block').forEach(room => {
+        const roomId = room.dataset.roomId;
+        const roomTotal = document.getElementById(`room-total-${roomId}`);
+        if (roomTotal) {
+            total += parseCurrency(roomTotal.textContent);
         }
+    });
 
-        return null;
+    // Soma os serviços (se existirem)
+    try {
+        if (typeof calculateServicosTotal === 'function') {
+            total += calculateServicosTotal(projectId);
+        }
+    } catch (error) {
+        // Silencia erro
     }
 
-    updateProjectTotal(projectId) {
-        if (this.updating.has(projectId)) return;
-
-        this.updating.add(projectId);
-
-        try {
-            const total = this.calculateProjectTotal(projectId);
-            this.updateDisplay(projectId, total);
-            projectTotals.set(projectId, total);
-        } catch (error) {
-        } finally {
-            this.updating.delete(projectId);
+    const projectTotalSpan = document.getElementById(`total-projeto-valor-${projectId}`);
+    if (projectTotalSpan) {
+        projectTotalSpan.textContent = formatCurrency(total);
+    } else {
+        const addRoomSection = projectElement.querySelector('.add-room-section');
+        if (addRoomSection) {
+            addRoomSection.insertAdjacentHTML('beforeend',
+                `<span class="project-total-value" id="total-projeto-valor-${projectId}" 
+                      data-project-id="${projectId}" title="Valor total do projeto">
+                    ${formatCurrency(total)}
+                </span>`
+            );
         }
     }
 
-    updateDisplay(projectId, total) {
-        const displayElement = document.getElementById(`total-projeto-valor-${projectId}`);
-        if (!displayElement) return;
-
-        const formattedValue = new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(total);
-
-        displayElement.textContent = formattedValue;
-
-        // Removidas as classes has-value, high-value e zero
-        displayElement.classList.add('updating');
-        setTimeout(() => {
-            displayElement.classList.remove('updating');
-        }, 62);
-    }
-
-    registerObserver(projectId, callback) {
-        if (!this.observers.has(projectId)) {
-            this.observers.set(projectId, new Set());
-        }
-        this.observers.get(projectId).add(callback);
-    }
-
-    unregisterObserver(projectId, callback) {
-        if (this.observers.has(projectId)) {
-            this.observers.get(projectId).delete(callback);
-        }
+    // 🔥 DISPARA EVENTO PARA A OBRA (NÍVEL 4)
+    const obraId = projectElement.dataset.obraId;
+    if (obraId) {
+        document.dispatchEvent(new CustomEvent('projetoAtualizado', {
+            detail: { projectId, obraId, total }
+        }));
     }
 }
 
-// Inicializa o gerenciador global
-const totalManager = new ProjectTotalManager();
+// 🔥 ESCUTA EVENTOS DAS SALAS (NÍVEL 2)
+document.addEventListener('salaAtualizada', (e) => {
+    const { projectId } = e.detail;
+    if (projectId) {
+        setTimeout(() => updateProjectTotal(projectId), 10);
+    }
+});
 
 /**
  * Constrói o HTML de um projeto
  */
 function buildProjectHTML(obraId, obraName, projectId, projectName) {
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
-        return ''
+        return '';
     }
 
-    const finalProjectId = projectId || generateProjectId(document.querySelector(`[data-obra-id="${obraId}"]`))
+    const finalProjectId = projectId || generateProjectId(document.querySelector(`[data-obra-id="${obraId}"]`));
 
     if (!finalProjectId || finalProjectId === 'undefined' || finalProjectId === 'null') {
-        return ''
+        return '';
     }
 
     return `
@@ -237,50 +126,38 @@ function buildProjectHTML(obraId, obraName, projectId, projectName) {
                     </span>
                 </div>
                 ${buildServicosInProject(finalProjectId)}
-
             </div>
         </div>
-    `
+    `;
 }
 
 /**
  * Cria um projeto vazio na obra
  */
 async function createEmptyProject(obraId, obraName, projectId, projectName) {
-    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`)
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraBlock) return false;
 
-    if (!obraBlock) {
-        return false
-    }
+    const projectsContainer = document.getElementById(`projects-${obraId}`);
+    if (!projectsContainer) return false;
 
-    const projectsContainer = document.getElementById(`projects-${obraId}`)
-    if (!projectsContainer) {
-        return false
-    }
+    removeEmptyObraMessage(obraName);
 
-    removeEmptyObraMessage(obraName)
+    const projectNumber = getNextProjectNumber(obraId);
+    const finalProjectId = projectId || generateProjectId(obraBlock, projectNumber);
 
-    const projectNumber = getNextProjectNumber(obraId)
-    const finalProjectId = projectId || generateProjectId(obraBlock, projectNumber)
+    if (!finalProjectId) return false;
 
-    if (!finalProjectId) {
-        return false
-    }
+    const projectHTML = buildProjectHTML(obraId, obraName, finalProjectId, projectName);
+    projectsContainer.insertAdjacentHTML('beforeend', projectHTML);
 
-    const projectHTML = buildProjectHTML(obraId, obraName, finalProjectId, projectName)
-    projectsContainer.insertAdjacentHTML('beforeend', projectHTML)
-
-    // Remove mensagem de "nenhum projeto"
     const emptyMessage = projectsContainer.querySelector('.empty-message');
-    if (emptyMessage) {
-        emptyMessage.remove();
-    }
+    if (emptyMessage) emptyMessage.remove();
 
-    setTimeout(() => {
-        totalManager.updateProjectTotal(finalProjectId);
-    }, 125);
+    // Inicializa o total do projeto
+    setTimeout(() => updateProjectTotal(finalProjectId), 125);
 
-    return true
+    return true;
 }
 
 /**
@@ -288,10 +165,7 @@ async function createEmptyProject(obraId, obraName, projectId, projectName) {
  */
 async function addNewProjectToObra(obraId) {
     const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
-
-    if (!obraBlock) {
-        return;
-    }
+    if (!obraBlock) return;
 
     const obraName = obraBlock.dataset.obraName;
     const projectNumber = getNextProjectNumber(obraId);
@@ -309,45 +183,37 @@ async function addNewProjectToObra(obraId) {
  * Remove um projeto da obra
  */
 function deleteProject(obraId, projectId) {
-    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`)
+    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`);
+    if (!projectElement) return;
 
-    if (!projectElement) {
-        return
-    }
+    projectElement.remove();
 
-    projectTotals.delete(projectId);
-
-    const projectName = projectElement.dataset.projectName
-    projectElement.remove()
+    // Dispara evento para a obra recalcular
+    document.dispatchEvent(new CustomEvent('projetoAtualizado', {
+        detail: { projectId, obraId, total: 0 }
+    }));
 }
 
 /**
  * Inicializa totais para projetos existentes
  */
 function initializeExistingProjectTotals() {
-    const projectBlocks = document.querySelectorAll('.project-block');
-
-    projectBlocks.forEach(project => {
+    document.querySelectorAll('.project-block').forEach(project => {
         const projectId = project.dataset.projectId;
         if (projectId) {
             let totalElement = document.getElementById(`total-projeto-valor-${projectId}`);
-
             if (!totalElement) {
                 const addRoomSection = project.querySelector('.add-room-section');
                 if (addRoomSection) {
                     addRoomSection.insertAdjacentHTML('beforeend',
                         `<span class="project-total-value" id="total-projeto-valor-${projectId}" 
-                              data-project-id="${projectId}" 
-                              title="Valor total do projeto">
+                              data-project-id="${projectId}" title="Valor total do projeto">
                             R$ 0,00
                         </span>`
                     );
                 }
             }
-
-            setTimeout(() => {
-                totalManager.updateProjectTotal(projectId);
-            }, 125);
+            setTimeout(() => updateProjectTotal(projectId), 125);
         }
     });
 }
@@ -361,8 +227,8 @@ if (typeof window !== 'undefined') {
     window.buildProjectHTML = buildProjectHTML;
     window.addNewRoomToProject = addNewRoomToProject || window.addNewRoomToProject;
     window.initializeExistingProjectTotals = initializeExistingProjectTotals;
-    window.parseCurrency  = parseCurrency ;
-    window.updateProjectTotal = (projectId) => totalManager.updateProjectTotal(projectId);
+    window.parseCurrency = parseCurrency;
+    window.updateProjectTotal = updateProjectTotal;
 }
 
 // Inicializa quando carregado
@@ -377,5 +243,7 @@ export {
     buildProjectHTML,
     addNewProjectToObra,
     deleteProject,
-    initializeExistingProjectTotals
-}
+    initializeExistingProjectTotals,
+    parseCurrency,
+    formatCurrency
+};

@@ -213,13 +213,25 @@ function extractCapacityData(roomElement) {
         Object.entries(specificSelectors).forEach(([key, selector]) => {
             const element = roomElement.querySelector(selector);
             if (element) {
-                let value = element.textContent || element.value;
+                let value;
+                
+                // Para selects e inputs, pega o value; para outros, textContent
+                if (element.tagName === 'SELECT' || element.tagName === 'INPUT') {
+                    value = element.value;
+                } else {
+                    value = element.textContent;
+                }
+
+                // Se for o campo folga, remove o símbolo de %
                 if (key === 'folga' && typeof value === 'string') {
                     value = value.replace('%', '');
                 }
                 
-                if (value && !isNaN(value.replace(',', '.'))) {
+                // Tenta converter para número se for string numérica
+                if (value && typeof value === 'string' && !isNaN(value.replace(',', '.'))) {
                     value = parseFloat(value.replace(',', '.'));
+                } else if (typeof value === 'string' && value.trim() === '') {
+                    value = ''; // mantém vazio
                 }
                 
                 capacityData[key] = value;

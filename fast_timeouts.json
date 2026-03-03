@@ -1,0 +1,1244 @@
+{
+  "total": 154,
+  "statistics": {
+    "<10ms": 16,
+    "10-50ms": 76,
+    "51-100ms": 39,
+    "101-150ms": 20,
+    "151-200ms": 3
+  },
+  "fast_timeouts": [
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main.js",
+      "line": 141,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   139:     if (typeof window.addNewObra !== 'function') {\n   140:         console.log('⏳ addNewObra ainda não disponível - aguardando...');\n>> 141:         setTimeout(setupAddObraButtonProtection, 62);\n   142:         return;\n   143:     }",
+      "function_context": "setupAddObraButtonProtection"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main.js",
+      "line": 255,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   253:         \n   254:         // Tentar novamente após 1 segundo\n>> 255:         setTimeout(initializeFilterSystem, 62);\n   256:         return;\n   257:     }",
+      "function_context": "initializeFilterSystem"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main.js",
+      "line": 272,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   270:                 \n   271:                 // Tentar novamente em caso de falha\n>> 272:                 setTimeout(() => {\n   273:                     initializeFilterSystem();\n   274:                 }, 125);",
+      "function_context": "initializeFilterSystem"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main.js",
+      "line": 283,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   281:         \n   282:         // Tentar novamente em caso de erro\n>> 283:         setTimeout(() => {\n   284:             initializeFilterSystem();\n   285:         }, 125);",
+      "function_context": "initializeFilterSystem"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main.js",
+      "line": 375,
+      "timeout_ms": 31,
+      "is_variable": false,
+      "code": "   373:   console.log(\"🔍 Verificando obras existentes...\");\n   374:   \n>> 375:   await new Promise(resolve => setTimeout(resolve, 31));\n   376:   \n   377:   const currentCount = window.getGeralCount ? window.getGeralCount() : 0;",
+      "function_context": "verifyAndCreateBaseObra"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main.js",
+      "line": 690,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   688:     \n   689:     // ✅ Verificação final do estado do sistema\n>> 690:     setTimeout(() => {\n   691:         checkSystemLoaded();\n   692:         finalSystemDebug();",
+      "function_context": "getFunctionFromModules"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main.js",
+      "line": 696,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   694:     \n   695:     // ✅ Verificar funções críticas após inicialização completa\n>> 696:     setTimeout(verifyCriticalFunctions, 125);\n   697:     \n   698:     // ✅ INICIALIZAR SISTEMA DE FILTROS",
+      "function_context": "getFunctionFromModules"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\loader.js",
+      "line": 88,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   86:     document.addEventListener('DOMContentLoaded', () => {\n   87:         console.log('🚀 DOM pronto, carregando módulos...');\n>> 88:         setTimeout(() => loadModules(), 100);\n   89:     });\n   90: } else {",
+      "function_context": "loadModules"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\loader.js",
+      "line": 92,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   90: } else {\n   91:     console.log('🚀 DOM já pronto, carregando módulos...');\n>> 92:     setTimeout(() => loadModules(), 100);\n   93: }",
+      "function_context": "loadModules"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 87,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   85:         // Garante que o editor seja inicializado\n   86:         if (typeof window.initJSONEditor === 'function') {\n>> 87:             setTimeout(() => {\n   88:                 window.initJSONEditor();\n   89:                 ",
+      "function_context": "ensureCompleteSystemData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 302,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   300:     \n   301:     // Carrega todos os componentes\n>> 302:     setTimeout(() => {\n   303:         if (window.loadConstants) window.loadConstants();\n   304:         if (window.loadMachines) window.loadMachines();",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 492,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   490:                     console.log('🎯 Tab de dutos ativada');\n   491:                     if (typeof window.loadDutos === 'function') {\n>> 492:                         setTimeout(window.loadDutos, 100);\n   493:                     }\n   494:                     break;",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 499,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   497:                     console.log('🎯 Tab de tubos ativada');\n   498:                     if (typeof window.loadTubos === 'function') {\n>> 499:                         setTimeout(window.loadTubos, 100);\n   500:                     }\n   501:                     break;",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 507,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   505:                     console.log('🎯 Tab de acessorios ativada');\n   506:                     if (typeof window.loadAcessorios === 'function') {\n>> 507:                         setTimeout(window.loadAcessorios, 100);\n   508:                     } else if (typeof window.loadAcessoriesData === 'function') {\n   509:                         setTimeout(window.loadAcessoriesData, 100);",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 509,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   507:                         setTimeout(window.loadAcessorios, 100);\n   508:                     } else if (typeof window.loadAcessoriesData === 'function') {\n>> 509:                         setTimeout(window.loadAcessoriesData, 100);\n   510:                     }\n   511:                     break;",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 516,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   514:                     console.log('🎯 Tab JSON ativada');\n   515:                     if (typeof window.initJSONEditor === 'function') {\n>> 516:                         setTimeout(window.initJSONEditor, 100);\n   517:                     }\n   518:                     break;",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 546,
+      "timeout_ms": 150,
+      "is_variable": false,
+      "code": "   544:                 \n   545:                 // Pequeno delay para garantir que a tab está visível\n>> 546:                 setTimeout(() => {\n   547:                     if (typeof window.initJSONEditor === 'function') {\n   548:                         window.initJSONEditor();",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 560,
+      "timeout_ms": 150,
+      "is_variable": false,
+      "code": "   558:                 console.log('🎯 Tab de dutos clicada');\n   559:                 \n>> 560:                 setTimeout(() => {\n   561:                     if (typeof window.loadDutos === 'function') {\n   562:                         window.loadDutos();",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 570,
+      "timeout_ms": 150,
+      "is_variable": false,
+      "code": "   568:                 console.log('🎯 Tab de tubos clicada');\n   569:                 \n>> 570:                 setTimeout(() => {\n   571:                     if (typeof window.loadTubos === 'function') {\n   572:                         window.loadTubos();",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\main.js",
+      "line": 580,
+      "timeout_ms": 150,
+      "is_variable": false,
+      "code": "   578:                 console.log('🎯 Tab de acessorios clicada');\n   579:                 \n>> 580:                 setTimeout(() => {\n   581:                     if (typeof window.loadAcessorios === 'function') {\n   582:                         window.loadAcessorios();",
+      "function_context": "updateJSONStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\acessorios.js",
+      "line": 35,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   33:     // Carregar se tab está ativa\n   34:     if (document.getElementById('acessoriesTab').classList.contains('active')) {\n>> 35:         setTimeout(loadAcessoriesData, 100);\n   36:     }\n   37: }",
+      "function_context": "setupAcessorieSystem"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\acessorios.js",
+      "line": 60,
+      "timeout_ms": 150,
+      "is_variable": false,
+      "code": "   58:     if (acessorieTabBtn) {\n   59:         acessorieTabBtn.addEventListener('click', () => {\n>> 60:             setTimeout(() => {\n   61:                 if (isAcessorieTabActive()) {\n   62:                     loadAcessoriesData();",
+      "function_context": "setupEventListeners"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\acessorios.js",
+      "line": 269,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   267:     \n   268:     if (!content.classList.contains('collapsed')) {\n>> 269:         setTimeout(() => {\n   270:             const firstInput = content.querySelector('input');\n   271:             if (firstInput) firstInput.focus();",
+      "function_context": "toggleAcessorieItem"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\acessorios.js",
+      "line": 337,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   335:         grid.appendChild(newItem);\n   336:         \n>> 337:         setTimeout(() => {\n   338:             const input = newItem.querySelector('input[type=\"text\"]');\n   339:             if (input) {",
+      "function_context": "addAcessorieDimension"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\acessorios.js",
+      "line": 429,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   427:     \n   428:     if (field === 'codigo' && oldValue !== value) {\n>> 429:         setTimeout(() => populateCodigosFilter(), 100);\n   430:     }\n   431: }",
+      "function_context": "updateAcessorie"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\acessorios.js",
+      "line": 509,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   507:     renderAcessorieList();\n   508:     \n>> 509:     setTimeout(() => {\n   510:         const items = document.querySelectorAll('.acessorie-item');\n   511:         const newItem = items[items.length - 1];",
+      "function_context": "addNewAcessorie"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\acessorios.js",
+      "line": 622,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   620: if (document.readyState === 'loading') {\n   621:     document.addEventListener('DOMContentLoaded', () => {\n>> 622:         setTimeout(() => {\n   623:             if (typeof initAcessories === 'function') {\n   624:                 initAcessories();",
+      "function_context": "renderEmptyState"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\acessorios.js",
+      "line": 629,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   627:     });\n   628: } else {\n>> 629:     setTimeout(() => {\n   630:         if (typeof initAcessories === 'function') {\n   631:             initAcessories();",
+      "function_context": "renderEmptyState"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\tubos.js",
+      "line": 226,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   224:         if (field === 'polegadas' && value && value.trim() !== '') {\n   225:             // Chama loadTubos novamente para reorganizar\n>> 226:             setTimeout(() => {\n   227:                 loadTubos();\n   228:             }, 100);",
+      "function_context": "updateTuboField"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\tubos.js",
+      "line": 516,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   514: if (document.readyState === 'loading') {\n   515:     document.addEventListener('DOMContentLoaded', () => {\n>> 516:         setTimeout(() => {\n   517:             if (typeof initTubosModule === 'function') {\n   518:                 initTubosModule();",
+      "function_context": "initTubosModule"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\tubos.js",
+      "line": 523,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   521:     });\n   522: } else {\n>> 523:     setTimeout(() => {\n   524:         if (typeof initTubosModule === 'function') {\n   525:             initTubosModule();",
+      "function_context": "initTubosModule"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\editorJson\\json-editor.js",
+      "line": 101,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   99:         if (totalWidth > domCache.editor.clientWidth && \n   100:             domCache.jsonContainer.scrollWidth <= domCache.jsonContainer.clientWidth) {\n>> 101:             setTimeout(() => {\n   102:                 if (domCache.jsonContainer) {\n   103:                     domCache.jsonContainer.style.overflowX = 'auto';",
+      "function_context": "adjustEditorLayout"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\editorJson\\json-editor.js",
+      "line": 441,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   439:     }\n   440: \n>> 441:     setTimeout(initJSONEditor, 50);\n   442: }\n   443: ",
+      "function_context": "resetJSONEditor"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\machines\\machines-configs.js",
+      "line": 53,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   51:             configuracoesList.appendChild(newItem);\n   52: \n>> 53:             setTimeout(() => {\n   54:                 const input = newItem.querySelector('input');\n   55:                 if (input) {",
+      "function_context": "addConfiguracao"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\machines\\machines-configs.js",
+      "line": 245,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   243: \n   244:         // Focar no campo de capacidade\n>> 245:         setTimeout(() => {\n   246:             const input = newItem.querySelector('input[type=\"text\"]');\n   247:             if (input) {",
+      "function_context": "addBaseValueToDOM"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\machines\\machines-impostos.js",
+      "line": 150,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   148:             impostosList.appendChild(newItem);\n   149:             \n>> 150:             setTimeout(() => {\n   151:                 const input = newItem.querySelector('.imposto-header input');\n   152:                 if (input) {",
+      "function_context": "addImposto"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\machines\\machines-options.js",
+      "line": 141,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   139:             optionsList.appendChild(newItem);\n   140: \n>> 141:             setTimeout(() => {\n   142:                 const input = newItem.querySelector('.option-field input');\n   143:                 if (input) {",
+      "function_context": "addOption"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\machines\\machines-options.js",
+      "line": 216,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   214:         optionValuesGrid.appendChild(newItem);\n   215: \n>> 216:         setTimeout(() => {\n   217:             const input = newItem.querySelector('.option-value-content .option-value-field:nth-child(1) input');\n   218:             if (input) {",
+      "function_context": "addOptionValueToDOM"
+    },
+    {
+      "file": "codigo\\public\\scripts\\03_Edit_data\\core\\machines\\machines-voltages.js",
+      "line": 71,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   69:             voltagesContainer.appendChild(newItem);\n   70: \n>> 71:             setTimeout(() => {\n   72:                 const input = newItem.querySelector('input[type=\"text\"]');\n   73:                 if (input) {",
+      "function_context": "addVoltage"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\core\\app.js",
+      "line": 316,
+      "timeout_ms": 0,
+      "is_variable": false,
+      "code": "   314: } else {\n   315:     // DOM já está pronto, inicializa imediatamente\n>> 316:     setTimeout(bootstrapApplication, 0);\n   317: }\n   318: ",
+      "function_context": "getAppStatus"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\core\\shared-utils.js",
+      "line": 22,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   20:     }\n   21:     \n>> 22:     setTimeout(() => {\n   23:         // Tenta ambas as formas de chamar a função\n   24:         if (typeof calculateVazaoArAndThermalGains === 'function') {",
+      "function_context": "triggerCalculation"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main-folder\\filter-init.js",
+      "line": 161,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   159:     applyRemovalAnimation(element);\n   160:     \n>> 161:     setTimeout(() => {\n   162:       if (element.parentNode) {\n   163:         element.remove();",
+      "function_context": "removeElementFromDOM"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main-folder\\filter-init.js",
+      "line": 400,
+      "timeout_ms": 187,
+      "is_variable": false,
+      "code": "   398: \n   399:             if (itemType === 'obra') {\n>> 400:                 setTimeout(() => {\n   401:                     if (window.FilterSystem) {\n   402:                         window.FilterSystem.reloadObras();",
+      "function_context": "toggleOverride"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main-folder\\filter-init.js",
+      "line": 437,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   435: \n   436:     // Inicializar listener\n>> 437:     setTimeout(() => setupFilterListener(), 125);\n   438: \n   439:     console.log(\"✅ Sistema de sobrescrita condicional configurado\");",
+      "function_context": "setupFilterListener"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main-folder\\filter-init.js",
+      "line": 491,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   489:     if (filterToggle && filterToggle.checked) {\n   490:         if (window.ButtonDeleteUniversal && window.ButtonDeleteUniversal.setupAllDeleteButtons) {\n>> 491:             setTimeout(() => {\n   492:                 const buttonsConfigured = window.ButtonDeleteUniversal.setupAllDeleteButtons();\n   493:                 console.log(`✅ [FILTER-INIT] ${buttonsConfigured} botões de deleção REAL configurados`);",
+      "function_context": "setupInitialButtonConfiguration"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main-folder\\filter-init.js",
+      "line": 499,
+      "timeout_ms": 75,
+      "is_variable": false,
+      "code": "   497: \n   498:     if (window.ButtonModeManager && typeof window.ButtonModeManager.applyMode === 'function') {\n>> 499:         setTimeout(() => {\n   500:             window.ButtonModeManager.applyMode();\n   501:             console.log(\"✅ [FILTER-INIT] Modo inicial aplicado aos botões\");",
+      "function_context": "setupInitialButtonConfiguration"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main-folder\\filter-init.js",
+      "line": 523,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   521:                 if (hasObras) {\n   522:                     console.log(\"👀 [FILTER-INIT] Novas obras detectadas, reconfigurando botões...\");\n>> 523:                     setTimeout(() => {\n   524:                         if (window.ButtonModeManager && window.ButtonModeManager.applyMode) {\n   525:                             window.ButtonModeManager.applyMode();",
+      "function_context": "setupDynamicButtonConfiguration"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\main-folder\\system-init.js",
+      "line": 323,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   321:     console.log(\"🏢 Inicializando sistema de cadastro de empresas...\");\n   322: \n>> 323:     await new Promise(resolve => setTimeout(resolve, 62));\n   324: \n   325:     window.empresaCadastro = new EmpresaCadastroInline();",
+      "function_context": "initializeEmpresaCadastro"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\helpers.js",
+      "line": 200,
+      "timeout_ms": 10,
+      "is_variable": false,
+      "code": "   198:     \n   199:     // Animar para altura 0\n>> 200:     setTimeout(() => {\n   201:         element.style.height = '0px';\n   202:         element.style.overflow = 'hidden';",
+      "function_context": "collapseElementWithAnimation"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\helpers.js",
+      "line": 206,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   204:     \n   205:     // Finalizar animação\n>> 206:     setTimeout(() => {\n   207:         element.classList.add(\"collapsed\");\n   208:         element.classList.remove(\"collapsing\");",
+      "function_context": "collapseElementWithAnimation"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\helpers.js",
+      "line": 226,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   224:     \n   225:     // Definir altura para auto após animação\n>> 226:     setTimeout(() => {\n   227:         const fullHeight = element.scrollHeight;\n   228:         element.style.height = '0px';",
+      "function_context": "expandElementWithAnimation"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\components\\edit.js",
+      "line": 76,
+      "timeout_ms": 10,
+      "is_variable": false,
+      "code": "   74:     \n   75:     // Aguarda um frame para garantir que o elemento está focado\n>> 76:     setTimeout(() => {\n   77:         const range = document.createRange();\n   78:         const selection = window.getSelection();",
+      "function_context": "selectElementContent"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\download\\word-modal.js",
+      "line": 274,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   272:     overlay.style.opacity = '0';\n   273:     \n>> 274:     setTimeout(() => {\n   275:         if (overlay.parentNode) {\n   276:             overlay.parentNode.removeChild(overlay);",
+      "function_context": "closeModal"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\components\\modal\\exit-modal.js",
+      "line": 81,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   79:         if (modalElement) {\n   80:             modalElement.classList.remove('active');\n>> 81:             setTimeout(() => {\n   82:                 if (modalElement.parentNode) {\n   83:                     modalElement.remove();",
+      "function_context": "cleanup"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\components\\modal\\modal.js",
+      "line": 68,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   66:     modal.classList.add('active');\n   67: \n>> 68:     setTimeout(() => {\n   69:         const btn = document.querySelector('.btn-cancel');\n   70:         if (btn) btn.focus();",
+      "function_context": "showConfirmationModal"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\components\\modal\\modal.js",
+      "line": 148,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   146: \n   147:         // Inicia animação da barra de contagem regressiva\n>> 148:         setTimeout(() => {\n   149:             const countdownBar = toast.querySelector('.countdown-bar');\n   150:             if (countdownBar) {",
+      "function_context": "showToast"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\components\\modal\\modal.js",
+      "line": 255,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   253:     try {\n   254:         el.classList.add('hiding'); // se existir CSS de transição\n>> 255:         setTimeout(() => { if (el && el.parentNode) el.remove(); }, 37);\n   256:     } catch (_) {\n   257:         if (el && el.parentNode) el.parentNode.removeChild(el);",
+      "function_context": "animateAndRemove"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\ui\\components\\modal\\modal.js",
+      "line": 490,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   488:         obraBlock.style.opacity = '0';\n   489: \n>> 490:         setTimeout(() => {\n   491:             if (obraBlock.parentNode) {\n   492:                 obraBlock.remove();",
+      "function_context": "confirmDeletion"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\calculations\\calculations-core.js",
+      "line": 77,
+      "timeout_ms": 25,
+      "is_variable": false,
+      "code": "   75:     while ((!window.systemConstants || !window.systemConstants.VARIAVEL_PD.value\n   76: ) && attempts < maxAttempts) {\n>> 77:         await new Promise(resolve => setTimeout(resolve, 25));\n   78:         attempts++;\n   79:     }",
+      "function_context": "waitForSystemConstants"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\calculations\\thermal-gains.js",
+      "line": 386,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   384: \n   385:   console.log(`🔥 [THERMAL] Atualizando capacidade para ${roomId}`);\n>> 386:   setTimeout(() => {\n   387:     if (typeof window.updateCapacityFromThermalGains === 'function') {\n   388:       const success = window.updateCapacityFromThermalGains(roomId);",
+      "function_context": "calculateThermalGains"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\button-delete-universal.js",
+      "line": 363,
+      "timeout_ms": 10,
+      "is_variable": false,
+      "code": "   361:             \n   362:             // Animar entrada\n>> 363:             setTimeout(() => {\n   364:                 const modal = document.getElementById('universal-delete-modal');\n   365:                 const content = modal.querySelector('.modal-content');",
+      "function_context": "global_scope"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\button-delete-universal.js",
+      "line": 381,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   379:                     content.style.transform = 'translateY(-20px)';\n   380:                     \n>> 381:                     setTimeout(() => {\n   382:                         modal.remove();\n   383:                         resolve(confirmed);",
+      "function_context": "closeModal"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\button-delete-universal.js",
+      "line": 444,
+      "timeout_ms": 187,
+      "is_variable": false,
+      "code": "   442:                 \n   443:                 if (config.type === 'obra') {\n>> 444:                     setTimeout(() => {\n   445:                         if (window.FilterSystem) {\n   446:                             window.FilterSystem.reloadObras();",
+      "function_context": "escHandler"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\button-delete-universal.js",
+      "line": 505,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   503:             elementToRemove.style.overflow = 'hidden';\n   504:             \n>> 505:             setTimeout(() => {\n   506:                 if (elementToRemove.parentNode) {\n   507:                     elementToRemove.remove();",
+      "function_context": "escHandler"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\button-delete-universal.js",
+      "line": 513,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   511:         } else {\n   512:             console.warn(`⚠️ Não encontrou elemento para remover: ${config.type}`, ids);\n>> 513:             setTimeout(() => window.location.reload(), 125);\n   514:         }\n   515:     }",
+      "function_context": "escHandler"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\button-delete-universal.js",
+      "line": 588,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   586:         this.toastContainer.appendChild(toast);\n   587:         \n>> 588:         setTimeout(() => {\n   589:             toast.style.animation = 'slideOut 0.3s forwards';\n   590:             setTimeout(() => {",
+      "function_context": "escHandler"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\button-mode-manager.js",
+      "line": 29,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   27:         // 🔥 ATIVAR ButtonDeleteUniversal\n   28:         if (window.ButtonDeleteUniversal && window.ButtonDeleteUniversal.setupAllDeleteButtons) {\n>> 29:             setTimeout(() => {\n   30:                 window.ButtonDeleteUniversal.setupAllDeleteButtons();\n   31:                 console.log('✅ [BUTTON-MANAGER] ButtonDeleteUniversal ativado');",
+      "function_context": "global_scope"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\button-mode-manager.js",
+      "line": 173,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   171:                 if (mutation.addedNodes.length > 0 && this.state.filterMode) {\n   172:                     // Se novos botões foram adicionados e estamos no modo filtro\n>> 173:                     setTimeout(() => {\n   174:                         this.changeButtonTexts('Deletar');\n   175:                         ",
+      "function_context": "global_scope"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\button-mode-manager.js",
+      "line": 197,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   195:         \n   196:         this.setupMutationObserver();\n>> 197:         setTimeout(() => {\n   198:             this.applyMode();\n   199:         }, 62);",
+      "function_context": "global_scope"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\filter-autocomplete.js",
+      "line": 134,
+      "timeout_ms": 18,
+      "is_variable": false,
+      "code": "   132:         empresaInput.addEventListener('input', function (e) {\n   133:             clearTimeout(inputTimeout);\n>> 134:             inputTimeout = setTimeout(() => {\n   135:                 handleInput(e.target.value);\n   136:             }, 18);",
+      "function_context": "setupEventListeners"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\filter-autocomplete.js",
+      "line": 158,
+      "timeout_ms": 25,
+      "is_variable": false,
+      "code": "   156:         // Blur event (fechar dropdown com delay)\n   157:         empresaInput.addEventListener('blur', function () {\n>> 158:             setTimeout(() => {\n   159:                 if (dropdown) dropdown.style.display = 'none';\n   160:             }, 25);",
+      "function_context": "setupEventListeners"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\filter-system.js",
+      "line": 445,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   443:             \n   444:             // Aguardar DOM se estabilizar\n>> 445:             await new Promise(resolve => setTimeout(resolve, 12));\n   446:         }\n   447:         ",
+      "function_context": "carregarObrasComEmpresa"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\filter-system.js",
+      "line": 679,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   677:                 // Debounce para evitar múltiplas recargas rápidas\n   678:                 clearTimeout(window._filterDebounce);\n>> 679:                 window._filterDebounce = setTimeout(() => {\n   680:                     reloadObrasWithCurrentEndpoint();\n   681:                 }, 62); // 🔥 Aumentado para 500ms para evitar sobrecarga",
+      "function_context": "updateFilterValue"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\filter-system.js",
+      "line": 799,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   797:                 input.addEventListener('change', function() {\n   798:                     // Pequeno delay antes de recarregar empresa\n>> 799:                     setTimeout(() => {\n   800:                         if (window.FilterSystem.isFilterActive()) {\n   801:                             window.FilterSystem.recarregarDadosEmpresa();",
+      "function_context": "recarregarDadosEmpresa"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\universal-delete-modal.js",
+      "line": 108,
+      "timeout_ms": 10,
+      "is_variable": false,
+      "code": "   106:         this.isShowing = true;\n   107:         \n>> 108:         setTimeout(() => {\n   109:             this.modal.style.opacity = '1';\n   110:             this.modalContent.style.transform = 'translateY(0)';",
+      "function_context": "global_scope"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\universal-delete-modal.js",
+      "line": 118,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   116:         \n   117:         // Focar no botão de cancelar\n>> 118:         setTimeout(() => document.getElementById('universal-delete-cancel').focus(), 12);\n   119:         document.body.style.overflow = 'hidden';\n   120:         ",
+      "function_context": "global_scope"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\universal-delete-modal.js",
+      "line": 137,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   135:         document.body.style.overflow = '';\n   136:         \n>> 137:         setTimeout(() => {\n   138:             this.modal.style.display = 'none';\n   139:             this.isShowing = false;",
+      "function_context": "global_scope"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\universal-delete-modal.js",
+      "line": 155,
+      "timeout_ms": 43,
+      "is_variable": false,
+      "code": "   153:             modal.hide = function() {\n   154:                 originalHide();\n>> 155:                 setTimeout(() => {\n   156:                     resolve(false);\n   157:                     modal.hide = originalHide;",
+      "function_context": "global_scope"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\filters\\universal-delete-modal.js",
+      "line": 162,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   160:             \n   161:             const deleteCallback = () => {\n>> 162:                 setTimeout(() => resolve(true), 6);\n   163:             };\n   164:             ",
+      "function_context": "deleteCallback"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\project-manager.js",
+      "line": 142,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   140:         // Se adicionou novos totais, atualiza o projeto correspondente\n   141:         if (hasNewRoomTotal) {\n>> 142:             setTimeout(() => {\n   143:                 document.querySelectorAll('.project-block').forEach(project => {\n   144:                     updateProjectTotal(project.dataset.projectId);",
+      "function_context": "observeAllRoomTotals"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\project-manager.js",
+      "line": 159,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   157:     \n   158:     // Atualiza todos os projetos uma vez no início\n>> 159:     setTimeout(() => {\n   160:         document.querySelectorAll('.project-block').forEach(project => {\n   161:             updateProjectTotal(project.dataset.projectId);",
+      "function_context": "observeAllRoomTotals"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\project-manager.js",
+      "line": 369,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   367:     document.addEventListener('DOMContentLoaded', initializeExistingProjectTotals);\n   368: } else {\n>> 369:     setTimeout(initializeExistingProjectTotals, 125);\n   370: }\n   371: ",
+      "function_context": "initializeExistingProjectTotals"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\servicos.js",
+      "line": 232,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   230:         item.remove()\n   231:         // Delay para garantir que o DOM foi atualizado\n>> 232:         setTimeout(() => {\n   233:             updateServicosTotal(projectId);\n   234:         }, 6);",
+      "function_context": "removeAdicionalItem"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\obra-folder\\obra-creator.js",
+      "line": 119,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   117:         projectsContainer.insertAdjacentHTML(\"beforeend\", obraHTML);\n   118: \n>> 119:         setTimeout(() => {\n   120:             const obraInserida = document.querySelector(`[data-obra-id=\"${obraId}\"]`);\n   121:             if (obraInserida) {",
+      "function_context": "insertObraIntoDOM"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\obra-folder\\obra-creator.js",
+      "line": 183,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   181:         await createEmptyObra(obraName, obraId, false, false);\n   182: \n>> 183:         setTimeout(async () => {\n   184:             if (typeof window.addNewProjectToObra === 'function') {\n   185:                 await window.addNewProjectToObra(obraId);",
+      "function_context": "addNewObra"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\obra-folder\\obra-creator.js",
+      "line": 377,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   375:         \n   376:         // Agenda nova atualização\n>> 377:         this.timeouts[obraId] = setTimeout(() => {\n   378:             this.updateObraTotal(obraId);\n   379:             delete this.timeouts[obraId];",
+      "function_context": "createObraFromServer"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\obra-folder\\obra-creator.js",
+      "line": 669,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   667: if (document.readyState === 'loading') {\n   668:     document.addEventListener('DOMContentLoaded', () => {\n>> 669:         setTimeout(() => {\n   670:             if (window.obraTotalManager) {\n   671:                 window.obraTotalManager.initializeExistingObraTotals();",
+      "function_context": "createObraFromServer"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\obra-folder\\obra-creator.js",
+      "line": 676,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   674:     });\n   675: } else {\n>> 676:     setTimeout(() => {\n   677:         if (window.obraTotalManager) {\n   678:             window.obraTotalManager.initializeExistingObraTotals();",
+      "function_context": "createObraFromServer"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\features\\managers\\obra-folder\\obra-dom-manager.js",
+      "line": 45,
+      "timeout_ms": 25,
+      "is_variable": false,
+      "code": "   43:         \n   44:         if (attempt < maxAttempts) {\n>> 45:             await new Promise(resolve => setTimeout(resolve, 25));\n   46:         }\n   47:     }",
+      "function_context": "findObraBlockWithRetry"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\adapters\\shutdown-adapter.js",
+      "line": 47,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   45:         \n   46:         // APENAS 1 SEGUNDO DE ESPERA ENTRE AS ETAPAS\n>> 47:         await new Promise(resolve => setTimeout(resolve, 125));\n   48:         \n   49:         // 3. Encerra servidor",
+      "function_context": "shutdownManual"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-autocomplete.js",
+      "line": 93,
+      "timeout_ms": 25,
+      "is_variable": false,
+      "code": "   91:             clearTimeout(timeoutBusca);\n   92:         }\n>> 93:         setTimeout(() => {\n   94:             window.usuarioEstaApagando = false;\n   95:             if (dropdown) {",
+      "function_context": "inicializarInputEmpresaHibrido"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-autocomplete.js",
+      "line": 170,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   168:         }\n   169: \n>> 170:         setTimeout(() => {\n   171:             window.usuarioEstaApagando = false;\n   172:         }, 12);",
+      "function_context": "processarInputEmpresa"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-autocomplete.js",
+      "line": 266,
+      "timeout_ms": 10,
+      "is_variable": false,
+      "code": "   264: \n   265:     dropdown.style.display = 'block';\n>> 266:     setTimeout(corrigirPosicaoDropdown, 10);\n   267: \n   268:     // Selecionar primeira opção",
+      "function_context": "exibirSugestoes"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-autocomplete.js",
+      "line": 318,
+      "timeout_ms": 10,
+      "is_variable": false,
+      "code": "   316:     container.innerHTML = html;\n   317:     dropdown.style.display = 'block';\n>> 318:     setTimeout(corrigirPosicaoDropdown, 10);\n   319: \n   320:     setTimeout(() => {",
+      "function_context": "exibirTodasEmpresas"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-autocomplete.js",
+      "line": 320,
+      "timeout_ms": 10,
+      "is_variable": false,
+      "code": "   318:     setTimeout(corrigirPosicaoDropdown, 10);\n   319: \n>> 320:     setTimeout(() => {\n   321:         if (dropdown.scrollHeight > 200) {\n   322:             dropdown.style.overflowY = 'auto';",
+      "function_context": "exibirTodasEmpresas"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-core.js",
+      "line": 157,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   155:         this.vincularEventosFormulario();\n   156: \n>> 157:         setTimeout(() => {\n   158:             const empresaInput = this.container.querySelector('#empresa-input');\n   159:             if (empresaInput) empresaInput.focus();",
+      "function_context": "limparCacheEmpresas"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-core.js",
+      "line": 367,
+      "timeout_ms": 25,
+      "is_variable": false,
+      "code": "   365:             empresaInput.addEventListener('input', (e) => this.buscarEmpresas(e.target.value));\n   366:             empresaInput.addEventListener('blur', () => {\n>> 367:                 setTimeout(() => this.ocultarSugestoes(), 25);\n   368:             });\n   369:             empresaInput.addEventListener('keydown', (e) => this.tratarTecladoAutocomplete(e));",
+      "function_context": "limparCacheEmpresas"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-form-manager.js",
+      "line": 180,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   178:     \n   179:     // 🔥 CORREÇÃO: Inicializar autocomplete após inserir HTML\n>> 180:     setTimeout(() => {\n   181:         if (typeof window.inicializarInputEmpresaHibrido === 'function') {\n   182:             window.inicializarInputEmpresaHibrido(obraData.id);",
+      "function_context": "criarVisualizacaoEmpresa"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-form-manager.js",
+      "line": 296,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   294:     container.insertAdjacentHTML('beforeend', formularioHTML);\n   295:     \n>> 296:     setTimeout(() => {\n   297:         inicializarInputEmpresaHibrido(obraId);\n   298:         ",
+      "function_context": "criarFormularioVazioEmpresa"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-form-manager.js",
+      "line": 419,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   417:     });\n   418:     \n>> 419:     setTimeout(() => {\n   420:         datePicker.focus();\n   421:         datePicker.showPicker();",
+      "function_context": "configurarCampoDataEspecifico"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-ui-helpers.js",
+      "line": 25,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   23: \n   24:             // Timeout para resetar se parou de apertar\n>> 25:             timeoutBackspace = setTimeout(() => {\n   26:                 pressionandoBackspace = false;\n   27:                 window.usuarioEstaApagando = false;",
+      "function_context": "criarSistemaBackspaceDetector"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-ui-helpers.js",
+      "line": 37,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   35:         if (e.key === 'Backspace' || e.key === 'Delete') {\n   36:             // Pequeno delay para garantir que o input foi processado\n>> 37:             setTimeout(() => {\n   38:                 if (!pressionandoBackspace) {\n   39:                     window.usuarioEstaApagando = false;",
+      "function_context": "criarSistemaBackspaceDetector"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-ui-helpers.js",
+      "line": 74,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   72: \n   73:             // Timeout para resetar se parou de apertar\n>> 74:             timeoutBackspace = setTimeout(() => {\n   75:                 pressionandoBackspace = false;\n   76:                 window.usuarioEstaApagando = false;",
+      "function_context": "inicializarDetectorBackspace"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-ui-helpers.js",
+      "line": 88,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   86:         if (e.key === 'Backspace' || e.key === 'Delete') {\n   87:             // Pequeno delay para garantir que o input foi processado\n>> 88:             setTimeout(() => {\n   89:                 if (!pressionandoBackspace) {\n   90:                     window.usuarioEstaApagando = false;",
+      "function_context": "inicializarDetectorBackspace"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-ui-helpers.js",
+      "line": 176,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   174: \n   175:     // Animação\n>> 176:     setTimeout(() => aviso.classList.add('show'), 6);\n   177: \n   178:     // Remover",
+      "function_context": "mostrarAvisoAutocompletado"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-ui-helpers.js",
+      "line": 179,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   177: \n   178:     // Remover\n>> 179:     setTimeout(() => {\n   180:         aviso.classList.remove('show');\n   181:         setTimeout(() => aviso.remove(), 37);",
+      "function_context": "mostrarAvisoAutocompletado"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\empresa-system\\empresa-ui-helpers.js",
+      "line": 397,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   395: // 🔥 INICIALIZAR DETECTOR EM TODOS OS INPUTS EXISTENTES\n   396: document.addEventListener('DOMContentLoaded', function () {\n>> 397:     setTimeout(() => {\n   398:         const inputs = document.querySelectorAll('.empresa-input-cadastro');\n   399:         inputs.forEach(input => {",
+      "function_context": "formatarData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\dutos.js",
+      "line": 262,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   260: \n   261:     // Inicialização pós-render\n>> 262:     setTimeout(() => {\n   263:         initDutosSystem(roomId);\n   264:     }, 12);",
+      "function_context": "buildDutosSection"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\dutos.js",
+      "line": 516,
+      "timeout_ms": 187,
+      "is_variable": false,
+      "code": "   514:                 cobreInput.style.boxShadow = '0 0 0 3px rgba(72, 187, 120, 0.1)';\n   515:                 \n>> 516:                 setTimeout(() => {\n   517:                     cobreInput.style.borderColor = '';\n   518:                     cobreInput.style.boxShadow = '';",
+      "function_context": "carregarValorCobrePadrao"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\rooms.js",
+      "line": 266,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   264: \n   265:     // Outras inicializações...\n>> 266:     setTimeout(async () => {\n   267:         try {\n   268:             const machinesModule = await import('./machines/machines-core.js');",
+      "function_context": "initializeRoomComponents"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\rooms.js",
+      "line": 279,
+      "timeout_ms": 150,
+      "is_variable": false,
+      "code": "   277: \n   278:     // ✅ INICIALIZAÇÃO DE FATOR DE SEGURANÇA\n>> 279:     setTimeout(() => {\n   280:         safeInitializeFatorSeguranca(roomId);\n   281:     }, 150);",
+      "function_context": "initializeRoomComponents"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\tubos.js",
+      "line": 439,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   437:             \n   438:             // Forçar cálculo imediato da linha sincronizada\n>> 439:             setTimeout(() => {\n   440:                 calcularLinhaComAPI(linhaDestinoId);\n   441:             }, 6);",
+      "function_context": "sincronizarLSLL"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\tubos.js",
+      "line": 701,
+      "timeout_ms": 18,
+      "is_variable": false,
+      "code": "   699:         // Calcular a linha se houver dados\n   700:         if (linha.comprimentoInterligacao || linha.numCircuitos || linha.numCurvas || linha.comprimentoEquivalenteCurva) {\n>> 701:             setTimeout(() => {\n   702:                 calcularLinhaComAPI(linha.id);\n   703:             }, 18);",
+      "function_context": "adicionarLinhaNaTabelaComAPI"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\tubos.js",
+      "line": 1110,
+      "timeout_ms": 25,
+      "is_variable": false,
+      "code": "   1108:             \n   1109:             // Atualizar totais\n>> 1110:             setTimeout(() => {\n   1111:                 atualizarTotaisConjuntoComAPI(novoConjuntoId);\n   1112:                 atualizarTotalGeralTubulacao(roomId);",
+      "function_context": "addTubulacaoConjuntoComAPI"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\tubos.js",
+      "line": 1323,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   1321:         atualizarControleLinhas(conjuntoId);\n   1322:         \n>> 1323:         setTimeout(() => {\n   1324:             atualizarTotaisConjuntoComAPI(conjuntoId);\n   1325:             ",
+      "function_context": "removerLinha"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\ventilacao.js",
+      "line": 96,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   94:     // Dispara refresh se solicitado\n   95:     if (triggerRefresh && window.refreshVentilationForRoom) {\n>> 96:         setTimeout(() => {\n   97:             window.refreshVentilationForRoom(roomId);\n   98:         }, 12);",
+      "function_context": "finishRoomLoading"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\ventilacao.js",
+      "line": 613,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   611:     // Dispara o recalculo da ventilação para atualizar perda/dissipação\n   612:     if (roomId) {\n>> 613:         setTimeout(() => {\n   614:             refreshVentilationForRoom(roomId);\n   615:         }, 6);",
+      "function_context": "updateSolutionTable"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\ventilacao.js",
+      "line": 767,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   765:     \n   766:     if (!window.systemConstants) {\n>> 767:         setTimeout(() => refreshVentilationForRoom(roomId), 62);\n   768:         return;\n   769:     }",
+      "function_context": "setupMachinesObserver"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\ventilacao.js",
+      "line": 944,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   942:     }\n   943:     \n>> 944:     setTimeout(() => {\n   945:         setupVentilationForRoom(roomId);\n   946:     }, 12);",
+      "function_context": "buildVentilacaoSection"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\utils\\core-utils.js",
+      "line": 33,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   31:             }\n   32:             \n>> 33:             setTimeout(check, 12);\n   34:         }\n   35:         ",
+      "function_context": "check"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\machines\\capacity-calculator.js",
+      "line": 500,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   498:                 \n   499:                 // Restaura o onchange após um breve delay\n>> 500:                 setTimeout(() => {\n   501:                     input.onchange = originalOnChange;\n   502:                 }, 12);",
+      "function_context": "syncBackupWithClimaInputs"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\machines\\capacity-calculator.js",
+      "line": 514,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   512:  */\n   513: function syncCapacityTableBackup(roomId) {\n>> 514:   setTimeout(() => {\n   515:     const backupFromInputs = getBackupFromClimaInputs(roomId);\n   516:     const capacityTable = document.querySelector(`#room-content-${roomId} .capacity-calculation-table`);",
+      "function_context": "syncCapacityTableBackup"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\modules\\machines\\machines-core.js",
+      "line": 721,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   719:         \n   720:         if (window.refreshVentilationForRoom) {\n>> 721:             setTimeout(() => {\n   722:                 window.refreshVentilationForRoom(roomId);\n   723:             }, 100);",
+      "function_context": "executeAutoCapacitySelection"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\data-fillers.js",
+      "line": 131,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   129: \n   130:         // Configurar sincronizações\n>> 131:         setTimeout(() => {\n   132:             setupRoomTitleChangeListener(roomId);\n   133:             ",
+      "function_context": "fillClimatizationInputs"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\data-fillers.js",
+      "line": 141,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   139:         // Disparar cálculo final\n   140:         if (roomId && typeof calculateVazaoArAndThermalGains === 'function') {\n>> 141:             setTimeout(() => {\n   142:                 calculateVazaoArAndThermalGains(roomId);\n   143:             }, 37);",
+      "function_context": "fillClimatizationInputs"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\data-fillers.js",
+      "line": 380,
+      "timeout_ms": 18,
+      "is_variable": false,
+      "code": "   378:                     \n   379:                     lastSection = roomContent.querySelector('.section-block:last-child');\n>> 380:                     await new Promise(resolve => setTimeout(resolve, 18));\n   381:                 }\n   382:             }",
+      "function_context": "checkSection"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 102,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   100: \n   101:         lastSection.insertAdjacentHTML('afterend', machinesHTML);\n>> 102:         await new Promise(resolve => setTimeout(resolve, 12));\n   103:         \n   104:         // ✅ CORREÇÃO: Usar a nova função para encontrar a seção",
+      "function_context": "ensureMachinesSection"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 186,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   184:                         retryCount++;\n   185:                         console.log(`🔄 Tentativa ${retryCount}/3 para adicionar máquina ${machineData.tipo}`);\n>> 186:                         await new Promise(resolve => setTimeout(resolve, 12));\n   187:                     }\n   188:                 }",
+      "function_context": "fillMachinesData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 198,
+      "timeout_ms": 18,
+      "is_variable": false,
+      "code": "   196: \n   197:                 // Aguardar renderização completa\n>> 198:                 await new Promise(resolve => setTimeout(resolve, 18));\n   199: \n   200:                 // Encontrar a máquina mais recente",
+      "function_context": "fillMachinesData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 225,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   223: \n   224:             // Pequena pausa entre máquinas\n>> 225:             await new Promise(resolve => setTimeout(resolve, 12));\n   226:         }\n   227: ",
+      "function_context": "fillMachinesData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 294,
+      "timeout_ms": 31,
+      "is_variable": false,
+      "code": "   292:             \n   293:             // Aguarda o sistema carregar as capacidades\n>> 294:             await new Promise(resolve => setTimeout(resolve, 31));\n   295:         }\n   296: ",
+      "function_context": "populateMachineData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 308,
+      "timeout_ms": 18,
+      "is_variable": false,
+      "code": "   306:             aplicacaoSelect.dispatchEvent(changeEvent);\n   307:             \n>> 308:             await new Promise(resolve => setTimeout(resolve, 18));\n   309:         }\n   310: ",
+      "function_context": "populateMachineData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 323,
+      "timeout_ms": 18,
+      "is_variable": false,
+      "code": "   321:             \n   322:             while (powerSelect.disabled && attempts < maxAttempts) {\n>> 323:                 await new Promise(resolve => setTimeout(resolve, 18));\n   324:                 attempts++;\n   325:                 console.log(`⏳ Aguardando habilitação da capacidade... (${attempts}/${maxAttempts})`);",
+      "function_context": "populateMachineData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 348,
+      "timeout_ms": 31,
+      "is_variable": false,
+      "code": "   346:                     powerSelect.dispatchEvent(powerEvent);\n   347:                     \n>> 348:                     await new Promise(resolve => setTimeout(resolve, 31));\n   349:                 }\n   350:             }",
+      "function_context": "populateMachineData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 364,
+      "timeout_ms": 15,
+      "is_variable": false,
+      "code": "   362:             \n   363:             while (voltageSelect.disabled && attempts < maxAttempts) {\n>> 364:                 await new Promise(resolve => setTimeout(resolve, 15));\n   365:                 attempts++;\n   366:             }",
+      "function_context": "populateMachineData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 422,
+      "timeout_ms": 31,
+      "is_variable": false,
+      "code": "   420:         // =========================================================\n   421:         if (machineData.opcoesSelecionadas?.length) {\n>> 422:             await new Promise(resolve => setTimeout(resolve, 31));\n   423:             \n   424:             const optionsContainer = machineElement.querySelector('.options-grid');",
+      "function_context": "populateMachineData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\machine-renderer.js",
+      "line": 442,
+      "timeout_ms": 31,
+      "is_variable": false,
+      "code": "   440: \n   441:         if (machineData.configuracoesSelecionadas?.length) {\n>> 442:             await new Promise(resolve => setTimeout(resolve, 31));\n   443:             \n   444:             const configContainer = machineElement.querySelector('.config-grid');",
+      "function_context": "populateMachineData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 72,
+      "timeout_ms": 18,
+      "is_variable": false,
+      "code": "   70:         if (!obraCriada) return;\n   71: \n>> 72:         await new Promise(resolve => setTimeout(resolve, 18));\n   73: \n   74:         obraElement = document.querySelector(`[data-obra-id=\"${obraId}\"]`);",
+      "function_context": "populateObraData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 101,
+      "timeout_ms": 62,
+      "is_variable": false,
+      "code": "   99: \n   100:     if (typeof window.createEmptyProject !== 'function' || typeof window.createEmptyRoom !== 'function') {\n>> 101:         await new Promise(resolve => setTimeout(resolve, 62));\n   102: \n   103:         if (typeof window.createEmptyProject !== 'function' || typeof window.createEmptyRoom !== 'function') {",
+      "function_context": "populateObraData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 132,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   130:             await Promise.allSettled(projetosPromises);\n   131:             projetosPromises.length = 0;\n>> 132:             await new Promise(resolve => setTimeout(resolve, 12));\n   133:         }\n   134:     }",
+      "function_context": "populateObraData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 156,
+      "timeout_ms": 25,
+      "is_variable": false,
+      "code": "   154:         if (!projectCreated) return false;\n   155: \n>> 156:         await new Promise(resolve => setTimeout(resolve, 25));\n   157: \n   158:         const projectElement = await waitForElement(`[data-obra-id=\"${obraId}\"][data-project-id=\"${projectId}\"]`, 3000);",
+      "function_context": "processProjectAsync"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 237,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   235:                             window.addAdicionalConjunto(projectId);\n   236: \n>> 237:                             await new Promise(resolve => setTimeout(resolve, 6));\n   238: \n   239:                             const ultimoItem = container.querySelector('.adicional-item:last-child');",
+      "function_context": "populateServicosData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 257,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   255:                             window.addAdicionalValor(projectId);\n   256: \n>> 257:                             await new Promise(resolve => setTimeout(resolve, 6));\n   258: \n   259:                             const ultimoItem = container.querySelector('.adicional-item:last-child');",
+      "function_context": "populateServicosData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 270,
+      "timeout_ms": 6,
+      "is_variable": false,
+      "code": "   268:                             window.addAdicionalTexto(projectId);\n   269: \n>> 270:                             await new Promise(resolve => setTimeout(resolve, 6));\n   271: \n   272:                             const ultimoItem = container.querySelector('.adicional-item:last-child');",
+      "function_context": "populateServicosData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 280,
+      "timeout_ms": 12,
+      "is_variable": false,
+      "code": "   278:                     }\n   279: \n>> 280:                     await new Promise(resolve => setTimeout(resolve, 12));\n   281:                 }\n   282:             }",
+      "function_context": "populateServicosData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 296,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   294:     if (document.readyState === 'loading') {\n   295:         document.addEventListener('DOMContentLoaded', () => {\n>> 296:             setTimeout(atualizarTodosBotoesEmpresa, 125);\n   297:         });\n   298:     } else {",
+      "function_context": "populateServicosData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\obra-renderer.js",
+      "line": 299,
+      "timeout_ms": 125,
+      "is_variable": false,
+      "code": "   297:         });\n   298:     } else {\n>> 299:         setTimeout(atualizarTodosBotoesEmpresa, 125);\n   300:     }\n   301: }",
+      "function_context": "populateServicosData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\builders\\ui-folder\\project-renderer.js",
+      "line": 149,
+      "timeout_ms": 37,
+      "is_variable": false,
+      "code": "   147:         }\n   148:         \n>> 149:         await new Promise(resolve => setTimeout(resolve, 37));\n   150:     }\n   151: ",
+      "function_context": "populateProjectData"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\adapters\\obra-adapter-folder\\obra-data-loader.js",
+      "line": 70,
+      "timeout_ms": 5,
+      "is_variable": false,
+      "code": "   68:         \n   69:         // Aguardar micro-tick para DOM\n>> 70:         await new Promise(resolve => setTimeout(resolve, 5));\n   71:         \n   72:         // Carregar TODOS os dados em PARALELO ABSOLUTO",
+      "function_context": "loadObrasFromServer"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\adapters\\obra-adapter-folder\\obra-data-loader.js",
+      "line": 112,
+      "timeout_ms": 5,
+      "is_variable": false,
+      "code": "   110:         \n   111:         // 2. Aguardar DOM se estabilizar\n>> 112:         await new Promise(resolve => setTimeout(resolve, 5));\n   113:         \n   114:         // 3. Carregar TODOS os dados em paralelo",
+      "function_context": "loadSingleObra"
+    },
+    {
+      "file": "codigo\\public\\scripts\\01_Create_Obra\\data\\adapters\\obra-adapter-folder\\obra-data-loader.js",
+      "line": 160,
+      "timeout_ms": 5,
+      "is_variable": false,
+      "code": "   158:         if (!element && window.createEmptyObra) {\n   159:             await window.createEmptyObra(obraNome, obraId);\n>> 160:             await new Promise(resolve => setTimeout(resolve, 5));\n   161:             element = document.querySelector(`[data-obra-id=\"${obraId}\"]`);\n   162:         }",
+      "function_context": "loadSingleObra"
+    },
+    {
+      "file": "codigo\\public\\pages\\01_Create_Obras.html",
+      "line": 194,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   192: \n   193:             // Executa novamente após um delay para garantir\n>> 194:             setTimeout(highlightAndLockActivePage, 50);\n   195:         });\n   196:     </script>",
+      "function_context": "lockActivePageAdvanced"
+    },
+    {
+      "file": "codigo\\public\\pages\\03_Edit_data.html",
+      "line": 364,
+      "timeout_ms": 50,
+      "is_variable": false,
+      "code": "   362:         document.addEventListener('DOMContentLoaded', function () {\n   363:             highlightAndLockActivePage();\n>> 364:             setTimeout(highlightAndLockActivePage, 50);\n   365: \n   366:             // Carregar dados ao iniciar",
+      "function_context": "highlightAndLockActivePage"
+    },
+    {
+      "file": "codigo\\public\\pages\\03_Edit_data.html",
+      "line": 367,
+      "timeout_ms": 100,
+      "is_variable": false,
+      "code": "   365: \n   366:             // Carregar dados ao iniciar\n>> 367:             setTimeout(() => {\n   368:                 if (typeof loadData === 'function') {\n   369:                     loadData();",
+      "function_context": "highlightAndLockActivePage"
+    }
+  ]
+}

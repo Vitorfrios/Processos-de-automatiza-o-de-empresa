@@ -17,6 +17,7 @@
                 "area": 150,
                 "peDireito": 3,
                 "volume": "450.00",
+                "dissipacao": 1500,
                 "numPessoas": 1,
                 "pressurizacaoSetpoint": 25,
                 "setpointTemp": 25,
@@ -26,25 +27,39 @@
               },
               "maquinas": [
                 {
-                  "nome": "Filtro Cartucho-01A (2000m³/h)",
+                  "nome": "Filtro Cartucho-01A (4200m³/h)",
                   "tipo": "Filtro Cartucho",
-                  "potencia": "2000m³/h",
+                  "potencia": "4200m³/h",
                   "tensao": "",
-                  "quantidade": 5,
+                  "quantidade": 1,
                   "aplicacao_machines": "pressurizacao",
-                  "precoBase": 17200,
+                  "precoBase": 28400,
                   "opcoesSelecionadas": [],
                   "configuracoesSelecionadas": [],
-                  "precoTotal": 86000,
-                  "potenciaSelecionada": "2000m³/h",
+                  "precoTotal": 28400,
+                  "potenciaSelecionada": "4200m³/h",
                   "tipoSelecionado": "Filtro Cartucho"
+                },
+                {
+                  "nome": "Wall Mounted-01A (2TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "2TR",
+                  "tensao": "",
+                  "quantidade": 234,
+                  "aplicacao_machines": "climatizacao",
+                  "precoBase": 28503.4,
+                  "opcoesSelecionadas": [],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 6669795.6,
+                  "potenciaSelecionada": "2TR",
+                  "tipoSelecionado": "Wall Mounted"
                 }
               ],
               "capacidade": {
                 "fatorSeguranca": 10,
-                "capacidadeUnitaria": "\n                  1 TR2 TR3 TR4 TR5 TR7.5 TR10 TR12.5 TR15 TR20 TR25 TR30 TR\n                ",
-                "solucao": 4,
-                "solucaoBackup": 4,
+                "capacidadeUnitaria": 2,
+                "solucao": 2,
+                "solucaoBackup": 2,
                 "totalCapacidade": 4,
                 "folga": 33.3,
                 "backup": "n"
@@ -67,7 +82,28 @@
                 "total-ar-sensivel": 3328,
                 "total-ar-latente": 8465
               },
-              "acessorios": [],
+              "acessorios": [
+                {
+                  "id": "1772476126339r0xbqn88r",
+                  "aplicacao_Acessorio": "climatizacao",
+                  "tipo": "DF",
+                  "dimensao": "250",
+                  "quantidade": 1,
+                  "valor_unitario": 128,
+                  "valor_total": 128,
+                  "descricao": "DF"
+                },
+                {
+                  "id": "1772476890467ddetlvox4",
+                  "aplicacao_Acessorio": "exaustao_bateria",
+                  "tipo": "DF",
+                  "dimensao": "300",
+                  "quantidade": 100,
+                  "valor_unitario": 165,
+                  "valor_total": 16500,
+                  "descricao": "DF"
+                }
+              ],
               "dutos": [],
               "tubulacao": {
                 "conjuntos": [],

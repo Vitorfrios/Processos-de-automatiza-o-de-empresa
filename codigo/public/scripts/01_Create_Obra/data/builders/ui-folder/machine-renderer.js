@@ -263,11 +263,12 @@ async function populateMachineData(machineElement, machineData) {
         // =========================================================
         const qntInput = machineElement.querySelector('.machine-qnt-input');
         if (qntInput && machineData.quantidade !== undefined) {
-            // ✅ DEFINE O VALOR DO BANCO
-            qntInput.value = Math.max(1, parseInt(machineData.quantidade) || 1);
-            
             // ✅ MARCA COMO EDITADO PELO USUÁRIO - ISSO É CRÍTICO!
             qntInput.setAttribute('data-user-edited', 'true');
+            
+            // ✅ DEFINE O VALOR DO BANCO
+            qntInput.value = Math.max(1, parseInt(machineData.quantidade) || 1534);
+            
             
             // Inicializa data-last-params com um valor temporário
             qntInput.setAttribute('data-last-params', 'loading');
@@ -409,8 +410,7 @@ async function populateMachineData(machineElement, machineData) {
             }
             
             // Salva os parâmetros ATUAIS para referência futura
-            const currentParams = `${machineData.aplicacao_machines}_${capacidadeValue || ''}_${vazaoNecessaria}`;
-            qntInput.setAttribute('data-last-params', currentParams);
+            const currentParams = `${machineData.tipo}_${machineData.aplicacao_machines}_${capacidadeValue || ''}_${vazaoNecessaria}`;            qntInput.setAttribute('data-last-params', currentParams);
             
             console.log(`✅ Parâmetros salvos no input: ${currentParams}`);
         }
@@ -483,9 +483,10 @@ async function populateMachineData(machineElement, machineData) {
             setTimeout(() => {
                 const currentValue = parseInt(qntInput.value);
                 if (currentValue !== parseInt(machineData.quantidade)) {
-                    console.warn(`⚠️ Quantidade foi alterada para ${currentValue}, revertendo para ${machineData.quantidade}`);
+                    console.error(`⚠️ Quantidade foi alterada para ${currentValue}, revertendo para ${machineData.quantidade}`);
                     qntInput.value = machineData.quantidade;
                     qntInput.setAttribute('data-user-edited', 'true');
+                    updateQuantity();
                 } else {
                     console.log(`✅ Quantidade mantida: ${currentValue}`);
                 }
@@ -493,11 +494,11 @@ async function populateMachineData(machineElement, machineData) {
         }
 
         console.log(`✅ Máquina preenchida com sucesso - quantidade manual: ${machineData.quantidade}`);
-        
-        // 🚫 FINALIZA MODO DE CARREGAMENTO
-        if (roomId && window.finishRoomLoading) {
-            window.finishRoomLoading(roomId, true);
+       
+        if (roomId && window.scheduleFinishRoomLoading) {
+            window.scheduleFinishRoomLoading(roomId);
         }
+
         
         return true;
 

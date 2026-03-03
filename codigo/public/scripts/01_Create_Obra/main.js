@@ -128,7 +128,7 @@ function showSystemNotLoadedMessage() {
         if (tempMessage.parentNode) {
             tempMessage.parentNode.removeChild(tempMessage);
         }
-    }, 156);
+    }, 400);
 }
 
 /**
@@ -404,7 +404,7 @@ function handleInitializationError(error) {
       if (window.showSystemStatus) {
         window.showSystemStatus("Sistema carregado com avisos", "error");
       }
-    }, 250);
+    }, 600);
   }
 }
 
@@ -672,7 +672,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.log("🔍 Verificando sessão existente...");
     const hasExistingSession = await checkAndLoadExistingSession();
     
-    // ... resto do código continua igual ...
     
     if (!hasExistingSession) {
       console.log("📭 Nenhuma sessão existente - sistema começa vazio");
@@ -691,7 +690,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     setTimeout(() => {
         checkSystemLoaded();
         finalSystemDebug();
-    }, 62);
+    }, 100);
     
     // ✅ Verificar funções críticas após inicialização completa
     setTimeout(verifyCriticalFunctions, 125);
@@ -700,7 +699,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     // Aguardar 500ms para garantir que o DOM está pronto e outros módulos carregaram
     setTimeout(() => {
         initializeFilterSystem();
-    }, 31);
+    }, 250);
     
   } catch (error) {
     handleInitializationError(error);

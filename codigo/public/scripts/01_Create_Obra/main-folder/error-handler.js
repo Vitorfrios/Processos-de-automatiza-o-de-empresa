@@ -7,6 +7,8 @@
  * Mostra mensagem amigável quando o servidor está offline
  */
 export function showServerOfflineMessage() {
+    let countdown = 20;
+
     console.log("🔄 Mostrando mensagem de servidor offline...");
     
     const existingMessage = document.getElementById('server-offline-message');
@@ -101,7 +103,7 @@ export function showServerOfflineMessage() {
                         line-height: 1.4;
                         display: block;
                     ">
-                        ⏳ Esta janela será fechada automaticamente em <strong id="countdown">10</strong> segundos...
+                        ⏳ Esta janela será fechada automaticamente em <strong id="countdown">${countdown}</strong> segundos...
                     </small>
                 </div>
             </p>
@@ -140,7 +142,6 @@ export function showServerOfflineMessage() {
     `;
     document.head.appendChild(style);
     
-    let countdown = 10;
     const countdownElement = document.getElementById('countdown');
     const countdownInterval = setInterval(() => {
         countdown--;
@@ -151,11 +152,9 @@ export function showServerOfflineMessage() {
             clearInterval(countdownInterval);
             window.close();
         }
-    }, 800);
+    }, 1000);
     
-    setTimeout(() => {
-        window.close();
-    }, 750);
+
 }
 
 /**

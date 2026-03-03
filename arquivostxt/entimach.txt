@@ -1,2300 +1,1079 @@
 
-/* ==== INÍCIO: data/modules/machines/machines-core.js ==== */
+/* ==== INÍCIO: features/managers/obra-folder/obra-creator.js ==== */
+import { getNextObraNumber } from '../../../data/utils/data-utils.js';
+import { generateObraId } from '../../../data/utils/id-generator.js';
+
 /**
- * data/modules/machines/machines-core.js
- * Sistema unificado de máquinas - COM NOMENCLATURA AUTOMÁTICA
- * Versão SIMPLIFICADA com preenchimento automático de quantidade
+ * 🏗️ FUNÇÕES DE CONSTRUÇÃO DE INTERFACE - FONTE ÚNICA
  */
 
-import { updateElementText, safeNumber } from '../../utils/core-utils.js';
-import { generateMachineId } from '../../utils/id-generator.js';
-// =============================================================================
-// CACHE E ESTADO GLOBAL
-// =============================================================================
+function buildObraHTML(obraName, obraId, hasId = false, isFromServer = false, obraData = null) {
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        obraId = generateObraId();
+    }
 
-if (typeof window !== 'undefined' && !window.machinesDataCache) {
-    window.machinesDataCache = null;
+    // VERIFICAR SE A OBRA TEM DADOS DE EMPRESA
+    let buttonText = "Adicionar campos de cadastro de empresas";
+    
+    if (isFromServer && obraData) {
+        // Verificar se tem dados de empresa
+        const temDadosEmpresa = obraData.empresaSigla || 
+                                obraData.empresa_id || 
+                                obraData.numeroClienteFinal;
+        
+        if (temDadosEmpresa) {
+            buttonText = "Visualizar campos de cadastro de empresas";
+        }
+    }
+
+    return `
+    <div class="obra-block" data-obra-id="${obraId}" data-obra-name="${obraName}">
+        <div class="obra-header">
+            <button class="minimizer" onclick="toggleObra('${obraId}', event)">+</button>
+            <h2 class="obra-title compact-title editable-title" data-editable="true" onclick="makeEditable(this, 'obra')">${obraName}</h2>
+            <div class="obra-header-spacer"></div>
+            <div class="obra-actions">
+                <button class="btn btn-delete" onclick="window.deleteObra('${obraName}', '${obraId}')">Remover Obra</button>
+            </div>
+        </div>
+
+        <div class="obra-content collapsed" id="obra-content-${obraId}">
+            <div class="projetc-header-record very-dark">
+                <button class="btn-empresa-cadastro" onclick="window.ativarCadastroEmpresa('${obraId}')">
+                    ${buttonText}
+                </button>
+            </div>
+            <div class="projects-container" id="projects-${obraId}">
+                <!-- A mensagem será removida quando projetos forem adicionados -->
+                <p class="empty-message">Nenhum projeto adicionado ainda. Adicione o primeiro projeto!</p>
+            </div>
+            
+            <!-- Seção para adicionar projeto com total da obra -->
+            <div class="add-project-section">
+                <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraId}')">+ Adicionar Projeto</button>
+                
+                <!-- Span com valor total da obra -->
+                <span class="obra-total-value" id="total-obra-valor-${obraId}" 
+                      data-obra-id="${obraId}" 
+                      title="Valor total da obra (soma de todos os projetos)">
+                    R$ 0,00
+                </span>
+            </div>
+            
+            ${buildObraActionsFooter(obraId, obraName, hasId)} 
+        </div>
+    </div>
+    `;
 }
 
-// =============================================================================
-// FUNÇÕES CORE UNIFICADAS
-// =============================================================================
+function buildObraActionsFooter(obraId, _obraName, hasId = false) {
+    console.log('=== DEBUG buildObraActionsFooter ===');
+    console.log('obraId:', obraId);
+    console.log('hasId:', hasId);
+    console.log('typeof hasId:', typeof hasId);
+    
+    // Converter hasId para booleano de forma robusta
+    const hasIdBool = Boolean(hasId) && 
+                     hasId !== 'false' && 
+                     hasId !== '0' && 
+                     hasId !== '' && 
+                     hasId !== null && 
+                     hasId !== undefined;
+    
+    console.log('hasIdBool:', hasIdBool);
+    console.log('buttonText:', hasIdBool ? "Atualizar Obra" : "Salvar Obra");
+    
+    const buttonText = hasIdBool ? "Atualizar Obra" : "Salvar Obra";
+    const buttonClass = hasIdBool ? "btn-update" : "btn-save";
 
-/**
- * Carrega dados das máquinas com cache
- */
-async function loadMachinesData() {
-    if (window.machinesDataCache?.machines?.length) {
-        return window.machinesDataCache;
+    const html = `
+    <div class="obra-actions-footer">
+        <button class="btn btn-verify" onclick="verifyObraData('${obraId}')">Verificar Dados</button>
+        <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraId}')">${buttonText}</button>
+        ${hasIdBool ? `
+        <button class="btn btn-download" onclick="downloadWord('${obraId}')" style="background-color: blue; color: white;">Baixar Word</button>
+        ` : ''}
+    </div>
+    `;
+    
+    console.log('HTML gerado:', html);
+    return html;
+}
+
+async function insertObraIntoDOM(obraHTML, obraId, hasProjects = false) {
+    const projectsContainer = document.getElementById("projects-container");
+
+    if (!projectsContainer) {
+        const mainContent = document.querySelector('main, body');
+        if (mainContent) {
+            const newContainer = document.createElement('div');
+            newContainer.id = 'projects-container';
+            newContainer.innerHTML = '<!-- Hierarquia: Obra → Projeto → Sala -->';
+            mainContent.appendChild(newContainer);
+            return insertObraIntoDOM(obraHTML, obraId, hasProjects);
+        }
+        return false;
     }
 
     try {
-        const response = await fetch('/machines');
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        projectsContainer.insertAdjacentHTML("beforeend", obraHTML);
 
-        const data = await response.json();
-        const machinesData = { machines: Array.isArray(data) ? data : data.machines };
+        setTimeout(() => {
+            const obraInserida = document.querySelector(`[data-obra-id="${obraId}"]`);
+            if (obraInserida) {
+                // Remove mensagem se a obra já tem projetos
+                if (hasProjects) {
+                    const emptyMessage = obraInserida.querySelector('.empty-message');
+                    if (emptyMessage) {
+                        emptyMessage.remove();
+                    }
+                }
 
-        window.machinesDataCache = machinesData;
-        window.machinesData = machinesData.machines;
-        return machinesData;
-
-    } catch (error) {
-        console.error("❌ Erro ao carregar máquinas:", error);
-        return window.machinesDataCache || { machines: [] };
-    }
-}
-
-    // =============================================================================
-// HANDLERS DE EVENTOS PARA VENTILAÇÃO
-// =============================================================================
-
-/**
- * DISPARA EVENTO QUANDO UM CAMPO DE MÁQUINA É ALTERADO
- */
-function notifyMachineFieldChange(machineId, fieldType) {
-    // Chama diretamente o handler se disponível
-    if (window.handleMachineFieldChange) {
-        window.handleMachineFieldChange(machineId, fieldType);
-    }
-    
-    // Também dispara evento customizado
-    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-    const roomId = machineElement?.dataset.roomId;
-    
-    if (roomId) {
-        const event = new CustomEvent('machineFieldChanged', { 
-            detail: { 
-                machineId: machineId, 
-                roomId: roomId,
-                fieldType: fieldType
-            } 
-        });
-        window.dispatchEvent(event);
-    }
-}
-
-
-
-
-// =============================================================================
-// SISTEMA DE NOMENCLATURA AUTOMÁTICA
-// =============================================================================
-
-/**
- * 🆕 GERA NOME AUTOMÁTICO APENAS QUANDO TIPO E CAPACIDADE ESTÃO SELECIONADOS
- */
-function generateMachineName(machineType, roomId, currentMachineId = null) {
-    console.log(`🔤 Gerando nome automático para ${machineType} na sala ${roomId}`);
-
-    const container = document.getElementById(`machines-${roomId}`);
-    if (!container) return machineType;
-
-    const existingMachines = Array.from(container.querySelectorAll('.climatization-machine'));
-    const allMachinesData = [];
-
-    existingMachines.forEach(machine => {
-        const machineId = machine.dataset.machineId;
-        const typeSelect = machine.querySelector('.machine-type-select');
-        const powerSelect = machine.querySelector('.machine-power-select');
-
-        if (typeSelect && typeSelect.value === machineType && powerSelect && powerSelect.value) {
-            allMachinesData.push({
-                machineId: machineId,
-                type: typeSelect.value,
-                power: powerSelect.value,
-                capacityValue: getGenericCapacityValue(powerSelect.value)
-            });
-        }
-    });
-
-    if (currentMachineId && machineType) {
-        const currentMachineElement = document.querySelector(`[data-machine-id="${currentMachineId}"]`);
-        const powerSelect = currentMachineElement?.querySelector('.machine-power-select');
-        const currentPower = powerSelect ? powerSelect.value : '';
-
-        if (currentPower) {
-            allMachinesData.push({
-                machineId: currentMachineId,
-                type: machineType,
-                power: currentPower,
-                capacityValue: getGenericCapacityValue(currentPower),
-                isNew: true
-            });
-        } else {
-            return machineType;
-        }
-    }
-
-    if (allMachinesData.length === 0) {
-        return machineType;
-    }
-
-    allMachinesData.sort((a, b) => b.capacityValue - a.capacityValue);
-
-    const capacityGroups = {};
-    allMachinesData.forEach(machine => {
-        const capacityKey = machine.power;
-        if (!capacityGroups[capacityKey]) {
-            capacityGroups[capacityKey] = [];
-        }
-        capacityGroups[capacityKey].push(machine);
-    });
-
-    const sortedGroups = Object.entries(capacityGroups)
-        .sort(([, groupA], [, groupB]) => {
-            const capacityA = groupA[0].capacityValue;
-            const capacityB = groupB[0].capacityValue;
-            return capacityB - capacityA;
-        });
-
-    let groupNumber = 1;
-    const newNames = {};
-
-    sortedGroups.forEach(([capacityKey, machines]) => {
-        machines.sort((a, b) => a.machineId.localeCompare(b.machineId));
-
-        machines.forEach((machine, index) => {
-            const letter = String.fromCharCode(65 + index);
-            const newName = `${machineType}-${groupNumber.toString().padStart(2, '0')}${letter} (${machine.power})`;
-            newNames[machine.machineId] = newName;
-        });
-
-        groupNumber++;
-    });
-
-    if (currentMachineId) {
-        return newNames[currentMachineId] || machineType;
-    } else {
-        Object.entries(newNames).forEach(([machineId, newName]) => {
-            const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-            if (machineElement) {
-                const titleInput = machineElement.querySelector('.machine-title-editable');
-                if (titleInput && titleInput.value !== newName) {
-                    titleInput.value = newName;
+                // Inicializa o total da obra após inserção
+                if (window.obraTotalManager && typeof window.obraTotalManager.initializeObraTotal === 'function') {
+                    setTimeout(() => {
+                        window.obraTotalManager.initializeObraTotal(obraId);
+                    }, 37);
                 }
             }
-        });
-    }
-}
+        }, 50);
 
-/**
- * 🆕 OBTÉM VALOR NUMÉRICO DA CAPACIDADE PARA ORDENAÇÃO
- */
-function getGenericCapacityValue(powerText) {
-    if (!powerText) return 0;
-
-    try {
-        const numericMatch = powerText.match(/(\d+[.,]?\d*)/);
-        if (numericMatch) {
-            return parseFloat(numericMatch[0].replace(',', '.'));
-        }
-        return 0;
-    } catch (error) {
-        console.error('Erro ao obter capacidade:', error);
-        return 0;
-    }
-}
-
-// =============================================================================
-// FUNÇÃO PRINCIPAL PARA CONTROLE DE QUANTIDADE
-// =============================================================================
-
-/**
- * 🆕 ATUALIZA QUANTIDADE COM BASE NA APLICAÇÃO
- * Se aplicação for "climatizacao" → preenche com valor do backup
- * Se não → MANTÉM a quantidade atual (não altera)
- */
-function handleAplicacaoChange(machineId) {
-    console.log(`🔄 Aplicação alterada na máquina ${machineId}`);
-    
-    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-    if (!machineElement) return;
-    
-    const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
-    const qntInput = machineElement.querySelector('.machine-qnt-input');
-    const roomId = machineElement.dataset.roomId;
-    
-    if (!aplicacaoSelect || !qntInput || !roomId) return;
-    
-    const aplicacao = aplicacaoSelect.value;
-    const quantidadeAtual = qntInput.value;
-    
-    console.log(`   - Aplicação selecionada: ${aplicacao}`);
-    console.log(`   - Quantidade atual: ${quantidadeAtual}`);
-    
-    if (aplicacao === "climatizacao") {
-        // Para climatização, tenta pegar do backup
-        const backupElement = document.getElementById(`solucao-backup-${roomId}`);
-        if (backupElement) {
-            const backupText = backupElement.textContent.trim();
-            const match = backupText.match(/(\d+)/);
-            if (match) {
-                const backupValue = parseInt(match[1]);
-                if (backupValue > 0) {
-                    qntInput.value = backupValue;
-                    console.log(`✅ Quantidade atualizada para ${backupValue} (backup: ${backupText})`);
-                }
-            }
-        }
-    } else {
-        // 🔥 IMPORTANTE: Para ventilação, NÃO ALTERA a quantidade
-        // A quantidade será controlada pelo módulo de ventilação
-        console.log(`🔧 É ventilação (${aplicacao}) - MANTENDO quantidade: ${quantidadeAtual}`);
-        // Não faz nada, mantém o valor atual
-    }
-    
-    calculateMachinePrice(machineId);
-    
-    // NOTIFICAR MUDANÇA
-    notifyMachineFieldChange(machineId, 'aplicacao');
-    
-    // DISPARA EVENTO PARA O MÓDULO DE VENTILAÇÃO
-    const event = new CustomEvent('machineChanged', { 
-        detail: { 
-            machineId: machineId, 
-            roomId: roomId,
-            changeType: 'aplicacao',
-            aplicacao: aplicacao
-        } 
-    });
-    window.dispatchEvent(event);
-}
-
-// =============================================================================
-// CONSTRUÇÃO DE UI UNIFICADA
-// =============================================================================
-
-/**
- * Constrói seção completa de máquinas
- */
-function buildMachinesSection(obraId, projectId, roomName, finalRoomId) {
-    if (!finalRoomId) return '';
-
-    return `
-    <div class="section-block">
-      <div class="section-header-machine">
-        <button class="minimizer" onclick="toggleSection('${finalRoomId}-maquinas')">+</button>
-        <h4 class="section-title">Máquinas</h4>
-      </div>
-      <div class="section-content collapsed" id="section-content-${finalRoomId}-maquinas">
-        <div class="machines-container" id="machines-${finalRoomId}">
-          <p class="empty-message">Nenhuma máquina adicionada ainda.</p>
-        </div>
-        <div class="add-machine">
-            <button class="btn btn-add-secondary" onclick="addMachine('${finalRoomId}')">+ Adicionar Máquina</button> 
-        </div>
-        <div class="all-machines-total-price">
-          <strong>Total de Maquinas: <span id="total-all-machines-price-${finalRoomId}">R$ 0,00</span></strong>
-        </div>
-      </div>
-    </div>`;
-}
-
-
-/**
- * Constrói HTML de máquina individual (modificado para incluir notificações)
- */
-function buildMachineHTML(machineId, displayName, machines, roomId) {
-    const machineTypes = machines.map(m => m.type);
-
-    return `
-    <div class="climatization-machine" data-machine-id="${machineId}" data-room-id="${roomId}">
-      <div class="machine-header">
-        <button class="minimizer" onclick="toggleMachineSection(this)">−</button>
-        <input type="text" class="machine-title-editable" id="title-${machineId}" value="${displayName}" 
-               onchange="updateMachineTitle(this, '${machineId}')" onclick="this.select()">
-        <button class="btn btn-delete-small" onclick="deleteMachine('${machineId}')">Remover</button>
-      </div>
-      <div class="machine-content" id="machine-content-${machineId}">
-        <div class="climatization-form-grid">
-          
-          ${buildFormGroup("Tipo:", `<select id="tipo-${machineId}" class="form-input machine-type-select" data-machine-id="${machineId}" onchange="updateMachineOptions(this)"><option value="">Selecionar</option>${machineTypes.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select>`)}
-          ${buildFormGroup("Aplicação:", `<select id="aplicacao-${machineId}" class="form-input machine-aplicacao-select" data-machine-id="${machineId}" onchange="handleAplicacaoChange('${machineId}')"><option value="">Selecionar</option><option value="climatizacao">Climatização</option><option value="pressurizacao">Pressurização</option><option value="exaustao_bateria">Exaustão da sala de bateria</option><option value="exaustao_baia_trafo">Exaustão da sala baia de trafo</option></select>`)}
-          ${buildFormGroup("Capacidade:", `<select id="capacidade-${machineId}" class="form-input machine-power-select" data-machine-id="${machineId}" onchange="handlePowerChange('${machineId}')" disabled><option value="">Selecionar</option></select>`)}
-          ${buildFormGroup("Tensão:", buildSelect([], machineId, "machine-voltage-select", `calculateMachinePrice('${machineId}')`, true))}
-          ${buildFormGroup("Qnt:", `<input id="solution-${machineId}" type="number" class="form-input machine-qnt-input" data-machine-id="${machineId}" min="1" value="1" onchange="updateQuantity('${machineId}')">`)}
-          ${buildFormGroup("Preço Base:", `<div class="price-display" id="base-price-${machineId}">R$ 0,00</div>`)}
-          ${buildFormGroup("Preço Total:", `<div class="price-display" id="total-price-${machineId}">R$ 0,00</div>`)}
-        </div>
-        <div class="machine-options-section">
-          <h6>Opções Adicionais:</h6>
-          <div class="options-grid" id="options-container-${machineId}">
-            <p class="empty-options-message">Selecione tipo e capacidade</p>
-          </div>
-        </div>
-        <div class="machine-config-section">
-            <h6>Configurações de Instalação:</h6>
-            <div class="config-grid" id="config-container-${machineId}">
-                <p class="empty-config-message">Selecione tipo e capacidade</p>
-            </div>
-        </div>
-      </div>
-    </div>`;
-}
-
-// =============================================================================
-// COMPONENTES UI REUTILIZÁVEIS
-// =============================================================================
-
-/**
- * Constrói grupo de formulário
- */
-function buildFormGroup(label, content) {
-    return `<div class="form-group"><label>${label}</label>${content}</div>`;
-}
-
-/**
- * Constrói elemento select
- */
-function buildSelect(options, machineId, className, onchangeHandler, disabled = false, selectedValue = '') {
-    const disabledAttr = disabled ? 'disabled' : '';
-    
-    const getOptionText = (value) => {
-        const mapping = {
-            "climatizacao": "Climatização",
-            "pressurizacao": "Pressurização",
-            "exaustao_bateria": "Exaustão da sala de bateria",
-            "exaustao_baia_trafo": "Exaustão da sala baia de trafo"
-        };
-        return mapping[value] || value;
-    };
-
-    const optionsHTML = options.map(opt => {
-        const optionText = getOptionText(opt);
-        return `<option value="${opt}" ${opt === selectedValue ? 'selected' : ''}>${optionText}</option>`;
-    }).join('');
-
-    return `
-    <select class="form-input ${className}" data-machine-id="${machineId}" 
-            onchange="${onchangeHandler}" ${disabledAttr}>
-      <option value="">Selecionar</option>${optionsHTML}
-    </select>`;
-}
-
-/**
- * Constrói opções da máquina
- */
-function buildOptionsHTML(options, machineId, selectedOptions = [], selectedPower = null) {
-    if (!options?.length) return '<p class="empty-options-message">Nenhuma opção disponível</p>';
-
-    return options.map(option => {
-        const isChecked = selectedOptions.some(selected => selected.id === option.id);
-        const optionValue = selectedPower && option.values?.[selectedPower] || 0;
-        const displayValue = `+R$ ${optionValue.toLocaleString("pt-BR")}`;
-
-        return `
-        <div class="option-item ${isChecked ? 'option-selected' : ''}" onclick="toggleOption('${machineId}', ${option.id})">
-          <div class="option-checkbox">
-            <input type="checkbox" value="${optionValue}" data-option-id="${option.id}" 
-                   data-option-name="${option.name}" id="option-${machineId}-${option.id}"
-                   onchange="updateOptionSelection('${machineId}', ${option.id}); calculateMachinePrice('${machineId}')"
-                   ${isChecked ? 'checked' : ''}>
-            <div class="option-content">
-              <div class="option-name">${option.name}</div>
-              <div class="option-price">${displayValue}</div>
-            </div>
-          </div>
-        </div>`;
-    }).join('');
-}
-
-/**
- * CONSTRÓI HTML DAS CONFIGURAÇÕES DE INSTALAÇÃO
- */
-function buildConfigHTML(configuracoes, machineId, configuracoesSelecionadas = [], potencia = '') {
-    if (!configuracoes || !Array.isArray(configuracoes) || configuracoes.length === 0) {
-        return '<p class="empty-config-message">Nenhuma configuração disponível</p>';
-    }
-
-    return configuracoes.map(config => {
-        const isSaved = configuracoesSelecionadas.some(savedConfig => {
-            if (typeof savedConfig === 'object') {
-                return savedConfig.id === config.id || savedConfig.nome === config.nome;
-            }
-            return savedConfig === config.id || savedConfig === config.nome;
-        });
-
-        const isChecked = isSaved;
-        const configName = config.nome;
-        const isBocalInsuflamento = configName === "Bocal de insuflamento protegido por grelha diretamente no ambiente";
-        const isBocalAcoplado = configName === "Bocal acoplado à rede de dutos por lona flexível. Distribuição por grelhas";
-        const isExclusiveGroup = isBocalInsuflamento || isBocalAcoplado;
-
-        return `
-        <div class="config-option ${isChecked ? 'config-selected' : ''} ${isExclusiveGroup ? 'exclusive-group' : ''}" 
-             onclick="toggleConfig('${machineId}', ${config.id})">
-            <div class="config-checkbox">
-                <input type="checkbox" data-config-id="${config.id}" 
-                       data-config-name="${configName}" 
-                       data-exclusive-group="${isExclusiveGroup ? 'bocal-distribuicao' : ''}"
-                       id="config-${machineId}-${config.id}"
-                       onchange="handleConfigChange('${machineId}', ${config.id})"
-                       ${isChecked ? 'checked' : ''}>
-                <div class="config-content">
-                    <div class="config-name">${configName}</div>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-// =============================================================================
-// GERENCIAMENTO DE MÁQUINAS
-// =============================================================================
-
-/**
- * Adiciona nova máquina COM NOME SIMPLES INICIAL
- */
-async function addMachine(roomId) {
-    const container = document.getElementById(`machines-${roomId}`);
-    if (!container) return;
-
-    const machineId = generateMachineId(roomId);
-    const machineCount = container.querySelectorAll(".climatization-machine").length;
-
-    try {
-        const machinesData = await loadMachinesData();
-        if (!machinesData.machines.length) throw new Error("Nenhum dado disponível");
-
-        const autoName = `Maquina ${machineCount + 1}`;
-        const machineHTML = buildMachineHTML(machineId, autoName, machinesData.machines, roomId);
-        container.insertAdjacentHTML("beforeend", machineHTML);
-
-        const emptyMsg = container.querySelector('.empty-message');
-        if (emptyMsg) emptyMsg.remove();
-
-        // 🔥 CONFIGURA OBSERVER PARA AGUARDAR SELEÇÃO DO TIPO
-        setupTypeSelectionObserver(machineId, roomId);
-
-        updateAllMachinesTotal(roomId);
-        
-        console.log(`✅ Máquina ${autoName} adicionada à sala ${roomId}`);
-        
-        // Dispara evento para o módulo de ventilação
-        const event = new CustomEvent('machineAdded', { 
-            detail: { 
-                machineId: machineId, 
-                roomId: roomId,
-                machineName: autoName 
-            } 
-        });
-        window.dispatchEvent(event);
-        
         return true;
     } catch (error) {
-        console.error("❌ Erro ao adicionar máquina:", error);
-        showEmptyMessage(container, "Erro ao carregar dados");
+        return false;
     }
 }
 
+async function createEmptyObra(obraName, obraId, isFromServer = false, hasProjects = false) {
+    const finalObraId = obraId || generateObraId();
+    const obraHTML = buildObraHTML(obraName, finalObraId, isFromServer, isFromServer);
 
-/**
- * 🔥 CONFIGURA OBSERVER PARA DETECTAR QUANDO O USUÁRIO SELECIONA O TIPO
- * CORRIGIDO: Pega a vazão da LINHA ESPECÍFICA da máquina na tabela 2
- */
-function setupTypeSelectionObserver(machineId, roomId) {
-    console.log(`👀 [OBSERVER] Configurando observer para máquina ${machineId}`);
-    
-    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-    if (!machineElement) return;
-    
-    const tipoSelect = machineElement.querySelector('.machine-type-select');
-    if (!tipoSelect) return;
-    
-    // Flag para garantir que executa apenas uma vez
-    let autoSelectExecuted = false;
-    
-    // Função que será chamada quando o tipo mudar
-    const handleTypeChange = function() {
-        // Só executa se:
-        // 1. Ainda não executou a seleção automática
-        // 2. Um tipo foi selecionado
-        if (autoSelectExecuted) {
-            console.log(`⏭️ [OBSERVER] Seleção automática já foi executada para máquina ${machineId}`);
-            return;
-        }
-        
-        if (!tipoSelect.value) {
-            console.log(`⏳ [OBSERVER] Aguardando seleção de tipo para máquina ${machineId}`);
-            return;
-        }
-        
-        console.log(`🎯 [OBSERVER] Tipo selecionado: ${tipoSelect.value} para máquina ${machineId}`);
-        
-        // 🔥 CORRIGIDO: Pega a vazão da LINHA ESPECÍFICA desta máquina na tabela 2
-        let vazaoNecessaria = null;
-        
-        // Tenta pegar da linha correspondente na tabela de solução
-        const solucaoBody = document.getElementById(`solucao-body-${roomId}`);
-        if (solucaoBody) {
-            // Procura a linha que corresponde a esta máquina
-            const linhas = solucaoBody.querySelectorAll('tr');
-            for (let linha of linhas) {
-                // Verifica se é a linha desta máquina (pode ter o machineId no data attribute)
-                if (linha.dataset.machineId === machineId) {
-                    const vazaoCell = linha.querySelector('.solution-flow');
-                    if (vazaoCell) {
-                        const text = vazaoCell.textContent.trim();
-                        const cleanText = text.replace(/\./g, '').replace(',', '.');
-                        vazaoNecessaria = parseFloat(cleanText);
-                        console.log(`📊 [OBSERVER] Vazão encontrada na linha da máquina: ${vazaoNecessaria} m³/h`);
-                    }
-                    break;
-                }
-            }
-            
-            // Se não encontrou pelo data attribute, pega a primeira linha como fallback
-            if (isNaN(vazaoNecessaria) || vazaoNecessaria <= 0) {
-                const primeiraLinha = solucaoBody.querySelector('tr');
-                if (primeiraLinha) {
-                    const vazaoCell = primeiraLinha.querySelector('.solution-flow');
-                    if (vazaoCell) {
-                        const text = vazaoCell.textContent.trim();
-                        const cleanText = text.replace(/\./g, '').replace(',', '.');
-                        vazaoNecessaria = parseFloat(cleanText);
-                        console.log(`📊 [OBSERVER] Vazão encontrada na primeira linha (fallback): ${vazaoNecessaria} m³/h`);
-                    }
-                }
-            }
-        }
-        
-        if (isNaN(vazaoNecessaria) || vazaoNecessaria <= 0) {
-            console.log(`⏳ [OBSERVER] Aguardando vazão válida para máquina ${machineId}. Atual: ${vazaoNecessaria}`);
-            
-            // Tenta novamente em 1 segundo
-            setTimeout(handleTypeChange, 1000);
-            return;
-        }
-        
-        // TUDO PRONTO! Executa a seleção automática
-        console.log(`✅ [OBSERVER] Condições atendidas! Vazão para máquina ${machineId}: ${vazaoNecessaria} m³/h`);
-        autoSelectExecuted = true;
-        
-        // Pequeno delay para garantir que o select de capacidade foi populado
+    const inserted = await insertObraIntoDOM(obraHTML, finalObraId, hasProjects);
+
+    if (inserted) {
         setTimeout(() => {
-            executeAutoCapacitySelection(machineId, roomId, vazaoNecessaria);
-        }, 300);
-    };
-    
-    // Remove listener anterior se existir
-    if (tipoSelect._autoSelectHandler) {
-        tipoSelect.removeEventListener('change', tipoSelect._autoSelectHandler);
-    }
-    
-    // Adiciona novo listener
-    tipoSelect._autoSelectHandler = handleTypeChange;
-    tipoSelect.addEventListener('change', handleTypeChange);
-    
-    // Verifica se o tipo já está selecionado
-    setTimeout(handleTypeChange, 500);
-}
+            const obraNoDOM = document.querySelector(`[data-obra-id="${finalObraId}"]`);
+            if (obraNoDOM) {
+                // Dispara evento para inicializar o total da obra
+                document.dispatchEvent(new CustomEvent('obraCreated', {
+                    detail: { obraId: finalObraId }
+                }));
 
-/**
- * 🔥 EXECUTA A SELEÇÃO AUTOMÁTICA DA CAPACIDADE
- * Usa a vazão específica da máquina
- */
-function executeAutoCapacitySelection(machineId, roomId, vazaoNecessaria) {
-    console.log(`🎯 [AUTO] Executando seleção de capacidade para máquina ${machineId}`);
-    console.log(`📊 [AUTO] Vazão necessária para esta máquina: ${vazaoNecessaria} m³/h`);
-    
-    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-    if (!machineElement) return;
-    
-    const tipoSelect = machineElement.querySelector('.machine-type-select');
-    if (!tipoSelect || !tipoSelect.value) {
-        console.log(`❌ [AUTO] Tipo não selecionado`);
-        return;
-    }
-    
-    const selectedType = tipoSelect.value;
-    const machine = window.machinesData?.find(m => m.type === selectedType);
-    if (!machine || !machine.baseValues) {
-        console.log(`❌ [AUTO] Dados da máquina não encontrados`);
-        return;
-    }
-    
-    // Extrai capacidades disponíveis
-    const capacityOptions = [];
-    Object.keys(machine.baseValues).forEach(cap => {
-        const match = cap.match(/(\d+[.,]?\d*)/);
-        if (match) {
-            const numericValue = parseFloat(match[0].replace(',', '.'));
-            capacityOptions.push({
-                text: cap,
-                value: numericValue,
-                originalText: cap
-            });
-        }
-    });
-    
-    capacityOptions.sort((a, b) => a.value - b.value);
-    
-    console.log(`📊 [AUTO] Capacidades disponíveis:`, capacityOptions.map(c => `${c.value} (${c.text})`));
-    
-    if (capacityOptions.length === 0) {
-        console.log(`❌ [AUTO] Nenhuma capacidade disponível`);
-        return;
-    }
-    
-    // Encontra a capacidade MAIS PRÓXIMA
-    let bestOption = capacityOptions[0];
-    let smallestDifference = Math.abs(capacityOptions[0].value - vazaoNecessaria);
-    
-    console.log(`📊 [AUTO] Comparando com vazão ${vazaoNecessaria}:`);
-    for (let i = 0; i < capacityOptions.length; i++) {
-        const diff = Math.abs(capacityOptions[i].value - vazaoNecessaria);
-        console.log(`   - ${capacityOptions[i].value} m³/h: diferença = ${diff.toFixed(2)} m³/h`);
-        
-        if (diff < smallestDifference) {
-            smallestDifference = diff;
-            bestOption = capacityOptions[i];
-        }
-    }
-    
-    console.log(`🎯 [AUTO] Capacidade MAIS PRÓXIMA: ${bestOption.value} m³/h (diferença: ${smallestDifference.toFixed(2)} m³/h)`);
-    
-    // Seleciona no dropdown
-    const powerSelect = machineElement.querySelector('.machine-power-select');
-    if (!powerSelect) return;
-    
-    powerSelect.disabled = false;
-    
-    // Procura a opção correspondente
-    let selected = false;
-    for (let i = 0; i < powerSelect.options.length; i++) {
-        const option = powerSelect.options[i];
-        if (option.text === bestOption.originalText || option.text === bestOption.text) {
-            powerSelect.value = option.value;
-            selected = true;
-            console.log(`✅ [AUTO] Opção selecionada: ${option.value} (${bestOption.value} m³/h)`);
-            break;
-        }
-    }
-    
-    if (!selected) {
-        // Fallback por valor numérico
-        for (let i = 0; i < powerSelect.options.length; i++) {
-            const option = powerSelect.options[i];
-            const optionMatch = option.text.match(/(\d+[.,]?\d*)/);
-            if (optionMatch) {
-                const optionValue = parseFloat(optionMatch[0].replace(',', '.'));
-                if (Math.abs(optionValue - bestOption.value) < 0.1) {
-                    powerSelect.value = option.value;
-                    selected = true;
-                    console.log(`✅ [AUTO] Opção selecionada por valor: ${option.value} (${optionValue} m³/h)`);
-                    break;
+                // Se for do servidor, atualiza botão de empresa
+                if (isFromServer && window.atualizarTextoBotaoEmpresa) {
+                    window.atualizarTextoBotaoEmpresa(finalObraId, "Visualizar campos de cadastro de empresas");
                 }
             }
-        }
+        }, 100);
     }
-    
-    if (selected) {
-        powerSelect.dispatchEvent(new Event('change', { bubbles: true }));
-        
-        const saldo = vazaoNecessaria - bestOption.value;
-        console.log(`📊 [AUTO] Saldo: ${Math.abs(saldo).toFixed(2)} m³/h (${saldo > 0 ? 'positivo' : saldo < 0 ? 'negativo' : 'zero'})`);
-        
-        const event = new CustomEvent('machineCapacityAutoSelected', { 
-            detail: { 
-                machineId: machineId, 
-                roomId: roomId,
-                capacity: bestOption.value,
-                vazao: vazaoNecessaria,
-                saldo: saldo,
-                difference: smallestDifference
-            } 
-        });
-        window.dispatchEvent(event);
-        
-        if (window.refreshVentilationForRoom) {
-            setTimeout(() => {
-                window.refreshVentilationForRoom(roomId);
-            }, 100);
-        }
-    } else {
-        console.log(`❌ [AUTO] Não foi possível selecionar a capacidade`);
+
+    return inserted;
+}
+
+/**
+ * 🚀 FUNÇÕES PRINCIPAIS DE GERENCIAMENTO
+ */
+
+async function addNewObra() {
+    try {
+        const obraNumber = getNextObraNumber();
+        const obraName = `Obra${obraNumber}`;
+        const obraId = generateObraId();
+
+        await createEmptyObra(obraName, obraId, false, false);
+
+        setTimeout(async () => {
+            if (typeof window.addNewProjectToObra === 'function') {
+                await window.addNewProjectToObra(obraId);
+                
+                // Atualiza o total da obra após criar projeto
+                if (window.obraTotalManager && typeof window.obraTotalManager.updateObraTotal === 'function') {
+                    setTimeout(() => {
+                        window.obraTotalManager.updateObraTotal(obraId);
+                    }, 62);
+                }
+            }
+        }, 150);
+
+    } catch (error) {
+        alert("Erro ao criar nova obra.");
     }
 }
 
+// Função para criação de obra a partir de dados do servidor
+async function createObraFromServer(obraData) {
+    try {
+        const obraName = obraData.nome;
+        const obraId = obraData.id;
 
+        await createEmptyObra(obraName, obraId, true);
 
-// =============================================================================
-// ATUALIZAÇÃO DE UI
-// =============================================================================
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
 
 /**
- * Atualiza opções da máquina
+ * 🔥 SISTEMA DE GERENCIAMENTO DE TOTAL DA OBRA - VERSÃO CORRIGIDA
  */
-async function updateMachineOptions(selectElement) {
-    const machineId = selectElement.dataset.machineId;
-    const selectedType = selectElement.value;
-
-    if (!selectedType) {
-        resetMachineFields(machineId);
-        
-        const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-        if (machineElement) {
-            const titleInput = machineElement.querySelector('.machine-title-editable');
-            const container = document.getElementById(`machines-${machineElement.dataset.roomId}`);
-            const machineCount = container ? container.querySelectorAll(".climatization-machine").length : 1;
-            
-            if (titleInput && !titleInput.value.includes('Maquina')) {
-                titleInput.value = `Maquina ${machineCount}`;
-            }
-        }
-        
-        // NOTIFICAR MUDANÇA
-        notifyMachineFieldChange(machineId, 'tipo');
-        return;
+class ObraTotalManager {
+    constructor() {
+        this.obraTotals = new Map();
+        this.initialized = new Set();
+        this.timeouts = {};
+        this.setupObservers();
     }
 
-    try {
-        const machinesData = window.machinesData || [];
-        const machine = machinesData.find(m => m.type === selectedType);
-
-        if (machine) {
-            updateMachineUI(machineId, machine);
-            
-            const aplicacaoSelect = document.querySelector(`.machine-aplicacao-select[data-machine-id="${machineId}"]`);
-            if (aplicacaoSelect) {
-                if (machine.type === "Tubo Axial") {
-                    aplicacaoSelect.value = "";
-                } else {
-                    const aplicacaoValue = machine.aplicacao;
-                    let mappedValue = aplicacaoValue;
-                    
-                    if (aplicacaoValue === "pressurizacao_ventilacao") {
-                        mappedValue = "pressurizacao";
-                    } else if (aplicacaoValue === "climatizacao") {
-                        mappedValue = "climatizacao";
-                    } else if (aplicacaoValue === "exaustao") {
-                        mappedValue = "";
-                    }
-                    
-                    const option = Array.from(aplicacaoSelect.options).find(opt => opt.value === mappedValue);
-                    if (option) {
-                        aplicacaoSelect.value = mappedValue;
-                        // SE FOR CLIMATIZAÇÃO, ATUALIZAR QUANTIDADE
-                        if (mappedValue === "climatizacao") {
-                            handleAplicacaoChange(machineId);
+    setupObservers() {
+        // 1. Observador de mutação SIMPLIFICADO
+        try {
+            const mutationObserver = new MutationObserver((mutations) => {
+                let shouldUpdate = false;
+                
+                mutations.forEach((mutation) => {
+                    // Verifica mudanças em texto
+                    if (mutation.type === 'characterData') {
+                        const target = mutation.target;
+                        if (target.nodeType === Node.TEXT_NODE) {
+                            const parent = target.parentElement;
+                            if (parent && this.isValueElement(parent)) {
+                                shouldUpdate = true;
+                            }
                         }
                     }
-                }
-            }
-            
-            const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-            if (machineElement) {
-                const powerSelect = machineElement.querySelector('.machine-power-select');
-                if (powerSelect && powerSelect.value) {
-                    const roomId = machineElement.dataset.roomId;
-                    const newName = generateMachineName(selectedType, roomId, machineId);
                     
-                    const titleInput = machineElement.querySelector('.machine-title-editable');
-                    if (titleInput) {
-                        titleInput.value = newName;
-                    }
-                } else {
-                    const titleInput = machineElement.querySelector('.machine-title-editable');
-                    if (titleInput) {
-                        titleInput.value = selectedType;
-                    }
-                }
-            }
-            
-            // 🔥 Dispara evento personalizado para notificar que o select foi populado
-            setTimeout(() => {
-                const event = new CustomEvent('machinePowerSelectPopulated', { 
-                    detail: { machineId: machineId }
-                });
-                window.dispatchEvent(event);
-            }, 100);
-
-        } else {
-            resetMachineFields(machineId);
-        }
-    } catch (error) {
-        console.error("❌ Erro em updateMachineOptions:", error);
-        resetMachineFields(machineId);
-    }
-    
-    // NOTIFICAR MUDANÇA
-    notifyMachineFieldChange(machineId, 'tipo');
-}
-
-/**
- * ATUALIZA UI COMPLETA DA MÁQUINA
- */
-function updateMachineUI(machineId, machine) {
-    const potencies = Object.keys(machine.baseValues || {});
-    const voltages = (machine.voltages || []).map(v => v.name);
-
-    updateSelectUI(`.machine-power-select[data-machine-id="${machineId}"]`, potencies, false);
-    updateSelectUI(`.machine-voltage-select[data-machine-id="${machineId}"]`, voltages, false);
-
-    const optionsContainer = document.getElementById(`options-container-${machineId}`);
-    if (optionsContainer) {
-        optionsContainer.innerHTML = machine.options?.length
-            ? buildOptionsHTML(machine.options, machineId)
-            : '<p class="empty-options-message">Nenhuma opção disponível</p>';
-    }
-
-    const configContainer = document.getElementById(`config-container-${machineId}`);
-    if (configContainer) {
-        if (machine.configuracoes_instalacao?.length) {
-            const configHTML = buildConfigHTML(machine.configuracoes_instalacao, machineId);
-            configContainer.innerHTML = '';
-            configContainer.insertAdjacentHTML('beforeend', configHTML);
-        } else {
-            configContainer.innerHTML = '<p class="empty-config-message">Nenhuma configuração disponível</p>';
-        }
-    }
-
-    updateElementText(`base-price-${machineId}`, 'R$ 0,00');
-    updateElementText(`total-price-${machineId}`, 'R$ 0,00');
-}
-
-/**
- * Atualiza select na UI
- */
-function updateSelectUI(selector, options, disabled = false) {
-    const select = document.querySelector(selector);
-    if (select) {
-        const getOptionText = (value) => {
-            const mapping = {
-                "climatizacao": "Climatização",
-                "pressurizacao": "Pressurização",
-                "exaustao_bateria": "Exaustão da sala de bateria",
-                "exaustao_baia_trafo": "Exaustão da sala baia de trafo"
-            };
-            return mapping[value] || value;
-        };
-
-        const optionsHTML = options.map(opt => {
-            const optionText = getOptionText(opt);
-            return `<option value="${opt}">${optionText}</option>`;
-        }).join('');
-        
-        select.innerHTML = `<option value="">Selecionar</option>${optionsHTML}`;
-        select.disabled = disabled;
-    }
-}
-
-/**
- * RESETA CAMPOS DA MÁQUINA
- */
-function resetMachineFields(machineId) {
-    updateSelectUI(`.machine-power-select[data-machine-id="${machineId}"]`, [], true);
-    updateSelectUI(`.machine-voltage-select[data-machine-id="${machineId}"]`, [], true);
-    
-    const aplicacaoSelect = document.querySelector(`.machine-aplicacao-select[data-machine-id="${machineId}"]`);
-    if (aplicacaoSelect) {
-        aplicacaoSelect.value = "";
-    }
-
-    const optionsContainer = document.getElementById(`options-container-${machineId}`);
-    if (optionsContainer) {
-        optionsContainer.innerHTML = '<p class="empty-options-message">Selecione um tipo de máquina</p>';
-    }
-
-    const configContainer = document.getElementById(`config-container-${machineId}`);
-    if (configContainer) {
-        configContainer.innerHTML = '<p class="empty-config-message">Selecione um tipo de máquina</p>';
-    }
-
-    updateElementText(`base-price-${machineId}`, 'R$ 0,00');
-    updateElementText(`total-price-${machineId}`, 'R$ 0,00');
-}
-
-// =============================================================================
-// CÁLCULOS DE PREÇO
-// =============================================================================
-
-/**
- * Atualiza a quantidade e recalcula o preço
- */
-function updateQuantity(machineId) {
-    const qntInput = document.querySelector(`.machine-qnt-input[data-machine-id="${machineId}"]`);
-    if (!qntInput) return;
-
-    const quantidade = Math.max(1, parseInt(qntInput.value) || 1);
-    qntInput.value = quantidade;
-
-    calculateMachinePrice(machineId);
-}
-
-/**
- * Calcula preço da máquina
- */
-function calculateMachinePrice(machineId) {
-    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-    if (!machineElement) return;
-
-    const typeSelect = machineElement.querySelector('.machine-type-select');
-    const powerSelect = machineElement.querySelector('.machine-power-select');
-    const voltageSelect = machineElement.querySelector('.machine-voltage-select');
-    const qntInput = machineElement.querySelector('.machine-qnt-input');
-
-    const selectedType = typeSelect?.value;
-    const selectedPower = powerSelect?.value;
-    const selectedVoltage = voltageSelect?.value;
-    const quantidade = qntInput ? parseInt(qntInput.value) || 1 : 1;
-
-    let basePrice = 0, voltageValue = 0;
-
-    if (selectedType && selectedPower && window.machinesData) {
-        const machine = window.machinesData.find(m => m.type === selectedType);
-        basePrice = machine?.baseValues?.[selectedPower] || 0;
-    }
-
-    if (selectedType && selectedVoltage && window.machinesData) {
-        const machine = window.machinesData.find(m => m.type === selectedType);
-        const voltageObj = machine?.voltages?.find(v => v.name === selectedVoltage);
-        voltageValue = voltageObj?.value || 0;
-    }
-
-    let optionsTotal = 0;
-    const optionsContainer = document.getElementById(`options-container-${machineId}`);
-    if (optionsContainer) {
-        optionsContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(option => {
-            optionsTotal += safeNumber(option.value);
-        });
-    }
-
-    const basePriceUnitario = basePrice + voltageValue;
-    const totalPriceUnitario = basePriceUnitario + optionsTotal;
-    const totalPriceFinal = totalPriceUnitario * quantidade;
-
-    updateElementText(`base-price-${machineId}`, `R$ ${basePriceUnitario.toLocaleString("pt-BR")}`);
-    updateElementText(`total-price-${machineId}`, `R$ ${totalPriceFinal.toLocaleString("pt-BR")}`);
-
-    const roomId = machineElement.dataset.roomId;
-    if (roomId) updateAllMachinesTotal(roomId);
-}
-
-/**
- * Atualiza valores das opções
- */
-function updateOptionValues(machineId) {
-    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-    if (!machineElement) return;
-
-    const typeSelect = machineElement.querySelector('.machine-type-select');
-    const powerSelect = machineElement.querySelector('.machine-power-select');
-
-    const selectedType = typeSelect?.value;
-    const selectedPower = powerSelect?.value;
-
-    if (!selectedType || !selectedPower || !window.machinesData) return;
-
-    const machine = window.machinesData.find(m => m.type === selectedType);
-    if (!machine?.options) return;
-
-    machine.options.forEach(option => {
-        const checkbox = document.getElementById(`option-${machineId}-${option.id}`);
-        if (checkbox) {
-            const optionValue = selectedPower && option.values?.[selectedPower] || 0;
-            checkbox.value = optionValue;
-
-            const priceDisplay = checkbox.closest('.option-item')?.querySelector('.option-price');
-            if (priceDisplay) {
-                priceDisplay.textContent = `+R$ ${optionValue.toLocaleString("pt-BR")}`;
-            }
-        }
-    });
-
-    calculateMachinePrice(machineId);
-}
-
-// =============================================================================
-// FUNÇÕES DE INTERAÇÃO DO USUÁRIO
-// =============================================================================
-
-function toggleMachineSection(button) {
-    const content = button.closest(".climatization-machine").querySelector(".machine-content");
-    const isCollapsed = content.classList.toggle("collapsed");
-    button.textContent = isCollapsed ? "+" : "−";
-}
-
-function updateMachineTitle(input, machineId) {
-    if (!input.value.trim()) {
-        const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-        const container = document.getElementById(`machines-${machineElement.dataset.roomId}`);
-        const machineCount = container ? container.querySelectorAll(".climatization-machine").length : 1;
-        
-        if (input && !input.value.includes('Maquina')) {
-            input.value = `Maquina ${machineCount}`;
-        }
-        
-        // NOTIFICAR MUDANÇA
-        notifyMachineFieldChange(machineId, 'title');
-    }
-}
-
-function toggleOption(machineId, optionId) {
-    const checkbox = document.getElementById(`option-${machineId}-${optionId}`);
-    if (checkbox) {
-        checkbox.checked = !checkbox.checked;
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-}
-
-function updateOptionSelection(machineId, optionId) {
-    const checkbox = document.getElementById(`option-${machineId}-${optionId}`);
-    const item = checkbox?.closest('.option-item');
-    if (item) {
-        item.classList.toggle('option-selected', checkbox.checked);
-    }
-}
-
-function handlePowerChange(machineId) {
-    calculateMachinePrice(machineId);
-    updateOptionValues(machineId);
-
-    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-    if (machineElement) {
-        const typeSelect = machineElement.querySelector('.machine-type-select');
-        const powerSelect = machineElement.querySelector('.machine-power-select');
-        const roomId = machineElement.dataset.roomId;
-
-        if (typeSelect && typeSelect.value && powerSelect && powerSelect.value) {
-            generateMachineName(typeSelect.value, roomId);
-        } else if (typeSelect && typeSelect.value && (!powerSelect || !powerSelect.value)) {
-            const titleInput = machineElement.querySelector('.machine-title-editable');
-            if (titleInput) {
-                titleInput.value = typeSelect.value;
-            }
-        }
-    }
-    
-    // NOTIFICAR MUDANÇA
-    notifyMachineFieldChange(machineId, 'capacidade');
-    
-    // DISPARA EVENTO PARA O MÓDULO DE VENTILAÇÃO
-    if (machineElement) {
-        const roomId = machineElement.dataset.roomId;
-        const event = new CustomEvent('machineChanged', { 
-            detail: { 
-                machineId: machineId, 
-                roomId: roomId,
-                changeType: 'power'
-            } 
-        });
-        window.dispatchEvent(event);
-    }
-}
-
-function deleteMachine(machineId) {
-    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-    if (!machineElement) return;
-
-    const roomId = machineElement.dataset.roomId;
-    const container = machineElement.closest(".machines-container");
-    const machineName = machineElement.querySelector('.machine-title-editable')?.value || 'Máquina';
-
-    machineElement.remove();
-
-    if (roomId) {
-        updateAllMachineNamesInRoom(roomId);
-        updateAllMachinesTotal(roomId);
-        
-        // NOTIFICAR MUDANÇA PARA ATUALIZAR VENTILAÇÃO
-        if (window.refreshVentilationForRoom) {
-            window.refreshVentilationForRoom(roomId);
-        }
-        
-        // DISPARA EVENTO PARA O MÓDULO DE VENTILAÇÃO
-        const event = new CustomEvent('machineRemoved', { 
-            detail: { 
-                machineId: machineId, 
-                roomId: roomId,
-                machineName: machineName 
-            } 
-        });
-        window.dispatchEvent(event);
-    }
-
-    if (container && container.querySelectorAll('.climatization-machine').length === 0) {
-        showEmptyMessage(container, "Nenhuma máquina adicionada ainda.");
-    }
-}
-
-
-function toggleConfig(machineId, configId) {
-    const checkbox = document.getElementById(`config-${machineId}-${configId}`);
-    if (checkbox) {
-        checkbox.checked = !checkbox.checked;
-        handleConfigChange(machineId, configId);
-    }
-}
-
-function updateConfigSelection(machineId, configId) {
-    const checkbox = document.getElementById(`config-${machineId}-${configId}`);
-    const item = checkbox?.closest('.config-option');
-    if (item) {
-        item.classList.toggle('config-selected', checkbox.checked);
-    }
-}
-
-function handleConfigChange(machineId, configId) {
-    const checkbox = document.getElementById(`config-${machineId}-${configId}`);
-    if (!checkbox) return;
-
-    updateConfigSelection(machineId, configId);
-
-    const isExclusiveGroup = checkbox.getAttribute('data-exclusive-group') === 'bocal-distribuicao';
-    if (isExclusiveGroup && checkbox.checked) {
-        deselectOtherBocalOptions(machineId, configId);
-    }
-
-    calculateMachinePrice(machineId);
-}
-
-function deselectOtherBocalOptions(machineId, selectedConfigId) {
-    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
-    if (!machineElement) return;
-
-    const bocalCheckboxes = machineElement.querySelectorAll('input[data-exclusive-group="bocal-distribuicao"]');
-
-    bocalCheckboxes.forEach(checkbox => {
-        const configId = parseInt(checkbox.getAttribute('data-config-id'));
-        if (configId !== selectedConfigId && checkbox.checked) {
-            checkbox.checked = false;
-            updateConfigSelection(machineId, configId);
-        }
-    });
-}
-
-// =============================================================================
-// FUNÇÕES AUXILIARES
-// =============================================================================
-
-function showEmptyMessage(container, message) {
-    const existing = container.querySelector('.empty-message');
-    if (existing) existing.remove();
-    container.insertAdjacentHTML('beforeend', `<p class="empty-message">${message}</p>`);
-}
-
-function removeEmptyMessage(container) {
-    const emptyMsg = container.querySelector('.empty-message');
-    if (emptyMsg) emptyMsg.remove();
-}
-
-function calculateAllMachinesTotal(roomId) {
-    const container = document.getElementById(`machines-${roomId}`);
-    if (!container) return 0;
-
-    let total = 0;
-    container.querySelectorAll('.climatization-machine').forEach(machineElement => {
-        const machineId = machineElement.dataset.machineId;
-        const priceElement = document.getElementById(`total-price-${machineId}`);
-        if (priceElement) {
-            const priceText = priceElement.textContent;
-            const cleanText = priceText.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
-            total += safeNumber(cleanText);
-        }
-    });
-
-    return total;
-}
-
-function updateAllMachinesTotal(roomId) {
-    const total = calculateAllMachinesTotal(roomId);
-    const display = document.getElementById(`total-all-machines-price-${roomId}`);
-    if (display) {
-        display.textContent = `R$ ${total.toLocaleString('pt-BR')}`;
-    }
-}
-
-function updateAllMachineNamesInRoom(roomId) {
-    const container = document.getElementById(`machines-${roomId}`);
-    if (!container) return;
-
-    const machines = Array.from(container.querySelectorAll('.climatization-machine'));
-    const machineTypes = new Set();
-
-    machines.forEach(machine => {
-        const typeSelect = machine.querySelector('.machine-type-select');
-        if (typeSelect && typeSelect.value) {
-            machineTypes.add(typeSelect.value);
-        }
-    });
-
-    machineTypes.forEach(type => {
-        generateMachineName(type, roomId);
-    });
-}
-
-// =============================================================================
-// EXPORTAÇÕES E GLOBAIS
-// =============================================================================
-
-export {
-    buildMachinesSection,
-    loadMachinesData,
-    addMachine,
-    buildMachineHTML,
-    toggleMachineSection,
-    updateMachineTitle,
-    updateMachineOptions,
-    updateMachineUI,
-    resetMachineFields,
-    calculateMachinePrice,
-    deleteMachine,
-    toggleOption,
-    updateOptionSelection,
-    updateOptionValues,
-    handlePowerChange,
-    calculateAllMachinesTotal,
-    updateAllMachinesTotal,
-    generateMachineId,
-    buildConfigHTML,
-    toggleConfig,
-    updateConfigSelection,
-    handleConfigChange,
-    deselectOtherBocalOptions,
-    buildOptionsHTML,
-    updateSelectUI,
-    showEmptyMessage,
-    removeEmptyMessage,
-    updateQuantity,
-    generateMachineName,
-    getGenericCapacityValue,
-    updateAllMachineNamesInRoom,
-    handleAplicacaoChange,
-    notifyMachineFieldChange
-};
-
-// 🆕 DISPONIBILIZAÇÃO GLOBAL SIMPLIFICADA
-if (typeof window !== 'undefined') {
-    window.handleAplicacaoChange = handleAplicacaoChange;
-    window.updateMachineOptions = updateMachineOptions;
-    window.calculateMachinePrice = calculateMachinePrice;
-    window.updateQuantity = updateQuantity;
-    window.deleteMachine = deleteMachine;
-    window.addMachine = addMachine;
-    window.toggleMachineSection = toggleMachineSection;
-    window.handlePowerChange = handlePowerChange;
-    window.generateMachineName = generateMachineName;
-    window.notifyMachineFieldChange = notifyMachineFieldChange;
-    window.updateMachineTitle = updateMachineTitle;
-    window.handleConfigChange = handleConfigChange;
-    window.updateOptionSelection = updateOptionSelection;
-
-    console.log('✅ Funções principais carregadas no escopo global');
-    
-}
-/* ==== FIM: data/modules/machines/machines-core.js ==== */
-
-/* ==== INÍCIO: data/modules/ventilacao.js ==== */
-/**
- * MÓDULO DE VENTILAÇÃO - INTEGRAÇÃO COM SISTEMA DE MÁQUINAS EXISTENTE
- * @module data/modules/ventilacao.js
- * 
- * CORRIGIDO: Agora recalcula a solução sempre que os parâmetros mudam,
- * mas respeita as edições manuais do usuário
- */
-
-// =============================================================================
-// CONSTANTES E CONFIGURAÇÕES
-// =============================================================================
-
-// Mapeamento aplicação → texto legível
-const APPLICATION_TEXT_MAP = {
-    'pressurizacao': 'Pressurização',
-    'exaustao_bateria': 'Exaustão da Sala de Bateria',
-    'exaustao_baia_trafo': 'Exaustão da Baia de Trafo'
-};
-
-// Aplicações válidas que disparam cálculos
-const VALID_APPLICATIONS = ['pressurizacao', 'exaustao_bateria', 'exaustao_baia_trafo'];
-
-// Fatores de conversão
-const FATOR_CONVERSAO_W_CAL = 859.85;
-const FATOR_PRESSURIZACAO = 3.6;
-
-// Store para controle por sala
-const ventilationState = new Map();
-
-
-// =============================================================================
-// CONTROLE DE CARREGAMENTO - EVITA RECÁLCULOS DURANTE PREENCHIMENTO
-// =============================================================================
-
-// Flag global para indicar que está em processo de carregamento
-window._isLoadingData = false;
-
-// Contador para rastrear quantas salas estão sendo carregadas
-window._loadingRooms = new Set();
-
-/**
- * Inicia o modo de carregamento para uma sala específica
- * @param {string} roomId - ID da sala
- */
-export function startRoomLoading(roomId) {
-    if (!window._loadingRooms) window._loadingRooms = new Set();
-    window._loadingRooms.add(roomId);
-    window._isLoadingData = true;
-    console.log(`🔄 [MODO CARREGAMENTO] Ativado para sala ${roomId}`);
-}
-
-/**
- * Finaliza o modo de carregamento para uma sala específica
- * @param {string} roomId - ID da sala
- * @param {boolean} triggerRefresh - Se deve disparar refresh após finalizar
- */
-export function finishRoomLoading(roomId, triggerRefresh = true) {
-    if (!window._loadingRooms) return;
-    
-    window._loadingRooms.delete(roomId);
-    
-    // Se não há mais salas carregando, desativa o flag global
-    if (window._loadingRooms.size === 0) {
-        window._isLoadingData = false;
-        console.log('🔄 [MODO CARREGAMENTO] Finalizado - todas as salas carregadas');
-    }
-    
-    // Dispara refresh se solicitado
-    if (triggerRefresh && window.refreshVentilationForRoom) {
-        setTimeout(() => {
-            window.refreshVentilationForRoom(roomId);
-        }, 12);
-    }
-}
-
-/**
- * Verifica se está em modo de carregamento para uma sala
- * @param {string} roomId - ID da sala
- * @returns {boolean}
- */
-export function isLoadingForRoom(roomId) {
-    return window._isLoadingData === true || 
-           (window._loadingRooms && window._loadingRooms.has(roomId));
-}
-
-// =============================================================================
-// FUNÇÕES UTILITÁRIAS
-// =============================================================================
-
-/**
- * OBTÉM CONSTANTES DO SISTEMA
- */
-function getSystemConstants() {
-    if (!window.systemConstants) {
-        throw new Error('window.systemConstants não disponível');
-    }
-
-    const Densi_ar = window.systemConstants.Densi_ar?.value;
-    const fatorEspecifico = window.systemConstants.fatorEspecifico?.value;
-
-    if (!Densi_ar || typeof Densi_ar !== 'number') {
-        throw new Error('Constante Densi_ar não encontrada');
-    }
-    if (!fatorEspecifico || typeof fatorEspecifico !== 'number') {
-        throw new Error('Constante fatorEspecifico não encontrada');
-    }
-
-    return { Densi_ar, fatorEspecifico };
-}
-
-/**
- * EXTRAI VALOR NUMÉRICO DO SELECT DE CAPACIDADE
- */
-export function extractCapacidadeValue(capacidadeValue) {
-    if (!capacidadeValue) return null;
-    const match = capacidadeValue.match(/^(\d+(?:\.\d+)?)/);
-    return match ? parseFloat(match[1]) : null;
-}
-
-/**
- * FORMATA NÚMERO PARA EXIBIÇÃO
- */
-function formatNumber(value, decimals = 2) {
-    if (value === null || value === undefined || isNaN(value)) return '-';
-    const formatted = value.toFixed(decimals).replace('.', ',');
-    const parts = formatted.split(',');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return parts.join(',');
-}
-
-/**
- * COLETA INPUTS TÉCNICOS DA SALA
- */
-function collectRoomInputs(roomId) {
-    console.log(`📊 [collectRoomInputs] Coletando inputs para sala ${roomId}`);
-    
-    const inputs = {};
-    
-    // Busca pelos elementos específicos
-    const vazaoArElement = document.getElementById(`vazao-ar-${roomId}`);
-    const volumeElement = document.getElementById(`volume-${roomId}`);
-    const potenciaElement = document.getElementById(`potencia-${roomId}`);
-    const tempInternaElement = document.getElementById(`temp-interna-${roomId}`);
-    const tempExternaElement = document.getElementById(`temp-externa-${roomId}`);
-    
-    // Para vazaoAr, pode ser um div com textContent ou um input
-    if (vazaoArElement) {
-        if (vazaoArElement.tagName === 'DIV' || vazaoArElement.classList.contains('result-value-inline')) {
-            inputs.vazaoAr = parseFloat(vazaoArElement.textContent);
-        } else if (vazaoArElement.tagName === 'INPUT') {
-            inputs.vazaoAr = parseFloat(vazaoArElement.value);
-        }
-    } else {
-        inputs.vazaoAr = null;
-    }
-    
-    inputs.volume = volumeElement ? parseFloat(volumeElement.value) : null;
-    inputs.potencia = potenciaElement ? parseFloat(potenciaElement.value) : null;
-    inputs.tempInterna = tempInternaElement ? parseFloat(tempInternaElement.value) : 45;
-    inputs.tempExterna = tempExternaElement ? parseFloat(tempExternaElement.value) : 35;
-    
-    return inputs;
-}
-
-// =============================================================================
-// FUNÇÕES DE CÁLCULO
-// =============================================================================
-
-/**
- * CALCULA VAZÃO POR APLICAÇÃO
- */
-function calculateVazaoByAplicacao(aplicacao, roomId, inputs) {
-    switch (aplicacao) {
-        case 'pressurizacao': {
-            if (!inputs.vazaoAr || isNaN(inputs.vazaoAr)) {
-                return null;
-            }
-            return inputs.vazaoAr * FATOR_PRESSURIZACAO;
-        }
-        
-        case 'exaustao_bateria': {
-            if (!inputs.volume || isNaN(inputs.volume)) {
-                return null;
-            }
-            return inputs.volume * 12;
-        }
-        
-        case 'exaustao_baia_trafo': {
-            if (!inputs.potencia || isNaN(inputs.potencia)) {
-                return null;
-            }
-            
-            const deltaT = inputs.tempInterna - inputs.tempExterna;
-            const deltaTAbs = Math.abs(deltaT);
-            
-            if (deltaTAbs === 0) {
-                return null;
-            }
-            
-            const constants = getSystemConstants();
-            const Q = inputs.potencia * FATOR_CONVERSAO_W_CAL;
-            const massaGR = Q / (constants.fatorEspecifico * deltaTAbs);
-            const massaAr = massaGR / 1000;
-            const vazao = massaAr / constants.Densi_ar;
-            
-            return deltaT < 0 ? -vazao : vazao;
-        }
-        
-        default:
-            return null;
-    }
-}
-
-// =============================================================================
-// ATUALIZAÇÃO DAS TABELAS
-// =============================================================================
-
-/**
- * ATUALIZA TABELA 1 - Cálculo Técnico
- */
-function updateTechnicalTable(roomId, inputs) {
-    const elements = {
-        q: document.getElementById(`q-cal-${roomId}`),
-        deltaT: document.getElementById(`delta-t-${roomId}`),
-        massaGrama: document.getElementById(`massa-gramas-${roomId}`),
-        massa: document.getElementById(`massa-ar-${roomId}`),
-        vazao: document.getElementById(`vazao-${roomId}`)
-    };
-    
-    // Se não tem potência, limpa resultados
-    if (!inputs.potencia || isNaN(inputs.potencia)) {
-        Object.values(elements).forEach(el => {
-            if (el) {
-                el.textContent = '-';
-                el.classList.remove('negative');
-            }
-        });
-        return;
-    }
-    
-    const deltaT = inputs.tempInterna - inputs.tempExterna;
-    const isDeltaTNegative = deltaT < 0;
-    const deltaTAbs = Math.abs(deltaT);
-    
-    try {
-        const constants = getSystemConstants();
-        const Q = inputs.potencia * FATOR_CONVERSAO_W_CAL;
-        
-        let massaGR, massaAr, vazao;
-        
-        if (deltaTAbs > 0) {
-            massaGR = Q / (constants.fatorEspecifico * deltaTAbs);
-            massaAr = massaGR / 1000;
-            vazao = massaAr / constants.Densi_ar;
-            
-            if (isDeltaTNegative) {
-                massaGR = -massaGR;
-                massaAr = -massaAr;
-                vazao = -vazao;
-            }
-        } else {
-            massaGR = 0;
-            massaAr = 0;
-            vazao = 0;
-        }
-        
-        if (elements.q) {
-            elements.q.textContent = formatNumber(Q);
-            elements.q.classList.remove('negative');
-        }
-        
-        if (elements.deltaT) {
-            elements.deltaT.textContent = formatNumber(deltaT, 1);
-            if (deltaT < 0) {
-                elements.deltaT.classList.add('negative');
-            } else {
-                elements.deltaT.classList.remove('negative');
-            }
-        }
-        
-        if (elements.massaGrama) {
-            elements.massaGrama.textContent = formatNumber(massaGR);
-            if (massaGR < 0) {
-                elements.massaGrama.classList.add('negative');
-            } else {
-                elements.massaGrama.classList.remove('negative');
-            }
-        }
-        
-        if (elements.massa) {
-            elements.massa.textContent = formatNumber(massaAr);
-            if (massaAr < 0) {
-                elements.massa.classList.add('negative');
-            } else {
-                elements.massa.classList.remove('negative');
-            }
-        }
-        
-        if (elements.vazao) {
-            elements.vazao.textContent = formatNumber(vazao);
-            if (vazao < 0) {
-                elements.vazao.classList.add('negative');
-            } else {
-                elements.vazao.classList.remove('negative');
-            }
-        }
-        
-    } catch (error) {
-        console.error('❌ Erro ao atualizar tabela técnica:', error);
-    }
-}
-
-/**
- * ATUALIZA TABELA 2 - Solução das Máquinas
- */
-function updateSolutionTable(roomId, inputs) {
-    // 🚫 BLOQUEIA SE ESTIVER CARREGANDO
-    if (window.isLoadingForRoom && window.isLoadingForRoom(roomId)) {
-        console.log(`⏸️ [updateSolutionTable] Bloqueado - sala ${roomId} em carregamento`);
-        return;
-    }
-    
-    const machinesContainer = document.getElementById(`machines-${roomId}`);
-    if (!machinesContainer) {
-        setTimeout(() => updateSolutionTable(roomId, inputs), 500);
-        return;
-    }
-    
-    
-    const tableBody = document.getElementById(`solucao-body-${roomId}`);
-    if (!tableBody) return;
-    
-    const machines = machinesContainer.querySelectorAll('.climatization-machine');
-    
-    // Limpa tabela
-    tableBody.innerHTML = '';
-    
-    let hasVentilationMachines = false;
-    
-    // Calcula a vazão necessária para a sala
-    let vazaoNecessaria = null;
-    let vazaoNecessariaAbs = null;
-    
-    // Pega a primeira máquina de ventilação para determinar a aplicação da sala
-    for (const machine of machines) {
-        const machineId = machine.dataset.machineId;
-        const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
-        if (!aplicacaoSelect) continue;
-        
-        const aplicacao = aplicacaoSelect.value;
-        if (VALID_APPLICATIONS.includes(aplicacao)) {
-            vazaoNecessaria = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
-            if (vazaoNecessaria !== null && !isNaN(vazaoNecessaria)) {
-                vazaoNecessariaAbs = Math.abs(vazaoNecessaria);
-            }
-            break;
-        }
-    }
-    
-    // Itera sobre todas as máquinas
-    machines.forEach(machine => {
-        const machineId = machine.dataset.machineId;
-        
-        const titleInput = document.getElementById(`title-${machineId}`);
-        const tipoSelect = document.getElementById(`tipo-${machineId}`);
-        const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
-        const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
-        const qntInput = document.getElementById(`solution-${machineId}`);
-        
-        if (!titleInput || !tipoSelect || !aplicacaoSelect || !capacidadeSelect || !qntInput) return;
-        
-        const aplicacao = aplicacaoSelect.value;
-        
-        // Pula se for climatização ou aplicação vazia
-        if (aplicacao === 'climatizacao' || !aplicacao) {
-            return;
-        }
-        
-        const aplicacaoTexto = APPLICATION_TEXT_MAP[aplicacao] || aplicacao;
-        const titulo = titleInput.value || 'Máquina sem nome';
-        const tipo = tipoSelect.options[tipoSelect.selectedIndex]?.text || 'Não definido';
-        
-        // Extrai capacidade
-        const capacidadeValue = extractCapacidadeValue(capacidadeSelect.value);
-        const capacidadeDisplay = capacidadeValue ? formatNumber(capacidadeValue) : '-';
-        
-        // Calcula vazão da máquina
-        let vazaoMaquinaDisplay = '-';
-        if (VALID_APPLICATIONS.includes(aplicacao)) {
-            const vazaoMaquina = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
-            if (vazaoMaquina !== null && !isNaN(vazaoMaquina)) {
-                vazaoMaquinaDisplay = formatNumber(Math.abs(vazaoMaquina));
-            }
-        }
-        
-        // 🔥 SISTEMA DE CONTROLE DE EDIÇÃO DO USUÁRIO - CORRIGIDO
-        // Inicializa o atributo se não existir
-        if (!qntInput.hasAttribute('data-user-edited')) {
-            qntInput.setAttribute('data-user-edited', 'false');
-        }
-        
-        // 🔥 CALCULA A SOLUÇÃO (valor teórico)
-        let solucaoNumerica = 1;
-        if (capacidadeValue && vazaoNecessariaAbs) {
-            solucaoNumerica = Math.ceil(vazaoNecessariaAbs / capacidadeValue);
-        }
-        
-        // 🔥 REGRA DE NEGÓCIO CORRIGIDA PARA QUANTIDADE:
-        // - Se NUNCA foi editado OU se os parâmetros mudaram: QUANTIDADE = SOLUÇÃO
-        // - Se JÁ foi editado E os parâmetros NÃO mudaram: MANTÉM valor manual
-        
-        // Verifica se os parâmetros críticos mudaram
-        const lastParams = qntInput.getAttribute('data-last-params') || '';
-        const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
-        
-        const userEdited = qntInput.getAttribute('data-user-edited') === 'true';
-        const paramsChanged = lastParams !== currentParams;
-        
-        // Se os parâmetros mudaram, o usuário precisa re-editar para manter o valor manual
-        if (paramsChanged) {
-            // 🔥 RESETA O FLAG DE EDIÇÃO QUANDO OS PARÂMETROS MUDAM
-            qntInput.setAttribute('data-user-edited', 'false');
-            
-            // Atualiza a quantidade para a nova solução
-            qntInput.value = solucaoNumerica;
-            
-            // Salva os novos parâmetros
-            qntInput.setAttribute('data-last-params', currentParams);
-            
-            console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} resetada para ${solucaoNumerica}`);
-            
-            // Recalcula preço
-            if (window.calculateMachinePrice) {
-                window.calculateMachinePrice(machineId);
-            }
-        } else if (!userEdited) {
-            // Se nunca foi editado e parâmetros não mudaram, usa a solução
-            const currentValue = parseInt(qntInput.value) || 1;
-            if (currentValue !== solucaoNumerica) {
-                qntInput.value = solucaoNumerica;
-                
-                if (window.calculateMachinePrice) {
-                    window.calculateMachinePrice(machineId);
-                }
-                
-                console.log(`📊 [Ventilação] Quantidade da máquina ${machineId} inicializada para ${solucaoNumerica}`);
-            }
-        }
-        
-        // Salva os parâmetros atuais se ainda não existirem
-        if (!qntInput.hasAttribute('data-last-params')) {
-            qntInput.setAttribute('data-last-params', currentParams);
-        }
-        
-        // Obtém a quantidade ATUAL (pode ser automática ou manual)
-        const quantidadeAtual = parseInt(qntInput.value) || 1;
-        
-        // 🔥 CALCULA PERDA E DISSIPAÇÃO com a quantidade ATUAL
-        let perdaDisplay = '-';
-        let dissipacaoDisplay = '-';
-        let dissipacaoClass = '';
-        
-        if (capacidadeValue && vazaoNecessariaAbs) {
-            // Perda = Capacidade * Quantidade ATUAL
-            const perdaValue = capacidadeValue * quantidadeAtual;
-            perdaDisplay = formatNumber(perdaValue);
-            
-            // Dissipação = Perda - Vazão Necessária
-            const dissipacaoValue = perdaValue - vazaoNecessariaAbs;
-            dissipacaoDisplay = formatNumber(dissipacaoValue);
-            
-            // 🔥 CORREÇÃO: Aplica classe CSS baseada no valor (negativo ou positivo)
-            if (dissipacaoValue < 0) {
-                dissipacaoClass = 'negative';
-            } else if (dissipacaoValue > 0) {
-                dissipacaoClass = 'positive';
-            } else {
-                dissipacaoClass = '';
-            }
-        }
-        
-        // Cria a linha da tabela - AGORA COM COLUNA "Qtd. Atual"
-        const row = document.createElement('tr');
-        row.dataset.machineId = machine.machineId;
-        
-        row.innerHTML = `
-            <td><span id="solucao-title-${machine.machineId}" class="solution-title">${titulo}</span></td>
-            <td><span id="solucao-tipo-${machine.machineId}" class="solution-type">${tipo}</span></td>
-            <td><span id="solucao-aplicacao-${machine.machineId}" class="solution-application">${aplicacaoTexto}</span></td>
-            <td><span id="solucao-capacidade-${machine.machineId}" class="solution-capacity">${capacidadeDisplay}</span></td>
-            <td><span id="solucao-qtd-${machine.machineId}" class="solution-quantity">${solucaoNumerica}</span></td>
-            <td><span id="solucao-vazao-${machine.machineId}" class="solution-flow">${vazaoMaquinaDisplay}</span></td>
-            <td><span id="solucao-qtd-atual-${machine.machineId}" class="solution-current-quantity" style="font-weight: bold; color: #2563eb;">${quantidadeAtual}</span></td>
-            <td><span id="solucao-perda-${machine.machineId}" class="solution-loss">${perdaDisplay}</span></td>
-            <td><span id="solucao-dissipacao-${machine.machineId}" class="solution-balance ${dissipacaoClass}">${dissipacaoDisplay}</span></td>
-        `;
-        
-        tableBody.appendChild(row);
-        hasVentilationMachines = true;
-    });
-    
-    // Mensagem se não há máquinas de ventilação
-    if (!hasVentilationMachines) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td colspan="9" style="text-align: center; padding: 20px; color: var(--color-gray-500);">
-                Nenhuma máquina com aplicação válida para ventilação
-            </td>
-        `;
-        tableBody.appendChild(row);
-    }
-    
-    if (window.updateAllMachinesTotal) {
-        window.updateAllMachinesTotal(roomId);
-    }
-}
-
-// =============================================================================
-// HANDLER DE EDIÇÃO MANUAL
-// =============================================================================
-
-/**
- * Handler para quando o usuário edita manualmente a quantidade
- */
-window.handleManualQuantityEdit = function(machineId) {
-    const qntInput = document.getElementById(`solution-${machineId}`);
-    const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
-    const roomId = machine?.dataset.roomId;
-    
-    if (!qntInput) return;
-    
-    // 🚫 SE ESTIVER CARREGANDO, NÃO MARCA COMO EDIÇÃO MANUAL
-    if (roomId && isLoadingForRoom(roomId)) {
-        console.log(`⏸️ [VENTILAÇÃO] Edição manual ignorada - sala ${roomId} em carregamento`);
-        return;
-    }
-    
-    // Marca que o usuário editou manualmente
-    qntInput.setAttribute('data-user-edited', 'true');
-    
-    // 🔥 SALVA OS PARÂMETROS ATUAIS PARA REFERÊNCIA FUTURA
-    if (roomId) {
-        const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
-        const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
-        
-        const aplicacao = aplicacaoSelect?.value || '';
-        const capacidadeValue = extractCapacidadeValue(capacidadeSelect?.value);
-        
-        // Calcula vazão necessária
-        const inputs = collectRoomInputs(roomId);
-        let vazaoNecessariaAbs = null;
-        
-        if (VALID_APPLICATIONS.includes(aplicacao)) {
-            const vazaoNecessaria = calculateVazaoByAplicacao(aplicacao, roomId, inputs);
-            if (vazaoNecessaria !== null && !isNaN(vazaoNecessaria)) {
-                vazaoNecessariaAbs = Math.abs(vazaoNecessaria);
-            }
-        }
-        
-        const currentParams = `${aplicacao}_${capacidadeValue}_${vazaoNecessariaAbs}`;
-        qntInput.setAttribute('data-last-params', currentParams);
-    }
-    
-    console.log(`📝 [Ventilação] Usuário editou manualmente quantidade da máquina ${machineId}`);
-    
-    // Dispara o recalculo da ventilação para atualizar perda/dissipação
-    if (roomId) {
-        setTimeout(() => {
-            refreshVentilationForRoom(roomId);
-        }, 6);
-    }
-    
-    if (window.calculateMachinePrice) {
-        window.calculateMachinePrice(machineId);
-    }
-};
-
-// =============================================================================
-// CONFIGURAÇÃO DE LISTENERS
-// =============================================================================
-
-/**
- * Configura listener para input de quantidade
- */
-function setupQuantityInputListener(machineId) {
-    const qntInput = document.getElementById(`solution-${machineId}`);
-    if (qntInput) {
-        // Remove listener antigo
-        if (qntInput._manualEditHandler) {
-            qntInput.removeEventListener('change', qntInput._manualEditHandler);
-            qntInput.removeEventListener('input', qntInput._manualEditHandler);
-        }
-        
-        // Adiciona novo handler
-        qntInput._manualEditHandler = function() {
-            window.handleManualQuantityEdit(machineId);
-        };
-        
-        qntInput.addEventListener('change', qntInput._manualEditHandler);
-        qntInput.addEventListener('input', qntInput._manualEditHandler);
-        
-        // Inicializa os atributos
-        if (!qntInput.hasAttribute('data-user-edited')) {
-            qntInput.setAttribute('data-user-edited', 'false');
-        }
-        if (!qntInput.hasAttribute('data-last-params')) {
-            qntInput.setAttribute('data-last-params', '');
-        }
-    }
-}
-
-/**
- * Configura listeners para inputs técnicos
- */
-function setupTechnicalListeners(roomId) {
-    const inputIds = [
-        `potencia-${roomId}`,
-        `temp-interna-${roomId}`,
-        `temp-externa-${roomId}`,
-        `vazao-ar-${roomId}`,
-        `volume-${roomId}`
-    ];
-    
-    inputIds.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            if (element._ventListener) {
-                element.removeEventListener('input', element._ventListener);
-                element.removeEventListener('change', element._ventListener);
-            }
-            
-            element._ventListener = () => refreshVentilationForRoom(roomId);
-            element.addEventListener('input', element._ventListener);
-            element.addEventListener('change', element._ventListener);
-        }
-    });
-    
-    // Configura listeners para inputs de quantidade
-    const machines = document.querySelectorAll(`[data-room-id="${roomId}"]`);
-    machines.forEach(container => {
-        const machineId = container.dataset.machineId;
-        if (machineId) {
-            setupQuantityInputListener(machineId);
-        }
-    });
-}
-
-/**
- * Configura observer para novas máquinas
- */
-function setupMachinesObserver(roomId) {
-    if (ventilationState.get(roomId)?.observer) return;
-    
-    const observer = new MutationObserver((mutations) => {
-        let shouldRefresh = false;
-        
-        mutations.forEach(mutation => {
-            if (mutation.type === 'childList') {
-                if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
-                    shouldRefresh = true;
-                    
-                    // Configura listeners para novas máquinas
-                    if (mutation.addedNodes.length > 0) {
+                    // Verifica adição/remoção de elementos
+                    if (mutation.type === 'childList') {
                         mutation.addedNodes.forEach(node => {
-                            if (node.nodeType === 1) {
-                                const newMachines = node.querySelectorAll('[data-machine-id]');
-                                newMachines.forEach(machine => {
-                                    const machineId = machine.dataset.machineId;
-                                    if (machineId) {
-                                        setupQuantityInputListener(machineId);
-                                    }
-                                });
+                            if (node.nodeType === Node.ELEMENT_NODE) {
+                                // Verifica se é elemento de valor
+                                if (this.isValueElement(node)) {
+                                    shouldUpdate = true;
+                                }
                             }
                         });
                     }
+                });
+                
+                if (shouldUpdate) {
+                    this.scheduleFullUpdate();
                 }
-            }
-            
-            if (mutation.type === 'attributes') {
-                const target = mutation.target;
-                if (target.id?.startsWith('aplicacao-') || 
-                    target.id?.startsWith('capacidade-') ||
-                    target.id?.startsWith('tipo-')) {
-                    shouldRefresh = true;
-                }
-            }
-        });
-        
-        if (shouldRefresh) {
-            refreshVentilationForRoom(roomId);
-        }
-    });
-    
-    const machinesContainer = document.getElementById(`machines-${roomId}`);
-    if (machinesContainer) {
-        observer.observe(machinesContainer, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['value']
-        });
-        
-        ventilationState.set(roomId, { observer });
-    }
-}
-
-// =============================================================================
-// FUNÇÃO PRINCIPAL DE REFRESH
-// =============================================================================
-
-window.refreshVentilationForRoom = function(roomId) {
-    // 🚫 BLOQUEIA CÁLCULOS DURANTE CARREGAMENTO
-    if (isLoadingForRoom(roomId)) {
-        console.log(`⏸️ [VENTILAÇÃO] Cálculo bloqueado - sala ${roomId} em carregamento`);
-        return;
-    }
-    
-    if (!roomId || !roomId.includes('_proj_') || !roomId.includes('_sala_')) {
-        return;
-    }
-    
-    if (!window.systemConstants) {
-        setTimeout(() => refreshVentilationForRoom(roomId), 62);
-        return;
-    }
-    
-    if (window[`_vent_frame_${roomId}`]) {
-        cancelAnimationFrame(window[`_vent_frame_${roomId}`]);
-    }
-    
-    window[`_vent_frame_${roomId}`] = requestAnimationFrame(() => {
-        const inputs = collectRoomInputs(roomId);
-        updateTechnicalTable(roomId, inputs);
-        updateSolutionTable(roomId, inputs);
-        delete window[`_vent_frame_${roomId}`];
-    });
-};
-
-// =============================================================================
-// HANDLERS DE EVENTOS (GLOBAIS)
-// =============================================================================
-
-window.handleVentilacaoAplicacaoChange = function(machineId) {
-    const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
-    const roomId = machine?.dataset.roomId;
-    
-    // 🚫 BLOQUEIA DURANTE CARREGAMENTO
-    if (roomId && isLoadingForRoom(roomId)) {
-        console.log(`⏸️ [VENTILAÇÃO] Aplicação alterada ignorada - sala ${roomId} em carregamento`);
-        return;
-    }
-    
-    const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
-    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
-    
-    if (!roomId) return;
-    
-    const aplicacao = aplicacaoSelect?.value;
-    
-    if (capacidadeSelect) {
-        capacidadeSelect.disabled = !VALID_APPLICATIONS.includes(aplicacao);
-        if (capacidadeSelect.disabled) {
-            capacidadeSelect.value = '';
-        }
-    }
-    
-    refreshVentilationForRoom(roomId);
-};
-
-window.handleVentilacaoPowerChange = function(machineId) {
-    const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
-    const machine = capacidadeSelect?.closest('.climatization-machine');
-    const roomId = machine?.dataset.roomId;
-    
-    // 🚫 BLOQUEIA DURANTE CARREGAMENTO
-    if (roomId && isLoadingForRoom(roomId)) {
-        console.log(`⏸️ [VENTILAÇÃO] Capacidade alterada ignorada - sala ${roomId} em carregamento`);
-        return;
-    }
-    
-    if (roomId) {
-        refreshVentilationForRoom(roomId);
-    }
-};
-
-window.handleVentilacaoTipoChange = function(machineId) {
-    const tipoSelect = document.getElementById(`tipo-${machineId}`);
-    const machine = tipoSelect?.closest('.climatization-machine');
-    const roomId = machine?.dataset.roomId;
-    
-    // 🚫 BLOQUEIA DURANTE CARREGAMENTO
-    if (roomId && isLoadingForRoom(roomId)) {
-        console.log(`⏸️ [VENTILAÇÃO] Tipo alterado ignorado - sala ${roomId} em carregamento`);
-        return;
-    }
-    
-    if (roomId) {
-        refreshVentilationForRoom(roomId);
-    }
-};
-
-// =============================================================================
-// CONFIGURAÇÃO INICIAL
-// =============================================================================
-
-function setupVentilationForRoom(roomId) {
-    if (!roomId || !roomId.includes('_proj_') || !roomId.includes('_sala_')) {
-        return;
-    }
-    
-    if (ventilationState.get(roomId)?.configured) return;
-    
-    setupTechnicalListeners(roomId);
-    
-    const checkContainer = setInterval(() => {
-        const container = document.getElementById(`machines-${roomId}`);
-        if (container) {
-            clearInterval(checkContainer);
-            setupMachinesObserver(roomId);
-            
-            ventilationState.set(roomId, { 
-                ...ventilationState.get(roomId),
-                configured: true 
             });
-            
-            refreshVentilationForRoom(roomId);
+
+            // Configuração CORRETA do MutationObserver
+            mutationObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+                attributes: false  // Desabilitado para evitar erro
+            });
+
+            console.log('✅ MutationObserver configurado com sucesso');
+        } catch (error) {
+            console.error('❌ Erro ao configurar MutationObserver:', error);
+            // Fallback: usar polling
+            this.startPollingFallback();
         }
-    }, 500);
-    
-    ventilationState.set(roomId, { 
-        ...ventilationState.get(roomId),
-        checkInterval: checkContainer 
-    });
+
+        // 2. Observador de eventos de input
+        document.addEventListener('input', (event) => {
+            const target = event.target;
+            if (target.type === 'number' || target.classList.contains('input-valor')) {
+                this.scheduleFullUpdate();
+            }
+        });
+
+        // 3. Observador de eventos customizados
+        document.addEventListener('valorAtualizado', () => this.scheduleFullUpdate());
+        document.addEventListener('projectTotalUpdated', (e) => {
+            if (e.detail && e.detail.projectId) {
+                this.updateObraFromProject(e.detail.projectId);
+            }
+        });
+
+        // 4. Polling de segurança
+        this.startSafetyPolling();
+    }
+
+    startPollingFallback() {
+        // Polling mais agressivo se MutationObserver falhar
+        console.log('🔄 Usando polling como fallback');
+        setInterval(() => {
+            this.scheduleFullUpdate();
+        }, 1000);
+    }
+
+    isValueElement(element) {
+        if (!element || !element.textContent) return false;
+        
+        const text = element.textContent.trim();
+        const id = element.id || '';
+        const className = element.className || '';
+        
+        // É elemento monetário?
+        const isMonetary = text.includes('R$') || 
+                          (text.match(/[\d.,]+\s*[Rr]\$?/) !== null);
+        
+        // É elemento de total?
+        const isTotalElement = id.includes('total-') || 
+                              id.includes('valor-') ||
+                              id.includes('-total') ||
+                              id.includes('-valor') ||
+                              className.includes('total-value') ||
+                              className.includes('valor-total') ||
+                              className.includes('project-total') ||
+                              className.includes('obra-total');
+        
+        return isMonetary || isTotalElement;
+    }
+
+    startSafetyPolling() {
+        // Polling a cada 3 segundos para garantir
+        setInterval(() => {
+            this.updateAllObrasIfChanged();
+        }, 3000);
+    }
+
+    scheduleFullUpdate() {
+        // Atualiza todas as obras
+        const obraBlocks = document.querySelectorAll('.obra-block');
+        obraBlocks.forEach(obra => {
+            const obraId = obra.dataset.obraId;
+            if (obraId) this.scheduleObraUpdate(obraId);
+        });
+    }
+
+    updateAllObrasIfChanged() {
+        const obraBlocks = document.querySelectorAll('.obra-block');
+        obraBlocks.forEach(obra => {
+            const obraId = obra.dataset.obraId;
+            if (obraId) {
+                const currentTotal = this.calculateObraTotal(obraId);
+                const lastTotal = this.obraTotals.get(obraId) || 0;
+                
+                if (Math.abs(currentTotal - lastTotal) > 0.01) {
+                    this.updateObraTotal(obraId);
+                }
+            }
+        });
+    }
+
+    updateObraFromProject(projectId) {
+        const projectElement = document.querySelector(`[data-project-id="${projectId}"]`);
+        if (projectElement) {
+            const obraId = projectElement.dataset.obraId;
+            if (obraId) {
+                this.scheduleObraUpdate(obraId);
+            }
+        }
+    }
+
+    scheduleObraUpdate(obraId) {
+        // Limpa timeout anterior
+        if (this.timeouts[obraId]) {
+            clearTimeout(this.timeouts[obraId]);
+        }
+        
+        // Agenda nova atualização
+        this.timeouts[obraId] = setTimeout(() => {
+            this.updateObraTotal(obraId);
+            delete this.timeouts[obraId];
+        }, 37);
+    }
+
+    calculateObraTotal(obraId) {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) return 0;
+
+        let total = 0;
+        const projectElements = obraElement.querySelectorAll('.project-block');
+
+        projectElements.forEach((project) => {
+            const projectId = project.dataset.projectId;
+            total += this.getProjectTotal(projectId);
+        });
+
+        return total;
+    }
+
+    getProjectTotal(projectId) {
+        // Tenta múltiplas formas de encontrar o total
+        let totalElement = null;
+        
+        // 1. ID exato
+        totalElement = document.getElementById(`total-projeto-valor-${projectId}`);
+        
+        // 2. Dentro do projeto
+        if (!totalElement) {
+            const projectElement = document.querySelector(`[data-project-id="${projectId}"]`);
+            if (projectElement) {
+                totalElement = projectElement.querySelector('.project-total-value');
+            }
+        }
+
+        if (totalElement) {
+            const texto = totalElement.textContent || totalElement.innerText || '';
+            return this.parseCurrency(texto);
+        }
+
+        return 0;
+    }
+
+    updateObraTotal(obraId) {
+        const total = this.calculateObraTotal(obraId);
+        const obraTotalElement = document.getElementById(`total-obra-valor-${obraId}`);
+
+        // Salva o total anterior para comparação
+        const lastTotal = this.obraTotals.get(obraId) || 0;
+        
+        // Se não mudou, não atualiza (evita flicker)
+        if (Math.abs(total - lastTotal) < 0.01 && obraTotalElement && obraTotalElement.textContent !== 'R$ 0,00') {
+            return;
+        }
+
+        this.obraTotals.set(obraId, total);
+
+        if (obraTotalElement) {
+            const formattedValue = this.formatCurrency(total);
+            
+            // Só atualiza se realmente mudou
+            if (obraTotalElement.textContent !== formattedValue) {
+                obraTotalElement.textContent = formattedValue;
+                
+                // Removidas as classes zero, has-value e high-value
+                // Não adiciona nenhuma classe de estilo baseada no valor
+            }
+        } else {
+            // Cria o elemento se não existir
+            this.createObraTotalElement(obraId, total);
+        }
+    }
+
+    createObraTotalElement(obraId, total = 0) {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) return;
+
+        const addProjectSection = obraElement.querySelector('.add-project-section');
+        if (addProjectSection) {
+            const formattedValue = this.formatCurrency(total);
+            
+            // Removida a lógica de classes baseadas no valor
+            const spanHTML = `<span class="obra-total-value" 
+                  id="total-obra-valor-${obraId}" 
+                  data-obra-id="${obraId}" 
+                  title="Valor total da obra (soma de todos os projetos)">
+                ${formattedValue}
+            </span>`;
+            
+            addProjectSection.insertAdjacentHTML('beforeend', spanHTML);
+        }
+    }
+
+    formatCurrency(value) {
+        if (typeof value !== 'number' || isNaN(value)) {
+            return 'R$ 0,00';
+        }
+
+        return value.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    parseCurrency(text) {
+        if (!text || typeof text !== 'string') return 0;
+
+        // Limpa o texto
+        let cleaned = text
+            .replace(/R\$/g, '')
+            .replace(/&nbsp;/g, '')
+            .replace(/\s/g, '')
+            .replace(/[^\d,.-]/g, '')
+            .trim();
+
+        if (!cleaned) return 0;
+
+        // Detecta formato
+        if (cleaned.includes('.') && cleaned.includes(',')) {
+            // Formato brasileiro: 1.234.567,89
+            cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        } else if (cleaned.includes(',')) {
+            // Formato com vírgula decimal
+            cleaned = cleaned.replace(',', '.');
+        } else if (cleaned.includes('.')) {
+            // Verifica se é separador de milhar
+            const parts = cleaned.split('.');
+            if (parts.length > 2) {
+                // Múltiplos pontos = separadores de milhar
+                cleaned = cleaned.replace(/\./g, '');
+            }
+        }
+
+        const result = parseFloat(cleaned);
+        return isNaN(result) ? 0 : result;
+    }
+
+    /**
+     * Inicializa o total para uma obra específica
+     */
+    initializeObraTotal(obraId) {
+        if (this.initialized.has(obraId)) {
+            return;
+        }
+
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) {
+            return;
+        }
+
+        // Verifica se já tem o elemento de total
+        let totalElement = document.getElementById(`total-obra-valor-${obraId}`);
+
+        if (!totalElement) {
+            this.createObraTotalElement(obraId);
+        } else {
+            // Se já existe, força atualização
+            this.updateObraTotal(obraId);
+        }
+
+        this.initialized.add(obraId);
+    }
+
+    // Inicializa totais para obras existentes
+    initializeExistingObraTotals() {
+        const obraBlocks = document.querySelectorAll('.obra-block');
+
+        obraBlocks.forEach((obra) => {
+            const obraId = obra.dataset.obraId;
+            if (obraId) {
+                this.initializeObraTotal(obraId);
+            }
+        });
+
+        // Atualização periódica
+        setTimeout(() => this.updateAllObraTotals(), 250);
+    }
+
+    updateAllObraTotals() {
+        const obraBlocks = document.querySelectorAll('.obra-block');
+        
+        obraBlocks.forEach((obra) => {
+            const obraId = obra.dataset.obraId;
+            if (obraId) {
+                this.updateObraTotal(obraId);
+            }
+        });
+    }
+
+    // 🔥 Função de correção manual
+    forceUpdateObra(obraId) {
+        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+        if (!obraElement) return false;
+
+        let total = 0;
+        const projects = obraElement.querySelectorAll('.project-block');
+        
+        projects.forEach(project => {
+            const projectId = project.dataset.projectId;
+            const totalElement = document.getElementById(`total-projeto-valor-${projectId}`);
+            
+            if (totalElement) {
+                const texto = totalElement.textContent;
+                const valor = this.parseCurrency(texto);
+                total += valor;
+            }
+        });
+
+        // Atualiza ou cria o elemento
+        let obraTotalElement = document.getElementById(`total-obra-valor-${obraId}`);
+        const formatted = this.formatCurrency(total);
+        
+        if (obraTotalElement) {
+            obraTotalElement.textContent = formatted;
+            // Removida a lógica de classes baseadas no valor
+            return true;
+        } else {
+            // Cria elemento sem classes de estilo baseadas no valor
+            const addProjectSection = obraElement.querySelector('.add-project-section');
+            if (addProjectSection) {
+                addProjectSection.insertAdjacentHTML('beforeend', 
+                    `<span class="obra-total-value" id="total-obra-valor-${obraId}" 
+                          data-obra-id="${obraId}" title="Valor total da obra">
+                        ${formatted}
+                    </span>`);
+                return true;
+            }
+        }
+        
+        return false;
+    }
 }
 
+// Inicializa o gerenciador global
+const obraTotalManager = new ObraTotalManager();
+
+// ADICIONAR FUNÇÕES GLOBAIS
+if (typeof window !== 'undefined') {
+    window.obraTotalManager = obraTotalManager;
+
+    window.updateObraTotal = (obraId) => {
+        if (obraTotalManager) {
+            obraTotalManager.updateObraTotal(obraId);
+        }
+    };
+
+    window.forceUpdateObra = (obraId) => {
+        if (obraTotalManager && obraTotalManager.forceUpdateObra) {
+            return obraTotalManager.forceUpdateObra(obraId);
+        }
+        return false;
+    };
+
+    window.updateAllObraTotals = () => {
+        if (obraTotalManager && obraTotalManager.updateAllObraTotals) {
+            obraTotalManager.updateAllObraTotals();
+        }
+    };
+
+    window.initializeAllObraTotals = () => {
+        if (obraTotalManager && obraTotalManager.initializeExistingObraTotals) {
+            obraTotalManager.initializeExistingObraTotals();
+        }
+    };
+    
+    // 🔥 Função de correção de emergência
+    window.emergencyFixObra = (obraId) => {
+        if (!obraId) {
+            // Corrige todas as obras
+            const obras = document.querySelectorAll('.obra-block');
+            let corrigidas = 0;
+            obras.forEach(obra => {
+                const id = obra.dataset.obraId;
+                if (id && window.forceUpdateObra(id)) {
+                    corrigidas++;
+                }
+            });
+            console.log(`✅ ${corrigidas} obras corrigidas`);
+            return corrigidas;
+        } else {
+            // Corrige obra específica
+            return window.forceUpdateObra(obraId);
+        }
+    };
+}
+
+// Inicialização automática
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            if (window.obraTotalManager) {
+                window.obraTotalManager.initializeExistingObraTotals();
+            }
+        }, 125);
+    });
+} else {
+    setTimeout(() => {
+        if (window.obraTotalManager) {
+            window.obraTotalManager.initializeExistingObraTotals();
+        }
+    }, 125);
+}
+
+// EXPORTS NO FINAL
+export {
+    buildObraHTML,
+    buildObraActionsFooter,
+    insertObraIntoDOM,
+    createEmptyObra,
+    addNewObra,
+    createObraFromServer,
+    obraTotalManager
+};
+/* ==== FIM: features/managers/obra-folder/obra-creator.js ==== */
+
+/* ==== INÍCIO: features/managers/project-manager.js ==== */
+import { createEmptyRoom } from '../../data/modules/rooms.js';
+import { generateProjectId } from '../../data/utils/id-generator.js';
+import { getNextProjectNumber } from '../../data/utils/data-utils.js'
+import { removeEmptyObraMessage } from '../../ui/helpers.js';
+import { addNewRoomToProject } from '../../data/modules/rooms.js';
+import { buildServicosInProject } from './servicos.js';
+
+// Cache de totais por projeto
+const projectTotals = new Map();
 
 /**
- * PREENCHE OS INPUTS DE VENTILAÇÃO
- * Função para preencher os campos de ventilação com dados salvos
- * @param {HTMLElement} roomElement - Elemento da sala
- * @param {Object} ventilacaoData - Dados de ventilação { potencia, tempInterna, tempExterna }
+ * Converte texto monetário para número
  */
-export function fillVentilacaoInputs(roomElement, ventilacaoData) {
-    if (!roomElement || !ventilacaoData) {
-        console.error('❌ Elemento da sala ou dados de ventilação inválidos');
+function parseCurrency(text) {
+    if (!text || typeof text !== 'string') return 0;
+    
+    // Remove "R$" e espaços
+    let cleaned = text.replace(/R\$/g, '').trim();
+    
+    // Se não tem vírgula, assume que é valor inteiro
+    if (!cleaned.includes(',')) {
+        // Remove pontos (separadores de milhar)
+        cleaned = cleaned.replace(/\./g, '');
+        const result = parseFloat(cleaned);
+        return isNaN(result) ? 0 : result;
+    }
+    
+    // Tem vírgula (formato brasileiro)
+    // Remove todos os pontos (separadores de milhar)
+    cleaned = cleaned.replace(/\./g, '');
+    
+    // Troca vírgula por ponto para parseFloat
+    cleaned = cleaned.replace(',', '.');
+    
+    const result = parseFloat(cleaned);
+    return isNaN(result) ? 0 : result;
+}
+
+/**
+ * Sistema de Eventos para total do projeto
+ */
+class ProjectTotalManager {
+    constructor() {
+        this.observers = new Map();
+        this.updating = new Set();
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        document.addEventListener('valorAtualizado', (event) => {
+            const { projectId } = event.detail;
+            if (projectId && !this.updating.has(projectId)) {
+                this.scheduleUpdate(projectId);
+            }
+        });
+    }
+
+    scheduleUpdate(projectId) {
+        clearTimeout(this[`timeout_${projectId}`]);
+        this[`timeout_${projectId}`] = setTimeout(() => {
+            this.updateProjectTotal(projectId);
+        }, 37);
+    }
+
+    calculateProjectTotal(projectId) {
+        const projectElement = document.querySelector(`[data-project-id="${projectId}"]`);
+        if (!projectElement) return 0;
+
+        let total = 0;
+
+        // 1. Serviços
+        try {
+            if (typeof calculateServicosTotal === 'function') {
+                const servicosTotal = calculateServicosTotal(projectId);
+                total += servicosTotal;
+            }
+        } catch (error) {}
+
+        // 2. Salas
+        const rooms = projectElement.querySelectorAll('.room-block');
+
+        rooms.forEach(room => {
+            const roomId = room.dataset.roomId;
+
+            // Máquinas
+            const machinesElement = this.findMachinesTotalElement(roomId);
+            if (machinesElement) {
+                const machinesText = machinesElement.textContent.trim();
+                const machinesValue = parseCurrency(machinesText);
+                total += machinesValue;
+            }
+
+            // Acessórios
+            const acessoriosElement = document.getElementById(`acessorios-total-${roomId}`);
+            if (acessoriosElement) {
+                const acessoriosText = acessoriosElement.textContent.trim();
+                const acessoriosValue = parseCurrency(acessoriosText);
+                total += acessoriosValue;
+            }
+
+            // Dutos
+            const dutosElement = document.getElementById(`dutos-total-${roomId}`);
+            if (dutosElement) {
+                const dutosText = dutosElement.textContent.trim();
+                const dutosValue = parseCurrency(dutosText);
+                total += dutosValue;
+            }
+
+            // Tubulação
+            const tubulacaoElement = document.getElementById(`total-geral-valor-${roomId}`);
+            if (tubulacaoElement) {
+                const tubulacaoText = tubulacaoElement.textContent.trim();
+                const tubulacaoValue = parseCurrency(tubulacaoText);
+                total += tubulacaoValue;
+            }
+        });
+
+        return total;
+    }
+
+    /**
+     * Encontra o elemento de total de máquinas
+     */
+    findMachinesTotalElement(roomId) {
+        // Tenta primeiro pelo formato direto
+        let element = document.getElementById(`total-all-machines-price-${roomId}`);
+
+        if (element) return element;
+
+        // Se não encontrar, busca por elementos que contenham o padrão
+        const allElements = document.querySelectorAll('[id*="total-all-machines-price-"]');
+
+        for (const el of allElements) {
+            // Verifica se o ID termina com o roomId ou contém o roomId
+            if (el.id.includes(roomId) ||
+                el.id.endsWith(roomId) ||
+                el.id.includes(`sala_${roomId.split('_').pop()}`)) {
+                return el;
+            }
+        }
+
+        return null;
+    }
+
+    updateProjectTotal(projectId) {
+        if (this.updating.has(projectId)) return;
+
+        this.updating.add(projectId);
+
+        try {
+            const total = this.calculateProjectTotal(projectId);
+            this.updateDisplay(projectId, total);
+            projectTotals.set(projectId, total);
+        } catch (error) {
+        } finally {
+            this.updating.delete(projectId);
+        }
+    }
+
+    updateDisplay(projectId, total) {
+        const displayElement = document.getElementById(`total-projeto-valor-${projectId}`);
+        if (!displayElement) return;
+
+        const formattedValue = new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(total);
+
+        displayElement.textContent = formattedValue;
+
+        // Removidas as classes has-value, high-value e zero
+        displayElement.classList.add('updating');
+        setTimeout(() => {
+            displayElement.classList.remove('updating');
+        }, 62);
+    }
+
+    registerObserver(projectId, callback) {
+        if (!this.observers.has(projectId)) {
+            this.observers.set(projectId, new Set());
+        }
+        this.observers.get(projectId).add(callback);
+    }
+
+    unregisterObserver(projectId, callback) {
+        if (this.observers.has(projectId)) {
+            this.observers.get(projectId).delete(callback);
+        }
+    }
+}
+
+// Inicializa o gerenciador global
+const totalManager = new ProjectTotalManager();
+
+/**
+ * Constrói o HTML de um projeto
+ */
+function buildProjectHTML(obraId, obraName, projectId, projectName) {
+    if (!obraId || obraId === 'undefined' || obraId === 'null') {
+        return ''
+    }
+
+    const finalProjectId = projectId || generateProjectId(document.querySelector(`[data-obra-id="${obraId}"]`))
+
+    if (!finalProjectId || finalProjectId === 'undefined' || finalProjectId === 'null') {
+        return ''
+    }
+
+    return `
+        <div class="project-block" 
+             data-project-id="${finalProjectId}" 
+             data-project-name="${projectName}" 
+             data-obra-id="${obraId}" 
+             data-obra-name="${obraName}">
+            <div class="project-header">
+                <button class="minimizer" onclick="toggleProject('${finalProjectId}', event)">+</button>
+                <h3 class="project-title editable-title" data-editable="true" onclick="makeEditable(this, 'project')">${projectName}</h3>
+                <div class="project-actions">
+                    <button class="btn btn-delete" onclick="deleteProject('${obraId}', '${finalProjectId}')">Remover Projeto</button>
+                </div>
+            </div>
+            
+            <div class="project-content collapsed" id="project-content-${finalProjectId}">                
+                <div class="rooms-container">
+                    <p class="empty-message">Adicione salas a este projeto...</p>
+                </div>
+                
+                <div class="add-room-section">
+                    <button class="btn btn-add-secondary" onclick="addNewRoom('${obraId}', '${finalProjectId}')">
+                        + Adicionar Sala
+                    </button>
+                    
+                    <span class="project-total-value" id="total-projeto-valor-${finalProjectId}" 
+                          data-project-id="${finalProjectId}" 
+                          title="Valor total do projeto">
+                        R$ 0,00
+                    </span>
+                </div>
+                ${buildServicosInProject(finalProjectId)}
+
+            </div>
+        </div>
+    `
+}
+
+/**
+ * Cria um projeto vazio na obra
+ */
+async function createEmptyProject(obraId, obraName, projectId, projectName) {
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`)
+
+    if (!obraBlock) {
+        return false
+    }
+
+    const projectsContainer = document.getElementById(`projects-${obraId}`)
+    if (!projectsContainer) {
+        return false
+    }
+
+    removeEmptyObraMessage(obraName)
+
+    const projectNumber = getNextProjectNumber(obraId)
+    const finalProjectId = projectId || generateProjectId(obraBlock, projectNumber)
+
+    if (!finalProjectId) {
+        return false
+    }
+
+    const projectHTML = buildProjectHTML(obraId, obraName, finalProjectId, projectName)
+    projectsContainer.insertAdjacentHTML('beforeend', projectHTML)
+
+    // Remove mensagem de "nenhum projeto"
+    const emptyMessage = projectsContainer.querySelector('.empty-message');
+    if (emptyMessage) {
+        emptyMessage.remove();
+    }
+
+    setTimeout(() => {
+        totalManager.updateProjectTotal(finalProjectId);
+    }, 125);
+
+    return true
+}
+
+/**
+ * Adiciona um novo projeto à obra especificada
+ */
+async function addNewProjectToObra(obraId) {
+    const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
+
+    if (!obraBlock) {
         return;
     }
 
-    const roomId = roomElement.dataset.roomId;
-    if (!roomId) {
-        console.error('❌ Room ID não encontrado');
-        return;
+    const obraName = obraBlock.dataset.obraName;
+    const projectNumber = getNextProjectNumber(obraId);
+    const projectName = `Projeto${projectNumber}`;
+    const projectId = generateProjectId(obraBlock);
+
+    await createEmptyProject(obraId, obraName, projectId, projectName);
+
+    if (typeof window.addNewRoomToProject === 'function') {
+        await window.addNewRoomToProject(obraId, projectId);
+    }
+}
+
+/**
+ * Remove um projeto da obra
+ */
+function deleteProject(obraId, projectId) {
+    const projectElement = document.querySelector(`[data-obra-id="${obraId}"][data-project-id="${projectId}"]`)
+
+    if (!projectElement) {
+        return
     }
 
-    console.log(`🌬️ Preenchendo inputs de ventilação para sala ${roomId}`, ventilacaoData);
+    projectTotals.delete(projectId);
 
-    // Mapeamento dos campos
-    const fieldMappings = [
-        { id: `potencia-${roomId}`, field: 'potencia' },
-        { id: `temp-interna-${roomId}`, field: 'tempInterna' },
-        { id: `temp-externa-${roomId}`, field: 'tempExterna' }
-    ];
+    const projectName = projectElement.dataset.projectName
+    projectElement.remove()
+}
 
-    // Preencher cada campo
-    fieldMappings.forEach(mapping => {
-        const element = document.getElementById(mapping.id);
-        if (element && ventilacaoData[mapping.field] !== undefined) {
-            const value = ventilacaoData[mapping.field];
-            
-            // Garantir que é número
-            const numericValue = parseFloat(value);
-            element.value = isNaN(numericValue) ? '' : numericValue;
-            
-            console.log(`  ✅ Campo ${mapping.field} = ${element.value}`);
-            
-            // Disparar evento change para ativar cálculos
+/**
+ * Inicializa totais para projetos existentes
+ */
+function initializeExistingProjectTotals() {
+    const projectBlocks = document.querySelectorAll('.project-block');
+
+    projectBlocks.forEach(project => {
+        const projectId = project.dataset.projectId;
+        if (projectId) {
+            let totalElement = document.getElementById(`total-projeto-valor-${projectId}`);
+
+            if (!totalElement) {
+                const addRoomSection = project.querySelector('.add-room-section');
+                if (addRoomSection) {
+                    addRoomSection.insertAdjacentHTML('beforeend',
+                        `<span class="project-total-value" id="total-projeto-valor-${projectId}" 
+                              data-project-id="${projectId}" 
+                              title="Valor total do projeto">
+                            R$ 0,00
+                        </span>`
+                    );
+                }
+            }
+
             setTimeout(() => {
-                const event = new Event('change', { bubbles: true });
-                element.dispatchEvent(event);
-            }, 50);
+                totalManager.updateProjectTotal(projectId);
+            }, 125);
         }
     });
 }
 
-// Adicione ao objeto window para compatibilidade global
+// Funções globais
 if (typeof window !== 'undefined') {
-    window.fillVentilacaoInputs = fillVentilacaoInputs;
+    window.addNewProjectToObra = addNewProjectToObra;
+    window.getNextProjectNumber = getNextProjectNumber;
+    window.deleteProject = deleteProject;
+    window.createEmptyProject = createEmptyProject;
+    window.buildProjectHTML = buildProjectHTML;
+    window.addNewRoomToProject = addNewRoomToProject || window.addNewRoomToProject;
+    window.initializeExistingProjectTotals = initializeExistingProjectTotals;
+    window.parseCurrency  = parseCurrency ;
+    window.updateProjectTotal = (projectId) => totalManager.updateProjectTotal(projectId);
 }
 
-
-// =============================================================================
-// FUNÇÃO PRINCIPAL EXPORTADA
-// =============================================================================
-
-export function buildVentilacaoSection(roomId) {
-    if (!roomId || roomId === 'undefined' || roomId === 'null') {
-        console.error(`❌ buildVentilacaoSection: Room ID inválido`);
-        return '';
-    }
-    
-    if (!roomId.includes('_proj_') || !roomId.includes('_sala_')) {
-        console.warn(`⚠️ ID não parece ser de sala: ${roomId}`);
-        return '';
-    }
-    
-    setTimeout(() => {
-        setupVentilationForRoom(roomId);
-    }, 12);
-    
-    return `
-    <div class="section-block ventilation-section" id="ventilacao-section-${roomId}" data-room-id="${roomId}">
-      <div class="section-header">
-        <button class="minimizer" onclick="toggleSection('${roomId}ventilacao')">+</button>
-        <h4 class="section-title">Ventilação</h4>
-      </div>
-      <div class="section-content collapsed" id="section-content-${roomId}ventilacao">
-        
-        <!-- TABELA 1 - CÁLCULO TÉCNICO -->
-        <div class="technical-table">
-          <h5>Cálculo Técnico</h5>
-          <div class="vertical-table-container">
-            <table class="vertical-table">
-              <tr>
-                <td>Potência (kW)</td>
-                <td>
-                  <input type="number" 
-                         id="potencia-${roomId}" 
-                         class="vertical-input" 
-                         step="any" 
-                         placeholder="Ex: 100">
-                </td>
-              </tr>
-              <tr>
-                <td>Temp. Int. (°C)</td>
-                <td>
-                  <input type="number" 
-                         id="temp-interna-${roomId}" 
-                         class="vertical-input" 
-                         step="any" 
-                         value="45"
-                         placeholder="°C">
-                </td>
-              </tr>
-              <tr>
-                <td>Temp. Ext. (°C)</td>
-                <td>
-                  <input type="number" 
-                         id="temp-externa-${roomId}" 
-                         class="vertical-input" 
-                         step="any" 
-                         value="35"
-                         placeholder="°C">
-                </td>
-              </tr>
-              <tr>
-                <td>Q (cal/h)</td>
-                <td><span id="q-cal-${roomId}" class="result-venti-value">-</span></td>
-              </tr>
-              <tr>
-                <td>Massa (gramas)</td>
-                <td><span id="massa-gramas-${roomId}" class="result-venti-value">-</span></td>
-              </tr>
-              <tr>
-                <td>ΔT (°C)</td>
-                <td><span id="delta-t-${roomId}" class="result-venti-value">-</span></td>
-              </tr>
-              <tr>
-                <td>Massa de Ar (kg/h)</td>
-                <td><span id="massa-ar-${roomId}" class="result-venti-value">-</span></td>
-              </tr>
-              <tr>
-                <td>Vaz. Vol. (m³/h)</td>
-                <td><span id="vazao-${roomId}" class="result-venti-value">-</span></td>
-              </tr>
-            </table>
-          </div>
-        </div>
-
-        <!-- TABELA 2 - SOLUÇÃO DAS MÁQUINAS -->
-        <div class="solution-table">
-          <h5>Solução das Máquinas</h5>
-          <div class="horizontal-table-container">
-            <table class="machines-solution-table">
-              <thead>
-                <tr>
-                  <th>Nome da Máquina</th>
-                  <th>Tipo de Ventilador / Filtro</th>
-                  <th>Aplicação</th>
-                  <th>Cap. Unit. (m³/h)</th>
-                  <th>Solução</th>
-                  <th>Vazão (m³/h)</th>
-                  <th>Qtd. Inst.</th>
-                  <th>Cap. Total (m³/h)</th>
-                  <th>Saldo (m³/h)</th>
-                </tr>
-              </thead>
-              <tbody id="solucao-body-${roomId}">
-                <tr>
-                  <td colspan="9" style="text-align: center; padding: 20px; color: var(--color-gray-500);">
-                    Aguardando máquinas...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
+// Inicializa quando carregado
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeExistingProjectTotals);
+} else {
+    setTimeout(initializeExistingProjectTotals, 125);
 }
-/* ==== FIM: data/modules/ventilacao.js ==== */
+
+export {
+    createEmptyProject,
+    buildProjectHTML,
+    addNewProjectToObra,
+    deleteProject,
+    initializeExistingProjectTotals
+}
+/* ==== FIM: features/managers/project-manager.js ==== */

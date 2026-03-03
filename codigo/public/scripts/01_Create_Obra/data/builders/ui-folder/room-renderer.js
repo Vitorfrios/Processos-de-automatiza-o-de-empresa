@@ -111,7 +111,7 @@ async function populateRoomData(roomElement, roomData) {
                 } else {
                     console.error(`❌ Função fillVentilacaoInputs não disponível no window`);
                 }
-            }, 350); // Delay apropriado
+            }, 600); // Delay apropriado
         }
 
         // ✅ Preencher acessorios

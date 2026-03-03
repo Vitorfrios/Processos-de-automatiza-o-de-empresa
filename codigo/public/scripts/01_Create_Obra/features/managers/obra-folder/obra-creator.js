@@ -1,24 +1,63 @@
 import { getNextObraNumber } from '../../../data/utils/data-utils.js';
 import { generateObraId } from '../../../data/utils/id-generator.js';
+import { deleteObra } from './obra-utils.js';
+import { parseCurrency,formatCurrency } from '../project-manager.js';
 
 /**
- * 🏗️ FUNÇÕES DE CONSTRUÇÃO DE INTERFACE - FONTE ÚNICA
+ * ATUALIZA O TOTAL DA OBRA (NÍVEL 4)
+ * Escuta eventos dos projetos
  */
+function updateObraTotal(obraId) {
+    const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraElement) return;
 
+    let total = 0;
+
+    // Soma os totais dos projetos
+    obraElement.querySelectorAll('.project-block').forEach(project => {
+        const projectId = project.dataset.projectId;
+        const projectTotal = document.getElementById(`total-projeto-valor-${projectId}`);
+        if (projectTotal) {
+            total += parseCurrency(projectTotal.textContent);
+        }
+    });
+
+    const obraTotalSpan = document.getElementById(`total-obra-valor-${obraId}`);
+    if (obraTotalSpan) {
+        obraTotalSpan.textContent = formatCurrency(total);
+    } else {
+        const addProjectSection = obraElement.querySelector('.add-project-section');
+        if (addProjectSection) {
+            addProjectSection.insertAdjacentHTML('beforeend',
+                `<span class="obra-total-value" id="total-obra-valor-${obraId}" 
+                      data-obra-id="${obraId}" title="Valor total da obra">
+                    ${formatCurrency(total)}
+                </span>`
+            );
+        }
+    }
+}
+
+// 🔥 ESCUTA EVENTOS DOS PROJETOS (NÍVEL 3)
+document.addEventListener('projetoAtualizado', (e) => {
+    const { obraId } = e.detail;
+    if (obraId) {
+        setTimeout(() => updateObraTotal(obraId), 10);
+    }
+});
+
+/**
+ * Constrói o HTML de uma obra
+ */
 function buildObraHTML(obraName, obraId, hasId = false, isFromServer = false, obraData = null) {
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
         obraId = generateObraId();
     }
 
-    // VERIFICAR SE A OBRA TEM DADOS DE EMPRESA
     let buttonText = "Adicionar campos de cadastro de empresas";
     
     if (isFromServer && obraData) {
-        // Verificar se tem dados de empresa
-        const temDadosEmpresa = obraData.empresaSigla || 
-                                obraData.empresa_id || 
-                                obraData.numeroClienteFinal;
-        
+        const temDadosEmpresa = obraData.empresaSigla || obraData.empresa_id || obraData.numeroClienteFinal;
         if (temDadosEmpresa) {
             buttonText = "Visualizar campos de cadastro de empresas";
         }
@@ -42,18 +81,14 @@ function buildObraHTML(obraName, obraId, hasId = false, isFromServer = false, ob
                 </button>
             </div>
             <div class="projects-container" id="projects-${obraId}">
-                <!-- A mensagem será removida quando projetos forem adicionados -->
                 <p class="empty-message">Nenhum projeto adicionado ainda. Adicione o primeiro projeto!</p>
             </div>
             
-            <!-- Seção para adicionar projeto com total da obra -->
             <div class="add-project-section">
                 <button class="btn btn-add-secondary" onclick="addNewProjectToObra('${obraId}')">+ Adicionar Projeto</button>
-                
-                <!-- Span com valor total da obra -->
                 <span class="obra-total-value" id="total-obra-valor-${obraId}" 
                       data-obra-id="${obraId}" 
-                      title="Valor total da obra (soma de todos os projetos)">
+                      title="Valor total da obra">
                     R$ 0,00
                 </span>
             </div>
@@ -65,26 +100,12 @@ function buildObraHTML(obraName, obraId, hasId = false, isFromServer = false, ob
 }
 
 function buildObraActionsFooter(obraId, _obraName, hasId = false) {
-    console.log('=== DEBUG buildObraActionsFooter ===');
-    console.log('obraId:', obraId);
-    console.log('hasId:', hasId);
-    console.log('typeof hasId:', typeof hasId);
-    
-    // Converter hasId para booleano de forma robusta
-    const hasIdBool = Boolean(hasId) && 
-                     hasId !== 'false' && 
-                     hasId !== '0' && 
-                     hasId !== '' && 
-                     hasId !== null && 
-                     hasId !== undefined;
-    
-    console.log('hasIdBool:', hasIdBool);
-    console.log('buttonText:', hasIdBool ? "Atualizar Obra" : "Salvar Obra");
+    const hasIdBool = Boolean(hasId) && hasId !== 'false' && hasId !== '0' && hasId !== '' && hasId !== null && hasId !== undefined;
     
     const buttonText = hasIdBool ? "Atualizar Obra" : "Salvar Obra";
     const buttonClass = hasIdBool ? "btn-update" : "btn-save";
 
-    const html = `
+    return `
     <div class="obra-actions-footer">
         <button class="btn btn-verify" onclick="verifyObraData('${obraId}')">Verificar Dados</button>
         <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraId}')">${buttonText}</button>
@@ -93,24 +114,21 @@ function buildObraActionsFooter(obraId, _obraName, hasId = false) {
         ` : ''}
     </div>
     `;
-    
-    console.log('HTML gerado:', html);
-    return html;
 }
 
 async function insertObraIntoDOM(obraHTML, obraId, hasProjects = false) {
-    const projectsContainer = document.getElementById("projects-container");
+    let projectsContainer = document.getElementById("projects-container");
 
     if (!projectsContainer) {
         const mainContent = document.querySelector('main, body');
         if (mainContent) {
-            const newContainer = document.createElement('div');
-            newContainer.id = 'projects-container';
-            newContainer.innerHTML = '<!-- Hierarquia: Obra → Projeto → Sala -->';
-            mainContent.appendChild(newContainer);
-            return insertObraIntoDOM(obraHTML, obraId, hasProjects);
+            projectsContainer = document.createElement('div');
+            projectsContainer.id = 'projects-container';
+            projectsContainer.innerHTML = '<!-- Hierarquia: Obra → Projeto → Sala -->';
+            mainContent.appendChild(projectsContainer);
+        } else {
+            return false;
         }
-        return false;
     }
 
     try {
@@ -119,25 +137,17 @@ async function insertObraIntoDOM(obraHTML, obraId, hasProjects = false) {
         setTimeout(() => {
             const obraInserida = document.querySelector(`[data-obra-id="${obraId}"]`);
             if (obraInserida) {
-                // Remove mensagem se a obra já tem projetos
                 if (hasProjects) {
                     const emptyMessage = obraInserida.querySelector('.empty-message');
-                    if (emptyMessage) {
-                        emptyMessage.remove();
-                    }
+                    if (emptyMessage) emptyMessage.remove();
                 }
-
-                // Inicializa o total da obra após inserção
-                if (window.obraTotalManager && typeof window.obraTotalManager.initializeObraTotal === 'function') {
-                    setTimeout(() => {
-                        window.obraTotalManager.initializeObraTotal(obraId);
-                    }, 37);
-                }
+                updateObraTotal(obraId);
             }
         }, 50);
 
         return true;
     } catch (error) {
+        console.error('Erro ao inserir obra:', error);
         return false;
     }
 }
@@ -150,17 +160,12 @@ async function createEmptyObra(obraName, obraId, isFromServer = false, hasProjec
 
     if (inserted) {
         setTimeout(() => {
-            const obraNoDOM = document.querySelector(`[data-obra-id="${finalObraId}"]`);
-            if (obraNoDOM) {
-                // Dispara evento para inicializar o total da obra
-                document.dispatchEvent(new CustomEvent('obraCreated', {
-                    detail: { obraId: finalObraId }
-                }));
+            document.dispatchEvent(new CustomEvent('obraCreated', {
+                detail: { obraId: finalObraId }
+            }));
 
-                // Se for do servidor, atualiza botão de empresa
-                if (isFromServer && window.atualizarTextoBotaoEmpresa) {
-                    window.atualizarTextoBotaoEmpresa(finalObraId, "Visualizar campos de cadastro de empresas");
-                }
+            if (isFromServer && window.atualizarTextoBotaoEmpresa) {
+                window.atualizarTextoBotaoEmpresa(finalObraId, "Visualizar campos de cadastro de empresas");
             }
         }, 100);
     }
@@ -183,13 +188,7 @@ async function addNewObra() {
         setTimeout(async () => {
             if (typeof window.addNewProjectToObra === 'function') {
                 await window.addNewProjectToObra(obraId);
-                
-                // Atualiza o total da obra após criar projeto
-                if (window.obraTotalManager && typeof window.obraTotalManager.updateObraTotal === 'function') {
-                    setTimeout(() => {
-                        window.obraTotalManager.updateObraTotal(obraId);
-                    }, 62);
-                }
+                setTimeout(() => updateObraTotal(obraId), 62);
             }
         }, 150);
 
@@ -203,484 +202,53 @@ async function createObraFromServer(obraData) {
     try {
         const obraName = obraData.nome;
         const obraId = obraData.id;
-
         await createEmptyObra(obraName, obraId, true);
-
         return true;
     } catch (error) {
+        console.error('Erro ao criar obra do servidor:', error);
         return false;
     }
 }
 
-/**
- * 🔥 SISTEMA DE GERENCIAMENTO DE TOTAL DA OBRA - VERSÃO CORRIGIDA
- */
-class ObraTotalManager {
-    constructor() {
-        this.obraTotals = new Map();
-        this.initialized = new Set();
-        this.timeouts = {};
-        this.setupObservers();
-    }
 
-    setupObservers() {
-        // 1. Observador de mutação SIMPLIFICADO
-        try {
-            const mutationObserver = new MutationObserver((mutations) => {
-                let shouldUpdate = false;
-                
-                mutations.forEach((mutation) => {
-                    // Verifica mudanças em texto
-                    if (mutation.type === 'characterData') {
-                        const target = mutation.target;
-                        if (target.nodeType === Node.TEXT_NODE) {
-                            const parent = target.parentElement;
-                            if (parent && this.isValueElement(parent)) {
-                                shouldUpdate = true;
-                            }
-                        }
-                    }
-                    
-                    // Verifica adição/remoção de elementos
-                    if (mutation.type === 'childList') {
-                        mutation.addedNodes.forEach(node => {
-                            if (node.nodeType === Node.ELEMENT_NODE) {
-                                // Verifica se é elemento de valor
-                                if (this.isValueElement(node)) {
-                                    shouldUpdate = true;
-                                }
-                            }
-                        });
-                    }
-                });
-                
-                if (shouldUpdate) {
-                    this.scheduleFullUpdate();
-                }
-            });
-
-            // Configuração CORRETA do MutationObserver
-            mutationObserver.observe(document.body, {
-                childList: true,
-                subtree: true,
-                characterData: true,
-                attributes: false  // Desabilitado para evitar erro
-            });
-
-            console.log('✅ MutationObserver configurado com sucesso');
-        } catch (error) {
-            console.error('❌ Erro ao configurar MutationObserver:', error);
-            // Fallback: usar polling
-            this.startPollingFallback();
-        }
-
-        // 2. Observador de eventos de input
-        document.addEventListener('input', (event) => {
-            const target = event.target;
-            if (target.type === 'number' || target.classList.contains('input-valor')) {
-                this.scheduleFullUpdate();
-            }
-        });
-
-        // 3. Observador de eventos customizados
-        document.addEventListener('valorAtualizado', () => this.scheduleFullUpdate());
-        document.addEventListener('projectTotalUpdated', (e) => {
-            if (e.detail && e.detail.projectId) {
-                this.updateObraFromProject(e.detail.projectId);
-            }
-        });
-
-        // 4. Polling de segurança
-        this.startSafetyPolling();
-    }
-
-    startPollingFallback() {
-        // Polling mais agressivo se MutationObserver falhar
-        console.log('🔄 Usando polling como fallback');
-        setInterval(() => {
-            this.scheduleFullUpdate();
-        }, 1000);
-    }
-
-    isValueElement(element) {
-        if (!element || !element.textContent) return false;
-        
-        const text = element.textContent.trim();
-        const id = element.id || '';
-        const className = element.className || '';
-        
-        // É elemento monetário?
-        const isMonetary = text.includes('R$') || 
-                          (text.match(/[\d.,]+\s*[Rr]\$?/) !== null);
-        
-        // É elemento de total?
-        const isTotalElement = id.includes('total-') || 
-                              id.includes('valor-') ||
-                              id.includes('-total') ||
-                              id.includes('-valor') ||
-                              className.includes('total-value') ||
-                              className.includes('valor-total') ||
-                              className.includes('project-total') ||
-                              className.includes('obra-total');
-        
-        return isMonetary || isTotalElement;
-    }
-
-    startSafetyPolling() {
-        // Polling a cada 3 segundos para garantir
-        setInterval(() => {
-            this.updateAllObrasIfChanged();
-        }, 3000);
-    }
-
-    scheduleFullUpdate() {
-        // Atualiza todas as obras
-        const obraBlocks = document.querySelectorAll('.obra-block');
-        obraBlocks.forEach(obra => {
-            const obraId = obra.dataset.obraId;
-            if (obraId) this.scheduleObraUpdate(obraId);
-        });
-    }
-
-    updateAllObrasIfChanged() {
-        const obraBlocks = document.querySelectorAll('.obra-block');
-        obraBlocks.forEach(obra => {
-            const obraId = obra.dataset.obraId;
-            if (obraId) {
-                const currentTotal = this.calculateObraTotal(obraId);
-                const lastTotal = this.obraTotals.get(obraId) || 0;
-                
-                if (Math.abs(currentTotal - lastTotal) > 0.01) {
-                    this.updateObraTotal(obraId);
+function initializeExistingObraTotals() {
+    document.querySelectorAll('.obra-block').forEach(obra => {
+        const obraId = obra.dataset.obraId;
+        if (obraId) {
+            let totalElement = document.getElementById(`total-obra-valor-${obraId}`);
+            if (!totalElement) {
+                const addProjectSection = obra.querySelector('.add-project-section');
+                if (addProjectSection) {
+                    addProjectSection.insertAdjacentHTML('beforeend',
+                        `<span class="obra-total-value" id="total-obra-valor-${obraId}" 
+                              data-obra-id="${obraId}" title="Valor total da obra">
+                            R$ 0,00
+                        </span>`
+                    );
                 }
             }
-        });
-    }
-
-    updateObraFromProject(projectId) {
-        const projectElement = document.querySelector(`[data-project-id="${projectId}"]`);
-        if (projectElement) {
-            const obraId = projectElement.dataset.obraId;
-            if (obraId) {
-                this.scheduleObraUpdate(obraId);
-            }
+            setTimeout(() => updateObraTotal(obraId), 125);
         }
-    }
-
-    scheduleObraUpdate(obraId) {
-        // Limpa timeout anterior
-        if (this.timeouts[obraId]) {
-            clearTimeout(this.timeouts[obraId]);
-        }
-        
-        // Agenda nova atualização
-        this.timeouts[obraId] = setTimeout(() => {
-            this.updateObraTotal(obraId);
-            delete this.timeouts[obraId];
-        }, 37);
-    }
-
-    calculateObraTotal(obraId) {
-        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
-        if (!obraElement) return 0;
-
-        let total = 0;
-        const projectElements = obraElement.querySelectorAll('.project-block');
-
-        projectElements.forEach((project) => {
-            const projectId = project.dataset.projectId;
-            total += this.getProjectTotal(projectId);
-        });
-
-        return total;
-    }
-
-    getProjectTotal(projectId) {
-        // Tenta múltiplas formas de encontrar o total
-        let totalElement = null;
-        
-        // 1. ID exato
-        totalElement = document.getElementById(`total-projeto-valor-${projectId}`);
-        
-        // 2. Dentro do projeto
-        if (!totalElement) {
-            const projectElement = document.querySelector(`[data-project-id="${projectId}"]`);
-            if (projectElement) {
-                totalElement = projectElement.querySelector('.project-total-value');
-            }
-        }
-
-        if (totalElement) {
-            const texto = totalElement.textContent || totalElement.innerText || '';
-            return this.parseCurrency(texto);
-        }
-
-        return 0;
-    }
-
-    updateObraTotal(obraId) {
-        const total = this.calculateObraTotal(obraId);
-        const obraTotalElement = document.getElementById(`total-obra-valor-${obraId}`);
-
-        // Salva o total anterior para comparação
-        const lastTotal = this.obraTotals.get(obraId) || 0;
-        
-        // Se não mudou, não atualiza (evita flicker)
-        if (Math.abs(total - lastTotal) < 0.01 && obraTotalElement && obraTotalElement.textContent !== 'R$ 0,00') {
-            return;
-        }
-
-        this.obraTotals.set(obraId, total);
-
-        if (obraTotalElement) {
-            const formattedValue = this.formatCurrency(total);
-            
-            // Só atualiza se realmente mudou
-            if (obraTotalElement.textContent !== formattedValue) {
-                obraTotalElement.textContent = formattedValue;
-                
-                // Removidas as classes zero, has-value e high-value
-                // Não adiciona nenhuma classe de estilo baseada no valor
-            }
-        } else {
-            // Cria o elemento se não existir
-            this.createObraTotalElement(obraId, total);
-        }
-    }
-
-    createObraTotalElement(obraId, total = 0) {
-        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
-        if (!obraElement) return;
-
-        const addProjectSection = obraElement.querySelector('.add-project-section');
-        if (addProjectSection) {
-            const formattedValue = this.formatCurrency(total);
-            
-            // Removida a lógica de classes baseadas no valor
-            const spanHTML = `<span class="obra-total-value" 
-                  id="total-obra-valor-${obraId}" 
-                  data-obra-id="${obraId}" 
-                  title="Valor total da obra (soma de todos os projetos)">
-                ${formattedValue}
-            </span>`;
-            
-            addProjectSection.insertAdjacentHTML('beforeend', spanHTML);
-        }
-    }
-
-    formatCurrency(value) {
-        if (typeof value !== 'number' || isNaN(value)) {
-            return 'R$ 0,00';
-        }
-
-        return value.toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
-
-    parseCurrency(text) {
-        if (!text || typeof text !== 'string') return 0;
-
-        // Limpa o texto
-        let cleaned = text
-            .replace(/R\$/g, '')
-            .replace(/&nbsp;/g, '')
-            .replace(/\s/g, '')
-            .replace(/[^\d,.-]/g, '')
-            .trim();
-
-        if (!cleaned) return 0;
-
-        // Detecta formato
-        if (cleaned.includes('.') && cleaned.includes(',')) {
-            // Formato brasileiro: 1.234.567,89
-            cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-        } else if (cleaned.includes(',')) {
-            // Formato com vírgula decimal
-            cleaned = cleaned.replace(',', '.');
-        } else if (cleaned.includes('.')) {
-            // Verifica se é separador de milhar
-            const parts = cleaned.split('.');
-            if (parts.length > 2) {
-                // Múltiplos pontos = separadores de milhar
-                cleaned = cleaned.replace(/\./g, '');
-            }
-        }
-
-        const result = parseFloat(cleaned);
-        return isNaN(result) ? 0 : result;
-    }
-
-    /**
-     * Inicializa o total para uma obra específica
-     */
-    initializeObraTotal(obraId) {
-        if (this.initialized.has(obraId)) {
-            return;
-        }
-
-        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
-        if (!obraElement) {
-            return;
-        }
-
-        // Verifica se já tem o elemento de total
-        let totalElement = document.getElementById(`total-obra-valor-${obraId}`);
-
-        if (!totalElement) {
-            this.createObraTotalElement(obraId);
-        } else {
-            // Se já existe, força atualização
-            this.updateObraTotal(obraId);
-        }
-
-        this.initialized.add(obraId);
-    }
-
-    // Inicializa totais para obras existentes
-    initializeExistingObraTotals() {
-        const obraBlocks = document.querySelectorAll('.obra-block');
-
-        obraBlocks.forEach((obra) => {
-            const obraId = obra.dataset.obraId;
-            if (obraId) {
-                this.initializeObraTotal(obraId);
-            }
-        });
-
-        // Atualização periódica
-        setTimeout(() => this.updateAllObraTotals(), 250);
-    }
-
-    updateAllObraTotals() {
-        const obraBlocks = document.querySelectorAll('.obra-block');
-        
-        obraBlocks.forEach((obra) => {
-            const obraId = obra.dataset.obraId;
-            if (obraId) {
-                this.updateObraTotal(obraId);
-            }
-        });
-    }
-
-    // 🔥 Função de correção manual
-    forceUpdateObra(obraId) {
-        const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
-        if (!obraElement) return false;
-
-        let total = 0;
-        const projects = obraElement.querySelectorAll('.project-block');
-        
-        projects.forEach(project => {
-            const projectId = project.dataset.projectId;
-            const totalElement = document.getElementById(`total-projeto-valor-${projectId}`);
-            
-            if (totalElement) {
-                const texto = totalElement.textContent;
-                const valor = this.parseCurrency(texto);
-                total += valor;
-            }
-        });
-
-        // Atualiza ou cria o elemento
-        let obraTotalElement = document.getElementById(`total-obra-valor-${obraId}`);
-        const formatted = this.formatCurrency(total);
-        
-        if (obraTotalElement) {
-            obraTotalElement.textContent = formatted;
-            // Removida a lógica de classes baseadas no valor
-            return true;
-        } else {
-            // Cria elemento sem classes de estilo baseadas no valor
-            const addProjectSection = obraElement.querySelector('.add-project-section');
-            if (addProjectSection) {
-                addProjectSection.insertAdjacentHTML('beforeend', 
-                    `<span class="obra-total-value" id="total-obra-valor-${obraId}" 
-                          data-obra-id="${obraId}" title="Valor total da obra">
-                        ${formatted}
-                    </span>`);
-                return true;
-            }
-        }
-        
-        return false;
-    }
+    });
 }
 
-// Inicializa o gerenciador global
-const obraTotalManager = new ObraTotalManager();
-
-// ADICIONAR FUNÇÕES GLOBAIS
 if (typeof window !== 'undefined') {
-    window.obraTotalManager = obraTotalManager;
-
-    window.updateObraTotal = (obraId) => {
-        if (obraTotalManager) {
-            obraTotalManager.updateObraTotal(obraId);
-        }
-    };
-
-    window.forceUpdateObra = (obraId) => {
-        if (obraTotalManager && obraTotalManager.forceUpdateObra) {
-            return obraTotalManager.forceUpdateObra(obraId);
-        }
-        return false;
-    };
-
-    window.updateAllObraTotals = () => {
-        if (obraTotalManager && obraTotalManager.updateAllObraTotals) {
-            obraTotalManager.updateAllObraTotals();
-        }
-    };
-
-    window.initializeAllObraTotals = () => {
-        if (obraTotalManager && obraTotalManager.initializeExistingObraTotals) {
-            obraTotalManager.initializeExistingObraTotals();
-        }
-    };
-    
-    // 🔥 Função de correção de emergência
-    window.emergencyFixObra = (obraId) => {
-        if (!obraId) {
-            // Corrige todas as obras
-            const obras = document.querySelectorAll('.obra-block');
-            let corrigidas = 0;
-            obras.forEach(obra => {
-                const id = obra.dataset.obraId;
-                if (id && window.forceUpdateObra(id)) {
-                    corrigidas++;
-                }
-            });
-            console.log(`✅ ${corrigidas} obras corrigidas`);
-            return corrigidas;
-        } else {
-            // Corrige obra específica
-            return window.forceUpdateObra(obraId);
-        }
-    };
+    window.addNewObra = addNewObra;
+    window.deleteObra = deleteObra;
+    window.createEmptyObra = createEmptyObra;
+    window.buildObraHTML = buildObraHTML;
+    window.initializeExistingObraTotals = initializeExistingObraTotals;
+    window.updateObraTotal = updateObraTotal;
 }
 
-// Inicialização automática
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            if (window.obraTotalManager) {
-                window.obraTotalManager.initializeExistingObraTotals();
-            }
-        }, 125);
+        setTimeout(initializeExistingObraTotals, 125);
     });
 } else {
-    setTimeout(() => {
-        if (window.obraTotalManager) {
-            window.obraTotalManager.initializeExistingObraTotals();
-        }
-    }, 125);
+    setTimeout(initializeExistingObraTotals, 125);
 }
 
-// EXPORTS NO FINAL
 export {
     buildObraHTML,
     buildObraActionsFooter,
@@ -688,5 +256,5 @@ export {
     createEmptyObra,
     addNewObra,
     createObraFromServer,
-    obraTotalManager
+    initializeExistingObraTotals
 };

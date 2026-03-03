@@ -1,0 +1,50 @@
+================================================================================
+RELATÓRIO DE BUSCA DOS IDs
+Data: 02/03/2026 18:12:36
+Diretório: codigo\public\scripts\01_Create_Obra
+================================================================================
+
+📌 OCORRÊNCIAS ENCONTRADAS:
+------------------------------------------------------------
+
+🟢 solution-{machineId}:
+
+Arquivo: data\modules\ventilacao.js (linha 370)
+Código: const qntInput = document.getElementById(`solution-${machineId}`);
+Contexto:
+     368:         const aplicacaoSelect = document.getElementById(`aplicacao-${machineId}`);
+     369:         const capacidadeSelect = document.getElementById(`capacidade-${machineId}`);
+  >> 370:         const qntInput = document.getElementById(`solution-${machineId}`);
+     371: 
+     372:         if (!titleInput || !tipoSelect || !aplicacaoSelect || !capacidadeSelect || !qntInput) return;
+----------------------------------------
+
+Arquivo: data\modules\ventilacao.js (linha 545)
+Código: const qntInput = document.getElementById(`solution-${machineId}`);
+Contexto:
+     543:  */
+     544: window.handleManualQuantityEdit = function(machineId) {
+  >> 545:     const qntInput = document.getElementById(`solution-${machineId}`);
+     546:     const machine = document.getElementById(`tipo-${machineId}`)?.closest('.climatization-machine');
+     547:     const roomId = machine?.dataset.roomId;
+----------------------------------------
+
+Arquivo: data\modules\ventilacao.js (linha 607)
+Código: const qntInput = document.getElementById(`solution-${machineId}`);
+Contexto:
+     605:  */
+     606: function setupQuantityInputListener(machineId) {
+  >> 607:     const qntInput = document.getElementById(`solution-${machineId}`);
+     608:     if (qntInput) {
+     609:         // Remove listener antigo
+----------------------------------------
+
+Arquivo: data\modules\machines\machines-core.js (linha 325)
+Código: ${buildFormGroup("Qnt:", `<input id="solution-${machineId}" type="number" class="form-input machine-qnt-input" data-machine-id="${machineId}" min="1" value="1" onchange="updateQuantity('${machineId}')">`)}
+Contexto:
+     323:           ${buildFormGroup("Capacidade:", `<select id="capacidade-${machineId}" class="form-input machine-power-select" data-machine-id="${machineId}" onchange="handlePowerChange('${machineId}')" disabled><option value="">Selecionar</option></select>`)}
+     324:           ${buildFormGroup("Tensão:", buildSelect([], machineId, "machine-voltage-select", `calculateMachinePrice('${machineId}')`, true))}
+  >> 325:           ${buildFormGroup("Qnt:", `<input id="solution-${machineId}" type="number" class="form-input machine-qnt-input" data-machine-id="${machineId}" min="1" value="1" onchange="updateQuantity('${machineId}')">`)}
+     326:           ${buildFormGroup("Preço Base:", `<div class="price-display" id="base-price-${machineId}">R$ 0,00</div>`)}
+     327:           ${buildFormGroup("Preço Total:", `<div class="price-display" id="total-price-${machineId}">R$ 0,00</div>`)}
+----------------------------------------

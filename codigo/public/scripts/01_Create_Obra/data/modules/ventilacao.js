@@ -29,6 +29,30 @@ const FATOR_PRESSURIZACAO = 3.6;
 // Store para controle por sala
 const ventilationState = new Map();
 
+// =============================================================================
+// DEBOUNCE PARA FINALIZAR CARREGAMENTO
+// =============================================================================
+
+// Mapa para armazenar timers pendentes por sala
+const pendingFinishTimers = {};
+
+/**
+ * Agenda a finalização do modo de carregamento para uma sala.
+ * Se chamado novamente dentro do intervalo, o timer é reiniciado.
+ * @param {string} roomId - ID da sala
+ */
+window.scheduleFinishRoomLoading = function(roomId) {
+    if (pendingFinishTimers[roomId]) {
+        clearTimeout(pendingFinishTimers[roomId]);
+    }
+    pendingFinishTimers[roomId] = setTimeout(() => {
+        if (window.finishRoomLoading) {
+            window.finishRoomLoading(roomId, true);
+        }
+        delete pendingFinishTimers[roomId];
+        console.log(`✅ Modo de carregamento finalizado para sala ${roomId} (após inatividade)`);
+    }, 1000); // Aguarda 500ms sem novas atividades
+};
 
 // =============================================================================
 // CONTROLE DE CARREGAMENTO - EVITA RECÁLCULOS DURANTE PREENCHIMENTO
@@ -44,7 +68,7 @@ window._loadingRooms = new Set();
  * Inicia o modo de carregamento para uma sala específica
  * @param {string} roomId - ID da sala
  */
-export function startRoomLoading(roomId) {
+function startRoomLoading(roomId) {
     if (!window._loadingRooms) window._loadingRooms = new Set();
     window._loadingRooms.add(roomId);
     window._isLoadingData = true;
@@ -56,7 +80,7 @@ export function startRoomLoading(roomId) {
  * @param {string} roomId - ID da sala
  * @param {boolean} triggerRefresh - Se deve disparar refresh após finalizar
  */
-export function finishRoomLoading(roomId, triggerRefresh = true) {
+function finishRoomLoading(roomId, triggerRefresh = true) {
     if (!window._loadingRooms) return;
     
     window._loadingRooms.delete(roomId);
@@ -67,11 +91,14 @@ export function finishRoomLoading(roomId, triggerRefresh = true) {
         console.log('🔄 [MODO CARREGAMENTO] Finalizado - todas as salas carregadas');
     }
     
-    // Dispara refresh se solicitado
-    if (triggerRefresh && window.refreshVentilationForRoom) {
-        setTimeout(() => {
-            window.refreshVentilationForRoom(roomId);
-        }, 12);
+    // Após o carregamento, libera as quantidades para recálculo automático
+    const machinesContainer = document.getElementById(`machines-${roomId}`);
+    if (machinesContainer) {
+        const qntInputs = machinesContainer.querySelectorAll('.machine-qnt-input');
+        qntInputs.forEach(input => {
+            input.setAttribute('data-user-edited', 'false');
+        });
+        console.log(`🔄 Flags de edição manual resetadas para máquinas da sala ${roomId}`);
     }
 }
 
@@ -80,7 +107,7 @@ export function finishRoomLoading(roomId, triggerRefresh = true) {
  * @param {string} roomId - ID da sala
  * @returns {boolean}
  */
-export function isLoadingForRoom(roomId) {
+function isLoadingForRoom(roomId) {
     return window._isLoadingData === true || 
            (window._loadingRooms && window._loadingRooms.has(roomId));
 }
@@ -113,7 +140,7 @@ function getSystemConstants() {
 /**
  * EXTRAI VALOR NUMÉRICO DO SELECT DE CAPACIDADE
  */
-export function extractCapacidadeValue(capacidadeValue) {
+function extractCapacidadeValue(capacidadeValue) {
     if (!capacidadeValue) return null;
     const match = capacidadeValue.match(/^(\d+(?:\.\d+)?)/);
     return match ? parseFloat(match[1]) : null;
@@ -436,37 +463,33 @@ function updateSolutionTable(roomId, inputs) {
         //   → Se JÁ foi editado: MANTÉM valor manual
 
         if (paramsChanged) {
-            // 🔥 PARÂMETROS MUDARAM - SEMPRE atualiza para a nova solução
-            qntInput.value = solucaoNumerica;
-            
-            // Se já tinha sido editado, mantém a flag, mas atualiza o valor
-            if (!userEdited) {
-                qntInput.setAttribute('data-user-edited', 'false');
-            }
-            
+            // Sempre atualiza o registro dos parâmetros atuais
             qntInput.setAttribute('data-last-params', currentParams);
-            
-            console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} ATUALIZADA para ${solucaoNumerica} (userEdited=${userEdited})`);
-            
-            if (window.calculateMachinePrice) {
-                window.calculateMachinePrice(machineId);
-            }
-            
-        } else {
-            // Parâmetros NÃO mudaram
+
             if (!userEdited) {
-                // Nunca foi editado - verifica se precisa atualizar para a solução
+                // Não foi editado manualmente → atualiza para a solução
+                qntInput.value = solucaoNumerica;
+                console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} ATUALIZADA para ${solucaoNumerica} (automática)`);
+                
+                if (window.calculateMachinePrice) {
+                    window.calculateMachinePrice(machineId);
+                }
+            } else {
+                // Foi editado manualmente → preserva o valor, apenas log
+                console.log(`✅ [Ventilação] Parâmetros mudaram, mas quantidade manual da máquina ${machineId} preservada: ${qntInput.value}`);
+            }
+        } else {
+            // Parâmetros não mudaram
+            if (!userEdited) {
                 const currentValue = parseInt(qntInput.value) || 1;
                 if (currentValue !== solucaoNumerica) {
                     qntInput.value = solucaoNumerica;
                     console.log(`📊 [Ventilação] Quantidade da máquina ${machineId} ajustada para solução: ${solucaoNumerica}`);
-                    
                     if (window.calculateMachinePrice) {
                         window.calculateMachinePrice(machineId);
                     }
                 }
             } else {
-                // Já foi editado - MANTÉM o valor manual
                 console.log(`✅ [Ventilação] Quantidade manual da máquina ${machineId} preservada: ${qntInput.value}`);
             }
         }
@@ -727,7 +750,7 @@ function setupMachinesObserver(roomId) {
 
 window.refreshVentilationForRoom = function(roomId) {
     // 🚫 BLOQUEIA CÁLCULOS DURANTE CARREGAMENTO
-    if (isLoadingForRoom(roomId)) {
+    if (window.isLoadingForRoom && window.isLoadingForRoom(roomId)) {
         console.log(`⏸️ [VENTILAÇÃO] Cálculo bloqueado - sala ${roomId} em carregamento`);
         return;
     }
@@ -857,7 +880,7 @@ function setupVentilationForRoom(roomId) {
  * @param {HTMLElement} roomElement - Elemento da sala
  * @param {Object} ventilacaoData - Dados de ventilação { potencia, tempInterna, tempExterna }
  */
-export function fillVentilacaoInputs(roomElement, ventilacaoData) {
+function fillVentilacaoInputs(roomElement, ventilacaoData) {
     if (!roomElement || !ventilacaoData) {
         console.error('❌ Elemento da sala ou dados de ventilação inválidos');
         return;
@@ -899,17 +922,11 @@ export function fillVentilacaoInputs(roomElement, ventilacaoData) {
     });
 }
 
-// Adicione ao objeto window para compatibilidade global
-if (typeof window !== 'undefined') {
-    window.fillVentilacaoInputs = fillVentilacaoInputs;
-}
-
-
 // =============================================================================
 // FUNÇÃO PRINCIPAL EXPORTADA
 // =============================================================================
 
-export function buildVentilacaoSection(roomId) {
+function buildVentilacaoSection(roomId) {
     if (!roomId || roomId === 'undefined' || roomId === 'null') {
         console.error(`❌ buildVentilacaoSection: Room ID inválido`);
         return '';
@@ -925,7 +942,7 @@ export function buildVentilacaoSection(roomId) {
     }, 12);
     
     return `
-    <div class="section-block ventilation-section" id="ventilacao-section-${roomId}" data-room-id="${roomId}">
+    <div class="section-block" id="ventilacao-section-${roomId}" data-room-id="${roomId}">
       <div class="section-header">
         <button class="minimizer" onclick="toggleSection('${roomId}ventilacao')">+</button>
         <h4 class="section-title">Ventilação</h4>
@@ -1024,4 +1041,32 @@ export function buildVentilacaoSection(roomId) {
       </div>
     </div>
   `;
+}
+
+
+// =============================================================================
+// EXPORTS E WINDOW - MÓDULO DE VENTILAÇÃO
+// =============================================================================
+
+// EXPORTS (ES Modules)
+export {
+    startRoomLoading,
+    finishRoomLoading,
+    isLoadingForRoom,
+    extractCapacidadeValue,
+    buildVentilacaoSection,
+    fillVentilacaoInputs
+};
+
+// WINDOW (Objeto Global)
+if (typeof window !== 'undefined') {
+    // Controle de carregamento
+    window.startRoomLoading = startRoomLoading,
+    window.finishRoomLoading = finishRoomLoading,
+    window.isLoadingForRoom = isLoadingForRoom,
+    window.extractCapacidadeValue = extractCapacidadeValue,
+    window.buildVentilacaoSection = buildVentilacaoSection,
+    window.fillVentilacaoInputs = fillVentilacaoInputs
+    
+
 }
