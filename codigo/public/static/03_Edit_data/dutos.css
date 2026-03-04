@@ -203,8 +203,7 @@ textarea.form-control {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.95rem;
-        display: block;
-        overflow-x: auto;
+    overflow-x: auto;
 
 }
 .data-table-duto td{

@@ -42,8 +42,8 @@ function updateProjectTotal(projectId) {
 
     // Soma os serviços (se existirem)
     try {
-        if (typeof calculateServicosTotal === 'function') {
-            total += calculateServicosTotal(projectId);
+        if (typeof window.calculateServicosTotal === 'function') {
+            total += window.calculateServicosTotal(projectId);
         }
     } catch (error) {
         // Silencia erro

@@ -12,19 +12,19 @@ function calculateServicosTotal(projectId) {
     
     let total = 0;
     
-    // Engenharia
-    const engenhariaInput = projectElement.querySelector('.subsection-block:first-child .input-valor');
+    // Engenharia - usando o ID específico da subseção
+    const engenhariaInput = projectElement.querySelector(`#subsection-content-engenharia-${projectId} .input-valor`);
     if (engenhariaInput) {
         total += parseFloat(engenhariaInput.value) || 0;
     }
     
-    // Adicionais
-    const adicionaisInputs = projectElement.querySelectorAll('.adicionais-container .input-valor');
-    adicionaisInputs.forEach(input => {
-        if (input && input.value) {
+    // Adicionais - usando o container específico
+    const adicionaisContainer = projectElement.querySelector(`#adicionais-container-${projectId}`);
+    if (adicionaisContainer) {
+        adicionaisContainer.querySelectorAll('.input-valor').forEach(input => {
             total += parseFloat(input.value) || 0;
-        }
-    });
+        });
+    }
     
     return total;
 }
@@ -33,18 +33,20 @@ function calculateServicosTotal(projectId) {
  * Atualiza o total dos serviços e dispara evento
  */
 function updateServicosTotal(projectId) {
-    // Delay para evitar loops
     setTimeout(() => {
         const total = calculateServicosTotal(projectId);
         
-        // Dispara evento de atualização
+        // Dispara evento para outros possíveis listeners
         document.dispatchEvent(new CustomEvent('valorAtualizado', {
-            detail: { 
-                tipo: 'servico',
-                projectId,
-                valor: total
-            }
+            detail: { tipo: 'servico', projectId, valor: total }
         }));
+
+        // 🔥 ATUALIZA O TOTAL DO PROJETO
+        if (typeof window.updateProjectTotal === 'function') {
+            window.updateProjectTotal(projectId);
+        } else {
+            console.warn('updateProjectTotal não está disponível no escopo global');
+        }
     }, 100);
 }
 
