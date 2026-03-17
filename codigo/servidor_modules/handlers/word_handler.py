@@ -80,12 +80,9 @@ class WordHandler:
                 vars_list = doc.add_paragraph()
                 vars_list.add_run('• {{data_emissao}} - Data de emissão\n').bold = True
                 vars_list.add_run('• {{empresa_nome}} - Nome da empresa\n')
-                vars_list.add_run('• {{obra_nome}} - Nome da obra\n')
-                vars_list.add_run('• {{cliente_final}} - Cliente final\n')
-                vars_list.add_run('• {{normas_aplicaveis}} - Normas técnicas aplicadas\n')
-                vars_list.add_run('• {{escopo_trabalho}} - Escopo do trabalho\n')
-                vars_list.add_run('• {{memoria_calculo}} - Memória de cálculo\n')
-                vars_list.add_run('• {{especificacoes_tecnicas}} - Especificações técnicas\n')
+                vars_list.add_run('• {{projetos}} - Lista de projetos com salas e máquinas\n')
+                vars_list.add_run('• {{opcoes_por_tipo}} - Opções disponíveis por tipo de máquina\n')
+                vars_list.add_run('• {{tensoes_disponiveis}} - Tensões elétricas disponíveis\n')
             
             doc.save(str(template_path))
             print(f"✅ Template placeholder criado: {template_path}")
@@ -211,41 +208,63 @@ class WordHandler:
             traceback.print_exc()
             return None
     
+    # ===============================================================
+    # NOVO MÉTODO: GERAÇÃO DE PROPOSTA TÉCNICA USANDO GERADOR AVANÇADO
+    # ===============================================================
     def generate_proposta_tecnica_avancada(self, obra_id):
-        """Gera proposta técnica usando método genérico por enquanto"""
+        """Gera proposta técnica usando o gerador avançado WordPTGenerator"""
         try:
-            # Para proposta técnica, podemos usar o método existente
-            # ou criar uma implementação específica
+            # Importar o gerador avançado para PT
+            from servidor_modules.generators.wordPT_generator import WordPTGenerator
+            
+            # Criar instância do gerador
+            pt_generator = WordPTGenerator(self.project_root, self.file_utils)
+            
+            # Localizar template
             template_path = self.templates_dir / "proposta_tecnica_template.docx"
             if not template_path.exists():
-                return None, None, "Template de proposta técnica não encontrado"
+                # Tentar encontrar qualquer template .docx
+                docx_files = list(self.templates_dir.glob("*.docx"))
+                if docx_files:
+                    template_path = docx_files[0]
+                else:
+                    return None, None, "Nenhum template encontrado na pasta word_templates"
             
-            # Obter dados da obra
-            obra_data = self.get_obra_data(obra_id)
-            if not obra_data:
-                return None, None, "Obra não encontrada"
+            # Validar obra (opcional, não bloqueia)
+            is_valid, message = self.validate_obra_for_pc(obra_id)  # reutiliza validação
+            if not is_valid:
+                print(f"⚠️ Validação: {message}")
             
-            # Gerar contexto
-            context = self.generate_context_for_obra(obra_data, "tecnica")
+            # Gerar documento
+            output_path = pt_generator.generate_proposta_tecnica(obra_id, template_path)
             
-            # Carregar e preencher template
-            from docxtpl import DocxTemplate
-            doc = DocxTemplate(str(template_path))
-            doc.render(context)
-            
-            # Salvar arquivo temporário
-            import tempfile
-            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as tmp:
-                output_path = tmp.name
-                doc.save(output_path)
-            
-            # Gerar nome do arquivo no formato PT_Obra_sigla_numero_data
-            filename = self.generate_pt_filename(obra_data)
-            
-            return output_path, filename, None
-            
+            if output_path:
+                # Gerar nome do arquivo usando o método do handler
+                obra_data = self.get_obra_data(obra_id)
+                if obra_data:
+                    filename = self.generate_pt_filename(obra_data)
+                else:
+                    # Fallback
+                    from datetime import datetime
+                    import pytz
+                    try:
+                        tz = pytz.timezone('America/Sao_Paulo')
+                        data_atual = datetime.now(tz)
+                    except:
+                        data_atual = datetime.now()
+                    filename = f"PT_Obra_{obra_id}_{data_atual.strftime('%d-%m-%Y')}.docx"
+                
+                # Log de geração
+                obra_summary = self.get_obra_summary(obra_id)
+                print(f"📄 Proposta Técnica gerada para obra: {obra_summary.get('obra_nome')}")
+                print(f"   - Arquivo: {filename}")
+                
+                return output_path, filename, None
+            else:
+                return None, None, "Falha ao gerar documento"
+                
         except Exception as e:
-            print(f"❌ Erro ao gerar proposta técnica: {e}")
+            print(f"❌ Erro em generate_proposta_tecnica_avancada: {e}")
             import traceback
             traceback.print_exc()
             return None, None, str(e)
@@ -692,5 +711,5 @@ class WordHandler:
             print(f"❌ Erro ao gerar nome PT: {e}")
             # Fallback: PT_Obra_data
             from datetime import datetime
-            data_fallback = datetime.now().strftime("%d-%m-%Y")
+            data_fallback = datetime.now().strftime("%d-%m-%YYYY")
             return f"PT_Obra_{data_fallback}.docx"

@@ -44,8 +44,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ROTAS EXISTENTES DO SISTEMA
         "/constants": "handle_get_constants",
         "/system-constants": "handle_get_constants",
-        "/dados": "handle_get_dados",
-        "/backup": "handle_get_backup",
+            "/dados": "handle_get_dados",
+            "/backup": "handle_get_backup",
         "/machines": "handle_get_machines",
         "/health-check": "handle_health_check",
         "/session-obras": "handle_get_session_obras",
@@ -247,105 +247,149 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         print(f"📨 POST: {path}")
         
         # ========== ROTAS PARA WORD ==========
+        # IMPORTANTE: Processar e RETORNAR imediatamente para evitar duplicação
         if path == "/api/word/generate/proposta-comercial":
             self.handle_generate_word_proposta_comercial()
+            return  
+        
         elif path == "/api/word/generate/proposta-tecnica":
             self.handle_generate_word_proposta_tecnica()
+            return  
+        
         elif path == "/api/word/generate/ambos":
             self.handle_generate_word_ambos()
-            
+            return  
+        
         # ========== ROTAS PARA EQUIPAMENTOS ==========
-
-        # ROTAS PARA EQUIPAMENTOS
-        if path == "/api/acessorios/add":
+        elif path == "/api/acessorios/add":
             self.handle_post_add_acessorio()
+            return  
+        
         elif path == "/api/acessorios/update":
             self.handle_post_update_acessorio()
+            return  
+        
         elif path == "/api/acessorios/delete":
             self.handle_post_delete_acessorio()
+            return  
 
         # ========== ROTAS PARA JSON ==========
-
         elif path == "/api/system/apply-json":
             self.handle_post_system_apply_json()
-
+            return  
 
         # ========== ROTAS EXISTENTES ==========
         elif path == "/obras":
             self.route_handler.handle_post_obras(self)
+            return  
 
         # ========== ROTAS DE SESSÃO ==========
         elif path == "/api/sessions/shutdown":
             self.route_handler.handle_post_sessions_shutdown(self)
+            return  
+        
         elif path == "/api/shutdown":
             self.route_handler.handle_shutdown(self)
+            return  
+        
         elif path == "/api/sessions/ensure-single":
             self.route_handler.handle_post_sessions_ensure_single(self)
+            return  
+        
         elif path == "/api/sessions/add-obra":
             self.route_handler.handle_post_sessions_add_obra(self)
+            return  
+        
         elif path == "/api/reload-page":
             self.route_handler.handle_post_reload_page(self)
+            return  
 
         # ========== ROTAS DE DADOS ==========
         elif path == "/dados":
             self.route_handler.handle_post_dados(self)
+            return  
+        
         elif path == "/backup":
             self.route_handler.handle_post_backup(self)
+            return  
 
         # ========== ROTAS DE EMPRESAS ==========
         elif path == "/api/dados/empresas":
             self.route_handler.handle_post_empresas(self)
+            return  
+        
         elif path == "/api/dados/empresas/auto":
             self.route_handler.handle_post_empresas_auto(self)
+            return  
 
-        # ========== ROTAS LEGACY (COMPATIBILIDADE) ==========
+        # ========== ROTAS LEGACY ==========
         elif path in ["/projetos", "/projects"]:
             self.route_handler.handle_post_projetos(self)
+            return  
 
         # ========== NOVAS ROTAS PARA EDIÇÃO DE DADOS ==========
-
-        # ROTAS DE SALVAMENTO COMPLETO
         elif path == "/api/system-data/save":
             self.route_handler.handle_post_save_system_data(self)
+            return  
 
-        # ROTAS DE SALVAMENTO POR SEÇÃO
         elif path == "/api/constants/save":
             self.route_handler.handle_post_save_constants(self)
+            return  
+        
         elif path == "/api/materials/save":
             self.route_handler.handle_post_save_materials(self)
+            return  
+        
         elif path == "/api/empresas/save":
             self.route_handler.handle_post_save_empresas(self)
+            return  
+        
         elif path == "/api/machines/save":
             self.route_handler.handle_post_save_machines(self)
+            return  
 
-        # ROTAS ESPECÍFICAS DE MÁQUINAS
         elif path == "/api/machines/add":
             self.route_handler.handle_post_add_machine(self)
+            return  
+        
         elif path == "/api/machines/update":
             self.route_handler.handle_post_update_machine(self)
+            return  
+        
         elif path == "/api/machines/delete":
             self.route_handler.handle_post_delete_machine(self)
+            return  
             
         # ========== ROTAS PARA DUTOS ==========
         elif path == "/api/dutos/add":
             self.handle_post_add_duto()
+            return  
+        
         elif path == "/api/dutos/update":
             self.handle_post_update_duto()
+            return  
+        
         elif path == "/api/dutos/delete":
             self.handle_post_delete_duto()
+            return  
 
         # ========== ROTAS PARA TUBOS ==========
         elif path == "/api/tubos/add":
             self.handle_post_add_tubo()
+            return  
+        
         elif path == "/api/tubos/update":
             self.handle_post_update_tubo()
+            return  
+        
         elif path == "/api/tubos/delete":
             self.handle_post_delete_tubo()
+            return  
 
         # ========== ROTA NÃO ENCONTRADA ==========
-        else:
-            print(f"❌ POST não implementado: {path}")
-            self.send_error(501, f"Método não suportado: POST {path}")
+        # Se chegou aqui, nenhuma rota foi encontrada
+        print(f"❌ POST não executado corretamente: {path}")
+        self.send_error(501, f"Método não suportado: POST {path}")
 
     def do_PUT(self):
         """PUT para atualizações"""
