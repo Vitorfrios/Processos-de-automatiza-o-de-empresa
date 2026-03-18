@@ -100,9 +100,9 @@
       "value": 10,
       "description": "Margem de segurança aplicada à capacidade final"
     },
-    "fatorEspecifico":{
-      "value":0.24,
-      "description":"Varivel referente ao calor específico"
+    "fatorEspecifico": {
+      "value": 0.24,
+      "description": "Varivel referente ao calor específico"
     }
   },
   "machines": [
@@ -409,7 +409,7 @@
       ]
     },
     {
-      "type": "Split System",
+      "type": "Split System/Self Contained (conforto)",
       "aplicacao": "climatizacao",
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -762,7 +762,7 @@
       ]
     },
     {
-      "type": "Self Contained",
+      "type": "Split System/Self Contained (industrial)",
       "aplicacao": "climatizacao",
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1307,7 +1307,7 @@
       ]
     },
     {
-      "type": "ACJ",
+      "type": "ACJ (janela)",
       "aplicacao": "climatizacao",
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1557,7 +1557,7 @@
       ]
     },
     {
-      "type": "Caixa de Ventilação",
+      "type": "Pressurizador Externo",
       "aplicacao": "pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1715,7 +1715,7 @@
       ]
     },
     {
-      "type": "Centrífugo",
+      "type": "Gabinete Centrífugo",
       "aplicacao": "pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1775,7 +1775,7 @@
       ]
     },
     {
-      "type": "Gabinetes Inline",
+      "type": "Pressurizador Inline",
       "aplicacao": "pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1826,7 +1826,7 @@
       ]
     },
     {
-      "type": "FH Filtros",
+      "type": "Pressurizador Suspenso Horizontal",
       "aplicacao": "pressurizacao_ventilacao",
       "impostos": {
         "PIS_COFINS": "INCL",
@@ -1834,7 +1834,7 @@
         "ICMS": "12%",
         "PRAZO": "45 a 60 dias",
         "FRETE": "FOB/Cabreúva/SP",
-        "FORNECEDOR": "TOSI"
+        "FORNECEDOR": "A definir"
       },
       "configuracoes_instalacao": [
         {
@@ -1880,6 +1880,38 @@
           "value": 300
         }
       ]
+    },
+    {
+      "type": "Filtro Quimico",
+      "aplicacao": "pressurizacao_ventilacao",
+      "impostos": {
+        "PIS_COFINS": "INCL",
+        "IPI": "ISENTO",
+        "ICMS": "12%",
+        "PRAZO": "45 a 60 dias",
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
+      },
+      "configuracoes_instalacao": [],
+      "baseValues": {},
+      "options": [],
+      "voltages": []
+    },
+    {
+      "type": "Rooftop",
+      "aplicacao": "climatizacao",
+      "impostos": {
+        "PIS_COFINS": "INCL",
+        "IPI": "ISENTO",
+        "ICMS": "12%",
+        "PRAZO": "70 dias",
+        "FRETE": "FOB/Cabreúva/SP",
+        "FORNECEDOR": "TOSI"
+      },
+      "configuracoes_instalacao": [],
+      "baseValues": {},
+      "options": [],
+      "voltages": []
     }
   ],
   "materials": {
@@ -1931,7 +1963,13 @@
   },
   "empresas": [
     {
-      "ACT": "ACTEMIUM"
+      "ACT": "ACTEMIUM",
+      "credenciais": {
+        "usuario": "awffr",
+        "token": "fefefeeef",
+        "data_criacao": "2026-03-10T09:30:00Z",
+        "tempoUso": "90"
+      }
     },
     {
       "AMC": "AMC SOLUÇÕES"

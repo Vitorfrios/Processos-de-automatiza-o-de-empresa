@@ -237,7 +237,7 @@ async function fillMachinesData(roomElement, machinesData) {
 }
 
 /**
- * Preenche os dados individuais de uma máquina - COM PRIORIDADE PARA QUANTIDADE SALVA
+ * Preenche os dados individuais de uma máquina
  */
 async function populateMachineData(machineElement, machineData) {
     if (!machineElement || !machineData) {
@@ -249,7 +249,6 @@ async function populateMachineData(machineElement, machineData) {
     
     const roomId = machineElement.dataset.roomId;
     
-    // 🚫 INICIA MODO DE CARREGAMENTO PARA ESTA SALA
     if (roomId && window.startRoomLoading) {
         window.startRoomLoading(roomId);
     }
@@ -258,44 +257,32 @@ async function populateMachineData(machineElement, machineData) {
         const machineId = machineElement.dataset.machineId;
 
         // =========================================================
-        // PASSO 1: PRIMEIRO DEFINIR A QUANTIDADE (se disponível)
-        // E MARCAR COMO EDITADA PELO USUÁRIO IMEDIATAMENTE
+        // PASSO 1: QUANTIDADE
         // =========================================================
         const qntInput = machineElement.querySelector('.machine-qnt-input');
         if (qntInput && machineData.quantidade !== undefined) {
-            // ✅ MARCA COMO EDITADO PELO USUÁRIO - ISSO É CRÍTICO!
             qntInput.setAttribute('data-user-edited', 'true');
-            
-            // ✅ DEFINE O VALOR DO BANCO
-            qntInput.value = Math.max(1, parseInt(machineData.quantidade) || 1534);
-            
-            
-            // Inicializa data-last-params com um valor temporário
+            qntInput.value = Math.max(1, parseInt(machineData.quantidade) || 1);
             qntInput.setAttribute('data-last-params', 'loading');
-            
-            console.log(`✅ Quantidade do banco definida: ${qntInput.value} (marcada como manual)`);
-        } else {
-            console.log(`⚠️ Quantidade não encontrada no banco para máquina ${machineId}`);
+            console.log(`✅ Quantidade definida: ${qntInput.value}`);
         }
 
         // =========================================================
-        // PASSO 2: DEFINIR TIPO E DISPARAR EVENTO PARA CARREGAR CAPACIDADES
+        // PASSO 2: TIPO
         // =========================================================
         const typeSelect = machineElement.querySelector('.machine-type-select');
         if (typeSelect && machineData.tipo) {
             typeSelect.value = machineData.tipo;
             console.log(`✅ Tipo definido: ${machineData.tipo}`);
             
-            // Dispara evento para carregar capacidades
             const changeEvent = new Event('change', { bubbles: true });
             typeSelect.dispatchEvent(changeEvent);
             
-            // Aguarda o sistema carregar as capacidades
             await new Promise(resolve => setTimeout(resolve, 31));
         }
 
         // =========================================================
-        // PASSO 3: DEFINIR APLICAÇÃO
+        // PASSO 3: APLICAÇÃO
         // =========================================================
         const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
         if (aplicacaoSelect && machineData.aplicacao_machines !== undefined) {
@@ -309,24 +296,21 @@ async function populateMachineData(machineElement, machineData) {
         }
 
         // =========================================================
-        // PASSO 4: DEFINIR CAPACIDADE
+        // PASSO 4: CAPACIDADE
         // =========================================================
         const powerSelect = machineElement.querySelector('.machine-power-select');
         if (powerSelect && machineData.potencia) {
             console.log(`🔍 Procurando capacidade: "${machineData.potencia}"`);
             
-            // Aguarda habilitação
             let attempts = 0;
             const maxAttempts = 10;
             
             while (powerSelect.disabled && attempts < maxAttempts) {
                 await new Promise(resolve => setTimeout(resolve, 18));
                 attempts++;
-                console.log(`⏳ Aguardando habilitação da capacidade... (${attempts}/${maxAttempts})`);
             }
             
             if (!powerSelect.disabled) {
-                // Tenta encontrar a opção
                 const powerOption = Array.from(powerSelect.options).find(opt => {
                     const optText = opt.text.toLowerCase();
                     const optValue = opt.value.toLowerCase();
@@ -341,7 +325,6 @@ async function populateMachineData(machineElement, machineData) {
                     powerSelect.value = powerOption.value;
                     console.log(`✅ Capacidade definida: ${powerOption.value}`);
                     
-                    // Dispara evento
                     const powerEvent = new Event('change', { bubbles: true });
                     powerSelect.dispatchEvent(powerEvent);
                     
@@ -351,7 +334,7 @@ async function populateMachineData(machineElement, machineData) {
         }
 
         // =========================================================
-        // PASSO 5: DEFINIR TENSÃO
+        // PASSO 5: TENSÃO FORÇA
         // =========================================================
         const voltageSelect = machineElement.querySelector('.machine-voltage-select');
         if (voltageSelect && machineData.tensao) {
@@ -387,14 +370,34 @@ async function populateMachineData(machineElement, machineData) {
         }
 
         // =========================================================
-        // PASSO 6: ATUALIZAR PARÂMETROS NO INPUT DE QUANTIDADE
+        // PASSO 6: TENSÃO COMANDO
+        // =========================================================
+        const commandVoltageSelect = machineElement.querySelector('.machine-command-voltage-select');
+        if (commandVoltageSelect) {
+            const tensaoComando = machineData.tensao_comando || '220V';
+            console.log(`🔍 Definindo tensão comando: "${tensaoComando}"`);
+            
+            const commandOption = Array.from(commandVoltageSelect.options).find(opt => 
+                opt.value === tensaoComando
+            );
+            
+            if (commandOption) {
+                commandVoltageSelect.value = tensaoComando;
+                console.log(`✅ Tensão comando definida: ${tensaoComando}`);
+            } else {
+                // Valor padrão se não encontrar
+                commandVoltageSelect.value = '220V';
+                console.log(`⚠️ Valor "${tensaoComando}" não encontrado, usando 220V`);
+            }
+        }
+
+        // =========================================================
+        // PASSO 7: PARÂMETROS NO INPUT
         // =========================================================
         if (qntInput && machineData.aplicacao_machines && machineData.potencia) {
-            // Extrai valor numérico da capacidade
             const capacidadeMatch = machineData.potencia.match(/(\d+)/);
             const capacidadeValue = capacidadeMatch ? parseFloat(capacidadeMatch[1]) : null;
             
-            // Calcula vazão necessária aproximada (opcional, pode ser 0)
             let vazaoNecessaria = 0;
             if (roomId && window.calculateVazaoByAplicacao) {
                 try {
@@ -409,14 +412,12 @@ async function populateMachineData(machineElement, machineData) {
                 }
             }
             
-            // Salva os parâmetros ATUAIS para referência futura
-            const currentParams = `${machineData.tipo}_${machineData.aplicacao_machines}_${capacidadeValue || ''}_${vazaoNecessaria}`;            qntInput.setAttribute('data-last-params', currentParams);
-            
-            console.log(`✅ Parâmetros salvos no input: ${currentParams}`);
+            const currentParams = `${machineData.tipo}_${machineData.aplicacao_machines}_${capacidadeValue || ''}_${vazaoNecessaria}`;
+            qntInput.setAttribute('data-last-params', currentParams);
         }
 
         // =========================================================
-        // PASSO 7: DEFINIR OPÇÕES E CONFIGURAÇÕES
+        // PASSO 8: OPÇÕES
         // =========================================================
         if (machineData.opcoesSelecionadas?.length) {
             await new Promise(resolve => setTimeout(resolve, 31));
@@ -438,6 +439,9 @@ async function populateMachineData(machineElement, machineData) {
             }
         }
 
+        // =========================================================
+        // PASSO 9: CONFIGURAÇÕES
+        // =========================================================
         if (machineData.configuracoesSelecionadas?.length) {
             await new Promise(resolve => setTimeout(resolve, 31));
             
@@ -459,7 +463,7 @@ async function populateMachineData(machineElement, machineData) {
         }
 
         // =========================================================
-        // PASSO 8: DEFINIR PREÇOS
+        // PASSO 10: PREÇOS
         // =========================================================
         if (machineData.precoBase !== undefined) {
             const basePriceElement = document.getElementById(`base-price-${machineId}`);
@@ -476,29 +480,30 @@ async function populateMachineData(machineElement, machineData) {
         }
 
         // =========================================================
-        // PASSO 9: VERIFICAÇÃO FINAL - GARANTE QUE QUANTIDADE NÃO FOI ALTERADA
+        // PASSO 11: VERIFICAÇÃO DA QUANTIDADE
         // =========================================================
         if (qntInput && machineData.quantidade !== undefined) {
-            // Pequeno delay e verifica se a quantidade ainda é a do banco
             setTimeout(() => {
                 const currentValue = parseInt(qntInput.value);
                 if (currentValue !== parseInt(machineData.quantidade)) {
-                    console.error(`⚠️ Quantidade foi alterada para ${currentValue}, revertendo para ${machineData.quantidade}`);
+                    console.log(`⚠️ Quantidade alterada para ${currentValue}, revertendo para ${machineData.quantidade}`);
                     qntInput.value = machineData.quantidade;
                     qntInput.setAttribute('data-user-edited', 'true');
-                    updateQuantity();
+                    if (window.updateQuantity) window.updateQuantity(machineId);
                 } else {
                     console.log(`✅ Quantidade mantida: ${currentValue}`);
                 }
             }, 150);
         }
 
-        console.log(`✅ Máquina preenchida com sucesso - quantidade manual: ${machineData.quantidade}`);
+        console.log(`✅ Máquina preenchida com sucesso - dados:`, {
+            nome: machineData.nome,
+            tensao_comando: machineData.tensao_comando
+        });
        
         if (roomId && window.scheduleFinishRoomLoading) {
             window.scheduleFinishRoomLoading(roomId);
         }
-
         
         return true;
 

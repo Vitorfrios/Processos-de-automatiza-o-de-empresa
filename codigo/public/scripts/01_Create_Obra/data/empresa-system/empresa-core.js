@@ -543,16 +543,30 @@ export class EmpresaCadastroInline {
 
             const novoNumero = maiorNumero + 1;
 
-            // 🔥 Atualizar campo no DOM
             if (obraId) {
                 this.atualizarCampoNumeroCliente(obraId, novoNumero);
+                
+                // 🔥 NOVO: Atualizar o header da obra
+                const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+                if (obraElement) {
+                    const dados = {
+                        empresaSigla: sigla,
+                        empresaNome: obraElement.dataset.empresaNome || '',
+                        numeroClienteFinal: novoNumero,
+                        clienteFinal: obraElement.dataset.clienteFinal,
+                        codigoCliente: obraElement.dataset.codigoCliente,
+                        dataCadastro: obraElement.dataset.dataCadastro,
+                        orcamentistaResponsavel: obraElement.dataset.orcamentistaResponsavel
+                    };
+                    this.atualizarHeaderObra(obraElement, dados);
+                }
             }
 
             return novoNumero;
 
         } catch (error) {
             console.error('❌ [EMPRESA] Erro ao calcular número do cliente final:', error);
-            return 1; // ✅ Para empresa nova, retorna 1 como fallback
+            return 1;
         }
     }
 
@@ -1404,22 +1418,13 @@ window.atualizarDadosEmpresa = function (input, campo, obraId) {
             console.error(`❌ [EMPRESA] Obra ${obraId} não encontrada`);
             return;
         }
-
-        // Atualizar data attribute
         obraElement.dataset[campo] = input.value;
-
         console.log(`📝 [EMPRESA] Campo ${campo} atualizado para:`, input.value);
-
-        // Se for cliente final ou orçamentista, atualizar tooltip do header
-        if (campo === 'clienteFinal' || campo === 'orcamentistaResponsavel') {
-            if (window.empresaCadastro && typeof window.empresaCadastro.atualizarHeaderObra === 'function') {
-                const dadosAtuais = obterDadosEmpresaDaObra(obraId);
-                if (dadosAtuais) {
-                    window.empresaCadastro.atualizarHeaderObra(obraElement, dadosAtuais);
-                }
-            }
+        
+        // Atualizar tooltip
+        if (typeof atualizarTooltipEmpresa === 'function') {
+            atualizarTooltipEmpresa(obraId);
         }
-
     } catch (error) {
         console.error(`❌ [EMPRESA] Erro ao atualizar campo ${campo}:`, error);
     }
@@ -1580,6 +1585,40 @@ function inicializarSistemaEmpresa() {
         return false;
     }
 }
+// empresa-core.js - funções auxiliares para tooltip
+function criarTooltipEmpresa(dados) {
+    const partes = [];
+    if (dados.empresaNome) partes.push(`Empresa: ${dados.empresaNome}`);
+    if (dados.clienteFinal) partes.push(`Cliente: ${dados.clienteFinal}`);
+    if (dados.codigoCliente) partes.push(`Código: ${dados.codigoCliente}`);
+    if (dados.dataCadastro) partes.push(`Data: ${dados.dataCadastro}`);
+    if (dados.orcamentistaResponsavel) partes.push(`Orçamentista: ${dados.orcamentistaResponsavel}`);
+    return partes.join('\n');
+}
+
+function atualizarTooltipEmpresa(obraId) {
+    const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (!obraElement) return;
+    
+    const headerSpacer = obraElement.querySelector('.obra-header-spacer');
+    if (!headerSpacer) return;
+    
+    const span = headerSpacer.querySelector('.empresa-identifier-display');
+    if (!span) return;
+    
+    const dados = {
+        empresaSigla: obraElement.dataset.empresaSigla,
+        empresaNome: obraElement.dataset.empresaNome,
+        numeroClienteFinal: obraElement.dataset.numeroClienteFinal,
+        clienteFinal: obraElement.dataset.clienteFinal,
+        codigoCliente: obraElement.dataset.codigoCliente,
+        dataCadastro: obraElement.dataset.dataCadastro,
+        orcamentistaResponsavel: obraElement.dataset.orcamentistaResponsavel
+    };
+    
+    span.setAttribute('data-tooltip', criarTooltipEmpresa(dados));
+}
+
 
 export {
     carregarEmpresasComCache,
@@ -1588,6 +1627,8 @@ export {
     atualizarTextoBotaoEmpresa,
     atualizarTodosBotoesEmpresa,
     inicializarSistemaEmpresa,
+    atualizarTooltipEmpresa,
+    criarTooltipEmpresa
 
 }
 
@@ -1598,5 +1639,7 @@ if (typeof window !== 'undefined') {
     window.obterDadosEmpresaDaObra = obterDadosEmpresaDaObra;
     window.atualizarTextoBotaoEmpresa = atualizarTextoBotaoEmpresa;
     window.atualizarTodosBotoesEmpresa = atualizarTodosBotoesEmpresa;
-    window.inicializarSistemaEmpresa = inicializarSistemaEmpresa
+    window.inicializarSistemaEmpresa = inicializarSistemaEmpresa;
+    window.atualizarTooltipEmpresa = atualizarTooltipEmpresa;
+
 }

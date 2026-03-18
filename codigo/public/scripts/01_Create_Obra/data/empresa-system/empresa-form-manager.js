@@ -90,8 +90,12 @@ function atualizarCamposEmpresaForm(obraData, formElement) {
 function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
     console.log(`📋 [EMPRESA] Criando formulário para obra ${obraId}`, dadosExistentes ? 'com dados' : 'vazio');
     
+    // Remove qualquer botão existente no container
+    const botoes = container.querySelectorAll('.btn-empresa-cadastro, .btn-empresa-visualizar');
+    botoes.forEach(btn => btn.remove());
+    
     const dataAtual = new Date().toLocaleDateString('pt-BR');
-    const modoEdicao = !!dadosExistentes; // true se tem dados
+    const modoEdicao = !!dadosExistentes;
     
     // Preparar valores
     const valorEmpresa = dadosExistentes?.empresaSigla && dadosExistentes?.empresaNome 
@@ -126,43 +130,43 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
                 </div>
             </div>
 
-            <!-- Nº CLIENTE (NUNCA readonly) -->
+            <!-- Nº CLIENTE -->
             <div class="form-group-horizontal">
                 <label>Nº Cliente</label>
                 <input type="text" 
-                       class="numero-cliente-input" 
+                       class="numero-cliente-final-cadastro" 
                        id="numero-cliente-${obraId}"
                        value="${numeroCliente}"
                        placeholder="${modoEdicao ? 'Número do cliente' : 'Será gerado automaticamente'}"
-                       ${modoEdicao ? '' : 'readonly'}> <!-- Apenas readonly em criação até selecionar empresa -->
+                       ${modoEdicao ? '' : 'readonly'}>
             </div>
 
-            <!-- CLIENTE FINAL (sempre editável) -->
+            <!-- CLIENTE FINAL -->
             <div class="form-group-horizontal">
                 <label>Cliente Final</label>
                 <input type="text" 
-                       class="cliente-final-input" 
+                       class="cliente-final-cadastro" 
                        id="cliente-final-${obraId}"
                        value="${clienteFinal}"
                        placeholder="Nome do cliente final">
             </div>
 
-            <!-- CÓDIGO (sempre editável) -->
+            <!-- CÓDIGO -->
             <div class="form-group-horizontal">
                 <label>Código</label>
                 <input type="text" 
-                       class="codigo-cliente-input" 
+                       class="codigo-cliente-cadastro" 
                        id="codigo-cliente-${obraId}"
                        value="${codigoCliente}"
                        placeholder="Código do cliente">
             </div>
 
-            <!-- DATA (sempre editável, com fallback) -->
+            <!-- DATA -->
             <div class="form-group-horizontal">
                 <label>Data</label>
                 <div class="date-input-container">
                     <input type="text" 
-                           class="data-cadastro-input" 
+                           class="data-cadastro-cadastro" 
                            id="data-cadastro-${obraId}"
                            value="${dataCadastro}"
                            placeholder="DD/MM/AAAA"
@@ -171,18 +175,18 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
                 </div>
             </div>
 
-            <!-- ORÇAMENTISTA (sempre editável) -->
+            <!-- ORÇAMENTISTA -->
             <div class="form-group-horizontal">
                 <label>Orçamentista</label>
                 <input type="text" 
-                       class="orcamentista-input" 
+                       class="orcamentista-responsavel-cadastro" 
                        id="orcamentista-${obraId}"
                        value="${orcamentista}"
                        placeholder="Nome do orçamentista">
             </div>
         </div>
 
-        <!-- BOTÕES: SEMPRE OCULTAR + LIMPAR -->
+        <!-- BOTÕES -->
         <div class="empresa-form-actions">
             <button type="button" class="btn-ocultar" 
                     onclick="window.ocultarFormularioEmpresa('${obraId}')">
@@ -196,14 +200,12 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
     </div>
     `;
     
-    // Remover formulário anterior se existir
+    // Remove formulário anterior se existir
     const formularioAnterior = container.querySelector('.empresa-formulario-ativo');
     if (formularioAnterior) formularioAnterior.remove();
     
-    // Inserir novo formulário
     container.insertAdjacentHTML('beforeend', formularioHTML);
     
-    // Configurar após inserção
     setTimeout(() => {
         // Inicializar autocomplete
         if (typeof window.inicializarInputEmpresaHibrido === 'function') {
@@ -214,7 +216,7 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
         const dataCampo = document.getElementById(`data-cadastro-${obraId}`);
         if (dataCampo) configurarCampoDataEspecifico(dataCampo);
         
-        // Se tem dados, configurar data attributes
+        // Se tem dados, configurar data attributes e número cliente editável
         if (dadosExistentes) {
             const empresaInput = document.getElementById(`empresa-input-${obraId}`);
             if (empresaInput && dadosExistentes.empresaSigla) {
@@ -222,7 +224,6 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
                 empresaInput.dataset.nomeSelecionado = dadosExistentes.empresaNome || '';
             }
             
-            // Número do cliente SEMPRE editável
             const numeroInput = document.getElementById(`numero-cliente-${obraId}`);
             if (numeroInput) {
                 numeroInput.removeAttribute('readonly');
@@ -846,6 +847,31 @@ window.limparFormularioEmpresa = function(obraId) {
 };
 
 
+async function carregarDadosEmpresaNaObra(obraElement, obraData) {
+    const obraId = obraElement.dataset.obraId;
+    const container = obraElement.querySelector('.projetc-header-record.very-dark');
+    if (!container) return;
+
+    // Verificar se há dados de empresa
+    const temDados = obraData.empresaSigla || obraData.empresaNome || obraData.numeroClienteFinal;
+    if (!temDados) return;
+
+    // Criar formulário com os dados
+    criarFormularioEmpresa(obraId, container, obraData);
+
+    // Atualizar o header (título e spacer)
+    if (window.empresaCadastro && typeof window.empresaCadastro.atualizarHeaderObra === 'function') {
+        window.empresaCadastro.atualizarHeaderObra(obraElement, obraData);
+    }
+
+    // Garantir que o título da obra seja SIGLA-NUMERO
+    const tituloElement = obraElement.querySelector('.obra-title');
+    if (tituloElement && obraData.empresaSigla && obraData.numeroClienteFinal) {
+        tituloElement.textContent = `${obraData.empresaSigla}-${obraData.numeroClienteFinal}`;
+    }
+
+    console.log(`✅ [EMPRESA] Dados carregados e interface atualizada para obra ${obraId}`);
+}
 
 /* ==== SEÇÃO 5: INICIALIZAÇÃO ==== */
 export { 
@@ -860,7 +886,8 @@ export {
     validarTodosCamposDataNoFormulario,
     limparCampoData,
     limparCamposEmpresaCompletamente,
-    criarFormularioEmpresa
+    criarFormularioEmpresa,
+    carregarDadosEmpresaNaObra
 }
 
 // Compatibilidade global
@@ -877,6 +904,7 @@ if (typeof window !== 'undefined') {
     window.validarTodosCamposDataNoFormulario = validarTodosCamposDataNoFormulario;
     window.limparCampoData = limparCampoData;
     window.limparCamposEmpresaCompletamente = limparCamposEmpresaCompletamente;
+    window.carregarDadosEmpresaNaObra = carregarDadosEmpresaNaObra;
 }
 
 

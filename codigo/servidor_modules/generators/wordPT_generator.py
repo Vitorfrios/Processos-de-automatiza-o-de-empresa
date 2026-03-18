@@ -377,9 +377,19 @@ class WordPTGenerator:
 
                 # Processa salas do projeto
                 salas_processadas = []
+                acessorios_do_projeto = []  # Acumula acessórios de todas as salas
+                tem_dutos_no_projeto = False  # True se QUALQUER sala tiver dutos
+                
                 for sala in projeto.get("salas", []):
                     sala_proc = self._processar_sala(sala)
                     salas_processadas.append(sala_proc)
+                    
+                    # Acumula acessórios da sala (se existirem)
+                    acessorios_do_projeto.extend(sala.get("acessorios", []))
+                    
+                    # Verifica se a sala tem dutos
+                    if sala.get("dutos"):
+                        tem_dutos_no_projeto = True
                     
                     # Acumula para agregações globais
                     for maq in sala_proc.maquinas_climatizacao:
@@ -398,6 +408,12 @@ class WordPTGenerator:
                 # Agrega máquinas do projeto por tipo
                 agregacoes_projeto = self._agregar_maquinas_por_tipo(salas_processadas)
 
+                # Processa acessórios do projeto (acumulados de todas as salas)
+                tem_dcf_90 = any(ac.get("tipo") == "DCF_90" for ac in acessorios_do_projeto)
+                tem_dcf_120 = any(ac.get("tipo") == "DCF_120" for ac in acessorios_do_projeto)
+                tem_tae = any(ac.get("tipo") == "TAE" for ac in acessorios_do_projeto)
+                tem_vz = any(ac.get("tipo") == "VZ" for ac in acessorios_do_projeto)
+
                 projetos_processados.append({
                     "nome": projeto_nome,
                     "salas": [self._sala_to_dict(s) for s in salas_processadas],
@@ -405,7 +421,19 @@ class WordPTGenerator:
                         tipo: self._aggregate_to_dict(agg)
                         for tipo, agg in agregacoes_projeto.items()
                     },
-                    "primeira_sala": self._sala_to_dict(salas_processadas[0]) if salas_processadas else None
+                    "primeira_sala": self._sala_to_dict(salas_processadas[0]) if salas_processadas else None,
+                    # Dutos - TRUE se QUALQUER sala tiver dutos
+                    "tem_dutos": tem_dutos_no_projeto,
+                    # Acessórios - acumulados de todas as salas
+                    "acessorios": {
+                        "lista": acessorios_do_projeto,
+                        "tem_dcf_90": tem_dcf_90,
+                        "tem_dcf_120": tem_dcf_120,
+                        "tem_tae": tem_tae,
+                        "tem_vz": tem_vz,
+                        "tem_dcf": tem_dcf_90 or tem_dcf_120,
+                        "tem_algum": len(acessorios_do_projeto) > 0
+                    }
                 })
 
             # Cria agregações globais
@@ -430,21 +458,22 @@ class WordPTGenerator:
                     ]
                 }
 
-            # Criar agregados específicos para exaustores
+            # Criar agregados específicos para exaustores (IGUAL aos outros equipamentos)
             exaustao_trafo_agg = None
             if exaustores_trafo:
-                # Pega o primeiro para ter referência de tensão
                 primeira_maq = exaustores_trafo[0]
-                # Coleta todas as opções
+                tipo_maq = primeira_maq.tipo
+                
+                # Coleta opções reais
                 todas_opcoes = set()
                 for maq in exaustores_trafo:
                     todas_opcoes.update(maq.opcoes_selecionadas)
                 
-                # Lista padrão de opções para exaustores de trafo
-                opcoes_padrao = ['Sensor de temperatura', 'Termostato', 'Proteção IP55', 'Veneziana motorizada']
+                # Usa as opções possíveis do tipo (vindas do dados.json)
+                opcoes_possiveis = self.opcoes_possiveis_por_tipo.get(tipo_maq, [])
                 
                 lista_opcoes = []
-                for opcao in opcoes_padrao:
+                for opcao in opcoes_possiveis:
                     lista_opcoes.append({
                         "nome": opcao,
                         "incluso": opcao in todas_opcoes
@@ -460,15 +489,18 @@ class WordPTGenerator:
             exaustao_bateria_agg = None
             if exaustores_bateria:
                 primeira_maq = exaustores_bateria[0]
+                tipo_maq = primeira_maq.tipo
+                
+                # Coleta opções reais
                 todas_opcoes = set()
                 for maq in exaustores_bateria:
                     todas_opcoes.update(maq.opcoes_selecionadas)
                 
-                # Lista padrão de opções para exaustores de bateria
-                opcoes_padrao = ['Sensor de gás', 'Alarme', 'Proteção IP55', 'Veneziana motorizada']
+                # Usa as opções possíveis do tipo (vindas do dados.json)
+                opcoes_possiveis = self.opcoes_possiveis_por_tipo.get(tipo_maq, [])
                 
                 lista_opcoes = []
-                for opcao in opcoes_padrao:
+                for opcao in opcoes_possiveis:
                     lista_opcoes.append({
                         "nome": opcao,
                         "incluso": opcao in todas_opcoes
@@ -506,7 +538,6 @@ class WordPTGenerator:
                     "bateria": exaustao_bateria_agg
                 },
                 "tenses": tenses,
-                
                 "format_currency": self.format_currency
             }
 

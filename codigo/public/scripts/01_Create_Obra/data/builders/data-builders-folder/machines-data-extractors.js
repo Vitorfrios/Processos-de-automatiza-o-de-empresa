@@ -43,8 +43,9 @@ function extractClimatizationMachineData(machineElement) {
         tipo: machineElement.querySelector('.machine-type-select')?.value || '',
         potencia: machineElement.querySelector('.machine-power-select')?.value || '',
         tensao: machineElement.querySelector('.machine-voltage-select')?.value || '',
+        tensao_comando: '220V',
         quantidade: 1,
-        aplicacao_machines: '', // 🆕 NOVO CAMPO PARA APLICAÇÃO
+        aplicacao_machines: '',
         precoBase: 0,
         opcoesSelecionadas: [],
         configuracoesSelecionadas: [],
@@ -60,11 +61,17 @@ function extractClimatizationMachineData(machineElement) {
             machineData.quantidade = parseInt(qntInput.value) || 1;
         }
 
-        // 🆕 Aplicação da máquina
+        // Aplicação da máquina
         const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
         if (aplicacaoSelect) {
             machineData.aplicacao_machines = aplicacaoSelect.value || '';
-            console.log(`✅ Aplicação extraída: ${machineData.aplicacao_machines}`);
+        }
+
+        // Tensão comando
+        const commandVoltageSelect = machineElement.querySelector('.machine-command-voltage-select');
+        if (commandVoltageSelect) {
+            machineData.tensao_comando = commandVoltageSelect.value || '220V';
+            console.log(`✅ Tensão comando extraída: ${machineData.tensao_comando}`);
         }
 
         // Preço base (unitário)
@@ -114,7 +121,6 @@ function extractClimatizationMachineData(machineElement) {
         if (totalPriceElement) {
             machineData.precoTotal = parseMachinePrice(totalPriceElement.textContent);
         } else {
-            // Calcula manualmente se não tiver elemento
             const basePriceUnitario = machineData.precoBase;
             const optionsTotal = selectedOptions.reduce((sum, option) => sum + option.value, 0);
             machineData.precoTotal = (basePriceUnitario + optionsTotal) * machineData.quantidade;
@@ -123,13 +129,10 @@ function extractClimatizationMachineData(machineElement) {
         console.log(`✅ Máquina ${machineId} extraída:`, {
             nome: machineData.nome,
             tipo: machineData.tipo,
+            tensao_comando: machineData.tensao_comando, 
             aplicacao_machines: machineData.aplicacao_machines,
             potencia: machineData.potencia,
-            quantidade: machineData.quantidade,
-            precoBase: machineData.precoBase,
-            opcoes: machineData.opcoesSelecionadas.length,
-            configuracoes: machineData.configuracoesSelecionadas.length,
-            precoTotal: machineData.precoTotal
+            quantidade: machineData.quantidade
         });
 
         return machineData;

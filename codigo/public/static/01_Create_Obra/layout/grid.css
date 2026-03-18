@@ -144,20 +144,10 @@
 
 
 
-.sections-row {
-  display: flex;
-  gap: 15px; /* espaço entre as colunas */
-}
+
 
 .section-column {
   flex: 1; /* faz com que as colunas tenham largura igual */
   min-width: 0; /* previne overflow */
 }
 
-/* Responsividade para mobile */
-@media (max-width: 768px) {
-  .sections-row {
-    flex-direction: column;
-    gap: 10px;
-  }
-}

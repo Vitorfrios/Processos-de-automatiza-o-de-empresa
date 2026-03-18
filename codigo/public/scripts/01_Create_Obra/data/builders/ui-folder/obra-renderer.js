@@ -83,10 +83,12 @@ async function populateObraData(obraData) {
     if (!obraElement) return;
 
     if (obraData.empresaSigla || obraData.empresaNome || obraData.empresa_id) {
-        if (typeof window.prepararDadosEmpresaNaObra === 'function') {
+        if (typeof window.carregarDadosEmpresaNaObra === 'function') {
             try {
-                await window.prepararDadosEmpresaNaObra(obraData, obraElement);
-            } catch (error) {}
+                await window.carregarDadosEmpresaNaObra(obraElement, obraData);
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados da empresa:', error);
+            }
         } else {
             const camposEmpresa = ['empresaSigla', 'empresaNome', 'empresa_id'];
             camposEmpresa.forEach(campo => {

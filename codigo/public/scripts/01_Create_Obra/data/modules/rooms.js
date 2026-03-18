@@ -48,14 +48,8 @@ function buildRoomHTML(obraId, projectId, roomName, roomId) {
         </div>
         <div class="room-content collapsed" id="room-content-${roomId}">
           ${buildTableSection(roomId, roomName)}
-            <div class="sections-row">
-                <div class="section-column">
-                ${buildClimatizationSection(obraId, projectId, roomName, roomId)}
-                </div>
-                <div class="section-column">
-                ${buildVentilacaoSection(roomId)}
-                </div>
-            </div>
+          ${buildClimatizationSection(obraId, projectId, roomName, roomId)}
+          ${buildVentilacaoSection(roomId)}
           ${buildMachinesSection(obraId, projectId, roomName, roomId)}
           ${buildAcessoriosSection(obraId, projectId, roomName, roomId)}
           ${buildTubosSection(obraId, projectId, roomName, roomId)}

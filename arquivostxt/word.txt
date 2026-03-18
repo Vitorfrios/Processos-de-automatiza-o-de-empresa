@@ -1,0 +1,18 @@
+{% if sala.tem_climatizacao -%}
+Climatização: {{ sala.inputs.setpointTemp | default('25') }}°C
+	       {% for maquina in sala.maquinas_climatizacao -%}
+{{ maquina.quantidade }} equipamentos do tipo {{ maquina.tipo }} com capacidade de {{ maquina.potencia }}
+{% if maquina.quantidade > 1 -%}
+☒ Back-up: {{ maquina.quantidade - 1 }} atuante + 1 back-up
+{% else -%}
+☐ Back-up
+{% endif -%}
+
+Opcionais selecionados:
+{% for opcao in maquina.opcoes_selecionadas -%}
+☒ {{ opcao }}
+{% else -%}
+☐ Nenhum opcional selecionado
+{% endfor -%}
+{% endfor -%}
+{% endif -%}
