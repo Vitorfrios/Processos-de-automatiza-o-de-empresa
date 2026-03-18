@@ -161,7 +161,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         parsed_path = urlparse(self.path)
         original_path = self.path
         path = parsed_path.path
-
+        
+        if path == '/' or path == '':
+            print("🌐 Acesso à raiz detectado - redirecionando para página principal")
+            self.send_response(302)
+            self.send_header('Location', '/public/pages/01_Create_Obras_Client.html')
+            self.end_headers()
+            return
+    
         # Normalização rápida de path
         if path.startswith("/codigo/"):
             path = path[7:]
