@@ -2,64 +2,8 @@
 
 class ButtonDeleteUniversal {
     constructor() {
+        // APENAS configuração para obras
         this.BUTTON_CONFIGS = {
-            'deleteMachine': {
-                type: 'maquina',
-                extractIds: (onclick) => {
-                    const match = onclick.match(/deleteMachine\('([^']+)'\)/);
-                    return match ? { machineId: match[1] } : null;
-                },
-                buildPath: (ids) => {
-                    const parts = ids.machineId.split('_');
-                    if (parts.length >= 5) {
-                        const obraId = `obra_${parts[1]}`;
-                        const projectId = `${obraId}_proj_${parts[3]}_${parts[4]}`;
-                        const roomId = `${projectId}_sala_${parts[6]}_${parts[7]}`;
-                        
-                        const machineIndexMatch = ids.machineId.match(/maquina_(\d+)$/);
-                        let machineIndex = 0;
-                        
-                        if (machineIndexMatch) {
-                            machineIndex = parseInt(machineIndexMatch[1]);
-                        } else {
-                            for (let i = 0; i < parts.length; i++) {
-                                if (parts[i] === 'maquina' && i + 1 < parts.length) {
-                                    machineIndex = parseInt(parts[i + 1]) || 0;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        return ['obras', obraId, 'projetos', projectId, 'salas', roomId, 'maquinas', machineIndex];
-                    }
-                    return null;
-                },
-                confirmMessage: 'Tem certeza que deseja DELETAR esta MÁQUINA? Esta ação é permanente e não pode ser desfeita.',
-                successMessage: 'Máquina deletada com sucesso',
-                itemType: 'máquina'
-            },
-            'deleteRoom': {
-                type: 'sala',
-                extractIds: (onclick) => {
-                    const match = onclick.match(/deleteRoom\('([^']+)',\s*'([^']+)',\s*'([^']+)'\)/);
-                    return match ? { obraId: match[1], projectId: match[2], roomId: match[3] } : null;
-                },
-                buildPath: (ids) => ids ? ['obras', ids.obraId, 'projetos', ids.projectId, 'salas', ids.roomId] : null,
-                confirmMessage: 'Tem certeza que deseja DELETAR esta SALA? Todas as máquinas serão perdidas. Esta ação é permanente!',
-                successMessage: 'Sala deletada com sucesso',
-                itemType: 'sala'
-            },
-            'deleteProject': {
-                type: 'projeto',
-                extractIds: (onclick) => {
-                    const match = onclick.match(/deleteProject\('([^']+)',\s*'([^']+)'\)/);
-                    return match ? { obraId: match[1], projectId: match[2] } : null;
-                },
-                buildPath: (ids) => ids ? ['obras', ids.obraId, 'projetos', ids.projectId] : null,
-                confirmMessage: 'Tem certeza que deseja DELETAR este PROJETO? Todas as salas e máquinas serão perdidas. Esta ação é permanente!',
-                successMessage: 'Projeto deletado com sucesso',
-                itemType: 'projeto'
-            },
             'deleteObra': {
                 type: 'obra',
                 extractIds: (onclick) => {
@@ -77,98 +21,49 @@ class ButtonDeleteUniversal {
         this.undoTimeout = null;
         this.toastContainer = null;
         
-        console.log('✅ ButtonDeleteUniversal configurado (versão COM NOMES)');
+        console.log('✅ ButtonDeleteUniversal configurado (APENAS OBRAS)');
     }
 
     /**
-     * 🔥 NOVO: Verifica se deve configurar botão (apenas com filtro ativo)
+     * Verifica se deve configurar botão (apenas com filtro ativo)
      */
     shouldSetupButton() {
-        // Verificar se FilterSystem existe e está ativo
         if (window.FilterSystem && window.FilterSystem.isFilterActive) {
             return window.FilterSystem.isFilterActive();
         }
         
-        // Fallback: verificar estado do toggle
         const filterToggle = document.getElementById('filter-toggle');
         if (filterToggle) {
             return filterToggle.checked;
         }
         
-        return false; // Por padrão, não configurar
+        return false;
     }
 
     /**
-     * 🔥 NOVO: Busca o nome do item no DOM baseado no tipo
+     * Busca o nome da obra no DOM
      */
     getItemNameFromDOM(button, itemType, ids) {
-        console.log(`🔍 Buscando nome para ${itemType}...`, ids);
+        console.log(`🔍 Buscando nome para obra...`, ids);
         
         let titleElement = null;
         
-        // Subir na hierarquia para encontrar container
-        let container = button.closest('.item-container, .obra-container, .projeto-container, .sala-container, .maquina-container, .card, tr, li');
+        // Procurar especificamente por elementos de obra
+        const obraElement = document.getElementById(ids.obraId) || 
+                           document.querySelector(`[data-obra-id="${ids.obraId}"]`) ||
+                           button.closest('.obra-container, .obra-item, [class*="obra"]');
         
-        if (!container) {
-            // Tentar encontrar por ID se não encontrar por classe
-            if (ids.obraId) {
-                container = document.getElementById(ids.obraId) || 
-                           document.querySelector(`[data-obra-id="${ids.obraId}"]`);
-            }
-            if (ids.projectId && !container) {
-                container = document.getElementById(ids.projectId) || 
-                           document.querySelector(`[data-project-id="${ids.projectId}"]`);
-            }
-            if (ids.roomId && !container) {
-                container = document.getElementById(ids.roomId) || 
-                           document.querySelector(`[data-room-id="${ids.roomId}"]`);
-            }
-            if (ids.machineId && !container) {
-                container = document.getElementById(ids.machineId) || 
-                           document.querySelector(`[data-machine-id="${ids.machineId}"]`);
-            }
-        }
-        
-        if (container) {
-            console.log('📦 Container encontrado:', container);
+        if (obraElement) {
+            console.log('📦 Elemento obra encontrado:', obraElement);
             
-            // Buscar título baseado no tipo
-            switch(itemType) {
-                case 'obra':
-                    // Procurar título da obra
-                    titleElement = container.querySelector('.obra-title, h2.obra-title, [data-obra-nome]');
-                    if (!titleElement) {
-                        // Se não encontrar classe específica, procurar h2
-                        titleElement = container.querySelector('h2');
-                    }
-                    break;
-                    
-                case 'projeto':
-                    // Procurar título do projeto
-                    titleElement = container.querySelector('.project-title, .projeto-title, h3.project-title');
-                    if (!titleElement) {
-                        titleElement = container.querySelector('h3');
-                    }
-                    break;
-                    
-                case 'sala':
-                    // Procurar título da sala
-                    titleElement = container.querySelector('.room-title, .sala-title, h4.room-title');
-                    if (!titleElement) {
-                        titleElement = container.querySelector('h4');
-                    }
-                    break;
-                    
-                case 'maquina':
-                    // Procurar título da máquina (pode ser input)
-                    titleElement = container.querySelector('.machine-title-editable, input.machine-title-editable');
-                    if (!titleElement) {
-                        titleElement = container.querySelector('input[type="text"][value]');
-                    }
-                    break;
+            // Buscar título da obra (prioridade para elementos editáveis)
+            titleElement = obraElement.querySelector('.obra-title, h2.obra-title, [data-editable="true"]');
+            
+            if (!titleElement) {
+                // Se não encontrar, procurar qualquer h2
+                titleElement = obraElement.querySelector('h2');
             }
             
-            // Se encontrou elemento, extrair o texto
             if (titleElement) {
                 let itemName = '';
                 
@@ -179,82 +74,60 @@ class ButtonDeleteUniversal {
                 }
                 
                 if (itemName && itemName.length > 0) {
-                    console.log(`✅ Nome encontrado para ${itemType}: "${itemName}"`);
+                    console.log(`✅ Nome encontrado: "${itemName}"`);
                     return itemName;
                 }
-            } else {
-                console.warn(`⚠️ Não encontrou elemento de título para ${itemType}`);
-                
-                // Fallback: buscar qualquer texto que pareça nome
-                const allText = container.textContent || '';
-                const lines = allText.split('\n').map(line => line.trim()).filter(line => 
-                    line.length > 2 && 
-                    !line.includes('Delete') && 
-                    !line.includes('Editar') &&
-                    !line.match(/^[a-z]+_[a-z0-9_]+$/i)
-                );
-                
-                if (lines.length > 0) {
-                    console.log(`✅ Nome encontrado (fallback): "${lines[0].substring(0, 50)}"`);
-                    return lines[0].substring(0, 50); // Limitar tamanho
-                }
             }
-        } else {
-            console.warn('⚠️ Container não encontrado para buscar nome');
         }
         
-        // Último fallback: usar ID formatado
-        console.warn('⚠️ Usando fallback com ID');
-        if (itemType === 'obra' && ids.obraName) {
+        // Fallback para o nome da obra do onclick
+        if (ids.obraName) {
+            console.log(`⚠️ Usando nome do onclick: "${ids.obraName}"`);
             return ids.obraName;
         }
-        if (ids.machineId) {
-            return `Máquina (${ids.machineId})`;
-        }
-        if (ids.roomId) {
-            return `Sala (${ids.roomId})`;
-        }
-        if (ids.projectId) {
-            return `Projeto (${ids.projectId})`;
-        }
         
-        return 'Item sem nome';
+        return 'Obra sem nome';
     }
 
+    /**
+     * Analisa apenas botões de obra
+     */
     analyzeButton(button) {
         if (!button || !button.getAttribute) return null;
         
         const onclick = button.getAttribute('onclick') || '';
         const text = button.textContent?.trim() || '';
         
-        for (const [funcName, config] of Object.entries(this.BUTTON_CONFIGS)) {
-            if (onclick.includes(funcName)) {
-                const ids = config.extractIds(onclick);
-                if (ids) {
-                    const path = config.buildPath(ids);
-                    
-                    // 🔥 AGORA: Buscar o nome correto no DOM
-                    const itemName = this.getItemNameFromDOM(button, config.type, ids);
-                    
-                    return {
-                        button,
-                        funcName,
-                        config,
-                        ids,
-                        path,
-                        itemName,
-                        originalText: text,
-                        originalOnclick: onclick
-                    };
-                }
+        // APENAS verificar deleteObra
+        if (onclick.includes('deleteObra')) {
+            const config = this.BUTTON_CONFIGS['deleteObra'];
+            const ids = config.extractIds(onclick);
+            
+            if (ids) {
+                const path = config.buildPath(ids);
+                const itemName = this.getItemNameFromDOM(button, config.type, ids);
+                
+                return {
+                    button,
+                    funcName: 'deleteObra',
+                    config,
+                    ids,
+                    path,
+                    itemName,
+                    originalText: text,
+                    originalOnclick: onclick
+                };
             }
         }
         
         return null;
     }
 
+    /**
+     * Configura apenas botões de obra
+     */
     setupButton(button) {
-        // 🔥 VERIFICAR SE FILTRO ESTÁ ATIVO
+        // Verificar se filtro está ativo
         if (!this.shouldSetupButton()) {
             console.log('⏭️ Botão não configurado - filtro desativado');
             return;
@@ -262,11 +135,11 @@ class ButtonDeleteUniversal {
         
         const buttonInfo = this.analyzeButton(button);
         if (!buttonInfo) {
-            console.log('⚠️ Botão não identificado:', button);
+            // Não é botão de obra - ignorar silenciosamente
             return;
         }
         
-        console.log(`🔧 Configurando botão ${buttonInfo.config.type}:`, buttonInfo.itemName);
+        console.log(`🔧 Configurando botão de obra:`, buttonInfo.itemName);
         
         // Clonar botão para remover event listeners antigos
         const newButton = button.cloneNode(true);
@@ -295,131 +168,46 @@ class ButtonDeleteUniversal {
         // Substituir o botão antigo
         button.parentNode.replaceChild(newButton, button);
         
-        console.log(`✅ Botão ${buttonInfo.config.type} configurado para "${buttonInfo.itemName}"`);
+        console.log(`✅ Botão de obra configurado para "${buttonInfo.itemName}"`);
         return newButton;
     }
 
     /**
-     * 🔥 CORRIGIDO: Mostra confirmação com NOME correto
+     * Mostra confirmação APENAS para obras
      */
     async showAdvancedConfirmation(buttonInfo) {
         const { config, ids, itemName } = buttonInfo;
         
-        console.log(`🔔 Mostrando confirmação para deletar ${config.itemType}: "${itemName}"`);
+        console.log(`🔔 Mostrando confirmação para deletar obra: "${itemName}"`);
         
-        // Verificar se o UniversalDeleteModal está disponível
         if (window.UniversalDeleteModal) {
-            // Usar o UniversalDeleteModal se disponível
             const confirmed = await UniversalDeleteModal.confirmDelete(
-                config.itemType,
+                'obra',
                 itemName,
-                `Tipo: ${config.itemType}\nID: ${JSON.stringify(ids)}`
+                `ID: ${ids.obraId}`
             );
             
             if (confirmed) {
                 await this.executeRealDeletion(buttonInfo);
             }
         } else {
-            // Fallback: usar modal próprio
-            const modalHTML = `
-                <div id="universal-delete-modal" class="universal-modal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="warning-icon">⚠️</div>
-                            <h3>DELETAR ${config.itemType.toUpperCase()}</h3>
-                            <p>Esta ação não pode ser desfeita</p>
-                        </div>
-                        
-                        <div class="modal-body">
-                            <div class="warning-message">
-                                <strong>"${itemName}"</strong> será 
-                                <span class="highlight-delete">DELETADO PERMANENTEMENTE</span> 
-                                do sistema.
-                            </div>
-                            
-                            <div class="item-details">
-                                <strong>Tipo:</strong> ${config.itemType}<br>
-                                <strong>Nome:</strong> ${itemName}<br>
-                                <strong>Data:</strong> ${new Date().toLocaleString()}
-                            </div>
-                        </div>
-                        
-                        <div class="modal-actions">
-                            <button class="btn-cancel">Cancelar (ESC)</button>
-                            <button class="btn-confirm-delete">DELETAR Permanentemente</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Remover modal anterior se existir
-            const existingModal = document.getElementById('universal-delete-modal');
-            if (existingModal) existingModal.remove();
-            
-            // Adicionar novo modal ao DOM
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            // Animar entrada
-            setTimeout(() => {
-                const modal = document.getElementById('universal-delete-modal');
-                const content = modal.querySelector('.modal-content');
-                modal.style.opacity = '1';
-                content.style.transform = 'translateY(0)';
-            }, 10);
-            
-            // Retornar Promise
-            return new Promise((resolve) => {
-                const modal = document.getElementById('universal-delete-modal');
-                const btnCancel = modal.querySelector('.btn-cancel');
-                const btnConfirm = modal.querySelector('.btn-confirm-delete');
-                
-                const closeModal = (confirmed) => {
-                    modal.style.opacity = '0';
-                    const content = modal.querySelector('.modal-content');
-                    content.style.transform = 'translateY(-20px)';
-                    
-                    setTimeout(() => {
-                        modal.remove();
-                        resolve(confirmed);
-                    }, 37);
-                };
-                
-                btnCancel.addEventListener('click', () => {
-                    console.log('❌ Deleção cancelada pelo usuário');
-                    closeModal(false);
-                });
-                
-                btnConfirm.addEventListener('click', async () => {
-                    console.log('✅ Usuário confirmou deleção permanente');
-                    closeModal(true);
-                    
-                    // Executar deleção real
-                    await this.executeRealDeletion(buttonInfo);
-                });
-                
-                // Fechar ao clicar fora
-                modal.addEventListener('click', (e) => {
-                    if (e.target.id === 'universal-delete-modal') {
-                        closeModal(false);
-                    }
-                });
-                
-                // Fechar com ESC
-                const escHandler = (e) => {
-                    if (e.key === 'Escape') closeModal(false);
-                };
-                document.addEventListener('keydown', escHandler);
-            });
+            // Fallback para confirm nativo
+            if (confirm(`Deseja DELETAR PERMANENTEMENTE a obra "${itemName}"?`)) {
+                await this.executeRealDeletion(buttonInfo);
+            }
         }
     }
 
+    /**
+     * Executa deleção da obra
+     */
     async executeRealDeletion(buttonInfo) {
-        const { config, ids, path, button, itemName } = buttonInfo;
+        const { config, ids, path, itemName } = buttonInfo;
         
-        console.log(`🗑️ Executando deleção REAL para ${config.itemType}: "${itemName}"`, path);
+        console.log(`🗑️ Executando deleção REAL da obra: "${itemName}"`, path);
         
         try {
-            this.showToast(`${config.itemType} "${itemName}" sendo deletado...`, 'processing');
+            this.showToast(`Obra "${itemName}" sendo deletada...`, 'processing');
             
             const response = await fetch('/api/delete', {
                 method: 'DELETE',
@@ -438,22 +226,20 @@ class ButtonDeleteUniversal {
                 console.log(`✅ [DELETE-REAL] Sucesso: ${result.message}`);
                 
                 this.removeElementFromDOM(buttonInfo);
-                this.showToast(`${config.itemType} "${itemName}" deletado permanentemente`, 'success');
+                this.showToast(`Obra "${itemName}" deletada permanentemente`, 'success');
                 
-                if (config.type === 'obra') {
-                    setTimeout(() => {
-                        if (window.FilterSystem) {
-                            window.FilterSystem.reloadObras();
-                        } else {
-                            window.location.reload();
-                        }
-                    }, 187);
-                }
+                setTimeout(() => {
+                    if (window.FilterSystem) {
+                        window.FilterSystem.reloadObras();
+                    } else {
+                        window.location.reload();
+                    }
+                }, 187);
                 
                 return true;
             } else {
                 console.error('❌ [DELETE-REAL] Erro:', result.error);
-                this.showToast(`Erro ao deletar ${config.itemType}: ${result.error}`, 'error');
+                this.showToast(`Erro ao deletar obra: ${result.error}`, 'error');
                 return false;
             }
 
@@ -464,36 +250,15 @@ class ButtonDeleteUniversal {
         }
     }
 
+    /**
+     * Remove elemento da obra do DOM
+     */
     removeElementFromDOM(buttonInfo) {
-        const { config, ids, button, itemName } = buttonInfo;
+        const { ids, itemName } = buttonInfo;
         
-        let elementToRemove = null;
-        
-        switch(config.type) {
-            case 'obra':
-                const obraId = ids.obraId;
-                elementToRemove = document.querySelector(`[data-obra-id="${obraId}"]`) || 
-                                  document.querySelector(`#${obraId}`);
-                break;
-                
-            case 'projeto':
-                const projectId = ids.projectId;
-                elementToRemove = document.getElementById(projectId) || 
-                                  document.querySelector(`[data-project-id="${projectId}"]`);
-                break;
-                
-            case 'sala':
-                const roomId = ids.roomId;
-                elementToRemove = document.getElementById(roomId) || 
-                                  document.querySelector(`[data-room-id="${roomId}"]`);
-                break;
-                
-            case 'maquina':
-                const machineId = ids.machineId;
-                elementToRemove = document.getElementById(machineId) || 
-                                  document.querySelector(`[data-machine-id="${machineId}"]`);
-                break;
-        }
+        let elementToRemove = document.getElementById(ids.obraId) || 
+                              document.querySelector(`[data-obra-id="${ids.obraId}"]`) ||
+                              buttonInfo.button.closest('.obra-container, .obra-item, [class*="obra"]');
         
         if (elementToRemove) {
             elementToRemove.style.transition = 'all 0.5s ease';
@@ -505,11 +270,11 @@ class ButtonDeleteUniversal {
             setTimeout(() => {
                 if (elementToRemove.parentNode) {
                     elementToRemove.remove();
-                    console.log(`✅ Elemento "${itemName}" removido do DOM`);
+                    console.log(`✅ Obra "${itemName}" removida do DOM`);
                 }
             }, 62);
         } else {
-            console.warn(`⚠️ Não encontrou elemento para remover: ${config.type}`, ids);
+            console.warn(`⚠️ Não encontrou elemento para remover: obra`, ids);
             setTimeout(() => window.location.reload(), 125);
         }
     }
@@ -595,35 +360,35 @@ class ButtonDeleteUniversal {
         }, type === 'processing' ? 3000 : 5000);
     }
 
+    /**
+     * Configura APENAS botões de obra
+     */
     setupAllDeleteButtons() {
-        // Verificar se filtro está ativo
         if (!this.shouldSetupButton()) {
             console.log('⏭️ [DELETE-REAL] Filtro não está ativo - ignorando configuração de botões');
             return 0;
         }
         
-        console.log('🔧 [DELETE-REAL] Buscando botões específicos (filtro ATIVO)...');
+        console.log('🔧 [DELETE-REAL] Buscando botões de OBRA (filtro ATIVO)...');
         
-        const allButtons = document.querySelectorAll('button');
+        // Buscar especificamente botões que parecem ser de obra
+        const obraButtons = document.querySelectorAll('[onclick*="deleteObra"], .btn-delete-obra, .delete-obra-btn');
         let configuredButtons = 0;
         
-        allButtons.forEach(button => {
-            const onclick = button.getAttribute('onclick') || '';
-            if (onclick.includes('delete')) {
-                const setup = this.setupButton(button);
-                if (setup) configuredButtons++;
-            }
+        obraButtons.forEach(button => {
+            const setup = this.setupButton(button);
+            if (setup) configuredButtons++;
         });
         
-        console.log(`🎯 [DELETE-REAL] ${configuredButtons} botões configurados para deleção REAL`);
+        console.log(`🎯 [DELETE-REAL] ${configuredButtons} botões de obra configurados`);
         return configuredButtons;
     }
 
     /**
-     * 🔥 NOVO: Restaura botões para estado original
+     * Restaura apenas botões de obra
      */
     restoreOriginalButtons() {
-        console.log('🔄 [DELETE-REAL] Restaurando botões originais...');
+        console.log('🔄 [DELETE-REAL] Restaurando botões de obra originais...');
         
         const universalButtons = document.querySelectorAll('.delete-real');
         let restoredCount = 0;
@@ -655,7 +420,7 @@ class ButtonDeleteUniversal {
             restoredCount++;
         });
         
-        console.log(`✅ [DELETE-REAL] ${restoredCount} botões restaurados para estado original`);
+        console.log(`✅ [DELETE-REAL] ${restoredCount} botões de obra restaurados`);
         return restoredCount;
     }
 }

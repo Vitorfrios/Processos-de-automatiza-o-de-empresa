@@ -2,7 +2,7 @@
 /**
  * filter-init.js - SISTEMA DE FILTROS E DELEÇÃO UNIVERSAL
  * 🔥 Contém todas as funções relacionadas a filtros e deleção
- * VERSÃO CORRIGIDA: Só ativa deleção universal quando filtro ligado
+ * VERSÃO CORRIGIDA: Só ativa deleção universal para OBRAS
  */
 
 // 🔥 IMPORTS: Sistemas de deleção universal
@@ -170,10 +170,10 @@ const removeElementFromDOM = (itemType, itemId, additionalIds = {}) => {
 };
 
 /**
- * 🔥 Configura deleção universal SOMENTE quando filtro ativo
+ * 🔥 Configura deleção universal SOMENTE para OBRAS
  */
 function setupUniversalDeletionOverride() {
-    console.log("🔄 [FILTER-INIT] Preparando sobrescrita do sistema de deleção...");
+    console.log("🔄 [FILTER-INIT] Preparando sobrescrita do sistema de deleção APENAS PARA OBRAS...");
 
     // Guardar referências às funções originais
     const originalFunctions = {
@@ -189,128 +189,35 @@ function setupUniversalDeletionOverride() {
     function toggleOverride(active) {
         if (active === isOverrideActive) return;
 
-        console.log(`🔄 [UNIVERSAL-DELETE] ${active ? 'Ativando' : 'Desativando'} sobrescrita`);
+        console.log(`🔄 [UNIVERSAL-DELETE] ${active ? 'Ativando' : 'Desativando'} sobrescrita APENAS PARA OBRAS`);
 
         if (active) {
-            // 🔥 ATIVAR: Substituir por versão universal
+            // 🔥 ATIVAR: Substituir APENAS deleteObra
             window.deleteObra = async function (obraName, obraId) {
                 const cleanObraId = obraId.replace(/\s+/g, '');
                 return handleUniversalDeletion('obra', obraName, cleanObraId);
             };
 
-            window.deleteProject = async function (obraId, projectId) {
-                console.log(`🔧 deleteProject chamado: obraId="${obraId}", projectId="${projectId}"`);
-                
-                const cleanObraId = obraId.replace(/\s+/g, '');
-                const cleanProjectId = projectId.replace(/\s+/g, '');
-                
-                const projectElement = document.getElementById(projectId);
-                let projectName = `Projeto ${projectId}`;
+            // Manter funções originais para outros tipos
+            window.deleteProject = originalFunctions.deleteProject;
+            window.deleteRoom = originalFunctions.deleteRoom;
+            window.deleteMachine = originalFunctions.deleteMachine;
 
-                if (projectElement) {
-                    const header = projectElement.querySelector('.project-header h3');
-                    if (header) {
-                        projectName = header.textContent || projectName;
-                    }
-                    
-                    const extractedProjectId = extractProjectIdFromDOM(projectElement);
-                    if (extractedProjectId) {
-                        projectId = extractedProjectId;
-                    }
-                }
-
-                return handleUniversalDeletion('projeto', projectName, cleanProjectId, { 
-                    obraId: cleanObraId 
-                });
-            };
-
-            window.deleteRoom = async function (obraId, projectId, roomId) {
-                console.log(`🔧 deleteRoom chamado: obraId="${obraId}", projectId="${projectId}", roomId="${roomId}"`);
-                
-                const cleanObraId = obraId.replace(/\s+/g, '');
-                const cleanProjectId = projectId.replace(/\s+/g, '');
-                const cleanRoomId = roomId.replace(/\s+/g, '');
-                
-                const roomElement = document.getElementById(roomId);
-                let roomName = `Sala ${roomId}`;
-
-                if (roomElement) {
-                    const header = roomElement.querySelector('.room-header h4');
-                    if (header) {
-                        roomName = header.textContent || roomName;
-                    }
-                    
-                    const extractedRoomId = extractRoomIdFromDOM(roomElement);
-                    if (extractedRoomId) {
-                        roomId = extractedRoomId;
-                    }
-                }
-
-                return handleUniversalDeletion('sala', roomName, cleanRoomId, { 
-                    obraId: cleanObraId, 
-                    projectId: cleanProjectId 
-                });
-            };
-
-            window.deleteMachine = async function (machineId) {
-                console.log(`🔧 deleteMachine chamado com ID: ${machineId}`);
-                
-                const cleanMachineId = machineId.replace(/\s+/g, '');
-                
-                const machineElement = document.getElementById(machineId);
-                let machineName = `Máquina ${machineId}`;
-
-                if (machineElement) {
-                    const nameElement = machineElement.querySelector('.machine-name');
-                    if (nameElement) {
-                        machineName = nameElement.textContent || machineName;
-                    }
-                }
-
-                const parts = cleanMachineId.split('_');
-                
-                if (parts.length >= 5) {
-                    const obraId = `obra_${parts[1]}`;
-                    const projectId = `${obraId}_proj_${parts[3]}_${parts[4]}`;
-                    const roomId = `${projectId}_sala_${parts[6]}_${parts[7]}`;
-                    
-                    // Usar o último número como índice
-                    let machineIndex = 0;
-                    for (let i = parts.length - 1; i >= 0; i--) {
-                        const num = parseInt(parts[i]);
-                        if (!isNaN(num)) {
-                            machineIndex = num;
-                            break;
-                        }
-                    }
-
-                    return handleUniversalDeletion('maquina', machineName, machineIndex.toString(), {
-                        obraId,
-                        projectId,
-                        roomId,
-                        originalMachineId: machineId,
-                        machineName: machineName
-                    });
-                }
-                
-                throw new Error(`Estrutura inválida de machineId: ${cleanMachineId}`);
-            };
-
-            console.log("✅ Funções de deleção universais ATIVADAS");
+            console.log("✅ Função deleteObra universal ATIVADA (outras funções mantidas originais)");
         } else {
-            // 🔥 DESATIVAR: Restaurar funções originais
+            // 🔥 DESATIVAR: Restaurar TODAS as funções originais
             window.deleteObra = originalFunctions.deleteObra;
             window.deleteProject = originalFunctions.deleteProject;
             window.deleteRoom = originalFunctions.deleteRoom;
             window.deleteMachine = originalFunctions.deleteMachine;
 
-            console.log("✅ Funções de deleção originais RESTAURADAS");
+            console.log("✅ Todas as funções de deleção RESTAURADAS");
         }
 
         isOverrideActive = active;
     }
 
-    // 🔥 FUNÇÃO DE DELEÇÃO UNIVERSAL
+    // 🔥 FUNÇÃO DE DELEÇÃO UNIVERSAL (APENAS PARA OBRAS)
     const handleUniversalDeletion = async (itemType, itemName, itemId, additionalIds = {}) => {
         console.log(`🔄 [UNIVERSAL-DELETE] Iniciando deleção para ${itemType}: ${itemName} (ID: ${itemId})`);
 
@@ -325,46 +232,7 @@ function setupUniversalDeletionOverride() {
             return false;
         }
 
-        let pathArray = null;
-        
-        switch (itemType.toLowerCase()) {
-            case 'obra':
-                pathArray = ['obras', itemId];
-                break;
-            case 'projeto':
-                const obraId = additionalIds.obraId;
-                if (!obraId) {
-                    throw new Error(`Obra ID não fornecido para deletar projeto ${itemId}`);
-                }
-                pathArray = ['obras', obraId, 'projetos', itemId];
-                break;
-            case 'sala':
-                const salaObraId = additionalIds.obraId;
-                const salaProjectId = additionalIds.projectId;
-                if (!salaObraId || !salaProjectId) {
-                    throw new Error(`IDs necessários não fornecidos para deletar sala ${itemId}`);
-                }
-                pathArray = ['obras', salaObraId, 'projetos', salaProjectId, 'salas', itemId];
-                break;
-            case 'maquina':
-                const machineObraId = additionalIds.obraId;
-                const machineProjectId = additionalIds.projectId;
-                const machineRoomId = additionalIds.roomId;
-                
-                if (!machineObraId || !machineProjectId || !machineRoomId) {
-                    throw new Error(`IDs necessários não fornecidos para deletar máquina ${itemId}`);
-                }
-                
-                const machineIndex = parseInt(itemId);
-                if (isNaN(machineIndex)) {
-                    throw new Error(`Índice de máquina inválido: ${itemId}`);
-                }
-                
-                pathArray = ['obras', machineObraId, 'projetos', machineProjectId, 'salas', machineRoomId, 'maquinas', machineIndex];
-                break;
-            default:
-                throw new Error(`Tipo de item não suportado: ${itemType}`);
-        }
+        let pathArray = ['obras', itemId];
 
         console.log(`🔧 Path para deleção:`, pathArray);
 
@@ -396,13 +264,11 @@ function setupUniversalDeletionOverride() {
 
             removeElementFromDOM(itemType, itemId, additionalIds);
 
-            if (itemType === 'obra') {
-                setTimeout(() => {
-                    if (window.FilterSystem) {
-                        window.FilterSystem.reloadObras();
-                    }
-                }, 187);
-            }
+            setTimeout(() => {
+                if (window.FilterSystem) {
+                    window.FilterSystem.reloadObras();
+                }
+            }, 187);
 
             return true;
         } else {
@@ -436,7 +302,7 @@ function setupUniversalDeletionOverride() {
     // Inicializar listener
     setTimeout(() => setupFilterListener(), 125);
 
-    console.log("✅ Sistema de sobrescrita condicional configurado");
+    console.log("✅ Sistema de sobrescrita condicional configurado - APENAS OBRAS");
 }
 
 /**
@@ -591,7 +457,7 @@ export async function initializeFilterSystem() {
             await window.ButtonModeManager.initialize();
         }
 
-        console.log("🔄 [FILTER-INIT] Configurando sistema de deleção condicional...");
+        console.log("🔄 [FILTER-INIT] Configurando sistema de deleção condicional (APENAS OBRAS)...");
         setupUniversalDeletionOverride();
 
         console.log("🔗 [FILTER-INIT] Configurando integrações...");

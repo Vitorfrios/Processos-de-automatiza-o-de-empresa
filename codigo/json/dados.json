@@ -1972,8 +1972,9 @@
       "nome": "AMC SOLUÇÕES",
       "credenciais": {
         "usuario": "zzzzzz",
-        "token": "sdfsdfsdfdsfsf",
-        "data_criacao": "2026-03-10T09:30:00Z",
+        "token": "4a680c6fb48144a3fc255abc3c27d407",
+        "data_criacao": "2026-03-18T14:09:02.326Z",
+        "data_expiracao": "2026-06-16T14:09:02.326Z",
         "tempoUso": 90
       }
     },

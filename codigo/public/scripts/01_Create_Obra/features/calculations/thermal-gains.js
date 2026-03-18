@@ -322,19 +322,16 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
       return;
     }
 
+    const inputSection = document.getElementById(`section-content-${roomId}-input-table`);
     const roomContent = findRoomContentThermal(roomId);
-    if (!roomContent) {
-      console.error(`[THERMAL] room-content-${roomId} NÃO ENCONTRADO`);
+    const climaInputContainer = inputSection || roomContent || document.querySelector(`[data-room-id="${roomId}"]`);
+
+    if (!climaInputContainer) {
+      console.error(`[THERMAL] Container de inputs não encontrado para ${roomId}`);
       return;
     }
 
-    const climaSection = roomContent.querySelector('[id*="-clima"]');
-    if (!climaSection) {
-      console.error(`[THERMAL] Seção clima NÃO ENCONTRADA para ${roomId}`);
-      return;
-    }
-
-    const inputData = collectClimatizationInputs(climaSection, roomId);
+    const inputData = collectClimatizationInputs(climaInputContainer, roomId);
 
     const calcData = {
       ...inputData,

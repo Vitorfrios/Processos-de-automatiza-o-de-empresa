@@ -366,27 +366,34 @@ function setupFirstInteractionWallSync(roomId) {
 
 // ✅ FUNÇÃO PARA SINCRONIZAÇÃO DE PAR DE PAREDES (APENAS PRIMEIRA INTERAÇÃO)
 function setupFirstInteractionWallPair(input1, input2, roomId, name1, name2) {
-    let isFirstInteraction1 = true;
-    let isFirstInteraction2 = true;
+    let isFirstInteractionPair = true;
     let isEditing1 = false;
     let isEditing2 = false;
     
     const placeholderValues = ['Ex: 5.5', 'Ex: 8.0', ''];
 
+    function refreshCalculatedArea() {
+        if (typeof window.updateRoomAreaFromWalls === 'function') {
+            window.updateRoomAreaFromWalls(roomId);
+        }
+    }
+
     function syncDuringFirstEdit(editingInput, otherInput, value) {
-        if (!value || placeholderValues.includes(value)) return;
+        if (!isFirstInteractionPair || !value || placeholderValues.includes(value)) return;
         
-        if (editingInput === input1 && isFirstInteraction1 && isEditing1) {
+        if (editingInput === input1 && isEditing1) {
             otherInput.value = value;
+            refreshCalculatedArea();
             triggerCalculation(roomId);
-        } else if (editingInput === input2 && isFirstInteraction2 && isEditing2) {
+        } else if (editingInput === input2 && isEditing2) {
             otherInput.value = value;
+            refreshCalculatedArea();
             triggerCalculation(roomId);
         }
     }
 
     input1.addEventListener('focus', function() {
-        if (isFirstInteraction1) isEditing1 = true;
+        if (isFirstInteractionPair) isEditing1 = true;
     });
 
     input1.addEventListener('input', function() {
@@ -394,14 +401,16 @@ function setupFirstInteractionWallPair(input1, input2, roomId, name1, name2) {
     });
 
     input1.addEventListener('blur', function() {
-        if (isFirstInteraction1) {
-            isFirstInteraction1 = false;
+        if (isFirstInteractionPair) {
+            isFirstInteractionPair = false;
             isEditing1 = false;
+            isEditing2 = false;
         }
+        refreshCalculatedArea();
     });
 
     input2.addEventListener('focus', function() {
-        if (isFirstInteraction2) isEditing2 = true;
+        if (isFirstInteractionPair) isEditing2 = true;
     });
 
     input2.addEventListener('input', function() {
@@ -409,10 +418,12 @@ function setupFirstInteractionWallPair(input1, input2, roomId, name1, name2) {
     });
 
     input2.addEventListener('blur', function() {
-        if (isFirstInteraction2) {
-            isFirstInteraction2 = false;
+        if (isFirstInteractionPair) {
+            isFirstInteractionPair = false;
             isEditing2 = false;
+            isEditing1 = false;
         }
+        refreshCalculatedArea();
     });
 
     if (input1.value && !placeholderValues.includes(input1.value)) {
@@ -424,6 +435,8 @@ function setupFirstInteractionWallPair(input1, input2, roomId, name1, name2) {
             input1.value = input2.value;
         }
     }
+
+    refreshCalculatedArea();
 }
 
 // ✅ FUNÇÃO PARA INICIALIZAÇÃO DOS VALORES PADRÃO

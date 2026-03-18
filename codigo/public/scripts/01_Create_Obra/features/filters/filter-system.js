@@ -226,8 +226,8 @@ const FilterSystem = (function () {
         const label = filterSwitchArea.querySelector('.switch-label-text');
         if (label) {
             label.textContent = isActive
-                ? 'Filtro Ativo (Modo Geral)'
-                : 'Filtro de Obras';
+                ? 'Edição de Obras Salvas (Ativado)'
+                : 'Edição de Obras Salvas';
             label.style.color = isActive ? '#4CAF50' : '#666';
             label.style.fontWeight = isActive ? 'bold' : 'normal';
             label.style.transition = 'color 0.3s ease';

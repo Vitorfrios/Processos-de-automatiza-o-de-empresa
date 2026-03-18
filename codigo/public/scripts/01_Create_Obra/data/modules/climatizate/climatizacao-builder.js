@@ -3,6 +3,7 @@
 
 import { calculateVazaoArAndThermalGains } from '../../../features/calculations/air-flow.js';
 import { buildCapacityCalculationTable } from '../machines/capacity-calculator.js';
+import { isClientMode } from '../../../core/config.js';
 
 /**
  * Constrói seção completa de climatização para uma sala específica
@@ -84,7 +85,14 @@ function buildClimatizationTable(roomId, roomName = 'Sala') {
   )}
       ${buildClimaRow(
     [
-      { label: "Área (m²):", field: "area", type: "number", placeholder: "Ex: 50" },
+      { 
+        label: "Pé Direito (m):", 
+        field: "peDireito", 
+        type: "number", 
+        placeholder: "Ex: 3.0",
+        value: "3.0",
+        step: "0.1"
+      },
       {
         label: "Tipo de Construção:",
         field: "tipoConstrucao",
@@ -130,20 +138,21 @@ function buildClimatizationTable(roomId, roomName = 'Sala') {
   )}
       ${buildClimaRow(
     [
-      { 
-        label: "Pé Direito (m):", 
-        field: "peDireito", 
-        type: "number", 
-        placeholder: "Ex: 3.0",
-        value: "3.0",
-        step: "0.1"
+
+      {
+        label: "Área (m²):",
+        field: "area",
+        type: "number",
+        placeholder: "Calculado automaticamente",
+        value: "0",
+        step: "1"
       },
       { 
         label: "Volume (m³):", 
         field: "volume", 
-        type: "text", 
-        readonly: true,
+        type: "number", 
         value: "0",
+        step: "1",
         id: `volume-${roomId}`
       }
     ],
@@ -387,9 +396,10 @@ function buildTextInput(field, roomId) {
         onInputEvents = `onchange="calculateVazaoArAndThermalGains('${roomId}')"`;
     }
     
-    // Sincronização para paredes
+    // Sincronização para paredes e recálculo automático da área
     if (field.field && field.field.includes('parede')) {
-        onInputEvents += ` oninput="if(window.handleWallInputSync) window.handleWallInputSync('${roomId}', '${field.field}', this.value)"`;
+        onInputEvents = `onchange="if(window.updateRoomAreaFromWalls) window.updateRoomAreaFromWalls('${roomId}'); calculateVazaoArAndThermalGains('${roomId}')"` +
+            ` oninput="if(window.handleWallInputSync) window.handleWallInputSync('${roomId}', '${field.field}', this.value); if(window.updateRoomAreaFromWalls) window.updateRoomAreaFromWalls('${roomId}')"`;
     }
     
     // Sincronização para campo ambiente
@@ -489,6 +499,10 @@ function buildThermalGainsSection(roomId) {
     // ✅ CORREÇÃO: Validar ID único
     if (!roomId || roomId === 'undefined' || roomId === 'null') {
         console.error(`ERRO FALBACK (buildThermalGainsSection) climatizacao.js [Room ID inválido: ${roomId}]`);
+        return '';
+    }
+
+    if (isClientMode()) {
         return '';
     }
     
@@ -818,6 +832,53 @@ function updateRoomVolume(inputElement) {
     }
 }
 
+function getWallInputValue(roomId, fieldName) {
+    const input = document.querySelector(`input[data-field="${fieldName}"][data-room-id="${roomId}"]`);
+    return input ? parseFloat(input.value) || 0 : 0;
+}
+
+function calculateAverageDimension(values) {
+    const validValues = values.filter(value => Number.isFinite(value) && value > 0);
+    if (validValues.length === 0) return 0;
+
+    const total = validValues.reduce((sum, value) => sum + value, 0);
+    return total / validValues.length;
+}
+
+function calculateRoomAreaFromWalls(roomId) {
+    if (!roomId) return 0;
+
+    const mediaOesteLeste = calculateAverageDimension([
+        getWallInputValue(roomId, 'paredeOeste'),
+        getWallInputValue(roomId, 'paredeLeste')
+    ]);
+
+    const mediaNorteSul = calculateAverageDimension([
+        getWallInputValue(roomId, 'paredeNorte'),
+        getWallInputValue(roomId, 'paredeSul')
+    ]);
+
+    return mediaOesteLeste * mediaNorteSul;
+}
+
+function updateRoomAreaFromWalls(roomIdOrInput) {
+    const roomId = typeof roomIdOrInput === 'string'
+        ? roomIdOrInput
+        : roomIdOrInput?.dataset?.roomId;
+
+    if (!roomId) return 0;
+
+    const area = calculateRoomAreaFromWalls(roomId);
+    const areaInput = document.querySelector(`input[data-field="area"][data-room-id="${roomId}"]`);
+
+    if (areaInput) {
+        areaInput.value = area.toFixed(2);
+        updateRoomVolumeFromArea(areaInput);
+    }
+
+    return area;
+}
+
 /**
  * Atualiza o volume quando a área é modificada
  * @param {HTMLElement} inputElement - Elemento do input de área
@@ -933,11 +994,15 @@ export {
     buildThermalGainsSection,
     buildPressurizationRow,
     togglePressurizationFields,
+    calculateRoomAreaFromWalls,
+    updateRoomAreaFromWalls,
     updateRoomVolume,
     updateRoomVolumeFromArea,
     initVolumeListeners
 };
 
+window.calculateRoomAreaFromWalls= calculateRoomAreaFromWalls,
+window.updateRoomAreaFromWalls= updateRoomAreaFromWalls,
 window.updateRoomVolume= updateRoomVolume,  
 window.updateRoomVolumeFromArea=updateRoomVolumeFromArea,
 window.initVolumeListeners= initVolumeListeners

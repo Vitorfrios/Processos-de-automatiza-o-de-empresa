@@ -1,8 +1,6 @@
 /* ==== INÍCIO: button-mode-manager.js ==== */
 /**
- * ButtonModeManager - Gerencia APENAS a mudança de texto dos botões
- * Versão SIMPLES: muda "Remover" para "Deletar" quando filtro ativo
- * COM INTEGRAÇÃO com ButtonDeleteUniversal
+ * ButtonModeManager - Gerencia APENAS a mudança de texto dos botões de OBRA
  */
 class ButtonModeManager {
     constructor() {
@@ -11,11 +9,11 @@ class ButtonModeManager {
             originalTexts: new Map()
         };
         
-        console.log('✅ ButtonModeManager criado (versão COM INTEGRAÇÃO)');
+        console.log('✅ ButtonModeManager criado (APENAS OBRAS)');
     }
 
     /**
-     * Ativa o modo filtro (muda textos)
+     * Ativa o modo filtro (muda textos APENAS dos botões de obra)
      */
     enableFilterMode() {
         if (this.state.filterMode) return;
@@ -24,7 +22,7 @@ class ButtonModeManager {
         this.state.filterMode = true;
         this.changeButtonTexts('Deletar');
         
-        // 🔥 ATIVAR ButtonDeleteUniversal
+        // ATIVAR ButtonDeleteUniversal
         if (window.ButtonDeleteUniversal && window.ButtonDeleteUniversal.setupAllDeleteButtons) {
             setTimeout(() => {
                 window.ButtonDeleteUniversal.setupAllDeleteButtons();
@@ -43,17 +41,17 @@ class ButtonModeManager {
         this.state.filterMode = false;
         this.restoreButtonTexts();
         
-        // 🔥 DESATIVAR ButtonDeleteUniversal
+        // DESATIVAR ButtonDeleteUniversal
         this.disableUniversalDeleteButtons();
     }
 
     /**
-     * 🔥 NOVO: Desativa botões universais quando filtro desativado
+     * Desativa botões universais quando filtro desativado
      */
     disableUniversalDeleteButtons() {
         if (window.ButtonDeleteUniversal && window.ButtonDeleteUniversal.restoreOriginalButtons) {
             const restoredCount = window.ButtonDeleteUniversal.restoreOriginalButtons();
-            console.log(`✅ [BUTTON-MANAGER] ${restoredCount} botões universais desativados`);
+            console.log(`✅ [BUTTON-MANAGER] ${restoredCount} botões de obra universais desativados`);
         } else {
             // Fallback manual
             const deleteButtons = document.querySelectorAll('.delete-real');
@@ -78,15 +76,15 @@ class ButtonModeManager {
                 button.removeAttribute('data-item-name');
             });
             
-            console.log(`✅ [BUTTON-MANAGER] ${deleteButtons.length} botões restaurados manualmente`);
+            console.log(`✅ [BUTTON-MANAGER] ${deleteButtons.length} botões de obra restaurados manualmente`);
         }
     }
 
     /**
-     * Muda textos dos botões
+     * Muda textos APENAS dos botões de obra
      */
     changeButtonTexts(newText) {
-        console.log(`🔄 Mudando textos dos botões para: "${newText}"`);
+        console.log(`🔄 Mudando textos dos botões de obra para: "${newText}"`);
         
         const allButtons = document.querySelectorAll('button');
         
@@ -94,19 +92,17 @@ class ButtonModeManager {
             const text = button.textContent?.trim();
             const onclick = button.getAttribute('onclick') || '';
             
-            // Apenas botões que têm "Remover" e onclick com "delete"
-            if (text && text.includes('Remover') && onclick.includes('delete')) {
+            // APENAS botões que têm texto com "Obra" e onclick com "deleteObra"
+            if (text && text.includes('Obra') && onclick.includes('deleteObra')) {
                 // Guardar texto original se não guardado ainda
                 if (!this.state.originalTexts.has(button)) {
                     this.state.originalTexts.set(button, text);
                 }
                 
-                if (text === 'Remover') {
-                    button.textContent = newText;
-                } else if (text === 'Remover Projeto') {
-                    button.textContent = 'Deletar Projeto';
-                } else if (text.includes('Remover')) {
-                    button.textContent = text.replace('Remover', newText);
+                if (text === 'Deletar Obra' || text === 'Remover Obra') {
+                    button.textContent = newText + ' Obra';
+                } else if (text.includes('Obra')) {
+                    button.textContent = text.replace(/Remover|Deletar/, newText);
                 }
                 
                 // Adicionar classe para estilo
@@ -124,7 +120,7 @@ class ButtonModeManager {
      * Restaura textos originais
      */
     restoreButtonTexts() {
-        console.log('🔄 Restaurando textos originais...');
+        console.log('🔄 Restaurando textos originais dos botões de obra...');
         
         this.state.originalTexts.forEach((originalText, button) => {
             button.textContent = originalText;
@@ -169,11 +165,9 @@ class ButtonModeManager {
         const observer = new MutationObserver((mutations) => {
             mutations.forEach(mutation => {
                 if (mutation.addedNodes.length > 0 && this.state.filterMode) {
-                    // Se novos botões foram adicionados e estamos no modo filtro
                     setTimeout(() => {
                         this.changeButtonTexts('Deletar');
                         
-                        // Configurar botões de deleção universal
                         if (window.ButtonDeleteUniversal && window.ButtonDeleteUniversal.setupAllDeleteButtons) {
                             window.ButtonDeleteUniversal.setupAllDeleteButtons();
                         }
@@ -183,7 +177,7 @@ class ButtonModeManager {
         });
         
         observer.observe(document.body, { childList: true, subtree: true });
-        console.log('🔍 Observador configurado para novos botões');
+        console.log('🔍 Observador configurado para novos botões de obra');
         return observer;
     }
 
@@ -191,7 +185,7 @@ class ButtonModeManager {
      * Inicializa o gerenciador
      */
     initialize() {
-        console.log('🔧 [BUTTON-MANAGER] Inicializando (versão COM INTEGRAÇÃO)...');
+        console.log('🔧 [BUTTON-MANAGER] Inicializando (APENAS OBRAS)...');
         
         this.setupMutationObserver();
         setTimeout(() => {
