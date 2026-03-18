@@ -481,4 +481,3 @@ if (typeof window !== 'undefined') {
     window.atualizarEmpresaEmTodasObras = atualizarEmpresaEmTodasObras;
     window.debugExtractEmpresaData = debugExtractEmpresaData;
 }
-console.log('✅ empresa-data-extractor.js carregado com sucesso');

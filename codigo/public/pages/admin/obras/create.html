@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Criação de Obras ESI</title>
-    <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
-    <!-- Adicione no HEAD do seu HTML principal -->
+    <title>Admin | Obras | Sistema ESI</title>
+    <link rel="stylesheet" href="/public/static/01_Create_Obra/main.css">
+    <!-- HTML principal -->
     <script src="https://unpkg.com/docx@8.3.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
@@ -29,21 +29,21 @@
 
     <nav class="navbar">
         <ul class="nav-list">
-            <li><a href="./01_Create_Obra.html" id="nav-criar-obras">Criar Obras</a></li>
-            <li><a href="./00_Client_Login.html" id="nav-editar-dados">login</a></li>
-            <li><a href="./03_Edit_data.html" id="nav-editar-dados">Editar dados</a></li>
+            <li><a href="/admin/obras/create" id="nav-criar-obras">Criar Obras</a></li>
+            <li><a href="/login" id="nav-login">Login</a></li>
+            <li><a href="/admin/data" id="nav-editar-dados">Editar dados</a></li>
         </ul>
     </nav>
 
     <main class="main-content">
         <div class="container">
-            <!-- Botão para adicionar nova obra -->
+            <!-- BotÃ£o para adicionar nova obra -->
             <div class="add-obra-section">
 
                 <!-- BLOCO ESQUERDO (switch + inputs divididos verticalmente) -->
                 <div class="filtro-bloco-altura">
 
-                    <!-- METADE DE CIMA — SWITCH -->
+                    <!-- METADE DE CIMA â€” SWITCH -->
                     <div class="filtro-switch-area">
                         <label class="filter-switch">
                             <input type="checkbox" id="filter-toggle""
@@ -51,22 +51,22 @@
                             <span class=" slider"></span>
                         </label>
 
-                        <span class="switch-label-text">Edição de Obras Salvas</span>
+                        <span class="switch-label-text">EdiÃ§Ã£o de Obras Salvas</span>
 
                     </div>
 
-                    <!-- METADE DE BAIXO — INPUTS -->
+                    <!-- METADE DE BAIXO â€” INPUTS -->
                     <div class="filtro-inputs-area" id="filtros-inputs">
                         <input type="text" id="filter-empresa" placeholder="Empresa" disabled>
 
-                        <input type="number" id="filter-numero-cliente" placeholder="Nº Cliente" min="1" step="1"
+                        <input type="number" id="filter-numero-cliente" placeholder="NÂº Cliente" min="1" step="1"
                             disabled>
 
                         <input type="text" id="filter-nome-obra" placeholder="Nome da Obra" disabled>
                     </div>
                 </div>
 
-                <!-- BOTÃO NO MESMO NÍVEL -->
+                <!-- BOTÃƒO NO MESMO NÃVEL -->
                 <button class="btn btn-add" onclick="addNewObra()" id="add-obra-btn" disabled>
                     + Adicionar Nova Obra
                 </button>
@@ -75,18 +75,18 @@
 
             <!-- Container de Obras -->
             <div id="projects-container">
-                <!-- Hierarquia: Obra → Projeto → Sala -->
+                <!-- Hierarquia: Obra â†’ Projeto â†’ Sala -->
             </div>
         </div>
     </main>
 
-    <!-- Modal de Confirmação para Exclusão -->
+    <!-- Modal de ConfirmaÃ§Ã£o para ExclusÃ£o -->
     <div id="confirmationModal" class="confirmation-modal hidden">
         <div class="modal-content">
-            <div class="modal-icon">❓</div>
-            <h2 class="modal-title">Remover da Visualização</h2>
+            <div class="modal-icon">â“</div>
+            <h2 class="modal-title">Remover da VisualizaÃ§Ã£o</h2>
             <p class="modal-message" id="modalMessage">
-                <!-- O conteúdo será inserido pelo JavaScript -->
+                <!-- O conteÃºdo serÃ¡ inserido pelo JavaScript -->
             </p>
             <div class="modal-actions">
                 <button class="modal-btn btn-cancel" onclick="window.closeConfirmationModal()">
@@ -99,8 +99,8 @@
         </div>
     </div>
 
-    <script type="module" src="../scripts/01_Create_Obra/pages/create-obras-page.js?v=20260318-1"></script>
-    <script type="module" src="../scripts/01_Create_Obra/main.js?v=20260318-1"></script>
+    <script type="module" src="/public/scripts/01_Create_Obra/pages/create-obras-page.js?v=20260318-1"></script>
+    <script type="module" src="/public/scripts/01_Create_Obra/main.js?v=20260318-1"></script>
 </body>
 
 </html>

@@ -7,8 +7,8 @@ const DEFAULT_APP_CONFIG = {
     auth: {
         required: false,
         storageKey: CLIENT_SESSION_STORAGE_KEY,
-        loginPage: './00_Login.html',
-        redirectAfterLogin: './01_Create_Obras.html'
+        loginPage: '/login',
+        redirectAfterLogin: '/admin/obras/create'
     },
     features: {
         empresaAutocomplete: true,
@@ -24,8 +24,8 @@ const DEFAULT_APP_CONFIG = {
 const CLIENT_MODE_DEFAULTS = {
     auth: {
         required: true,
-        loginPage: './00_Client_Login.html',
-        redirectAfterLogin: './01_Create_Obras_Client.html'
+        loginPage: '/login',
+        redirectAfterLogin: '/obras/create'
     },
     features: {
         empresaAutocomplete: false,

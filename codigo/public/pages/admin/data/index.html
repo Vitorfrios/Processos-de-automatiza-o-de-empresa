@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema - Edição de Dados</title>
-    <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
-    <link rel="stylesheet" href="../static/03_Edit_data/edit_data.css">
+    <title>Admin | Dados | Sistema ESI</title>
+    <link rel="stylesheet" href="/public/static/01_Create_Obra/main.css">
+    <link rel="stylesheet" href="/public/static/03_Edit_data/edit_data.css">
 </head>
 
 <body>
@@ -16,18 +16,18 @@
                 alt="Logo Esquerda" class="logo">
         </div>
         <div class="header-center">
-            <h1>Edição de Dados do Sistema</h1>
+            <h1>EdiÃ§Ã£o de Dados do Sistema</h1>
         </div>
         <button class="shutdown-btn" onclick="shutdownManual()" title="Encerrar Servidor">
             Encerrar Servidor
         </button>
     </header>
 
-    <!-- Barra de Navegação -->
+    <!-- Barra de NavegaÃ§Ã£o -->
     <nav class="navbar">
         <ul class="nav-list">
-            <li><a href="./01_Create_Obras.html" id="nav-criar-obras">Criar Obras</a></li>
-            <li><a href="./03_Edit_data.html" id="nav-editar-dados">Editar dados</a></li>
+            <li><a href="/admin/obras/create" id="nav-criar-obras">Criar Obras</a></li>
+            <li><a href="/admin/data" id="nav-editar-dados">Editar dados</a></li>
         </ul>
     </nav>
 
@@ -36,7 +36,7 @@
         <div class="toolbar">
             <div class="toolbar-left">
 
-                <!-- Botões simples -->
+                <!-- BotÃµes simples -->
                 <button class="btn btn-primary" onclick="loadData()">
                     <i class="icon-refresh"></i> Carregar Dados
                 </button>
@@ -50,10 +50,10 @@
         </div>
 
 
-        <!-- Tabs de Navegação -->
+        <!-- Tabs de NavegaÃ§Ã£o -->
         <div class="tabs">
             <button class="tab active" onclick="switchTab('constants')">Constantes</button>
-            <button class="tab" onclick="switchTab('machines')">Máquinas</button>
+            <button class="tab" onclick="switchTab('machines')">MÃ¡quinas</button>
             <button class="tab" onclick="switchTab('materials')">Materiais</button>
             <button class="tab" onclick="switchTab('empresas')">Empresas</button>
             <button class="tab" onclick="switchTab('acessories')">Acessorios</button>
@@ -62,7 +62,7 @@
             <button class="tab" onclick="switchTab('raw')">JSON Bruto</button>
         </div>
 
-        <!-- Conteúdo das Tabs -->
+        <!-- ConteÃºdo das Tabs -->
         <div id="tabContent">
             <!-- Tab Constantes -->
             <div id="constantsTab" class="tab-pane active">
@@ -74,37 +74,37 @@
                         <thead>
                             <tr>
                                 <th width="30%">Nome</th>
-                                <th width="40%">Descrição</th>
+                                <th width="40%">DescriÃ§Ã£o</th>
                                 <th width="20%">Valor</th>
                             </tr>
                         </thead>
                         <tbody id="constantsTableBody">
-                            <!-- Dados serão carregados aqui -->
+                            <!-- Dados serÃ£o carregados aqui -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Tab Máquinas -->
+            <!-- Tab MÃ¡quinas -->
             <div id="machinesTab" class="tab-pane">
                 <div class="tab-header">
-                    <h2><i class="icon-machine"></i> Tipos de Máquinas</h2>
+                    <h2><i class="icon-machine"></i> Tipos de MÃ¡quinas</h2>
                     <div class="machine-actions">
                         <select id="machineTypeFilter" onchange="filterMachines()">
-                            <option value="">Todas as aplicações</option>
-                            <option value="climatizacao">Climatização</option>
-                            <option value="pressurizacao_ventilacao">Pressurização/Ventilação</option>
-                            <option value="exaustao_bateria">Exaustão Sala de Bateria</option>
-                            <option value="exaustao_baia_trafo">Exaustão Baia de Trafo</option>
+                            <option value="">Todas as aplicaÃ§Ãµes</option>
+                            <option value="climatizacao">ClimatizaÃ§Ã£o</option>
+                            <option value="pressurizacao_ventilacao">PressurizaÃ§Ã£o/VentilaÃ§Ã£o</option>
+                            <option value="exaustao_bateria">ExaustÃ£o Sala de Bateria</option>
+                            <option value="exaustao_baia_trafo">ExaustÃ£o Baia de Trafo</option>
                         </select>
                         <button class="btn btn-small btn-success" onclick="addMachine()">
-                            <i class="icon-add"></i> Nova Máquina
+                            <i class="icon-add"></i> Nova MÃ¡quina
                         </button>
                     </div>
                 </div>
 
                 <div id="machinesList">
-                    <!-- Cards de máquinas serão carregados aqui -->
+                    <!-- Cards de mÃ¡quinas serÃ£o carregados aqui -->
                 </div>
 
                 <div class="machine-detail-view" id="machineDetailView" style="display: none;">
@@ -112,7 +112,7 @@
                         <h3>Editando: <span id="machineDetailTitle">Wall Mounted</span></h3>
                         <div class="detail-header-machine-actions">
                             <button class="btn btn-small btn-warning" onclick="resetMachineChanges()"
-                                title="Descartar alterações">
+                                title="Descartar alteraÃ§Ãµes">
                                 <i class="icon-refresh"></i> Resetar
                             </button>
                             <button class="btn btn-small btn-danger" onclick="closeMachineDetail()">
@@ -121,7 +121,7 @@
                         </div>
                     </div>
                     <div id="machineDetailContent">
-                        <!-- Conteúdo dinâmico da máquina -->
+                        <!-- ConteÃºdo dinÃ¢mico da mÃ¡quina -->
                     </div>
                 </div>
             </div>
@@ -129,20 +129,20 @@
             <!-- Tab Materiais -->
             <div id="materialsTab" class="tab-pane">
                 <div class="tab-header">
-                    <h2><i class="icon-material"></i> Materiais e Preços</h2>
+                    <h2><i class="icon-material"></i> Materiais e PreÃ§os</h2>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th width="25%">Material</th>
-                                <th width="45%">Descrição</th>
+                                <th width="45%">DescriÃ§Ã£o</th>
                                 <th width="15%">Unidade</th>
-                                <th width="15%">Preço (R$)</th>
+                                <th width="15%">PreÃ§o (R$)</th>
                             </tr>
                         </thead>
                         <tbody id="materialsTableBody">
-                            <!-- Dados serão carregados aqui -->
+                            <!-- Dados serÃ£o carregados aqui -->
                         </tbody>
                     </table>
                 </div>
@@ -157,14 +157,14 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th width="15%">Código</th>
+                                <th width="15%">CÃ³digo</th>
                                 <th width="55%">Nome da Empresa</th>
                                 <th width="15%">Credenciais</th>
-                                <th width="15%">Ações</th>
+                                <th width="15%">AÃ§Ãµes</th>
                             </tr>
                         </thead>
                         <tbody id="empresasTableBody">
-                            <!-- Dados serão carregados aqui -->
+                            <!-- Dados serÃ£o carregados aqui -->
                         </tbody>
                     </table>
                 </div>
@@ -177,8 +177,8 @@
                     <div class="actions">
                         <div class="form-inline">
                             <select id="codigoFilter" class="form-control form-control-sm"
-                                onchange="filterAcessorieTable()" title="Filtrar por código">
-                                <option value="">Todos os códigos</option>
+                                onchange="filterAcessorieTable()" title="Filtrar por cÃ³digo">
+                                <option value="">Todos os cÃ³digos</option>
                             </select>
                         </div>
                         <button class="btn btn-primary btn-sm" onclick="addNewAcessorie()"
@@ -189,7 +189,7 @@
                 </div>
 
                 <div class="acessorie-list" id="acessorieList">
-                    <!-- Lista de acessorios será renderizada aqui -->
+                    <!-- Lista de acessorios serÃ¡ renderizada aqui -->
                 </div>
             </div>
 
@@ -208,14 +208,14 @@
                     <table class="data-table-duto">
                         <thead>
                             <tr>
-                                <th width="40%">Tipo / Descrição</th>
+                                <th width="40%">Tipo / DescriÃ§Ã£o</th>
                                 <th width="15%">Valor Base</th>
                                 <th width="20%">Opcionais</th>
-                                <th width="25%">Ações</th>
+                                <th width="25%">AÃ§Ãµes</th>
                             </tr>
                         </thead>
                         <tbody id="dutosTableBody">
-                            <!-- Dados serão carregados aqui -->
+                            <!-- Dados serÃ£o carregados aqui -->
                         </tbody>
                     </table>
                 </div>
@@ -233,14 +233,14 @@
                         </div>
                     </div>
                     <div id="dutoDetailContent">
-                        <!-- Conteúdo dinâmico do duto -->
+                        <!-- ConteÃºdo dinÃ¢mico do duto -->
                     </div>
                 </div>
             </div>
             <!-- Tab Tubos -->
             <div id="tubosTab" class="tab-pane">
                 <div class="tab-header">
-                    <h2><i class="icon-tube"></i> Catálogo de Tubos</h2>
+                    <h2><i class="icon-tube"></i> CatÃ¡logo de Tubos</h2>
                     <div class="tubos-actions">
                         <button class="btn btn-success" onclick="addTubo()">
                             <i class="icon-add"></i> Novo Tubo
@@ -253,13 +253,13 @@
                         <thead>
                             <tr>
                                 <th width="30%">Polegadas</th>
-                                <th width="20%">Milímetros</th>
+                                <th width="20%">MilÃ­metros</th>
                                 <th width="20%">Valor (R$)</th>
-                                <th width="30%">Ações</th>
+                                <th width="30%">AÃ§Ãµes</th>
                             </tr>
                         </thead>
                         <tbody id="tubosTableBody">
-                            <!-- Dados serão carregados aqui -->
+                            <!-- Dados serÃ£o carregados aqui -->
                         </tbody>
                     </table>
                 </div>
@@ -279,7 +279,7 @@
                             <i class="icon-validate"></i> Validar
                         </button>
 
-                        <!-- NOVO BOTÃO -->
+                        <!-- NOVO BOTÃƒO -->
                         <button class="btn btn-small btn-success" onclick="applyJSON()">
                             <i class="icon-check"></i> Aplicar JSON
                         </button>
@@ -290,7 +290,7 @@
                 </div>
 
                 <div class="json-container">
-                    <!-- Container do editor e números -->
+                    <!-- Container do editor e nÃºmeros -->
                     <div class="json-scroll-wrapper">
 
 
@@ -305,11 +305,11 @@
 
         </div>
 
-        <!-- Modal para confirmação -->
+        <!-- Modal para confirmaÃ§Ã£o -->
         <div id="confirmationModal" class="modal">
             <div class="modal-content">
-                <h3 id="modalTitle">Confirmação</h3>
-                <p id="modalMessage">Tem certeza que deseja realizar esta ação?</p>
+                <h3 id="modalTitle">ConfirmaÃ§Ã£o</h3>
+                <p id="modalMessage">Tem certeza que deseja realizar esta aÃ§Ã£o?</p>
                 <div class="modal-actions">
                     <button class="btn btn-danger" onclick="confirmAction(true)">Confirmar</button>
                     <button class="btn btn-secondary" onclick="confirmAction(false)">Cancelar</button>
@@ -317,12 +317,12 @@
             </div>
         </div>
 
-        <!-- Modal para edição detalhada -->
+        <!-- Modal para ediÃ§Ã£o detalhada -->
         <div id="editModal" class="modal">
             <div class="modal-content">
                 <h3 id="editModalTitle">Editar Item</h3>
                 <div id="editModalContent">
-                    <!-- Conteúdo dinâmico -->
+                    <!-- ConteÃºdo dinÃ¢mico -->
                 </div>
                 <div class="modal-actions">
                     <button class="btn btn-success" onclick="saveEdit()">Salvar</button>
@@ -332,10 +332,10 @@
         </div>
     </main>
 
-    <script type="module" src="../scripts/03_Edit_data/main.js"></script>
-    <script type="module" src="../scripts/01_Create_Obra/main-folder/system-init.js"></script>
+    <script type="module" src="/public/scripts/03_Edit_data/main.js"></script>
+    <script type="module" src="/public/scripts/01_Create_Obra/main-folder/system-init.js"></script>
     <script>
-        // Função para destacar e travar apenas o clique da página ativa
+        // FunÃ§Ã£o para destacar e travar apenas o clique da pÃ¡gina ativa
         function highlightAndLockActivePage() {
             const currentPath = window.location.pathname.toLowerCase();
             document.querySelectorAll('.nav-list li a').forEach(link => {
@@ -343,11 +343,9 @@
             });
 
             let activeLink = null;
-            if (currentPath.includes('create_obra')) {
+            if (currentPath.startsWith('/obras/create') || currentPath.startsWith('/admin/obras/create')) {
                 activeLink = document.getElementById('nav-criar-obras');
-            } else if (currentPath.includes('manager_obras')) {
-                activeLink = document.getElementById('nav-gerenciar-obras');
-            } else if (currentPath.includes('edit_data')) {
+            } else if (currentPath.startsWith('/admin/data')) {
                 activeLink = document.getElementById('nav-editar-dados');
             } else {
                 activeLink = document.querySelector('.nav-list li a');

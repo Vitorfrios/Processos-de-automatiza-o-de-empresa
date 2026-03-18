@@ -36,11 +36,11 @@ function updatePageTitle(modoEdicao = false) {
 function resolveActiveLink() {
     const currentPath = window.location.pathname.toLowerCase();
 
-    if (currentPath.includes('create_obra')) {
+    if (currentPath.startsWith('/obras/create') || currentPath.startsWith('/admin/obras/create')) {
         return document.getElementById('nav-criar-obras');
     }
 
-    if (currentPath.includes('edit_data')) {
+    if (currentPath.startsWith('/admin/data')) {
         return document.getElementById('nav-editar-dados');
     }
 

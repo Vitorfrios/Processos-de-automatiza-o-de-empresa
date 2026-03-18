@@ -1,6 +1,6 @@
-"""
+﻿"""
 server_utils.py
-Utilitários do servidor - Versão Simplificada
+UtilitÃ¡rios do servidor - VersÃ£o Simplificada
 """
 
 import socket
@@ -14,24 +14,24 @@ import os
 from pathlib import Path
 
 class ServerUtils:
-    """Utilitários do servidor - Mantido para compatibilidade"""
+    """UtilitÃ¡rios do servidor - Mantido para compatibilidade"""
     
     @staticmethod
     def setup_signal_handlers():
         """Configura handlers de sinal"""
         try:
-            signal.signal(signal.SIGINT, lambda s, f: print("\n🔄 Encerrando..."))
-            signal.signal(signal.SIGTERM, lambda s, f: print("\n🔄 Encerrando..."))
-            print("✅ Handlers de sinal configurados")
+            signal.signal(signal.SIGINT, lambda s, f: print("\nðŸ”„ Encerrando..."))
+            signal.signal(signal.SIGTERM, lambda s, f: print("\nðŸ”„ Encerrando..."))
+            print("âœ… Handlers de sinal configurados")
         except Exception as e:
-            print(f"⚠️  Aviso na configuração de sinais: {e}")
+            print(f"âš ï¸  Aviso na configuraÃ§Ã£o de sinais: {e}")
 
     @staticmethod
     def print_server_info(port):
-        """Exibe informações do servidor"""
-        print(f"\n🎉 SERVIDOR INICIADO COM SUCESSO!")
+        """Exibe informaÃ§Ãµes do servidor"""
+        print(f"\n SERVIDOR INICIADO COM SUCESSO!")
         print("=" * 50)
-        print(f"🌐 URL: http://localhost:{port}/public/pages/01_Create_Obras.html")
+        print(f" URL: http://localhost:{port}/admin/obras/create")
         print("=" * 50)
 
     @staticmethod
@@ -39,16 +39,16 @@ class ServerUtils:
         """Abre o navegador automaticamente"""
         time.sleep(2)
         
-        url = f"http://localhost:{port}/public/pages/01_Create_Obras.html"
-        print(f"🌐 Abrindo aplicação: {url}")
+        url = f"http://localhost:{port}/admin/obras/create"
+        print(f" Abrindo aplicaÃ§Ã£o: {url}")
         
         try:
             import webbrowser
             webbrowser.open(url)
-            print("✅ Navegador iniciado com sucesso!")
+            print("âœ… Navegador iniciado com sucesso!")
         except Exception as e:
-            print(f"⚠️  Não foi possível abrir navegador automaticamente: {e}")
-            print(f"💡 Acesse manualmente: {url}")
+            print(f"âš ï¸  NÃ£o foi possÃ­vel abrir navegador automaticamente: {e}")
+            print(f"ðŸ’¡ Acesse manualmente: {url}")
 
     @staticmethod
     def start_server_threads(port, httpd, monitor_function):
@@ -60,9 +60,9 @@ class ServerUtils:
             monitor_thread = threading.Thread(target=monitor_function, args=(port, httpd), daemon=True)
             monitor_thread.start()
             
-            print("\n🟢 SISTEMA PRONTO!")
-            print("   Aplicação carregada no navegador")
-            print("   Trabalhe normalmente - tudo é salvo automaticamente\n")
+            print("\nðŸŸ¢ SISTEMA PRONTO!")
+            print("   AplicaÃ§Ã£o carregada no navegador")
+            print("   Trabalhe normalmente - tudo Ã© salvo automaticamente\n")
             
         except Exception as e:
-            print(f"⚠️  Erro ao iniciar threads: {e}")
+            print(f"âš ï¸  Erro ao iniciar threads: {e}")

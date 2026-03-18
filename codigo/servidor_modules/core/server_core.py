@@ -1,6 +1,6 @@
-"""
+﻿"""
 server_core.py
-Núcleo principal do servidor - Lógica centralizada
+NÃºcleo principal do servidor - LÃ³gica centralizada
 """
 
 import socket
@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 class ServerCore:
-    """Núcleo principal do servidor com todas as funcionalidades essenciais"""
+    """NÃºcleo principal do servidor com todas as funcionalidades essenciais"""
     
     def __init__(self):
         self.servidor_rodando = True
@@ -26,7 +26,7 @@ class ServerCore:
         return current_dir
 
     def is_port_in_use(self, port):
-        """Verifica se uma porta está em uso"""
+        """Verifica se uma porta estÃ¡ em uso"""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(1)
             try:
@@ -71,7 +71,7 @@ class ServerCore:
             return False
 
     def find_available_port(self, start_port=8000, max_attempts=15):
-        """Encontra uma porta disponível"""
+        """Encontra uma porta disponÃ­vel"""
         for port in range(start_port, start_port + max_attempts):
             if not self.is_port_in_use(port):
                 return port
@@ -114,7 +114,7 @@ class ServerCore:
         self.servidor_rodando = False
 
     def create_server(self, port, handler_class):
-        """Cria instância do servidor"""
+        """Cria instÃ¢ncia do servidor"""
         try:
             server = socketserver.TCPServer(("", port), handler_class)
             server.timeout = 1  # 1 segundo timeout
@@ -124,23 +124,23 @@ class ServerCore:
             raise
 
     def print_server_info(self, port):
-        """Exibe informações do servidor"""
-        print(f"\n🎉 SERVIDOR INICIADO COM SUCESSO!")
+        """Exibe informaÃ§Ãµes do servidor"""
+        print(f"\n SERVIDOR INICIADO COM SUCESSO!")
         print("=" * 50)
-        print(f"🌐 URL: http://localhost:{port}/public/pages/01_Create_Obras.html")
+        print(f" URL: http://localhost:{port}/admin/obras/create")
         print("=" * 50)
 
     def open_browser(self, port=8000):
         """Abre o navegador automaticamente"""
         time.sleep(2)
         
-        url = f"http://localhost:{port}/public/pages/01_Create_Obras.html"
+        url = f"http://localhost:{port}/admin/obras/create"
         
         try:
             import webbrowser
             webbrowser.open(url)
         except Exception as e:
-            print(f"💡 Acesse manualmente: {url}")
+            print(f"ðŸ’¡ Acesse manualmente: {url}")
 
     def start_server_threads(self, port, httpd, monitor_function):
         """Inicia threads auxiliares"""

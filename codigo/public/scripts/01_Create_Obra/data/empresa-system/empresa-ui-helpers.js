@@ -427,4 +427,3 @@ if (typeof window !== 'undefined') {
     window.atualizarNumeroClienteInput = atualizarNumeroClienteInput;
     window.formatarData = formatarData;
 }
-console.log('✅ empresa-ui-helpers.js carregado com sucesso');

@@ -4,16 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Client | Sistema ESI</title>
-    <link rel="stylesheet" href="../static/00_Login/login.css">
+    <title>Login | Sistema ESI</title>
+    <link rel="stylesheet" href="/public/static/00_Login/login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
         window.__APP_CONFIG_OVERRIDES__ = {
             mode: 'client',
             auth: {
                 required: true,
-                loginPage: './00_Client_Login.html',
-                redirectAfterLogin: './01_Create_Obras_Client.html'
+                loginPage: '/login',
+                redirectAfterLogin: '/obras/create'
             },
             features: {
                 empresaAutocomplete: false,
@@ -88,7 +88,7 @@
         </div>
     </div>
 
-    <script type="module" src="../scripts/01_Create_Obra/pages/client-login.js?v=20260318-1"></script>
+    <script type="module" src="/public/scripts/01_Create_Obra/pages/client-login.js?v=20260318-1"></script>
 </body>
 
 </html>
