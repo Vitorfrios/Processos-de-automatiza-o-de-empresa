@@ -193,7 +193,7 @@ function updateAllTabsUI() {
     if (window.loadMachines) window.loadMachines();
     if (window.loadMaterials) window.loadMaterials();
     if (window.loadEmpresas) window.loadEmpresas();
-    if (window.populateMachineFilter) window.populateMachineFilter();
+    if (window.filterMachines) window.filterMachines();
     if (window.loadJSONEditor) window.loadJSONEditor();
     if (window.loadAcessorios) window.loadAcessorios();
     if (window.loadDutos) window.loadDutos();

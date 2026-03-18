@@ -7,7 +7,8 @@ import {
     pendingChanges, 
     updateSystemData,
     clearPendingChanges,
-    updateOriginalData
+    updateOriginalData,
+    hasRealChanges,
 } from './state.js';
 import { showLoading, hideLoading, showSuccess, showError, showWarning, showInfo } from './ui.js';
 
@@ -101,8 +102,11 @@ export async function loadData() {
 
 export async function saveData() {
     try {
-        if (pendingChanges.size === 0) {
-            showInfo('Nenhuma alteração para salvar.');
+        // Verificar se há mudanças reais pendentes
+        const realPendingChanges = getRealPendingChanges();
+        
+        if (realPendingChanges.size === 0) {
+            showInfo('Nenhuma alteração real para salvar.');
             return;
         }
         
@@ -110,7 +114,7 @@ export async function saveData() {
         
         // Debug: Verificar dados antes da validação
         console.log('🔄 Tentando salvar dados...');
-        console.log('Mudanças pendentes:', Array.from(pendingChanges));
+        console.log('Mudanças reais pendentes:', Array.from(realPendingChanges));
         debugDataValidation();
         
         // Validar dados antes de salvar
@@ -160,6 +164,19 @@ export async function saveData() {
     } finally {
         hideLoading();
     }
+}
+
+// Função para obter apenas mudanças reais
+function getRealPendingChanges() {
+    const realChanges = new Set();
+    
+    for (const section of pendingChanges) {
+        if (hasRealChanges(section)) {
+            realChanges.add(section);
+        }
+    }
+    
+    return realChanges;
 }
 
 // Função para corrigir dados automaticamente

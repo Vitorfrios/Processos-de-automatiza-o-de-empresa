@@ -1,13 +1,10 @@
 // scripts/03_Edit_data/machines-main.js
 // Arquivo principal que importa e organiza todos os módulos de máquinas
 
-import { systemData, addPendingChange, getCurrentMachineIndex, setCurrentMachineIndex, clearCurrentMachineIndex } from '../config/state.js';
-import { escapeHtml, showError, showInfo, showWarning, showSuccess, showConfirmation } from '../config/ui.js';
 
 // Importar módulos
 import {
     loadMachines,
-    populateMachineFilter,
     filterMachines,
     addMachine,
     editMachine,
@@ -71,7 +68,6 @@ import {
 export {
     // Funções principais
     loadMachines,
-    populateMachineFilter,
     filterMachines,
     addMachine,
     editMachine,
@@ -128,7 +124,6 @@ export {
 // Exportar funções para o objeto window
 export function exposeToWindow() {
     window.loadMachines = loadMachines;
-    window.populateMachineFilter = populateMachineFilter;
     window.filterMachines = filterMachines;
     window.addMachine = addMachine;
     window.editMachine = editMachine;
@@ -176,7 +171,6 @@ exposeToWindow();
 // Exportar também para uso em outros lugares
 export default {
     loadMachines,
-    populateMachineFilter,
     filterMachines,
     addMachine,
     editMachine,

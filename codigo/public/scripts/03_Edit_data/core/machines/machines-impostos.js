@@ -109,10 +109,6 @@ export function addImposto(event) {
         // Verificar se já existe FORNECEDOR (case insensitive)
         const hasFornecedor = existingKeys.some(key => key.toUpperCase() === 'FORNECEDOR');
         
-        if (hasFornecedor) {
-            showInfo('O campo FORNECEDOR já existe na lista.');
-            return;
-        }
         
         const newKey = `NOVO_IMPOSTO_${Date.now().toString().slice(-4)}`;
         if (!machine.impostos) {

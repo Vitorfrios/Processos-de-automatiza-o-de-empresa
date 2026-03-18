@@ -2,15 +2,21 @@
 // scripts/03_Edit_data/machines/machines-core.js
 // Funções principais de carregamento e gerenciamento de máquinas
 
-import { systemData, addPendingChange, getCurrentMachineIndex, setCurrentMachineIndex, clearCurrentMachineIndex } from '../../config/state.js';
-import { escapeHtml, showError, showInfo, showWarning, showSuccess, showConfirmation } from '../../config/ui.js';
+import {
+    systemData, addPendingChange,
+    getCurrentMachineIndex, setCurrentMachineIndex,
+    clearCurrentMachineIndex, UpdatePendingChanges
+} from '../../config/state.js';
+import {
+    escapeHtml, showError,
+    showInfo, showWarning,
+    showSuccess, showConfirmation
+} from '../../config/ui.js';
 
 // Importar funções de renderização
 import {
-    loadConfiguracoesHTML,
-    loadBaseValuesHTML,
-    loadOptionsHTML,
-    loadVoltagesHTML
+    loadConfiguracoesHTML, loadBaseValuesHTML,
+    loadOptionsHTML, loadVoltagesHTML
 } from './machines-render.js';
 
 // ===== DEFINIÇÃO DAS APLICAÇÕES DISPONÍVEIS =====
@@ -109,8 +115,8 @@ export function loadMachines() {
                 <p><strong>Opções:</strong> ${machine.options?.length || 0}</p>
                 <p><strong>Tensões:</strong> ${machine.voltages?.length || 0}</p>
                 <p><strong>Valores base:</strong> ${Object.keys(machine.baseValues || {}).length}</p>
-                <p><strong>Aplicação:</strong> ${escapeHtml(aplicacaoNome)}</p>
-            </div>
+                </div>
+                <p>Aplicação: ${escapeHtml(aplicacaoNome)}</p>
             <div class="machine-card-footer">
                 <span>ID: ${index}</span>
                 <span>Tipo: ${machine.type || 'Não definido'}</span>
@@ -120,31 +126,62 @@ export function loadMachines() {
     });
 }
 
-export function populateMachineFilter() {
-    const filter = document.getElementById('machineTypeFilter');
-    if (!filter) return;
-
-    filter.innerHTML = '<option value="">Todas as máquinas</option>';
-
-    systemData.machines.forEach((machine, index) => {
-        const option = document.createElement('option');
-        option.value = machine.type;
-        option.textContent = machine.type || `Máquina ${index + 1}`;
-        filter.appendChild(option);
-    });
-}
 
 export function filterMachines() {
-    const filterValue = document.getElementById('machineTypeFilter').value.toLowerCase();
+    const filterValue = document.getElementById('machineTypeFilter').value;
     const cards = document.querySelectorAll('.machine-card');
 
     cards.forEach(card => {
-        const machineType = card.querySelector('h3').textContent.toLowerCase();
-        if (!filterValue || machineType.includes(filterValue)) {
+        // Procurar o elemento que contém o texto "Aplicação:" 
+        // Pode ser um elemento <p> ou diretamente um texto no card
+        let applicationText = '';
+        
+        // Tentar encontrar em um elemento <p>
+        const applicationElement = Array.from(card.querySelectorAll('p')).find(p => 
+            p.textContent.includes('Aplicação:')
+        );
+        
+        if (applicationElement) {
+            applicationText = applicationElement.textContent.replace('Aplicação:', '').trim();
+        } else {
+            // Se não encontrar em <p>, procurar em qualquer elemento que contenha "Aplicação:"
+            const allElements = card.querySelectorAll('*');
+            for (let element of allElements) {
+                if (element.textContent && element.textContent.includes('Aplicação:')) {
+                    applicationText = element.textContent.replace('Aplicação:', '').trim();
+                    break;
+                }
+            }
+        }
+        
+        console.log('Filtro:', filterValue, 'Card:', applicationText);
+        
+        if (!filterValue) {
             card.style.display = 'block';
             card.classList.add('fade-in');
         } else {
-            card.style.display = 'none';
+            // Mapear o texto da aplicação para o valor do filtro
+            let matches = false;
+            
+            if (filterValue === 'climatizacao' && applicationText === 'Climatização') {
+                matches = true;
+            } else if (filterValue === 'pressurizacao_ventilacao' && applicationText === 'Pressurização/Ventilação') {
+                matches = true;
+            } else if (filterValue === 'exaustao_bateria' && applicationText === 'Exaustão Sala de Bateria') {
+                matches = true;
+            } else if (filterValue === 'exaustao_baia_trafo' && applicationText === 'Exaustão Baia de Trafo') {
+                matches = true;
+            } else if (filterValue === 'exaustao' && applicationText === 'exaustao') {
+                // Caso especial para o card com aplicação "exaustao" (sem formatação)
+                matches = true;
+            }
+            
+            if (matches) {
+                card.style.display = 'block';
+                card.classList.add('fade-in');
+            } else {
+                card.style.display = 'none';
+            }
         }
     });
 }
@@ -169,7 +206,6 @@ export function addMachine() {
 
     systemData.machines.push(newMachine);
     loadMachines();
-    populateMachineFilter();
     editMachine(systemData.machines.length - 1);
     addPendingChange('machines');
     showInfo('Nova máquina adicionada. Configure os detalhes.');
@@ -361,7 +397,6 @@ export async function deleteMachine(index) {
             // Primeiro remover localmente para feedback imediato
             const deletedMachine = systemData.machines.splice(index, 1)[0];
             loadMachines();
-            populateMachineFilter();
             closeMachineDetail();
             addPendingChange('machines');
             
@@ -402,6 +437,49 @@ export async function deleteMachine(index) {
     });
 }
 
+export function updateMachineCardField(index, field, value) {
+    if (index === undefined || index === null) return;
+    
+    const card = document.querySelector(`.machine-card:has(button[onclick*="editMachine(${index})"])`);
+    if (!card) return;
+    
+    if (field === 'type') {
+        // Atualiza o título do card
+        const title = card.querySelector('h3');
+        if (title) {
+            title.textContent = value || 'Sem nome';
+        }
+        
+        // Atualiza o tipo no footer
+        const footerSpans = card.querySelectorAll('.machine-card-footer span');
+        footerSpans.forEach(span => {
+            if (span.textContent.startsWith('Tipo:')) {
+                span.textContent = `Tipo: ${value || 'Não definido'}`;
+            }
+        });
+    }
+    
+    if (field === 'aplicacao') {
+        // Encontra o nome da aplicação a partir do valor
+        const aplicacoes = {
+            'climatizacao': 'Climatização',
+            'pressurizacao_ventilacao': 'Pressurização/Ventilação',
+            'exaustao_bateria': 'Exaustão Sala de Bateria',
+            'exaustao_baia_trafo': 'Exaustão Baia de Trafo'
+        };
+        
+        const aplicacaoNome = aplicacoes[value] || value || 'N/A';
+        
+        // Atualiza a aplicação no body
+        const bodyParagraphs = card.querySelectorAll('.machine-card-body p');
+        bodyParagraphs.forEach(p => {
+            if (p.innerHTML.includes('Aplicação:')) {
+                p.innerHTML = `<strong>Aplicação:</strong> ${aplicacaoNome}`;
+            }
+        });
+    }
+}
+
 export function updateMachineField(field, value) {
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
@@ -410,6 +488,8 @@ export function updateMachineField(field, value) {
             document.getElementById('machineDetailTitle').textContent = value;
         }
         addPendingChange('machines');
+        
+        updateMachineCardField(currentIndex, field, value);
     }
 }
 
@@ -448,16 +528,77 @@ export function resetMachineChanges() {
                     typeInput.value = machine.type || '';
                 }
                 
-                showWarning('Alterações descartadas. Dados restaurados ao estado original.');
-                
-                // Recarregar toda a visualização
+                // Recarregar a visualização do modal
                 editMachine(currentIndex);
+                
+                // RECARREGAR A LISTA DE CARDS
+                loadMachines();
+                
+                // VERIFICAR SE AINDA HÁ MUDANÇAS REAIS EM MACHINES
+                // Importar a função do state.js (você precisa importar no topo do arquivo)
+                if (typeof UpdatePendingChanges === 'function') {
+                    UpdatePendingChanges('machines');
+                } else {
+                    // Fallback: Se não conseguir importar, tenta acessar via window
+                    if (window.UpdatePendingChanges) {
+                        window.UpdatePendingChanges('machines');
+                    }
+                }
+                
+                showWarning('Alterações descartadas. Dados restaurados ao estado original.');
             },
             'Descartar Alterações',
             'Cancelar'
         );
     } else {
         showWarning('Não há alterações para descartar ou nenhuma máquina está sendo editada.');
+    }
+}
+
+// Função auxiliar para atualizar apenas um card específico
+function updateMachineCard(index) {
+    const container = document.getElementById('machinesList');
+    if (!container) return;
+    
+    const machine = systemData.machines[index];
+    if (!machine) return;
+    
+    // Encontrar o card específico
+    const cards = container.querySelectorAll('.machine-card');
+    if (cards[index]) {
+        // Encontrar o nome da aplicação
+        const aplicacaoInfo = APLICACOES_DISPONIVEIS.find(app => app.tipo === machine.aplicacao);
+        const aplicacaoNome = aplicacaoInfo ? aplicacaoInfo.nome : machine.aplicacao || 'N/A';
+        
+        // Atualizar o HTML do card
+        cards[index].innerHTML = `
+            <div class="machine-card-header">
+                <h3>${escapeHtml(machine.type || 'Sem nome')}</h3>
+                <div class="machine-card-actions">
+                    <button class="btn btn-small btn-primary" 
+                            onclick="editMachine(${index})"
+                            title="Editar máquina">
+                        <i class="icon-edit"></i> Editar
+                    </button>
+                    <button class="btn btn-small btn-danger"
+                            onclick="deleteMachine(${index})"
+                            title="Excluir máquina">
+                        <i class="icon-delete"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="machine-card-body">
+                <p><strong>Configurações:</strong> ${machine.configuracoes_instalacao?.length || 0}</p>
+                <p><strong>Opções:</strong> ${machine.options?.length || 0}</p>
+                <p><strong>Tensões:</strong> ${machine.voltages?.length || 0}</p>
+                <p><strong>Valores base:</strong> ${Object.keys(machine.baseValues || {}).length}</p>
+                <p><strong>Aplicação:</strong> ${escapeHtml(aplicacaoNome)}</p>
+            </div>
+            <div class="machine-card-footer">
+                <span>ID: ${index}</span>
+                <span>Tipo: ${machine.type || 'Não definido'}</span>
+            </div>
+        `;
     }
 }
 
@@ -561,7 +702,6 @@ export function restoreSectionStates() {
 // ===== EXPORTAÇÃO GLOBAL =====
 
 window.loadMachines = loadMachines;
-window.populateMachineFilter = populateMachineFilter;
 window.filterMachines = filterMachines;
 window.addMachine = addMachine;
 window.editMachine = editMachine;

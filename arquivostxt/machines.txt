@@ -390,8 +390,8 @@ export function loadMachines() {
                 <p><strong>Opções:</strong> ${machine.options?.length || 0}</p>
                 <p><strong>Tensões:</strong> ${machine.voltages?.length || 0}</p>
                 <p><strong>Valores base:</strong> ${Object.keys(machine.baseValues || {}).length}</p>
-                </div>
-                <p>Aplicação: ${escapeHtml(aplicacaoNome)}</p>
+                <p><strong>Aplicação:</strong> ${escapeHtml(aplicacaoNome)}</p>
+            </div>
             <div class="machine-card-footer">
                 <span>ID: ${index}</span>
                 <span>Tipo: ${machine.type || 'Não definido'}</span>
@@ -683,49 +683,6 @@ export async function deleteMachine(index) {
     });
 }
 
-export function updateMachineCardField(index, field, value) {
-    if (index === undefined || index === null) return;
-    
-    const card = document.querySelector(`.machine-card:has(button[onclick*="editMachine(${index})"])`);
-    if (!card) return;
-    
-    if (field === 'type') {
-        // Atualiza o título do card
-        const title = card.querySelector('h3');
-        if (title) {
-            title.textContent = value || 'Sem nome';
-        }
-        
-        // Atualiza o tipo no footer
-        const footerSpans = card.querySelectorAll('.machine-card-footer span');
-        footerSpans.forEach(span => {
-            if (span.textContent.startsWith('Tipo:')) {
-                span.textContent = `Tipo: ${value || 'Não definido'}`;
-            }
-        });
-    }
-    
-    if (field === 'aplicacao') {
-        // Encontra o nome da aplicação a partir do valor
-        const aplicacoes = {
-            'climatizacao': 'Climatização',
-            'pressurizacao_ventilacao': 'Pressurização/Ventilação',
-            'exaustao_bateria': 'Exaustão Sala de Bateria',
-            'exaustao_baia_trafo': 'Exaustão Baia de Trafo'
-        };
-        
-        const aplicacaoNome = aplicacoes[value] || value || 'N/A';
-        
-        // Atualiza a aplicação no body
-        const bodyParagraphs = card.querySelectorAll('.machine-card-body p');
-        bodyParagraphs.forEach(p => {
-            if (p.innerHTML.includes('Aplicação:')) {
-                p.innerHTML = `<strong>Aplicação:</strong> ${aplicacaoNome}`;
-            }
-        });
-    }
-}
-
 export function updateMachineField(field, value) {
     const currentIndex = getCurrentMachineIndex();
     if (currentIndex !== null) {
@@ -734,8 +691,6 @@ export function updateMachineField(field, value) {
             document.getElementById('machineDetailTitle').textContent = value;
         }
         addPendingChange('machines');
-        
-        updateMachineCardField(currentIndex, field, value);
     }
 }
 
@@ -1016,6 +971,10 @@ export function addImposto(event) {
         // Verificar se já existe FORNECEDOR (case insensitive)
         const hasFornecedor = existingKeys.some(key => key.toUpperCase() === 'FORNECEDOR');
         
+        if (hasFornecedor) {
+            showInfo('O campo FORNECEDOR já existe na lista.');
+            return;
+        }
         
         const newKey = `NOVO_IMPOSTO_${Date.now().toString().slice(-4)}`;
         if (!machine.impostos) {

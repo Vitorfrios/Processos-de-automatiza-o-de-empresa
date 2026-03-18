@@ -24,6 +24,7 @@ let _currentMachineIndex = null;
 
 // Exportar para acesso global
 window.systemData = systemData;
+window.originalData = originalData;
 
 export function updateSystemData(newData) {
     systemData = {
@@ -33,16 +34,18 @@ export function updateSystemData(newData) {
         empresas: normalizeEmpresas(newData.empresas || []),
         banco_acessorios: newData.banco_acessorios || {},
         dutos: Array.isArray(newData.dutos) ? newData.dutos : [],
-        tubos: Array.isArray(newData.tubos) ? newData.tubos : []  // ADICIONADO
+        tubos: Array.isArray(newData.tubos) ? newData.tubos : []
     };
     
     // Manter referência global
     window.systemData = systemData;
     originalData = JSON.parse(JSON.stringify(systemData));
+    window.originalData = originalData;
 }
 
 export function updateOriginalData(newData) {
     originalData = JSON.parse(JSON.stringify(newData));
+    window.originalData = originalData;
 }
 
 // Funções para gerenciar currentMachineIndex
@@ -58,9 +61,60 @@ export function clearCurrentMachineIndex() {
     _currentMachineIndex = null;
 }
 
-export function addPendingChange(type) {
-    pendingChanges.add(type);
+// Função para verificar se houve mudança real em uma seção
+export function hasRealChanges(section) {
+    if (!originalData || !systemData) return false;
+    
+    switch(section) {
+        case 'machines':
+            return JSON.stringify(originalData.machines || []) !== 
+                   JSON.stringify(systemData.machines || []);
+        case 'dutos':
+            return JSON.stringify(originalData.dutos || []) !== 
+                   JSON.stringify(systemData.dutos || []);
+        case 'tubos':
+            return JSON.stringify(originalData.tubos || []) !== 
+                   JSON.stringify(systemData.tubos || []);
+        case 'banco_acessorios':
+            return JSON.stringify(originalData.banco_acessorios || {}) !== 
+                   JSON.stringify(systemData.banco_acessorios || {});
+        case 'constants':
+            return JSON.stringify(originalData.constants || {}) !== 
+                   JSON.stringify(systemData.constants || {});
+        case 'materials':
+            return JSON.stringify(originalData.materials || {}) !== 
+                   JSON.stringify(systemData.materials || {});
+        case 'empresas':
+            return JSON.stringify(originalData.empresas || []) !== 
+                   JSON.stringify(systemData.empresas || []);
+        default:
+            return false;
+    }
+}
+
+// Função para verificar e atualizar pendingChanges
+export function UpdatePendingChanges(section) {
+    const hasRealChange = hasRealChanges(section);
+    
+    if (hasRealChange) {
+        if (!pendingChanges.has(section)) {
+            pendingChanges.add(section);
+            console.log(`📝 Mudança real detectada em: ${section}`);
+        }
+    } else {
+        if (pendingChanges.has(section)) {
+            pendingChanges.delete(section);
+            console.log(`✅ Removido ${section} das pendências - sem alterações reais`);
+        }
+    }
+    
     updateSaveButton();
+    return hasRealChange;
+}
+
+// Versão melhorada do addPendingChange
+export function addPendingChange(section) {
+    UpdatePendingChanges(section);
 }
 
 export function clearPendingChanges() {
@@ -72,13 +126,38 @@ export function updateSaveButton() {
     const saveBtn = document.querySelector('.btn-success[onclick*="saveData"]');
     if (!saveBtn) return;
     
-    if (pendingChanges.size > 0) {
-        saveBtn.innerHTML = '<i class="icon-save"></i> Salvar (' + pendingChanges.size + ')';
+    // Contar apenas mudanças reais
+    const realChangesCount = getRealPendingChangesCount();
+    
+    if (realChangesCount > 0) {
+        saveBtn.innerHTML = '<i class="icon-save"></i> Salvar (' + realChangesCount + ')';
         saveBtn.classList.add('has-changes');
     } else {
         saveBtn.innerHTML = '<i class="icon-save"></i> Salvar Tudo';
         saveBtn.classList.remove('has-changes');
     }
+}
+
+// Função para contar mudanças reais
+function getRealPendingChangesCount() {
+    let count = 0;
+    for (const section of pendingChanges) {
+        if (hasRealChanges(section)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// Função para obter apenas mudanças reais
+export function getRealPendingChanges() {
+    const realChanges = new Set();
+    for (const section of pendingChanges) {
+        if (hasRealChanges(section)) {
+            realChanges.add(section);
+        }
+    }
+    return realChanges;
 }
 
 // Função auxiliar para mostrar erro detalhado
@@ -236,7 +315,7 @@ export function validateDataDebug() {
         }
         console.log('✅ Dutos OK');
         
-        // ADICIONADO: Validar tubos
+        // Validar tubos
         console.log('📏 Validando tubos...');
         console.log('Tubos encontrados:', systemData.tubos?.length || 0);
         
@@ -356,7 +435,7 @@ export function normalizeSystemData() {
         });
     }
     
-    // ADICIONADO: Normalizar tubos
+    // Normalizar tubos
     if (Array.isArray(systemData.tubos)) {
         systemData.tubos.forEach((tubo, index) => {
             // Garantir que polegadas é string

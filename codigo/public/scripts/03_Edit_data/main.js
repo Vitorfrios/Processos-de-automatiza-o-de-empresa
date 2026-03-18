@@ -4,6 +4,21 @@ import { createSmartLogger } from '../01_Create_Obra/core/logger.js';
 
 // ==================== CONFIGURAÇÃO INICIAL ====================
 
+
+// ✅ INICIALIZAR LOGGER IMEDIATAMENTE
+window.logger = createSmartLogger();
+
+// ✅ EXPOR FUNÇÃO GLOBAL PARA CONTROLE DO LOGGER
+window.toggleSystemLogger = function(enable = null) {
+    if (window.logger && typeof window.toggleLogger === 'function') {
+        return window.toggleLogger(enable);
+    } else {
+        console.warn('⚠️ Logger não disponível para controle');
+        return false;
+    }
+};
+
+
 // Função para garantir que systemData tenha estrutura completa
 function ensureCompleteSystemData(data) {
     if (!data || typeof data !== 'object') {
@@ -307,7 +322,7 @@ window.addEventListener('dataLoaded', function(event) {
         if (window.loadAcessorios) window.loadAcessorios();
         if (window.loadDutos) window.loadDutos();
         if (window.loadTubos) window.loadTubos();  // ADICIONADO
-        if (window.populateMachineFilter) window.populateMachineFilter();
+        if (window.filterMachines) window.filterMachines();
         if (window.loadJSONEditor) window.loadJSONEditor();
         
         // Limpar staging
@@ -335,7 +350,7 @@ window.addEventListener('dataImported', function(event) {
     if (window.loadAcessorios) window.loadAcessorios();
     if (window.loadDutos) window.loadDutos();
     if (window.loadTubos) window.loadTubos();  // ADICIONADO
-    if (window.populateMachineFilter) window.populateMachineFilter();
+    if (window.filterMachines) window.filterMachines();
     if (window.loadJSONEditor) window.loadJSONEditor();
     
     // Limpar staging

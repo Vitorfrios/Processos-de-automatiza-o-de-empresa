@@ -1965,13 +1965,7 @@
     {
       "codigo": "ACT",
       "nome": "ACTEMIUM",
-      "credenciais": {
-        "usuario": "awffr",
-        "token": "89307b1fa0cfd1cfccd96d0f5540e598",
-        "data_criacao": "2026-03-17T05:21:45.246Z",
-        "data_expiracao": "2026-03-18T05:21:45.246Z",
-        "tempoUso": 1
-      }
+      "credenciais": null
     },
     {
       "codigo": "AMC",

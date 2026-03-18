@@ -1,11 +1,12 @@
 // scripts/03_Edit_data/core/dutos.js
-// Módulo de gerenciamento de Dutos - Versão corrigida
+// Módulo de gerenciamento de Dutos - Versão corrigida com reatividade
 
 // Importar sistema de estado global
 import { systemData, addPendingChange, clearPendingChanges, updateSaveButton } from '../config/state.js';
 
 // Estado do módulo
 let dutosData = [];
+let currentEditingDutoIndex = null;
 
 // Elementos DOM
 let dutosTableBody;
@@ -42,6 +43,7 @@ export async function initDutosModule() {
         window.resetDutoChanges = resetDutoChanges;
         window.viewOpcionais = viewOpcionais;
         window.saveDutosData = saveDutosData;
+        window.refreshDutoTableRow = refreshDutoTableRow;
         
         console.log('✅ Módulo de dutos inicializado');
         return true;
@@ -131,17 +133,19 @@ function renderDutosTable() {
     
     dutosData.forEach((duto, index) => {
         const tr = document.createElement('tr');
+        tr.setAttribute('data-duto-index', index);
+        
         const opcionaisCount = duto.opcionais && Array.isArray(duto.opcionais) ? duto.opcionais.length : 0;
         
         tr.innerHTML = `
-            <td>
+            <td class="duto-name-cell">
                 <strong>${duto.type || 'Sem nome'}</strong>
                 <div class="text-muted small">${duto.descricao || 'Sem descrição'}</div>
             </td>
-            <td class="text-center">
+            <td class="text-center duto-value-cell">
                 <span class="badge bg-success">R$ ${parseFloat(duto.valor || 0).toFixed(2)}</span>
             </td>
-            <td class="text-center">
+            <td class="text-center duto-opcionais-cell">
                 <span class="badge bg-secondary">
                     ${opcionaisCount} ${opcionaisCount === 1 ? 'opcional' : 'opcionais'}
                 </span>
@@ -160,33 +164,116 @@ function renderDutosTable() {
     });
 }
 
+// ==================== FUNÇÃO REATIVA PARA ATUALIZAR LINHA ====================
+
+export function refreshDutoTableRow(index) {
+    if (!dutosTableBody || index === undefined || index === null) return;
+    
+    const duto = dutosData[index];
+    if (!duto) return;
+    
+    // Encontra a linha específica pelo atributo data-duto-index
+    const targetRow = dutosTableBody.querySelector(`tr[data-duto-index="${index}"]`);
+    
+    // Se encontrou a linha, atualiza seu conteúdo
+    if (targetRow) {
+        const opcionaisCount = duto.opcionais && Array.isArray(duto.opcionais) ? duto.opcionais.length : 0;
+        
+        // Atualiza a primeira célula (nome e descrição)
+        const nameCell = targetRow.querySelector('.duto-name-cell');
+        if (nameCell) {
+            nameCell.innerHTML = `
+                <strong>${duto.type || 'Sem nome'}</strong>
+                <div class="text-muted small">${duto.descricao || 'Sem descrição'}</div>
+            `;
+        }
+        
+        // Atualiza a segunda célula (valor)
+        const valueCell = targetRow.querySelector('.duto-value-cell');
+        if (valueCell) {
+            valueCell.innerHTML = `
+                <span class="badge bg-success">R$ ${parseFloat(duto.valor || 0).toFixed(2)}</span>
+            `;
+        }
+        
+        // Atualiza a terceira célula (contagem de opcionais)
+        const opcionaisCell = targetRow.querySelector('.duto-opcionais-cell');
+        if (opcionaisCell) {
+            opcionaisCell.innerHTML = `
+                <span class="badge bg-secondary">
+                    ${opcionaisCount} ${opcionaisCount === 1 ? 'opcional' : 'opcionais'}
+                </span>
+            `;
+        }
+    } else {
+        // Se não encontrou a linha, recarrega toda a tabela (fallback)
+        console.warn('Linha não encontrada, recarregando tabela completa');
+        renderDutosTable();
+    }
+}
+
 // ==================== FUNÇÕES GLOBAIS DE ACESSO ====================
 
-// Funções para acessar dutosData do HTML
 export function updateDutoField(index, field, value) {
     if (dutosData[index]) {
-        dutosData[index][field] = value;
+        // Garantir que valor seja número quando apropriado
+        if (field === 'valor') {
+            dutosData[index][field] = parseFloat(value) || 0;
+        } else {
+            dutosData[index][field] = value;
+        }
+        
         systemData.dutos = dutosData; // Atualizar estado global
+        
+        // Atualiza o título do detalhe se for o tipo
+        if (field === 'type' && dutoDetailTitle) {
+            dutoDetailTitle.textContent = value || 'Editar Duto';
+        }
         
         // Marcar mudança pendente
         addPendingChange('dutos');
         window.hasPendingChanges = true;
         
-        // Atualizar visualização se necessário
-        if (field === 'type' && dutoDetailTitle) {
-            dutoDetailTitle.textContent = value || 'Editar Duto';
+        // ATUALIZA A LINHA NA TABELA REATIVAMENTE
+        refreshDutoTableRow(index);
+        
+        // Atualizar botão de salvar
+        if (typeof updateSaveButton === 'function') {
+            updateSaveButton();
         }
     }
 }
 
 export function updateDutoOpcional(dutoIndex, opcionalIndex, field, value) {
     if (dutosData[dutoIndex] && dutosData[dutoIndex].opcionais) {
-        dutosData[dutoIndex].opcionais[opcionalIndex][field] = value;
+        // Garantir que valor seja número quando apropriado
+        if (field === 'value') {
+            dutosData[dutoIndex].opcionais[opcionalIndex][field] = parseFloat(value) || 0;
+        } else {
+            dutosData[dutoIndex].opcionais[opcionalIndex][field] = value;
+        }
+        
         systemData.dutos = dutosData; // Atualizar estado global
         
         // Marcar mudança pendente
         addPendingChange('dutos');
         window.hasPendingChanges = true;
+        
+        // ATUALIZA A CONTAGEM DE OPCIONAIS NA TABELA
+        refreshDutoTableRow(dutoIndex);
+        
+        // Atualizar botão de salvar
+        if (typeof updateSaveButton === 'function') {
+            updateSaveButton();
+        }
+        
+        // Se for o nome do opcional, atualiza o título do card
+        if (field === 'nome') {
+            const card = document.querySelector(`.opcional-card[data-index="${opcionalIndex}"] .card-title-input`);
+            if (card && card.value !== value) {
+                card.value = value;
+            }
+        }
     }
 }
 
@@ -211,10 +298,18 @@ export function addDuto() {
     // Marcar mudança pendente
     addPendingChange('dutos');
     window.hasPendingChanges = true;
+    
+    // Atualizar botão de salvar
+    if (typeof updateSaveButton === 'function') {
+        updateSaveButton();
+    }
 }
 
 export function editDuto(index) {
     if (!dutosData[index]) return;
+    
+    // Guarda o índice atual
+    currentEditingDutoIndex = index;
     
     const duto = dutosData[index];
     
@@ -237,6 +332,7 @@ export function editDuto(index) {
                                 <input type="text" class="form-control" 
                                        value="${escapeHtml(duto.type || '')}" 
                                        onchange="updateDutoField(${index}, 'type', this.value)"
+                                       oninput="updateDutoField(${index}, 'type', this.value)"
                                        placeholder="Ex: Chapa de aço inoxidável">
                             </div>
                             
@@ -244,7 +340,7 @@ export function editDuto(index) {
                                 <label>Valor Base (R$)</label>
                                 <input type="number" class="form-control" step="0.01"
                                        value="${duto.valor || 0}" 
-                                       onchange="updateDutoField(${index}, 'valor', parseFloat(this.value) || 0)"
+                                       onchange="updateDutoField(${index}, 'valor', this.value)"
                                        placeholder="0.00">
                             </div>
                         </div>
@@ -254,6 +350,7 @@ export function editDuto(index) {
                             <input type="text" class="form-control"
                                    value="${escapeHtml(duto.descricao || '')}"
                                    onchange="updateDutoField(${index}, 'descricao', this.value)"
+                                   oninput="updateDutoField(${index}, 'descricao', this.value)"
                                    placeholder="Descrição detalhada do duto">
                         </div>
                     </div>
@@ -302,6 +399,7 @@ function renderOpcionaisCards(opcionais, dutoIndex) {
                     <input type="text" class="card-title-input" 
                            value="${escapeHtml(opcional.nome || '')}" 
                            onchange="updateDutoOpcional(${dutoIndex}, ${opcIndex}, 'nome', this.value)"
+                           oninput="updateDutoOpcional(${dutoIndex}, ${opcIndex}, 'nome', this.value)"
                            placeholder="Nome do opcional">
                     <button class="btn-delete" onclick="deleteOpcional(${dutoIndex}, ${opcIndex})" 
                             title="Excluir opcional">
@@ -314,7 +412,7 @@ function renderOpcionaisCards(opcionais, dutoIndex) {
                         <label>Valor Adicional (R$)</label>
                         <input type="number" class="form-control" step="0.01"
                                value="${opcional.value || 0}" 
-                               onchange="updateDutoOpcional(${dutoIndex}, ${opcIndex}, 'value', parseFloat(this.value) || 0)"
+                               onchange="updateDutoOpcional(${dutoIndex}, ${opcIndex}, 'value', this.value)"
                                placeholder="0.00">
                     </div>
                     
@@ -323,6 +421,7 @@ function renderOpcionaisCards(opcionais, dutoIndex) {
                         <input type="text" class="form-control"
                                value="${escapeHtml(opcional.descricao || '')}" 
                                onchange="updateDutoOpcional(${dutoIndex}, ${opcIndex}, 'descricao', this.value)"
+                               oninput="updateDutoOpcional(${dutoIndex}, ${opcIndex}, 'descricao', this.value)"
                                placeholder="Descrição do opcional">
                     </div>
                 </div>
@@ -346,9 +445,14 @@ export function deleteDuto(index) {
     // Marcar mudança pendente
     addPendingChange('dutos');
     window.hasPendingChanges = true;
+    
+    // Atualizar botão de salvar
+    if (typeof updateSaveButton === 'function') {
+        updateSaveButton();
+    }
 }
 
-// ==================== CRUD DE OPÇÕES ====================
+// ==================== CRUD DE OPCIONAIS ====================
 
 export function addOpcional(dutoIndex) {
     const duto = dutosData[dutoIndex];
@@ -365,12 +469,20 @@ export function addOpcional(dutoIndex) {
     // Atualizar estado global
     systemData.dutos = dutosData;
     
+    // ATUALIZA A CONTAGEM NA TABELA
+    refreshDutoTableRow(dutoIndex);
+    
     editDuto(dutoIndex);
     showMessage('info', 'Novo opcional adicionado');
     
     // Marcar mudança pendente
     addPendingChange('dutos');
     window.hasPendingChanges = true;
+    
+    // Atualizar botão de salvar
+    if (typeof updateSaveButton === 'function') {
+        updateSaveButton();
+    }
 }
 
 export function deleteOpcional(dutoIndex, opcionalIndex) {
@@ -383,12 +495,20 @@ export function deleteOpcional(dutoIndex, opcionalIndex) {
         // Atualizar estado global
         systemData.dutos = dutosData;
         
+        // ATUALIZA A CONTAGEM NA TABELA
+        refreshDutoTableRow(dutoIndex);
+        
         editDuto(dutoIndex);
         showMessage('success', 'Opcional excluído');
         
         // Marcar mudança pendente
         addPendingChange('dutos');
         window.hasPendingChanges = true;
+        
+        // Atualizar botão de salvar
+        if (typeof updateSaveButton === 'function') {
+            updateSaveButton();
+        }
     }
 }
 
@@ -397,6 +517,9 @@ export function deleteOpcional(dutoIndex, opcionalIndex) {
 export function closeDutoDetail() {
     if (dutoDetailView) dutoDetailView.style.display = 'none';
     if (dutoDetailContent) dutoDetailContent.innerHTML = '';
+    
+    // Limpa o índice atual
+    currentEditingDutoIndex = null;
 }
 
 export function viewOpcionais(index) {
@@ -475,6 +598,10 @@ export function updateDutosData(newData) {
     systemData.dutos = dutosData; // Atualizar estado global
     window.dutosData = dutosData; // Atualizar referência global
     
+    renderDutosTable();
+}
+
+export function refreshAllDutosTable() {
     renderDutosTable();
 }
 
@@ -581,5 +708,7 @@ export default {
     addOpcional,
     deleteOpcional,
     closeDutoDetail,
-    resetDutoChanges
+    resetDutoChanges,
+    refreshDutoTableRow,
+    refreshAllDutosTable
 };
