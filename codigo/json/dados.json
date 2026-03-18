@@ -1963,70 +1963,115 @@
   },
   "empresas": [
     {
-      "ACT": "ACTEMIUM",
+      "codigo": "ACT",
+      "nome": "ACTEMIUM",
       "credenciais": {
         "usuario": "awffr",
-        "token": "fefefeeef",
-        "data_criacao": "2026-03-10T09:30:00Z",
-        "tempoUso": "90"
+        "token": "89307b1fa0cfd1cfccd96d0f5540e598",
+        "data_criacao": "2026-03-17T05:21:45.246Z",
+        "data_expiracao": "2026-03-18T05:21:45.246Z",
+        "tempoUso": 1
       }
     },
     {
-      "AMC": "AMC SOLUÇÕES"
+      "codigo": "AMC",
+      "nome": "AMC SOLUÇÕES",
+      "credenciais": {
+        "usuario": "zzzzzz",
+        "token": "sdfsdfsdfdsfsf",
+        "data_criacao": "2026-03-10T09:30:00Z",
+        "tempoUso": 90
+      }
     },
     {
-      "ARC": "ARCON"
+      "codigo": "ARC",
+      "nome": "ARCON",
+      "credenciais": null
     },
     {
-      "ART": "ARTECAL"
+      "codigo": "ART",
+      "nome": "ARTECAL",
+      "credenciais": null
     },
     {
-      "CIC": "CICLO SOLAR"
+      "codigo": "CIC",
+      "nome": "CICLO SOLAR",
+      "credenciais": null
     },
     {
-      "GEP": "GRUPO ELETROPAINEL"
+      "codigo": "GEP",
+      "nome": "GRUPO ELETROPAINEL",
+      "credenciais": null
     },
     {
-      "IHM": "IHM ENGENHARIA"
+      "codigo": "IHM",
+      "nome": "IHM ENGENHARIA",
+      "credenciais": null
     },
     {
-      "SEP": "SEMPEL"
+      "codigo": "SEP",
+      "nome": "SEMPEL",
+      "credenciais": null
     },
     {
-      "SEN": "SENIOR"
+      "codigo": "SEN",
+      "nome": "SENIOR",
+      "credenciais": null
     },
     {
-      "TEC": "TECNOTEMP"
+      "codigo": "TEC",
+      "nome": "TECNOTEMP",
+      "credenciais": null
     },
     {
-      "SIT": "SIMATEC"
+      "codigo": "SIT",
+      "nome": "SIMATEC",
+      "credenciais": null
     },
     {
-      "INO": "INOVAR"
+      "codigo": "INO",
+      "nome": "INOVAR",
+      "credenciais": null
     },
     {
-      "SIE": "SIEMENS"
+      "codigo": "SIE",
+      "nome": "SIEMENS",
+      "credenciais": null
     },
     {
-      "GEE": "GE POWER"
+      "codigo": "GEE",
+      "nome": "GE POWER",
+      "credenciais": null
     },
     {
-      "EMA": "EMAC"
+      "codigo": "EMA",
+      "nome": "EMAC",
+      "credenciais": null
     },
     {
-      "MAR": "MARP PAINÉIS"
+      "codigo": "MAR",
+      "nome": "MARP PAINÉIS",
+      "credenciais": null
     },
     {
-      "ENG": "ENGESULT"
+      "codigo": "ENG",
+      "nome": "ENGESULT",
+      "credenciais": null
     },
     {
-      "CAM": "CAM ENGENHARIA"
+      "codigo": "CAM",
+      "nome": "CAM ENGENHARIA",
+      "credenciais": null
     },
     {
-      "SRA": "SRA"
+      "codigo": "SRA",
+      "nome": "SRA",
+      "credenciais": null
     },
     {
-      "BLC": "BlueLink Consulting"
+      "codigo": "BLC",
+      "nome": "BlueLink Consulting",
+      "credenciais": null
     }
   ],
   "banco_acessorios": {

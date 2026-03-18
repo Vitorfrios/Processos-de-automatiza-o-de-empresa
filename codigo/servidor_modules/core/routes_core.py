@@ -540,16 +540,7 @@ class RoutesCore:
     def handle_get_dados(self):
         """DADOS.json completo"""
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(
-                dados_file, {
-                    "constants": {}, 
-                    "machines": [],
-                    "materials": {},
-                    "empresas": [],
-                    "banco_acessorios": {}  # ADICIONE AQUI
-                }
-            )
+            _, dados_data = self.empresa_handler.carregar_dados_empresas_atualizados()
 
             print("📁 Retornando DADOS.json")
             return dados_data
@@ -604,6 +595,7 @@ class RoutesCore:
             new_data = json.loads(post_data)
 
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            new_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(new_data)
 
             if self.file_utils.save_json_file(dados_file, new_data):
                 print("💾 DADOS.json salvo")
@@ -862,19 +854,7 @@ class RoutesCore:
     def handle_get_system_data(self):
         """Retorna TODOS os dados do sistema para a interface de edição"""
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(
-                dados_file, 
-                {
-                    "constants": {}, 
-                    "machines": [], 
-                    "materials": {}, 
-                    "empresas": [],
-                    "banco_acessorios": {},
-                    "dutos": [],
-                    "tubos": []  # ADICIONADO
-                }
-            )
+            _, dados_data = self.empresa_handler.carregar_dados_empresas_atualizados()
             
             print("📊 Retornando todos os dados do sistema")
             return dados_data
@@ -920,10 +900,7 @@ class RoutesCore:
     def handle_get_all_empresas(self):
         """Retorna todas empresas no formato correto"""
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            empresas = dados_data.get("empresas", [])
+            empresas = self.empresa_handler.obter_empresas()
             return {"empresas": empresas}
             
         except Exception as e:
@@ -980,6 +957,7 @@ class RoutesCore:
                 }
             
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            new_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(new_data)
             
             if self.file_utils.save_json_file(dados_file, new_data):
                 print("💾 TODOS os dados do sistema salvos (incluindo dutos e tubos)")
@@ -1041,7 +1019,8 @@ class RoutesCore:
             dados_data = self.file_utils.load_json_file(dados_file, {})
             
             dados_data["empresas"] = new_empresas.get("empresas", [])
-            
+            dados_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(dados_data)
+
             if self.file_utils.save_json_file(dados_file, dados_data):
                 print("💾 Empresas salvas")
                 return {"success": True, "message": "Empresas salvas"}

@@ -2,6 +2,7 @@
 // Estado global do sistema
 
 import { showError } from './ui.js';
+import { normalizeEmpresa, normalizeEmpresas } from '../../01_Create_Obra/core/shared-utils.js';
 
 export let systemData = {
     constants: {},
@@ -29,7 +30,7 @@ export function updateSystemData(newData) {
         constants: newData.constants || {},
         machines: Array.isArray(newData.machines) ? newData.machines : [],
         materials: newData.materials || {},
-        empresas: Array.isArray(newData.empresas) ? newData.empresas : [],
+        empresas: normalizeEmpresas(newData.empresas || []),
         banco_acessorios: newData.banco_acessorios || {},
         dutos: Array.isArray(newData.dutos) ? newData.dutos : [],
         tubos: Array.isArray(newData.tubos) ? newData.tubos : []  // ADICIONADO
@@ -145,7 +146,7 @@ export function validateDataDebug() {
                 return showValidationError('Empresas', `Empresa ${index}: Estrutura inválida`, empresa);
             }
             
-            const sigla = Object.keys(empresa)[0];
+            const sigla = normalizeEmpresa(empresa)?.codigo;
             if (!sigla || typeof sigla !== 'string' || sigla.trim() === '') {
                 return showValidationError('Empresas', `Empresa ${index}: Sigla inválida: "${sigla}"`, empresa);
             }

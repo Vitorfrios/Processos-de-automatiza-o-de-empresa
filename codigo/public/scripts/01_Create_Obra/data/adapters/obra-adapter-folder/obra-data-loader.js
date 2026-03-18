@@ -4,6 +4,7 @@ import {
     prepararDadosEmpresaNaObra,
     forcarAtualizacaoEmpresa
 } from '../../empresa-system/empresa-data-extractor.js'
+import { matchesEmpresaContext } from '../../../core/config.js'
 /**
  * Remove todas as obras base do container HTML
  */
@@ -13,6 +14,19 @@ function removeBaseObraFromHTML() {
 
     const existingObras = obrasContainer.querySelectorAll(".obra-block")
     existingObras.forEach((obra) => obra.remove())
+}
+
+function filterObrasForCurrentMode(obras) {
+    if (!Array.isArray(obras)) return []
+
+    return obras.filter((obra) => {
+        if (matchesEmpresaContext(obra)) {
+            return true
+        }
+
+        console.warn(`[LOAD OBRAS] Obra ${obra.id} ignorada por nao pertencer a empresa autenticada`)
+        return false
+    })
 }
 
 /**
@@ -52,7 +66,9 @@ async function loadObrasFromServer() {
         
         console.log(`🎯 ${obrasParaCarregar.length} obras encontradas para carregar`);
         
-        if (obrasParaCarregar.length === 0) return;
+        const obrasPermitidas = filterObrasForCurrentMode(obrasParaCarregar);
+
+        if (obrasPermitidas.length === 0) return;
         
         // Limpar interface
         removeBaseObraFromHTML();
@@ -60,7 +76,7 @@ async function loadObrasFromServer() {
         // Criar todas as estruturas básicas primeiro
         if (window.createEmptyObra) {
             await Promise.allSettled(
-                obrasParaCarregar.map(obra => 
+                obrasPermitidas.map(obra => 
                     window.createEmptyObra(obra.nome, obra.id)
                 )
             );
@@ -70,7 +86,7 @@ async function loadObrasFromServer() {
         await new Promise(resolve => setTimeout(resolve, 5));
         
         // Carregar TODOS os dados em PARALELO ABSOLUTO
-        const loadPromises = obrasParaCarregar.map(obra => 
+        const loadPromises = obrasPermitidas.map(obra => 
             loadSingleObra(obra).catch(e => {
                 console.warn(`⚠️ Falha ao carregar obra ${obra.id}:`, e.message);
                 return 0;
@@ -95,16 +111,18 @@ async function loadObrasFromServer() {
 async function loadSingleObra(obraData) {
     // Modo PARALELO: array de obras
     if (Array.isArray(obraData)) {
+        const obrasPermitidas = filterObrasForCurrentMode(obraData)
+
         console.log(`⚡ Carregando ${obraData.length} obras em PARALELO...`);
         
-        if (obraData.length === 0) return 0;
+        if (obrasPermitidas.length === 0) return 0;
         
         const startTime = performance.now();
         
         // 1. Criar estruturas em paralelo
         if (window.createEmptyObra) {
             await Promise.allSettled(
-                obraData.map(obra => window.createEmptyObra(obra.nome, obra.id))
+                obrasPermitidas.map(obra => window.createEmptyObra(obra.nome, obra.id))
             );
         }
         
@@ -112,7 +130,7 @@ async function loadSingleObra(obraData) {
         await new Promise(resolve => setTimeout(resolve, 5));
         
         // 3. Carregar TODOS os dados em paralelo
-        const promises = obraData.map(async (obra) => {
+        const promises = obrasPermitidas.map(async (obra) => {
             try {
                 const element = document.querySelector(`[data-obra-id="${obra.id}"]`);
                 if (!element) {
@@ -147,6 +165,11 @@ async function loadSingleObra(obraData) {
     
     // Modo SINGLE: objeto único
     try {
+        if (!matchesEmpresaContext(obraData)) {
+            console.warn(`[LOAD OBRAS] Obra ${obraData?.id} bloqueada para a empresa autenticada`)
+            return 0
+        }
+
         const obraId = obraData.id.toString();
         const obraNome = obraData.nome || `Obra ${obraId}`;
         

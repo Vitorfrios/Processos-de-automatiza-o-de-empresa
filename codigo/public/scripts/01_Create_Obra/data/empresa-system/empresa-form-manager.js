@@ -208,7 +208,8 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
     
     setTimeout(() => {
         // Inicializar autocomplete
-        if (typeof window.inicializarInputEmpresaHibrido === 'function') {
+        if (window.APP_CONFIG?.features?.empresaAutocomplete !== false &&
+            typeof window.inicializarInputEmpresaHibrido === 'function') {
             window.inicializarInputEmpresaHibrido(obraId);
         }
         
@@ -229,6 +230,10 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
                 numeroInput.removeAttribute('readonly');
                 numeroInput.readOnly = false;
             }
+        }
+
+        if (typeof window.applyClientEmpresaRestrictions === 'function') {
+            window.applyClientEmpresaRestrictions(obraId, dadosExistentes);
         }
         
         console.log(`✅ [EMPRESA] Formulário ${modoEdicao ? 'de edição' : 'de criação'} criado para obra ${obraId}`);
@@ -347,12 +352,18 @@ function criarFormularioVazioEmpresa(obraId, container) {
     container.insertAdjacentHTML('beforeend', formularioHTML);
     
     setTimeout(() => {
-        inicializarInputEmpresaHibrido(obraId);
+        if (window.APP_CONFIG?.features?.empresaAutocomplete !== false) {
+            inicializarInputEmpresaHibrido(obraId);
+        }
         
         // 🆕 CONFIGURAR AUTO-FORMATAÇÃO PARA O CAMPO DE DATA
         const dataCampo = container.querySelector(`#data-cadastro-${obraId}`);
         if (dataCampo) {
             configurarCampoDataEspecifico(dataCampo);
+        }
+
+        if (typeof window.applyClientEmpresaRestrictions === 'function') {
+            window.applyClientEmpresaRestrictions(obraId);
         }
         
     }, 37);
@@ -858,6 +869,12 @@ async function carregarDadosEmpresaNaObra(obraElement, obraData) {
 
     // Criar formulário com os dados
     criarFormularioEmpresa(obraId, container, obraData);
+
+    if (typeof window.applyClientEmpresaRestrictions === 'function') {
+        setTimeout(() => {
+            window.applyClientEmpresaRestrictions(obraId, obraData);
+        }, 24);
+    }
 
     // Atualizar o header (título e spacer)
     if (window.empresaCadastro && typeof window.empresaCadastro.atualizarHeaderObra === 'function') {

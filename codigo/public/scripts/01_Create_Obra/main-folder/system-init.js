@@ -9,6 +9,9 @@ import { loadObrasFromServer } from '../data/adapters/obra-adapter-folder/obra-d
 
 import { shutdownManual } from '../data/adapters/shutdown-adapter.js';
 import {EmpresaCadastroInline} from '../data/empresa-system/empresa-core.js';
+import { isFeatureEnabled } from '../core/config.js';
+import { ensureClientAccess } from '../core/auth.js';
+import { applyStaticUiRestrictions, updateClientPageTitle } from './client-mode.js';
 
 // 🔥 Importar módulo de filtros separado
 import { initializeFilterSystem } from './filter-init.js';
@@ -340,13 +343,27 @@ async function initializeEmpresaCadastro() {
  * Inicializa o sistema completo
  */
 export async function initializeSystem() {
+  const accessState = ensureClientAccess();
+  if (!accessState.allowed) {
+    return false;
+  }
+
   try {
+    applyStaticUiRestrictions();
+    updateClientPageTitle();
+
     console.log("🚀 [SYSTEM-INIT] Iniciando sistema completo...");
 
     window.systemLoadingStart = Date.now();
 
     console.log("🔒 [SYSTEM-INIT] Inicializando shutdown manager...");
-    window.shutdownManager = new ShutdownManager();
+    if (isFeatureEnabled('shutdown')) {
+      window.shutdownManager = new ShutdownManager();
+    } else {
+      document.querySelectorAll('.shutdown-btn').forEach((button) => {
+        button.style.display = 'none';
+      });
+    }
 
     console.log("📊 [SYSTEM-INIT] Carregando constantes do sistema...");
     await loadSystemConstants();
@@ -361,7 +378,11 @@ export async function initializeSystem() {
     console.log("✅ [SYSTEM-INIT] Sistema de empresas inicializado");
 
     console.log("🔧 [SYSTEM-INIT] Inicializando sistema de filtros...");
-    await initializeFilterSystem();
+    if (isFeatureEnabled('filtros')) {
+      await initializeFilterSystem();
+    } else {
+      console.log("[SYSTEM-INIT] Filtros desativados para o modo atual");
+    }
     console.log("✅ [SYSTEM-INIT] Sistema de filtros inicializado");
 
     const loadingTime = Date.now() - window.systemLoadingStart;

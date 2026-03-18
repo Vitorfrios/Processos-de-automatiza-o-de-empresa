@@ -29,7 +29,7 @@ async function carregarEmpresasComCache() {
 
         if (response.ok) {
             const data = await response.json();
-            const empresas = data.empresas || [];
+            const empresas = normalizeEmpresas(data.empresas || []);
 
             // Atualiza cache
             window.empresasCache = empresas;
@@ -59,6 +59,7 @@ function limparCacheEmpresas() {
 /* ==== SEÇÃO 2: CLASSE PRINCIPAL - EMPRESA CADASTRO INLINE ==== */
 
 import { showSystemStatus } from '../../ui/components/status.js';
+import { normalizeEmpresa, normalizeEmpresas } from '../../core/shared-utils.js';
 
 export class EmpresaCadastroInline {
     constructor() {
@@ -81,7 +82,7 @@ export class EmpresaCadastroInline {
             const responseEmpresas = await fetch('/api/dados/empresas');
             if (responseEmpresas.ok) {
                 const dados = await responseEmpresas.json();
-                this.empresas = dados.empresas || [];
+                this.empresas = normalizeEmpresas(dados.empresas || []);
             }
 
             // Carregar obras existentes do backup.json
@@ -395,8 +396,12 @@ export class EmpresaCadastroInline {
     }
 
     filtrarEmpresas(termo) {
-        return this.empresas.filter(empresaObj => {
-            const [sigla, nome] = Object.entries(empresaObj)[0];
+        return this.empresas.filter((empresaObj) => {
+            const empresa = normalizeEmpresa(empresaObj);
+            if (!empresa || !empresa.codigo) return false;
+
+            const sigla = empresa.codigo;
+            const nome = empresa.nome || '';
             const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const primeiroNome = nome.split(' ')[0].toUpperCase();
 
@@ -415,8 +420,12 @@ export class EmpresaCadastroInline {
             return;
         }
 
-        const html = sugestoes.map(empresaObj => {
-            const [sigla, nome] = Object.entries(empresaObj)[0];
+        const html = sugestoes.map((empresaObj) => {
+            const empresa = normalizeEmpresa(empresaObj);
+            if (!empresa || !empresa.codigo) return '';
+
+            const sigla = empresa.codigo;
+            const nome = empresa.nome || '';
             const primeiroNome = nome.split(' ')[0];
 
             return `
@@ -941,9 +950,9 @@ export class EmpresaCadastroInline {
 
     async cadastrarNovaEmpresa(sigla, nome) {
         try {
-            const siglaExistente = this.empresas.find(empresaObj => {
-                const [siglaExistente] = Object.keys(empresaObj);
-                return siglaExistente === sigla;
+            const siglaExistente = this.empresas.find((empresaObj) => {
+                const empresa = normalizeEmpresa(empresaObj);
+                return empresa?.codigo === sigla;
             });
 
             if (siglaExistente) {
@@ -951,7 +960,7 @@ export class EmpresaCadastroInline {
                 return false;
             }
 
-            const novaEmpresa = { [sigla]: nome };
+            const novaEmpresa = { codigo: sigla, nome, credenciais: null };
             this.empresas.push(novaEmpresa);
 
             const response = await fetch('/api/dados/empresas', {

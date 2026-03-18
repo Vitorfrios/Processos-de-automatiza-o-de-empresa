@@ -2,7 +2,9 @@
   "sessions": {
     "session_active": {
       "obras": [
-      "obra_a42"
+        "obra_a42",
+        "obra_w25",
+        "obra_e58"
       ]
     }
   }

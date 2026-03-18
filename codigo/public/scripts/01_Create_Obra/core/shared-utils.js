@@ -7,6 +7,37 @@ function attachModuleToWindow(module) {
     });
 }
 
+function normalizeEmpresa(empresa) {
+    if (!empresa || typeof empresa !== 'object') {
+        return null;
+    }
+
+    if (empresa.codigo && empresa.nome) {
+        return empresa;
+    }
+
+    const codigo = Object.keys(empresa)[0];
+    if (!codigo) {
+        return null;
+    }
+
+    return {
+        codigo,
+        nome: empresa[codigo],
+        credenciais: empresa.credenciais ?? null
+    };
+}
+
+function normalizeEmpresas(empresas) {
+    if (!Array.isArray(empresas)) {
+        return [];
+    }
+
+    return empresas
+        .map(normalizeEmpresa)
+        .filter((empresa) => empresa && empresa.codigo);
+}
+
 
 /**
  * 🔄 FUNÇÃO CENTRALIZADA: Dispara cálculo de vazão e ganhos térmicos
@@ -68,6 +99,8 @@ function syncTitleToAmbienteDirect(roomId, newTitle) {
 // 📤 EXPORTS - Adicionar as novas funções
 export {
     attachModuleToWindow,
+    normalizeEmpresa,
+    normalizeEmpresas,
     triggerCalculation,        // 🔄 NOVA
     syncTitleToAmbienteDirect  // 🔄 NOVA
 };

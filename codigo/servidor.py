@@ -8,6 +8,12 @@ import sys
 import time
 from pathlib import Path
 
+
+# Impede bytecode mesmo quando este arquivo for importado
+# ou executado sem passar por setup_environment().
+os.environ.setdefault('PYTHONDONTWRITEBYTECODE', '1')
+sys.dont_write_bytecode = True
+
 def setup_environment():
     """Configuração do ambiente """
     current_dir = Path(__file__).parent

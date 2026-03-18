@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Client | Sistema ESI</title>
+    <link rel="stylesheet" href="../static/00_Login/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        window.__APP_CONFIG_OVERRIDES__ = {
+            mode: 'client',
+            auth: {
+                required: true,
+                loginPage: './00_Client_Login.html',
+                redirectAfterLogin: './01_Create_Obras_Client.html'
+            },
+            features: {
+                empresaAutocomplete: false,
+                filtros: false,
+                editDataNavigation: false,
+                shutdown: false
+            }
+        };
+    </script>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="https://esienergia.com.br/wp-content/uploads/2023/08/logo-esienergia-white.png"
+                    alt="Logo ESI Energia" class="login-logo">
+                <h1 class="login-title">Acesso do Cliente</h1>
+                <p class="login-subtitle">Entre com usuário e token da sua empresa</p>
+            </div>
+
+            <form class="login-form" id="loginForm" autocomplete="off">
+                <div class="input-group">
+                    <label for="username" class="input-label">
+                        <i class="fas fa-user"></i>
+                        Usuário
+                    </label>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           class="input-field"
+                           placeholder="Digite seu usuário"
+                           autocomplete="off"
+                           required>
+                </div>
+
+                <div class="input-group">
+                    <label for="password" class="input-label">
+                        <i class="fas fa-lock"></i>
+                        Token
+                    </label>
+                    <div class="password-field-wrapper">
+                        <input type="password"
+                               id="password"
+                               name="password"
+                               class="input-field"
+                               placeholder="Digite seu token"
+                               autocomplete="off"
+                               required>
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-button" id="loginBtn">
+                    <span class="btn-text">Entrar</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p class="footer-text" id="loginFeedback"></p>
+                <p class="footer-version">Modo client</p>
+            </div>
+        </div>
+
+        <div class="login-background">
+            <div class="bg-shape bg-shape-1"></div>
+            <div class="bg-shape bg-shape-2"></div>
+            <div class="bg-shape bg-shape-3"></div>
+        </div>
+    </div>
+
+    <script type="module" src="../scripts/01_Create_Obra/pages/client-login.js?v=20260318-1"></script>
+</body>
+
+</html>

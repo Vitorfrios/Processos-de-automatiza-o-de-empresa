@@ -4,13 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Criação de Obras ESI</title>
+    <title>Criação de Obras Client | Sistema ESI</title>
     <link rel="stylesheet" href="../static/01_Create_Obra/main.css">
-    <!-- Adicione no HEAD do seu HTML principal -->
     <script src="https://unpkg.com/docx@8.3.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-
+    <script>
+        window.__APP_CONFIG_OVERRIDES__ = {
+            mode: 'client',
+            auth: {
+                required: true,
+                loginPage: './00_Client_Login.html',
+                redirectAfterLogin: './01_Create_Obras_Client.html'
+            },
+            features: {
+                empresaAutocomplete: false,
+                filtros: false,
+                editDataNavigation: false,
+                shutdown: false
+            }
+        };
+    </script>
 </head>
 
 <body>
@@ -29,65 +42,28 @@
 
     <nav class="navbar">
         <ul class="nav-list">
-            <li><a href="./01_Create_Obra.html" id="nav-criar-obras">Criar Obras</a></li>
-            <li><a href="./00_Client_Login.html" id="nav-editar-dados">login</a></li>
-            <li><a href="./03_Edit_data.html" id="nav-editar-dados">Editar dados</a></li>
+            <li><a href="./01_Create_Obras_Client.html" id="nav-criar-obras">Criar Obras</a></li>
         </ul>
     </nav>
 
     <main class="main-content">
         <div class="container">
-            <!-- Botão para adicionar nova obra -->
             <div class="add-obra-section">
 
-                <!-- BLOCO ESQUERDO (switch + inputs divididos verticalmente) -->
-                <div class="filtro-bloco-altura">
-
-                    <!-- METADE DE CIMA — SWITCH -->
-                    <div class="filtro-switch-area">
-                        <label class="filter-switch">
-                            <input type="checkbox" id="filter-toggle""
-                                disabled>
-                            <span class=" slider"></span>
-                        </label>
-
-                        <span class="switch-label-text">Filtro de Obras</span>
-
-                    </div>
-
-                    <!-- METADE DE BAIXO — INPUTS -->
-                    <div class="filtro-inputs-area" id="filtros-inputs">
-                        <input type="text" id="filter-empresa" placeholder="Empresa" disabled>
-
-                        <input type="number" id="filter-numero-cliente" placeholder="Nº Cliente" min="1" step="1"
-                            disabled>
-
-                        <input type="text" id="filter-nome-obra" placeholder="Nome da Obra" disabled>
-                    </div>
-                </div>
-
-                <!-- BOTÃO NO MESMO NÍVEL -->
                 <button class="btn btn-add" onclick="addNewObra()" id="add-obra-btn" disabled>
                     + Adicionar Nova Obra
                 </button>
-
             </div>
 
-            <!-- Container de Obras -->
-            <div id="projects-container">
-                <!-- Hierarquia: Obra → Projeto → Sala -->
-            </div>
+            <div id="projects-container"></div>
         </div>
     </main>
 
-    <!-- Modal de Confirmação para Exclusão -->
     <div id="confirmationModal" class="confirmation-modal hidden">
         <div class="modal-content">
-            <div class="modal-icon">❓</div>
+            <div class="modal-icon">?</div>
             <h2 class="modal-title">Remover da Visualização</h2>
-            <p class="modal-message" id="modalMessage">
-                <!-- O conteúdo será inserido pelo JavaScript -->
-            </p>
+            <p class="modal-message" id="modalMessage"></p>
             <div class="modal-actions">
                 <button class="modal-btn btn-cancel" onclick="window.closeConfirmationModal()">
                     Manter

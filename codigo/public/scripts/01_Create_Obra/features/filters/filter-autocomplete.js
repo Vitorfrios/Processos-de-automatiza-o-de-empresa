@@ -3,6 +3,8 @@
  * REUTILIZA COMPLETAMENTE o sistema existente de autocomplete
  */
 
+import { normalizeEmpresa } from '../../core/shared-utils.js';
+
 const FilterAutocomplete = (function () {
     let empresaInput = null;
     let dropdown = null;
@@ -192,7 +194,10 @@ const FilterAutocomplete = (function () {
         const termoNormalizado = termo.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         return empresas.filter(empresaObj => {
-            const [sigla, nome] = Object.entries(empresaObj)[0];
+            const empresa = normalizeEmpresa(empresaObj);
+            if (!empresa || !empresa.codigo) return false;
+            const sigla = empresa.codigo;
+            const nome = empresa.nome || '';
             const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
             return sigla === termoNormalizado ||
@@ -234,7 +239,10 @@ const FilterAutocomplete = (function () {
         if (!optionsContainer) return;
 
         optionsContainer.innerHTML = empresas.map(empresaObj => {
-            const [sigla, nome] = Object.entries(empresaObj)[0];
+            const empresa = normalizeEmpresa(empresaObj);
+            if (!empresa || !empresa.codigo) return '';
+            const sigla = empresa.codigo;
+            const nome = empresa.nome || '';
             return `
                 <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}">
                     <strong>${sigla}</strong> 

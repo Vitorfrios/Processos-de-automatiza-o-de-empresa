@@ -15,6 +15,7 @@ import {
     mostrarAvisoAutocompletado,
     limparDadosSelecao
 } from './empresa-ui-helpers.js';
+import { normalizeEmpresa } from '../../core/shared-utils.js';
 
 
 
@@ -187,7 +188,13 @@ function processarInputEmpresa(termo, input, dropdown, optionsContainer, obraId,
 
     // 🔥 AUTOCOMPLETE MAIS CONSERVADOR
     if (sugestoes.length === 1 && termo.length >= 3) { // ✅ Mínimo 3 caracteres
-        const [sigla, nome] = Object.entries(sugestoes[0])[0];
+        const empresa = normalizeEmpresa(sugestoes[0]);
+        if (!empresa || !empresa.codigo) {
+            exibirSugestoes(sugestoes, optionsContainer, input, dropdown, obraId);
+            return;
+        }
+        const sigla = empresa.codigo;
+        const nome = empresa.nome || '';
         
         // Verificar se é um match exato da sigla
         if (sigla === termo.toUpperCase()) {
@@ -208,7 +215,10 @@ function filtrarEmpresas(termo, empresas) {
     const termoNormalizado = termo.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
     return empresas.filter(empresaObj => {
-        const [sigla, nome] = Object.entries(empresaObj)[0];
+        const empresa = normalizeEmpresa(empresaObj);
+        if (!empresa || !empresa.codigo) return false;
+        const sigla = empresa.codigo;
+        const nome = empresa.nome || '';
         const nomeNormalizado = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         return sigla === termoNormalizado ||
@@ -245,7 +255,12 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
 
     // 🔥 BLOQUEAR SELEÇÃO AUTOMÁTICA SE ESTÁ APAGANDO
     if (sugestoesLimitadas.length === 1 && valorAtual.length > 0 && !window.usuarioEstaApagando) {
-        const [sigla, nome] = Object.entries(sugestoesLimitadas[0])[0];
+        const empresa = normalizeEmpresa(sugestoesLimitadas[0]);
+        if (!empresa || !empresa.codigo) {
+            return;
+        }
+        const sigla = empresa.codigo;
+        const nome = empresa.nome || '';
         const matchForte = valorAtual === sigla || valorAtual.length >= 3;
 
         if (matchForte) {
@@ -256,7 +271,10 @@ function exibirSugestoes(sugestoes, container, input, dropdown, obraId) {
 
     // 🔥 RENDERIZAÇÃO MAIS RÁPIDA
     container.innerHTML = sugestoesLimitadas.map(empresaObj => {
-        const [sigla, nome] = Object.entries(empresaObj)[0];
+        const empresa = normalizeEmpresa(empresaObj);
+        if (!empresa || !empresa.codigo) return '';
+        const sigla = empresa.codigo;
+        const nome = empresa.nome || '';
         return `
             <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}" title="${nome}">
                 <strong>${sigla}</strong> 
@@ -306,7 +324,10 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
     const empresasLimitadas = empresas.slice(0, 50);
 
     const html = empresasLimitadas.map(empresaObj => {
-        const [sigla, nome] = Object.entries(empresaObj)[0];
+        const empresa = normalizeEmpresa(empresaObj);
+        if (!empresa || !empresa.codigo) return '';
+        const sigla = empresa.codigo;
+        const nome = empresa.nome || '';
 
         return `
             <div class="dropdown-option" data-sigla="${sigla}" data-nome="${nome}" title="${nome}">

@@ -5,6 +5,8 @@
 
 // ✅ IMPORTAR LOGGER
 import { createSmartLogger } from './core/logger.js';
+import { APP_CONFIG, isFeatureEnabled } from './core/config.js';
+import { bootstrapClientMode } from './main-folder/client-mode.js';
 
 // ✅ INICIALIZAR LOGGER IMEDIATAMENTE
 window.logger = createSmartLogger();
@@ -237,6 +239,11 @@ function setupSystemLoadObserver() {
  * ✅ INICIALIZAR SISTEMA DE FILTROS - FUNÇÃO OTIMIZADA
  */
 function initializeFilterSystem() {
+    if (!isFeatureEnabled('filtros')) {
+        console.log('[MAIN] Sistema de filtros desativado pela configuracao atual');
+        return;
+    }
+
     console.log('🔧 [MAIN] Inicializando sistema de filtros...');
     
     // 🔍 DEBUG: Verificar se módulos foram carregados
@@ -290,6 +297,10 @@ function initializeFilterSystem() {
  * ✅ CONFIGURAR ESTADO DO SWITCH APÓS SISTEMA CARREGAR
  */
 function setupFilterSwitchState() {
+    if (!isFeatureEnabled('filtros')) {
+        return;
+    }
+
     console.log('🎛️ [MAIN] Configurando estado do switch de filtro...');
     
     // Monitorar quando o sistema carregar para atualizar switch
@@ -647,6 +658,11 @@ function getFunctionFromModules(funcName) {
  * Inicialização principal do sistema
  */
 window.addEventListener("DOMContentLoaded", async () => {
+  const accessState = bootstrapClientMode();
+  if (APP_CONFIG.mode === 'client' && !accessState.allowed) {
+    return;
+  }
+
   console.log("🚀 Inicializando sistema...");
   
   try {
@@ -662,7 +678,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     inicializarSistemaData();
     
     // ✅ Inicializar sistema completo
-    await initializeSystem();
+    const systemInitialized = await initializeSystem();
+    if (systemInitialized === false) {
+      return;
+    }
 
     
     // ✅ EXPORTAR FUNÇÕES PARA FILTROS (IMPORTANTE!)
@@ -697,9 +716,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     // ✅ INICIALIZAR SISTEMA DE FILTROS
     // Aguardar 500ms para garantir que o DOM está pronto e outros módulos carregaram
-    setTimeout(() => {
-        initializeFilterSystem();
-    }, 250);
+    if (isFeatureEnabled('filtros')) {
+        setTimeout(() => {
+            initializeFilterSystem();
+        }, 250);
+    }
     
   } catch (error) {
     handleInitializationError(error);
