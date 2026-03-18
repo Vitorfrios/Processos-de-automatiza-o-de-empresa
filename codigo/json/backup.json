@@ -2,7 +2,7 @@
   "obras": [
     {
       "id": "obra_a42",
-      "nome": "ACT",
+      "nome": "ACT-123",
       "empresa_id": "empresa_obra_a42",
       "empresaSigla": "ACT",
       "empresaNome": "ACTEMIUM",
@@ -129,7 +129,7 @@
                   "tipoSelecionado": "Tubo Axial"
                 },
                 {
-                  "nome": "Gabinete Centrífugo-01A (1500m³/h)",
+                  "nome": "Gabinete Centrífugo-01B (1500m³/h)",
                   "tipo": "Gabinete Centrífugo",
                   "potencia": "1500m³/h",
                   "tensao": "220V/1F",
@@ -339,7 +339,7 @@
                   "tipoSelecionado": "Filtro Cartucho"
                 },
                 {
-                  "nome": "Gabinete Centrífugo-01B (1500m³/h)",
+                  "nome": "Gabinete Centrífugo-01A (1500m³/h)",
                   "tipo": "Gabinete Centrífugo",
                   "potencia": "1500m³/h",
                   "tensao": "220V/1F",
@@ -536,41 +536,41 @@
                     "id": "obra_a42_proj_r53_3_sala_k99_1-1",
                     "numero": 1,
                     "quantidade": 1,
-                    "cabos": 0,
-                    "luvas": 0,
-                    "reducoes": 0,
-                    "totalLSmetros": 0,
-                    "totalLSkg": 0,
-                    "totalLLmetros": 0,
-                    "totalLLkg": 0,
-                    "totalKG": 0,
-                    "valorTotal": 0,
+                    "cabos": 18,
+                    "luvas": 8.4,
+                    "reducoes": 4,
+                    "totalLSmetros": 21,
+                    "totalLSkg": 16.3,
+                    "totalLLmetros": 21,
+                    "totalLLkg": 18.77,
+                    "totalKG": 35.07,
+                    "valorTotal": 2184,
                     "linhas": [
                       {
-                        "id": "LS-obra_a42_proj_r53_3_sala_k99_1-1-1773801907320",
+                        "id": "LS-obra_a42_proj_r53_3_sala_k99_1-1-1773802076682",
                         "tipo": "L.S.",
-                        "pol": "",
-                        "expe": "",
-                        "compr": 0,
-                        "numC": 0,
-                        "numCu": 0,
-                        "Cee": 0,
-                        "Lsm": 0,
-                        "LSkg": 0,
-                        "valorTotal": 0
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 12,
+                        "numC": 1,
+                        "numCu": 3,
+                        "Cee": 3,
+                        "Lsm": 21,
+                        "LSkg": 16.296,
+                        "valorTotal": 1302
                       },
                       {
-                        "id": "LL-obra_a42_proj_r53_3_sala_k99_1-1-1773801907320",
+                        "id": "LL-obra_a42_proj_r53_3_sala_k99_1-1-1773802076682",
                         "tipo": "L.L.",
-                        "pol": "",
-                        "expe": "",
-                        "compr": 0,
-                        "numC": 0,
-                        "numCu": 0,
-                        "Cee": 0,
-                        "Lsm": 0,
-                        "LSkg": 0,
-                        "valorTotal": 0
+                        "pol": "7/8",
+                        "expe": "0,80",
+                        "compr": 12,
+                        "numC": 1,
+                        "numCu": 3,
+                        "Cee": 3,
+                        "Lsm": 21,
+                        "LSkg": 18.774,
+                        "valorTotal": 882
                       }
                     ]
                   }
@@ -587,10 +587,10 @@
             },
             "adicionais": []
           },
-          "valorTotalProjeto": 393830.37
+          "valorTotalProjeto": 396014.37
         }
       ],
-      "valorTotalObra": 393830.37
+      "valorTotalObra": 396014.37
     }
   ]
 }
