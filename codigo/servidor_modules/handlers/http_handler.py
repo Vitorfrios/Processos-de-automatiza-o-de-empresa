@@ -165,7 +165,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if path == '/' or path == '':
             print("🌐 Acesso à raiz detectado - redirecionando para página principal")
             self.send_response(302)
-            self.send_header('Location', '/public/pages/01_Create_Obras_Client.html')
+            self.send_header('Location', '/public/pages/00_Client_Login.html')
             self.end_headers()
             return
     
