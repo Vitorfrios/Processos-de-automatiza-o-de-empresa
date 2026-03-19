@@ -19,10 +19,10 @@ import {
  */
 function getNextProjectNumber(obraId) {
     try {
-        // ✅ CORREÇÃO: Buscar apenas projetos DESTA obra específica
+        //  CORREÇÃO: Buscar apenas projetos DESTA obra específica
         const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
         if (!obraBlock) {
-            console.warn(`⚠️ Obra ${obraId} não encontrada, usando projeto 1`);
+            console.warn(` Obra ${obraId} não encontrada, usando projeto 1`);
             return 1;
         }
 
@@ -43,11 +43,11 @@ function getNextProjectNumber(obraId) {
             }
         });
 
-        console.log(`🔢 Next project number for obra ${obraId}: ${maxNumber + 1} (max found: ${maxNumber})`);
+        console.log(` Next project number for obra ${obraId}: ${maxNumber + 1} (max found: ${maxNumber})`);
         return maxNumber + 1;
 
     } catch (error) {
-        console.error('❌ Erro em getNextProjectNumber:', error);
+        console.error(' Erro em getNextProjectNumber:', error);
         return 1; // Fallback seguro
     }
 }
@@ -61,7 +61,7 @@ function getNextRoomNumber(projectId) {
     try {
         const projectBlock = document.querySelector(`[data-project-id="${projectId}"]`);
         if (!projectBlock) {
-            console.warn(`⚠️ Projeto ${projectId} não encontrado, usando sala 1`);
+            console.warn(` Projeto ${projectId} não encontrado, usando sala 1`);
             return 1;
         }
 
@@ -82,11 +82,11 @@ function getNextRoomNumber(projectId) {
             }
         });
 
-        console.log(`🔢 Next room number for project ${projectId}: ${maxNumber + 1}`);
+        console.log(` Next room number for project ${projectId}: ${maxNumber + 1}`);
         return maxNumber + 1;
 
     } catch (error) {
-        console.error('❌ Erro em getNextRoomNumber:', error);
+        console.error(' Erro em getNextRoomNumber:', error);
         return 1; // Fallback seguro
     }
 }
@@ -114,11 +114,11 @@ function getNextObraNumber() {
             }
         });
 
-        console.log(`🔢 Next obra number: ${maxNumber + 1} (max found: ${maxNumber})`);
+        console.log(` Next obra number: ${maxNumber + 1} (max found: ${maxNumber})`);
         return maxNumber + 1;
 
     } catch (error) {
-        console.error('❌ Erro em getNextObraNumber:', error);
+        console.error(' Erro em getNextObraNumber:', error);
         return 1; // Fallback seguro
     }
 }
@@ -140,7 +140,7 @@ function getRoomFullId(roomElement) {
         return generateSecureId('sala');
     }
     
-    console.log(`✅ ID da sala obtido do data attribute: ${roomId}`);
+    console.log(` ID da sala obtido do data attribute: ${roomId}`);
     return roomId;
 }
 
@@ -189,14 +189,14 @@ function getProjectName(projectElement) {
         const titleText = titleElement.textContent || titleElement.innerText || '';
         const trimmedText = titleText.trim();
         if (trimmedText && trimmedText !== 'Projeto') {
-            console.log(`📝 Nome do projeto obtido do título: "${trimmedText}"`);
+            console.log(` Nome do projeto obtido do título: "${trimmedText}"`);
             return trimmedText;
         }
     }
     
     const projectNameFromData = projectElement.dataset.projectName;
     if (projectNameFromData && projectNameFromData !== 'undefined' && projectNameFromData !== 'null' && projectNameFromData !== 'Projeto') {
-        console.log(`📝 Nome do projeto obtido do data attribute: "${projectNameFromData}"`);
+        console.log(` Nome do projeto obtido do data attribute: "${projectNameFromData}"`);
         return projectNameFromData;
     }
     
@@ -287,7 +287,7 @@ function parseMachinePrice(priceText) {
                                 .trim();
         return parseFloat(cleaned) || 0;
     } catch (error) {
-        console.error('❌ Erro ao converter preço:', priceText, error);
+        console.error(' Erro ao converter preço:', priceText, error);
         return 0;
     }
 }
@@ -299,9 +299,9 @@ function parseMachinePrice(priceText) {
  */
 function debugThermalGainsElements(roomElement) {
     const roomFullId = getRoomFullId(roomElement);
-    console.log('🐛 DEBUG: Todos os elementos de ganhos térmicos disponíveis:');
+    console.log(' DEBUG: Todos os elementos de ganhos térmicos disponíveis:');
     
-    // ✅ ATUALIZADO: Incluir os novos IDs de TR
+    //  ATUALIZADO: Incluir os novos IDs de TR
     const selectors = [
         'total-ganhos-w', 'total-tr-aprox', 'total-tr-exato', 'total-externo', 'total-divisoes',
         'total-piso', 'total-iluminacao', 'total-dissi', 'total-pessoas',
@@ -310,7 +310,7 @@ function debugThermalGainsElements(roomElement) {
     
     selectors.forEach(selector => {
         const element = document.querySelector(`#${selector}-${roomFullId}`);
-        console.log(`🔍 ${selector}-${roomFullId}:`, element ? `ENCONTRADO - "${element.textContent}"` : 'NÃO ENCONTRADO');
+        console.log(` ${selector}-${roomFullId}:`, element ? `ENCONTRADO - "${element.textContent}"` : 'NÃO ENCONTRADO');
     });
 }
 
@@ -328,12 +328,12 @@ function validateTRElements(roomId) {
     const isValid = !!(elementAprox && elementExato);
     
     if (!isValid) {
-        console.warn(`⚠️ [TR VALIDATE] Elementos de TR incompletos para sala ${roomId}:`, {
+        console.warn(` [TR VALIDATE] Elementos de TR incompletos para sala ${roomId}:`, {
             aprox: !!elementAprox,
             exato: !!elementExato
         });
     } else {
-        console.log(`✅ [TR VALIDATE] Elementos de TR válidos para sala ${roomId}`);
+        console.log(` [TR VALIDATE] Elementos de TR válidos para sala ${roomId}`);
     }
     
     return isValid;
@@ -350,7 +350,7 @@ function validateTRElements(roomId) {
  * @returns {Object} Dados coletados dos inputs
  */
 function collectClimatizationInputs(climaSection, roomId) {
-    console.log(`📝 [COLLECT] Coletando inputs para sala: ${roomId}`);
+    console.log(`  Coletando inputs para sala: ${roomId}`);
     
     const inputs = climaSection.querySelectorAll(".clima-input, input[data-field], select[data-field]");
     const data = {};
@@ -359,7 +359,7 @@ function collectClimatizationInputs(climaSection, roomId) {
         const field = input.dataset.field;
         let value;
         
-        // ✅ CORREÇÃO: Tratar diferentes tipos de input
+        //  CORREÇÃO: Tratar diferentes tipos de input
         if (input.type === 'checkbox') {
             value = input.checked;
         } else if (input.type === 'number' || input.type === 'text') {
@@ -373,7 +373,7 @@ function collectClimatizationInputs(climaSection, roomId) {
         }
     });
 
-    // ✅ CORREÇÃO: Coletar estado da pressurização dos RADIO BUTTONS
+    //  CORREÇÃO: Coletar estado da pressurização dos RADIO BUTTONS
     if (data.pressurizacao === undefined) {
         const radioSim = climaSection.querySelector('input[type="radio"][value="sim"]');
         const radioNao = climaSection.querySelector('input[type="radio"][value="nao"]');
@@ -381,31 +381,31 @@ function collectClimatizationInputs(climaSection, roomId) {
         // Se o radio "sim" estiver marcado, pressurização está ativa
         data.pressurizacao = radioSim ? radioSim.checked : false;
         
-        console.log(`🎯 [COLLECT] Estado da pressurização:`, {
+        console.log(`  Estado da pressurização:`, {
             radioSimChecked: radioSim?.checked,
             radioNaoChecked: radioNao?.checked,
             pressurizacao: data.pressurizacao
         });
     }
     
-    // ✅ CORREÇÃO: Garantir que setpointTemp esteja presente
+    //  CORREÇÃO: Garantir que setpointTemp esteja presente
     if (data.setpointTemp === undefined) {
         const setpointInput = climaSection.querySelector('input[data-field="setpointTemp"]');
         data.setpointTemp = setpointInput ? safeNumber(setpointInput.value) : 0;
     }
 
-    // ✅ CORREÇÃO: Garantir que pressurizacaoSetpoint esteja presente
+    //  CORREÇÃO: Garantir que pressurizacaoSetpoint esteja presente
     if (data.pressurizacaoSetpoint === undefined) {
         const pressurizacaoInput = climaSection.querySelector('input[data-field="pressurizacaoSetpoint"]');
         data.pressurizacaoSetpoint = pressurizacaoInput ? safeNumber(pressurizacaoInput.value) : 0;
         
-        console.log(`🎯 [COLLECT] Valor da pressurização:`, {
+        console.log(`  Valor da pressurização:`, {
             pressurizacaoSetpoint: data.pressurizacaoSetpoint,
             inputValue: pressurizacaoInput?.value
         });
     }
 
-    console.log(`✅ [COLLECT] ${Object.keys(data).length} dados coletados para ${roomId}:`, data);
+    console.log(`  ${Object.keys(data).length} dados coletados para ${roomId}:`, data);
     return data;
 }
 
@@ -415,20 +415,20 @@ function collectClimatizationInputs(climaSection, roomId) {
  * @returns {HTMLElement|null} Elemento da seção de climatização
  */
 function findClimatizationSection(roomId) {
-    // ✅ CORREÇÃO: Buscar APENAS por ID único
+    //  CORREÇÃO: Buscar APENAS por ID único
     const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
     if (!roomElement) {
-        console.error(`❌ [FIND] Sala não encontrada: ${roomId}`);
+        console.error(`  Sala não encontrada: ${roomId}`);
         return null;
     }
     
     const climaSection = roomElement.querySelector('#section-content-' + roomId + '-clima');
     if (!climaSection) {
-        console.error(`❌ [FIND] Seção de climatização não encontrada para: ${roomId}`);
+        console.error(`  Seção de climatização não encontrada para: ${roomId}`);
         return null;
     }
     
-    console.log(`✅ [FIND] Seção encontrada para: ${roomId}`);
+    console.log(`  Seção encontrada para: ${roomId}`);
     return climaSection;
 }
 
@@ -453,7 +453,7 @@ export {
     getMachineName,
     parseMachinePrice,
     debugThermalGainsElements,
-    validateTRElements, // ✅ NOVA: Validação dos elementos
+    validateTRElements, //  NOVA: Validação dos elementos
     
     // Coleta de Dados
     collectClimatizationInputs,
@@ -470,5 +470,5 @@ if (typeof window !== 'undefined') {
     // Utilitários
     window.getRoomFullId = getRoomFullId;
     window.debugThermalGainsElements = debugThermalGainsElements;
-    window.validateTRElements = validateTRElements; // ✅ NOVA
+    window.validateTRElements = validateTRElements; //  NOVA
 }

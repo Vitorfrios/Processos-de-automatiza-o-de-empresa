@@ -1,7 +1,7 @@
 /**
  * thermal-gains.js
- * 🎯 FUSÃO COMPLETA: thermalCalculations + thermalComponents + thermalDisplay
- * ⚡ REDUÇÃO: 3 arquivos → 1 arquivo (~600 → ~350 linhas)
+ *  FUSÃO COMPLETA: thermalCalculations + thermalComponents + thermalDisplay
+ *  REDUÇÃO: 3 arquivos  1 arquivo (~600  ~350 linhas)
  */
 
 
@@ -14,7 +14,7 @@ import {
 import { safeNumber, updateElementText } from '../../data/utils/core-utils.js';
 
 /**
- * 🔥 CÁLCULOS DE COMPONENTES TÉRMICOS (thermalComponents.js)
+ *  CÁLCULOS DE COMPONENTES TÉRMICOS (thermalComponents.js)
  */
 
 function calculateCeilingGain(area, uValue, deltaT) {
@@ -33,7 +33,7 @@ function calculateWallGain(comprimento, peDireito, uValue, deltaT) {
   const deltaTNum = safeNumber(deltaT);
   const area = compNum * peDireitoNum;
   const result = area * uValueNum * deltaTNum;
-  console.log(`[DEBUG DETAIL] calculateWallGain: (${compNum} * ${peDireitoNum}) = ${area}m² * ${uValueNum} * ${deltaTNum} = ${result}`);
+  console.log(`[DEBUG DETAIL] calculateWallGain: (${compNum} * ${peDireitoNum}) = ${area}m * ${uValueNum} * ${deltaTNum} = ${result}`);
   return result;
 }
 
@@ -96,7 +96,7 @@ function calculateExternalAirLatentGain(vazaoArExterno, constants) {
 }
 
 /**
- * 📊 CÁLCULOS DE TOTAIS E DISPLAY (thermalDisplay.js)
+ *  CÁLCULOS DE TOTAIS E DISPLAY (thermalDisplay.js)
  */
 
 function calculateTotals(gains) {
@@ -148,7 +148,7 @@ function updatePartitionDisplay(roomId, type, gain, uValue, inputArea, peDireito
 }
 
 function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
-  console.log(`🔥 Atualizando display térmico para sala: ${roomId}`);
+  console.log(` Atualizando display térmico para sala: ${roomId}`);
   
   updateElementText(`total-ganhos-w-${roomId}`, totals.geralW);
 
@@ -213,11 +213,11 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   updateElementText(`total-externo-${roomId}`, totals.externo);
   updateElementText(`total-divisoes-${roomId}`, totals.divisoes);
   
-  console.log(`✅ Display térmico atualizado para sala: ${roomId}`);
+  console.log(` Display térmico atualizado para sala: ${roomId}`);
 }
 
 /**
- * 🔍 FUNÇÕES AUXILIARES DE BUSCA (thermalCalculations.js)
+ *  FUNÇÕES AUXILIARES DE BUSCA (thermalCalculations.js)
  */
 
 function findRoomContentThermal(roomId) {
@@ -226,12 +226,12 @@ function findRoomContentThermal(roomId) {
         return null;
     }
     
-    console.log(`🔍 [THERMAL] Procurando sala: "${roomId}"`);
+    console.log(`  Procurando sala: "${roomId}"`);
     
     let roomContent = document.getElementById(`room-content-${roomId}`);
     
     if (roomContent) {
-        console.log(`✅ [THERMAL] Sala encontrada pelo ID: room-content-${roomId}`);
+        console.log(`  Sala encontrada pelo ID: room-content-${roomId}`);
         return roomContent;
     }
     
@@ -239,7 +239,7 @@ function findRoomContentThermal(roomId) {
     
     if (roomBlock) {
         const foundId = roomBlock.dataset.roomId;
-        console.log(`✅ [THERMAL] Sala encontrada pelo data-room-id: ${foundId}`);
+        console.log(`  Sala encontrada pelo data-room-id: ${foundId}`);
         
         const finalRoomContent = document.getElementById(`room-content-${foundId}`);
         if (finalRoomContent) {
@@ -247,9 +247,9 @@ function findRoomContentThermal(roomId) {
         }
     }
   
-    console.error(`❌ [THERMAL] Sala não encontrada: ${roomId}`);
+    console.error(`  Sala não encontrada: ${roomId}`);
     const allRooms = document.querySelectorAll('.room-block');
-    console.log('🔍 [THERMAL] Todas as salas disponíveis no DOM:');
+    console.log('  Todas as salas disponíveis no DOM:');
     allRooms.forEach(room => {
         console.log(`  - ID: "${room.dataset.roomId}", Nome: "${room.dataset.roomName}", Projeto: "${room.dataset.projectId}", Obra: "${room.dataset.obraId}"`);
     });
@@ -303,7 +303,7 @@ function calculateAuxiliaryVariables(inputData) {
 }
 
 /**
- * 🎯 FUNÇÃO PRINCIPAL DE CÁLCULO (thermalCalculations.js)
+ *  FUNÇÃO PRINCIPAL DE CÁLCULO (thermalCalculations.js)
  */
 
 async function calculateThermalGains(roomId, vazaoArExterno = 0) {
@@ -313,12 +313,12 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
         return;
     }
     
-    console.log(`🔥 [THERMAL] Iniciando cálculos para sala: ${roomId}`);
+    console.log(`  Iniciando cálculos para sala: ${roomId}`);
     
     await waitForSystemConstants();
 
     if (!validateSystemConstants()) {
-      console.error(`[THERMAL] validateSystemConstants FALHOU para ${roomId}`);
+      console.error(` validateSystemConstants FALHOU para ${roomId}`);
       return;
     }
 
@@ -327,7 +327,7 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
     const climaInputContainer = inputSection || roomContent || document.querySelector(`[data-room-id="${roomId}"]`);
 
     if (!climaInputContainer) {
-      console.error(`[THERMAL] Container de inputs não encontrado para ${roomId}`);
+      console.error(` Container de inputs não encontrado para ${roomId}`);
       return;
     }
 
@@ -373,23 +373,23 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
 
     const totals = calculateTotals(gains);
 
-    console.log(`🔥 [THERMAL] Ganhos calculados para ${roomId}:`, gains);
-    console.log(`🔥 [THERMAL] Totais para ${roomId}:`, totals);
-    console.log("🔥 [THERMAL] ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====");
+    console.log(`  Ganhos calculados para ${roomId}:`, gains);
+    console.log(`  Totais para ${roomId}:`, totals);
+    console.log("  ===== FIM DO CÁLCULO DE GANHOS TÉRMICOS =====");
 
     updateThermalGainsDisplay(roomId, gains, totals, uValues, {...inputData, vazaoArExterno});
 
-  console.log(`🔥 [THERMAL] Atualizando capacidade para ${roomId}`);
+  console.log(`  Atualizando capacidade para ${roomId}`);
   setTimeout(() => {
     if (typeof window.updateCapacityFromThermalGains === 'function') {
       const success = window.updateCapacityFromThermalGains(roomId);
       if (success) {
-        console.log(`✅ [THERMAL] Capacidade atualizada com sucesso para ${roomId}`);
+        console.log(`  Capacidade atualizada com sucesso para ${roomId}`);
       } else {
-        console.log(`⚠️ [THERMAL] Aguardando carga térmica para ${roomId}`);
+        console.log(`  Aguardando carga térmica para ${roomId}`);
       }
     } else {
-      console.log(`ℹ️ [THERMAL] Função de capacidade ainda não disponível para ${roomId}`);
+      console.log(`  Função de capacidade ainda não disponível para ${roomId}`);
       // Tenta novamente em 1 segundo
       setTimeout(() => {
         if (typeof window.updateCapacityFromThermalGains === 'function') {
@@ -400,12 +400,12 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
   }, 250);
     
   } catch (error) {
-    console.error(`[THERMAL] Erro em calculateThermalGains para ${roomId}:`, error);
+    console.error(` Erro em calculateThermalGains para ${roomId}:`, error);
   }
 }
 
 /**
- * 🌐 EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
+ *  EXPORTAÇÕES E COMPATIBILIDADE GLOBAL
  */
 
 // Exportações para módulos ES6

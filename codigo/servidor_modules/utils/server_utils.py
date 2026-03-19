@@ -1,4 +1,4 @@
-﻿"""
+"""
 server_utils.py
 Utilitários do servidor - Versão Simplificada
 """
@@ -23,11 +23,11 @@ class ServerUtils:
     def setup_signal_handlers():
         """Configura handlers de sinal"""
         try:
-            signal.signal(signal.SIGINT, lambda s, f: print("\nðŸ”„ Encerrando..."))
-            signal.signal(signal.SIGTERM, lambda s, f: print("\nðŸ”„ Encerrando..."))
-            print("âœ… Handlers de sinal configurados")
+            signal.signal(signal.SIGINT, lambda s, f: print("\n Encerrando..."))
+            signal.signal(signal.SIGTERM, lambda s, f: print("\n Encerrando..."))
+            print(" Handlers de sinal configurados")
         except Exception as e:
-            print(f"âš ï¸  Aviso na configuração de sinais: {e}")
+            print(f"â   Aviso na configuração de sinais: {e}")
 
     @staticmethod
     def print_server_info(port):
@@ -48,10 +48,10 @@ class ServerUtils:
         try:
             import webbrowser
             webbrowser.open(url)
-            print("âœ… Navegador iniciado com sucesso!")
+            print(" Navegador iniciado com sucesso!")
         except Exception as e:
-            print(f"âš ï¸  Não foi possível abrir navegador automaticamente: {e}")
-            print(f"ðŸ’¡ Acesse manualmente: {url}")
+            print(f"â   Não foi possível abrir navegador automaticamente: {e}")
+            print(f" Acesse manualmente: {url}")
 
     @staticmethod
     def start_server_threads(port, httpd, monitor_function):
@@ -63,9 +63,9 @@ class ServerUtils:
             monitor_thread = threading.Thread(target=monitor_function, args=(port, httpd), daemon=True)
             monitor_thread.start()
             
-            print("\nðŸŸ¢ SISTEMA PRONTO!")
+            print("\n SISTEMA PRONTO!")
             print("   Aplicação carregada no navegador")
             print("   Trabalhe normalmente - tudo é salvo automaticamente\n")
             
         except Exception as e:
-            print(f"âš ï¸  Erro ao iniciar threads: {e}")
+            print(f"â   Erro ao iniciar threads: {e}")

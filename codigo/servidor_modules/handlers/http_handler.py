@@ -1,4 +1,4 @@
-﻿# servidor_modules/handlers/http_handler.py
+# servidor_modules/handlers/http_handler.py
 
 import http.server
 import json
@@ -172,7 +172,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         # Timestamp único para TODOS os arquivos (muda a cada execução do servidor)
         self.CACHE_BUSTER = f"v{int(time.time())}"
-        # print(f"ðŸ”„ CACHE BUSTER INICIADO: {self.CACHE_BUSTER}")
+        # print(f" CACHE BUSTER INICIADO: {self.CACHE_BUSTER}")
 
         # Inicialização Preguiçosa - só quando necessário
         self._routes_core = None
@@ -238,13 +238,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         # Log apenas para rotas importantes (acelera MUITO)
         if not any(silent in path for silent in self.SILENT_PATHS):
-            print(f"ðŸ“¥ GET: {path}")
+            print(f" GET: {path}")
 
         # CACHE BUSTER AUTOMÁTICO: Adiciona versionamento a CSS, JS e HTML
         if any(path.endswith(ext) for ext in [".css", ".js", ".html", ".htm"]):
             new_path = self._add_cache_buster(original_path)
             if new_path != original_path:
-                # print(f"ðŸ”„ AUTO CACHE BUSTER: {original_path} -> {new_path}")
+                # print(f" AUTO CACHE BUSTER: {original_path} -> {new_path}")
                 self.path = new_path
 
         # ========== ROTEAMENTO RÁPIDO PARA APIs ==========
@@ -255,9 +255,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 getattr(self.route_handler, handler_name)(self)
             except AttributeError as e:
-                print(f"âŒ Handler não encontrado: {handler_name}")
+                print(f" Handler não encontrado: {handler_name}")
                 print(
-                    f"âŒ Métodos disponíveis: {[m for m in dir(self.route_handler) if not m.startswith('_')]}"
+                    f" Métodos disponíveis: {[m for m in dir(self.route_handler) if not m.startswith('_')]}"
                 )
                 self.send_error(501, f"Handler não implementado: {handler_name}")
 
@@ -314,7 +314,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if path.startswith("/codigo/"):
             path = path[7:]
 
-        print(f"ðŸ“¨ POST: {path}")
+        print(f" POST: {path}")
         
         # ========== ROTAS PARA WORD ==========
         # IMPORTANTE: Processar e RETORNAR imediatamente para evitar duplicação
@@ -457,7 +457,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         # ========== ROTA NÃO ENCONTRADA ==========
         # Se chegou aqui, nenhuma rota foi encontrada
-        print(f"âŒ POST não executado corretamente: {path}")
+        print(f" POST não executado corretamente: {path}")
         self.send_error(501, f"Método não suportado: POST {path}")
 
     def handle_post_admin_login(self):
@@ -474,7 +474,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response({"success": False, "error": "JSON inválido"}, 400)
             return
         except Exception as e:
-            print(f"âŒ Erro ao ler corpo do login admin: {e}")
+            print(f" Erro ao ler corpo do login admin: {e}")
             self.send_json_response(
                 {"success": False, "error": "Erro ao processar login administrativo"},
                 500,
@@ -508,7 +508,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
         except Exception as e:
-            print(f"âŒ Erro ao carregar dados.json para login admin: {e}")
+            print(f" Erro ao carregar dados.json para login admin: {e}")
             self.send_json_response(
                 {
                     "success": False,
@@ -580,7 +580,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response({"success": False, "error": "JSON inválido"}, 400)
             return
         except Exception as e:
-            print(f"âŒ Erro ao ler corpo do login client: {e}")
+            print(f" Erro ao ler corpo do login client: {e}")
             self.send_json_response(
                 {"success": False, "error": "Erro ao processar login do cliente"},
                 500,
@@ -608,14 +608,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if path.startswith("/codigo/"):
             path = path[7:]
 
-        print(f"ðŸ“¨ PUT: {path}")
+        print(f" PUT: {path}")
 
         # ROTAS PRINCIPAIS - OBRAS
         if path.startswith("/obras/"):
-            print(f"ðŸŽ¯ Roteando PUT para obra: {path}")
+            print(f" Roteando PUT para obra: {path}")
             self.route_handler.handle_put_obra(self)
         else:
-            print(f"âŒ PUT não implementado: {path}")
+            print(f" PUT não implementado: {path}")
             self.send_error(501, f"Método não suportado: PUT {path}")
 
     def do_DELETE(self):
@@ -626,7 +626,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if path.startswith("/codigo/"):
             path = path[7:]
 
-        print(f"ðŸ—‘ï¸  DELETE: {path}")
+        print(f"  DELETE: {path}")
 
         # ========== NOVA ROTA UNIVERSAL ==========
         if path == "/api/delete":
@@ -639,7 +639,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ROTAS PRINCIPAIS - OBRAS
         elif path.startswith("/obras/"):
             obra_id = path.split("/")[-1]
-            print(f"ðŸŽ¯ Roteando DELETE para obra: {obra_id}")
+            print(f" Roteando DELETE para obra: {obra_id}")
             self.route_handler.handle_delete_obra(self, obra_id)
         # ROTAS PRINCIPAIS - SESSÕES OBRAS
         elif path.startswith("/api/sessions/remove-obra/"):
@@ -647,7 +647,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_delete_sessions_remove_obra(self, obra_id)
 
         else:
-            print(f"âŒ DELETE não implementado: {path}")
+            print(f" DELETE não implementado: {path}")
             self.send_error(501, f"Método não suportado: DELETE {path}")
 
     def handle_delete_universal(self):
@@ -670,7 +670,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 )
                 return
 
-            print(f"ðŸ—‘ï¸  DELETE UNIVERSAL - Path: {path}")
+            print(f"  DELETE UNIVERSAL - Path: {path}")
 
             # Chama o método no RoutesCore
             result = self.routes_core.handle_delete_universal(path)
@@ -685,7 +685,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_delete_universal: {e}")
+            print(f" Erro em handle_delete_universal: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -807,7 +807,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404, f"File not found: {clean_path}")
 
         except Exception as e:
-            print(f"âŒ Erro em {path}: {e}")
+            print(f" Erro em {path}: {e}")
             self.send_error(404, f"Recurso não encontrado: {path}")
 
     def send_json_response(self, data, status=200):
@@ -826,7 +826,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(response)
 
         except Exception as e:
-            print(f"âŒ Erro em send_json_response: {e}")
+            print(f" Erro em send_json_response: {e}")
             self.send_error(500, "Erro interno")
 
     def end_headers(self):
@@ -874,7 +874,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         try:
             # Extrai o índice da URL (ex: /api/empresas/21 -> index=21)
             index = self.path.split("/")[-1]
-            print(f"ðŸ—‘ï¸  DELETE empresa - índice: {index}")
+            print(f"  DELETE empresa - índice: {index}")
 
             # Chama o método no RoutesCore
             result = self.routes_core.handle_delete_empresa_by_index(index)
@@ -885,7 +885,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json_response(result, status=500)
 
         except Exception as e:
-            print(f"âŒ Erro em handle_delete_empresa: {e}")
+            print(f" Erro em handle_delete_empresa: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -901,7 +901,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             proposed = data.get("proposed", {})
 
             print(
-                f"ðŸ” Comparando JSONs: current={bool(current)}, proposed={bool(proposed)}"
+                f" Comparando JSONs: current={bool(current)}, proposed={bool(proposed)}"
             )
 
             # Validação básica ATUALIZADA
@@ -927,7 +927,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             differences = self._calculate_simple_differences(current, proposed)
             summary = self._generate_simple_summary(differences)
 
-            print(f"ðŸ“Š Comparação concluída: {summary['total_changes']} alterações")
+            print(f" Comparação concluída: {summary['total_changes']} alterações")
 
             self.send_json_response(
                 {
@@ -942,7 +942,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except json.JSONDecodeError:
             self.send_json_response({"success": False, "error": "JSON inválido"}, 400)
         except Exception as e:
-            print(f"âŒ Erro em handle_post_system_apply_json: {e}")
+            print(f" Erro em handle_post_system_apply_json: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, 500
             )
@@ -1142,7 +1142,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
         except Exception as e:
-            print(f"âŒ Erro em handle_get_acessorios: {e}")
+            print(f" Erro em handle_get_acessorios: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -1173,7 +1173,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
         except Exception as e:
-            print(f"âŒ Erro em handle_get_acessorio_types: {e}")
+            print(f" Erro em handle_get_acessorio_types: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -1241,7 +1241,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 )
 
         except Exception as e:
-            print(f"âŒ Erro em handle_get_acessorio_by_type: {e}")
+            print(f" Erro em handle_get_acessorio_by_type: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -1327,7 +1327,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_post_add_acessorio: {e}")
+            print(f" Erro em handle_post_add_acessorio: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -1415,7 +1415,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_post_update_acessorio: {e}")
+            print(f" Erro em handle_post_update_acessorio: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -1490,7 +1490,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_post_delete_acessorio: {e}")
+            print(f" Erro em handle_post_delete_acessorio: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -1589,7 +1589,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
         except Exception as e:
-            print(f"âŒ Erro em handle_get_search_acessorios: {e}")
+            print(f" Erro em handle_get_search_acessorios: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -1650,7 +1650,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
         except Exception as e:
-            print(f"âŒ Erro em handle_get_acessorio_dimensoes: {e}")
+            print(f" Erro em handle_get_acessorio_dimensoes: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"}, status=500
             )
@@ -1680,7 +1680,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_dutos: {e}")
+            print(f" Erro em handle_get_dutos: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -1724,7 +1724,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_duto_types: {e}")
+            print(f" Erro em handle_get_duto_types: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -1791,7 +1791,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_duto_opcionais: {e}")
+            print(f" Erro em handle_get_duto_opcionais: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -1847,7 +1847,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             "valor": valor_base,
                             "descricao": duto.get("descricao", ""),
                             "categoria": duto.get("categoria", ""),
-                            "unidade": duto.get("unidade", "mÂ²"),
+                            "unidade": duto.get("unidade", "mÂ"),
                             "opcionais": opcionais
                         },
                         "estatisticas": {
@@ -1858,7 +1858,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         }
                     }
                     
-                    print(f"âœ… Retornando duto '{tipo}': {len(opcionais)} opcionais")
+                    print(f" Retornando duto '{tipo}': {len(opcionais)} opcionais")
                     self.send_json_response(response)
                     return
             
@@ -1868,7 +1868,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             }, status=404)
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_duto_by_type: {e}")
+            print(f" Erro em handle_get_duto_by_type: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -1941,7 +1941,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_search_dutos: {e}")
+            print(f" Erro em handle_get_search_dutos: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2028,7 +2028,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_post_add_duto: {e}")
+            print(f" Erro em handle_post_add_duto: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2117,7 +2117,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_post_update_duto: {e}")
+            print(f" Erro em handle_post_update_duto: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2196,7 +2196,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_post_delete_duto: {e}")
+            print(f" Erro em handle_post_delete_duto: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2227,7 +2227,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_tubos: {e}")
+            print(f" Erro em handle_get_tubos: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2287,7 +2287,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_tubo_polegadas: {e}")
+            print(f" Erro em handle_get_tubo_polegadas: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2336,7 +2336,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             }, status=404)
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_tubo_por_polegada: {e}")
+            print(f" Erro em handle_get_tubo_por_polegada: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2418,7 +2418,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_post_add_tubo: {e}")
+            print(f" Erro em handle_post_add_tubo: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2504,7 +2504,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_post_update_tubo: {e}")
+            print(f" Erro em handle_post_update_tubo: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2583,7 +2583,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 status=400
             )
         except Exception as e:
-            print(f"âŒ Erro em handle_post_delete_tubo: {e}")
+            print(f" Erro em handle_post_delete_tubo: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2663,7 +2663,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_search_tubos: {e}")
+            print(f" Erro em handle_get_search_tubos: {e}")
             self.send_json_response(
                 {"success": False, "error": f"Erro interno: {str(e)}"},
                 status=500
@@ -2683,19 +2683,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "id": "pc",
                     "name": "Proposta Comercial",
                     "description": "Documento comercial com valores e condições",
-                    "icon": "ðŸ“‹"
+                    "icon": ""
                 },
                 {
                     "id": "pt", 
                     "name": "Proposta Técnica",
                     "description": "Documento técnico com especificações",
-                    "icon": "ðŸ”§"
+                    "icon": ""
                 },
                 {
                     "id": "ambos",
                     "name": "Ambos Documentos",
                     "description": "Proposta Comercial e Técnica juntos",
-                    "icon": "ðŸ“„"
+                    "icon": ""
                 }
             ]
             
@@ -2706,7 +2706,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_word_models: {e}")
+            print(f" Erro em handle_get_word_models: {e}")
             self.send_json_response({
                 "success": False,
                 "error": str(e)
@@ -2727,7 +2727,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"âŒ Erro em handle_get_word_templates: {e}")
+            print(f" Erro em handle_get_word_templates: {e}")
             self.send_json_response({
                 "success": False,
                 "error": str(e)
@@ -2825,7 +2825,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "error": "JSON inválido"
             }, status=400)
         except Exception as e:
-            print(f"âŒ Erro em handle_generate_word: {e}")
+            print(f" Erro em handle_generate_word: {e}")
             self.send_json_response({
                 "success": False,
                 "error": f"Erro interno: {str(e)}"
@@ -2889,7 +2889,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 pass
                 
         except Exception as e:
-            print(f"âŒ Erro em handle_download_word: {e}")
+            print(f" Erro em handle_download_word: {e}")
             self.send_json_response({
                 "success": False,
                 "error": str(e)
