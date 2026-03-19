@@ -10,6 +10,10 @@ import time
 import threading
 from pathlib import Path
 
+from servidor_modules.database.repositories.empresa_repository import EmpresaRepository
+from servidor_modules.database.repositories.machine_repository import MachineRepository
+from servidor_modules.database.repositories.obra_repository import ObraRepository
+from servidor_modules.database.repositories.system_repository import SystemRepository
 
 
 class RoutesCore:
@@ -25,213 +29,125 @@ class RoutesCore:
         from servidor_modules.handlers.empresa_handler import EmpresaHandler
 
         self.empresa_handler = EmpresaHandler(file_utils=self.file_utils)
+        self.empresa_repository = EmpresaRepository(self.project_root)
+        self.obra_repository = ObraRepository(self.project_root)
+        self.machine_repository = MachineRepository(self.project_root)
+        self.system_repository = SystemRepository(self.project_root)
 
     # ========== ROTAS DE OBRAS ==========
 
     def handle_get_obras(self):
-        """Obtém todas as obras da sessão atual"""
+        """Obtem todas as obras da sessao atual"""
         try:
-            print(" [OBRAS] Obtendo obras da sessão")
+            print(" [OBRAS] Obtendo obras da sessao")
 
             current_session_id = self.sessions_manager.get_current_session_id()
             session_data = self.sessions_manager._load_sessions_data()
             session_obra_ids = (
                 session_data["sessions"].get(current_session_id, {}).get("obras", [])
             )
+            obras_da_sessao = self.obra_repository.get_by_session_ids(session_obra_ids)
 
-            backup_path = self.project_root / "json" / "backup.json"
-
-            if not backup_path.exists():
-                return []
-
-            with open(backup_path, "r", encoding="utf-8") as f:
-                backup_data = json.loads(f.read())
-
-            obras = backup_data.get("obras", [])
-            if not isinstance(obras, list):
-                obras = []
-
-            obras_da_sessao = []
-            for obra in obras:
-                if not isinstance(obra, dict):
-                    continue
-
-                obra_id = str(obra.get("id", ""))
-                if obra_id in session_obra_ids:
-                    obras_da_sessao.append(obra)
-
-            print(f" ENVIANDO: {len(obras_da_sessao)} obras da sessão")
+            print(f" ENVIANDO: {len(obras_da_sessao)} obras da sessao")
             return obras_da_sessao
 
         except Exception as e:
-            print(f"❌ ERRO em handle_get_obras: {str(e)}")
+            print(f"ERRO em handle_get_obras: {str(e)}")
             return []
 
     def handle_get_obra_by_id(self, obra_id):
-        """Obtém uma obra específica por ID"""
+        """Obtem uma obra especifica por ID"""
         try:
             print(f" [OBRA POR ID] Buscando obra {obra_id}")
 
-            backup_path = self.project_root / "json" / "backup.json"
+            obra = self.obra_repository.get_by_id(obra_id)
+            if obra:
+                print(f"Obra {obra_id} encontrada")
+                return obra
 
-            if not backup_path.exists():
-                return None
-
-            with open(backup_path, "r", encoding="utf-8") as f:
-                backup_data = json.loads(f.read())
-
-            obras = backup_data.get("obras", [])
-
-            for obra in obras:
-                if str(obra.get("id")) == obra_id:
-                    print(f"✅ Obra {obra_id} encontrada")
-                    return obra
-
-            print(f"❌ Obra {obra_id} não encontrada")
+            print(f"Obra {obra_id} nao encontrada")
             return None
 
         except Exception as e:
-            print(f"❌ ERRO em handle_get_obra_by_id: {str(e)}")
+            print(f"ERRO em handle_get_obra_by_id: {str(e)}")
             return None
 
     def handle_post_obras(self, post_data):
-        """Salva nova obra e adiciona à sessão - COM VERIFICAÇÃO DE EMPRESA"""
+        """Salva nova obra e adiciona a sessao com verificacao de empresa"""
         try:
             nova_obra = json.loads(post_data)
 
-            # 🆕 VERIFICAR E CRIAR EMPRESA AUTOMATICAMENTE ANTES DE SALVAR OBRA
-            print("🔍 [OBRA] Verificando se precisa criar empresa automaticamente...")
+            print("[OBRA] Verificando se precisa criar empresa automaticamente...")
             nova_obra = self.empresa_handler.verificar_e_criar_empresa_automatica(
                 nova_obra
-            )
-
-            backup_file = self.file_utils.find_json_file(
-                "backup.json", self.project_root
-            )
-            backup_data = self.file_utils.load_json_file(
-                backup_file, {"obras": [], "projetos": []}
             )
 
             obra_id = nova_obra.get("id")
 
             if not obra_id or obra_id.isdigit():
                 import random
-                import string
 
                 letters = "abcdefghjkmnpqrstwxyz"
                 random_letter1 = random.choice(letters)
-                random_letter2 = random.choice(letters)
                 random_num = random.randint(10, 99)
                 obra_id = f"obra_{random_letter1}{random_num}"
-
-                print(f"🆕 Backend gerou ID seguro: {obra_id}")
+                print(f"Backend gerou ID seguro: {obra_id}")
 
             nova_obra["id"] = obra_id
 
-            print(f"📝 Tentando adicionar obra {obra_id} à sessão...")
+            print(f"Tentando adicionar obra {obra_id} a sessao...")
             success = self.sessions_manager.add_obra_to_session(obra_id)
 
             if not success:
-                print(f"❌ FALHA ao adicionar obra {obra_id} à sessão")
+                print(f"FALHA ao adicionar obra {obra_id} a sessao")
                 return None
 
-            obras = backup_data.get("obras", [])
-            obras.append(nova_obra)
-            backup_data["obras"] = obras
-
-            print(f"➕ ADICIONANDO nova obra ID: {obra_id}")
-
-            if self.file_utils.save_json_file(backup_file, backup_data):
-                print(f"✅ Obra {obra_id} salva com sucesso")
-                return nova_obra
-            else:
-                return None
+            print(f"ADICIONANDO nova obra ID: {obra_id}")
+            self.obra_repository.save(nova_obra)
+            print(f"Obra {obra_id} salva com sucesso")
+            return nova_obra
 
         except Exception as e:
-            print(f"❌ Erro ao adicionar obra: {str(e)}")
+            print(f"Erro ao adicionar obra: {str(e)}")
             return None
 
-    # NO routes_core.py, MODIFIQUE também o método handle_put_obra:
-
     def handle_put_obra(self, obra_id, put_data):
-        """Atualiza obra existente - COM VERIFICAÇÃO DE EMPRESA"""
+        """Atualiza obra existente com verificacao de empresa"""
         try:
             obra_atualizada = json.loads(put_data)
 
-            # 🆕 VERIFICAR E CRIAR EMPRESA AUTOMATICAMENTE ANTES DE ATUALIZAR OBRA
             print(
-                "🔍 [OBRA UPDATE] Verificando se precisa criar empresa automaticamente..."
+                "[OBRA UPDATE] Verificando se precisa criar empresa automaticamente..."
             )
             obra_atualizada = self.empresa_handler.verificar_e_criar_empresa_automatica(
                 obra_atualizada
             )
 
-            backup_file = self.file_utils.find_json_file(
-                "backup.json", self.project_root
-            )
-            backup_data = self.file_utils.load_json_file(backup_file)
-
-            if not backup_data:
+            if not self.obra_repository.get_by_id(obra_id):
                 return None
 
-            obras = backup_data.get("obras", [])
-            obra_encontrada = False
-
-            for i, obra in enumerate(obras):
-                if str(obra.get("id")) == obra_id:
-                    obras[i] = obra_atualizada
-                    obra_encontrada = True
-                    print(f"✏️  ATUALIZANDO obra {obra_id}")
-                    break
-
-            if not obra_encontrada:
-                return None
-
-            backup_data["obras"] = obras
-
-            if self.file_utils.save_json_file(backup_file, backup_data):
-                return obra_atualizada
-            else:
-                return None
+            self.obra_repository.save(obra_atualizada)
+            print(f"ATUALIZANDO obra {obra_id}")
+            return obra_atualizada
 
         except Exception as e:
-            print(f"❌ Erro ao atualizar obra: {str(e)}")
+            print(f"Erro ao atualizar obra: {str(e)}")
             return None
 
     def handle_delete_obra(self, obra_id):
         """Deleta uma obra do servidor"""
         try:
-            print(f"🗑️  Deletando obra {obra_id} do servidor")
+            print(f"Deletando obra {obra_id} do servidor")
 
-            backup_file = self.file_utils.find_json_file(
-                "backup.json", self.project_root
-            )
-            backup_data = self.file_utils.load_json_file(backup_file, {"obras": []})
-
-            obras = backup_data.get("obras", [])
-            obra_encontrada = False
-
-            obras_atualizadas = []
-            for obra in obras:
-                if str(obra.get("id")) != obra_id:
-                    obras_atualizadas.append(obra)
-                else:
-                    obra_encontrada = True
-                    print(f"✅ Obra {obra_id} encontrada para remoção")
-
-            if not obra_encontrada:
+            if not self.obra_repository.delete(obra_id):
                 return False
 
-            backup_data["obras"] = obras_atualizadas
-
-            if self.file_utils.save_json_file(backup_file, backup_data):
-                self.sessions_manager.remove_obra(obra_id)
-                return True
-            else:
-                return False
+            print(f"Obra {obra_id} encontrada para remocao")
+            self.sessions_manager.remove_obra(obra_id)
+            return True
 
         except Exception as e:
-            print(f"❌ Erro ao deletar obra: {str(e)}")
+            print(f"Erro ao deletar obra: {str(e)}")
             return False
 
     # ========= Metodos para empresas ========
@@ -512,81 +428,57 @@ class RoutesCore:
     def handle_get_constants(self):
         """Constants do DADOS.json"""
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-
-            constants = dados_data.get("constants", {})
+            constants = self.system_repository.get_constants()
             print(f"  Retornando constants")
             return constants
 
         except Exception as e:
-            print(f"❌ Erro ao carregar constants: {str(e)}")
+            print(f"Erro ao carregar constants: {str(e)}")
             return {}
 
     def handle_get_machines(self):
         """Machines do DADOS.json"""
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-
-            machines = dados_data.get("machines", [])
-            print(f"  Retornando {len(machines)} máquinas")
+            machines = self.machine_repository.get_all()
+            print(f"  Retornando {len(machines)} maquinas")
             return machines
 
         except Exception as e:
-            print(f"❌ Erro ao carregar machines: {str(e)}")
+            print(f"Erro ao carregar machines: {str(e)}")
             return []
 
     def handle_get_dados(self):
         """DADOS.json completo"""
         try:
-            _, dados_data = self.empresa_handler.carregar_dados_empresas_atualizados()
-
+            dados_data = self.system_repository.get_dados_payload()
             print(" Retornando DADOS.json")
             return dados_data
 
         except Exception as e:
-            print(f"❌ Erro ao carregar dados: {str(e)}")
+            print(f"Erro ao carregar dados: {str(e)}")
             return {"constants": {}, "machines": []}
 
     def handle_get_backup(self):
         """BACKUP.json completo"""
         try:
-            backup_file = self.file_utils.find_json_file(
-                "backup.json", self.project_root
-            )
-            backup_data = self.file_utils.load_json_file(
-                backup_file, {"obras": [], "projetos": []}
-            )
-
+            backup_data = self.obra_repository.get_backup_payload()
             print(" Retornando BACKUP.json")
             return backup_data
 
         except Exception as e:
-            print(f"❌ Erro ao carregar backup: {str(e)}")
+            print(f"Erro ao carregar backup: {str(e)}")
             return {"obras": [], "projetos": []}
 
     def handle_get_backup_completo(self):
-        """Obtém TODAS as obras do backup (sem filtro de sessão)"""
+        """Obtem todas as obras do backup sem filtro de sessao"""
         try:
             print(" [BACKUP COMPLETO] Obtendo TODAS as obras")
-
-            backup_path = self.project_root / "json" / "backup.json"
-
-            if not backup_path.exists():
-                return {"obras": []}
-
-            with open(backup_path, "r", encoding="utf-8") as f:
-                backup_content = f.read()
-
-            backup_data = json.loads(backup_content)
-            obras = backup_data.get("obras", [])
-
+            obras = self.obra_repository.get_all()
             print(f" Total de obras no backup: {len(obras)}")
             return {"obras": obras}
 
         except Exception as e:
-            print(f"❌ ERRO em handle_get_backup_completo: {str(e)}")
+            print(f"ERRO em handle_get_backup_completo: {str(e)}")
             return {"obras": []}
 
     def handle_get_runtime_bootstrap(self):
@@ -618,37 +510,25 @@ class RoutesCore:
         """Salva DADOS.json"""
         try:
             new_data = json.loads(post_data)
-
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             new_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(new_data)
-
-            if self.file_utils.save_json_file(dados_file, new_data):
-                print(" DADOS.json salvo")
-                return {"status": "success", "message": "Dados salvos"}
-            else:
-                return {"status": "error", "message": "Erro ao salvar dados"}
+            self.system_repository.save_dados_payload(new_data)
+            print(" DADOS.json salvo")
+            return {"status": "success", "message": "Dados salvos"}
 
         except Exception as e:
-            print(f"❌ Erro ao salvar dados: {str(e)}")
+            print(f"Erro ao salvar dados: {str(e)}")
             return {"status": "error", "message": str(e)}
 
     def handle_post_backup(self, post_data):
         """Salva BACKUP.json"""
         try:
             new_data = json.loads(post_data)
-
-            backup_file = self.file_utils.find_json_file(
-                "backup.json", self.project_root
-            )
-
-            if self.file_utils.save_json_file(backup_file, new_data):
-                print(" BACKUP.json salvo")
-                return {"status": "success", "message": "Backup salvo"}
-            else:
-                return {"status": "error", "message": "Erro ao salvar backup"}
+            self.obra_repository.replace_backup_payload(new_data)
+            print(" BACKUP.json salvo")
+            return {"status": "success", "message": "Backup salvo"}
 
         except Exception as e:
-            print(f"❌ Erro ao salvar backup: {str(e)}")
+            print(f"Erro ao salvar backup: {str(e)}")
             return {"status": "error", "message": str(e)}
 
     def handle_post_reload_page(self, post_data):
@@ -877,264 +757,162 @@ class RoutesCore:
     # ==========  FUNÇÕES PARA SISTEMA DE EDIÇÃO ==========
 
     def handle_get_system_data(self):
-        """Retorna TODOS os dados do sistema para a interface de edição"""
+        """Retorna todos os dados do sistema para a interface de edicao"""
         try:
-            _, dados_data = self.empresa_handler.carregar_dados_empresas_atualizados()
-            
+            dados_data = self.system_repository.get_dados_payload()
             print(" Retornando todos os dados do sistema")
             return dados_data
-            
+
         except Exception as e:
-            print(f"❌ Erro ao carregar system data: {str(e)}")
+            print(f"Erro ao carregar system data: {str(e)}")
             return {
-                "constants": {}, 
-                "machines": [], 
-                "materials": {}, 
+                "constants": {},
+                "machines": [],
+                "materials": {},
                 "empresas": [],
                 "banco_acessorios": {},
                 "dutos": [],
-                "tubos": []  # ADICIONADO
+                "tubos": [],
             }
 
     def handle_get_constants_json(self):
         """Retorna apenas as constantes formatadas"""
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            constants = dados_data.get("constants", {})
-            return {"constants": constants}
-            
+            return {"constants": self.system_repository.get_constants()}
+
         except Exception as e:
-            print(f"❌ Erro ao carregar constants: {str(e)}")
+            print(f"Erro ao carregar constants: {str(e)}")
             return {"constants": {}}
 
     def handle_get_materials(self):
         """Retorna materiais"""
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            materials = dados_data.get("materials", {})
-            return {"materials": materials}
-            
+            return {"materials": self.system_repository.get_materials()}
+
         except Exception as e:
-            print(f"❌ Erro ao carregar materials: {str(e)}")
+            print(f"Erro ao carregar materials: {str(e)}")
             return {"materials": {}}
 
     def handle_get_all_empresas(self):
         """Retorna todas empresas no formato correto"""
         try:
-            empresas = self.empresa_handler.obter_empresas_publicas()
-            return {"empresas": empresas}
-            
+            return {"empresas": self.empresa_repository.get_public()}
+
         except Exception as e:
-            print(f"❌ Erro ao carregar empresas: {str(e)}")
+            print(f"Erro ao carregar empresas: {str(e)}")
             return {"empresas": []}
 
     def handle_get_machine_types(self):
-        """Retorna lista de tipos de máquinas"""
+        """Retorna lista de tipos de maquinas"""
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            machines = dados_data.get("machines", [])
-            machine_types = [machine.get("type", "") for machine in machines if machine.get("type")]
-            
-            return {"machine_types": machine_types}
-            
+            return {"machine_types": self.machine_repository.get_types()}
+
         except Exception as e:
-            print(f"❌ Erro ao carregar machine types: {str(e)}")
+            print(f"Erro ao carregar machine types: {str(e)}")
             return {"machine_types": []}
 
     def handle_get_machine_by_type(self, machine_type):
-        """Retorna máquina específica pelo tipo"""
+        """Retorna maquina especifica pelo tipo"""
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            machines = dados_data.get("machines", [])
-            
-            for machine in machines:
-                if machine.get("type") == machine_type:
-                    return {"machine": machine}
-            
-            return {"machine": None}
-            
+            return {"machine": self.machine_repository.get_by_type(machine_type)}
+
         except Exception as e:
-            print(f"❌ Erro ao carregar machine: {str(e)}")
+            print(f"Erro ao carregar machine: {str(e)}")
             return {"machine": None}
 
     def handle_post_save_system_data(self, post_data):
         """Salva TODOS os dados do sistema"""
         try:
             new_data = json.loads(post_data)
-            
-            # Valida estrutura básica ATUALIZADA com dutos e tubos
             required_keys = [
-                "constants", "machines", "materials", "empresas", 
-                "banco_acessorios", "dutos", "tubos"  # ADICIONADO tubos
+                "constants", "machines", "materials", "empresas",
+                "banco_acessorios", "dutos", "tubos"
             ]
             if not all(key in new_data for key in required_keys):
                 return {
-                    "success": False, 
-                    "error": "Estrutura de dados inválida. Faltam campos obrigatórios."
+                    "success": False,
+                    "error": "Estrutura de dados invalida. Faltam campos obrigatorios.",
                 }
-            
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            new_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(new_data)
-            
-            if self.file_utils.save_json_file(dados_file, new_data):
-                print(" TODOS os dados do sistema salvos (incluindo dutos e tubos)")
-                return {"success": True, "message": "Dados salvos com sucesso"}
-            else:
-                return {"success": False, "error": "Erro ao salvar dados"}
-                
-        except Exception as e:
-            print(f"❌ Erro ao salvar system data: {str(e)}")
-            return {"success": False, "error": str(e)}
 
+            new_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(new_data)
+            self.system_repository.save_dados_payload(new_data)
+            print(" TODOS os dados do sistema salvos (incluindo dutos e tubos)")
+            return {"success": True, "message": "Dados salvos com sucesso"}
+
+        except Exception as e:
+            print(f"Erro ao salvar system data: {str(e)}")
+            return {"success": False, "error": str(e)}
 
     def handle_post_save_constants(self, post_data):
         """Salva apenas as constantes"""
         try:
             new_constants = json.loads(post_data)
-            
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            dados_data["constants"] = new_constants.get("constants", {})
-            
-            if self.file_utils.save_json_file(dados_file, dados_data):
-                print(" Constantes salvas")
-                return {"success": True, "message": "Constantes salvas"}
-            else:
-                return {"success": False, "error": "Erro ao salvar constantes"}
-                
+            self.system_repository.save_constants(new_constants.get("constants", {}))
+            print(" Constantes salvas")
+            return {"success": True, "message": "Constantes salvas"}
+
         except Exception as e:
-            print(f"❌ Erro ao salvar constants: {str(e)}")
+            print(f"Erro ao salvar constants: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_save_materials(self, post_data):
         """Salva materiais"""
         try:
             new_materials = json.loads(post_data)
-            
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            dados_data["materials"] = new_materials.get("materials", {})
-            
-            if self.file_utils.save_json_file(dados_file, dados_data):
-                print(" Materiais salvos")
-                return {"success": True, "message": "Materiais salvas"}
-            else:
-                return {"success": False, "error": "Erro ao salvar materiais"}
-                
+            self.system_repository.save_materials(new_materials.get("materials", {}))
+            print(" Materiais salvos")
+            return {"success": True, "message": "Materiais salvas"}
+
         except Exception as e:
-            print(f"❌ Erro ao salvar materials: {str(e)}")
+            print(f"Erro ao salvar materials: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_save_empresas(self, post_data):
         """Salva empresas"""
         try:
             new_empresas = json.loads(post_data)
-            
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            dados_data["empresas"] = new_empresas.get("empresas", [])
-            dados_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(dados_data)
+            self.empresa_repository.replace_all(new_empresas.get("empresas", []))
+            print(" Empresas salvas")
+            return {"success": True, "message": "Empresas salvas"}
 
-            if self.file_utils.save_json_file(dados_file, dados_data):
-                print(" Empresas salvas")
-                return {"success": True, "message": "Empresas salvas"}
-            else:
-                return {"success": False, "error": "Erro ao salvar empresas"}
-                
         except Exception as e:
-            print(f"❌ Erro ao salvar empresas: {str(e)}")
+            print(f"Erro ao salvar empresas: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_save_machines(self, post_data):
-        """Salva todas as máquinas"""
+        """Salva todas as maquinas"""
         try:
             new_machines = json.loads(post_data)
-            
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            dados_data["machines"] = new_machines.get("machines", [])
-            
-            if self.file_utils.save_json_file(dados_file, dados_data):
-                print(" Máquinas salvas")
-                return {"success": True, "message": "Máquinas salvas"}
-            else:
-                return {"success": False, "error": "Erro ao salvar máquinas"}
-                
+            self.machine_repository.replace_all(new_machines.get("machines", []))
+            print(" Maquinas salvas")
+            return {"success": True, "message": "Maquinas salvas"}
+
         except Exception as e:
-            print(f"❌ Erro ao salvar machines: {str(e)}")
+            print(f"Erro ao salvar machines: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_add_machine(self, post_data):
-        """Adiciona nova máquina"""
+        """Adiciona nova maquina"""
         try:
             new_machine = json.loads(post_data)
-            
-            if not new_machine.get("type"):
-                return {"success": False, "error": "Tipo de máquina não especificado"}
-            
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            machines = dados_data.get("machines", [])
-            machines.append(new_machine)
-            dados_data["machines"] = machines
-            
-            if self.file_utils.save_json_file(dados_file, dados_data):
-                print(f" Nova máquina '{new_machine.get('type')}' adicionada")
-                return {"success": True, "message": "Máquina adicionada", "machine": new_machine}
-            else:
-                return {"success": False, "error": "Erro ao adicionar máquina"}
-                
+            machine = self.machine_repository.add(new_machine)
+            print(f" Nova maquina '{new_machine.get('type')}' adicionada")
+            return {"success": True, "message": "Maquina adicionada", "machine": machine}
+
         except Exception as e:
-            print(f"❌ Erro ao adicionar machine: {str(e)}")
+            print(f"Erro ao adicionar machine: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_update_machine(self, post_data):
-        """Atualiza máquina existente"""
+        """Atualiza maquina existente"""
         try:
             update_data = json.loads(post_data)
-            
-            machine_type = update_data.get("type")
-            if not machine_type:
-                return {"success": False, "error": "Tipo de máquina não especificado"}
-            
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            machines = dados_data.get("machines", [])
-            updated = False
-            
-            for i, machine in enumerate(machines):
-                if machine.get("type") == machine_type:
-                    machines[i] = update_data
-                    updated = True
-                    break
-            
-            if not updated:
-                return {"success": False, "error": f"Máquina '{machine_type}' não encontrada"}
-            
-            dados_data["machines"] = machines
-            
-            if self.file_utils.save_json_file(dados_file, dados_data):
-                print(f" Máquina '{machine_type}' atualizada")
-                return {"success": True, "message": "Máquina atualizada", "machine": update_data}
-            else:
-                return {"success": False, "error": "Erro ao atualizar máquina"}
-                
+            machine = self.machine_repository.update(update_data)
+            print(f" Maquina '{update_data.get('type')}' atualizada")
+            return {"success": True, "message": "Maquina atualizada", "machine": machine}
+
         except Exception as e:
-            print(f"❌ Erro ao atualizar machine: {str(e)}")
+            print(f"Erro ao atualizar machine: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_empresas_auto(self, post_data):
@@ -1378,62 +1156,20 @@ class RoutesCore:
         # Adicione este método na classe RoutesCore, depois do método handle_post_update_machine:
 
     def handle_post_delete_machine(self, post_data):
-        """Deleta uma máquina do sistema"""
+        """Deleta uma maquina do sistema"""
         try:
             data = json.loads(post_data)
-            
-            # Obtém o tipo da máquina e o índice
             machine_type = data.get("type")
-            index = data.get("index", None)
-            
-            if not machine_type:
-                return {"success": False, "error": "Tipo de máquina não especificado"}
-            
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-            
-            machines = dados_data.get("machines", [])
-            
-            # Buscar máquina pelo tipo
-            machine_found = False
-            machine_index = -1
-            
-            for i, machine in enumerate(machines):
-                if machine.get("type") == machine_type:
-                    machine_found = True
-                    machine_index = i
-                    break
-            
-            # Se não encontrar pelo tipo, tenta pelo índice
-            if not machine_found and index is not None:
-                try:
-                    index_int = int(index)
-                    if 0 <= index_int < len(machines):
-                        machine_found = True
-                        machine_index = index_int
-                except (ValueError, TypeError):
-                    pass
-            
-            if not machine_found:
-                return {"success": False, "error": f"Máquina '{machine_type}' não encontrada"}
-            
-            # Remover a máquina
-            machine_removed = machines.pop(machine_index)
-            dados_data["machines"] = machines
-            
-            if self.file_utils.save_json_file(dados_file, dados_data):
-                print(f"🗑️  Máquina '{machine_type}' (índice {machine_index}) removida com sucesso")
-                return {
-                    "success": True, 
-                    "message": f"Máquina '{machine_type}' deletada com sucesso",
-                    "machine_removed": machine_removed,
-                    "index": machine_index
-                }
-            else:
-                return {"success": False, "error": "Erro ao salvar dados após remoção"}
-                
-        except json.JSONDecodeError:
-            return {"success": False, "error": "JSON inválido"}
+            index = data.get("index")
+            removed, removed_index = self.machine_repository.delete(machine_type, index)
+            print(f"Maquina '{machine_type}' (indice {removed_index}) removida com sucesso")
+            return {
+                "success": True,
+                "message": f"Maquina '{machine_type}' deletada com sucesso",
+                "machine_removed": removed,
+                "index": removed_index,
+            }
+
         except Exception as e:
-            print(f"❌ Erro ao deletar machine: {str(e)}")
+            print(f"Erro ao deletar machine: {str(e)}")
             return {"success": False, "error": str(e)}

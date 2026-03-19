@@ -37,9 +37,9 @@ class ServerTimeMonitor:
         minutes = int((elapsed % 3600) // 60)
         
         if hours > 0:
-            print(f" Servidor ativo há {hours}h {minutes}min")
+            print(f" [TEMPO DE USO]Servidor ativo há {hours}h {minutes}min")
         else:
-            print(f" Servidor ativo há {minutes}min")
+            print(f" [TEMPO DE USO]Servidor ativo há {minutes}min")
     
     def get_uptime(self):
         """Retorna o tempo de atividade em formato legível"""

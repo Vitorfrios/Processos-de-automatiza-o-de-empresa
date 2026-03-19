@@ -7,11 +7,21 @@ import json
 import os
 from pathlib import Path
 
+from servidor_modules.database.storage import get_storage
+
 class FileUtils:
     """Utilitários para manipulação de arquivos"""
     
     def __init__(self):
         self._project_root = None  # Cache do project root
+        self._storage = None
+
+    def _get_storage(self, project_root=None):
+        if project_root is None:
+            project_root = self.find_project_root()
+        if self._storage is None or Path(project_root) != self._storage.project_root:
+            self._storage = get_storage(project_root)
+        return self._storage
     
     def find_project_root(self):
         """Encontra a raiz do projeto COM CACHE"""
@@ -38,25 +48,24 @@ class FileUtils:
         json_dir.mkdir(parents=True, exist_ok=True)
         
         target_file = json_dir / filename
-        
-        # Se o arquivo não existe, cria com estrutura básica
-        if not target_file.exists():
-            if filename == "backup.json":
-                default_data = {"obras": []}
-            elif filename == "dados.json":
-                default_data = {"constants": {}, "machines": []}
-            elif filename == "sessions.json":
-                default_data = {"sessions": {}}
-            else:
-                default_data = {}
-            
-            self.save_json_file(target_file, default_data)
+
+        if filename in {"backup.json", "dados.json", "sessions.json"}:
+            storage = self._get_storage(project_root)
+            storage.load_document(filename, storage.default_document(filename))
+            storage.sync_document_to_disk(filename)
+        elif not target_file.exists():
+            self.save_json_file(target_file, {})
         
         return target_file
 
     def load_json_file(self, filepath, default_data=None):
         """Carrega arquivo JSON com tratamento de erro"""
         try:
+            filepath = Path(filepath)
+            if filepath.name in {"backup.json", "dados.json", "sessions.json"}:
+                storage = self._get_storage(filepath.parent.parent)
+                return storage.load_document(filepath.name, default_data)
+
             if filepath.exists():
                 with open(filepath, 'r', encoding='utf-8') as f:
                     return json.load(f)
@@ -74,6 +83,11 @@ class FileUtils:
     def save_json_file(self, filepath, data):
         """Salva dados em arquivo JSON"""
         try:
+            filepath = Path(filepath)
+            if filepath.name in {"backup.json", "dados.json", "sessions.json"}:
+                storage = self._get_storage(filepath.parent.parent)
+                return storage.save_document(filepath.name, data)
+
             # Garante que o diretório existe
             filepath.parent.mkdir(parents=True, exist_ok=True)
             

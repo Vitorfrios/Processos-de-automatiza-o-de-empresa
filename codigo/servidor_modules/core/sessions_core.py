@@ -8,6 +8,8 @@ import time
 import os
 from pathlib import Path
 
+from servidor_modules.database.storage import get_storage
+
 class SessionsManager:
     """
     Gerenciador de sessões para sistema que começa vazio
@@ -18,8 +20,10 @@ class SessionsManager:
         # Usa caminho absoluto baseado na localização do arquivo
         current_file = Path(__file__)  # sessions_core.py
         project_root = current_file.parent.parent.parent  # sobe para pasta codigo
+        self.project_root = project_root
         self.sessions_dir = project_root / "json"  # pasta json dentro de codigo
         self.sessions_file = self.sessions_dir / "sessions.json"
+        self.storage = get_storage(project_root)
         self.ensure_sessions_file()
     
     def ensure_sessions_file(self):
@@ -27,11 +31,11 @@ class SessionsManager:
         try:
             # Cria diretório se não existir
             self.sessions_dir.mkdir(parents=True, exist_ok=True)
-            # print(f"SessionsManager: Pasta json verificada: {self.sessions_dir.exists()}")
-            
-            if not self.sessions_file.exists():
-                print("SessionsManager: Criando arquivo sessions.json vazio")
-                self._initialize_sessions_file()
+            self.storage.load_document(
+                "sessions.json",
+                {"sessions": {"session_active": {"obras": []}}},
+            )
+            self.storage.sync_document_to_disk("sessions.json")
                 
         except Exception as e:
             print(f"ERRO em ensure_sessions_file: {e}")
@@ -243,12 +247,6 @@ class SessionsManager:
     def force_clear_all_sessions(self) -> bool:
         """Força a limpeza total deletando e recriando o arquivo"""
         try:
-            # Deleta fisicamente o arquivo e recria vazio
-            if self.sessions_file.exists():
-                self.sessions_file.unlink()
-                print("Arquivo sessions.json deletado fisicamente")
-            
-            # Recria com sessão ativa vazia
             self._initialize_sessions_file()
             print("Arquivo sessions.json recriado com sessão ativa vazia")
             
@@ -278,49 +276,30 @@ class SessionsManager:
     def _load_sessions_data(self) -> dict:
         """Carrega os dados das sessões do arquivo"""
         try:
-            if self.sessions_file.exists():
-                with open(self.sessions_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                
-                # Garante estrutura básica
-                if "sessions" not in data:
-                    data["sessions"] = {}
-                
-                # Cria sessão ativa vazia se não existir
-                if "session_active" not in data["sessions"]:
-                    data["sessions"] = {
-                        "session_active": {"obras": []}
-                    }
-                    print("✅ Sessão ativa vazia criada")
-                
-                # Garante que cada sessão tem "obras" 
-                for session_id, session_data in data["sessions"].items():
-                    if "obras" not in session_data:
-                        session_data["obras"] = []
-                
-                return data
-            else:
-                return {"sessions": {"session_active": {"obras": []}}}
-                
+            data = self.storage.load_document(
+                "sessions.json",
+                {"sessions": {"session_active": {"obras": []}}},
+            )
+
+            if "sessions" not in data:
+                data["sessions"] = {}
+
+            if "session_active" not in data["sessions"]:
+                data["sessions"] = {"session_active": {"obras": []}}
+
+            for session_id, session_data in data["sessions"].items():
+                if "obras" not in session_data:
+                    session_data["obras"] = []
+
+            return data
+
         except (FileNotFoundError, json.JSONDecodeError):
             return {"sessions": {"session_active": {"obras": []}}}
     
     def _save_sessions_data(self, data: dict) -> bool:
         """Salva os dados das sessões no arquivo"""
         try:
-            # Garante que o diretório existe
-            self.sessions_dir.mkdir(parents=True, exist_ok=True)
-            
-            with open(self.sessions_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            
-            # Verifica se o arquivo foi realmente criado/atualizado
-            if self.sessions_file.exists():
-                # print(f"✅ Arquivo sessions.json salvo com sucesso: {self.sessions_file}")
-                return True
-            else:
-                print(f"❌ ERRO: Arquivo sessions.json não foi criado: {self.sessions_file}")
-                return False
+            return self.storage.save_document("sessions.json", data)
                 
         except Exception as e:
             print(f"❌ ERRO ao salvar sessions: {e}")

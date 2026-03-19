@@ -317,8 +317,8 @@
     }
     
     .room-total-value,
-    .project-total-value {
-        margin-left: 0;
+    .project-total-value,
+    .obra-total-value {
         justify-content: center;
         order: -1;
     }
@@ -367,13 +367,6 @@
         justify-content: center;
     }
     
-    .obra-total-value {
-        width: 100%;
-        margin-top: 10px;
-        margin-left: 0;
-        justify-content: center;
-        order: -1; /* Coloca o total acima do botão em mobile */
-    }
     
     .btn-add-secondary {
         width: 100%;

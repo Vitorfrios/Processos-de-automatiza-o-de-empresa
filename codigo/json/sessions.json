@@ -1,7 +1,10 @@
 {
   "sessions": {
     "session_active": {
-      "obras": []
+      "obras": [
+        "obra_h28",
+        "obra_z88"
+      ]
     }
   }
 }

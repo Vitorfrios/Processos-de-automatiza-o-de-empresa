@@ -1189,7 +1189,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """GET /api/acessorios - Retorna todos os acessorios"""
         try:
             # Carrega dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
             if not dados_file.exists():
                 self.send_json_response(
@@ -1221,7 +1221,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_acessorio_types(self):
         """GET /api/acessorios/types - Retorna tipos de acessorios"""
         try:
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
             if not dados_file.exists():
                 self.send_json_response(
@@ -1263,7 +1263,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             tipo = path_parts[-1]
 
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
             if not dados_file.exists():
                 self.send_json_response(
@@ -1340,7 +1340,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             tipo = data["tipo"]
 
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
             if not dados_file.exists():
                 self.send_json_response(
@@ -1382,8 +1382,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             banco_acessorios[tipo] = novo_acessorio
 
             # Salvar dados atualizados
-            with open(dados_file, "w", encoding="utf-8") as f:
-                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            if not self.file_utils.save_json_file(dados_file, dados_data):
+                self.send_json_response(
+                    {"success": False, "error": "Erro ao persistir dados"},
+                    status=500,
+                )
+                return
 
             self.send_json_response(
                 {
@@ -1421,7 +1425,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             tipo = data["tipo"]
 
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
             if not dados_file.exists():
                 self.send_json_response(
@@ -1470,8 +1474,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 acessorio_atual["unidade_valor"] = data["unidade_valor"]
 
             # Salvar dados atualizados
-            with open(dados_file, "w", encoding="utf-8") as f:
-                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            if not self.file_utils.save_json_file(dados_file, dados_data):
+                self.send_json_response(
+                    {"success": False, "error": "Erro ao persistir dados"},
+                    status=500,
+                )
+                return
 
             self.send_json_response(
                 {
@@ -1508,7 +1516,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             tipo = data["tipo"]
 
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
             if not dados_file.exists():
                 self.send_json_response(
@@ -1545,8 +1553,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             acessorio_removido = banco_acessorios.pop(tipo)
 
             # Salvar dados atualizados
-            with open(dados_file, "w", encoding="utf-8") as f:
-                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            if not self.file_utils.save_json_file(dados_file, dados_data):
+                self.send_json_response(
+                    {"success": False, "error": "Erro ao persistir dados"},
+                    status=500,
+                )
+                return
 
             self.send_json_response(
                 {
@@ -1582,7 +1594,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
             if not dados_file.exists():
                 self.send_json_response(
@@ -1669,7 +1681,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """GET /api/acessorios/dimensoes - Retorna dimensões disponíveis"""
         try:
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
             if not dados_file.exists():
                 self.send_json_response(
@@ -1729,7 +1741,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_dutos(self):
         """GET /api/dutos - Retorna todos os dutos"""
         try:
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -1760,7 +1772,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_duto_types(self):
         """GET /api/dutos/types - Retorna tipos de dutos"""
         try:
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -1804,7 +1816,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_duto_opcionais(self):
         """GET /api/dutos/opcionais - Retorna opcionais disponíveis"""
         try:
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -1882,7 +1894,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 
             tipo = path_parts[-1]
             
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -1961,7 +1973,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 )
                 return
             
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2038,7 +2050,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             tipo = data["type"]
             
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2084,8 +2096,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             dutos.append(novo_duto)
             
             # Salvar dados atualizados
-            with open(dados_file, "w", encoding="utf-8") as f:
-                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            if not self.file_utils.save_json_file(dados_file, dados_data):
+                self.send_json_response(
+                    {"success": False, "error": "Erro ao persistir dados"},
+                    status=500,
+                )
+                return
             
             self.send_json_response({
                 "success": True,
@@ -2123,7 +2139,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             tipo = data["type"]
             
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2173,8 +2189,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 dutos[duto_index]["descricao"] = data["descricao"]
             
             # Salvar dados atualizados
-            with open(dados_file, "w", encoding="utf-8") as f:
-                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            if not self.file_utils.save_json_file(dados_file, dados_data):
+                self.send_json_response(
+                    {"success": False, "error": "Erro ao persistir dados"},
+                    status=500,
+                )
+                return
             
             self.send_json_response({
                 "success": True,
@@ -2211,7 +2231,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             tipo = data["type"]
             
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2252,8 +2272,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Salvar dados atualizados
             dados_data["dutos"] = novos_dutos
-            with open(dados_file, "w", encoding="utf-8") as f:
-                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            if not self.file_utils.save_json_file(dados_file, dados_data):
+                self.send_json_response(
+                    {"success": False, "error": "Erro ao persistir dados"},
+                    status=500,
+                )
+                return
             
             self.send_json_response({
                 "success": True,
@@ -2276,7 +2300,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_tubos(self):
         """GET /api/tubos - Retorna todos os tubos"""
         try:
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2307,7 +2331,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_tubo_polegadas(self):
         """GET /api/tubos/polegadas - Retorna todas as polegadas disponíveis"""
         try:
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2378,7 +2402,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 
             polegada = path_parts[-1]
             
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2433,7 +2457,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             polegadas = data["polegadas"]
             
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2474,8 +2498,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             tubos.append(novo_tubo)
             
             # Salvar dados atualizados
-            with open(dados_file, "w", encoding="utf-8") as f:
-                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            if not self.file_utils.save_json_file(dados_file, dados_data):
+                self.send_json_response(
+                    {"success": False, "error": "Erro ao persistir dados"},
+                    status=500,
+                )
+                return
             
             self.send_json_response({
                 "success": True,
@@ -2513,7 +2541,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             polegadas = data["polegadas"]
             
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2560,8 +2588,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 tubos[tubo_index]["descricao"] = data["descricao"]
             
             # Salvar dados atualizados
-            with open(dados_file, "w", encoding="utf-8") as f:
-                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            if not self.file_utils.save_json_file(dados_file, dados_data):
+                self.send_json_response(
+                    {"success": False, "error": "Erro ao persistir dados"},
+                    status=500,
+                )
+                return
             
             self.send_json_response({
                 "success": True,
@@ -2598,7 +2630,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             polegadas = data["polegadas"]
             
             # Carregar dados.json
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
@@ -2639,8 +2671,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Salvar dados atualizados
             dados_data["tubos"] = novos_tubos
-            with open(dados_file, "w", encoding="utf-8") as f:
-                json.dump(dados_data, f, ensure_ascii=False, indent=2)
+            if not self.file_utils.save_json_file(dados_file, dados_data):
+                self.send_json_response(
+                    {"success": False, "error": "Erro ao persistir dados"},
+                    status=500,
+                )
+                return
             
             self.send_json_response({
                 "success": True,
@@ -2676,7 +2712,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 )
                 return
             
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             
             if not dados_file.exists():
                 self.send_json_response(
