@@ -15,28 +15,153 @@
       "valorTotalObra": 0
     },
     {
-      "id": "obra_w25",
+      "id": "obra_j52",
       "nome": "ACT-124",
-      "empresa_id": "empresa_obra_w25",
+      "empresa_id": "empresa_obra_j52",
       "empresaSigla": "ACT",
       "empresaNome": "ACTEMIUM",
       "numeroClienteFinal": 124,
-      "clienteFinal": "sad",
-      "codigoCliente": "sd",
       "dataCadastro": "18/03/2026",
-      "orcamentistaResponsavel": "sd",
-      "projetos": [],
+      "projetos": [
+        {
+          "id": "obra_j52_proj_n89_3",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_j52_proj_n89_3_sala_n40_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "area": 0,
+                "volume": 0,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "pressurizacao": true,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ventilacao": {
+                "tempInterna": 45,
+                "tempExterna": 35
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "acessorios": [],
+              "dutos": [],
+              "tubulacao": {
+                "conjuntos": [],
+                "valorTotalGeralTubos": 0
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 0
+        }
+      ],
       "valorTotalObra": 0
     },
     {
-      "id": "obra_e58",
-      "nome": "AMC-1",
-      "empresa_id": "empresa_obra_e58",
-      "empresaSigla": "AMC",
-      "empresaNome": "AMC SOLUÇÕES",
-      "numeroClienteFinal": 1,
+      "id": "obra_x85",
+      "nome": "ACT-125",
+      "empresa_id": "empresa_obra_x85",
+      "empresaSigla": "ACT",
+      "empresaNome": "ACTEMIUM",
+      "numeroClienteFinal": 125,
       "dataCadastro": "18/03/2026",
-      "projetos": [],
+      "projetos": [
+        {
+          "id": "obra_x85_proj_n37_3",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_x85_proj_n37_3_sala_w60_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "area": 0,
+                "volume": 0,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "pressurizacao": true,
+                "numPortasDuplas": 0,
+                "numPortasSimples": 0
+              },
+              "maquinas": [],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "solucao": "-",
+                "solucaoBackup": "-",
+                "totalCapacidade": "-",
+                "folga": "-",
+                "backup": "n"
+              },
+              "ventilacao": {
+                "tempInterna": 45,
+                "tempExterna": 35
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 0,
+                "total-tr-aprox": 0,
+                "total-tr-exato": 0,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
+              },
+              "acessorios": [],
+              "dutos": [],
+              "tubulacao": {
+                "conjuntos": [],
+                "valorTotalGeralTubos": 0
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 0
+        }
+      ],
       "valorTotalObra": 0
     }
   ]

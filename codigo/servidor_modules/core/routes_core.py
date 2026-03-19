@@ -238,7 +238,7 @@ class RoutesCore:
     def handle_get_empresas(self):
         """Obtém todas as empresas"""
         try:
-            empresas = self.empresa_handler.obter_empresas()
+            empresas = self.empresa_handler.obter_empresas_publicas()
             return {"success": True, "empresas": empresas}
         except Exception as e:
             print(f"❌ Erro ao obter empresas: {e}")
@@ -261,7 +261,7 @@ class RoutesCore:
             from urllib.parse import unquote
 
             termo_decodificado = unquote(termo)
-            resultados = self.empresa_handler.buscar_empresa_por_termo(
+            resultados = self.empresa_handler.buscar_empresa_publica_por_termo(
                 termo_decodificado
             )
 
@@ -589,6 +589,31 @@ class RoutesCore:
             print(f"❌ ERRO em handle_get_backup_completo: {str(e)}")
             return {"obras": []}
 
+    def handle_get_runtime_bootstrap(self):
+        """Retorna payload agregado para inicialização da interface de obras"""
+        try:
+            empresas = self.empresa_handler.obter_empresas_publicas()
+            session_data = self.handle_get_session_obras()
+            backup_data = self.handle_get_backup_completo()
+            obras_sessao = self.handle_get_obras()
+
+            return {
+                "success": True,
+                "empresas": empresas,
+                "sessionObras": session_data,
+                "backup": backup_data,
+                "obrasSessao": obras_sessao,
+            }
+        except Exception as e:
+            print(f"❌ Erro ao montar runtime bootstrap: {str(e)}")
+            return {
+                "success": False,
+                "empresas": [],
+                "sessionObras": {"session_id": "error", "obras": []},
+                "backup": {"obras": []},
+                "obrasSessao": [],
+            }
+
     def handle_post_dados(self, post_data):
         """Salva DADOS.json"""
         try:
@@ -900,7 +925,7 @@ class RoutesCore:
     def handle_get_all_empresas(self):
         """Retorna todas empresas no formato correto"""
         try:
-            empresas = self.empresa_handler.obter_empresas()
+            empresas = self.empresa_handler.obter_empresas_publicas()
             return {"empresas": empresas}
             
         except Exception as e:

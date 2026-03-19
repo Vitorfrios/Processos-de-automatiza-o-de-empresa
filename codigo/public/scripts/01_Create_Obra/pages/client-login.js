@@ -1,7 +1,10 @@
 import { APP_CONFIG } from '../core/config.js';
+import { createSmartLogger } from '../core/logger.js';
 import {
     clearClientSession,
+    loginAdmin,
     loginClient,
+    redirectToAdminApp,
     redirectToClientApp
 } from '../core/auth.js';
 
@@ -61,6 +64,18 @@ function bindLoginForm() {
         setLoadingState(true);
 
         try {
+            const adminResult = usernameInput.value.trim() === 'ADM'
+                ? await loginAdmin({
+                    usuario: usernameInput.value,
+                    token: passwordInput.value
+                })
+                : null;
+
+            if (adminResult?.success) {
+                redirectToAdminApp(adminResult.redirectTo);
+                return;
+            }
+
             const result = await loginClient({
                 usuario: usernameInput.value,
                 token: passwordInput.value
@@ -84,6 +99,15 @@ function bindLoginForm() {
 document.addEventListener('DOMContentLoaded', () => {
     if (APP_CONFIG.mode !== 'client') {
         return;
+    }
+
+    if (!window.logger) {
+        Object.defineProperty(window, 'logger', {
+            value: createSmartLogger(APP_CONFIG),
+            configurable: true,
+            writable: true,
+            enumerable: false
+        });
     }
 
     // A tela de login sempre inicia sem reaproveitar sessao anterior.

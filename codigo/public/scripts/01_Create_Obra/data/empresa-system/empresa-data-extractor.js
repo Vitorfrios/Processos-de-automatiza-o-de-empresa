@@ -322,9 +322,10 @@ async function prepararDadosEmpresaNaObra(obraData, obraElement) {
         });
         
         // Verificar se temos dados de empresa
-        const temDadosEmpresa = camposEmpresa.some(campo => 
-            obraData[campo] && obraData[campo].trim() !== ''
-        ) || (obraData.empresa_id && obraData.empresa_id.trim() !== '');
+        const temDadosEmpresa = camposEmpresa.some(campo => {
+            const valor = obraData[campo];
+            return valor !== undefined && valor !== null && valor.toString().trim() !== '';
+        }) || (obraData.empresa_id && obraData.empresa_id.toString().trim() !== '');
         
         if (!temDadosEmpresa) {
             console.log('📭 [EMPRESA] Obra não possui dados de empresa identificáveis');

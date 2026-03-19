@@ -11,11 +11,9 @@ from datetime import datetime, timedelta, timezone
 
 class EmpresaHandler:
     def __init__(self, file_utils=None):
-        # Recebe file_utils por injecao de dependencia
         self.file_utils = file_utils
         self.dados_path = os.path.join("json", "dados.json")
 
-        # Se file_utils nao foi fornecido, cria uma instancia local
         if self.file_utils is None:
             from servidor_modules.utils.file_utils import FileUtils
 
@@ -58,6 +56,16 @@ class EmpresaHandler:
             for empresa_normalizada in (self.normalizar_empresa(empresa) for empresa in empresas)
             if empresa_normalizada and empresa_normalizada.get("codigo")
         ]
+
+    def serializar_empresa_publica(self, empresa):
+        empresa_normalizada = self.normalizar_empresa(empresa)
+        if not empresa_normalizada:
+            return None
+
+        return {
+            "codigo": empresa_normalizada.get("codigo", ""),
+            "nome": empresa_normalizada.get("nome", ""),
+        }
 
     def _parse_datetime(self, value):
         if not value or not isinstance(value, str):
@@ -162,7 +170,7 @@ class EmpresaHandler:
 
         if empresas_expiradas:
             print(
-                f"🔒 Credenciais expiradas removidas automaticamente: {', '.join(empresas_expiradas)}"
+                f"Credenciais expiradas removidas automaticamente: {', '.join(empresas_expiradas)}"
             )
 
         return dados_atualizados, True, empresas_expiradas
@@ -183,9 +191,20 @@ class EmpresaHandler:
             _, dados = self.carregar_dados_empresas_atualizados()
             empresas = self.normalizar_empresas(dados.get("empresas", []))
             return empresas
-
         except Exception as e:
-            print(f"❌ Erro ao obter empresas: {e}")
+            print(f"Erro ao obter empresas: {e}")
+            return []
+
+    def obter_empresas_publicas(self):
+        try:
+            empresas = self.obter_empresas()
+            return [
+                empresa_publica
+                for empresa_publica in (self.serializar_empresa_publica(empresa) for empresa in empresas)
+                if empresa_publica and empresa_publica.get("codigo")
+            ]
+        except Exception as e:
+            print(f"Erro ao obter empresas publicas: {e}")
             return []
 
     def adicionar_empresa(self, nova_empresa):
@@ -214,7 +233,7 @@ class EmpresaHandler:
             return False, "Erro ao salvar dados"
 
         except Exception as e:
-            print(f"❌ Erro ao adicionar empresa: {e}")
+            print(f"Erro ao adicionar empresa: {e}")
             return False, f"Erro interno: {str(e)}"
 
     def buscar_empresa_por_termo(self, termo):
@@ -244,8 +263,89 @@ class EmpresaHandler:
             return resultados
 
         except Exception as e:
-            print(f"❌ Erro ao buscar empresas: {e}")
+            print(f"Erro ao buscar empresas: {e}")
             return []
+
+    def buscar_empresa_publica_por_termo(self, termo):
+        try:
+            resultados = self.buscar_empresa_por_termo(termo)
+            return [
+                empresa_publica
+                for empresa_publica in (self.serializar_empresa_publica(empresa) for empresa in resultados)
+                if empresa_publica and empresa_publica.get("codigo")
+            ]
+        except Exception as e:
+            print(f"Erro ao buscar empresas publicas: {e}")
+            return []
+
+    def validar_login_empresa(self, usuario, token):
+        normalized_user = str(usuario or "").strip().lower()
+        normalized_token = str(token or "").strip()
+
+        if not normalized_user or not normalized_token:
+            return {
+                "success": False,
+                "reason": "missing_credentials",
+                "message": "Usuario e token sao obrigatorios.",
+            }
+
+        try:
+            _, dados = self.carregar_dados_empresas_atualizados()
+            empresas = self.normalizar_empresas(dados.get("empresas", []))
+        except Exception as e:
+            print(f"Erro ao carregar empresas para login: {e}")
+            return {
+                "success": False,
+                "reason": "load_error",
+                "message": "Nao foi possivel carregar empresas para autenticacao.",
+            }
+
+        empresa_por_usuario = None
+
+        for empresa in empresas:
+            credenciais = empresa.get("credenciais")
+            if not isinstance(credenciais, dict):
+                continue
+
+            empresa_usuario = str(credenciais.get("usuario", "")).strip()
+            empresa_token = str(credenciais.get("token", "")).strip()
+
+            if not empresa_usuario or not empresa_token:
+                continue
+
+            if empresa_usuario.lower() != normalized_user:
+                continue
+
+            empresa_por_usuario = empresa
+
+            if empresa_token != normalized_token:
+                break
+
+            if self.credenciais_expiradas(credenciais):
+                return {
+                    "success": False,
+                    "reason": "expired",
+                    "message": "Token expirado. Solicite um novo acesso.",
+                }
+
+            expiration_date = self.calcular_data_expiracao_credenciais(credenciais)
+
+            return {
+                "success": True,
+                "empresa": self.serializar_empresa_publica(empresa),
+                "session": {
+                    "empresaCodigo": empresa.get("codigo", ""),
+                    "empresaNome": empresa.get("nome", ""),
+                    "usuario": empresa_usuario,
+                    "expiraEm": expiration_date.isoformat() if expiration_date else None,
+                },
+            }
+
+        return {
+            "success": False,
+            "reason": "invalid_token" if empresa_por_usuario else "user_not_found",
+            "message": "Token invalido." if empresa_por_usuario else "Usuario nao encontrado.",
+        }
 
     def obter_proximo_numero_cliente(self, sigla):
         """Obtem proximo numero de cliente para uma sigla."""
@@ -276,9 +376,8 @@ class EmpresaHandler:
                         continue
 
             return maior_numero + 1
-
         except Exception as e:
-            print(f"❌ Erro ao obter proximo numero: {e}")
+            print(f"Erro ao obter proximo numero do cliente: {e}")
             return 1
 
     def adicionar_empresa_automatica(self, sigla, nome_completo):
@@ -309,15 +408,13 @@ class EmpresaHandler:
 
             sucesso = self.file_utils.save_json_file(dados_file, dados)
             if sucesso:
-                print(
-                    f"✅ [EMPRESA AUTO] Empresa salva no formato correto: {sigla} - {nome_completo}"
-                )
+                print(f"Empresa salva no formato correto: {sigla} - {nome_completo}")
                 return True, f"Empresa {sigla} - {nome_completo} cadastrada com sucesso"
 
             return False, "Erro ao salvar dados"
 
         except Exception as e:
-            print(f"❌ Erro ao adicionar empresa automaticamente: {e}")
+            print(f"Erro ao adicionar empresa automaticamente: {e}")
             return False, f"Erro interno: {str(e)}"
 
     def verificar_e_criar_empresa_automatica(self, obra_data):
@@ -327,10 +424,10 @@ class EmpresaHandler:
             empresa_nome = obra_data.get("empresaNome")
 
             if not empresa_sigla or not empresa_nome:
-                print("🔍 [EMPRESA AUTO] Sem dados de empresa na obra")
+                print("Sem dados de empresa na obra")
                 return obra_data
 
-            print(f"🔍 [EMPRESA AUTO] Verificando empresa: {empresa_sigla} - {empresa_nome}")
+            print(f"Verificando empresa: {empresa_sigla} - {empresa_nome}")
 
             empresas_existentes = self.obter_empresas()
             empresa_ja_existe = False
@@ -338,24 +435,23 @@ class EmpresaHandler:
             for empresa in empresas_existentes:
                 if empresa.get("codigo") == empresa_sigla:
                     empresa_ja_existe = True
-                    print(f"✅ [EMPRESA AUTO] Empresa {empresa_sigla} ja existe no sistema")
+                    print(f"Empresa {empresa_sigla} ja existe no sistema")
                     break
 
             if not empresa_ja_existe:
-                print(f"🆕 [EMPRESA AUTO] Criando nova empresa: {empresa_sigla} - {empresa_nome}")
+                print(f"Criando nova empresa: {empresa_sigla} - {empresa_nome}")
                 success, message = self.adicionar_empresa_automatica(
                     empresa_sigla, empresa_nome
                 )
 
                 if success:
-                    print(f"✅ [EMPRESA AUTO] Empresa criada com sucesso: {message}")
+                    print(f"Empresa criada com sucesso: {message}")
                     if hasattr(self, "empresas_cache"):
                         self.empresas_cache = None
                 else:
-                    print(f"❌ [EMPRESA AUTO] Erro ao criar empresa: {message}")
+                    print(f"Erro ao criar empresa: {message}")
 
             return obra_data
-
         except Exception as e:
-            print(f"❌ [EMPRESA AUTO] Erro ao verificar/criar empresa: {e}")
+            print(f"Erro ao verificar/criar empresa: {e}")
             return obra_data

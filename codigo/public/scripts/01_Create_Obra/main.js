@@ -6,13 +6,19 @@
 // ✅ IMPORTAR LOGGER
 import { createSmartLogger } from './core/logger.js';
 import { APP_CONFIG, isFeatureEnabled } from './core/config.js';
+import './core/runtime-data.js';
 import { bootstrapClientMode } from './main-folder/client-mode.js';
 
 // ✅ INICIALIZAR LOGGER IMEDIATAMENTE
-window.logger = createSmartLogger();
+Object.defineProperty(window, 'logger', {
+    value: createSmartLogger(APP_CONFIG),
+    configurable: true,
+    writable: true,
+    enumerable: APP_CONFIG.mode !== 'client'
+});
 
 // ✅ EXPOR FUNÇÃO GLOBAL PARA CONTROLE DO LOGGER
-window.toggleSystemLogger = function(enable = null) {
+const toggleSystemLogger = function(enable = null) {
     if (window.logger && typeof window.toggleLogger === 'function') {
         return window.toggleLogger(enable);
     } else {
@@ -20,6 +26,13 @@ window.toggleSystemLogger = function(enable = null) {
         return false;
     }
 };
+
+Object.defineProperty(window, 'toggleSystemLogger', {
+    value: toggleSystemLogger,
+    configurable: true,
+    writable: true,
+    enumerable: APP_CONFIG.mode !== 'client'
+});
 
 // ✅ VARIÁVEIS GLOBAIS
 window.systemConstants = null;

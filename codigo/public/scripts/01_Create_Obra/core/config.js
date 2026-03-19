@@ -7,6 +7,7 @@ const DEFAULT_APP_CONFIG = {
     auth: {
         required: false,
         storageKey: CLIENT_SESSION_STORAGE_KEY,
+        storageType: 'local',
         loginPage: '/login',
         redirectAfterLogin: '/admin/obras/create'
     },
@@ -24,6 +25,7 @@ const DEFAULT_APP_CONFIG = {
 const CLIENT_MODE_DEFAULTS = {
     auth: {
         required: true,
+        storageType: 'session',
         loginPage: '/login',
         redirectAfterLogin: '/obras/create'
     },
@@ -59,9 +61,20 @@ function deepMerge(base, override) {
     return output;
 }
 
-function safeReadStoredSession(storageKey = CLIENT_SESSION_STORAGE_KEY) {
+function resolveAuthStorage(storageType = 'local') {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    return storageType === 'session'
+        ? window.sessionStorage
+        : window.localStorage;
+}
+
+function safeReadStoredSession(storageKey = CLIENT_SESSION_STORAGE_KEY, storageType = 'local') {
     try {
-        const rawSession = window.localStorage.getItem(storageKey);
+        const storage = resolveAuthStorage(storageType);
+        const rawSession = storage?.getItem(storageKey);
         return rawSession ? JSON.parse(rawSession) : null;
     } catch (error) {
         console.warn('[APP-CONFIG] Falha ao ler sessao armazenada:', error);
@@ -119,7 +132,7 @@ function buildAppConfig() {
     }
 
     const storedSession = config.mode === 'client'
-        ? safeReadStoredSession(config.auth?.storageKey)
+        ? safeReadStoredSession(config.auth?.storageKey, config.auth?.storageType)
         : null;
     const sessionEmpresaContext = getEmpresaContextFromSession(storedSession);
 
@@ -147,7 +160,7 @@ function refreshAppConfigFromSession() {
     }
 
     const sessionEmpresaContext = getEmpresaContextFromSession(
-        safeReadStoredSession(APP_CONFIG.auth?.storageKey)
+        safeReadStoredSession(APP_CONFIG.auth?.storageKey, APP_CONFIG.auth?.storageType)
     );
 
     APP_CONFIG.empresaContext = sessionEmpresaContext;

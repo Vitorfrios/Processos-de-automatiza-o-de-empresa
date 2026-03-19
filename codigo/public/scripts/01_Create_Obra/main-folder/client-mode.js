@@ -75,6 +75,61 @@ function updateClientPageTitle() {
     }
 }
 
+function parsePositiveInteger(value) {
+    if (value === undefined || value === null) {
+        return null;
+    }
+
+    const parsed = parseInt(String(value).trim(), 10);
+    return Number.isNaN(parsed) || parsed <= 0 ? null : parsed;
+}
+
+function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractNumeroFromIdentifier(value, empresaSigla = '') {
+    const text = String(value || '').trim();
+    if (!text) {
+        return null;
+    }
+
+    if (empresaSigla) {
+        const escapedSigla = escapeRegExp(empresaSigla);
+        const matchBySigla = text.match(new RegExp(`${escapedSigla}-(\\d+)$`, 'i')) ||
+            text.match(new RegExp(`obra_${escapedSigla}_(\\d+)$`, 'i'));
+
+        if (matchBySigla) {
+            return parsePositiveInteger(matchBySigla[1]);
+        }
+    }
+
+    const genericMatch = text.match(/-(\d+)$/) || text.match(/obra_[A-Za-z0-9]+_(\d+)$/i);
+    return genericMatch ? parsePositiveInteger(genericMatch[1]) : null;
+}
+
+function resolveNumeroClienteFinal(obraElement, obraData = null, empresaSigla = '') {
+    return parsePositiveInteger(obraData?.numeroClienteFinal) ||
+        parsePositiveInteger(obraElement.dataset.numeroClienteFinal) ||
+        extractNumeroFromIdentifier(obraData?.identificadorObra, empresaSigla) ||
+        extractNumeroFromIdentifier(obraData?.idGerado, empresaSigla) ||
+        extractNumeroFromIdentifier(obraData?.nome, empresaSigla) ||
+        extractNumeroFromIdentifier(obraElement.dataset.identificadorObra, empresaSigla) ||
+        extractNumeroFromIdentifier(obraElement.dataset.idGerado, empresaSigla) ||
+        extractNumeroFromIdentifier(obraElement.dataset.obraName, empresaSigla) ||
+        extractNumeroFromIdentifier(obraElement.querySelector('.obra-title')?.textContent, empresaSigla);
+}
+
+function sincronizarIdentificadoresObra(obraElement, empresaSigla, numeroClienteFinal) {
+    if (!obraElement || !empresaSigla || !numeroClienteFinal) {
+        return;
+    }
+
+    obraElement.dataset.numeroClienteFinal = String(numeroClienteFinal);
+    obraElement.dataset.idGerado = `obra_${empresaSigla}_${numeroClienteFinal}`;
+    obraElement.dataset.identificadorObra = `${empresaSigla}-${numeroClienteFinal}`;
+}
+
 function applyClientEmpresaRestrictions(obraId, obraData = null) {
     if (!isClientMode() || !APP_CONFIG.ui?.lockEmpresaField) {
         return false;
@@ -129,8 +184,15 @@ function applyClientEmpresaRestrictions(obraId, obraData = null) {
     empresaInput.dataset.siglaSelecionada = empresaSigla;
     empresaInput.dataset.nomeSelecionado = empresaNome;
 
-    if (!obraElement.dataset.numeroClienteFinal && typeof window.empresaCadastro?.calcularNumeroClienteFinal === 'function') {
-        window.empresaCadastro.calcularNumeroClienteFinal(empresaSigla, obraId);
+    const numeroExistente = resolveNumeroClienteFinal(obraElement, obraData, empresaSigla);
+
+    if (numeroExistente) {
+        sincronizarIdentificadoresObra(obraElement, empresaSigla, numeroExistente);
+    } else if (typeof window.empresaCadastro?.calcularNumeroClienteFinal === 'function') {
+        const novoNumero = window.empresaCadastro.calcularNumeroClienteFinal(empresaSigla, obraId);
+        if (novoNumero) {
+            sincronizarIdentificadoresObra(obraElement, empresaSigla, novoNumero);
+        }
     }
 
     if (numeroClienteInput && obraElement.dataset.numeroClienteFinal) {

@@ -4,6 +4,7 @@ Servidor principal
 """
 
 import os
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -13,6 +14,21 @@ from pathlib import Path
 # ou executado sem passar por setup_environment().
 os.environ.setdefault('PYTHONDONTWRITEBYTECODE', '1')
 sys.dont_write_bytecode = True
+
+
+def cleanup_python_caches(base_dir):
+    """Remove caches Python residuais do projeto."""
+    base_path = Path(base_dir)
+
+    for pycache_dir in base_path.rglob('__pycache__'):
+        shutil.rmtree(pycache_dir, ignore_errors=True)
+
+    for pattern in ('*.pyc', '*.pyo'):
+        for cache_file in base_path.rglob(pattern):
+            try:
+                cache_file.unlink()
+            except FileNotFoundError:
+                pass
 
 def setup_environment():
     """Configuração do ambiente """
@@ -25,6 +41,7 @@ def setup_environment():
     
     # Desativa cache de importação
     sys.dont_write_bytecode = True
+    cleanup_python_caches(current_dir)
 
 def load_modules_no_cache():
     """Carrega módulos """

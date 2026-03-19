@@ -1,4 +1,8 @@
 {
+  "ADM":{
+    "usuario": "ADM",
+    "token": "senha adm"
+  },
   "constants": {
     "VARIAVEL_PD": {
       "value": 0.0402,
@@ -1965,14 +1969,20 @@
     {
       "codigo": "ACT",
       "nome": "ACTEMIUM",
-      "credenciais": null
+      "credenciais": {
+        "usuario": "1",
+        "token": "1",
+        "data_criacao": "2026-02-16T20:35:25.359Z",
+        "data_expiracao": "2026-04-17T20:35:25.359Z",
+        "tempoUso": 60
+      }
     },
     {
       "codigo": "AMC",
       "nome": "AMC SOLUÇÕES",
       "credenciais": {
-        "usuario": "AMC SOLUCOES",
-        "token": "4a680c6fb48144a3fc255abc3c27d407",
+        "usuario": "2",
+        "token": "2",
         "data_criacao": "2026-03-18T14:09:02.326Z",
         "data_expiracao": "2026-06-16T14:09:02.326Z",
         "tempoUso": 90

@@ -38,6 +38,43 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         ".ttf",
         ".eot",
     }
+    RAW_DATA_BLOCKED_ROUTES = {
+        "/dados",
+        "/backup",
+        "/api/sessions/current",
+    }
+    ALLOWED_STATIC_PREFIXES = (
+        "/public/",
+    )
+    BLOCKED_STATIC_PREFIXES = (
+        "/json/",
+        "/servidor_modules/",
+        "/utilitarios py/",
+        "/arquivostxt/",
+        "/arquivos/",
+    )
+    BLOCKED_STATIC_FILENAMES = {
+        "/servidor.py",
+        "/sitecustomize.py",
+        "/readme.md",
+    }
+    BLOCKED_STATIC_EXTENSIONS = (
+        ".json",
+        ".py",
+        ".pyc",
+        ".pyo",
+        ".pyd",
+        ".map",
+        ".md",
+        ".toml",
+        ".yml",
+        ".yaml",
+        ".ini",
+        ".env",
+        ".log",
+        ".db",
+        ".sqlite",
+    )
 
     # Roteamento direto para mÃ¡xima velocidade
     API_ROUTES = {
@@ -53,6 +90,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/api/sessions/current": "handle_get_sessions_current",
         "/api/backup-completo": "handle_get_backup_completo",
         "/api/dados/empresas": "handle_get_empresas",
+        "/api/runtime/bootstrap": "handle_get_runtime_bootstrap",
         "/obras": "handle_get_obras",
         "/api/server/uptime": "handle_get_server_uptime",
         # ========== ROTAS PARA EQUIPAMENTOS ==========
@@ -124,6 +162,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/public/pages/01_Create_Obras_Client.html": "/obras/create",
         "/public/pages/01_Create_Obras.html": "/admin/obras/create",
         "/public/pages/03_Edit_data.html": "/admin/data",
+        "/pages/obras/create.html": "/admin/obras/create",
     }
 
     def __init__(self, *args, **kwargs):
@@ -191,6 +230,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         if path in self.PAGE_ROUTES:
             self.serve_page_route(path)
+            return
+
+        if path in self.RAW_DATA_BLOCKED_ROUTES:
+            self.send_error(403, "Acesso direto a arquivos internos bloqueado")
             return
 
         # Log apenas para rotas importantes (acelera MUITO)
@@ -308,7 +351,15 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ========== ROTAS EXISTENTES ==========
         elif path == "/obras":
             self.route_handler.handle_post_obras(self)
-            return  
+            return 
+
+        elif path == "/api/admin/login":
+            self.handle_post_admin_login()
+            return
+
+        elif path == "/api/client/login":
+            self.handle_post_client_login()
+            return
 
         # ========== ROTAS DE SESSÃƒO ==========
         elif path == "/api/sessions/shutdown":
@@ -329,15 +380,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         elif path == "/api/reload-page":
             self.route_handler.handle_post_reload_page(self)
-            return  
-
-        # ========== ROTAS DE DADOS ==========
-        elif path == "/dados":
-            self.route_handler.handle_post_dados(self)
-            return  
-        
-        elif path == "/backup":
-            self.route_handler.handle_post_backup(self)
             return  
 
         # ========== ROTAS DE EMPRESAS ==========
@@ -417,6 +459,146 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # Se chegou aqui, nenhuma rota foi encontrada
         print(f"âŒ POST nÃ£o executado corretamente: {path}")
         self.send_error(501, f"MÃ©todo nÃ£o suportado: POST {path}")
+
+    def handle_post_admin_login(self):
+        """POST /api/admin/login - Valida credenciais fixas do ADM"""
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+            raw_body = (
+                self.rfile.read(content_length).decode("utf-8")
+                if content_length > 0
+                else "{}"
+            )
+            payload = json.loads(raw_body or "{}")
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invÃ¡lido"}, 400)
+            return
+        except Exception as e:
+            print(f"âŒ Erro ao ler corpo do login admin: {e}")
+            self.send_json_response(
+                {"success": False, "error": "Erro ao processar login administrativo"},
+                500,
+            )
+            return
+
+        usuario = str(payload.get("usuario", "")).strip()
+        token = str(payload.get("token", "")).strip()
+
+        if not usuario or not token:
+            self.send_json_response(
+                {
+                    "success": False,
+                    "reason": "missing_credentials",
+                    "error": "Usuario e senha sao obrigatorios",
+                },
+                400,
+            )
+            return
+
+        try:
+            dados_file = self.project_root / "json" / "dados.json"
+
+            if not dados_file.exists():
+                self.send_json_response(
+                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    404,
+                )
+                return
+
+            with open(dados_file, "r", encoding="utf-8") as f:
+                dados_data = json.load(f)
+        except Exception as e:
+            print(f"âŒ Erro ao carregar dados.json para login admin: {e}")
+            self.send_json_response(
+                {
+                    "success": False,
+                    "error": "Nao foi possivel carregar as credenciais do ADM",
+                },
+                500,
+            )
+            return
+
+        admin_data = dados_data.get("ADM")
+        admin_usuario = (
+            str(admin_data.get("usuario", "")).strip()
+            if isinstance(admin_data, dict)
+            else ""
+        )
+        admin_token = (
+            str(admin_data.get("token", "")).strip()
+            if isinstance(admin_data, dict)
+            else ""
+        )
+
+        if not admin_usuario or not admin_token:
+            self.send_json_response(
+                {
+                    "success": False,
+                    "reason": "admin_not_configured",
+                    "error": "Credenciais ADM nao configuradas no dados.json",
+                },
+                500,
+            )
+            return
+
+        is_admin_match = usuario == "ADM" and usuario == admin_usuario and token == admin_token
+
+        if not is_admin_match:
+            self.send_json_response(
+                {
+                    "success": False,
+                    "reason": "invalid_credentials",
+                    "error": "Usuario ou senha de administrador invalidos",
+                },
+                401,
+            )
+            return
+
+        self.send_json_response(
+            {
+                "success": True,
+                "session": {
+                    "usuario": admin_usuario,
+                    "perfil": "ADM",
+                },
+                "redirectTo": "/pages/obras/create.html",
+            },
+            200,
+        )
+
+    def handle_post_client_login(self):
+        """POST /api/client/login - Valida credenciais de empresa no backend"""
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+            raw_body = (
+                self.rfile.read(content_length).decode("utf-8")
+                if content_length > 0
+                else "{}"
+            )
+            payload = json.loads(raw_body or "{}")
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invÃ¡lido"}, 400)
+            return
+        except Exception as e:
+            print(f"âŒ Erro ao ler corpo do login client: {e}")
+            self.send_json_response(
+                {"success": False, "error": "Erro ao processar login do cliente"},
+                500,
+            )
+            return
+
+        result = self.routes_core.empresa_handler.validar_login_empresa(
+            payload.get("usuario", ""),
+            payload.get("token", ""),
+        )
+
+        status = 200 if result.get("success") else 401
+        if result.get("reason") == "missing_credentials":
+            status = 400
+        elif result.get("reason") == "load_error":
+            status = 500
+
+        self.send_json_response(result, status)
 
     def do_PUT(self):
         """PUT para atualizaÃ§Ãµes"""
@@ -542,6 +724,21 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         self.serve_static_file_no_cache(f"/{target_file}")
 
+    def _is_allowed_static_path(self, clean_path):
+        normalized_path = (clean_path or "/").replace("\\", "/")
+        lower_path = normalized_path.lower()
+
+        if any(lower_path.startswith(prefix) for prefix in self.BLOCKED_STATIC_PREFIXES):
+            return False
+
+        if lower_path in self.BLOCKED_STATIC_FILENAMES:
+            return False
+
+        if lower_path.endswith(self.BLOCKED_STATIC_EXTENSIONS):
+            return False
+
+        return any(lower_path.startswith(prefix) for prefix in self.ALLOWED_STATIC_PREFIXES)
+
     def _add_cache_buster(self, path):
         """Adiciona cache buster Ã  URL se nÃ£o tiver"""
         if "?" in path:
@@ -565,6 +762,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         try:
             # Remove parÃ¢metros para encontrar arquivo real
             clean_path = path.split("?")[0]
+            if not self._is_allowed_static_path(clean_path):
+                self.send_error(403, f"Acesso bloqueado: {clean_path}")
+                return
+
             file_path = self.translate_path(clean_path)
 
             if os.path.isfile(file_path):

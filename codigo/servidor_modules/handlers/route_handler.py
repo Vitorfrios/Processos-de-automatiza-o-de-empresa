@@ -180,6 +180,11 @@ class RouteHandler:
         backup = self.routes_core.handle_get_backup_completo()
         handler.send_json_response(backup)
 
+    def handle_get_runtime_bootstrap(self, handler):
+        """GET /api/runtime/bootstrap"""
+        payload = self.routes_core.handle_get_runtime_bootstrap()
+        handler.send_json_response(payload)
+
     def handle_post_dados(self, handler):
         """POST /dados"""
         content_length = int(handler.headers['Content-Length'])

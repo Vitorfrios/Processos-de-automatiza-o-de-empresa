@@ -1,99 +1,85 @@
 /**
  * logger.js
- * 🎯 Reduz logs em 90% - Filtro automático de mensagens
+ * Smart console filter with a silent client mode.
  */
 
-export function createSmartLogger() {
-    'use strict';
-    
+function resolveAppConfig(appConfig) {
+    if (appConfig) {
+        return appConfig;
+    }
+
+    if (typeof window === 'undefined') {
+        return {};
+    }
+
+    return window.APP_CONFIG || window.__APP_CONFIG_OVERRIDES__ || {};
+}
+
+export function createSmartLogger(appConfig = null) {
     class SmartLogger {
-        constructor() {
-            this.levels = { 
-                ERROR: 0, 
-                WARN: 1, 
-                INFO: 2, 
+        constructor(runtimeAppConfig) {
+            this.appConfig = resolveAppConfig(runtimeAppConfig);
+            this.isClientMode = this.appConfig?.mode === 'client';
+
+            this.levels = {
+                NONE: -1,
+                ERROR: 0,
+                WARN: 1,
+                INFO: 2,
                 DEBUG: 3
             };
-            
-            // ✅ CONFIGURAÇÃO DE FILTROS
+
             this.config = {
-                globalLevel: 'WARN', // Só mostra ERROR e WARN por padrão
-                enabled: true, // ✅ INICIA ATIVADO
+                globalLevel: this.isClientMode ? 'NONE' : 'WARN',
+                enabled: true,
+                announceCommands: !this.isClientMode,
                 silentPatterns: [
-                    // Cálculos térmicos
-                    'Vazão atualizada para', 'Salvando dados para sala', 'Iniciando cálculos para sala',
+                    'VazÃ£o atualizada para', 'Salvando dados para sala', 'Iniciando cÃ¡lculos para sala',
                     'Ganhos calculados para', 'Dados coletados para', 'Tentando atualizar tabela',
-                    'Obras carregadas:', 'Sala ainda não salva', 'Procurando sala:',
-                    
-                    // Sincronização
-                    'Sincronização configurada', 'Observer configurado', 'VERIFICAÇÃO COMPLETA',
-                    'Elementos encontrados', 'Construindo seção de', '🧱 Sincronização paredes',
-                    '🔧 Configurando par', '✅ Sincronização configurada', '⚡ INICIALIZANDO VALORES PADRÃO',
-                    '🎯 CONFIGURANDO TODAS AS SINCRONIZAÇÕES', '🔧 CONFIGURANDO SINCRONIZAÇÃO BIDIRECIONAL',
-                    
-                    // UI e componentes
-                    'Módulos carregados', 'Funções críticas', 'DEBUG FINAL', 'Carregando constantes',
-                    'Inicializando sistema', '✅ Constantes carregadas', '📦 Carregando módulos',
-                    '🔍 Verificando sessão', '📊 Sessão encontrada', '🔒 Sistema de shutdown',
-                    '🏢 Inicializando sistema', 'ℹ️ Display térmico atualizado',
-                    
-                    // Thermal gains
-                    '🔥 [THERMAL]', '[THERMAL] Iniciando cálculos', '[THERMAL] Ganhos calculados',
+                    'Obras carregadas:', 'Sala ainda nÃ£o salva', 'Procurando sala:',
+                    'SincronizaÃ§Ã£o configurada', 'Observer configurado', 'VERIFICAÃ‡ÃƒO COMPLETA',
+                    'Elementos encontrados', 'Construindo seÃ§Ã£o de', 'ðŸ§± SincronizaÃ§Ã£o paredes',
+                    'ðŸ”§ Configurando par', 'âœ… SincronizaÃ§Ã£o configurada', 'âš¡ INICIALIZANDO VALORES PADRÃƒO',
+                    'ðŸŽ¯ CONFIGURANDO TODAS AS SINCRONIZAÃ‡Ã•ES', 'ðŸ”§ CONFIGURANDO SINCRONIZAÃ‡ÃƒO BIDIRECIONAL',
+                    'MÃ³dulos carregados', 'FunÃ§Ãµes crÃ­ticas', 'DEBUG FINAL', 'Carregando constantes',
+                    'Inicializando sistema', 'âœ… Constantes carregadas', 'ðŸ“¦ Carregando mÃ³dulos',
+                    'ðŸ” Verificando sessÃ£o', 'ðŸ“Š SessÃ£o encontrada', 'ðŸ”’ Sistema de shutdown',
+                    'ðŸ¢ Inicializando sistema', 'â„¹ï¸ Display tÃ©rmico atualizado',
+                    'ðŸ”¥ [THERMAL]', '[THERMAL] Iniciando cÃ¡lculos', '[THERMAL] Ganhos calculados',
                     '[THERMAL] Totais para', '[THERMAL] Tentando atualizar',
-                    
-                    // Capacity calculator
-                    '[CAPACITY] Salvando dados', '[CAPACITY] Obras carregadas', '[CAPACITY] Sala ainda não salva',
-                    
-                    // Data collection
-                    '📝 [COLLECT] Coletando inputs', '🎯 [COLLECT] Estado da pressurização',
-                    '✅ [COLLECT] dados coletados', '✅ [FIND] Seção encontrada',
-                    
-                    // Room verification
-                    '🔍 VERIFICAÇÃO COMPLETA DA SALA', '📊 Título: ✅ Encontrado',
-                    '🎉 TODOS OS ELEMENTOS ENCONTRADOS',
-                    
-                    // Machines
-                    '✅ Máquina adicionada à sala', '🔍 Procurando máquinas após clique',
-                    '🖊️ Preenchendo campos', '🔧 Encontradas máquinas', '🔧 Preenchendo apenas a PRIMEIRA',
-                    '🔧 Preenchendo máquina', '✅ Tipo de máquina selecionado', '✅ Capacidade selecionada',
-                    '✅ Tensão selecionada', '🎲 Selecionando opções aleatórias', '🔧 Encontrados checkboxes',
-                    '✅ Opção selecionada', '🎲 opções selecionadas aleatoriamente',
-                    
-                    // Obra saving
-                    '💾 Botão Salvar Obra clicado', '🔄 Alterando TODOS os valores', '✅ TODOS os valores alterados',
-                    '💾 Chamando função original', '💾 SALVANDO OBRA pelo ID', '🔍 Buscando obra com retry',
-                    '✅ Obra encontrada na tentativa', '🔒 REFERÊNCIA SALVA', '✅ Obra confirmada no DOM',
-                    '🔨 Construindo dados da obra', '🚨 buildObraData INICIADA', '📦 Construindo dados da obra',
-                    
-                    // Empresa data extraction
-                    '🔍 [EXTRACT EMPRESA]', '📋 [EXTRACT EMPRESA]', '✅ [EXTRACT EMPRESA]',
-                    '🏢 [EXTRACT EMPRESA]', '🔢 [EXTRACT EMPRESA]', '🎯 [EXTRACT EMPRESA]',
-                    '📅 [EXTRACT EMPRESA]',
-                    
-                    // Project and room data
-                    '🔍 Encontrados projetos', '📝 Processando projeto', '🔍 Encontradas salas',
-                    '🔍 Extraindo dados da sala', '📝 Inputs de climatização', '🔧 Extraindo dados da máquina',
-                    '✅ Máquina extraída', '🤖 máquina(s) extraída(s)', '❄️ Dados de capacidade',
-                    '🔥 ganhos térmicos', '⚙️ opções de instalação', '📊 Dados extraídos da sala',
-                    '✅ Projeto processado', '✅ Projeto adicionado à obra', '📦 Dados da obra construídos',
-                    
-                    // Obra persistence
-                    '🔍 VERIFICAÇÃO FINAL', '🔍 VERIFICAÇÃO DE OBRA MELHORADA', '🆕 SALVANDO COMO NOVA OBRA',
-                    '📤 SALVANDO NOVA OBRA', '📝 Adicionando obra à sessão', '✅ NOVA OBRA SALVA',
-                    '✅ Obra confirmada no DOM', '🔄 Atualizando botão da obra', '✅ Botão atualizado para',
-                    
-                    // Header updates
-                    '🔄 [HEADER] Chamando', '🔄 [HEADER] Iniciando', '🔍 [HEADER] Extraindo',
-                    '📊 [HEADER] Dados extraídos', '🎨 [HEADER] Chamando', '🔧 Inicializando tooltip',
-                    '✅ Tooltip inicializado', '✅ Header da obra atualizado', '✅ [EMPRESA] Interface atualizada',
-                    '✅ [HEADER] Header atualizado', '✅ OBRA SALVA/ATUALIZADA',
-                    
-                    // Misc
-                    '🐭 Escondendo', '🔄 Backup alterado no form'
+                    '[CAPACITY] Salvando dados', '[CAPACITY] Obras carregadas', '[CAPACITY] Sala ainda nÃ£o salva',
+                    'ðŸ“ [COLLECT] Coletando inputs', 'ðŸŽ¯ [COLLECT] Estado da pressurizaÃ§Ã£o',
+                    'âœ… [COLLECT] dados coletados', 'âœ… [FIND] SeÃ§Ã£o encontrada',
+                    'ðŸ” VERIFICAÃ‡ÃƒO COMPLETA DA SALA', 'ðŸ“Š TÃ­tulo: âœ… Encontrado',
+                    'ðŸŽ‰ TODOS OS ELEMENTOS ENCONTRADOS',
+                    'âœ… MÃ¡quina adicionada Ã  sala', 'ðŸ” Procurando mÃ¡quinas apÃ³s clique',
+                    'ðŸ–Šï¸ Preenchendo campos', 'ðŸ”§ Encontradas mÃ¡quinas', 'ðŸ”§ Preenchendo apenas a PRIMEIRA',
+                    'ðŸ”§ Preenchendo mÃ¡quina', 'âœ… Tipo de mÃ¡quina selecionado', 'âœ… Capacidade selecionada',
+                    'âœ… TensÃ£o selecionada', 'ðŸŽ² Selecionando opÃ§Ãµes aleatÃ³rias', 'ðŸ”§ Encontrados checkboxes',
+                    'âœ… OpÃ§Ã£o selecionada', 'ðŸŽ² opÃ§Ãµes selecionadas aleatoriamente',
+                    'ðŸ’¾ BotÃ£o Salvar Obra clicado', ' Alterando TODOS os valores', 'âœ… TODOS os valores alterados',
+                    'ðŸ’¾ Chamando funÃ§Ã£o original', 'ðŸ’¾ SALVANDO OBRA pelo ID', 'ðŸ” Buscando obra com retry',
+                    'âœ… Obra encontrada na tentativa', 'ðŸ”’ REFERÃŠNCIA SALVA', 'âœ… Obra confirmada no DOM',
+                    'ðŸ”¨ Construindo dados da obra', 'ðŸš¨ buildObraData INICIADA', 'ðŸ“¦ Construindo dados da obra',
+                    'ðŸ” [EXTRACT EMPRESA]', 'ðŸ“‹ [EXTRACT EMPRESA]', 'âœ… [EXTRACT EMPRESA]',
+                    'ðŸ¢ [EXTRACT EMPRESA]', 'ðŸ”¢ [EXTRACT EMPRESA]', 'ðŸŽ¯ [EXTRACT EMPRESA]',
+                    'ðŸ“… [EXTRACT EMPRESA]',
+                    'ðŸ” Encontrados projetos', 'ðŸ“ Processando projeto', 'ðŸ” Encontradas salas',
+                    'ðŸ” Extraindo dados da sala', 'ðŸ“ Inputs de climatizaÃ§Ã£o', 'ðŸ”§ Extraindo dados da mÃ¡quina',
+                    'âœ… MÃ¡quina extraÃ­da', 'ðŸ¤– mÃ¡quina(s) extraÃ­da(s)', 'â„ï¸ Dados de capacidade',
+                    'ðŸ”¥ ganhos tÃ©rmicos', 'âš™ï¸ opÃ§Ãµes de instalaÃ§Ã£o', 'ðŸ“Š Dados extraÃ­dos da sala',
+                    'âœ… Projeto processado', 'âœ… Projeto adicionado Ã  obra', 'ðŸ“¦ Dados da obra construÃ­dos',
+                    'ðŸ” VERIFICAÃ‡ÃƒO FINAL', 'ðŸ” VERIFICAÃ‡ÃƒO DE OBRA MELHORADA', 'ðŸ†• SALVANDO COMO NOVA OBRA',
+                    'ðŸ“¤ SALVANDO NOVA OBRA', 'ðŸ“ Adicionando obra Ã  sessÃ£o', 'âœ… NOVA OBRA SALVA',
+                    'âœ… Obra confirmada no DOM', ' Atualizando botÃ£o da obra', 'âœ… BotÃ£o atualizado para',
+                    ' [HEADER] Chamando', ' [HEADER] Iniciando', 'ðŸ” [HEADER] Extraindo',
+                    'ðŸ“Š [HEADER] Dados extraÃ­dos', 'ðŸŽ¨ [HEADER] Chamando', 'ðŸ”§ Inicializando tooltip',
+                    'âœ… Tooltip inicializado', 'âœ… Header da obra atualizado', 'âœ… [EMPRESA] Interface atualizada',
+                    'âœ… [HEADER] Header atualizado', 'âœ… OBRA SALVA/ATUALIZADA',
+                    'ðŸ­ Escondendo', ' Backup alterado no form'
                 ]
             };
-            
-            // Salvar console original
+
             this.originalConsole = {
                 log: console.log,
                 warn: console.warn,
@@ -101,56 +87,55 @@ export function createSmartLogger() {
                 info: console.info,
                 debug: console.debug
             };
-            
+
             this.initialize();
         }
-        
+
         initialize() {
             this.interceptConsole();
-            
-            // ✅ MOSTRAR COMANDOS COM PRIORIDADE MÁXIMA (nunca filtrar)
-            this.showLoggerCommands();
+            this.registerLoggerCommands();
+
+            if (this.config.announceCommands) {
+                this.showLoggerCommands();
+            }
         }
-        
-        /**
-         * 🎯 INTERCEPTA console.log GLOBALMENTE
-         */
+
         interceptConsole() {
             const self = this;
-            
-            console.log = function(...args) {
+
+            console.log = function (...args) {
                 if (!self.config.enabled) {
-                    self.originalConsole.log(...args); // Mostra tudo se desativado
+                    self.originalConsole.log(...args);
                     return;
                 }
                 self.processLog('INFO', args);
             };
-            
-            console.info = function(...args) {
+
+            console.info = function (...args) {
                 if (!self.config.enabled) {
                     self.originalConsole.info(...args);
                     return;
                 }
                 self.processLog('INFO', args);
             };
-            
-            console.warn = function(...args) {
+
+            console.warn = function (...args) {
                 if (!self.config.enabled) {
                     self.originalConsole.warn(...args);
                     return;
                 }
                 self.processLog('WARN', args);
             };
-            
-            console.error = function(...args) {
+
+            console.error = function (...args) {
                 if (!self.config.enabled) {
                     self.originalConsole.error(...args);
                     return;
                 }
                 self.processLog('ERROR', args);
             };
-            
-            console.debug = function(...args) {
+
+            console.debug = function (...args) {
                 if (!self.config.enabled) {
                     self.originalConsole.debug(...args);
                     return;
@@ -158,129 +143,149 @@ export function createSmartLogger() {
                 self.processLog('DEBUG', args);
             };
         }
-        
-        /**
-         * 🎯 Processa cada log automaticamente
-         */
+
         processLog(level, args) {
-            const message = args.map(arg => 
+            const message = args.map((arg) =>
                 typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
             ).join(' ');
-            
-            // 🚫 Pular logs silenciados
+
             if (this.shouldSilence(message)) {
                 return;
             }
-            
-            // 📊 Mostrar apenas logs importantes
-            if (this.shouldShow(level)) {
-                const icon = this.getIcon(level);
-                const method = level === 'INFO' ? 'log' : level.toLowerCase();
-                this.originalConsole[method](icon, ...args);
+
+            if (!this.shouldShow(level)) {
+                return;
             }
+
+            const icon = this.getIcon(level);
+            const method = level === 'INFO' ? 'log' : level.toLowerCase();
+            this.originalConsole[method](icon, ...args);
         }
-        
-        /**
-         * 🚫 Verifica se deve silenciar a mensagem
-         */
+
         shouldSilence(message) {
-            return this.config.silentPatterns.some(pattern => message.includes(pattern));
+            return this.config.silentPatterns.some((pattern) => message.includes(pattern));
         }
-        
-        /**
-         * 📊 Verifica se deve mostrar baseado no nível
-         */
+
         shouldShow(level) {
             return this.levels[level] <= this.levels[this.config.globalLevel];
         }
-        
-        /**
-         * 🎯 Retorna ícone para o nível
-         */
+
         getIcon(level) {
-            const icons = { 
-                ERROR: '❌', 
-                WARN: '⚠️', 
-                INFO: 'ℹ️', 
-                DEBUG: '🔍'
+            const icons = {
+                ERROR: 'X',
+                WARN: '!',
+                INFO: 'i',
+                DEBUG: '>'
             };
-            return icons[level] || '💬';
+
+            return icons[level] || '-';
         }
-        
-        /**
-         * 🔥 MOSTRAR COMANDOS COM PRIORIDADE MÁXIMA
-         * Nunca é filtrado - sempre aparece
-         */
+
+        defineHiddenGlobal(name, value) {
+            if (typeof window === 'undefined') {
+                return;
+            }
+
+            Object.defineProperty(window, name, {
+                value,
+                configurable: true,
+                writable: true,
+                enumerable: false
+            });
+        }
+
+        toggleFiltering(enable = null) {
+            if (enable === null) {
+                this.config.enabled = !this.config.enabled;
+            } else {
+                this.config.enabled = Boolean(enable);
+            }
+
+            if (this.isClientMode) {
+                return this.config.enabled;
+            }
+
+            const status = this.config.enabled ? 'ATIVADO' : 'DESATIVADO';
+            const behavior = this.config.enabled ? 'filtrados' : 'mostrados';
+            this.originalConsole.log(
+                `%cLogger ${status} - logs serao ${behavior}`,
+                'color: #ffffff; background: #1976d2; padding: 4px 8px; border-radius: 4px; font-weight: bold;'
+            );
+
+            return this.config.enabled;
+        }
+
+        getStatus() {
+            const status = {
+                enabled: this.config.enabled,
+                level: this.config.globalLevel,
+                filteredPatterns: this.config.silentPatterns.length,
+                mode: this.isClientMode ? 'client-stealth' : 'admin'
+            };
+
+            if (!this.isClientMode) {
+                this.originalConsole.log('%cLogger status:', 'color: #1976d2; font-weight: bold;', status);
+            }
+
+            return status;
+        }
+
+        restoreConsole() {
+            console.log = this.originalConsole.log;
+            console.warn = this.originalConsole.warn;
+            console.error = this.originalConsole.error;
+            console.info = this.originalConsole.info;
+            console.debug = this.originalConsole.debug;
+
+            if (!this.isClientMode) {
+                this.originalConsole.log(
+                    '%cConsole original restaurado',
+                    'color: #ffffff; background: #d32f2f; padding: 4px 8px; border-radius: 4px; font-weight: bold;'
+                );
+            }
+        }
+
+        registerLoggerCommands() {
+            const api = {
+                toggle: (enable = null) => this.toggleFiltering(enable),
+                on: () => this.toggleFiltering(true),
+                off: () => this.toggleFiltering(false),
+                status: () => this.getStatus(),
+                restore: () => this.restoreConsole(),
+                instance: this
+            };
+
+            this.defineHiddenGlobal('__esiLogger', api);
+
+            const debugNamespace = window.__esiDebug && typeof window.__esiDebug === 'object'
+                ? { ...window.__esiDebug, logger: api }
+                : { logger: api };
+
+            this.defineHiddenGlobal('__esiDebug', debugNamespace);
+            this.defineHiddenGlobal('toggleLogger', api.toggle);
+            this.defineHiddenGlobal('loggerOn', api.on);
+            this.defineHiddenGlobal('loggerOff', api.off);
+            this.defineHiddenGlobal('getLoggerStatus', api.status);
+            this.defineHiddenGlobal('restoreOriginalConsole', api.restore);
+        }
+
         showLoggerCommands() {
-            const self = this;
-            
-            // ✅ Função para ativar/desativar logs
-            window.toggleLogger = function(enable = null) {
-                if (enable === null) {
-                    // Alternar estado atual
-                    self.config.enabled = !self.config.enabled;
-                } else {
-                    // Definir estado específico
-                    self.config.enabled = Boolean(enable);
-                }
-                
-                const status = self.config.enabled ? '✅ ATIVADO' : '❌ DESATIVADO';
-                const message = `🔧 Logger ${status} - Todos os logs serão ${self.config.enabled ? 'filtrados' : 'mostrados'}`;
-                
-                // ✅ MOSTRAR STATUS SEMPRE (nunca filtrar)
-                self.originalConsole.log('%c' + message, 
-                    'color: #ffffff; background: #1976d2; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
-                
-                return self.config.enabled;
-            };
-            
-            // ✅ Função para ver status
-            window.getLoggerStatus = function() {
-                const status = {
-                    enabled: self.config.enabled,
-                    level: self.config.globalLevel,
-                    filteredPatterns: self.config.silentPatterns.length
-                };
-                
-                // ✅ MOSTRAR STATUS SEMPRE (nunca filtrar)
-                self.originalConsole.log('%c🔧 Status do Logger:', 
-                    'color: #1976d2; font-weight: bold;', status);
-                
-                return status;
-            };
-            
-            // ✅ Função para restaurar console original
-            window.restoreOriginalConsole = function() {
-                console.log = self.originalConsole.log;
-                console.warn = self.originalConsole.warn;
-                console.error = self.originalConsole.error;
-                console.info = self.originalConsole.info;
-                console.debug = self.originalConsole.debug;
-                
-                // ✅ MOSTRAR MENSAGEM SEMPRE (nunca filtrar)
-                self.originalConsole.log('%c🔧 Console original restaurado - filtros removidos', 
-                    'color: #ffffff; background: #d32f2f; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
-            };
-            
-            // ✅ Adicionar atalhos rápidos
-            window.loggerOn = () => window.toggleLogger(true);
-            window.loggerOff = () => window.toggleLogger(false);
-            
-            // ✅ MOSTRAR COMANDOS INICIAIS COM PRIORIDADE MÁXIMA
             setTimeout(() => {
-                self.originalConsole.log('%c🔧 FILTRO DE LOGS ATIVADO', 
-                    'color: #ffffff; background: #388e3c; padding: 3px 5px; border-radius: 4px; font-size: 14px;');
-                
-                self.originalConsole.log('%cComandos disponíveis:', 'color: #1976d2; font-weight: bold;');
-                self.originalConsole.log('   - toggleLogger()       - Alternar filtro de logs');
-                self.originalConsole.log('   - loggerOn()           - Ativar filtro');
-                self.originalConsole.log('   - loggerOff()          - Desativar filtro (mostrar tudo)');
-                self.originalConsole.log('   - getLoggerStatus()    - Ver status atual');
-                self.originalConsole.log('   - restoreOriginalConsole() - Remover filtros completamente');
-                self.originalConsole.log('');
+                this.originalConsole.log(
+                    '%cFILTRO DE LOGS ATIVADO',
+                    'color: #ffffff; background: #388e3c; padding: 3px 5px; border-radius: 4px; font-size: 14px;'
+                );
+                this.originalConsole.log('%cComandos disponiveis:', 'color: #1976d2; font-weight: bold;');
+                this.originalConsole.log('   - toggleLogger()       - Alternar filtro de logs');
+                this.originalConsole.log('   - loggerOn()           - Ativar filtro');
+                this.originalConsole.log('   - loggerOff()          - Desativar filtro (mostrar tudo)');
+                this.originalConsole.log('   - getLoggerStatus()    - Ver status atual');
+                this.originalConsole.log('   - restoreOriginalConsole() - Remover filtros completamente');
+                this.originalConsole.log('   - __esiLogger.status() - API discreta');
+                this.originalConsole.log('');
             }, 100);
         }
     }
 
-    return new SmartLogger();
+    return new SmartLogger(appConfig);
 }

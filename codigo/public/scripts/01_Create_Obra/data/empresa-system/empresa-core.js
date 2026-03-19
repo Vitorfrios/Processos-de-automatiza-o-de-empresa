@@ -60,6 +60,7 @@ function limparCacheEmpresas() {
 
 import { showSystemStatus } from '../../ui/components/status.js';
 import { normalizeEmpresa, normalizeEmpresas } from '../../core/shared-utils.js';
+import { invalidateRuntimeBootstrap } from '../../core/runtime-data.js';
 
 export class EmpresaCadastroInline {
     constructor() {
@@ -973,6 +974,7 @@ export class EmpresaCadastroInline {
                 throw new Error('Erro ao salvar empresa');
             }
 
+            invalidateRuntimeBootstrap();
             showSystemStatus(`Empresa ${sigla} - ${nome} cadastrada com sucesso!`, 'success');
             return true;
 
@@ -1627,6 +1629,161 @@ function atualizarTooltipEmpresa(obraId) {
     
     span.setAttribute('data-tooltip', criarTooltipEmpresa(dados));
 }
+
+EmpresaCadastroInline.prototype.obterObrasDoDOMParaNumeracao = function() {
+    return Array.from(document.querySelectorAll('.obra-block')).map((obraElement) => {
+        const titulo = obraElement.querySelector('.obra-title')?.textContent?.trim() || '';
+        const identificador = obraElement.dataset.identificadorObra ||
+            obraElement.querySelector('.empresa-identifier-display')?.textContent?.trim() ||
+            titulo;
+
+        const matchTitulo = identificador.match(/^([A-Za-z0-9]+)-(\d+)$/);
+        const siglaDoTitulo = matchTitulo ? matchTitulo[1].toUpperCase() : '';
+        const numeroDoTitulo = matchTitulo ? parseInt(matchTitulo[2], 10) : null;
+
+        return {
+            id: obraElement.dataset.obraId || '',
+            empresaSigla: obraElement.dataset.empresaSigla || obraElement.dataset.empresaCodigo || siglaDoTitulo,
+            empresaCodigo: obraElement.dataset.empresaCodigo || obraElement.dataset.empresaSigla || siglaDoTitulo,
+            empresa_id: obraElement.dataset.empresaId || obraElement.dataset.empresa_id || '',
+            numeroClienteFinal: obraElement.dataset.numeroClienteFinal
+                ? parseInt(obraElement.dataset.numeroClienteFinal, 10)
+                : numeroDoTitulo,
+            idGerado: obraElement.dataset.idGerado || '',
+            identificadorObra: obraElement.dataset.identificadorObra || identificador
+        };
+    });
+};
+
+EmpresaCadastroInline.prototype.obterObrasDaEmpresaParaNumeracao = function(sigla, obraId = null) {
+    const obrasCombinadas = [...this.obrasExistentes];
+    const obrasNoDOM = this.obterObrasDoDOMParaNumeracao();
+
+    obrasNoDOM.forEach((obraDOM) => {
+        const indiceExistente = obrasCombinadas.findIndex((obraCache) =>
+            String(obraCache.id || '') === String(obraDOM.id || '')
+        );
+
+        if (indiceExistente >= 0) {
+            obrasCombinadas[indiceExistente] = {
+                ...obrasCombinadas[indiceExistente],
+                ...obraDOM
+            };
+            return;
+        }
+
+        obrasCombinadas.push(obraDOM);
+    });
+
+    return obrasCombinadas.filter((obra) => {
+        if (obraId && String(obra.id || '') === String(obraId)) {
+            return false;
+        }
+
+        return obra.empresaSigla === sigla ||
+            obra.empresaCodigo === sigla ||
+            obra.empresa_id === sigla ||
+            (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`)) ||
+            (obra.identificadorObra && obra.identificadorObra.startsWith(`${sigla}-`));
+    });
+};
+
+EmpresaCadastroInline.prototype.sincronizarObraExistenteParaNumeracao = function(obraData) {
+    if (!obraData?.id) {
+        return;
+    }
+
+    const indiceExistente = this.obrasExistentes.findIndex((obra) =>
+        String(obra.id || '') === String(obraData.id || '')
+    );
+
+    if (indiceExistente >= 0) {
+        this.obrasExistentes[indiceExistente] = {
+            ...this.obrasExistentes[indiceExistente],
+            ...obraData
+        };
+        return;
+    }
+
+    this.obrasExistentes.push(obraData);
+};
+
+EmpresaCadastroInline.prototype.calcularNumeroClienteFinal = function(sigla, obraId = null) {
+    try {
+        console.log(`[EMPRESA] Calculando numero para empresa: ${sigla}, obra: ${obraId}`);
+
+        if (!sigla) {
+            console.log('[EMPRESA] Sigla nao fornecida');
+            return 0;
+        }
+
+        const obrasDaEmpresa = this.obterObrasDaEmpresaParaNumeracao(sigla, obraId);
+        console.log(`[EMPRESA] Encontradas ${obrasDaEmpresa.length} obras para ${sigla}`);
+
+        let maiorNumero = 0;
+        obrasDaEmpresa.forEach((obra) => {
+            if (obra.numeroClienteFinal) {
+                const numero = parseInt(obra.numeroClienteFinal, 10);
+                if (!isNaN(numero) && numero > maiorNumero) {
+                    maiorNumero = numero;
+                }
+            }
+
+            if (obra.idGerado) {
+                const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
+                if (match) {
+                    const numero = parseInt(match[1], 10);
+                    if (numero > maiorNumero) {
+                        maiorNumero = numero;
+                    }
+                }
+            }
+        });
+
+        const novoNumero = maiorNumero + 1;
+
+        if (obraId) {
+            const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+            if (obraElement) {
+                obraElement.dataset.empresaSigla = sigla;
+                obraElement.dataset.empresaCodigo = sigla;
+                obraElement.dataset.numeroClienteFinal = String(novoNumero);
+                obraElement.dataset.idGerado = `obra_${sigla}_${novoNumero}`;
+                obraElement.dataset.identificadorObra = `${sigla}-${novoNumero}`;
+            }
+
+            this.atualizarCampoNumeroCliente(obraId, novoNumero);
+
+            if (obraElement) {
+                const dados = {
+                    empresaSigla: sigla,
+                    empresaNome: obraElement.dataset.empresaNome || '',
+                    numeroClienteFinal: novoNumero,
+                    clienteFinal: obraElement.dataset.clienteFinal,
+                    codigoCliente: obraElement.dataset.codigoCliente,
+                    dataCadastro: obraElement.dataset.dataCadastro,
+                    orcamentistaResponsavel: obraElement.dataset.orcamentistaResponsavel
+                };
+                this.atualizarHeaderObra(obraElement, dados);
+            }
+
+            this.sincronizarObraExistenteParaNumeracao({
+                id: obraId,
+                empresaSigla: sigla,
+                empresaCodigo: sigla,
+                empresa_id: obraElement?.dataset.empresaId || obraElement?.dataset.empresa_id || '',
+                numeroClienteFinal: novoNumero,
+                idGerado: `obra_${sigla}_${novoNumero}`,
+                identificadorObra: `${sigla}-${novoNumero}`
+            });
+        }
+
+        return novoNumero;
+    } catch (error) {
+        console.error('[EMPRESA] Erro ao calcular numero do cliente final:', error);
+        return 1;
+    }
+};
 
 
 export {

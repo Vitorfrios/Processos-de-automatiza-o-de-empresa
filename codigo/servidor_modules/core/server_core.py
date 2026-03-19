@@ -13,6 +13,9 @@ import subprocess
 import os
 from pathlib import Path
 
+os.environ.setdefault('PYTHONDONTWRITEBYTECODE', '1')
+sys.dont_write_bytecode = True
+
 class ServerCore:
     """NÃºcleo principal do servidor com todas as funcionalidades essenciais"""
     

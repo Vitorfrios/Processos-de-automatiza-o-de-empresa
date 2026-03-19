@@ -4,104 +4,16 @@ import {
     refreshAppConfigFromSession
 } from './config.js';
 
-const AUTH_ENDPOINTS = [
-    '/api/empresas/all',
-    '/api/dados/empresas'
-];
+const CLIENT_AUTH_ENDPOINT = '/api/client/login';
+const ADMIN_AUTH_ENDPOINT = '/api/admin/login';
+const ADMIN_REDIRECT_PATH = '/pages/obras/create.html';
 
-function toIsoString(dateValue) {
-    if (!dateValue) return null;
-
-    const date = new Date(dateValue);
-    if (Number.isNaN(date.getTime())) {
-        return null;
-    }
-
-    return date.toISOString();
-}
-
-function resolveExpiration(credenciais = {}) {
-    const explicitExpiration = toIsoString(
-        credenciais.expiracao || credenciais.expiresAt || credenciais.expiration
-    );
-
-    if (explicitExpiration) {
-        return explicitExpiration;
-    }
-
-    const createdAt = toIsoString(credenciais.data_criacao || credenciais.createdAt);
-    const tempoUso = Number.parseInt(
-        credenciais.tempoUso || credenciais.validadeDias || credenciais.validade,
-        10
-    );
-
-    if (!createdAt || !Number.isFinite(tempoUso)) {
-        return null;
-    }
-
-    const expirationDate = new Date(createdAt);
-    expirationDate.setDate(expirationDate.getDate() + tempoUso);
-
-    return expirationDate.toISOString();
-}
-
-function normalizeEmpresaAuthRecord(rawEmpresa) {
-    if (!rawEmpresa || typeof rawEmpresa !== 'object') {
-        return null;
-    }
-
-    const credenciais = rawEmpresa.credenciais;
-    if (!credenciais) {
-        return null;
-    }
-
-    const codigo = (rawEmpresa.codigo || rawEmpresa.sigla || '').trim();
-    const nome = (rawEmpresa.nome || '').trim();
-
+function buildClientSession(empresaRecord = {}) {
     return {
-        codigo,
-        sigla: codigo,
-        nome,
-        usuario: (credenciais.usuario || '').trim(),
-        token: (credenciais.token || '').trim(),
-        expiracao: resolveExpiration(credenciais),
-        credenciais
-    };
-}
-
-async function fetchEmpresasForAuth() {
-    let lastError = null;
-
-    for (const endpoint of AUTH_ENDPOINTS) {
-        try {
-            const response = await fetch(endpoint);
-
-            if (!response.ok) {
-                lastError = new Error(`Falha ao carregar empresas em ${endpoint}: ${response.status}`);
-                continue;
-            }
-
-            const payload = await response.json();
-            const empresas = Array.isArray(payload.empresas) ? payload.empresas : [];
-
-            return empresas
-                .map(normalizeEmpresaAuthRecord)
-                .filter((empresa) => empresa && empresa.codigo && empresa.usuario && empresa.token);
-        } catch (error) {
-            lastError = error;
-        }
-    }
-
-    throw lastError || new Error('Nao foi possivel carregar empresas para autenticacao.');
-}
-
-function buildClientSession(empresaRecord) {
-    return {
-        empresaCodigo: empresaRecord.codigo,
-        empresaNome: empresaRecord.nome,
+        empresaCodigo: empresaRecord.empresaCodigo || empresaRecord.codigo || '',
+        empresaNome: empresaRecord.empresaNome || empresaRecord.nome || '',
         usuario: empresaRecord.usuario,
-        token: empresaRecord.token,
-        expiraEm: empresaRecord.expiracao
+        expiraEm: empresaRecord.expiraEm || empresaRecord.expiracao || null
     };
 }
 
@@ -109,15 +21,26 @@ function getAuthStorageKey() {
     return APP_CONFIG.auth?.storageKey || CLIENT_SESSION_STORAGE_KEY;
 }
 
+function getAuthStorage() {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    return APP_CONFIG.auth?.storageType === 'session'
+        ? window.sessionStorage
+        : window.localStorage;
+}
+
 function persistClientSession(session) {
-    window.localStorage.setItem(getAuthStorageKey(), JSON.stringify(session));
+    const storage = getAuthStorage();
+    storage?.setItem(getAuthStorageKey(), JSON.stringify(session));
     refreshAppConfigFromSession();
     return session;
 }
 
 function getClientSession() {
     try {
-        const rawSession = window.localStorage.getItem(getAuthStorageKey());
+        const rawSession = getAuthStorage()?.getItem(getAuthStorageKey());
         if (!rawSession) {
             return null;
         }
@@ -149,7 +72,7 @@ function getClientSession() {
 }
 
 function clearClientSession() {
-    window.localStorage.removeItem(getAuthStorageKey());
+    getAuthStorage()?.removeItem(getAuthStorageKey());
     refreshAppConfigFromSession();
 }
 
@@ -194,39 +117,105 @@ async function loginClient({ usuario, token }) {
         };
     }
 
-    const empresas = await fetchEmpresasForAuth();
-    const empresa = empresas.find(
-        (candidate) =>
-            candidate.usuario.toLowerCase() === normalizedUser &&
-            candidate.token === normalizedToken
-    );
+    let response;
+    let payload = null;
 
-    if (!empresa) {
-        const empresaByUser = empresas.find(
-            (candidate) => candidate.usuario.toLowerCase() === normalizedUser
-        );
-
+    try {
+        response = await fetch(CLIENT_AUTH_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                usuario: normalizedUser,
+                token: normalizedToken
+            })
+        });
+    } catch (error) {
         return {
             success: false,
-            reason: empresaByUser ? 'invalid_token' : 'user_not_found',
-            message: empresaByUser ? 'Token invalido.' : 'Usuario nao encontrado.'
+            reason: 'network_error',
+            message: 'Nao foi possivel validar o acesso.'
         };
     }
 
-    const tokenValidation = validateToken(empresa);
-    if (!tokenValidation.valid) {
+    try {
+        payload = await response.json();
+    } catch (error) {
+        payload = null;
+    }
+
+    if (!response.ok || !payload?.success) {
         return {
             success: false,
-            reason: tokenValidation.reason,
-            message: 'Token expirado. Solicite um novo acesso.'
+            reason: payload?.reason || 'auth_error',
+            message: payload?.message || payload?.error || 'Falha ao autenticar.'
         };
     }
 
-    const session = persistClientSession(buildClientSession(empresa));
+    const session = persistClientSession(buildClientSession(payload.session));
 
     return {
         success: true,
         session
+    };
+}
+
+async function loginAdmin({ usuario, token }) {
+    const normalizedUser = (usuario || '').trim();
+    const normalizedToken = (token || '').trim();
+
+    if (!normalizedUser || !normalizedToken) {
+        return {
+            success: false,
+            reason: 'missing_credentials',
+            message: 'Usuario e senha sao obrigatorios.'
+        };
+    }
+
+    let response;
+    let payload = null;
+
+    try {
+        response = await fetch(ADMIN_AUTH_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                usuario: normalizedUser,
+                token: normalizedToken
+            })
+        });
+    } catch (error) {
+        return {
+            success: false,
+            reason: 'network_error',
+            message: 'Nao foi possivel validar o acesso administrativo.'
+        };
+    }
+
+    try {
+        payload = await response.json();
+    } catch (error) {
+        payload = null;
+    }
+
+    if (!response.ok || !payload?.success) {
+        return {
+            success: false,
+            reason: payload?.reason || 'invalid_credentials',
+            message: payload?.error || 'Usuario ou senha de administrador invalidos.'
+        };
+    }
+
+    return {
+        success: true,
+        session: payload.session || {
+            usuario: normalizedUser,
+            perfil: 'ADM'
+        },
+        redirectTo: payload.redirectTo || ADMIN_REDIRECT_PATH
     };
 }
 
@@ -251,6 +240,10 @@ function redirectToClientApp() {
     if (redirectTarget) {
         window.location.replace(redirectTarget);
     }
+}
+
+function redirectToAdminApp(redirectTo = ADMIN_REDIRECT_PATH) {
+    window.location.replace(redirectTo || ADMIN_REDIRECT_PATH);
 }
 
 function ensureClientAccess({ redirectToLoginPage = true } = {}) {
@@ -308,14 +301,15 @@ if (typeof window !== 'undefined') {
 }
 
 export {
-    fetchEmpresasForAuth,
     getClientSession,
     persistClientSession,
     clearClientSession,
     validateToken,
     loginClient,
+    loginAdmin,
     hasValidClientSession,
     ensureClientAccess,
     redirectToClientApp,
+    redirectToAdminApp,
     logoutClient
 };
