@@ -3,8 +3,50 @@ import { showInfo, showWarning } from '../config/ui.js';
 const ADMIN_OBRAS_FILTER_URL = '/admin/obras/create?filtro=1';
 
 const dashboardState = {
-    initialized: false
+    initialized: false,
+    dataReady: false,
+    renderQueued: false,
+    rendering: false,
+    needsRender: false
 };
+
+function isDashboardTabActive() {
+    const dashboardTab = document.getElementById('dashboardTab');
+    return Boolean(dashboardTab?.classList.contains('active'));
+}
+
+function hasDashboardReadyData() {
+    return dashboardState.dataReady || hasLoadedSystemData(window.systemData);
+}
+
+function canRenderDashboard(force = false) {
+    if (force) {
+        return true;
+    }
+
+    return hasDashboardReadyData() && isDashboardTabActive();
+}
+
+function queueDashboardRender({ force = false } = {}) {
+    dashboardState.needsRender = true;
+
+    if (dashboardState.renderQueued || dashboardState.rendering) {
+        return;
+    }
+
+    dashboardState.renderQueued = true;
+
+    window.requestAnimationFrame(() => {
+        dashboardState.renderQueued = false;
+
+        if (!dashboardState.needsRender) {
+            return;
+        }
+
+        dashboardState.needsRender = false;
+        renderDashboard({ force });
+    });
+}
 
 function formatNumber(value) {
     return new Intl.NumberFormat('pt-BR').format(Number(value || 0));
@@ -813,9 +855,20 @@ function renderTimelineWidget(stats) {
     `;
 }
 
-export async function renderDashboard() {
+export async function renderDashboard({ force = false } = {}) {
     const container = document.getElementById('dashboardContent');
     if (!container) return;
+
+    if (!canRenderDashboard(force)) {
+        return;
+    }
+
+    if (dashboardState.rendering) {
+        dashboardState.needsRender = true;
+        return;
+    }
+
+    dashboardState.rendering = true;
 
     container.innerHTML = '<div class="dashboard-loading">Carregando dados...</div>';
 
@@ -868,6 +921,12 @@ export async function renderDashboard() {
         console.error(' Erro ao renderizar dashboard:', error);
         container.innerHTML = '<div class="empty-state">Nao foi possivel carregar o dashboard.</div>';
         showWarning('Erro ao carregar dados do dashboard');
+    } finally {
+        dashboardState.rendering = false;
+
+        if (dashboardState.needsRender) {
+            queueDashboardRender({ force });
+        }
     }
 }
 
@@ -878,12 +937,16 @@ export function initializeDashboard() {
     window.openDashboardObraModal = openDashboardObraModal;
     window.closeDashboardObraModal = closeDashboardObraModal;
 
-    renderDashboard();
+    if (hasLoadedSystemData(window.systemData)) {
+        dashboardState.dataReady = true;
+    }
+
+    queueDashboardRender();
 
     const refreshBtn = document.getElementById('refreshDashboardBtn');
     if (refreshBtn) {
         refreshBtn.onclick = () => {
-            renderDashboard();
+            queueDashboardRender({ force: true });
             showInfo('Dashboard atualizado');
         };
     }
@@ -892,9 +955,14 @@ export function initializeDashboard() {
         return;
     }
 
-    window.addEventListener('dataLoaded', renderDashboard);
-    window.addEventListener('dataImported', renderDashboard);
-    window.addEventListener('dataApplied', renderDashboard);
+    const handleDashboardDataUpdate = () => {
+        dashboardState.dataReady = true;
+        queueDashboardRender();
+    };
+
+    window.addEventListener('dataLoaded', handleDashboardDataUpdate);
+    window.addEventListener('dataImported', handleDashboardDataUpdate);
+    window.addEventListener('dataApplied', handleDashboardDataUpdate);
 
     dashboardState.initialized = true;
 }
