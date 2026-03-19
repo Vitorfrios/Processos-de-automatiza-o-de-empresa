@@ -17,14 +17,14 @@
                 alt="Logo Esquerda" class="logo">
         </div>
         <div class="header-center">
-            <h1>EdiÃ§Ã£o de Dados do Sistema</h1>
+            <h1>Edição de Dados do Sistema</h1>
         </div>
         <button class="shutdown-btn" onclick="shutdownManual()" title="Encerrar Servidor">
             Encerrar Servidor
         </button>
     </header>
 
-    <!-- Barra de NavegaÃ§Ã£o -->
+    <!-- Barra de Navegação -->
     <nav class="navbar">
         <ul class="nav-list">
             <li><a href="/admin/obras/create" id="nav-criar-obras">Criar Obras</a></li>
@@ -37,7 +37,7 @@
         <div class="toolbar">
             <div class="toolbar-left">
 
-                <!-- BotÃµes simples -->
+                <!-- Botões simples -->
                 <button class="btn btn-primary" onclick="loadData()">
                     <i class="icon-refresh"></i> Carregar Dados
                 </button>
@@ -51,10 +51,10 @@
         </div>
 
 
-        <!-- Tabs de NavegaÃ§Ã£o -->
+        <!-- Tabs de Navegação -->
         <div class="tabs">
             <button class="tab active" onclick="switchTab('constants')">Constantes</button>
-            <button class="tab" onclick="switchTab('machines')">MÃ¡quinas</button>
+            <button class="tab" onclick="switchTab('machines')">Máquinas</button>
             <button class="tab" onclick="switchTab('materials')">Materiais</button>
             <button class="tab" onclick="switchTab('empresas')">Empresas</button>
             <button class="tab" onclick="switchTab('acessories')">Acessorios</button>
@@ -63,7 +63,7 @@
             <button class="tab" onclick="switchTab('raw')">JSON Bruto</button>
         </div>
 
-        <!-- ConteÃºdo das Tabs -->
+        <!-- Conteúdo das Tabs -->
         <div id="tabContent">
             <!-- Tab Constantes -->
             <div id="constantsTab" class="tab-pane active">
@@ -75,37 +75,37 @@
                         <thead>
                             <tr>
                                 <th width="30%">Nome</th>
-                                <th width="40%">DescriÃ§Ã£o</th>
+                                <th width="40%">Descrição</th>
                                 <th width="20%">Valor</th>
                             </tr>
                         </thead>
                         <tbody id="constantsTableBody">
-                            <!-- Dados serÃ£o carregados aqui -->
+                            <!-- Dados serão carregados aqui -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Tab MÃ¡quinas -->
+            <!-- Tab Máquinas -->
             <div id="machinesTab" class="tab-pane">
                 <div class="tab-header">
-                    <h2><i class="icon-machine"></i> Tipos de MÃ¡quinas</h2>
+                    <h2><i class="icon-machine"></i> Tipos de Máquinas</h2>
                     <div class="machine-actions">
                         <select id="machineTypeFilter" onchange="filterMachines()">
-                            <option value="">Todas as aplicaÃ§Ãµes</option>
-                            <option value="climatizacao">ClimatizaÃ§Ã£o</option>
-                            <option value="pressurizacao_ventilacao">PressurizaÃ§Ã£o/VentilaÃ§Ã£o</option>
-                            <option value="exaustao_bateria">ExaustÃ£o Sala de Bateria</option>
-                            <option value="exaustao_baia_trafo">ExaustÃ£o Baia de Trafo</option>
+                            <option value="">Todas as aplicações</option>
+                            <option value="climatizacao">Climatização</option>
+                            <option value="pressurizacao_ventilacao">Pressurização/Ventilação</option>
+                            <option value="exaustao_bateria">Exaustão Sala de Bateria</option>
+                            <option value="exaustao_baia_trafo">Exaustão Baia de Trafo</option>
                         </select>
                         <button class="btn btn-small btn-success" onclick="addMachine()">
-                            <i class="icon-add"></i> Nova MÃ¡quina
+                            <i class="icon-add"></i> Nova Máquina
                         </button>
                     </div>
                 </div>
 
                 <div id="machinesList">
-                    <!-- Cards de mÃ¡quinas serÃ£o carregados aqui -->
+                    <!-- Cards de máquinas serão carregados aqui -->
                 </div>
 
                 <div class="machine-detail-view" id="machineDetailView" style="display: none;">
@@ -113,7 +113,7 @@
                         <h3>Editando: <span id="machineDetailTitle">Wall Mounted</span></h3>
                         <div class="detail-header-machine-actions">
                             <button class="btn btn-small btn-warning" onclick="resetMachineChanges()"
-                                title="Descartar alteraÃ§Ãµes">
+                                title="Descartar alterações">
                                 <i class="icon-refresh"></i> Resetar
                             </button>
                             <button class="btn btn-small btn-danger" onclick="closeMachineDetail()">
@@ -122,7 +122,7 @@
                         </div>
                     </div>
                     <div id="machineDetailContent">
-                        <!-- ConteÃºdo dinÃ¢mico da mÃ¡quina -->
+                        <!-- Conteúdo dinâmico da máquina -->
                     </div>
                 </div>
             </div>
@@ -130,20 +130,20 @@
             <!-- Tab Materiais -->
             <div id="materialsTab" class="tab-pane">
                 <div class="tab-header">
-                    <h2><i class="icon-material"></i> Materiais e PreÃ§os</h2>
+                    <h2><i class="icon-material"></i> Materiais e Preços</h2>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th width="25%">Material</th>
-                                <th width="45%">DescriÃ§Ã£o</th>
+                                <th width="45%">Descrição</th>
                                 <th width="15%">Unidade</th>
-                                <th width="15%">PreÃ§o (R$)</th>
+                                <th width="15%">Preço (R$)</th>
                             </tr>
                         </thead>
                         <tbody id="materialsTableBody">
-                            <!-- Dados serÃ£o carregados aqui -->
+                            <!-- Dados serão carregados aqui -->
                         </tbody>
                     </table>
                 </div>
@@ -158,14 +158,14 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th width="15%">CÃ³digo</th>
+                                <th width="15%">Código</th>
                                 <th width="55%">Nome da Empresa</th>
                                 <th width="15%">Credenciais</th>
-                                <th width="15%">AÃ§Ãµes</th>
+                                <th width="15%">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="empresasTableBody">
-                            <!-- Dados serÃ£o carregados aqui -->
+                            <!-- Dados serão carregados aqui -->
                         </tbody>
                     </table>
                 </div>
@@ -178,8 +178,8 @@
                     <div class="actions">
                         <div class="form-inline">
                             <select id="codigoFilter" class="form-control form-control-sm"
-                                onchange="filterAcessorieTable()" title="Filtrar por cÃ³digo">
-                                <option value="">Todos os cÃ³digos</option>
+                                onchange="filterAcessorieTable()" title="Filtrar por código">
+                                <option value="">Todos os códigos</option>
                             </select>
                         </div>
                         <button class="btn btn-primary btn-sm" onclick="addNewAcessorie()"
@@ -190,7 +190,7 @@
                 </div>
 
                 <div class="acessorie-list" id="acessorieList">
-                    <!-- Lista de acessorios serÃ¡ renderizada aqui -->
+                    <!-- Lista de acessorios será renderizada aqui -->
                 </div>
             </div>
 
@@ -209,14 +209,14 @@
                     <table class="data-table-duto">
                         <thead>
                             <tr>
-                                <th width="40%">Tipo / DescriÃ§Ã£o</th>
+                                <th width="40%">Tipo / Descrição</th>
                                 <th width="15%">Valor Base</th>
                                 <th width="20%">Opcionais</th>
-                                <th width="25%">AÃ§Ãµes</th>
+                                <th width="25%">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="dutosTableBody">
-                            <!-- Dados serÃ£o carregados aqui -->
+                            <!-- Dados serão carregados aqui -->
                         </tbody>
                     </table>
                 </div>
@@ -234,14 +234,14 @@
                         </div>
                     </div>
                     <div id="dutoDetailContent">
-                        <!-- ConteÃºdo dinÃ¢mico do duto -->
+                        <!-- Conteúdo dinâmico do duto -->
                     </div>
                 </div>
             </div>
             <!-- Tab Tubos -->
             <div id="tubosTab" class="tab-pane">
                 <div class="tab-header">
-                    <h2><i class="icon-tube"></i> CatÃ¡logo de Tubos</h2>
+                    <h2><i class="icon-tube"></i> Catálogo de Tubos</h2>
                     <div class="tubos-actions">
                         <button class="btn btn-success" onclick="addTubo()">
                             <i class="icon-add"></i> Novo Tubo
@@ -254,13 +254,13 @@
                         <thead>
                             <tr>
                                 <th width="30%">Polegadas</th>
-                                <th width="20%">MilÃ­metros</th>
+                                <th width="20%">Milímetros</th>
                                 <th width="20%">Valor (R$)</th>
-                                <th width="30%">AÃ§Ãµes</th>
+                                <th width="30%">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tubosTableBody">
-                            <!-- Dados serÃ£o carregados aqui -->
+                            <!-- Dados serão carregados aqui -->
                         </tbody>
                     </table>
                 </div>
@@ -280,7 +280,7 @@
                             <i class="icon-validate"></i> Validar
                         </button>
 
-                        <!-- NOVO BOTÃƒO -->
+                        <!-- NOVO BOTÃO -->
                         <button class="btn btn-small btn-success" onclick="applyJSON()">
                             <i class="icon-check"></i> Aplicar JSON
                         </button>
@@ -291,7 +291,7 @@
                 </div>
 
                 <div class="json-container">
-                    <!-- Container do editor e nÃºmeros -->
+                    <!-- Container do editor e números -->
                     <div class="json-scroll-wrapper">
 
 
@@ -306,11 +306,11 @@
 
         </div>
 
-        <!-- Modal para confirmaÃ§Ã£o -->
+        <!-- Modal para confirmação -->
         <div id="confirmationModal" class="modal">
             <div class="modal-content">
-                <h3 id="modalTitle">ConfirmaÃ§Ã£o</h3>
-                <p id="modalMessage">Tem certeza que deseja realizar esta aÃ§Ã£o?</p>
+                <h3 id="modalTitle">Confirmação</h3>
+                <p id="modalMessage">Tem certeza que deseja realizar esta ação?</p>
                 <div class="modal-actions">
                     <button class="btn btn-danger" onclick="confirmAction(true)">Confirmar</button>
                     <button class="btn btn-secondary" onclick="confirmAction(false)">Cancelar</button>
@@ -318,12 +318,12 @@
             </div>
         </div>
 
-        <!-- Modal para ediÃ§Ã£o detalhada -->
+        <!-- Modal para edição detalhada -->
         <div id="editModal" class="modal">
             <div class="modal-content">
                 <h3 id="editModalTitle">Editar Item</h3>
                 <div id="editModalContent">
-                    <!-- ConteÃºdo dinÃ¢mico -->
+                    <!-- Conteúdo dinâmico -->
                 </div>
                 <div class="modal-actions">
                     <button class="btn btn-success" onclick="saveEdit()">Salvar</button>
@@ -336,7 +336,7 @@
     <script type="module" src="/public/scripts/03_Edit_data/main.js"></script>
     <script type="module" src="/public/scripts/01_Create_Obra/main-folder/system-init.js"></script>
     <script>
-        // FunÃ§Ã£o para destacar e travar apenas o clique da pÃ¡gina ativa
+        // Função para destacar e travar apenas o clique da página ativa
         function highlightAndLockActivePage() {
             const currentPath = window.location.pathname.toLowerCase();
             document.querySelectorAll('.nav-list li a').forEach(link => {

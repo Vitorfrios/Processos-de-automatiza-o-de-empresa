@@ -1,6 +1,6 @@
 ﻿"""
 file_utils.py
-UtilitÃ¡rios para manipulaÃ§Ã£o de arquivos e paths
+Utilitários para manipulação de arquivos e paths
 """
 
 import json
@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 
 class FileUtils:
-    """UtilitÃ¡rios para manipulaÃ§Ã£o de arquivos"""
+    """Utilitários para manipulação de arquivos"""
     
     def __init__(self):
         self._project_root = None  # Cache do project root
@@ -20,7 +20,7 @@ class FileUtils:
             
         current_dir = Path(__file__).parent.parent.parent
         
-        # VerificaÃ§Ã£o rÃ¡pida
+        # Verificação rápida
         if (current_dir / "public" / "pages" / "login" / "index.html").exists():
             self._project_root = current_dir
         else:
@@ -39,7 +39,7 @@ class FileUtils:
         
         target_file = json_dir / filename
         
-        # Se o arquivo nÃ£o existe, cria com estrutura bÃ¡sica
+        # Se o arquivo não existe, cria com estrutura básica
         if not target_file.exists():
             if filename == "backup.json":
                 default_data = {"obras": []}
@@ -61,7 +61,7 @@ class FileUtils:
                 with open(filepath, 'r', encoding='utf-8') as f:
                     return json.load(f)
             elif default_data is not None:
-                # Cria o arquivo com dados padrÃ£o
+                # Cria o arquivo com dados padrão
                 with open(filepath, 'w', encoding='utf-8') as f:
                     json.dump(default_data, f, indent=2, ensure_ascii=False)
                 return default_data
@@ -74,7 +74,7 @@ class FileUtils:
     def save_json_file(self, filepath, data):
         """Salva dados em arquivo JSON"""
         try:
-            # Garante que o diretÃ³rio existe
+            # Garante que o diretório existe
             filepath.parent.mkdir(parents=True, exist_ok=True)
             
             with open(filepath, 'w', encoding='utf-8') as f:

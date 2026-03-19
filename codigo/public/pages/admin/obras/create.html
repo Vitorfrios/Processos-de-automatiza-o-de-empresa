@@ -38,13 +38,13 @@
 
     <main class="main-content">
         <div class="container">
-            <!-- BotÃ£o para adicionar nova obra -->
+            <!-- Botão para adicionar nova obra -->
             <div class="add-obra-section">
 
                 <!-- BLOCO ESQUERDO (switch + inputs divididos verticalmente) -->
                 <div class="filtro-bloco-altura">
 
-                    <!-- METADE DE CIMA â€” SWITCH -->
+                    <!-- METADE DE CIMA — SWITCH -->
                     <div class="filtro-switch-area">
                         <label class="filter-switch">
                             <input type="checkbox" id="filter-toggle""
@@ -56,7 +56,7 @@
 
                     </div>
 
-                    <!-- METADE DE BAIXO â€” INPUTS -->
+                    <!-- METADE DE BAIXO — INPUTS -->
                     <div class="filtro-inputs-area" id="filtros-inputs">
                         <input type="text" id="filter-empresa" placeholder="Empresa" disabled>
 
@@ -67,7 +67,7 @@
                     </div>
                 </div>
 
-                <!-- BOTÃƒO NO MESMO NÃVEL -->
+                <!-- BOTÃO NO MESMO NÍVEL -->
                 <button class="btn btn-add" onclick="addNewObra()" id="add-obra-btn" disabled>
                     + Adicionar Nova Obra
                 </button>
@@ -81,13 +81,13 @@
         </div>
     </main>
 
-    <!-- Modal de ConfirmaÃ§Ã£o para ExclusÃ£o -->
+    <!-- Modal de Confirmação para Exclusão -->
     <div id="confirmationModal" class="confirmation-modal hidden">
         <div class="modal-content">
             <div class="modal-icon">â“</div>
-            <h2 class="modal-title">Remover da VisualizaÃ§Ã£o</h2>
+            <h2 class="modal-title">Remover da Visualização</h2>
             <p class="modal-message" id="modalMessage">
-                <!-- O conteÃºdo serÃ¡ inserido pelo JavaScript -->
+                <!-- O conteúdo será inserido pelo JavaScript -->
             </p>
             <div class="modal-actions">
                 <button class="modal-btn btn-cancel" onclick="window.closeConfirmationModal()">

@@ -1,6 +1,6 @@
 ﻿"""
 server_core.py
-NÃºcleo principal do servidor - LÃ³gica centralizada
+Núcleo principal do servidor - Lógica centralizada
 """
 
 import socket
@@ -17,7 +17,7 @@ os.environ.setdefault('PYTHONDONTWRITEBYTECODE', '1')
 sys.dont_write_bytecode = True
 
 class ServerCore:
-    """NÃºcleo principal do servidor com todas as funcionalidades essenciais"""
+    """Núcleo principal do servidor com todas as funcionalidades essenciais"""
     
     def __init__(self):
         self.servidor_rodando = True
@@ -29,7 +29,7 @@ class ServerCore:
         return current_dir
 
     def is_port_in_use(self, port):
-        """Verifica se uma porta estÃ¡ em uso"""
+        """Verifica se uma porta está em uso"""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(1)
             try:
@@ -74,7 +74,7 @@ class ServerCore:
             return False
 
     def find_available_port(self, start_port=8000, max_attempts=15):
-        """Encontra uma porta disponÃ­vel"""
+        """Encontra uma porta disponível"""
         for port in range(start_port, start_port + max_attempts):
             if not self.is_port_in_use(port):
                 return port
@@ -117,7 +117,7 @@ class ServerCore:
         self.servidor_rodando = False
 
     def create_server(self, port, handler_class):
-        """Cria instÃ¢ncia do servidor"""
+        """Cria instância do servidor"""
         try:
             server = socketserver.TCPServer(("", port), handler_class)
             server.timeout = 1  # 1 segundo timeout
@@ -127,7 +127,7 @@ class ServerCore:
             raise
 
     def print_server_info(self, port):
-        """Exibe informaÃ§Ãµes do servidor"""
+        """Exibe informações do servidor"""
         print(f"\n SERVIDOR INICIADO COM SUCESSO!")
         print("=" * 50)
         print(f" URL: http://localhost:{port}/admin/obras/create")

@@ -17,7 +17,7 @@ from servidor_modules.utils.file_utils import FileUtils
 
 
 class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    """Handler ULTRA-RÃPIDO com CACHE BUSTER AUTOMÃTICO PARA TODOS OS ARQUIVOS"""
+    """Handler ULTRA-RÁPIDO com CACHE BUSTER AUTOMÁTICO PARA TODOS OS ARQUIVOS"""
 
     # Arquivos que NUNCA devem ser logados (acelera MUITO)
     SILENT_PATHS = {
@@ -76,7 +76,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         ".sqlite",
     )
 
-    # Roteamento direto para mÃ¡xima velocidade
+    # Roteamento direto para máxima velocidade
     API_ROUTES = {
         # ROTAS EXISTENTES DO SISTEMA
         "/constants": "handle_get_constants",
@@ -97,16 +97,16 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/api/acessorios": "handle_get_acessorios",
         "/api/acessorios/types": "handle_get_acessorio_types",
         "/api/acessorios/dimensoes": "handle_get_acessorio_dimensoes",
-        # ========== NOVAS ROTAS PARA SISTEMA DE EDIÃ‡ÃƒO ==========
+        # ========== NOVAS ROTAS PARA SISTEMA DE EDIÇÃO ==========
         # ROTAS GET - DADOS DO SISTEMA
         "/api/system-data": "handle_get_system_data",
         "/api/constants": "handle_get_constants_json",
         "/api/materials": "handle_get_materials",
         "/api/empresas/all": "handle_get_all_empresas",
         "/api/empresas/": "handle_delete_empresa_route",
-        # ROTAS GET - MÃQUINAS
+        # ROTAS GET - MÁQUINAS
         "/api/machines/types": "handle_get_machine_types",
-        # '/api/machines/type/{type}' Ã© tratada separadamente no handle_machine_routes
+        # '/api/machines/type/{type}' é tratada separadamente no handle_machine_routes
         # ROTAS POST - SALVAMENTO DE DADOS
         "/api/system-data/save": "handle_post_save_system_data",
         "/api/constants/save": "handle_post_save_constants",
@@ -116,9 +116,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/api/machines/add": "handle_post_add_machine",
         "/api/machines/update": "handle_post_update_machine",
         "/api/machines/delete": "handle_post_delete_machine",  # NOVA ROTA ADICIONADA
-        # ROTAS DE EMPRESAS ESPECÃFICAS
+        # ROTAS DE EMPRESAS ESPECÍFICAS
         "/api/dados/empresas/auto": "handle_post_empresas_auto",
-        # ROTAS DE SESSÃƒO
+        # ROTAS DE SESSÃO
         "/api/sessions/shutdown": "handle_post_sessions_shutdown",
         "/api/sessions/ensure-single": "handle_post_sessions_ensure_single",
         "/api/sessions/add-obra": "handle_post_sessions_add_obra",
@@ -166,15 +166,15 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     }
 
     def __init__(self, *args, **kwargs):
-        # INICIALIZAÃ‡ÃƒO RÃPIDA
+        # INICIALIZAÇÃO RÁPIDA
         self.file_utils = FileUtils()
         self.project_root = self.file_utils.find_project_root()
 
-        # Timestamp Ãºnico para TODOS os arquivos (muda a cada execuÃ§Ã£o do servidor)
+        # Timestamp único para TODOS os arquivos (muda a cada execução do servidor)
         self.CACHE_BUSTER = f"v{int(time.time())}"
         # print(f"ðŸ”„ CACHE BUSTER INICIADO: {self.CACHE_BUSTER}")
 
-        # InicializaÃ§Ã£o PreguiÃ§osa - sÃ³ quando necessÃ¡rio
+        # Inicialização Preguiçosa - só quando necessário
         self._routes_core = None
         self._route_handler = None
 
@@ -183,7 +183,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     @property
     def routes_core(self):
-        """InicializaÃ§Ã£o preguiÃ§osa do RoutesCore"""
+        """Inicialização preguiçosa do RoutesCore"""
         if self._routes_core is None:
             from servidor_modules.core.routes_core import RoutesCore
             from servidor_modules.core.sessions_core import sessions_manager
@@ -196,7 +196,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     @property
     def route_handler(self):
-        """InicializaÃ§Ã£o preguiÃ§osa do RouteHandler"""
+        """Inicialização preguiçosa do RouteHandler"""
         if self._route_handler is None:
             from servidor_modules.core.sessions_core import sessions_manager
             from servidor_modules.utils.cache_cleaner import CacheCleaner
@@ -210,13 +210,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 
     def do_GET(self):
-        """GET com CACHE BUSTER AUTOMÃTICO para CSS/JS/HTML"""
+        """GET com CACHE BUSTER AUTOMÁTICO para CSS/JS/HTML"""
         parsed_path = urlparse(self.path)
         original_path = self.path
         path = parsed_path.path
         
         if path == '/' or path == '':
-            print(" Acesso Ã  raiz detectado - redirecionando para pÃ¡gina principal")
+            print(" Acesso Ã  raiz detectado - redirecionando para página principal")
             self.redirect_to("/login")
             return
 
@@ -224,7 +224,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.redirect_to(self.LEGACY_PAGE_REDIRECTS[path])
             return
     
-        # NormalizaÃ§Ã£o rÃ¡pida de path
+        # Normalização rápida de path
         if path.startswith("/codigo/"):
             path = path[7:]
 
@@ -240,30 +240,30 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if not any(silent in path for silent in self.SILENT_PATHS):
             print(f"ðŸ“¥ GET: {path}")
 
-        # CACHE BUSTER AUTOMÃTICO: Adiciona versionamento a CSS, JS e HTML
+        # CACHE BUSTER AUTOMÁTICO: Adiciona versionamento a CSS, JS e HTML
         if any(path.endswith(ext) for ext in [".css", ".js", ".html", ".htm"]):
             new_path = self._add_cache_buster(original_path)
             if new_path != original_path:
                 # print(f"ðŸ”„ AUTO CACHE BUSTER: {original_path} -> {new_path}")
                 self.path = new_path
 
-        # ========== ROTEAMENTO RÃPIDO PARA APIs ==========
+        # ========== ROTEAMENTO RÁPIDO PARA APIs ==========
 
-        # Rotas definidas no dicionÃ¡rio API_ROUTES
+        # Rotas definidas no dicionário API_ROUTES
         if path in self.API_ROUTES:
             handler_name = self.API_ROUTES[path]
             try:
                 getattr(self.route_handler, handler_name)(self)
             except AttributeError as e:
-                print(f"âŒ Handler nÃ£o encontrado: {handler_name}")
+                print(f"âŒ Handler não encontrado: {handler_name}")
                 print(
-                    f"âŒ MÃ©todos disponÃ­veis: {[m for m in dir(self.route_handler) if not m.startswith('_')]}"
+                    f"âŒ Métodos disponíveis: {[m for m in dir(self.route_handler) if not m.startswith('_')]}"
                 )
-                self.send_error(501, f"Handler nÃ£o implementado: {handler_name}")
+                self.send_error(501, f"Handler não implementado: {handler_name}")
 
-        # ========== ROTAS COM PARÃ‚METROS ==========
+        # ========== ROTAS COM PARÂMETROS ==========
 
-        # Rotas de empresas com parÃ¢metros
+        # Rotas de empresas com parâmetros
         elif path.startswith("/api/dados/empresas/buscar/"):
             termo = path.split("/")[-1]
             self.route_handler.handle_buscar_empresas(self, termo)
@@ -275,13 +275,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif path.startswith("/obras/"):
             self.handle_obra_routes(path)
 
-        # Rotas de mÃ¡quinas com parÃ¢metros
+        # Rotas de máquinas com parâmetros
         elif path.startswith("/api/machines/"):
             self.handle_machine_routes(path)
 
         # ========== ROTAS PARA EQUIPAMENTOS ==========
 
-        # Rotas de acessorios com parÃ¢metros
+        # Rotas de acessorios com parâmetros
         elif path.startswith("/api/acessorios/type/"):
             self.handle_get_acessorio_by_type()
 
@@ -301,13 +301,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif path.startswith("/api/tubos/search"):
             self.handle_get_search_tubos()
             
-        # ========== ARQUIVOS ESTÃTICOS ==========
+        # ========== ARQUIVOS ESTÁTICOS ==========
         else:
-            # Serve arquivo estÃ¡tico COM HEADERS ANTI-CACHE
+            # Serve arquivo estático COM HEADERS ANTI-CACHE
             self.serve_static_file_no_cache(path)
 
     def do_POST(self):
-        """POST com todas as rotas necessÃ¡rias"""
+        """POST com todas as rotas necessárias"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
 
@@ -317,7 +317,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         print(f"ðŸ“¨ POST: {path}")
         
         # ========== ROTAS PARA WORD ==========
-        # IMPORTANTE: Processar e RETORNAR imediatamente para evitar duplicaÃ§Ã£o
+        # IMPORTANTE: Processar e RETORNAR imediatamente para evitar duplicação
         if path == "/api/word/generate/proposta-comercial":
             self.handle_generate_word_proposta_comercial()
             return  
@@ -361,7 +361,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_post_client_login()
             return
 
-        # ========== ROTAS DE SESSÃƒO ==========
+        # ========== ROTAS DE SESSÃO ==========
         elif path == "/api/sessions/shutdown":
             self.route_handler.handle_post_sessions_shutdown(self)
             return  
@@ -396,7 +396,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_post_projetos(self)
             return  
 
-        # ========== NOVAS ROTAS PARA EDIÃ‡ÃƒO DE DADOS ==========
+        # ========== NOVAS ROTAS PARA EDIÇÃO DE DADOS ==========
         elif path == "/api/system-data/save":
             self.route_handler.handle_post_save_system_data(self)
             return  
@@ -455,10 +455,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_post_delete_tubo()
             return  
 
-        # ========== ROTA NÃƒO ENCONTRADA ==========
+        # ========== ROTA NÃO ENCONTRADA ==========
         # Se chegou aqui, nenhuma rota foi encontrada
-        print(f"âŒ POST nÃ£o executado corretamente: {path}")
-        self.send_error(501, f"MÃ©todo nÃ£o suportado: POST {path}")
+        print(f"âŒ POST não executado corretamente: {path}")
+        self.send_error(501, f"Método não suportado: POST {path}")
 
     def handle_post_admin_login(self):
         """POST /api/admin/login - Valida credenciais fixas do ADM"""
@@ -471,7 +471,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
             payload = json.loads(raw_body or "{}")
         except json.JSONDecodeError:
-            self.send_json_response({"success": False, "error": "JSON invÃ¡lido"}, 400)
+            self.send_json_response({"success": False, "error": "JSON inválido"}, 400)
             return
         except Exception as e:
             print(f"âŒ Erro ao ler corpo do login admin: {e}")
@@ -500,7 +500,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     404,
                 )
                 return
@@ -577,7 +577,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
             payload = json.loads(raw_body or "{}")
         except json.JSONDecodeError:
-            self.send_json_response({"success": False, "error": "JSON invÃ¡lido"}, 400)
+            self.send_json_response({"success": False, "error": "JSON inválido"}, 400)
             return
         except Exception as e:
             print(f"âŒ Erro ao ler corpo do login client: {e}")
@@ -601,7 +601,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_json_response(result, status)
 
     def do_PUT(self):
-        """PUT para atualizaÃ§Ãµes"""
+        """PUT para atualizações"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
 
@@ -615,11 +615,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             print(f"ðŸŽ¯ Roteando PUT para obra: {path}")
             self.route_handler.handle_put_obra(self)
         else:
-            print(f"âŒ PUT nÃ£o implementado: {path}")
-            self.send_error(501, f"MÃ©todo nÃ£o suportado: PUT {path}")
+            print(f"âŒ PUT não implementado: {path}")
+            self.send_error(501, f"Método não suportado: PUT {path}")
 
     def do_DELETE(self):
-        """DELETE para remoÃ§Ã£o de recursos"""
+        """DELETE para remoção de recursos"""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
 
@@ -632,7 +632,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if path == "/api/delete":
             self.handle_delete_universal()
 
-        # ========== ROTA ESPECÃFICA PARA EMPRESAS ==========
+        # ========== ROTA ESPECÍFICA PARA EMPRESAS ==========
         elif path.startswith("/api/empresas/"):
             self.handle_delete_empresa()
 
@@ -641,14 +641,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             obra_id = path.split("/")[-1]
             print(f"ðŸŽ¯ Roteando DELETE para obra: {obra_id}")
             self.route_handler.handle_delete_obra(self, obra_id)
-        # ROTAS PRINCIPAIS - SESSÃ•ES OBRAS
+        # ROTAS PRINCIPAIS - SESSÕES OBRAS
         elif path.startswith("/api/sessions/remove-obra/"):
             obra_id = path.split("/")[-1]
             self.route_handler.handle_delete_sessions_remove_obra(self, obra_id)
 
         else:
-            print(f"âŒ DELETE nÃ£o implementado: {path}")
-            self.send_error(501, f"MÃ©todo nÃ£o suportado: DELETE {path}")
+            print(f"âŒ DELETE não implementado: {path}")
+            self.send_error(501, f"Método não suportado: DELETE {path}")
 
     def handle_delete_universal(self):
         """API universal para deletar qualquer item do backup.json usando path"""
@@ -657,14 +657,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             post_data = self.rfile.read(content_length).decode("utf-8")
             data = json.loads(post_data)
 
-            # ObrigatÃ³rio: path como array (ex: ["obras", "obra_id", "projetos", "projeto_id"])
+            # Obrigatório: path como array (ex: ["obras", "obra_id", "projetos", "projeto_id"])
             path = data.get("path")
 
             if not path or not isinstance(path, list):
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": "Path invÃ¡lido. Deve ser um array (ex: ['obras', 'id_da_obra'])",
+                        "error": "Path inválido. Deve ser um array (ex: ['obras', 'id_da_obra'])",
                     },
                     status=400,
                 )
@@ -672,7 +672,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             print(f"ðŸ—‘ï¸  DELETE UNIVERSAL - Path: {path}")
 
-            # Chama o mÃ©todo no RoutesCore
+            # Chama o método no RoutesCore
             result = self.routes_core.handle_delete_universal(path)
 
             if result["success"]:
@@ -682,7 +682,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"}, status=400
+                {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
             print(f"âŒ Erro em handle_delete_universal: {e}")
@@ -691,7 +691,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
     def handle_health_check(self):
-        """Health check rÃ¡pido"""
+        """Health check rápido"""
         self.send_json_response({"status": "online", "timestamp": time.time()})
 
     def handle_empresa_routes(self, path):
@@ -740,27 +740,27 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return any(lower_path.startswith(prefix) for prefix in self.ALLOWED_STATIC_PREFIXES)
 
     def _add_cache_buster(self, path):
-        """Adiciona cache buster Ã  URL se nÃ£o tiver"""
+        """Adiciona cache buster Ã  URL se não tiver"""
         if "?" in path:
-            # JÃ¡ tem parÃ¢metros, adiciona ou atualiza o v=
+            # Já tem parâmetros, adiciona ou atualiza o v=
             if "v=" in path:
-                # Substitui versÃ£o existente
+                # Substitui versão existente
                 path = re.sub(r"[?&]v=[^&]+", f"&v={self.CACHE_BUSTER}", path)
                 # Corrige se ficou ?& substituindo por ?
                 path = path.replace("?&", "?")
             else:
-                # Adiciona novo parÃ¢metro
+                # Adiciona novo parâmetro
                 path += f"&v={self.CACHE_BUSTER}"
         else:
-            # Primeiro parÃ¢metro
+            # Primeiro parâmetro
             path += f"?v={self.CACHE_BUSTER}"
 
         return path
 
     def serve_static_file_no_cache(self, path):
-        """Serve arquivos estÃ¡ticos - sempre do disco com headers anti-cache"""
+        """Serve arquivos estáticos - sempre do disco com headers anti-cache"""
         try:
-            # Remove parÃ¢metros para encontrar arquivo real
+            # Remove parâmetros para encontrar arquivo real
             clean_path = path.split("?")[0]
             if not self._is_allowed_static_path(clean_path):
                 self.send_error(403, f"Acesso bloqueado: {clean_path}")
@@ -808,14 +808,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         except Exception as e:
             print(f"âŒ Erro em {path}: {e}")
-            self.send_error(404, f"Recurso nÃ£o encontrado: {path}")
+            self.send_error(404, f"Recurso não encontrado: {path}")
 
     def send_json_response(self, data, status=200):
-        """Resposta JSON RÃPIDA SEM compressÃ£o para simplicidade"""
+        """Resposta JSON RÁPIDA SEM compressão para simplicidade"""
         try:
             response = json.dumps(data, ensure_ascii=False).encode("utf-8")
 
-            # Resposta direta SEM compressÃ£o
+            # Resposta direta SEM compressão
             self.send_response(status)
             self.send_header("Content-type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(response)))
@@ -843,7 +843,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_OPTIONS(self):
-        """CORS rÃ¡pido"""
+        """CORS rápido"""
         self.send_response(200)
         self.end_headers()
 
@@ -858,7 +858,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             print(f"Local Host {self.address_string()} - {message}")
 
     def handle_machine_routes(self, path):
-        """Rotas especÃ­ficas para mÃ¡quinas"""
+        """Rotas específicas para máquinas"""
         if self.command == "GET":
             if path == "/api/machines/types":
                 self.route_handler.handle_get_machine_types(self)
@@ -866,17 +866,17 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 machine_type = path.split("/")[-1]
                 self.route_handler.handle_get_machine_by_type(self, machine_type)
         elif self.command == "POST":
-            # As rotas POST de mÃ¡quinas jÃ¡ sÃ£o tratadas no do_POST
+            # As rotas POST de máquinas já são tratadas no do_POST
             pass
 
     def handle_delete_empresa(self):
         """Handler para DELETE /api/empresas/{index}"""
         try:
-            # Extrai o Ã­ndice da URL (ex: /api/empresas/21 -> index=21)
+            # Extrai o índice da URL (ex: /api/empresas/21 -> index=21)
             index = self.path.split("/")[-1]
-            print(f"ðŸ—‘ï¸  DELETE empresa - Ã­ndice: {index}")
+            print(f"ðŸ—‘ï¸  DELETE empresa - índice: {index}")
 
-            # Chama o mÃ©todo no RoutesCore
+            # Chama o método no RoutesCore
             result = self.routes_core.handle_delete_empresa_by_index(index)
 
             if result.get("success"):
@@ -891,7 +891,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
     def handle_post_system_apply_json(self):
-        """Rota: /api/system/apply-json - Compara JSONs e retorna diferenÃ§as"""
+        """Rota: /api/system/apply-json - Compara JSONs e retorna diferenças"""
         try:
             content_length = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_length)
@@ -904,7 +904,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 f"ðŸ” Comparando JSONs: current={bool(current)}, proposed={bool(proposed)}"
             )
 
-            # ValidaÃ§Ã£o bÃ¡sica ATUALIZADA
+            # Validação básica ATUALIZADA
             required_sections = [
                 "constants", 
                 "machines", 
@@ -918,29 +918,29 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     return self.send_json_response(
                         {
                             "success": False,
-                            "error": f"SeÃ§Ã£o '{section}' nÃ£o encontrada no JSON proposto",
+                            "error": f"Seção '{section}' não encontrada no JSON proposto",
                         },
                         400,
                     )
 
-            # Calcular diferenÃ§as (jÃ¡ atualizada anteriormente)
+            # Calcular diferenças (já atualizada anteriormente)
             differences = self._calculate_simple_differences(current, proposed)
             summary = self._generate_simple_summary(differences)
 
-            print(f"ðŸ“Š ComparaÃ§Ã£o concluÃ­da: {summary['total_changes']} alteraÃ§Ãµes")
+            print(f"ðŸ“Š Comparação concluída: {summary['total_changes']} alterações")
 
             self.send_json_response(
                 {
                     "success": True,
                     "differences": differences,
                     "summary": summary,
-                    "message": "ComparaÃ§Ã£o realizada com sucesso",
+                    "message": "Comparação realizada com sucesso",
                 },
                 200,
             )
 
         except json.JSONDecodeError:
-            self.send_json_response({"success": False, "error": "JSON invÃ¡lido"}, 400)
+            self.send_json_response({"success": False, "error": "JSON inválido"}, 400)
         except Exception as e:
             print(f"âŒ Erro em handle_post_system_apply_json: {e}")
             self.send_json_response(
@@ -948,7 +948,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
     def _calculate_simple_differences(self, current, proposed):
-        """Calcula diferenÃ§as simples entre JSONs"""
+        """Calcula diferenças simples entre JSONs"""
         diffs = {
             "constants": {"added": [], "modified": [], "removed": []},
             "machines": {"added": [], "modified": [], "removed": []},
@@ -1075,7 +1075,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return diffs
 
     def _generate_simple_summary(self, differences):
-        """Gera resumo simples das diferenÃ§as"""
+        """Gera resumo simples das diferenças"""
         total_added = (
             len(differences["constants"]["added"]) +
             len(differences["machines"]["added"]) +
@@ -1122,7 +1122,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404,
                 )
                 return
@@ -1130,7 +1130,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verifica se existe a seÃ§Ã£o banco_acessorios
+            # Verifica se existe a seção banco_acessorios
             banco_acessorios = dados_data.get("banco_acessorios", {})
 
             self.send_json_response(
@@ -1154,7 +1154,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404,
                 )
                 return
@@ -1185,7 +1185,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             path_parts = self.path.split("/")
             if len(path_parts) < 5:
                 self.send_json_response(
-                    {"success": False, "error": "Tipo nÃ£o especificado na URL"},
+                    {"success": False, "error": "Tipo não especificado na URL"},
                     status=400,
                 )
                 return
@@ -1196,7 +1196,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404,
                 )
                 return
@@ -1209,11 +1209,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if tipo in banco_acessorios:
                 acessorio = banco_acessorios[tipo]
 
-                # Adicionar estatÃ­sticas
+                # Adicionar estatísticas
                 valores = acessorio.get("valores_padrao", {})
                 dimensoes = list(valores.keys())
 
-                # Calcular preÃ§o mÃ©dio
+                # Calcular preço médio
                 precos = list(valores.values())
                 preco_medio = sum(precos) / len(precos) if precos else 0
 
@@ -1224,7 +1224,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         "acessorio": acessorio,
                         "estatisticas": {
                             "quantidade_dimensoes": len(dimensoes),
-                            "dimensoes": dimensoes[:10],  # Primeiras 10 dimensÃµes
+                            "dimensoes": dimensoes[:10],  # Primeiras 10 dimensões
                             "preco_medio": round(preco_medio, 2),
                             "preco_min": min(precos) if precos else 0,
                             "preco_max": max(precos) if precos else 0,
@@ -1235,7 +1235,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": f"Tipo de acessorio '{tipo}' nÃ£o encontrado",
+                        "error": f"Tipo de acessorio '{tipo}' não encontrado",
                     },
                     status=404,
                 )
@@ -1260,7 +1260,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_json_response(
                         {
                             "success": False,
-                            "error": f"Campo obrigatÃ³rio faltando: {field}",
+                            "error": f"Campo obrigatório faltando: {field}",
                         },
                         status=400,
                     )
@@ -1273,7 +1273,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404,
                 )
                 return
@@ -1281,16 +1281,16 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Garantir que existe a seÃ§Ã£o banco_acessorios
+            # Garantir que existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
                 dados_data["banco_acessorios"] = {}
 
             banco_acessorios = dados_data["banco_acessorios"]
 
-            # Verificar se tipo jÃ¡ existe
+            # Verificar se tipo já existe
             if tipo in banco_acessorios:
                 self.send_json_response(
-                    {"success": False, "error": f"Tipo '{tipo}' jÃ¡ existe"}, status=400
+                    {"success": False, "error": f"Tipo '{tipo}' já existe"}, status=400
                 )
                 return
 
@@ -1300,7 +1300,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "valores_padrao": data["valores"],
             }
 
-            # Adicionar dimensÃµes se fornecidas
+            # Adicionar dimensões se fornecidas
             if "dimensoes" in data:
                 novo_acessorio["dimensoes"] = data["dimensoes"]
 
@@ -1324,7 +1324,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"}, status=400
+                {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
             print(f"âŒ Erro em handle_post_add_acessorio: {e}")
@@ -1342,7 +1342,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Validar dados
             if "tipo" not in data:
                 self.send_json_response(
-                    {"success": False, "error": "Campo 'tipo' Ã© obrigatÃ³rio"},
+                    {"success": False, "error": "Campo 'tipo' é obrigatório"},
                     status=400,
                 )
                 return
@@ -1354,7 +1354,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404,
                 )
                 return
@@ -1362,12 +1362,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verificar se existe a seÃ§Ã£o banco_acessorios
+            # Verificar se existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": "SeÃ§Ã£o 'banco_acessorios' nÃ£o encontrada",
+                        "error": "Seção 'banco_acessorios' não encontrada",
                     },
                     status=404,
                 )
@@ -1378,7 +1378,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Verificar se tipo existe
             if tipo not in banco_acessorios:
                 self.send_json_response(
-                    {"success": False, "error": f"Tipo '{tipo}' nÃ£o encontrado"},
+                    {"success": False, "error": f"Tipo '{tipo}' não encontrado"},
                     status=404,
                 )
                 return
@@ -1412,7 +1412,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"}, status=400
+                {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
             print(f"âŒ Erro em handle_post_update_acessorio: {e}")
@@ -1429,7 +1429,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if "tipo" not in data:
                 self.send_json_response(
-                    {"success": False, "error": "Campo 'tipo' Ã© obrigatÃ³rio"},
+                    {"success": False, "error": "Campo 'tipo' é obrigatório"},
                     status=400,
                 )
                 return
@@ -1441,7 +1441,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404,
                 )
                 return
@@ -1449,12 +1449,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verificar se existe a seÃ§Ã£o banco_acessorios
+            # Verificar se existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": "SeÃ§Ã£o 'banco_acessorios' nÃ£o encontrada",
+                        "error": "Seção 'banco_acessorios' não encontrada",
                     },
                     status=404,
                 )
@@ -1465,7 +1465,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Verificar se tipo existe
             if tipo not in banco_acessorios:
                 self.send_json_response(
-                    {"success": False, "error": f"Tipo '{tipo}' nÃ£o encontrado"},
+                    {"success": False, "error": f"Tipo '{tipo}' não encontrado"},
                     status=404,
                 )
                 return
@@ -1487,7 +1487,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"}, status=400
+                {"success": False, "error": "JSON inválido"}, status=400
             )
         except Exception as e:
             print(f"âŒ Erro em handle_post_delete_acessorio: {e}")
@@ -1498,14 +1498,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_search_acessorios(self):
         """GET /api/acessorios/search?q=termo - Busca acessorios"""
         try:
-            # Extrair parÃ¢metro de busca da query string
+            # Extrair parâmetro de busca da query string
             parsed_path = urlparse(self.path)
             query_params = parse_qs(parsed_path.query)
             termo = query_params.get("q", [""])[0].lower()
 
             if not termo:
                 self.send_json_response(
-                    {"success": False, "error": "Termo de busca nÃ£o fornecido"},
+                    {"success": False, "error": "Termo de busca não fornecido"},
                     status=400,
                 )
                 return
@@ -1515,7 +1515,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404,
                 )
                 return
@@ -1523,12 +1523,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verificar se existe a seÃ§Ã£o banco_acessorios
+            # Verificar se existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": "SeÃ§Ã£o 'banco_acessorios' nÃ£o encontrada",
+                        "error": "Seção 'banco_acessorios' não encontrada",
                     },
                     status=404,
                 )
@@ -1550,7 +1550,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     )
                     continue
 
-                # Buscar na descriÃ§Ã£o
+                # Buscar na descrição
                 descricao = dados.get("descricao", "").lower()
                 if termo in descricao:
                     resultados.append(
@@ -1563,7 +1563,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     )
                     continue
 
-                # Buscar nas dimensÃµes/valores
+                # Buscar nas dimensões/valores
                 valores = dados.get("valores_padrao", {})
                 for dimensao, valor in valores.items():
                     if termo in dimensao.lower():
@@ -1595,14 +1595,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
     def handle_get_acessorio_dimensoes(self):
-        """GET /api/acessorios/dimensoes - Retorna dimensÃµes disponÃ­veis"""
+        """GET /api/acessorios/dimensoes - Retorna dimensões disponíveis"""
         try:
             # Carregar dados.json
             dados_file = self.project_root / "json" / "dados.json"
 
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404,
                 )
                 return
@@ -1610,12 +1610,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
 
-            # Verificar se existe a seÃ§Ã£o banco_acessorios
+            # Verificar se existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
                 self.send_json_response(
                     {
                         "success": False,
-                        "error": "SeÃ§Ã£o 'banco_acessorios' nÃ£o encontrada",
+                        "error": "Seção 'banco_acessorios' não encontrada",
                     },
                     status=404,
                 )
@@ -1623,7 +1623,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             banco_acessorios = dados_data["banco_acessorios"]
 
-            # Coletar todas as dimensÃµes Ãºnicas
+            # Coletar todas as dimensões únicas
             todas_dimensoes = set()
             dimensoes_por_tipo = {}
 
@@ -1637,7 +1637,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "quantidade": len(dimensoes),
                 }
 
-                # Adicionar dimensÃµes ao conjunto geral
+                # Adicionar dimensões ao conjunto geral
                 todas_dimensoes.update(dimensoes)
 
             self.send_json_response(
@@ -1662,7 +1662,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -1670,7 +1670,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
             
-            # Verifica se existe a seÃ§Ã£o dutos
+            # Verifica se existe a seção dutos
             dutos = dados_data.get("dutos", [])
             
             self.send_json_response({
@@ -1693,7 +1693,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -1702,7 +1702,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 dados_data = json.load(f)
             
             dutos = dados_data.get("dutos", [])
-            # Retornar array de objetos com informaÃ§Ãµes completas
+            # Retornar array de objetos com informações completas
             types = []
             for duto in dutos:
                 tipo = duto.get("type", "")
@@ -1719,7 +1719,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             self.send_json_response({
                 "success": True,
-                "types": types,  # Agora Ã© array de objetos
+                "types": types,  # Agora é array de objetos
                 "count": len(types)
             })
             
@@ -1731,13 +1731,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
     def handle_get_duto_opcionais(self):
-        """GET /api/dutos/opcionais - Retorna opcionais disponÃ­veis"""
+        """GET /api/dutos/opcionais - Retorna opcionais disponíveis"""
         try:
             dados_file = self.project_root / "json" / "dados.json"
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -1804,7 +1804,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             path_parts = self.path.split("/")
             if len(path_parts) < 5:
                 self.send_json_response(
-                    {"success": False, "error": "Tipo nÃ£o especificado na URL"},
+                    {"success": False, "error": "Tipo não especificado na URL"},
                     status=400
                 )
                 return
@@ -1815,7 +1815,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -1827,12 +1827,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             for duto in dutos:
                 if duto.get("type") == tipo:
-                    # Garantir que opcionais Ã© um array
+                    # Garantir que opcionais é um array
                     opcionais = duto.get("opcionais", [])
                     if not isinstance(opcionais, list):
                         opcionais = []
                     
-                    # Calcular valor mÃ¡ximo (com todos os opcionais)
+                    # Calcular valor máximo (com todos os opcionais)
                     valor_base = duto.get("valor", 0)
                     valor_maximo = valor_base
                     for opcional in opcionais:
@@ -1864,7 +1864,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             self.send_json_response({
                 "success": False,
-                "error": f"Tipo de duto '{tipo}' nÃ£o encontrado"
+                "error": f"Tipo de duto '{tipo}' não encontrado"
             }, status=404)
             
         except Exception as e:
@@ -1885,7 +1885,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not termo:
                 self.send_json_response(
-                    {"success": False, "error": "Termo de busca nÃ£o fornecido"},
+                    {"success": False, "error": "Termo de busca não fornecido"},
                     status=400
                 )
                 return
@@ -1894,7 +1894,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -1960,7 +1960,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if field not in data:
                     self.send_json_response({
                         "success": False,
-                        "error": f"Campo obrigatÃ³rio faltando: {field}"
+                        "error": f"Campo obrigatório faltando: {field}"
                     }, status=400)
                     return
             
@@ -1971,7 +1971,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -1979,18 +1979,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
             
-            # Garantir que existe a seÃ§Ã£o dutos
+            # Garantir que existe a seção dutos
             if "dutos" not in dados_data:
                 dados_data["dutos"] = []
             
             dutos = dados_data["dutos"]
             
-            # Verificar se tipo jÃ¡ existe
+            # Verificar se tipo já existe
             for duto in dutos:
                 if duto.get("type") == tipo:
                     self.send_json_response({
                         "success": False,
-                        "error": f"Tipo '{tipo}' jÃ¡ existe"
+                        "error": f"Tipo '{tipo}' já existe"
                     }, status=400)
                     return
             
@@ -2006,7 +2006,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 novo_duto["opcionais"] = []
             
-            # Adicionar descriÃ§Ã£o se fornecida
+            # Adicionar descrição se fornecida
             if "descricao" in data:
                 novo_duto["descricao"] = data["descricao"]
             
@@ -2024,7 +2024,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"},
+                {"success": False, "error": "JSON inválido"},
                 status=400
             )
         except Exception as e:
@@ -2045,7 +2045,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "type" not in data:
                 self.send_json_response({
                     "success": False,
-                    "error": "Campo 'type' Ã© obrigatÃ³rio"
+                    "error": "Campo 'type' é obrigatório"
                 }, status=400)
                 return
             
@@ -2056,7 +2056,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -2064,11 +2064,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
             
-            # Verificar se existe a seÃ§Ã£o dutos
+            # Verificar se existe a seção dutos
             if "dutos" not in dados_data:
                 self.send_json_response({
                     "success": False,
-                    "error": "SeÃ§Ã£o 'dutos' nÃ£o encontrada"
+                    "error": "Seção 'dutos' não encontrada"
                 }, status=404)
                 return
             
@@ -2087,7 +2087,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if duto_index == -1:
                 self.send_json_response({
                     "success": False,
-                    "error": f"Tipo '{tipo}' nÃ£o encontrado"
+                    "error": f"Tipo '{tipo}' não encontrado"
                 }, status=404)
                 return
             
@@ -2113,7 +2113,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"},
+                {"success": False, "error": "JSON inválido"},
                 status=400
             )
         except Exception as e:
@@ -2133,7 +2133,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "type" not in data:
                 self.send_json_response({
                     "success": False,
-                    "error": "Campo 'type' Ã© obrigatÃ³rio"
+                    "error": "Campo 'type' é obrigatório"
                 }, status=400)
                 return
             
@@ -2144,7 +2144,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -2152,11 +2152,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
             
-            # Verificar se existe a seÃ§Ã£o dutos
+            # Verificar se existe a seção dutos
             if "dutos" not in dados_data:
                 self.send_json_response({
                     "success": False,
-                    "error": "SeÃ§Ã£o 'dutos' nÃ£o encontrada"
+                    "error": "Seção 'dutos' não encontrada"
                 }, status=404)
                 return
             
@@ -2175,7 +2175,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if duto_removido is None:
                 self.send_json_response({
                     "success": False,
-                    "error": f"Tipo '{tipo}' nÃ£o encontrado"
+                    "error": f"Tipo '{tipo}' não encontrado"
                 }, status=404)
                 return
             
@@ -2192,7 +2192,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"},
+                {"success": False, "error": "JSON inválido"},
                 status=400
             )
         except Exception as e:
@@ -2209,7 +2209,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -2217,7 +2217,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
             
-            # Verifica se existe a seÃ§Ã£o tubos
+            # Verifica se existe a seção tubos
             tubos = dados_data.get("tubos", [])
             
             self.send_json_response({
@@ -2234,13 +2234,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
     def handle_get_tubo_polegadas(self):
-        """GET /api/tubos/polegadas - Retorna todas as polegadas disponÃ­veis"""
+        """GET /api/tubos/polegadas - Retorna todas as polegadas disponíveis"""
         try:
             dados_file = self.project_root / "json" / "dados.json"
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -2261,11 +2261,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         "valor": tubo.get("valor", 0)
                     })
             
-            # Ordenar por tamanho (convertendo polegadas para valor numÃ©rico)
+            # Ordenar por tamanho (convertendo polegadas para valor numérico)
             def polegadas_para_numero(polegadas_str):
                 try:
                     if '/' in polegadas_str:
-                        # Converte fraÃ§Ãµes como "1 1/4" ou "1/2"
+                        # Converte frações como "1 1/4" ou "1/2"
                         if ' ' in polegadas_str:
                             inteiro, frac = polegadas_str.split(' ')
                             num, den = frac.split('/')
@@ -2300,7 +2300,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             path_parts = self.path.split("/")
             if len(path_parts) < 5:
                 self.send_json_response(
-                    {"success": False, "error": "Polegada nÃ£o especificada na URL"},
+                    {"success": False, "error": "Polegada não especificada na URL"},
                     status=400
                 )
                 return
@@ -2311,7 +2311,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -2332,7 +2332,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             self.send_json_response({
                 "success": False,
-                "error": f"Tubo de {polegada}'' nÃ£o encontrado"
+                "error": f"Tubo de {polegada}'' não encontrado"
             }, status=404)
             
         except Exception as e:
@@ -2355,7 +2355,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if field not in data:
                     self.send_json_response({
                         "success": False,
-                        "error": f"Campo obrigatÃ³rio faltando: {field}"
+                        "error": f"Campo obrigatório faltando: {field}"
                     }, status=400)
                     return
             
@@ -2366,7 +2366,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -2374,18 +2374,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
             
-            # Garantir que existe a seÃ§Ã£o tubos
+            # Garantir que existe a seção tubos
             if "tubos" not in dados_data:
                 dados_data["tubos"] = []
             
             tubos = dados_data["tubos"]
             
-            # Verificar se polegada jÃ¡ existe
+            # Verificar se polegada já existe
             for tubo in tubos:
                 if tubo.get("polegadas") == polegadas:
                     self.send_json_response({
                         "success": False,
-                        "error": f"Tubo de {polegadas}'' jÃ¡ existe"
+                        "error": f"Tubo de {polegadas}'' já existe"
                     }, status=400)
                     return
             
@@ -2396,7 +2396,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "valor": data["valor"]
             }
             
-            # Adicionar descriÃ§Ã£o se fornecida
+            # Adicionar descrição se fornecida
             if "descricao" in data:
                 novo_tubo["descricao"] = data["descricao"]
             
@@ -2414,7 +2414,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"},
+                {"success": False, "error": "JSON inválido"},
                 status=400
             )
         except Exception as e:
@@ -2435,7 +2435,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "polegadas" not in data:
                 self.send_json_response({
                     "success": False,
-                    "error": "Campo 'polegadas' Ã© obrigatÃ³rio"
+                    "error": "Campo 'polegadas' é obrigatório"
                 }, status=400)
                 return
             
@@ -2446,7 +2446,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -2454,11 +2454,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
             
-            # Verificar se existe a seÃ§Ã£o tubos
+            # Verificar se existe a seção tubos
             if "tubos" not in dados_data:
                 self.send_json_response({
                     "success": False,
-                    "error": "SeÃ§Ã£o 'tubos' nÃ£o encontrada"
+                    "error": "Seção 'tubos' não encontrada"
                 }, status=404)
                 return
             
@@ -2474,7 +2474,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if tubo_index == -1:
                 self.send_json_response({
                     "success": False,
-                    "error": f"Tubo de {polegadas}'' nÃ£o encontrado"
+                    "error": f"Tubo de {polegadas}'' não encontrado"
                 }, status=404)
                 return
             
@@ -2500,7 +2500,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"},
+                {"success": False, "error": "JSON inválido"},
                 status=400
             )
         except Exception as e:
@@ -2520,7 +2520,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "polegadas" not in data:
                 self.send_json_response({
                     "success": False,
-                    "error": "Campo 'polegadas' Ã© obrigatÃ³rio"
+                    "error": "Campo 'polegadas' é obrigatório"
                 }, status=400)
                 return
             
@@ -2531,7 +2531,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -2539,11 +2539,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(dados_file, "r", encoding="utf-8") as f:
                 dados_data = json.load(f)
             
-            # Verificar se existe a seÃ§Ã£o tubos
+            # Verificar se existe a seção tubos
             if "tubos" not in dados_data:
                 self.send_json_response({
                     "success": False,
-                    "error": "SeÃ§Ã£o 'tubos' nÃ£o encontrada"
+                    "error": "Seção 'tubos' não encontrada"
                 }, status=404)
                 return
             
@@ -2562,7 +2562,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if tubo_removido is None:
                 self.send_json_response({
                     "success": False,
-                    "error": f"Tubo de {polegadas}'' nÃ£o encontrado"
+                    "error": f"Tubo de {polegadas}'' não encontrado"
                 }, status=404)
                 return
             
@@ -2579,7 +2579,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
         except json.JSONDecodeError:
             self.send_json_response(
-                {"success": False, "error": "JSON invÃ¡lido"},
+                {"success": False, "error": "JSON inválido"},
                 status=400
             )
         except Exception as e:
@@ -2600,7 +2600,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not termo:
                 self.send_json_response(
-                    {"success": False, "error": "Termo de busca nÃ£o fornecido"},
+                    {"success": False, "error": "Termo de busca não fornecido"},
                     status=400
                 )
                 return
@@ -2609,7 +2609,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             if not dados_file.exists():
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json nÃ£o encontrado"},
+                    {"success": False, "error": "Arquivo dados.json não encontrado"},
                     status=404
                 )
                 return
@@ -2673,7 +2673,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
 
     def handle_get_word_models(self):
-        """GET /api/word/models - Retorna modelos de Word disponÃ­veis"""
+        """GET /api/word/models - Retorna modelos de Word disponíveis"""
         try:
             from servidor_modules.handlers.word_handler import WordHandler
             word_handler = WordHandler(self.project_root, self.file_utils)
@@ -2682,19 +2682,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 {
                     "id": "pc",
                     "name": "Proposta Comercial",
-                    "description": "Documento comercial com valores e condiÃ§Ãµes",
+                    "description": "Documento comercial com valores e condições",
                     "icon": "ðŸ“‹"
                 },
                 {
                     "id": "pt", 
-                    "name": "Proposta TÃ©cnica",
-                    "description": "Documento tÃ©cnico com especificaÃ§Ãµes",
+                    "name": "Proposta Técnica",
+                    "description": "Documento técnico com especificações",
                     "icon": "ðŸ”§"
                 },
                 {
                     "id": "ambos",
                     "name": "Ambos Documentos",
-                    "description": "Proposta Comercial e TÃ©cnica juntos",
+                    "description": "Proposta Comercial e Técnica juntos",
                     "icon": "ðŸ“„"
                 }
             ]
@@ -2713,7 +2713,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             }, status=500)
 
     def handle_get_word_templates(self):
-        """GET /api/word/templates - Retorna templates disponÃ­veis"""
+        """GET /api/word/templates - Retorna templates disponíveis"""
         try:
             from servidor_modules.handlers.word_handler import WordHandler
             word_handler = WordHandler(self.project_root, self.file_utils)
@@ -2746,7 +2746,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.handle_generate_word("ambos")
 
     def handle_generate_word(self, template_type):
-        """Handler genÃ©rico para geraÃ§Ã£o de Word"""
+        """Handler genérico para geração de Word"""
         try:
             content_length = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_length)
@@ -2756,7 +2756,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if not obra_id:
                 self.send_json_response({
                     "success": False,
-                    "error": "ID da obra nÃ£o fornecido"
+                    "error": "ID da obra não fornecido"
                 }, status=400)
                 return
             
@@ -2774,7 +2774,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             elif template_type == "tecnica":
                 file_path, filename, error = word_handler.generate_proposta_tecnica_avancada(obra_id)
             else:
-                error = f"Tipo de template nÃ£o suportado: {template_type}"
+                error = f"Tipo de template não suportado: {template_type}"
             
             if error:
                 self.send_json_response({
@@ -2787,7 +2787,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             obra_data = word_handler.get_obra_data(obra_id)
             obra_nome = obra_data.get("nome", "obra") if obra_data else obra_id
             
-            # Salvar informaÃ§Ãµes do arquivo gerado para download posterior
+            # Salvar informações do arquivo gerado para download posterior
             from datetime import datetime
             import os
             
@@ -2801,7 +2801,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0
             }
             
-            # Salvar em arquivo temporÃ¡rio de sessÃ£o
+            # Salvar em arquivo temporário de sessão
             import tempfile
             download_id = f"word_{int(datetime.now().timestamp())}_{obra_id}"
             temp_info_file = tempfile.gettempdir() + f"/{download_id}.json"
@@ -2822,7 +2822,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except json.JSONDecodeError:
             self.send_json_response({
                 "success": False,
-                "error": "JSON invÃ¡lido"
+                "error": "JSON inválido"
             }, status=400)
         except Exception as e:
             print(f"âŒ Erro em handle_generate_word: {e}")
@@ -2842,18 +2842,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if not download_id:
                 self.send_json_response({
                     "success": False,
-                    "error": "ID de download nÃ£o fornecido"
+                    "error": "ID de download não fornecido"
                 }, status=400)
                 return
             
-            # Buscar informaÃ§Ãµes do arquivo
+            # Buscar informações do arquivo
             import tempfile
             temp_info_file = tempfile.gettempdir() + f"/{download_id}.json"
             
             if not os.path.exists(temp_info_file):
                 self.send_json_response({
                     "success": False,
-                    "error": "Arquivo nÃ£o encontrado ou expirado"
+                    "error": "Arquivo não encontrado ou expirado"
                 }, status=404)
                 return
             
@@ -2866,7 +2866,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if not file_path or not os.path.exists(file_path):
                 self.send_json_response({
                     "success": False,
-                    "error": "Arquivo Word nÃ£o encontrado"
+                    "error": "Arquivo Word não encontrado"
                 }, status=404)
                 return
             
@@ -2881,7 +2881,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(file_data)
             
-            # Limpar arquivos temporÃ¡rios apÃ³s envio
+            # Limpar arquivos temporários após envio
             try:
                 os.unlink(file_path)
                 os.unlink(temp_info_file)

@@ -1,6 +1,6 @@
 ﻿"""
 server_utils.py
-UtilitÃ¡rios do servidor - VersÃ£o Simplificada
+Utilitários do servidor - Versão Simplificada
 """
 
 import socket
@@ -17,7 +17,7 @@ os.environ.setdefault('PYTHONDONTWRITEBYTECODE', '1')
 sys.dont_write_bytecode = True
 
 class ServerUtils:
-    """UtilitÃ¡rios do servidor - Mantido para compatibilidade"""
+    """Utilitários do servidor - Mantido para compatibilidade"""
     
     @staticmethod
     def setup_signal_handlers():
@@ -27,11 +27,11 @@ class ServerUtils:
             signal.signal(signal.SIGTERM, lambda s, f: print("\nðŸ”„ Encerrando..."))
             print("âœ… Handlers de sinal configurados")
         except Exception as e:
-            print(f"âš ï¸  Aviso na configuraÃ§Ã£o de sinais: {e}")
+            print(f"âš ï¸  Aviso na configuração de sinais: {e}")
 
     @staticmethod
     def print_server_info(port):
-        """Exibe informaÃ§Ãµes do servidor"""
+        """Exibe informações do servidor"""
         print(f"\n SERVIDOR INICIADO COM SUCESSO!")
         print("=" * 50)
         print(f" URL: http://localhost:{port}/admin/obras/create")
@@ -43,14 +43,14 @@ class ServerUtils:
         time.sleep(2)
         
         url = f"http://localhost:{port}/admin/obras/create"
-        print(f" Abrindo aplicaÃ§Ã£o: {url}")
+        print(f" Abrindo aplicação: {url}")
         
         try:
             import webbrowser
             webbrowser.open(url)
             print("âœ… Navegador iniciado com sucesso!")
         except Exception as e:
-            print(f"âš ï¸  NÃ£o foi possÃ­vel abrir navegador automaticamente: {e}")
+            print(f"âš ï¸  Não foi possível abrir navegador automaticamente: {e}")
             print(f"ðŸ’¡ Acesse manualmente: {url}")
 
     @staticmethod
@@ -64,8 +64,8 @@ class ServerUtils:
             monitor_thread.start()
             
             print("\nðŸŸ¢ SISTEMA PRONTO!")
-            print("   AplicaÃ§Ã£o carregada no navegador")
-            print("   Trabalhe normalmente - tudo Ã© salvo automaticamente\n")
+            print("   Aplicação carregada no navegador")
+            print("   Trabalhe normalmente - tudo é salvo automaticamente\n")
             
         except Exception as e:
             print(f"âš ï¸  Erro ao iniciar threads: {e}")
