@@ -3,7 +3,7 @@ import { showSystemStatus } from '../../../ui/components/status.js';
 import { isSessionActive } from '../../../data/adapters/session-adapter.js';
 
 /**
- * 💾 FUNÇÕES DE PERSISTÊNCIA
+ *  FUNÇÕES DE PERSISTÊNCIA
  */
 
 async function fetchObras() {
@@ -52,7 +52,7 @@ async function atualizarObra(obraId, obraData) {
         const todasObras = backupData.obras || [];
         const obraExistente = todasObras.find(obra => String(obra.id) === String(obraId));
         
-        console.log(`📊 Verificação: Obra ${obraId} existe? ${!!obraExistente}`);
+        console.log(` Verificação: Obra ${obraId} existe? ${!!obraExistente}`);
         console.log(`📋 TODAS as obras no backup:`, todasObras.map(o => ({ id: o.id, nome: o.nome })));
 
         if (!obraExistente) {
@@ -62,14 +62,14 @@ async function atualizarObra(obraId, obraData) {
             return await supportFrom_saveObra(obraData);
         }
 
-        console.log('🔄 ATUALIZANDO OBRA EXISTENTE:', {
+        console.log(' ATUALIZANDO OBRA EXISTENTE:', {
             id: obraData.id,
             nome: obraData.nome,
             projetos: obraData.projetos?.length || 0
         });
 
         const url = `/obras/${obraId}`;
-        console.log(`🎯 Fazendo PUT para: ${url}`);
+        console.log(` Fazendo PUT para: ${url}`);
         
         const response = await fetch(url, {
             method: "PUT",

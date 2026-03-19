@@ -26,7 +26,7 @@ import { normalizeEmpresa } from '../../core/shared-utils.js';
  * INICIALIZAR INPUT HÍBRIDO - OTIMIZADO
  */
 async function inicializarInputEmpresaHibrido(obraId) {
-    console.log(`🔧 [INPUT HÍBRIDO] Inicializando para obra: ${obraId}`);
+    console.log(` [INPUT HÍBRIDO] Inicializando para obra: ${obraId}`);
 
     const input = document.getElementById(`empresa-input-${obraId}`);
     const dropdown = document.getElementById(`empresa-dropdown-${obraId}`);
@@ -351,7 +351,7 @@ function exibirTodasEmpresas(empresas, container, input, dropdown, obraId) {
     // ✅ CORREÇÃO: APLICAR EVENT LISTENERS DIRETOS PARA SUPORTE TOUCHPAD
     aplicarEventListenersDiretos(container, input, dropdown, obraId);
 
-    console.log(`📊 [EMPRESA] Exibindo ${empresasLimitadas.length} de ${empresas.length} empresas`);
+    console.log(` [EMPRESA] Exibindo ${empresasLimitadas.length} de ${empresas.length} empresas`);
 }
 
 /* ==== SEÇÃO 4: NAVEGAÇÃO E SELEÇÃO ==== */
@@ -378,7 +378,7 @@ function navegarDropdown(direcao, container, input, dropdown, obraId) {
             nextIndex = currentIndex === 0 ? options.length - 1 : currentIndex - 1;
         }
 
-        console.log(`🔄 Navegação: ${currentIndex} → ${nextIndex} (total: ${options.length})`);
+        console.log(` Navegação: ${currentIndex} → ${nextIndex} (total: ${options.length})`);
     } else {
         // Se não há opção ativa, começa na primeira (down) ou última (up)
         nextIndex = direcao === 'down' ? 0 : options.length - 1;
@@ -399,14 +399,14 @@ function navegarDropdown(direcao, container, input, dropdown, obraId) {
         behavior: 'smooth'
     });
 
-    console.log(`🎯 Navegando para: ${sigla} - ${nome} (${nextIndex + 1}/${options.length})`);
+    console.log(` Navegando para: ${sigla} - ${nome} (${nextIndex + 1}/${options.length})`);
 }
 
 /**
  * SELECIONAR EMPRESA - COM ATUALIZAÇÃO DO NÚMERO DO CLIENTE
  */
 function selecionarEmpresa(sigla, nome, input, dropdown, obraId, tipoSelecao = 'manual') {
-    console.log('🎯 Selecionando empresa:', sigla, nome, 'Tipo:', tipoSelecao);
+    console.log(' Selecionando empresa:', sigla, nome, 'Tipo:', tipoSelecao);
 
     // 🔥 1. Atualizar o campo da empresa
     if (input) {

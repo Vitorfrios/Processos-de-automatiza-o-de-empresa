@@ -40,7 +40,7 @@ function normalizeEmpresas(empresas) {
 
 
 /**
- * 🔄 FUNÇÃO CENTRALIZADA: Dispara cálculo de vazão e ganhos térmicos
+ *  FUNÇÃO CENTRALIZADA: Dispara cálculo de vazão e ganhos térmicos
  * @param {string} roomId - ID da sala
  * @returns {void}
  */
@@ -63,7 +63,7 @@ function triggerCalculation(roomId) {
 }
 
 /**
- * 🔄 FUNÇÃO CENTRALIZADA: Sincroniza título da sala com campo ambiente
+ *  FUNÇÃO CENTRALIZADA: Sincroniza título da sala com campo ambiente
  * @param {string} roomId - ID da sala
  * @param {string} newTitle - Novo título
  * @returns {void}
@@ -101,6 +101,6 @@ export {
     attachModuleToWindow,
     normalizeEmpresa,
     normalizeEmpresas,
-    triggerCalculation,        // 🔄 NOVA
-    syncTitleToAmbienteDirect  // 🔄 NOVA
+    triggerCalculation,        //  NOVA
+    syncTitleToAmbienteDirect  //  NOVA
 };

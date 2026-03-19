@@ -162,7 +162,7 @@ class WordHandler:
             if not context:
                 raise ValueError("Não foi possível gerar contexto para a PC")
             
-            print(f"📊 Contexto gerado com {len(context.get('aplicacoes_groups', []))} aplicações")
+            print(f" Contexto gerado com {len(context.get('aplicacoes_groups', []))} aplicações")
             
             # Testar contexto básico primeiro
             test_context = {
@@ -190,7 +190,7 @@ class WordHandler:
                 print(f"❌ Erro no template: {template_error}")
             
             # Agora renderizar com contexto completo
-            print("🔄 Renderizando com contexto completo...")
+            print(" Renderizando com contexto completo...")
             doc = DocxTemplate(str(template_path))
             doc.render(context)
             

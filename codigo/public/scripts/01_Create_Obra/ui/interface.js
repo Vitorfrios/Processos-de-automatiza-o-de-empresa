@@ -107,7 +107,7 @@ function addNewProject() {
  * toggleObra('obra_a42', event) // Expande ou recolhe a obra com ID 'obra_a42'
  */
 function toggleObra(obraId, event) {
-    console.log(`🔧 Toggle Obra chamado: ${obraId}`);
+    console.log(` Toggle Obra chamado: ${obraId}`);
     
     // ✅ CORREÇÃO: Validar ID único
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
@@ -138,7 +138,7 @@ function toggleObra(obraId, event) {
     } else {
         content.classList.add("collapsed");
         minimizer.textContent = "+";
-        console.log(`📁 Obra ${obraId} recolhida`);
+        console.log(` Obra ${obraId} recolhida`);
     }
 }
 
@@ -152,7 +152,7 @@ function toggleObra(obraId, event) {
  * toggleProject('obra_a42_proj1', event) // Expande ou recolhe o projeto com ID 'obra_a42_proj1'
  */
 function toggleProject(projectId, event) {
-    console.log(`🔧 Toggle Project chamado: ${projectId}`);
+    console.log(` Toggle Project chamado: ${projectId}`);
     
     // ✅ CORREÇÃO: Validar ID único
     if (!projectId || projectId === 'undefined' || projectId === 'null') {
@@ -183,7 +183,7 @@ function toggleProject(projectId, event) {
     } else {
         content.classList.add("collapsed");
         minimizer.textContent = "+";
-        console.log(`📁 Projeto ${projectId} recolhido`);
+        console.log(` Projeto ${projectId} recolhido`);
     }
 }
 
@@ -197,7 +197,7 @@ function toggleProject(projectId, event) {
  * toggleRoom('obra_a42_proj1_sala1', event) // Expande ou recolhe a sala com ID 'obra_a42_proj1_sala1'
  */
 function toggleRoom(roomId, event) {
-    console.log(`🔧 Toggle Sala chamado: ID ${roomId}`, event);
+    console.log(` Toggle Sala chamado: ID ${roomId}`, event);
     
     // ✅ CORREÇÃO: Validar ID único
     if (!roomId || roomId === 'undefined' || roomId === 'null') {
@@ -231,7 +231,7 @@ function toggleRoom(roomId, event) {
     } else {
         content.classList.add("collapsed");
         minimizer.textContent = "+";
-        console.log(`📁 Sala ${roomId} RECOLHIDA`);
+        console.log(` Sala ${roomId} RECOLHIDA`);
     }
 }
 
@@ -289,7 +289,7 @@ function saveOrUpdateObra(obraParam, event) {
         event.stopPropagation();
     }
 
-    console.log(`💾 SALVANDO/ATUALIZANDO OBRA pelo parâmetro: "${obraParam}"`);
+    console.log(` SALVANDO/ATUALIZANDO OBRA pelo parâmetro: "${obraParam}"`);
 
     // ✅ CORREÇÃO: Converter automaticamente nome para ID
     let obraId = obraParam;

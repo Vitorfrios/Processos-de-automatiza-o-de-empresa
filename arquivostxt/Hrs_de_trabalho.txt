@@ -123,3 +123,7 @@ Março
 06/03/2026 08:30 - 13:40
 09/03/2026 10:20 - 13:00
 10/03/2026 07:50 - 12:00
+
+
+
+criar tag dashboard e credenciais adms(pode ter mais de 1 adm ) arrumar a parte ADM do dados para poder ser escalável 1 ou mais adms

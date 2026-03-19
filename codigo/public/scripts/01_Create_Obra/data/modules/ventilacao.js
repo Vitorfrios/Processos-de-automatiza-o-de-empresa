@@ -72,7 +72,7 @@ function startRoomLoading(roomId) {
     if (!window._loadingRooms) window._loadingRooms = new Set();
     window._loadingRooms.add(roomId);
     window._isLoadingData = true;
-    console.log(`🔄 [MODO CARREGAMENTO] Ativado para sala ${roomId}`);
+    console.log(` [MODO CARREGAMENTO] Ativado para sala ${roomId}`);
 }
 
 /**
@@ -88,7 +88,7 @@ function finishRoomLoading(roomId, triggerRefresh = true) {
     // Se não há mais salas carregando, desativa o flag global
     if (window._loadingRooms.size === 0) {
         window._isLoadingData = false;
-        console.log('🔄 [MODO CARREGAMENTO] Finalizado - todas as salas carregadas');
+        console.log(' [MODO CARREGAMENTO] Finalizado - todas as salas carregadas');
     }
     
     // Após o carregamento, libera as quantidades para recálculo automático
@@ -98,7 +98,7 @@ function finishRoomLoading(roomId, triggerRefresh = true) {
         qntInputs.forEach(input => {
             input.setAttribute('data-user-edited', 'false');
         });
-        console.log(`🔄 Flags de edição manual resetadas para máquinas da sala ${roomId}`);
+        console.log(` Flags de edição manual resetadas para máquinas da sala ${roomId}`);
     }
 }
 
@@ -161,7 +161,7 @@ function formatNumber(value, decimals = 2) {
  * COLETA INPUTS TÉCNICOS DA SALA
  */
 function collectRoomInputs(roomId) {
-    console.log(`📊 [collectRoomInputs] Coletando inputs para sala ${roomId}`);
+    console.log(` [collectRoomInputs] Coletando inputs para sala ${roomId}`);
     
     const inputs = {};
     
@@ -469,7 +469,7 @@ function updateSolutionTable(roomId, inputs) {
             if (!userEdited) {
                 // Não foi editado manualmente → atualiza para a solução
                 qntInput.value = solucaoNumerica;
-                console.log(`📊 [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} ATUALIZADA para ${solucaoNumerica} (automática)`);
+                console.log(` [Ventilação] Parâmetros mudaram. Quantidade da máquina ${machineId} ATUALIZADA para ${solucaoNumerica} (automática)`);
                 
                 if (window.calculateMachinePrice) {
                     window.calculateMachinePrice(machineId);
@@ -484,7 +484,7 @@ function updateSolutionTable(roomId, inputs) {
                 const currentValue = parseInt(qntInput.value) || 1;
                 if (currentValue !== solucaoNumerica) {
                     qntInput.value = solucaoNumerica;
-                    console.log(`📊 [Ventilação] Quantidade da máquina ${machineId} ajustada para solução: ${solucaoNumerica}`);
+                    console.log(` [Ventilação] Quantidade da máquina ${machineId} ajustada para solução: ${solucaoNumerica}`);
                     if (window.calculateMachinePrice) {
                         window.calculateMachinePrice(machineId);
                     }

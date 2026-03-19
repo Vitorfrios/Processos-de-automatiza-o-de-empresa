@@ -461,7 +461,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(501, f"Método não suportado: POST {path}")
 
     def handle_post_admin_login(self):
-        """POST /api/admin/login - Valida credenciais fixas do ADM"""
+        """POST /api/admin/login - Valida credenciais administrativas"""
         try:
             content_length = int(self.headers.get("Content-Length", 0))
             raw_body = (
@@ -471,7 +471,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
             payload = json.loads(raw_body or "{}")
         except json.JSONDecodeError:
-            self.send_json_response({"success": False, "error": "JSON inválido"}, 400)
+            self.send_json_response({"success": False, "error": "JSON invalido"}, 400)
             return
         except Exception as e:
             print(f" Erro ao ler corpo do login admin: {e}")
@@ -483,6 +483,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         usuario = str(payload.get("usuario", "")).strip()
         token = str(payload.get("token", "")).strip()
+        normalized_usuario = usuario.lower()
 
         if not usuario or not token:
             self.send_json_response(
@@ -496,17 +497,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         try:
-            dados_file = self.project_root / "json" / "dados.json"
+            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
 
-            if not dados_file.exists():
+            if not isinstance(dados_data, dict):
                 self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    404,
+                    {
+                        "success": False,
+                        "error": "Estrutura de credenciais administrativas invalida",
+                    },
+                    500,
                 )
                 return
-
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
         except Exception as e:
             print(f" Erro ao carregar dados.json para login admin: {e}")
             self.send_json_response(
@@ -519,31 +521,98 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         admin_data = dados_data.get("ADM")
-        admin_usuario = (
-            str(admin_data.get("usuario", "")).strip()
-            if isinstance(admin_data, dict)
-            else ""
-        )
-        admin_token = (
-            str(admin_data.get("token", "")).strip()
-            if isinstance(admin_data, dict)
-            else ""
+        administradores = (
+            dados_data.get("administradores", [])
+            if isinstance(dados_data.get("administradores", []), list)
+            else []
         )
 
-        if not admin_usuario or not admin_token:
+        normalized_admins = []
+
+        if isinstance(admin_data, list):
+            for admin in admin_data:
+                if not isinstance(admin, dict):
+                    continue
+
+                admin_usuario = str(admin.get("usuario", "")).strip()
+                admin_token = str(admin.get("token", "")).strip()
+
+                if not admin_usuario or not admin_token:
+                    continue
+
+                normalized_admins.append(
+                    {
+                        "nome": admin.get("nome", admin_usuario),
+                        "email": admin.get("email", ""),
+                        "usuario": admin_usuario,
+                        "token": admin_token,
+                        "status": str(admin.get("status", "ativo")).strip().lower()
+                        or "ativo",
+                        "nivel": admin.get("nivel", "ADM"),
+                    }
+                )
+        elif isinstance(admin_data, dict):
+            admin_usuario = str(admin_data.get("usuario", "")).strip()
+            admin_token = str(admin_data.get("token", "")).strip()
+
+            if admin_usuario and admin_token:
+                normalized_admins.append(
+                    {
+                        "nome": admin_data.get("nome", admin_usuario),
+                        "email": admin_data.get("email", ""),
+                        "usuario": admin_usuario,
+                        "token": admin_token,
+                        "status": str(admin_data.get("status", "ativo")).strip().lower()
+                        or "ativo",
+                        "nivel": admin_data.get("nivel", "ADM"),
+                    }
+                )
+
+        for admin in administradores:
+            if not isinstance(admin, dict):
+                continue
+
+            admin_usuario = str(admin.get("usuario", "")).strip()
+            admin_token = str(admin.get("token", "")).strip()
+
+            if not admin_usuario or not admin_token:
+                continue
+
+            normalized_admins.append(
+                {
+                    "nome": admin.get("nome", admin_usuario),
+                    "email": admin.get("email", ""),
+                    "usuario": admin_usuario,
+                    "token": admin_token,
+                    "status": str(admin.get("status", "ativo")).strip().lower()
+                    or "ativo",
+                    "nivel": admin.get("nivel", "Administrador"),
+                }
+            )
+
+        active_admin = next(
+            (
+                admin
+                for admin in normalized_admins
+                if str(admin["usuario"]).strip().lower() == normalized_usuario
+                and admin["token"] == token
+                and admin["status"] != "inativo"
+            ),
+            None,
+        )
+
+        if not normalized_admins:
             self.send_json_response(
                 {
                     "success": False,
                     "reason": "admin_not_configured",
-                    "error": "Credenciais ADM nao configuradas no dados.json",
+                    "error": "Credenciais administrativas nao configuradas no dados.json",
                 },
                 500,
             )
             return
 
-        is_admin_match = usuario == "ADM" and usuario == admin_usuario and token == admin_token
-
-        if not is_admin_match:
+        if not active_admin:
             self.send_json_response(
                 {
                     "success": False,
@@ -558,8 +627,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             {
                 "success": True,
                 "session": {
-                    "usuario": admin_usuario,
+                    "usuario": active_admin["usuario"],
+                    "nome": active_admin["nome"],
                     "perfil": "ADM",
+                    "nivel": active_admin["nivel"],
                 },
                 "redirectTo": "/pages/obras/create.html",
             },

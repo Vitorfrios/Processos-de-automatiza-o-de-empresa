@@ -45,7 +45,7 @@ export function showWordModelModal(obraId, obraName) {
                 
                 <div class="model-option" data-model="pt">
                     <input type="checkbox" id="model-pt" class="model-option-checkbox">
-                    <div class="model-option-icon">🔧</div>
+                    <div class="model-option-icon"></div>
                     <div class="model-option-details">
                         <div class="model-option-title">Proposta Técnica</div>
                         <div class="model-option-description">Documento técnico detalhado com especificações, cálculos e memórias de cálculo.</div>

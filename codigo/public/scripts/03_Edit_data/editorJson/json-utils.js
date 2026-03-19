@@ -788,22 +788,22 @@ window.loadData = loadData;
 // ==================== INICIALIZAÇÃO ====================
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🔄 DOM carregado, inicializando...');
+    console.log(' DOM carregado, inicializando...');
     
     // Adicionar listener para debug
     window.addEventListener('dataLoaded', function (event) {
-        console.log('🎯 EVENTO dataLoaded recebido no json-utils.js');
-        console.log('🎯 Dutos:', event.detail.dutos);
-        console.log('🎯 Dutos é array?', Array.isArray(event.detail.dutos));
-        console.log('🎯 Número de dutos:', event.detail.dutos?.length || 0);
-        console.log('🎯 Tubos:', event.detail.tubos);
-        console.log('🎯 Tubos é array?', Array.isArray(event.detail.tubos));
-        console.log('🎯 Número de tubos:', event.detail.tubos?.length || 0);
+        console.log(' EVENTO dataLoaded recebido no json-utils.js');
+        console.log(' Dutos:', event.detail.dutos);
+        console.log(' Dutos é array?', Array.isArray(event.detail.dutos));
+        console.log(' Número de dutos:', event.detail.dutos?.length || 0);
+        console.log(' Tubos:', event.detail.tubos);
+        console.log(' Tubos é array?', Array.isArray(event.detail.tubos));
+        console.log(' Número de tubos:', event.detail.tubos?.length || 0);
     });
 
     // Inicializar editor após um delay
     setTimeout(() => {
-        console.log('⏰ Inicializando editor JSON...');
+        console.log(' Inicializando editor JSON...');
         if (window.initJSONEditor) {
             window.initJSONEditor();
         }

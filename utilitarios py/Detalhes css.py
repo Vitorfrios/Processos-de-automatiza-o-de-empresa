@@ -121,8 +121,8 @@ def analyze_css_comprehensive():
         for file_path, data in sorted(all_files_data.items()):
             report.write(f"🎨 ARQUIVO: {file_path}\n")
             report.write(f"   📏 Linhas de código: {data['lines']}\n")
-            report.write(f"   🎯 Regras CSS: {data['rule_count']}\n")
-            report.write(f"   ⚙️  Propriedades: {data['property_count']}\n")
+            report.write(f"    Regras CSS: {data['rule_count']}\n")
+            report.write(f"     Propriedades: {data['property_count']}\n")
             report.write(f"   📱 Media Queries: {len(data['media_queries'])}\n")
             report.write(f"   📥 Imports: {len(data['imports'])}\n")
             
@@ -156,7 +156,7 @@ def analyze_css_comprehensive():
                     report.write(f"      ... e mais {len(data['colors']) - 15} cores\n")
             
             if data['selectors']:
-                report.write(f"   🎯 Seletores principais: {len(data['selectors'])}\n")
+                report.write(f"    Seletores principais: {len(data['selectors'])}\n")
                 report.write("   📋 Lista de seletores:\n")
                 for selector in sorted(data['selectors'])[:10]:
                     usage_count = len(selector_usages.get(selector, []))
@@ -192,7 +192,7 @@ def analyze_css_comprehensive():
                 report.write(f"🏷️  .{cls} - aparece em {len(files)} arquivos:\n")
                 
                 for file_path, count in file_count.most_common():
-                    report.write(f"   📁 {file_path} ({count}x)\n")
+                    report.write(f"    {file_path} ({count}x)\n")
                 
                 report.write("\n")
         else:
@@ -206,7 +206,7 @@ def analyze_css_comprehensive():
                 report.write(f"🆔 #{id_name} - aparece em {len(files)} arquivos:\n")
                 
                 for file_path, count in file_count.most_common():
-                    report.write(f"   📁 {file_path} ({count}x)\n")
+                    report.write(f"    {file_path} ({count}x)\n")
                 
                 report.write("\n")
         else:
@@ -218,10 +218,10 @@ def analyze_css_comprehensive():
             for selector, files in sorted(duplicate_selectors.items(), key=lambda x: len(x[1]), reverse=True)[:10]:
                 file_count = Counter(files)
                 display_selector = selector if len(selector) <= 40 else selector[:37] + "..."
-                report.write(f"🎯 {display_selector} - aparece em {len(files)} arquivos:\n")
+                report.write(f" {display_selector} - aparece em {len(files)} arquivos:\n")
                 
                 for file_path, count in file_count.most_common():
-                    report.write(f"   📁 {file_path} ({count}x)\n")
+                    report.write(f"    {file_path} ({count}x)\n")
                 
                 report.write("\n")
         else:
@@ -241,7 +241,7 @@ def analyze_css_comprehensive():
         total_properties = sum(data['property_count'] for data in all_files_data.values())
         total_media_queries = sum(len(data['media_queries']) for data in all_files_data.values())
         
-        report.write(f"📊 ESTATÍSTICAS:\n")
+        report.write(f" ESTATÍSTICAS:\n")
         report.write(f"   • Total de arquivos .css: {total_files}\n")
         report.write(f"   • Total de linhas de código: {total_lines}\n")
         report.write(f"   • Total de seletores: {total_selectors}\n")
@@ -266,7 +266,7 @@ def analyze_css_comprehensive():
             report.write(f"   {i:2d}. {file_path}: {data['rule_count']} regras, {data['property_count']} propriedades, {data['lines']} linhas\n")
         
         # Propriedades mais comuns
-        report.write(f"\n⚙️  PROPRIEDADES MAIS COMUNS:\n")
+        report.write(f"\n  PROPRIEDADES MAIS COMUNS:\n")
         all_properties = []
         for data in all_files_data.values():
             all_properties.extend([prop[0] for prop in data['properties']])

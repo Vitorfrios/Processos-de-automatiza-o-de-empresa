@@ -18,7 +18,7 @@ const FilterDOM = (function () {
      * Inicializa o módulo DOM
      */
     function initialize() {
-        console.log('🔧 [FILTER-DOM] Inicializando...');
+        console.log(' [FILTER-DOM] Inicializando...');
 
         // Buscar elementos
         filterInputsArea = document.getElementById('filtros-inputs');

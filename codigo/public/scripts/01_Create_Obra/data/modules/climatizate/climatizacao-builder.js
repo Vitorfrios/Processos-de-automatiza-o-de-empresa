@@ -16,7 +16,7 @@ function buildClimatizationSection(obraId, projectId, roomName, finalRoomId) {
     }
     
     const roomId = finalRoomId;
-    console.log(`🔧 Construindo seção de climatização para sala: ${roomName} (ID: ${roomId})`);
+    console.log(` Construindo seção de climatização para sala: ${roomName} (ID: ${roomId})`);
     
     return `
     <div class="section-block">
@@ -66,7 +66,7 @@ function buildClimatizationTable(roomId, roomName = 'Sala') {
         return '';
     }
     
-    console.log(`🔧 Construindo tabela de climatização para sala ID: ${roomId}`);
+    console.log(` Construindo tabela de climatização para sala ID: ${roomId}`);
     
     return `
     <div class="clima-table">
@@ -348,7 +348,7 @@ function buildSelectInput(field, roomId) {
     .map((opt) => `<option value="${opt}">${opt === "" ? "Selecione" : opt}</option>`)
     .join("");
 
-    // 🔄 MODIFICAÇÃO: Para campo backup, usar função específica que evita loop
+    //  MODIFICAÇÃO: Para campo backup, usar função específica que evita loop
     const onChangeHandler = field.field === "backup" 
         ? `handleClimaBackupChange('${roomId}', this.value)`
         : `calculateVazaoArAndThermalGains('${roomId}')`;
@@ -506,7 +506,7 @@ function buildThermalGainsSection(roomId) {
         return '';
     }
     
-    console.log(`🔧 Construindo seção de ganhos térmicos para sala ID: ${roomId}`);
+    console.log(` Construindo seção de ganhos térmicos para sala ID: ${roomId}`);
     
     return `
     <div class="subsection-block">

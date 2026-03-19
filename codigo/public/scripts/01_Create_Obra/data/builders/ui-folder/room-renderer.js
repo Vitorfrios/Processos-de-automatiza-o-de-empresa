@@ -12,7 +12,7 @@ function renderRoomFromData(projectId, projectName, roomData, obraId = null, obr
     const roomName = roomData.nome;
     const roomId = ensureStringId(roomData.id);
 
-    console.log(`🎯 Renderizando sala: ${roomName} no projeto ${projectName}`, {
+    console.log(` Renderizando sala: ${roomName} no projeto ${projectName}`, {
         obra: obraName,
         projectId: projectId,
         roomId: roomId,
@@ -70,7 +70,7 @@ async function populateRoomData(roomElement, roomData) {
         return false;
     }
     
-    console.log(`🔄 Preenchendo sala "${roomName}" (ID: ${roomId})`);
+    console.log(` Preenchendo sala "${roomName}" (ID: ${roomId})`);
 
     try {
         const tableExists = ensureTableSectionExists(roomElement);
@@ -92,7 +92,7 @@ async function populateRoomData(roomElement, roomData) {
         }
 
         if (roomData.ganhosTermicos) {
-            console.log(`📊 Preenchendo ganhos térmicos para sala ${roomName}`);
+            console.log(` Preenchendo ganhos térmicos para sala ${roomName}`);
             fillThermalGainsData(roomElement, roomData.ganhosTermicos);
         }
 
@@ -116,7 +116,7 @@ async function populateRoomData(roomElement, roomData) {
 
         // ✅ Preencher acessorios
         if (roomData.acessorios && Array.isArray(roomData.acessorios)) {
-            console.log(`🔧 Preenchendo ${roomData.acessorios.length} acessorio(s) para sala ${roomName}`);
+            console.log(` Preenchendo ${roomData.acessorios.length} acessorio(s) para sala ${roomName}`);
             
             // Aguardar um pouco para garantir que a seção foi criada
             setTimeout(() => {
@@ -146,7 +146,7 @@ async function populateRoomData(roomElement, roomData) {
 
         // ✅ CORREÇÃO CRÍTICA: Preencher tubulação - CUIDADO COM A ESTRUTURA
         if (roomData.tubulacao && roomData.tubulacao.conjuntos && Array.isArray(roomData.tubulacao.conjuntos)) {
-            console.log(`🔧 Preenchendo ${roomData.tubulacao.conjuntos.length} conjunto(s) de tubulação para sala ${roomName}`);
+            console.log(` Preenchendo ${roomData.tubulacao.conjuntos.length} conjunto(s) de tubulação para sala ${roomName}`);
             
             // Aguardar mais tempo para garantir que a seção de tubulação foi criada
             setTimeout(() => {
@@ -172,7 +172,7 @@ async function populateRoomData(roomElement, roomData) {
             // Aguardar mais tempo para garantir que todas as outras seções foram preenchidas
             setTimeout(async () => {
                 try {
-                    console.log(`🚀 Iniciando preenchimento de máquinas para sala ${roomName}`);
+                    console.log(` Iniciando preenchimento de máquinas para sala ${roomName}`);
                     
                     const success = await fillMachinesData(roomElement, roomData.maquinas);
                     

@@ -226,7 +226,7 @@ function initializeInterface() {
  * Inicializa sistemas core da aplicação
  */
 function initializeCoreSystems() {
-    console.log('🚀 Inicializando sistemas core...');
+    console.log(' Inicializando sistemas core...');
     
     try {
         // 1. Inicializa Event Bus
@@ -254,7 +254,7 @@ function initializeCoreSystems() {
  * Ponto único de entrada - substitui main.js
  */
 export function bootstrapApplication() {
-    console.log('🎯 Bootstrap da aplicação iniciado...');
+    console.log(' Bootstrap da aplicação iniciado...');
     
     // Verifica se já está inicializado
     if (window.appInitialized) {
@@ -275,7 +275,7 @@ export function bootstrapApplication() {
  * Reinicializa a aplicação
  */
 export function reinitializeApplication() {
-    console.log('🔄 Reinicializando aplicação...');
+    console.log(' Reinicializando aplicação...');
     
     // Limpa estado
     appState.clear();

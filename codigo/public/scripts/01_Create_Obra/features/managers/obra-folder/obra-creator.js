@@ -174,7 +174,7 @@ async function createEmptyObra(obraName, obraId, isFromServer = false, hasProjec
 }
 
 /**
- * 🚀 FUNÇÕES PRINCIPAIS DE GERENCIAMENTO
+ *  FUNÇÕES PRINCIPAIS DE GERENCIAMENTO
  */
 
 async function addNewObra() {

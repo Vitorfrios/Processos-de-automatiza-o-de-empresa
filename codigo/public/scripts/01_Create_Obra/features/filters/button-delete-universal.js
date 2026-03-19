@@ -139,7 +139,7 @@ class ButtonDeleteUniversal {
             return;
         }
         
-        console.log(`🔧 Configurando botão de obra:`, buttonInfo.itemName);
+        console.log(` Configurando botão de obra:`, buttonInfo.itemName);
         
         // Clonar botão para remover event listeners antigos
         const newButton = button.cloneNode(true);
@@ -369,7 +369,7 @@ class ButtonDeleteUniversal {
             return 0;
         }
         
-        console.log('🔧 [DELETE-REAL] Buscando botões de OBRA (filtro ATIVO)...');
+        console.log(' [DELETE-REAL] Buscando botões de OBRA (filtro ATIVO)...');
         
         // Buscar especificamente botões que parecem ser de obra
         const obraButtons = document.querySelectorAll('[onclick*="deleteObra"], .btn-delete-obra, .delete-obra-btn');
@@ -380,7 +380,7 @@ class ButtonDeleteUniversal {
             if (setup) configuredButtons++;
         });
         
-        console.log(`🎯 [DELETE-REAL] ${configuredButtons} botões de obra configurados`);
+        console.log(` [DELETE-REAL] ${configuredButtons} botões de obra configurados`);
         return configuredButtons;
     }
 
@@ -388,7 +388,7 @@ class ButtonDeleteUniversal {
      * Restaura apenas botões de obra
      */
     restoreOriginalButtons() {
-        console.log('🔄 [DELETE-REAL] Restaurando botões de obra originais...');
+        console.log(' [DELETE-REAL] Restaurando botões de obra originais...');
         
         const universalButtons = document.querySelectorAll('.delete-real');
         let restoredCount = 0;

@@ -53,7 +53,9 @@
 
         <!-- Tabs de Navegação -->
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('constants')">Constantes</button>
+            <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab" onclick="switchTab('adminCredentials')">Credenciais ADM</button>
+            <button class="tab" onclick="switchTab('constants')">Constantes</button>
             <button class="tab" onclick="switchTab('machines')">Máquinas</button>
             <button class="tab" onclick="switchTab('materials')">Materiais</button>
             <button class="tab" onclick="switchTab('empresas')">Empresas</button>
@@ -65,8 +67,42 @@
 
         <!-- Conteúdo das Tabs -->
         <div id="tabContent">
+            <!-- Tab Dashboard -->
+            <div id="dashboardTab" class="tab-pane active">
+                <section class="admin-dashboard-shell">
+                    <div class="admin-dashboard-hero">
+                        <div>
+                            <span class="dashboard-eyebrow">Resumo dos bancos</span>
+                            <h2>Dashboard de dados do sistema</h2>
+                            <p>
+                                Resumo direto das bases do sistema com totais de obras, empresas, máquinas,
+                                tubos, acessórios, dutos e logins ativos.
+                            </p>
+                        </div>
+                        <div class="dashboard-toolbar">
+                            <button class="btn btn-primary" id="refreshDashboardBtn" type="button">
+                                <i class="icon-refresh"></i> Atualizar painel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="dashboardContent" class="admin-dashboard-content">
+                        <!-- Conteúdo dinâmico do dashboard -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab Credenciais ADM -->
+            <div id="adminCredentialsTab" class="tab-pane">
+                <section class="admin-credentials-shell">
+                    <div id="adminCredentialsContent" class="admin-credentials-content">
+                        <!-- Conteúdo dinâmico das credenciais -->
+                    </div>
+                </section>
+            </div>
+
             <!-- Tab Constantes -->
-            <div id="constantsTab" class="tab-pane active">
+            <div id="constantsTab" class="tab-pane">
                 <div class="tab-header">
                     <h2><i class="icon-settings"></i> Constantes do Sistema</h2>
                 </div>
@@ -329,6 +365,46 @@
                     <button class="btn btn-success" onclick="saveEdit()">Salvar</button>
                     <button class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="adminCredentialModal" class="modal">
+            <div class="modal-content admin-credential-modal">
+                <div class="admin-modal-header">
+                    <div>
+                        <span class="dashboard-eyebrow">Administrador</span>
+                        <h3 id="adminCredentialModalTitle">Novo administrador</h3>
+                    </div>
+                    <button class="btn btn-secondary btn-small" id="closeAdminModalBtn" type="button">
+                        <i class="icon-close"></i> Fechar
+                    </button>
+                </div>
+
+                <form id="adminCredentialForm" class="admin-credential-form">
+                    <input type="hidden" id="adminRecordId">
+
+                    <div class="admin-form-grid admin-form-grid-simple">
+                        <label class="admin-field">
+                            <span>Usuário</span>
+                            <input type="text" id="adminUsernameInput" required>
+                        </label>
+
+                        <label class="admin-field">
+                            <span>Senha</span>
+                            <div class="admin-token-field">
+                                <input type="text" id="adminTokenInput" required>
+                                <button class="btn btn-info btn-small" id="generateAdminTokenBtn" type="button">
+                                    Gerar
+                                </button>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="btn btn-success" id="saveAdminCredentialBtn" type="submit">Salvar</button>
+                        <button class="btn btn-secondary" id="cancelAdminCredentialBtn" type="button">Cancelar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </main>

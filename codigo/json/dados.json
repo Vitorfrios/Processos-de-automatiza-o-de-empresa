@@ -1,8 +1,130 @@
 {
-  "ADM":{
-    "usuario": "ADM",
-    "token": "senha adm"
-  },
+  "ADM": [
+    {
+      "usuario": "adm",
+      "token": "1",
+      "criadoEm": "2026-03-19T13:57:43.560Z"
+    },
+    {
+      "usuario": "ADM2",
+      "token": "ANctJJMDjft7",
+      "criadoEm": "2026-03-19T14:30:59.996Z"
+    }
+  ],
+  "empresas": [
+    {
+      "codigo": "ACT",
+      "nome": "ACTEMIUM",
+      "credenciais": {
+        "usuario": "1",
+        "token": "2",
+        "data_criacao": "2026-02-16T20:35:25.359Z",
+        "data_expiracao": "2026-04-17T20:35:25.359Z",
+        "tempoUso": 60
+      }
+    },
+    {
+      "codigo": "AMC",
+      "nome": "AMC SOLUÇÕES",
+      "credenciais": {
+        "usuario": "2",
+        "token": "2",
+        "data_criacao": "2026-03-18T14:09:02.326Z",
+        "data_expiracao": "2026-06-16T14:09:02.326Z",
+        "tempoUso": 90
+      }
+    },
+    {
+      "codigo": "ARC",
+      "nome": "ARCON",
+      "credenciais": null
+    },
+    {
+      "codigo": "ART",
+      "nome": "ARTECAL",
+      "credenciais": null
+    },
+    {
+      "codigo": "CIC",
+      "nome": "CICLO SOLAR",
+      "credenciais": null
+    },
+    {
+      "codigo": "GEP",
+      "nome": "GRUPO ELETROPAINEL",
+      "credenciais": null
+    },
+    {
+      "codigo": "IHM",
+      "nome": "IHM ENGENHARIA",
+      "credenciais": null
+    },
+    {
+      "codigo": "SEP",
+      "nome": "SEMPEL",
+      "credenciais": null
+    },
+    {
+      "codigo": "SEN",
+      "nome": "SENIOR",
+      "credenciais": null
+    },
+    {
+      "codigo": "TEC",
+      "nome": "TECNOTEMP",
+      "credenciais": null
+    },
+    {
+      "codigo": "SIT",
+      "nome": "SIMATEC",
+      "credenciais": null
+    },
+    {
+      "codigo": "INO",
+      "nome": "INOVAR",
+      "credenciais": null
+    },
+    {
+      "codigo": "SIE",
+      "nome": "SIEMENS",
+      "credenciais": null
+    },
+    {
+      "codigo": "GEE",
+      "nome": "GE POWER",
+      "credenciais": null
+    },
+    {
+      "codigo": "EMA",
+      "nome": "EMAC",
+      "credenciais": null
+    },
+    {
+      "codigo": "MAR",
+      "nome": "MARP PAINÉIS",
+      "credenciais": null
+    },
+    {
+      "codigo": "ENG",
+      "nome": "ENGESULT",
+      "credenciais": null
+    },
+    {
+      "codigo": "CAM",
+      "nome": "CAM ENGENHARIA",
+      "credenciais": null
+    },
+    {
+      "codigo": "SRA",
+      "nome": "SRA",
+      "credenciais": null
+    },
+    {
+      "codigo": "BLC",
+      "nome": "BlueLink Consulting",
+      "credenciais": null
+    }
+  ],
   "constants": {
     "VARIAVEL_PD": {
       "value": 0.0402,
@@ -1965,120 +2087,6 @@
       "description": "Chumbador 3/8 por 2 1/2 polegadas"
     }
   },
-  "empresas": [
-    {
-      "codigo": "ACT",
-      "nome": "ACTEMIUM",
-      "credenciais": {
-        "usuario": "1",
-        "token": "1",
-        "data_criacao": "2026-02-16T20:35:25.359Z",
-        "data_expiracao": "2026-04-17T20:35:25.359Z",
-        "tempoUso": 60
-      }
-    },
-    {
-      "codigo": "AMC",
-      "nome": "AMC SOLUÇÕES",
-      "credenciais": {
-        "usuario": "2",
-        "token": "2",
-        "data_criacao": "2026-03-18T14:09:02.326Z",
-        "data_expiracao": "2026-06-16T14:09:02.326Z",
-        "tempoUso": 90
-      }
-    },
-    {
-      "codigo": "ARC",
-      "nome": "ARCON",
-      "credenciais": null
-    },
-    {
-      "codigo": "ART",
-      "nome": "ARTECAL",
-      "credenciais": null
-    },
-    {
-      "codigo": "CIC",
-      "nome": "CICLO SOLAR",
-      "credenciais": null
-    },
-    {
-      "codigo": "GEP",
-      "nome": "GRUPO ELETROPAINEL",
-      "credenciais": null
-    },
-    {
-      "codigo": "IHM",
-      "nome": "IHM ENGENHARIA",
-      "credenciais": null
-    },
-    {
-      "codigo": "SEP",
-      "nome": "SEMPEL",
-      "credenciais": null
-    },
-    {
-      "codigo": "SEN",
-      "nome": "SENIOR",
-      "credenciais": null
-    },
-    {
-      "codigo": "TEC",
-      "nome": "TECNOTEMP",
-      "credenciais": null
-    },
-    {
-      "codigo": "SIT",
-      "nome": "SIMATEC",
-      "credenciais": null
-    },
-    {
-      "codigo": "INO",
-      "nome": "INOVAR",
-      "credenciais": null
-    },
-    {
-      "codigo": "SIE",
-      "nome": "SIEMENS",
-      "credenciais": null
-    },
-    {
-      "codigo": "GEE",
-      "nome": "GE POWER",
-      "credenciais": null
-    },
-    {
-      "codigo": "EMA",
-      "nome": "EMAC",
-      "credenciais": null
-    },
-    {
-      "codigo": "MAR",
-      "nome": "MARP PAINÉIS",
-      "credenciais": null
-    },
-    {
-      "codigo": "ENG",
-      "nome": "ENGESULT",
-      "credenciais": null
-    },
-    {
-      "codigo": "CAM",
-      "nome": "CAM ENGENHARIA",
-      "credenciais": null
-    },
-    {
-      "codigo": "SRA",
-      "nome": "SRA",
-      "credenciais": null
-    },
-    {
-      "codigo": "BLC",
-      "nome": "BlueLink Consulting",
-      "credenciais": null
-    }
-  ],
   "banco_acessorios": {
     "VZ": {
       "codigo": "VZ",
@@ -2493,5 +2501,6 @@
       "mm": 47.62,
       "valor": 96
     }
-  ]
+  ],
+  "administradores": []
 }

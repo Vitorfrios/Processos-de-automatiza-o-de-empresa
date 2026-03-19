@@ -36,7 +36,7 @@ function extractClimatizationMachineData(machineElement) {
     const machineId = machineElement.getAttribute('data-machine-id') || `machine-${Date.now()}`;
     const roomId = machineElement.getAttribute('data-room-id');
 
-    console.log(`🔧 Extraindo dados da máquina ${machineId} na sala ${roomId}`);
+    console.log(` Extraindo dados da máquina ${machineId} na sala ${roomId}`);
 
     const machineData = {
         nome: getMachineName(machineElement, machineId),

@@ -65,7 +65,7 @@ def load_modules_no_cache():
 
 def initialize_server():
     """Inicialização do servidor """
-    print("🚀 INICIANDO SERVIDOR ")
+    print(" INICIANDO SERVIDOR ")
     start_time = time.time()
     
     # Limpa possíveis caches na inicialização
@@ -79,14 +79,14 @@ def initialize_server():
     server_core = ServerCore()
     
     # Configura porta
-    print("🔧 Configurando porta...")
+    print(" Configurando porta...")
     port = server_core.setup_port(8000)
     if not port:
         print("❌ Não foi possível encontrar porta disponível")
         sys.exit(1)
     
     # Cria servidor
-    print("🔄 Criando servidor HTTP...")
+    print(" Criando servidor HTTP...")
     try:
         httpd = server_core.create_server(port, UniversalHTTPRequestHandler)
     except Exception as e:
@@ -113,7 +113,7 @@ def run_server():
     httpd, server_core = initialize_server()
     
     try:
-        print("🔄 Servidor em execução ()...")
+        print(" Servidor em execução ()...")
         
         while server_core.servidor_rodando:
             try:

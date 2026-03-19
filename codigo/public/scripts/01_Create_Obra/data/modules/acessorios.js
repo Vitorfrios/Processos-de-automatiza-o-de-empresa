@@ -12,7 +12,7 @@ function fillAcessoriosData(roomElement, acessoriosData) {
     }
 
     const roomId = roomElement.dataset.roomId;
-    console.log(`🔄 Preenchendo acessorios para sala ${roomId}:`, acessoriosData);
+    console.log(` Preenchendo acessorios para sala ${roomId}:`, acessoriosData);
 
     // Verificar se a seção de acessorios existe
     const acessoriosSection = roomElement.querySelector(`#section-content-${roomId}acessorios`);
@@ -96,7 +96,7 @@ function buildAcessoriosSection(obraId, projectId, roomName, finalRoomId) {
     }
     
     const roomId = finalRoomId;
-    console.log(`🔧 Construindo seção de Acessorios para sala: ${roomName} (ID: ${roomId})`);
+    console.log(` Construindo seção de Acessorios para sala: ${roomName} (ID: ${roomId})`);
     
     return `
     <div class="section-block">
@@ -200,7 +200,7 @@ function buildAcessoriosSection(obraId, projectId, roomName, finalRoomId) {
  * Inicializa o sistema de acessorios para uma sala
  */
 function initAcessoriosSystem(roomId) {
-    console.log(`🔧 Inicializando sistema de acessorios para sala: ${roomId}`);
+    console.log(` Inicializando sistema de acessorios para sala: ${roomId}`);
     
     // Carregar tipos de acessorios da API
     carregarTiposAcessorios(roomId);
@@ -633,7 +633,7 @@ function salvarAcessorios(roomId) {
     const key = `acessorios_${roomId}`;
     localStorage.setItem(key, JSON.stringify(acessorios));
     
-    console.log(`💾 ${acessorios.length} acessorio(s) salvos para sala ${roomId}`);
+    console.log(` ${acessorios.length} acessorio(s) salvos para sala ${roomId}`);
 }
 
 /**

@@ -1,5 +1,5 @@
 // data/modules/climatizacao/climatizacao-core.js
-// 🎯 ARQUIVO PRINCIPAL - ORQUESTRADOR
+//  ARQUIVO PRINCIPAL - ORQUESTRADOR
 
 // Importar todos os módulos
 import { 

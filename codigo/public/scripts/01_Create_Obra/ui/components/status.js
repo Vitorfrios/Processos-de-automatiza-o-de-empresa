@@ -1,6 +1,6 @@
 /**
  * ui/components/status.js
- * 🎯 FUSÃO: status-manager.js → status.js
+ *  FUSÃO: status-manager.js → status.js
  * ⚡ REFATORAÇÃO: Import atualizado + funcionalidades estendidas
  */
 

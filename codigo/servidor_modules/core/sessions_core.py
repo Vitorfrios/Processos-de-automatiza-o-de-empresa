@@ -77,7 +77,7 @@ class SessionsManager:
         obra_id_str = str(obra_id)
         
         print(f"🔍 Tentando remover obra {obra_id_str} da sessão {current_session_id}")
-        print(f"📊 Obras na sessão antes: {data['sessions'][current_session_id]['obras']}")
+        print(f" Obras na sessão antes: {data['sessions'][current_session_id]['obras']}")
         
         if (current_session_id in data["sessions"] and 
             obra_id_str in data["sessions"][current_session_id]["obras"]):
@@ -98,7 +98,7 @@ class SessionsManager:
                     return False
                 else:
                     print(f"✅ Obra {obra_id_str} removida com sucesso")
-                    print(f"📊 Obras na sessão depois: {updated_data['sessions'][current_session_id]['obras']}")
+                    print(f" Obras na sessão depois: {updated_data['sessions'][current_session_id]['obras']}")
                     return True
             else:
                 print(f"❌ ERRO: Falha ao salvar dados após remoção da obra {obra_id_str}")
@@ -191,7 +191,7 @@ class SessionsManager:
 
     def add_project_to_session(self, project_id: str) -> bool:
         """Método de compatibilidade: converte projetos para obras"""
-        print(f"🔄 [COMPAT] Convertendo projeto {project_id} para obra")
+        print(f" [COMPAT] Convertendo projeto {project_id} para obra")
         
         # Em sistemas atualizados, project_id JÁ É o obra_id
         obra_id = str(project_id)
@@ -393,7 +393,7 @@ except Exception as e:
             return {"sessions": {"session_active": {"obras": []}}}
         
         def add_project_to_session(self, project_id):
-            print(f"🔄 [EMERGENCY] Convertendo projeto {project_id} para obra")
+            print(f" [EMERGENCY] Convertendo projeto {project_id} para obra")
             return self.add_obra_to_session(project_id)
             
         def remove_project(self, project_id):

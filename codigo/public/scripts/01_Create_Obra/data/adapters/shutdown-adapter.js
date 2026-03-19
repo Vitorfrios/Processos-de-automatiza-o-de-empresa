@@ -20,10 +20,10 @@ async function shutdownManual() {
     
     try {
         // 2 MENSAGENS: Limpeza e Encerramento
-        showShutdownMessage("🔄 Limpando sessões e encerrando servidor...");
+        showShutdownMessage(" Limpando sessões e encerrando servidor...");
         
         // 1. Limpa sessões no backend (continua mesmo com erro)
-        console.log("🔄 Limpando sessões...");
+        console.log(" Limpando sessões...");
         try {
             const sessionsResponse = await fetch('/api/sessions/shutdown', {
                 method: 'POST'
@@ -47,7 +47,7 @@ async function shutdownManual() {
         await new Promise(resolve => setTimeout(resolve, 200));
         
         // 3. Encerra servidor
-        console.log("🔄 Encerrando servidor...");
+        console.log(" Encerrando servidor...");
         
         const shutdownResponse = await fetch('/api/shutdown', {
             method: 'POST'
@@ -62,7 +62,7 @@ async function shutdownManual() {
             
             // Fechar após delay
             const closeDelay = result.close_delay || 2000;
-            console.log(`⏰ Fechando janela em ${closeDelay}ms...`);
+            console.log(` Fechando janela em ${closeDelay}ms...`);
             
             setTimeout(() => {
                 console.log("🚪 Fechando janela...");
@@ -83,7 +83,7 @@ async function shutdownManual() {
         console.error('❌ Erro no shutdown:', error);
         showShutdownMessage("🔌 Conexão com servidor perdida");
         showShutdownMessage("📋 Status: Servidor encerrado no console");
-        showShutdownMessage("🔄 Ação: Reexecute o servidor para continuar");
+        showShutdownMessage(" Ação: Reexecute o servidor para continuar");
         setTimeout(() => {
             window.close();
         }, 5000);
@@ -116,7 +116,7 @@ async function ensureSingleActiveSession() {
  * Inicializa a sessão automaticamente quando o sistema carrega
  */
 async function initializeSession() {
-    console.log("🔄 Verificando sessão...");
+    console.log(" Verificando sessão...");
     
     const { isSessionActive } = await import('./session-adapter.js');
     const { loadObrasFromServer } = await import('../adapters/obra-adapter-folder/obra-data-loader.js');

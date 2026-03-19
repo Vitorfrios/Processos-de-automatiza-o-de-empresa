@@ -21,14 +21,14 @@ class ServerTimeMonitor:
     
     def _time_monitor_loop(self):
         """Loop de monitoramento de tempo"""
-        print("⏰ MONITOR DE TEMPO: Iniciado")
+        print(" MONITOR DE TEMPO: Iniciado")
         
         while self.is_running:
             try:
                 time.sleep(1800)  # Verifica a cada 5 minutos
                 self._log_uptime()
             except Exception as e:
-                print(f"⏰ Monitor de tempo: Erro - {e}")
+                print(f" Monitor de tempo: Erro - {e}")
     
     def _log_uptime(self):
         """Loga o tempo de atividade do servidor"""
@@ -37,9 +37,9 @@ class ServerTimeMonitor:
         minutes = int((elapsed % 3600) // 60)
         
         if hours > 0:
-            print(f"⏰ Servidor ativo há {hours}h {minutes}min")
+            print(f" Servidor ativo há {hours}h {minutes}min")
         else:
-            print(f"⏰ Servidor ativo há {minutes}min")
+            print(f" Servidor ativo há {minutes}min")
     
     def get_uptime(self):
         """Retorna o tempo de atividade em formato legível"""
@@ -74,21 +74,21 @@ def monitorar_navegador(port, httpd):
     print("   • Servidor permanecerá aberto até encerramento manual")
     print("   • Use o botão 'Encerrar Servidor' na interface web")
     print("   • Ou pressione Ctrl+C neste terminal")
-    print(f"   • Tempo de atividade será mostrado a cada 5 minutos\n")
+    print(f"   • Tempo de atividade será mostrado a cada 30 minutos\n")
     
     # Loop principal
     while True:
         try:
             time.sleep(10)
         except KeyboardInterrupt:
-            print("\n⏰ MONITOR: Interrupção recebida - parando monitor de tempo...")
+            print("\n MONITOR: Interrupção recebida - parando monitor de tempo...")
             time_monitor.stop()
             break
         except Exception as e:
-            print(f"⏰ MONITOR: Erro inesperado: {e}")
+            print(f" MONITOR: Erro inesperado: {e}")
             time.sleep(10)
     
-    print("⏰ MONITOR: Thread finalizada")
+    print(" MONITOR: Thread finalizada")
 
 def get_server_uptime():
     """Retorna o tempo de atividade do servidor (para APIs)"""

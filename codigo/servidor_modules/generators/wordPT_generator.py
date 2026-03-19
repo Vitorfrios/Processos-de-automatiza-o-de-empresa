@@ -373,7 +373,7 @@ class WordPTGenerator:
 
             for projeto in obra_data.get("projetos", []):
                 projeto_nome = projeto.get("nome", "Projeto sem nome")
-                print(f"📁 Processando projeto: {projeto_nome}")
+                print(f" Processando projeto: {projeto_nome}")
 
                 # Processa salas do projeto
                 salas_processadas = []

@@ -112,7 +112,7 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
                 <button class="btn-material-default"
                         onclick="carregarValorMaterialDutoPadrao('${roomId}')"
                         title="Carregar valor padrão da API">
-                    🔄 Restaurar
+                     Restaurar
                 </button>
               </div>
             </div>
@@ -273,7 +273,7 @@ function buildDutosSection(obraId, projectId, roomName, finalRoomId) {
  * Inicializa o sistema de dutos
  */
 async function initDutosSystem(roomId) {
-    console.log(`🚀 Inicializando dutos para sala: ${roomId}`);
+    console.log(` Inicializando dutos para sala: ${roomId}`);
     
     // Verificar se os elementos existem
     const tipoSelect = document.getElementById(`duto-tipo-${roomId}`);
@@ -503,7 +503,7 @@ async function carregarValorMaterialDuto(roomId) {
  */
 async function carregarValorMaterialDutoPadrao(roomId) {
     try {
-        console.log('🔄 Restaurando valor padrão do material do duto...');
+        console.log(' Restaurando valor padrão do material do duto...');
         const response = await fetch('/api/materials');
         const data = await response.json();
         

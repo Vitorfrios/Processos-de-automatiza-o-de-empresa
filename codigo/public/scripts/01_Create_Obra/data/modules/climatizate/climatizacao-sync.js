@@ -18,11 +18,11 @@ let setupCompleteRoomSync;
 
 if (typeof window !== 'undefined') {
     // ============================================
-    // 🔄 SINCRONIZAÇÃO APENAS NA PRIMEIRA INTERAÇÃO PAREDES
+    //  SINCRONIZAÇÃO APENAS NA PRIMEIRA INTERAÇÃO PAREDES
     // ============================================
     // ✅ CORREÇÃO DA FUNÇÃO DE SINCRONIZAÇÃO DE PAREDES (ATUALIZADA)
     window.handleWallInputSyncFirstInteraction = function (roomId, field, value) {
-        console.log(`🔄 [PRIMEIRA-INTERAÇÃO] Sincronização de parede: ${field} = ${value}`);
+        console.log(` [PRIMEIRA-INTERAÇÃO] Sincronização de parede: ${field} = ${value}`);
 
         const numValue = parseFloat(value);
         if (isNaN(numValue)) return;
@@ -77,7 +77,7 @@ if (typeof window !== 'undefined') {
 
     // Usar sincronização apenas na primeira interação
     window.handleWallInputSync = window.handleWallInputSyncFirstInteraction;
-    console.log('🎯 LÓGICA ATIVA: Sincronização APENAS NA PRIMEIRA INTERAÇÃO');
+    console.log(' LÓGICA ATIVA: Sincronização APENAS NA PRIMEIRA INTERAÇÃO');
 
     // ============================================
     // SINCRONIZAÇÃO TÍTULO ↔ AMBIENTE
@@ -85,7 +85,7 @@ if (typeof window !== 'undefined') {
 
     // Função de sincronização título→ambiente
     window.syncTitleToAmbiente = function (roomId, newTitle) {
-        console.log(`🔄 Título → Ambiente: "${newTitle}" para sala ${roomId}`);
+        console.log(` Título → Ambiente: "${newTitle}" para sala ${roomId}`);
         const ambienteInput = document.querySelector(`input[data-field="ambiente"][data-room-id="${roomId}"]`);
         if (ambienteInput && ambienteInput.value !== newTitle) {
             ambienteInput.value = newTitle;
@@ -109,7 +109,7 @@ if (typeof window !== 'undefined') {
 
     // ✅ CORREÇÃO: Função setupCompleteRoomSync adicionada de volta
     window.setupCompleteRoomSync = function (roomId) {
-        console.log(`🎯 CONFIGURANDO SINCRONIZAÇÃO COMPLETA PARA SALA: ${roomId}`);
+        console.log(` CONFIGURANDO SINCRONIZAÇÃO COMPLETA PARA SALA: ${roomId}`);
 
         // Configurar paredes
         setupWallEventListenersDirect(roomId);
@@ -132,7 +132,7 @@ if (typeof window !== 'undefined') {
 
                 input.addEventListener('focus', function () {
                     this.setAttribute('data-editing', 'true');
-                    console.log(`🎯 Foco em ${field} - primeira interação ativa`);
+                    console.log(` Foco em ${field} - primeira interação ativa`);
                 });
 
                 input.addEventListener('input', function () {
@@ -183,7 +183,7 @@ if (typeof window !== 'undefined') {
                     if (roomBlock) {
                         roomBlock.dataset.roomName = this.value;
                     }
-                    console.log(`🔄 Ambiente → Título: "${this.value}"`);
+                    console.log(` Ambiente → Título: "${this.value}"`);
                     triggerCalculation(roomId);
                 }
             });

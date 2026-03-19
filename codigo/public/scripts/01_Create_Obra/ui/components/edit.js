@@ -340,7 +340,7 @@ function cancelInlineEdit(element) {
  */
 function makeAllEditable(selector, type) {
     const elements = document.querySelectorAll(selector);
-    console.log(`🔧 Tornando ${elements.length} elementos editáveis: ${selector}`);
+    console.log(` Tornando ${elements.length} elementos editáveis: ${selector}`);
     
     elements.forEach((element, index) => {
         // Adiciona pequeno delay para evitar conflitos
@@ -369,7 +369,7 @@ function disableAllEditing() {
  */
 function saveAllPendingEdits() {
     const editingElements = document.querySelectorAll('.editing');
-    console.log(`💾 Salvando ${editingElements.length} edições pendentes`);
+    console.log(` Salvando ${editingElements.length} edições pendentes`);
     
     editingElements.forEach(element => {
         const type = element.dataset.editType || 'unknown';

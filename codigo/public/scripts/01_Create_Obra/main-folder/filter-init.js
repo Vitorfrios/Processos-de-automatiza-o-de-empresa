@@ -173,7 +173,7 @@ const removeElementFromDOM = (itemType, itemId, additionalIds = {}) => {
  * 🔥 Configura deleção universal SOMENTE para OBRAS
  */
 function setupUniversalDeletionOverride() {
-    console.log("🔄 [FILTER-INIT] Preparando sobrescrita do sistema de deleção APENAS PARA OBRAS...");
+    console.log(" [FILTER-INIT] Preparando sobrescrita do sistema de deleção APENAS PARA OBRAS...");
 
     // Guardar referências às funções originais
     const originalFunctions = {
@@ -189,7 +189,7 @@ function setupUniversalDeletionOverride() {
     function toggleOverride(active) {
         if (active === isOverrideActive) return;
 
-        console.log(`🔄 [UNIVERSAL-DELETE] ${active ? 'Ativando' : 'Desativando'} sobrescrita APENAS PARA OBRAS`);
+        console.log(` [UNIVERSAL-DELETE] ${active ? 'Ativando' : 'Desativando'} sobrescrita APENAS PARA OBRAS`);
 
         if (active) {
             // 🔥 ATIVAR: Substituir APENAS deleteObra
@@ -219,7 +219,7 @@ function setupUniversalDeletionOverride() {
 
     // 🔥 FUNÇÃO DE DELEÇÃO UNIVERSAL (APENAS PARA OBRAS)
     const handleUniversalDeletion = async (itemType, itemName, itemId, additionalIds = {}) => {
-        console.log(`🔄 [UNIVERSAL-DELETE] Iniciando deleção para ${itemType}: ${itemName} (ID: ${itemId})`);
+        console.log(` [UNIVERSAL-DELETE] Iniciando deleção para ${itemType}: ${itemName} (ID: ${itemId})`);
 
         const confirmed = await window.UniversalDeleteModal.confirmDelete(
             itemType,
@@ -234,7 +234,7 @@ function setupUniversalDeletionOverride() {
 
         let pathArray = ['obras', itemId];
 
-        console.log(`🔧 Path para deleção:`, pathArray);
+        console.log(` Path para deleção:`, pathArray);
 
         // Executar deleção via API
         const response = await fetch('/api/delete', {
@@ -309,7 +309,7 @@ function setupUniversalDeletionOverride() {
  * 🔥 Configura integração com FilterSystem
  */
 function setupFilterSystemIntegration() {
-    console.log("🔧 [FILTER-INIT] Configurando integração com FilterSystem...");
+    console.log(" [FILTER-INIT] Configurando integração com FilterSystem...");
 
     if (!window.FilterSystem) {
         console.warn("⚠️ [FILTER-INIT] FilterSystem não disponível para integração");
@@ -348,7 +348,7 @@ function setupFilterSystemIntegration() {
  * 🔥 Aplica configuração inicial dos botões após carregar obras
  */
 function setupInitialButtonConfiguration() {
-    console.log("🔧 [FILTER-INIT] Configurando botões inicialmente...");
+    console.log(" [FILTER-INIT] Configurando botões inicialmente...");
 
     // Apenas configurar se filtro já estiver ativo
     const filterToggle = document.getElementById('filter-toggle');
@@ -440,30 +440,30 @@ function waitForSystemLoad() {
  */
 export async function initializeFilterSystem() {
     try {
-        console.log("🔧 [FILTER-INIT] Inicializando sistema de filtros...");
+        console.log(" [FILTER-INIT] Inicializando sistema de filtros...");
 
         // Aguardar sistema carregar
         await waitForSystemLoad();
 
-        console.log("🔧 [FILTER-INIT] Criando sistemas...");
+        console.log(" [FILTER-INIT] Criando sistemas...");
         window.ButtonDeleteUniversal = new ButtonDeleteUniversal();
         window.ButtonModeManager = new ButtonModeManager();
         window.UniversalDeleteModal = UniversalDeleteModal;
 
         console.log("✅ [FILTER-INIT] Sistemas criados");
 
-        console.log("🔧 [FILTER-INIT] Inicializando ButtonModeManager...");
+        console.log(" [FILTER-INIT] Inicializando ButtonModeManager...");
         if (window.ButtonModeManager && window.ButtonModeManager.initialize) {
             await window.ButtonModeManager.initialize();
         }
 
-        console.log("🔄 [FILTER-INIT] Configurando sistema de deleção condicional (APENAS OBRAS)...");
+        console.log(" [FILTER-INIT] Configurando sistema de deleção condicional (APENAS OBRAS)...");
         setupUniversalDeletionOverride();
 
         console.log("🔗 [FILTER-INIT] Configurando integrações...");
         setupFilterSystemIntegration();
 
-        console.log("🔧 [FILTER-INIT] Agendando configuração inicial dos botões...");
+        console.log(" [FILTER-INIT] Agendando configuração inicial dos botões...");
         setupInitialButtonConfiguration();
 
         console.log("🔗 [FILTER-INIT] Configurando listeners dinâmicos...");

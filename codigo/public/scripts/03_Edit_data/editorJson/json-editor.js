@@ -158,7 +158,7 @@ function scrollToLine(lineNumber) {
  * Inicializa o editor JSON
  */
 export function initJSONEditor() {
-    console.log('🚀 Inicializando editor JSON...');
+    console.log(' Inicializando editor JSON...');
 
     if (isInitialized) {
         console.log('⚠️ Editor já inicializado');
@@ -237,7 +237,7 @@ export function initJSONEditor() {
  * Função para forçar atualização de layout
  */
 export function forceLayoutUpdate() {
-    console.log('🔧 Forçando atualização de layout...');
+    console.log(' Forçando atualização de layout...');
     adjustEditorLayout();
 }
 
@@ -426,7 +426,7 @@ export function fileToBase64(file) {
  * Limpa e reinicializa o editor
  */
 export function resetJSONEditor() {
-    console.log('🔄 Reinicializando editor JSON...');
+    console.log(' Reinicializando editor JSON...');
     
     isInitialized = false;
 

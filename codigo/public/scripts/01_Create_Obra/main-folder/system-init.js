@@ -1,7 +1,7 @@
 /* ==== INÍCIO: main-folder/system-init.js ==== */
 /**
  * system-init.js - INICIALIZAÇÃO DO SISTEMA PRINCIPAL
- * 🎯 Carrega constantes, módulos e componentes principais
+ *  Carrega constantes, módulos e componentes principais
  */
 
 // ✅ IMPORTAR MÓDULOS COM CAMINHOS CORRETOS
@@ -55,7 +55,7 @@ class ShutdownManager {
   async shutdownManual() {
     if (confirm('Deseja realmente ENCERRAR o servidor?')) {
       try {
-        console.log('🔄 Executando shutdown COMPLETO...');
+        console.log(' Executando shutdown COMPLETO...');
         await shutdownManual();
       } catch (error) {
         console.log('🔌 Servidor encerrado ou não responde:', error);
@@ -352,7 +352,7 @@ export async function initializeSystem() {
     applyStaticUiRestrictions();
     updateClientPageTitle();
 
-    console.log("🚀 [SYSTEM-INIT] Iniciando sistema completo...");
+    console.log(" [SYSTEM-INIT] Iniciando sistema completo...");
 
     window.systemLoadingStart = Date.now();
 
@@ -365,7 +365,7 @@ export async function initializeSystem() {
       });
     }
 
-    console.log("📊 [SYSTEM-INIT] Carregando constantes do sistema...");
+    console.log(" [SYSTEM-INIT] Carregando constantes do sistema...");
     await loadSystemConstants();
     console.log("✅ [SYSTEM-INIT] Constantes carregadas");
 
@@ -377,7 +377,7 @@ export async function initializeSystem() {
     await initializeEmpresaCadastro();
     console.log("✅ [SYSTEM-INIT] Sistema de empresas inicializado");
 
-    console.log("🔧 [SYSTEM-INIT] Inicializando sistema de filtros...");
+    console.log(" [SYSTEM-INIT] Inicializando sistema de filtros...");
     if (isFeatureEnabled('filtros')) {
       await initializeFilterSystem();
     } else {

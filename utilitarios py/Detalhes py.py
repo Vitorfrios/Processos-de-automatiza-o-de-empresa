@@ -139,7 +139,7 @@ def analyze_python_comprehensive():
         report.write("=" * 80 + "\n\n")
         
         for file_path, data in sorted(all_files_data.items()):
-            report.write(f"📁 ARQUIVO: {file_path}\n")
+            report.write(f" ARQUIVO: {file_path}\n")
             report.write(f"   📏 Linhas de código: {data['lines']}\n")
             
             if data['classes']:
@@ -157,12 +157,12 @@ def analyze_python_comprehensive():
                             report.write(f"          └── {method}() (usada em {method_usage_count} arquivos)\n")
             
             if data['functions']:
-                report.write(f"   🔧 Funções encontradas: {len(data['functions'])}\n")
+                report.write(f"    Funções encontradas: {len(data['functions'])}\n")
                 report.write("   📋 Lista de funções:\n")
                 for func in sorted(data['functions']):
                     usage_count = len(function_usages.get(func, []))
                     is_async = func in [f[0] for f in re.findall(async_function_pattern, data['content'], re.MULTILINE)]
-                    async_tag = "🔄 " if is_async else ""
+                    async_tag = " " if is_async else ""
                     report.write(f"      • {async_tag}{func}() (usada em {usage_count} arquivos)\n")
             
             if data['imports']:
@@ -185,7 +185,7 @@ def analyze_python_comprehensive():
             
             for func, files in sorted(duplicate_functions.items(), key=lambda x: len(x[1]), reverse=True):
                 file_count = Counter(files)
-                report.write(f"🔧 def {func}() - aparece em {len(files)} arquivos:\n")
+                report.write(f" def {func}() - aparece em {len(files)} arquivos:\n")
                 
                 for file_path, count in file_count.most_common():
                     file_data = all_files_data.get(file_path, {})
@@ -195,7 +195,7 @@ def analyze_python_comprehensive():
                     else:
                         status = "🔵 USADA"
                     
-                    report.write(f"   📁 {file_path} ({count}x) - {status}\n")
+                    report.write(f"    {file_path} ({count}x) - {status}\n")
                 
                 report.write("\n")
         else:
@@ -216,7 +216,7 @@ def analyze_python_comprehensive():
                     else:
                         status = "🔵 USADA"
                     
-                    report.write(f"   📁 {file_path} ({count}x) - {status}\n")
+                    report.write(f"    {file_path} ({count}x) - {status}\n")
                 
                 report.write("\n")
         else:
@@ -240,7 +240,7 @@ def analyze_python_comprehensive():
             for methods in data['class_methods'].values()
         )
         
-        report.write(f"📊 ESTATÍSTICAS:\n")
+        report.write(f" ESTATÍSTICAS:\n")
         report.write(f"   • Total de arquivos .py: {total_files}\n")
         report.write(f"   • Total de linhas de código: {total_lines}\n")
         report.write(f"   • Total de funções: {total_functions}\n")
@@ -267,7 +267,7 @@ def analyze_python_comprehensive():
         main_files = [fp for fp in all_files_data.keys() if not fp.startswith('servidor_modules')]
         module_files = [fp for fp in all_files_data.keys() if fp.startswith('servidor_modules')]
         
-        report.write(f"\n📁 DISTRIBUIÇÃO DE ARQUIVOS:\n")
+        report.write(f"\n DISTRIBUIÇÃO DE ARQUIVOS:\n")
         report.write(f"   • Arquivos principais: {len(main_files)}\n")
         report.write(f"   • Módulos (servidor_modules): {len(module_files)}\n")
         

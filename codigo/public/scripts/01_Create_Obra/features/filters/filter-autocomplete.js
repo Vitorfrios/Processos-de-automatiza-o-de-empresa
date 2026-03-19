@@ -21,7 +21,7 @@ const FilterAutocomplete = (function () {
             return true;
         }
 
-        console.log('🔧 [FILTER-AUTOCOMPLETE] Inicializando...');
+        console.log(' [FILTER-AUTOCOMPLETE] Inicializando...');
 
         // Buscar elementos
         empresaInput = document.getElementById('filter-empresa');
@@ -332,7 +332,7 @@ const FilterAutocomplete = (function () {
      * Seleciona uma empresa
      */
     function selectEmpresa(sigla, nome) {
-        console.log(`🎯 [FILTER-AUTOCOMPLETE] Empresa selecionada: ${sigla} - ${nome}`);
+        console.log(` [FILTER-AUTOCOMPLETE] Empresa selecionada: ${sigla} - ${nome}`);
 
         // Preencher input com formato completo
         empresaInput.value = `${sigla} - ${nome}`;

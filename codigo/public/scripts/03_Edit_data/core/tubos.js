@@ -53,7 +53,7 @@ export function loadTubos() {
     }
     
     // DEBUG: Mostrar ordem de classificação
-    console.log('📊 Tubos carregados:', todosTubos.map(t => ({
+    console.log(' Tubos carregados:', todosTubos.map(t => ({
         polegadas: t.polegadas || '(vazio)',
         valorDecimal: t.polegadas ? parsePolegadas(t.polegadas) : 0,
         isNew: !t.polegadas || t.polegadas.trim() === ''
@@ -473,7 +473,7 @@ export async function saveTuboChanges() {
 // ==================== INICIALIZAÇÃO ====================
 
 export async function initTubosModule() {
-    console.log('🔧 Inicializando módulo de tubos...');
+    console.log(' Inicializando módulo de tubos...');
     
     try {
         // Carrega dados iniciais da API

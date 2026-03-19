@@ -351,8 +351,8 @@
 }
 
 /* ===== ÍCONES ESPECÍFICOS PARA MÁQUINAS ===== */
-.icon-config::before { content: "⚙️"; }
-.icon-base::before { content: "📊"; }
+.icon-config::before { content: ""; }
+.icon-base::before { content: ""; }
 .icon-option::before { content: "📋"; }
 .icon-voltage::before { content: "⚡"; }
 .icon-tax::before { content: "💰"; }

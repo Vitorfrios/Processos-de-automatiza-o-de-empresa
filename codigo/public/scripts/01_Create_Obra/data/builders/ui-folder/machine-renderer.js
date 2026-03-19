@@ -75,7 +75,7 @@ async function ensureMachinesSection(roomElement) {
     }
 
     // Se ainda não existe, tentar criar apenas a seção de máquinas
-    console.log(`🔄 Tentando criar apenas seção de máquinas para sala ${roomName}`);
+    console.log(` Tentando criar apenas seção de máquinas para sala ${roomName}`);
 
     // Encontrar a última seção para inserir após ela
     const lastSection = roomElement.querySelector('.section-block:last-child') || 
@@ -129,7 +129,7 @@ async function fillMachinesData(roomElement, machinesData) {
     const roomId = roomElement.dataset.roomId;
     const roomName = roomElement.dataset.roomName;
     
-    console.log(`🔄 Preenchendo ${machinesData.length} máquina(s) para sala ${roomName} (ID: ${roomId})`);
+    console.log(` Preenchendo ${machinesData.length} máquina(s) para sala ${roomName} (ID: ${roomId})`);
 
     // ✅ CORREÇÃO: Verificar se há máquinas para preencher
     if (machinesData.length === 0) {
@@ -182,7 +182,7 @@ async function fillMachinesData(roomElement, machinesData) {
                     
                     if (!machineAdded) {
                         retryCount++;
-                        console.log(`🔄 Tentativa ${retryCount}/3 para adicionar máquina ${machineData.tipo}`);
+                        console.log(` Tentativa ${retryCount}/3 para adicionar máquina ${machineData.tipo}`);
                         await new Promise(resolve => setTimeout(resolve, 12));
                     }
                 }
@@ -245,7 +245,7 @@ async function populateMachineData(machineElement, machineData) {
         return false;
     }
 
-    console.log(`🔧 Preenchendo dados da máquina:`, machineData);
+    console.log(` Preenchendo dados da máquina:`, machineData);
     
     const roomId = machineElement.dataset.roomId;
     

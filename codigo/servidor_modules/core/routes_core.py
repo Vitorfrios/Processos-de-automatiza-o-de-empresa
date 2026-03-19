@@ -31,7 +31,7 @@ class RoutesCore:
     def handle_get_obras(self):
         """Obtém todas as obras da sessão atual"""
         try:
-            print("🎯 [OBRAS] Obtendo obras da sessão")
+            print(" [OBRAS] Obtendo obras da sessão")
 
             current_session_id = self.sessions_manager.get_current_session_id()
             session_data = self.sessions_manager._load_sessions_data()
@@ -60,7 +60,7 @@ class RoutesCore:
                 if obra_id in session_obra_ids:
                     obras_da_sessao.append(obra)
 
-            print(f"🎯 ENVIANDO: {len(obras_da_sessao)} obras da sessão")
+            print(f" ENVIANDO: {len(obras_da_sessao)} obras da sessão")
             return obras_da_sessao
 
         except Exception as e:
@@ -70,7 +70,7 @@ class RoutesCore:
     def handle_get_obra_by_id(self, obra_id):
         """Obtém uma obra específica por ID"""
         try:
-            print(f"🎯 [OBRA POR ID] Buscando obra {obra_id}")
+            print(f" [OBRA POR ID] Buscando obra {obra_id}")
 
             backup_path = self.project_root / "json" / "backup.json"
 
@@ -298,7 +298,7 @@ class RoutesCore:
 
             current_session = {current_session_id: data["sessions"][current_session_id]}
 
-            print(f"📊 Retornando sessão {current_session_id}")
+            print(f" Retornando sessão {current_session_id}")
             return {"sessions": current_session}
 
         except Exception as e:
@@ -395,7 +395,7 @@ class RoutesCore:
                     "final_state": data_after,
                 }
             else:
-                print("🔄 Método normal falhou - forçando limpeza...")
+                print(" Método normal falhou - forçando limpeza...")
                 success = self.sessions_manager.force_clear_all_sessions()
                 data_final = self.sessions_manager._load_sessions_data()
 
@@ -476,7 +476,7 @@ class RoutesCore:
             print("✅ Resposta enviada ao cliente - servidor será encerrado")
 
             def shutdown_sequence():
-                print("🔄 Iniciando sequência de encerramento...")
+                print(" Iniciando sequência de encerramento...")
 
                 try:
                     print("🧹 Executando limpeza de cache...")
@@ -516,7 +516,7 @@ class RoutesCore:
             dados_data = self.file_utils.load_json_file(dados_file, {})
 
             constants = dados_data.get("constants", {})
-            print(f"⚙️  Retornando constants")
+            print(f"  Retornando constants")
             return constants
 
         except Exception as e:
@@ -530,7 +530,7 @@ class RoutesCore:
             dados_data = self.file_utils.load_json_file(dados_file, {})
 
             machines = dados_data.get("machines", [])
-            print(f"🖥️  Retornando {len(machines)} máquinas")
+            print(f"  Retornando {len(machines)} máquinas")
             return machines
 
         except Exception as e:
@@ -542,7 +542,7 @@ class RoutesCore:
         try:
             _, dados_data = self.empresa_handler.carregar_dados_empresas_atualizados()
 
-            print("📁 Retornando DADOS.json")
+            print(" Retornando DADOS.json")
             return dados_data
 
         except Exception as e:
@@ -559,7 +559,7 @@ class RoutesCore:
                 backup_file, {"obras": [], "projetos": []}
             )
 
-            print("💾 Retornando BACKUP.json")
+            print(" Retornando BACKUP.json")
             return backup_data
 
         except Exception as e:
@@ -569,7 +569,7 @@ class RoutesCore:
     def handle_get_backup_completo(self):
         """Obtém TODAS as obras do backup (sem filtro de sessão)"""
         try:
-            print("🎯 [BACKUP COMPLETO] Obtendo TODAS as obras")
+            print(" [BACKUP COMPLETO] Obtendo TODAS as obras")
 
             backup_path = self.project_root / "json" / "backup.json"
 
@@ -582,7 +582,7 @@ class RoutesCore:
             backup_data = json.loads(backup_content)
             obras = backup_data.get("obras", [])
 
-            print(f"📁 Total de obras no backup: {len(obras)}")
+            print(f" Total de obras no backup: {len(obras)}")
             return {"obras": obras}
 
         except Exception as e:
@@ -623,7 +623,7 @@ class RoutesCore:
             new_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(new_data)
 
             if self.file_utils.save_json_file(dados_file, new_data):
-                print("💾 DADOS.json salvo")
+                print(" DADOS.json salvo")
                 return {"status": "success", "message": "Dados salvos"}
             else:
                 return {"status": "error", "message": "Erro ao salvar dados"}
@@ -642,7 +642,7 @@ class RoutesCore:
             )
 
             if self.file_utils.save_json_file(backup_file, new_data):
-                print("💾 BACKUP.json salvo")
+                print(" BACKUP.json salvo")
                 return {"status": "success", "message": "Backup salvo"}
             else:
                 return {"status": "error", "message": "Erro ao salvar backup"}
@@ -661,7 +661,7 @@ class RoutesCore:
             obra_name = data.get("obraName")
 
             print(
-                f"🔄 [RECARREGAMENTO] Ação: {action}, Obra: {obra_name} (ID: {obra_id})"
+                f" [RECARREGAMENTO] Ação: {action}, Obra: {obra_name} (ID: {obra_id})"
             )
 
             if action == "undo":
@@ -673,7 +673,7 @@ class RoutesCore:
                     f"↩️ Usuário desfez exclusão (dados insuficientes) - recarregando página"
                 )
             elif action.startswith("timeout"):
-                print(f"⏰ Timeout completo - obra {obra_name} removida da sessão")
+                print(f" Timeout completo - obra {obra_name} removida da sessão")
 
             return {
                 "reload_required": True,
@@ -817,7 +817,7 @@ class RoutesCore:
                 }
             
             # Salvar backup atualizado
-            print(f"💾 Salvando backup atualizado...")
+            print(f" Salvando backup atualizado...")
             if self.file_utils.save_json_file(backup_file, backup_data):
                 # Se for uma obra, também remove da sessão atual
                 if len(path_array) == 2 and path_array[0] == 'obras':
@@ -881,7 +881,7 @@ class RoutesCore:
         try:
             _, dados_data = self.empresa_handler.carregar_dados_empresas_atualizados()
             
-            print("📊 Retornando todos os dados do sistema")
+            print(" Retornando todos os dados do sistema")
             return dados_data
             
         except Exception as e:
@@ -985,7 +985,7 @@ class RoutesCore:
             new_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(new_data)
             
             if self.file_utils.save_json_file(dados_file, new_data):
-                print("💾 TODOS os dados do sistema salvos (incluindo dutos e tubos)")
+                print(" TODOS os dados do sistema salvos (incluindo dutos e tubos)")
                 return {"success": True, "message": "Dados salvos com sucesso"}
             else:
                 return {"success": False, "error": "Erro ao salvar dados"}
@@ -1006,7 +1006,7 @@ class RoutesCore:
             dados_data["constants"] = new_constants.get("constants", {})
             
             if self.file_utils.save_json_file(dados_file, dados_data):
-                print("💾 Constantes salvas")
+                print(" Constantes salvas")
                 return {"success": True, "message": "Constantes salvas"}
             else:
                 return {"success": False, "error": "Erro ao salvar constantes"}
@@ -1026,7 +1026,7 @@ class RoutesCore:
             dados_data["materials"] = new_materials.get("materials", {})
             
             if self.file_utils.save_json_file(dados_file, dados_data):
-                print("💾 Materiais salvos")
+                print(" Materiais salvos")
                 return {"success": True, "message": "Materiais salvas"}
             else:
                 return {"success": False, "error": "Erro ao salvar materiais"}
@@ -1047,7 +1047,7 @@ class RoutesCore:
             dados_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(dados_data)
 
             if self.file_utils.save_json_file(dados_file, dados_data):
-                print("💾 Empresas salvas")
+                print(" Empresas salvas")
                 return {"success": True, "message": "Empresas salvas"}
             else:
                 return {"success": False, "error": "Erro ao salvar empresas"}
@@ -1067,7 +1067,7 @@ class RoutesCore:
             dados_data["machines"] = new_machines.get("machines", [])
             
             if self.file_utils.save_json_file(dados_file, dados_data):
-                print("💾 Máquinas salvas")
+                print(" Máquinas salvas")
                 return {"success": True, "message": "Máquinas salvas"}
             else:
                 return {"success": False, "error": "Erro ao salvar máquinas"}
@@ -1092,7 +1092,7 @@ class RoutesCore:
             dados_data["machines"] = machines
             
             if self.file_utils.save_json_file(dados_file, dados_data):
-                print(f"💾 Nova máquina '{new_machine.get('type')}' adicionada")
+                print(f" Nova máquina '{new_machine.get('type')}' adicionada")
                 return {"success": True, "message": "Máquina adicionada", "machine": new_machine}
             else:
                 return {"success": False, "error": "Erro ao adicionar máquina"}
@@ -1128,7 +1128,7 @@ class RoutesCore:
             dados_data["machines"] = machines
             
             if self.file_utils.save_json_file(dados_file, dados_data):
-                print(f"💾 Máquina '{machine_type}' atualizada")
+                print(f" Máquina '{machine_type}' atualizada")
                 return {"success": True, "message": "Máquina atualizada", "machine": update_data}
             else:
                 return {"success": False, "error": "Erro ao atualizar máquina"}
@@ -1321,7 +1321,7 @@ class RoutesCore:
             dados_data["dutos"] = new_dutos.get("dutos", [])
             
             if self.file_utils.save_json_file(dados_file, dados_data):
-                print("💾 Dutos salvos")
+                print(" Dutos salvos")
                 return {"success": True, "message": "Dutos salvos"}
             else:
                 return {"success": False, "error": "Erro ao salvar dutos"}
@@ -1364,7 +1364,7 @@ class RoutesCore:
             dados_data["tubos"] = new_tubos.get("tubos", [])
             
             if self.file_utils.save_json_file(dados_file, dados_data):
-                print("💾 Tubos salvos")
+                print(" Tubos salvos")
                 return {"success": True, "message": "Tubos salvos"}
             else:
                 return {"success": False, "error": "Erro ao salvar tubos"}

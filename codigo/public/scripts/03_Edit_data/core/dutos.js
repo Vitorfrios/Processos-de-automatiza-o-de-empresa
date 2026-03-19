@@ -17,7 +17,7 @@ let dutoDetailTitle;
 // ==================== INICIALIZAÇÃO ====================
 
 export async function initDutosModule() {
-    console.log('🔧 Inicializando módulo de dutos...');
+    console.log(' Inicializando módulo de dutos...');
     
     try {
         // Inicializar elementos DOM
@@ -550,7 +550,7 @@ export function resetDutoChanges() {
 
 export async function saveDutosData() {
     try {
-        console.log('💾 Salvando dados dos dutos...');
+        console.log(' Salvando dados dos dutos...');
         
         const response = await fetch('/api/dutos', {
             method: 'POST',

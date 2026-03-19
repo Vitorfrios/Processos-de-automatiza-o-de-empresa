@@ -45,7 +45,7 @@ function criarSistemaBackspaceDetector(input) {
     // Detectar seleção total (Ctrl+A) + Backspace
     input.addEventListener('input', function (e) {
         if (pressionandoBackspace && this.value.length === 0) {
-            console.log('🎯 Usuário apagou tudo - reset completo');
+            console.log(' Usuário apagou tudo - reset completo');
             limparDadosSelecao(input, input.closest('[data-obra-id]')?.dataset.obraId);
         }
     });
@@ -82,7 +82,7 @@ function inicializarDetectorBackspace(input, obraId) {
             timeoutBackspace = setTimeout(() => {
                 pressionandoBackspace = false;
                 window.usuarioEstaApagando = false;
-                console.log('🔄 Resetando flag de apagamento');
+                console.log(' Resetando flag de apagamento');
             }, 300); // ✅ Aumentar para 300ms
         }
     });
@@ -90,7 +90,7 @@ function inicializarDetectorBackspace(input, obraId) {
     // Detectar seleção total + backspace
     input.addEventListener('input', function (e) {
         if (pressionandoBackspace && this.value.length === 0) {
-            console.log('🎯 Usuário apagou tudo - reset completo');
+            console.log(' Usuário apagou tudo - reset completo');
             limparDadosSelecao(input, obraId);
         }
     });
@@ -105,7 +105,7 @@ function limparDadosSelecao(input, obraId) {
         delete input.dataset.nomeSelecionado;
     }
     limparNumeroCliente(obraId);
-    console.log('🔄 Dados de seleção limpos');
+    console.log(' Dados de seleção limpos');
 }
 
 /* ==== SEÇÃO 2: CORREÇÕES DE UI E POSICIONAMENTO ==== */
@@ -135,7 +135,7 @@ function limparNumeroCliente(obraId) {
     const numeroInput = document.querySelector(`[data-obra-id="${obraId}"] .numero-cliente-final-cadastro`);
     if (numeroInput) {
         numeroInput.value = '';
-        console.log(`🔄 [EMPRESA] Número do cliente limpo para obra ${obraId}`);
+        console.log(` [EMPRESA] Número do cliente limpo para obra ${obraId}`);
     }
 }
 
@@ -329,7 +329,7 @@ async function calcularNumeroLocal(sigla, obraId) {
         // Fallback final: número aleatório
         const numeroFallback = Math.floor(Math.random() * 100) + 1;
         atualizarNumeroClienteInput(numeroFallback, obraId);
-        console.log(`🔄 [EMPRESA] Número fallback: ${numeroFallback} para ${sigla}`);
+        console.log(` [EMPRESA] Número fallback: ${numeroFallback} para ${sigla}`);
     }
 }
 

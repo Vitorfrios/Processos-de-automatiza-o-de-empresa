@@ -40,7 +40,7 @@ window.obraCounter = 0;
 window.GeralCount = 0;
 window.systemLoaded = false;
 
-console.log("🚀 Variáveis globais inicializadas:", {
+console.log(" Variáveis globais inicializadas:", {
   systemConstants: window.systemConstants,
   obraCounter: window.obraCounter,
   GeralCount: window.GeralCount,
@@ -257,7 +257,7 @@ function initializeFilterSystem() {
         return;
     }
 
-    console.log('🔧 [MAIN] Inicializando sistema de filtros...');
+    console.log(' [MAIN] Inicializando sistema de filtros...');
     
     // 🔍 DEBUG: Verificar se módulos foram carregados
     console.log('🔍 [DEBUG] Módulos disponíveis:', {
@@ -352,7 +352,7 @@ function setupFilterSwitchState() {
             const filterToggle = document.getElementById('filter-toggle');
             if (filterToggle) {
                 filterToggle.disabled = false;
-                console.log('🔄 [MAIN] Switch habilitado via fallback');
+                console.log(' [MAIN] Switch habilitado via fallback');
             }
         }
     }, 500);
@@ -401,7 +401,7 @@ async function verifyAndCreateBaseObra() {
   const currentCount = window.getGeralCount ? window.getGeralCount() : 0;
   const obrasInDOM = document.querySelectorAll('.obra-block').length;
   
-  console.log(`📊 Estado atual - GeralCount: ${currentCount}, Obras no DOM: ${obrasInDOM}`);
+  console.log(` Estado atual - GeralCount: ${currentCount}, Obras no DOM: ${obrasInDOM}`);
   
   if (obrasInDOM === 0 && currentCount === 0) {
     console.log("📭 Sistema iniciado vazio - aguardando ação do usuário");
@@ -424,7 +424,7 @@ function handleInitializationError(error) {
     showServerOfflineMessage();
   } else {
     setTimeout(() => {
-      console.log("🔄 Sistema em estado de espera");
+      console.log(" Sistema em estado de espera");
       if (window.showSystemStatus) {
         window.showSystemStatus("Sistema carregado com avisos", "error");
       }
@@ -479,10 +479,10 @@ function verifyCriticalFunctions() {
         }
     });
     
-    console.log(`📊 Total de funções carregadas: ${loadedFunctions.length}/${criticalFunctions.length}`);
+    console.log(` Total de funções carregadas: ${loadedFunctions.length}/${criticalFunctions.length}`);
     
     if (loadedFunctions.length > 0) {
-        console.log('🎯 Funções disponíveis:', loadedFunctions.join(', '));
+        console.log(' Funções disponíveis:', loadedFunctions.join(', '));
     } else {
         console.warn('⚠️ Nenhuma função crítica foi carregada');
     }
@@ -632,7 +632,7 @@ function exportSystemFunctionsForFilters() {
     
     // 🔥 VERIFICAÇÃO FINAL: Mostrar o que foi exportado
     if (window.systemFunctions) {
-        console.log('📊 [MAIN] Funções exportadas para systemFunctions:', 
+        console.log(' [MAIN] Funções exportadas para systemFunctions:', 
             Object.keys(window.systemFunctions).join(', '));
     } else {
         console.error('❌ [MAIN] NENHUMA função foi exportada para systemFunctions!');
@@ -676,7 +676,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  console.log("🚀 Inicializando sistema...");
+  console.log(" Inicializando sistema...");
   
   try {
     // ✅ CONFIGURAR PROTEÇÕES IMEDIATAS

@@ -138,10 +138,10 @@ def analyze_js_comprehensive(selected_dirs):
         report.write("=" * 80 + "\n\n")
 
         for file_path, data in sorted(all_files_data.items()):
-            report.write(f"📁 ARQUIVO: {file_path}\n")
+            report.write(f" ARQUIVO: {file_path}\n")
             report.write(f"   📂 Pasta base: {data['label']}\n")
             report.write(f"   📏 Linhas de código: {data['lines']}\n")
-            report.write(f"   🔧 Funções encontradas: {len(data['functions'])}\n")
+            report.write(f"    Funções encontradas: {len(data['functions'])}\n")
 
             if data['functions']:
                 report.write("   📋 Lista de funções:\n")
@@ -183,7 +183,7 @@ def analyze_js_comprehensive(selected_dirs):
                 reverse=True
             ):
                 file_count = Counter(files)
-                report.write(f"🔧 function {func}() - aparece em {len(files)} arquivos:\n")
+                report.write(f" function {func}() - aparece em {len(files)} arquivos:\n")
 
                 for file_path, count in file_count.most_common():
                     file_data = all_files_data.get(file_path, {})
@@ -193,7 +193,7 @@ def analyze_js_comprehensive(selected_dirs):
                     else:
                         status = "🔵 USADA"
 
-                    report.write(f"   📁 {file_path} ({count}x) - {status}\n")
+                    report.write(f"    {file_path} ({count}x) - {status}\n")
 
                 report.write("\n")
         else:
@@ -212,7 +212,7 @@ def analyze_js_comprehensive(selected_dirs):
         total_imports = sum(len(data['imports']) for data in all_files_data.values())
         total_exports = sum(len(data['exports']) for data in all_files_data.values())
 
-        report.write("📊 ESTATÍSTICAS:\n")
+        report.write(" ESTATÍSTICAS:\n")
         report.write(f"   • Total de arquivos .js: {total_files}\n")
         report.write(f"   • Total de linhas de código: {total_lines}\n")
         report.write(f"   • Total de funções: {total_functions}\n")

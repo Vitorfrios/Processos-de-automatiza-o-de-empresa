@@ -10,7 +10,7 @@ import { prepararEmpresaParaSalvamento } from '../../../data/empresa-system/empr
  * 🆕 MINIMIZAR TODOS OS TOGGLES AO SALVAR
  */
 async function minimizarTogglesAposSalvamento(obraId) {
-    console.log(`📁 [TOGGLES] Minimizando todos os toggles para obra: ${obraId}`);
+    console.log(` [TOGGLES] Minimizando todos os toggles para obra: ${obraId}`);
     
     try {
         const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
@@ -54,7 +54,7 @@ async function minimizarTogglesAposSalvamento(obraId) {
 }
 
 /**
- * 💾 FUNÇÃO PRINCIPAL DE SALVAMENTO - ATUALIZADA COM TOGGLES
+ *  FUNÇÃO PRINCIPAL DE SALVAMENTO - ATUALIZADA COM TOGGLES
  */
 async function saveObra(obraId, event) {
     if (event) {
@@ -62,7 +62,7 @@ async function saveObra(obraId, event) {
         event.stopPropagation();
     }
 
-    console.log(`💾 SALVANDO OBRA pelo ID: "${obraId}"`);
+    console.log(` SALVANDO OBRA pelo ID: "${obraId}"`);
 
     let obraBlock = await findObraBlockWithRetry(obraId, 15);
     
@@ -209,12 +209,12 @@ async function saveObra(obraId, event) {
             console.error('❌ Obra não está no DOM para atualizar botão');
         }
 
-        console.log('🔄 [HEADER] Chamando atualização do header após salvamento...');
+        console.log(' [HEADER] Chamando atualização do header após salvamento...');
         await atualizarHeaderObraAposSalvamento(finalId);
 
 
         // 🆕 MINIMIZAR TOGGLES APÓS SALVAMENTO BEM-SUCEDIDO
-        console.log('📁 [SALVAMENTO] Minimizando toggles automaticamente...');
+        console.log(' [SALVAMENTO] Minimizando toggles automaticamente...');
         await minimizarTogglesAposSalvamento(finalId);
 
         console.log(`✅ OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${finalId}`);
@@ -230,7 +230,7 @@ async function saveObra(obraId, event) {
  */
 async function atualizarHeaderObraAposSalvamento(obraId) {
     try {
-        console.log(`🔄 [HEADER] Iniciando atualização do header para obra: ${obraId}`);
+        console.log(` [HEADER] Iniciando atualização do header para obra: ${obraId}`);
         
         const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
         if (!obraElement) {
@@ -246,7 +246,7 @@ async function atualizarHeaderObraAposSalvamento(obraId) {
         console.log('🔍 [HEADER] Extraindo dados da empresa...');
         const empresaData = extractEmpresaData(obraElement);
         
-        console.log('📊 [HEADER] Dados extraídos:', empresaData);
+        console.log(' [HEADER] Dados extraídos:', empresaData);
         
         if (!empresaData.empresaSigla || !empresaData.empresaNome) {
             console.log('⚠️ [HEADER] Dados de empresa incompletos para atualizar header');

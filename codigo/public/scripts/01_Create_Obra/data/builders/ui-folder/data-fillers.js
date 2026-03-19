@@ -344,7 +344,7 @@ async function ensureAllRoomSections(roomElement) {
         return true;
     }
 
-    console.log(`🔄 Criando seções faltantes`);
+    console.log(` Criando seções faltantes`);
 
     try {
         const roomContent = roomElement.querySelector('.room-content');

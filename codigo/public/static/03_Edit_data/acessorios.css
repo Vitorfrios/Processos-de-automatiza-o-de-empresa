@@ -2,7 +2,7 @@
 
 /* Ícone */
 .icon-acessorie::before {
-    content: "⚙️";
+    content: "";
     margin-right: 5px;
 }
 

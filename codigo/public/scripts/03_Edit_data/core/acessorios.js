@@ -5,7 +5,7 @@
 import { systemData, addPendingChange } from '../config/state.js';
 
 export function initAcessories() {
-    console.log('🚀 Inicializando sistema de acessorios...');
+    console.log(' Inicializando sistema de acessorios...');
     
     // Verificar se estamos na página correta
     if (!document.getElementById('acessoriesTab')) {

@@ -5,6 +5,8 @@ import { showError } from './ui.js';
 import { normalizeEmpresa, normalizeEmpresas } from '../../01_Create_Obra/core/shared-utils.js';
 
 export let systemData = {
+    ADM: [],
+    administradores: [],
     constants: {},
     machines: [],
     materials: {},
@@ -26,8 +28,25 @@ let _currentMachineIndex = null;
 window.systemData = systemData;
 window.originalData = originalData;
 
+function normalizeADMData(admData) {
+    if (Array.isArray(admData)) {
+        return admData
+            .filter((admin) => admin && typeof admin === 'object')
+            .map((admin) => ({ ...admin }));
+    }
+
+    if (admData && typeof admData === 'object') {
+        return [{ ...admData }];
+    }
+
+    return [];
+}
+
 export function updateSystemData(newData) {
     systemData = {
+        ...newData,
+        ADM: normalizeADMData(newData.ADM),
+        administradores: Array.isArray(newData.administradores) ? [...newData.administradores] : [],
         constants: newData.constants || {},
         machines: Array.isArray(newData.machines) ? newData.machines : [],
         materials: newData.materials || {},
@@ -87,6 +106,12 @@ export function hasRealChanges(section) {
         case 'empresas':
             return JSON.stringify(originalData.empresas || []) !== 
                    JSON.stringify(systemData.empresas || []);
+        case 'ADM':
+            return JSON.stringify(originalData.ADM || []) !==
+                   JSON.stringify(systemData.ADM || []);
+        case 'administradores':
+            return JSON.stringify(originalData.administradores || []) !==
+                   JSON.stringify(systemData.administradores || []);
         default:
             return false;
     }
@@ -188,7 +213,7 @@ export function validateDataDebug() {
         console.log('✅ Constantes OK');
         
         // Validar máquinas
-        console.log('⚙️ Validando máquinas...');
+        console.log(' Validando máquinas...');
         for (const [index, machine] of systemData.machines.entries()) {
             if (!machine.type || typeof machine.type !== 'string') {
                 return showValidationError('Máquinas', `Máquina ${index}: Tipo inválido ou não especificado`, machine);
@@ -233,7 +258,7 @@ export function validateDataDebug() {
         console.log('✅ Empresas OK');
         
         // Validar banco_acessorios
-        console.log('🔧 Validando acessorios...');
+        console.log(' Validando acessorios...');
         if (systemData.banco_acessorios && typeof systemData.banco_acessorios === 'object') {
             for (const [id, acessorio] of Object.entries(systemData.banco_acessorios)) {
                 console.log(`  Validando acessorio ${id}...`);
@@ -366,7 +391,7 @@ export function validateDataDebug() {
 
 // Função para limpar e normalizar dados
 export function normalizeSystemData() {
-    console.log('🔄 Normalizando dados do sistema...');
+    console.log(' Normalizando dados do sistema...');
     let changes = 0;
     
     // Normalizar dutos
@@ -546,3 +571,4 @@ window.normalizeSystemData = normalizeSystemData;
 window.validateDataOriginal = validateData; // Manter original se necessário
 window.getSortedTubos = getSortedTubos;
 window.findTuboByPolegadas = findTuboByPolegadas;
+window.addPendingChange = addPendingChange;

@@ -29,7 +29,7 @@ const FilterSystem = (function () {
      * Inicializa o sistema de filtros
      */
     function initialize() {
-        console.log('🔧 [FILTER-SYSTEM] Inicializando...');
+        console.log(' [FILTER-SYSTEM] Inicializando...');
 
         // Buscar elementos DOM
         filterToggle = document.getElementById('filter-toggle');
@@ -275,7 +275,7 @@ const FilterSystem = (function () {
         }
 
         state.isLoading = true;
-        console.log('🔄 [FILTER-SYSTEM] Recarregando obras...');
+        console.log(' [FILTER-SYSTEM] Recarregando obras...');
 
         try {
             // Limpar obras atuais (reutiliza função existente)
@@ -391,7 +391,7 @@ const FilterSystem = (function () {
 
             // 2. Aplicar filtros
             const obrasFiltradas = aplicarFiltros(state.currentObras);
-            console.log(`🎯 [FILTER-SYSTEM] ${obrasFiltradas.length} obras após filtros`);
+            console.log(` [FILTER-SYSTEM] ${obrasFiltradas.length} obras após filtros`);
 
             // 🔥 VERIFICAÇÃO: Log das obras filtradas
             if (obrasFiltradas.length > 0) {
@@ -448,7 +448,7 @@ const FilterSystem = (function () {
         // 🔥 CORREÇÃO: Usar loadSingleObra para cada obra (já inclui prepararDadosEmpresaNaObra)
         for (const obraData of obrasFiltradas) {
             try {
-                console.log(`🔄 [FILTER-SYSTEM] Carregando obra ${obraData.nome} com dados de empresa...`);
+                console.log(` [FILTER-SYSTEM] Carregando obra ${obraData.nome} com dados de empresa...`);
                 
                 // Opção 1: Usar loadSingleObra se disponível (que já chama prepararDadosEmpresaNaObra)
                 if (typeof window.loadSingleObra === 'function') {
@@ -521,7 +521,7 @@ const FilterSystem = (function () {
      * 🔥 ATUALIZADA: Carrega obras da sessão (modo normal)
      */
     async function loadSessionObras() {
-        console.log('📁 [FILTER-SYSTEM] Carregando obras da sessão');
+        console.log(' [FILTER-SYSTEM] Carregando obras da sessão');
 
         try {
             // 🔥 IMPORTANTE: Limpar DOM completamente primeiro
@@ -573,7 +573,7 @@ const FilterSystem = (function () {
             return obras;
         }
 
-        console.log(`🎯 [FILTER-SYSTEM] Aplicando filtros:`, { empresa, numeroCliente, nomeObra });
+        console.log(` [FILTER-SYSTEM] Aplicando filtros:`, { empresa, numeroCliente, nomeObra });
 
         return obras.filter(obra => {
             let passaEmpresa = true;
@@ -672,7 +672,7 @@ const FilterSystem = (function () {
 
             // 🔥 ATUALIZAR: Recarregar SEMPRE que filtro mudar (mesmo que seja null)
             if (state.active) {
-                console.log('🔄 [FILTER-SYSTEM] Filtro alterado - recarregando obras...');
+                console.log(' [FILTER-SYSTEM] Filtro alterado - recarregando obras...');
 
                 // Debounce para evitar múltiplas recargas rápidas
                 clearTimeout(window._filterDebounce);
@@ -747,7 +747,7 @@ const FilterSystem = (function () {
             return;
         }
         
-        console.log('🔄 [FILTER-SYSTEM] Recarregando dados de empresa nas obras visíveis...');
+        console.log(' [FILTER-SYSTEM] Recarregando dados de empresa nas obras visíveis...');
         
         const obrasVisiveis = document.querySelectorAll('.obra-block[data-obra-id]');
         for (const obraElement of obrasVisiveis) {

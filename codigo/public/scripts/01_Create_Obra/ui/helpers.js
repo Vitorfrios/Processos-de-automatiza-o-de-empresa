@@ -1,6 +1,6 @@
 /**
  * ui/helpers.js
- * 🎯 FUSÃO: ui-helpers.js → ui/helpers.js
+ *  FUSÃO: ui-helpers.js → ui/helpers.js
  * ⚡ REFATORAÇÃO: Import atualizado + compatibilidade global
  */
 
@@ -210,7 +210,7 @@ function collapseElementWithAnimation(element, minimizerElement) {
         element.style.overflow = '';
         minimizerElement.textContent = "+";
         
-        console.log(`📁 Elemento recolhido com animação: ${element.id}`);
+        console.log(` Elemento recolhido com animação: ${element.id}`);
     }, 37);
 }
 

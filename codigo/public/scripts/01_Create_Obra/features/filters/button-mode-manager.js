@@ -84,7 +84,7 @@ class ButtonModeManager {
      * Muda textos APENAS dos botões de obra
      */
     changeButtonTexts(newText) {
-        console.log(`🔄 Mudando textos dos botões de obra para: "${newText}"`);
+        console.log(` Mudando textos dos botões de obra para: "${newText}"`);
         
         const allButtons = document.querySelectorAll('button');
         
@@ -113,14 +113,14 @@ class ButtonModeManager {
             }
         });
         
-        console.log(`🎯 Textos alterados para modo filtro`);
+        console.log(` Textos alterados para modo filtro`);
     }
 
     /**
      * Restaura textos originais
      */
     restoreButtonTexts() {
-        console.log('🔄 Restaurando textos originais dos botões de obra...');
+        console.log(' Restaurando textos originais dos botões de obra...');
         
         this.state.originalTexts.forEach((originalText, button) => {
             button.textContent = originalText;
@@ -185,7 +185,7 @@ class ButtonModeManager {
      * Inicializa o gerenciador
      */
     initialize() {
-        console.log('🔧 [BUTTON-MANAGER] Inicializando (APENAS OBRAS)...');
+        console.log(' [BUTTON-MANAGER] Inicializando (APENAS OBRAS)...');
         
         this.setupMutationObserver();
         setTimeout(() => {

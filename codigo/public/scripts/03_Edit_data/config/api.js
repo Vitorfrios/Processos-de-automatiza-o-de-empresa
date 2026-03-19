@@ -17,7 +17,7 @@ function debugDataValidation() {
     console.group('🔍 DEBUG: Validação de Dados');
     
     // Verificar estrutura do systemData
-    console.log('📊 systemData structure:', Object.keys(systemData));
+    console.log(' systemData structure:', Object.keys(systemData));
     
     // Verificar dutos
     if (systemData.dutos) {
@@ -48,7 +48,7 @@ function debugDataValidation() {
     
     // Verificar banco_acessorios
     if (systemData.banco_acessorios) {
-        console.log('⚙️ Acessorios:', Object.keys(systemData.banco_acessorios).length);
+        console.log(' Acessorios:', Object.keys(systemData.banco_acessorios).length);
         Object.entries(systemData.banco_acessorios).forEach(([id, equip], index) => {
             console.log(`  Acessorio ${index}:`, {
                 id,
@@ -113,7 +113,7 @@ export async function saveData() {
         showLoading('Salvando dados...');
         
         // Debug: Verificar dados antes da validação
-        console.log('🔄 Tentando salvar dados...');
+        console.log(' Tentando salvar dados...');
         console.log('Mudanças reais pendentes:', Array.from(realPendingChanges));
         debugDataValidation();
         

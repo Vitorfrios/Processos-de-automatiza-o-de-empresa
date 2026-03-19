@@ -22,7 +22,7 @@ function extractRoomData(roomElement, projectElement) {
         const dataName = roomElement.dataset.roomName;
         
         if (currentTitle && currentTitle !== dataName) {
-            console.log(`🔄 Sincronizando sala: data-room-name "${dataName}" → "${currentTitle}"`);
+            console.log(` Sincronizando sala: data-room-name "${dataName}" → "${currentTitle}"`);
             roomElement.dataset.roomName = currentTitle;
         }
     }
@@ -50,7 +50,7 @@ function extractRoomData(roomElement, projectElement) {
         tubulacao: extractTubulacaoData(roomElement)
     };
 
-    console.log(`📊 Dados extraídos da sala ${roomId}:`, {
+    console.log(` Dados extraídos da sala ${roomId}:`, {
         inputs: Object.keys(roomData.inputs).length,
         maquinas: roomData.maquinas.length,
         capacidade: Object.keys(roomData.capacidade).length,
@@ -322,7 +322,7 @@ function extractAcessoriosData(roomElement) {
         }
     });
     
-    console.log(`🔧 ${acessorios.length} acessorio(s) extraído(s) da sala ${roomId}`);
+    console.log(` ${acessorios.length} acessorio(s) extraído(s) da sala ${roomId}`);
     return acessorios;
 }
 

@@ -1,6 +1,6 @@
 /**
  * error-handler.js - TRATAMENTO DE ERROS
- * 🎯 Gerencia erros e mensagens de sistema offline
+ *  Gerencia erros e mensagens de sistema offline
  */
 
 /**
@@ -9,7 +9,7 @@
 export function showServerOfflineMessage() {
     let countdown = 20;
 
-    console.log("🔄 Mostrando mensagem de servidor offline...");
+    console.log(" Mostrando mensagem de servidor offline...");
     
     const existingMessage = document.getElementById('server-offline-message');
     if (existingMessage) {

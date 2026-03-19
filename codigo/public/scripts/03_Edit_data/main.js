@@ -1,9 +1,10 @@
 // scripts/03_Edit_data/main.js
 import { loadModules } from './loader.js';
 import { createSmartLogger } from '../01_Create_Obra/core/logger.js';
+import { initializeDashboard } from './core/dashboard-summary.js';          // NOVO
+import { initializeAdminCredentials } from './core/admin-credentials.js';
 
 // ==================== CONFIGURAÇÃO INICIAL ====================
-
 
 // ✅ INICIALIZAR LOGGER IMEDIATAMENTE
 window.logger = createSmartLogger();
@@ -18,11 +19,26 @@ window.toggleSystemLogger = function(enable = null) {
     }
 };
 
-
 // Função para garantir que systemData tenha estrutura completa
+function normalizeADMData(admData) {
+    if (Array.isArray(admData)) {
+        return admData
+            .filter((admin) => admin && typeof admin === 'object')
+            .map((admin) => ({ ...admin }));
+    }
+
+    if (admData && typeof admData === 'object') {
+        return [{ ...admData }];
+    }
+
+    return [];
+}
+
 function ensureCompleteSystemData(data) {
     if (!data || typeof data !== 'object') {
         return {
+            ADM: [],
+            administradores: [],
             constants: {},
             machines: [],
             materials: {},
@@ -32,11 +48,14 @@ function ensureCompleteSystemData(data) {
                 tipos: [],
                 opcionais: []
             },
-            tubos: []  // ADICIONADO: estrutura para tubos
+            tubos: []
         };
     }
     
     return {
+        ...data,
+        ADM: normalizeADMData(data.ADM),
+        administradores: Array.isArray(data.administradores) ? [...data.administradores] : [],
         constants: data.constants || {},
         machines: data.machines || [],
         materials: data.materials || {},
@@ -46,7 +65,7 @@ function ensureCompleteSystemData(data) {
             tipos: [],
             opcionais: []
         },
-        tubos: Array.isArray(data.tubos) ? data.tubos : []  // ADICIONADO
+        tubos: Array.isArray(data.tubos) ? data.tubos : []
     };
 }
 
@@ -62,6 +81,7 @@ Object.defineProperty(window, 'systemData', {
         window._systemData = ensureCompleteSystemData(value);
         
         console.log('✅ systemData corrigido:', {
+            ADM: window._systemData.ADM.length,
             constants: Object.keys(window._systemData.constants).length,
             machines: window._systemData.machines.length,
             materials: Object.keys(window._systemData.materials).length,
@@ -71,7 +91,7 @@ Object.defineProperty(window, 'systemData', {
                 tipos: window._systemData.dutos?.tipos?.length || 0,
                 opcionais: window._systemData.dutos?.opcionais?.length || 0
             },
-            tubos: window._systemData.tubos?.length || 0  // ADICIONADO
+            tubos: window._systemData.tubos?.length || 0
         });
     },
     configurable: true,
@@ -84,7 +104,7 @@ window._systemData = ensureCompleteSystemData({});
 // ==================== INICIALIZAÇÃO PRINCIPAL ====================
 
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('🚀 Sistema de Edição de Dados iniciado');
+    console.log(' Sistema de Edição de Dados iniciado');
     
     // Carregar todos os módulos
     await loadModules();
@@ -92,6 +112,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Inicializar sistema de staging
     window.stagingData = null;
     window.hasPendingChanges = false;
+    
+    // Inicializar módulos das novas abas
+    initializeDashboard();
+    initializeAdminCredentials();
     
     // Função para forçar atualização do editor quando a tab é aberta
     window.activateJSONTab = function() {
@@ -124,10 +148,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.log('✅ window.systemData:', window.systemData);
                 console.log('✅ Tem banco_acessorios?', 'banco_acessorios' in window.systemData);
                 console.log('✅ Tem dutos?', 'dutos' in window.systemData);
-                console.log('✅ Tem tubos?', 'tubos' in window.systemData);  // ADICIONADO
-                console.log('✅ banco_acessorios:', window.systemData?.banco_acessorios);
-                console.log('✅ dutos:', window.systemData?.dutos);
-                console.log('✅ tubos:', window.systemData?.tubos);  // ADICIONADO
+                console.log('✅ Tem tubos?', 'tubos' in window.systemData);
+                console.log('✅ Tem administradores?', 'administradores' in window.systemData);
+                console.log('✅ Tem ADM?', 'ADM' in window.systemData);
+                
+                // Atualiza as novas abas
+                initializeDashboard();
+                initializeAdminCredentials();
                 
                 // Inicializa o editor com os dados carregados
                 if (typeof window.initJSONEditor === 'function') {
@@ -174,6 +201,200 @@ window.saveEdit = function() {
     closeEditModal();
 };
 
+// ==================== MANIPULAÇÃO DE TABS ====================
+
+// Função principal para alternar entre tabs
+window.switchTab = function(tabName) {
+    console.log(` Alternando para tab: ${tabName}`);
+    
+    // Esconder todas as tabs
+    document.querySelectorAll('.tab-pane').forEach(tab => {
+        tab.classList.remove('active');
+        tab.style.display = 'none';
+    });
+    
+    // Remover active de todos os botões
+    document.querySelectorAll('.tabs .tab').forEach(tabBtn => {
+        tabBtn.classList.remove('active');
+    });
+    
+    // Mostrar tab selecionada
+    const tabElement = document.getElementById(tabName + 'Tab');
+    if (tabElement) {
+        tabElement.classList.add('active');
+        tabElement.style.display = 'block';
+        
+        // Ativar botão correspondente
+        const tabButtons = document.querySelectorAll('.tabs .tab');
+        tabButtons.forEach(btn => {
+            const btnText = btn.textContent.toLowerCase().replace(/[^a-z]/g, '');
+            const tabNameClean = tabName.toLowerCase().replace(/[^a-z]/g, '');
+            
+            if (btnText.includes(tabNameClean) || 
+                btn.getAttribute('onclick')?.includes(tabName)) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Disparar evento personalizado
+        const event = new CustomEvent('tabChanged', {
+            detail: { tab: tabName }
+        });
+        document.dispatchEvent(event);
+        
+        // Ações específicas por tab
+        setTimeout(() => {
+            switch(tabName) {
+                case 'dashboard':
+                    console.log(' Inicializando dashboard');
+                    initializeDashboard();
+                    break;
+                    
+                case 'adminCredentials':
+                    console.log('👤 Inicializando credenciais ADM');
+                    initializeAdminCredentials();
+                    break;
+                    
+                case 'dutos':
+                    console.log(' Tab de dutos ativada');
+                    if (typeof window.loadDutos === 'function') {
+                        window.loadDutos();
+                    }
+                    break;
+                    
+                case 'tubos':
+                    console.log(' Tab de tubos ativada');
+                    if (typeof window.loadTubos === 'function') {
+                        window.loadTubos();
+                    }
+                    break;
+                    
+                case 'acessories':
+                case 'acessorios':
+                    console.log(' Tab de acessorios ativada');
+                    if (typeof window.loadAcessorios === 'function') {
+                        window.loadAcessorios();
+                    } else if (typeof window.loadAcessoriesData === 'function') {
+                        window.loadAcessoriesData();
+                    }
+                    break;
+                    
+                case 'constants':
+                    console.log(' Tab de constantes ativada');
+                    if (typeof window.loadConstants === 'function') {
+                        window.loadConstants();
+                    }
+                    break;
+                    
+                case 'machines':
+                    console.log(' Tab de máquinas ativada');
+                    if (typeof window.loadMachines === 'function') {
+                        window.loadMachines();
+                    }
+                    break;
+                    
+                case 'materials':
+                    console.log(' Tab de materiais ativada');
+                    if (typeof window.loadMaterials === 'function') {
+                        window.loadMaterials();
+                    }
+                    break;
+                    
+                case 'empresas':
+                    console.log(' Tab de empresas ativada');
+                    if (typeof window.loadEmpresas === 'function') {
+                        window.loadEmpresas();
+                    }
+                    break;
+                    
+                case 'raw':
+                    console.log(' Tab JSON ativada');
+                    if (typeof window.initJSONEditor === 'function') {
+                        window.initJSONEditor();
+                    }
+                    if (typeof window.updateApplyButtonState === 'function') {
+                        window.updateApplyButtonState();
+                    }
+                    break;
+            }
+        }, 100);
+    }
+};
+
+// Adiciona evento para quando as tabs forem clicadas
+document.addEventListener('DOMContentLoaded', function() {
+    // Encontra todas as tabs
+    const tabs = document.querySelectorAll('.tab');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabText = this.textContent.toLowerCase();
+            
+            // Mapear texto da tab para nome da tab
+            if (tabText.includes('dashboard')) {
+                // Já tratado pelo onclick
+            } else if (tabText.includes('credenciais') || tabText.includes('adm')) {
+                // Já tratado pelo onclick
+            } else if (tabText.includes('json') || tabText.includes('raw') || tabText.includes('bruto')) {
+                console.log(' Tab JSON clicada, inicializando editor...');
+                
+                setTimeout(() => {
+                    if (typeof window.initJSONEditor === 'function') {
+                        window.initJSONEditor();
+                    }
+                    if (typeof window.updateApplyButtonState === 'function') {
+                        window.updateApplyButtonState();
+                    }
+                }, 150);
+            } else if (tabText.includes('dutos') || tabText.includes('duto')) {
+                console.log(' Tab de dutos clicada');
+                
+                setTimeout(() => {
+                    if (typeof window.loadDutos === 'function') {
+                        window.loadDutos();
+                    }
+                }, 150);
+            } else if (tabText.includes('tubos') || tabText.includes('tubo')) {
+                console.log(' Tab de tubos clicada');
+                
+                setTimeout(() => {
+                    if (typeof window.loadTubos === 'function') {
+                        window.loadTubos();
+                    }
+                }, 150);
+            } else if (tabText.includes('acessorio') || tabText.includes('acessorie')) {
+                console.log(' Tab de acessorios clicada');
+                
+                setTimeout(() => {
+                    if (typeof window.loadAcessorios === 'function') {
+                        window.loadAcessorios();
+                    } else if (typeof window.loadAcessoriesData === 'function') {
+                        window.loadAcessoriesData();
+                    }
+                }, 150);
+            }
+        });
+    });
+    
+    // Inicializar a tab ativa se houver
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab) {
+        const onclickAttr = activeTab.getAttribute('onclick');
+        if (onclickAttr) {
+            const match = onclickAttr.match(/'([^']+)'/);
+            if (match && match[1]) {
+                setTimeout(() => {
+                    if (match[1] === 'dashboard') {
+                        initializeDashboard();
+                    } else if (match[1] === 'adminCredentials') {
+                        initializeAdminCredentials();
+                    }
+                }, 200);
+            }
+        }
+    }
+});
+
 // ==================== MÓDULO JSON EDITOR ====================
 
 const jsonEditorModule = {
@@ -192,7 +413,9 @@ const jsonEditorModule = {
                 tipos: systemData.dutos?.tipos?.length || 0,
                 opcionais: systemData.dutos?.opcionais?.length || 0
             },
-            tubos: systemData.tubos?.length || 0  // ADICIONADO
+            tubos: systemData.tubos?.length || 0,
+            administradores: systemData.administradores?.length || 0,
+            ADM: systemData.ADM?.length || 0
         });
         
         editor.value = JSON.stringify(systemData, null, 2);
@@ -215,8 +438,8 @@ const jsonEditorModule = {
         try {
             const parsed = JSON.parse(editor.value);
             
-            // ADICIONADO: tubos na lista de campos obrigatórios
-            const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_acessorios', 'dutos', 'tubos'];
+            // Campos obrigatórios
+            const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_acessorios', 'dutos', 'tubos', 'administradores', 'ADM'];
             const missingKeys = requiredKeys.filter(key => !(key in parsed));
             
             if (missingKeys.length > 0) {
@@ -247,9 +470,14 @@ const jsonEditorModule = {
             if (!Array.isArray(parsed.dutos.opcionais)) {
                 throw new Error('dutos.opcionais deve ser um array');
             }
-            // ADICIONADO: validação de tubos
             if (!Array.isArray(parsed.tubos)) {
                 throw new Error('tubos deve ser um array');
+            }
+            if (!Array.isArray(parsed.administradores)) {
+                throw new Error('administradores deve ser um array');
+            }
+            if (!Array.isArray(parsed.ADM)) {
+                throw new Error('ADM deve ser um array');
             }
             
             this.updateJSONStatus('✅ JSON válido e com estrutura correta', 'success');
@@ -296,8 +524,8 @@ window.updateJSONStatus = jsonEditorModule.updateJSONStatus.bind(jsonEditorModul
 window.addEventListener('dataLoaded', function(event) {
     const data = event.detail;
     
-    console.log('🎯 EVENTO dataLoaded recebido na main.js');
-    console.log('🎯 Dados recebidos:', {
+    console.log(' EVENTO dataLoaded recebido na main.js');
+    console.log(' Dados recebidos:', {
         constants: Object.keys(data.constants || {}).length,
         machines: data.machines?.length || 0,
         materials: Object.keys(data.materials || {}).length,
@@ -307,7 +535,9 @@ window.addEventListener('dataLoaded', function(event) {
             tipos: data.dutos?.tipos?.length || 0,
             opcionais: data.dutos?.opcionais?.length || 0
         },
-        tubos: data.tubos?.length || 0  // ADICIONADO
+        tubos: data.tubos?.length || 0,
+        administradores: data.administradores?.length || 0,
+        ADM: data.ADM?.length || 0
     });
     
     // Atualiza window.systemData com os dados recebidos
@@ -321,9 +551,13 @@ window.addEventListener('dataLoaded', function(event) {
         if (window.loadEmpresas) window.loadEmpresas();
         if (window.loadAcessorios) window.loadAcessorios();
         if (window.loadDutos) window.loadDutos();
-        if (window.loadTubos) window.loadTubos();  // ADICIONADO
+        if (window.loadTubos) window.loadTubos();
         if (window.filterMachines) window.filterMachines();
         if (window.loadJSONEditor) window.loadJSONEditor();
+        
+        // Atualiza as novas abas
+        initializeDashboard();
+        initializeAdminCredentials();
         
         // Limpar staging
         window.stagingData = null;
@@ -340,7 +574,7 @@ window.addEventListener('dataLoaded', function(event) {
 window.addEventListener('dataImported', function(event) {
     const data = event.detail;
     
-    console.log('🎯 EVENTO dataImported recebido');
+    console.log(' EVENTO dataImported recebido');
     window.systemData = data;
     
     if (window.loadConstants) window.loadConstants();
@@ -349,9 +583,13 @@ window.addEventListener('dataImported', function(event) {
     if (window.loadEmpresas) window.loadEmpresas();
     if (window.loadAcessorios) window.loadAcessorios();
     if (window.loadDutos) window.loadDutos();
-    if (window.loadTubos) window.loadTubos();  // ADICIONADO
+    if (window.loadTubos) window.loadTubos();
     if (window.filterMachines) window.filterMachines();
     if (window.loadJSONEditor) window.loadJSONEditor();
+    
+    // Atualiza as novas abas
+    initializeDashboard();
+    initializeAdminCredentials();
     
     // Limpar staging
     window.stagingData = null;
@@ -366,7 +604,7 @@ window.addEventListener('dataApplied', function(event) {
     const data = event.detail.data;
     const changes = event.detail.changes;
     
-    console.log('🎯 EVENTO dataApplied recebido:', changes);
+    console.log(' EVENTO dataApplied recebido:', changes);
     
     // Atualizar window.systemData
     window.systemData = data;
@@ -376,20 +614,18 @@ window.addEventListener('dataApplied', function(event) {
         window.loadJSONEditor();
     }
     
-    // Atualizar acessorios também
-    if (window.loadAcessorios) {
-        window.loadAcessorios();
-    }
+    // Atualizar todas as tabs
+    if (window.loadConstants) window.loadConstants();
+    if (window.loadMachines) window.loadMachines();
+    if (window.loadMaterials) window.loadMaterials();
+    if (window.loadEmpresas) window.loadEmpresas();
+    if (window.loadAcessorios) window.loadAcessorios();
+    if (window.loadDutos) window.loadDutos();
+    if (window.loadTubos) window.loadTubos();
     
-    // Atualizar dutos também
-    if (window.loadDutos) {
-        window.loadDutos();
-    }
-    
-    // Atualizar tubos também
-    if (window.loadTubos) {
-        window.loadTubos();
-    }
+    // Atualiza as novas abas
+    initializeDashboard();
+    initializeAdminCredentials();
     
     // Registrar no logger se disponível
     if (window.logger && window.logger.log) {
@@ -405,14 +641,20 @@ window.debugSystemData = function() {
     console.log('systemData:', window.systemData);
     console.log('Tem banco_acessorios?', 'banco_acessorios' in window.systemData);
     console.log('Tem dutos?', 'dutos' in window.systemData);
-    console.log('Tem tubos?', 'tubos' in window.systemData);  // ADICIONADO
+    console.log('Tem tubos?', 'tubos' in window.systemData);
+    console.log('Tem administradores?', 'administradores' in window.systemData);
+    console.log('Tem ADM?', 'ADM' in window.systemData);
     console.log('banco_acessorios:', window.systemData?.banco_acessorios);
     console.log('dutos:', window.systemData?.dutos);
-    console.log('tubos:', window.systemData?.tubos);  // ADICIONADO
+    console.log('tubos:', window.systemData?.tubos);
+    console.log('administradores:', window.systemData?.administradores);
+    console.log('ADM:', window.systemData?.ADM);
     console.log('Número de acessorios:', Object.keys(window.systemData?.banco_acessorios || {}).length);
     console.log('Número de tipos de dutos:', window.systemData?.dutos?.tipos?.length || 0);
     console.log('Número de opcionais:', window.systemData?.dutos?.opcionais?.length || 0);
-    console.log('Número de tubos:', window.systemData?.tubos?.length || 0);  // ADICIONADO
+    console.log('Número de tubos:', window.systemData?.tubos?.length || 0);
+    console.log('Número de administradores:', window.systemData?.administradores?.length || 0);
+    console.log('Número de ADM:', window.systemData?.ADM?.length || 0);
     console.log('Keys de banco_acessorios:', Object.keys(window.systemData?.banco_acessorios || {}));
     
     // Verifica o editor
@@ -422,10 +664,12 @@ window.debugSystemData = function() {
             const parsed = JSON.parse(editor.value);
             console.log('Editor tem banco_acessorios?', 'banco_acessorios' in parsed);
             console.log('Editor tem dutos?', 'dutos' in parsed);
-            console.log('Editor tem tubos?', 'tubos' in parsed);  // ADICIONADO
+            console.log('Editor tem tubos?', 'tubos' in parsed);
+            console.log('Editor tem administradores?', 'administradores' in parsed);
+            console.log('Editor tem ADM?', 'ADM' in parsed);
             console.log('Acessorios no editor:', Object.keys(parsed?.banco_acessorios || {}).length);
             console.log('Tipos de dutos no editor:', parsed?.dutos?.tipos?.length || 0);
-            console.log('Tubos no editor:', parsed?.tubos?.length || 0);  // ADICIONADO
+            console.log('Tubos no editor:', parsed?.tubos?.length || 0);
         } catch(e) {
             console.error('Erro ao parsear editor:', e);
         }
@@ -434,7 +678,7 @@ window.debugSystemData = function() {
 
 // Função para forçar recarregamento completo
 window.reloadCompleteData = async function() {
-    console.log('🔄 Forçando recarregamento completo...');
+    console.log(' Forçando recarregamento completo...');
     
     try {
         // Busca dados diretamente da API
@@ -447,7 +691,9 @@ window.reloadCompleteData = async function() {
                     tipos: data.dutos?.tipos?.length || 0,
                     opcionais: data.dutos?.opcionais?.length || 0
                 },
-                tubos: data.tubos?.length || 0  // ADICIONADO
+                tubos: data.tubos?.length || 0,
+                administradores: data.administradores?.length || 0,
+                ADM: data.ADM?.length || 0
             });
             
             // Atualiza window.systemData
@@ -469,147 +715,12 @@ window.reloadCompleteData = async function() {
     }
 };
 
-// ==================== MANIPULAÇÃO DE TABS ====================
-
-// Função para switchTab (se não existir)
-if (typeof window.switchTab === 'undefined') {
-    window.switchTab = function(tabName) {
-        console.log(`🔄 Alternando para tab: ${tabName}`);
-        
-        // Esconder todas as tabs
-        document.querySelectorAll('.tab-pane').forEach(tab => {
-            tab.classList.remove('active');
-            tab.style.display = 'none';
-        });
-        
-        // Remover active de todos os botões
-        document.querySelectorAll('.tabs .tab').forEach(tabBtn => {
-            tabBtn.classList.remove('active');
-        });
-        
-        // Mostrar tab selecionada
-        const tabElement = document.getElementById(tabName + 'Tab');
-        if (tabElement) {
-            tabElement.classList.add('active');
-            tabElement.style.display = 'block';
-            
-            // Disparar evento personalizado
-            const event = new CustomEvent('tabChanged', {
-                detail: { tab: tabName }
-            });
-            document.dispatchEvent(event);
-            
-            // Ações específicas por tab
-            switch(tabName) {
-                case 'dutos':
-                    console.log('🎯 Tab de dutos ativada');
-                    if (typeof window.loadDutos === 'function') {
-                        setTimeout(window.loadDutos, 100);
-                    }
-                    break;
-                    
-                case 'tubos':  // ADICIONADO
-                    console.log('🎯 Tab de tubos ativada');
-                    if (typeof window.loadTubos === 'function') {
-                        setTimeout(window.loadTubos, 100);
-                    }
-                    break;
-                    
-                case 'acessories':
-                case 'acessorios':
-                    console.log('🎯 Tab de acessorios ativada');
-                    if (typeof window.loadAcessorios === 'function') {
-                        setTimeout(window.loadAcessorios, 100);
-                    } else if (typeof window.loadAcessoriesData === 'function') {
-                        setTimeout(window.loadAcessoriesData, 100);
-                    }
-                    break;
-                    
-                case 'raw':
-                    console.log('🎯 Tab JSON ativada');
-                    if (typeof window.initJSONEditor === 'function') {
-                        setTimeout(window.initJSONEditor, 100);
-                    }
-                    break;
-            }
-        }
-        
-        // Ativar botão correspondente
-        const tabButtons = document.querySelectorAll('.tabs .tab');
-        tabButtons.forEach(btn => {
-            if (btn.textContent.toLowerCase().includes(tabName.toLowerCase()) || 
-                btn.getAttribute('onclick')?.includes(tabName)) {
-                btn.classList.add('active');
-            }
-        });
-    };
-}
-
-// Adiciona evento para quando as tabs forem clicadas
-document.addEventListener('DOMContentLoaded', function() {
-    // Encontra todas as tabs
-    const tabs = document.querySelectorAll('.tab');
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const tabText = this.textContent.toLowerCase();
-            
-            if (tabText.includes('json') || tabText.includes('raw') || tabText.includes('bruto')) {
-                console.log('🎯 Tab JSON clicada, inicializando editor...');
-                
-                // Pequeno delay para garantir que a tab está visível
-                setTimeout(() => {
-                    if (typeof window.initJSONEditor === 'function') {
-                        window.initJSONEditor();
-                    }
-                    
-                    if (typeof window.updateApplyButtonState === 'function') {
-                        window.updateApplyButtonState();
-                    }
-                }, 150);
-            }
-            
-            if (tabText.includes('dutos') || tabText.includes('duto')) {
-                console.log('🎯 Tab de dutos clicada');
-                
-                setTimeout(() => {
-                    if (typeof window.loadDutos === 'function') {
-                        window.loadDutos();
-                    }
-                }, 150);
-            }
-            
-            if (tabText.includes('tubos') || tabText.includes('tubo')) {  // ADICIONADO
-                console.log('🎯 Tab de tubos clicada');
-                
-                setTimeout(() => {
-                    if (typeof window.loadTubos === 'function') {
-                        window.loadTubos();
-                    }
-                }, 150);
-            }
-            
-            if (tabText.includes('acessorio') || tabText.includes('acessorie')) {
-                console.log('🎯 Tab de acessorios clicada');
-                
-                setTimeout(() => {
-                    if (typeof window.loadAcessorios === 'function') {
-                        window.loadAcessorios();
-                    } else if (typeof window.loadAcessoriesData === 'function') {
-                        window.loadAcessoriesData();
-                    }
-                }, 150);
-            }
-        });
-    });
-});
-
 // ==================== INICIALIZAÇÃO EXTRA ====================
 
 // Adiciona listener para debug quando o sistema está pronto
 setTimeout(() => {
     console.log('✅ Sistema completamente inicializado');
-    console.log('📊 Estado final do systemData:', {
+    console.log(' Estado final do systemData:', {
         constants: Object.keys(window.systemData?.constants || {}).length,
         machines: window.systemData?.machines?.length || 0,
         materials: Object.keys(window.systemData?.materials || {}).length,
@@ -619,6 +730,18 @@ setTimeout(() => {
             tipos: window.systemData?.dutos?.tipos?.length || 0,
             opcionais: window.systemData?.dutos?.opcionais?.length || 0
         },
-        tubos: window.systemData?.tubos?.length || 0  // ADICIONADO
+        tubos: window.systemData?.tubos?.length || 0,
+        administradores: window.systemData?.administradores?.length || 0,
+        ADM: window.systemData?.ADM?.length || 0
     });
+    
+    // Inicializa as abas se estiverem ativas
+    const activeTab = document.querySelector('.tab-pane.active');
+    if (activeTab) {
+        if (activeTab.id === 'dashboardTab') {
+            initializeDashboard();
+        } else if (activeTab.id === 'adminCredentialsTab') {
+            initializeAdminCredentials();
+        }
+    }
 }, 2000);

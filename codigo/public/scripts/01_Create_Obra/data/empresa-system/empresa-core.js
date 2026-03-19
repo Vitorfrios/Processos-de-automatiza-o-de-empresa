@@ -93,7 +93,7 @@ export class EmpresaCadastroInline {
                 this.obrasExistentes = backup.obras || [];
             }
 
-            console.log(`📊 Dados carregados: ${this.empresas.length} empresas, ${this.obrasExistentes.length} obras`);
+            console.log(` Dados carregados: ${this.empresas.length} empresas, ${this.obrasExistentes.length} obras`);
         } catch (error) {
             console.error('❌ Erro ao carregar dados:', error);
         }
@@ -529,7 +529,7 @@ export class EmpresaCadastroInline {
                     (obra.idGerado && obra.idGerado.startsWith(`obra_${sigla}_`));
             });
 
-            console.log(`📊 [EMPRESA] Encontradas ${obrasDaEmpresa.length} obras para ${sigla}`);
+            console.log(` [EMPRESA] Encontradas ${obrasDaEmpresa.length} obras para ${sigla}`);
 
             let maiorNumero = 0;
             obrasDaEmpresa.forEach(obra => {
@@ -623,7 +623,7 @@ export class EmpresaCadastroInline {
 
             this.calcularNumeroClienteFinal(novaSigla);
 
-            console.log(`🔄 Empresa alterada de ${siglaAnterior || 'nenhuma'} para ${novaSigla}`);
+            console.log(` Empresa alterada de ${siglaAnterior || 'nenhuma'} para ${novaSigla}`);
 
         } catch (error) {
             console.error('❌ Erro ao sincronizar troca de empresa:', error);
@@ -1097,7 +1097,7 @@ export class EmpresaCadastroInline {
                     delete campo.dataset.nomeSelecionado;
                 }
 
-                console.log(`🔄 Campo ${selector} limpo`);
+                console.log(` Campo ${selector} limpo`);
             }
         });
 
@@ -1114,7 +1114,7 @@ export class EmpresaCadastroInline {
             numeroClienteInput.setAttribute('value', '');
             numeroClienteInput.value = '';
             numeroClienteInput.setAttribute('placeholder', 'Número do cliente');
-            console.log('🔄 Número do cliente resetado (readonly)');
+            console.log(' Número do cliente resetado (readonly)');
         }
 
         const formNumeroInput = this.container?.querySelector('#numero-cliente-final');
@@ -1446,7 +1446,7 @@ window.atualizarDadosEmpresa = function (input, campo, obraId) {
  */
 window.ativarCadastroEmpresa = function(obraId) {
     try {
-        console.log(`🎯 [EMPRESA] Ativando formulário para obra: ${obraId}`);
+        console.log(` [EMPRESA] Ativando formulário para obra: ${obraId}`);
 
         const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
         if (!obraElement) {

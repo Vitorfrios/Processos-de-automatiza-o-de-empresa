@@ -207,7 +207,7 @@ function getGenericCapacityValue(powerText) {
  * Respeita data-user-edited para QUALQUER aplicação
  */
 function handleAplicacaoChange(machineId) {
-    console.log(`🔄 Aplicação alterada na máquina ${machineId}`);
+    console.log(` Aplicação alterada na máquina ${machineId}`);
     
     const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
     if (!machineElement) return;
@@ -232,7 +232,7 @@ function handleAplicacaoChange(machineId) {
     } 
     else {
         // ✅ Só executa lógica automática se NÃO foi editado pelo usuário
-        console.log(`🔄 Quantidade automática permitida (não foi editada manualmente)`);
+        console.log(` Quantidade automática permitida (não foi editada manualmente)`);
         
         if (aplicacao === "climatizacao") {
             // Para climatização, tenta pegar do backup
@@ -582,7 +582,7 @@ function setupAutoCapacitySelection(machineId, roomId) {
  * Seleciona o valor MAIS PRÓXIMO (não importa se maior ou menor)
  */
 function executeAutoCapacitySelection(machineId, roomId) {
-    console.log(`🎯 Executando seleção automática de capacidade para máquina ${machineId}`);
+    console.log(` Executando seleção automática de capacidade para máquina ${machineId}`);
     
     const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
     if (!machineElement) return;
@@ -602,7 +602,7 @@ function executeAutoCapacitySelection(machineId, roomId) {
     const tipo = tipoSelect.value;
     const aplicacao = aplicacaoSelect.value;
     
-    console.log(`📊 Tipo: ${tipo}, Aplicação: ${aplicacao}`);
+    console.log(` Tipo: ${tipo}, Aplicação: ${aplicacao}`);
     
     // Calcula vazão necessária baseada na aplicação
     const inputs = collectRoomInputs(roomId);
@@ -611,11 +611,11 @@ function executeAutoCapacitySelection(machineId, roomId) {
     switch (aplicacao) {
         case 'pressurizacao':
             vazaoNecessaria = inputs.vazaoAr ? inputs.vazaoAr * 3.6 : null;
-            console.log(`📊 Vazão de ar: ${inputs.vazaoAr}, Vazão necessária (pressurização): ${vazaoNecessaria}`);
+            console.log(` Vazão de ar: ${inputs.vazaoAr}, Vazão necessária (pressurização): ${vazaoNecessaria}`);
             break;
         case 'exaustao_bateria':
             vazaoNecessaria = inputs.volume ? inputs.volume * 12 : null;
-            console.log(`📊 Volume: ${inputs.volume}, Vazão necessária (exaustão bateria): ${vazaoNecessaria}`);
+            console.log(` Volume: ${inputs.volume}, Vazão necessária (exaustão bateria): ${vazaoNecessaria}`);
             break;
         case 'exaustao_baia_trafo':
             if (inputs.potencia && inputs.tempInterna && inputs.tempExterna) {
@@ -627,7 +627,7 @@ function executeAutoCapacitySelection(machineId, roomId) {
                         const massaGR = Q / (constants.fatorEspecifico * Math.abs(deltaT));
                         const massaAr = massaGR / 1000;
                         vazaoNecessaria = Math.abs(massaAr / constants.Densi_ar);
-                        console.log(`📊 Potência: ${inputs.potencia}, ΔT: ${deltaT}, Vazão necessária: ${vazaoNecessaria}`);
+                        console.log(` Potência: ${inputs.potencia}, ΔT: ${deltaT}, Vazão necessária: ${vazaoNecessaria}`);
                     } catch (e) {
                         console.error('Erro ao calcular vazão:', e);
                     }
@@ -641,7 +641,7 @@ function executeAutoCapacitySelection(machineId, roomId) {
         return;
     }
     
-    console.log(`📊 Vazão necessária: ${vazaoNecessaria.toFixed(2)} m³/h`);
+    console.log(` Vazão necessária: ${vazaoNecessaria.toFixed(2)} m³/h`);
     
     // Pega capacidades disponíveis
     const powerSelect = machineElement.querySelector('.machine-power-select');
@@ -671,7 +671,7 @@ function executeAutoCapacitySelection(machineId, roomId) {
         return;
     }
     
-    console.log(`📊 Capacidades disponíveis:`, capacityOptions.map(c => `${c.value} (${c.text})`));
+    console.log(` Capacidades disponíveis:`, capacityOptions.map(c => `${c.value} (${c.text})`));
     
     // 🔥 ENCONTRA O VALOR MAIS PRÓXIMO
     let bestOption = capacityOptions[0];
@@ -685,7 +685,7 @@ function executeAutoCapacitySelection(machineId, roomId) {
         }
     }
     
-    console.log(`🎯 Capacidade MAIS PRÓXIMA: ${bestOption.value} m³/h (diferença: ${smallestDifference.toFixed(2)})`);
+    console.log(` Capacidade MAIS PRÓXIMA: ${bestOption.value} m³/h (diferença: ${smallestDifference.toFixed(2)})`);
     
     // Seleciona a opção
     let selected = false;

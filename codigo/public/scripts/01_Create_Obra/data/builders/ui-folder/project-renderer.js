@@ -8,7 +8,7 @@ function renderProjectFromData(projectData, obraId = null, obraName = null) {
     const projectName = projectData.nome;
     const projectId = ensureStringId(projectData.id);
 
-    console.log(`🎯 Renderizando projeto: ${projectName} (ID: ${projectId})`);
+    console.log(` Renderizando projeto: ${projectName} (ID: ${projectId})`);
 
     if (!obraId) {
         const existingProject = document.querySelector(`[data-project-id="${projectId}"]`);
@@ -76,7 +76,7 @@ async function populateProjectData(projectElement, projectData, obraId, obraName
     const projectName = projectData.nome;
     const projectId = projectData.id;
     
-    console.log(`🎯 Preenchendo projeto: ${projectName}`, { 
+    console.log(` Preenchendo projeto: ${projectName}`, { 
         salas: projectData.salas?.length,
         servicos: projectData.servicos ? 'Sim' : 'Não',
         obraId: obraId,

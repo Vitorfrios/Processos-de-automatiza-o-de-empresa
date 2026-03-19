@@ -64,12 +64,10 @@ function bindLoginForm() {
         setLoadingState(true);
 
         try {
-            const adminResult = usernameInput.value.trim() === 'ADM'
-                ? await loginAdmin({
-                    usuario: usernameInput.value,
-                    token: passwordInput.value
-                })
-                : null;
+            const adminResult = await loginAdmin({
+                usuario: usernameInput.value,
+                token: passwordInput.value
+            });
 
             if (adminResult?.success) {
                 redirectToAdminApp(adminResult.redirectTo);

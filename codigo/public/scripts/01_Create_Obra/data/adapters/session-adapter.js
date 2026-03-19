@@ -89,7 +89,7 @@ function clearRenderedObras() {
     console.log('🔍 clearRenderedObras: Analisando obras no DOM...');
     
     const obras = obrasContainer.querySelectorAll('.obra-block');
-    console.log(`📊 Total de obras encontradas: ${obras.length}`);
+    console.log(` Total de obras encontradas: ${obras.length}`);
     
     let obrasRemovidas = 0;
     let obrasPreservadas = 0;
@@ -138,7 +138,7 @@ function clearRenderedObras() {
         window.GeralCount = Math.max(0, window.GeralCount - obrasRemovidas);
     }
     
-    console.log(`📊 clearRenderedObras finalizado: ${obrasPreservadas} preservadas, ${obrasRemovidas} removidas`);
+    console.log(` clearRenderedObras finalizado: ${obrasPreservadas} preservadas, ${obrasRemovidas} removidas`);
 }
 
 /**

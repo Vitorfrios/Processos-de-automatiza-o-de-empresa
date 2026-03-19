@@ -85,7 +85,7 @@ function atualizarCamposEmpresaForm(obraData, formElement) {
 // empresa-form-manager.js - VERSÃO UNIFICADA
 
 /**
- * 🎯 ÚNICO FORMULÁRIO DE EMPRESA - Inteligente (criação/visualização)
+ *  ÚNICO FORMULÁRIO DE EMPRESA - Inteligente (criação/visualização)
  */
 function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
     console.log(`📋 [EMPRESA] Criando formulário para obra ${obraId}`, dadosExistentes ? 'com dados' : 'vazio');

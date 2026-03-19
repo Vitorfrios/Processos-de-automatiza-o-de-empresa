@@ -30,7 +30,7 @@ class FastTimeoutMapper:
                 except Exception as e:
                     print(f"Erro ao ler {file_path}: {e}")
         
-        print(f"📁 Arquivos escaneados: {files_scanned}")
+        print(f" Arquivos escaneados: {files_scanned}")
         return files_scanned
     
     def _scan_file(self, file_path):
@@ -156,7 +156,7 @@ class FastTimeoutMapper:
             print("✅ Nenhum setTimeout < 200ms encontrado!")
             return
         
-        print(f"\n📊 TOTAL ENCONTRADO: {total}\n")
+        print(f"\n TOTAL ENCONTRADO: {total}\n")
         
         # Estatísticas por categoria
         print("📈 DISTRIBUIÇÃO POR TEMPO:")
@@ -175,7 +175,7 @@ class FastTimeoutMapper:
             print(f"   Função: {finding.get('function_context', 'desconhecida')}")
         
         # Agrupar por arquivo
-        print("\n📁 POR ARQUIVO:")
+        print("\n POR ARQUIVO:")
         print("-" * 70)
         by_file = defaultdict(list)
         for finding in self.fast_timeouts:
@@ -213,11 +213,11 @@ class FastTimeoutMapper:
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(output, f, indent=2, ensure_ascii=False)
         
-        print(f"\n💾 Dados exportados para {filename}")
+        print(f"\n Dados exportados para {filename}")
     
     def suggest_fixes(self):
         """Sugere correções para os timeouts encontrados"""
-        print("\n🔧 SUGESTÕES DE CORREÇÃO:")
+        print("\n SUGESTÕES DE CORREÇÃO:")
         print("=" * 70)
         
         for finding in self.fast_timeouts:
@@ -237,7 +237,7 @@ class FastTimeoutMapper:
 def scan_error_handler_specific():
     """Escaneia especificamente o error-handler.js em busca de setTimeout"""
     if os.path.exists('error-handler.js'):
-        print("\n🎯 ANALISANDO ESPECIFICAMENTE error-handler.js")
+        print("\n ANALISANDO ESPECIFICAMENTE error-handler.js")
         print("=" * 50)
         
         with open('error-handler.js', 'r') as f:
@@ -276,7 +276,7 @@ def scan_error_handler_specific():
             print("\nSOLUÇÃO: Remova este setTimeout ou aumente para 10000ms (10s)")
 
 def main():
-    print("🚀 Iniciando mapeamento de setTimeout < 200ms...")
+    print(" Iniciando mapeamento de setTimeout < 200ms...")
     print(f"📂 Diretório: {os.getcwd()}\n")
     
     mapper = FastTimeoutMapper()

@@ -51,11 +51,11 @@ async function findObraBlockWithRetry(obraId, maxAttempts = 10) {
 }
 
 /**
- * 🔄 FUNÇÕES DE ATUALIZAÇÃO DE INTERFACE
+ *  FUNÇÕES DE ATUALIZAÇÃO DE INTERFACE
  */
 
 function updateObraButtonAfterSave(obraName, obraId) {
-    console.log('🔄=== updateObraButtonAfterSave CHAMADO ===');
+    console.log('=== updateObraButtonAfterSave CHAMADO ===');
     console.log('obraName:', obraName);
     console.log('obraId:', obraId);
     

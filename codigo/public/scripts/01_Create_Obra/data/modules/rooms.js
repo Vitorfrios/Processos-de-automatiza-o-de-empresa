@@ -88,7 +88,7 @@ function buildRoomHeader(obraId, projectId, roomName, roomId) {
 
 
 /**
- * 🔧 FUNÇÕES DE OPERAÇÕES
+ *  FUNÇÕES DE OPERAÇÕES
  */
 
 /**
@@ -116,7 +116,7 @@ async function loadMachinesPreloadModule() {
  * @returns {Promise<boolean>} True se a sala foi criada com sucesso
  */
 async function createEmptyRoom(obraId, projectId, roomName, roomId) {
-    console.log(`🔄 Criando sala: ${roomName} na obra "${obraId}", projeto "${projectId}"`);
+    console.log(` Criando sala: ${roomName} na obra "${obraId}", projeto "${projectId}"`);
 
     if (!obraId || obraId === 'undefined' || obraId === 'null') {
         console.error(`ERRO FALBACK (createEmptyRoom) [Obra ID inválido: ${obraId}]`);
@@ -246,7 +246,7 @@ function updateRoomTotal(roomId) {
  * INICIALIZAÇÃO DA SALA
  */
 function initializeRoomComponents(obraId, projectId, roomName, roomId) {
-    console.log(`🔧 INICIALIZAÇÃO COMPLETA DA SALA: ${roomName} (ID: ${roomId})`);
+    console.log(` INICIALIZAÇÃO COMPLETA DA SALA: ${roomName} (ID: ${roomId})`);
 
     setTimeout(() => {
         setupBidirectionalTitleAmbienteSync(roomId, roomName);

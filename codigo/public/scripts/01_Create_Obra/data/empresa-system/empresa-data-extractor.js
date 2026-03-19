@@ -1,6 +1,6 @@
 // empresa-data-extractor.js
 /**
- * 📊 EMPRESA-DATA-EXTRACTOR.JS - Extração e Processamento de Dados de Empresa
+ *  EMPRESA-DATA-EXTRACTOR.JS - Extração e Processamento de Dados de Empresa
  * ✅ Responsabilidade: Extrair dados do DOM, preparar para salvamento, cálculos
  * ✅ Arquivo 4 de 5 na refatoração do sistema de empresa
  */
@@ -37,7 +37,7 @@ function extractEmpresaData(obraElement) {
         // 🆕 PRIORIDADE 1: Buscar dados do autocomplete (são os mais confiáveis)
         const empresaInput = formEmpresa.querySelector('.empresa-input-cadastro');
         if (empresaInput && empresaInput.dataset.siglaSelecionada) {
-            console.log('🎯 [EXTRACT EMPRESA] Dados do autocomplete encontrados:', {
+            console.log(' [EXTRACT EMPRESA] Dados do autocomplete encontrados:', {
                 sigla: empresaInput.dataset.siglaSelecionada,
                 nome: empresaInput.dataset.nomeSelecionado
             });
@@ -456,7 +456,7 @@ async function debugExtractEmpresaData() {
         console.log(`📦 Obra ${index + 1}: ${obraId}`);
         
         const dados = extractEmpresaData(obra);
-        console.log(`📊 Dados extraídos:`, dados);
+        console.log(` Dados extraídos:`, dados);
     });
 }
 

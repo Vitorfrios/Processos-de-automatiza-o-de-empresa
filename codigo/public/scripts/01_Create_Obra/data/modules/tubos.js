@@ -361,7 +361,7 @@ function calcularReducoes(numCircuitos) {
 const sincronizacaoPorConjunto = {};
 
 function configurarSincronizacaoLSLL(conjuntoId) {
-    console.log(`🔄 Configurando sincronização LS↔LL para conjunto ${conjuntoId}`);
+    console.log(` Configurando sincronização LS↔LL para conjunto ${conjuntoId}`);
     
     sincronizacaoPorConjunto[conjuntoId] = {
         lsId: null,
@@ -427,7 +427,7 @@ function sincronizarLSLL(linhaId, campo, valor) {
     if (inputDestino) {
         // Verificar se o valor atual é diferente
         if (inputDestino.value !== valor) {
-            console.log(`🔄 Sincronizando ${campo}: ${tipoLinha} → ${tipoLinha === 'L.S.' ? 'L.L.' : 'L.S.'} [${valor}]`);
+            console.log(` Sincronizando ${campo}: ${tipoLinha} → ${tipoLinha === 'L.S.' ? 'L.L.' : 'L.S.'} [${valor}]`);
             
             inputDestino.value = valor;
             
@@ -483,7 +483,7 @@ function atualizarControleLinhas(conjuntoId) {
         }
     });
     
-    console.log(`📊 Controle atualizado para conjunto ${conjuntoId}:`, {
+    console.log(` Controle atualizado para conjunto ${conjuntoId}:`, {
         lsPrincipal: dadosConjunto.lsId,
         llPrincipal: dadosConjunto.llId,
         adicionalLS: dadosConjunto.adicionalLS,
@@ -536,7 +536,7 @@ function fillTubulacaoData(roomElement, tubulacaoData) {
     }
 
     const roomId = roomElement.dataset.roomId;
-    console.log(`🔄 Preenchendo tubulação para sala ${roomId}`, tubulacaoData);
+    console.log(` Preenchendo tubulação para sala ${roomId}`, tubulacaoData);
 
     const emptyMessage = document.getElementById(`tubos-empty-${roomId}`);
     if (emptyMessage) {
@@ -1366,7 +1366,7 @@ function limparTubulacao(roomId) {
 
 // Inicializar sistema de tubulação
 async function initTubulacaoSystem(roomId) {
-    console.log(`🔧 Inicializando sistema de tubulação para sala: ${roomId}`);
+    console.log(` Inicializando sistema de tubulação para sala: ${roomId}`);
     
     try {
         await getTubos();
@@ -1591,7 +1591,7 @@ function atualizarNumeracaoConjuntos(roomId) {
             tituloElement.textContent = `Conjunto ${novoNum}`;
         }
         
-        console.log(`🔄 Conjunto ${conjuntoId} renumerado para ${novoNum}`);
+        console.log(` Conjunto ${conjuntoId} renumerado para ${novoNum}`);
     });
 }
 

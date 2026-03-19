@@ -43,7 +43,7 @@ function buildObraData(obraIdOrElement) {
         const dataName = obraElement.dataset.obraName;
         
         if (currentTitle && currentTitle !== dataName) {
-            console.log(`🔄 Sincronizando: data-obra-name "${dataName}" → "${currentTitle}"`);
+            console.log(` Sincronizando: data-obra-name "${dataName}" → "${currentTitle}"`);
             obraElement.dataset.obraName = currentTitle;
         }
     }
@@ -169,7 +169,7 @@ function buildProjectData(projectIdOrElement) {
         const dataName = projectElement.dataset.projectName;
         
         if (currentTitle && currentTitle !== dataName) {
-            console.log(`🔄 Sincronizando projeto: data-project-name "${dataName}" → "${currentTitle}"`);
+            console.log(` Sincronizando projeto: data-project-name "${dataName}" → "${currentTitle}"`);
             projectElement.dataset.projectName = currentTitle;
         }
     }
@@ -216,7 +216,7 @@ function buildProjectData(projectIdOrElement) {
 
     console.log(`✅ Projeto "${projectName}" processado: ${salasProcessadas}/${roomElements.length} salas`);
     console.log(`💰 Valor total do projeto: R$ ${valorTotalProjeto.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`);
-    console.log(`📊 Serviços extraídos:`, projectData.servicos);
+    console.log(` Serviços extraídos:`, projectData.servicos);
     
     return projectData;
 }
@@ -280,7 +280,7 @@ function extractServicosData(projectElement) {
         adicionais: extractAdicionaisData(sectionBlock)
     };
 
-    console.log(`📊 Dados de serviços extraídos:`, servicosData);
+    console.log(` Dados de serviços extraídos:`, servicosData);
     return servicosData;
 }
 

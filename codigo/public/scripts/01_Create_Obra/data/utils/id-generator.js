@@ -1,6 +1,6 @@
 /**
  * data/utils/id-generator.js
- * 🎯 SISTEMA UNIFICADO DE GERENÇÃO E VALIDAÇÃO DE IDs ÚNICOS
+ *  SISTEMA UNIFICADO DE GERENÇÃO E VALIDAÇÃO DE IDs ÚNICOS
  * ⚡ IDs SEGUROS: obra_w12, obra_w12_proj_t34_1, obra_w12_proj_t34_1_sala_r21_1
  */
 

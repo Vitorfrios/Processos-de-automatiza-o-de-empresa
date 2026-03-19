@@ -199,7 +199,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
     // Timeouts por tipo
     if (type === 'undo') {
         toastData.timeout = setTimeout(() => {
-            console.log(`⏰ Timeout de 5 segundos completado para obra ${obraName} (ID: ${obraId})`); // ← Atualize o texto
+            console.log(` Timeout de 5 segundos completado para obra ${obraName} (ID: ${obraId})`); // ← Atualize o texto
             // Remove o toast de undo primeiro
             hideSpecificToast(toastId);
             // Em seguida processa remoção definitiva
@@ -207,7 +207,7 @@ function showToast(obraName, type = 'undo', obraId = null) {
         }, 2500);
     } else {
         toastData.timeout = setTimeout(() => {
-            console.log(`⏰ Removendo toast de ${type} para obra ${obraName} (ID: ${obraId})`);
+            console.log(` Removendo toast de ${type} para obra ${obraName} (ID: ${obraId})`);
             hideSpecificToast(toastId);
         }, 437);
     }
@@ -374,7 +374,7 @@ export function undoDeletion(obraId, obraName) {
  * Completa a exclusão após timeout (remove do servidor)
  */
 async function completeDeletion(obraId, obraName) {
-    console.log(`⏰ completeDeletion() chamado para obra ${obraName} (ID: ${obraId})`);
+    console.log(` completeDeletion() chamado para obra ${obraName} (ID: ${obraId})`);
     await completeDeletionImmediate(obraId, obraName);
 }
 
@@ -438,7 +438,7 @@ async function verificarObraNoServidor(obraId) {
         // Verificar se a obra existe
         const obraExiste = todasObras.some(obra => String(obra.id) === String(obraId));
 
-        console.log(`📊 Obra ${obraId} existe no servidor? ${obraExiste}`);
+        console.log(` Obra ${obraId} existe no servidor? ${obraExiste}`);
         console.log(`📋 Obras no servidor:`, todasObras.map(o => ({ id: o.id, nome: o.nome })));
 
         return obraExiste;
@@ -453,7 +453,7 @@ async function verificarObraNoServidor(obraId) {
  * Confirma e executa a exclusão com sistema de undo - ATUALIZADO
  */
 export async function confirmDeletion() {
-    console.log('🎯 confirmDeletion() CHAMADO - Iniciando processo de deleção');
+    console.log(' confirmDeletion() CHAMADO - Iniciando processo de deleção');
 
     const { obraName, obraId, obraBlock, obraHTML, originalPosition } = pendingDeletion;
 
@@ -514,7 +514,7 @@ export function getPendingDeletion() {
 
 // Fecha modal clicando fora (mantido pois funciona bem)
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🔧 Modal system inicializado');
+    console.log(' Modal system inicializado');
 
     const modal = document.getElementById('confirmationModal');
     if (modal) {

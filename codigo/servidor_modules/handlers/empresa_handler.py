@@ -344,7 +344,7 @@ class EmpresaHandler:
         return {
             "success": False,
             "reason": "invalid_token" if empresa_por_usuario else "user_not_found",
-            "message": "Token invalido." if empresa_por_usuario else "Usuario nao encontrado.",
+            "message": "Token invalido." if empresa_por_usuario else "Usuario nao encontrado ou token expirado.",
         }
 
     def obter_proximo_numero_cliente(self, sigla):
