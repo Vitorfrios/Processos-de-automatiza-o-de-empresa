@@ -334,9 +334,6 @@
     min-width: 600px;
   }
 
-  .climatization-form-grid {
-    grid-template-columns: 1fr;
-  }
 
   .machine-options-section, .machine-config-section {
     display: flex;

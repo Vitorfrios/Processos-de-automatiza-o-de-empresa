@@ -863,7 +863,6 @@
     }
 
     .kpi-split {
-        grid-template-columns: 1fr;
         gap: var(--spacing-sm);
     }
 
@@ -872,7 +871,6 @@
         padding-left: 0;
         padding-top: var(--spacing-sm);
         border-left: none;
-        border-top: 1px solid var(--color-gray-200);
     }
     
     .dashboard-metrics-strip {

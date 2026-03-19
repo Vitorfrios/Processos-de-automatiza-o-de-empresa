@@ -253,12 +253,12 @@ export function updateApplyButtonState() {
     if (window.hasPendingChanges) {
         domCache.applyButton.disabled = false;
         domCache.applyButton.classList.remove('disabled');
-        domCache.applyButton.innerHTML = '<i class="icon-check"></i> Aplicar JSON';
+        domCache.applyButton.innerHTML = '</i> Aplicar JSON';
         domCache.applyButton.title = 'Aplicar alterações do JSON';
     } else {
         domCache.applyButton.disabled = true;
         domCache.applyButton.classList.add('disabled');
-        domCache.applyButton.innerHTML = '<i class="icon-check"></i> Nada para aplicar';
+        domCache.applyButton.innerHTML = '</i> Nada para aplicar';
         domCache.applyButton.title = 'Nenhuma alteração pendente';
     }
 }

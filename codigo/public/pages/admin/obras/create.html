@@ -42,14 +42,13 @@
             <div class="add-obra-section">
 
                 <!-- BLOCO ESQUERDO (switch + inputs divididos verticalmente) -->
-                <div class="filtro-bloco-altura">
+                <div class="add-obra-filters filtro-bloco-altura">
 
                     <!-- METADE DE CIMA  SWITCH -->
                     <div class="filtro-switch-area">
                         <label class="filter-switch">
-                            <input type="checkbox" id="filter-toggle""
-                                disabled>
-                            <span class=" slider"></span>
+                            <input type="checkbox" id="filter-toggle" disabled>
+                            <span class="slider"></span>
                         </label>
 
                         <span class="switch-label-text">Edição de Obras Salvas</span>
@@ -68,9 +67,11 @@
                 </div>
 
                 <!-- BOTÃO NO MESMO NÍVEL -->
-                <button class="btn btn-add" onclick="addNewObra()" id="add-obra-btn" disabled>
-                    + Adicionar Nova Obra
-                </button>
+                <div class="add-obra-actions">
+                    <button class="btn btn-add add-obra-button" onclick="addNewObra()" id="add-obra-btn" type="button" disabled>
+                        + Adicionar Nova Obra
+                    </button>
+                </div>
 
             </div>
 

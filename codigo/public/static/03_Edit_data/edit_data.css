@@ -330,9 +330,6 @@
     content: "✕";
 }
 
-.icon-format::before {
-    content: "🎨";
-}
 
 .icon-validate::before {
     content: "✓";

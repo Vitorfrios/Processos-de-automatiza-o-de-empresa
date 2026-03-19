@@ -1199,41 +1199,59 @@ export class EmpresaCadastroInline {
     }
 
     inicializarTooltipJavaScript(element) {
-        const isMobile = window.innerWidth <= 768;
-        let autoCloseTimer = null;
+        if (!element) {
+            return;
+        }
 
+        if (typeof element.__empresaTooltipCleanup === 'function') {
+            element.__empresaTooltipCleanup();
+        }
+
+        let autoCloseTimer = null;
+        let lastIsMobile = window.innerWidth <= 768;
+        const cleanupCallbacks = [];
+
+        const addManagedListener = (target, eventName, handler, options) => {
+            target.addEventListener(eventName, handler, options);
+            cleanupCallbacks.push(() => target.removeEventListener(eventName, handler, options));
+        };
+
+        const cleanup = () => {
+            if (autoCloseTimer) {
+                clearTimeout(autoCloseTimer);
+                autoCloseTimer = null;
+            }
+
+            cleanupCallbacks.splice(0).forEach((callback) => callback());
+            delete element.__empresaTooltipCleanup;
+            delete element.dataset.tooltipInitialized;
+        };
+
+        element.__empresaTooltipCleanup = cleanup;
+        element.dataset.tooltipInitialized = 'true';
         element.style.position = 'relative';
         element.style.overflow = 'visible';
         element.style.zIndex = '100';
 
         const tooltip = document.createElement('div');
         tooltip.className = 'empresa-tooltip';
+        tooltip.setAttribute('role', 'tooltip');
 
-        if (isMobile) {
-            tooltip.classList.add('empresa-tooltip-mobile');
+        const closeButton = document.createElement('button');
+        closeButton.className = 'empresa-tooltip-close';
+        closeButton.type = 'button';
+        closeButton.textContent = 'x';
+        closeButton.setAttribute('aria-label', 'Fechar tooltip');
 
-            const closeButton = document.createElement('button');
-            closeButton.className = 'empresa-tooltip-close';
-            closeButton.innerHTML = '×';
-            closeButton.setAttribute('aria-label', 'Fechar tooltip');
-            tooltip.appendChild(closeButton);
+        const tooltipContent = document.createElement('div');
+        tooltipContent.className = 'empresa-tooltip-content';
 
-            closeButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                esconderTooltip();
-            });
-        }
-
+        tooltip.appendChild(closeButton);
+        tooltip.appendChild(tooltipContent);
         document.body.appendChild(tooltip);
+        cleanupCallbacks.push(() => tooltip.remove());
 
-        const iniciarAutoCloseTimer = () => {
-            if (autoCloseTimer) {
-                clearTimeout(autoCloseTimer);
-            }
-            autoCloseTimer = setTimeout(() => {
-                esconderTooltip();
-            }, 400);
-        };
+        const getIsMobile = () => window.innerWidth <= 768;
 
         const cancelarAutoCloseTimer = () => {
             if (autoCloseTimer) {
@@ -1242,133 +1260,174 @@ export class EmpresaCadastroInline {
             }
         };
 
+        const esconderTooltip = () => {
+            tooltip.classList.remove('show');
+            cancelarAutoCloseTimer();
+        };
+
+        const sincronizarModoTooltip = () => {
+            const isMobile = getIsMobile();
+            tooltip.classList.toggle('empresa-tooltip-mobile', isMobile);
+            closeButton.hidden = !isMobile;
+
+            if (!isMobile) {
+                cancelarAutoCloseTimer();
+            }
+        };
+
+        const iniciarAutoCloseTimer = () => {
+            cancelarAutoCloseTimer();
+
+            if (!getIsMobile()) {
+                return;
+            }
+
+            autoCloseTimer = setTimeout(() => {
+                esconderTooltip();
+            }, 400);
+        };
+
         const atualizarPosicaoTooltip = () => {
             const rect = element.getBoundingClientRect();
-            const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-            const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-            const isMobileNow = window.innerWidth <= 768;
+            const isMobile = getIsMobile();
 
-            if (isMobileNow) {
+            if (isMobile) {
                 tooltip.style.position = 'fixed';
                 tooltip.style.left = '50%';
                 tooltip.style.top = '50%';
-                tooltip.style.transform = 'translate(-50%, -50%)';
                 tooltip.style.bottom = 'auto';
                 tooltip.style.right = 'auto';
-                tooltip.style.width = '90vw';
+                tooltip.style.transform = 'translate(-50%, -50%)';
+                tooltip.style.width = 'min(90vw, 320px)';
                 tooltip.style.maxWidth = '320px';
                 tooltip.style.maxHeight = '70vh';
                 tooltip.style.overflowY = 'auto';
                 tooltip.style.zIndex = '100000';
             } else {
                 tooltip.style.position = 'fixed';
-                tooltip.style.left = (rect.left + scrollX + (rect.width / 2)) + 'px';
-                tooltip.style.bottom = (window.innerHeight - rect.top - scrollY + 8) + 'px';
+                tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
+                tooltip.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+                tooltip.style.top = 'auto';
+                tooltip.style.right = 'auto';
                 tooltip.style.transform = 'translateX(-50%)';
                 tooltip.style.width = 'auto';
                 tooltip.style.maxWidth = '380px';
                 tooltip.style.maxHeight = 'none';
+                tooltip.style.overflowY = 'visible';
+                tooltip.style.zIndex = '100000';
             }
         };
 
         const mostrarTooltip = () => {
             const tooltipText = element.getAttribute('data-tooltip');
-            if (tooltipText) {
-                const closeBtn = tooltip.querySelector('.empresa-tooltip-close');
-                tooltip.innerHTML = tooltipText;
-                if (closeBtn && isMobile) {
-                    tooltip.appendChild(closeBtn);
-                }
-
-                tooltip.classList.add('show');
-                atualizarPosicaoTooltip();
-
-                if (isMobile) {
-                    iniciarAutoCloseTimer();
-                }
+            if (!tooltipText) {
+                return;
             }
+
+            sincronizarModoTooltip();
+            tooltipContent.innerHTML = tooltipText;
+            tooltip.classList.add('show');
+            atualizarPosicaoTooltip();
+            iniciarAutoCloseTimer();
         };
 
-        const esconderTooltip = () => {
-            tooltip.classList.remove('show');
-            cancelarAutoCloseTimer();
-        };
+        const toggleTooltip = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
 
-        if (isMobile) {
-            element.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                if (tooltip.classList.contains('show')) {
-                    esconderTooltip();
-                } else {
-                    mostrarTooltip();
-                }
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!element.contains(e.target) && !tooltip.contains(e.target)) {
-                    esconderTooltip();
-                }
-            });
-
-            window.addEventListener('scroll', esconderTooltip);
-            window.addEventListener('orientationchange', esconderTooltip);
-
-        } else {
-            element.addEventListener('mouseenter', mostrarTooltip);
-            element.addEventListener('mouseleave', esconderTooltip);
-        }
-
-        if (isMobile) {
-            tooltip.addEventListener('touchstart', () => {
-                cancelarAutoCloseTimer();
-                iniciarAutoCloseTimer();
-            });
-
-            tooltip.addEventListener('click', () => {
-                cancelarAutoCloseTimer();
-                iniciarAutoCloseTimer();
-            });
-        }
-
-        window.addEventListener('scroll', () => {
             if (tooltip.classList.contains('show')) {
-                atualizarPosicaoTooltip();
-            }
-        });
-
-        window.addEventListener('resize', () => {
-            if (tooltip.classList.contains('show')) {
-                atualizarPosicaoTooltip();
-            }
-
-            const novaCondicaoMobile = window.innerWidth <= 768;
-            if (isMobile !== novaCondicaoMobile) {
                 esconderTooltip();
-                tooltip.remove();
-                this.inicializarTooltipJavaScript(element);
+                return;
+            }
+
+            mostrarTooltip();
+        };
+
+        const handleDocumentClick = (event) => {
+            if (!element.contains(event.target) && !tooltip.contains(event.target)) {
+                esconderTooltip();
+            }
+        };
+
+        const handleWindowScroll = () => {
+            if (!tooltip.classList.contains('show')) {
+                return;
+            }
+
+            if (getIsMobile()) {
+                esconderTooltip();
+                return;
+            }
+
+            atualizarPosicaoTooltip();
+        };
+
+        const handleWindowResize = () => {
+            const isMobile = getIsMobile();
+            sincronizarModoTooltip();
+
+            if (!tooltip.classList.contains('show')) {
+                lastIsMobile = isMobile;
+                return;
+            }
+
+            if (lastIsMobile !== isMobile) {
+                esconderTooltip();
+            } else {
+                atualizarPosicaoTooltip();
+            }
+
+            lastIsMobile = isMobile;
+        };
+
+        addManagedListener(closeButton, 'click', (event) => {
+            event.stopPropagation();
+            esconderTooltip();
+        });
+
+        addManagedListener(element, 'click', (event) => {
+            if (getIsMobile()) {
+                toggleTooltip(event);
             }
         });
 
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.removedNodes.length > 0) {
-                    const removed = Array.from(mutation.removedNodes);
-                    if (removed.includes(element) || element.parentNode === null) {
-                        tooltip.remove();
-                        cancelarAutoCloseTimer();
-                        window.removeEventListener('scroll', atualizarPosicaoTooltip);
-                        window.removeEventListener('resize', atualizarPosicaoTooltip);
-                        document.removeEventListener('click', esconderTooltip);
-                        window.removeEventListener('orientationchange', esconderTooltip);
-                        observer.disconnect();
-                    }
-                }
-            });
+        addManagedListener(element, 'mouseenter', () => {
+            if (!getIsMobile()) {
+                mostrarTooltip();
+            }
+        });
+
+        addManagedListener(element, 'mouseleave', () => {
+            if (!getIsMobile()) {
+                esconderTooltip();
+            }
+        });
+
+        addManagedListener(document, 'click', handleDocumentClick);
+        addManagedListener(window, 'scroll', handleWindowScroll, { passive: true });
+        addManagedListener(window, 'resize', handleWindowResize, { passive: true });
+        addManagedListener(window, 'orientationchange', esconderTooltip, { passive: true });
+
+        addManagedListener(tooltip, 'touchstart', () => {
+            cancelarAutoCloseTimer();
+            iniciarAutoCloseTimer();
+        }, { passive: true });
+
+        addManagedListener(tooltip, 'click', () => {
+            cancelarAutoCloseTimer();
+            iniciarAutoCloseTimer();
+        });
+
+        const observer = new MutationObserver(() => {
+            if (!document.body.contains(element)) {
+                cleanup();
+            }
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
+        cleanupCallbacks.push(() => observer.disconnect());
+
+        sincronizarModoTooltip();
     }
 }
 

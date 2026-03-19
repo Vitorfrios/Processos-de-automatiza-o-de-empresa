@@ -146,6 +146,35 @@
   align-items: center;
   gap: 22px;
   margin-bottom: var(--spacing-xl);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.add-obra-section > * {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.add-obra-filters {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.add-obra-actions {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.add-obra-button {
+  max-width: 100%;
+  white-space: normal;
 }
 
 
@@ -160,6 +189,7 @@
     min-height: 78px;
     height: auto;
     padding: 4px 0;
+    min-width: 0;
 }
 
 
@@ -175,7 +205,7 @@
   gap: 8px;
   padding-bottom: 2px;
   margin-bottom: 15px;
-  
+  min-width: 0;
 }
 
 
@@ -187,6 +217,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 
   /* inicialmente ocultos */
   opacity: 0;
@@ -211,7 +244,10 @@
    INPUTS — ESTILO ESCURO, ELEGANTE E FLUIDO
 ============================================================ */
 .filtro-inputs-area input {
+  flex: 1 1 185px;
   width: 185px;
+  max-width: 100%;
+  min-width: 0;
   padding: 7px 12px;
 
   background: #f3f3f3;
@@ -431,4 +467,54 @@
 .filter-clear-button:hover {
     background-color: #f5f5f5;
     color: #333;
+}
+
+@media (max-width: 900px) {
+  .add-obra-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+
+  .add-obra-filters,
+  .filtro-bloco-altura,
+  .add-obra-actions,
+  .add-obra-section .btn,
+  .add-obra-section button {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .filtro-switch-area,
+  .filtro-inputs-area {
+    width: 100%;
+  }
+
+  .filtro-inputs-area input {
+    flex: 1 1 220px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .add-obra-section {
+    gap: var(--spacing-sm);
+  }
+
+  .filtro-switch-area {
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .filtro-inputs-area {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .filtro-inputs-area input {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
 }
