@@ -154,6 +154,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/login": "public/pages/login/index.html",
         "/obras/create": "public/pages/obras/create.html",
         "/admin/obras/create": "public/pages/admin/obras/create.html",
+        "/admin/obras/embed": "public/pages/admin/obras/embed.html",
         "/admin/data": "public/pages/admin/data/index.html",
     }
 

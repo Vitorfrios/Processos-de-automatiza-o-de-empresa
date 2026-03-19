@@ -63,6 +63,88 @@
   transform: scale(0.95);
 }
 
+body.obra-embed-mode {
+  background: var(--color-white);
+}
+
+body.obra-embed-mode .header,
+body.obra-embed-mode .navbar,
+body.obra-embed-mode .add-obra-section {
+  display: none !important;
+}
+
+body.obra-embed-mode .main-content {
+  padding: 0 !important;
+}
+
+body.obra-embed-mode .container {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.obra-dashboard-embed {
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  min-height: 100vh;
+}
+
+body.obra-dashboard-embed .main-content {
+  padding: 12px;
+}
+
+body.obra-dashboard-embed .container.obra-dashboard-embed-container {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.obra-dashboard-embed #projects-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.obra-dashboard-status {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: #334155;
+  font-size: 0.95rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.obra-dashboard-status[data-type="error"] {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: rgba(220, 38, 38, 0.22);
+}
+
+.obra-dashboard-hidden-controls {
+  display: none !important;
+}
+
+body.obra-dashboard-embed .system-status-banner {
+  position: static;
+  top: auto;
+  right: auto;
+  margin: 0 0 12px;
+}
+
+@media (max-width: 768px) {
+  body.obra-dashboard-embed .main-content {
+    padding: 8px;
+  }
+
+  .obra-dashboard-status {
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+  }
+}
+
 /* ===== ESTILOS GERAIS PARA HEADERS ===== */
 
 /* Estilos gerais para inputs editáveis em headers */

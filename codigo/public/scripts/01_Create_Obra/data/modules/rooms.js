@@ -16,6 +16,24 @@ import { parseCurrency,formatCurrency } from '../../features/managers/project-ma
 // Cache para módulo de máquinas
 let machinesPreloadModule = null;
 
+function scheduleRoomTask(task, { delay = 0, idle = false, timeout = 1000 } = {}) {
+    const runTask = () => {
+        if (idle && 'requestIdleCallback' in window) {
+            window.requestIdleCallback(() => task(), { timeout });
+            return;
+        }
+
+        window.requestAnimationFrame(() => task());
+    };
+
+    if (delay > 0) {
+        window.setTimeout(runTask, delay);
+        return;
+    }
+
+    runTask();
+}
+
 
 /**
  * 🏗️ FUNÇÕES DE CONSTRUÇÃO DE HTML
@@ -248,7 +266,7 @@ function updateRoomTotal(roomId) {
 function initializeRoomComponents(obraId, projectId, roomName, roomId) {
     console.log(` INICIALIZAÇÃO COMPLETA DA SALA: ${roomName} (ID: ${roomId})`);
 
-    setTimeout(() => {
+    scheduleRoomTask(() => {
         setupBidirectionalTitleAmbienteSync(roomId, roomName);
         setupFirstInteractionWallSync(roomId);
         initializeDefaultValues(roomId, roomName);
@@ -258,9 +276,9 @@ function initializeRoomComponents(obraId, projectId, roomName, roomId) {
         updateRoomTotal(roomId);
 
         console.log(`✅ TODAS AS SINCRONIZAÇÕES CONFIGURADAS PARA: ${roomId}`);
-    }, 500);
+    }, { delay: 120, idle: true, timeout: 1000 });
 
-    setTimeout(async () => {
+    scheduleRoomTask(async () => {
         try {
             const machinesModule = await import('./machines/machines-core.js');
             if (machinesModule.preloadMachinesDataForRoom) {
@@ -269,10 +287,10 @@ function initializeRoomComponents(obraId, projectId, roomName, roomId) {
         } catch (error) {
             console.log(`ℹ️ Não foi possível pré-carregar dados das máquinas para ${roomId}`);
         }
-    }, 100);
+    }, { delay: 60, idle: true, timeout: 1000 });
 
-    setTimeout(() => safeInitializeFatorSeguranca(roomId), 150);
-    setTimeout(() => verifyRoomSetupComplete(roomId), 250);
+    scheduleRoomTask(() => safeInitializeFatorSeguranca(roomId), { delay: 90 });
+    scheduleRoomTask(() => verifyRoomSetupComplete(roomId), { delay: 160, idle: true, timeout: 1000 });
 }
 
 // 🔥 ESCUTA EVENTOS DOS MÓDULOS (NÍVEL 1)

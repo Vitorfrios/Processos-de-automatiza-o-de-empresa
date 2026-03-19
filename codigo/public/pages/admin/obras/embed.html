@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obra | Sistema ESI</title>
+    <link rel="icon" type="image/png" href="https://esienergia.com.br/wp-content/uploads/2024/02/favicon5.png">
+    <link rel="stylesheet" href="/public/static/01_Create_Obra/main.css">
+    <script src="https://unpkg.com/docx@8.3.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        window.__APP_CONFIG_OVERRIDES__ = {
+            features: {
+                filtros: false,
+                shutdown: false,
+                editDataNavigation: false
+            }
+        };
+    </script>
+</head>
+
+<body class="obra-dashboard-embed">
+    <main class="main-content">
+        <div class="container obra-dashboard-embed-container">
+            <div id="obraEmbedStatus" class="obra-dashboard-status" role="status" aria-live="polite">
+                Carregando obra...
+            </div>
+
+            <div class="add-obra-actions obra-dashboard-hidden-controls" aria-hidden="true">
+                <button class="btn btn-add add-obra-button" id="add-obra-btn" type="button" disabled tabindex="-1">
+                    + Adicionar Nova Obra
+                </button>
+            </div>
+
+            <div id="projects-container"></div>
+        </div>
+    </main>
+
+    <div id="confirmationModal" class="confirmation-modal hidden">
+        <div class="modal-content">
+            <h2 class="modal-title">Remover da Visualizacao</h2>
+            <p class="modal-message" id="modalMessage"></p>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" onclick="window.closeConfirmationModal()">
+                    Manter
+                </button>
+                <button class="modal-btn btn-confirm" onclick="window.confirmDeletion()">
+                    Remover
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/public/scripts/01_Create_Obra/pages/embed-obra-page.js?v=20260319-1"></script>
+</body>
+
+</html>

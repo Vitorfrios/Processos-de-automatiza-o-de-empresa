@@ -30,9 +30,9 @@ export function createSmartLogger(appConfig = null) {
             };
 
             this.config = {
-                globalLevel: this.isClientMode ? 'NONE' : 'WARN',
-                enabled: true,
-                announceCommands: !this.isClientMode,
+                globalLevel: this.appConfig?.logger?.globalLevel || (this.isClientMode ? 'NONE' : 'WARN'),
+                enabled: this.appConfig?.logger?.enabled ?? true,
+                announceCommands: this.appConfig?.logger?.announceCommands ?? !this.isClientMode,
                 silentPatterns: [
                     'Vazão atualizada para', 'Salvando dados para sala', 'Iniciando cálculos para sala',
                     'Ganhos calculados para', 'Dados coletados para', 'Tentando atualizar tabela',

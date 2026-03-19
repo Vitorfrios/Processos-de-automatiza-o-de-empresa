@@ -1543,8 +1543,16 @@ window.ativarCadastroEmpresa = function(obraId) {
         // Verificar se há dados salvos
         const dadosEmpresa = obterDadosEmpresaDaObra(obraId);
         
-        // Criar formulário
-        criarFormularioEmpresa(obraId, empresaContainer, dadosEmpresa);
+        // Criar formulario com fallback seguro para contextos de embed/minimos
+        const criarFormulario = typeof criarFormularioEmpresa === 'function'
+            ? criarFormularioEmpresa
+            : window.criarFormularioEmpresa;
+
+        if (typeof criarFormulario !== 'function') {
+            throw new ReferenceError('criarFormularioEmpresa nao esta disponivel');
+        }
+
+        criarFormulario(obraId, empresaContainer, dadosEmpresa);
 
     } catch (error) {
         console.error(`❌ [EMPRESA] Erro ao ativar cadastro:`, error);

@@ -1,5 +1,7 @@
 import { showInfo, showWarning } from '../config/ui.js';
 
+const ADMIN_OBRAS_FILTER_URL = '/admin/obras/create?filtro=1';
+
 const dashboardState = {
     initialized: false
 };
@@ -46,8 +48,31 @@ function hasEmpresaLogin(empresa) {
 function parseDate(value) {
     if (!value) return null;
 
+    if (typeof value === 'string') {
+        const normalizedValue = value.trim();
+        const brazilianDateMatch = normalizedValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+        if (brazilianDateMatch) {
+            const [, day, month, year] = brazilianDateMatch;
+            const parsedBrazilianDate = new Date(`${year}-${month}-${day}T00:00:00`);
+            return Number.isNaN(parsedBrazilianDate.getTime()) ? null : parsedBrazilianDate;
+        }
+    }
+
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatDate(value) {
+    const date = parseDate(value);
+    if (!date) return 'Data indisponivel';
+
+    return new Intl.DateTimeFormat('pt-BR').format(date);
+}
+
+function getDaysUntil(date) {
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+    return Math.ceil((date.getTime() - Date.now()) / millisecondsPerDay);
 }
 
 function getCredenciaisExpirationDate(credenciais) {
@@ -93,6 +118,87 @@ function hasEmpresaActiveLogin(empresa) {
     }
 
     return expirationDate.getTime() > Date.now();
+}
+
+function getEmpresaLabel(empresa) {
+    return String(
+        empresa?.codigo ||
+        empresa?.sigla ||
+        empresa?.nome ||
+        'Empresa sem identificacao'
+    ).trim();
+}
+
+function getObraEmpresaLabel(obra) {
+    return String(
+        obra?.empresaSigla ||
+        obra?.empresaCodigo ||
+        obra?.empresaNome ||
+        obra?.empresa ||
+        'Sem empresa'
+    ).trim();
+}
+
+function getObraDateValue(obra) {
+    return (
+        obra?.dataCadastro ||
+        obra?.criadoEm ||
+        obra?.createdAt ||
+        obra?.dataCriacao ||
+        obra?.updatedAt ||
+        null
+    );
+}
+
+function getDuplicateMachineTypes(maquinas) {
+    const counter = new Map();
+
+    safeArray(maquinas).forEach((machine) => {
+        const type = String(machine?.type || '').trim();
+        if (!type) return;
+
+        const key = type.toLowerCase();
+        const current = counter.get(key) || { label: type, count: 0 };
+        current.count += 1;
+        counter.set(key, current);
+    });
+
+    return Array.from(counter.values())
+        .filter((item) => item.count > 1)
+        .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'pt-BR'));
+}
+
+function buildEmpresaRanking(obras) {
+    const counter = new Map();
+
+    safeArray(obras).forEach((obra) => {
+        const label = getObraEmpresaLabel(obra);
+        const current = counter.get(label) || { label, totalObras: 0, totalProjetos: 0 };
+        current.totalObras += 1;
+        current.totalProjetos += safeArray(obra?.projetos).length;
+        counter.set(label, current);
+    });
+
+    return Array.from(counter.values())
+        .sort((a, b) => b.totalObras - a.totalObras || b.totalProjetos - a.totalProjetos || a.label.localeCompare(b.label, 'pt-BR'))
+        .slice(0, 5);
+}
+
+function buildRecentObras(obras) {
+    return safeArray(obras)
+        .map((obra) => ({
+            id: String(obra?.id || '').trim(),
+            nome: String(obra?.nome || obra?.id || 'Obra sem nome').trim(),
+            empresa: getObraEmpresaLabel(obra),
+            totalProjetos: safeArray(obra?.projetos).length,
+            rawDate: getObraDateValue(obra),
+            parsedDate: parseDate(getObraDateValue(obra))
+        }))
+        .sort((a, b) => {
+            const timeA = a.parsedDate?.getTime() || 0;
+            const timeB = b.parsedDate?.getTime() || 0;
+            return timeB - timeA;
+        });
 }
 
 function hasLoadedSystemData(data) {
@@ -152,7 +258,7 @@ async function fetchDashboardData() {
         constants: safeObject(systemData.constants)
     };
 
-    console.log('✅ Dados do dashboard carregados:', {
+    console.log(' Dados do dashboard carregados:', {
         empresas: data.empresas.length,
         obras: data.obras.length,
         maquinas: data.maquinas.length,
@@ -164,15 +270,127 @@ async function fetchDashboardData() {
     return data;
 }
 
+function buildCadastroAlerts(data, stats) {
+    const alerts = [];
+
+    if (stats.empresasSemLogin > 0) {
+        alerts.push({
+            title: 'Empresas sem acesso configurado',
+            meta: `${formatNumber(stats.empresasSemLogin)} empresa(s) ainda nao possuem usuario e token para login do cliente.`,
+            actionLabel: 'Revisar empresas',
+            actionType: 'tab',
+            actionValue: 'empresas'
+        });
+    }
+
+    if (stats.credenciaisExpiradas.length > 0) {
+        alerts.push({
+            title: 'Credenciais expiradas',
+            meta: `${formatNumber(stats.credenciaisExpiradas.length)} empresa(s) com login vencido e bloqueado para acesso.`,
+            actionLabel: 'Abrir empresas',
+            actionType: 'tab',
+            actionValue: 'empresas'
+        });
+    }
+
+    if (stats.credenciaisExpirando.length > 0) {
+        alerts.push({
+            title: 'Credenciais vencendo em ate 7 dias',
+            meta: `${formatNumber(stats.credenciaisExpirando.length)} empresa(s) precisam de renovacao em breve.`,
+            actionLabel: 'Planejar renovacao',
+            actionType: 'tab',
+            actionValue: 'empresas'
+        });
+    }
+
+    if (stats.obrasSemProjeto > 0) {
+        alerts.push({
+            title: 'Obras sem projeto cadastrado',
+            meta: `${formatNumber(stats.obrasSemProjeto)} obra(s) existem no backup, mas ainda sem nenhum projeto vinculado.`,
+            actionLabel: 'Abrir obras',
+            actionType: 'link',
+            actionValue: ADMIN_OBRAS_FILTER_URL
+        });
+    }
+
+    if (stats.duplicateMachineTypes.length > 0) {
+        const duplicatePreview = stats.duplicateMachineTypes
+            .slice(0, 3)
+            .map((item) => `${item.label} (${item.count})`)
+            .join(', ');
+
+        alerts.push({
+            title: 'Tipos de maquina duplicados',
+            meta: `${formatNumber(stats.duplicateMachineTypes.length)} duplicidade(s) detectada(s). Ex.: ${duplicatePreview}.`,
+            actionLabel: 'Ver maquinas',
+            actionType: 'tab',
+            actionValue: 'machines'
+        });
+    }
+
+    if (alerts.length === 0 && data.empresas.length > 0) {
+        alerts.push({
+            title: 'Cadastro em ordem',
+            meta: 'Nenhum alerta imediato encontrado nas empresas, obras e maquinas cadastradas.',
+            variant: 'good'
+        });
+    }
+
+    return alerts.slice(0, 5);
+}
+
 function processDashboardData(data) {
-    return {
+    const empresasComLogin = data.empresas.filter(hasEmpresaActiveLogin);
+    const empresasSemLogin = data.empresas.filter((empresa) => !hasEmpresaLogin(empresa));
+    const credenciaisExpiradas = [];
+    const credenciaisExpirando = [];
+
+    data.empresas.forEach((empresa) => {
+        if (!hasEmpresaLogin(empresa)) {
+            return;
+        }
+
+        const expirationDate = getCredenciaisExpirationDate(safeObject(empresa?.credenciais));
+        if (!expirationDate) {
+            return;
+        }
+
+        const daysUntilExpiration = getDaysUntil(expirationDate);
+        const normalizedEmpresa = {
+            label: getEmpresaLabel(empresa),
+            expirationDate,
+            daysUntilExpiration
+        };
+
+        if (daysUntilExpiration < 0) {
+            credenciaisExpiradas.push(normalizedEmpresa);
+            return;
+        }
+
+        if (daysUntilExpiration <= 7) {
+            credenciaisExpirando.push(normalizedEmpresa);
+        }
+    });
+
+    const rankingEmpresas = buildEmpresaRanking(data.obras);
+    const obrasRecentes = buildRecentObras(data.obras);
+    const duplicateMachineTypes = getDuplicateMachineTypes(data.maquinas);
+
+    const stats = {
         totalEmpresas: data.empresas.length,
-        empresasComLogin: data.empresas.filter(hasEmpresaActiveLogin).length,
+        empresasComLogin: empresasComLogin.length,
+        empresasSemLogin: empresasSemLogin.length,
+        credenciaisExpiradas,
+        credenciaisExpirando,
         totalObras: data.obras.length,
+        obrasSemProjeto: data.obras.filter((obra) => safeArray(obra?.projetos).length === 0).length,
         totalMaquinas: data.maquinas.length,
+        duplicateMachineTypes,
         totalDutos: data.dutos.length,
         totalAcessorios: Object.keys(data.acessorios).length,
         totalTubos: data.tubos.length,
+        rankingEmpresas,
+        obrasRecentes,
         distribuicaoTipos: {
             labels: ['Maquinas', 'Acessorios', 'Dutos', 'Tubos'],
             data: [
@@ -181,8 +399,16 @@ function processDashboardData(data) {
                 data.dutos.length,
                 data.tubos.length
             ]
+        },
+        distribuicaoObrasPorEmpresa: {
+            labels: rankingEmpresas.map((item) => item.label),
+            data: rankingEmpresas.map((item) => item.totalObras)
         }
     };
+
+    stats.alerts = buildCadastroAlerts(data, stats);
+
+    return stats;
 }
 
 function renderKPIs(stats) {
@@ -195,9 +421,9 @@ function renderKPIs(stats) {
             secondaryValue: stats.empresasComLogin
         },
         { label: 'Obras', value: stats.totalObras, color: '#2B6CB0' },
-        { label: 'Máquinas', value: stats.totalMaquinas, color: '#D69E2E' },
+        { label: 'Maquinas', value: stats.totalMaquinas, color: '#D69E2E' },
         { label: 'Dutos', value: stats.totalDutos, color: '#C53030' },
-        { label: 'Acessórios', value: stats.totalAcessorios, color: '#805AD5' },
+        { label: 'Acessorios', value: stats.totalAcessorios, color: '#805AD5' },
         { label: 'Tubos', value: stats.totalTubos, color: '#0F766E' }
     ];
 
@@ -254,7 +480,7 @@ function buildPieGradient(data, colors) {
     return `conic-gradient(${segments.join(', ')})`;
 }
 
-function renderPieChart(containerId, data, labels, title) {
+function renderPieChart(containerId, data, labels, title, totalSuffix = 'tipos') {
     const container = document.getElementById(containerId);
     if (!container) return;
 
@@ -270,7 +496,7 @@ function renderPieChart(containerId, data, labels, title) {
         return;
     }
 
-    const colors = ['#D69E2E', '#805AD5', '#C53030', '#0F766E'];
+    const colors = ['#D69E2E', '#805AD5', '#C53030', '#0F766E', '#2B6CB0'];
     const gradient = buildPieGradient(data, colors);
 
     const legend = data.map((value, index) => {
@@ -292,7 +518,7 @@ function renderPieChart(containerId, data, labels, title) {
     container.innerHTML = `
         <div class="chart-header">
             <h4>${escapeHtml(title)}</h4>
-            <span class="chart-total">Total: ${formatNumber(total)} tipos</span>
+            <span class="chart-total">Total: ${formatNumber(total)} ${escapeHtml(totalSuffix)}</span>
         </div>
         <div class="pie-container">
             <div class="pie-chart-visual" style="background: ${gradient}">
@@ -300,6 +526,290 @@ function renderPieChart(containerId, data, labels, title) {
             </div>
             <div class="pie-legend">${legend}</div>
         </div>
+    `;
+}
+
+function renderMetricsStrip(stats) {
+    const items = [
+        {
+            label: 'Cobertura de acesso',
+            value: stats.totalEmpresas > 0
+                ? `${Math.round((stats.empresasComLogin / stats.totalEmpresas) * 100)}%`
+                : '0%',
+            note: `${formatNumber(stats.empresasComLogin)} de ${formatNumber(stats.totalEmpresas)} empresas com login ativo`
+        },
+        {
+            label: 'Sem login',
+            value: formatNumber(stats.empresasSemLogin),
+            note: 'Empresas sem usuario/token configurado'
+        },
+        {
+            label: 'Expiradas',
+            value: formatNumber(stats.credenciaisExpiradas.length),
+            note: 'Credenciais que ja nao permitem acesso'
+        },
+        {
+            label: 'Expiram em 7 dias',
+            value: formatNumber(stats.credenciaisExpirando.length),
+            note: 'Logins que precisam de renovacao imediata'
+        },
+        {
+            label: 'Obras sem projeto',
+            value: formatNumber(stats.obrasSemProjeto),
+            note: 'Obras salvas sem nenhum projeto associado'
+        }
+    ];
+
+    return `
+        <div class="dashboard-metrics-strip">
+            ${items.map((item) => `
+                <div class="strip-item">
+                    <span class="muted-note">${escapeHtml(item.label)}</span>
+                    <strong>${escapeHtml(item.value)}</strong>
+                    <span class="muted-note">${escapeHtml(item.note)}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderActionButton(actionLabel, actionType, actionValue) {
+    if (!actionLabel || !actionType || !actionValue) {
+        return '';
+    }
+
+    if (actionType === 'tab') {
+        return `
+            <button class="btn btn-small btn-primary dashboard-action-btn" type="button" onclick="switchTab('${escapeHtml(actionValue)}')">
+                ${escapeHtml(actionLabel)}
+            </button>
+        `;
+    }
+
+    if (actionType === 'link') {
+        return `
+            <button class="btn btn-small btn-primary dashboard-action-btn" type="button" onclick="window.location.href='${escapeHtml(actionValue)}'">
+                ${escapeHtml(actionLabel)}
+            </button>
+        `;
+    }
+
+    return '';
+}
+
+function buildObraDashboardModalUrl(obra) {
+    const obraUrl = new URL('/admin/obras/embed', window.location.origin);
+
+    if (obra?.id) {
+        obraUrl.searchParams.set('obraId', obra.id);
+    }
+
+    if (obra?.nome) {
+        obraUrl.searchParams.set('obra', obra.nome);
+    }
+
+    if (obra?.empresa && obra.empresa !== 'Sem empresa') {
+        obraUrl.searchParams.set('empresa', obra.empresa);
+    }
+
+    return `${obraUrl.pathname}${obraUrl.search}`;
+}
+
+function ensureDashboardObraModal() {
+    if (document.getElementById('dashboardObraModal')) {
+        return;
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'dashboardObraModal';
+    modal.className = 'dashboard-obra-modal';
+    modal.innerHTML = `
+        <div class="dashboard-obra-dialog" role="dialog" aria-modal="true" aria-labelledby="dashboardObraModalTitle">
+            <div class="dashboard-obra-header">
+                <div>
+                    <span class="dashboard-eyebrow">Obra Selecionada</span>
+                    <h3 id="dashboardObraModalTitle">Visualizacao da obra</h3>
+                </div>
+                <div class="dashboard-obra-actions">
+                    <button class="btn btn-small btn-primary" type="button" onclick="closeDashboardObraModal()">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+            <div class="dashboard-obra-body">
+                <iframe
+                    id="dashboardObraFrame"
+                    class="dashboard-obra-frame"
+                    title="Visualizacao detalhada da obra"
+                    loading="lazy"
+                ></iframe>
+            </div>
+        </div>
+    `;
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeDashboardObraModal();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeDashboardObraModal();
+        }
+    });
+
+    document.body.appendChild(modal);
+}
+
+function openDashboardObraModal(modalUrl, obraName) {
+    ensureDashboardObraModal();
+
+    const modal = document.getElementById('dashboardObraModal');
+    const title = document.getElementById('dashboardObraModalTitle');
+    const frame = document.getElementById('dashboardObraFrame');
+    if (!modal || !title || !frame) {
+        return;
+    }
+
+    modal.dataset.url = modalUrl;
+    title.textContent = obraName ? `Obra: ${obraName}` : 'Visualizacao da obra';
+    frame.src = modalUrl;
+
+    modal.classList.add('is-open');
+    document.body.classList.add('dashboard-modal-open');
+}
+
+function closeDashboardObraModal() {
+    const modal = document.getElementById('dashboardObraModal');
+    const frame = document.getElementById('dashboardObraFrame');
+    if (!modal || !frame) {
+        return;
+    }
+
+    modal.classList.remove('is-open');
+    document.body.classList.remove('dashboard-modal-open');
+
+    setTimeout(() => {
+        if (!modal.classList.contains('is-open')) {
+            frame.src = 'about:blank';
+            delete modal.dataset.url;
+        }
+    }, 120);
+}
+
+function renderAlertsWidget(stats) {
+    return `
+        <section class="widget-card">
+            <div class="widget-title-row">
+                <div>
+                    <span class="dashboard-eyebrow">Saude do cadastro</span>
+                    <h3>Fila de atencao</h3>
+                </div>
+                <span class="info-badge ${stats.alerts.some((item) => item.variant !== 'good') ? 'alert' : 'good'}">
+                    ${formatNumber(stats.alerts.length)} item(ns)
+                </span>
+            </div>
+            <div class="alert-list">
+                ${stats.alerts.map((alert) => `
+                    <div class="alert-item ${alert.variant === 'good' ? 'alert-item-good' : ''}">
+                        <strong>${escapeHtml(alert.title)}</strong>
+                        <span class="alert-meta">${escapeHtml(alert.meta)}</span>
+                        ${renderActionButton(alert.actionLabel, alert.actionType, alert.actionValue)}
+                    </div>
+                `).join('')}
+            </div>
+        </section>
+    `;
+}
+
+function renderRankingWidget(stats) {
+    if (stats.rankingEmpresas.length === 0) {
+        return `
+            <section class="widget-card">
+                <div class="widget-title-row">
+                    <div>
+                        <span class="dashboard-eyebrow">Obras</span>
+                        <h3>Empresas com mais obras</h3>
+                    </div>
+                </div>
+                <div class="empty-state">Ainda nao existem obras suficientes para gerar ranking.</div>
+            </section>
+        `;
+    }
+
+    return `
+        <section class="widget-card">
+            <div class="widget-title-row">
+                <div>
+                    <span class="dashboard-eyebrow">Obras</span>
+                    <h3>Empresas com mais obras</h3>
+                </div>
+                <span class="info-badge neutral">Top ${formatNumber(stats.rankingEmpresas.length)}</span>
+            </div>
+            <div class="ranking-list">
+                ${stats.rankingEmpresas.map((item, index) => `
+                    <div class="ranking-item">
+                        <div>
+                            <strong>${formatNumber(index + 1)}. ${escapeHtml(item.label)}</strong>
+                            <div class="table-meta">${formatNumber(item.totalProjetos)} projeto(s) somados nas obras da empresa</div>
+                        </div>
+                        <span class="info-badge good">${formatNumber(item.totalObras)} obra(s)</span>
+                    </div>
+                `).join('')}
+            </div>
+        </section>
+    `;
+}
+
+function renderTimelineWidget(stats) {
+    if (stats.obrasRecentes.length === 0) {
+        return `
+            <section class="widget-card">
+                <div class="widget-title-row">
+                    <div>
+                        <span class="dashboard-eyebrow">Timeline</span>
+                        <h3>Obras cadastradas</h3>
+                    </div>
+                </div>
+                <div class="empty-state">Nenhuma obra cadastrada ainda.</div>
+            </section>
+        `;
+    }
+
+    const timelineClassName = stats.obrasRecentes.length > 5
+        ? 'timeline-list timeline-list-scrollable'
+        : 'timeline-list';
+
+    return `
+        <section class="widget-card">
+            <div class="widget-title-row">
+                <div>
+                    <span class="dashboard-eyebrow">Timeline</span>
+                    <h3>Obras cadastradas</h3>
+                </div>
+                <button class="btn btn-small btn-secondary dashboard-action-btn" type="button" onclick="window.location.href='${ADMIN_OBRAS_FILTER_URL}'">
+                    Abrir obras
+                </button>
+            </div>
+            <p class="muted-note">
+                Clique em qualquer obra para visualizar detalhes
+            </p>
+            <div class="${timelineClassName}">
+                ${stats.obrasRecentes.map((obra) => `
+                    <button
+                        class="timeline-item timeline-item-button"
+                        type="button"
+                        data-obra-name="${escapeHtml(obra.nome)}"
+                        data-obra-url="${escapeHtml(buildObraDashboardModalUrl(obra))}"
+                        onclick="openDashboardObraModal(this.dataset.obraUrl, this.dataset.obraName)"
+                    >
+                        <strong>${escapeHtml(obra.nome)}</strong>
+                        <span class="timeline-meta">${escapeHtml(obra.empresa)} | ${formatDate(obra.rawDate)} | ${formatNumber(obra.totalProjetos)} projeto(s)</span>
+                    </button>
+                `).join('')}
+            </div>
+        </section>
     `;
 }
 
@@ -318,12 +828,24 @@ export async function renderDashboard() {
                 ${renderKPIs(stats)}
             </div>
 
+            ${renderMetricsStrip(stats)}
+
             <div class="dashboard-grid charts">
                 <section class="chart-card">
-                    <div class="chart-title-row">
-                    </div>
+                    <div class="chart-title-row"></div>
                     <div id="distribuicaoChart" class="chart-frame chart-frame-pie"></div>
                 </section>
+
+                <section class="chart-card">
+                    <div class="chart-title-row"></div>
+                    <div id="obrasEmpresaChart" class="chart-frame chart-frame-pie"></div>
+                </section>
+            </div>
+
+            <div class="dashboard-grid support">
+                ${renderAlertsWidget(stats)}
+                ${renderRankingWidget(stats)}
+                ${renderTimelineWidget(stats)}
             </div>
         `;
 
@@ -331,10 +853,19 @@ export async function renderDashboard() {
             'distribuicaoChart',
             stats.distribuicaoTipos.data,
             stats.distribuicaoTipos.labels,
-            'Distribuição dos Tipos Cadastrados'
+            'Distribuicao dos Tipos Cadastrados',
+            'tipos'
+        );
+
+        renderPieChart(
+            'obrasEmpresaChart',
+            stats.distribuicaoObrasPorEmpresa.data,
+            stats.distribuicaoObrasPorEmpresa.labels,
+            'Obras por Empresa',
+            'obras'
         );
     } catch (error) {
-        console.error('❌ Erro ao renderizar dashboard:', error);
+        console.error(' Erro ao renderizar dashboard:', error);
         container.innerHTML = '<div class="empty-state">Nao foi possivel carregar o dashboard.</div>';
         showWarning('Erro ao carregar dados do dashboard');
     }
@@ -342,6 +873,10 @@ export async function renderDashboard() {
 
 export function initializeDashboard() {
     console.log(' Inicializando dashboard...');
+
+    ensureDashboardObraModal();
+    window.openDashboardObraModal = openDashboardObraModal;
+    window.closeDashboardObraModal = closeDashboardObraModal;
 
     renderDashboard();
 
