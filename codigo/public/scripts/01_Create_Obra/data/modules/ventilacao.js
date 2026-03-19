@@ -771,6 +771,9 @@ window.refreshVentilationForRoom = function(roomId) {
     window[`_vent_frame_${roomId}`] = requestAnimationFrame(() => {
         const inputs = collectRoomInputs(roomId);
         updateTechnicalTable(roomId, inputs);
+        if (typeof window.syncVentilationMachineCapacities === 'function') {
+            window.syncVentilationMachineCapacities(roomId);
+        }
         updateSolutionTable(roomId, inputs);
         delete window[`_vent_frame_${roomId}`];
     });

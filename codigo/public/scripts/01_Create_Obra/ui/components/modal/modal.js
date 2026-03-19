@@ -204,12 +204,12 @@ function showToast(obraName, type = 'undo', obraId = null) {
             hideSpecificToast(toastId);
             // Em seguida processa remoção definitiva
             completeDeletion(obraId, obraName);
-        }, 2500);
+        }, 5000);
     } else {
         toastData.timeout = setTimeout(() => {
             console.log(` Removendo toast de ${type} para obra ${obraName} (ID: ${obraId})`);
             hideSpecificToast(toastId);
-        }, 437);
+        }, 1500);
     }
 }
 

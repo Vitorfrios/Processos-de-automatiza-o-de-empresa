@@ -26,6 +26,7 @@ if (typeof window !== 'undefined' && !window.machinesDataCache) {
 // Flag global para controlar se a seleção automática já foi executada
 // Chave: machineId, Valor: boolean
 const autoSelectionExecuted = new Map();
+const VENTILATION_APPLICATIONS = ['pressurizacao', 'exaustao_bateria', 'exaustao_baia_trafo'];
 
 // =============================================================================
 // FUNÇÕES CORE UNIFICADAS
@@ -198,6 +199,60 @@ function getGenericCapacityValue(powerText) {
     }
 }
 
+function calculateVentilationFlow(aplicacao, inputs) {
+    switch (aplicacao) {
+        case 'pressurizacao':
+            return inputs.vazaoAr ? inputs.vazaoAr * 3.6 : null;
+        case 'exaustao_bateria':
+            return inputs.volume ? inputs.volume * 12 : null;
+        case 'exaustao_baia_trafo':
+            if (inputs.potencia && inputs.tempInterna && inputs.tempExterna) {
+                const deltaT = inputs.tempInterna - inputs.tempExterna;
+                if (deltaT !== 0) {
+                    const constants = getSystemConstants();
+                    const Q = inputs.potencia * 859.85;
+                    const massaGR = Q / (constants.fatorEspecifico * Math.abs(deltaT));
+                    const massaAr = massaGR / 1000;
+                    return Math.abs(massaAr / constants.Densi_ar);
+                }
+            }
+            return null;
+        default:
+            return null;
+    }
+}
+
+function selectBestVentilationCapacity(capacityOptions, vazaoNecessaria) {
+    const sortedOptions = [...capacityOptions]
+        .filter(option => Number.isFinite(option.value) && option.value > 0)
+        .sort((a, b) => a.value - b.value);
+
+    if (!sortedOptions.length || !Number.isFinite(vazaoNecessaria) || vazaoNecessaria <= 0) {
+        return null;
+    }
+
+    const singleMachineOption = sortedOptions.find(option => option.value >= vazaoNecessaria);
+    if (singleMachineOption) {
+        return {
+            bestOption: singleMachineOption,
+            quantity: 1,
+            totalCapacity: singleMachineOption.value,
+            balance: singleMachineOption.value - vazaoNecessaria
+        };
+    }
+
+    const largestOption = sortedOptions[sortedOptions.length - 1];
+    const quantity = Math.ceil(vazaoNecessaria / largestOption.value);
+    const totalCapacity = quantity * largestOption.value;
+
+    return {
+        bestOption: largestOption,
+        quantity,
+        totalCapacity,
+        balance: totalCapacity - vazaoNecessaria
+    };
+}
+
 // =============================================================================
 // FUNÇÃO PRINCIPAL PARA CONTROLE DE QUANTIDADE
 // =============================================================================
@@ -221,6 +276,10 @@ function handleAplicacaoChange(machineId) {
     const aplicacao = aplicacaoSelect.value;
     const quantidadeAtual = qntInput.value;
     const isUserEdited = qntInput.getAttribute('data-user-edited') === 'true';
+
+    if (VENTILATION_APPLICATIONS.includes(aplicacao)) {
+        autoSelectionExecuted.set(machineId, false);
+    }
     
     console.log(`   - Aplicação selecionada: ${aplicacao}`);
     console.log(`   - Quantidade atual: ${quantidadeAtual}`);
@@ -256,6 +315,12 @@ function handleAplicacaoChange(machineId) {
         }
     }
     
+    if (VENTILATION_APPLICATIONS.includes(aplicacao)) {
+        setTimeout(() => {
+            applyVentilationCapacityBusinessRules(machineId, roomId);
+        }, 0);
+    }
+
     calculateMachinePrice(machineId);
     notifyMachineFieldChange(machineId, 'aplicacao');
     
@@ -524,7 +589,6 @@ function setupAutoCapacitySelection(machineId, roomId) {
     autoSelectionExecuted.set(machineId, false);
     
     // Lista de aplicações de ventilação que devem disparar auto-seleção
-    const VENTILATION_APPLICATIONS = ['pressurizacao', 'exaustao_bateria', 'exaustao_baia_trafo'];
     
     // Função que verifica condições e executa seleção
     const checkAndExecuteAutoSelection = function() {
@@ -577,11 +641,137 @@ function setupAutoCapacitySelection(machineId, roomId) {
     setTimeout(checkAndExecuteAutoSelection, 500);
 }
 
+function applyVentilationCapacityBusinessRules(machineId, roomId, options = {}) {
+    const { suppressRefresh = false } = options;
+
+    console.log(` Executando seleÃ§Ã£o automÃ¡tica de capacidade para mÃ¡quina ${machineId}`);
+
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (!machineElement) return;
+
+    const tipoSelect = machineElement.querySelector('.machine-type-select');
+    if (!tipoSelect || !tipoSelect.value) {
+        console.log(`âŒ Tipo nÃ£o selecionado`);
+        return;
+    }
+
+    const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
+    if (!aplicacaoSelect || !aplicacaoSelect.value) {
+        console.log(`âŒ AplicaÃ§Ã£o nÃ£o selecionada`);
+        return;
+    }
+
+    const tipo = tipoSelect.value;
+    const aplicacao = aplicacaoSelect.value;
+
+    console.log(` Tipo: ${tipo}, AplicaÃ§Ã£o: ${aplicacao}`);
+
+    const inputs = collectRoomInputs(roomId);
+    let vazaoNecessaria = null;
+
+    try {
+        vazaoNecessaria = calculateVentilationFlow(aplicacao, inputs);
+    } catch (error) {
+        console.error('Erro ao calcular vazÃ£o:', error);
+    }
+
+    if (!vazaoNecessaria || isNaN(vazaoNecessaria) || vazaoNecessaria <= 0) {
+        console.log(`âŒ VazÃ£o invÃ¡lida: ${vazaoNecessaria}`);
+        return;
+    }
+
+    console.log(` VazÃ£o necessÃ¡ria: ${vazaoNecessaria.toFixed(2)} mÂ³/h`);
+
+    const powerSelect = machineElement.querySelector('.machine-power-select');
+    if (!powerSelect) return;
+
+    powerSelect.disabled = false;
+
+    const capacityOptions = [];
+    for (let i = 0; i < powerSelect.options.length; i++) {
+        const option = powerSelect.options[i];
+        if (option.value) {
+            const match = option.text.match(/(\d+[.,]?\d*)/);
+            if (match) {
+                const numericValue = parseFloat(match[0].replace(',', '.'));
+                capacityOptions.push({
+                    value: numericValue,
+                    text: option.text,
+                    optionValue: option.value
+                });
+            }
+        }
+    }
+
+    if (capacityOptions.length === 0) {
+        console.log(`âŒ Nenhuma capacidade disponÃ­vel`);
+        return;
+    }
+
+    console.log(` Capacidades disponÃ­veis:`, capacityOptions.map(c => `${c.value} (${c.text})`));
+
+    const selection = selectBestVentilationCapacity(capacityOptions, vazaoNecessaria);
+    if (!selection) {
+        console.log(`âŒ NÃ£o foi possÃ­vel determinar a melhor capacidade`);
+        return;
+    }
+
+    const { bestOption, quantity, totalCapacity, balance } = selection;
+    console.log(` Melhor combinaÃ§Ã£o: ${quantity} x ${bestOption.value} mÂ³/h = ${totalCapacity.toFixed(2)} mÂ³/h (saldo: ${balance.toFixed(2)} mÂ³/h)`);
+
+    let selected = false;
+    const currentValue = powerSelect.value;
+
+    for (let i = 0; i < powerSelect.options.length; i++) {
+        if (powerSelect.options[i].value === bestOption.optionValue) {
+            if (currentValue !== bestOption.optionValue) {
+                powerSelect.value = bestOption.optionValue;
+                selected = true;
+                console.log(`âœ… OpÃ§Ã£o selecionada: ${powerSelect.options[i].text}`);
+            } else {
+                console.log(`â„¹ï¸ Capacidade jÃ¡ estava correta: ${powerSelect.options[i].text}`);
+            }
+            break;
+        }
+    }
+
+    autoSelectionExecuted.set(machineId, true);
+
+    if (selected) {
+        powerSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    } else if (currentValue !== bestOption.optionValue) {
+        console.log(`âŒ NÃ£o foi possÃ­vel selecionar a capacidade`);
+        return;
+    }
+
+    const event = new CustomEvent('machineCapacityAutoSelected', {
+        detail: {
+            machineId: machineId,
+            roomId: roomId,
+            capacity: bestOption.value,
+            quantity: quantity,
+            totalCapacity: totalCapacity,
+            vazao: vazaoNecessaria,
+            difference: balance
+        }
+    });
+    window.dispatchEvent(event);
+
+    if (!suppressRefresh && window.refreshVentilationForRoom) {
+        setTimeout(() => {
+            window.refreshVentilationForRoom(roomId);
+        }, 100);
+    }
+
+    console.log(`âœ… SeleÃ§Ã£o automÃ¡tica concluÃ­da para mÃ¡quina ${machineId}`);
+}
+
 /**
  * EXECUTA A SELEÇÃO AUTOMÁTICA DA CAPACIDADE
  * Seleciona o valor MAIS PRÓXIMO (não importa se maior ou menor)
  */
-function executeAutoCapacitySelection(machineId, roomId) {
+function executeAutoCapacitySelection(machineId, roomId, options = {}) {
+    return applyVentilationCapacityBusinessRules(machineId, roomId, options);
     console.log(` Executando seleção automática de capacidade para máquina ${machineId}`);
     
     const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
@@ -731,6 +921,22 @@ function executeAutoCapacitySelection(machineId, roomId) {
 /**
  * Helper para coletar inputs da sala (cópia da função do módulo de ventilação)
  */
+function syncVentilationMachineCapacities(roomId) {
+    const machineElements = document.querySelectorAll(`.climatization-machine[data-room-id="${roomId}"]`);
+
+    machineElements.forEach(machineElement => {
+        const machineId = machineElement.dataset.machineId;
+        const tipo = machineElement.querySelector('.machine-type-select')?.value;
+        const aplicacao = machineElement.querySelector('.machine-aplicacao-select')?.value;
+
+        if (!machineId || !tipo || !VENTILATION_APPLICATIONS.includes(aplicacao)) {
+            return;
+        }
+
+        applyVentilationCapacityBusinessRules(machineId, roomId, { suppressRefresh: true });
+    });
+}
+
 function collectRoomInputs(roomId) {
     const inputs = {};
     
@@ -781,6 +987,8 @@ function getSystemConstants() {
 async function updateMachineOptions(selectElement) {
     const machineId = selectElement.dataset.machineId;
     const selectedType = selectElement.value;
+
+    autoSelectionExecuted.set(machineId, false);
 
     if (!selectedType) {
         resetMachineFields(machineId);
@@ -868,6 +1076,16 @@ async function updateMachineOptions(selectElement) {
         resetMachineFields(machineId);
     }
     
+    const currentMachineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    const currentAplicacao = currentMachineElement?.querySelector('.machine-aplicacao-select')?.value;
+    const currentRoomId = currentMachineElement?.dataset.roomId;
+
+    if (selectedType && currentRoomId && VENTILATION_APPLICATIONS.includes(currentAplicacao)) {
+        setTimeout(() => {
+            applyVentilationCapacityBusinessRules(machineId, currentRoomId);
+        }, 0);
+    }
+
     notifyMachineFieldChange(machineId, 'tipo');
 }
 
@@ -1335,6 +1553,7 @@ if (typeof window !== 'undefined') {
     window.handleConfigChange = handleConfigChange;
     window.updateOptionSelection = updateOptionSelection;
     window.toggleConfig = toggleConfig;
+    window.syncVentilationMachineCapacities = syncVentilationMachineCapacities;
 
     console.log('✅ Funções principais carregadas no escopo global');
 }
