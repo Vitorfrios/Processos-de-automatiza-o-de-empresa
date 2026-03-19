@@ -6,7 +6,6 @@ import { normalizeEmpresa, normalizeEmpresas } from '../../01_Create_Obra/core/s
 
 export let systemData = {
     ADM: [],
-    administradores: [],
     constants: {},
     machines: [],
     materials: {},
@@ -28,32 +27,35 @@ let _currentMachineIndex = null;
 window.systemData = systemData;
 window.originalData = originalData;
 
-function normalizeADMData(admData) {
-    if (Array.isArray(admData)) {
-        return admData
+function normalizeADMData(admData, legacyAdministradores = null) {
+    const source = admData ?? legacyAdministradores;
+
+    if (Array.isArray(source)) {
+        return source
             .filter((admin) => admin && typeof admin === 'object')
             .map((admin) => ({ ...admin }));
     }
 
-    if (admData && typeof admData === 'object') {
-        return [{ ...admData }];
+    if (source && typeof source === 'object') {
+        return [{ ...source }];
     }
 
     return [];
 }
 
 export function updateSystemData(newData) {
+    const { administradores, ...sanitizedData } = newData || {};
+
     systemData = {
-        ...newData,
-        ADM: normalizeADMData(newData.ADM),
-        administradores: Array.isArray(newData.administradores) ? [...newData.administradores] : [],
-        constants: newData.constants || {},
-        machines: Array.isArray(newData.machines) ? newData.machines : [],
-        materials: newData.materials || {},
-        empresas: normalizeEmpresas(newData.empresas || []),
-        banco_acessorios: newData.banco_acessorios || {},
-        dutos: Array.isArray(newData.dutos) ? newData.dutos : [],
-        tubos: Array.isArray(newData.tubos) ? newData.tubos : []
+        ...sanitizedData,
+        ADM: normalizeADMData(newData?.ADM, administradores),
+        constants: newData?.constants || {},
+        machines: Array.isArray(newData?.machines) ? newData.machines : [],
+        materials: newData?.materials || {},
+        empresas: normalizeEmpresas(newData?.empresas || []),
+        banco_acessorios: newData?.banco_acessorios || {},
+        dutos: Array.isArray(newData?.dutos) ? newData.dutos : [],
+        tubos: Array.isArray(newData?.tubos) ? newData.tubos : []
     };
     
     // Manter referência global
@@ -109,9 +111,6 @@ export function hasRealChanges(section) {
         case 'ADM':
             return JSON.stringify(originalData.ADM || []) !==
                    JSON.stringify(systemData.ADM || []);
-        case 'administradores':
-            return JSON.stringify(originalData.administradores || []) !==
-                   JSON.stringify(systemData.administradores || []);
         default:
             return false;
     }

@@ -20,15 +20,17 @@ window.toggleSystemLogger = function(enable = null) {
 };
 
 // Função para garantir que systemData tenha estrutura completa
-function normalizeADMData(admData) {
-    if (Array.isArray(admData)) {
-        return admData
+function normalizeADMData(admData, legacyAdministradores = null) {
+    const source = admData ?? legacyAdministradores;
+
+    if (Array.isArray(source)) {
+        return source
             .filter((admin) => admin && typeof admin === 'object')
             .map((admin) => ({ ...admin }));
     }
 
-    if (admData && typeof admData === 'object') {
-        return [{ ...admData }];
+    if (source && typeof source === 'object') {
+        return [{ ...source }];
     }
 
     return [];
@@ -38,7 +40,6 @@ function ensureCompleteSystemData(data) {
     if (!data || typeof data !== 'object') {
         return {
             ADM: [],
-            administradores: [],
             constants: {},
             machines: [],
             materials: {},
@@ -51,11 +52,12 @@ function ensureCompleteSystemData(data) {
             tubos: []
         };
     }
-    
+
+    const { administradores, ...sanitizedData } = data;
+
     return {
-        ...data,
-        ADM: normalizeADMData(data.ADM),
-        administradores: Array.isArray(data.administradores) ? [...data.administradores] : [],
+        ...sanitizedData,
+        ADM: normalizeADMData(data.ADM, administradores),
         constants: data.constants || {},
         machines: data.machines || [],
         materials: data.materials || {},
@@ -119,17 +121,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Função para forçar atualização do editor quando a tab é aberta
     window.activateJSONTab = function() {
-        console.log('📝 Ativando tab JSON...');
-        
-        // Garante que o editor seja inicializado
-        if (typeof window.initJSONEditor === 'function') {
+        console.log('📝 Ativando visualizador JSON...');
+
+        if (typeof window.loadJSONEditor === 'function') {
             setTimeout(() => {
-                window.initJSONEditor();
-                
-                // Atualiza botão de aplicar
-                if (typeof window.updateApplyButtonState === 'function') {
-                    window.updateApplyButtonState();
-                }
+                window.loadJSONEditor();
             }, 100);
         }
     };
@@ -149,31 +145,30 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.log('✅ Tem banco_acessorios?', 'banco_acessorios' in window.systemData);
                 console.log('✅ Tem dutos?', 'dutos' in window.systemData);
                 console.log('✅ Tem tubos?', 'tubos' in window.systemData);
-                console.log('✅ Tem administradores?', 'administradores' in window.systemData);
                 console.log('✅ Tem ADM?', 'ADM' in window.systemData);
                 
                 // Atualiza as novas abas
                 initializeDashboard();
                 initializeAdminCredentials();
                 
-                // Inicializa o editor com os dados carregados
-                if (typeof window.initJSONEditor === 'function') {
-                    setTimeout(window.initJSONEditor, 200);
+                // Atualiza o visualizador com os dados carregados
+                if (typeof window.loadJSONEditor === 'function') {
+                    setTimeout(window.loadJSONEditor, 200);
                 }
                 
             } catch (error) {
                 console.error('❌ Erro ao carregar dados:', error);
                 
-                // Mesmo com erro, inicializa o editor com estrutura vazia
-                if (typeof window.initJSONEditor === 'function') {
-                    setTimeout(window.initJSONEditor, 200);
+                // Mesmo com erro, atualiza o visualizador com estrutura vazia
+                if (typeof window.loadJSONEditor === 'function') {
+                    setTimeout(window.loadJSONEditor, 200);
                 }
             }
         } else {
             console.warn('⚠️ Função loadData não encontrada');
-            // Inicializa editor com estrutura vazia
-            if (typeof window.initJSONEditor === 'function') {
-                setTimeout(window.initJSONEditor, 200);
+            // Atualiza visualizador com estrutura vazia
+            if (typeof window.loadJSONEditor === 'function') {
+                setTimeout(window.loadJSONEditor, 200);
             }
         }
     }, 500);
@@ -309,11 +304,8 @@ window.switchTab = function(tabName) {
                     
                 case 'raw':
                     console.log(' Tab JSON ativada');
-                    if (typeof window.initJSONEditor === 'function') {
-                        window.initJSONEditor();
-                    }
-                    if (typeof window.updateApplyButtonState === 'function') {
-                        window.updateApplyButtonState();
+                    if (typeof window.loadJSONEditor === 'function') {
+                        window.loadJSONEditor();
                     }
                     break;
             }
@@ -336,14 +328,11 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (tabText.includes('credenciais') || tabText.includes('adm')) {
                 // Já tratado pelo onclick
             } else if (tabText.includes('json') || tabText.includes('raw') || tabText.includes('bruto')) {
-                console.log(' Tab JSON clicada, inicializando editor...');
+                console.log(' Tab JSON clicada, atualizando visualizador...');
                 
                 setTimeout(() => {
-                    if (typeof window.initJSONEditor === 'function') {
-                        window.initJSONEditor();
-                    }
-                    if (typeof window.updateApplyButtonState === 'function') {
-                        window.updateApplyButtonState();
+                    if (typeof window.loadJSONEditor === 'function') {
+                        window.loadJSONEditor();
                     }
                 }, 150);
             } else if (tabText.includes('dutos') || tabText.includes('duto')) {
@@ -395,128 +384,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ==================== MÓDULO JSON EDITOR ====================
+// ==================== MÓDULO JSON VIEWER ====================
 
-const jsonEditorModule = {
+const jsonViewerModule = {
     loadJSONEditor: function() {
-        console.log('📝 Carregando JSON Editor...');
+        console.log('📝 Carregando visualizador JSON...');
         const editor = document.getElementById('jsonEditor');
         if (!editor) {
-            console.warn('⚠️ Editor não encontrado');
+            console.warn('⚠️ Visualizador JSON não encontrado');
             return;
         }
         
         const systemData = window.systemData || {};
-        console.log('📝 Dados para o editor:', {
+        console.log('📝 Dados para o visualizador:', {
             banco_acessorios: Object.keys(systemData.banco_acessorios || {}).length,
             dutos: {
                 tipos: systemData.dutos?.tipos?.length || 0,
                 opcionais: systemData.dutos?.opcionais?.length || 0
             },
             tubos: systemData.tubos?.length || 0,
-            administradores: systemData.administradores?.length || 0,
             ADM: systemData.ADM?.length || 0
         });
-        
+
+        editor.readOnly = true;
         editor.value = JSON.stringify(systemData, null, 2);
-        this.updateJSONStatus('JSON carregado', 'info');
     },
-    
-    formatJSON: function() {
+
+    copyJSONToClipboard: async function(button) {
         const editor = document.getElementById('jsonEditor');
-        try {
-            const parsed = JSON.parse(editor.value);
-            editor.value = JSON.stringify(parsed, null, 2);
-            this.updateJSONStatus('JSON formatado com sucesso', 'success');
-        } catch (error) {
-            this.updateJSONStatus(`Erro de formatação: ${error.message}`, 'error');
+        if (!editor || !editor.value) {
+            console.warn('⚠️ Nenhum JSON disponível para copiar');
+            return;
         }
-    },
-    
-    validateJSON: function() {
-        const editor = document.getElementById('jsonEditor');
+
+        const originalLabel = button?.textContent?.trim() || 'Copiar JSON';
+
         try {
-            const parsed = JSON.parse(editor.value);
-            
-            // Campos obrigatórios
-            const requiredKeys = ['constants', 'machines', 'materials', 'empresas', 'banco_acessorios', 'dutos', 'tubos', 'administradores', 'ADM'];
-            const missingKeys = requiredKeys.filter(key => !(key in parsed));
-            
-            if (missingKeys.length > 0) {
-                throw new Error(`Campos ausentes: ${missingKeys.join(', ')}`);
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(editor.value);
+            } else {
+                editor.focus();
+                editor.select();
+                document.execCommand('copy');
+                editor.setSelectionRange(0, 0);
+                editor.blur();
             }
-            
-            if (typeof parsed.constants !== 'object') {
-                throw new Error('constants deve ser um objeto');
+
+            if (button) {
+                button.textContent = 'Copiado';
+                setTimeout(() => {
+                    button.textContent = originalLabel;
+                }, 1500);
             }
-            if (!Array.isArray(parsed.machines)) {
-                throw new Error('machines deve ser um array');
-            }
-            if (typeof parsed.materials !== 'object') {
-                throw new Error('materials deve ser um objeto');
-            }
-            if (!Array.isArray(parsed.empresas)) {
-                throw new Error('empresas deve ser um array');
-            }
-            if (typeof parsed.banco_acessorios !== 'object') {
-                throw new Error('banco_acessorios deve ser um objeto');
-            }
-            if (typeof parsed.dutos !== 'object') {
-                throw new Error('dutos deve ser um objeto');
-            }
-            if (!Array.isArray(parsed.dutos.tipos)) {
-                throw new Error('dutos.tipos deve ser um array');
-            }
-            if (!Array.isArray(parsed.dutos.opcionais)) {
-                throw new Error('dutos.opcionais deve ser um array');
-            }
-            if (!Array.isArray(parsed.tubos)) {
-                throw new Error('tubos deve ser um array');
-            }
-            if (!Array.isArray(parsed.administradores)) {
-                throw new Error('administradores deve ser um array');
-            }
-            if (!Array.isArray(parsed.ADM)) {
-                throw new Error('ADM deve ser um array');
-            }
-            
-            this.updateJSONStatus('✅ JSON válido e com estrutura correta', 'success');
-            return true;
-            
         } catch (error) {
-            this.updateJSONStatus(`❌ JSON inválido: ${error.message}`, 'error');
-            return false;
-        }
-    },
-    
-    updateJSONStatus: function(message, type) {
-        const status = document.getElementById('jsonStatus');
-        if (!status) return;
-        
-        status.textContent = message;
-        status.className = 'json-status-message';
-        
-        switch (type) {
-            case 'success':
-                status.classList.add('success');
-                break;
-            case 'error':
-                status.classList.add('error');
-                break;
-            case 'info':
-                status.classList.add('info');
-                break;
-            default:
-                status.classList.add('info');
+            console.error('❌ Erro ao copiar JSON:', error);
+
+            if (button) {
+                button.textContent = 'Erro ao copiar';
+                setTimeout(() => {
+                    button.textContent = originalLabel;
+                }, 1500);
+            }
         }
     }
 };
 
-// Atribuir funções globais do JSON Editor
-window.loadJSONEditor = jsonEditorModule.loadJSONEditor.bind(jsonEditorModule);
-window.formatJSON = jsonEditorModule.formatJSON.bind(jsonEditorModule);
-window.validateJSON = jsonEditorModule.validateJSON.bind(jsonEditorModule);
-window.updateJSONStatus = jsonEditorModule.updateJSONStatus.bind(jsonEditorModule);
+// Atribuir função global do visualizador JSON
+window.loadJSONEditor = jsonViewerModule.loadJSONEditor.bind(jsonViewerModule);
+window.copyJSONToClipboard = jsonViewerModule.copyJSONToClipboard.bind(jsonViewerModule);
 
 // ==================== EVENT LISTENERS ====================
 
@@ -536,7 +471,6 @@ window.addEventListener('dataLoaded', function(event) {
             opcionais: data.dutos?.opcionais?.length || 0
         },
         tubos: data.tubos?.length || 0,
-        administradores: data.administradores?.length || 0,
         ADM: data.ADM?.length || 0
     });
     
@@ -562,9 +496,6 @@ window.addEventListener('dataLoaded', function(event) {
         // Limpar staging
         window.stagingData = null;
         window.hasPendingChanges = false;
-        if (typeof updateApplyButtonState === 'function') {
-            updateApplyButtonState();
-        }
         
         console.log('✅ Todos os componentes carregados após dataLoaded');
     }, 100);
@@ -594,9 +525,6 @@ window.addEventListener('dataImported', function(event) {
     // Limpar staging
     window.stagingData = null;
     window.hasPendingChanges = false;
-    if (typeof updateApplyButtonState === 'function') {
-        updateApplyButtonState();
-    }
 });
 
 // Evento: Dados aplicados via botão "Aplicar JSON"
@@ -642,18 +570,15 @@ window.debugSystemData = function() {
     console.log('Tem banco_acessorios?', 'banco_acessorios' in window.systemData);
     console.log('Tem dutos?', 'dutos' in window.systemData);
     console.log('Tem tubos?', 'tubos' in window.systemData);
-    console.log('Tem administradores?', 'administradores' in window.systemData);
     console.log('Tem ADM?', 'ADM' in window.systemData);
     console.log('banco_acessorios:', window.systemData?.banco_acessorios);
     console.log('dutos:', window.systemData?.dutos);
     console.log('tubos:', window.systemData?.tubos);
-    console.log('administradores:', window.systemData?.administradores);
     console.log('ADM:', window.systemData?.ADM);
     console.log('Número de acessorios:', Object.keys(window.systemData?.banco_acessorios || {}).length);
     console.log('Número de tipos de dutos:', window.systemData?.dutos?.tipos?.length || 0);
     console.log('Número de opcionais:', window.systemData?.dutos?.opcionais?.length || 0);
     console.log('Número de tubos:', window.systemData?.tubos?.length || 0);
-    console.log('Número de administradores:', window.systemData?.administradores?.length || 0);
     console.log('Número de ADM:', window.systemData?.ADM?.length || 0);
     console.log('Keys de banco_acessorios:', Object.keys(window.systemData?.banco_acessorios || {}));
     
@@ -665,7 +590,6 @@ window.debugSystemData = function() {
             console.log('Editor tem banco_acessorios?', 'banco_acessorios' in parsed);
             console.log('Editor tem dutos?', 'dutos' in parsed);
             console.log('Editor tem tubos?', 'tubos' in parsed);
-            console.log('Editor tem administradores?', 'administradores' in parsed);
             console.log('Editor tem ADM?', 'ADM' in parsed);
             console.log('Acessorios no editor:', Object.keys(parsed?.banco_acessorios || {}).length);
             console.log('Tipos de dutos no editor:', parsed?.dutos?.tipos?.length || 0);
@@ -692,7 +616,6 @@ window.reloadCompleteData = async function() {
                     opcionais: data.dutos?.opcionais?.length || 0
                 },
                 tubos: data.tubos?.length || 0,
-                administradores: data.administradores?.length || 0,
                 ADM: data.ADM?.length || 0
             });
             
@@ -731,7 +654,6 @@ setTimeout(() => {
             opcionais: window.systemData?.dutos?.opcionais?.length || 0
         },
         tubos: window.systemData?.tubos?.length || 0,
-        administradores: window.systemData?.administradores?.length || 0,
         ADM: window.systemData?.ADM?.length || 0
     });
     

@@ -80,7 +80,7 @@
     -webkit-overflow-scrolling: touch;
 }
 .tabs::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
 }
 
 .tabs::-webkit-scrollbar-thumb {
@@ -155,6 +155,12 @@
 
 .tab-header h2 i {
     font-size: 1.2em;
+}
+
+.json-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 /* ===== TABELAS DE DADOS ===== */

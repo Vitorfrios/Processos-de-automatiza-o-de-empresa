@@ -298,6 +298,7 @@ function logoutClient({ redirect = true } = {}) {
 
 if (typeof window !== 'undefined') {
     window.validateToken = validateToken;
+    window.logoutClient = logoutClient;
 }
 
 export {

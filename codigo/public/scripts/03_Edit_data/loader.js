@@ -6,8 +6,6 @@ export async function loadModules() {
         console.log('Iniciando carregamento de modulos...');
 
         const modules = [
-            './editorJson/json-editor.js',
-            './editorJson/json-utils.js',
             './config/state.js',
             './config/api.js',
             './config/ui.js',

@@ -76,6 +76,11 @@
     outline: none;
 }
 
+#jsonEditor[readonly] {
+    cursor: default;
+    caret-color: transparent;
+}
+
 #jsonEditor::placeholder {
     color: #6a737d;
     font-style: italic;

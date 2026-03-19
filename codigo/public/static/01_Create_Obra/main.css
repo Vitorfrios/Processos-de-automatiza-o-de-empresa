@@ -36,6 +36,20 @@
   transition: all 0.3s ease;
   font-family: inherit;
 }
+.logout-btn {
+  background: var(--danger-gradient);
+  border: var(--primary-gradient);
+  color: #ffffff;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+.logout-btn:hover{
+    transform: scale(1.05);
+
+}
 
 .shutdown-btn:hover {
   background: #ff4444;
@@ -44,7 +58,8 @@
   transform: scale(1.05);
 }
 
-.shutdown-btn:active {
+.shutdown-btn:active,
+.logout-btn:active {
   transform: scale(0.95);
 }
 
@@ -514,6 +529,7 @@
 @media (prefers-reduced-motion: reduce) {
 
   .shutdown-btn,
+  .logout-btn,
   .minimizer,
   .editable-title,
   .machine-title-editable,
@@ -525,7 +541,9 @@
   }
 
   .shutdown-btn:hover,
-  .shutdown-btn:active {
+  .shutdown-btn:active,
+  .logout-btn:hover,
+  .logout-btn:active {
     transform: none;
   }
 }

@@ -306,35 +306,17 @@
             <div id="rawTab" class="tab-pane">
                 <div class="tab-header">
                     <h2><i class="icon-code"></i> JSON Completo</h2>
-
-                    <div class="json-actions">
-                        <button class="btn btn-small btn-info" onclick="formatJSON()">
-                            Formatar
-                        </button>
-
-                        <button class="btn btn-small btn-danger" onclick="validateJSON()">
-                            <i class="icon-validate"></i> Validar
-                        </button>
-
-                        <!-- NOVO BOTÃO -->
-                        <button class="btn btn-small btn-success" onclick="applyJSON()">
-                            Aplicar JSON
+                    <div class="json-header-actions">
+                        <button id="copyJsonButton" class="btn btn-small btn-info" onclick="copyJSONToClipboard(this)">
+                            Copiar JSON
                         </button>
                     </div>
                 </div>
-                <div class="json-status">
-                    <span id="jsonStatus"></span>
-                </div>
 
                 <div class="json-container">
-                    <!-- Container do editor e números -->
-                    <div class="json-scroll-wrapper">
-
-
-                        <!-- Editor JSON -->
-                        <div class="json-editor-wrapper">
-                            <textarea id="jsonEditor" spellcheck="false"></textarea>
-                        </div>
+                    <!-- Visualizador JSON -->
+                    <div class="json-editor-wrapper">
+                        <textarea id="jsonEditor" spellcheck="false" readonly aria-label="Visualizador JSON"></textarea>
                     </div>
                 </div>
 

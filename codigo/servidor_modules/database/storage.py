@@ -55,6 +55,37 @@ def normalize_empresa(empresa):
     }
 
 
+def normalize_admin_collection(admin_data):
+    if isinstance(admin_data, list):
+        return [{**admin} for admin in admin_data if isinstance(admin, dict)]
+
+    if isinstance(admin_data, dict):
+        return [{**admin_data}]
+
+    return []
+
+
+def sanitize_dados_payload(payload):
+    if not isinstance(payload, dict):
+        payload = {}
+
+    legacy_admins = payload.get("administradores")
+    primary_admins = payload.get("ADM")
+    sanitized = {
+        **payload,
+        "ADM": normalize_admin_collection(
+            primary_admins if primary_admins is not None else legacy_admins
+        ),
+    }
+
+    sanitized.pop("administradores", None)
+
+    for key, default_value in DEFAULT_DOCUMENTS["dados.json"].items():
+        sanitized.setdefault(key, deepcopy(default_value))
+
+    return sanitized
+
+
 class DatabaseStorage:
     def __init__(self, project_root):
         self.project_root = Path(project_root)
@@ -101,7 +132,10 @@ class DatabaseStorage:
             self._save_document_internal(name, payload, mirror_to_disk=True)
             return payload
 
-        return json.loads(row["payload_json"])
+        payload = json.loads(row["payload_json"])
+        if name == "dados.json":
+            payload = sanitize_dados_payload(payload)
+        return payload
 
     def save_document(self, name, payload):
         self.ensure_bootstrap()
@@ -120,6 +154,9 @@ class DatabaseStorage:
         return row is not None
 
     def _save_document_internal(self, name, payload, mirror_to_disk):
+        if name == "dados.json":
+            payload = sanitize_dados_payload(payload)
+
         payload_json = json.dumps(payload, ensure_ascii=False)
 
         with self._lock:

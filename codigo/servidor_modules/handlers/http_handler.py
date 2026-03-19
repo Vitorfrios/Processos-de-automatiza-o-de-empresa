@@ -521,11 +521,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         admin_data = dados_data.get("ADM")
-        administradores = (
-            dados_data.get("administradores", [])
-            if isinstance(dados_data.get("administradores", []), list)
-            else []
-        )
+        if admin_data is None:
+            admin_data = dados_data.get("administradores", [])
 
         normalized_admins = []
 
@@ -567,28 +564,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         "nivel": admin_data.get("nivel", "ADM"),
                     }
                 )
-
-        for admin in administradores:
-            if not isinstance(admin, dict):
-                continue
-
-            admin_usuario = str(admin.get("usuario", "")).strip()
-            admin_token = str(admin.get("token", "")).strip()
-
-            if not admin_usuario or not admin_token:
-                continue
-
-            normalized_admins.append(
-                {
-                    "nome": admin.get("nome", admin_usuario),
-                    "email": admin.get("email", ""),
-                    "usuario": admin_usuario,
-                    "token": admin_token,
-                    "status": str(admin.get("status", "ativo")).strip().lower()
-                    or "ativo",
-                    "nivel": admin.get("nivel", "Administrador"),
-                }
-            )
 
         active_admin = next(
             (
