@@ -324,7 +324,28 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def _normalize_text(self, value):
         return str(value or "").strip().upper()
 
+    def _get_request_host(self):
+        forwarded_host = str(self.headers.get("X-Forwarded-Host", "") or "").strip()
+        raw_host = forwarded_host or str(self.headers.get("Host", "") or "").strip()
+        host = raw_host.split(",")[0].strip().lower()
+
+        if host.startswith("[") and "]" in host:
+            host = host[1 : host.index("]")]
+        elif ":" in host:
+            host = host.split(":", 1)[0]
+
+        return host
+
     def _is_local_request(self):
+        request_host = self._get_request_host()
+        # CONFIGURA A PORTA HOST PARA O USER(ADM)
+        if request_host in {"localhost", "127.0.0.1", "::1"}:
+            return True
+
+        # CONFIGURA A PORTA HOST PARA O CLIENT
+        if request_host.endswith(".onrender.com"):
+            return False
+
         client_ip = str(self.client_address[0] or "").strip()
         return client_ip in {"127.0.0.1", "::1", "localhost"}
 
