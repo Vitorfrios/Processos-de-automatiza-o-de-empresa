@@ -614,6 +614,251 @@
         }
       ],
       "valorTotalObra": 0
+    },
+    {
+      "id": "obra_p59",
+      "nome": "ACT-127",
+      "empresa_id": "empresa_obra_p59",
+      "empresaSigla": "ACT",
+      "empresaNome": "ACTEMIUM",
+      "numeroClienteFinal": 127,
+      "clienteFinal": "testef",
+      "codigoCliente": "testec",
+      "dataCadastro": "19/03/2026",
+      "orcamentistaResponsavel": "testeo",
+      "idGerado": "obra_ACT_127",
+      "projetos": [
+        {
+          "id": "obra_p59_proj_k86_3",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_p59_proj_k86_3_sala_e18_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "paredeOeste": 11,
+                "paredeLeste": 11,
+                "paredeNorte": 11,
+                "paredeSul": 11,
+                "area": 121,
+                "volume": 363,
+                "divisoriaNaoClima1": 12,
+                "divisoriaNaoClima2": 12,
+                "divisoriaClima1": 12,
+                "divisoriaClima2": 12,
+                "dissipacao": 60000,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "numPortasDuplas": 1,
+                "numPortasSimples": 2,
+                "combateIncendio": "fm200",
+                "pressurizacao": true
+              },
+              "maquinas": [
+                {
+                  "nome": "Wall Mounted-01A (4TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "4TR",
+                  "tensao": "220V/1F",
+                  "tensao_comando": "220V",
+                  "quantidade": 7,
+                  "aplicacao_machines": "climatizacao",
+                  "precoBase": 47951.2,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 5300,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "4TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 200,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "4TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Umidificação",
+                      "value": 9200,
+                      "originalName": "Umidificação",
+                      "potenciaAplicada": "4TR"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "nome": "Bocal de insuflamento protegido por grelha diretamente no ambiente"
+                    },
+                    {
+                      "id": 3,
+                      "nome": "Condicionadores fixados externamente à SE, sobre mão-francesa na parede"
+                    }
+                  ],
+                  "precoTotal": 438558.4,
+                  "potenciaSelecionada": "4TR",
+                  "tipoSelecionado": "Wall Mounted"
+                },
+                {
+                  "nome": "Pressurizador Externo-01A (2000m³/h)",
+                  "tipo": "Pressurizador Externo",
+                  "potencia": "2000m³/h",
+                  "tensao": "220V/1F",
+                  "tensao_comando": "220V",
+                  "quantidade": 1,
+                  "aplicacao_machines": "pressurizacao",
+                  "precoBase": 3900,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "com 10mmCA",
+                      "value": 9,
+                      "originalName": "com 10mmCA",
+                      "potenciaAplicada": "2000m³/h"
+                    },
+                    {
+                      "id": 2,
+                      "name": "com 15mmCA",
+                      "value": 1,
+                      "originalName": "com 15mmCA",
+                      "potenciaAplicada": "2000m³/h"
+                    },
+                    {
+                      "id": 3,
+                      "name": "com 20mmCA",
+                      "value": 2,
+                      "originalName": "com 20mmCA",
+                      "potenciaAplicada": "2000m³/h"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 3912,
+                  "potenciaSelecionada": "2000m³/h",
+                  "tipoSelecionado": "Pressurizador Externo"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "solucao": 25,
+                "solucaoBackup": 25,
+                "totalCapacidade": 25,
+                "folga": 10.3,
+                "backup": "n"
+              },
+              "ventilacao": {
+                "potencia": 11000,
+                "tempInterna": 45,
+                "tempExterna": 35
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 79713,
+                "total-tr-aprox": 23,
+                "total-tr-exato": 22.67,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 2451,
+                "total-iluminacao": 847,
+                "total-dissi": 60000,
+                "total-pessoas": 220,
+                "total-ar-sensivel": 4571,
+                "total-ar-latente": 11626
+              },
+              "acessorios": [
+                {
+                  "id": "1773961194656b925745zo",
+                  "aplicacao_Acessorio": "climatizacao",
+                  "tipo": "DCF_120",
+                  "dimensao": "850x850",
+                  "quantidade": 1,
+                  "valor_unitario": 106500,
+                  "valor_total": 106500,
+                  "descricao": "DCF_120"
+                }
+              ],
+              "dutos": [
+                {
+                  "id": "1773961210863tj22t7i1o",
+                  "tipo": "Chapa preta",
+                  "tipo_descricao": "Chapa preta",
+                  "opcional_id": "2",
+                  "opcional_nome": "Isolamento acustico",
+                  "aplicacao_Dutos": "climatizacao",
+                  "kg": 1,
+                  "quantidade": 1,
+                  "valor_tipo": 105,
+                  "valor_opcional": 40,
+                  "valor_material_por_kg": 99,
+                  "valor_unitario": 244,
+                  "valor_total": 244
+                }
+              ],
+              "tubulacao": {
+                "conjuntos": [
+                  {
+                    "id": "obra_p59_proj_k86_3_sala_e18_1-1",
+                    "numero": 1,
+                    "quantidade": 1,
+                    "cabos": 7,
+                    "luvas": 5.6,
+                    "reducoes": 8,
+                    "totalLSmetros": 14,
+                    "totalLSkg": 10.86,
+                    "totalLLmetros": 14,
+                    "totalLLkg": 12.52,
+                    "totalKG": 23.38,
+                    "valorTotal": 1456,
+                    "linhas": [
+                      {
+                        "id": "LS-obra_p59_proj_k86_3_sala_e18_1-1-1773961197565",
+                        "tipo": "L.S.",
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 1,
+                        "numC": 2,
+                        "numCu": 3,
+                        "Cee": 4,
+                        "Lsm": 14,
+                        "LSkg": 10.864,
+                        "valorTotal": 868
+                      },
+                      {
+                        "id": "LL-obra_p59_proj_k86_3_sala_e18_1-1-1773961197565",
+                        "tipo": "L.L.",
+                        "pol": "7/8",
+                        "expe": "0,80",
+                        "compr": 1,
+                        "numC": 2,
+                        "numCu": 3,
+                        "Cee": 4,
+                        "Lsm": 14,
+                        "LSkg": 12.516,
+                        "valorTotal": 588
+                      }
+                    ]
+                  }
+                ],
+                "valorTotalGeralTubos": 0,
+                "valorTotal": null
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 550670.4
+        }
+      ],
+      "valorTotalObra": 550670.4
     }
   ]
 }

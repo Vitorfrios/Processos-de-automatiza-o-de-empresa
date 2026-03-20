@@ -27,6 +27,30 @@ if (typeof window !== 'undefined' && !window.machinesDataCache) {
 // Chave: machineId, Valor: boolean
 const autoSelectionExecuted = new Map();
 const VENTILATION_APPLICATIONS = ['pressurizacao', 'exaustao_bateria', 'exaustao_baia_trafo'];
+const CAPACITY_USER_EDITED_ATTR = 'data-capacity-user-edited';
+const CAPACITY_AUTO_CHANGE_ATTR = 'data-capacity-auto-change';
+
+function setCapacityUserEdited(selectElement, isEdited) {
+    if (!selectElement) return;
+    selectElement.setAttribute(CAPACITY_USER_EDITED_ATTR, isEdited ? 'true' : 'false');
+}
+
+function isCapacityUserEdited(selectElement) {
+    return selectElement?.getAttribute(CAPACITY_USER_EDITED_ATTR) === 'true';
+}
+
+function markCapacityAutoChange(selectElement, isAuto) {
+    if (!selectElement) return;
+    if (isAuto) {
+        selectElement.setAttribute(CAPACITY_AUTO_CHANGE_ATTR, 'true');
+        return;
+    }
+    selectElement.removeAttribute(CAPACITY_AUTO_CHANGE_ATTR);
+}
+
+function isCapacityAutoChange(selectElement) {
+    return selectElement?.getAttribute(CAPACITY_AUTO_CHANGE_ATTR) === 'true';
+}
 
 // =============================================================================
 // FUNÇÕES CORE UNIFICADAS
@@ -199,6 +223,56 @@ function getGenericCapacityValue(powerText) {
     }
 }
 
+function getClimatizationRequiredCapacity(roomId) {
+    const cargaInput = document.querySelector(`#carga-estimada-${roomId} input`);
+    const fatorSegurancaInput = document.getElementById(`fator-seguranca-${roomId}`);
+
+    const cargaEstimada = Number.parseFloat(cargaInput?.value || '');
+    if (!Number.isFinite(cargaEstimada) || cargaEstimada <= 0) {
+        return null;
+    }
+
+    const fatorSegurancaRaw = Number.parseFloat(fatorSegurancaInput?.value || '0');
+    const fatorSeguranca = Number.isFinite(fatorSegurancaRaw) ? fatorSegurancaRaw / 100 : 0;
+
+    return cargaEstimada * (1 + fatorSeguranca);
+}
+
+function updateClimatizationQuantityFromCapacity(machineId, options = {}) {
+    const { force = false } = options;
+
+    const machineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
+    if (!machineElement) return false;
+
+    const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
+    const powerSelect = machineElement.querySelector('.machine-power-select');
+    const qntInput = machineElement.querySelector('.machine-qnt-input');
+    const roomId = machineElement.dataset.roomId;
+
+    if (!aplicacaoSelect || !powerSelect || !qntInput || !roomId) return false;
+    if (aplicacaoSelect.value !== 'climatizacao') return false;
+
+    if (!force && qntInput.getAttribute('data-user-edited') === 'true') {
+        return false;
+    }
+
+    const capacidadeSelecionada = getGenericCapacityValue(powerSelect.value);
+    const capacidadeNecessaria = getClimatizationRequiredCapacity(roomId);
+
+    if (!Number.isFinite(capacidadeSelecionada) || capacidadeSelecionada <= 0 || !Number.isFinite(capacidadeNecessaria) || capacidadeNecessaria <= 0) {
+        return false;
+    }
+
+    const quantidadeCalculada = Math.max(1, Math.ceil(capacidadeNecessaria / capacidadeSelecionada));
+    qntInput.value = quantidadeCalculada;
+    qntInput.setAttribute('data-user-edited', 'false');
+
+    console.log(`✅ Quantidade climatização atualizada para ${quantidadeCalculada} (necessária: ${capacidadeNecessaria.toFixed(2)} TR, máquina: ${capacidadeSelecionada} TR)`);
+
+    calculateMachinePrice(machineId);
+    return true;
+}
+
 function calculateVentilationFlow(aplicacao, inputs) {
     switch (aplicacao) {
         case 'pressurizacao':
@@ -269,6 +343,7 @@ function handleAplicacaoChange(machineId) {
     
     const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
     const qntInput = machineElement.querySelector('.machine-qnt-input');
+    const powerSelect = machineElement.querySelector('.machine-power-select');
     const roomId = machineElement.dataset.roomId;
     
     if (!aplicacaoSelect || !qntInput || !roomId) return;
@@ -279,6 +354,12 @@ function handleAplicacaoChange(machineId) {
 
     if (VENTILATION_APPLICATIONS.includes(aplicacao)) {
         autoSelectionExecuted.set(machineId, false);
+    }
+
+    setCapacityUserEdited(powerSelect, false);
+
+    if (aplicacao === 'climatizacao') {
+        qntInput.setAttribute('data-user-edited', 'false');
     }
     
     console.log(`   - Aplicação selecionada: ${aplicacao}`);
@@ -294,8 +375,9 @@ function handleAplicacaoChange(machineId) {
         console.log(` Quantidade automática permitida (não foi editada manualmente)`);
         
         if (aplicacao === "climatizacao") {
+            updateClimatizationQuantityFromCapacity(machineId, { force: true });
             // Para climatização, tenta pegar do backup
-            const backupElement = document.getElementById(`solucao-backup-${roomId}`);
+            const backupElement = null; // legado desativado
             if (backupElement) {
                 const backupText = backupElement.textContent.trim();
                 const match = backupText.match(/(\d+)/);
@@ -642,7 +724,7 @@ function setupAutoCapacitySelection(machineId, roomId) {
 }
 
 function applyVentilationCapacityBusinessRules(machineId, roomId, options = {}) {
-    const { suppressRefresh = false } = options;
+    const { suppressRefresh = false, force = false } = options;
 
     console.log(` Executando seleÃ§Ã£o automÃ¡tica de capacidade para mÃ¡quina ${machineId}`);
 
@@ -685,6 +767,11 @@ function applyVentilationCapacityBusinessRules(machineId, roomId, options = {}) 
     const powerSelect = machineElement.querySelector('.machine-power-select');
     if (!powerSelect) return;
 
+    if (!force && isCapacityUserEdited(powerSelect)) {
+        console.log(`⏭️ Capacidade manual preservada para máquina ${machineId}: ${powerSelect.value}`);
+        return;
+    }
+
     powerSelect.disabled = false;
 
     const capacityOptions = [];
@@ -726,6 +813,7 @@ function applyVentilationCapacityBusinessRules(machineId, roomId, options = {}) 
         if (powerSelect.options[i].value === bestOption.optionValue) {
             if (currentValue !== bestOption.optionValue) {
                 powerSelect.value = bestOption.optionValue;
+                markCapacityAutoChange(powerSelect, true);
                 selected = true;
                 console.log(`âœ… OpÃ§Ã£o selecionada: ${powerSelect.options[i].text}`);
             } else {
@@ -736,9 +824,11 @@ function applyVentilationCapacityBusinessRules(machineId, roomId, options = {}) 
     }
 
     autoSelectionExecuted.set(machineId, true);
+    setCapacityUserEdited(powerSelect, false);
 
     if (selected) {
         powerSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        markCapacityAutoChange(powerSelect, false);
     } else if (currentValue !== bestOption.optionValue) {
         console.log(`âŒ NÃ£o foi possÃ­vel selecionar a capacidade`);
         return;
@@ -928,8 +1018,13 @@ function syncVentilationMachineCapacities(roomId) {
         const machineId = machineElement.dataset.machineId;
         const tipo = machineElement.querySelector('.machine-type-select')?.value;
         const aplicacao = machineElement.querySelector('.machine-aplicacao-select')?.value;
+        const powerSelect = machineElement.querySelector('.machine-power-select');
 
         if (!machineId || !tipo || !VENTILATION_APPLICATIONS.includes(aplicacao)) {
+            return;
+        }
+
+        if (isCapacityUserEdited(powerSelect)) {
             return;
         }
 
@@ -1079,6 +1174,9 @@ async function updateMachineOptions(selectElement) {
     const currentMachineElement = document.querySelector(`[data-machine-id="${machineId}"]`);
     const currentAplicacao = currentMachineElement?.querySelector('.machine-aplicacao-select')?.value;
     const currentRoomId = currentMachineElement?.dataset.roomId;
+    const currentPowerSelect = currentMachineElement?.querySelector('.machine-power-select');
+
+    setCapacityUserEdited(currentPowerSelect, false);
 
     if (selectedType && currentRoomId && VENTILATION_APPLICATIONS.includes(currentAplicacao)) {
         setTimeout(() => {
@@ -1098,6 +1196,10 @@ function updateMachineUI(machineId, machine) {
 
     updateSelectUI(`.machine-power-select[data-machine-id="${machineId}"]`, potencies, false);
     updateSelectUI(`.machine-voltage-select[data-machine-id="${machineId}"]`, voltages, false);
+
+    const powerSelect = document.querySelector(`.machine-power-select[data-machine-id="${machineId}"]`);
+    setCapacityUserEdited(powerSelect, false);
+    markCapacityAutoChange(powerSelect, false);
 
     const optionsContainer = document.getElementById(`options-container-${machineId}`);
     if (optionsContainer) {
@@ -1153,6 +1255,10 @@ function updateSelectUI(selector, options, disabled = false) {
 function resetMachineFields(machineId) {
     updateSelectUI(`.machine-power-select[data-machine-id="${machineId}"]`, [], true);
     updateSelectUI(`.machine-voltage-select[data-machine-id="${machineId}"]`, [], true);
+
+    const powerSelect = document.querySelector(`.machine-power-select[data-machine-id="${machineId}"]`);
+    setCapacityUserEdited(powerSelect, false);
+    markCapacityAutoChange(powerSelect, false);
     
     const aplicacaoSelect = document.querySelector(`.machine-aplicacao-select[data-machine-id="${machineId}"]`);
     if (aplicacaoSelect) {
@@ -1321,7 +1427,17 @@ function handlePowerChange(machineId) {
     if (machineElement) {
         const typeSelect = machineElement.querySelector('.machine-type-select');
         const powerSelect = machineElement.querySelector('.machine-power-select');
+        const aplicacaoSelect = machineElement.querySelector('.machine-aplicacao-select');
         const roomId = machineElement.dataset.roomId;
+
+        if (powerSelect) {
+            if (isCapacityAutoChange(powerSelect)) {
+                setCapacityUserEdited(powerSelect, false);
+                markCapacityAutoChange(powerSelect, false);
+            } else {
+                setCapacityUserEdited(powerSelect, true);
+            }
+        }
 
         if (typeSelect && typeSelect.value && powerSelect && powerSelect.value) {
             generateMachineName(typeSelect.value, roomId);
@@ -1330,6 +1446,10 @@ function handlePowerChange(machineId) {
             if (titleInput) {
                 titleInput.value = typeSelect.value;
             }
+        }
+
+        if (aplicacaoSelect?.value === 'climatizacao') {
+            updateClimatizationQuantityFromCapacity(machineId, { force: true });
         }
     }
     

@@ -469,7 +469,7 @@ function buildResultRow(roomId) {
     
     return `
     <div class="clima-row">
-      <div class="clima-cell clima-cell-result">
+      <div class="clima-cell clima-cell-result client-hidden">
         <label>Vazão de Ar Externo (l/s):</label>
         <div class="result-value-inline" id="vazao-ar-${roomId}">0</div>
       </div>

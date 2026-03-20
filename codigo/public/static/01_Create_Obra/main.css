@@ -125,6 +125,44 @@ body.obra-dashboard-embed #projects-container {
   display: none !important;
 }
 
+body.client-mode .client-hidden {
+  display: none !important;
+}
+
+body.client-mode .room-total-container,
+body.client-mode .project-total-value,
+body.client-mode .obra-total-value,
+body.client-mode .all-machines-total-price,
+body.client-mode .option-price,
+body.client-mode .tubos-total-geral,
+body.client-mode .total-item-valor,
+body.client-mode .clima-cell:has([id^="vazao-ar-"]),
+body.client-mode .vertical-table tr:has([id^="q-cal-"]),
+body.client-mode .vertical-table tr:has([id^="massa-gramas-"]),
+body.client-mode .vertical-table tr:has([id^="delta-t-"]),
+body.client-mode .vertical-table tr:has([id^="massa-ar-"]),
+body.client-mode .climatization-form-grid .form-group:has([id^="base-price-"]),
+body.client-mode .climatization-form-grid .form-group:has([id^="total-price-"]),
+body.client-mode .duto-header-line .material-inline,
+body.client-mode .duto-selector .selector-item:has([id^="duto-valor-tipo-"]),
+body.client-mode .duto-selector .selector-item:has([id^="duto-valor-opcional-"]),
+body.client-mode .duto-selector .selector-item:has([id^="duto-valor-total-"]),
+body.client-mode .acessorio-selector .selector-item:has([id^="acessorio-valor-"]),
+body.client-mode .dutos-table th:nth-child(6),
+body.client-mode .dutos-table td:nth-child(6),
+body.client-mode .dutos-table th:nth-child(7),
+body.client-mode .dutos-table td:nth-child(7),
+body.client-mode .dutos-table th:nth-child(8),
+body.client-mode .dutos-table td:nth-child(8),
+body.client-mode .dutos-table tfoot,
+body.client-mode .acessorios-table th:nth-child(5),
+body.client-mode .acessorios-table td:nth-child(5),
+body.client-mode .acessorios-table th:nth-child(6),
+body.client-mode .acessorios-table td:nth-child(6),
+body.client-mode .acessorios-table tfoot {
+  display: none !important;
+}
+
 body.obra-dashboard-embed .system-status-banner {
   position: static;
   top: auto;

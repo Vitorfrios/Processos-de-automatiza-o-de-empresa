@@ -989,7 +989,7 @@ function buildVentilacaoSection(roomId) {
                          placeholder="°C">
                 </td>
               </tr>
-              <tr>
+              <tr class="client-hidden">
                 <td>Q (cal/h)</td>
                 <td><span id="q-cal-${roomId}" class="result-venti-value">-</span></td>
               </tr>

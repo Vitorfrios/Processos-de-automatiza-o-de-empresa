@@ -37,6 +37,8 @@ function applyStaticUiRestrictions() {
         return;
     }
 
+    document.body.classList.add('client-mode');
+
     if (!isFeatureEnabled('editDataNavigation')) {
         const editNavLink = document.getElementById('nav-editar-dados');
         if (editNavLink?.parentElement) {
