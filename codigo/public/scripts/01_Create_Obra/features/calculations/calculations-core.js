@@ -1,6 +1,5 @@
 /**
  * features/calculations/calculations-core.js
- * Núcleo de cálculos unificado - FUSÃO OTIMIZADA: calculos-manager.js + helpers.js
  * Sistema centralizado para cálculos de climatização
  */
 
@@ -17,11 +16,11 @@ import {
     findClimatizationSection as dataFindClimatizationSection
 } from '../../data/utils/data-utils.js';
 
-// ✅ RE-EXPORTAR funções de data-utils para compatibilidade
+// RE-EXPORTAR funções de data-utils para compatibilidade
 export const collectClimatizationInputs = dataCollectClimatizationInputs;
 export const findClimatizationSection = dataFindClimatizationSection;
 
-// ✅ RE-EXPORTAR funções de core-utils para compatibilidade  
+// RE-EXPORTAR funções de core-utils para compatibilidade
 export const safeNumber = coreSafeNumber;
 export const updateElementText = coreUpdateElementText;
 

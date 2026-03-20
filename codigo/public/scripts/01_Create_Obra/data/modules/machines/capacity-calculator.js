@@ -163,7 +163,7 @@ function initializeCapacitySystem(roomId) {
 
     applyFatorSeguranca(roomId, fatorSeguranca);
 
-    // CORREÇÃO: Aguarda o DOM estar pronto antes de tentar buscar a carga térmica
+    // Aguarda o DOM estar pronto antes de tentar buscar a carga térmica
     setTimeout(() => {
       const cargaInicial = getThermalLoadTR(roomId);
       const cargaInput = document.querySelector(`#carga-estimada-${roomId} input`);
@@ -575,7 +575,7 @@ function handleClimaInputBackupChangeFromEvent(selectElement) {
 }
 
 /**
- * NOVA FUNÇÃO: Atualiza capacidade a partir dos ganhos térmicos
+ * Atualiza capacidade a partir dos ganhos térmicos
  * @param {string} roomId - ID da sala
  * @returns {void}
  */

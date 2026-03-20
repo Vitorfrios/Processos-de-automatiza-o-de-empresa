@@ -373,7 +373,7 @@ class WordPTGenerator:
         return self._backup_cache
 
     def _find_obra_by_id(self, backup_data: Dict, obra_id: str) -> Optional[Dict]:
-        """Busca obra por ID de forma otimizada."""
+        """Busca obra por ID"""
         obras = backup_data.get("obras", [])
         
         # Tenta busca direta por índice se for inteiro
@@ -535,9 +535,7 @@ class WordPTGenerator:
         }
 
     def generate_context_for_pt(self, obra_id: str) -> Dict:
-        """
-        Gera contexto completo para a Proposta Técnica (versão otimizada).
-        """
+        """Gera contexto completo para a Proposta Técnica."""
         # Verifica cache
         cache_key = f"pt_context_{obra_id}"
         if cache_key in self._context_cache:

@@ -1,6 +1,6 @@
 """
 sessions_core.py
-Gerenciador de sessões -  e Otimizada
+Gerenciador de sessões
 """
 
 import json
@@ -70,7 +70,7 @@ class SessionsManager:
         obra_id_str = str(obra_id)
         if obra_id_str not in data["sessions"][current_session_id]["obras"]:
             data["sessions"][current_session_id]["obras"].append(obra_id_str)
-            print(f"✅ Obra {obra_id_str} adicionada à sessão {current_session_id}")
+            print(f" Obra {obra_id_str} adicionada à sessão {current_session_id}")
         
         return self._save_sessions_data(data)
 
@@ -101,7 +101,7 @@ class SessionsManager:
                     print(f"❌ ERRO: Obra {obra_id_str} ainda está na sessão após remoção!")
                     return False
                 else:
-                    print(f"✅ Obra {obra_id_str} removida com sucesso")
+                    print(f" Obra {obra_id_str} removida com sucesso")
                     print(f" Obras na sessão depois: {updated_data['sessions'][current_session_id]['obras']}")
                     return True
             else:
@@ -127,7 +127,7 @@ class SessionsManager:
                 
                 # Remove a obra
                 data["sessions"][current_session_id]["obras"].remove(obra_id_str)
-                print(f"✅ Obra {obra_id_str} removida da sessão")
+                print(f" Obra {obra_id_str} removida da sessão")
                 
                 # Salva os dados
                 if self._save_sessions_data(data):
@@ -270,7 +270,7 @@ class SessionsManager:
             }
         }
         
-        # print(f"✅ Sessão única garantida: {current_session_id} com {len(current_obras)} obras")
+        # print(f" Sessão única garantida: {current_session_id} com {len(current_obras)} obras")
         return self._save_sessions_data(data)
     
     def _load_sessions_data(self) -> dict:
@@ -329,7 +329,7 @@ class SessionsManager:
 # Instância global com tratamento de erro
 try:
     sessions_manager = SessionsManager()
-    # print("✅ SessionsManager  inicializado com sucesso!")
+    # print(" SessionsManager  inicializado com sucesso!")
     
     # Força sessão única na inicialização
     sessions_manager.ensure_single_session()
@@ -350,19 +350,19 @@ except Exception as e:
             return "session_active"
         
         def add_obra_to_session(self, obra_id):
-            print(f"✅ [EMERGENCY] Obra {obra_id} adicionada à sessão ativa")
+            print(f" [EMERGENCY] Obra {obra_id} adicionada à sessão ativa")
             return True
 
         def remove_obra(self, obra_id):
-            print(f"✅ [EMERGENCY] Obra {obra_id} removida da sessão ativa")
+            print(f" [EMERGENCY] Obra {obra_id} removida da sessão ativa")
             return True
 
         def remove_obra_from_session(self, obra_id):
-            print(f"✅ [EMERGENCY] Obra {obra_id} removida da sessão ativa (modal)")
+            print(f" [EMERGENCY] Obra {obra_id} removida da sessão ativa (modal)")
             return {'success': True, 'message': 'Obra removida', 'reload_required': True}
 
         def check_obra_in_session(self, obra_id):
-            print(f"✅ [EMERGENCY] Verificando obra {obra_id} na sessão")
+            print(f" [EMERGENCY] Verificando obra {obra_id} na sessão")
             return {'exists': False, 'obra_id': obra_id}
 
         def get_session_obras(self):

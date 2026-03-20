@@ -12,7 +12,7 @@ export function downloadWord(obraId, projectName = null) {
     // Buscar obra por ID
     const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
     if (!obraBlock) {
-        console.error(`❌ Obra com ID "${obraId}" não encontrada para Word`);
+        console.error(` Obra com ID "${obraId}" não encontrada para Word`);
         showSystemStatus(`ERRO: Obra não encontrada`, "error");
         return;
     }
@@ -20,7 +20,7 @@ export function downloadWord(obraId, projectName = null) {
     const obraName = obraBlock.dataset.obraName;
     const target = projectName ? `projeto ${projectName} da obra ${obraName}` : `obra ${obraName}`;
     
-    console.log(`📝 Gerando Word para ${target} (ID: ${obraId})`);
+    console.log(` Gerando Word para ${target} (ID: ${obraId})`);
     
     // Mostrar modal de seleção
     showWordModelModal(obraId, obraName);

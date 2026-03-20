@@ -312,7 +312,7 @@ body.obra-dashboard-embed .system-status-banner {
     flex-shrink: 0;
   }
 
-  /* ✅ Títulos para todos os headers */
+  /*  Títulos para todos os headers */
   .project-header .project-title,
   .room-header .room-title,
   .machine-header .machine-title-editable {
@@ -321,7 +321,7 @@ body.obra-dashboard-embed .system-status-banner {
     font-size: 0.95rem;
     white-space: nowrap;
     min-width: 0;
-    /* ✅ permite que quebre corretamente */
+    /*  permite que quebre corretamente */
   }
 
   /* Input do título da máquina - ajustes específicos mobile */

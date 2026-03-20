@@ -75,7 +75,7 @@
     cursor: pointer;
     transition: opacity 0.2s, transform 0.1s;
     user-select: none;
-    z-index: 3; /* 🆕 GARANTE QUE O ÍCONE FIQUE SEMPRE ACIMA DE TUDO */
+    z-index: 3; /* GARANTE QUE O ÍCONE FIQUE SEMPRE ACIMA DE TUDO */
 }
 
 .calendar-icon:hover {
@@ -101,7 +101,7 @@
     outline: none;
 }
 
-/* 🆕 ESTILOS PARA O DATE PICKER VISÍVEL */
+/* ESTILOS PARA O DATE PICKER VISÍVEL */
 .date-picker-visible-wrapper {
     position: relative;
     width: 100%;

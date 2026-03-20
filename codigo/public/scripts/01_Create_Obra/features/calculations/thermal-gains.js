@@ -1,6 +1,5 @@
 /**
  * thermal-gains.js
- *  FUSÃO COMPLETA: thermalCalculations + thermalComponents + thermalDisplay
  *  REDUÇÃO: 3 arquivos  1 arquivo (~600  ~350 linhas)
  */
 

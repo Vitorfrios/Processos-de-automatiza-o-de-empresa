@@ -64,7 +64,7 @@ function updateProjectTotal(projectId) {
         }
     }
 
-    // 🔥 DISPARA EVENTO PARA A OBRA (NÍVEL 4)
+    // DISPARA EVENTO PARA A OBRA (NÍVEL 4)
     const obraId = projectElement.dataset.obraId;
     if (obraId) {
         document.dispatchEvent(new CustomEvent('projetoAtualizado', {
@@ -73,7 +73,7 @@ function updateProjectTotal(projectId) {
     }
 }
 
-// 🔥 ESCUTA EVENTOS DAS SALAS (NÍVEL 2)
+// ESCUTA EVENTOS DAS SALAS (NÍVEL 2)
 document.addEventListener('salaAtualizada', (e) => {
     const { projectId } = e.detail;
     if (projectId) {

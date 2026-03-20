@@ -1,14 +1,9 @@
 /**
  * ui/helpers.js
- *  FUSÃO: ui-helpers.js → ui/helpers.js
- * ⚡ REFATORAÇÃO: Import atualizado + compatibilidade global
+ * Utilitários de interface do usuário
  */
 
-import { UI_CONSTANTS } from '../core/constants.js';
-
-/**
- * Utilitários de interface do usuário - SISTEMA UNIFICADO
- */
+import { UI_CONSTANTS } from "../core/constants.js";
 
 /**
  * Alterna a visibilidade de um elemento (expandir/recolher)
@@ -18,7 +13,7 @@ import { UI_CONSTANTS } from '../core/constants.js';
 function toggleElementVisibility(contentId, minimizerElement) {
   const content = document.getElementById(contentId);
   if (!content) {
-    console.error(`❌ Elemento ${contentId} não encontrado para toggle`);
+    console.error(` Elemento ${contentId} não encontrado para toggle`);
     return;
   }
 
@@ -59,14 +54,15 @@ function collapseElement(element, minimizerElement) {
 function calculateRoomCompletionStats(room) {
   const inputs = room.querySelectorAll(".form-input, .clima-input");
   const filledInputs = Array.from(inputs).filter((input) => {
-    if (input.type === 'checkbox' || input.type === 'radio') {
+    if (input.type === "checkbox" || input.type === "radio") {
       return input.checked;
     }
     return input.value && input.value.trim() !== "";
   }).length;
 
   const totalInputs = inputs.length;
-  const percentage = totalInputs > 0 ? ((filledInputs / totalInputs) * 100).toFixed(1) : 0;
+  const percentage =
+    totalInputs > 0 ? ((filledInputs / totalInputs) * 100).toFixed(1) : 0;
 
   return {
     filled: filledInputs,
@@ -84,7 +80,7 @@ function removeEmptyObraMessage(obraName) {
   if (projectsContainer) {
     const emptyMessage = projectsContainer.querySelector(".empty-message");
     if (emptyMessage) {
-      console.log(`🗑️ Removendo mensagem de obra vazia: ${obraName}`);
+      console.log(` Removendo mensagem de obra vazia: ${obraName}`);
       emptyMessage.remove();
     }
   }
@@ -98,14 +94,14 @@ function showEmptyObraMessageIfNeeded(obraName) {
   const projectsContainer = document.getElementById(`projects-${obraName}`);
   if (projectsContainer) {
     const projects = projectsContainer.querySelectorAll(".project-block");
-    
+
     if (projects.length === 0) {
       const existingMessage = projectsContainer.querySelector(".empty-message");
       if (!existingMessage) {
-        console.log(`📝 Exibindo mensagem de obra vazia: ${obraName}`);
-        const emptyMessage = document.createElement('p');
-        emptyMessage.className = 'empty-message';
-        emptyMessage.textContent = 'Adicione projetos a esta obra...';
+        console.log(` Exibindo mensagem de obra vazia: ${obraName}`);
+        const emptyMessage = document.createElement("p");
+        emptyMessage.className = "empty-message";
+        emptyMessage.textContent = "Adicione projetos a esta obra...";
         projectsContainer.appendChild(emptyMessage);
       }
     } else {
@@ -121,7 +117,7 @@ function showEmptyObraMessageIfNeeded(obraName) {
 function removeEmptyProjectMessage(projectContent) {
   const emptyMessage = projectContent.querySelector(".empty-message");
   if (emptyMessage) {
-    console.log(`🗑️ Removendo mensagem de projeto vazio`);
+    console.log(` Removendo mensagem de projeto vazio`);
     emptyMessage.remove();
   }
 }
@@ -136,10 +132,13 @@ function showEmptyProjectMessageIfNeeded(projectContent) {
   if (remainingRooms.length === 0) {
     const existingMessage = projectContent.querySelector(".empty-message");
     if (!existingMessage) {
-      console.log(`📝 Exibindo mensagem de projeto vazio`);
+      console.log(` Exibindo mensagem de projeto vazio`);
       const addRoomSection = projectContent.querySelector(".add-room-section");
       if (addRoomSection) {
-        addRoomSection.insertAdjacentHTML("beforebegin", '<p class="empty-message">Adicione salas a este projeto...</p>');
+        addRoomSection.insertAdjacentHTML(
+          "beforebegin",
+          '<p class="empty-message">Adicione salas a este projeto...</p>',
+        );
       }
     }
   } else {
@@ -148,7 +147,7 @@ function showEmptyProjectMessageIfNeeded(projectContent) {
 }
 
 /**
- * 🆕 FUNÇÃO ADICIONAL: Verifica se elemento está visível
+ * FUNÇÃO ADICIONAL: Verifica se elemento está visível
  * @param {string} elementId - ID do elemento
  * @returns {boolean} True se visível
  */
@@ -158,7 +157,7 @@ function isElementVisible(elementId) {
 }
 
 /**
- * 🆕 FUNÇÃO ADICIONAL: Alterna todos os elementos de um container
+ * FUNÇÃO ADICIONAL: Alterna todos os elementos de um container
  * @param {string} containerId - ID do container
  * @param {boolean} expand - True para expandir, false para recolher
  */
@@ -166,8 +165,8 @@ function toggleAllElements(containerId, expand = true) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  const minimizers = container.querySelectorAll('.minimizer');
-  const contents = container.querySelectorAll('.collapsible-content');
+  const minimizers = container.querySelectorAll(".minimizer");
+  const contents = container.querySelectorAll(".collapsible-content");
 
   contents.forEach((content, index) => {
     const minimizer = minimizers[index];
@@ -181,69 +180,67 @@ function toggleAllElements(containerId, expand = true) {
   });
 }
 
-
 /**
- * 🆕 RECOLHER ELEMENTO COM ANIMAÇÃO
+ * Recolher elemento com animação
  */
 function collapseElementWithAnimation(element, minimizerElement) {
-    // Adicionar classe de animação
-    element.classList.add('collapsing');
-    
-    // Definir altura atual
-    const currentHeight = element.scrollHeight;
-    element.style.height = currentHeight + 'px';
-    
-    // Forçar reflow
-    element.offsetHeight;
-    
-    // Animar para altura 0
-    setTimeout(() => {
-        element.style.height = '0px';
-        element.style.overflow = 'hidden';
-    }, 10);
-    
-    // Finalizar animação
-    setTimeout(() => {
-        element.classList.add("collapsed");
-        element.classList.remove("collapsing");
-        element.style.height = '';
-        element.style.overflow = '';
-        minimizerElement.textContent = "+";
-        
-        console.log(` Elemento recolhido com animação: ${element.id}`);
-    }, 37);
+  // Adicionar classe de animação
+  element.classList.add("collapsing");
+
+  // Definir altura atual
+  const currentHeight = element.scrollHeight;
+  element.style.height = currentHeight + "px";
+
+  // Forçar reflow
+  element.offsetHeight;
+
+  // Animar para altura 0
+  setTimeout(() => {
+    element.style.height = "0px";
+    element.style.overflow = "hidden";
+  }, 10);
+
+  // Finalizar animação
+  setTimeout(() => {
+    element.classList.add("collapsed");
+    element.classList.remove("collapsing");
+    element.style.height = "";
+    element.style.overflow = "";
+    minimizerElement.textContent = "+";
+
+    console.log(` Elemento recolhido com animação: ${element.id}`);
+  }, 37);
 }
 
 /**
- * 🆕 EXPANDIR ELEMENTO COM ANIMAÇÃO  
+ * Expandir elemento com animação
  */
 function expandElementWithAnimation(element, minimizerElement) {
-    // Remover classe collapsed
-    element.classList.remove("collapsed");
-    element.classList.add("expanding");
-    
-    // Definir altura para auto após animação
-    setTimeout(() => {
-        const fullHeight = element.scrollHeight;
-        element.style.height = '0px';
-        
-        // Forçar reflow
-        element.offsetHeight;
-        
-        // Animar para altura completa
-        element.style.height = fullHeight + 'px';
-        
-        // Finalizar animação
-        setTimeout(() => {
-            element.classList.remove("expanding");
-            element.style.height = '';
-            minimizerElement.textContent = "−";
-            
-            console.log(`📂 Elemento expandido com animação: ${element.id}`);
-        }, 37);
-    }, 10);
-}
+  // Remover classe collapsed
+  element.classList.remove("collapsed");
+  element.classList.add("expanding");
 
+  // Definir altura para auto após animação
+  setTimeout(() => {
+    const fullHeight = element.scrollHeight;
+    element.style.height = "0px";
+
+    // Forçar reflow
+    element.offsetHeight;
+
+    // Animar para altura completa
+    element.style.height = fullHeight + "px";
+
+    // Finalizar animação
+    setTimeout(() => {
+      element.classList.remove("expanding");
+      element.style.height = "";
+      minimizerElement.textContent = "−";
+
+      console.log(` Elemento expandido com animação: ${element.id}`);
+    }, 37);
+  }, 10);
+}
 
 // Exportações para módulos ES6
 export {
@@ -256,11 +253,11 @@ export {
   removeEmptyProjectMessage,
   showEmptyProjectMessageIfNeeded,
   isElementVisible,
-  toggleAllElements
+  toggleAllElements,
 };
 
 // Compatibilidade global para scripts legados
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.toggleElementVisibility = toggleElementVisibility;
   window.expandElement = expandElement;
   window.collapseElement = collapseElement;

@@ -270,9 +270,7 @@ class RoutesCore:
             session_obras = self.sessions_manager.get_session_obras()
             current_session_id = self.sessions_manager.get_current_session_id()
 
-            print(
-                # f"📋 [SESSION-OBRAS] Sessão {current_session_id} - Obras: {session_obras}"
-            )
+            # print(f"[SESSION-OBRAS] Sessão {current_session_id} - Obras: {session_obras}")
 
             return {"session_id": current_session_id, "obras": session_obras}
 
@@ -389,7 +387,7 @@ class RoutesCore:
                 "close_delay": 3000,
             }
 
-            print("✅ Resposta enviada ao cliente - servidor será encerrado")
+            print(" Resposta enviada ao cliente - servidor será encerrado")
 
             def shutdown_sequence():
                 print(" Iniciando sequência de encerramento...")
@@ -564,7 +562,7 @@ class RoutesCore:
                 "reload_delay": 500,
             }
 
-            print(f"✅ Comando de recarregamento enviado para o frontend")
+            print(f" Comando de recarregamento enviado para o frontend")
 
         except Exception as e:
             print(f"❌ Erro no recarregamento: {str(e)}")
@@ -604,7 +602,7 @@ class RoutesCore:
                             parent_key = idx
                             current = item
                             item_found = True
-                            print(f"✅ Encontrado '{key}' no índice {idx}")
+                            print(f" Encontrado '{key}' no índice {idx}")
                             break
                     
                     if not item_found:
@@ -632,7 +630,7 @@ class RoutesCore:
                         "path": path_array
                     }
             
-            # 🔥 CORREÇÃO CRÍTICA: ÚLTIMO ELEMENTO - SEMPRE tenta como índice primeiro
+            #  SEMPRE tenta como índice primeiro
             last_item = path_array[-1]
             print(f"🔍 Último item a deletar: '{last_item}' (tipo: {type(last_item)})")
             print(f"🔍 Nível final type: {type(current)}")
@@ -640,16 +638,16 @@ class RoutesCore:
             if isinstance(current, list):
                 print(f"🔍 Array final com {len(current)} itens")
                 
-                # 🔥 SEMPRE TENTA COMO ÍNDICE PRIMEIRO (para máquinas)
+                #  SEMPRE TENTA COMO ÍNDICE PRIMEIRO (para máquinas)
                 try:
                     # Converter para inteiro
                     item_index = int(last_item)
                     print(f"🔍 Interpretando '{last_item}' como índice numérico: {item_index}")
                     
                     if 0 <= item_index < len(current):
-                        print(f"✅ Removendo pelo índice {item_index}")
+                        print(f" Removendo pelo índice {item_index}")
                         deleted_item = current.pop(item_index)
-                        print(f"✅ Item removido do índice {item_index}. Array agora tem {len(current)} itens")
+                        print(f" Item removido do índice {item_index}. Array agora tem {len(current)} itens")
                     else:
                         return {
                             "success": False,
@@ -676,7 +674,7 @@ class RoutesCore:
                         }
                     
                     deleted_item = current.pop(item_index)
-                    print(f"✅ Removido item com ID '{last_item}' no índice {item_index}")
+                    print(f" Removido item com ID '{last_item}' no índice {item_index}")
                     
             elif isinstance(current, dict):
                 # Para dicionários, remover pela chave
@@ -688,7 +686,7 @@ class RoutesCore:
                     }
                 
                 deleted_item = current.pop(str(last_item))
-                print(f"✅ Removido chave '{last_item}' do dicionário")
+                print(f" Removido chave '{last_item}' do dicionário")
             else:
                 return {
                     "success": False,
@@ -983,7 +981,7 @@ class RoutesCore:
             if 0 <= index_int < len(empresas):
                 empresa_removida = empresas.pop(index_int)
                 sigla_removida = list(empresa_removida.keys())[0] if empresa_removida else "?"
-                print(f"✅ Empresa '{sigla_removida}' (índice {index_int}) removida.")
+                print(f" Empresa '{sigla_removida}' (índice {index_int}) removida.")
 
                 # Salva
                 dados_data["empresas"] = empresas
@@ -1019,7 +1017,7 @@ class RoutesCore:
             if 0 <= index_int < len(empresas):
                 empresa_removida = empresas.pop(index_int)
                 sigla_removida = list(empresa_removida.keys())[0] if empresa_removida else "?"
-                print(f"✅ Empresa '{sigla_removida}' (índice {index_int}) removida.")
+                print(f" Empresa '{sigla_removida}' (índice {index_int}) removida.")
 
                 # Salva
                 dados_data["empresas"] = empresas

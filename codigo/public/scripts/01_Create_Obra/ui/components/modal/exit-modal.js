@@ -12,7 +12,7 @@ const DEFAULT_CONFIG = {
     message: 'Tem certeza que deseja encerrar o servidor?',
     confirmText: 'Encerrar Servidor',
     cancelText: 'Cancelar',
-    icon: '⚠️',
+    icon: '',
     borderColor: '#4299e1'
 };
 
@@ -37,7 +37,7 @@ function createModalHTML(config) {
         </div>
 
         <div class="warning-note">
-            <small>⚠️ Todas as conexões ativas serão finalizadas e o servidor será desligado completamente.</small>
+            <small> Todas as conexões ativas serão finalizadas e o servidor será desligado completamente.</small>
         </div>
     ` : config.message;
 

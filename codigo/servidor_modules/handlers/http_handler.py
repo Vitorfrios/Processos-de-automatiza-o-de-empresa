@@ -743,13 +743,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         path = parsed_path.path
 
         if path in {"/", ""}:
-            print(" Acesso a raiz detectado - redirecionando para pagina principal")
-            self.redirect_to("/admin/obras/create")
-            return
-        
-        if path == '/' or path == '':
-            print(" Acesso Ã  raiz detectado - redirecionando para página principal")
-            self.redirect_to("/login")
+            if self._is_local_request():
+                print(" Acesso local a raiz detectado - abrindo area administrativa")
+                self._issue_local_admin_session()
+                self.redirect_to("/admin/obras/create")
+            else:
+                print(" Acesso remoto a raiz detectado - redirecionando para login")
+                self.redirect_to("/login")
             return
 
         if path in self.LEGACY_PAGE_REDIRECTS:
@@ -1337,7 +1337,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_json_response({"status": "online", "timestamp": time.time()})
 
     def handle_empresa_routes(self, path):
-        """Rotas de empresa otimizadas"""
+        """Rotas de empresa"""
         if path.startswith("/api/dados/empresas/buscar/"):
             termo = path.split("/")[-1]
             self.route_handler.handle_buscar_empresas(self, termo)
@@ -1346,7 +1346,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.route_handler.handle_get_proximo_numero(self, sigla)
 
     def handle_obra_routes(self, path):
-        """Rotas de obra otimizadas"""
+        """Rotas de obra"""
         if self.command == "GET":
             obra_id = path.split("/")[-1]
             self.handle_get_obra_by_id_secure(obra_id)

@@ -1,6 +1,6 @@
 /**
  * core/constants.js
- * Constantes globais do sistema - FUSÃO: config.js + constantes adicionais
+ * Constantes globais do sistema
  * Centraliza todas as constantes para fácil manutenção
  */
 

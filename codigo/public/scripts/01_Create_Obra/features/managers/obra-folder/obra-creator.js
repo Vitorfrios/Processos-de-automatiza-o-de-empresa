@@ -38,7 +38,7 @@ function updateObraTotal(obraId) {
     }
 }
 
-// 🔥 ESCUTA EVENTOS DOS PROJETOS (NÍVEL 3)
+// ESCUTA EVENTOS DOS PROJETOS (NÍVEL 3)
 document.addEventListener('projetoAtualizado', (e) => {
     const { obraId } = e.detail;
     if (obraId) {

@@ -11,7 +11,7 @@ export * from './obra-folder/obra-utils.js';
 // Re-export de funções de ID
 export { generateObraId, ensureStringId } from '../../data/utils/id-generator.js';
 
-// 🔥 COMPATIBILIDADE GLOBAL
+// COMPATIBILIDADE GLOBAL
 if (typeof window !== 'undefined') {
     Promise.all([
         import('./obra-folder/obra-creator.js'),
@@ -26,7 +26,7 @@ if (typeof window !== 'undefined') {
         window.generateObraId = generateObraId;
         window.ensureStringId = ensureStringId;
         
-        console.log('✅ [obra-manager] Módulos de obra carregados no escopo global');
+        console.log(' [obra-manager] Módulos de obra carregados no escopo global');
     }).catch(error => {
         console.error('[obra-manager] Erro ao carregar módulos de obra:', error);
     });

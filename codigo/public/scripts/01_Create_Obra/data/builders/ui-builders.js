@@ -8,7 +8,7 @@ export * from './ui-folder/room-renderer.js';
 export * from './ui-folder/machine-renderer.js';
 export * from './ui-folder/data-fillers.js';
 
-// 🔥 COMPATIBILIDADE GLOBAL
+// COMPATIBILIDADE GLOBAL
 if (typeof window !== 'undefined') {
     Promise.all([
         import('./ui-folder/obra-renderer.js'),
@@ -18,7 +18,7 @@ if (typeof window !== 'undefined') {
         import('./ui-folder/data-fillers.js')
     ]).then(modules => {
         modules.forEach(attachModuleToWindow);
-        console.log('✅ [ui-builders] Módulos de UI carregados no escopo global');
+        console.log(' [ui-builders] Módulos de UI carregados no escopo global');
     }).catch(error => {
         console.error('[ui-builders] Erro ao carregar módulos de UI:', error);
     });

@@ -196,7 +196,7 @@ def analyze_css_comprehensive():
                 
                 report.write("\n")
         else:
-            report.write("✅ Nenhuma classe duplicada encontrada!\n\n")
+            report.write(" Nenhuma classe duplicada encontrada!\n\n")
         
         if duplicate_ids:
             report.write(f"🚨 IDs DUPLICADOS ENCONTRADAS: {len(duplicate_ids)}\n\n")
@@ -210,7 +210,7 @@ def analyze_css_comprehensive():
                 
                 report.write("\n")
         else:
-            report.write("✅ Nenhum ID duplicado encontrado!\n\n")
+            report.write(" Nenhum ID duplicado encontrado!\n\n")
         
         if duplicate_selectors:
             report.write(f"🚨 SELETORES DUPLICADOS ENCONTRADOS: {len(duplicate_selectors)}\n\n")
@@ -225,7 +225,7 @@ def analyze_css_comprehensive():
                 
                 report.write("\n")
         else:
-            report.write("✅ Nenhum seletor duplicado encontrado!\n\n")
+            report.write(" Nenhum seletor duplicado encontrado!\n\n")
         
         # Estatísticas gerais
         report.write("\n" + "=" * 80 + "\n")
@@ -333,9 +333,9 @@ def main():
             print(f"   ... e mais {len(analysis['duplicate_ids']) - 5} IDs")
     
     if not analysis['duplicate_classes'] and not analysis['duplicate_ids']:
-        print(f"\n✅ Nenhuma classe ou ID duplicado encontrado!")
+        print(f"\n Nenhuma classe ou ID duplicado encontrado!")
     
-    print(f"\n[✅] Análise CSS concluída! Verifique o relatório completo em: {REPORT_FILE}")
+    print(f"\n[] Análise CSS concluída! Verifique o relatório completo em: {REPORT_FILE}")
 
 if __name__ == "__main__":
     main()

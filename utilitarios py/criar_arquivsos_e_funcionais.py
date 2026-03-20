@@ -153,7 +153,7 @@ class FastTimeoutMapper:
         
         total = len(self.fast_timeouts)
         if total == 0:
-            print("✅ Nenhum setTimeout < 200ms encontrado!")
+            print(" Nenhum setTimeout < 200ms encontrado!")
             return
         
         print(f"\n TOTAL ENCONTRADO: {total}\n")
@@ -253,7 +253,7 @@ def scan_error_handler_specific():
             
             if timeout_val < 200:
                 found = True
-                print(f"❌ setTimeout PERIGOSO: {timeout_val}ms na linha {line_num}")
+                print(f" setTimeout PERIGOSO: {timeout_val}ms na linha {line_num}")
                 
                 # Mostra o contexto
                 lines = content.split('\n')
@@ -261,7 +261,7 @@ def scan_error_handler_specific():
                     prefix = '>>' if i == line_num-1 else '  '
                     print(f"{prefix} {i+1}: {lines[i]}")
             else:
-                print(f"✅ setTimeout seguro: {timeout_val}ms na linha {line_num}")
+                print(f" setTimeout seguro: {timeout_val}ms na linha {line_num}")
         
         if not found:
             print("Nenhum setTimeout encontrado no error-handler.js")
@@ -315,7 +315,7 @@ window.setTimeout = function(fn, delay) {
     return originalSetTimeout(fn, delay);
 };
 
-console.log('✅ Monitor de setTimeout instalado!');
+console.log(' Monitor de setTimeout instalado!');
 """)
 
 if __name__ == "__main__":

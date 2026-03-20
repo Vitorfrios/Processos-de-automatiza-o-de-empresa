@@ -338,7 +338,7 @@
 
 
 
-/* 🔥 ESTILOS PARA O TOTAL DA OBRA */
+/*  ESTILOS PARA O TOTAL DA OBRA */
 .add-project-section {
     display: flex;
     align-items: center;
@@ -360,7 +360,7 @@
 }
 
 
-/* 🔥 Responsividade */
+/*  Responsividade */
 @media (max-width: 768px) {
     .add-project-section {
         flex-wrap: wrap;

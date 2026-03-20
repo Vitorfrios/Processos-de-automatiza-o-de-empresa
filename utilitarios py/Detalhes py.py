@@ -199,7 +199,7 @@ def analyze_python_comprehensive():
                 
                 report.write("\n")
         else:
-            report.write("✅ Nenhuma função duplicada encontrada!\n\n")
+            report.write(" Nenhuma função duplicada encontrada!\n\n")
         
         if duplicate_classes:
             report.write(f"🚨 CLASSES DUPLICADAS ENCONTRADAS: {len(duplicate_classes)}\n\n")
@@ -220,7 +220,7 @@ def analyze_python_comprehensive():
                 
                 report.write("\n")
         else:
-            report.write("✅ Nenhuma classe duplicada encontrada!\n\n")
+            report.write(" Nenhuma classe duplicada encontrada!\n\n")
         
         # Estatísticas gerais
         report.write("\n" + "=" * 80 + "\n")
@@ -318,9 +318,9 @@ def main():
             print(f"   ... e mais {len(analysis['duplicate_classes']) - 5} classes")
     
     if not analysis['duplicate_functions'] and not analysis['duplicate_classes']:
-        print(f"\n✅ Nenhuma função ou classe duplicada encontrada!")
+        print(f"\n Nenhuma função ou classe duplicada encontrada!")
     
-    print(f"\n[✅] Análise concluída! Verifique o relatório completo em: {REPORT_FILE}")
+    print(f"\n[] Análise concluída! Verifique o relatório completo em: {REPORT_FILE}")
 
 if __name__ == "__main__":
     main()

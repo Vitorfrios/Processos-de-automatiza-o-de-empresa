@@ -1,6 +1,6 @@
 /**
  * core/app.js
- * Ponto único de entrada do sistema - FUSÃO: bootstrap.js + event-bus.js + state.js
+ * Ponto único de entrada do sistema
  * Sistema de inicialização, eventos e estado global unificados
  */
 
@@ -47,7 +47,7 @@ class EventBus {
                 try {
                     callback(data);
                 } catch (error) {
-                    console.error(`❌ Erro no listener do evento ${event}:`, error);
+                    console.error(` Erro no listener do evento ${event}:`, error);
                 }
             });
         }
@@ -193,7 +193,7 @@ export const appState = new ApplicationState();
  */
 function initializeEventBus() {
     window.eventBus = eventBus;
-    console.log('✅ Event Bus inicializado');
+    console.log(' Event Bus inicializado');
 }
 
 /**
@@ -201,7 +201,7 @@ function initializeEventBus() {
  */
 function initializeState() {
     window.appState = appState;
-    console.log('✅ State inicializado');
+    console.log(' State inicializado');
 }
 
 /**
@@ -214,11 +214,11 @@ function initializeInterface() {
             if (module.initializeInterface) {
                 module.initializeInterface();
             } else {
-                console.warn('⚠️ initializeInterface não encontrado em interface.js');
+                console.warn(' initializeInterface não encontrado em interface.js');
             }
         })
         .catch(error => {
-            console.error('❌ Erro ao inicializar interface:', error);
+            console.error(' Erro ao inicializar interface:', error);
         });
 }
 
@@ -238,13 +238,13 @@ function initializeCoreSystems() {
         // 3. Inicializa Interface (assíncrona)
         initializeInterface();
         
-        console.log('✅ Sistemas core inicializados com sucesso');
+        console.log(' Sistemas core inicializados com sucesso');
         
         // Dispara evento de inicialização completa
         eventBus.emit('app:core-ready');
         
     } catch (error) {
-        console.error('❌ Erro na inicialização dos sistemas core:', error);
+        console.error(' Erro na inicialização dos sistemas core:', error);
         eventBus.emit('app:core-error', error);
     }
 }
@@ -258,7 +258,7 @@ export function bootstrapApplication() {
     
     // Verifica se já está inicializado
     if (window.appInitialized) {
-        console.log('⚠️ Aplicação já inicializada');
+        console.log(' Aplicação já inicializada');
         return;
     }
     
@@ -268,7 +268,7 @@ export function bootstrapApplication() {
     // Marca como inicializado
     window.appInitialized = true;
     
-    console.log('✅ Aplicação bootstrap completa');
+    console.log(' Aplicação bootstrap completa');
 }
 
 /**

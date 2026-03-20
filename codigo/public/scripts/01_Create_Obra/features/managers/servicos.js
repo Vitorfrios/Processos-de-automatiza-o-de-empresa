@@ -41,7 +41,7 @@ function updateServicosTotal(projectId) {
             detail: { tipo: 'servico', projectId, valor: total }
         }));
 
-        // 🔥 ATUALIZA O TOTAL DO PROJETO
+        // ATUALIZA O TOTAL DO PROJETO
         if (typeof window.updateProjectTotal === 'function') {
             window.updateProjectTotal(projectId);
         } else {
@@ -55,7 +55,7 @@ function updateServicosTotal(projectId) {
  */
 function buildServicosInProject(projectId) {
     if (!projectId) {
-        console.error('❌ Project ID inválido para construir serviços')
+        console.error(' Project ID inválido para construir serviços')
         return ''
     }
 

@@ -295,7 +295,7 @@ function parsePolegadas(polegadasStr) {
         return parseFloat(str) || 0;
         
     } catch (e) {
-        console.warn('❌ Erro ao converter polegadas:', polegadasStr, e);
+        console.warn(' Erro ao converter polegadas:', polegadasStr, e);
         return 0;
     }
 }
@@ -499,10 +499,10 @@ export async function initTubosModule() {
         window.resetTuboChanges = resetTuboChanges;
         window.saveTuboChanges = saveTuboChanges;
         
-        console.log('✅ Módulo de tubos inicializado');
+        console.log(' Módulo de tubos inicializado');
         
     } catch (error) {
-        console.error('❌ Erro ao inicializar módulo de tubos:', error);
+        console.error(' Erro ao inicializar módulo de tubos:', error);
         showError('Erro ao carregar dados dos tubos');
         systemData.tubos = [];
         pendingTuboChanges = [];

@@ -392,7 +392,7 @@
     overflow: visible !important;
     z-index: 100;
     
-    /* 🆕 MELHORIAS PARA MOBILE */
+    /* MELHORIAS PARA MOBILE */
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
@@ -432,7 +432,7 @@
 .empresa-tooltip.show {
     opacity: 1;
     display: block;
-    pointer-events: auto; /* 🆕 PERMITIR INTERAÇÃO NO MOBILE */
+    pointer-events: auto; /* PERMITIR INTERAÇÃO NO MOBILE */
 }
 
 .empresa-tooltip::after {
@@ -445,7 +445,7 @@
     border-top-color: var(--color-gray-800);
 }
 
-/* 🆕 TOOLTIP MOBILE - VERSÃO CENTRALIZADA */
+/* TOOLTIP MOBILE - VERSÃO CENTRALIZADA */
 .empresa-tooltip-mobile {
     min-width: auto !important;
     width: 90vw !important;
@@ -462,14 +462,14 @@
     line-height: 1.5 !important;
     text-align: center !important;
     border: 2px solid var(--color-primary) !important;
-    z-index: 100000 !important; /* 🆕 Z-INDEX MUITO ALTO PARA MOBILE */
+    z-index: 100000 !important; /* Z-INDEX MUITO ALTO PARA MOBILE */
 }
 
 .empresa-tooltip-mobile::after {
-    display: none !important; /* 🆕 REMOVER SETA NO MOBILE */
+    display: none !important; /* REMOVER SETA NO MOBILE */
 }
 
-/* 🆕 OVERLAY PARA MOBILE */
+/* OVERLAY PARA MOBILE */
 .empresa-tooltip-overlay {
     position: fixed;
     top: 0;
@@ -486,7 +486,7 @@
     display: block;
 }
 
-/* 🆕 BOTÃO FECHAR PARA MOBILE */
+/* BOTÃO FECHAR PARA MOBILE */
 .empresa-tooltip-close {
     position: absolute;
     top: 8px;
@@ -518,7 +518,7 @@
     transform: scale(0.95);
 }
 
-/* 🆕 INDICADOR VISUAL DE AUTO-CLOSE */
+/* INDICADOR VISUAL DE AUTO-CLOSE */
 .empresa-tooltip-mobile::before {
     content: '';
     position: absolute;
@@ -550,7 +550,7 @@
     to { width: 0%; }
 }
 
-/* 🆕 PAUSAR ANIMAÇÃO QUANDO HOUVER INTERAÇÃO */
+/* PAUSAR ANIMAÇÃO QUANDO HOUVER INTERAÇÃO */
 .empresa-tooltip-mobile.paused::after {
     animation-play-state: paused;
 }
@@ -691,7 +691,7 @@
         max-height: 180px;
     }
     
-    /* 🔥 GARANTIR QUE O DROPDOWN ACOMPANHE O INPUT */
+    /*  GARANTIR QUE O DROPDOWN ACOMPANHE O INPUT */
     .form-group-horizontal {
         position: relative;
     }
@@ -728,7 +728,7 @@
         width: 100%;
     }
     
-    /* 🔥 CORREÇÃO: DROPDOWN MANTÉM POSIÇÃO RELATIVA */
+    /* DROPDOWN MANTÉM POSIÇÃO RELATIVA */
     .empresa-dropdown {
         max-height: 60vh;
         z-index: 1000;
@@ -741,23 +741,23 @@
         max-width: 200px;
     }
     
-    /* 🔥 GARANTIR QUE O CONTAINER TENHA ESPAÇO SUFICIENTE */
+    /*  GARANTIR QUE O CONTAINER TENHA ESPAÇO SUFICIENTE */
     .form-group-horizontal {
         margin-bottom: var(--spacing-sm);
     }
     
-    /* 🆕 COMPORTAMENTO DO IDENTIFICADOR NO MOBILE */
+    /* COMPORTAMENTO DO IDENTIFICADOR NO MOBILE */
     .empresa-identifier-display {
         padding: 10px 14px;
         font-size: 13px;
-        min-height: 44px; /* 🆕 MELHOR TOUCH TARGET */
+        min-height: 44px; /* MELHOR TOUCH TARGET */
         width: 100%;
         justify-content: center;
         text-align: center;
         margin: var(--spacing-xs) 0;
     }
     
-    /* 🆕 ESCONDER TOOLTIP NORMAL NO MOBILE */
+    /* ESCONDER TOOLTIP NORMAL NO MOBILE */
     .empresa-tooltip:not(.empresa-tooltip-mobile) {
         display: none !important;
     }
@@ -771,7 +771,7 @@
     
     .form-group-horizontal input {
         padding: var(--spacing-md);
-        font-size: 16px; /* 🆕 MELHOR LEGIBILIDADE EM MOBILE */
+        font-size: 16px; /* MELHOR LEGIBILIDADE EM MOBILE */
         min-height: 44px;
     }
     
@@ -782,7 +782,7 @@
     }
 }
 
-/* 🔥 CORREÇÃO ESPECÍFICA PARA DROPDOWN EM DISPOSITIVOS MÓVEIS */
+/*  ESPECÍFICA PARA DROPDOWN EM DISPOSITIVOS MÓVEIS */
 @media (max-width: 768px) {
     .empresa-dropdown {
         /* Forçar que o dropdown respeite o container do input */
@@ -974,7 +974,7 @@
     }
 }
 
-/* 🔥 CORREÇÃO PARA TELAS MUITO PEQUENAS (até 320px) */
+/*  PARA TELAS MUITO PEQUENAS (até 320px) */
 @media (max-width: 320px) {
     .empresa-dropdown {
         max-height: 45vh;
@@ -1005,7 +1005,7 @@
     }
 }
 
-/* 🆕 ORIENTAÇÃO LANDSCAPE NO MOBILE */
+/* ORIENTAÇÃO LANDSCAPE NO MOBILE */
 @media (max-width: 768px) and (orientation: landscape) {
     .empresa-tooltip-mobile {
         max-height: 60vh !important;
@@ -1029,7 +1029,7 @@
     }
 }
 
-/* 🆕 DISPOSITIVOS COM ALTURA MUITO PEQUENA */
+/* DISPOSITIVOS COM ALTURA MUITO PEQUENA */
 @media (max-height: 500px) {
     .empresa-tooltip-mobile {
         max-height: 50vh !important;
@@ -1049,7 +1049,7 @@
     }
 }
 
-/* 🆕 SUPORTE PARA DARK MODE EM DISPOSITIVOS MÓVEIS */
+/* SUPORTE PARA DARK MODE EM DISPOSITIVOS MÓVEIS */
 @media (max-width: 768px) and (prefers-color-scheme: dark) {
     .empresa-identifier-display {
         background: linear-gradient(135deg, var(--color-gray-800) 0%, var(--color-gray-700) 100%);
@@ -1063,7 +1063,7 @@
     }
 }
 
-/* 🆕 DISPOSITIVOS COM TOUCH SCREEN */
+/* DISPOSITIVOS COM TOUCH SCREEN */
 @media (hover: none) and (pointer: coarse) {
     .empresa-identifier-display:hover {
         transform: none;
@@ -1084,7 +1084,7 @@
     }
 }
 
-/* 🆕 DISPOSITIVOS COM HOVER (desktop) */
+/* DISPOSITIVOS COM HOVER (desktop) */
 @media (hover: hover) and (pointer: fine) {
     .empresa-identifier-display:hover {
         transform: translateY(-2px);
@@ -1098,7 +1098,7 @@
     }
 }
 
-/* 🆕 IMPRESSÃO */
+/* IMPRESSÃO */
 @media print {
     .empresa-cadastro-inline,
     .empresa-formulario-ativo,

@@ -87,7 +87,7 @@ async function populateObraData(obraData) {
             try {
                 await window.carregarDadosEmpresaNaObra(obraElement, obraData);
             } catch (error) {
-                console.error('❌ Erro ao carregar dados da empresa:', error);
+                console.error(' Erro ao carregar dados da empresa:', error);
             }
         } else {
             const camposEmpresa = ['empresaSigla', 'empresaNome', 'empresa_id'];
@@ -302,7 +302,7 @@ if (typeof window !== 'undefined') {
     }
 }
 
-// EXPORTS NO FINAL
+
 export {
     renderObraFromData,
     populateObraData,

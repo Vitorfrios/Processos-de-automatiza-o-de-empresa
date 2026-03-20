@@ -85,7 +85,7 @@ class WordHandler:
                 vars_list.add_run('• {{tensoes_disponiveis}} - Tensões elétricas disponíveis\n')
             
             doc.save(str(template_path))
-            print(f"✅ Template placeholder criado: {template_path}")
+            print(f" Template placeholder criado: {template_path}")
             return True
         except Exception as e:
             print(f"❌ Erro ao criar template placeholder: {e}")
@@ -185,7 +185,7 @@ class WordHandler:
             try:
                 doc = DocxTemplate(str(template_path))
                 doc.render(test_context)
-                print("✅ Template básico funciona!")
+                print(" Template básico funciona!")
             except Exception as template_error:
                 print(f"❌ Erro no template: {template_error}")
             
@@ -200,7 +200,7 @@ class WordHandler:
                 output_path = tmp.name
                 doc.save(output_path)
             
-            print(f"✅ Proposta Comercial gerada: {output_path}")
+            print(f" Proposta Comercial gerada: {output_path}")
             return output_path
             
         except Exception as e:
@@ -554,7 +554,7 @@ class WordHandler:
             
         except Exception as e:
             print(f"❌ Erro ao validar obra: {e}")
-            # ⚠️ NEM MESMO ERRO DEVE BLOQUEAR - APENAS LOGAR
+            # Nem mesmo um erro deve bloquear; apenas registrar
             return True, f"Erro na validação, mas documento será gerado: {str(e)}"
     
     def get_obra_summary(self, obra_id):

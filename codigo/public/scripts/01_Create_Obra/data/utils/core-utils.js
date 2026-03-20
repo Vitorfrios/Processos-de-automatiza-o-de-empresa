@@ -20,7 +20,7 @@ function waitForElement(selector, timeout = 3000) {
         function check() {
             const element = document.querySelector(selector);
             if (element) {
-                console.log(`✅ Elemento encontrado: ${selector}`);
+                console.log(` Elemento encontrado: ${selector}`);
                 resolve(element);
                 return;
             }
@@ -66,7 +66,7 @@ function updateElementText(elementId, value) {
     if (element) {
         element.textContent = value;
     } else {
-        console.log(`⚠️  [DEBUG] Elemento ${elementId} não encontrado`);
+        console.log(`  [DEBUG] Elemento ${elementId} não encontrado`);
     }
 }
 

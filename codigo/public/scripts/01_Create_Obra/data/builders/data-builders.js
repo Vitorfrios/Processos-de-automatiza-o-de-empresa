@@ -8,7 +8,7 @@ export * from './data-builders-folder/obra-data-builder.js';
 export * from './data-builders-folder/room-data-extractors.js';
 export * from './data-builders-folder/machines-data-extractors.js';
 
-// 🔥 COMPATIBILIDADE GLOBAL
+// COMPATIBILIDADE GLOBAL
 if (typeof window !== 'undefined') {
 
 
@@ -19,7 +19,7 @@ if (typeof window !== 'undefined') {
         import('./data-builders-folder/machines-data-extractors.js'),
     ]).then(modules => {
         modules.forEach(attachModuleToWindow);
-        console.log('✅ [data-builders] Módulos carregados no escopo global');
+        console.log(' [data-builders] Módulos carregados no escopo global');
     }).catch(error => {
         console.error('[data-builders] Erro ao carregar módulos:', error);
     });

@@ -197,7 +197,7 @@ def analyze_js_comprehensive(selected_dirs):
 
                 report.write("\n")
         else:
-            report.write("✅ Nenhuma função duplicada encontrada!\n\n")
+            report.write(" Nenhuma função duplicada encontrada!\n\n")
 
         # ---------------------------------------------------------------------
         # ESTATÍSTICAS GERAIS
@@ -310,9 +310,9 @@ def main():
                 f"   ... e mais {len(analysis['duplicate_functions']) - 10} funções"
             )
     else:
-        print("\n✅ Nenhuma função duplicada encontrada!")
+        print("\n Nenhuma função duplicada encontrada!")
 
-    print(f"\n[✅] Análise concluída! Verifique o relatório completo em: {REPORT_FILE}")
+    print(f"\n[] Análise concluída! Verifique o relatório completo em: {REPORT_FILE}")
 
 
 if __name__ == "__main__":

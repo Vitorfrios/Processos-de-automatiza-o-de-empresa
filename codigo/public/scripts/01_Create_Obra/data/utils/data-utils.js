@@ -1,6 +1,6 @@
 /**
  * data/utils/data-utils.js
- * Utilitários de dados unificados - FUSÃO: data-utils-core.js + helpers.js
+ * Utilitários de dados unificados
  * Sistema completo de IDs, numeração, nomeação e utilitários
  */
 
@@ -19,7 +19,7 @@ import {
  */
 function getNextProjectNumber(obraId) {
     try {
-        //  CORREÇÃO: Buscar apenas projetos DESTA obra específica
+        //  Buscar apenas projetos DESTA obra específica
         const obraBlock = document.querySelector(`[data-obra-id="${obraId}"]`);
         if (!obraBlock) {
             console.warn(` Obra ${obraId} não encontrada, usando projeto 1`);
@@ -301,7 +301,7 @@ function debugThermalGainsElements(roomElement) {
     const roomFullId = getRoomFullId(roomElement);
     console.log(' DEBUG: Todos os elementos de ganhos térmicos disponíveis:');
     
-    //  ATUALIZADO: Incluir os novos IDs de TR
+    //   Incluir os novos IDs de TR
     const selectors = [
         'total-ganhos-w', 'total-tr-aprox', 'total-tr-exato', 'total-externo', 'total-divisoes',
         'total-piso', 'total-iluminacao', 'total-dissi', 'total-pessoas',
@@ -359,7 +359,7 @@ function collectClimatizationInputs(climaSection, roomId) {
         const field = input.dataset.field;
         let value;
         
-        //  CORREÇÃO: Tratar diferentes tipos de input
+        //  Tratar diferentes tipos de input
         if (input.type === 'checkbox') {
             value = input.checked;
         } else if (input.type === 'number' || input.type === 'text') {
@@ -373,7 +373,7 @@ function collectClimatizationInputs(climaSection, roomId) {
         }
     });
 
-    //  CORREÇÃO: Coletar estado da pressurização dos RADIO BUTTONS
+    //  Coletar estado da pressurização dos RADIO BUTTONS
     if (data.pressurizacao === undefined) {
         const radioSim = climaSection.querySelector('input[type="radio"][value="sim"]');
         const radioNao = climaSection.querySelector('input[type="radio"][value="nao"]');
@@ -388,13 +388,13 @@ function collectClimatizationInputs(climaSection, roomId) {
         });
     }
     
-    //  CORREÇÃO: Garantir que setpointTemp esteja presente
+    //  Garantir que setpointTemp esteja presente
     if (data.setpointTemp === undefined) {
         const setpointInput = climaSection.querySelector('input[data-field="setpointTemp"]');
         data.setpointTemp = setpointInput ? safeNumber(setpointInput.value) : 0;
     }
 
-    //  CORREÇÃO: Garantir que pressurizacaoSetpoint esteja presente
+    //  Garantir que pressurizacaoSetpoint esteja presente
     if (data.pressurizacaoSetpoint === undefined) {
         const pressurizacaoInput = climaSection.querySelector('input[data-field="pressurizacaoSetpoint"]');
         data.pressurizacaoSetpoint = pressurizacaoInput ? safeNumber(pressurizacaoInput.value) : 0;
@@ -415,7 +415,7 @@ function collectClimatizationInputs(climaSection, roomId) {
  * @returns {HTMLElement|null} Elemento da seção de climatização
  */
 function findClimatizationSection(roomId) {
-    //  CORREÇÃO: Buscar APENAS por ID único
+    //  Buscar APENAS por ID único
     const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
     if (!roomElement) {
         console.error(`  Sala não encontrada: ${roomId}`);

@@ -9,14 +9,14 @@ export function initAcessories() {
     
     // Verificar se estamos na página correta
     if (!document.getElementById('acessoriesTab')) {
-        console.log('⚠️ Tab de acessorios não encontrada');
+        console.log(' Tab de acessorios não encontrada');
         return;
     }
     
     // Inicializar sistema
     setupAcessorieSystem();
     
-    console.log('✅ Sistema de acessorios pronto');
+    console.log(' Sistema de acessorios pronto');
 }
 
 // Configuração do sistema
@@ -596,7 +596,7 @@ function showNotification(message, type = 'info') {
         window.showNotification(message, type);
     } else {
         // Fallback simples
-        alert(`${type === 'error' ? '❌' : '✅'} ${message}`);
+        alert(`${type === 'error' ? '' : ''} ${message}`);
     }
 }
 

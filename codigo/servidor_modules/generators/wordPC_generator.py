@@ -19,7 +19,7 @@ from docxtpl import DocxTemplate
 
 
 class WordPCGenerator:
-    """Gerador específico para Proposta Comercial - VERSÃO OTIMIZADA"""
+    """Gerador específico para Proposta Comercial"""
     
     def __init__(self, project_root: Path, file_utils):
         self.project_root = project_root
