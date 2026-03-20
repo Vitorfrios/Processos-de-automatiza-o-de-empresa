@@ -109,7 +109,8 @@ class SessionsManager:
                 return False
         
         print(f"⚠️ Obra {obra_id_str} não encontrada na sessão {current_session_id}")
-        return False
+        print(f"🧹 Remoção de sessão tratada como idempotente para {obra_id_str}")
+        return True
 
     def remove_obra_from_session(self, obra_id: str) -> dict:
         """Remove uma obra da sessão ativa - para uso com modal"""

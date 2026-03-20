@@ -118,7 +118,60 @@ function shouldInvalidateRuntimeCache(method, pathname) {
         return true;
     }
 
+    if (pathname === '/api/delete') {
+        return true;
+    }
+
     return false;
+}
+
+export function removeObraFromRuntimeBootstrap(obraId) {
+    const obraIdStr = String(obraId || '').trim();
+    if (!obraIdStr) {
+        return false;
+    }
+
+    const prunePayload = (payload) => {
+        if (!payload || typeof payload !== 'object') {
+            return false;
+        }
+
+        let removed = false;
+
+        if (payload.backup && Array.isArray(payload.backup.obras)) {
+            const previousLength = payload.backup.obras.length;
+            payload.backup.obras = payload.backup.obras.filter(
+                (obra) => String(obra?.id || '').trim() !== obraIdStr
+            );
+            removed = removed || payload.backup.obras.length !== previousLength;
+        }
+
+        if (payload.sessionObras && Array.isArray(payload.sessionObras.obras)) {
+            const previousLength = payload.sessionObras.obras.length;
+            payload.sessionObras.obras = payload.sessionObras.obras.filter(
+                (id) => String(id || '').trim() !== obraIdStr
+            );
+            removed = removed || payload.sessionObras.obras.length !== previousLength;
+        }
+
+        if (Array.isArray(payload.obrasSessao)) {
+            const previousLength = payload.obrasSessao.length;
+            payload.obrasSessao = payload.obrasSessao.filter(
+                (obra) => String(obra?.id || '').trim() !== obraIdStr
+            );
+            removed = removed || payload.obrasSessao.length !== previousLength;
+        }
+
+        return removed;
+    };
+
+    const removedFromCache = prunePayload(runtimeBootstrapCache);
+
+    if (typeof window !== 'undefined' && window.__RUNTIME_BOOTSTRAP__) {
+        prunePayload(window.__RUNTIME_BOOTSTRAP__);
+    }
+
+    return removedFromCache;
 }
 
 export function installRuntimeFetchBridge() {
@@ -187,5 +240,6 @@ if (typeof window !== 'undefined') {
     }
     window.loadRuntimeBootstrap = loadRuntimeBootstrap;
     window.invalidateRuntimeBootstrap = invalidateRuntimeBootstrap;
+    window.removeObraFromRuntimeBootstrap = removeObraFromRuntimeBootstrap;
     installRuntimeFetchBridge();
 }

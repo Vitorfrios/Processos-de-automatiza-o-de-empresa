@@ -1,5 +1,7 @@
 /* ==== INÍCIO: button-delete-universal.js ==== */
 
+import { removeObraFromRuntimeBootstrap } from "../../core/runtime-data.js";
+
 class ButtonDeleteUniversal {
   constructor() {
     // APENAS configuração para obras
@@ -21,6 +23,7 @@ class ButtonDeleteUniversal {
     this.pendingDeletion = null;
     this.undoTimeout = null;
     this.toastContainer = null;
+    this.inFlightDeletions = new Set();
 
     console.log(" ButtonDeleteUniversal configurado (APENAS OBRAS)");
   }
@@ -165,11 +168,16 @@ class ButtonDeleteUniversal {
     newButton.classList.add("delete-real");
 
     // Adicionar novo evento
+    const runtimeButtonInfo = {
+      ...buttonInfo,
+      button: newButton,
+    };
+
     newButton.addEventListener("click", async (e) => {
       e.preventDefault();
       e.stopPropagation();
 
-      await this.showAdvancedConfirmation(buttonInfo);
+      await this.showAdvancedConfirmation(runtimeButtonInfo);
     });
 
     // Substituir o botão antigo
@@ -210,10 +218,28 @@ class ButtonDeleteUniversal {
    */
   async executeRealDeletion(buttonInfo) {
     const { config, ids, path, itemName } = buttonInfo;
+    const obraId = String(ids?.obraId || "").trim();
 
     console.log(` Executando deleção REAL da obra: "${itemName}"`, path);
 
+    if (!obraId) {
+      this.showToast("ID da obra inválido para exclusão", "error");
+      return false;
+    }
+
+    if (this.inFlightDeletions.has(obraId)) {
+      console.warn(` [DELETE-REAL] Exclusão já em andamento para ${obraId}`);
+      return false;
+    }
+
     try {
+      this.inFlightDeletions.add(obraId);
+      if (buttonInfo.button) {
+        buttonInfo.button.disabled = true;
+        buttonInfo.button.dataset.deleting = "true";
+        buttonInfo.button.textContent = "Removendo...";
+      }
+
       this.showToast(`Obra "${itemName}" sendo deletada...`, "processing");
 
       const response = await fetch("/api/delete", {
@@ -227,10 +253,18 @@ class ButtonDeleteUniversal {
         }),
       });
 
-      const result = await response.json();
+      const result = await response.json().catch(() => ({
+        success: false,
+        error: `Resposta inválida do servidor (${response.status})`,
+      }));
 
       if (result.success) {
         console.log(` [DELETE-REAL] Sucesso: ${result.message}`);
+
+        removeObraFromRuntimeBootstrap(obraId);
+        if (window.FilterSystem?.notifyObraDeleted) {
+          window.FilterSystem.notifyObraDeleted(obraId);
+        }
 
         this.removeElementFromDOM(buttonInfo);
         this.showToast(
@@ -238,13 +272,16 @@ class ButtonDeleteUniversal {
           "success",
         );
 
-        setTimeout(() => {
-          if (window.FilterSystem) {
-            window.FilterSystem.reloadObras();
-          } else {
-            window.location.reload();
-          }
-        }, 187);
+        if (typeof window.invalidateRuntimeBootstrap === "function") {
+          window.invalidateRuntimeBootstrap();
+        }
+        if (typeof window.loadRuntimeBootstrap === "function") {
+          window
+            .loadRuntimeBootstrap({ forceReload: true })
+            .catch((error) =>
+              console.warn(" [DELETE-REAL] Falha ao sincronizar cache:", error),
+            );
+        }
 
         return true;
       } else {
@@ -256,6 +293,18 @@ class ButtonDeleteUniversal {
       console.error(" [DELETE-REAL] Exceção:", error);
       this.showToast("Erro ao conectar com o servidor", "error");
       return false;
+    } finally {
+      this.inFlightDeletions.delete(obraId);
+
+      if (buttonInfo.button?.isConnected) {
+        buttonInfo.button.disabled = false;
+        buttonInfo.button.removeAttribute("data-deleting");
+        const originalText =
+          buttonInfo.button.getAttribute("data-original-text") ||
+          buttonInfo.originalText ||
+          "Remover Obra";
+        buttonInfo.button.textContent = originalText;
+      }
     }
   }
 

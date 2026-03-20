@@ -17,6 +17,8 @@ const FilterSystem = (function () {
     },
     systemReady: false,
     isLoading: false,
+    reloadQueued: false,
+    forceReloadQueued: false,
     currentObras: [], // Cache das obras carregadas
     modalsDisabled: false, // Novo estado para controlar modais
   };
@@ -24,6 +26,28 @@ const FilterSystem = (function () {
   // Referências DOM
   let filterToggle = null;
   let filterSwitchArea = null;
+
+  function getProjectsContainer() {
+    let container = document.getElementById("projects-container");
+    if (container) {
+      return container;
+    }
+
+    const host =
+      document.querySelector(".container") ||
+      document.querySelector(".main-content") ||
+      document.querySelector("main") ||
+      document.body;
+
+    if (!host) {
+      return null;
+    }
+
+    container = document.createElement("div");
+    container.id = "projects-container";
+    host.appendChild(container);
+    return container;
+  }
 
   /**
    * Inicializa o sistema de filtros
@@ -86,6 +110,7 @@ const FilterSystem = (function () {
    * Habilita o switch de filtro (MESMA LÓGICA DO BOTÃO "NOVA OBRA")
    */
   function enableFilterSwitch() {
+    filterToggle = filterToggle || document.getElementById("filter-toggle");
     if (!filterToggle) return;
 
     filterToggle.disabled = false;
@@ -103,6 +128,10 @@ const FilterSystem = (function () {
    * Configura listener para mudança do switch
    */
   function setupSwitchListener() {
+    if (!filterToggle) {
+      return;
+    }
+
     filterToggle.addEventListener("change", function (e) {
       const isActive = e.target.checked;
       handleFilterToggleChange(isActive);
@@ -113,9 +142,13 @@ const FilterSystem = (function () {
    * Manipula mudança no switch
    */
   function handleFilterToggleChange(isActive) {
+    filterToggle = filterToggle || document.getElementById("filter-toggle");
+
     if (state.isLoading) {
       console.log(" [FILTER-SYSTEM] Sistema ocupado, ignorando toggle");
-      filterToggle.checked = !isActive; // Reverte visualmente
+      if (filterToggle) {
+        filterToggle.checked = !isActive; // Reverte visualmente
+      }
       return;
     }
 
@@ -278,16 +311,27 @@ const FilterSystem = (function () {
   /**
    * Recarrega obras com endpoint atual + filtros
    */
-  async function reloadObrasWithCurrentEndpoint() {
+  async function reloadObrasWithCurrentEndpoint(options = {}) {
+    const forceReload =
+      options === true ||
+      options?.force === true ||
+      options?.forceReload === true;
+
     if (state.isLoading) {
-      console.log(" [FILTER-SYSTEM] Já recarregando, ignorando...");
-      return;
+      state.reloadQueued = true;
+      state.forceReloadQueued = state.forceReloadQueued || forceReload;
+      console.log(" [FILTER-SYSTEM] Já recarregando, agendando nova execução...");
+      return false;
     }
 
     state.isLoading = true;
     console.log(" [FILTER-SYSTEM] Recarregando obras...");
 
     try {
+      if (forceReload && typeof window.invalidateRuntimeBootstrap === "function") {
+        window.invalidateRuntimeBootstrap();
+      }
+
       // Limpar obras atuais (reutiliza função existente)
       clearCurrentObras();
 
@@ -304,6 +348,15 @@ const FilterSystem = (function () {
       console.error(" [FILTER-SYSTEM] Erro ao recarregar obras:", error);
     } finally {
       state.isLoading = false;
+
+      if (state.reloadQueued) {
+        const shouldForceReload = state.forceReloadQueued;
+        state.reloadQueued = false;
+        state.forceReloadQueued = false;
+        setTimeout(() => {
+          reloadObrasWithCurrentEndpoint({ forceReload: shouldForceReload });
+        }, 0);
+      }
     }
   }
 
@@ -320,7 +373,7 @@ const FilterSystem = (function () {
       window.removeBaseObraFromHTML();
     } else {
       // Fallback: limpar container manualmente
-      const container = document.getElementById("projects-container");
+      const container = getProjectsContainer();
       if (container) {
         container.innerHTML = "";
         console.log(" [FILTER-SYSTEM] Container de obras limpo manualmente");
@@ -391,9 +444,12 @@ const FilterSystem = (function () {
         }
       }
 
-      // Se nenhum endpoint funcionou, lançar erro
+      // Sem obras salvas não é erro
       if (todasObras.length === 0) {
-        throw new Error("Não foi possível carregar obras de nenhum endpoint");
+        console.log(" [FILTER-SYSTEM] Nenhuma obra salva encontrada no sistema");
+        state.currentObras = [];
+        showSavedObrasEmptyState();
+        return;
       }
 
       // Garantir que os dados completos estão no cache
@@ -531,7 +587,7 @@ const FilterSystem = (function () {
    * Mostra mensagem quando não há resultados
    */
   function showNoResultsMessage() {
-    const container = document.getElementById("projects-container");
+    const container = getProjectsContainer();
     if (container) {
       container.innerHTML = `
  <div class="no-results-message" style="text-align: center; padding: 40px; color: #666;">
@@ -542,11 +598,23 @@ const FilterSystem = (function () {
     }
   }
 
+  function showSavedObrasEmptyState() {
+    const container = getProjectsContainer();
+    if (container) {
+      container.innerHTML = `
+ <div class="empty-obras-message" style="text-align: center; padding: 40px; color: #666;">
+ <h3>Sem obras salvas</h3>
+ <p>Salve uma obra para visualizar.</p>
+ </div>
+ `;
+    }
+  }
+
   /**
    * Mostra mensagem de erro
    */
   function showErrorMessage(message) {
-    const container = document.getElementById("projects-container");
+    const container = getProjectsContainer();
     if (container) {
       container.innerHTML = `
  <div class="error-message" style="text-align: center; padding: 40px; color: #d32f2f;">
@@ -567,15 +635,15 @@ const FilterSystem = (function () {
     console.log(" [FILTER-SYSTEM] Carregando obras da sessão");
 
     try {
-      // Limpar DOM completamente primeiro
-      clearCurrentObras();
-
       // NOVA ABORDAGEM: Usar loadObrasFromServer importada diretamente
       if (typeof loadObrasFromServer === "function") {
         console.log(
           " [FILTER-SYSTEM] Usando loadObrasFromServer do escopo global",
         );
-        await loadObrasFromServer();
+        const count = await loadObrasFromServer();
+        if (!count) {
+          showSavedObrasEmptyState();
+        }
       }
       // Fallback: tentar outras localizações
       else if (
@@ -583,7 +651,10 @@ const FilterSystem = (function () {
         typeof window.loadObrasFromServer === "function"
       ) {
         console.log(" [FILTER-SYSTEM] Usando loadObrasFromServer do window");
-        await window.loadObrasFromServer();
+        const count = await window.loadObrasFromServer();
+        if (!count) {
+          showSavedObrasEmptyState();
+        }
       } else if (
         window.systemFunctions &&
         window.systemFunctions.loadObrasFromServer &&
@@ -592,7 +663,10 @@ const FilterSystem = (function () {
         console.log(
           " [FILTER-SYSTEM] Usando loadObrasFromServer do systemFunctions",
         );
-        await window.systemFunctions.loadObrasFromServer();
+        const count = await window.systemFunctions.loadObrasFromServer();
+        if (!count) {
+          showSavedObrasEmptyState();
+        }
       } else {
         console.warn(" [FILTER-SYSTEM] Nenhuma função encontrada");
         throw new Error("Função de carregamento não encontrada");
@@ -813,7 +887,7 @@ const FilterSystem = (function () {
    * Recarrega obras com endpoint atual (para uso externo)
    */
   function reloadObras() {
-    return reloadObrasWithCurrentEndpoint();
+    return reloadObrasWithCurrentEndpoint.apply(null, arguments);
   }
 
   /**
@@ -863,6 +937,24 @@ const FilterSystem = (function () {
     }
   }
 
+  function notifyObraDeleted(obraId) {
+    const obraIdStr = String(obraId || "").trim();
+    if (!obraIdStr) {
+      return false;
+    }
+
+    const previousLength = state.currentObras.length;
+    state.currentObras = state.currentObras.filter(
+      (obra) => String(obra?.id || "").trim() !== obraIdStr,
+    );
+
+    if (state.active && state.currentObras.length === 0) {
+      showSavedObrasEmptyState();
+    }
+
+    return state.currentObras.length !== previousLength;
+  }
+
   // API pública
   return {
     initialize,
@@ -876,6 +968,7 @@ const FilterSystem = (function () {
     isFilterActive,
     handleFilterToggleChange,
     recarregarDadosEmpresa,
+    notifyObraDeleted,
   };
 })();
 

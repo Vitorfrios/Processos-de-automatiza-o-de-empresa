@@ -194,6 +194,7 @@ function setupUniversalDeletionOverride() {
   };
 
   let isOverrideActive = false;
+  const inFlightObraDeletes = new Set();
 
   // Função para ativar/desativar a sobrescrita
   function toggleOverride(active) {
@@ -238,14 +239,23 @@ function setupUniversalDeletionOverride() {
     itemId,
     additionalIds = {},
   ) => {
+    const normalizedItemId = String(itemId || "").trim();
+
+    if (itemType === "obra" && inFlightObraDeletes.has(normalizedItemId)) {
+      console.warn(
+        ` [UNIVERSAL-DELETE] Exclusão já em andamento para obra ${normalizedItemId}`,
+      );
+      return false;
+    }
+
     console.log(
-      ` [UNIVERSAL-DELETE] Iniciando deleção para ${itemType}: ${itemName} (ID: ${itemId})`,
+      ` [UNIVERSAL-DELETE] Iniciando deleção para ${itemType}: ${itemName} (ID: ${normalizedItemId})`,
     );
 
     const confirmed = await window.UniversalDeleteModal.confirmDelete(
       itemType,
       itemName,
-      `ID: ${itemId}`,
+      `ID: ${normalizedItemId}`,
     );
 
     if (!confirmed) {
@@ -253,55 +263,74 @@ function setupUniversalDeletionOverride() {
       return false;
     }
 
-    let pathArray = ["obras", itemId];
+    let pathArray = ["obras", normalizedItemId];
 
     console.log(` Path para deleção:`, pathArray);
 
     // Executar deleção via API
-    const response = await fetch("/api/delete", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        path: pathArray,
-        itemType: itemType,
-        itemName: itemName,
-        timestamp: new Date().toISOString(),
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Erro HTTP ${response.status} ao deletar ${itemType}: ${errorText}`,
-      );
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      console.log(` ${itemType} "${itemName}" deletado com sucesso`);
-
-      if (
-        window.ButtonDeleteUniversal &&
-        window.ButtonDeleteUniversal.showToast
-      ) {
-        window.ButtonDeleteUniversal.showToast(
-          `${itemType} "${itemName}" deletado permanentemente`,
-          "success",
-        );
+    try {
+      if (itemType === "obra") {
+        inFlightObraDeletes.add(normalizedItemId);
       }
 
-      removeElementFromDOM(itemType, itemId, additionalIds);
+      const response = await fetch("/api/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: pathArray,
+          itemType: itemType,
+          itemName: itemName,
+          timestamp: new Date().toISOString(),
+        }),
+      });
 
-      setTimeout(() => {
-        if (window.FilterSystem) {
-          window.FilterSystem.reloadObras();
+      const result = await response.json().catch(() => ({
+        success: false,
+        error: `Resposta inválida do servidor (${response.status})`,
+      }));
+
+      if (!response.ok && !result.success) {
+        throw new Error(`Erro HTTP ${response.status} ao deletar ${itemType}: ${result.error}`);
+      }
+
+      if (result.success) {
+        console.log(` ${itemType} "${itemName}" deletado com sucesso`);
+
+        if (itemType === "obra") {
+          window.removeObraFromRuntimeBootstrap?.(normalizedItemId);
+          window.FilterSystem?.notifyObraDeleted?.(normalizedItemId);
+          window.invalidateRuntimeBootstrap?.();
         }
-      }, 187);
 
-      return true;
-    } else {
+        if (
+          window.ButtonDeleteUniversal &&
+          window.ButtonDeleteUniversal.showToast
+        ) {
+          window.ButtonDeleteUniversal.showToast(
+            `${itemType} "${itemName}" deletado permanentemente`,
+            "success",
+          );
+        }
+
+        removeElementFromDOM(itemType, normalizedItemId, additionalIds);
+
+        window
+          .loadRuntimeBootstrap?.({ forceReload: true })
+          .catch((error) =>
+            console.warn(
+              " [UNIVERSAL-DELETE] Falha ao sincronizar cache em background:",
+              error,
+            ),
+          );
+
+        return true;
+      }
+
       throw new Error(`Erro ao deletar ${itemType}: ${result.error}`);
+    } finally {
+      if (itemType === "obra") {
+        inFlightObraDeletes.delete(normalizedItemId);
+      }
     }
   };
 

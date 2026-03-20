@@ -139,10 +139,11 @@ class RoutesCore:
         try:
             print(f"Deletando obra {obra_id} do servidor")
 
-            if not self.obra_repository.delete(obra_id):
-                return False
+            deleted = self.obra_repository.delete(obra_id)
+            if not deleted:
+                print(f"⚠️ Obra {obra_id} já não existia no servidor")
 
-            print(f"Obra {obra_id} encontrada para remocao")
+            print(f"Obra {obra_id} encontrada para remocao" if deleted else f"Obra {obra_id} tratada como já removida")
             self.sessions_manager.remove_obra(obra_id)
             return True
 
@@ -580,6 +581,27 @@ class RoutesCore:
         try:
             print(f"🔍 [DELETE UNIVERSAL] Path recebido: {path_array}")
             print(f"🔍 [DELETE UNIVERSAL] Tipos dos elementos: {[type(item) for item in path_array]}")
+
+            def is_top_level_obra_delete():
+                return (
+                    isinstance(path_array, list)
+                    and len(path_array) == 2
+                    and str(path_array[0]) == "obras"
+                )
+
+            def build_already_deleted_response(item_id, reason):
+                item_id_str = str(item_id)
+                print(
+                    f"⚠️ [DELETE UNIVERSAL] Obra {item_id_str} já não existia no backup ({reason})"
+                )
+                self.sessions_manager.remove_obra(item_id_str)
+                return {
+                    "success": True,
+                    "message": "Item já havia sido deletado",
+                    "path": path_array,
+                    "deleted_item": item_id_str,
+                    "already_deleted": True,
+                }
             
             # Carrega backup.json
             backup_file = self.file_utils.find_json_file('backup.json', self.project_root)
@@ -667,6 +689,8 @@ class RoutesCore:
                                 break
                     
                     if item_index == -1:
+                        if is_top_level_obra_delete():
+                            return build_already_deleted_response(last_item, "id-nao-encontrado")
                         return {
                             "success": False,
                             "error": f"Item '{last_item}' não encontrado",
