@@ -6,7 +6,6 @@ import os
 import smtplib
 import shutil
 import tempfile
-import zipfile
 from email.message import EmailMessage
 from email.utils import formataddr
 from pathlib import Path
@@ -24,8 +23,16 @@ def cleanup_temp_files(*paths):
         if not path:
             continue
         try:
+            if isinstance(path, (list, tuple, set)):
+                cleanup_temp_files(*path)
+                continue
+
+            if isinstance(path, dict):
+                cleanup_temp_files(path.get("path"))
+                continue
+
             path_obj = Path(path)
-            if path_obj.exists():
+            if path_obj.exists() and path_obj.is_file():
                 path_obj.unlink()
         except Exception:
             continue
@@ -46,6 +53,29 @@ def duplicate_temp_file(source_path, output_filename=None):
     return duplicate_path, duplicate_name
 
 
+def duplicate_attachment_files(files):
+    """Duplica uma lista de anexos temporarios para uso paralelo."""
+    duplicates = []
+
+    for file_info in files or []:
+        if not isinstance(file_info, dict):
+            continue
+
+        duplicate_path, duplicate_name = duplicate_temp_file(
+            file_info.get("path"),
+            file_info.get("filename"),
+        )
+        duplicates.append(
+            {
+                **file_info,
+                "path": duplicate_path,
+                "filename": duplicate_name,
+            }
+        )
+
+    return duplicates
+
+
 def format_currency_brl(value):
     """Formata numero simples em moeda BRL."""
     try:
@@ -58,26 +88,38 @@ def format_currency_brl(value):
     )
 
 
-def create_zip_bundle(files, output_filename=None):
-    """Compacta uma lista de arquivos em um unico ZIP temporario."""
-    if not files:
-        raise ValueError("Nenhum arquivo disponivel para compactacao")
+def normalize_attachment_files(files):
+    """Normaliza anexos para o formato interno padrao."""
+    normalized_files = []
 
-    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp_zip:
-        zip_path = tmp_zip.name
+    for file_info in files or []:
+        if isinstance(file_info, dict):
+            file_path = file_info.get("path")
+            filename = file_info.get("filename")
+            template_type = file_info.get("template_type")
+        elif isinstance(file_info, (list, tuple)) and len(file_info) >= 2:
+            file_path = file_info[0]
+            filename = file_info[1]
+            template_type = file_info[2] if len(file_info) > 2 else ""
+        else:
+            continue
 
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for file_path, archive_name in files:
-            if not file_path or not os.path.exists(file_path):
-                continue
-            zip_file.write(file_path, archive_name)
+        if not file_path or not os.path.exists(file_path):
+            continue
 
-    zip_filename = output_filename or f"{Path(files[0][1]).stem}.zip"
-    return zip_path, zip_filename
+        normalized_files.append(
+            {
+                "path": file_path,
+                "filename": filename or Path(file_path).name,
+                "template_type": template_type or "",
+            }
+        )
+
+    return normalized_files
 
 
-def enviar_email_com_zip(destino, assunto, mensagem, zip_path):
-    """Envia um email com ZIP anexado usando a configuracao SMTP do ADM."""
+def enviar_email_com_anexos(destino, assunto, mensagem, attachment_files):
+    """Envia um email com anexos diretos usando a configuracao SMTP do ADM."""
     config_store = AdminEmailConfigStore()
     config = config_store.load()
 
@@ -88,9 +130,9 @@ def enviar_email_com_zip(destino, assunto, mensagem, zip_path):
     if not is_valid_email(destination):
         raise ValueError("Endereco de email de destino invalido")
 
-    zip_file = Path(zip_path)
-    if not zip_file.exists():
-        raise FileNotFoundError("Arquivo ZIP nao encontrado para envio")
+    attachments = normalize_attachment_files(attachment_files)
+    if not attachments:
+        raise FileNotFoundError("Nenhum arquivo valido encontrado para envio")
 
     smtp_settings = config_store.resolve_smtp_settings(config)
     host = str(smtp_settings.get("host") or "").strip()
@@ -109,13 +151,24 @@ def enviar_email_com_zip(destino, assunto, mensagem, zip_path):
     message["To"] = destination
     message.set_content(str(mensagem or "").strip() or "Segue arquivo em anexo.")
 
-    with open(zip_file, "rb") as file_obj:
-        message.add_attachment(
-            file_obj.read(),
-            maintype="application",
-            subtype="zip",
-            filename=zip_file.name,
-        )
+    for attachment in attachments:
+        file_path = Path(str(attachment.get("path") or ""))
+        filename = str(attachment.get("filename") or file_path.name).strip() or file_path.name
+        suffix = file_path.suffix.lower()
+        subtype = "octet-stream"
+
+        if suffix == ".docx":
+            subtype = "vnd.openxmlformats-officedocument.wordprocessingml.document"
+        elif suffix == ".zip":
+            subtype = "zip"
+
+        with open(file_path, "rb") as file_obj:
+            message.add_attachment(
+                file_obj.read(),
+                maintype="application",
+                subtype=subtype,
+                filename=filename,
+            )
 
     smtp_client = None
     try:
@@ -138,6 +191,25 @@ def enviar_email_com_zip(destino, assunto, mensagem, zip_path):
                 pass
 
 
+def enviar_email_com_zip(destino, assunto, mensagem, zip_path):
+    """Compatibilidade: encaminha anexos diretos em vez de ZIP."""
+    return enviar_email_com_anexos(
+        destino,
+        assunto,
+        mensagem,
+        [{"path": zip_path, "filename": Path(zip_path).name}],
+    )
+
+
+def build_export_file(file_path, filename, template_type=""):
+    """Cria estrutura padrao de arquivo exportado."""
+    return {
+        "path": file_path,
+        "filename": filename,
+        "template_type": str(template_type or "").strip(),
+    }
+
+
 def prepare_export_assets(project_root, file_utils, obra_id, formato, need_download, need_email):
     """Gera os arquivos necessarios para um fluxo de exportacao."""
     export_format = str(formato or "ambos").strip().lower()
@@ -148,52 +220,29 @@ def prepare_export_assets(project_root, file_utils, obra_id, formato, need_downl
     obra_data = word_handler.get_obra_data(obra_id)
 
     if export_format == "ambos":
-        zip_path, zip_filename, error = word_handler.generate_both_documents(obra_id)
+        files, error = word_handler.generate_selected_documents(obra_id, export_format)
         if error:
             raise RuntimeError(error)
-
-        return {
-            "obra_data": obra_data,
-            "download_path": zip_path if need_download else None,
-            "download_filename": zip_filename if need_download else None,
-            "email_zip_path": zip_path if need_email else None,
-            "email_zip_filename": zip_filename if need_email else None,
-        }
-
-    if export_format == "pc":
+    elif export_format == "pc":
         file_path, filename, error = word_handler.generate_proposta_comercial_avancada(
             obra_id
         )
+        files = [build_export_file(file_path, filename, "comercial")]
     else:
         file_path, filename, error = word_handler.generate_proposta_tecnica_avancada(
             obra_id
         )
+        files = [build_export_file(file_path, filename, "tecnica")]
 
     if error:
         raise RuntimeError(error)
 
-    if not file_path or not os.path.exists(file_path):
+    files = normalize_attachment_files(files)
+    if not files:
         raise RuntimeError("Arquivo de exportacao nao foi gerado")
-
-    email_zip_path = None
-    email_zip_filename = None
-
-    if need_email:
-        zip_name = f"{Path(filename).stem}.zip"
-        email_zip_path, email_zip_filename = create_zip_bundle(
-            [(file_path, filename)],
-            zip_name,
-        )
-
-    if not need_download:
-        cleanup_temp_files(file_path)
-        file_path = None
-        filename = None
 
     return {
         "obra_data": obra_data,
-        "download_path": file_path if need_download else None,
-        "download_filename": filename if need_download else None,
-        "email_zip_path": email_zip_path,
-        "email_zip_filename": email_zip_filename,
+        "download_files": files if need_download else [],
+        "email_files": files if need_email else [],
     }

@@ -1,5 +1,5 @@
 import { showSystemStatus } from "../components/status.js";
-import { downloadGeneratedFile, waitForBackgroundJob } from "./word-modal.js";
+import { downloadGeneratedFiles, waitForBackgroundJob } from "./word-modal.js";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -166,7 +166,7 @@ function renderDecisionStep(state, shell) {
 
     <div class="export-choice-grid">
       ${renderTypeCard("download", "Download", "Gera os arquivos e inicia o download imediato.", state.selectedType)}
-      ${renderTypeCard("email", "Enviar por email", "Compacta os arquivos e envia o ZIP para um destinatário.", state.selectedType)}
+      ${renderTypeCard("email", "Enviar por email", "Anexa os arquivos gerados diretamente no email.", state.selectedType)}
       ${renderTypeCard("completo", "Exportação completa", "Executa download e envio de email no mesmo fluxo.", state.selectedType)}
     </div>
 
@@ -226,7 +226,7 @@ function renderDetailStep(state, shell) {
       <section class="export-panel">
         <div class="export-panel-header">
           <h3>Envio por email</h3>
-          <p>O ZIP será enviado usando o email administrativo configurado.</p>
+          <p>Os arquivos serão enviados como anexos usando o email administrativo configurado.</p>
         </div>
         ${!emailConfigLoaded ? `
           <div class="export-inline-alert export-inline-alert-info">
@@ -308,7 +308,7 @@ function renderLoadingStep(state, shell) {
       ]
     : [
         ["Gerando arquivos...", "Preparando os documentos da obra."],
-        ["Enviando email...", "Compactando e enviando o ZIP para o destinatário."],
+        ["Enviando email...", "Anexando os documentos e preparando o envio ao destinatario."],
       ];
 
   steps.slice(1).forEach(([title, hint], index) => {
@@ -521,8 +521,14 @@ async function submitExport(state, shell) {
         })
       : result;
 
-    if (finalResult.download_id) {
-      await downloadGeneratedFile(finalResult.download_id);
+    const downloadIds = Array.isArray(finalResult.download_ids)
+      ? finalResult.download_ids.filter(Boolean)
+      : finalResult.download_id
+        ? [finalResult.download_id]
+        : [];
+
+    if (downloadIds.length) {
+      await downloadGeneratedFiles(downloadIds);
     }
 
     const successMessage = finalResult.email_error

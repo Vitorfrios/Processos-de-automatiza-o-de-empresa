@@ -131,6 +131,24 @@ export async function waitForBackgroundJob(jobId, options = {}) {
   throw new Error("O processamento demorou mais do que o esperado.");
 }
 
+function normalizeDownloadIds(result) {
+  if (Array.isArray(result?.download_ids) && result.download_ids.length) {
+    return result.download_ids.filter(Boolean);
+  }
+
+  if (Array.isArray(result?.downloads) && result.downloads.length) {
+    return result.downloads
+      .map((download) => download?.download_id)
+      .filter(Boolean);
+  }
+
+  if (result?.download_id) {
+    return [result.download_id];
+  }
+
+  return [];
+}
+
 function updateWordLoadingState(modal, job) {
   const loadingText = modal.querySelector(".word-modal-loading-text");
   const loadingHint = modal.querySelector(".word-modal-loading p");
@@ -268,8 +286,8 @@ function setupModalEvents(
         throw new Error(result.error || "Erro na geração do documento");
       }
 
-      // Baixar o arquivo
-      await downloadGeneratedFile(finalResult.download_id);
+      // Baixar os arquivos em sequencia
+      await downloadGeneratedFiles(normalizeDownloadIds(finalResult));
 
       if (finalResult.notification_error) {
         showSystemStatus(
@@ -355,6 +373,21 @@ export async function downloadGeneratedFile(downloadId) {
   } catch (error) {
     console.error(" Erro no download:", error);
     throw error;
+  }
+}
+
+export async function downloadGeneratedFiles(downloadIds) {
+  const normalizedIds = Array.isArray(downloadIds)
+    ? downloadIds.filter(Boolean)
+    : [downloadIds].filter(Boolean);
+
+  if (!normalizedIds.length) {
+    throw new Error("Nenhum arquivo foi disponibilizado para download.");
+  }
+
+  for (const downloadId of normalizedIds) {
+    await downloadGeneratedFile(downloadId);
+    await wait(180);
   }
 }
 

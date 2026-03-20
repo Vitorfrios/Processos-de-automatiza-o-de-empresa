@@ -3486,6 +3486,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     ):
         """Registra um arquivo temporario para download posterior."""
         from datetime import datetime
+        from uuid import uuid4
 
         download_info = {
             "file_path": file_path,
@@ -3494,16 +3495,49 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "obra_nome": obra_nome,
             "template_type": template_type,
             "generated_at": datetime.now().isoformat(),
-            "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
+            "size": os.path.getsize(file_path) if file_path and os.path.exists(file_path) else 0,
         }
 
-        download_id = f"word_{int(datetime.now().timestamp())}_{obra_id}"
+        download_id = f"word_{obra_id}_{uuid4().hex}"
         temp_info_file = tempfile.gettempdir() + f"/{download_id}.json"
 
         with open(temp_info_file, "w", encoding="utf-8") as file_obj:
             json.dump(download_info, file_obj)
 
         return download_id, download_info
+
+    def _store_generated_downloads(
+        self,
+        files,
+        obra_id,
+        obra_nome,
+        template_type,
+    ):
+        downloads = []
+
+        for file_info in files or []:
+            if not isinstance(file_info, dict):
+                continue
+            if not file_info.get("path") or not file_info.get("filename"):
+                continue
+
+            download_id, download_info = self._store_generated_download(
+                file_info.get("path"),
+                file_info.get("filename"),
+                obra_id,
+                obra_nome,
+                file_info.get("template_type") or template_type,
+            )
+            downloads.append(
+                {
+                    "download_id": download_id,
+                    "filename": download_info.get("filename", ""),
+                    "size": download_info.get("size", 0),
+                    "template_type": download_info.get("template_type", ""),
+                }
+            )
+
+        return downloads
 
     def _serialize_background_job(self, job):
         if not job:
@@ -3541,51 +3575,70 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             }
         )
 
-    def _queue_background_email_job(self, destinatario, assunto, mensagem, zip_path):
+    def _queue_background_email_job(self, destinatario, assunto, mensagem, attachment_files):
         def run_email_job(job_id):
             return self._run_background_email_job(
                 job_id,
                 destinatario,
                 assunto,
                 mensagem,
-                zip_path,
+                attachment_files,
             )
 
         return background_jobs.submit(
             "email_send",
             run_email_job,
-            metadata={"destinatario": str(destinatario or "").strip()},
+            metadata={
+                "destinatario": str(destinatario or "").strip(),
+                "attachments": len(attachment_files or []),
+            },
         )
 
-    def _queue_admin_notification_job(self, obra_data, zip_path):
+    def _queue_admin_notification_job(self, obra_data, attachment_files):
         obra = obra_data if isinstance(obra_data, dict) else {}
 
         def run_notification_job(job_id):
-            return self._run_admin_notification_job(job_id, obra, zip_path)
+            return self._run_admin_notification_job(job_id, obra, attachment_files)
 
         return background_jobs.submit(
             "admin_notification",
             run_notification_job,
-            metadata={"obra_id": str(obra.get("id") or "").strip()},
+            metadata={
+                "obra_id": str(obra.get("id") or "").strip(),
+                "attachments": len(attachment_files or []),
+            },
         )
 
-    def _resolve_async_email_asset(self, email_zip_path, email_zip_filename, download_path=None):
-        from servidor_modules.utils.export_utils import duplicate_temp_file
+    def _resolve_async_email_assets(self, email_files, download_files=None):
+        from servidor_modules.utils.export_utils import duplicate_attachment_files
 
-        if not email_zip_path:
-            return None
+        normalized_email_files = [
+            file_info
+            for file_info in (email_files or [])
+            if isinstance(file_info, dict) and file_info.get("path")
+        ]
+        if not normalized_email_files:
+            return []
 
-        if download_path and os.path.abspath(email_zip_path) == os.path.abspath(download_path):
-            duplicate_path, _ = duplicate_temp_file(
-                email_zip_path,
-                email_zip_filename,
-            )
-            return duplicate_path
+        download_paths = {
+            os.path.abspath(str(file_info.get("path")))
+            for file_info in (download_files or [])
+            if isinstance(file_info, dict) and file_info.get("path")
+        }
 
-        return email_zip_path
+        overlapping_files = []
+        standalone_files = []
+        for file_info in normalized_email_files:
+            file_path = os.path.abspath(str(file_info.get("path")))
+            if file_path in download_paths:
+                overlapping_files.append(file_info)
+            else:
+                standalone_files.append(file_info)
 
-    def _run_background_email_job(self, job_id, destinatario, assunto, mensagem, zip_path):
-        from servidor_modules.utils.export_utils import cleanup_temp_files, enviar_email_com_zip
+        return standalone_files + duplicate_attachment_files(overlapping_files)
+
+    def _run_background_email_job(self, job_id, destinatario, assunto, mensagem, attachment_files):
+        from servidor_modules.utils.export_utils import cleanup_temp_files, enviar_email_com_anexos
 
         background_jobs.set_stage(
             job_id,
@@ -3594,15 +3647,15 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         )
 
         try:
-            enviar_email_com_zip(destinatario, assunto, mensagem, zip_path)
+            enviar_email_com_anexos(destinatario, assunto, mensagem, attachment_files)
             return {
                 "message": "Email enviado com sucesso.",
                 "destinatario": str(destinatario or "").strip(),
             }
         finally:
-            cleanup_temp_files(zip_path)
+            cleanup_temp_files(*(file_info.get("path") for file_info in (attachment_files or [])))
 
-    def _run_admin_notification_job(self, job_id, obra_data, zip_path):
+    def _run_admin_notification_job(self, job_id, obra_data, attachment_files):
         from servidor_modules.utils.export_utils import cleanup_temp_files
 
         background_jobs.set_stage(
@@ -3612,7 +3665,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         )
 
         try:
-            notification_result = self._notify_admin_if_needed(obra_data, zip_path)
+            notification_result = self._notify_admin_if_needed(obra_data, attachment_files)
             return {
                 "message": (
                     "Notificacao enviada ao ADM com sucesso."
@@ -3623,7 +3676,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "destinatario": notification_result.get("destinatario", ""),
             }
         finally:
-            cleanup_temp_files(zip_path)
+            cleanup_temp_files(*(file_info.get("path") for file_info in (attachment_files or [])))
 
     def _run_export_job(self, job_id, payload):
         from servidor_modules.utils.export_utils import cleanup_temp_files, prepare_export_assets
@@ -3657,8 +3710,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             obra_data = assets.get("obra_data") or {}
             obra_nome = obra_data.get("nome", obra_id)
 
-            download_id = None
-            download_info = None
+            downloads = []
             email_job_id = None
             email_error = ""
 
@@ -3668,13 +3720,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "preparing_download",
                     "Preparando download...",
                 )
-                download_id, download_info = self._store_generated_download(
-                    assets.get("download_path"),
-                    assets.get("download_filename"),
+                downloads = self._store_generated_downloads(
+                    assets.get("download_files"),
                     obra_id,
                     obra_nome,
                     f"export_{export_type}_{export_format}",
                 )
+                if not downloads:
+                    raise RuntimeError("Nenhum arquivo foi disponibilizado para download.")
 
             if need_email:
                 background_jobs.set_stage(
@@ -3682,12 +3735,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "queueing_email",
                     "Enfileirando envio de email...",
                 )
-                email_asset_path = None
+                email_asset_files = []
                 try:
-                    email_asset_path = self._resolve_async_email_asset(
-                        assets.get("email_zip_path"),
-                        assets.get("email_zip_filename"),
-                        assets.get("download_path"),
+                    email_asset_files = self._resolve_async_email_assets(
+                        assets.get("email_files"),
+                        assets.get("download_files"),
                     )
                     email_job_id = self._queue_background_email_job(
                         destinatario,
@@ -3697,21 +3749,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             mensagem,
                             recipient_mode,
                         ),
-                        email_asset_path,
+                        email_asset_files,
                     )
                 except Exception as exc:
                     email_error = str(exc)
-                    cleanup_targets = []
-                    if email_asset_path and email_asset_path != assets.get("download_path"):
-                        cleanup_targets.append(email_asset_path)
-                    if (
-                        assets.get("email_zip_path")
-                        and assets.get("email_zip_path") != assets.get("download_path")
-                        and assets.get("email_zip_path") != email_asset_path
-                    ):
-                        cleanup_targets.append(assets.get("email_zip_path"))
-                    if cleanup_targets:
-                        cleanup_temp_files(*cleanup_targets)
+                    cleanup_temp_files(*(file_info.get("path") for file_info in email_asset_files))
                     if not need_download:
                         raise
 
@@ -3725,16 +3767,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "tipo": export_type,
                 "formato": export_format,
                 "destinatario": destinatario if need_email else "",
-                "download_id": download_id,
-                "filename": download_info.get("filename") if download_info else "",
-                "size": download_info.get("size") if download_info else 0,
+                "download_id": downloads[0]["download_id"] if len(downloads) == 1 else "",
+                "download_ids": [download["download_id"] for download in downloads],
+                "downloads": downloads,
+                "filename": downloads[0]["filename"] if len(downloads) == 1 else "",
+                "size": sum(download.get("size", 0) for download in downloads),
                 "email_job_id": email_job_id,
                 "email_error": email_error,
             }
         except Exception:
             cleanup_temp_files(
-                assets.get("download_path"),
-                assets.get("email_zip_path"),
+                [file_info.get("path") for file_info in assets.get("download_files", [])],
+                [file_info.get("path") for file_info in assets.get("email_files", [])],
             )
             raise
 
@@ -3756,15 +3800,16 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             True,
         )
 
+        notification_files = self._resolve_async_email_assets(assets.get("email_files"))
         return self._run_admin_notification_job(
             job_id,
             assets.get("obra_data") or {},
-            assets.get("email_zip_path"),
+            notification_files,
         )
 
     def _run_word_generation_job(self, job_id, template_type, obra_id, notify_admin=False):
         from servidor_modules.handlers.word_handler import WordHandler
-        from servidor_modules.utils.export_utils import cleanup_temp_files, create_zip_bundle
+        from servidor_modules.utils.export_utils import cleanup_temp_files
 
         background_jobs.set_stage(
             job_id,
@@ -3775,13 +3820,27 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         word_handler = WordHandler(self.project_root, self.file_utils)
 
         if template_type == "ambos":
-            file_path, filename, error = word_handler.generate_both_documents(obra_id)
+            generated_files, error = word_handler.generate_selected_documents(obra_id, "ambos")
         elif template_type == "comercial":
             file_path, filename, error = word_handler.generate_proposta_comercial_avancada(obra_id)
+            generated_files = [
+                {
+                    "path": file_path,
+                    "filename": filename,
+                    "template_type": "comercial",
+                }
+            ]
         elif template_type == "tecnica":
             file_path, filename, error = word_handler.generate_proposta_tecnica_avancada(obra_id)
+            generated_files = [
+                {
+                    "path": file_path,
+                    "filename": filename,
+                    "template_type": "tecnica",
+                }
+            ]
         else:
-            file_path, filename, error = None, None, f"Tipo de template nao suportado: {template_type}"
+            generated_files, error = [], f"Tipo de template nao suportado: {template_type}"
 
         if error:
             raise RuntimeError(error)
@@ -3794,50 +3853,43 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "preparing_download",
             "Preparando download...",
         )
-        download_id, download_info = self._store_generated_download(
-            file_path,
-            filename,
+        downloads = self._store_generated_downloads(
+            generated_files,
             obra_id,
             obra_nome,
             template_type,
         )
+        if not downloads:
+            cleanup_temp_files(*(file_info.get("path") for file_info in generated_files))
+            raise RuntimeError("Nenhum documento foi disponibilizado para download.")
 
         notification_job_id = None
         notification_error = ""
+        notification_files = []
 
-        if notify_admin and obra_data and file_path and filename:
+        if notify_admin and obra_data and generated_files:
             try:
-                notification_zip_path = file_path
-
-                if str(filename).lower().endswith(".zip"):
-                    notification_zip_path = self._resolve_async_email_asset(
-                        file_path,
-                        filename,
-                        file_path,
-                    )
-                else:
-                    temp_notification_zip, _ = create_zip_bundle(
-                        [(file_path, filename)],
-                        f"{Path(str(filename)).stem}.zip",
-                    )
-                    notification_zip_path = temp_notification_zip
-
+                notification_files = self._resolve_async_email_assets(
+                    generated_files,
+                    generated_files,
+                )
                 notification_job_id = self._queue_admin_notification_job(
                     obra_data,
-                    notification_zip_path,
+                    notification_files,
                 )
             except Exception as exc:
                 notification_error = str(exc)
-                if notification_zip_path and notification_zip_path != file_path:
-                    cleanup_temp_files(notification_zip_path)
+                cleanup_temp_files(*(file_info.get("path") for file_info in notification_files))
 
         return {
             "message": f"Documento {template_type} preparado com sucesso!",
-            "download_id": download_id,
-            "filename": filename,
+            "download_id": downloads[0]["download_id"] if len(downloads) == 1 else "",
+            "download_ids": [download["download_id"] for download in downloads],
+            "downloads": downloads,
+            "filename": downloads[0]["filename"] if len(downloads) == 1 else "",
             "obra_nome": obra_nome,
             "template_type": template_type,
-            "size": download_info["size"],
+            "size": sum(download.get("size", 0) for download in downloads),
             "notification_job_id": notification_job_id,
             "notification_error": notification_error,
         }
@@ -4012,13 +4064,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         return assunto, mensagem
 
-    def _notify_admin_if_needed(self, obra_data, zip_path):
+    def _notify_admin_if_needed(self, obra_data, attachment_files):
         """Envia email ao ADM apenas se os dados da obra mudaram desde o ultimo envio."""
         from servidor_modules.database.repositories.obra_notification_repository import (
             ObraNotificationRepository,
         )
         from servidor_modules.utils.admin_email_config import AdminEmailConfigStore
-        from servidor_modules.utils.export_utils import enviar_email_com_zip
+        from servidor_modules.utils.export_utils import enviar_email_com_anexos
 
         obra = obra_data if isinstance(obra_data, dict) else {}
         obra_id = str(obra.get("id") or "").strip()
@@ -4052,11 +4104,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             is_update=is_update,
         )
 
-        enviar_email_com_zip(
+        enviar_email_com_anexos(
             str(config.get("email") or "").strip(),
             assunto,
             mensagem,
-            zip_path,
+            attachment_files,
         )
         repository.upsert(obra_id, current_fingerprint, assunto, mensagem)
 

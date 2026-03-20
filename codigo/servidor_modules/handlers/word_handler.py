@@ -442,67 +442,110 @@ class WordHandler:
             import traceback
             traceback.print_exc()
             return None, None, str(e)
-    
+
+    def generate_selected_documents(self, obra_id, export_format="ambos"):
+        """Gera um ou mais documentos sem compactar em ZIP."""
+        try:
+            export_format = str(export_format or "ambos").strip().lower()
+            files = []
+
+            if export_format == "ambos":
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    pc_future = executor.submit(
+                        self.generate_proposta_comercial_avancada,
+                        obra_id,
+                    )
+                    pt_future = executor.submit(
+                        self.generate_proposta_tecnica_avancada,
+                        obra_id,
+                    )
+
+                    pc_path, pc_filename, pc_error = pc_future.result()
+                    pt_path, pt_filename, pt_error = pt_future.result()
+
+                if pc_error:
+                    if pt_path and os.path.exists(pt_path):
+                        os.unlink(pt_path)
+                    return [], pc_error
+
+                if pt_error:
+                    if pc_path and os.path.exists(pc_path):
+                        os.unlink(pc_path)
+                    return [], pt_error
+
+                return [
+                    {
+                        "path": pc_path,
+                        "filename": pc_filename,
+                        "template_type": "comercial",
+                    },
+                    {
+                        "path": pt_path,
+                        "filename": pt_filename,
+                        "template_type": "tecnica",
+                    },
+                ], None
+
+            if export_format in {"pc", "ambos"}:
+                pc_path, pc_filename, pc_error = self.generate_proposta_comercial_avancada(
+                    obra_id
+                )
+                if pc_error:
+                    if files:
+                        for file_info in files:
+                            try:
+                                if file_info.get("path") and os.path.exists(file_info["path"]):
+                                    os.unlink(file_info["path"])
+                            except Exception:
+                                pass
+                    return [], pc_error
+                files.append(
+                    {
+                        "path": pc_path,
+                        "filename": pc_filename,
+                        "template_type": "comercial",
+                    }
+                )
+
+            if export_format in {"pt", "ambos"}:
+                pt_path, pt_filename, pt_error = self.generate_proposta_tecnica_avancada(
+                    obra_id
+                )
+                if pt_error:
+                    for file_info in files:
+                        try:
+                            if file_info.get("path") and os.path.exists(file_info["path"]):
+                                os.unlink(file_info["path"])
+                        except Exception:
+                            pass
+                    return [], pt_error
+                files.append(
+                    {
+                        "path": pt_path,
+                        "filename": pt_filename,
+                        "template_type": "tecnica",
+                    }
+                )
+
+            return files, None
+        except Exception as e:
+            print(f"❌ Erro ao gerar documentos selecionados: {e}")
+            return [], str(e)
+
     def generate_both_documents(self, obra_id):
         """Gera ambos os documentos (comercial e técnico)"""
         try:
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                pc_future = executor.submit(
-                    self.generate_proposta_comercial_avancada, obra_id
-                )
-                pt_future = executor.submit(
-                    self.generate_proposta_tecnica_avancada, obra_id
-                )
+            files, error = self.generate_selected_documents(obra_id, "ambos")
 
-                pc_path, pc_filename, pc_error = pc_future.result()
-                pt_path, pt_filename, pt_error = pt_future.result()
+            if error:
+                return None, None, error
 
-            if pc_error:
-                if pt_path and os.path.exists(pt_path):
-                    os.unlink(pt_path)
-                return None, None, pc_error
+            if not files:
+                return None, None, "Nenhum documento foi gerado"
 
-            if pt_error:
-                if pc_path and os.path.exists(pc_path):
-                    os.unlink(pc_path)
-                return None, None, pt_error
-            
-            # Para ambos, criar um ZIP com os dois arquivos
-            import zipfile
-            import tempfile
-            from datetime import datetime
-            
-            # Criar arquivo ZIP temporário
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmp_zip:
-                zip_path = tmp_zip.name
-            
-            # Criar ZIP com os dois documentos
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                # Adicionar PC
-                if pc_path and os.path.exists(pc_path):
-                    zipf.write(pc_path, pc_filename)
-                
-                # Adicionar PT
-                if pt_path and os.path.exists(pt_path):
-                    zipf.write(pt_path, pt_filename)
-            
-            # Limpar arquivos individuais
-            if pc_path and os.path.exists(pc_path):
-                os.unlink(pc_path)
-            if pt_path and os.path.exists(pt_path):
-                os.unlink(pt_path)
-            
-            # Gerar nome do arquivo ZIP
-            obra_data = self.get_obra_data(obra_id)
-            if obra_data:
-                # Extrair base do nome (sigla_numero)
-                base_name = self.extract_filename_base(obra_data)
-                zip_filename = f"PC_PT_{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
-            else:
-                zip_filename = f"PC_PT_{obra_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
-            
-            return zip_path, zip_filename, None
-            
+            # Compatibilidade legado: retorna o primeiro arquivo.
+            first_file = files[0]
+            return first_file.get("path"), first_file.get("filename"), None
         except Exception as e:
             print(f"❌ Erro ao gerar ambos documentos: {e}")
             return None, None, str(e)
