@@ -86,6 +86,32 @@ function parsePositiveInteger(value) {
     return Number.isNaN(parsed) || parsed <= 0 ? null : parsed;
 }
 
+function normalizeDisplayDate(value) {
+    const rawValue = String(value || '').trim();
+    if (!rawValue) {
+        return '';
+    }
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(rawValue)) {
+        return rawValue;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+        const [ano, mes, dia] = rawValue.split('-');
+        return `${dia}/${mes}/${ano}`;
+    }
+
+    const parsedDate = new Date(rawValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+        return rawValue;
+    }
+
+    const dia = String(parsedDate.getDate()).padStart(2, '0');
+    const mes = String(parsedDate.getMonth() + 1).padStart(2, '0');
+    const ano = parsedDate.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+}
+
 function escapeRegExp(value) {
     return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -178,7 +204,13 @@ function applyClientEmpresaRestrictions(obraId, obraData = null) {
         obraElement.dataset.empresaNome = empresaNome;
     }
 
-    if (!obraElement.dataset.dataCadastro) {
+    const dataCadastro = normalizeDisplayDate(
+        obraData?.dataCadastro || obraElement.dataset.dataCadastro
+    );
+
+    if (dataCadastro) {
+        obraElement.dataset.dataCadastro = dataCadastro;
+    } else if (!obraElement.dataset.dataCadastro) {
         obraElement.dataset.dataCadastro = new Date().toLocaleDateString('pt-BR');
     }
 
@@ -199,6 +231,11 @@ function applyClientEmpresaRestrictions(obraId, obraData = null) {
 
     if (numeroClienteInput && obraElement.dataset.numeroClienteFinal) {
         numeroClienteInput.value = obraElement.dataset.numeroClienteFinal;
+    }
+
+    const dataCadastroInput = document.getElementById(`data-cadastro-${obraId}`);
+    if (dataCadastroInput && obraElement.dataset.dataCadastro) {
+        dataCadastroInput.value = obraElement.dataset.dataCadastro;
     }
 
     setDisabled(empresaInput, true);
@@ -264,7 +301,12 @@ function setupClientObservers() {
 
     document.addEventListener('obraCreated', (event) => {
         const obraId = event.detail?.obraId;
+        const isFromServer = Boolean(event.detail?.isFromServer);
         if (!obraId) return;
+
+        if (isFromServer) {
+            return;
+        }
 
         setTimeout(() => {
             ensureClientEmpresaForm(obraId);

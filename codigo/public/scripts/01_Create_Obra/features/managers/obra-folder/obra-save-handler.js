@@ -1,6 +1,7 @@
 import { ensureStringId } from "../../../data/utils/id-generator.js";
 import { buildObraData } from "../../../data/builders/data-builders.js";
 import { showSystemStatus } from "../../../ui/components/status.js";
+import { APP_CONFIG } from "../../../core/config.js";
 import {
   isSessionActive,
   startSessionOnFirstSave,
@@ -52,6 +53,25 @@ async function minimizarTogglesAposSalvamento(obraId) {
     console.log(` [TOGGLES] Todos os toggles minimizados para obra ${obraId}`);
   } catch (error) {
     console.error(` [TOGGLES] Erro ao minimizar toggles:`, error);
+  }
+}
+
+async function notificarAdminSobreObra(obraId) {
+  if (APP_CONFIG.mode !== "client") {
+    return;
+  }
+
+  const response = await fetch("/api/obra/notificar", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ obraId }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || "Falha ao enviar notificação ao ADM.");
   }
 }
 
@@ -230,7 +250,19 @@ async function saveObra(obraId, event) {
     await minimizarTogglesAposSalvamento(finalId);
 
     console.log(` OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${finalId}`);
-    showSystemStatus("Obra salva com sucesso!", "success");
+    let successMessage = "Obra salva com sucesso!";
+
+    try {
+      await notificarAdminSobreObra(finalId);
+    } catch (notificationError) {
+      console.error(" [NOTIFICACAO] Falha ao enviar email ao ADM:", notificationError);
+      successMessage = "Obra salva, mas a notificação ao ADM não foi enviada.";
+    }
+
+    showSystemStatus(
+      successMessage,
+      successMessage.includes("não foi enviada") ? "warning" : "success",
+    );
   } else {
     console.error(" FALHA AO SALVAR OBRA NO SERVIDOR");
     showSystemStatus("ERRO: Falha ao salvar obra no servidor", "error");

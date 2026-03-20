@@ -2,6 +2,7 @@ import { getNextObraNumber } from '../../../data/utils/data-utils.js';
 import { generateObraId } from '../../../data/utils/id-generator.js';
 import { deleteObra } from './obra-utils.js';
 import { parseCurrency,formatCurrency } from '../project-manager.js';
+import { APP_CONFIG } from '../../../core/config.js';
 
 /**
  * ATUALIZA O TOTAL DA OBRA (NÍVEL 4)
@@ -105,12 +106,16 @@ function buildObraActionsFooter(obraId, _obraName, hasId = false) {
     const buttonText = hasIdBool ? "Atualizar Obra" : "Salvar Obra";
     const buttonClass = hasIdBool ? "btn-update" : "btn-save";
 
+    const exportButtonHtml = APP_CONFIG.mode === 'client'
+        ? `<button class="btn btn-download" onclick="downloadWord('${obraId}')">Baixar Word</button>`
+        : `<button class="btn btn-download" onclick="abrirModalExportacao('${obraId}')">Exportar Obra</button>`;
+
     return `
     <div class="obra-actions-footer">
         <button class="btn btn-verify" onclick="verifyObraData('${obraId}')">Verificar Dados</button>
         <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraId}')">${buttonText}</button>
         ${hasIdBool ? `
-        <button class="btn btn-download" onclick="downloadWord('${obraId}')" style="background-color: blue; color: white;">Baixar Word</button>
+        ${exportButtonHtml}
         ` : ''}
     </div>
     `;
@@ -161,7 +166,10 @@ async function createEmptyObra(obraName, obraId, isFromServer = false, hasProjec
     if (inserted) {
         setTimeout(() => {
             document.dispatchEvent(new CustomEvent('obraCreated', {
-                detail: { obraId: finalObraId }
+                detail: {
+                    obraId: finalObraId,
+                    isFromServer
+                }
             }));
 
             if (isFromServer && window.atualizarTextoBotaoEmpresa) {

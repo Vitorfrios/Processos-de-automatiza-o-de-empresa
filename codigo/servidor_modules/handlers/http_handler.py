@@ -9,12 +9,14 @@ import os
 import gzip
 import threading
 import re
+import tempfile
 
 
 
 # IMPORTS
 from servidor_modules.utils.file_utils import FileUtils
 from servidor_modules.utils.security_utils import SessionSecurity
+from servidor_modules.utils.background_jobs import background_jobs
 
 
 class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -49,7 +51,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     )
     BLOCKED_STATIC_PREFIXES = (
         "/public/pages/",
-        "/public/scripts/",
         "/json/",
         "/servidor_modules/",
         "/utilitarios py/",
@@ -137,6 +138,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/api/sessions/shutdown",
         "/api/sessions/ensure-single",
         "/api/reload-page",
+        "/api/admin/email-config",
+        "/api/export",
         "/api/shutdown",
         "/api/delete",
         "/api/system/apply-json",
@@ -235,6 +238,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ========= ROTAS PARA WORD ========== #
         "/api/word/models": "handle_get_word_models",
         "/api/word/templates": "handle_get_word_templates",
+        "/api/admin/email-config": "handle_get_admin_email_config",
         "/api/word/generate/proposta-comercial": "handle_generate_word_proposta_comercial",
         "/api/word/generate/proposta-tecnica": "handle_generate_word_proposta_tecnica",
         "/api/word/generate/ambos": "handle_generate_word_ambos",
@@ -468,10 +472,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         session = self.get_auth_session()
         if (
-            not session
-            and allowed_roles == {"admin"}
+            allowed_roles == {"admin"}
             and path.startswith("/admin/")
             and self._is_local_request()
+            and (not session or session.get("role") != "admin")
         ):
             self._issue_local_admin_session()
             return True
@@ -764,13 +768,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         path = parsed_path.path
 
         if path in {"/", ""}:
-            if self._is_local_request():
-                print(" Acesso local a raiz detectado - abrindo area administrativa")
-                self._issue_local_admin_session()
-                self.redirect_to("/admin/obras/create")
-            else:
-                print(" Acesso remoto a raiz detectado - redirecionando para login")
-                self.redirect_to("/login")
+            print(" Acesso a raiz detectado - redirecionando para login")
+            self.redirect_to("/login")
             return
 
         if path in self.LEGACY_PAGE_REDIRECTS:
@@ -811,6 +810,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         if path == "/api/runtime/system-bootstrap":
             self.handle_get_runtime_system_bootstrap()
+            return
+
+        if path == "/api/jobs/status":
+            self.handle_get_background_job_status()
             return
 
         if path == "/api/backup-completo":
@@ -938,8 +941,20 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_post_admin_login()
             return
 
+        elif path == "/api/admin/email-config":
+            self.handle_post_admin_email_config()
+            return
+
         elif path == "/api/client/login":
             self.handle_post_client_login()
+            return
+
+        elif path == "/api/export":
+            self.handle_post_export()
+            return
+
+        elif path == "/api/obra/notificar":
+            self.handle_post_obra_notificar()
             return
 
         # ========== ROTAS DE SESSÃO ==========
@@ -3374,6 +3389,831 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             
 
+    def handle_get_admin_email_config(self):
+        """GET /api/admin/email-config - Retorna configuracao SMTP do ADM."""
+        try:
+            from servidor_modules.utils.admin_email_config import AdminEmailConfigStore
+
+            config_store = AdminEmailConfigStore(self.project_root)
+            config = config_store.load()
+
+            self.send_json_response(
+                {
+                    "success": True,
+                    "config": config,
+                    "configured": config_store.is_configured(config),
+                    "smtpResolved": config_store.resolve_smtp_settings(config),
+                }
+            )
+        except Exception as e:
+            print(f" Erro em handle_get_admin_email_config: {e}")
+            self.send_json_response(
+                {"success": False, "error": str(e)},
+                status=500,
+            )
+
+    def handle_post_admin_email_config(self):
+        """POST /api/admin/email-config - Salva configuracao SMTP do ADM."""
+        try:
+            from datetime import datetime
+
+            from servidor_modules.utils.admin_email_config import (
+                AdminEmailConfigStore,
+                is_valid_email,
+            )
+
+            payload = self._read_json_body()
+            email = str(payload.get("email") or payload.get("adminEmail") or "").strip()
+            token = str(payload.get("token") or payload.get("adminToken") or "").strip()
+            nome = str(payload.get("nome") or payload.get("adminNome") or "").strip()
+
+            if not email or not is_valid_email(email):
+                self.send_json_response(
+                    {"success": False, "error": "Informe um email valido."},
+                    status=400,
+                )
+                return
+
+            if not token:
+                self.send_json_response(
+                    {"success": False, "error": "Informe a senha ou token SMTP."},
+                    status=400,
+                )
+                return
+
+            if not nome:
+                self.send_json_response(
+                    {"success": False, "error": "Informe o nome do remetente."},
+                    status=400,
+                )
+                return
+
+            config_store = AdminEmailConfigStore(self.project_root)
+            saved_config = config_store.save(
+                {
+                    **payload,
+                    "email": email,
+                    "token": token,
+                    "nome": nome,
+                    "updatedAt": datetime.now().isoformat(),
+                }
+            )
+
+            self.send_json_response(
+                {
+                    "success": True,
+                    "message": "Configuracao de email salva com sucesso.",
+                    "config": saved_config,
+                    "smtpResolved": config_store.resolve_smtp_settings(saved_config),
+                }
+            )
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invalido"}, 400)
+        except Exception as e:
+            print(f" Erro em handle_post_admin_email_config: {e}")
+            self.send_json_response(
+                {"success": False, "error": str(e)},
+                status=500,
+            )
+
+    def _store_generated_download(
+        self,
+        file_path,
+        filename,
+        obra_id,
+        obra_nome,
+        template_type,
+    ):
+        """Registra um arquivo temporario para download posterior."""
+        from datetime import datetime
+
+        download_info = {
+            "file_path": file_path,
+            "filename": filename,
+            "obra_id": obra_id,
+            "obra_nome": obra_nome,
+            "template_type": template_type,
+            "generated_at": datetime.now().isoformat(),
+            "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
+        }
+
+        download_id = f"word_{int(datetime.now().timestamp())}_{obra_id}"
+        temp_info_file = tempfile.gettempdir() + f"/{download_id}.json"
+
+        with open(temp_info_file, "w", encoding="utf-8") as file_obj:
+            json.dump(download_info, file_obj)
+
+        return download_id, download_info
+
+    def _serialize_background_job(self, job):
+        if not job:
+            return None
+
+        payload = dict(job)
+        payload.pop("debug_trace", None)
+        return payload
+
+    def handle_get_background_job_status(self):
+        """GET /api/jobs/status?id={job_id} - Retorna status de um job em segundo plano."""
+        parsed_path = urlparse(self.path)
+        query_params = parse_qs(parsed_path.query)
+        job_id = str(query_params.get("id", [""])[0] or "").strip()
+
+        if not job_id:
+            self.send_json_response(
+                {"success": False, "error": "ID do job nao informado."},
+                status=400,
+            )
+            return
+
+        job = background_jobs.get(job_id)
+        if not job:
+            self.send_json_response(
+                {"success": False, "error": "Job nao encontrado ou expirado."},
+                status=404,
+            )
+            return
+
+        self.send_json_response(
+            {
+                "success": True,
+                "job": self._serialize_background_job(job),
+            }
+        )
+
+    def _queue_background_email_job(self, destinatario, assunto, mensagem, zip_path):
+        def run_email_job(job_id):
+            return self._run_background_email_job(
+                job_id,
+                destinatario,
+                assunto,
+                mensagem,
+                zip_path,
+            )
+
+        return background_jobs.submit(
+            "email_send",
+            run_email_job,
+            metadata={"destinatario": str(destinatario or "").strip()},
+        )
+
+    def _queue_admin_notification_job(self, obra_data, zip_path):
+        obra = obra_data if isinstance(obra_data, dict) else {}
+
+        def run_notification_job(job_id):
+            return self._run_admin_notification_job(job_id, obra, zip_path)
+
+        return background_jobs.submit(
+            "admin_notification",
+            run_notification_job,
+            metadata={"obra_id": str(obra.get("id") or "").strip()},
+        )
+
+    def _resolve_async_email_asset(self, email_zip_path, email_zip_filename, download_path=None):
+        from servidor_modules.utils.export_utils import duplicate_temp_file
+
+        if not email_zip_path:
+            return None
+
+        if download_path and os.path.abspath(email_zip_path) == os.path.abspath(download_path):
+            duplicate_path, _ = duplicate_temp_file(
+                email_zip_path,
+                email_zip_filename,
+            )
+            return duplicate_path
+
+        return email_zip_path
+
+    def _run_background_email_job(self, job_id, destinatario, assunto, mensagem, zip_path):
+        from servidor_modules.utils.export_utils import cleanup_temp_files, enviar_email_com_zip
+
+        background_jobs.set_stage(
+            job_id,
+            "sending_email",
+            "Enviando email em segundo plano...",
+        )
+
+        try:
+            enviar_email_com_zip(destinatario, assunto, mensagem, zip_path)
+            return {
+                "message": "Email enviado com sucesso.",
+                "destinatario": str(destinatario or "").strip(),
+            }
+        finally:
+            cleanup_temp_files(zip_path)
+
+    def _run_admin_notification_job(self, job_id, obra_data, zip_path):
+        from servidor_modules.utils.export_utils import cleanup_temp_files
+
+        background_jobs.set_stage(
+            job_id,
+            "sending_email",
+            "Enviando notificacao ao ADM...",
+        )
+
+        try:
+            notification_result = self._notify_admin_if_needed(obra_data, zip_path)
+            return {
+                "message": (
+                    "Notificacao enviada ao ADM com sucesso."
+                    if notification_result.get("sent")
+                    else "Notificacao ignorada porque os dados da obra nao mudaram."
+                ),
+                "notification": notification_result,
+                "destinatario": notification_result.get("destinatario", ""),
+            }
+        finally:
+            cleanup_temp_files(zip_path)
+
+    def _run_export_job(self, job_id, payload):
+        from servidor_modules.utils.export_utils import cleanup_temp_files, prepare_export_assets
+
+        obra_id = str(payload.get("obra_id") or "").strip()
+        export_type = str(payload.get("export_type") or "").strip().lower()
+        export_format = str(payload.get("export_format") or "ambos").strip().lower()
+        destinatario = str(payload.get("destinatario") or "").strip()
+        mensagem = str(payload.get("mensagem") or "").strip()
+        recipient_mode = str(payload.get("recipient_mode") or "company").strip().lower()
+
+        need_download = export_type in {"download", "completo"}
+        need_email = export_type in {"email", "completo"}
+        assets = {}
+
+        background_jobs.set_stage(
+            job_id,
+            "generating_files",
+            "Gerando arquivos da exportacao...",
+        )
+
+        try:
+            assets = prepare_export_assets(
+                self.project_root,
+                self.file_utils,
+                obra_id,
+                export_format,
+                need_download,
+                need_email,
+            )
+            obra_data = assets.get("obra_data") or {}
+            obra_nome = obra_data.get("nome", obra_id)
+
+            download_id = None
+            download_info = None
+            email_job_id = None
+            email_error = ""
+
+            if need_download:
+                background_jobs.set_stage(
+                    job_id,
+                    "preparing_download",
+                    "Preparando download...",
+                )
+                download_id, download_info = self._store_generated_download(
+                    assets.get("download_path"),
+                    assets.get("download_filename"),
+                    obra_id,
+                    obra_nome,
+                    f"export_{export_type}_{export_format}",
+                )
+
+            if need_email:
+                background_jobs.set_stage(
+                    job_id,
+                    "queueing_email",
+                    "Enfileirando envio de email...",
+                )
+                email_asset_path = None
+                try:
+                    email_asset_path = self._resolve_async_email_asset(
+                        assets.get("email_zip_path"),
+                        assets.get("email_zip_filename"),
+                        assets.get("download_path"),
+                    )
+                    email_job_id = self._queue_background_email_job(
+                        destinatario,
+                        f"Exportacao da obra: {obra_nome}",
+                        self._normalize_export_message(
+                            obra_data,
+                            mensagem,
+                            recipient_mode,
+                        ),
+                        email_asset_path,
+                    )
+                except Exception as exc:
+                    email_error = str(exc)
+                    cleanup_targets = []
+                    if email_asset_path and email_asset_path != assets.get("download_path"):
+                        cleanup_targets.append(email_asset_path)
+                    if (
+                        assets.get("email_zip_path")
+                        and assets.get("email_zip_path") != assets.get("download_path")
+                        and assets.get("email_zip_path") != email_asset_path
+                    ):
+                        cleanup_targets.append(assets.get("email_zip_path"))
+                    if cleanup_targets:
+                        cleanup_temp_files(*cleanup_targets)
+                    if not need_download:
+                        raise
+
+            return {
+                "message": (
+                    "Exportacao preparada com sucesso."
+                    if not email_error
+                    else "Download preparado, mas o envio do email nao foi enfileirado."
+                ),
+                "obra_nome": obra_nome,
+                "tipo": export_type,
+                "formato": export_format,
+                "destinatario": destinatario if need_email else "",
+                "download_id": download_id,
+                "filename": download_info.get("filename") if download_info else "",
+                "size": download_info.get("size") if download_info else 0,
+                "email_job_id": email_job_id,
+                "email_error": email_error,
+            }
+        except Exception:
+            cleanup_temp_files(
+                assets.get("download_path"),
+                assets.get("email_zip_path"),
+            )
+            raise
+
+    def _run_obra_notification_flow(self, job_id, obra_id, export_format):
+        from servidor_modules.utils.export_utils import prepare_export_assets
+
+        background_jobs.set_stage(
+            job_id,
+            "generating_files",
+            "Gerando arquivos para notificacao...",
+        )
+
+        assets = prepare_export_assets(
+            self.project_root,
+            self.file_utils,
+            obra_id,
+            export_format,
+            False,
+            True,
+        )
+
+        return self._run_admin_notification_job(
+            job_id,
+            assets.get("obra_data") or {},
+            assets.get("email_zip_path"),
+        )
+
+    def _run_word_generation_job(self, job_id, template_type, obra_id, notify_admin=False):
+        from servidor_modules.handlers.word_handler import WordHandler
+        from servidor_modules.utils.export_utils import cleanup_temp_files, create_zip_bundle
+
+        background_jobs.set_stage(
+            job_id,
+            "generating_files",
+            "Gerando documento(s) Word...",
+        )
+
+        word_handler = WordHandler(self.project_root, self.file_utils)
+
+        if template_type == "ambos":
+            file_path, filename, error = word_handler.generate_both_documents(obra_id)
+        elif template_type == "comercial":
+            file_path, filename, error = word_handler.generate_proposta_comercial_avancada(obra_id)
+        elif template_type == "tecnica":
+            file_path, filename, error = word_handler.generate_proposta_tecnica_avancada(obra_id)
+        else:
+            file_path, filename, error = None, None, f"Tipo de template nao suportado: {template_type}"
+
+        if error:
+            raise RuntimeError(error)
+
+        obra_data = word_handler.get_obra_data(obra_id)
+        obra_nome = obra_data.get("nome", "obra") if obra_data else obra_id
+
+        background_jobs.set_stage(
+            job_id,
+            "preparing_download",
+            "Preparando download...",
+        )
+        download_id, download_info = self._store_generated_download(
+            file_path,
+            filename,
+            obra_id,
+            obra_nome,
+            template_type,
+        )
+
+        notification_job_id = None
+        notification_error = ""
+
+        if notify_admin and obra_data and file_path and filename:
+            try:
+                notification_zip_path = file_path
+
+                if str(filename).lower().endswith(".zip"):
+                    notification_zip_path = self._resolve_async_email_asset(
+                        file_path,
+                        filename,
+                        file_path,
+                    )
+                else:
+                    temp_notification_zip, _ = create_zip_bundle(
+                        [(file_path, filename)],
+                        f"{Path(str(filename)).stem}.zip",
+                    )
+                    notification_zip_path = temp_notification_zip
+
+                notification_job_id = self._queue_admin_notification_job(
+                    obra_data,
+                    notification_zip_path,
+                )
+            except Exception as exc:
+                notification_error = str(exc)
+                if notification_zip_path and notification_zip_path != file_path:
+                    cleanup_temp_files(notification_zip_path)
+
+        return {
+            "message": f"Documento {template_type} preparado com sucesso!",
+            "download_id": download_id,
+            "filename": filename,
+            "obra_nome": obra_nome,
+            "template_type": template_type,
+            "size": download_info["size"],
+            "notification_job_id": notification_job_id,
+            "notification_error": notification_error,
+        }
+
+    def _normalize_export_message(
+        self,
+        obra_data,
+        provided_message=None,
+        recipient_mode="company",
+    ):
+        message = str(provided_message or "").strip()
+        if message:
+            return message
+
+        obra = obra_data if isinstance(obra_data, dict) else {}
+        obra_nome = str(obra.get("nome") or "").strip()
+        empresa_nome = str(obra.get("empresaNome") or "").strip()
+        empresa_sigla = str(obra.get("empresaSigla") or obra.get("empresaCodigo") or "").strip()
+        cliente_final = str(obra.get("clienteFinal") or "").strip()
+        codigo_cliente = str(obra.get("codigoCliente") or "").strip()
+        numero_cliente = str(obra.get("numeroClienteFinal") or "").strip()
+        data_cadastro = str(obra.get("dataCadastro") or "").strip()
+        responsavel = str(obra.get("orcamentistaResponsavel") or "").strip()
+        valor_total = str(
+            obra.get("valorTotalObra")
+            or obra.get("valorTotal")
+            or obra.get("total")
+            or "R$ 0,00"
+        ).strip()
+
+        if recipient_mode == "self":
+            empresa_linha = (
+                f"{empresa_nome} ({empresa_sigla})" if empresa_sigla else empresa_nome
+            )
+            return "\n".join(
+                [
+                    f"Segue arquivos da obra {obra_nome}",
+                    f"Nome: {obra_nome}",
+                    f"Empresa: {empresa_linha}",
+                    f"Cliente Final: {cliente_final}",
+                    f"Código Cliente: {codigo_cliente}",
+                    f"Número Cliente: {numero_cliente}",
+                    f"Data: {data_cadastro}",
+                    f"Responsável: {responsavel}",
+                    f"Valor: {valor_total}",
+                ]
+            ).strip()
+
+        return "\n".join(
+            [
+                "Prezados,",
+                "",
+                f"Segue em anexo a exportação da obra {obra_nome}.",
+                "",
+                "Os arquivos foram organizados para análise e consulta.",
+                "",
+                "Fico à disposição para qualquer ajuste ou esclarecimento.",
+            ]
+        ).strip()
+
+    def _build_notification_message(self, obra_data):
+        """Monta o email automatico de notificacao ao ADM."""
+        from servidor_modules.utils.export_utils import format_currency_brl
+
+        obra = obra_data if isinstance(obra_data, dict) else {}
+        nome = obra.get("nome", "")
+        empresa_nome = obra.get("empresaNome", "")
+        empresa_sigla = obra.get("empresaSigla") or obra.get("empresaCodigo") or ""
+        valor_total = (
+            obra.get("valorTotalObra")
+            or obra.get("valorTotal")
+            or obra.get("total")
+            or 0
+        )
+
+        assunto = f"Nova obra cadastrada: {nome}".strip()
+        mensagem = "\n".join(
+            [
+                "Nova obra cadastrada/atualizada:",
+                "",
+                f"Nome: {nome}",
+                f"Empresa: {empresa_nome} ({empresa_sigla})".rstrip(),
+                f"Cliente Final: {obra.get('clienteFinal', '')}",
+                f"Código Cliente: {obra.get('codigoCliente', '')}",
+                f"Número Cliente: {obra.get('numeroClienteFinal', '')}",
+                f"Data: {obra.get('dataCadastro', '')}",
+                f"Responsável: {obra.get('orcamentistaResponsavel', '')}",
+                f"Valor: {format_currency_brl(valor_total)}",
+            ]
+        ).strip()
+
+        return assunto, mensagem
+
+    def _build_notification_snapshot(self, value):
+        excluded_keys = {
+            "generatedAt",
+            "updatedAt",
+            "updated_at",
+            "lastUpdatedAt",
+            "last_updated_at",
+            "downloadId",
+            "download_id",
+            "token",
+        }
+
+        if isinstance(value, dict):
+            normalized = {}
+            for key in sorted(value.keys()):
+                if key in excluded_keys:
+                    continue
+                normalized[str(key)] = self._build_notification_snapshot(value.get(key))
+            return normalized
+
+        if isinstance(value, list):
+            return [self._build_notification_snapshot(item) for item in value]
+
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+
+        return str(value)
+
+    def _build_notification_fingerprint(self, obra_data):
+        import hashlib
+
+        obra = obra_data if isinstance(obra_data, dict) else {}
+        snapshot = self._build_notification_snapshot(obra)
+        serialized = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
+        return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+    def _build_admin_notification_message(self, obra_data, is_update=False):
+        """Monta assunto e corpo da notificacao automatica ao ADM."""
+        from servidor_modules.utils.export_utils import format_currency_brl
+
+        obra = obra_data if isinstance(obra_data, dict) else {}
+        nome = str(obra.get("nome") or "").strip()
+        empresa_nome = str(obra.get("empresaNome") or "").strip()
+        empresa_sigla = str(
+            obra.get("empresaSigla") or obra.get("empresaCodigo") or ""
+        ).strip()
+        valor_total = (
+            obra.get("valorTotalObra")
+            or obra.get("valorTotal")
+            or obra.get("total")
+            or 0
+        )
+
+        empresa_linha = empresa_nome
+        if empresa_sigla:
+            empresa_linha = f"{empresa_nome} ({empresa_sigla})".strip()
+
+        if is_update:
+            assunto = f"Atualizacao nos valores de {nome}".strip()
+            cabecalho = f"Atualizacao nos valores de {nome}:".strip()
+        else:
+            assunto = f"Nova obra cadastrada: {nome}".strip()
+            cabecalho = "Nova obra cadastrada/atualizada:"
+
+        mensagem = "\n".join(
+            [
+                cabecalho,
+                "",
+                f"Nome: {nome}",
+                f"Empresa: {empresa_linha}",
+                f"Cliente Final: {obra.get('clienteFinal', '')}",
+                f"Codigo Cliente: {obra.get('codigoCliente', '')}",
+                f"Numero Cliente: {obra.get('numeroClienteFinal', '')}",
+                f"Data: {obra.get('dataCadastro', '')}",
+                f"Responsavel: {obra.get('orcamentistaResponsavel', '')}",
+                f"Valor: {format_currency_brl(valor_total)}",
+            ]
+        ).strip()
+
+        return assunto, mensagem
+
+    def _notify_admin_if_needed(self, obra_data, zip_path):
+        """Envia email ao ADM apenas se os dados da obra mudaram desde o ultimo envio."""
+        from servidor_modules.database.repositories.obra_notification_repository import (
+            ObraNotificationRepository,
+        )
+        from servidor_modules.utils.admin_email_config import AdminEmailConfigStore
+        from servidor_modules.utils.export_utils import enviar_email_com_zip
+
+        obra = obra_data if isinstance(obra_data, dict) else {}
+        obra_id = str(obra.get("id") or "").strip()
+        if not obra_id:
+            raise ValueError("ID da obra nao encontrado para notificacao.")
+
+        config_store = AdminEmailConfigStore(self.project_root)
+        config = config_store.load()
+        if not config_store.is_configured(config):
+            raise RuntimeError("Configuracao SMTP do ADM nao encontrada.")
+
+        repository = ObraNotificationRepository(self.project_root)
+        current_fingerprint = self._build_notification_fingerprint(obra)
+        last_notification = repository.get_by_obra_id(obra_id)
+
+        if (
+            last_notification
+            and str(last_notification.get("fingerprint") or "") == current_fingerprint
+        ):
+            return {
+                "success": True,
+                "sent": False,
+                "skipped": True,
+                "reason": "unchanged",
+                "destinatario": str(config.get("email") or "").strip(),
+            }
+
+        is_update = bool(last_notification)
+        assunto, mensagem = self._build_admin_notification_message(
+            obra,
+            is_update=is_update,
+        )
+
+        enviar_email_com_zip(
+            str(config.get("email") or "").strip(),
+            assunto,
+            mensagem,
+            zip_path,
+        )
+        repository.upsert(obra_id, current_fingerprint, assunto, mensagem)
+
+        return {
+            "success": True,
+            "sent": True,
+            "skipped": False,
+            "updated": is_update,
+            "destinatario": str(config.get("email") or "").strip(),
+            "subject": assunto,
+        }
+
+    def handle_post_export(self):
+        """POST /api/export - Exporta obra via download, email ou completo."""
+        from servidor_modules.utils.admin_email_config import (
+            AdminEmailConfigStore,
+            is_valid_email,
+        )
+
+        try:
+            payload = self._read_json_body()
+            obra_id = str(payload.get("obraId") or payload.get("obra_id") or "").strip()
+            export_type = str(payload.get("tipo") or "").strip().lower()
+            export_format = str(payload.get("formato") or "ambos").strip().lower()
+            destinatario = str(payload.get("destinatario") or "").strip()
+            mensagem = str(payload.get("mensagem") or "").strip()
+            recipient_mode = str(payload.get("recipientMode") or "company").strip().lower()
+
+            if not obra_id:
+                self.send_json_response(
+                    {"success": False, "error": "ID da obra nao informado."},
+                    status=400,
+                )
+                return
+
+            if export_type not in {"download", "email", "completo"}:
+                self.send_json_response(
+                    {"success": False, "error": "Tipo de exportacao invalido."},
+                    status=400,
+                )
+                return
+
+            if export_type == "email":
+                export_format = (
+                    export_format if export_format in {"pc", "pt", "ambos"} else "ambos"
+                )
+            elif export_format not in {"pc", "pt", "ambos"}:
+                self.send_json_response(
+                    {"success": False, "error": "Formato de exportacao invalido."},
+                    status=400,
+                )
+                return
+
+            need_email = export_type in {"email", "completo"}
+
+            email_store = AdminEmailConfigStore(self.project_root)
+            if need_email and not email_store.is_configured():
+                self.send_json_response(
+                    {
+                        "success": False,
+                        "error": "Configure o email do ADM antes de enviar exportacoes.",
+                    },
+                    status=409,
+                )
+                return
+
+            if need_email and not is_valid_email(destinatario):
+                self.send_json_response(
+                    {"success": False, "error": "Endereco de destino invalido."},
+                    status=400,
+                )
+                return
+
+            job_payload = {
+                "obra_id": obra_id,
+                "export_type": export_type,
+                "export_format": export_format,
+                "destinatario": destinatario,
+                "mensagem": mensagem,
+                "recipient_mode": recipient_mode,
+            }
+            job_id = background_jobs.submit(
+                "export",
+                lambda background_job_id: self._run_export_job(
+                    background_job_id,
+                    job_payload,
+                ),
+                metadata={
+                    "obra_id": obra_id,
+                    "tipo": export_type,
+                    "formato": export_format,
+                },
+            )
+
+            self.send_json_response(
+                {
+                    "success": True,
+                    "accepted": True,
+                    "job_id": job_id,
+                    "message": "Exportacao recebida e iniciada em segundo plano.",
+                },
+                status=202,
+            )
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invalido"}, 400)
+        except Exception as e:
+            print(f" Erro em handle_post_export: {e}")
+            self.send_json_response(
+                {"success": False, "error": str(e)},
+                status=500,
+            )
+
+    def handle_post_obra_notificar(self):
+        """POST /api/obra/notificar - Envia notificacao automatica ao ADM."""
+        try:
+            payload = self._read_json_body()
+            obra_id = str(payload.get("obraId") or payload.get("obra_id") or "").strip()
+            export_format = str(payload.get("formato") or "ambos").strip().lower()
+
+            if not obra_id:
+                self.send_json_response(
+                    {"success": False, "error": "ID da obra nao informado."},
+                    status=400,
+                )
+                return
+
+            job_id = background_jobs.submit(
+                "obra_notification",
+                lambda background_job_id: self._run_obra_notification_flow(
+                    background_job_id,
+                    obra_id,
+                    export_format,
+                ),
+                metadata={
+                    "obra_id": obra_id,
+                    "formato": export_format,
+                },
+            )
+
+            self.send_json_response(
+                {
+                    "success": True,
+                    "accepted": True,
+                    "job_id": job_id,
+                    "message": "Notificacao recebida e iniciada em segundo plano.",
+                },
+                status=202,
+            )
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invalido"}, 400)
+        except Exception as e:
+            print(f" Erro em handle_post_obra_notificar: {e}")
+            self.send_json_response(
+                {"success": False, "error": str(e)},
+                status=500,
+            )
+
     def handle_get_word_models(self):
         """GET /api/word/models - Retorna modelos de Word disponíveis"""
         try:
@@ -3488,6 +4328,40 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Obter dados da obra para o response
             obra_data = word_handler.get_obra_data(obra_id)
             obra_nome = obra_data.get("nome", "obra") if obra_data else obra_id
+            notification_result = None
+
+            if self._has_role("client") and obra_data and file_path and filename:
+                from pathlib import Path
+                from servidor_modules.utils.export_utils import (
+                    cleanup_temp_files,
+                    create_zip_bundle,
+                )
+
+                temp_notification_zip = None
+                notification_zip_path = file_path
+
+                if not str(filename).lower().endswith(".zip"):
+                    temp_notification_zip, _ = create_zip_bundle(
+                        [(file_path, filename)],
+                        f"{Path(str(filename)).stem}.zip",
+                    )
+                    notification_zip_path = temp_notification_zip
+
+                try:
+                    notification_result = self._notify_admin_if_needed(
+                        obra_data,
+                        notification_zip_path,
+                    )
+                except Exception as notification_error:
+                    notification_result = {
+                        "success": False,
+                        "sent": False,
+                        "skipped": False,
+                        "error": str(notification_error),
+                    }
+                finally:
+                    if temp_notification_zip:
+                        cleanup_temp_files(temp_notification_zip)
             
             # Salvar informações do arquivo gerado para download posterior
             from datetime import datetime
@@ -3518,7 +4392,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "obra_nome": obra_nome,
                 "template_type": template_type,
                 "size": download_info["size"],
-                "message": f"Documento {template_type} gerado com sucesso!"
+                "message": f"Documento {template_type} gerado com sucesso!",
+                "notification": notification_result,
             })
             
         except json.JSONDecodeError:
@@ -3533,6 +4408,66 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "error": f"Erro interno: {str(e)}"
             }, status=500)
 
+
+    def handle_generate_word(self, template_type):
+        """Handler generico para geracao de Word em segundo plano."""
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            notify_admin = self._has_role("client")
+
+            obra_id = data.get("obra_id")
+            if not obra_id:
+                self.send_json_response(
+                    {
+                        "success": False,
+                        "error": "ID da obra nao fornecido",
+                    },
+                    status=400,
+                )
+                return
+
+            job_id = background_jobs.submit(
+                "word_generation",
+                lambda background_job_id: self._run_word_generation_job(
+                    background_job_id,
+                    template_type,
+                    obra_id,
+                    notify_admin,
+                ),
+                metadata={
+                    "obra_id": str(obra_id),
+                    "template_type": template_type,
+                },
+            )
+
+            self.send_json_response(
+                {
+                    "success": True,
+                    "accepted": True,
+                    "job_id": job_id,
+                    "message": f"Geracao do documento {template_type} iniciada em segundo plano.",
+                },
+                status=202,
+            )
+        except json.JSONDecodeError:
+            self.send_json_response(
+                {
+                    "success": False,
+                    "error": "JSON invalido",
+                },
+                status=400,
+            )
+        except Exception as e:
+            print(f" Erro em handle_generate_word: {e}")
+            self.send_json_response(
+                {
+                    "success": False,
+                    "error": f"Erro interno: {str(e)}",
+                },
+                status=500,
+            )
 
     def handle_download_word(self):
         """GET /api/word/download?id={download_id} - Faz download do arquivo gerado"""
@@ -3576,8 +4511,16 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             with open(file_path, "rb") as f:
                 file_data = f.read()
             
+            lower_filename = filename.lower()
+            if lower_filename.endswith(".zip"):
+                content_type = "application/zip"
+            elif lower_filename.endswith(".docx"):
+                content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            else:
+                content_type = self.guess_type(filename) or "application/octet-stream"
+
             self.send_response(200)
-            self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            self.send_header("Content-Type", content_type)
             self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
             self.send_header("Content-Length", str(len(file_data)))
             self.end_headers()

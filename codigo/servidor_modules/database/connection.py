@@ -120,10 +120,30 @@ CREATE TABLE IF NOT EXISTS sessions (
     payload_json TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS admin_email_config (
+    config_key TEXT PRIMARY KEY,
+    email TEXT NOT NULL DEFAULT '',
+    token TEXT NOT NULL DEFAULT '',
+    nome TEXT NOT NULL DEFAULT '',
+    smtp_host TEXT NOT NULL DEFAULT '',
+    smtp_port INTEGER,
+    use_tls INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS obra_notifications (
+    obra_id TEXT PRIMARY KEY,
+    fingerprint TEXT NOT NULL,
+    last_subject TEXT NOT NULL DEFAULT '',
+    last_message TEXT NOT NULL DEFAULT '',
+    last_sent_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_empresas_sort_order ON empresas(sort_order);
 CREATE INDEX IF NOT EXISTS idx_machine_catalog_sort_order ON machine_catalog(sort_order);
 CREATE INDEX IF NOT EXISTS idx_obras_empresa_codigo ON obras(empresa_codigo);
 CREATE INDEX IF NOT EXISTS idx_obras_sort_order ON obras(sort_order);
+CREATE INDEX IF NOT EXISTS idx_obra_notifications_sent_at ON obra_notifications(last_sent_at);
 CREATE INDEX IF NOT EXISTS idx_projetos_obra_id_sort ON projetos(obra_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_salas_projeto_id_sort ON salas(projeto_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_sala_maquinas_sala_id_sort ON sala_maquinas(sala_id, sort_order);

@@ -2,6 +2,9 @@
 
 import { showSystemStatus } from "../interface.js";
 
+const BACKGROUND_JOB_POLL_INTERVAL_MS = 700;
+const BACKGROUND_JOB_TIMEOUT_MS = 180000;
+
 /**
  * Exibe modal para seleção do modelo Word
  * @param {string} obraId - ID da obra
@@ -82,6 +85,68 @@ export function showWordModelModal(obraId, obraName) {
 
   // Prevenir scroll no body
   document.body.style.overflow = "hidden";
+}
+
+async function fetchBackgroundJob(jobId) {
+  const response = await fetch(`/api/jobs/status?id=${encodeURIComponent(jobId)}`);
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || !result.success || !result.job) {
+    throw new Error(result.error || "Nao foi possivel consultar o processamento.");
+  }
+
+  return result.job;
+}
+
+function wait(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+export async function waitForBackgroundJob(jobId, options = {}) {
+  const {
+    intervalMs = BACKGROUND_JOB_POLL_INTERVAL_MS,
+    timeoutMs = BACKGROUND_JOB_TIMEOUT_MS,
+    onProgress = null,
+  } = options;
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const job = await fetchBackgroundJob(jobId);
+
+    if (typeof onProgress === "function") {
+      onProgress(job);
+    }
+
+    if (job.status === "completed") {
+      return job;
+    }
+
+    if (job.status === "failed") {
+      throw new Error(job.error || "Falha ao processar a solicitacao.");
+    }
+
+    await wait(intervalMs);
+  }
+
+  throw new Error("O processamento demorou mais do que o esperado.");
+}
+
+function updateWordLoadingState(modal, job) {
+  const loadingText = modal.querySelector(".word-modal-loading-text");
+  const loadingHint = modal.querySelector(".word-modal-loading p");
+  if (!loadingText || !loadingHint || !job) {
+    return;
+  }
+
+  if (job.stage === "preparing_download") {
+    loadingText.textContent = "Preparando download...";
+    loadingHint.textContent =
+      "Os arquivos ja foram gerados e o download sera iniciado em instantes...";
+    return;
+  }
+
+  loadingText.textContent = "Gerando documento(s)...";
+  loadingHint.textContent = "Isso pode levar alguns instantes...";
 }
 
 /**
@@ -193,13 +258,25 @@ function setupModalEvents(
       });
 
       const result = await response.json();
+      const finalResult = result.job_id
+        ? await waitForBackgroundJob(result.job_id, {
+            onProgress: (job) => updateWordLoadingState(modal, job),
+          })
+        : result;
 
       if (!result.success) {
         throw new Error(result.error || "Erro na geração do documento");
       }
 
       // Baixar o arquivo
-      await downloadGeneratedFile(result.download_id);
+      await downloadGeneratedFile(finalResult.download_id);
+
+      if (finalResult.notification_error) {
+        showSystemStatus(
+          "Download concluido, mas o email ao ADM nao foi enviado.",
+          "warning",
+        );
+      }
 
       // Mostrar sucesso
       showSuccess(modal, selectedModels.length);
@@ -207,7 +284,12 @@ function setupModalEvents(
       // Fechar modal após 2 segundos
       setTimeout(() => {
         closeModal(overlay);
-        showSystemStatus(`Documento(s) Word gerado(s) com sucesso!`, "success");
+        showSystemStatus(
+          finalResult.notification_error
+            ? "Documento(s) gerado(s) com sucesso, mas o email ao ADM nao foi enviado."
+            : `Documento(s) Word gerado(s) com sucesso!`,
+          finalResult.notification_error ? "warning" : "success",
+        );
       }, 2000);
     } catch (error) {
       console.error(" Erro ao gerar documento(s):", error);
@@ -237,7 +319,7 @@ function setupModalEvents(
 /**
  * Baixa arquivo gerado usando a API de download
  */
-async function downloadGeneratedFile(downloadId) {
+export async function downloadGeneratedFile(downloadId) {
   try {
     const response = await fetch(`/api/word/download?id=${downloadId}`);
 

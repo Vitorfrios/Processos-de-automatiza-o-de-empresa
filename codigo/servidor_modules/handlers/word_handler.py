@@ -6,6 +6,7 @@ word_handler.py - Manipulação de documentos Word
 import json
 import os
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from datetime import datetime
 from docxtpl import DocxTemplate
@@ -20,6 +21,8 @@ class WordHandler:
         self.project_root = project_root
         self.file_utils = file_utils
         self.templates_dir = project_root / "word_templates"
+        self._backup_cache = None
+        self._obra_cache = {}
         self.ensure_templates_dir()
         
     def ensure_templates_dir(self):
@@ -106,16 +109,35 @@ class WordHandler:
     def get_obra_data(self, obra_id):
         """Obtém dados completos de uma obra"""
         try:
-            backup_file = self.project_root / "json" / "backup.json"
-            if not backup_file.exists():
-                return None
-                
-            with open(backup_file, "r", encoding="utf-8") as f:
-                backup_data = json.load(f)
-            
-            obras = backup_data.get("obras", [])
+            obra_key = str(obra_id)
+
+            if obra_key in self._obra_cache:
+                return self._obra_cache[obra_key]
+
+            try:
+                from servidor_modules.database.repositories.obra_repository import (
+                    ObraRepository,
+                )
+
+                obra = ObraRepository(self.project_root).get_by_id(obra_key)
+                if obra:
+                    self._obra_cache[obra_key] = obra
+                    return obra
+            except Exception:
+                pass
+
+            if self._backup_cache is None:
+                backup_file = self.project_root / "json" / "backup.json"
+                if not backup_file.exists():
+                    return None
+
+                with open(backup_file, "r", encoding="utf-8") as f:
+                    self._backup_cache = json.load(f)
+
+            obras = self._backup_cache.get("obras", [])
             for obra in obras:
-                if str(obra.get("id")) == obra_id:
+                if str(obra.get("id")) == obra_key:
+                    self._obra_cache[obra_key] = obra
                     return obra
             return None
         except Exception as e:
@@ -424,15 +446,23 @@ class WordHandler:
     def generate_both_documents(self, obra_id):
         """Gera ambos os documentos (comercial e técnico)"""
         try:
-            # Gerar proposta comercial
-            pc_path, pc_filename, pc_error = self.generate_proposta_comercial_avancada(obra_id)
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                pc_future = executor.submit(
+                    self.generate_proposta_comercial_avancada, obra_id
+                )
+                pt_future = executor.submit(
+                    self.generate_proposta_tecnica_avancada, obra_id
+                )
+
+                pc_path, pc_filename, pc_error = pc_future.result()
+                pt_path, pt_filename, pt_error = pt_future.result()
+
             if pc_error:
+                if pt_path and os.path.exists(pt_path):
+                    os.unlink(pt_path)
                 return None, None, pc_error
-            
-            # Gerar proposta técnica
-            pt_path, pt_filename, pt_error = self.generate_proposta_tecnica_avancada(obra_id)
+
             if pt_error:
-                # Limpar arquivo gerado anteriormente
                 if pc_path and os.path.exists(pc_path):
                     os.unlink(pc_path)
                 return None, None, pt_error

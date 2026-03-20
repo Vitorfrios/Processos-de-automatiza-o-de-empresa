@@ -2387,7 +2387,13 @@
     {
       "codigo": "ACT",
       "nome": "ACTEMIUM",
-      "credenciais": null
+      "credenciais": {
+        "usuario": "act",
+        "token": "5d1184a61dd46b60e252bba6e04f753d",
+        "data_criacao": "2026-03-20T17:00:41.253Z",
+        "data_expiracao": "2026-04-19T17:00:41.253Z",
+        "tempoUso": 30
+      }
     },
     {
       "codigo": "AMC",

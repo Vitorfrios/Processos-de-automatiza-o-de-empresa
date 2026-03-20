@@ -4,7 +4,13 @@ import { showConfirmation, showError, showSuccess, showInfo } from '../config/ui
 const adminState = {
     search: '',
     initialized: false,
-    modalListenerBound: false
+    modalListenerBound: false,
+    emailConfig: {
+        email: '',
+        token: '',
+        nome: ''
+    },
+    emailConfigLoaded: false
 };
 
 function escapeHtml(text) {
@@ -20,6 +26,10 @@ function formatDate(date) {
     if (Number.isNaN(parsedDate.getTime())) return 'Sem registro';
 
     return parsedDate.toLocaleDateString('pt-BR');
+}
+
+function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 }
 
 function generateToken() {
@@ -138,6 +148,119 @@ function renderAdminCard(admin, index) {
     `;
 }
 
+function renderEmailConfigPanel() {
+    const config = adminState.emailConfig || {};
+    const helperText = adminState.emailConfigLoaded
+        ? 'Use este remetente para exportação por email e notificações automáticas.'
+        : 'Carregando configuração de email...';
+
+    return `
+        <section class="admin-email-config-panel">
+            <div class="admin-section-header admin-section-header-panel">
+                <div class="admin-section-copy">
+                    <span class="dashboard-eyebrow">SMTP</span>
+                    <h3>Email do responsável</h3>
+                    <p>${helperText}</p>
+                </div>
+            </div>
+
+            <div class="admin-form-grid admin-form-grid-simple">
+                <label class="admin-field">
+                    <span>Email do responsável</span>
+                    <input type="email" id="adminEmail" placeholder="Email do responsável" value="${escapeHtml(config.email || '')}">
+                </label>
+
+                <label class="admin-field">
+                    <span>Senha ou token SMTP</span>
+                    <input type="password" id="adminToken" placeholder="Senha ou token SMTP" value="${escapeHtml(config.token || '')}">
+                </label>
+
+                <label class="admin-field">
+                    <span>Nome do remetente</span>
+                    <input type="text" id="adminNome" placeholder="Nome do remetente" value="${escapeHtml(config.nome || '')}">
+                </label>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-success" id="saveAdminEmailConfigBtn" type="button" onclick="salvarCredenciais()">Salvar</button>
+            </div>
+        </section>
+    `;
+}
+
+async function loadAdminEmailConfig() {
+    try {
+        const response = await fetch('/api/admin/email-config');
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Falha ao carregar configuração de email.');
+        }
+
+        adminState.emailConfig = {
+            email: result.config?.email || '',
+            token: result.config?.token || '',
+            nome: result.config?.nome || ''
+        };
+        adminState.emailConfigLoaded = true;
+    } catch (error) {
+        adminState.emailConfigLoaded = true;
+        adminState.emailConfig = {
+            email: '',
+            token: '',
+            nome: ''
+        };
+        showInfo(error.message || 'Configuração SMTP ainda não definida.');
+    }
+}
+
+async function saveAdminEmailConfig() {
+    const email = document.getElementById('adminEmail')?.value.trim() || '';
+    const token = document.getElementById('adminToken')?.value.trim() || '';
+    const nome = document.getElementById('adminNome')?.value.trim() || '';
+
+    if (!isValidEmail(email)) {
+        showError('Informe um email válido para o responsável.');
+        return;
+    }
+
+    if (!token) {
+        showError('Informe a senha ou token SMTP.');
+        return;
+    }
+
+    if (!nome) {
+        showError('Informe o nome do remetente.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/email-config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, token, nome })
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Falha ao salvar configuração de email.');
+        }
+
+        adminState.emailConfig = {
+            email,
+            token,
+            nome
+        };
+        adminState.emailConfigLoaded = true;
+        renderAdminCredentials();
+        showSuccess('Configuração de email salva com sucesso.');
+    } catch (error) {
+        showError(error.message || 'Falha ao salvar configuração de email.');
+    }
+}
+
 export function renderAdminCredentials() {
     const container = document.getElementById('adminCredentialsContent');
     if (!container) return;
@@ -146,6 +269,8 @@ export function renderAdminCredentials() {
     const filteredAdmins = filterAdmins(admins);
 
     container.innerHTML = `
+        ${renderEmailConfigPanel()}
+
         <div class="admin-section-header admin-section-header-panel">
             <div class="admin-section-copy">
                 <span class="dashboard-eyebrow">ADM</span>
@@ -305,6 +430,7 @@ function bindAdminEvents() {
     const closeModalBtn = document.getElementById('closeAdminModalBtn');
     const cancelBtn = document.getElementById('cancelAdminCredentialBtn');
     const generateBtn = document.getElementById('generateAdminTokenBtn');
+    const saveEmailConfigBtn = document.getElementById('saveAdminEmailConfigBtn');
 
 
 
@@ -337,6 +463,10 @@ function bindAdminEvents() {
         };
     }
 
+    if (saveEmailConfigBtn) {
+        saveEmailConfigBtn.onclick = saveAdminEmailConfig;
+    }
+
     if (!adminState.modalListenerBound) {
         window.addEventListener('click', (event) => {
             const modal = document.getElementById('adminCredentialModal');
@@ -359,6 +489,11 @@ export function initializeAdminCredentials() {
     window.addEventListener('dataLoaded', renderAdminCredentials);
     window.addEventListener('dataImported', renderAdminCredentials);
     window.addEventListener('dataApplied', renderAdminCredentials);
+    window.salvarCredenciais = saveAdminEmailConfig;
+
+    loadAdminEmailConfig().then(() => {
+        renderAdminCredentials();
+    });
 
     adminState.initialized = true;
 }

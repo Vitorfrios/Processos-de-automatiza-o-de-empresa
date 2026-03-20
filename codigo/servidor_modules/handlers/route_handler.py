@@ -471,6 +471,10 @@ class RouteHandler:
         """GET /api/word/templates"""
         handler.handle_get_word_templates()
 
+    def handle_get_admin_email_config(self, handler):
+        """GET /api/admin/email-config"""
+        handler.handle_get_admin_email_config()
+
     def handle_generate_word_proposta_comercial(self, handler):
         """POST /api/word/generate/proposta-comercial"""
         handler.handle_generate_word_proposta_comercial()

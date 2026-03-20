@@ -1,3 +1,232 @@
 {
-  "obras": []
+  "obras": [
+    {
+      "id": "obra_u57",
+      "nome": "ACT-1",
+      "empresa_id": "empresa_obra_u57",
+      "empresaSigla": "ACT",
+      "empresaNome": "ACTEMIUM",
+      "numeroClienteFinal": 1,
+      "clienteFinal": "teste cliente final",
+      "codigoCliente": "codigo",
+      "dataCadastro": "20/03/2026",
+      "orcamentistaResponsavel": "orçamentista",
+      "idGerado": "obra_ACT_1",
+      "projetos": [
+        {
+          "id": "obra_u57_proj_h12_3",
+          "nome": "Projeto1",
+          "salas": [
+            {
+              "id": "obra_u57_proj_h12_3_sala_e83_1",
+              "nome": "Sala1",
+              "inputs": {
+                "ambiente": "Sala1",
+                "peDireito": 3,
+                "paredeOeste": 12,
+                "paredeLeste": 12,
+                "paredeNorte": 12,
+                "paredeSul": 12,
+                "area": 144,
+                "volume": 432,
+                "divisoriaNaoClima1": 1,
+                "divisoriaNaoClima2": 1,
+                "divisoriaClima1": 1,
+                "divisoriaClima2": 1,
+                "dissipacao": 60000,
+                "numPessoas": 1,
+                "pressurizacaoSetpoint": 25,
+                "setpointTemp": 25,
+                "numPortasDuplas": 1,
+                "numPortasSimples": 2,
+                "pressurizacao": true
+              },
+              "maquinas": [
+                {
+                  "nome": "Wall Mounted-01A (3TR)",
+                  "tipo": "Wall Mounted",
+                  "potencia": "3TR",
+                  "tensao": "220V/1F",
+                  "tensao_comando": "220V",
+                  "quantidade": 9,
+                  "aplicacao_machines": "climatizacao",
+                  "precoBase": 39852.8,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "Automação Embarcada",
+                      "value": 5300,
+                      "originalName": "Automação Embarcada",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 2,
+                      "name": "1 Damper Manual",
+                      "value": 200,
+                      "originalName": "1 Damper Manual",
+                      "potenciaAplicada": "3TR"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Umidificação",
+                      "value": 9200,
+                      "originalName": "Umidificação",
+                      "potenciaAplicada": "3TR"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 490975.2,
+                  "potenciaSelecionada": "3TR",
+                  "tipoSelecionado": "Wall Mounted"
+                },
+                {
+                  "nome": "Pressurizador Externo-01A (2000m³/h)",
+                  "tipo": "Pressurizador Externo",
+                  "potencia": "2000m³/h",
+                  "tensao": "220V/1F",
+                  "tensao_comando": "220V",
+                  "quantidade": 1,
+                  "aplicacao_machines": "pressurizacao",
+                  "precoBase": 3900,
+                  "opcoesSelecionadas": [
+                    {
+                      "id": 1,
+                      "name": "com 10mmCA",
+                      "value": 9,
+                      "originalName": "com 10mmCA",
+                      "potenciaAplicada": "2000m³/h"
+                    },
+                    {
+                      "id": 2,
+                      "name": "com 15mmCA",
+                      "value": 1,
+                      "originalName": "com 15mmCA",
+                      "potenciaAplicada": "2000m³/h"
+                    }
+                  ],
+                  "configuracoesSelecionadas": [],
+                  "precoTotal": 3910,
+                  "potenciaSelecionada": "2000m³/h",
+                  "tipoSelecionado": "Pressurizador Externo"
+                }
+              ],
+              "capacidade": {
+                "fatorSeguranca": 10,
+                "capacidadeUnitaria": 1,
+                "solucao": 26,
+                "solucaoBackup": 26,
+                "totalCapacidade": 26,
+                "folga": 13.8,
+                "backup": "n"
+              },
+              "ventilacao": {
+                "potencia": 10100,
+                "tempInterna": 45,
+                "tempExterna": 35
+              },
+              "ganhosTermicos": {
+                "total-ganhos-w": 80340,
+                "total-tr-aprox": 23,
+                "total-tr-exato": 22.84,
+                "total-externo": 0,
+                "total-divisoes": 0,
+                "total-piso": 2916,
+                "total-iluminacao": 1008,
+                "total-dissi": 60000,
+                "total-pessoas": 220,
+                "total-ar-sensivel": 4571,
+                "total-ar-latente": 11626
+              },
+              "acessorios": [
+                {
+                  "id": "1774025177403dmoxz0wqn",
+                  "aplicacao_Acessorio": "pressurizacao",
+                  "tipo": "DCF_120",
+                  "dimensao": "850x850",
+                  "quantidade": 1,
+                  "valor_unitario": 106500,
+                  "valor_total": 106500,
+                  "descricao": "DCF_120"
+                }
+              ],
+              "dutos": [
+                {
+                  "id": "1774025192006k0zo8dhfj",
+                  "tipo": "Chapa de aco inox",
+                  "tipo_descricao": "Chapa de aco inox",
+                  "opcional_id": "1",
+                  "opcional_nome": "Polimento",
+                  "aplicacao_Dutos": "climatizacao",
+                  "kg": 1,
+                  "quantidade": 1,
+                  "valor_tipo": 180,
+                  "valor_opcional": 45,
+                  "valor_material_por_kg": 99,
+                  "valor_unitario": 324,
+                  "valor_total": 324
+                }
+              ],
+              "tubulacao": {
+                "conjuntos": [
+                  {
+                    "id": "obra_u57_proj_h12_3_sala_e83_1-1",
+                    "numero": 1,
+                    "quantidade": 1,
+                    "cabos": 18,
+                    "luvas": 115.2,
+                    "reducoes": 48,
+                    "totalLSmetros": 288,
+                    "totalLSkg": 386.21,
+                    "totalLLmetros": 288,
+                    "totalLLkg": 136.22,
+                    "totalKG": 522.43,
+                    "valorTotal": 29952,
+                    "linhas": [
+                      {
+                        "id": "LS-obra_u57_proj_h12_3_sala_e83_1-1-1774025180848",
+                        "tipo": "L.S.",
+                        "pol": "1.1/4",
+                        "expe": "1,59",
+                        "compr": 12,
+                        "numC": 12,
+                        "numCu": 12,
+                        "Cee": 12,
+                        "Lsm": 288,
+                        "LSkg": 386.20799999999997,
+                        "valorTotal": 17856
+                      },
+                      {
+                        "id": "LL-obra_u57_proj_h12_3_sala_e83_1-1-1774025180848",
+                        "tipo": "L.L.",
+                        "pol": "7/8",
+                        "expe": "0,80",
+                        "compr": 12,
+                        "numC": 12,
+                        "numCu": 12,
+                        "Cee": 12,
+                        "Lsm": 288,
+                        "LSkg": 136.224,
+                        "valorTotal": 12096
+                      }
+                    ]
+                  }
+                ],
+                "valorTotalGeralTubos": 0,
+                "valorTotal": null
+              }
+            }
+          ],
+          "servicos": {
+            "engenharia": {
+              "valor": 0,
+              "descricao": "Referente ao projeto HVAC e acompanhamento do start-up nas dependências do cliente (região metropolitana de Belo Horizonte/MG). Impostos inclusos (ISS), faturado pela ESI."
+            },
+            "adicionais": []
+          },
+          "valorTotalProjeto": 631661.2
+        }
+      ],
+      "valorTotalObra": 631661.2
+    }
+  ]
 }

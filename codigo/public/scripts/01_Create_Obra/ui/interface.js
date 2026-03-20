@@ -3,6 +3,7 @@
  * Sistema com IDs únicos
  */
 import { downloadWord } from "./download/infodownload.js";
+import { abrirModalExportacao } from "./download/export-modal.js";
 import {
   showSystemStatus,
   removeExistingStatusBanner,
@@ -392,6 +393,7 @@ if (typeof window !== "undefined") {
   window.deleteObra = deleteObra;
   window.saveOrUpdateObra = saveOrUpdateObra;
   window.downloadWord = downloadWord;
+  window.abrirModalExportacao = abrirModalExportacao;
   window.addNewProject = addNewProject;
   window.createEmptyProject = createEmptyProject;
 }

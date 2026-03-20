@@ -24,6 +24,9 @@ class WordPCGenerator:
     def __init__(self, project_root: Path, file_utils):
         self.project_root = project_root
         self.file_utils = file_utils
+        self._json_cache = {}
+        self._dados_cache = None
+        self._backup_cache = None
 
 
     # ----------------------------------------------------------------------
@@ -31,23 +34,34 @@ class WordPCGenerator:
     # ----------------------------------------------------------------------
     def _load_json(self, filename: str) -> Dict:
         """Carrega um arquivo JSON do diretório 'json'."""
+        if filename in self._json_cache:
+            return self._json_cache[filename]
+
         path = self.project_root / "json" / filename
         if not path.exists():
+            self._json_cache[filename] = {}
             return {}
         try:
             with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                self._json_cache[filename] = data
+                return data
         except Exception as e:
             print(f"❌ Erro ao carregar {filename}: {e}")
+            self._json_cache[filename] = {}
             return {}
 
     def get_dados_data(self) -> Dict:
         """Obtém dados do sistema (machines, constants, etc.)"""
-        return self._load_json("dados.json")
+        if self._dados_cache is None:
+            self._dados_cache = self._load_json("dados.json")
+        return self._dados_cache
 
     def get_backup_data(self) -> Dict:
         """Obtém dados de backup"""
-        return self._load_json("backup.json")
+        if self._backup_cache is None:
+            self._backup_cache = self._load_json("backup.json")
+        return self._backup_cache
 
     def _find_obra_by_id(self, backup_data: Dict, obra_id: str) -> Optional[Dict]:
         """Busca obra específica na estrutura de backup já carregada."""
