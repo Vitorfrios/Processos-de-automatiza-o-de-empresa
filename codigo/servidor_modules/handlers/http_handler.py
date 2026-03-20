@@ -14,6 +14,7 @@ import re
 
 # IMPORTS
 from servidor_modules.utils.file_utils import FileUtils
+from servidor_modules.utils.security_utils import SessionSecurity
 
 
 class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -47,6 +48,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/public/",
     )
     BLOCKED_STATIC_PREFIXES = (
+        "/public/pages/",
+        "/public/scripts/",
         "/json/",
         "/servidor_modules/",
         "/utilitarios py/",
@@ -74,6 +77,94 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         ".log",
         ".db",
         ".sqlite",
+    )
+    PAGE_ACCESS_ROLES = {
+        "/login": None,
+        "/obras/create": {"client", "admin"},
+        "/admin/obras/create": {"admin"},
+        "/admin/obras/embed": {"admin"},
+        "/admin/data": {"admin"},
+    }
+    PUBLIC_API_ROUTES = {
+        "/health-check",
+        "/api/admin/login",
+        "/api/client/login",
+    }
+    AUTHENTICATED_API_ROUTES = {
+        "/obras",
+        "/api/backup-completo",
+        "/api/runtime/bootstrap",
+        "/api/runtime/system-bootstrap",
+        "/api/session-obras",
+        "/api/sessions/current",
+        "/api/sessions/add-obra",
+        "/api/word/models",
+        "/api/word/templates",
+        "/api/word/generate/proposta-comercial",
+        "/api/word/generate/proposta-tecnica",
+        "/api/word/generate/ambos",
+        "/api/word/download",
+    }
+    AUTHENTICATED_API_PREFIXES = (
+        "/obras/",
+        "/api/sessions/remove-obra/",
+    )
+    ADMIN_ONLY_API_ROUTES = {
+        "/constants",
+        "/system-constants",
+        "/dados",
+        "/backup",
+        "/machines",
+        "/api/server/uptime",
+        "/api/dados/empresas",
+        "/api/acessorios",
+        "/api/acessorios/types",
+        "/api/acessorios/dimensoes",
+        "/api/system-data",
+        "/api/constants",
+        "/api/materials",
+        "/api/empresas/all",
+        "/api/machines/types",
+        "/api/system-data/save",
+        "/api/constants/save",
+        "/api/materials/save",
+        "/api/empresas/save",
+        "/api/machines/save",
+        "/api/machines/add",
+        "/api/machines/update",
+        "/api/machines/delete",
+        "/api/dados/empresas/auto",
+        "/api/sessions/shutdown",
+        "/api/sessions/ensure-single",
+        "/api/reload-page",
+        "/api/shutdown",
+        "/api/delete",
+        "/api/system/apply-json",
+        "/api/dutos",
+        "/api/dutos/types",
+        "/api/dutos/opcionais",
+        "/api/tubos",
+        "/api/tubos/polegadas",
+    }
+    ADMIN_ONLY_API_PREFIXES = (
+        "/api/dados/empresas/",
+        "/api/empresas/",
+        "/api/machines/type/",
+        "/api/acessorios/type/",
+        "/api/acessorios/search",
+        "/api/acessorios/add",
+        "/api/acessorios/update",
+        "/api/acessorios/delete",
+        "/api/dutos/type/",
+        "/api/dutos/search",
+        "/api/dutos/add",
+        "/api/dutos/update",
+        "/api/dutos/delete",
+        "/api/tubos/polegada/",
+        "/api/tubos/search",
+        "/api/tubos/add",
+        "/api/tubos/update",
+        "/api/tubos/delete",
     )
 
     # Roteamento direto para máxima velocidade
@@ -170,6 +261,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # INICIALIZAÇÃO RÁPIDA
         self.file_utils = FileUtils()
         self.project_root = self.file_utils.find_project_root()
+        self.session_security = SessionSecurity(self.project_root)
+        self._pending_response_headers = []
+        self._auth_session_cache = None
+        self._auth_session_loaded = False
 
         # Timestamp único para TODOS os arquivos (muda a cada execução do servidor)
         self.CACHE_BUSTER = f"v{int(time.time())}"
@@ -209,12 +304,448 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self._route_handler.set_routes_core(self.routes_core)
         return self._route_handler
 
+    def queue_response_header(self, name, value):
+        """Agenda headers extras para a resposta atual."""
+        self._pending_response_headers.append((name, value))
+
+    def get_auth_session(self):
+        """Resolve a sessao autenticada a partir do cookie assinado."""
+        if not self._auth_session_loaded:
+            self._auth_session_cache = self.session_security.get_session_from_cookie_header(
+                self.headers.get("Cookie")
+            )
+            self._auth_session_loaded = True
+        return self._auth_session_cache
+
+    def _has_role(self, *roles):
+        session = self.get_auth_session() or {}
+        return session.get("role") in set(roles)
+
+    def _normalize_text(self, value):
+        return str(value or "").strip().upper()
+
+    def _is_local_request(self):
+        client_ip = str(self.client_address[0] or "").strip()
+        return client_ip in {"127.0.0.1", "::1", "localhost"}
+
+    def _issue_local_admin_session(self):
+        admin_session_token, _ = self.session_security.create_signed_token(
+            {
+                "role": "admin",
+                "usuario": "local_admin",
+                "nome": "Administrador Local",
+                "nivel": "ADM",
+                "source": "local_bootstrap",
+            }
+        )
+        self.queue_response_header(
+            "Set-Cookie",
+            self.session_security.build_set_cookie_header(admin_session_token),
+        )
+        self._auth_session_cache = {
+            "role": "admin",
+            "usuario": "local_admin",
+            "nome": "Administrador Local",
+            "nivel": "ADM",
+            "source": "local_bootstrap",
+        }
+        self._auth_session_loaded = True
+
+    def _matches_empresa_context(self, obra_data, session=None):
+        session = session or self.get_auth_session()
+        if not obra_data or not session:
+            return False
+
+        if session.get("role") == "admin":
+            return True
+
+        empresa_codigo = self._normalize_text(session.get("empresaCodigo"))
+        empresa_nome = self._normalize_text(session.get("empresaNome"))
+        obra_codigo = self._normalize_text(
+            obra_data.get("empresaCodigo")
+            or obra_data.get("empresaSigla")
+            or obra_data.get("codigo")
+            or obra_data.get("sigla")
+            or obra_data.get("empresaAtual")
+        )
+        obra_nome = self._normalize_text(
+            obra_data.get("empresaNome")
+            or obra_data.get("nomeEmpresa")
+            or obra_data.get("empresa")
+        )
+
+        return bool(
+            (empresa_codigo and obra_codigo == empresa_codigo)
+            or (empresa_nome and obra_nome == empresa_nome)
+        )
+
+    def _filter_obras_for_session(self, obras, session=None):
+        session = session or self.get_auth_session()
+        if not session:
+            return []
+
+        if session.get("role") == "admin":
+            return list(obras or [])
+
+        return [
+            obra
+            for obra in (obras or [])
+            if isinstance(obra, dict) and self._matches_empresa_context(obra, session)
+        ]
+
+    def _apply_company_context_to_obra(self, obra_data, session=None):
+        session = session or self.get_auth_session()
+        payload = dict(obra_data or {})
+
+        if not session or session.get("role") != "client":
+            return payload
+
+        empresa_codigo = session.get("empresaCodigo", "")
+        empresa_nome = session.get("empresaNome", "")
+        payload["empresaCodigo"] = empresa_codigo
+        payload["empresaSigla"] = empresa_codigo
+        payload["codigo"] = empresa_codigo
+        payload["sigla"] = empresa_codigo
+        payload["empresaAtual"] = empresa_codigo
+        payload["empresaNome"] = empresa_nome
+        payload["nomeEmpresa"] = empresa_nome
+        payload["empresa"] = empresa_nome
+        return payload
+
+    def _read_json_body(self):
+        content_length = int(self.headers.get("Content-Length", 0) or 0)
+        raw_body = (
+            self.rfile.read(content_length).decode("utf-8")
+            if content_length > 0
+            else "{}"
+        )
+        return json.loads(raw_body or "{}")
+
+    def _unauthorized_response(self, path, role_required=None):
+        if path in self.PAGE_ROUTES:
+            self.redirect_to("/login")
+            return
+
+        message = "Autenticacao obrigatoria"
+        status = 401
+        if self.get_auth_session() and role_required:
+            message = f"Acesso restrito ao perfil {role_required}"
+            status = 403
+
+        self.send_json_response(
+            {
+                "success": False,
+                "error": message,
+                "redirectTo": "/login",
+            },
+            status,
+        )
+
+    def _require_roles(self, path, allowed_roles=None):
+        if allowed_roles is None:
+            return True
+
+        session = self.get_auth_session()
+        if (
+            not session
+            and allowed_roles == {"admin"}
+            and path.startswith("/admin/")
+            and self._is_local_request()
+        ):
+            self._issue_local_admin_session()
+            return True
+
+        if not session:
+            self._unauthorized_response(path)
+            return False
+
+        if session.get("role") not in set(allowed_roles):
+            self._unauthorized_response(path, ",".join(sorted(allowed_roles)))
+            return False
+
+        return True
+
+    def _authorize_request(self, path):
+        if path in self.PAGE_ACCESS_ROLES:
+            return self._require_roles(path, self.PAGE_ACCESS_ROLES[path])
+
+        if path in self.PUBLIC_API_ROUTES:
+            return True
+
+        if path in self.ADMIN_ONLY_API_ROUTES or any(
+            path.startswith(prefix) for prefix in self.ADMIN_ONLY_API_PREFIXES
+        ):
+            return self._require_roles(path, {"admin"})
+
+        if path in self.AUTHENTICATED_API_ROUTES or any(
+            path.startswith(prefix) for prefix in self.AUTHENTICATED_API_PREFIXES
+        ):
+            return self._require_roles(path, {"client", "admin"})
+
+        if path.startswith("/api/") or path == "/obras" or path.startswith("/obras/"):
+            return self._require_roles(path, {"client", "admin"})
+
+        return True
+
+    def _build_runtime_bootstrap_payload(self):
+        session = self.get_auth_session() or {}
+        all_obras = self.routes_core.obra_repository.get_all()
+        allowed_obras = self._filter_obras_for_session(all_obras, session)
+
+        if session.get("role") == "admin":
+            session_obras = self.routes_core.handle_get_session_obras()
+            obras_sessao = self.routes_core.handle_get_obras()
+            empresas = self.routes_core.empresa_handler.obter_empresas_publicas()
+            backup_payload = {"obras": all_obras}
+        else:
+            empresa_publica = {
+                "codigo": session.get("empresaCodigo", ""),
+                "nome": session.get("empresaNome", ""),
+            }
+            empresas = [empresa_publica] if empresa_publica["codigo"] else []
+            session_obras = {
+                "session_id": self.routes_core.sessions_manager.get_current_session_id(),
+                "obras": [obra.get("id") for obra in allowed_obras if obra.get("id")],
+            }
+            obras_sessao = allowed_obras
+            backup_payload = {"obras": allowed_obras}
+
+        return {
+            "success": True,
+            "empresas": empresas,
+            "sessionObras": session_obras,
+            "backup": backup_payload,
+            "obrasSessao": obras_sessao,
+        }
+
+    def _build_system_bootstrap_payload(self, include_admin_sections=False):
+        dados_payload = self.routes_core.system_repository.get_dados_payload()
+        base_payload = {
+            "constants": dados_payload.get("constants", {}),
+            "machines": self.routes_core.machine_repository.get_all(),
+            "materials": dados_payload.get("materials", {}),
+            "banco_acessorios": dados_payload.get("banco_acessorios", {}),
+            "dutos": dados_payload.get("dutos", []),
+            "tubos": dados_payload.get("tubos", []),
+        }
+
+        if include_admin_sections:
+            base_payload.update(
+                {
+                    "ADM": dados_payload.get("ADM", []),
+                    "administradores": dados_payload.get("administradores", []),
+                    "empresas": dados_payload.get("empresas", []),
+                }
+            )
+
+        return base_payload
+
+    def _serialize_script_payload(self, payload):
+        return json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+
+    def _build_page_context_script(self, route_path):
+        script_parts = []
+        session = self.get_auth_session()
+
+        if route_path in {"/obras/create", "/admin/obras/create", "/admin/obras/embed"}:
+            runtime_payload = self._build_runtime_bootstrap_payload()
+            system_payload = self._build_system_bootstrap_payload(
+                include_admin_sections=False
+            )
+            script_parts.append(
+                f"window.__RUNTIME_BOOTSTRAP__={self._serialize_script_payload(runtime_payload)};"
+            )
+            script_parts.append(
+                f"window.__SYSTEM_BOOTSTRAP__={self._serialize_script_payload(system_payload)};"
+            )
+
+        if route_path == "/admin/data":
+            system_payload = self._build_system_bootstrap_payload(
+                include_admin_sections=True
+            )
+            script_parts.append(
+                f"window.__SYSTEM_BOOTSTRAP__={self._serialize_script_payload(system_payload)};"
+            )
+
+        if session:
+            public_session = {
+                "role": session.get("role"),
+                "usuario": session.get("usuario", ""),
+                "empresaCodigo": session.get("empresaCodigo", ""),
+                "empresaNome": session.get("empresaNome", ""),
+            }
+            script_parts.append(
+                f"window.__AUTH_CONTEXT__={self._serialize_script_payload(public_session)};"
+            )
+
+        if not script_parts:
+            return ""
+
+        return "<script>" + "".join(script_parts) + "</script>"
+
+    def _serve_html_page(self, route_path, target_file):
+        file_path = Path(self.translate_path(f"/{target_file}"))
+        if not file_path.is_file():
+            self.send_error(404, f"File not found: /{target_file}")
+            return
+
+        if route_path == "/login":
+            self.queue_response_header(
+                "Set-Cookie",
+                self.session_security.build_clear_cookie_header(),
+            )
+
+        html_content = file_path.read_text(encoding="utf-8")
+        page_context_script = self._build_page_context_script(route_path)
+        if page_context_script:
+            if "</head>" in html_content:
+                html_content = html_content.replace(
+                    "</head>",
+                    f"{page_context_script}\n</head>",
+                    1,
+                )
+            else:
+                html_content = page_context_script + html_content
+
+        response = html_content.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(response)))
+        self.send_header(
+            "Cache-Control", "no-cache, no-store, must-revalidate, max-age=0"
+        )
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        self.end_headers()
+        self.wfile.write(response)
+
+    def handle_get_runtime_bootstrap_secure(self):
+        self.send_json_response(self._build_runtime_bootstrap_payload())
+
+    def handle_get_runtime_system_bootstrap(self):
+        self.send_json_response(
+            self._build_system_bootstrap_payload(
+                include_admin_sections=self._has_role("admin")
+            )
+        )
+
+    def handle_get_backup_completo_secure(self):
+        obras = self.routes_core.obra_repository.get_all()
+        self.send_json_response({"obras": self._filter_obras_for_session(obras)})
+
+    def handle_get_obras_secure(self):
+        if self._has_role("admin"):
+            obras = self.routes_core.handle_get_obras()
+        else:
+            obras = self._filter_obras_for_session(
+                self.routes_core.obra_repository.get_all()
+            )
+        self.send_json_response(obras)
+
+    def handle_get_obra_by_id_secure(self, obra_id):
+        obra = self.routes_core.handle_get_obra_by_id(obra_id)
+        if not obra or not self._matches_empresa_context(obra):
+            self.send_error(404, f"Obra {obra_id} nao encontrada")
+            return
+        self.send_json_response(obra)
+
+    def handle_post_obras_secure(self):
+        try:
+            obra_payload = self._read_json_body()
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invalido"}, 400)
+            return
+
+        obra_payload = self._apply_company_context_to_obra(obra_payload)
+        obra = self.routes_core.handle_post_obras(
+            json.dumps(obra_payload, ensure_ascii=False)
+        )
+        if obra:
+            self.send_json_response(obra)
+        else:
+            self.send_error(500, "Erro ao salvar obra")
+
+    def handle_put_obra_secure(self, obra_id):
+        obra_atual = self.routes_core.handle_get_obra_by_id(obra_id)
+        if not obra_atual or not self._matches_empresa_context(obra_atual):
+            self.send_error(404, f"Obra {obra_id} nao encontrada")
+            return
+
+        try:
+            obra_payload = self._read_json_body()
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invalido"}, 400)
+            return
+
+        obra_payload = self._apply_company_context_to_obra(obra_payload)
+        obra = self.routes_core.handle_put_obra(
+            obra_id,
+            json.dumps(obra_payload, ensure_ascii=False),
+        )
+        if obra:
+            self.send_json_response(obra)
+        else:
+            self.send_error(404, f"Obra {obra_id} nao encontrada")
+
+    def handle_delete_obra_secure(self, obra_id):
+        obra = self.routes_core.handle_get_obra_by_id(obra_id)
+        if not obra or not self._matches_empresa_context(obra):
+            self.send_error(404, f"Obra {obra_id} nao encontrada")
+            return
+
+        if self.routes_core.handle_delete_obra(obra_id):
+            self.send_json_response(
+                {"success": True, "message": f"Obra {obra_id} deletada com sucesso"}
+            )
+            return
+
+        self.send_error(500, "Erro ao deletar obra")
+
+    def handle_get_session_obras_secure(self):
+        if self._has_role("admin"):
+            self.route_handler.handle_get_session_obras(self)
+            return
+
+        obras = self._filter_obras_for_session(self.routes_core.obra_repository.get_all())
+        self.send_json_response(
+            {
+                "session_id": self.routes_core.sessions_manager.get_current_session_id(),
+                "obras": [obra.get("id") for obra in obras if obra.get("id")],
+            }
+        )
+
+    def handle_post_sessions_add_obra_secure(self):
+        try:
+            payload = self._read_json_body()
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invalido"}, 400)
+            return
+
+        obra_id = str(payload.get("obra_id", "")).strip()
+        obra = self.routes_core.handle_get_obra_by_id(obra_id)
+        if not obra or not self._matches_empresa_context(obra):
+            self.send_json_response(
+                {"success": False, "error": "Obra nao autorizada para a sessao atual"},
+                403,
+            )
+            return
+
+        result = self.routes_core.handle_post_sessions_add_obra(
+            json.dumps({"obra_id": obra_id})
+        )
+        self.send_json_response(result, 200 if result.get("success") else 500)
+
 
     def do_GET(self):
         """GET com CACHE BUSTER AUTOMÁTICO para CSS/JS/HTML"""
         parsed_path = urlparse(self.path)
         original_path = self.path
         path = parsed_path.path
+
+        if path in {"/", ""}:
+            print(" Acesso a raiz detectado - redirecionando para pagina principal")
+            self.redirect_to("/admin/obras/create")
+            return
         
         if path == '/' or path == '':
             print(" Acesso Ã  raiz detectado - redirecionando para página principal")
@@ -230,6 +761,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             path = path[7:]
 
         if path in self.PAGE_ROUTES:
+            if not self._authorize_request(path):
+                return
             self.serve_page_route(path)
             return
 
@@ -247,6 +780,29 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if new_path != original_path:
                 # print(f" AUTO CACHE BUSTER: {original_path} -> {new_path}")
                 self.path = new_path
+
+        if not self._authorize_request(path):
+            return
+
+        if path == "/api/runtime/bootstrap":
+            self.handle_get_runtime_bootstrap_secure()
+            return
+
+        if path == "/api/runtime/system-bootstrap":
+            self.handle_get_runtime_system_bootstrap()
+            return
+
+        if path == "/api/backup-completo":
+            self.handle_get_backup_completo_secure()
+            return
+
+        if path in {"/session-obras", "/api/session-obras"}:
+            self.handle_get_session_obras_secure()
+            return
+
+        if path == "/obras":
+            self.handle_get_obras_secure()
+            return
 
         # ========== ROTEAMENTO RÁPIDO PARA APIs ==========
 
@@ -316,6 +872,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             path = path[7:]
 
         print(f" POST: {path}")
+
+        if not self._authorize_request(path):
+            return
         
         # ========== ROTAS PARA WORD ==========
         # IMPORTANTE: Processar e RETORNAR imediatamente para evitar duplicação
@@ -351,7 +910,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         # ========== ROTAS EXISTENTES ==========
         elif path == "/obras":
-            self.route_handler.handle_post_obras(self)
+            self.handle_post_obras_secure()
             return 
 
         elif path == "/api/admin/login":
@@ -376,7 +935,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return  
         
         elif path == "/api/sessions/add-obra":
-            self.route_handler.handle_post_sessions_add_obra(self)
+            self.handle_post_sessions_add_obra_secure()
             return  
         
         elif path == "/api/reload-page":
@@ -599,6 +1158,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
             return
 
+        admin_session_token, _ = self.session_security.create_signed_token(
+            {
+                "role": "admin",
+                "usuario": active_admin["usuario"],
+                "nome": active_admin["nome"],
+                "nivel": active_admin["nivel"],
+            }
+        )
+        self.queue_response_header(
+            "Set-Cookie",
+            self.session_security.build_set_cookie_header(admin_session_token),
+        )
+
         self.send_json_response(
             {
                 "success": True,
@@ -608,7 +1180,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "perfil": "ADM",
                     "nivel": active_admin["nivel"],
                 },
-                "redirectTo": "/pages/obras/create.html",
+                "redirectTo": "/admin/obras/create",
             },
             200,
         )
@@ -645,6 +1217,22 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif result.get("reason") == "load_error":
             status = 500
 
+        if result.get("success"):
+            session_payload = result.get("session") or {}
+            client_session_token, _ = self.session_security.create_signed_token(
+                {
+                    "role": "client",
+                    "usuario": session_payload.get("usuario", ""),
+                    "empresaCodigo": session_payload.get("empresaCodigo", ""),
+                    "empresaNome": session_payload.get("empresaNome", ""),
+                    "expiraEm": session_payload.get("expiraEm"),
+                }
+            )
+            self.queue_response_header(
+                "Set-Cookie",
+                self.session_security.build_set_cookie_header(client_session_token),
+            )
+
         self.send_json_response(result, status)
 
     def do_PUT(self):
@@ -657,10 +1245,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         print(f" PUT: {path}")
 
+        if not self._authorize_request(path):
+            return
+
         # ROTAS PRINCIPAIS - OBRAS
         if path.startswith("/obras/"):
             print(f" Roteando PUT para obra: {path}")
-            self.route_handler.handle_put_obra(self)
+            obra_id = path.split("/")[-1]
+            self.handle_put_obra_secure(obra_id)
         else:
             print(f" PUT não implementado: {path}")
             self.send_error(501, f"Método não suportado: PUT {path}")
@@ -675,6 +1267,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         print(f"  DELETE: {path}")
 
+        if not self._authorize_request(path):
+            return
+
         # ========== NOVA ROTA UNIVERSAL ==========
         if path == "/api/delete":
             self.handle_delete_universal()
@@ -687,7 +1282,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif path.startswith("/obras/"):
             obra_id = path.split("/")[-1]
             print(f" Roteando DELETE para obra: {obra_id}")
-            self.route_handler.handle_delete_obra(self, obra_id)
+            self.handle_delete_obra_secure(obra_id)
         # ROTAS PRINCIPAIS - SESSÕES OBRAS
         elif path.startswith("/api/sessions/remove-obra/"):
             obra_id = path.split("/")[-1]
@@ -754,7 +1349,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """Rotas de obra otimizadas"""
         if self.command == "GET":
             obra_id = path.split("/")[-1]
-            self.route_handler.handle_get_obra_by_id(self, obra_id)
+            self.handle_get_obra_by_id_secure(obra_id)
 
     def redirect_to(self, location):
         """Redireciona para uma rota canonica."""
@@ -769,7 +1364,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404, f"Page route not found: {route_path}")
             return
 
-        self.serve_static_file_no_cache(f"/{target_file}")
+        self._serve_html_page(route_path, target_file)
 
     def _is_allowed_static_path(self, clean_path):
         normalized_path = (clean_path or "/").replace("\\", "/")
@@ -878,6 +1473,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):
         """Headers CORS otimizados"""
+        while self._pending_response_headers:
+            header_name, header_value = self._pending_response_headers.pop(0)
+            self.send_header(header_name, header_value)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header(
             "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"

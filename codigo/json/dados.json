@@ -1,15 +1,15 @@
 {
   "ADM": [
-    {
-      "usuario": "adm",
-      "token": "122222",
-      "criadoEm": "2026-03-19T13:57:43.560Z"
-    },
-    {
-      "usuario": "ADM2",
-      "token": "ANctJJMDjft7",
-      "criadoEm": "2026-03-19T14:30:59.996Z"
-    }
+  {
+    "usuario": "adm",
+    "token": "122222",
+    "criadoEm": "2026-03-19T13:57:43.560Z"
+  },
+  {
+    "usuario": "ADM2",
+    "token": "ANctJJMDjft7",
+    "criadoEm": "2026-03-19T14:30:59.996Z"
+  }
   ],
   "empresas": [
     {
@@ -37,7 +37,13 @@
     {
       "codigo": "ARC",
       "nome": "ARCON",
-      "credenciais": null
+      "credenciais": {
+        "usuario": "huj",
+        "token": "cf56346a-3fa3-4f78-214c-1c4681c887c9",
+        "data_criacao": "2026-03-20T01:49:53.505Z",
+        "data_expiracao": "2026-04-19T01:49:53.505Z",
+        "tempoUso": 30
+      }
     },
     {
       "codigo": "ART",

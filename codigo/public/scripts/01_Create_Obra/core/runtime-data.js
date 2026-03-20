@@ -182,6 +182,9 @@ export async function getSessionScopedObrasRuntimeData(options = {}) {
 }
 
 if (typeof window !== 'undefined') {
+    if (window.__RUNTIME_BOOTSTRAP__) {
+        runtimeBootstrapCache = normalizeRuntimePayload(window.__RUNTIME_BOOTSTRAP__);
+    }
     window.loadRuntimeBootstrap = loadRuntimeBootstrap;
     window.invalidateRuntimeBootstrap = invalidateRuntimeBootstrap;
     installRuntimeFetchBridge();

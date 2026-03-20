@@ -6,7 +6,7 @@ import {
 
 const CLIENT_AUTH_ENDPOINT = '/api/client/login';
 const ADMIN_AUTH_ENDPOINT = '/api/admin/login';
-const ADMIN_REDIRECT_PATH = '/pages/obras/create.html';
+const ADMIN_REDIRECT_PATH = '/admin/obras/create';
 
 function buildClientSession(empresaRecord = {}) {
     return {

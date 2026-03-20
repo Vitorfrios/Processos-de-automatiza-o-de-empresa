@@ -1,7 +1,17 @@
 // scripts/03_Edit_data/main.js
-import { loadModules } from './loader.js';
 import { createSmartLogger } from '../01_Create_Obra/core/logger.js';
-import { initializeDashboard } from './core/dashboard-summary.js';          // NOVO
+import '../01_Create_Obra/core/system-bootstrap.js';
+import './config/state.js';
+import './config/api.js';
+import './config/ui.js';
+import './core/constants.js';
+import './core/machines.js';
+import './core/materials.js';
+import './core/empresas.js';
+import './core/acessorios.js';
+import './core/dutos.js';
+import './core/tubos.js';
+import { initializeDashboard } from './core/dashboard-summary.js';
 import { initializeAdminCredentials } from './core/admin-credentials.js';
 
 // ==================== CONFIGURAÇÃO INICIAL ====================
@@ -103,13 +113,36 @@ Object.defineProperty(window, 'systemData', {
 // Inicializar systemData vazio
 window._systemData = ensureCompleteSystemData({});
 
+function ensureLoadDataFunction() {
+    window.loadData = window.loadData || async function() {
+        console.log('Carregando dados do sistema...');
+
+        const response = await fetch('/api/system-data');
+        if (!response.ok) {
+            throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (typeof window.updateSystemData === 'function') {
+            window.updateSystemData(data);
+        }
+
+        window.dispatchEvent(new CustomEvent('dataLoaded', {
+            detail: data
+        }));
+
+        return data;
+    };
+}
+
 // ==================== INICIALIZAÇÃO PRINCIPAL ====================
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log(' Sistema de Edição de Dados iniciado');
     
     // Carregar todos os módulos
-    await loadModules();
+    ensureLoadDataFunction();
     
     // Inicializar sistema de staging
     window.stagingData = null;

@@ -7,6 +7,7 @@
 import { createSmartLogger } from './core/logger.js';
 import { APP_CONFIG, isFeatureEnabled } from './core/config.js';
 import './core/runtime-data.js';
+import './core/system-bootstrap.js';
 import { bootstrapClientMode } from './main-folder/client-mode.js';
 
 // ✅ INICIALIZAR LOGGER IMEDIATAMENTE
@@ -595,22 +596,7 @@ function exportSystemFunctionsForFilters() {
         'removeBaseObraFromHTML'
     ];
     
-    // 🔥 MÉTODO 1: Verificar variáveis globais via eval (cuidadoso)
     criticalFunctions.forEach(funcName => {
-        try {
-            // Tenta avaliar se a função existe no escopo
-            if (eval(`typeof ${funcName}`) === 'function') {
-                // Exporta para window.systemFunctions
-                if (!window.systemFunctions) window.systemFunctions = {};
-                window.systemFunctions[funcName] = eval(funcName);
-                console.log(`✅ [MAIN] ${funcName} exportada (encontrada como global)`);
-                return;
-            }
-        } catch (e) {
-            // Ignora erros de variável não definida
-        }
-        
-        // 🔥 MÉTODO 2: Verificar no window
         if (window[funcName] && typeof window[funcName] === 'function') {
             if (!window.systemFunctions) window.systemFunctions = {};
             window.systemFunctions[funcName] = window[funcName];
