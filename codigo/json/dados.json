@@ -1,49 +1,29 @@
 {
   "ADM": [
-  {
-    "usuario": "adm",
-    "token": "122222",
-    "criadoEm": "2026-03-19T13:57:43.560Z"
-  },
-  {
-    "usuario": "ADM2",
-    "token": "ANctJJMDjft7",
-    "criadoEm": "2026-03-19T14:30:59.996Z"
-  }
+    {
+      "usuario": "adm",
+      "token": "1",
+      "criadoEm": "2026-03-19T13:57:43.560Z"
+    }
   ],
   "empresas": [
     {
       "codigo": "ACT",
       "nome": "ACTEMIUM",
-      "credenciais": {
-        "usuario": "1",
-        "token": "2",
-        "data_criacao": "2026-02-16T20:35:25.359Z",
-        "data_expiracao": "2026-04-17T20:35:25.359Z",
-        "tempoUso": 60
-      }
+      "credenciais": null
+
     },
     {
       "codigo": "AMC",
       "nome": "AMC SOLUÇÕES",
-      "credenciais": {
-        "usuario": "2",
-        "token": "2",
-        "data_criacao": "2026-03-18T14:09:02.326Z",
-        "data_expiracao": "2026-06-16T14:09:02.326Z",
-        "tempoUso": 90
-      }
+      "credenciais": null
+
     },
     {
       "codigo": "ARC",
       "nome": "ARCON",
-      "credenciais": {
-        "usuario": "huj",
-        "token": "cf56346a-3fa3-4f78-214c-1c4681c887c9",
-        "data_criacao": "2026-03-20T01:49:53.505Z",
-        "data_expiracao": "2026-04-19T01:49:53.505Z",
-        "tempoUso": 30
-      }
+      "credenciais": null
+
     },
     {
       "codigo": "ART",
