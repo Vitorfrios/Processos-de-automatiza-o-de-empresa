@@ -12,6 +12,7 @@ function buildClientSession(empresaRecord = {}) {
     return {
         empresaCodigo: empresaRecord.empresaCodigo || empresaRecord.codigo || '',
         empresaNome: empresaRecord.empresaNome || empresaRecord.nome || '',
+        empresaEmail: empresaRecord.empresaEmail || empresaRecord.email || '',
         usuario: empresaRecord.usuario,
         expiraEm: empresaRecord.expiraEm || empresaRecord.expiracao || null
     };
@@ -58,6 +59,7 @@ function getClientSession() {
             return {
                 empresaCodigo: parsedSession.empresa.codigo || parsedSession.empresa.sigla || '',
                 empresaNome: parsedSession.empresa.nome || '',
+                empresaEmail: parsedSession.empresaEmail || parsedSession.empresa.email || '',
                 usuario: parsedSession.usuario || '',
                 token: parsedSession.token || '',
                 expiraEm: parsedSession.expiraEm || parsedSession.empresa.expiraEm || parsedSession.empresa.expiracao || null

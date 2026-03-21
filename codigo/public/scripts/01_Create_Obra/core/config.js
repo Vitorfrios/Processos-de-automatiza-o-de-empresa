@@ -90,6 +90,7 @@ function normalizeEmpresaContext(value) {
             codigo: value,
             sigla: value,
             nome: value,
+            email: '',
             usuario: '',
             expiracao: null,
             expiraEm: null
@@ -103,6 +104,7 @@ function normalizeEmpresaContext(value) {
         codigo,
         sigla: codigo,
         nome: value.nome || value.empresaNome || value.empresaAtual || '',
+        email: value.email || value.empresaEmail || value.recoveryEmail || '',
         usuario: value.usuario || '',
         expiracao,
         expiraEm: expiracao
@@ -117,9 +119,35 @@ function getEmpresaContextFromSession(session) {
     return normalizeEmpresaContext({
         codigo: session.empresaCodigo || session.empresa?.codigo || session.empresa?.sigla,
         nome: session.empresaNome || session.empresa?.nome,
+        email: session.empresaEmail || session.empresa?.email,
         usuario: session.usuario || session.empresa?.usuario,
         expiraEm: session.expiraEm || session.empresa?.expiraEm || session.empresa?.expiracao
     });
+}
+
+function getEmpresaContextFromAuthContext() {
+    if (typeof window === 'undefined' || !window.__AUTH_CONTEXT__) {
+        return null;
+    }
+
+    return getEmpresaContextFromSession(window.__AUTH_CONTEXT__);
+}
+
+function mergeEmpresaContexts(primaryContext, fallbackContext) {
+    if (!primaryContext) return fallbackContext;
+    if (!fallbackContext) return primaryContext;
+
+    return {
+        ...fallbackContext,
+        ...primaryContext,
+        codigo: primaryContext.codigo || fallbackContext.codigo || '',
+        sigla: primaryContext.sigla || fallbackContext.sigla || '',
+        nome: primaryContext.nome || fallbackContext.nome || '',
+        email: primaryContext.email || fallbackContext.email || '',
+        usuario: primaryContext.usuario || fallbackContext.usuario || '',
+        expiracao: primaryContext.expiracao || fallbackContext.expiracao || null,
+        expiraEm: primaryContext.expiraEm || fallbackContext.expiraEm || null
+    };
 }
 
 function buildAppConfig() {
@@ -134,7 +162,10 @@ function buildAppConfig() {
     const storedSession = config.mode === 'client'
         ? safeReadStoredSession(config.auth?.storageKey, config.auth?.storageType)
         : null;
-    const sessionEmpresaContext = getEmpresaContextFromSession(storedSession);
+    const sessionEmpresaContext = mergeEmpresaContexts(
+        getEmpresaContextFromSession(storedSession),
+        getEmpresaContextFromAuthContext()
+    );
 
     if (config.mode === 'client' && sessionEmpresaContext) {
         config.empresaContext = sessionEmpresaContext;
@@ -162,10 +193,14 @@ function refreshAppConfigFromSession() {
     const sessionEmpresaContext = getEmpresaContextFromSession(
         safeReadStoredSession(APP_CONFIG.auth?.storageKey, APP_CONFIG.auth?.storageType)
     );
+    const authEmpresaContext = getEmpresaContextFromAuthContext();
 
-    APP_CONFIG.empresaContext = sessionEmpresaContext;
-    APP_CONFIG.empresaAtual = sessionEmpresaContext
-        ? (sessionEmpresaContext.codigo || sessionEmpresaContext.sigla)
+    APP_CONFIG.empresaContext = mergeEmpresaContexts(
+        sessionEmpresaContext,
+        authEmpresaContext
+    );
+    APP_CONFIG.empresaAtual = APP_CONFIG.empresaContext
+        ? (APP_CONFIG.empresaContext.codigo || APP_CONFIG.empresaContext.sigla)
         : null;
 
     return APP_CONFIG;

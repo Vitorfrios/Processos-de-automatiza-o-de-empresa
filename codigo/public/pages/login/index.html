@@ -70,6 +70,12 @@
                     </div>
                 </div>
 
+                <div class="login-options">
+                    <button type="button" class="forgot-password" id="openRecoveryModalBtn">
+                        Esqueci o token
+                    </button>
+                </div>
+
                 <button type="submit" class="login-button" id="loginBtn">
                     <span class="btn-text">Entrar</span>
                     <i class="fas fa-arrow-right"></i>
@@ -89,7 +95,59 @@
         </div>
     </div>
 
-    <script type="module" src="/public/dist/client-login.min.js?v=20260319-1"></script>
+    <div class="modal hidden" id="recoverTokenModal">
+        <div class="modal-content recover-modal">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <h3 class="modal-title">Recuperar Token</h3>
+                <button type="button" class="modal-close" id="closeRecoveryModalBtn" aria-label="Fechar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <p class="modal-description">
+                Informe o tipo de acesso, o usuário e o email cadastrado para receber o token atual.
+            </p>
+
+            <form class="recover-form" id="recoverTokenForm" autocomplete="off">
+
+                <div class="input-group">
+                    <label for="recoveryUsername" class="input-label">
+                        <i class="fas fa-user"></i>
+                        Usuário
+                    </label>
+                    <input type="text" id="recoveryUsername" class="input-field" placeholder="Digite o usuário cadastrado" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="recoveryEmail" class="input-label">
+                        <i class="fas fa-at"></i>
+                        Email de recuperação
+                    </label>
+                    <input type="email" id="recoveryEmail" class="input-field" placeholder="Digite o email cadastrado" required>
+                </div>
+
+                <p class="footer-text" id="recoverTokenFeedback"></p>
+
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn btn-cancel" id="cancelRecoveryBtn">Cancelar</button>
+                    <button type="submit" class="modal-btn btn-send" id="sendRecoveryBtn">
+                        <span class="btn-text">Enviar token</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+
+            <div class="recover-footer">
+                <i class="fas fa-shield-alt"></i>
+                <span>Para recuperar o token de acesso o email precisa estar cadastrado</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/public/scripts/01_Create_Obra/pages/client-login.js?v=20260320-1"></script>
 </body>
 
 </html>

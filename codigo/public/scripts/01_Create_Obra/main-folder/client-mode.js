@@ -172,6 +172,7 @@ function applyClientEmpresaRestrictions(obraId, obraData = null) {
 
     const empresaInput = document.getElementById(`empresa-input-${obraId}`);
     const numeroClienteInput = document.getElementById(`numero-cliente-${obraId}`);
+    const emailEmpresaInput = document.getElementById(`email-empresa-${obraId}`);
     const dropdown = document.getElementById(`empresa-dropdown-${obraId}`);
     const formElement = obraElement.querySelector('.empresa-formulario-ativo');
     const empresaContainer = obraElement.querySelector('.projetc-header-record.very-dark');
@@ -190,6 +191,15 @@ function applyClientEmpresaRestrictions(obraId, obraData = null) {
         ''
     ).trim();
     const empresaNome = (obraData?.empresaNome || obraElement.dataset.empresaNome || empresaContext.nome || '').trim();
+    const empresaEmail = (
+        obraData?.emailEmpresa ||
+        obraData?.empresaEmail ||
+        obraElement.dataset.emailEmpresa ||
+        obraElement.dataset.empresaEmail ||
+        empresaContext.email ||
+        empresaContext.empresaEmail ||
+        ''
+    ).trim();
     const empresaValue = [empresaSigla, empresaNome].filter(Boolean).join(' - ');
 
     if (!obraElement.dataset.empresaCodigo && empresaSigla) {
@@ -202,6 +212,11 @@ function applyClientEmpresaRestrictions(obraId, obraData = null) {
 
     if (!obraElement.dataset.empresaNome && empresaNome) {
         obraElement.dataset.empresaNome = empresaNome;
+    }
+
+    if (empresaEmail) {
+        obraElement.dataset.emailEmpresa = empresaEmail;
+        obraElement.dataset.empresaEmail = empresaEmail;
     }
 
     const dataCadastro = normalizeDisplayDate(
@@ -236,6 +251,10 @@ function applyClientEmpresaRestrictions(obraId, obraData = null) {
     const dataCadastroInput = document.getElementById(`data-cadastro-${obraId}`);
     if (dataCadastroInput && obraElement.dataset.dataCadastro) {
         dataCadastroInput.value = obraElement.dataset.dataCadastro;
+    }
+
+    if (emailEmpresaInput && empresaEmail) {
+        emailEmpresaInput.value = empresaEmail;
     }
 
     setDisabled(empresaInput, true);

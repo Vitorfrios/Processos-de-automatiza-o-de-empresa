@@ -79,12 +79,43 @@ function normalizeDutos(dutos) {
     return [];
 }
 
+function normalizeAdmins(admins, legacyAdmins = []) {
+    if (Array.isArray(admins)) {
+        return admins.filter((admin) => admin && typeof admin === 'object');
+    }
+
+    if (admins && typeof admins === 'object') {
+        return [admins];
+    }
+
+    if (Array.isArray(legacyAdmins)) {
+        return legacyAdmins.filter((admin) => admin && typeof admin === 'object');
+    }
+
+    if (legacyAdmins && typeof legacyAdmins === 'object') {
+        return [legacyAdmins];
+    }
+
+    return [];
+}
+
 function hasEmpresaLogin(empresa) {
     const credenciais = safeObject(empresa?.credenciais);
     const usuario = String(credenciais.usuario || '').trim();
     const token = String(credenciais.token || '').trim();
 
     return Boolean(usuario && token);
+}
+
+function hasEmpresaRecoveryEmail(empresa) {
+    const credenciais = safeObject(empresa?.credenciais);
+    const email = String(credenciais.email || credenciais.recoveryEmail || '').trim();
+    return Boolean(email);
+}
+
+function hasAdminRecoveryEmail(admin) {
+    const email = String(admin?.email || '').trim();
+    return Boolean(email);
 }
 
 function parseDate(value) {
@@ -292,6 +323,7 @@ async function fetchDashboardData() {
 
     const data = {
         empresas: safeArray(systemData.empresas),
+        admins: normalizeAdmins(systemData.ADM, systemData.administradores),
         obras: safeArray(backupData.obras),
         maquinas: safeArray(systemData.machines),
         dutos: normalizeDutos(systemData.dutos),
@@ -301,6 +333,7 @@ async function fetchDashboardData() {
     };
 
     console.log(' Dados do dashboard carregados:', {
+        admins: data.admins.length,
         empresas: data.empresas.length,
         obras: data.obras.length,
         maquinas: data.maquinas.length,
@@ -322,6 +355,26 @@ function buildCadastroAlerts(data, stats) {
             actionLabel: 'Revisar empresas',
             actionType: 'tab',
             actionValue: 'empresas'
+        });
+    }
+
+    if (stats.empresasSemEmail > 0) {
+        alerts.push({
+            title: 'Empresas sem email de recuperacao',
+            meta: `${formatNumber(stats.empresasSemEmail)} empresa(s) ainda nao possuem email para recuperar o acesso.`,
+            actionLabel: 'Revisar empresas',
+            actionType: 'tab',
+            actionValue: 'empresas'
+        });
+    }
+
+    if (stats.adminsSemEmail > 0) {
+        alerts.push({
+            title: 'ADMs sem email de recuperacao',
+            meta: `${formatNumber(stats.adminsSemEmail)} administrador(es) ainda nao possuem email cadastrado.`,
+            actionLabel: 'Revisar ADMs',
+            actionType: 'tab',
+            actionValue: 'adminCredentials'
         });
     }
 
@@ -384,6 +437,8 @@ function buildCadastroAlerts(data, stats) {
 function processDashboardData(data) {
     const empresasComLogin = data.empresas.filter(hasEmpresaActiveLogin);
     const empresasSemLogin = data.empresas.filter((empresa) => !hasEmpresaLogin(empresa));
+    const empresasSemEmail = data.empresas.filter((empresa) => !hasEmpresaRecoveryEmail(empresa));
+    const adminsSemEmail = safeArray(data.admins).filter((admin) => !hasAdminRecoveryEmail(admin));
     const credenciaisExpiradas = [];
     const credenciaisExpirando = [];
 
@@ -420,8 +475,11 @@ function processDashboardData(data) {
 
     const stats = {
         totalEmpresas: data.empresas.length,
+        totalAdmins: safeArray(data.admins).length,
         empresasComLogin: empresasComLogin.length,
         empresasSemLogin: empresasSemLogin.length,
+        empresasSemEmail: empresasSemEmail.length,
+        adminsSemEmail: adminsSemEmail.length,
         credenciaisExpiradas,
         credenciaisExpirando,
         totalObras: data.obras.length,

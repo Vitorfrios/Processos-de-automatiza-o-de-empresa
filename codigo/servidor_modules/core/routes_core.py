@@ -82,6 +82,14 @@ class RoutesCore:
                 nova_obra
             )
 
+            email_empresa = str(nova_obra.get("emailEmpresa") or "").strip()
+            if email_empresa:
+                self.empresa_repository.upsert_recovery_email(
+                    nova_obra.get("empresaSigla"),
+                    nova_obra.get("empresaNome"),
+                    email_empresa,
+                )
+
             obra_id = nova_obra.get("id")
 
             if not obra_id or obra_id.isdigit():
@@ -122,6 +130,14 @@ class RoutesCore:
             obra_atualizada = self.empresa_handler.verificar_e_criar_empresa_automatica(
                 obra_atualizada
             )
+
+            email_empresa = str(obra_atualizada.get("emailEmpresa") or "").strip()
+            if email_empresa:
+                self.empresa_repository.upsert_recovery_email(
+                    obra_atualizada.get("empresaSigla"),
+                    obra_atualizada.get("empresaNome"),
+                    email_empresa,
+                )
 
             if not self.obra_repository.get_by_id(obra_id):
                 return None

@@ -116,6 +116,8 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
   const numeroCliente = dadosExistentes?.numeroClienteFinal || "";
   const clienteFinal = dadosExistentes?.clienteFinal || "";
   const codigoCliente = dadosExistentes?.codigoCliente || "";
+  const emailEmpresa =
+    dadosExistentes?.emailEmpresa || dadosExistentes?.empresaEmail || "";
   const dataCadastro = dadosExistentes?.dataCadastro
     ? formatarData(dadosExistentes.dataCadastro)
     : dataAtual;
@@ -172,6 +174,15 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
  id="codigo-cliente-${obraId}"
  value="${codigoCliente}"
  placeholder="Código do cliente">
+ </div>
+
+ <div class="form-group-horizontal">
+ <label>Email da empresa</label>
+ <input type="email" 
+ class="email-empresa-cadastro" 
+ id="email-empresa-${obraId}"
+ value="${emailEmpresa}"
+ placeholder="Email para contato e recuperacao">
  </div>
 
  <!-- DATA -->
@@ -335,6 +346,14 @@ function criarFormularioVazioEmpresa(obraId, container) {
  class="codigo-cliente-cadastro" 
  id="codigo-cliente-${obraId}"
  placeholder="Código do cliente">
+ </div>
+
+ <div class="form-group-horizontal">
+ <label>Email da empresa</label>
+ <input type="email" 
+ class="email-empresa-cadastro" 
+ id="email-empresa-${obraId}"
+ placeholder="Email para contato e recuperacao">
  </div>
 
  <div class="form-group-horizontal">
@@ -715,6 +734,7 @@ function limparCamposEmpresaCompletamente(obraId) {
  .cliente-final-input,
  .codigo-cliente-cadastro,
  .codigo-cliente-input,
+ .email-empresa-cadastro,
  .data-cadastro-cadastro,
  .data-cadastro-input,
  .orcamentista-responsavel-cadastro,
@@ -760,6 +780,7 @@ function limparCamposEmpresaCompletamente(obraId) {
       "numeroClienteFinal",
       "clienteFinal",
       "codigoCliente",
+      "emailEmpresa",
       "dataCadastro",
       "orcamentistaResponsavel",
       "idGerado",
@@ -872,6 +893,7 @@ window.limparFormularioEmpresa = function (obraId) {
       "#numero-cliente-" + obraId,
       "#cliente-final-" + obraId,
       "#codigo-cliente-" + obraId,
+      "#email-empresa-" + obraId,
       "#orcamentista-" + obraId,
     ];
 
@@ -907,6 +929,7 @@ window.limparFormularioEmpresa = function (obraId) {
       "numeroClienteFinal",
       "clienteFinal",
       "codigoCliente",
+      "emailEmpresa",
       "orcamentistaResponsavel",
       "idGerado",
       "identificadorObra",

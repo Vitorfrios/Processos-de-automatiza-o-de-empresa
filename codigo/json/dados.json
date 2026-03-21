@@ -2379,8 +2379,10 @@
   "ADM": [
     {
       "usuario": "adm",
-      "token": "1",
-      "criadoEm": "2026-03-19T14:30:59.996Z"
+      "token": "5tgrySVdG458",
+      "email": "vitorfrios074@gmail.com",
+      "criadoEm": "2026-03-19T14:30:59.996Z",
+      "ultimoAcesso": "2026-03-20T21:31:29.220933"
     }
   ],
   "empresas": [
@@ -2389,9 +2391,10 @@
       "nome": "ACTEMIUM",
       "credenciais": {
         "usuario": "act",
+        "email": "uvciuwciuw@gmail.com",
         "token": "5d1184a61dd46b60e252bba6e04f753d",
-        "data_criacao": "2026-03-20T17:00:41.253Z",
-        "data_expiracao": "2026-04-19T17:00:41.253Z",
+        "data_criacao": "2026-03-20T22:35:02.190Z",
+        "data_expiracao": "2026-04-19T22:35:02.190Z",
         "tempoUso": 30
       }
     },

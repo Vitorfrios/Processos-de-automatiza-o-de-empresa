@@ -90,6 +90,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/health-check",
         "/api/admin/login",
         "/api/client/login",
+        "/api/auth/recover-token",
     }
     AUTHENTICATED_API_ROUTES = {
         "/obras",
@@ -328,6 +329,47 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def _normalize_text(self, value):
         return str(value or "").strip().upper()
 
+    def _resolve_company_email_from_session(self, session=None):
+        session = session or self.get_auth_session() or {}
+        if session.get("role") != "client":
+            return ""
+
+        email_from_session = str(session.get("empresaEmail", "") or "").strip()
+        if email_from_session:
+            return email_from_session
+
+        empresa_codigo = self._normalize_text(session.get("empresaCodigo"))
+        empresa_nome = self._normalize_text(session.get("empresaNome"))
+        if not empresa_codigo and not empresa_nome:
+            return ""
+
+        try:
+            empresas = self.routes_core.empresa_repository.get_all()
+        except Exception:
+            return ""
+
+        for empresa in empresas:
+            if not isinstance(empresa, dict):
+                continue
+
+            codigo = self._normalize_text(empresa.get("codigo"))
+            nome = self._normalize_text(empresa.get("nome"))
+            if not (
+                (empresa_codigo and codigo == empresa_codigo)
+                or (empresa_nome and nome == empresa_nome)
+            ):
+                continue
+
+            credenciais = empresa.get("credenciais")
+            if not isinstance(credenciais, dict):
+                return ""
+
+            return str(
+                credenciais.get("email") or credenciais.get("recoveryEmail") or ""
+            ).strip()
+
+        return ""
+
     def _get_request_host(self):
         forwarded_host = str(self.headers.get("X-Forwarded-Host", "") or "").strip()
         raw_host = forwarded_host or str(self.headers.get("Host", "") or "").strip()
@@ -354,12 +396,30 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return client_ip in {"127.0.0.1", "::1", "localhost"}
 
     def _issue_local_admin_session(self):
+        admin_user = "local_admin"
+        admin_name = "Administrador Local"
+        admin_level = "ADM"
+
+        try:
+            admins = self._load_admin_accounts()
+            active_admin = next(
+                (admin for admin in admins if admin.get("status") != "inativo"),
+                None,
+            )
+            if active_admin:
+                admin_user = str(active_admin.get("usuario") or admin_user).strip() or admin_user
+                admin_name = str(active_admin.get("nome") or admin_name).strip() or admin_name
+                admin_level = str(active_admin.get("nivel") or admin_level).strip() or admin_level
+                self._touch_admin_last_access(admin_user)
+        except Exception:
+            pass
+
         admin_session_token, _ = self.session_security.create_signed_token(
             {
                 "role": "admin",
-                "usuario": "local_admin",
-                "nome": "Administrador Local",
-                "nivel": "ADM",
+                "usuario": admin_user,
+                "nome": admin_name,
+                "nivel": admin_level,
                 "source": "local_bootstrap",
             }
         )
@@ -369,9 +429,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         )
         self._auth_session_cache = {
             "role": "admin",
-            "usuario": "local_admin",
-            "nome": "Administrador Local",
-            "nivel": "ADM",
+            "usuario": admin_user,
+            "nome": admin_name,
+            "nivel": admin_level,
             "source": "local_bootstrap",
         }
         self._auth_session_loaded = True
@@ -427,6 +487,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         empresa_codigo = session.get("empresaCodigo", "")
         empresa_nome = session.get("empresaNome", "")
+        empresa_email = self._resolve_company_email_from_session(session)
         payload["empresaCodigo"] = empresa_codigo
         payload["empresaSigla"] = empresa_codigo
         payload["codigo"] = empresa_codigo
@@ -435,6 +496,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         payload["empresaNome"] = empresa_nome
         payload["nomeEmpresa"] = empresa_nome
         payload["empresa"] = empresa_nome
+        if empresa_email and not str(
+            payload.get("emailEmpresa") or payload.get("empresaEmail") or ""
+        ).strip():
+            payload["emailEmpresa"] = empresa_email
+            payload["empresaEmail"] = empresa_email
         return payload
 
     def _read_json_body(self):
@@ -473,8 +539,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         session = self.get_auth_session()
         if (
             allowed_roles == {"admin"}
-            and path.startswith("/admin/")
             and self._is_local_request()
+            and (path.startswith("/admin/") or path.startswith("/api/"))
             and (not session or session.get("role") != "admin")
         ):
             self._issue_local_admin_session()
@@ -598,6 +664,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "usuario": session.get("usuario", ""),
                 "empresaCodigo": session.get("empresaCodigo", ""),
                 "empresaNome": session.get("empresaNome", ""),
+                "empresaEmail": self._resolve_company_email_from_session(session),
             }
             script_parts.append(
                 f"window.__AUTH_CONTEXT__={self._serialize_script_payload(public_session)};"
@@ -949,6 +1016,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_post_client_login()
             return
 
+        elif path == "/api/auth/recover-token":
+            self.handle_post_recover_token()
+            return
+
         elif path == "/api/export":
             self.handle_post_export()
             return
@@ -1093,20 +1164,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         try:
-            dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            dados_data = self.file_utils.load_json_file(dados_file, {})
-
-            if not isinstance(dados_data, dict):
-                self.send_json_response(
-                    {
-                        "success": False,
-                        "error": "Estrutura de credenciais administrativas invalida",
-                    },
-                    500,
-                )
-                return
+            normalized_admins = self._load_admin_accounts()
         except Exception as e:
-            print(f" Erro ao carregar dados.json para login admin: {e}")
+            print(f" Erro ao carregar credenciais administrativas: {e}")
             self.send_json_response(
                 {
                     "success": False,
@@ -1115,51 +1175,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 500,
             )
             return
-
-        admin_data = dados_data.get("ADM")
-        if admin_data is None:
-            admin_data = dados_data.get("administradores", [])
-
-        normalized_admins = []
-
-        if isinstance(admin_data, list):
-            for admin in admin_data:
-                if not isinstance(admin, dict):
-                    continue
-
-                admin_usuario = str(admin.get("usuario", "")).strip()
-                admin_token = str(admin.get("token", "")).strip()
-
-                if not admin_usuario or not admin_token:
-                    continue
-
-                normalized_admins.append(
-                    {
-                        "nome": admin.get("nome", admin_usuario),
-                        "email": admin.get("email", ""),
-                        "usuario": admin_usuario,
-                        "token": admin_token,
-                        "status": str(admin.get("status", "ativo")).strip().lower()
-                        or "ativo",
-                        "nivel": admin.get("nivel", "ADM"),
-                    }
-                )
-        elif isinstance(admin_data, dict):
-            admin_usuario = str(admin_data.get("usuario", "")).strip()
-            admin_token = str(admin_data.get("token", "")).strip()
-
-            if admin_usuario and admin_token:
-                normalized_admins.append(
-                    {
-                        "nome": admin_data.get("nome", admin_usuario),
-                        "email": admin_data.get("email", ""),
-                        "usuario": admin_usuario,
-                        "token": admin_token,
-                        "status": str(admin_data.get("status", "ativo")).strip().lower()
-                        or "ativo",
-                        "nivel": admin_data.get("nivel", "ADM"),
-                    }
-                )
 
         active_admin = next(
             (
@@ -1193,6 +1208,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 401,
             )
             return
+
+        self._touch_admin_last_access(active_admin["usuario"])
 
         admin_session_token, _ = self.session_security.create_signed_token(
             {
@@ -1261,6 +1278,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "usuario": session_payload.get("usuario", ""),
                     "empresaCodigo": session_payload.get("empresaCodigo", ""),
                     "empresaNome": session_payload.get("empresaNome", ""),
+                    "empresaEmail": session_payload.get("empresaEmail", ""),
                     "expiraEm": session_payload.get("expiraEm"),
                 }
             )
@@ -1270,6 +1288,275 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
         self.send_json_response(result, status)
+
+    def _load_admin_accounts(self):
+        from servidor_modules.database.storage import get_storage
+
+        storage = get_storage(self.project_root)
+        dados_data = storage.load_document("dados.json", {"ADM": []})
+        admin_data = dados_data.get("ADM")
+        if admin_data is None:
+            admin_data = dados_data.get("administradores", [])
+
+        if isinstance(admin_data, dict):
+            source_admins = [admin_data]
+        elif isinstance(admin_data, list):
+            source_admins = admin_data
+        else:
+            source_admins = []
+
+        normalized_admins = []
+        for admin in source_admins:
+            if not isinstance(admin, dict):
+                continue
+
+            admin_usuario = str(admin.get("usuario", "")).strip()
+            admin_token = str(admin.get("token", "")).strip()
+            if not admin_usuario or not admin_token:
+                continue
+
+            normalized_admins.append(
+                {
+                    "nome": str(admin.get("nome") or admin_usuario).strip(),
+                    "email": str(admin.get("email") or "").strip(),
+                    "usuario": admin_usuario,
+                    "token": admin_token,
+                    "status": str(admin.get("status", "ativo")).strip().lower() or "ativo",
+                    "nivel": admin.get("nivel", "ADM"),
+                }
+            )
+
+        return normalized_admins
+
+    def _touch_admin_last_access(self, usuario):
+        from datetime import datetime
+        from servidor_modules.database.storage import get_storage
+
+        normalized_user = str(usuario or "").strip().lower()
+        if not normalized_user:
+            return False
+
+        storage = get_storage(self.project_root)
+        dados = storage.load_document("dados.json", {"ADM": []})
+        admins = list(dados.get("ADM", []))
+        updated = False
+
+        for admin in admins:
+            if not isinstance(admin, dict):
+                continue
+            if str(admin.get("usuario", "")).strip().lower() != normalized_user:
+                continue
+
+            admin["ultimoAcesso"] = datetime.now().isoformat()
+            updated = True
+            break
+
+        if updated:
+            dados["ADM"] = admins
+            storage.save_document("dados.json", dados)
+
+        return updated
+
+    def _find_recovery_targets(self, usuario, email):
+        normalized_user = str(usuario or "").strip().lower()
+        normalized_email = str(email or "").strip().lower()
+        matches = []
+
+        for admin in self._load_admin_accounts():
+            if admin.get("status") == "inativo":
+                continue
+            if str(admin.get("usuario", "")).strip().lower() != normalized_user:
+                continue
+
+            registered_email = str(admin.get("email") or "").strip().lower()
+            if not registered_email or registered_email != normalized_email:
+                continue
+
+            matches.append(
+                {
+                    "account_type": "admin",
+                    "destinatario": registered_email,
+                    "nome": admin.get("nome") or admin.get("usuario") or "Administrador",
+                    "usuario": admin.get("usuario") or "",
+                    "token": admin.get("token") or "",
+                    "contexto": "ADM",
+                }
+            )
+
+        try:
+            empresas = self.routes_core.empresa_handler.obter_empresas()
+        except Exception:
+            return None, "Nao foi possivel carregar as empresas para recuperacao."
+
+        for empresa in empresas:
+            if not isinstance(empresa, dict):
+                continue
+
+            credenciais = empresa.get("credenciais")
+            if not isinstance(credenciais, dict):
+                continue
+
+            empresa_usuario = str(credenciais.get("usuario", "")).strip().lower()
+            if empresa_usuario != normalized_user:
+                continue
+
+            if self.routes_core.empresa_handler.credenciais_expiradas(credenciais):
+                continue
+
+            registered_email = str(
+                credenciais.get("email") or credenciais.get("recoveryEmail") or ""
+            ).strip().lower()
+            if not registered_email or registered_email != normalized_email:
+                continue
+
+            matches.append(
+                {
+                    "account_type": "client",
+                    "destinatario": registered_email,
+                    "nome": empresa.get("nome") or empresa.get("codigo") or "Cliente",
+                    "usuario": credenciais.get("usuario") or "",
+                    "token": credenciais.get("token") or "",
+                    "contexto": empresa.get("codigo") or "CLIENTE",
+                }
+            )
+
+        if matches:
+            return matches, ""
+
+        return [], "Usuario ou email de recuperacao invalido."
+
+    def _build_recovery_email(self, recovery_target):
+        account_label = (
+            "ADM" if recovery_target.get("account_type") == "admin" else "Cliente"
+        )
+        context = str(recovery_target.get("contexto") or account_label).strip()
+        usuario = str(recovery_target.get("usuario") or "").strip()
+        token = str(recovery_target.get("token") or "").strip()
+        nome = str(recovery_target.get("nome") or usuario).strip()
+
+        subject = f"ESI Energia Recuperacao de token - {context}".strip()
+        message = "\n".join(
+            [
+                f"Olá, {nome}.",
+                "",
+                "Somos da equipe da ESI Energia.",
+                "",
+                f"Recebemos uma solicitação de recuperação de token para o acesso {account_label}.",
+                "",
+                f"Usuário: {usuario}",
+                f"Token atual: {token}",
+                "",
+                "Se você não solicitou esta recuperação, ignore este e-mail e entre em contato com o responsável pelo sistema para garantir a segurança da sua conta.",
+            ]
+        ).strip()
+        return subject, message
+
+    def handle_post_recover_token(self):
+        """POST /api/auth/recover-token - Recupera token para cliente ou ADM via email."""
+        from servidor_modules.utils.admin_email_config import (
+            AdminEmailConfigStore,
+            is_valid_email,
+        )
+        from servidor_modules.utils.export_utils import enviar_email
+
+        try:
+            payload = self._read_json_body()
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invalido"}, 400)
+            return
+        except Exception as exc:
+            print(f" Erro ao ler corpo da recuperacao de token: {exc}")
+            self.send_json_response(
+                {"success": False, "error": "Falha ao processar a recuperacao."},
+                500,
+            )
+            return
+
+        usuario = str(payload.get("usuario") or "").strip()
+        email = str(payload.get("email") or "").strip()
+
+        if not usuario or not email:
+            self.send_json_response(
+                {"success": False, "error": "Informe usuario e email de recuperacao."},
+                400,
+            )
+            return
+
+        if not is_valid_email(email):
+            self.send_json_response(
+                {"success": False, "error": "Informe um email valido para recuperacao."},
+                400,
+            )
+            return
+
+        email_store = AdminEmailConfigStore(self.project_root)
+        if not email_store.is_configured():
+            self.send_json_response(
+                {
+                    "success": False,
+                    "error": "A recuperacao por email nao esta configurada no sistema.",
+                },
+                409,
+            )
+            return
+
+        try:
+            recovery_targets, error_message = self._find_recovery_targets(
+                usuario,
+                email,
+            )
+        except Exception as exc:
+            self.send_json_response({"success": False, "error": str(exc)}, 400)
+            return
+
+        if not recovery_targets:
+            self.send_json_response(
+                {
+                    "success": False,
+                    "error": error_message or "Nao foi possivel localizar a conta.",
+                },
+                404,
+            )
+            return
+
+        if len(recovery_targets) > 1:
+            self.send_json_response(
+                {
+                    "success": False,
+                    "error": "Foi encontrada mais de uma conta com este usuario e email. Solicite o token ao administrador do sistema.",
+                },
+                409,
+            )
+            return
+
+        recovery_target = recovery_targets[0]
+
+        subject, message = self._build_recovery_email(recovery_target)
+
+        try:
+            enviar_email(
+                recovery_target.get("destinatario") or "",
+                subject,
+                message,
+            )
+        except Exception as exc:
+            print(f" Erro ao enviar email de recuperacao: {exc}")
+            self.send_json_response(
+                {
+                    "success": False,
+                    "error": "Nao foi possivel enviar o email de recuperacao.",
+                },
+                500,
+            )
+            return
+
+        self.send_json_response(
+            {
+                "success": True,
+                "message": "Token enviado para o email cadastrado.",
+            },
+            200,
+        )
 
     def do_PUT(self):
         """PUT para atualizações"""
@@ -3421,6 +3708,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 AdminEmailConfigStore,
                 is_valid_email,
             )
+            from servidor_modules.utils.export_utils import validate_smtp_secret
 
             payload = self._read_json_body()
             email = str(payload.get("email") or payload.get("adminEmail") or "").strip()
@@ -3444,6 +3732,15 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if not nome:
                 self.send_json_response(
                     {"success": False, "error": "Informe o nome do remetente."},
+                    status=400,
+                )
+                return
+
+            try:
+                validate_smtp_secret(email, token)
+            except RuntimeError as exc:
+                self.send_json_response(
+                    {"success": False, "error": str(exc)},
                     status=400,
                 )
                 return

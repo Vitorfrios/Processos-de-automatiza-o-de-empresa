@@ -115,6 +115,7 @@ function showCredentialsModal(index) {
     // Valores padrão para o formulário
     const credenciais = temCredenciais ? empresa.credenciais : {
         usuario: '',
+        email: '',
         token: generateToken(32),
         data_criacao: new Date().toISOString(),
         data_expiracao: calcularDataExpiracao(30),
@@ -123,6 +124,7 @@ function showCredentialsModal(index) {
     
     // Garantir que todos os campos existam
     const usuarioAtual = credenciais.usuario || '';
+    const emailAtual = credenciais.email || credenciais.recoveryEmail || '';
     const tokenAtual = credenciais.token || generateToken(32);
     const tempoUsoAtual = credenciais.tempoUso || 30;
     const dataCriacaoAtual = credenciais.data_criacao;
@@ -209,6 +211,20 @@ function showCredentialsModal(index) {
                        style="width: 100%; padding: 8px; border: 1px solid #2d3748; border-radius: 6px; font-size: 1rem; transition: all 0.2s ease; background: #2d3748; color: #f7fafc;"
                        onfocus="this.style.borderColor='#4a5568'; this.style.boxShadow='0 0 0 3px rgba(74, 85, 104, 0.3)'; this.style.outline='none'"
                        onblur="this.style.borderColor='#2d3748'; this.style.boxShadow='none'">
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #cbd5e0;">
+                    Email de recuperacao:
+                </label>
+                <input type="email" id="emailInput" value="${escapeHtml(emailAtual)}" 
+                       placeholder="Email usado para recuperar o token"
+                       style="width: 100%; padding: 8px; border: 1px solid #2d3748; border-radius: 6px; font-size: 1rem; transition: all 0.2s ease; background: #2d3748; color: #f7fafc;"
+                       onfocus="this.style.borderColor='#4a5568'; this.style.boxShadow='0 0 0 3px rgba(74, 85, 104, 0.3)'; this.style.outline='none'"
+                       onblur="this.style.borderColor='#2d3748'; this.style.boxShadow='none'">
+                <small style="color: #a0aec0; display: block; margin-top: 5px; font-size: 0.85rem;">
+                    Este email recebera o token caso o cliente esqueca o acesso.
+                </small>
             </div>
             
             <div style="margin-bottom: 16px;">
@@ -325,6 +341,7 @@ window.generateNewToken = function() {
 window.saveCredentials = function(empresaIndex) {
     try {
         const usuario = document.getElementById('usuarioInput')?.value;
+        const email = document.getElementById('emailInput')?.value?.trim() || '';
         const token = document.getElementById('tokenInput')?.value;
         
         // Pegar o valor do radio button selecionado
@@ -373,6 +390,11 @@ window.saveCredentials = function(empresaIndex) {
             return;
         }
         
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showError('Informe um email valido para recuperacao.');
+            return;
+        }
+
         const empresa = normalizeEmpresa(systemData.empresas[empresaIndex]);
         
         // Calcular datas
@@ -382,6 +404,7 @@ window.saveCredentials = function(empresaIndex) {
         // Criar objeto de credenciais
         const credenciais = {
             usuario: usuario.trim(),
+            email,
             token: token.trim(),
             data_criacao: dataCriacao,
             data_expiracao: dataExpiracao,
@@ -539,6 +562,9 @@ export function loadEmpresas() {
                         </span>
                         <small style="color: var(--color-gray-500, #666);" title="Expira em: ${credenciais?.data_expiracao ? formatarData(credenciais.data_expiracao) : ''}">
                             ${escapeHtml(credenciais?.usuario || '')} | ${credenciais?.tempoUso || 30}d
+                        </small>
+                        <small style="color: var(--color-gray-500, #666);">
+                            ${escapeHtml(credenciais?.email || credenciais?.recoveryEmail || 'Sem email cadastrado')}
                         </small>
                         <div style="display: flex; gap: var(--spacing-xs, 5px);">
                             <button class="btn btn-small btn-info" 

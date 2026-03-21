@@ -7,13 +7,17 @@ import os
 import shutil
 import sys
 import time
+import tempfile
 from pathlib import Path
 
 
 # Impede bytecode mesmo quando este arquivo for importado
 # ou executado sem passar por setup_environment().
 os.environ.setdefault('PYTHONDONTWRITEBYTECODE', '1')
+os.environ.setdefault('PYTHONPYCACHEPREFIX', str(Path(tempfile.gettempdir()) / 'esi_python_cache'))
 sys.dont_write_bytecode = True
+if hasattr(sys, 'pycache_prefix'):
+    sys.pycache_prefix = os.environ['PYTHONPYCACHEPREFIX']
 
 
 def cleanup_python_caches(base_dir):
@@ -37,10 +41,13 @@ def setup_environment():
     
     # DESATIVA CACHES DO PYTHON
     os.environ['PYTHONDONTWRITEBYTECODE'] = '1'  # Não gera .pyc
+    os.environ.setdefault('PYTHONPYCACHEPREFIX', str(Path(tempfile.gettempdir()) / 'esi_python_cache'))
     os.environ['PYTHONOPTIMIZE'] = '1'
     
     # Desativa cache de importação
     sys.dont_write_bytecode = True
+    if hasattr(sys, 'pycache_prefix'):
+        sys.pycache_prefix = os.environ['PYTHONPYCACHEPREFIX']
     cleanup_python_caches(current_dir)
 
 def load_modules_no_cache():

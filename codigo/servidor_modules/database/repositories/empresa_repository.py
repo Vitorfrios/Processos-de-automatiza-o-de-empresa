@@ -88,3 +88,55 @@ class EmpresaRepository:
 
         return resultados
 
+    def upsert_recovery_email(self, codigo, nome, email):
+        codigo_normalizado = str(codigo or "").strip()
+        nome_normalizado = str(nome or "").strip()
+        email_normalizado = str(email or "").strip()
+
+        if not codigo_normalizado or not email_normalizado:
+            return False
+
+        dados = self.storage.load_document(
+            "dados.json", self.storage.default_document("dados.json")
+        )
+        empresas = list(dados.get("empresas", []))
+        updated = False
+
+        for index, empresa in enumerate(empresas):
+            empresa_normalizada = normalize_empresa(empresa)
+            if not empresa_normalizada:
+                continue
+            if str(empresa_normalizada.get("codigo", "")).strip() != codigo_normalizado:
+                continue
+
+            credenciais = empresa_normalizada.get("credenciais")
+            if not isinstance(credenciais, dict):
+                credenciais = {}
+            else:
+                credenciais = dict(credenciais)
+
+            if str(credenciais.get("email") or "").strip() == email_normalizado:
+                return False
+
+            credenciais["email"] = email_normalizado
+            empresa_normalizada["credenciais"] = credenciais
+            if nome_normalizado and not empresa_normalizada.get("nome"):
+                empresa_normalizada["nome"] = nome_normalizado
+
+            empresas[index] = empresa_normalizada
+            updated = True
+            break
+
+        if not updated:
+            empresas.append(
+                {
+                    "codigo": codigo_normalizado,
+                    "nome": nome_normalizado or codigo_normalizado,
+                    "credenciais": {"email": email_normalizado},
+                }
+            )
+            updated = True
+
+        dados["empresas"] = empresas
+        self.storage.save_document("dados.json", dados)
+        return updated

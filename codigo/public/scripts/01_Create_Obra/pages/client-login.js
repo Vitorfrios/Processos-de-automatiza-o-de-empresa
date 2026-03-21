@@ -8,8 +8,19 @@ import {
     redirectToClientApp
 } from '../core/auth.js';
 
+const RECOVERY_ENDPOINT = '/api/auth/recover-token';
+
 function setFeedback(message, type = 'info') {
     const feedback = document.getElementById('loginFeedback');
+    if (!feedback) return;
+
+    feedback.textContent = message;
+    feedback.dataset.type = type;
+    feedback.style.color = type === 'error' ? '#c62828' : '#0d5d24';
+}
+
+function setRecoveryFeedback(message, type = 'info') {
+    const feedback = document.getElementById('recoverTokenFeedback');
     if (!feedback) return;
 
     feedback.textContent = message;
@@ -45,6 +56,97 @@ function bindPasswordToggle() {
         const icon = toggleButton.querySelector('i');
         if (icon) {
             icon.className = showPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+        }
+    });
+}
+
+function toggleRecoveryLoading(isLoading) {
+    const sendButton = document.getElementById('sendRecoveryBtn');
+    if (!sendButton) return;
+
+    sendButton.disabled = isLoading;
+    sendButton.classList.toggle('loading', isLoading);
+
+    const buttonText = sendButton.querySelector('.btn-text');
+    if (buttonText) {
+        buttonText.textContent = isLoading ? 'Enviando...' : 'Enviar token';
+    }
+}
+
+function openRecoveryModal() {
+    const modal = document.getElementById('recoverTokenModal');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRecoveryModal() {
+    const modal = document.getElementById('recoverTokenModal');
+    if (!modal) return;
+
+    setRecoveryFeedback('');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function bindRecoveryModal() {
+    const openButton = document.getElementById('openRecoveryModalBtn');
+    const closeButton = document.getElementById('closeRecoveryModalBtn');
+    const cancelButton = document.getElementById('cancelRecoveryBtn');
+    const modal = document.getElementById('recoverTokenModal');
+    const form = document.getElementById('recoverTokenForm');
+    const usernameInput = document.getElementById('recoveryUsername');
+    const emailInput = document.getElementById('recoveryEmail');
+
+    openButton?.addEventListener('click', () => {
+        setRecoveryFeedback('');
+        if (usernameInput) {
+            usernameInput.value = document.getElementById('username')?.value.trim() || '';
+        }
+        openRecoveryModal();
+    });
+
+    closeButton?.addEventListener('click', closeRecoveryModal);
+    cancelButton?.addEventListener('click', closeRecoveryModal);
+
+    modal?.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeRecoveryModal();
+        }
+    });
+
+    form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setRecoveryFeedback('');
+        toggleRecoveryLoading(true);
+
+        try {
+            const response = await fetch(RECOVERY_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    usuario: usernameInput?.value || '',
+                    email: emailInput?.value || ''
+                })
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Nao foi possivel enviar o token.');
+            }
+
+            setRecoveryFeedback(result.message || 'Token enviado para o email cadastrado.', 'success');
+            window.setTimeout(() => {
+                closeRecoveryModal();
+            }, 1200);
+        } catch (error) {
+            console.error('[CLIENT-LOGIN] Erro na recuperacao:', error);
+            setRecoveryFeedback(error.message || 'Nao foi possivel recuperar o token.', 'error');
+        } finally {
+            toggleRecoveryLoading(false);
         }
     });
 }
@@ -114,4 +216,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     bindPasswordToggle();
     bindLoginForm();
+    bindRecoveryModal();
 });

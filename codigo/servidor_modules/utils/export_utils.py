@@ -17,6 +17,35 @@ from servidor_modules.utils.admin_email_config import (
 )
 
 
+def normalize_smtp_secret(sender_email, token):
+    """Normaliza segredos SMTP para provedores com formatos conhecidos."""
+    normalized_email = str(sender_email or "").strip().lower()
+    normalized_token = str(token or "").strip()
+
+    if not normalized_token:
+        return ""
+
+    domain = normalized_email.split("@", 1)[1] if "@" in normalized_email else ""
+    if domain in {"gmail.com", "googlemail.com"}:
+        return "".join(normalized_token.split())
+
+    return normalized_token
+
+
+def validate_smtp_secret(sender_email, token):
+    """Valida segredos SMTP para provedores com regras conhecidas."""
+    normalized_email = str(sender_email or "").strip().lower()
+    normalized_token = normalize_smtp_secret(sender_email, token)
+    domain = normalized_email.split("@", 1)[1] if "@" in normalized_email else ""
+
+    if domain in {"gmail.com", "googlemail.com"} and len(normalized_token) != 16:
+        raise RuntimeError(
+            "Para Gmail, informe a senha de app de 16 caracteres do Google, nao o token do ADM do sistema."
+        )
+
+    return normalized_token
+
+
 def cleanup_temp_files(*paths):
     """Remove arquivos temporarios silenciosamente."""
     for path in paths:
@@ -118,8 +147,8 @@ def normalize_attachment_files(files):
     return normalized_files
 
 
-def enviar_email_com_anexos(destino, assunto, mensagem, attachment_files):
-    """Envia um email com anexos diretos usando a configuracao SMTP do ADM."""
+def enviar_email(destino, assunto, mensagem, attachment_files=None):
+    """Envia um email usando a configuracao SMTP do ADM."""
     config_store = AdminEmailConfigStore()
     config = config_store.load()
 
@@ -131,8 +160,6 @@ def enviar_email_com_anexos(destino, assunto, mensagem, attachment_files):
         raise ValueError("Endereco de email de destino invalido")
 
     attachments = normalize_attachment_files(attachment_files)
-    if not attachments:
-        raise FileNotFoundError("Nenhum arquivo valido encontrado para envio")
 
     smtp_settings = config_store.resolve_smtp_settings(config)
     host = str(smtp_settings.get("host") or "").strip()
@@ -181,14 +208,31 @@ def enviar_email_com_anexos(destino, assunto, mensagem, attachment_files):
                 smtp_client.starttls()
                 smtp_client.ehlo()
 
-        smtp_client.login(sender_email, str(config.get("token") or ""))
+        smtp_token = validate_smtp_secret(sender_email, config.get("token") or "")
+        smtp_client.login(sender_email, smtp_token)
         smtp_client.send_message(message)
+    except smtplib.SMTPAuthenticationError as exc:
+        domain = sender_email.split("@", 1)[1].lower() if "@" in sender_email else ""
+        if domain in {"gmail.com", "googlemail.com"}:
+            raise RuntimeError(
+                "Gmail rejeitou a autenticacao SMTP. Verifique se o App Password esta correto e se a conta usa verificacao em duas etapas."
+            ) from exc
+        raise RuntimeError("Credenciais SMTP rejeitadas pelo provedor de email.") from exc
     finally:
         if smtp_client is not None:
             try:
                 smtp_client.quit()
             except Exception:
                 pass
+
+
+def enviar_email_com_anexos(destino, assunto, mensagem, attachment_files):
+    """Envia um email com anexos diretos usando a configuracao SMTP do ADM."""
+    attachments = normalize_attachment_files(attachment_files)
+    if not attachments:
+        raise FileNotFoundError("Nenhum arquivo valido encontrado para envio")
+
+    return enviar_email(destino, assunto, mensagem, attachments)
 
 
 def enviar_email_com_zip(destino, assunto, mensagem, zip_path):

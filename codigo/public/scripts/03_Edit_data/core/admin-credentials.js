@@ -25,11 +25,26 @@ function formatDate(date) {
     const parsedDate = new Date(date);
     if (Number.isNaN(parsedDate.getTime())) return 'Sem registro';
 
-    return parsedDate.toLocaleDateString('pt-BR');
+    return parsedDate.toLocaleString('pt-BR');
 }
 
 function isValidEmail(value) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
+
+function normalizeSmtpToken(email, token) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedToken = String(token || '').trim();
+
+    if (!normalizedToken) {
+        return '';
+    }
+
+    if (normalizedEmail.endsWith('@gmail.com') || normalizedEmail.endsWith('@googlemail.com')) {
+        return normalizedToken.replace(/\s+/g, '');
+    }
+
+    return normalizedToken;
 }
 
 function generateToken() {
@@ -51,11 +66,13 @@ function maskToken(token) {
 function normalizeAdmin(admin, index = 0) {
     const usuario = String(admin?.usuario || '').trim() || `ADM${index + 1}`;
     const token = String(admin?.token || '').trim() || generateToken();
+    const email = String(admin?.email || '').trim();
 
     return {
         id: String(admin?.id || `adm_${index}_${usuario.toLowerCase()}`),
         usuario,
         token,
+        email,
         criadoEm: admin?.criadoEm || admin?.createdAt || null,
         ultimoAcesso: admin?.ultimoAcesso || admin?.lastLogin || null
     };
@@ -81,6 +98,10 @@ function saveAdmins(admins) {
             usuario: admin.usuario,
             token: admin.token
         };
+
+        if (admin.email) {
+            savedAdmin.email = admin.email;
+        }
 
         if (admin.criadoEm) {
             savedAdmin.criadoEm = admin.criadoEm;
@@ -120,6 +141,10 @@ function renderAdminCard(admin, index) {
                 <div class="admin-card-detail">
                     <span class="detail-label">Usuario</span>
                     <span class="detail-value">@${escapeHtml(admin.usuario)}</span>
+                </div>
+                <div class="admin-card-detail">
+                    <span class="detail-label">Email de recuperação</span>
+                    <span class="detail-value">${escapeHtml(admin.email || 'Nao cadastrado')}</span>
                 </div>
                 <div class="admin-card-detail">
                     <span class="detail-label">Senha atual</span>
@@ -229,6 +254,15 @@ async function saveAdminEmailConfig() {
         return;
     }
 
+    const normalizedToken = normalizeSmtpToken(email, token);
+    if (
+        (email.toLowerCase().endsWith('@gmail.com') || email.toLowerCase().endsWith('@googlemail.com'))
+        && normalizedToken.length !== 16
+    ) {
+        showError('Para Gmail, informe a senha de app de 16 caracteres do Google.');
+        return;
+    }
+
     if (!nome) {
         showError('Informe o nome do remetente.');
         return;
@@ -240,7 +274,7 @@ async function saveAdminEmailConfig() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ email, token, nome })
+            body: JSON.stringify({ email, token: normalizedToken, nome })
         });
 
         const result = await response.json().catch(() => ({}));
@@ -250,7 +284,7 @@ async function saveAdminEmailConfig() {
 
         adminState.emailConfig = {
             email,
-            token,
+            token: normalizedToken,
             nome
         };
         adminState.emailConfigLoaded = true;
@@ -297,8 +331,9 @@ function openAdminModal(admin = null) {
     const idInput = document.getElementById('adminRecordId');
     const usuarioInput = document.getElementById('adminUsernameInput');
     const tokenInput = document.getElementById('adminTokenInput');
+    const emailInput = document.getElementById('adminEmailInput');
 
-    if (!modal || !title || !idInput || !usuarioInput || !tokenInput) {
+    if (!modal || !title || !idInput || !usuarioInput || !tokenInput || !emailInput) {
         return;
     }
 
@@ -307,11 +342,13 @@ function openAdminModal(admin = null) {
         idInput.value = admin.id;
         usuarioInput.value = admin.usuario;
         tokenInput.value = admin.token;
+        emailInput.value = admin.email || '';
     } else {
         title.textContent = 'Novo ADM';
         idInput.value = `new_${Date.now()}`;
         usuarioInput.value = '';
         tokenInput.value = generateToken();
+        emailInput.value = '';
     }
 
     modal.style.display = 'flex';
@@ -330,9 +367,15 @@ function saveAdminFromForm(event) {
     const id = document.getElementById('adminRecordId')?.value;
     const usuario = document.getElementById('adminUsernameInput')?.value.trim();
     const token = document.getElementById('adminTokenInput')?.value.trim();
+    const email = document.getElementById('adminEmailInput')?.value.trim() || '';
 
     if (!id || !usuario || !token) {
         showError('Preencha usuario e senha do ADM.');
+        return;
+    }
+
+    if (email && !isValidEmail(email)) {
+        showError('Informe um email valido para recuperacao do ADM.');
         return;
     }
 
@@ -355,7 +398,8 @@ function saveAdminFromForm(event) {
                 ? {
                     ...admin,
                     usuario,
-                    token
+                    token,
+                    email
                 }
                 : admin
         ));
@@ -366,6 +410,7 @@ function saveAdminFromForm(event) {
                 id,
                 usuario,
                 token,
+                email,
                 criadoEm: new Date().toISOString()
             }
         ];

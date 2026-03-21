@@ -137,6 +137,13 @@ async function saveObra(obraId, event) {
     return;
   }
 
+  if (!String(obraData.emailEmpresa || "").trim()) {
+    showSystemStatus(
+      "O email da empresa nao foi preenchido. Isso pode dificultar a recuperacao do acesso posteriormente.",
+      "warning",
+    );
+  }
+
   const obraIdFromDOM = obraBlock.dataset.obraId;
   const obraIdFromData = obraData.id;
   const finalObraId = obraIdFromDOM || obraIdFromData;

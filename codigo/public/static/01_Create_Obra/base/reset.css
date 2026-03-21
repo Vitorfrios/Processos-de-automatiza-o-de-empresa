@@ -9,7 +9,6 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: var(--body-bg-gradient);
   min-height: 100vh;
-  /* color: var(--text-primary); */
 }
 
 .container {
@@ -19,6 +18,7 @@ body {
 
 .main-content {
   padding: var(--spacing-xl);
+
 }
 
 /* Estados Colapsados */
@@ -32,4 +32,15 @@ body {
   color: var(--text-secondary);
   font-style: italic;
   padding: var(--spacing-xl);
+}
+
+footer {
+  position: sticky;
+  top: 100vh; /* empurra ele pro final da tela */
+
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+
+  padding: 10px 0;
 }

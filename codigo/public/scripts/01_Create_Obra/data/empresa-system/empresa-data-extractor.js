@@ -30,6 +30,7 @@ function extractEmpresaData(obraElement) {
     "numeroClienteFinal",
     "clienteFinal",
     "codigoCliente",
+    "emailEmpresa",
     "dataCadastro",
     "orcamentistaResponsavel",
     "idGerado",
@@ -119,6 +120,7 @@ function extractEmpresaData(obraElement) {
       "numero-cliente-final-cadastro": ["numeroClienteFinal"],
       "cliente-final-cadastro": ["clienteFinal"],
       "codigo-cliente-cadastro": ["codigoCliente"],
+      "email-empresa-cadastro": ["emailEmpresa"],
       "data-cadastro-cadastro": ["dataCadastro"],
       "orcamentista-responsavel-cadastro": ["orcamentistaResponsavel"],
 
@@ -126,6 +128,7 @@ function extractEmpresaData(obraElement) {
       "numero-cliente-final-readonly": ["numeroClienteFinal"],
       "cliente-final-input": ["clienteFinal"],
       "codigo-cliente-input": ["codigoCliente"],
+      "email-empresa-input": ["emailEmpresa"],
       "data-cadastro-readonly": ["dataCadastro"],
       "orcamentista-responsavel-input": ["orcamentistaResponsavel"],
     };
@@ -183,7 +186,10 @@ function extractEmpresaData(obraElement) {
   );
 
   camposFaltantes.forEach((campo) => {
-    const valorDataAttr = obraElement.dataset[campo];
+    const valorDataAttr =
+      campo === "emailEmpresa"
+        ? obraElement.dataset.emailEmpresa || obraElement.dataset.empresaEmail
+        : obraElement.dataset[campo];
     if (
       valorDataAttr !== undefined &&
       valorDataAttr !== null &&
@@ -379,6 +385,7 @@ async function prepararDadosEmpresaNaObra(obraData, obraElement) {
       "numeroClienteFinal",
       "clienteFinal",
       "codigoCliente",
+      "emailEmpresa",
       "dataCadastro",
       "orcamentistaResponsavel",
       "idGerado",
@@ -422,6 +429,7 @@ async function prepararDadosEmpresaNaObra(obraData, obraElement) {
       numeroClienteFinal: obraData.numeroClienteFinal,
       clienteFinal: obraData.clienteFinal,
       codigoCliente: obraData.codigoCliente,
+      emailEmpresa: obraData.emailEmpresa || obraData.empresaEmail,
       dataCadastro: obraData.dataCadastro,
       orcamentistaResponsavel: obraData.orcamentistaResponsavel,
       idGerado: obraData.idGerado,

@@ -336,6 +336,11 @@ class EmpresaHandler:
                 "session": {
                     "empresaCodigo": empresa.get("codigo", ""),
                     "empresaNome": empresa.get("nome", ""),
+                    "empresaEmail": str(
+                        credenciais.get("email")
+                        or credenciais.get("recoveryEmail")
+                        or ""
+                    ).strip(),
                     "usuario": empresa_usuario,
                     "expiraEm": expiration_date.isoformat() if expiration_date else None,
                 },

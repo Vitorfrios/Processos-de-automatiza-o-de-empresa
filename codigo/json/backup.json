@@ -9,6 +9,7 @@
       "numeroClienteFinal": 1,
       "clienteFinal": "teste cliente final",
       "codigoCliente": "codigo",
+      "emailEmpresa": "uvciuwciuw@gmail.com",
       "dataCadastro": "20/03/2026",
       "orcamentistaResponsavel": "orçamentista",
       "idGerado": "obra_ACT_1",
@@ -130,12 +131,12 @@
                 "total-tr-exato": 22.84,
                 "total-externo": 0,
                 "total-divisoes": 0,
-                "total-piso": 2916,
-                "total-iluminacao": 1008,
-                "total-dissi": 60000,
-                "total-pessoas": 220,
-                "total-ar-sensivel": 4571,
-                "total-ar-latente": 11626
+                "total-piso": 0,
+                "total-iluminacao": 0,
+                "total-dissi": 0,
+                "total-pessoas": 0,
+                "total-ar-sensivel": 0,
+                "total-ar-latente": 0
               },
               "acessorios": [
                 {
@@ -172,41 +173,41 @@
                     "id": "obra_u57_proj_h12_3_sala_e83_1-1",
                     "numero": 1,
                     "quantidade": 1,
-                    "cabos": 18,
-                    "luvas": 115.2,
-                    "reducoes": 48,
-                    "totalLSmetros": 288,
-                    "totalLSkg": 386.21,
-                    "totalLLmetros": 288,
-                    "totalLLkg": 136.22,
-                    "totalKG": 522.43,
-                    "valorTotal": 29952,
+                    "cabos": 0,
+                    "luvas": 0,
+                    "reducoes": 0,
+                    "totalLSmetros": 0,
+                    "totalLSkg": 0,
+                    "totalLLmetros": 0,
+                    "totalLLkg": 0,
+                    "totalKG": 0,
+                    "valorTotal": 0,
                     "linhas": [
                       {
-                        "id": "LS-obra_u57_proj_h12_3_sala_e83_1-1-1774025180848",
+                        "id": "LS-obra_u57_proj_h12_3_sala_e83_1-1-1774046771867",
                         "tipo": "L.S.",
-                        "pol": "1.1/4",
-                        "expe": "1,59",
-                        "compr": 12,
-                        "numC": 12,
-                        "numCu": 12,
-                        "Cee": 12,
-                        "Lsm": 288,
-                        "LSkg": 386.20799999999997,
-                        "valorTotal": 17856
+                        "pol": "",
+                        "expe": "",
+                        "compr": 0,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0,
+                        "valorTotal": 0
                       },
                       {
-                        "id": "LL-obra_u57_proj_h12_3_sala_e83_1-1-1774025180848",
+                        "id": "LL-obra_u57_proj_h12_3_sala_e83_1-1-1774046771867",
                         "tipo": "L.L.",
-                        "pol": "7/8",
-                        "expe": "0,80",
-                        "compr": 12,
-                        "numC": 12,
-                        "numCu": 12,
-                        "Cee": 12,
-                        "Lsm": 288,
-                        "LSkg": 136.224,
-                        "valorTotal": 12096
+                        "pol": "",
+                        "expe": "",
+                        "compr": 0,
+                        "numC": 0,
+                        "numCu": 0,
+                        "Cee": 0,
+                        "Lsm": 0,
+                        "LSkg": 0,
+                        "valorTotal": 0
                       }
                     ]
                   }
@@ -223,10 +224,10 @@
             },
             "adicionais": []
           },
-          "valorTotalProjeto": 631661.2
+          "valorTotalProjeto": 601709.2
         }
       ],
-      "valorTotalObra": 631661.2
+      "valorTotalObra": 601709.2
     }
   ]
 }
