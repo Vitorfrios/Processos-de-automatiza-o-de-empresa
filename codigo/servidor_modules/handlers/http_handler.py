@@ -1329,7 +1329,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return normalized_admins
 
     def _touch_admin_last_access(self, usuario):
-        from datetime import datetime
+        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
         from servidor_modules.database.storage import get_storage
 
         normalized_user = str(usuario or "").strip().lower()
@@ -1347,7 +1348,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if str(admin.get("usuario", "")).strip().lower() != normalized_user:
                 continue
 
-            admin["ultimoAcesso"] = datetime.now().isoformat()
+            try:
+                admin["ultimoAcesso"] = datetime.now(
+                    ZoneInfo("America/Sao_Paulo")
+                ).isoformat()
+            except Exception:
+                admin["ultimoAcesso"] = datetime.now(timezone.utc).isoformat()
             updated = True
             break
 

@@ -22,10 +22,18 @@ function escapeHtml(text) {
 function formatDate(date) {
     if (!date) return 'Sem registro';
 
-    const parsedDate = new Date(date);
+    const rawDate = String(date).trim();
+    const normalizedDate =
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(rawDate)
+            ? `${rawDate}Z`
+            : rawDate;
+
+    const parsedDate = new Date(normalizedDate);
     if (Number.isNaN(parsedDate.getTime())) return 'Sem registro';
 
-    return parsedDate.toLocaleString('pt-BR');
+    return parsedDate.toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo'
+    });
 }
 
 function isValidEmail(value) {

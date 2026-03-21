@@ -237,6 +237,15 @@ function showCredentialsModal(index) {
                            readonly
                            required
                            style="flex: 1; padding: 8px; border: 1px solid #2d3748; border-radius: 6px; background: #25303f; font-family: monospace; font-size: 0.9rem; color: #cbd5e0;">
+                    <button type="button" onclick="window.copyTokenToClipboard(this)" 
+                            title="Copiar token"
+                            aria-label="Copiar token"
+                            class="btn btn-secondary"
+                            style="width: 42px; min-width: 42px; padding: 8px; display: inline-flex; align-items: center; justify-content: center; background: #2d3748; color: white; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s ease;"
+                            onmouseover="this.style.background='#3a4758'" 
+                            onmouseout="this.style.background=this.dataset.active==='true' ? '#2f855a' : '#2d3748'">
+                        <i class="fa-regular fa-copy" aria-hidden="true"></i>
+                    </button>
                     <button type="button" onclick="window.generateNewToken()" 
                             class="btn btn-secondary"
                             style="padding: 8px 16px; white-space: nowrap; background: #4a5568; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: background 0.2s ease;"
@@ -334,6 +343,59 @@ window.generateNewToken = function() {
     const tokenInput = document.getElementById('tokenInput');
     if (tokenInput) {
         tokenInput.value = generateToken(32);
+    }
+};
+
+async function copyTextToClipboard(text) {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+    }
+
+    const tokenInput = document.getElementById('tokenInput');
+    if (!tokenInput) {
+        return false;
+    }
+
+    tokenInput.removeAttribute('readonly');
+    tokenInput.select();
+    tokenInput.setSelectionRange(0, tokenInput.value.length);
+    const copied = document.execCommand('copy');
+    tokenInput.setAttribute('readonly', 'readonly');
+    tokenInput.blur();
+    return copied;
+}
+
+window.copyTokenToClipboard = async function(button) {
+    const token = document.getElementById('tokenInput')?.value?.trim();
+
+    if (!token) {
+        showWarning('Nao ha token para copiar.');
+        return;
+    }
+
+    try {
+        const copied = await copyTextToClipboard(token);
+        if (!copied) {
+            throw new Error('copy_failed');
+        }
+
+        if (button) {
+            button.dataset.active = 'true';
+            button.style.background = '#2f855a';
+            button.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i>';
+            window.setTimeout(() => {
+                if (!button.isConnected) return;
+                button.dataset.active = 'false';
+                button.style.background = '#2d3748';
+                button.innerHTML = '<i class="fas fa-copy" aria-hidden="true"></i>';
+            }, 1600);
+        }
+
+        showSuccess('Token copiado para a area de transferencia.');
+    } catch (error) {
+        console.error('Erro ao copiar token:', error);
+        showError('Nao foi possivel copiar o token.');
     }
 };
 
