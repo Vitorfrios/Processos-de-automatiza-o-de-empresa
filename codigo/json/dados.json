@@ -2382,21 +2382,14 @@
       "token": "5tgrySVdG458",
       "email": "vitorfrios074@gmail.com",
       "criadoEm": "2026-03-19T14:30:59.996Z",
-      "ultimoAcesso": "2026-03-21T11:43:32.478672-03:00"
+      "ultimoAcesso": "2026-03-21T23:45:28.609581-03:00"
     }
   ],
   "empresas": [
     {
       "codigo": "ACT",
       "nome": "ACTEMIUM",
-      "credenciais": {
-        "usuario": "act",
-        "email": "uvciuwciuw@gmail.com",
-        "token": "5d1184a61dd46b60e252bba6e04f753d",
-        "data_criacao": "2026-03-20T22:35:02.190Z",
-        "data_expiracao": "2026-04-19T22:35:02.190Z",
-        "tempoUso": 30
-      }
+      "credenciais": null
     },
     {
       "codigo": "AMC",
@@ -2416,9 +2409,7 @@
     {
       "codigo": "CIC",
       "nome": "CICLO SOLAR",
-      "credenciais": {
-        "email": "jgiyutyreasd\\z@gmail.com"
-      }
+      "credenciais": null
     },
     {
       "codigo": "GEP",
@@ -2428,14 +2419,7 @@
     {
       "codigo": "IHM",
       "nome": "IHM ENGENHARIA",
-      "credenciais": {
-        "email": "sophiafonvale@gmail.com",
-        "usuario": "user ihm",
-        "token": "ac22f3770bbb42f7801a4acbe360b943",
-        "tempoUso": 30,
-        "data_criacao": "2026-03-22T01:58:05.449Z",
-        "data_expiracao": "2026-04-21T01:58:05.449Z"
-      }
+      "credenciais": null
     },
     {
       "codigo": "SEP",
@@ -2445,9 +2429,7 @@
     {
       "codigo": "SEN",
       "nome": "SENIOR",
-      "credenciais": {
-        "email": "vitorfrios074@gmail.com"
-      }
+      "credenciais": null
     },
     {
       "codigo": "TEC",
@@ -2477,9 +2459,7 @@
     {
       "codigo": "EMA",
       "nome": "EMAC",
-      "credenciais": {
-        "email": "wliefbelwbbi@gmail.com"
-      }
+      "credenciais": null
     },
     {
       "codigo": "MAR",

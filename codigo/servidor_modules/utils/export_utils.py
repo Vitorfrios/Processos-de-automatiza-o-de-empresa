@@ -6,6 +6,8 @@ import os
 import smtplib
 import shutil
 import tempfile
+import time
+import zipfile
 from email.message import EmailMessage
 from email.utils import formataddr
 from pathlib import Path
@@ -67,17 +69,73 @@ def cleanup_temp_files(*paths):
             continue
 
 
+def read_verified_attachment_bytes(file_path, max_attempts=5, wait_seconds=0.25):
+    """Lê o anexo e garante consistência de tamanho antes de enviá-lo."""
+    attachment_path = Path(file_path)
+    last_error = None
+
+    for attempt in range(max_attempts):
+        if not attachment_path.exists():
+            last_error = FileNotFoundError(
+                f"Arquivo de anexo não encontrado: {attachment_path}"
+            )
+        else:
+            try:
+                size_before = attachment_path.stat().st_size
+                if size_before <= 0:
+                    raise RuntimeError(
+                        f"Arquivo de anexo vazio ou ainda não finalizado: {attachment_path}"
+                    )
+
+                with open(attachment_path, "rb") as file_obj:
+                    file_bytes = file_obj.read()
+
+                size_after = attachment_path.stat().st_size
+                if len(file_bytes) == size_before == size_after:
+                    return file_bytes
+
+                last_error = RuntimeError(
+                    "Leitura inconsistente do anexo: "
+                    f"{attachment_path} (lido={len(file_bytes)}, antes={size_before}, depois={size_after})"
+                )
+            except Exception as exc:
+                last_error = exc
+
+        if attempt < max_attempts - 1:
+            time.sleep(wait_seconds)
+
+    raise last_error or RuntimeError(
+        f"Não foi possível validar o anexo para envio: {attachment_path}"
+    )
+
+
 def duplicate_temp_file(source_path, output_filename=None):
     """Cria uma cópia temporária de um arquivo para uso paralelo em jobs distintos."""
     source = Path(source_path)
     if not source.exists():
         raise FileNotFoundError("Arquivo temporário não encontrado para duplicação")
 
+    source_bytes = read_verified_attachment_bytes(source)
     suffix = source.suffix or ".tmp"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
+        tmp_file.write(source_bytes)
+        tmp_file.flush()
+        os.fsync(tmp_file.fileno())
         duplicate_path = tmp_file.name
 
-    shutil.copy2(source, duplicate_path)
+    duplicate_size = Path(duplicate_path).stat().st_size
+    if duplicate_size != len(source_bytes):
+        cleanup_temp_files(duplicate_path)
+        raise RuntimeError(
+            "Falha ao criar cópia íntegra do anexo para envio: "
+            f"{source.name} (origem={len(source_bytes)}, copia={duplicate_size})"
+        )
+
+    try:
+        shutil.copystat(source, duplicate_path)
+    except Exception:
+        pass
+
     duplicate_name = output_filename or source.name
     return duplicate_path, duplicate_name
 
@@ -147,6 +205,65 @@ def normalize_attachment_files(files):
     return normalized_files
 
 
+def create_zip_bundle(files, output_filename=None):
+    """Compacta anexos em um ZIP temporário para envio íntegro por email."""
+    normalized_files = normalize_attachment_files(files)
+    if not normalized_files:
+        raise FileNotFoundError("Nenhum arquivo válido encontrado para compactação")
+
+    zip_name = str(output_filename or "").strip()
+    if not zip_name:
+        if len(normalized_files) == 1:
+            zip_name = f"{Path(normalized_files[0]['filename']).stem}.zip"
+        else:
+            zip_name = "exportacao_anexos.zip"
+    elif not zip_name.lower().endswith(".zip"):
+        zip_name = f"{zip_name}.zip"
+
+    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp_file:
+        zip_path = tmp_file.name
+
+    try:
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for file_info in normalized_files:
+                file_path = Path(str(file_info.get("path") or ""))
+                filename = str(file_info.get("filename") or file_path.name).strip() or file_path.name
+                file_bytes = read_verified_attachment_bytes(file_path)
+                zip_file.writestr(filename, file_bytes)
+
+        if Path(zip_path).stat().st_size <= 0:
+            raise RuntimeError("Falha ao gerar ZIP temporário para envio por email")
+
+        return zip_path, zip_name
+    except Exception:
+        cleanup_temp_files(zip_path)
+        raise
+
+
+def prepare_email_attachments(attachment_files):
+    """Prepara anexos para email, compactando DOCX em ZIP para preservar integridade."""
+    attachments = normalize_attachment_files(attachment_files)
+    if not attachments:
+        return [], []
+
+    has_docx = any(
+        Path(str(file_info.get("filename") or file_info.get("path") or "")).suffix.lower()
+        == ".docx"
+        for file_info in attachments
+    )
+
+    if not has_docx:
+        return attachments, []
+
+    zip_filename = (
+        f"{Path(attachments[0]['filename']).stem}.zip"
+        if len(attachments) == 1
+        else "exportacao_documentos.zip"
+    )
+    zip_path, bundle_name = create_zip_bundle(attachments, zip_filename)
+    return [build_export_file(zip_path, bundle_name, "zip_bundle")], [zip_path]
+
+
 def enviar_email(destino, assunto, mensagem, attachment_files=None):
     """Envia um email usando a configuração SMTP do ADM."""
     config_store = AdminEmailConfigStore()
@@ -183,19 +300,20 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
         filename = str(attachment.get("filename") or file_path.name).strip() or file_path.name
         suffix = file_path.suffix.lower()
         subtype = "octet-stream"
+        file_bytes = read_verified_attachment_bytes(file_path)
 
         if suffix == ".docx":
             subtype = "vnd.openxmlformats-officedocument.wordprocessingml.document"
         elif suffix == ".zip":
             subtype = "zip"
 
-        with open(file_path, "rb") as file_obj:
-            message.add_attachment(
-                file_obj.read(),
-                maintype="application",
-                subtype=subtype,
-                filename=filename,
-            )
+        message.add_attachment(
+            file_bytes,
+            maintype="application",
+            subtype=subtype,
+            filename=filename,
+            cte="base64",
+        )
 
     smtp_client = None
     try:
@@ -228,11 +346,14 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
 
 def enviar_email_com_anexos(destino, assunto, mensagem, attachment_files):
     """Envia um email com anexos diretos usando a configuração SMTP do ADM."""
-    attachments = normalize_attachment_files(attachment_files)
+    attachments, temp_paths = prepare_email_attachments(attachment_files)
     if not attachments:
         raise FileNotFoundError("Nenhum arquivo válido encontrado para envio")
 
-    return enviar_email(destino, assunto, mensagem, attachments)
+    try:
+        return enviar_email(destino, assunto, mensagem, attachments)
+    finally:
+        cleanup_temp_files(*temp_paths)
 
 
 def enviar_email_com_zip(destino, assunto, mensagem, zip_path):

@@ -148,14 +148,24 @@ function syncEmpresaCredenciaisInRenderedObras(empresa, credenciais = null) {
     const credencialValida = credenciais && typeof credenciais === 'object' ? credenciais : null;
 
     document.querySelectorAll('.obra-block[data-obra-id]').forEach((obraElement) => {
-        const obraCodigo = String(obraElement.dataset.empresaSigla || obraElement.dataset.empresaCodigo || '').trim().toUpperCase();
-        const obraNome = String(obraElement.dataset.empresaNome || '').trim().toUpperCase();
+        const obraId = obraElement.dataset.obraId;
+        const empresaInput = obraId ? document.getElementById(`empresa-input-${obraId}`) : null;
+        const obraCodigo = String(
+            empresaInput?.dataset?.siglaSelecionada ||
+            obraElement.dataset.empresaSigla ||
+            obraElement.dataset.empresaCodigo ||
+            ''
+        ).trim().toUpperCase();
+        const obraNome = String(
+            empresaInput?.dataset?.nomeSelecionado ||
+            obraElement.dataset.empresaNome ||
+            ''
+        ).trim().toUpperCase();
 
         if (!((empresaCodigo && obraCodigo === empresaCodigo) || (empresaNome && obraNome === empresaNome))) {
             return;
         }
 
-        const obraId = obraElement.dataset.obraId;
         const usuarioInput = obraId ? document.getElementById(`empresa-usuario-${obraId}`) : null;
         const tokenInput = obraId ? document.getElementById(`empresa-token-${obraId}`) : null;
         const emailInput = obraId ? document.getElementById(`email-empresa-${obraId}`) : null;
@@ -176,6 +186,16 @@ function syncEmpresaCredenciaisInRenderedObras(empresa, credenciais = null) {
             if (emailInput) emailInput.value = '';
             delete obraElement.dataset.emailEmpresa;
             delete obraElement.dataset.empresaEmail;
+
+            if (obraId && typeof window.syncAdminEmpresaCredentialsForObra === 'function') {
+                window.syncAdminEmpresaCredentialsForObra(obraId, {
+                    empresaSigla: empresa.codigo || '',
+                    empresaCodigo: empresa.codigo || '',
+                    empresaNome: empresa.nome || '',
+                    emailEmpresa: '',
+                    empresaCredenciais: null
+                });
+            }
             return;
         }
 
@@ -213,6 +233,17 @@ function syncEmpresaCredenciaisInRenderedObras(empresa, credenciais = null) {
         if (usuarioInput) usuarioInput.value = usuario;
         if (tokenInput) tokenInput.value = token;
         if (emailInput) emailInput.value = email;
+
+        if (obraId && typeof window.syncAdminEmpresaCredentialsForObra === 'function') {
+            window.syncAdminEmpresaCredentialsForObra(obraId, {
+                empresaSigla: empresa.codigo || '',
+                empresaCodigo: empresa.codigo || '',
+                empresaNome: empresa.nome || '',
+                emailEmpresa: email,
+                empresaCredenciais: credencialValida,
+                preferExplicitEmail: true
+            });
+        }
     });
 }
 

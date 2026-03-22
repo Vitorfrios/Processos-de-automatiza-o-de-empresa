@@ -3923,22 +3923,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if not normalized_email_files:
             return []
 
-        download_paths = {
-            os.path.abspath(str(file_info.get("path")))
-            for file_info in (download_files or [])
-            if isinstance(file_info, dict) and file_info.get("path")
-        }
-
-        overlapping_files = []
-        standalone_files = []
-        for file_info in normalized_email_files:
-            file_path = os.path.abspath(str(file_info.get("path")))
-            if file_path in download_paths:
-                overlapping_files.append(file_info)
-            else:
-                standalone_files.append(file_info)
-
-        return standalone_files + duplicate_attachment_files(overlapping_files)
+        # Sempre trabalhar com cópias dedicadas para email.
+        # Isso isola o anexo do arquivo original recém-gerado e evita disputa
+        # com o fluxo de download ou limpeza de temporários.
+        return duplicate_attachment_files(normalized_email_files)
 
     def _run_background_email_job(self, job_id, destinatario, assunto, mensagem, attachment_files):
         from servidor_modules.utils.export_utils import cleanup_temp_files, enviar_email_com_anexos
@@ -4059,6 +4047,20 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     cleanup_temp_files(*(file_info.get("path") for file_info in email_asset_files))
                     if not need_download:
                         raise
+                finally:
+                    download_paths = {
+                        os.path.abspath(str(file_info.get("path")))
+                        for file_info in (assets.get("download_files") or [])
+                        if isinstance(file_info, dict) and file_info.get("path")
+                    }
+                    original_email_only_paths = [
+                        file_info.get("path")
+                        for file_info in (assets.get("email_files") or [])
+                        if isinstance(file_info, dict)
+                        and file_info.get("path")
+                        and os.path.abspath(str(file_info.get("path"))) not in download_paths
+                    ]
+                    cleanup_temp_files(*original_email_only_paths)
 
             return {
                 "message": (
@@ -4086,7 +4088,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             raise
 
     def _run_obra_notification_flow(self, job_id, obra_id, export_format):
-        from servidor_modules.utils.export_utils import prepare_export_assets
+        from servidor_modules.utils.export_utils import cleanup_temp_files, prepare_export_assets
 
         background_jobs.set_stage(
             job_id,
@@ -4104,6 +4106,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         )
 
         notification_files = self._resolve_async_email_assets(assets.get("email_files"))
+        cleanup_temp_files(
+            *(file_info.get("path") for file_info in (assets.get("email_files") or []))
+        )
         return self._run_admin_notification_job(
             job_id,
             assets.get("obra_data") or {},

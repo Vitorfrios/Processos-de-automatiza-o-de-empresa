@@ -17,6 +17,7 @@ import {
 const empresa = new EmpresaCadastroInline();
 let adminEmpresasCachePromise = null;
 const EMPRESA_CREDENTIAL_DRAFT_PREFIX = "esi.empresaCredentialDraft.";
+let empresaCredentialStorageListenerBound = false;
 
 function isAdminCreateMode() {
   if (typeof window === "undefined") {
@@ -69,6 +70,26 @@ function getEmpresaCredentialCompanyKey(empresaSigla, empresaNome) {
   return String(empresaSigla || empresaNome || "")
     .trim()
     .toUpperCase();
+}
+
+function getSelectedEmpresaDataFromObraElement(obraElement) {
+  const obraId = String(obraElement?.dataset?.obraId || "").trim();
+  const empresaInput = obraId
+    ? document.getElementById(`empresa-input-${obraId}`)
+    : null;
+
+  return {
+    obraId,
+    empresaSigla: String(
+      empresaInput?.dataset?.siglaSelecionada ||
+        obraElement?.dataset?.empresaSigla ||
+        obraElement?.dataset?.empresaCodigo ||
+        ""
+    ).trim(),
+    empresaNome: String(
+      empresaInput?.dataset?.nomeSelecionado || obraElement?.dataset?.empresaNome || ""
+    ).trim(),
+  };
 }
 
 function calcularDataExpiracaoISO(tempoUso = 30, dataCriacao = "") {
@@ -244,6 +265,40 @@ async function loadAdminEmpresasCache() {
   return adminEmpresasCachePromise;
 }
 
+function bindEmpresaCredentialStorageSync() {
+  if (
+    empresaCredentialStorageListenerBound ||
+    typeof window === "undefined" ||
+    !isAdminCreateMode()
+  ) {
+    return;
+  }
+
+  window.addEventListener("storage", (event) => {
+    const storageKey = String(event?.key || "").trim();
+    if (!storageKey.startsWith(EMPRESA_CREDENTIAL_DRAFT_PREFIX)) {
+      return;
+    }
+
+    document.querySelectorAll(".obra-block[data-obra-id]").forEach((obraElement) => {
+      const { obraId, empresaSigla, empresaNome } =
+        getSelectedEmpresaDataFromObraElement(obraElement);
+      const companyDraftKey = getEmpresaCredentialDraftKey(empresaSigla, empresaNome);
+
+      if (!obraId || !companyDraftKey || companyDraftKey !== storageKey) {
+        return;
+      }
+
+      syncAdminEmpresaCredentialsForObra(obraId, {
+        empresaSigla,
+        empresaNome,
+      });
+    });
+  });
+
+  empresaCredentialStorageListenerBound = true;
+}
+
 function findEmpresaCredenciais(empresas, empresaSigla, empresaNome) {
   const normalizedSigla = String(empresaSigla || "")
     .trim()
@@ -297,6 +352,7 @@ function renderAdminCredentialUserField({
 function renderAdminCredentialTokenField({
   obraId,
   token = "",
+  tempoUso = 30,
 }) {
   if (!isAdminCreateMode()) {
     return "";
@@ -304,39 +360,187 @@ function renderAdminCredentialTokenField({
 
   return `
  <div class="form-group-horizontal">
-  <label>Token de acesso</label>
- <div class="empresa-token-inline" style="display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:8px; align-items:stretch;">
- <input type="text"
-  class="empresa-token-cadastro"
-  id="empresa-token-${obraId}"
-  value="${escapeHtml(token)}"
-  placeholder="Selecione uma empresa primeiro"
-  disabled
-  readonly
-  style="flex:1;">
-  <div style="display:flex; flex-direction:column; gap:8px;">
-  <button type="button"
-  class="empresa-token-action"
-  data-credential-action="copy"
-  onclick="window.copyEmpresaTokenToClipboard('${obraId}', this)"
-  title="Copiar token"
-  aria-label="Copiar token"
-  disabled
-  style="white-space:nowrap; padding:0 12px; border:1px solid #d5d9e2; border-radius:8px; background:#f3f6fb; cursor:pointer;">
-  Copiar
-  </button>
-  <button type="button"
-  class="empresa-token-action"
-  data-credential-action="generate"
-  onclick="window.generateEmpresaTokenField('${obraId}')"
-  disabled
-  style="white-space:nowrap; padding:0 12px; border:none; border-radius:8px; background:#1f4b99; color:#fff; cursor:pointer;">
-  Gerar
-  </button>
-  </div>
+ <div class="empresa-token-tempo-split">
+  <div class="empresa-token-column">
+   <div class="empresa-token-column-label">Token de acesso</div>
+   <div class="empresa-token-inline" style="display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:8px; align-items:stretch;">
+   <input type="text"
+    class="empresa-token-cadastro"
+    id="empresa-token-${obraId}"
+    value="${escapeHtml(token)}"
+    placeholder="Selecione uma empresa primeiro"
+    disabled
+    readonly
+    style="flex:1;">
+    <div style="display:flex; flex-direction:column; gap:8px;">
+    <button type="button"
+    class="empresa-token-action"
+    data-credential-action="copy"
+    onclick="window.copyEmpresaTokenToClipboard('${obraId}', this)"
+    title="Copiar token"
+    aria-label="Copiar token"
+    disabled
+    style="white-space:nowrap; padding:0 12px; border:1px solid #d5d9e2; border-radius:8px; background:#f3f6fb; cursor:pointer;">
+    Copiar
+    </button>
+    <button type="button"
+    class="empresa-token-action"
+    data-credential-action="generate"
+    onclick="window.generateEmpresaTokenField('${obraId}')"
+    disabled
+    style="white-space:nowrap; padding:0 12px; border:none; border-radius:8px; background:#1f4b99; color:#fff; cursor:pointer;">
+    Gerar
+    </button>
+    </div>
+    </div>
+   </div>
+   ${renderAdminCredentialTempoUsoField({ obraId, tempoUso })}
   </div>
  </div>
  `;
+}
+
+function renderEmpresaEmailField({
+  obraId,
+  emailEmpresa = "",
+}) {
+  if (APP_CONFIG.mode === "client") {
+    return "";
+  }
+
+  return `
+    <div class="form-group-horizontal">
+      <label>Email da empresa</label>
+      <input type="email" 
+        class="email-empresa-cadastro" 
+        id="email-empresa-${obraId}"
+        value="${emailEmpresa}"
+        placeholder="Email para contato e recuperação"
+        ${isAdminCreateMode() ? `oninput="window.syncEmpresaCredentialDraft?.('${obraId}')"` : ""}>
+    </div>
+  `;
+}
+
+function renderAdminCredentialTempoUsoField({
+  obraId,
+  tempoUso = 30,
+}) {
+  if (!isAdminCreateMode()) {
+    return "";
+  }
+
+  const normalizedTempoUso = Number.parseInt(tempoUso, 10) || 30;
+  const isPredefinedTime = [30, 60, 90].includes(normalizedTempoUso);
+  const customValue = isPredefinedTime ? "" : normalizedTempoUso;
+
+  return `
+    <div class="empresa-tempo-uso-panel">
+      <div class="empresa-tempo-uso-label">Dias</div>
+      <div class="empresa-tempo-uso-inline">
+        <div class="empresa-tempo-uso-presets">
+          <label class="empresa-tempo-uso-option">
+            <input type="radio"
+              name="empresa-tempo-uso-${obraId}"
+              value="30"
+              ${normalizedTempoUso === 30 ? "checked" : ""}
+              onchange="window.handleEmpresaTempoUsoChange?.('${obraId}')">
+            <span>30</span>
+          </label>
+          <label class="empresa-tempo-uso-option">
+            <input type="radio"
+              name="empresa-tempo-uso-${obraId}"
+              value="60"
+              ${normalizedTempoUso === 60 ? "checked" : ""}
+              onchange="window.handleEmpresaTempoUsoChange?.('${obraId}')">
+            <span>60</span>
+          </label>
+          <label class="empresa-tempo-uso-option">
+            <input type="radio"
+              name="empresa-tempo-uso-${obraId}"
+              value="90"
+              ${normalizedTempoUso === 90 ? "checked" : ""}
+              onchange="window.handleEmpresaTempoUsoChange?.('${obraId}')">
+            <span>90</span>
+          </label>
+        </div>
+        <div class="empresa-tempo-uso-custom-slot">
+          <label class="empresa-tempo-uso-option empresa-tempo-uso-option-custom">
+            <input type="radio"
+              name="empresa-tempo-uso-${obraId}"
+              value="personalizado"
+              ${!isPredefinedTime ? "checked" : ""}
+              onchange="window.handleEmpresaTempoUsoChange?.('${obraId}')">
+            <span>Outro</span>
+          </label>
+          <div class="empresa-tempo-uso-custom ${!isPredefinedTime ? "is-visible" : ""}"
+            id="empresa-tempo-uso-custom-${obraId}">
+            <input type="number"
+              class="empresa-tempo-uso-input"
+              id="empresa-tempo-uso-input-${obraId}"
+              value="${customValue}"
+              placeholder="dias"
+              min="1"
+              max="999"
+              oninput="window.syncEmpresaCredentialDraft?.('${obraId}')">
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function getEmpresaTempoUsoValue(obraId) {
+  const selectedOption = document.querySelector(
+    `input[name="empresa-tempo-uso-${obraId}"]:checked`
+  );
+  const selectedValue = String(selectedOption?.value || "30").trim().toLowerCase();
+
+  if (selectedValue === "personalizado") {
+    const customInput = document.getElementById(`empresa-tempo-uso-input-${obraId}`);
+    const customValue = Number.parseInt(customInput?.value, 10);
+    return customValue > 0 ? customValue : 30;
+  }
+
+  const parsedValue = Number.parseInt(selectedValue, 10);
+  return parsedValue > 0 ? parsedValue : 30;
+}
+
+function setEmpresaTempoUsoCustomVisibility(
+  obraId,
+  showCustomInput,
+  customValue = ""
+) {
+  const customContainer = document.getElementById(`empresa-tempo-uso-custom-${obraId}`);
+  const customInput = document.getElementById(`empresa-tempo-uso-input-${obraId}`);
+
+  if (customContainer) {
+    customContainer.classList.toggle("is-visible", showCustomInput);
+  }
+
+  if (customInput) {
+    customInput.value = showCustomInput ? String(customValue || "").trim() : "";
+  }
+}
+
+function setEmpresaTempoUsoValue(obraId, tempoUso = 30) {
+  const normalizedTempoUso = Number.parseInt(tempoUso, 10) || 30;
+  const selectedValue = [30, 60, 90].includes(normalizedTempoUso)
+    ? String(normalizedTempoUso)
+    : "personalizado";
+
+  const radioToSelect = document.querySelector(
+    `input[name="empresa-tempo-uso-${obraId}"][value="${selectedValue}"]`
+  );
+  if (radioToSelect) {
+    radioToSelect.checked = true;
+  }
+
+  const showCustomInput = selectedValue === "personalizado";
+  setEmpresaTempoUsoCustomVisibility(
+    obraId,
+    showCustomInput,
+    showCustomInput ? normalizedTempoUso : ""
+  );
 }
 
 function setAdminCredentialUiState(
@@ -412,11 +616,20 @@ async function syncAdminEmpresaCredentialsForObra(obraId, obraData = null) {
     obraData?.empresaNome || obraElement.dataset.empresaNome || ""
   ).trim();
   const companyKey = getEmpresaCredentialCompanyKey(empresaSigla, empresaNome);
+  const hasExplicitCredenciais =
+    Boolean(obraData) &&
+    Object.prototype.hasOwnProperty.call(obraData, "empresaCredenciais");
+  const hasExplicitEmail =
+    Boolean(obraData) &&
+    (Object.prototype.hasOwnProperty.call(obraData, "emailEmpresa") ||
+      Object.prototype.hasOwnProperty.call(obraData, "empresaEmail"));
+  const preferExplicitEmail = Boolean(obraData?.preferExplicitEmail);
 
   if (empresaInputVazio || (!empresaSigla && !empresaNome)) {
     clearAdminCredentialDataset(obraElement);
     usuarioInput.value = "";
     tokenInput.value = "";
+    setEmpresaTempoUsoValue(obraId, 30);
     if (emailInput) {
       emailInput.value = "";
     }
@@ -431,27 +644,38 @@ async function syncAdminEmpresaCredentialsForObra(obraId, obraData = null) {
   }
 
   const credenciaisDaObra =
-    obraData?.empresaCredenciais ||
-    (obraElement.dataset.empresaCredCompanyKey === companyKey
+    hasExplicitCredenciais
+      ? obraData?.empresaCredenciais
+      : obraElement.dataset.empresaCredCompanyKey === companyKey
       ? getAdminCredentialDataset(obraElement)
-      : null);
+      : null;
   const draftLocal = readEmpresaCredentialDraft(empresaSigla, empresaNome);
   const credenciaisRascunho =
-    draftLocal?.source === "manual-create" ? draftLocal : null;
-  const empresas = await loadAdminEmpresasCache();
-  const empresaEncontrada = findEmpresaCredenciais(
-    empresas,
-    empresaSigla,
-    empresaNome
-  );
-  const credenciaisPersistidas = empresaEncontrada?.credenciais;
+    draftLocal && typeof draftLocal === "object" ? draftLocal : null;
+  const explicitEmailValue = hasExplicitEmail
+    ? String(obraData?.emailEmpresa ?? obraData?.empresaEmail ?? "").trim()
+    : "";
+  let credenciaisPersistidas = null;
+  if (!hasExplicitCredenciais && !hasExplicitEmail) {
+    const empresas = await loadAdminEmpresasCache();
+    const empresaEncontrada = findEmpresaCredenciais(
+      empresas,
+      empresaSigla,
+      empresaNome
+    );
+    credenciaisPersistidas = empresaEncontrada?.credenciais;
+  }
   const emailResolvido = String(
-    obraData?.emailEmpresa ||
-      obraData?.empresaEmail ||
-      credenciaisDaObra?.email ||
+    credenciaisDaObra?.email ||
       credenciaisDaObra?.recoveryEmail ||
+      (preferExplicitEmail ? explicitEmailValue : "") ||
+      credenciaisRascunho?.email ||
+      credenciaisRascunho?.recoveryEmail ||
       credenciaisPersistidas?.email ||
       credenciaisPersistidas?.recoveryEmail ||
+      explicitEmailValue ||
+      obraElement.dataset.emailEmpresa ||
+      obraElement.dataset.empresaEmail ||
       ""
   ).trim();
 
@@ -463,14 +687,14 @@ async function syncAdminEmpresaCredentialsForObra(obraId, obraData = null) {
       credenciaisDaObra,
       emailResolvido
     );
-  } else if (hasAdminCredentialValue(credenciaisPersistidas)) {
-    credenciaisResolvidas = normalizeAdminCredentialData(
-      credenciaisPersistidas,
-      emailResolvido
-    );
   } else if (hasAdminCredentialValue(credenciaisRascunho)) {
     credenciaisResolvidas = normalizeAdminCredentialData(
       credenciaisRascunho,
+      emailResolvido
+    );
+  } else if (hasAdminCredentialValue(credenciaisPersistidas)) {
+    credenciaisResolvidas = normalizeAdminCredentialData(
+      credenciaisPersistidas,
       emailResolvido
     );
   }
@@ -491,6 +715,7 @@ async function syncAdminEmpresaCredentialsForObra(obraId, obraData = null) {
     clearAdminCredentialDataset(obraElement);
     usuarioInput.value = "";
     tokenInput.value = "";
+    setEmpresaTempoUsoValue(obraId, 30);
     setAdminCredentialUiState(obraId, {
       hasCompany: true,
       hasToken: false,
@@ -516,6 +741,7 @@ async function syncAdminEmpresaCredentialsForObra(obraId, obraData = null) {
   obraElement.dataset.empresaCredTempoUso = String(
     credenciaisResolvidas.tempoUso || 30
   );
+  setEmpresaTempoUsoValue(obraId, credenciaisResolvidas.tempoUso || 30);
   if (credenciaisResolvidas.data_criacao) {
     obraElement.dataset.empresaCredDataCriacao = String(
       credenciaisResolvidas.data_criacao
@@ -633,10 +859,14 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
   const numeroCliente = dadosExistentes?.numeroClienteFinal || "";
   const clienteFinal = dadosExistentes?.clienteFinal || "";
   const codigoCliente = dadosExistentes?.codigoCliente || "";
-  const emailEmpresa =
-    dadosExistentes?.emailEmpresa || dadosExistentes?.empresaEmail || "";
   const empresaCredenciais =
     dadosExistentes?.empresaCredenciais || dadosExistentes?.credenciais || null;
+  const emailEmpresa =
+    empresaCredenciais?.email ||
+    empresaCredenciais?.recoveryEmail ||
+    dadosExistentes?.emailEmpresa ||
+    dadosExistentes?.empresaEmail ||
+    "";
   const dataCadastro = dadosExistentes?.dataCadastro
     ? formatarData(dadosExistentes.dataCadastro)
     : dataAtual;
@@ -718,17 +948,13 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
     <!-- LINHA 3: USUÁRIO | EMAIL | TOKEN -->
     ${renderAdminCredentialUserField({ obraId, usuario: empresaCredenciais?.usuario || "" })}
     
-    <div class="form-group-horizontal">
-      <label>Email da empresa</label>
-      <input type="email" 
-        class="email-empresa-cadastro" 
-        id="email-empresa-${obraId}"
-        value="${emailEmpresa}"
-        placeholder="Email para contato e recuperação"
-        ${isAdminCreateMode() ? `oninput="window.syncEmpresaCredentialDraft?.('${obraId}')"` : ""}>
-    </div>
+    ${renderEmpresaEmailField({ obraId, emailEmpresa })}
 
-    ${renderAdminCredentialTokenField({ obraId, token: empresaCredenciais?.token || "" })}
+    ${renderAdminCredentialTokenField({
+      obraId,
+      token: empresaCredenciais?.token || "",
+      tempoUso: empresaCredenciais?.tempoUso || 30,
+    })}
   </div>
 
   <!-- BOTÕES -->
@@ -1620,6 +1846,7 @@ window.syncEmpresaCredentialDraft = function (obraId) {
   const usuarioAtual = String(usuarioInput?.value || "").trim();
   const tokenAtual = String(tokenInput?.value || "").trim();
   const emailAtual = String(emailInput?.value || "").trim();
+  const tempoUsoAtual = getEmpresaTempoUsoValue(obraId);
   const hasCredentialAccess = Boolean(tokenAtual);
 
   if (!hasCredentialAccess) {
@@ -1645,18 +1872,13 @@ window.syncEmpresaCredentialDraft = function (obraId) {
   obraElement.dataset.empresaCredCompanyKey = companyKey;
   obraElement.dataset.empresaCredUsuario = usuarioAtual;
   obraElement.dataset.empresaCredToken = tokenAtual;
-  obraElement.dataset.empresaCredTempoUso = String(
-    obraElement.dataset.empresaCredTempoUso || 30
-  );
-  obraElement.dataset.empresaCredDataCriacao = String(
+  obraElement.dataset.empresaCredTempoUso = String(tempoUsoAtual);
+  const dataCriacaoAtual = String(
     obraElement.dataset.empresaCredDataCriacao || new Date().toISOString()
   );
+  obraElement.dataset.empresaCredDataCriacao = dataCriacaoAtual;
   obraElement.dataset.empresaCredDataExpiracao = String(
-    obraElement.dataset.empresaCredDataExpiracao ||
-      calcularDataExpiracaoISO(
-        obraElement.dataset.empresaCredTempoUso || 30,
-        obraElement.dataset.empresaCredDataCriacao
-      )
+    calcularDataExpiracaoISO(tempoUsoAtual, dataCriacaoAtual)
   );
 
   if (emailAtual) {
@@ -1672,7 +1894,7 @@ window.syncEmpresaCredentialDraft = function (obraId) {
     usuario: obraElement.dataset.empresaCredUsuario,
     token: tokenAtual,
     email: emailAtual,
-    tempoUso: obraElement.dataset.empresaCredTempoUso,
+    tempoUso: tempoUsoAtual,
     data_criacao: obraElement.dataset.empresaCredDataCriacao,
     data_expiracao: obraElement.dataset.empresaCredDataExpiracao,
   });
@@ -1682,6 +1904,37 @@ window.syncEmpresaCredentialDraft = function (obraId) {
     hasCredentialAccess: true,
     hasToken: Boolean(tokenAtual),
   });
+};
+
+window.handleEmpresaTempoUsoChange = function (obraId) {
+  if (!isAdminCreateMode()) {
+    return;
+  }
+
+  const selectedOption = document.querySelector(
+    `input[name="empresa-tempo-uso-${obraId}"]:checked`
+  );
+  const selectedValue = String(selectedOption?.value || "30").trim().toLowerCase();
+
+  if (selectedValue === "personalizado") {
+    const customInput = document.getElementById(`empresa-tempo-uso-input-${obraId}`);
+    const currentCustomValue = Number.parseInt(customInput?.value, 10);
+    setEmpresaTempoUsoCustomVisibility(
+      obraId,
+      true,
+      currentCustomValue > 0 ? currentCustomValue : ""
+    );
+
+    if (customInput) {
+      customInput.focus();
+    }
+  } else {
+    setEmpresaTempoUsoValue(obraId, Number.parseInt(selectedValue, 10) || 30);
+  }
+
+  if (typeof window.syncEmpresaCredentialDraft === "function") {
+    window.syncEmpresaCredentialDraft(obraId);
+  }
 };
 
 export {
@@ -1723,5 +1976,6 @@ if (typeof window !== "undefined") {
 // Inicializar configuração de data quando o módulo for carregado
 document.addEventListener("DOMContentLoaded", function () {
   configurarAutoFormatacaoData();
+  bindEmpresaCredentialStorageSync();
   console.log(" empresa-form-manager.js carregado com sucesso");
 });
