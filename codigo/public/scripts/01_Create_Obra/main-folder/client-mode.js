@@ -71,7 +71,7 @@ function updateClientPageTitle() {
     const empresaDisplayName = getEmpresaDisplayName();
 
     if (pageTitle && empresaDisplayName) {
-        const finalTitle = `Criacao de Obras - ${empresaDisplayName}`;
+        const finalTitle = `Criação de Obras - ${empresaDisplayName}`;
         pageTitle.textContent = finalTitle;
         document.title = `${finalTitle} | Sistema ESI`;
     }

@@ -107,6 +107,37 @@ function limparDadosSelecao(input, obraId) {
     delete input.dataset.siglaSelecionada;
     delete input.dataset.nomeSelecionado;
   }
+  if (obraId) {
+    const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+    if (obraElement) {
+      delete obraElement.dataset.empresaSigla;
+      delete obraElement.dataset.empresaNome;
+      delete obraElement.dataset.emailEmpresa;
+      delete obraElement.dataset.empresaEmail;
+    }
+
+    const emailInput = document.getElementById(`email-empresa-${obraId}`);
+    const usuarioInput = document.getElementById(`empresa-usuario-${obraId}`);
+    const tokenInput = document.getElementById(`empresa-token-${obraId}`);
+
+    if (emailInput) {
+      emailInput.value = "";
+    }
+    if (usuarioInput) {
+      usuarioInput.value = "";
+    }
+    if (tokenInput) {
+      tokenInput.value = "";
+    }
+
+    if (typeof window.syncAdminEmpresaCredentialsForObra === "function") {
+      window.syncAdminEmpresaCredentialsForObra(obraId, {
+        empresaSigla: "",
+        empresaNome: "",
+        emailEmpresa: "",
+      });
+    }
+  }
   limparNumeroCliente(obraId);
   console.log(" Dados de seleção limpos");
 }

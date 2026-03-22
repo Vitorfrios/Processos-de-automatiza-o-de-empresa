@@ -287,7 +287,7 @@ window.switchTab = function (tabName) {
           break;
 
         case "adminCredentials":
-          console.log(" Inicializando credenciais ADM");
+          console.log(" Inicializando credenciais do ADM");
           initializeAdminCredentials();
           break;
 
@@ -307,7 +307,7 @@ window.switchTab = function (tabName) {
 
         case "acessories":
         case "acessorios":
-          console.log(" Tab de acessorios ativada");
+          console.log(" Tab de acessórios ativada");
           if (typeof window.loadAcessorios === "function") {
             window.loadAcessorios();
           } else if (typeof window.loadAcessoriesData === "function") {
@@ -400,7 +400,7 @@ document.addEventListener("DOMContentLoaded", function () {
         tabText.includes("acessorio") ||
         tabText.includes("acessorie")
       ) {
-        console.log(" Tab de acessorios clicada");
+        console.log(" Tab de acessórios clicada");
 
         setTimeout(() => {
           if (typeof window.loadAcessorios === "function") {
@@ -628,7 +628,7 @@ window.debugSystemData = function () {
   console.log("tubos:", window.systemData?.tubos);
   console.log("ADM:", window.systemData?.ADM);
   console.log(
-    "Número de acessorios:",
+    "Número de acessórios:",
     Object.keys(window.systemData?.banco_acessorios || {}).length,
   );
   console.log(
@@ -656,7 +656,7 @@ window.debugSystemData = function () {
       console.log("Editor tem tubos?", "tubos" in parsed);
       console.log("Editor tem ADM?", "ADM" in parsed);
       console.log(
-        "Acessorios no editor:",
+        "Acessórios no editor:",
         Object.keys(parsed?.banco_acessorios || {}).length,
       );
       console.log(

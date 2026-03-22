@@ -330,9 +330,7 @@ export {
     // Initialization functions
     initializeEventBus,
     initializeState,
-    initializeCoreSystems,
-    reinitializeApplication,
-    getAppStatus
+    initializeCoreSystems
 };
 
 // Disponibilização global para compatibilidade

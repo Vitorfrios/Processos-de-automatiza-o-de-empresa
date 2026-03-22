@@ -1672,14 +1672,14 @@ window.ativarCadastroEmpresa = function (obraId) {
     // Verificar se há dados salvos
     const dadosEmpresa = obterDadosEmpresaDaObra(obraId);
 
-    // Criar formulario com fallback seguro para contextos de embed/minimos
+    // Criar formulário com fallback seguro para contextos de embed/mínimos
     const criarFormulario =
       typeof criarFormularioEmpresa === "function"
         ? criarFormularioEmpresa
         : window.criarFormularioEmpresa;
 
     if (typeof criarFormulario !== "function") {
-      throw new ReferenceError("criarFormularioEmpresa nao esta disponivel");
+      throw new ReferenceError("criarFormularioEmpresa não está disponível");
     }
 
     criarFormulario(obraId, empresaContainer, dadosEmpresa);
@@ -1944,11 +1944,11 @@ EmpresaCadastroInline.prototype.calcularNumeroClienteFinal = function (
 ) {
   try {
     console.log(
-      `[EMPRESA] Calculando numero para empresa: ${sigla}, obra: ${obraId}`,
+      `[EMPRESA] Calculando número para empresa: ${sigla}, obra: ${obraId}`,
     );
 
     if (!sigla) {
-      console.log("[EMPRESA] Sigla nao fornecida");
+      console.log("[EMPRESA] Sigla não fornecida");
       return 0;
     }
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * data/modules/machines/machines-core.js
  * Sistema de máquinas
  *
@@ -858,7 +858,7 @@ function applyVentilationCapacityBusinessRules(
   const { suppressRefresh = false, force = false } = options;
 
   console.log(
-    ` Executando seleÃ§Ã£o automÃ¡tica de capacidade para mÃ¡quina ${machineId}`,
+    ` Executando selecao automatica de capacidade para maquina ${machineId}`,
   );
 
   const machineElement = document.querySelector(
@@ -868,7 +868,7 @@ function applyVentilationCapacityBusinessRules(
 
   const tipoSelect = machineElement.querySelector(".machine-type-select");
   if (!tipoSelect || !tipoSelect.value) {
-    console.log(`âŒ Tipo nÃ£o selecionado`);
+    console.log(`Tipo nao selecionado`);
     return;
   }
 
@@ -876,14 +876,14 @@ function applyVentilationCapacityBusinessRules(
     ".machine-aplicacao-select",
   );
   if (!aplicacaoSelect || !aplicacaoSelect.value) {
-    console.log(`âŒ AplicaÃ§Ã£o nÃ£o selecionada`);
+    console.log(`Aplicacao nao selecionada`);
     return;
   }
 
   const tipo = tipoSelect.value;
   const aplicacao = aplicacaoSelect.value;
 
-  console.log(` Tipo: ${tipo}, AplicaÃ§Ã£o: ${aplicacao}`);
+  console.log(` Tipo: ${tipo}, Aplicacao: ${aplicacao}`);
 
   const inputs = collectRoomInputs(roomId);
   let vazaoNecessaria = null;
@@ -891,15 +891,15 @@ function applyVentilationCapacityBusinessRules(
   try {
     vazaoNecessaria = calculateVentilationFlow(aplicacao, inputs);
   } catch (error) {
-    console.error("Erro ao calcular vazÃ£o:", error);
+    console.error("Erro ao calcular vazao:", error);
   }
 
   if (!vazaoNecessaria || isNaN(vazaoNecessaria) || vazaoNecessaria <= 0) {
-    console.log(`âŒ VazÃ£o invÃ¡lida: ${vazaoNecessaria}`);
+    console.log(`Vazao invalida: ${vazaoNecessaria}`);
     return;
   }
 
-  console.log(` VazÃ£o necessÃ¡ria: ${vazaoNecessaria.toFixed(2)} mÂ³/h`);
+  console.log(` Vazao necessaria: ${vazaoNecessaria.toFixed(2)} m3/h`);
 
   const powerSelect = machineElement.querySelector(".machine-power-select");
   if (!powerSelect) return;
@@ -930,12 +930,12 @@ function applyVentilationCapacityBusinessRules(
   }
 
   if (capacityOptions.length === 0) {
-    console.log(`âŒ Nenhuma capacidade disponÃ­vel`);
+    console.log(`Nenhuma capacidade disponivel`);
     return;
   }
 
   console.log(
-    ` Capacidades disponÃ­veis:`,
+    ` Capacidades disponiveis:`,
     capacityOptions.map((c) => `${c.value} (${c.text})`),
   );
 
@@ -944,13 +944,13 @@ function applyVentilationCapacityBusinessRules(
     vazaoNecessaria,
   );
   if (!selection) {
-    console.log(`âŒ NÃ£o foi possÃ­vel determinar a melhor capacidade`);
+    console.log(`Nao foi possivel determinar a melhor capacidade`);
     return;
   }
 
   const { bestOption, quantity, totalCapacity, balance } = selection;
   console.log(
-    ` Melhor combinaÃ§Ã£o: ${quantity} x ${bestOption.value} mÂ³/h = ${totalCapacity.toFixed(2)} mÂ³/h (saldo: ${balance.toFixed(2)} mÂ³/h)`,
+    ` Melhor combinacao: ${quantity} x ${bestOption.value} m3/h = ${totalCapacity.toFixed(2)} m3/h (saldo: ${balance.toFixed(2)} m3/h)`,
   );
 
   let selected = false;
@@ -962,10 +962,10 @@ function applyVentilationCapacityBusinessRules(
         powerSelect.value = bestOption.optionValue;
         markCapacityAutoChange(powerSelect, true);
         selected = true;
-        console.log(`âœ… OpÃ§Ã£o selecionada: ${powerSelect.options[i].text}`);
+        console.log(`Opcao selecionada: ${powerSelect.options[i].text}`);
       } else {
         console.log(
-          `â„¹ï¸ Capacidade jÃ¡ estava correta: ${powerSelect.options[i].text}`,
+          `Capacidade ja estava correta: ${powerSelect.options[i].text}`,
         );
       }
       break;
@@ -979,7 +979,7 @@ function applyVentilationCapacityBusinessRules(
     powerSelect.dispatchEvent(new Event("change", { bubbles: true }));
     markCapacityAutoChange(powerSelect, false);
   } else if (currentValue !== bestOption.optionValue) {
-    console.log(`âŒ NÃ£o foi possÃ­vel selecionar a capacidade`);
+    console.log(`Nao foi possivel selecionar a capacidade`);
     return;
   }
 
@@ -1003,7 +1003,7 @@ function applyVentilationCapacityBusinessRules(
   }
 
   console.log(
-    `âœ… SeleÃ§Ã£o automÃ¡tica concluÃ­da para mÃ¡quina ${machineId}`,
+    `Selecao automatica concluida para maquina ${machineId}`,
   );
 }
 

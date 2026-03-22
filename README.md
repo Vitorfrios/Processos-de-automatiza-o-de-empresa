@@ -1,931 +1,644 @@
-﻿# Sistema ESI - README Geral
-
-## 1. Visao geral
-
-Este repositorio concentra um sistema completo para:
-
-- criar e editar obras;
-- montar projetos e salas dentro de cada obra;
-- calcular vazao de ar, ganhos termicos e capacidade;
-- selecionar maquinas e componentes associados;
-- gerenciar empresas, materiais, acessorios, dutos e tubos;
-- persistir os dados em arquivos JSON;
-- operar em modo `USER` e em modo `CLIENT`;
-- gerar documentos Word a partir das obras salvas.
-
-O projeto foi construido com:
-
-- frontend em JavaScript puro, modularizado;
-- backend Python com servidor HTTP proprio;
-- persistencia baseada em JSON local;
-- interface web com paginas separadas por funcao;
-- adaptacao por configuracao, sem duplicar o sistema principal.
-
-Hoje, a base principal do frontend esta em `codigo/public/scripts/01_Create_Obra`, e o backend esta em `codigo/servidor.py` mais `codigo/servidor_modules`.
-
-## 2. Objetivo do sistema
-
-O sistema existe para centralizar o fluxo operacional de orcamento e estruturacao tecnica de obras. Na pratica, ele permite:
-
-- cadastrar uma obra vinculada a uma empresa;
-- criar projetos dentro da obra;
-- criar salas dentro de cada projeto;
-- preencher dados tecnicos das salas;
-- calcular automaticamente parametros de climatizacao;
-- selecionar maquinas e extras;
-- salvar tudo no backend;
-- restaurar sessao de trabalho;
-- editar a base do sistema em uma pagina administrativa;
-- restringir o acesso do cliente a apenas sua propria empresa.
-
-## 3. Modos de operacao
-
-O sistema opera hoje em dois modos logicos.
-
-### 3.1. Modo USER
-
-Modo padrao de uso interno.
-
-Caracteristicas:
-
-- sem autenticacao obrigatoria no frontend principal;
-- acesso completo a criacao de obras;
-- acesso a filtros de obras;
-- acesso ao link de edicao de dados;
-- campo de empresa com autocomplete;
-- botao de shutdown habilitado.
-
-Pagina principal:
-
-- `codigo/public/pages/01_Create_Obras.html`
-
-### 3.2. Modo CLIENT
-
-Modo restrito para clientes autenticados por usuario e token.
-
-Caracteristicas:
-
-- login obrigatorio;
-- sessao salva em `localStorage`;
-- empresa definida automaticamente pela sessao;
-- empresa travada no formulario;
-- filtros desativados;
-- navegacao para editar dados removida;
-- botao de shutdown escondido;
-- carregamento de obras filtrado pela empresa autenticada.
-
-Paginas:
-
-- `codigo/public/pages/00_Client_Login.html`
-- `codigo/public/pages/01_Create_Obras_Client.html`
-
-Base tecnica do modo CLIENT:
-
-- `codigo/public/scripts/01_Create_Obra/core/config.js`
-- `codigo/public/scripts/01_Create_Obra/core/auth.js`
-- `codigo/public/scripts/01_Create_Obra/main-folder/client-mode.js`
-
-## 4. Estrutura geral do repositorio
-
-```text
-.
-|-- README.md
-|-- requirements.txt
-|-- setup.py
-|-- codigo/
-|   |-- servidor.py
-|   |-- json/
-|   |   |-- dados.json
-|   |   |-- backup.json
-|   |   |-- sessions.json
-|   |-- public/
-|   |   |-- pages/
-|   |   |-- scripts/
-|   |   |-- static/
-|   |   `-- images/
-|   |-- servidor_modules/
-|   |   |-- core/
-|   |   |-- handlers/
-|   |   |-- generators/
-|   |   `-- utils/
-|   `-- word_templates/
-|-- arquivos/
-|-- arquivostxt/
-`-- utilitarios py/
-```
-
-### 4.1. Pastas mais importantes
-
-- `codigo/public/pages`
-  contem as paginas HTML de entrada do sistema.
-- `codigo/public/scripts/01_Create_Obra`
-  contem o modulo principal da aplicacao.
-- `codigo/public/scripts/03_Edit_data`
-  contem a interface administrativa para editar os dados estruturais do sistema.
-- `codigo/public/scripts/02_Client`
-  hoje esta reservada estruturalmente, mas o modo CLIENT atual reutiliza o codigo de `01_Create_Obra`.
-- `codigo/public/static`
-  contem CSS e assets visuais.
-- `codigo/json`
-  contem a persistencia principal do sistema.
-- `codigo/servidor_modules`
-  contem o backend modular.
-- `codigo/word_templates`
-  contem os templates DOCX usados na geracao de documentos.
-
-## 5. Paginas do sistema
-
-### 5.1. `00_Login.html`
-
-Pagina de login geral/legada. Existe no projeto, mas o modo CLIENT hoje usa a pagina especifica `00_Client_Login.html`.
-
-### 5.2. `00_Client_Login.html`
-
-Tela de autenticacao do cliente.
-
-Responsabilidades:
-
-- receber `usuario` e `token`;
-- validar credenciais contra as empresas cadastradas;
-- bloquear acesso se o token estiver expirado;
-- salvar a sessao client;
-- redirecionar para `01_Create_Obras_Client.html`.
-
-### 5.3. `01_Create_Obras.html`
-
-Pagina principal do modo USER.
-
-Responsabilidades:
-
-- carregar a SPA principal;
-- permitir criacao de obras;
-- permitir filtros;
-- permitir navegacao para `03_Edit_data.html`;
-- restaurar sessao de obras em andamento.
-
-### 5.4. `01_Create_Obras_Client.html`
-
-Versao CLIENT da pagina de criacao de obras.
-
-Responsabilidades:
-
-- reutilizar o mesmo sistema principal da pagina USER;
-- ativar o modo `client` via `window.__APP_CONFIG_OVERRIDES__`;
-- esconder recursos nao permitidos;
-- trabalhar sempre no contexto da empresa autenticada;
-- nao exibir navegacao de editar dados.
-
-### 5.5. `03_Edit_data.html`
-
-Painel administrativo de edicao dos dados do sistema.
-
-Responsabilidades:
-
-- editar constantes;
-- editar maquinas;
-- editar materiais;
-- editar empresas;
-- editar acessorios;
-- editar dutos;
-- editar tubos;
-- editar JSON bruto.
-
-## 6. Arquitetura do frontend principal
-
-O frontend principal esta em `codigo/public/scripts/01_Create_Obra` e segue uma divisao por responsabilidade.
-
-### 6.1. `core/`
-
-Camada de base da aplicacao.
-
-Arquivos importantes:
-
-- `config.js`
-  centraliza `APP_CONFIG`, flags de feature, contexto da empresa e definicao de modo.
-- `auth.js`
-  implementa autenticacao do CLIENT, validacao de token, sessao e redirecionamento.
-- `shared-utils.js`
-  contem helpers compartilhados; inclui a compatibilidade temporaria para normalizar empresa do formato legado para o formato atual.
-- `logger.js`
-  controla o logger do frontend.
-
-### 6.2. `main-folder/`
-
-Orquestracao de bootstrap.
-
-Arquivos importantes:
-
-- `system-init.js`
-  carrega constantes, modulos, sistema de empresa e filtros; no CLIENT tambem valida acesso e aplica restricoes.
-- `session-manager-main.js`
-  restaura obras da sessao ativa.
-- `client-mode.js`
-  aplica restricoes de UI e trava empresa no CLIENT.
-- `filter-init.js`
-  inicializa o sistema de filtros.
-- `error-handler.js`
-  trata erros de inicializacao e indisponibilidade do servidor.
-
-### 6.3. `data/`
-
-Camada de dados e integracao.
-
-Subareas importantes:
-
-- `adapters/`
-  integra frontend com backend e com persistencia.
-- `builders/`
-  monta e extrai estruturas de obra, projeto e sala.
-- `empresa-system/`
-  contem toda a logica de empresa, formulario, autocomplete e extracao.
-- `modules/`
-  contem os modulos funcionais de salas, climatizacao, maquinas e outros blocos da obra.
-- `utils/`
-  utilitarios tecnicos de apoio.
-
-### 6.4. `features/`
-
-Camada de comportamento de negocio da tela.
-
-Subpastas:
-
-- `calculations/`
-  calculos de vazao, ganhos termicos e capacidade.
-- `filters/`
-  filtro de obras na interface.
-- `managers/`
-  cria, remove, salva e atualiza obras, projetos e salas.
-
-### 6.5. `ui/`
-
-Camada de interface e componentes.
-
-Responsabilidades:
-
-- expandir e recolher blocos;
-- edicao inline;
-- banners de status;
-- modais;
-- integracao com download de arquivos.
-
-## 7. Fluxo de bootstrap da pagina principal
-
-O fluxo principal do frontend acontece assim:
-
-1. `main.js` e carregado pela pagina HTML.
-2. O logger e inicializado.
-3. No modo CLIENT, `bootstrapClientMode()` valida a sessao antes de seguir.
-4. `initializeSystem()` em `system-init.js`:
-   - valida acesso client;
-   - aplica restricoes de interface;
-   - carrega constantes via backend;
-   - importa os modulos dinamicamente;
-   - inicializa o sistema de empresa;
-   - inicializa filtros somente se a feature estiver habilitada.
-5. O gerenciador de sessao consulta `/api/session-obras`.
-6. `loadObrasFromServer()` busca `/obras`.
-7. As obras retornadas sao renderizadas no DOM.
-
-## 8. Sistema de empresas
-
-O sistema de empresas e uma parte central do projeto, porque influencia:
-
-- titulo da obra;
-- cabecalho visual;
-- numeracao de cliente;
-- autocomplete;
-- filtro de contexto no CLIENT;
-- autenticacao de clientes.
-
-### 8.1. Formato antigo
-
-Historicamente o sistema usava empresas no formato:
-
-```json
-{ "ACT": "ACTEMIUM" }
-```
-
-### 8.2. Formato atual
-
-O formato oficial atual e:
-
-```json
-{
-  "codigo": "ACT",
-  "nome": "ACTEMIUM",
-  "credenciais": {
-    "usuario": "awffr",
-    "token": "fefefeeef",
-    "data_criacao": "2026-03-10T09:30:00Z",
-    "tempoUso": 90
-  }
-}
-```
-
-### 8.3. Compatibilidade temporaria
-
-Durante a migracao, o frontend usa `normalizeEmpresa()` e `normalizeEmpresas()` em:
-
-- `codigo/public/scripts/01_Create_Obra/core/shared-utils.js`
-
-Isso permite:
-
-- aceitar temporariamente dados no formato antigo;
-- normalizar para `{ codigo, nome, credenciais }`;
-- evitar quebra imediata durante a transicao.
-
-### 8.4. Sistema de empresa no frontend
-
-Arquivos centrais:
-
-- `empresa-core.js`
-- `empresa-autocomplete.js`
-- `empresa-form-manager.js`
-- `empresa-data-extractor.js`
-- `empresa-ui-helpers.js`
-
-Responsabilidades do bloco de empresa:
-
-- carregar lista de empresas;
-- exibir autocomplete;
-- preencher `empresaSigla`, `empresaCodigo` e `empresaNome`;
-- calcular numero sequencial do cliente;
-- atualizar header visual da obra;
-- manter campos sincronizados com o dataset da obra;
-- no CLIENT, bloquear edicao e esconder acoes nao permitidas.
-
-## 9. Sistema de autenticacao CLIENT
-
-O modo CLIENT nao reimplementa a pagina inteira. Ele reaproveita o sistema principal com configuracao.
-
-### 9.1. Configuracao global
-
-`config.js` define `APP_CONFIG`.
-
-Campos relevantes:
-
-```js
-{
-  mode: "user" | "client",
-  empresaAtual: null | "ACT",
-  empresaContext: null | { codigo, nome, usuario, expiraEm },
-  auth: {
-    required: boolean,
-    storageKey: "esi_client_session",
-    loginPage: "./00_Client_Login.html",
-    redirectAfterLogin: "./01_Create_Obras_Client.html"
-  },
-  features: {
-    empresaAutocomplete: boolean,
-    filtros: boolean,
-    editDataNavigation: boolean,
-    shutdown: boolean
-  },
-  ui: {
-    lockEmpresaField: boolean
-  }
-}
-```
-
-### 9.2. Credenciais usadas
-
-O login do cliente usa:
-
-- `credenciais.usuario`;
-- `credenciais.token`.
-
-Empresas com `credenciais: null` sao ignoradas para autenticacao.
-
-### 9.3. Expiracao de token
-
-A expiracao e calculada por:
-
-- `data_criacao + tempoUso (dias)`
-
-O resultado e salvo em `expiraEm`.
-
-### 9.4. Sessao client
-
-Formato salvo no `localStorage`:
-
-```json
-{
-  "empresaCodigo": "ACT",
-  "empresaNome": "ACTEMIUM",
-  "usuario": "awffr",
-  "token": "fefefeeef",
-  "expiraEm": "2026-06-08T09:30:00.000Z"
-}
-```
-
-### 9.5. Funcoes principais do auth
-
-Em `core/auth.js`:
-
-- `loginClient()`;
-- `validateToken()`;
-- `getClientSession()`;
-- `ensureClientAccess()`;
-- `logoutClient()`;
-- `redirectToClientApp()`.
-
-### 9.6. Restricoes aplicadas no CLIENT
-
-O arquivo `client-mode.js` cuida de:
-
-- esconder link de editar dados;
-- esconder botao de shutdown;
-- esconder bloco visual de filtros;
-- atualizar titulo da pagina com o nome da empresa;
-- travar o campo de empresa;
-- esconder botoes de cadastro/visualizacao de empresa;
-- impedir carregamento de obras de outras empresas.
-
-## 10. Filtros e controle por empresa
-
-O sistema de filtros continua existindo no codigo principal, mas no CLIENT ele e desativado por feature flag.
-
-Pontos relevantes:
-
-- `features.filtros = false` no CLIENT;
-- `initializeSystem()` nao inicializa os filtros quando a feature esta desligada;
-- `main.js` tambem respeita essa flag antes de subir a camada de filtro;
-- `obra-data-loader.js` usa `matchesEmpresaContext()` para filtrar obras no CLIENT.
-
-Isso garante duas coisas:
-
-- o modo USER continua funcionando igual;
-- o CLIENT nao ve nem carrega obras fora do seu contexto.
-
-## 11. Sistema de obras, projetos e salas
-
-O dominio principal do projeto e a hierarquia:
-
-- obra;
-- projeto;
-- sala.
-
-### 11.1. Obra
-
-A obra e o container raiz.
-
-Ela guarda, entre outros:
-
-- id;
-- nome;
-- empresaSigla e empresaCodigo;
-- empresaNome;
-- numeroClienteFinal;
-- clienteFinal;
-- codigoCliente;
-- dataCadastro;
-- orcamentistaResponsavel;
-- projetos.
-
-### 11.2. Projeto
-
-Cada obra pode ter varios projetos.
-
-O projeto organiza:
-
-- nome;
-- id;
-- lista de salas.
-
-### 11.3. Sala
-
-A sala concentra os dados tecnicos:
-
-- ambiente;
-- medidas e areas;
-- pressurizacao;
-- pessoas;
-- dissipacao;
-- dados termicos;
-- maquinas;
-- configuracao;
-- acessorios;
+# Sistema ESI
+
+Sistema web para criação de obras, composição técnica de projetos e salas, cálculo de climatização, gestão de catálogos do sistema e exportação de documentos Word com envio por email.
+
+O projeto combina:
+
+- frontend em JavaScript modular, sem framework SPA tradicional;
+- backend Python com servidor HTTP próprio;
+- persistência híbrida com SQLite e documentos JSON de apoio/compatibilidade;
+- autenticação para cliente e administrador;
+- exportação de propostas técnicas e comerciais;
+- sincronização de empresas, credenciais de acesso e dados de obra.
+
+## Visão geral
+
+O fluxo principal do produto é:
+
+1. cadastrar ou abrir uma obra;
+2. vincular a obra a uma empresa;
+3. montar projetos e salas;
+4. preencher dados técnicos;
+5. calcular carga térmica, ventilação e solução de máquinas;
+6. salvar a obra;
+7. exportar PT/PC por download ou email.
+
+Além disso, o sistema possui um painel administrativo para editar os bancos internos:
+
+- credenciais ADM;
+- configuração SMTP;
+- empresas;
+- máquinas;
+- materiais;
+- acessórios;
 - dutos;
-- tubos.
+- tubos;
+- constantes;
+- JSON bruto.
 
-## 12. Calculos tecnicos
+## Perfis de uso
 
-Os calculos ficam principalmente em:
+Na prática, o sistema trabalha com 3 perfis de operação, embora o frontend principal use 2 modos de execução (`user` e `client`).
 
-- `features/calculations/air-flow.js`;
-- `features/calculations/thermal-gains.js`;
-- `features/calculations/calculations-core.js`;
-- `data/modules/machines/capacity-calculator.js`.
+### 1. Cliente
 
-Os calculos incluem:
+Perfil autenticado por usuário + token da empresa.
 
-- vazao de ar;
-- ganhos por superficies;
-- ganhos por pessoas;
-- ganhos por ar externo;
-- capacidade total;
-- configuracao de backup;
-- combinacao de maquinas.
+Características:
 
-## 13. Editor de dados do sistema
+- entra pela tela de login;
+- acessa apenas a própria empresa;
+- a empresa fica travada no formulário;
+- não vê o painel de edição de dados;
+- não usa filtros globais de obras;
+- pode criar/editar obras dentro do contexto da empresa autenticada;
+- pode recuperar token por email, se houver email de recuperação cadastrado;
+- ao salvar obra, dispara notificação ao ADM.
 
-O modulo administrativo esta em `codigo/public/scripts/03_Edit_data`.
+### 2. Usuário interno / operação
 
-### 13.1. Objetivo
+É o uso interno do módulo de criação de obras em modo `user`.
 
-Permitir manutencao do banco de configuracao sem editar JSON manualmente.
+Características:
 
-### 13.2. Estrutura
+- acesso amplo à tela de obras;
+- pode escolher qualquer empresa;
+- pode usar filtros;
+- pode acessar a navegação administrativa;
+- pode preencher dados de credenciais da empresa diretamente no cadastro da obra;
+- pode exportar documentos e enviar email.
+
+### 3. Administrador
+
+É o perfil com login administrativo, redirecionado para o ambiente `/admin`.
+
+Características:
+
+- acessa o cadastro de obras pelo caminho administrativo;
+- acessa o painel `/admin/data`;
+- gerencia credenciais ADM;
+- configura o remetente SMTP;
+- altera os bancos estruturais do sistema;
+- cria, edita ou remove credenciais de acesso das empresas.
+
+## Modos do frontend
+
+### Modo `user`
+
+Configuração padrão do app principal.
+
+Comportamento:
+
+- autenticação de cliente desativada;
+- filtros habilitados;
+- navegação para editar dados habilitada;
+- botão de desligar servidor habilitado;
+- empresa livre no formulário.
+
+Arquivo-base:
+
+- [config.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/core/config.js)
+
+### Modo `client`
+
+Ativado por `window.__APP_CONFIG_OVERRIDES__` nas páginas de login e obra do cliente.
+
+Comportamento:
+
+- autenticação obrigatória;
+- sessão do cliente em `sessionStorage`;
+- empresa resolvida a partir da sessão;
+- campo de empresa bloqueado;
+- filtros desabilitados;
+- acesso administrativo oculto;
+- shutdown oculto.
 
 Arquivos principais:
 
-- `main.js`;
-- `loader.js`;
-- `config/api.js`;
-- `config/state.js`;
-- `config/ui.js`;
-- `core/constants.js`;
-- `core/machines.js`;
-- `core/materials.js`;
-- `core/empresas.js`;
-- `core/acessorios.js`;
-- `core/dutos.js`;
-- `core/tubos.js`;
-- `editorJson/json-editor.js`.
+- [config.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/core/config.js)
+- [auth.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/core/auth.js)
+- [client-mode.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/main-folder/client-mode.js)
 
-### 13.3. O que pode ser editado
+## Rotas e páginas principais
 
-- constantes de calculo;
-- catalogo de maquinas;
-- materiais;
-- empresas;
-- banco de acessorios;
-- dutos;
-- tubos;
-- JSON bruto completo.
+### Login
 
-### 13.4. Observacao sobre empresas
+- `/login`
+  Tela única de autenticação.
 
-O editor ja foi adaptado para o novo formato de empresa estruturada.
+Detalhe importante:
 
-Ao adicionar empresas novas, ele grava:
+- o login primeiro tenta autenticar como ADM;
+- se não passar, tenta autenticar como cliente;
+- a mesma tela atende os dois cenários.
 
-```json
-{
-  "codigo": "ABC",
-  "nome": "EMPRESA ABC",
-  "credenciais": null
-}
-```
+Arquivos:
 
-## 14. Backend Python
+- [index.html](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/pages/login/index.html)
+- [client-login.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/pages/client-login.js)
 
-O backend local e iniciado por:
+### Obras do cliente
 
-- `codigo/servidor.py`
-
-Ele usa modulos de apoio em:
-
-- `codigo/servidor_modules/core`
-- `codigo/servidor_modules/handlers`
-- `codigo/servidor_modules/utils`
-
-### 14.1. Responsabilidades do backend
-
-- servir arquivos estaticos;
-- expor APIs REST do sistema;
-- ler e gravar `dados.json`;
-- ler e gravar `backup.json`;
-- ler e gravar `sessions.json`;
-- responder buscas de empresa;
-- persistir obras;
-- gerenciar sessao ativa;
-- gerar documentos Word.
-
-### 14.2. Modulos importantes
-
-- `core/routes_core.py`
-  regras principais de CRUD e sessao.
-- `core/sessions_core.py`
-  controle de `sessions.json`.
-- `handlers/http_handler.py`
-  roteamento HTTP e mapeamento de endpoints.
-- `handlers/route_handler.py`
-  handlers operacionais do sistema.
-- `handlers/empresa_handler.py`
-  gestao de empresas, busca, numero de cliente e normalizacao.
-- `handlers/word_handler.py`
-  geracao e download de documentos Word.
-
-## 15. Persistencia e arquivos JSON
-
-### 15.1. `dados.json`
-
-E o banco estrutural do sistema.
-
-Contem, entre outros:
-
-- `constants`;
-- `machines`;
-- `materials`;
-- `empresas`;
-- `banco_acessorios`;
-- `dutos`;
-- `tubos`.
-
-Uso tipico:
-
-- constantes para os calculos;
-- catalogo de maquinas;
-- base de empresas;
-- catalogos auxiliares do sistema.
-
-### 15.2. `backup.json`
-
-E o banco operacional de obras salvas.
-
-Contem:
-
-- lista de obras completas;
-- toda a hierarquia obra > projeto > sala;
-- dados calculados e dados de maquina.
-
-### 15.3. `sessions.json`
-
-Guarda a sessao ativa de trabalho.
+- `/obras/create`
 
 Uso:
 
-- definir quais obras estao carregadas na sessao atual;
-- restaurar o ambiente da pagina no reload;
-- limpar sessao no shutdown.
+- ambiente restrito para clientes autenticados;
+- empresa herdada da sessão;
+- mesma base funcional do módulo de obras, com restrições de UI.
 
-Exemplo simplificado:
+Arquivo:
 
-```json
-{
-  "sessions": {
-    "session_active": {
-      "obras": ["obra_x", "obra_y"]
-    }
-  }
-}
-```
+- [create.html](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/pages/obras/create.html)
 
-## 16. Endpoints principais
+### Obras administrativas
 
-O backend tem muitas rotas. Abaixo estao as mais importantes para operacao do sistema.
+- `/admin/obras/create`
 
-### 16.1. Sessao
+Uso:
 
-- `GET /api/session-obras`
-- `GET /api/sessions/current`
-- `POST /api/sessions/add-obra`
-- `DELETE /api/sessions/remove-obra/{id}`
-- `POST /api/sessions/shutdown`
-- `POST /api/sessions/ensure-single`
+- tela principal de criação, edição e atualização de obras no modo interno;
+- permite preencher dados completos da empresa e credenciais de acesso.
 
-### 16.2. Obras
+Arquivo:
 
-- `GET /obras`
-- `GET /obras/{id}`
-- `POST /obras`
-- `PUT /obras/{id}`
-- `DELETE /obras/{id}`
-- `GET /api/backup-completo`
+- [create.html](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/pages/admin/obras/create.html)
 
-### 16.3. Dados estruturais
+### Obras em modo embed
 
-- `GET /constants`
-- `GET /machines`
-- `GET /dados`
-- `POST /dados`
-- `GET /backup`
-- `POST /backup`
-- `GET /api/system-data`
-- `POST /api/system-data/save`
-- `POST /api/system/apply-json`
+- `/admin/obras/embed`
 
-### 16.4. Empresas
+Uso:
 
-- `GET /api/dados/empresas`
-- `GET /api/dados/empresas/buscar/{termo}`
-- `GET /api/dados/empresas/numero/{sigla}`
-- `POST /api/dados/empresas`
-- `POST /api/dados/empresas/auto`
-- `GET /api/empresas/all`
-- `POST /api/empresas/save`
-- `DELETE /api/empresas/{index}`
+- variante embutida para visualização/integração;
+- filtros e navegação administrativa ocultos.
 
-### 16.5. Catalogos auxiliares
+Arquivo:
 
-- acessorios:
-  - `GET /api/acessorios`
-  - `GET /api/acessorios/types`
-  - `GET /api/acessorios/dimensoes`
-  - `GET /api/acessorios/type/{type}`
-  - `GET /api/acessorios/search`
-  - `POST /api/acessorios/add`
-  - `POST /api/acessorios/update`
-  - `POST /api/acessorios/delete`
-- dutos:
-  - `GET /api/dutos`
-  - `GET /api/dutos/types`
-  - `GET /api/dutos/opcionais`
-  - `GET /api/dutos/type/{type}`
-  - `GET /api/dutos/search`
-  - `POST /api/dutos/add`
-  - `POST /api/dutos/update`
-  - `POST /api/dutos/delete`
-- tubos:
-  - `GET /api/tubos`
-  - `GET /api/tubos/polegadas`
-  - `GET /api/tubos/polegada/{polegada}`
-  - `GET /api/tubos/search`
-  - `POST /api/tubos/add`
-  - `POST /api/tubos/update`
-  - `POST /api/tubos/delete`
+- [embed.html](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/pages/admin/obras/embed.html)
 
-### 16.6. Word
+### Painel de dados administrativos
+
+- `/admin/data`
+
+Uso:
+
+- manutenção dos bancos do sistema;
+- gestão de empresas, credenciais, SMTP e catálogos.
+
+Arquivo:
+
+- [index.html](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/pages/admin/data/index.html)
+
+## O que o sistema faz
+
+### Cadastro estrutural
+
+- cria obras;
+- cria projetos dentro da obra;
+- cria salas dentro de cada projeto;
+- mantém identificadores derivados de empresa e número do cliente;
+- sincroniza cabeçalho e metadados da obra após salvamento.
+
+### Cálculo técnico
+
+- vazão de ar externo;
+- ganhos térmicos;
+- pressurização;
+- capacidade de refrigeração;
+- solução de máquinas;
+- ventilação;
+- componentes associados.
+
+### Catálogos de apoio
+
+- máquinas;
+- materiais;
+- acessórios;
+- dutos;
+- tubos;
+- constantes do sistema.
+
+### Exportação
+
+- proposta técnica;
+- proposta comercial;
+- ambos;
+- download;
+- envio por email;
+- fluxo combinado de download + email.
+
+## Credenciais e empresas
+
+O sistema hoje trata credenciais de empresa como parte do cadastro da empresa, mas também permite preenchê-las a partir da obra no ambiente administrativo.
+
+### Campos de credencial de empresa
+
+- usuário de acesso;
+- email de recuperação;
+- token de acesso;
+- tempo de uso;
+- data de criação;
+- data de expiração.
+
+### Fluxo atual de sincronização
+
+#### Obra para empresa
+
+Quando a obra é salva ou atualizada:
+
+- os dados da empresa são extraídos do formulário;
+- `empresaCredenciais` segue no payload da obra quando houver token;
+- o backend faz `upsert` das credenciais no cadastro da empresa.
+
+Arquivos centrais:
+
+- [empresa-data-extractor.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/data/empresa-system/empresa-data-extractor.js)
+- [obra-save-handler.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/features/managers/obra-folder/obra-save-handler.js)
+- [routes_core.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/core/routes_core.py)
+- [empresa_repository.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/database/repositories/empresa_repository.py)
+
+#### Empresa para obra
+
+No ambiente administrativo:
+
+- ao selecionar empresa na obra, o formulário tenta preencher as credenciais já cadastradas;
+- se não existir credencial salva, os campos ficam vazios para criação manual;
+- ao editar credenciais no grid de empresas, os blocos de obra renderizados para a mesma empresa são atualizados localmente.
+
+Arquivos centrais:
+
+- [empresa-form-manager.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/data/empresa-system/empresa-form-manager.js)
+- [empresa-ui-helpers.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/data/empresa-system/empresa-ui-helpers.js)
+- [empresas.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/03_Edit_data/core/empresas.js)
+
+### Regras importantes
+
+- limpar a empresa limpa também email, usuário e token no formulário administrativo;
+- o sistema não deve fabricar credencial automaticamente só por trocar empresa;
+- token novo nasce apenas por ação explícita do usuário;
+- o email da empresa também alimenta o fluxo de recuperação de token e exportação;
+- o cliente só autentica se o token estiver válido e não expirado.
+
+## Credenciais ADM e SMTP
+
+O painel administrativo possui uma aba específica para:
+
+- credenciais de administradores;
+- email de recuperação dos administradores;
+- configuração SMTP do remetente do sistema.
+
+Essa configuração SMTP é usada em:
+
+- exportação por email;
+- recuperação de token por email;
+- notificações automáticas ao ADM.
+
+Arquivos:
+
+- [admin-credentials.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/03_Edit_data/core/admin-credentials.js)
+- [admin-credentials.css](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/static/03_Edit_data/admin-credentials.css)
+
+Endpoints:
+
+- `GET /api/admin/email-config`
+- `POST /api/admin/email-config`
+
+## Recuperação de token por email
+
+A tela de login oferece recuperação de token.
+
+Fluxo:
+
+1. usuário informa usuário + email de recuperação;
+2. backend procura correspondência em ADM e empresas;
+3. se encontrar uma conta única compatível, envia o token atual por email.
+
+Endpoint:
+
+- `POST /api/auth/recover-token`
+
+Observações:
+
+- depende de SMTP configurado;
+- depende de email cadastrado corretamente;
+- se houver ambiguidade, o backend bloqueia o envio.
+
+## Exportação de documentos e envio por email
+
+O sistema possui dois fluxos de exportação.
+
+### 1. Geração Word clássica
+
+Usa os geradores de documento para PT, PC ou ambos.
+
+Rotas:
 
 - `GET /api/word/models`
 - `GET /api/word/templates`
 - `POST /api/word/generate/proposta-comercial`
 - `POST /api/word/generate/proposta-tecnica`
 - `POST /api/word/generate/ambos`
-- `GET /api/word/download`
+- `GET /api/word/download?id=...`
 
-### 16.7. Sistema
+### 2. Exportação unificada
 
-- `GET /api/server/uptime`
-- `POST /api/reload-page`
-- `POST /api/shutdown`
+Fluxo mais novo orientado a download, email ou ambos.
 
-## 17. Fluxo operacional completo
+Endpoint:
 
-### 17.1. Fluxo USER
+- `POST /api/export`
 
-1. Abrir `01_Create_Obras.html`.
-2. O frontend carrega constantes e modulos.
-3. O sistema tenta restaurar a sessao.
-4. O usuario cria uma nova obra.
-5. O bloco de empresa permite selecionar ou cadastrar empresa.
-6. Projetos e salas sao criados.
-7. Os calculos sao executados conforme o preenchimento.
-8. A obra e salva no backend.
-9. O id da obra entra em `sessions.json`.
-10. O backup completo vai para `backup.json`.
+Modos:
 
-### 17.2. Fluxo CLIENT
+- `download`
+- `email`
+- `completo`
 
-1. Abrir `00_Client_Login.html`.
-2. Informar `usuario` e `token`.
-3. `auth.js` carrega empresas e valida credenciais.
-4. O token e validado por expiracao.
-5. A sessao client e gravada no `localStorage`.
-6. O usuario e redirecionado para `01_Create_Obras_Client.html`.
-7. O bootstrap aplica restricoes de interface.
-8. As obras carregadas sao filtradas pela empresa autenticada.
-9. O campo de empresa nasce preenchido e bloqueado.
+Formatos:
 
-### 17.3. Fluxo de edicao de dados
+- `pc`
+- `pt`
+- `ambos`
 
-1. Abrir `03_Edit_data.html`.
-2. Carregar os dados estruturais.
-3. Editar o bloco desejado.
-4. Validar as alteracoes.
-5. Salvar pela API de dados.
+Comportamento:
 
-## 18. Convencoes importantes do projeto
+- monta os arquivos temporários da obra;
+- opcionalmente registra downloads para retirada posterior;
+- opcionalmente envia anexos por email;
+- trabalha com jobs assíncronos de background.
 
-### 18.1. Reutilizacao acima de duplicacao
+Arquivos:
 
-O projeto foi evoluido com a premissa de:
+- [export-modal.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/ui/download/export-modal.js)
+- [word-modal.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/ui/download/word-modal.js)
+- [http_handler.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/handlers/http_handler.py)
+- [wordPT_generator.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/generators/wordPT_generator.py)
+- [wordPC_generator.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/generators/wordPC_generator.py)
 
-- nao duplicar sistema para CLIENT;
-- nao quebrar comportamento do USER;
-- desligar recursos por configuracao;
-- manter modulos existentes e reaproveitados.
+### Notificação automática ao ADM
 
-### 18.2. Empresa como contexto de negocio
+Quando uma obra é salva no modo cliente:
 
-Os acessos modernos devem priorizar:
+- o frontend chama `/api/obra/notificar`;
+- o backend pode gerar os anexos;
+- o envio usa o remetente SMTP cadastrado.
 
-- `empresa.codigo`;
-- `empresa.nome`;
-- `empresa.credenciais`.
+Arquivo:
 
-Em vez de:
+- [obra-save-handler.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/features/managers/obra-folder/obra-save-handler.js)
 
-- `Object.keys(empresa)[0]`;
-- `Object.values(empresa)[0]`;
-- `empresa["SIGLA"]`.
+## Arquitetura do repositório
 
-### 18.3. Compatibilidade de migracao
+```text
+.
+├─ README.md
+├─ requirements.txt
+├─ setup.py
+├─ codigo/
+│  ├─ servidor.py
+│  ├─ database/
+│  │  └─ app.sqlite3
+│  ├─ json/
+│  ├─ public/
+│  │  ├─ pages/
+│  │  ├─ scripts/
+│  │  ├─ static/
+│  │  └─ images/
+│  ├─ servidor_modules/
+│  │  ├─ core/
+│  │  ├─ database/
+│  │  ├─ generators/
+│  │  ├─ handlers/
+│  │  └─ utils/
+│  └─ word_templates/
+├─ scripts/
+└─ utilitarios py/
+```
 
-Enquanto ainda existirem dados legados, a regra e:
+### Frontend principal
 
-- normalizar na entrada;
-- trabalhar internamente no formato novo;
-- evitar espalhar logica legado-novo pelo sistema.
+Raiz:
 
-## 19. Como rodar localmente
+- [01_Create_Obra](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra)
 
-### 19.1. Requisitos
+Pastas:
 
-- Python 3.11 ou superior;
-- dependencias instaladas via `requirements.txt`.
+- `core/`
+  configuração, autenticação, bootstrap e utilitários compartilhados.
+- `data/`
+  builders, extração de dados, adapters e sistema de empresa.
+- `features/`
+  managers e cálculos.
+- `main-folder/`
+  inicialização da aplicação e modo cliente.
+- `pages/`
+  scripts de entrada das páginas.
+- `ui/`
+  componentes visuais, status, modal e exportação.
 
-### 19.2. Passos
+### Painel administrativo
+
+Raiz:
+
+- [03_Edit_data](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/03_Edit_data)
+
+Responsabilidades:
+
+- carregar `systemData`;
+- editar bancos estruturais;
+- controlar pendências de salvamento;
+- renderizar tabs administrativas;
+- persistir alterações do painel.
+
+### Backend
+
+Arquivos centrais:
+
+- [servidor.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor.py)
+- [server_core.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/core/server_core.py)
+- [http_handler.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/handlers/http_handler.py)
+- [routes_core.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/core/routes_core.py)
+
+Responsabilidades:
+
+- servir HTML, JS, CSS e assets;
+- expor APIs JSON;
+- autenticar cliente e ADM;
+- persistir dados;
+- gerar documentos Word;
+- enviar emails;
+- coordenar exportações assíncronas.
+
+## Persistência de dados
+
+O sistema hoje é híbrido.
+
+### SQLite
+
+Banco principal:
+
+- [app.sqlite3](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/database/app.sqlite3)
+
+Schema central:
+
+- `admins`
+- `empresas`
+- `obras`
+- `projetos`
+- `salas`
+- `sala_maquinas`
+- `materials`
+- `machine_catalog`
+- `acessorios`
+- `dutos`
+- `tubos`
+- `sessions`
+- `admin_email_config`
+- `obra_notifications`
+
+Arquivo:
+
+- [connection.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/database/connection.py)
+
+### JSON
+
+O projeto ainda mantém documentos JSON e camadas de compatibilidade para:
+
+- dados agregados;
+- backup;
+- sessões;
+- migração/convivência com estrutura legada.
+
+Diretório:
+
+- [json](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/json)
+
+## Bootstrap e carregamento de dados
+
+O frontend usa payloads de bootstrap para evitar múltiplas consultas fragmentadas.
+
+Endpoints principais:
+
+- `GET /api/runtime/bootstrap`
+- `GET /api/runtime/system-bootstrap`
+
+Uso:
+
+- carregar obras visíveis;
+- carregar catálogos e bancos administrativos;
+- preencher contexto de empresa;
+- alimentar autocomplete, filtros e grids.
+
+Arquivo:
+
+- [system-bootstrap.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/core/system-bootstrap.js)
+
+## Como executar
+
+### Requisitos
+
+- Python 3.x
+- dependências de [requirements.txt](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/requirements.txt)
+
+Dependências principais:
+
+- Flask
+- pandas
+- numpy
+- openpyxl
+- python-docx
+- docxtpl
+- Jinja2
+- Pillow
+- lxml
+
+### Instalação
 
 ```bash
-python -m venv .venv
-.venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+### Execução local
+
+```bash
 python codigo/servidor.py
 ```
 
-Depois, abra no navegador:
+Comportamento esperado:
 
-- `http://127.0.0.1:8000/codigo/public/pages/01_Create_Obras.html`
+- o servidor procura a porta `8000`;
+- se necessário, tenta liberar a porta ou escolher outra;
+- abre o navegador automaticamente em `/admin/obras/create`.
 
-Ou, para CLIENT:
+## Operação diária recomendada
 
-- `http://127.0.0.1:8000/codigo/public/pages/00_Client_Login.html`
+### Para criar obras internas
 
-## 20. Templates Word
+1. abra `/admin/obras/create`;
+2. selecione a empresa;
+3. preencha projeto, salas e dados técnicos;
+4. se necessário, preencha credenciais da empresa;
+5. salve a obra;
+6. exporte PT/PC por download ou email.
 
-O sistema possui templates em:
+### Para configurar email do sistema
 
-- `codigo/word_templates/proposta_comercial_template.docx`
-- `codigo/word_templates/proposta_tecnica_template.docx`
+1. abra `/admin/data`;
+2. vá para `Credenciais ADM`;
+3. preencha email, token SMTP e nome do remetente;
+4. salve;
+5. valide a exportação por email.
 
-Eles sao usados pelas rotas de geracao de Word para produzir documentos a partir dos dados das obras.
+### Para gerenciar acesso do cliente
 
-## 21. Troubleshooting
+1. abra `/admin/data`;
+2. vá para `Empresas`;
+3. crie ou atualize usuário, email e token;
+4. defina validade;
+5. salve o painel administrativo.
 
-### 21.1. Frontend nao carrega
+## Pontos importantes do comportamento atual
 
-Verifique:
+- o login de cliente e de ADM compartilha a mesma tela;
+- o modo cliente restringe empresa, filtros e navegação administrativa;
+- a obra administrativa consegue criar credenciais da empresa sem sair da tela;
+- o grid de empresas também consegue criar e editar credenciais;
+- a sincronização empresa ↔ obra depende do salvamento do fluxo correspondente;
+- exportação por email depende de SMTP configurado;
+- recuperação de token depende de email de recuperação válido;
+- tokens podem ter validade e expiração;
+- há limpeza e saneamento de credenciais expiradas em fluxos do backend.
 
-- se `python codigo/servidor.py` esta rodando;
-- se `/constants` responde;
-- se `dados.json` esta valido.
+## Arquivos mais críticos do sistema
 
-### 21.2. Sessao ficou presa
+- [servidor.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor.py)
+- [http_handler.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/handlers/http_handler.py)
+- [routes_core.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/core/routes_core.py)
+- [empresa-form-manager.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/data/empresa-system/empresa-form-manager.js)
+- [empresa-data-extractor.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/data/empresa-system/empresa-data-extractor.js)
+- [empresas.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/03_Edit_data/core/empresas.js)
+- [admin-credentials.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/03_Edit_data/core/admin-credentials.js)
+- [obra-save-handler.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/features/managers/obra-folder/obra-save-handler.js)
+- [export-modal.js](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/public/scripts/01_Create_Obra/ui/download/export-modal.js)
 
-Verifique:
+## Resumo executivo
 
-- `codigo/json/sessions.json`;
-- endpoint `POST /api/sessions/shutdown`.
+Este sistema não é apenas um formulário de obras. Ele reúne, no mesmo produto:
 
-### 21.3. Cliente nao consegue entrar
+- CRM técnico de empresas e obras;
+- cálculo de climatização e ventilação;
+- catálogo editável de máquinas e componentes;
+- autenticação por empresa;
+- recuperação de token;
+- exportação documental;
+- entrega por email;
+- painel administrativo de manutenção de dados.
 
-Verifique:
+Se o próximo passo for melhorar a documentação ainda mais, o ideal é quebrar este README em documentos menores por domínio:
 
-- se a empresa possui `credenciais`;
-- se `usuario` e `token` batem;
-- se `data_criacao` e `tempoUso` geram um token ainda valido;
-- se a sessao antiga no `localStorage` nao esta expirada.
-
-### 21.4. Empresa nao aparece no autocomplete
-
-Verifique:
-
-- se ela esta em `dados.json.empresas`;
-- se foi salva no formato estruturado;
-- se a API `/api/dados/empresas` esta respondendo.
-
-### 21.5. CLIENT ve obras erradas
-
-Verifique:
-
-- se a obra possui `empresaCodigo` ou `empresaSigla` corretos;
-- se o `APP_CONFIG.empresaAtual` foi preenchido pelo login;
-- se `matchesEmpresaContext()` esta retornando `true` so para a empresa correta.
-
-## 22. Checklist de manutencao
-
-Quando alterar o sistema, preserve estas regras:
-
-- nao quebrar o modo USER;
-- nao duplicar telas ou modulos sem necessidade;
-- usar feature flags para comportamento restrito;
-- manter empresa no formato estruturado;
-- atualizar frontend e backend juntos quando mudar o contrato dos dados;
-- validar `dados.json`, `backup.json` e `sessions.json` ao mexer em persistencia;
-- atualizar este README quando houver mudanca relevante de arquitetura.
-
-## 23. Estado atual resumido
-
-Hoje o sistema esta organizado para:
-
-- operar com um frontend principal modular;
-- oferecer um painel administrativo de dados;
-- oferecer modo CLIENT com autenticacao e restricoes;
-- trabalhar com o novo formato de empresa estruturada;
-- manter compatibilidade temporaria com dados legados via normalizacao;
-- persistir tudo em JSON;
-- gerar documentos Word a partir das obras.
-
-Esse e o contrato atual do projeto. Qualquer evolucao futura deve partir desta base, preservando reutilizacao, modularidade e compatibilidade operacional.
+- `docs/arquitetura.md`
+- `docs/fluxo-de-credenciais.md`
+- `docs/exportacao-email.md`
+- `docs/modo-cliente.md`
+- `docs/backend-e-apis.md`

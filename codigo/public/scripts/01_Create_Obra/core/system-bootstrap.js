@@ -156,7 +156,7 @@ function buildAcessorioByType(payload, tipo) {
     if (!acessorio) {
         return createJsonResponse({
             success: false,
-            error: `Tipo de acessorio '${tipo}' nao encontrado`
+            error: `Tipo de acessório '${tipo}' não encontrado`
         }, 404);
     }
 
@@ -241,6 +241,8 @@ function shouldInvalidateSystemCache(method, pathname) {
     }
 
     return pathname.startsWith('/api/system-data/')
+        || pathname === '/obras'
+        || pathname.startsWith('/obras/')
         || pathname === '/api/system-data/save'
         || pathname === '/api/constants/save'
         || pathname === '/api/materials/save'

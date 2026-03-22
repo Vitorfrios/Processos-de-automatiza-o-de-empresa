@@ -77,7 +77,7 @@ function safeReadStoredSession(storageKey = CLIENT_SESSION_STORAGE_KEY, storageT
         const rawSession = storage?.getItem(storageKey);
         return rawSession ? JSON.parse(rawSession) : null;
     } catch (error) {
-        console.warn('[APP-CONFIG] Falha ao ler sessao armazenada:', error);
+        console.warn('[APP-CONFIG] Falha ao ler sessão armazenada:', error);
         return null;
     }
 }

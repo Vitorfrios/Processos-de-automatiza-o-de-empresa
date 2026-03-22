@@ -1,4 +1,4 @@
-"""Utilitarios de exportacao e envio de documentos."""
+"""Utilitários de exportação e envio de documentos."""
 
 from __future__ import annotations
 
@@ -40,14 +40,14 @@ def validate_smtp_secret(sender_email, token):
 
     if domain in {"gmail.com", "googlemail.com"} and len(normalized_token) != 16:
         raise RuntimeError(
-            "Para Gmail, informe a senha de app de 16 caracteres do Google, nao o token do ADM do sistema."
+            "Para Gmail, informe a senha de app de 16 caracteres do Google, não o token do ADM do sistema."
         )
 
     return normalized_token
 
 
 def cleanup_temp_files(*paths):
-    """Remove arquivos temporarios silenciosamente."""
+    """Remove arquivos temporários silenciosamente."""
     for path in paths:
         if not path:
             continue
@@ -68,10 +68,10 @@ def cleanup_temp_files(*paths):
 
 
 def duplicate_temp_file(source_path, output_filename=None):
-    """Cria uma copia temporaria de um arquivo para uso paralelo em jobs distintos."""
+    """Cria uma cópia temporária de um arquivo para uso paralelo em jobs distintos."""
     source = Path(source_path)
     if not source.exists():
-        raise FileNotFoundError("Arquivo temporario nao encontrado para duplicacao")
+        raise FileNotFoundError("Arquivo temporário não encontrado para duplicação")
 
     suffix = source.suffix or ".tmp"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
@@ -83,7 +83,7 @@ def duplicate_temp_file(source_path, output_filename=None):
 
 
 def duplicate_attachment_files(files):
-    """Duplica uma lista de anexos temporarios para uso paralelo."""
+    """Duplica uma lista de anexos temporários para uso paralelo."""
     duplicates = []
 
     for file_info in files or []:
@@ -106,7 +106,7 @@ def duplicate_attachment_files(files):
 
 
 def format_currency_brl(value):
-    """Formata numero simples em moeda BRL."""
+    """Formata número simples em moeda BRL."""
     try:
         numeric_value = float(value or 0)
     except (TypeError, ValueError):
@@ -118,7 +118,7 @@ def format_currency_brl(value):
 
 
 def normalize_attachment_files(files):
-    """Normaliza anexos para o formato interno padrao."""
+    """Normaliza anexos para o formato interno padrão."""
     normalized_files = []
 
     for file_info in files or []:
@@ -148,16 +148,16 @@ def normalize_attachment_files(files):
 
 
 def enviar_email(destino, assunto, mensagem, attachment_files=None):
-    """Envia um email usando a configuracao SMTP do ADM."""
+    """Envia um email usando a configuração SMTP do ADM."""
     config_store = AdminEmailConfigStore()
     config = config_store.load()
 
     if not config_store.is_configured(config):
-        raise RuntimeError("Configuracao SMTP do ADM nao encontrada")
+        raise RuntimeError("Configuração SMTP do ADM não encontrada")
 
     destination = str(destino or "").strip()
     if not is_valid_email(destination):
-        raise ValueError("Endereco de email de destino invalido")
+        raise ValueError("Endereço de email de destino inválido")
 
     attachments = normalize_attachment_files(attachment_files)
 
@@ -167,13 +167,13 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
     use_tls = bool(smtp_settings.get("use_tls", True))
 
     if not host:
-        raise RuntimeError("Nao foi possivel resolver o servidor SMTP")
+        raise RuntimeError("Não foi possível resolver o servidor SMTP")
 
     sender_email = str(config.get("email") or "").strip()
     sender_name = str(config.get("nome") or "").strip() or sender_email
 
     message = EmailMessage()
-    message["Subject"] = str(assunto or "").strip() or "Exportacao de obra"
+    message["Subject"] = str(assunto or "").strip() or "Exportação de obra"
     message["From"] = formataddr((sender_name, sender_email))
     message["To"] = destination
     message.set_content(str(mensagem or "").strip() or "Segue arquivo em anexo.")
@@ -215,7 +215,7 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
         domain = sender_email.split("@", 1)[1].lower() if "@" in sender_email else ""
         if domain in {"gmail.com", "googlemail.com"}:
             raise RuntimeError(
-                "Gmail rejeitou a autenticacao SMTP. Verifique se o App Password esta correto e se a conta usa verificacao em duas etapas."
+                "Gmail rejeitou a autenticação SMTP. Verifique se o App Password está correto e se a conta usa verificação em duas etapas."
             ) from exc
         raise RuntimeError("Credenciais SMTP rejeitadas pelo provedor de email.") from exc
     finally:
@@ -227,10 +227,10 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
 
 
 def enviar_email_com_anexos(destino, assunto, mensagem, attachment_files):
-    """Envia um email com anexos diretos usando a configuracao SMTP do ADM."""
+    """Envia um email com anexos diretos usando a configuração SMTP do ADM."""
     attachments = normalize_attachment_files(attachment_files)
     if not attachments:
-        raise FileNotFoundError("Nenhum arquivo valido encontrado para envio")
+        raise FileNotFoundError("Nenhum arquivo válido encontrado para envio")
 
     return enviar_email(destino, assunto, mensagem, attachments)
 
@@ -246,7 +246,7 @@ def enviar_email_com_zip(destino, assunto, mensagem, zip_path):
 
 
 def build_export_file(file_path, filename, template_type=""):
-    """Cria estrutura padrao de arquivo exportado."""
+    """Cria estrutura padrão de arquivo exportado."""
     return {
         "path": file_path,
         "filename": filename,
@@ -255,10 +255,10 @@ def build_export_file(file_path, filename, template_type=""):
 
 
 def prepare_export_assets(project_root, file_utils, obra_id, formato, need_download, need_email):
-    """Gera os arquivos necessarios para um fluxo de exportacao."""
+    """Gera os arquivos necessários para um fluxo de exportação."""
     export_format = str(formato or "ambos").strip().lower()
     if export_format not in {"pc", "pt", "ambos"}:
-        raise ValueError("Formato de exportacao invalido")
+        raise ValueError("Formato de exportação inválido")
 
     word_handler = WordHandler(project_root, file_utils)
     obra_data = word_handler.get_obra_data(obra_id)
@@ -283,7 +283,7 @@ def prepare_export_assets(project_root, file_utils, obra_id, formato, need_downl
 
     files = normalize_attachment_files(files)
     if not files:
-        raise RuntimeError("Arquivo de exportacao nao foi gerado")
+        raise RuntimeError("Arquivo de exportação não foi gerado")
 
     return {
         "obra_data": obra_data,

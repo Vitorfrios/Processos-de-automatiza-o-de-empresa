@@ -1,4 +1,4 @@
-# servidor_modules/handlers/http_handler.py
+﻿# servidor_modules/handlers/http_handler.py
 
 import http.server
 import json
@@ -1711,7 +1711,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return any(lower_path.startswith(prefix) for prefix in self.ALLOWED_STATIC_PREFIXES)
 
     def _add_cache_buster(self, path):
-        """Adiciona cache buster Ã  URL se não tiver"""
+        """Adiciona cache buster a URL se nao tiver"""
         if "?" in path:
             # Já tem parâmetros, adiciona ou atualiza o v=
             if "v=" in path:
@@ -2754,7 +2754,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     }
                     opcionais_formatados.append(opcional_info)
                     
-                    # Adicionar Ã  lista geral de opcionais
+                    # Adicionar a lista geral de opcionais
                     if opcional.get("nome") and opcional.get("nome") not in todos_opcionais_dict:
                         todos_opcionais_dict[opcional.get("nome")] = True
                         todos_opcionais.append({
@@ -2833,7 +2833,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             "valor": valor_base,
                             "descricao": duto.get("descricao", ""),
                             "categoria": duto.get("categoria", ""),
-                            "unidade": duto.get("unidade", "mÂ"),
+                            "unidade": duto.get("unidade", "m2"),
                             "opcionais": opcionais
                         },
                         "estatisticas": {
@@ -4046,7 +4046,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     )
                     email_job_id = self._queue_background_email_job(
                         destinatario,
-                        f"Exportacao da obra: {obra_nome}",
+                        f"ESI Energia Exportação da obra: {obra_nome}",
                         self._normalize_export_message(
                             obra_data,
                             mensagem,

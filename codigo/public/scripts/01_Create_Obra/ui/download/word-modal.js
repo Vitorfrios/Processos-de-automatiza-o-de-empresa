@@ -92,7 +92,7 @@ async function fetchBackgroundJob(jobId) {
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok || !result.success || !result.job) {
-    throw new Error(result.error || "Nao foi possivel consultar o processamento.");
+    throw new Error(result.error || "Não foi possível consultar o processamento.");
   }
 
   return result.job;
@@ -122,7 +122,7 @@ export async function waitForBackgroundJob(jobId, options = {}) {
     }
 
     if (job.status === "failed") {
-      throw new Error(job.error || "Falha ao processar a solicitacao.");
+      throw new Error(job.error || "Falha ao processar a solicitação.");
     }
 
     await wait(intervalMs);
@@ -159,7 +159,7 @@ function updateWordLoadingState(modal, job) {
   if (job.stage === "preparing_download") {
     loadingText.textContent = "Preparando download...";
     loadingHint.textContent =
-      "Os arquivos ja foram gerados e o download sera iniciado em instantes...";
+      "Os arquivos já foram gerados e o download será iniciado em instantes...";
     return;
   }
 
@@ -286,12 +286,12 @@ function setupModalEvents(
         throw new Error(result.error || "Erro na geração do documento");
       }
 
-      // Baixar os arquivos em sequencia
+      // Baixar os arquivos em sequência
       await downloadGeneratedFiles(normalizeDownloadIds(finalResult));
 
       if (finalResult.notification_error) {
         showSystemStatus(
-          "Download concluido, mas o email ao ADM nao foi enviado.",
+          "Download concluído, mas o email ao ADM não foi enviado.",
           "warning",
         );
       }
@@ -304,7 +304,7 @@ function setupModalEvents(
         closeModal(overlay);
         showSystemStatus(
           finalResult.notification_error
-            ? "Documento(s) gerado(s) com sucesso, mas o email ao ADM nao foi enviado."
+            ? "Documento(s) gerado(s) com sucesso, mas o email ao ADM não foi enviado."
             : `Documento(s) Word gerado(s) com sucesso!`,
           finalResult.notification_error ? "warning" : "success",
         );

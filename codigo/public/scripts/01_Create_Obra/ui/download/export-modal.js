@@ -180,6 +180,10 @@ function renderDecisionStep(state, shell) {
 }
 
 function renderTypeCard(id, title, description, selectedType) {
+  if (id === "completo") {
+    return "";
+  }
+
   const checked = id === selectedType;
   return `
     <label class="model-option export-choice-card ${checked ? "selected" : ""}" data-type="${id}">
@@ -194,7 +198,7 @@ function renderTypeCard(id, title, description, selectedType) {
 
 function renderDetailStep(state, shell) {
   state.currentStep = "details";
-  const needsFormat = state.selectedType === "download" || state.selectedType === "completo";
+  const needsFormat = ["download", "email", "completo"].includes(state.selectedType);
   const needsEmail = state.selectedType === "email" || state.selectedType === "completo";
   const emailConfig = state.emailConfig?.config || {};
   const emailConfigLoaded = state.emailConfig !== null;
@@ -452,7 +456,7 @@ function resolveDestination(state) {
 function validateExportState(state, shell) {
   const needsEmail = state.selectedType === "email" || state.selectedType === "completo";
 
-  if ((state.selectedType === "download" || state.selectedType === "completo") && !state.selectedFormat) {
+  if (["download", "email", "completo"].includes(state.selectedType) && !state.selectedFormat) {
     return "Selecione o formato da exportação.";
   }
 
@@ -493,7 +497,7 @@ async function submitExport(state, shell) {
     const payload = {
       obraId: state.obraId,
       tipo: state.selectedType,
-      formato: state.selectedType === "email" ? "ambos" : state.selectedFormat,
+      formato: state.selectedFormat,
       mensagem: state.message,
       recipientMode: state.recipientMode,
     };
@@ -532,7 +536,7 @@ async function submitExport(state, shell) {
     }
 
     const successMessage = finalResult.email_error
-      ? "Download iniciado, mas o envio do email nao foi enfileirado."
+      ? "Download iniciado, mas o envio do email não foi enfileirado."
       : getSuccessMessage(state.selectedType);
     renderSuccessStep(state, shell, successMessage);
     showSystemStatus(successMessage, finalResult.email_error ? "warning" : "success");

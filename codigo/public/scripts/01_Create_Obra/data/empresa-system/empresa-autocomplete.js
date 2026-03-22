@@ -519,6 +519,14 @@ function selecionarEmpresa(
         });
       }
     }
+
+    if (typeof window.syncAdminEmpresaCredentialsForObra === "function") {
+      window.syncAdminEmpresaCredentialsForObra(obraId, {
+        empresaSigla: sigla,
+        empresaNome: nome,
+      });
+    }
+
     if (input) input.blur();
   }, 100);
 

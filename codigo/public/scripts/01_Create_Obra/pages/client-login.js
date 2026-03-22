@@ -135,7 +135,7 @@ function bindRecoveryModal() {
 
             const result = await response.json().catch(() => ({}));
             if (!response.ok || !result.success) {
-                throw new Error(result.error || 'Nao foi possivel enviar o token.');
+                throw new Error(result.error || 'Não foi possível enviar o token.');
             }
 
             setRecoveryFeedback(result.message || 'Token enviado para o email cadastrado.', 'success');
@@ -143,8 +143,8 @@ function bindRecoveryModal() {
                 closeRecoveryModal();
             }, 1200);
         } catch (error) {
-            console.error('[CLIENT-LOGIN] Erro na recuperacao:', error);
-            setRecoveryFeedback(error.message || 'Nao foi possivel recuperar o token.', 'error');
+            console.error('[CLIENT-LOGIN] Erro na recuperação:', error);
+            setRecoveryFeedback(error.message || 'Não foi possível recuperar o token.', 'error');
         } finally {
             toggleRecoveryLoading(false);
         }
@@ -189,7 +189,7 @@ function bindLoginForm() {
             redirectToClientApp();
         } catch (error) {
             console.error('[CLIENT-LOGIN] Erro no login:', error);
-            setFeedback('Nao foi possivel validar o acesso.', 'error');
+            setFeedback('Não foi possível validar o acesso.', 'error');
         } finally {
             setLoadingState(false);
         }
@@ -210,8 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // A tela de login sempre inicia sem reaproveitar sessao anterior.
-    // Isso evita redirecionamento automatico e permite autenticar outra empresa.
+    // A tela de login sempre inicia sem reaproveitar sessão anterior.
+    // Isso evita redirecionamento automático e permite autenticar outra empresa.
     clearClientSession();
 
     bindPasswordToggle();

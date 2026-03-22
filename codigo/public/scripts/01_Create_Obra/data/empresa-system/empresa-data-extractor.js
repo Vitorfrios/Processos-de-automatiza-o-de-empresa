@@ -171,6 +171,29 @@ function extractEmpresaData(obraElement) {
         });
       }
     });
+
+    const usuarioAcesso = String(
+      formEmpresa.querySelector(".empresa-usuario-cadastro")?.value || ""
+    ).trim();
+    const tokenAcesso = String(
+      formEmpresa.querySelector(".empresa-token-cadastro")?.value || ""
+    ).trim();
+    const datasetUsuario = String(
+      obraElement.dataset.empresaCredUsuario || ""
+    ).trim();
+    const datasetToken = String(
+      obraElement.dataset.empresaCredToken || ""
+    ).trim();
+
+    if (tokenAcesso || datasetToken) {
+      empresaData.empresaCredenciais = {
+        usuario: usuarioAcesso || datasetUsuario,
+        token: tokenAcesso || datasetToken,
+        tempoUso: obraElement.dataset.empresaCredTempoUso || "",
+        data_criacao: obraElement.dataset.empresaCredDataCriacao || "",
+        data_expiracao: obraElement.dataset.empresaCredDataExpiracao || "",
+      };
+    }
   } else {
     console.log(" [EXTRACT EMPRESA] Formulário ativo não encontrado");
   }

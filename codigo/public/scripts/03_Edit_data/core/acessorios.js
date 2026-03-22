@@ -1,22 +1,22 @@
 // scripts/03_Edit_data/core/acessorios.js
-// Sistema CRUD para acessorios com interface estilo opções
+// Sistema CRUD para acessórios com interface estilo opções
 
 // Importar sistema de estado global
 import { systemData, addPendingChange } from '../config/state.js';
 
 export function initAcessories() {
-    console.log(' Inicializando sistema de acessorios...');
+    console.log(' Inicializando sistema de acessórios...');
     
     // Verificar se estamos na página correta
     if (!document.getElementById('acessoriesTab')) {
-        console.log(' Tab de acessorios não encontrada');
+        console.log(' Tab de acessórios não encontrada');
         return;
     }
     
     // Inicializar sistema
     setupAcessorieSystem();
     
-    console.log(' Sistema de acessorios pronto');
+    console.log(' Sistema de acessórios pronto');
 }
 
 // Configuração do sistema
@@ -53,7 +53,7 @@ function exposeGlobalFunctions() {
 
 // Configurar listeners de eventos
 function setupEventListeners() {
-    // Listener para tab de acessorios
+    // Listener para tab de acessórios
     const acessorieTabBtn = document.querySelector('.tab[onclick*="acessories"]');
     if (acessorieTabBtn) {
         acessorieTabBtn.addEventListener('click', () => {
@@ -91,7 +91,7 @@ async function loadAcessoriesData() {
         }
         
     } catch (error) {
-        console.error('Erro ao carregar acessorios:', error);
+        console.error('Erro ao carregar acessórios:', error);
         renderEmptyState();
     }
 }
@@ -118,7 +118,7 @@ function populateCodigosFilter() {
     });
 }
 
-// Renderiza lista de acessorios
+// Renderiza lista de acessórios
 function renderAcessorieList(filterCodigo = '') {
     const acessorieList = document.getElementById('acessorieList');
     if (!acessorieList) return;
@@ -131,9 +131,9 @@ function renderAcessorieList(filterCodigo = '') {
         acessorieList.innerHTML = `
             <div class="empty-state">
                 <i class="icon-empty"></i>
-                <p>Nenhum acessorio cadastrado</p>
+                <p>Nenhum acessório cadastrado</p>
                 <button class="btn btn-primary mt-2" onclick="addNewAcessorie()">
-                    Adicionar Primeiro Acessorio
+                    Adicionar Primeiro Acessório
                 </button>
             </div>
         `;
@@ -148,7 +148,7 @@ function renderAcessorieList(filterCodigo = '') {
         acessorieList.innerHTML = `
             <div class="empty-state">
                 <i class="icon-empty"></i>
-                <p>Nenhum acessorio encontrado para o código "${filterCodigo}"</p>
+                <p>Nenhum acessório encontrado para o código "${filterCodigo}"</p>
             </div>
         `;
         return;
@@ -181,13 +181,13 @@ function renderAcessorieList(filterCodigo = '') {
                                placeholder="Ex: VZ, DSP_15" 
                                onchange="updateAcessorie(${index}, 'codigo', this.value)"
                                class="form-input">
-                        <small class="text-muted">Código identificador do acessorio</small>
+                        <small class="text-muted">Código identificador do acessório</small>
                     </div>
                 </div>
                 <div class="acessorie-field">
                     <span class="acessorie-label">Descrição:</span>
                     <input type="text" value="${escapeHtml(acessorie.descricao || '')}" 
-                           placeholder="Descrição detalhada do acessorio" 
+                           placeholder="Descrição detalhada do acessório" 
                            oninput="syncAcessorieName(${index}, this.value)" 
                            onchange="updateAcessorie(${index}, 'descricao', this.value)" 
                            class="form-input">
@@ -273,7 +273,7 @@ function toggleAcessorieItem(index, event) {
     }
 }
 
-// Adiciona nova dimensão ao acessorio
+// Adiciona nova dimensão ao acessório
 function addAcessorieDimension(index, event) {
     if (event) event.stopPropagation();
     
@@ -344,7 +344,7 @@ function addAcessorieDimension(index, event) {
     }
 }
 
-// Remove dimensão do acessorio
+// Remove dimensão do acessório
 function removeAcessorieDimension(index, key, event) {
     if (event) event.stopPropagation();
     
@@ -386,7 +386,7 @@ function syncAcessorieName(index, value) {
     }
 }
 
-// Atualiza campo do acessorio
+// Atualiza campo do acessório
 function updateAcessorie(index, field, value) {
     const item = document.querySelector(`.acessorie-item[data-index="${index}"]`);
     if (!item) return;
@@ -406,7 +406,7 @@ function updateAcessorie(index, field, value) {
         const existingAcessories = Object.entries(window.acessoriesData);
         for (const [equipId, acessorie] of existingAcessories) {
             if (equipId !== id && acessorie.codigo === newCodigo) {
-                alert(`Código "${newCodigo}" já está em uso por outro acessorio!`);
+                alert(`Código "${newCodigo}" já está em uso por outro acessório!`);
                 return;
             }
         }
@@ -490,13 +490,13 @@ function updateAcessorieValue(index, key, value) {
     addPendingChange('banco_acessorios');
 }
 
-// Adiciona novo acessorio
+// Adiciona novo acessório
 function addNewAcessorie() {
     const newId = `equip_${Date.now()}`;
     
     window.acessoriesData[newId] = {
         codigo: '',
-        descricao: 'Novo Acessorio',
+        descricao: 'Novo Acessório',
         valores_padrao: { '300x200': 0 }
     };
     
@@ -532,20 +532,20 @@ function addNewAcessorie() {
     }, 100);
 }
 
-// Exclui acessorio
+// Exclui acessório
 async function deleteAcessorie(id, event) {
     if (event) event.stopPropagation();
     
     const acessorie = window.acessoriesData[id];
     if (!acessorie) {
-        alert('Acessorio não encontrado!');
+        alert('Acessório não encontrado!');
         return;
     }
     
     const codigo = acessorie.codigo;
     const descricao = acessorie.descricao || 'Sem descrição';
     
-    if (!confirm(`Excluir acessorio "${codigo} - ${descricao}"?\n\nEsta ação não pode ser desfeita.`)) {
+    if (!confirm(`Excluir acessório "${codigo} - ${descricao}"?\n\nEsta ação não pode ser desfeita.`)) {
         return;
     }
     
@@ -557,13 +557,13 @@ async function deleteAcessorie(id, event) {
         });
         
         if (!response.ok) {
-            throw new Error(`Falha ao excluir acessorio`);
+            throw new Error(`Falha ao excluir acessório`);
         }
         
         const result = await response.json();
         
         if (!result.success) {
-            throw new Error(result.error || 'Erro ao excluir acessorio');
+            throw new Error(result.error || 'Erro ao excluir acessório');
         }
         
         delete window.acessoriesData[id];
@@ -574,7 +574,7 @@ async function deleteAcessorie(id, event) {
         renderAcessorieList();
         populateCodigosFilter();
         
-        showNotification('Acessorio excluído com sucesso!', 'success');
+        showNotification('Acessório excluído com sucesso!', 'success');
         
     } catch (error) {
         console.error('Erro ao excluir:', error);
@@ -582,7 +582,7 @@ async function deleteAcessorie(id, event) {
     }
 }
 
-// Filtra acessorios por código
+// Filtra acessórios por código
 function filterAcessorieTable() {
     const filterSelect = document.getElementById('codigoFilter');
     renderAcessorieList(filterSelect?.value || '');
@@ -607,7 +607,7 @@ function renderEmptyState() {
     acessorieList.innerHTML = `
         <div class="empty-state">
             <i class="icon-empty"></i>
-            <p>Não foi possível carregar os acessorios</p>
+            <p>Não foi possível carregar os acessórios</p>
             <button class="btn btn-primary mt-2" onclick="loadAcessoriesData()">
                 Tentar novamente
             </button>

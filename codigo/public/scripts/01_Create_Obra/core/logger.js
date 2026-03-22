@@ -1,4 +1,4 @@
-/**
+﻿/**
  * logger.js
  * Smart console filter with a silent client mode.
  */
@@ -52,7 +52,7 @@ export function createSmartLogger(appConfig = null) {
                     '  dados coletados', '  Seção encontrada',
                     ' VERIFICAÇÃO COMPLETA DA SALA', ' Título:  Encontrado',
                     ' TODOS OS ELEMENTOS ENCONTRADOS',
-                    ' Máquina adicionada Ã  sala', ' Procurando máquinas após clique',
+                    ' Máquina adicionada à sala', ' Procurando máquinas após clique',
                     ' Preenchendo campos', ' Encontradas máquinas', ' Preenchendo apenas a PRIMEIRA',
                     ' Preenchendo máquina', ' Tipo de máquina selecionado', ' Capacidade selecionada',
                     ' Tensão selecionada', ' Selecionando opções aleatórias', ' Encontrados checkboxes',
@@ -68,9 +68,9 @@ export function createSmartLogger(appConfig = null) {
                     ' Extraindo dados da sala', ' Inputs de climatização', ' Extraindo dados da máquina',
                     ' Máquina extraída', ' máquina(s) extraída(s)', ' Dados de capacidade',
                     ' ganhos térmicos', ' opções de instalação', ' Dados extraídos da sala',
-                    ' Projeto processado', ' Projeto adicionado Ã  obra', ' Dados da obra construídos',
+                    ' Projeto processado', ' Projeto adicionado à obra', ' Dados da obra construídos',
                     ' VERIFICAÇÃO FINAL', ' VERIFICAÇÃO DE OBRA MELHORADA', ' SALVANDO COMO NOVA OBRA',
-                    ' SALVANDO NOVA OBRA', ' Adicionando obra Ã  sessão', ' NOVA OBRA SALVA',
+                    ' SALVANDO NOVA OBRA', ' Adicionando obra à sessão', ' NOVA OBRA SALVA',
                     ' Obra confirmada no DOM', ' Atualizando botão da obra', ' Botão atualizado para',
                     ' [HEADER] Chamando', ' [HEADER] Iniciando', ' [HEADER] Extraindo',
                     ' [HEADER] Dados extraídos', ' [HEADER] Chamando', ' Inicializando tooltip',
@@ -289,3 +289,4 @@ export function createSmartLogger(appConfig = null) {
 
     return new SmartLogger(appConfig);
 }
+

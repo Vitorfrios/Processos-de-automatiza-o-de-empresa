@@ -139,7 +139,7 @@ async function saveObra(obraId, event) {
 
   if (!String(obraData.emailEmpresa || "").trim()) {
     showSystemStatus(
-      "O email da empresa nao foi preenchido. Isso pode dificultar a recuperacao do acesso posteriormente.",
+      "O email da empresa não foi preenchido. Isso pode dificultar a recuperação do acesso posteriormente.",
       "warning",
     );
   }

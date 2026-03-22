@@ -1,4 +1,4 @@
-/**
+﻿/**
  * data/modules/rooms.js
  * ARQUIVO DE BUILDER DE SALA
  */
@@ -620,7 +620,7 @@ function verifyRoomSetupComplete(roomId) {
   if (!roomBlock) return false;
 
   const elements = {
-    Título: roomBlock.querySelector(".room-title"),
+    Titulo: roomBlock.querySelector(".room-title"),
     Ambiente: findAmbienteInput(roomId),
     "Parede Oeste": roomBlock.querySelector('input[data-field="paredeOeste"]'),
     "Parede Leste": roomBlock.querySelector('input[data-field="paredeLeste"]'),
@@ -643,7 +643,7 @@ if (typeof window !== "undefined") {
     if (roomBlock) {
       console.log(" Elementos encontrados:");
       console.log(
-        "- Título:",
+        "- Titulo:",
         roomBlock.querySelector(".room-title")?.textContent,
       );
       console.log("- Ambiente:", findAmbienteInput(roomId)?.value);
@@ -849,3 +849,4 @@ if (typeof window !== "undefined") {
   window.buildRoomHTML = buildRoomHTML;
   window.updateRoomTotal = updateRoomTotal;
 }
+

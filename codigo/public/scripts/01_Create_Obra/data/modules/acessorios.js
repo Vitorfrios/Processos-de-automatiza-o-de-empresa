@@ -1,31 +1,31 @@
 /* ==== INÍCIO: data/modules/acessorios.js ==== */
 /**
- * acessorios.js - Sistema de seleção de Acessorios de Difusão
- * Interface para selecionar e adicionar acessorios ao projeto
+ * acessorios.js - Sistema de seleção de acessórios de difusão
+ * Interface para selecionar e adicionar acessórios ao projeto
  */
 
-// ADICIONAR: Função para preenchimento de dados (FALTANTE)
+// ADICIONAR: Função para preenchimento de dados (faltante)
 function fillAcessoriosData(roomElement, acessoriosData) {
   if (!roomElement || !acessoriosData) {
-    console.error(" Elemento da sala ou dados de acessorios inválidos");
+    console.error(" Elemento da sala ou dados de acessórios inválidos");
     return;
   }
 
   const roomId = roomElement.dataset.roomId;
-  console.log(` Preenchendo acessorios para sala ${roomId}:`, acessoriosData);
+  console.log(` Preenchendo acessórios para sala ${roomId}:`, acessoriosData);
 
-  // Verificar se a seção de acessorios existe
+  // Verificar se a seção de acessórios existe
   const acessoriosSection = roomElement.querySelector(
     `#section-content-${roomId}acessorios`,
   );
   if (!acessoriosSection) {
-    console.error(` Seção de acessorios não encontrada para sala ${roomId}`);
+    console.error(` Seção de acessórios não encontrada para sala ${roomId}`);
     return;
   }
 
-  // Se não houver acessorios, sair
+  // Se não houver acessórios, sair
   if (!Array.isArray(acessoriosData) || acessoriosData.length === 0) {
-    console.log(` Nenhum acessorio para preencher na sala ${roomId}`);
+    console.log(` Nenhum acessório para preencher na sala ${roomId}`);
     return;
   }
 
@@ -34,7 +34,7 @@ function fillAcessoriosData(roomElement, acessoriosData) {
   let tbody = document.getElementById(tbodyId);
 
   if (!tbody) {
-    console.log(` Criando tabela de acessorios para sala ${roomId}`);
+    console.log(` Criando tabela de acessórios para sala ${roomId}`);
 
     // Buscar o container da tabela
     const tableContainer = acessoriosSection.querySelector(
@@ -47,7 +47,7 @@ function fillAcessoriosData(roomElement, acessoriosData) {
  <thead>
  <tr>
  <th width="20%">Aplicação</th>
- <th width="20%">Acessorio</th>
+ <th width="20%">Acessório</th>
  <th width="20%">Dimensão</th>
  <th width="15%">Qtd</th>
  <th width="15%">Valor Unit.</th>
@@ -56,7 +56,7 @@ function fillAcessoriosData(roomElement, acessoriosData) {
  </tr>
  </thead>
  <tbody id="${tbodyId}">
- <!-- Acessorios serão adicionados aqui -->
+ <!-- Acessórios serão adicionados aqui -->
  </tbody>
  <tfoot>
  <tr>
@@ -77,7 +77,7 @@ function fillAcessoriosData(roomElement, acessoriosData) {
     // Limpar tabela atual
     tbody.innerHTML = "";
 
-    // Adicionar cada acessorio
+    // Adicionar cada acessório
     acessoriosData.forEach((acessorio) => {
       adicionarAcessorioNaTabela(roomId, acessorio);
     });
@@ -86,13 +86,13 @@ function fillAcessoriosData(roomElement, acessoriosData) {
     atualizarTotalAcessorios(roomId);
 
     console.log(
-      ` ${acessoriosData.length} acessorio(s) preenchido(s) na sala ${roomId}`,
+      ` ${acessoriosData.length} acessório(s) preenchido(s) na sala ${roomId}`,
     );
   }
 }
 
 /**
- * Constrói a seção de Acessorios de Difusão e Controle de Ar
+ * Constrói a seção de acessórios de difusão e controle de ar
  */
 function buildAcessoriosSection(obraId, projectId, roomName, finalRoomId) {
   // Validar ID único
@@ -105,20 +105,20 @@ function buildAcessoriosSection(obraId, projectId, roomName, finalRoomId) {
 
   const roomId = finalRoomId;
   console.log(
-    ` Construindo seção de Acessorios para sala: ${roomName} (ID: ${roomId})`,
+    ` Construindo seção de acessórios para sala: ${roomName} (ID: ${roomId})`,
   );
 
   return `
  <div class="section-block">
  <div class="section-header">
  <button class="minimizer" onclick="toggleSection('${roomId}acessorios')">+</button>
- <h4 class="section-title">Acessorios de Difusão e Controle de Ar</h4>
+ <h4 class="section-title">Acessórios de Difusão e Controle de Ar</h4>
  </div>
  <div class="section-content collapsed" id="section-content-${roomId}acessorios">
  <div class="form-grid">
- <!-- Seletor de Acessorios -->
+ <!-- Seletor de Acessórios -->
  <div class="form-group full-width">
- <label class="acess-label">Adicionar Acessorio:</label>
+ <label class="acess-label">Adicionar Acessório:</label>
  <div class="acessorio-selector">
  <div class="selector-grid">
  <div class="selector-item">
@@ -161,15 +161,15 @@ function buildAcessoriosSection(obraId, projectId, roomName, finalRoomId) {
  </div>
  </div>
  
- <!-- Tabela de Acessorios Adicionados -->
+ <!-- Tabela de Acessórios Adicionados -->
  <div class="form-group full-width">
- <label class="acess-label">Acessorios Selecionados:</label>
+ <label class="acess-label">Acessórios Selecionados:</label>
  <div class="acessorios-table-container">
  <table class="acessorios-table" id="acessorios-table-${roomId}">
  <thead>
  <tr>
  <th width="20%">Aplicação</th>
- <th width="20%">Acessorio</th>
+ <th width="20%">Acessório</th>
  <th width="20%">Dimensão</th>
  <th width="15%">Qtd</th>
  <th width="15%">Valor Unit.</th>
@@ -178,9 +178,9 @@ function buildAcessoriosSection(obraId, projectId, roomName, finalRoomId) {
  </tr>
  </thead>
  <tbody id="acessorios-list-${roomId}">
- <!-- Lista de acessorios será gerada dinamicamente -->
+ <!-- Lista de acessórios será gerada dinamicamente -->
  <tr class="empty-row">
- <td colspan="7">Nenhum acessorio adicionado</td>
+ <td colspan="7">Nenhum acessório adicionado</td>
  </tr>
  </tbody>
  <tfoot>
@@ -207,15 +207,15 @@ function buildAcessoriosSection(obraId, projectId, roomName, finalRoomId) {
 }
 
 /**
- * Inicializa o sistema de acessorios para uma sala
+ * Inicializa o sistema de acessórios para uma sala
  */
 function initAcessoriosSystem(roomId) {
-  console.log(` Inicializando sistema de acessorios para sala: ${roomId}`);
+  console.log(` Inicializando sistema de acessórios para sala: ${roomId}`);
 
-  // Carregar tipos de acessorios da API
+  // Carregar tipos de acessórios da API
   carregarTiposAcessorios(roomId);
 
-  // Carregar acessorios salvos automaticamente
+  // Carregar acessórios salvos automaticamente
   carregarAcessoriosSilencioso(roomId);
 
   // Inicializar eventos
@@ -223,7 +223,7 @@ function initAcessoriosSystem(roomId) {
 }
 
 /**
- * Carrega os tipos de acessorios da API
+ * Carrega os tipos de acessórios da API
  */
 async function carregarTiposAcessorios(roomId) {
   try {
@@ -247,7 +247,7 @@ async function carregarTiposAcessorios(roomId) {
         select.appendChild(option);
       });
 
-      console.log(` ${data.types.length} tipos de acessorios carregados`);
+      console.log(` ${data.types.length} tipos de acessórios carregados`);
     } else {
       console.error(" Erro ao carregar tipos:", data.error);
     }
@@ -257,7 +257,7 @@ async function carregarTiposAcessorios(roomId) {
 }
 
 /**
- * Carrega as dimensões disponíveis para o acessorio selecionado
+ * Carrega as dimensões disponíveis para o acessório selecionado
  */
 async function loadAcessorioDimensoes(roomId) {
   const tipoSelect = document.getElementById(`acessorio-tipo-${roomId}`);
@@ -346,11 +346,11 @@ function limparCamposAcessorio(roomId) {
   quantidadeInput.value = 1;
   valorInput.value = "R$ 0,00";
 
-  console.log(` Campos de acessorio limpos para sala ${roomId}`);
+  console.log(` Campos de acessório limpos para sala ${roomId}`);
 }
 
 /**
- * Adiciona um acessorio à lista
+ * Adiciona um acessório à lista
  */
 function adicionarAcessorio(roomId) {
   const aplicacaoSelect = document.getElementById(`aplicacao-${roomId}`);
@@ -407,7 +407,7 @@ function adicionarAcessorio(roomId) {
     }
   }
 
-  // Criar objeto do acessorio apenas com aplicacao_Acessorio
+  // Criar objeto do acessório apenas com aplicacao_Acessorio
   const acessorio = {
     id: Date.now() + Math.random().toString(36).substr(2, 9),
     aplicacao_Acessorio: aplicacao_Acessorio, // Apenas este campo para aplicação
@@ -426,12 +426,12 @@ function adicionarAcessorio(roomId) {
   limparCamposAcessorio(roomId);
 
   console.log(
-    ` Acessorio adicionado: ${aplicacaoNomeDisplay} - ${acessorio.descricao}`,
+    ` Acessório adicionado: ${aplicacaoNomeDisplay} - ${acessorio.descricao}`,
   );
 }
 
 /**
- * Adiciona acessorio na tabela HTML
+ * Adiciona acessório na tabela HTML
  */
 function adicionarAcessorioNaTabela(roomId, acessorio) {
   const tbody = document.getElementById(`acessorios-list-${roomId}`);
@@ -501,7 +501,7 @@ function removerAcessorio(roomId, acessorioId) {
       // Adicionar linha vazia
       const emptyRow = document.createElement("tr");
       emptyRow.className = "empty-row";
-      emptyRow.innerHTML = '<td colspan="7">Nenhum acessorio adicionado</td>';
+      emptyRow.innerHTML = '<td colspan="7">Nenhum acessório adicionado</td>';
       tbody.appendChild(emptyRow);
     }
 
@@ -511,12 +511,12 @@ function removerAcessorio(roomId, acessorioId) {
     // Salvar no localStorage
     salvarAcessorios(roomId);
 
-    console.log(` Acessorio removido: ${acessorioId}`);
+    console.log(` Acessório removido: ${acessorioId}`);
   }
 }
 
 /**
- * Edita um acessorio existente
+ * Edita um acessório existente
  */
 function editarAcessorio(roomId, acessorioId) {
   const row = document.getElementById(`acessorio-${acessorioId}`);
@@ -568,14 +568,14 @@ function editarAcessorio(roomId, acessorioId) {
         quantidadeInput.value = acessorioData.quantidade;
         valorInput.value = `R$ ${formatarMoeda(acessorioData.valor_unitario)}`;
 
-        // Remover acessorio da lista
+        // Remover acessório da lista
         removerAcessorio(roomId, acessorioId);
 
-        console.log(` Acessorio em edição: ${acessorioId}`);
+        console.log(` Acessório em edição: ${acessorioId}`);
       }, 250);
     });
   } else {
-    // Para acessorios personalizados, apenas preencher campos básicos
+    // Para acessórios personalizados, apenas preencher campos básicos
     dimensaoSelect.disabled = true;
     dimensaoSelect.selectedIndex = 0;
 
@@ -583,15 +583,15 @@ function editarAcessorio(roomId, acessorioId) {
     quantidadeInput.value = acessorioData.quantidade;
     valorInput.value = `R$ ${formatarMoeda(acessorioData.valor_unitario)}`;
 
-    // Remover acessorio da lista
+    // Remover acessório da lista
     removerAcessorio(roomId, acessorioId);
 
-    console.log(` Acessorio personalizado em edição: ${acessorioId}`);
+    console.log(` Acessório personalizado em edição: ${acessorioId}`);
   }
 }
 
 /**
- * Atualiza o total de acessorios
+ * Atualiza o total de acessórios
  */
 function atualizarTotalAcessorios(roomId) {
   const tbody = document.getElementById(`acessorios-list-${roomId}`);
@@ -624,14 +624,14 @@ function atualizarTotalAcessorios(roomId) {
 }
 
 /**
- * Carrega acessorios do localStorage (silenciosamente - sem botão)
+ * Carrega acessórios do localStorage (silenciosamente, sem botão)
  */
 function carregarAcessoriosSilencioso(roomId) {
   const key = `acessorios_${roomId}`;
   const acessoriosSalvos = localStorage.getItem(key);
 
   if (!acessoriosSalvos) {
-    console.log(` Nenhum acessorio salvo para sala ${roomId}`);
+    console.log(` Nenhum acessório salvo para sala ${roomId}`);
     return;
   }
 
@@ -644,21 +644,21 @@ function carregarAcessoriosSilencioso(roomId) {
 
     tbody.innerHTML = "";
 
-    // Adicionar acessorios salvos
+    // Adicionar acessórios salvos
     acessorios.forEach((acessorio) => {
       adicionarAcessorioNaTabela(roomId, acessorio);
     });
 
     console.log(
-      ` ${acessorios.length} acessorio(s) carregado(s) automaticamente para sala ${roomId}`,
+      ` ${acessorios.length} acessório(s) carregado(s) automaticamente para sala ${roomId}`,
     );
   } catch (error) {
-    console.error(" Erro ao carregar acessorios:", error);
+    console.error(" Erro ao carregar acessórios:", error);
   }
 }
 
 /**
- * Salva acessorios no localStorage
+ * Salva acessórios no localStorage
  */
 function salvarAcessorios(roomId) {
   const tbody = document.getElementById(`acessorios-list-${roomId}`);
@@ -674,21 +674,21 @@ function salvarAcessorios(roomId) {
   const key = `acessorios_${roomId}`;
   localStorage.setItem(key, JSON.stringify(acessorios));
 
-  console.log(` ${acessorios.length} acessorio(s) salvos para sala ${roomId}`);
+  console.log(` ${acessorios.length} acessório(s) salvos para sala ${roomId}`);
 }
 
 /**
- * Limpa todos os acessorios
+ * Limpa todos os acessórios
  */
 function limparAcessorios(roomId) {
-  if (confirm("Tem certeza que deseja limpar todos os acessorios?")) {
+  if (confirm("Tem certeza que deseja limpar todos os acessórios?")) {
     const tbody = document.getElementById(`acessorios-list-${roomId}`);
     tbody.innerHTML = "";
 
     // Adicionar linha vazia
     const emptyRow = document.createElement("tr");
     emptyRow.className = "empty-row";
-    emptyRow.innerHTML = '<td colspan="7">Nenhum acessorio adicionado</td>';
+    emptyRow.innerHTML = '<td colspan="7">Nenhum acessório adicionado</td>';
     tbody.appendChild(emptyRow);
 
     // Atualizar total
@@ -698,7 +698,7 @@ function limparAcessorios(roomId) {
     const key = `acessorios_${roomId}`;
     localStorage.removeItem(key);
 
-    console.log(` Todos os acessorios removidos da sala ${roomId}`);
+    console.log(` Todos os acessórios removidos da sala ${roomId}`);
   }
 }
 
@@ -713,7 +713,7 @@ function formatarMoeda(valor) {
 }
 
 /**
- * Configura eventos para o sistema de acessorios
+ * Configura eventos para o sistema de acessórios
  */
 function setupAcessoriosEvents(roomId) {
   const quantidadeInput = document.getElementById(
@@ -770,7 +770,7 @@ if (typeof window !== "undefined") {
 
   // Helper para debug
   window.debugAcessoriosSystem = function (roomId) {
-    console.log(" Debug Sistema de Acessorios:");
+    console.log(" Debug Sistema de Acessórios:");
     console.log("- fillAcessoriosData:", typeof window.fillAcessoriosData);
     console.log("- initAcessoriosSystem:", typeof window.initAcessoriosSystem);
     console.log(

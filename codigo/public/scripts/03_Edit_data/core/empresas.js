@@ -5,6 +5,8 @@ import { systemData, addPendingChange } from '../config/state.js';
 import { escapeHtml, showError, showInfo, showWarning, showConfirmation, showSuccess } from '../config/ui.js';
 import { normalizeEmpresa, normalizeEmpresas } from '../../01_Create_Obra/core/shared-utils.js';
 
+const EMPRESA_CREDENTIAL_DRAFT_PREFIX = 'esi.empresaCredentialDraft.';
+
 // Função para formatar data no padrão DD/MM/AAAA
 function formatarData(dataISO) {
     if (!dataISO) return '';
@@ -54,6 +56,164 @@ function generateToken(length = 32) {
     }
     
     return token;
+}
+
+function getEmpresaCredentialDraftKey(codigo, nome = '') {
+    const normalized = String(codigo || nome || '')
+        .trim()
+        .toUpperCase();
+
+    return normalized ? `${EMPRESA_CREDENTIAL_DRAFT_PREFIX}${normalized}` : '';
+}
+
+function readEmpresaCredentialDraft(codigo, nome = '') {
+    const draftKey = getEmpresaCredentialDraftKey(codigo, nome);
+    if (!draftKey || typeof window === 'undefined' || !window.localStorage) {
+        return null;
+    }
+
+    try {
+        const rawValue = window.localStorage.getItem(draftKey);
+        if (!rawValue) {
+            return null;
+        }
+
+        const parsedValue = JSON.parse(rawValue);
+        return parsedValue && typeof parsedValue === 'object' ? parsedValue : null;
+    } catch (error) {
+        console.warn('Erro ao ler rascunho de credenciais da empresa:', error);
+        return null;
+    }
+}
+
+function writeEmpresaCredentialDraft(codigo, nome, credenciais) {
+    const draftKey = getEmpresaCredentialDraftKey(codigo, nome);
+    if (!draftKey || typeof window === 'undefined' || !window.localStorage || !credenciais) {
+        return;
+    }
+
+    try {
+        window.localStorage.setItem(draftKey, JSON.stringify(credenciais));
+    } catch (error) {
+        console.warn('Erro ao salvar rascunho de credenciais da empresa:', error);
+    }
+}
+
+function clearEmpresaCredentialDraft(codigo, nome = '') {
+    const draftKey = getEmpresaCredentialDraftKey(codigo, nome);
+    if (!draftKey || typeof window === 'undefined' || !window.localStorage) {
+        return;
+    }
+
+    try {
+        window.localStorage.removeItem(draftKey);
+    } catch (error) {
+        console.warn('Erro ao limpar rascunho de credenciais da empresa:', error);
+    }
+}
+
+function buildEmpresaCredentialState(empresa, credenciais = null) {
+    const source = credenciais && typeof credenciais === 'object' ? credenciais : {};
+    const tempoUso = parseInt(source.tempoUso, 10) || 30;
+    const dataCriacao = String(source.data_criacao || source.createdAt || '').trim();
+    const dataBase = new Date(dataCriacao);
+
+    const dataExpiracao =
+        String(source.data_expiracao || source.expiracao || '').trim() ||
+        (dataCriacao && !Number.isNaN(dataBase.getTime())
+            ? (() => {
+            const expirationDate = new Date(dataBase);
+            expirationDate.setDate(expirationDate.getDate() + tempoUso);
+            return expirationDate.toISOString();
+        })()
+            : '');
+
+    return {
+        usuario: String(source.usuario || '').trim(),
+        email: String(source.email || source.recoveryEmail || '').trim(),
+        token: String(source.token || '').trim(),
+        data_criacao: dataCriacao,
+        data_expiracao: dataExpiracao,
+        tempoUso,
+    };
+}
+
+function syncEmpresaCredenciaisInRenderedObras(empresa, credenciais = null) {
+    if (typeof document === 'undefined' || !empresa) {
+        return;
+    }
+
+    const empresaCodigo = String(empresa.codigo || '').trim().toUpperCase();
+    const empresaNome = String(empresa.nome || '').trim().toUpperCase();
+    const credencialValida = credenciais && typeof credenciais === 'object' ? credenciais : null;
+
+    document.querySelectorAll('.obra-block[data-obra-id]').forEach((obraElement) => {
+        const obraCodigo = String(obraElement.dataset.empresaSigla || obraElement.dataset.empresaCodigo || '').trim().toUpperCase();
+        const obraNome = String(obraElement.dataset.empresaNome || '').trim().toUpperCase();
+
+        if (!((empresaCodigo && obraCodigo === empresaCodigo) || (empresaNome && obraNome === empresaNome))) {
+            return;
+        }
+
+        const obraId = obraElement.dataset.obraId;
+        const usuarioInput = obraId ? document.getElementById(`empresa-usuario-${obraId}`) : null;
+        const tokenInput = obraId ? document.getElementById(`empresa-token-${obraId}`) : null;
+        const emailInput = obraId ? document.getElementById(`email-empresa-${obraId}`) : null;
+
+        if (!credencialValida) {
+            [
+                'empresaCredUsuario',
+                'empresaCredToken',
+                'empresaCredTempoUso',
+                'empresaCredDataCriacao',
+                'empresaCredDataExpiracao',
+                'empresaCredHasAccess',
+                'empresaCredCompanyKey'
+            ].forEach((field) => delete obraElement.dataset[field]);
+
+            if (usuarioInput) usuarioInput.value = '';
+            if (tokenInput) tokenInput.value = '';
+            if (emailInput) emailInput.value = '';
+            delete obraElement.dataset.emailEmpresa;
+            delete obraElement.dataset.empresaEmail;
+            return;
+        }
+
+        const usuario = String(credencialValida.usuario || '').trim();
+        const token = String(credencialValida.token || '').trim();
+        const email = String(credencialValida.email || '').trim();
+        const hasAccess = Boolean(usuario || token);
+
+        obraElement.dataset.empresaCredUsuario = usuario;
+        obraElement.dataset.empresaCredToken = token;
+        obraElement.dataset.empresaCredTempoUso = String(credencialValida.tempoUso || 30);
+        obraElement.dataset.empresaCredHasAccess = hasAccess ? 'true' : 'false';
+        obraElement.dataset.empresaCredCompanyKey = empresaCodigo || empresaNome;
+
+        if (credencialValida.data_criacao) {
+            obraElement.dataset.empresaCredDataCriacao = String(credencialValida.data_criacao);
+        } else {
+            delete obraElement.dataset.empresaCredDataCriacao;
+        }
+
+        if (credencialValida.data_expiracao) {
+            obraElement.dataset.empresaCredDataExpiracao = String(credencialValida.data_expiracao);
+        } else {
+            delete obraElement.dataset.empresaCredDataExpiracao;
+        }
+
+        if (email) {
+            obraElement.dataset.emailEmpresa = email;
+            obraElement.dataset.empresaEmail = email;
+        } else {
+            delete obraElement.dataset.emailEmpresa;
+            delete obraElement.dataset.empresaEmail;
+        }
+
+        if (usuarioInput) usuarioInput.value = usuario;
+        if (tokenInput) tokenInput.value = token;
+        if (emailInput) emailInput.value = email;
+    });
 }
 
 // Calcular data de expiração baseada no tempo de uso
@@ -113,19 +273,20 @@ function showCredentialsModal(index) {
                           empresa.credenciais !== null;
     
     // Valores padrão para o formulário
-    const credenciais = temCredenciais ? empresa.credenciais : {
-        usuario: '',
-        email: '',
-        token: generateToken(32),
-        data_criacao: new Date().toISOString(),
-        data_expiracao: calcularDataExpiracao(30),
-        tempoUso: 30
-    };
+    const credenciaisPersistidas = temCredenciais ? empresa.credenciais : null;
+    const credenciaisRascunho = readEmpresaCredentialDraft(empresa.codigo, empresa.nome);
+    const credenciaisRascunhoValidas = credenciaisRascunho?.source === 'manual-edit'
+        ? credenciaisRascunho
+        : null;
+    const credenciais = buildEmpresaCredentialState(
+        empresa,
+        credenciaisPersistidas || credenciaisRascunhoValidas
+    );
     
     // Garantir que todos os campos existam
     const usuarioAtual = credenciais.usuario || '';
     const emailAtual = credenciais.email || credenciais.recoveryEmail || '';
-    const tokenAtual = credenciais.token || generateToken(32);
+    const tokenAtual = credenciais.token || '';
     const tempoUsoAtual = credenciais.tempoUso || 30;
     const dataCriacaoAtual = credenciais.data_criacao;
     const dataExpiracaoAtual = credenciais.data_expiracao;
@@ -133,10 +294,11 @@ function showCredentialsModal(index) {
     // Verificar se o tempo atual está nos valores predefinidos
     const isPredefinedTime = [30, 60, 90].includes(tempoUsoAtual);
     
-    // Criar modal - MODO ESCURO (apenas o modal)
     const modal = document.createElement('div');
     modal.id = 'credentialsModal';
     modal.className = 'modal';
+    modal.dataset.empresaCodigo = empresa.codigo || '';
+    modal.dataset.empresaNome = empresa.nome || '';
     modal.style.cssText = `
         position: fixed;
         top: 0;
@@ -215,7 +377,7 @@ function showCredentialsModal(index) {
 
             <div style="margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #cbd5e0;">
-                    Email de recuperacao:
+                    Email de recuperação:
                 </label>
                 <input type="email" id="emailInput" value="${escapeHtml(emailAtual)}" 
                        placeholder="Email usado para recuperar o token"
@@ -223,7 +385,7 @@ function showCredentialsModal(index) {
                        onfocus="this.style.borderColor='#4a5568'; this.style.boxShadow='0 0 0 3px rgba(74, 85, 104, 0.3)'; this.style.outline='none'"
                        onblur="this.style.borderColor='#2d3748'; this.style.boxShadow='none'">
                 <small style="color: #a0aec0; display: block; margin-top: 5px; font-size: 0.85rem;">
-                    Este email recebera o token caso o cliente esqueca o acesso.
+                    Este email receberá o token caso o cliente esqueça o acesso.
                 </small>
             </div>
             
@@ -343,6 +505,25 @@ window.generateNewToken = function() {
     const tokenInput = document.getElementById('tokenInput');
     if (tokenInput) {
         tokenInput.value = generateToken(32);
+        const modal = document.getElementById('credentialsModal');
+        const codigo = modal?.dataset?.empresaCodigo || '';
+        const nome = modal?.dataset?.empresaNome || '';
+        if (codigo || nome) {
+            const selectedTempo = document.querySelector('input[name="tempoUso"]:checked')?.value;
+            const customTempo = parseInt(document.getElementById('tempoPersonalizado')?.value, 10);
+            const tempoUso = selectedTempo === 'personalizado'
+                ? (Number.isFinite(customTempo) && customTempo > 0 ? customTempo : 30)
+                : (parseInt(selectedTempo, 10) || 30);
+            writeEmpresaCredentialDraft(codigo, nome, {
+                usuario: document.getElementById('usuarioInput')?.value?.trim() || '',
+                email: document.getElementById('emailInput')?.value?.trim() || '',
+                token: tokenInput.value.trim(),
+                tempoUso,
+                data_criacao: new Date().toISOString(),
+                data_expiracao: calcularDataExpiracao(tempoUso),
+                source: 'manual-edit',
+            });
+        }
     }
 };
 
@@ -370,7 +551,7 @@ window.copyTokenToClipboard = async function(button) {
     const token = document.getElementById('tokenInput')?.value?.trim();
 
     if (!token) {
-        showWarning('Nao ha token para copiar.');
+        showWarning('Não há token para copiar.');
         return;
     }
 
@@ -395,7 +576,7 @@ window.copyTokenToClipboard = async function(button) {
         showSuccess('Token copiado para a area de transferencia.');
     } catch (error) {
         console.error('Erro ao copiar token:', error);
-        showError('Nao foi possivel copiar o token.');
+        showError('Não foi possível copiar o token.');
     }
 };
 
@@ -453,14 +634,17 @@ window.saveCredentials = function(empresaIndex) {
         }
         
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            showError('Informe um email valido para recuperacao.');
+            showError('Informe um email válido para recuperação.');
             return;
         }
 
         const empresa = normalizeEmpresa(systemData.empresas[empresaIndex]);
+        const credenciaisAtuais = empresa?.credenciais && typeof empresa.credenciais === 'object'
+            ? empresa.credenciais
+            : readEmpresaCredentialDraft(empresa?.codigo, empresa?.nome);
         
         // Calcular datas
-        const dataCriacao = new Date().toISOString();
+        const dataCriacao = String(credenciaisAtuais?.data_criacao || '').trim() || new Date().toISOString();
         const dataExpiracao = calcularDataExpiracao(tempoUso);
         
         // Criar objeto de credenciais
@@ -470,7 +654,8 @@ window.saveCredentials = function(empresaIndex) {
             token: token.trim(),
             data_criacao: dataCriacao,
             data_expiracao: dataExpiracao,
-            tempoUso: tempoUso
+            tempoUso: tempoUso,
+            source: 'manual-edit'
         };
         
         // Atualizar localmente
@@ -478,6 +663,9 @@ window.saveCredentials = function(empresaIndex) {
             ...empresa,
             credenciais: credenciais
         };
+
+        writeEmpresaCredentialDraft(empresa.codigo, empresa.nome, credenciais);
+        syncEmpresaCredenciaisInRenderedObras(empresa, credenciais);
         
         // Fechar modal
         document.getElementById('credentialsModal')?.remove();
@@ -513,6 +701,9 @@ async function removeCredentials(index, sigla) {
                     ...empresa,
                     credenciais: null
                 };
+
+                clearEmpresaCredentialDraft(empresa.codigo, empresa.nome);
+                syncEmpresaCredenciaisInRenderedObras(empresa, null);
                 
                 loadEmpresas();
                 

@@ -147,12 +147,12 @@ function renderAdminCard(admin, index) {
 
             <div class="admin-card-body">
                 <div class="admin-card-detail">
-                    <span class="detail-label">Usuario</span>
+                    <span class="detail-label">Usuário</span>
                     <span class="detail-value">@${escapeHtml(admin.usuario)}</span>
                 </div>
                 <div class="admin-card-detail">
                     <span class="detail-label">Email de recuperação</span>
-                    <span class="detail-value">${escapeHtml(admin.email || 'Nao cadastrado')}</span>
+                    <span class="detail-value">${escapeHtml(admin.email || 'Não cadastrado')}</span>
                 </div>
                 <div class="admin-card-detail">
                     <span class="detail-label">Senha atual</span>
@@ -167,7 +167,7 @@ function renderAdminCard(admin, index) {
                     <span class="detail-value">${escapeHtml(formatDate(admin.criadoEm))}</span>
                 </div>
                 <div class="admin-card-detail">
-                    <span class="detail-label">Ultimo acesso</span>
+                    <span class="detail-label">Último acesso</span>
                     <span class="detail-value">${escapeHtml(formatDate(admin.ultimoAcesso))}</span>
                 </div>
             </div>
@@ -214,7 +214,7 @@ function renderEmailConfigPanel() {
                 </label>
             </div>
 
-            <div class="modal-actions">
+            <div class="modal-actions-adm">
                 <button class="btn btn-success" id="saveAdminEmailConfigBtn" type="button" onclick="salvarCredenciais()">Salvar</button>
             </div>
         </section>
@@ -383,7 +383,7 @@ function saveAdminFromForm(event) {
     }
 
     if (email && !isValidEmail(email)) {
-        showError('Informe um email valido para recuperacao do ADM.');
+        showError('Informe um email válido para recuperação do ADM.');
         return;
     }
 

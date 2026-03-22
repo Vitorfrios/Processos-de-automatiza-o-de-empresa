@@ -68,7 +68,7 @@ function getClientSession() {
 
         return parsedSession;
     } catch (error) {
-        console.warn('[AUTH] Falha ao ler sessao client:', error);
+        console.warn('[AUTH] Falha ao ler sessão do client:', error);
         return null;
     }
 }
@@ -115,7 +115,7 @@ async function loginClient({ usuario, token }) {
         return {
             success: false,
             reason: 'missing_credentials',
-            message: 'Usuario e token sao obrigatorios.'
+            message: 'Usuário e token são obrigatórios.'
         };
     }
 
@@ -137,7 +137,7 @@ async function loginClient({ usuario, token }) {
         return {
             success: false,
             reason: 'network_error',
-            message: 'Nao foi possivel validar o acesso.'
+            message: 'Não foi possível validar o acesso.'
         };
     }
 
@@ -171,7 +171,7 @@ async function loginAdmin({ usuario, token }) {
         return {
             success: false,
             reason: 'missing_credentials',
-            message: 'Usuario e senha sao obrigatorios.'
+            message: 'Usuário e senha são obrigatórios.'
         };
     }
 
@@ -193,7 +193,7 @@ async function loginAdmin({ usuario, token }) {
         return {
             success: false,
             reason: 'network_error',
-            message: 'Nao foi possivel validar o acesso administrativo.'
+            message: 'Não foi possível validar o acesso administrativo.'
         };
     }
 
@@ -207,7 +207,7 @@ async function loginAdmin({ usuario, token }) {
         return {
             success: false,
             reason: payload?.reason || 'invalid_credentials',
-            message: payload?.error || 'Usuario ou senha de administrador invalidos.'
+            message: payload?.error || 'Usuário ou senha de administrador inválidos.'
         };
     }
 

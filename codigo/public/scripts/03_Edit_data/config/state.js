@@ -313,7 +313,7 @@ export function validateDataDebug() {
     console.log(" Empresas OK");
 
     // Validar banco_acessorios
-    console.log(" Validando acessorios...");
+    console.log(" Validando acessórios...");
     if (
       systemData.banco_acessorios &&
       typeof systemData.banco_acessorios === "object"
@@ -321,11 +321,11 @@ export function validateDataDebug() {
       for (const [id, acessorio] of Object.entries(
         systemData.banco_acessorios,
       )) {
-        console.log(` Validando acessorio ${id}...`);
+        console.log(` Validando acessório ${id}...`);
 
         if (typeof acessorio !== "object" || acessorio === null) {
           return showValidationError(
-            "Acessorios",
+            "Acessórios",
             `ID ${id}: Estrutura inválida`,
             acessorio,
           );
@@ -333,7 +333,7 @@ export function validateDataDebug() {
 
         if (!acessorio.codigo || typeof acessorio.codigo !== "string") {
           return showValidationError(
-            "Acessorios",
+            "Acessórios",
             `ID ${id}: Código inválido: "${acessorio.codigo}"`,
             acessorio,
           );
@@ -341,7 +341,7 @@ export function validateDataDebug() {
 
         if (!acessorio.descricao || typeof acessorio.descricao !== "string") {
           return showValidationError(
-            "Acessorios",
+            "Acessórios",
             `ID ${id}: Descrição inválida: "${acessorio.descricao}"`,
             acessorio,
           );
@@ -357,8 +357,8 @@ export function validateDataDebug() {
           )) {
             if (typeof valor !== "number" || isNaN(valor)) {
               return showValidationError(
-                "Acessorios",
-                `Acessorio "${acessorio.codigo}": Valor inválido para tamanho "${tamanho}": ${valor}`,
+                "Acessórios",
+                `Acessório "${acessorio.codigo}": Valor inválido para tamanho "${tamanho}": ${valor}`,
                 { tamanho, valor },
               );
             }
@@ -366,7 +366,7 @@ export function validateDataDebug() {
         }
       }
     }
-    console.log(" Acessorios OK");
+    console.log(" Acessórios OK");
 
     // Validar dutos
     console.log(" Validando dutos...");
@@ -601,7 +601,7 @@ export function normalizeSystemData() {
     });
   }
 
-  // Normalizar acessorios
+  // Normalizar acessórios
   if (
     systemData.banco_acessorios &&
     typeof systemData.banco_acessorios === "object"
@@ -610,7 +610,7 @@ export function normalizeSystemData() {
       // Garantir código string
       if (typeof acessorio.codigo !== "string") {
         console.warn(
-          `Normalizando acessorio ${id}: codigo "${acessorio.codigo}" -> string`,
+          `Normalizando acessório ${id}: codigo "${acessorio.codigo}" -> string`,
         );
         acessorio.codigo = String(acessorio.codigo || `EQ${id.slice(-3)}`);
         changes++;
@@ -619,10 +619,10 @@ export function normalizeSystemData() {
       // Garantir descrição string
       if (typeof acessorio.descricao !== "string") {
         console.warn(
-          `Normalizando acessorio ${id}: descricao "${acessorio.descricao}" -> string`,
+          `Normalizando acessório ${id}: descricao "${acessorio.descricao}" -> string`,
         );
         acessorio.descricao = String(
-          acessorio.descricao || "Acessorio sem descrição",
+          acessorio.descricao || "Acessório sem descrição",
         );
         changes++;
       }
@@ -635,7 +635,7 @@ export function normalizeSystemData() {
         Object.entries(acessorio.valores_padrao).forEach(([tamanho, valor]) => {
           if (typeof valor !== "number" || isNaN(valor)) {
             console.warn(
-              `Normalizando acessorio ${id} tamanho ${tamanho}: valor "${valor}" -> 0`,
+              `Normalizando acessório ${id} tamanho ${tamanho}: valor "${valor}" -> 0`,
             );
             acessorio.valores_padrao[tamanho] = parseFloat(valor) || 0;
             changes++;

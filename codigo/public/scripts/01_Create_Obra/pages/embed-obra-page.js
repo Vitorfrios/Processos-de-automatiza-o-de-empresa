@@ -21,7 +21,7 @@ const toggleSystemLogger = function(enable = null) {
         return window.toggleLogger(enable);
     }
 
-    console.warn('Logger nao disponivel para controle');
+    console.warn('Logger não disponível para controle');
     return false;
 };
 
@@ -129,14 +129,14 @@ async function loadRequestedObra(loadSingleObra, removeBaseObraFromHTML) {
     const obra = findRequestedObra(obras);
 
     if (!obra) {
-        throw new Error('Obra solicitada nao encontrada no backup.');
+        throw new Error('Obra solicitada não encontrada no backup.');
     }
 
     removeBaseObraFromHTML();
 
     const loadedCount = await loadSingleObra(obra);
     if (!loadedCount) {
-        throw new Error('Nao foi possivel renderizar a obra selecionada.');
+        throw new Error('Não foi possível renderizar a obra selecionada.');
     }
 
     expandLoadedObra(obra.id);
@@ -147,7 +147,7 @@ async function loadRequestedObra(loadSingleObra, removeBaseObraFromHTML) {
 async function initializeEmbedPage() {
     try {
         bootstrapEmbedGlobals();
-        setStatus('Inicializando visualizacao da obra...');
+        setStatus('Inicializando visualização da obra...');
 
         const [
             systemInitModule,
@@ -163,14 +163,14 @@ async function initializeEmbedPage() {
 
         const systemInitialized = await initializeSystem();
         if (systemInitialized === false) {
-            setStatus('Acesso indisponivel para carregar a obra.', 'error');
+            setStatus('Acesso indisponível para carregar a obra.', 'error');
             return;
         }
 
         setStatus('Carregando dados da obra...');
         await loadRequestedObra(loadSingleObra, removeBaseObraFromHTML);
     } catch (error) {
-        console.error('[OBRA-EMBED] Erro ao inicializar visualizacao da obra:', error);
+        console.error('[OBRA-EMBED] Erro ao inicializar visualização da obra:', error);
         setStatus(error.message || 'Erro ao carregar a obra.', 'error');
     }
 }

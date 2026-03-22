@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta
 
 from servidor_modules.database.storage import get_storage, normalize_empresa
 
@@ -133,6 +134,134 @@ class EmpresaRepository:
                     "codigo": codigo_normalizado,
                     "nome": nome_normalizado or codigo_normalizado,
                     "credenciais": {"email": email_normalizado},
+                }
+            )
+            updated = True
+
+        dados["empresas"] = empresas
+        self.storage.save_document("dados.json", dados)
+        return updated
+
+    def upsert_credentials(
+        self,
+        codigo,
+        nome="",
+        *,
+        usuario="",
+        token="",
+        email="",
+        tempo_uso=None,
+        data_criacao="",
+        data_expiracao="",
+    ):
+        codigo_normalizado = str(codigo or "").strip()
+        nome_normalizado = str(nome or "").strip()
+        usuario_normalizado = str(usuario or "").strip()
+        token_normalizado = str(token or "").strip()
+        email_normalizado = str(email or "").strip()
+        data_criacao_normalizada = str(data_criacao or "").strip()
+        data_expiracao_normalizada = str(data_expiracao or "").strip()
+
+        if not codigo_normalizado:
+            return False
+
+        should_sync_credentials = bool(usuario_normalizado)
+        should_sync_email = bool(email_normalizado)
+
+        if not should_sync_credentials and not should_sync_email:
+            return False
+
+        try:
+            tempo_uso_normalizado = (
+                int(tempo_uso) if tempo_uso not in (None, "", False) else None
+            )
+        except (TypeError, ValueError):
+            tempo_uso_normalizado = None
+
+        dados = self.storage.load_document(
+            "dados.json", self.storage.default_document("dados.json")
+        )
+        empresas = list(dados.get("empresas", []))
+        updated = False
+
+        for index, empresa in enumerate(empresas):
+            empresa_normalizada = normalize_empresa(empresa)
+            if not empresa_normalizada:
+                continue
+            if str(empresa_normalizada.get("codigo", "")).strip() != codigo_normalizado:
+                continue
+
+            credenciais = empresa_normalizada.get("credenciais")
+            if not isinstance(credenciais, dict):
+                credenciais = {}
+            else:
+                credenciais = dict(credenciais)
+
+            if should_sync_email:
+                credenciais["email"] = email_normalizado
+
+            if should_sync_credentials:
+                credenciais["usuario"] = usuario_normalizado
+                credenciais["token"] = token_normalizado
+
+            if tempo_uso_normalizado is not None:
+                credenciais["tempoUso"] = tempo_uso_normalizado
+            elif should_sync_credentials and not credenciais.get("tempoUso"):
+                credenciais["tempoUso"] = 30
+
+            if data_criacao_normalizada:
+                credenciais["data_criacao"] = data_criacao_normalizada
+            elif should_sync_credentials and not credenciais.get("data_criacao"):
+                credenciais["data_criacao"] = datetime.now().isoformat()
+
+            if data_expiracao_normalizada:
+                credenciais["data_expiracao"] = data_expiracao_normalizada
+            elif should_sync_credentials and not credenciais.get("data_expiracao"):
+                try:
+                    base_date = datetime.fromisoformat(
+                        str(credenciais.get("data_criacao") or datetime.now().isoformat())
+                    )
+                except ValueError:
+                    base_date = datetime.now()
+
+                validade_dias = int(credenciais.get("tempoUso") or 30)
+                credenciais["data_expiracao"] = (
+                    base_date + timedelta(days=validade_dias)
+                ).isoformat()
+
+            empresa_normalizada["credenciais"] = credenciais
+            if nome_normalizado and not empresa_normalizada.get("nome"):
+                empresa_normalizada["nome"] = nome_normalizado
+
+            empresas[index] = empresa_normalizada
+            updated = True
+            break
+
+        if not updated:
+            credenciais = {}
+            if should_sync_email:
+                credenciais["email"] = email_normalizado
+            if should_sync_credentials:
+                credenciais["usuario"] = usuario_normalizado
+                credenciais["token"] = token_normalizado
+                credenciais["tempoUso"] = tempo_uso_normalizado or 30
+                credenciais["data_criacao"] = (
+                    data_criacao_normalizada or datetime.now().isoformat()
+                )
+                try:
+                    base_date = datetime.fromisoformat(credenciais["data_criacao"])
+                except ValueError:
+                    base_date = datetime.now()
+                credenciais["data_expiracao"] = (
+                    data_expiracao_normalizada
+                    or (base_date + timedelta(days=int(credenciais["tempoUso"]))).isoformat()
+                )
+
+            empresas.append(
+                {
+                    "codigo": codigo_normalizado,
+                    "nome": nome_normalizado or codigo_normalizado,
+                    "credenciais": credenciais or None,
                 }
             )
             updated = True

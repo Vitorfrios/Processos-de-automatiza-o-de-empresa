@@ -147,7 +147,7 @@ class ServerCore:
             import webbrowser
             webbrowser.open(url)
         except Exception as e:
-            print(f"ðŸ’¡ Acesse manualmente: {url}")
+            print(f"Acesse manualmente: {url}")
 
     def start_server_threads(self, port, httpd, monitor_function):
         """Inicia threads auxiliares"""

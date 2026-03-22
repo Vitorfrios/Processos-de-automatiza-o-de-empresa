@@ -1,4 +1,4 @@
-"""Repositorio do catalogo de maquinas."""
+"""Repositório do catálogo de máquinas."""
 
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ class MachineRepository:
 
     def add(self, machine):
         if not isinstance(machine, dict) or not machine.get("type"):
-            raise ValueError("Tipo de maquina nao especificado")
+            raise ValueError("Tipo de máquina não especificado")
 
         dados = self.storage.load_document(
             "dados.json", self.storage.default_document("dados.json")
@@ -49,7 +49,7 @@ class MachineRepository:
         machines = list(dados.get("machines", []))
         machine_type = str(machine.get("type"))
         if any(str(existing.get("type")) == machine_type for existing in machines):
-            raise ValueError(f"Maquina '{machine_type}' ja existe")
+            raise ValueError(f"Máquina '{machine_type}' já existe")
 
         machines.append(machine)
         dados["machines"] = machines
@@ -58,7 +58,7 @@ class MachineRepository:
 
     def update(self, machine):
         if not isinstance(machine, dict) or not machine.get("type"):
-            raise ValueError("Tipo de maquina nao especificado")
+            raise ValueError("Tipo de máquina não especificado")
 
         dados = self.storage.load_document(
             "dados.json", self.storage.default_document("dados.json")
@@ -74,7 +74,7 @@ class MachineRepository:
                 break
 
         if not updated:
-            raise ValueError(f"Maquina '{machine_type}' nao encontrada")
+            raise ValueError(f"Máquina '{machine_type}' não encontrada")
 
         dados["machines"] = machines
         self.storage.save_document("dados.json", dados)
@@ -100,10 +100,9 @@ class MachineRepository:
                 machine_index = index
 
         if machine_index is None:
-            raise ValueError(f"Maquina '{machine_type}' nao encontrada")
+            raise ValueError(f"Máquina '{machine_type}' não encontrada")
 
         removed = machines.pop(machine_index)
         dados["machines"] = machines
         self.storage.save_document("dados.json", dados)
         return removed, machine_index
-

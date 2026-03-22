@@ -37,9 +37,9 @@ class RoutesCore:
     # ========== ROTAS DE OBRAS ==========
 
     def handle_get_obras(self):
-        """Obtem todas as obras da sessao atual"""
+        """Obtém todas as obras da sessão atual"""
         try:
-            print(" [OBRAS] Obtendo obras da sessao")
+            print(" [OBRAS] Obtendo obras da sessão")
 
             current_session_id = self.sessions_manager.get_current_session_id()
             session_data = self.sessions_manager._load_sessions_data()
@@ -48,7 +48,7 @@ class RoutesCore:
             )
             obras_da_sessao = self.obra_repository.get_by_session_ids(session_obra_ids)
 
-            print(f" ENVIANDO: {len(obras_da_sessao)} obras da sessao")
+            print(f" ENVIANDO: {len(obras_da_sessao)} obras da sessão")
             return obras_da_sessao
 
         except Exception as e:
@@ -56,7 +56,7 @@ class RoutesCore:
             return []
 
     def handle_get_obra_by_id(self, obra_id):
-        """Obtem uma obra especifica por ID"""
+        """Obtém uma obra específica por ID"""
         try:
             print(f" [OBRA POR ID] Buscando obra {obra_id}")
 
@@ -65,7 +65,7 @@ class RoutesCore:
                 print(f"Obra {obra_id} encontrada")
                 return obra
 
-            print(f"Obra {obra_id} nao encontrada")
+            print(f"Obra {obra_id} não encontrada")
             return None
 
         except Exception as e:
@@ -73,9 +73,10 @@ class RoutesCore:
             return None
 
     def handle_post_obras(self, post_data):
-        """Salva nova obra e adiciona a sessao com verificacao de empresa"""
+        """Salva nova obra e adiciona à sessão com verificação de empresa"""
         try:
             nova_obra = json.loads(post_data)
+            empresa_credenciais = nova_obra.pop("empresaCredenciais", None)
 
             print("[OBRA] Verificando se precisa criar empresa automaticamente...")
             nova_obra = self.empresa_handler.verificar_e_criar_empresa_automatica(
@@ -83,11 +84,33 @@ class RoutesCore:
             )
 
             email_empresa = str(nova_obra.get("emailEmpresa") or "").strip()
-            if email_empresa:
-                self.empresa_repository.upsert_recovery_email(
+            if email_empresa or (
+                isinstance(empresa_credenciais, dict)
+                and str(empresa_credenciais.get("usuario") or "").strip()
+            ):
+                self.empresa_repository.upsert_credentials(
                     nova_obra.get("empresaSigla"),
                     nova_obra.get("empresaNome"),
-                    email_empresa,
+                    usuario=str(empresa_credenciais.get("usuario") or "").strip()
+                    if isinstance(empresa_credenciais, dict)
+                    else "",
+                    token=str(empresa_credenciais.get("token") or "").strip()
+                    if isinstance(empresa_credenciais, dict)
+                    else "",
+                    email=email_empresa,
+                    tempo_uso=(empresa_credenciais or {}).get("tempoUso")
+                    if isinstance(empresa_credenciais, dict)
+                    else None,
+                    data_criacao=str(
+                        (empresa_credenciais or {}).get("data_criacao") or ""
+                    ).strip()
+                    if isinstance(empresa_credenciais, dict)
+                    else "",
+                    data_expiracao=str(
+                        (empresa_credenciais or {}).get("data_expiracao") or ""
+                    ).strip()
+                    if isinstance(empresa_credenciais, dict)
+                    else "",
                 )
 
             obra_id = nova_obra.get("id")
@@ -103,11 +126,11 @@ class RoutesCore:
 
             nova_obra["id"] = obra_id
 
-            print(f"Tentando adicionar obra {obra_id} a sessao...")
+            print(f"Tentando adicionar obra {obra_id} à sessão...")
             success = self.sessions_manager.add_obra_to_session(obra_id)
 
             if not success:
-                print(f"FALHA ao adicionar obra {obra_id} a sessao")
+                print(f"FALHA ao adicionar obra {obra_id} à sessão")
                 return None
 
             print(f"ADICIONANDO nova obra ID: {obra_id}")
@@ -120,9 +143,10 @@ class RoutesCore:
             return None
 
     def handle_put_obra(self, obra_id, put_data):
-        """Atualiza obra existente com verificacao de empresa"""
+        """Atualiza obra existente com verificação de empresa"""
         try:
             obra_atualizada = json.loads(put_data)
+            empresa_credenciais = obra_atualizada.pop("empresaCredenciais", None)
 
             print(
                 "[OBRA UPDATE] Verificando se precisa criar empresa automaticamente..."
@@ -132,11 +156,33 @@ class RoutesCore:
             )
 
             email_empresa = str(obra_atualizada.get("emailEmpresa") or "").strip()
-            if email_empresa:
-                self.empresa_repository.upsert_recovery_email(
+            if email_empresa or (
+                isinstance(empresa_credenciais, dict)
+                and str(empresa_credenciais.get("usuario") or "").strip()
+            ):
+                self.empresa_repository.upsert_credentials(
                     obra_atualizada.get("empresaSigla"),
                     obra_atualizada.get("empresaNome"),
-                    email_empresa,
+                    usuario=str(empresa_credenciais.get("usuario") or "").strip()
+                    if isinstance(empresa_credenciais, dict)
+                    else "",
+                    token=str(empresa_credenciais.get("token") or "").strip()
+                    if isinstance(empresa_credenciais, dict)
+                    else "",
+                    email=email_empresa,
+                    tempo_uso=(empresa_credenciais or {}).get("tempoUso")
+                    if isinstance(empresa_credenciais, dict)
+                    else None,
+                    data_criacao=str(
+                        (empresa_credenciais or {}).get("data_criacao") or ""
+                    ).strip()
+                    if isinstance(empresa_credenciais, dict)
+                    else "",
+                    data_expiracao=str(
+                        (empresa_credenciais or {}).get("data_expiracao") or ""
+                    ).strip()
+                    if isinstance(empresa_credenciais, dict)
+                    else "",
                 )
 
             if not self.obra_repository.get_by_id(obra_id):
@@ -159,7 +205,7 @@ class RoutesCore:
             if not deleted:
                 print(f"⚠️ Obra {obra_id} já não existia no servidor")
 
-            print(f"Obra {obra_id} encontrada para remocao" if deleted else f"Obra {obra_id} tratada como já removida")
+            print(f"Obra {obra_id} encontrada para remoção" if deleted else f"Obra {obra_id} tratada como já removida")
             self.sessions_manager.remove_obra(obra_id)
             return True
 
@@ -485,7 +531,7 @@ class RoutesCore:
             return {"obras": [], "projetos": []}
 
     def handle_get_backup_completo(self):
-        """Obtem todas as obras do backup sem filtro de sessao"""
+        """Obtém todas as obras do backup sem filtro de sessão"""
         try:
             print(" [BACKUP COMPLETO] Obtendo TODAS as obras")
             obras = self.obra_repository.get_all()
@@ -841,7 +887,7 @@ class RoutesCore:
             return {"empresas": []}
 
     def handle_get_machine_types(self):
-        """Retorna lista de tipos de maquinas"""
+        """Retorna lista de tipos de máquinas"""
         try:
             return {"machine_types": self.machine_repository.get_types()}
 
@@ -850,7 +896,7 @@ class RoutesCore:
             return {"machine_types": []}
 
     def handle_get_machine_by_type(self, machine_type):
-        """Retorna maquina especifica pelo tipo"""
+        """Retorna máquina específica pelo tipo"""
         try:
             return {"machine": self.machine_repository.get_by_type(machine_type)}
 
@@ -869,7 +915,7 @@ class RoutesCore:
             if not all(key in new_data for key in required_keys):
                 return {
                     "success": False,
-                    "error": "Estrutura de dados invalida. Faltam campos obrigatorios.",
+                    "error": "Estrutura de dados inválida. Faltam campos obrigatórios.",
                 }
 
             new_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(new_data)
@@ -918,36 +964,36 @@ class RoutesCore:
             return {"success": False, "error": str(e)}
 
     def handle_post_save_machines(self, post_data):
-        """Salva todas as maquinas"""
+        """Salva todas as máquinas"""
         try:
             new_machines = json.loads(post_data)
             self.machine_repository.replace_all(new_machines.get("machines", []))
-            print(" Maquinas salvas")
-            return {"success": True, "message": "Maquinas salvas"}
+            print(" Máquinas salvas")
+            return {"success": True, "message": "Máquinas salvas"}
 
         except Exception as e:
             print(f"Erro ao salvar machines: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_add_machine(self, post_data):
-        """Adiciona nova maquina"""
+        """Adiciona nova máquina"""
         try:
             new_machine = json.loads(post_data)
             machine = self.machine_repository.add(new_machine)
-            print(f" Nova maquina '{new_machine.get('type')}' adicionada")
-            return {"success": True, "message": "Maquina adicionada", "machine": machine}
+            print(f" Nova máquina '{new_machine.get('type')}' adicionada")
+            return {"success": True, "message": "Máquina adicionada", "machine": machine}
 
         except Exception as e:
             print(f"Erro ao adicionar machine: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_update_machine(self, post_data):
-        """Atualiza maquina existente"""
+        """Atualiza máquina existente"""
         try:
             update_data = json.loads(post_data)
             machine = self.machine_repository.update(update_data)
-            print(f" Maquina '{update_data.get('type')}' atualizada")
-            return {"success": True, "message": "Maquina atualizada", "machine": machine}
+            print(f" Máquina '{update_data.get('type')}' atualizada")
+            return {"success": True, "message": "Máquina atualizada", "machine": machine}
 
         except Exception as e:
             print(f"Erro ao atualizar machine: {str(e)}")
@@ -959,7 +1005,7 @@ class RoutesCore:
             # Esta função pode delegar para o EmpresaHandler
             return {
                 "success": True, 
-                "message": "Empresa auto criada"
+                "message": "Empresa criada automaticamente"
             }
         except Exception as e:
             print(f"❌ Erro em handle_post_empresas_auto: {str(e)}")
@@ -1082,7 +1128,7 @@ class RoutesCore:
         
         
     def handle_get_acessorios(self):
-        """Retorna todos os acessorios do banco_acessorios"""
+        """Retorna todos os acessórios do banco_acessorios"""
         try:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
             dados_data = self.file_utils.load_json_file(dados_file, {})
@@ -1095,7 +1141,7 @@ class RoutesCore:
             }
             
         except Exception as e:
-            print(f"❌ Erro ao carregar acessorios: {str(e)}")
+            print(f"❌ Erro ao carregar acessórios: {str(e)}")
             return {
                 "success": False,
                 "error": str(e),
@@ -1194,16 +1240,16 @@ class RoutesCore:
         # Adicione este método na classe RoutesCore, depois do método handle_post_update_machine:
 
     def handle_post_delete_machine(self, post_data):
-        """Deleta uma maquina do sistema"""
+        """Deleta uma máquina do sistema"""
         try:
             data = json.loads(post_data)
             machine_type = data.get("type")
             index = data.get("index")
             removed, removed_index = self.machine_repository.delete(machine_type, index)
-            print(f"Maquina '{machine_type}' (indice {removed_index}) removida com sucesso")
+            print(f"Máquina '{machine_type}' (índice {removed_index}) removida com sucesso")
             return {
                 "success": True,
-                "message": f"Maquina '{machine_type}' deletada com sucesso",
+                "message": f"Máquina '{machine_type}' deletada com sucesso",
                 "machine_removed": removed,
                 "index": removed_index,
             }

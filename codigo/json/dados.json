@@ -2382,7 +2382,7 @@
       "token": "5tgrySVdG458",
       "email": "vitorfrios074@gmail.com",
       "criadoEm": "2026-03-19T14:30:59.996Z",
-      "ultimoAcesso": "2026-03-20T21:31:29.220933"
+      "ultimoAcesso": "2026-03-21T11:43:32.478672-03:00"
     }
   ],
   "empresas": [
@@ -2416,7 +2416,9 @@
     {
       "codigo": "CIC",
       "nome": "CICLO SOLAR",
-      "credenciais": null
+      "credenciais": {
+        "email": "jgiyutyreasd\\z@gmail.com"
+      }
     },
     {
       "codigo": "GEP",
@@ -2426,7 +2428,14 @@
     {
       "codigo": "IHM",
       "nome": "IHM ENGENHARIA",
-      "credenciais": null
+      "credenciais": {
+        "email": "sophiafonvale@gmail.com",
+        "usuario": "user ihm",
+        "token": "ac22f3770bbb42f7801a4acbe360b943",
+        "tempoUso": 30,
+        "data_criacao": "2026-03-22T01:58:05.449Z",
+        "data_expiracao": "2026-04-21T01:58:05.449Z"
+      }
     },
     {
       "codigo": "SEP",
@@ -2436,7 +2445,9 @@
     {
       "codigo": "SEN",
       "nome": "SENIOR",
-      "credenciais": null
+      "credenciais": {
+        "email": "vitorfrios074@gmail.com"
+      }
     },
     {
       "codigo": "TEC",
@@ -2466,7 +2477,9 @@
     {
       "codigo": "EMA",
       "nome": "EMAC",
-      "credenciais": null
+      "credenciais": {
+        "email": "wliefbelwbbi@gmail.com"
+      }
     },
     {
       "codigo": "MAR",

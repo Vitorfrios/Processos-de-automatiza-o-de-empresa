@@ -1,6 +1,6 @@
 import { APP_CONFIG } from '../core/config.js';
 
-const DEFAULT_CREATE_TITLE = 'Criacao de Obras';
+const DEFAULT_CREATE_TITLE = 'Criação de Obras';
 const DEFAULT_EDIT_TITLE = 'Edicao de Obras';
 const dashboardViewParams = new URLSearchParams(window.location.search);
 

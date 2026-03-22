@@ -6,6 +6,8 @@
 
 import { EmpresaCadastroInline } from "./empresa-core.js";
 import { inicializarInputEmpresaHibrido } from "./empresa-autocomplete.js";
+import { APP_CONFIG } from "../../core/config.js";
+import { loadSystemBootstrap } from "../../core/system-bootstrap.js";
 import {
   formatarDataEmTempoReal,
   validarDataInput,
@@ -13,6 +15,522 @@ import {
 } from "./empresa-ui-helpers.js";
 
 const empresa = new EmpresaCadastroInline();
+let adminEmpresasCachePromise = null;
+const EMPRESA_CREDENTIAL_DRAFT_PREFIX = "esi.empresaCredentialDraft.";
+
+function isAdminCreateMode() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    APP_CONFIG.mode !== "client" &&
+    window.location.pathname === "/admin/obras/create"
+  );
+}
+
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value ?? "";
+  return div.innerHTML;
+}
+
+function generateEmpresaAccessToken(length = 32) {
+  const bytesLength = Math.max(16, Math.ceil(length / 2));
+  const bytes = new Uint8Array(bytesLength);
+  const cryptoObject = globalThis.crypto || window.crypto;
+
+  if (cryptoObject?.getRandomValues) {
+    cryptoObject.getRandomValues(bytes);
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) {
+      bytes[index] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, length);
+}
+
+function getEmpresaCredentialDraftKey(empresaSigla, empresaNome) {
+  const baseKey = String(empresaSigla || empresaNome || "")
+    .trim()
+    .toUpperCase();
+
+  if (!baseKey) {
+    return "";
+  }
+
+  return `${EMPRESA_CREDENTIAL_DRAFT_PREFIX}${baseKey}`;
+}
+
+function getEmpresaCredentialCompanyKey(empresaSigla, empresaNome) {
+  return String(empresaSigla || empresaNome || "")
+    .trim()
+    .toUpperCase();
+}
+
+function calcularDataExpiracaoISO(tempoUso = 30, dataCriacao = "") {
+  const baseDate = String(dataCriacao || "").trim();
+  const currentDate = baseDate ? new Date(baseDate) : new Date();
+  const resolvedDate = Number.isNaN(currentDate.getTime()) ? new Date() : currentDate;
+  resolvedDate.setDate(resolvedDate.getDate() + Number(tempoUso || 30));
+  return resolvedDate.toISOString();
+}
+
+function createEmpresaCredentialDraft({
+  empresaSigla = "",
+  empresaNome = "",
+  email = "",
+  credenciais = null,
+} = {}) {
+  const source = credenciais && typeof credenciais === "object" ? credenciais : {};
+  const tempoUso = Number.parseInt(source.tempoUso, 10) || 30;
+  const dataCriacao = String(source.data_criacao || source.createdAt || "").trim();
+  const token = String(source.token || "").trim() || generateEmpresaAccessToken();
+  const usuario = String(source.usuario || "").trim();
+
+  return {
+    usuario,
+    token,
+    email: String(source.email || source.recoveryEmail || email || "").trim(),
+    tempoUso,
+    data_criacao: dataCriacao || new Date().toISOString(),
+    data_expiracao:
+      String(source.data_expiracao || source.expiracao || "").trim() ||
+      calcularDataExpiracaoISO(tempoUso, dataCriacao),
+  };
+}
+
+function readEmpresaCredentialDraft(empresaSigla, empresaNome) {
+  const draftKey = getEmpresaCredentialDraftKey(empresaSigla, empresaNome);
+  if (!draftKey || typeof window === "undefined" || !window.localStorage) {
+    return null;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(draftKey);
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+    return parsedValue && typeof parsedValue === "object" ? parsedValue : null;
+  } catch (error) {
+    console.warn(" [EMPRESA] Não foi possível ler rascunho de credenciais:", error);
+    return null;
+  }
+}
+
+function writeEmpresaCredentialDraft(empresaSigla, empresaNome, credenciais) {
+  const draftKey = getEmpresaCredentialDraftKey(empresaSigla, empresaNome);
+  if (
+    !draftKey ||
+    typeof window === "undefined" ||
+    !window.localStorage ||
+    !credenciais ||
+    typeof credenciais !== "object"
+  ) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(draftKey, JSON.stringify(credenciais));
+  } catch (error) {
+    console.warn(" [EMPRESA] Não foi possível salvar rascunho de credenciais:", error);
+  }
+}
+
+function clearEmpresaCredentialDraft(empresaSigla, empresaNome) {
+  const draftKey = getEmpresaCredentialDraftKey(empresaSigla, empresaNome);
+  if (!draftKey || typeof window === "undefined" || !window.localStorage) {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(draftKey);
+  } catch (error) {
+    console.warn(" [EMPRESA] Não foi possível limpar rascunho de credenciais:", error);
+  }
+}
+
+function clearAdminCredentialDataset(obraElement) {
+  if (!obraElement) return;
+
+  [
+    "empresaCredUsuario",
+    "empresaCredToken",
+    "empresaCredTempoUso",
+    "empresaCredDataCriacao",
+    "empresaCredDataExpiracao",
+    "empresaCredHasAccess",
+    "empresaCredCompanyKey",
+  ].forEach((campo) => delete obraElement.dataset[campo]);
+}
+
+function getAdminCredentialDataset(obraElement) {
+  if (!obraElement) {
+    return null;
+  }
+
+  const usuario = String(obraElement.dataset.empresaCredUsuario || "").trim();
+  const token = String(obraElement.dataset.empresaCredToken || "").trim();
+  const tempoUso = String(obraElement.dataset.empresaCredTempoUso || "").trim();
+  const dataCriacao = String(obraElement.dataset.empresaCredDataCriacao || "").trim();
+  const dataExpiracao = String(
+    obraElement.dataset.empresaCredDataExpiracao || ""
+  ).trim();
+
+  if (!usuario && !token && !tempoUso && !dataCriacao && !dataExpiracao) {
+    return null;
+  }
+
+  return {
+    usuario,
+    token,
+    tempoUso,
+    data_criacao: dataCriacao,
+    data_expiracao: dataExpiracao,
+  };
+}
+
+function hasAdminCredentialValue(credenciais) {
+  if (!credenciais || typeof credenciais !== "object") {
+    return false;
+  }
+
+  return [
+    "usuario",
+    "token",
+    "email",
+    "recoveryEmail",
+    "tempoUso",
+    "data_criacao",
+    "data_expiracao",
+    "createdAt",
+    "expiracao",
+  ].some((campo) => String(credenciais[campo] || "").trim() !== "");
+}
+
+function normalizeAdminCredentialData(credenciais, fallbackEmail = "") {
+  const source = credenciais && typeof credenciais === "object" ? credenciais : {};
+
+  return {
+    usuario: String(source.usuario || "").trim(),
+    token: String(source.token || "").trim(),
+    email: String(source.email || source.recoveryEmail || fallbackEmail || "").trim(),
+    tempoUso: Number.parseInt(source.tempoUso, 10) || 30,
+    data_criacao: String(source.data_criacao || source.createdAt || "").trim(),
+    data_expiracao: String(source.data_expiracao || source.expiracao || "").trim(),
+  };
+}
+
+async function loadAdminEmpresasCache() {
+  if (!isAdminCreateMode()) {
+    return [];
+  }
+
+  if (!adminEmpresasCachePromise) {
+    adminEmpresasCachePromise = loadSystemBootstrap({ force: true })
+      .then((payload) => (Array.isArray(payload?.empresas) ? payload.empresas : []))
+      .catch((error) => {
+        console.error(" [EMPRESA] Erro ao carregar empresas do bootstrap:", error);
+        adminEmpresasCachePromise = null;
+        return [];
+      });
+  }
+
+  return adminEmpresasCachePromise;
+}
+
+function findEmpresaCredenciais(empresas, empresaSigla, empresaNome) {
+  const normalizedSigla = String(empresaSigla || "")
+    .trim()
+    .toUpperCase();
+  const normalizedNome = String(empresaNome || "")
+    .trim()
+    .toUpperCase();
+
+  return (empresas || []).find((empresaItem) => {
+    if (!empresaItem || typeof empresaItem !== "object") {
+      return false;
+    }
+
+    const codigo = String(empresaItem.codigo || "")
+      .trim()
+      .toUpperCase();
+    const nome = String(empresaItem.nome || "")
+      .trim()
+      .toUpperCase();
+
+    return Boolean(
+      (normalizedSigla && codigo === normalizedSigla) ||
+        (normalizedNome && nome === normalizedNome)
+    );
+  });
+}
+
+function renderAdminCredentialUserField({
+  obraId,
+  usuario = "",
+}) {
+  if (!isAdminCreateMode()) {
+    return "";
+  }
+
+  return `
+ <div class="form-group-horizontal">
+ <label>Usuário de acesso</label>
+ <input type="text"
+ class="empresa-usuario-cadastro"
+ id="empresa-usuario-${obraId}"
+ value="${escapeHtml(usuario)}"
+ placeholder="Selecione uma empresa primeiro"
+ disabled
+ readonly
+ oninput="window.syncEmpresaCredentialDraft?.('${obraId}')">
+ </div>
+ `;
+}
+
+function renderAdminCredentialTokenField({
+  obraId,
+  token = "",
+}) {
+  if (!isAdminCreateMode()) {
+    return "";
+  }
+
+  return `
+ <div class="form-group-horizontal">
+  <label>Token de acesso</label>
+ <div class="empresa-token-inline" style="display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:8px; align-items:stretch;">
+ <input type="text"
+  class="empresa-token-cadastro"
+  id="empresa-token-${obraId}"
+  value="${escapeHtml(token)}"
+  placeholder="Selecione uma empresa primeiro"
+  disabled
+  readonly
+  style="flex:1;">
+  <div style="display:flex; flex-direction:column; gap:8px;">
+  <button type="button"
+  class="empresa-token-action"
+  data-credential-action="copy"
+  onclick="window.copyEmpresaTokenToClipboard('${obraId}', this)"
+  title="Copiar token"
+  aria-label="Copiar token"
+  disabled
+  style="white-space:nowrap; padding:0 12px; border:1px solid #d5d9e2; border-radius:8px; background:#f3f6fb; cursor:pointer;">
+  Copiar
+  </button>
+  <button type="button"
+  class="empresa-token-action"
+  data-credential-action="generate"
+  onclick="window.generateEmpresaTokenField('${obraId}')"
+  disabled
+  style="white-space:nowrap; padding:0 12px; border:none; border-radius:8px; background:#1f4b99; color:#fff; cursor:pointer;">
+  Gerar
+  </button>
+  </div>
+  </div>
+ </div>
+ `;
+}
+
+function setAdminCredentialUiState(
+  obraId,
+  { hasCompany = false, hasToken = false, hasCredentialAccess = false } = {}
+) {
+  const usuarioInput = document.getElementById(`empresa-usuario-${obraId}`);
+  const tokenInput = document.getElementById(`empresa-token-${obraId}`);
+  const copyButton = document.querySelector(
+    `[data-obra-id="${obraId}"] [data-credential-action="copy"]`
+  );
+  const generateButton = document.querySelector(
+    `[data-obra-id="${obraId}"] [data-credential-action="generate"]`
+  );
+
+  if (usuarioInput) {
+    usuarioInput.disabled = !hasCompany;
+    usuarioInput.readOnly = !hasCompany;
+    usuarioInput.placeholder = !hasCompany
+      ? "Selecione uma empresa primeiro"
+      : hasCredentialAccess
+        ? "Usuário para login do cliente"
+        : "Defina o usuário de acesso";
+  }
+
+  if (tokenInput) {
+    tokenInput.disabled = !hasCompany;
+    tokenInput.readOnly = true;
+    tokenInput.placeholder = !hasCompany
+      ? "Selecione uma empresa primeiro"
+      : hasCredentialAccess
+        ? "Token gerado automaticamente"
+        : "Clique em Gerar para criar o token";
+  }
+
+  if (generateButton) {
+    generateButton.disabled = !hasCompany;
+  }
+
+  if (copyButton) {
+    copyButton.disabled = !hasCompany || !hasToken;
+  }
+}
+
+async function syncAdminEmpresaCredentialsForObra(obraId, obraData = null) {
+  if (!isAdminCreateMode()) {
+    return;
+  }
+
+  const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+  if (!obraElement) {
+    return;
+  }
+
+  const usuarioInput = document.getElementById(`empresa-usuario-${obraId}`);
+  const tokenInput = document.getElementById(`empresa-token-${obraId}`);
+  const emailInput = document.getElementById(`email-empresa-${obraId}`);
+  const empresaInput = document.getElementById(`empresa-input-${obraId}`);
+  if (!usuarioInput || !tokenInput) {
+    return;
+  }
+
+  const empresaInputVazio = !String(empresaInput?.value || "").trim();
+
+  const empresaSigla = String(
+    obraData?.empresaSigla ||
+      obraData?.empresaCodigo ||
+      obraElement.dataset.empresaSigla ||
+      obraElement.dataset.empresaCodigo ||
+      ""
+  ).trim();
+  const empresaNome = String(
+    obraData?.empresaNome || obraElement.dataset.empresaNome || ""
+  ).trim();
+  const companyKey = getEmpresaCredentialCompanyKey(empresaSigla, empresaNome);
+
+  if (empresaInputVazio || (!empresaSigla && !empresaNome)) {
+    clearAdminCredentialDataset(obraElement);
+    usuarioInput.value = "";
+    tokenInput.value = "";
+    if (emailInput) {
+      emailInput.value = "";
+    }
+    delete obraElement.dataset.emailEmpresa;
+    delete obraElement.dataset.empresaEmail;
+    setAdminCredentialUiState(obraId, {
+      hasCompany: false,
+      hasToken: false,
+      hasCredentialAccess: false,
+    });
+    return;
+  }
+
+  const credenciaisDaObra =
+    obraData?.empresaCredenciais ||
+    (obraElement.dataset.empresaCredCompanyKey === companyKey
+      ? getAdminCredentialDataset(obraElement)
+      : null);
+  const draftLocal = readEmpresaCredentialDraft(empresaSigla, empresaNome);
+  const credenciaisRascunho =
+    draftLocal?.source === "manual-create" ? draftLocal : null;
+  const empresas = await loadAdminEmpresasCache();
+  const empresaEncontrada = findEmpresaCredenciais(
+    empresas,
+    empresaSigla,
+    empresaNome
+  );
+  const credenciaisPersistidas = empresaEncontrada?.credenciais;
+  const emailResolvido = String(
+    obraData?.emailEmpresa ||
+      obraData?.empresaEmail ||
+      credenciaisDaObra?.email ||
+      credenciaisDaObra?.recoveryEmail ||
+      credenciaisPersistidas?.email ||
+      credenciaisPersistidas?.recoveryEmail ||
+      ""
+  ).trim();
+
+  let credenciaisResolvidas = null;
+  let hasCredentialAccess = false;
+
+  if (hasAdminCredentialValue(credenciaisDaObra)) {
+    credenciaisResolvidas = normalizeAdminCredentialData(
+      credenciaisDaObra,
+      emailResolvido
+    );
+  } else if (hasAdminCredentialValue(credenciaisPersistidas)) {
+    credenciaisResolvidas = normalizeAdminCredentialData(
+      credenciaisPersistidas,
+      emailResolvido
+    );
+  } else if (hasAdminCredentialValue(credenciaisRascunho)) {
+    credenciaisResolvidas = normalizeAdminCredentialData(
+      credenciaisRascunho,
+      emailResolvido
+    );
+  }
+
+  if (emailInput) {
+    emailInput.value = emailResolvido;
+  }
+
+  if (emailResolvido) {
+    obraElement.dataset.emailEmpresa = emailResolvido;
+    obraElement.dataset.empresaEmail = emailResolvido;
+  } else {
+    delete obraElement.dataset.emailEmpresa;
+    delete obraElement.dataset.empresaEmail;
+  }
+
+  if (!credenciaisResolvidas) {
+    clearAdminCredentialDataset(obraElement);
+    usuarioInput.value = "";
+    tokenInput.value = "";
+    setAdminCredentialUiState(obraId, {
+      hasCompany: true,
+      hasToken: false,
+      hasCredentialAccess: false,
+    });
+    return;
+  }
+
+  usuarioInput.value = String(credenciaisResolvidas.usuario || "").trim();
+  tokenInput.value = String(credenciaisResolvidas.token || "").trim();
+  hasCredentialAccess = Boolean(usuarioInput.value || tokenInput.value);
+
+  setAdminCredentialUiState(obraId, {
+    hasCompany: true,
+    hasCredentialAccess,
+    hasToken: Boolean(tokenInput.value.trim()),
+  });
+
+  obraElement.dataset.empresaCredUsuario = usuarioInput.value.trim();
+  obraElement.dataset.empresaCredToken = tokenInput.value.trim();
+  obraElement.dataset.empresaCredHasAccess = hasCredentialAccess ? "true" : "false";
+  obraElement.dataset.empresaCredCompanyKey = companyKey;
+  obraElement.dataset.empresaCredTempoUso = String(
+    credenciaisResolvidas.tempoUso || 30
+  );
+  if (credenciaisResolvidas.data_criacao) {
+    obraElement.dataset.empresaCredDataCriacao = String(
+      credenciaisResolvidas.data_criacao
+    );
+  } else {
+    delete obraElement.dataset.empresaCredDataCriacao;
+  }
+  if (credenciaisResolvidas.data_expiracao) {
+    obraElement.dataset.empresaCredDataExpiracao = String(
+      credenciaisResolvidas.data_expiracao
+    );
+  } else {
+    delete obraElement.dataset.empresaCredDataExpiracao;
+  }
+}
 
 /* ==== SEÇÃO 1: GERENCIAMENTO DE FORMULÁRIOS ==== */
 
@@ -85,12 +603,11 @@ function atualizarCamposEmpresaForm(obraData, formElement) {
 }
 
 /**
- * Cria formulário de empresa com dados existentes - corrigido
- */
-// empresa-form-manager.js
-
-/**
- * ÚNICO FORMULÁRIO DE EMPRESA - Inteligente (criação/visualização)
+ * Cria formulário de empresa com dados existentes - CORRIGIDO
+ * Layout em 3 linhas:
+ * Linha 1: Empresa | Nº Cliente | Cliente Final
+ * Linha 2: Código | Orçamentista | Data
+ * Linha 3: Usuário | Email | Token
  */
 function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
   console.log(
@@ -118,111 +635,115 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
   const codigoCliente = dadosExistentes?.codigoCliente || "";
   const emailEmpresa =
     dadosExistentes?.emailEmpresa || dadosExistentes?.empresaEmail || "";
+  const empresaCredenciais =
+    dadosExistentes?.empresaCredenciais || dadosExistentes?.credenciais || null;
   const dataCadastro = dadosExistentes?.dataCadastro
     ? formatarData(dadosExistentes.dataCadastro)
     : dataAtual;
   const orcamentista = dadosExistentes?.orcamentistaResponsavel || "";
 
   const formularioHTML = `
- <div class="empresa-formulario-ativo" data-modo="${modoEdicao ? "edicao" : "criacao"}">
- <h4>${modoEdicao ? "Dados da Empresa" : "Cadastro de Empresa"}</h4>
+<div class="empresa-formulario-ativo" data-modo="${modoEdicao ? "edicao" : "criacao"}">
+  <h4>${modoEdicao ? "Dados da Empresa" : "Cadastro de Empresa"}</h4>
 
- <div class="empresa-form-grid-horizontal">
- <!-- EMPRESA (sempre editável) -->
- <div class="form-group-horizontal">
- <label>Empresa ${!modoEdicao ? "*" : ""}</label>
- <div class="empresa-input-container">
- <input type="text" 
- class="empresa-input-cadastro" 
- id="empresa-input-${obraId}"
- value="${valorEmpresa}"
- placeholder="Digite sigla ou nome ou selecione..."
- autocomplete="off"
- ${modoEdicao ? "" : "required"}>
- <div class="empresa-dropdown" id="empresa-dropdown-${obraId}">
- <div class="dropdown-options" id="empresa-options-${obraId}"></div>
- </div>
- </div>
- </div>
+  <div class="empresa-form-grid-horizontal">
+    <!-- LINHA 1: EMPRESA | Nº CLIENTE | CLIENTE FINAL -->
+    <div class="form-group-horizontal">
+      <label>Empresa ${!modoEdicao ? "*" : ""}</label>
+      <div class="empresa-input-container">
+        <input type="text" 
+          class="empresa-input-cadastro" 
+          id="empresa-input-${obraId}"
+          value="${valorEmpresa}"
+          placeholder="Digite sigla ou nome ou selecione..."
+          autocomplete="off"
+          ${modoEdicao ? "" : "required"}>
+        <div class="empresa-dropdown" id="empresa-dropdown-${obraId}">
+          <div class="dropdown-options" id="empresa-options-${obraId}"></div>
+        </div>
+      </div>
+    </div>
 
- <!-- Nº CLIENTE -->
- <div class="form-group-horizontal">
- <label>Nº Cliente</label>
- <input type="text" 
- class="numero-cliente-final-cadastro" 
- id="numero-cliente-${obraId}"
- value="${numeroCliente}"
- placeholder="${modoEdicao ? "Número do cliente" : "Será gerado automaticamente"}"
- ${modoEdicao ? "" : "readonly"}>
- </div>
+    <div class="form-group-horizontal">
+      <label>Nº Cliente</label>
+      <input type="text" 
+        class="numero-cliente-final-cadastro" 
+        id="numero-cliente-${obraId}"
+        value="${numeroCliente}"
+        placeholder="${modoEdicao ? "Número do cliente" : "Será gerado automaticamente"}"
+        ${modoEdicao ? "" : "readonly"}>
+    </div>
 
- <!-- CLIENTE FINAL -->
- <div class="form-group-horizontal">
- <label>Cliente Final</label>
- <input type="text" 
- class="cliente-final-cadastro" 
- id="cliente-final-${obraId}"
- value="${clienteFinal}"
- placeholder="Nome do cliente final">
- </div>
+    <div class="form-group-horizontal">
+      <label>Cliente Final</label>
+      <input type="text" 
+        class="cliente-final-cadastro" 
+        id="cliente-final-${obraId}"
+        value="${clienteFinal}"
+        placeholder="Nome do cliente final">
+    </div>
 
- <!-- CÓDIGO -->
- <div class="form-group-horizontal">
- <label>Código</label>
- <input type="text" 
- class="codigo-cliente-cadastro" 
- id="codigo-cliente-${obraId}"
- value="${codigoCliente}"
- placeholder="Código do cliente">
- </div>
+    <!-- LINHA 2: CÓDIGO | ORÇAMENTISTA | DATA -->
+    <div class="form-group-horizontal">
+      <label>Código</label>
+      <input type="text" 
+        class="codigo-cliente-cadastro" 
+        id="codigo-cliente-${obraId}"
+        value="${codigoCliente}"
+        placeholder="Código do cliente">
+    </div>
 
- <div class="form-group-horizontal">
- <label>Email da empresa</label>
- <input type="email" 
- class="email-empresa-cadastro" 
- id="email-empresa-${obraId}"
- value="${emailEmpresa}"
- placeholder="Email para contato e recuperacao">
- </div>
+    <div class="form-group-horizontal">
+      <label>Orçamentista</label>
+      <input type="text" 
+        class="orcamentista-responsavel-cadastro" 
+        id="orcamentista-${obraId}"
+        value="${orcamentista}"
+        placeholder="Nome do orçamentista">
+    </div>
 
- <!-- DATA -->
- <div class="form-group-horizontal">
- <label>Data</label>
- <div class="date-input-container">
- <input type="text" 
- class="data-cadastro-cadastro" 
- id="data-cadastro-${obraId}"
- value="${dataCadastro}"
- placeholder="DD/MM/AAAA"
- maxlength="10">
- <span class="calendar-icon" onclick="window.alternarDatePicker('${obraId}')"></span>
- </div>
- </div>
+    <div class="form-group-horizontal">
+      <label>Data</label>
+      <div class="date-input-container">
+        <input type="text" 
+          class="data-cadastro-cadastro" 
+          id="data-cadastro-${obraId}"
+          value="${dataCadastro}"
+          placeholder="DD/MM/AAAA"
+          maxlength="10">
+        <span class="calendar-icon" onclick="window.alternarDatePicker('${obraId}')"></span>
+      </div>
+    </div>
 
- <!-- ORÇAMENTISTA -->
- <div class="form-group-horizontal">
- <label>Orçamentista</label>
- <input type="text" 
- class="orcamentista-responsavel-cadastro" 
- id="orcamentista-${obraId}"
- value="${orcamentista}"
- placeholder="Nome do orçamentista">
- </div>
- </div>
+    <!-- LINHA 3: USUÁRIO | EMAIL | TOKEN -->
+    ${renderAdminCredentialUserField({ obraId, usuario: empresaCredenciais?.usuario || "" })}
+    
+    <div class="form-group-horizontal">
+      <label>Email da empresa</label>
+      <input type="email" 
+        class="email-empresa-cadastro" 
+        id="email-empresa-${obraId}"
+        value="${emailEmpresa}"
+        placeholder="Email para contato e recuperação"
+        ${isAdminCreateMode() ? `oninput="window.syncEmpresaCredentialDraft?.('${obraId}')"` : ""}>
+    </div>
 
- <!-- BOTÕES -->
- <div class="empresa-form-actions">
- <button type="button" class="btn-ocultar" 
- onclick="window.ocultarFormularioEmpresa('${obraId}')">
- Ocultar
- </button>
- <button type="button" class="btn-limpar" 
- onclick="window.limparFormularioEmpresa('${obraId}')">
- Limpar
- </button>
- </div>
- </div>
- `;
+    ${renderAdminCredentialTokenField({ obraId, token: empresaCredenciais?.token || "" })}
+  </div>
+
+  <!-- BOTÕES -->
+  <div class="empresa-form-actions">
+    <button type="button" class="btn-ocultar" 
+      onclick="window.ocultarFormularioEmpresa('${obraId}')">
+      Ocultar
+    </button>
+    <button type="button" class="btn-limpar" 
+      onclick="window.limparFormularioEmpresa('${obraId}')">
+      Limpar
+    </button>
+  </div>
+</div>
+  `;
 
   // Remove formulário anterior se existir
   const formularioAnterior = container.querySelector(
@@ -265,6 +786,8 @@ function criarFormularioEmpresa(obraId, container, dadosExistentes = null) {
       window.applyClientEmpresaRestrictions(obraId, dadosExistentes);
     }
 
+    syncAdminEmpresaCredentialsForObra(obraId, dadosExistentes);
+
     console.log(
       ` [EMPRESA] Formulário ${modoEdicao ? "de edição" : "de criação"} criado para obra ${obraId}`,
     );
@@ -299,115 +822,6 @@ function vincularEventosMudanca(obraId, container) {
       input.addEventListener("change", input._changeHandler);
     }
   });
-}
-
-/**
- * Cria formulário vazio de empresa
- */
-function criarFormularioVazioEmpresa(obraId, container) {
-  const dataAtual = new Date().toLocaleDateString("pt-BR");
-
-  const formularioHTML = `
- <div class="empresa-formulario-ativo">
- <h4>Cadastro de Empresa</h4>
-
- <div class="empresa-form-grid-horizontal">
- <div class="form-group-horizontal">
- <label>Empresa *</label>
- <div class="empresa-input-container">
- <input type="text" 
- class="empresa-input-cadastro" 
- id="empresa-input-${obraId}"
- placeholder="Digite sigla ou nome ou selecione..."
- autocomplete="off">
- <div class="empresa-dropdown" id="empresa-dropdown-${obraId}">
- <div class="dropdown-options" id="empresa-options-${obraId}"></div>
- </div>
- </div>
- </div>
-
- <div class="form-group-horizontal">
- <label>Nº Cliente</label>
- <input type="text" class="numero-cliente-final-cadastro"
- placeholder="Será gerado automaticamente">
- </div>
-
- <div class="form-group-horizontal">
- <label>Cliente Final</label>
- <input type="text" 
- class="cliente-final-cadastro" 
- id="cliente-final-${obraId}"
- placeholder="Nome do cliente final">
- </div>
-
- <div class="form-group-horizontal">
- <label>Código</label>
- <input type="text" 
- class="codigo-cliente-cadastro" 
- id="codigo-cliente-${obraId}"
- placeholder="Código do cliente">
- </div>
-
- <div class="form-group-horizontal">
- <label>Email da empresa</label>
- <input type="email" 
- class="email-empresa-cadastro" 
- id="email-empresa-${obraId}"
- placeholder="Email para contato e recuperacao">
- </div>
-
- <div class="form-group-horizontal">
- <label>Data</label>
- <div class="date-input-container">
- <input type="text" 
- class="data-cadastro-cadastro" 
- id="data-cadastro-${obraId}"
- placeholder="DD/MM/AAAA"
- value="${dataAtual}"
- maxlength="10">
- <span class="calendar-icon" onclick="window.alternarDatePicker('${obraId}', 'cadastro')"></span>
- </div>
- </div>
-
- <div class="form-group-horizontal">
- <label>Orçamentista</label>
- <input type="text" 
- class="orcamentista-responsavel-cadastro" 
- id="orcamentista-${obraId}"
- placeholder="Nome do orçamentista">
- </div>
- </div>
-
- <div class="empresa-form-actions">
- <button type="button" class="btn-ocultar" 
- onclick="window.ocultarFormularioEmpresa('${obraId}')">
- Ocultar
- </button>
- <button type="button" class="btn-limpar" 
- onclick="window.limparFormularioEmpresa('${obraId}')">
- Limpar
- </button>
- </div>
- </div>
- `;
-
-  container.insertAdjacentHTML("beforeend", formularioHTML);
-
-  setTimeout(() => {
-    if (window.APP_CONFIG?.features?.empresaAutocomplete !== false) {
-      inicializarInputEmpresaHibrido(obraId);
-    }
-
-    // Configurar auto-formatação para o campo de data
-    const dataCampo = container.querySelector(`#data-cadastro-${obraId}`);
-    if (dataCampo) {
-      configurarCampoDataEspecifico(dataCampo);
-    }
-
-    if (typeof window.applyClientEmpresaRestrictions === "function") {
-      window.applyClientEmpresaRestrictions(obraId);
-    }
-  }, 37);
 }
 
 /* ==== SEÇÃO 2: SISTEMA DE DATEPICKER E FORMATAÇÃO DE DATA ==== */
@@ -735,6 +1149,8 @@ function limparCamposEmpresaCompletamente(obraId) {
  .codigo-cliente-cadastro,
  .codigo-cliente-input,
  .email-empresa-cadastro,
+ .empresa-usuario-cadastro,
+ .empresa-token-cadastro,
  .data-cadastro-cadastro,
  .data-cadastro-input,
  .orcamentista-responsavel-cadastro,
@@ -781,6 +1197,13 @@ function limparCamposEmpresaCompletamente(obraId) {
       "clienteFinal",
       "codigoCliente",
       "emailEmpresa",
+      "empresaCredUsuario",
+      "empresaCredToken",
+      "empresaCredTempoUso",
+      "empresaCredDataCriacao",
+      "empresaCredDataExpiracao",
+      "empresaCredHasAccess",
+      "empresaCredCompanyKey",
       "dataCadastro",
       "orcamentistaResponsavel",
       "idGerado",
@@ -894,6 +1317,8 @@ window.limparFormularioEmpresa = function (obraId) {
       "#cliente-final-" + obraId,
       "#codigo-cliente-" + obraId,
       "#email-empresa-" + obraId,
+      "#empresa-usuario-" + obraId,
+      "#empresa-token-" + obraId,
       "#orcamentista-" + obraId,
     ];
 
@@ -930,12 +1355,36 @@ window.limparFormularioEmpresa = function (obraId) {
       "clienteFinal",
       "codigoCliente",
       "emailEmpresa",
+      "empresaCredUsuario",
+      "empresaCredToken",
+      "empresaCredTempoUso",
+      "empresaCredDataCriacao",
+      "empresaCredDataExpiracao",
+      "empresaCredHasAccess",
+      "empresaCredCompanyKey",
       "orcamentistaResponsavel",
       "idGerado",
       "identificadorObra",
     ];
 
     camposParaRemover.forEach((campo) => delete obraElement.dataset[campo]);
+    clearAdminCredentialDataset(obraElement);
+
+    const usuarioInput = formulario.querySelector(`#empresa-usuario-${obraId}`);
+    if (usuarioInput) {
+      usuarioInput.value = "";
+    }
+
+    const tokenInput = formulario.querySelector(`#empresa-token-${obraId}`);
+    if (tokenInput) {
+      tokenInput.value = "";
+    }
+
+    setAdminCredentialUiState(obraId, {
+      hasCompany: false,
+      hasToken: false,
+      hasCredentialAccess: false,
+    });
 
     // APÓS LIMPAR, FECHAR O FORMULÁRIO E MOSTRAR BOTÃO DE CADASTRO
     formulario.style.display = "none";
@@ -1004,12 +1453,237 @@ async function carregarDadosEmpresaNaObra(obraElement, obraData) {
     tituloElement.textContent = `${obraData.empresaSigla}-${obraData.numeroClienteFinal}`;
   }
 
+  syncAdminEmpresaCredentialsForObra(obraId, obraData);
+
   console.log(
     ` [EMPRESA] Dados carregados e interface atualizada para obra ${obraId}`,
   );
 }
 
 /* ==== SEÇÃO 5: INICIALIZAÇÃO ==== */
+async function copyEmpresaTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+
+  const tempInput = document.createElement("input");
+  tempInput.value = text;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  tempInput.setSelectionRange(0, text.length);
+  const copied = document.execCommand("copy");
+  tempInput.remove();
+  return copied;
+}
+
+window.generateEmpresaTokenField = function (obraId) {
+  const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+  const empresaSigla = String(
+    obraElement?.dataset.empresaSigla ||
+      obraElement?.dataset.empresaCodigo ||
+      document.getElementById(`empresa-input-${obraId}`)?.dataset.siglaSelecionada ||
+      ""
+  ).trim();
+  const empresaNome = String(
+    obraElement?.dataset.empresaNome ||
+      document.getElementById(`empresa-input-${obraId}`)?.dataset.nomeSelecionado ||
+      ""
+  ).trim();
+  if (!empresaSigla && !empresaNome) {
+    return;
+  }
+
+  const tokenInput = document.getElementById(`empresa-token-${obraId}`);
+  if (!tokenInput || tokenInput.disabled) {
+    return;
+  }
+
+  tokenInput.value = generateEmpresaAccessToken();
+  if (obraElement) {
+    obraElement.dataset.empresaCredHasAccess = "true";
+    obraElement.dataset.empresaCredToken = tokenInput.value.trim();
+  }
+
+  setAdminCredentialUiState(obraId, {
+    hasCompany: true,
+    hasCredentialAccess: true,
+    hasToken: true,
+  });
+
+  if (typeof window.syncEmpresaCredentialDraft === "function") {
+    window.syncEmpresaCredentialDraft(obraId);
+  }
+};
+
+window.copyEmpresaTokenToClipboard = async function (obraId, button) {
+  const token = String(
+    document.getElementById(`empresa-token-${obraId}`)?.value || ""
+  ).trim();
+
+  if (!token) {
+    return;
+  }
+
+  try {
+    const copied = await copyEmpresaTextToClipboard(token);
+    if (!copied) {
+      throw new Error("copy_failed");
+    }
+
+    if (button) {
+      const previousLabel = button.textContent;
+      button.textContent = "Ok";
+      button.disabled = true;
+      setTimeout(() => {
+        if (!button.isConnected) return;
+        button.textContent = previousLabel;
+        button.disabled = false;
+      }, 1200);
+    }
+  } catch (error) {
+    console.error(" [EMPRESA] Erro ao copiar token:", error);
+  }
+};
+
+window.syncEmpresaCredentialDraft = function (obraId) {
+  if (!isAdminCreateMode()) {
+    return;
+  }
+
+  const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+  if (!obraElement) {
+    return;
+  }
+
+  const empresaInput = document.getElementById(`empresa-input-${obraId}`);
+  if (!String(empresaInput?.value || "").trim()) {
+    clearAdminCredentialDataset(obraElement);
+    const usuarioInput = document.getElementById(`empresa-usuario-${obraId}`);
+    const tokenInput = document.getElementById(`empresa-token-${obraId}`);
+    const emailInput = document.getElementById(`email-empresa-${obraId}`);
+    if (usuarioInput) {
+      usuarioInput.value = "";
+    }
+    if (tokenInput) {
+      tokenInput.value = "";
+    }
+    if (emailInput) {
+      emailInput.value = "";
+    }
+    delete obraElement.dataset.empresaSigla;
+    delete obraElement.dataset.empresaNome;
+    delete obraElement.dataset.emailEmpresa;
+    delete obraElement.dataset.empresaEmail;
+    setAdminCredentialUiState(obraId, {
+      hasCompany: false,
+      hasToken: false,
+      hasCredentialAccess: false,
+    });
+    return;
+  }
+
+  const empresaSigla = String(
+    obraElement.dataset.empresaSigla ||
+      obraElement.dataset.empresaCodigo ||
+      document.getElementById(`empresa-input-${obraId}`)?.dataset.siglaSelecionada ||
+      ""
+  ).trim();
+  const empresaNome = String(
+    obraElement.dataset.empresaNome ||
+      document.getElementById(`empresa-input-${obraId}`)?.dataset.nomeSelecionado ||
+      ""
+  ).trim();
+  const companyKey = getEmpresaCredentialCompanyKey(empresaSigla, empresaNome);
+
+  if (!empresaSigla && !empresaNome) {
+    clearAdminCredentialDataset(obraElement);
+    const usuarioInput = document.getElementById(`empresa-usuario-${obraId}`);
+    const tokenInput = document.getElementById(`empresa-token-${obraId}`);
+    if (usuarioInput) {
+      usuarioInput.value = "";
+    }
+    if (tokenInput) {
+      tokenInput.value = "";
+    }
+    setAdminCredentialUiState(obraId, {
+      hasCompany: false,
+      hasToken: false,
+      hasCredentialAccess: false,
+    });
+    return;
+  }
+
+  const usuarioInput = document.getElementById(`empresa-usuario-${obraId}`);
+  const tokenInput = document.getElementById(`empresa-token-${obraId}`);
+  const emailInput = document.getElementById(`email-empresa-${obraId}`);
+  const usuarioAtual = String(usuarioInput?.value || "").trim();
+  const tokenAtual = String(tokenInput?.value || "").trim();
+  const emailAtual = String(emailInput?.value || "").trim();
+  const hasCredentialAccess = Boolean(tokenAtual);
+
+  if (!hasCredentialAccess) {
+    clearAdminCredentialDataset(obraElement);
+    clearEmpresaCredentialDraft(empresaSigla, empresaNome);
+    setAdminCredentialUiState(obraId, {
+      hasCompany: true,
+      hasToken: false,
+      hasCredentialAccess: false,
+    });
+
+    if (emailAtual) {
+      obraElement.dataset.emailEmpresa = emailAtual;
+      obraElement.dataset.empresaEmail = emailAtual;
+    } else {
+      delete obraElement.dataset.emailEmpresa;
+      delete obraElement.dataset.empresaEmail;
+    }
+    return;
+  }
+
+  obraElement.dataset.empresaCredHasAccess = "true";
+  obraElement.dataset.empresaCredCompanyKey = companyKey;
+  obraElement.dataset.empresaCredUsuario = usuarioAtual;
+  obraElement.dataset.empresaCredToken = tokenAtual;
+  obraElement.dataset.empresaCredTempoUso = String(
+    obraElement.dataset.empresaCredTempoUso || 30
+  );
+  obraElement.dataset.empresaCredDataCriacao = String(
+    obraElement.dataset.empresaCredDataCriacao || new Date().toISOString()
+  );
+  obraElement.dataset.empresaCredDataExpiracao = String(
+    obraElement.dataset.empresaCredDataExpiracao ||
+      calcularDataExpiracaoISO(
+        obraElement.dataset.empresaCredTempoUso || 30,
+        obraElement.dataset.empresaCredDataCriacao
+      )
+  );
+
+  if (emailAtual) {
+    obraElement.dataset.emailEmpresa = emailAtual;
+    obraElement.dataset.empresaEmail = emailAtual;
+  } else {
+    delete obraElement.dataset.emailEmpresa;
+    delete obraElement.dataset.empresaEmail;
+  }
+
+  writeEmpresaCredentialDraft(empresaSigla, empresaNome, {
+    source: "manual-create",
+    usuario: obraElement.dataset.empresaCredUsuario,
+    token: tokenAtual,
+    email: emailAtual,
+    tempoUso: obraElement.dataset.empresaCredTempoUso,
+    data_criacao: obraElement.dataset.empresaCredDataCriacao,
+    data_expiracao: obraElement.dataset.empresaCredDataExpiracao,
+  });
+
+  setAdminCredentialUiState(obraId, {
+    hasCompany: true,
+    hasCredentialAccess: true,
+    hasToken: Boolean(tokenAtual),
+  });
+};
+
 export {
   atualizarInterfaceComEmpresa,
   atualizarCamposEmpresaForm,
@@ -1024,6 +1698,7 @@ export {
   limparCamposEmpresaCompletamente,
   criarFormularioEmpresa,
   carregarDadosEmpresaNaObra,
+  syncAdminEmpresaCredentialsForObra,
 };
 
 // Compatibilidade global
@@ -1042,6 +1717,7 @@ if (typeof window !== "undefined") {
   window.limparCampoData = limparCampoData;
   window.limparCamposEmpresaCompletamente = limparCamposEmpresaCompletamente;
   window.carregarDadosEmpresaNaObra = carregarDadosEmpresaNaObra;
+  window.syncAdminEmpresaCredentialsForObra = syncAdminEmpresaCredentialsForObra;
 }
 
 // Inicializar configuração de data quando o módulo for carregado

@@ -351,7 +351,7 @@ function buildCadastroAlerts(data, stats) {
     if (stats.empresasSemLogin > 0) {
         alerts.push({
             title: 'Empresas sem acesso configurado',
-            meta: `${formatNumber(stats.empresasSemLogin)} empresa(s) ainda nao possuem usuario e token para login do cliente.`,
+            meta: `${formatNumber(stats.empresasSemLogin)} empresa(s) ainda não possuem usuário e token para login do cliente.`,
             actionLabel: 'Revisar empresas',
             actionType: 'tab',
             actionValue: 'empresas'
@@ -360,8 +360,8 @@ function buildCadastroAlerts(data, stats) {
 
     if (stats.empresasSemEmail > 0) {
         alerts.push({
-            title: 'Empresas sem email de recuperacao',
-            meta: `${formatNumber(stats.empresasSemEmail)} empresa(s) ainda nao possuem email para recuperar o acesso.`,
+            title: 'Empresas sem email de recuperação',
+            meta: `${formatNumber(stats.empresasSemEmail)} empresa(s) ainda não possuem email para recuperar o acesso.`,
             actionLabel: 'Revisar empresas',
             actionType: 'tab',
             actionValue: 'empresas'
@@ -370,8 +370,8 @@ function buildCadastroAlerts(data, stats) {
 
     if (stats.adminsSemEmail > 0) {
         alerts.push({
-            title: 'ADMs sem email de recuperacao',
-            meta: `${formatNumber(stats.adminsSemEmail)} administrador(es) ainda nao possuem email cadastrado.`,
+            title: 'ADMs sem email de recuperação',
+            meta: `${formatNumber(stats.adminsSemEmail)} administrador(es) ainda não possuem email cadastrado.`,
             actionLabel: 'Revisar ADMs',
             actionType: 'tab',
             actionValue: 'adminCredentials'
@@ -390,9 +390,9 @@ function buildCadastroAlerts(data, stats) {
 
     if (stats.credenciaisExpirando.length > 0) {
         alerts.push({
-            title: 'Credenciais vencendo em ate 7 dias',
-            meta: `${formatNumber(stats.credenciaisExpirando.length)} empresa(s) precisam de renovacao em breve.`,
-            actionLabel: 'Planejar renovacao',
+            title: 'Credenciais vencendo em até 7 dias',
+            meta: `${formatNumber(stats.credenciaisExpirando.length)} empresa(s) precisam de renovação em breve.`,
+            actionLabel: 'Planejar renovação',
             actionType: 'tab',
             actionValue: 'empresas'
         });
@@ -415,9 +415,9 @@ function buildCadastroAlerts(data, stats) {
             .join(', ');
 
         alerts.push({
-            title: 'Tipos de maquina duplicados',
+            title: 'Tipos de máquina duplicados',
             meta: `${formatNumber(stats.duplicateMachineTypes.length)} duplicidade(s) detectada(s). Ex.: ${duplicatePreview}.`,
-            actionLabel: 'Ver maquinas',
+            actionLabel: 'Ver máquinas',
             actionType: 'tab',
             actionValue: 'machines'
         });
@@ -426,7 +426,7 @@ function buildCadastroAlerts(data, stats) {
     if (alerts.length === 0 && data.empresas.length > 0) {
         alerts.push({
             title: 'Cadastro em ordem',
-            meta: 'Nenhum alerta imediato encontrado nas empresas, obras e maquinas cadastradas.',
+            meta: 'Nenhum alerta imediato encontrado nas empresas, obras e máquinas cadastradas.',
             variant: 'good'
         });
     }
@@ -492,7 +492,7 @@ function processDashboardData(data) {
         rankingEmpresas,
         obrasRecentes,
         distribuicaoTipos: {
-            labels: ['Maquinas', 'Acessorios', 'Dutos', 'Tubos'],
+            labels: ['Máquinas', 'Acessórios', 'Dutos', 'Tubos'],
             data: [
                 data.maquinas.length,
                 Object.keys(data.acessorios).length,
@@ -521,9 +521,9 @@ function renderKPIs(stats) {
             secondaryValue: stats.empresasComLogin
         },
         { label: 'Obras', value: stats.totalObras, color: '#2B6CB0' },
-        { label: 'Maquinas', value: stats.totalMaquinas, color: '#D69E2E' },
+        { label: 'Máquinas', value: stats.totalMaquinas, color: '#D69E2E' },
         { label: 'Dutos', value: stats.totalDutos, color: '#C53030' },
-        { label: 'Acessorios', value: stats.totalAcessorios, color: '#805AD5' },
+        { label: 'Acessórios', value: stats.totalAcessorios, color: '#805AD5' },
         { label: 'Tubos', value: stats.totalTubos, color: '#0F766E' }
     ];
 
@@ -591,7 +591,7 @@ function renderPieChart(containerId, data, labels, title, totalSuffix = 'tipos')
             <div class="chart-header">
                 <h4>${escapeHtml(title)}</h4>
             </div>
-            <div class="empty-state">Sem dados disponiveis.</div>
+            <div class="empty-state">Sem dados disponíveis.</div>
         `;
         return;
     }
@@ -641,17 +641,17 @@ function renderMetricsStrip(stats) {
         {
             label: 'Sem login',
             value: formatNumber(stats.empresasSemLogin),
-            note: 'Empresas sem usuario/token configurado'
+            note: 'Empresas sem usuário/token configurado'
         },
         {
             label: 'Expiradas',
             value: formatNumber(stats.credenciaisExpiradas.length),
-            note: 'Credenciais que ja nao permitem acesso'
+            note: 'Credenciais que já não permitem acesso'
         },
         {
             label: 'Expiram em 7 dias',
             value: formatNumber(stats.credenciaisExpirando.length),
-            note: 'Logins que precisam de renovacao imediata'
+            note: 'Logins que precisam de renovação imediata'
         },
         {
             label: 'Obras sem projeto',
@@ -728,7 +728,7 @@ function ensureDashboardObraModal() {
             <div class="dashboard-obra-header">
                 <div>
                     <span class="dashboard-eyebrow">Obra Selecionada</span>
-                    <h3 id="dashboardObraModalTitle">Visualizacao da obra</h3>
+                    <h3 id="dashboardObraModalTitle">Visualização da obra</h3>
                 </div>
                 <div class="dashboard-obra-actions">
                     <button class="btn btn-small btn-primary" type="button" onclick="closeDashboardObraModal()">
@@ -740,7 +740,7 @@ function ensureDashboardObraModal() {
                 <iframe
                     id="dashboardObraFrame"
                     class="dashboard-obra-frame"
-                    title="Visualizacao detalhada da obra"
+                    title="Visualização detalhada da obra"
                     loading="lazy"
                 ></iframe>
             </div>
@@ -773,7 +773,7 @@ function openDashboardObraModal(modalUrl, obraName) {
     }
 
     modal.dataset.url = modalUrl;
-    title.textContent = obraName ? `Obra: ${obraName}` : 'Visualizacao da obra';
+    title.textContent = obraName ? `Obra: ${obraName}` : 'Visualização da obra';
     frame.src = modalUrl;
 
     modal.classList.add('is-open');
@@ -803,8 +803,8 @@ function renderAlertsWidget(stats) {
         <section class="widget-card">
             <div class="widget-title-row">
                 <div>
-                    <span class="dashboard-eyebrow">Saude do cadastro</span>
-                    <h3>Fila de atencao</h3>
+                    <span class="dashboard-eyebrow">Saúde do cadastro</span>
+                    <h3>Fila de atenção</h3>
                 </div>
                 <span class="info-badge ${stats.alerts.some((item) => item.variant !== 'good') ? 'alert' : 'good'}">
                     ${formatNumber(stats.alerts.length)} item(ns)
@@ -833,7 +833,7 @@ function renderRankingWidget(stats) {
                         <h3>Empresas com mais obras</h3>
                     </div>
                 </div>
-                <div class="empty-state">Ainda nao existem obras suficientes para gerar ranking.</div>
+                <div class="empty-state">Ainda não existem obras suficientes para gerar ranking.</div>
             </section>
         `;
     }
@@ -977,7 +977,7 @@ export async function renderDashboard({ force = false } = {}) {
         );
     } catch (error) {
         console.error(' Erro ao renderizar dashboard:', error);
-        container.innerHTML = '<div class="empty-state">Nao foi possivel carregar o dashboard.</div>';
+        container.innerHTML = '<div class="empty-state">Não foi possível carregar o dashboard.</div>';
         showWarning('Erro ao carregar dados do dashboard');
     } finally {
         dashboardState.rendering = false;
