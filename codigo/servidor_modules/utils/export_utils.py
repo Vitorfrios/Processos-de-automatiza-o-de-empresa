@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import json
 import os
 import smtplib
 import shutil
@@ -10,7 +12,10 @@ import time
 import zipfile
 from email.message import EmailMessage
 from email.utils import formataddr
+from html import escape as html_escape
 from pathlib import Path
+from urllib import error as urllib_error
+from urllib import request as urllib_request
 
 from servidor_modules.handlers.word_handler import WordHandler
 from servidor_modules.utils.admin_email_config import (
@@ -84,6 +89,104 @@ def build_smtp_connection_candidates(host, port, use_tls, sender_email):
             candidates.append(fallback)
 
     return candidates
+
+
+def get_resend_api_key():
+    """Obtém a API key do Resend a partir do ambiente."""
+    return str(
+        os.environ.get("resend_API")
+        or os.environ.get("RESEND_API")
+        or os.environ.get("RESEND_API_KEY")
+        or ""
+    ).strip()
+
+
+def build_resend_sender(sender_email, sender_name):
+    """Resolve o remetente usado no fallback via Resend."""
+    resolved_email = str(
+        os.environ.get("RESEND_FROM_EMAIL")
+        or os.environ.get("RESEND_FROM")
+        or "onboarding@resend.dev"
+    ).strip()
+    resolved_name = str(
+        os.environ.get("RESEND_FROM_NAME")
+        or sender_name
+        or ""
+    ).strip()
+
+    return formataddr((resolved_name, resolved_email)) if resolved_name else resolved_email
+
+
+def convert_message_to_simple_html(message_text):
+    """Converte texto simples em HTML básico para provedores HTTP."""
+    normalized = str(message_text or "").strip() or "Segue arquivo em anexo."
+    lines = normalized.splitlines() or [normalized]
+    return "".join(f"<p>{html_escape(line) or '&nbsp;'}</p>" for line in lines)
+
+
+def send_via_resend(destino, assunto, mensagem, sender_email, sender_name, attachments=None):
+    """Envia email via Resend como fallback HTTP."""
+    api_key = get_resend_api_key()
+    if not api_key:
+        raise RuntimeError("API key do Resend não configurada.")
+
+    destination = str(destino or "").strip()
+    if not is_valid_email(destination):
+        raise ValueError("Endereço de email de destino inválido")
+
+    resend_payload = {
+        "from": build_resend_sender(sender_email, sender_name),
+        "to": [destination],
+        "subject": str(assunto or "").strip() or "Exportação de obra",
+        "text": str(mensagem or "").strip() or "Segue arquivo em anexo.",
+        "html": convert_message_to_simple_html(mensagem),
+    }
+
+    reply_to_email = str(sender_email or "").strip()
+    if reply_to_email and is_valid_email(reply_to_email):
+        resend_payload["reply_to"] = reply_to_email
+
+    normalized_attachments = normalize_attachment_files(attachments)
+    if normalized_attachments:
+        resend_payload["attachments"] = []
+        for attachment in normalized_attachments:
+            file_path = Path(str(attachment.get("path") or ""))
+            filename = str(attachment.get("filename") or file_path.name).strip() or file_path.name
+            file_bytes = read_verified_attachment_bytes(file_path)
+            resend_payload["attachments"].append(
+                {
+                    "filename": filename,
+                    "content": base64.b64encode(file_bytes).decode("ascii"),
+                }
+            )
+
+    request_body = json.dumps(resend_payload).encode("utf-8")
+    request_obj = urllib_request.Request(
+        "https://api.resend.com/emails",
+        data=request_body,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib_request.urlopen(request_obj, timeout=30) as response:
+            response_body = response.read().decode("utf-8", errors="replace")
+            parsed_response = json.loads(response_body or "{}")
+            if response.status < 200 or response.status >= 300:
+                raise RuntimeError(
+                    f"Resend respondeu com status {response.status}: {response_body}"
+                )
+            return parsed_response
+    except urllib_error.HTTPError as exc:
+        response_body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(
+            f"Resend rejeitou a requisição ({exc.code}): {response_body}"
+        ) from exc
+    except urllib_error.URLError as exc:
+        raise RuntimeError(f"Falha de rede ao conectar no Resend: {exc}") from exc
 
 
 def cleanup_temp_files(*paths):
@@ -398,6 +501,22 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
                 except Exception:
                     pass
 
+    resend_error = None
+    if get_resend_api_key():
+        try:
+            send_via_resend(
+                destino=destination,
+                assunto=message["Subject"],
+                mensagem=mensagem,
+                sender_email=sender_email,
+                sender_name=sender_name,
+                attachments=attachments,
+            )
+            return
+        except Exception as exc:
+            resend_error = exc
+            print(" Aviso Resend fallback:", exc)
+
     if isinstance(last_error, smtplib.SMTPAuthenticationError):
         domain = sender_email.split("@", 1)[1].lower() if "@" in sender_email else ""
         if domain in {"gmail.com", "googlemail.com"}:
@@ -405,6 +524,11 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
                 "Gmail rejeitou a autenticação SMTP. Verifique se o App Password está correto e se a conta usa verificação em duas etapas."
             ) from last_error
         raise RuntimeError("Credenciais SMTP rejeitadas pelo provedor de email.") from last_error
+
+    if resend_error is not None:
+        raise RuntimeError(
+            f"Falha no envio por SMTP ({host}:{port}) e tambem no fallback Resend."
+        ) from resend_error
 
     if last_error is not None:
         raise RuntimeError(f"Falha ao conectar ao servidor SMTP ({host}:{port}).") from last_error
