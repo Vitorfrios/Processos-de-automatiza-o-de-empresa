@@ -412,7 +412,6 @@ Arquivo:
 │  │  ├─ handlers/
 │  │  └─ utils/
 │  └─ word_templates/
-├─ scripts/
 └─ utilitarios py/
 ```
 

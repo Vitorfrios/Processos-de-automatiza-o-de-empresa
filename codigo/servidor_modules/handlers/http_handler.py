@@ -80,6 +80,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         ".db",
         ".sqlite",
     )
+    CLIENT_SENSITIVE_OBRA_FIELDS = {
+        "precoBase",
+        "precoTotal",
+        "valorTotalObra",
+        "valorTotalProjeto",
+        "valorTotalGeralTubos",
+        "valorTipo",
+        "valorOpcional",
+        "valorTotal",
+        "valorUnitario",
+        "valor",
+        "value",
+    }
     PAGE_ACCESS_ROLES = {
         "/login": None,
         "/obras/create": {"client", "admin"},
@@ -487,6 +500,28 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if isinstance(obra, dict) and self._matches_empresa_context(obra, session)
         ]
 
+    def _sanitize_obra_for_client(self, payload):
+        if isinstance(payload, list):
+            return [self._sanitize_obra_for_client(item) for item in payload]
+
+        if not isinstance(payload, dict):
+            return payload
+
+        sanitized = {}
+        for key, value in payload.items():
+            if str(key) in self.CLIENT_SENSITIVE_OBRA_FIELDS:
+                continue
+            sanitized[key] = self._sanitize_obra_for_client(value)
+
+        return sanitized
+
+    def _sanitize_obras_for_client(self, obras):
+        return [
+            self._sanitize_obra_for_client(obra)
+            for obra in (obras or [])
+            if isinstance(obra, dict)
+        ]
+
     def _apply_company_context_to_obra(self, obra_data, session=None):
         session = session or self.get_auth_session()
         payload = dict(obra_data or {})
@@ -602,16 +637,19 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "codigo": session.get("empresaCodigo", ""),
                 "nome": session.get("empresaNome", ""),
             }
+            obras_cliente = self._sanitize_obras_for_client(
+                self._filter_obras_for_session(
+                    self.routes_core.obra_repository.get_all(),
+                    session,
+                )
+            )
             empresas = [empresa_publica] if empresa_publica["codigo"] else []
             session_obras = {
                 "session_id": self.routes_core.sessions_manager.get_current_session_id(),
-                "obras": [obra.get("id") for obra in allowed_catalog if obra.get("id")],
+                "obras": [obra.get("id") for obra in obras_cliente if obra.get("id")],
             }
-            obras_sessao = self._filter_obras_for_session(
-                self.routes_core.obra_repository.get_all(),
-                session,
-            )
-            obra_catalog = {"obras": allowed_catalog}
+            obras_sessao = obras_cliente
+            obra_catalog = {"obras": obras_cliente}
 
         return {
             "success": True,
@@ -736,7 +774,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_get_backup_completo_secure(self):
         obras = self.routes_core.obra_repository.get_all()
-        self.send_json_response({"obras": self._filter_obras_for_session(obras)})
+        obras_filtradas = self._filter_obras_for_session(obras)
+        if self._has_role("admin"):
+            self.send_json_response({"obras": obras_filtradas})
+            return
+        self.send_json_response({"obras": self._sanitize_obras_for_client(obras_filtradas)})
 
     def handle_get_obras_catalog_secure(self):
         catalog = self.routes_core.obra_repository.get_catalog()
@@ -749,14 +791,20 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             obras = self._filter_obras_for_session(
                 self.routes_core.obra_repository.get_all()
             )
-        self.send_json_response(obras)
+        if self._has_role("admin"):
+            self.send_json_response(obras)
+            return
+        self.send_json_response(self._sanitize_obras_for_client(obras))
 
     def handle_get_obra_by_id_secure(self, obra_id):
         obra = self.routes_core.handle_get_obra_by_id(obra_id)
         if not obra or not self._matches_empresa_context(obra):
             self.send_error(404, f"Obra {obra_id} nao encontrada")
             return
-        self.send_json_response(obra)
+        if self._has_role("admin"):
+            self.send_json_response(obra)
+            return
+        self.send_json_response(self._sanitize_obra_for_client(obra))
 
     def handle_post_obras_secure(self):
         try:
@@ -770,7 +818,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             json.dumps(obra_payload, ensure_ascii=False)
         )
         if obra:
-            self.send_json_response(obra)
+            if self._has_role("admin"):
+                self.send_json_response(obra)
+                return
+            self.send_json_response(self._sanitize_obra_for_client(obra))
         else:
             self.send_error(500, "Erro ao salvar obra")
 
@@ -792,7 +843,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             json.dumps(obra_payload, ensure_ascii=False),
         )
         if obra:
-            self.send_json_response(obra)
+            if self._has_role("admin"):
+                self.send_json_response(obra)
+                return
+            self.send_json_response(self._sanitize_obra_for_client(obra))
         else:
             self.send_error(404, f"Obra {obra_id} nao encontrada")
 

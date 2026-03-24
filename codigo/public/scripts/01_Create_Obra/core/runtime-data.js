@@ -99,6 +99,33 @@ function createJsonResponse(data, status = 200) {
     });
 }
 
+function getRuntimeObras(payload) {
+    if (!payload || typeof payload !== 'object') {
+        return [];
+    }
+
+    if (Array.isArray(payload.obrasSessao) && payload.obrasSessao.length > 0) {
+        return payload.obrasSessao;
+    }
+
+    if (payload.obraCatalog && Array.isArray(payload.obraCatalog.obras)) {
+        return payload.obraCatalog.obras;
+    }
+
+    return [];
+}
+
+function findRuntimeObraById(payload, obraId) {
+    const obraIdStr = String(obraId || '').trim();
+    if (!obraIdStr) {
+        return null;
+    }
+
+    return getRuntimeObras(payload).find(
+        (obra) => String(obra?.id || '').trim() === obraIdStr
+    ) || null;
+}
+
 function shouldInvalidateRuntimeCache(method, pathname) {
     const upperMethod = String(method || 'GET').toUpperCase();
 
@@ -190,10 +217,26 @@ export function installRuntimeFetchBridge() {
         const requestMethod = init?.method || (typeof input !== 'string' ? input?.method : null) || 'GET';
         const normalizedUrl = new URL(requestUrl, window.location.origin);
         const routeBuilder = RUNTIME_ROUTE_BUILDERS[normalizedUrl.pathname];
+        const isGetRequest = String(requestMethod).toUpperCase() === 'GET';
 
-        if (String(requestMethod).toUpperCase() === 'GET' && routeBuilder) {
+        if (isGetRequest && routeBuilder) {
             const payload = await loadRuntimeBootstrap();
             return createJsonResponse(routeBuilder(payload));
+        }
+
+        if (isGetRequest && normalizedUrl.pathname === '/obras') {
+            const payload = await loadRuntimeBootstrap();
+            return createJsonResponse(getRuntimeObras(payload));
+        }
+
+        if (isGetRequest && normalizedUrl.pathname.startsWith('/obras/')) {
+            const payload = await loadRuntimeBootstrap();
+            const obraId = decodeURIComponent(normalizedUrl.pathname.split('/').pop() || '');
+            const obra = findRuntimeObraById(payload, obraId);
+
+            if (obra) {
+                return createJsonResponse(obra);
+            }
         }
 
         const response = await originalFetch(input, init);
