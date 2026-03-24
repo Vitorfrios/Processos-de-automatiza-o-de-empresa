@@ -6,10 +6,12 @@ O projeto combina:
 
 - frontend em JavaScript modular, sem framework SPA tradicional;
 - backend Python com servidor HTTP próprio;
-- persistência híbrida com SQLite e documentos JSON de apoio/compatibilidade;
+- persistência com PostgreSQL hospedado por supabase;
+- servidor online hospedado por render.com [https://app-esienergia.onrender.com]
 - autenticação para cliente e administrador;
 - exportação de propostas técnicas e comerciais;
 - sincronização de empresas, credenciais de acesso e dados de obra.
+- sincronização assincrona do banco de dados SQL tanto para o onlinehost quanto localhost
 
 ## Visão geral
 
@@ -17,16 +19,17 @@ O fluxo principal do produto é:
 
 1. cadastrar ou abrir uma obra;
 2. vincular a obra a uma empresa;
-3. montar projetos e salas;
-4. preencher dados técnicos;
-5. calcular carga térmica, ventilação e solução de máquinas;
-6. salvar a obra;
-7. exportar PT/PC por download ou email.
+3. cadastrar dados da empresa;
+4. montar projetos e salas;
+5. preencher dados técnicos;
+6. calcular carga térmica, ventilação e solução de máquinas;
+7. salvar a obra;
+8. exportar PT/PC por download e/ou email.
 
 Além disso, o sistema possui um painel administrativo para editar os bancos internos:
 
 - credenciais ADM;
-- configuração SMTP;
+- configuração SMTP(credencial de envio de email);
 - empresas;
 - máquinas;
 - materiais;
@@ -34,7 +37,6 @@ Além disso, o sistema possui um painel administrativo para editar os bancos int
 - dutos;
 - tubos;
 - constantes;
-- JSON bruto.
 
 ## Perfis de uso
 
@@ -53,7 +55,7 @@ Características:
 - não usa filtros globais de obras;
 - pode criar/editar obras dentro do contexto da empresa autenticada;
 - pode recuperar token por email, se houver email de recuperação cadastrado;
-- ao salvar obra, dispara notificação ao ADM.
+- ao salvar obra, dispara notificação com email da obra anexada ao ADM.
 
 ### 2. Usuário interno / operação
 

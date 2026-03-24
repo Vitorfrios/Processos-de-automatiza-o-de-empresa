@@ -48,6 +48,44 @@ def validate_smtp_secret(sender_email, token):
     return normalized_token
 
 
+def build_smtp_connection_candidates(host, port, use_tls, sender_email):
+    """Monta candidatos de conexão SMTP, com fallback para Gmail."""
+    resolved_host = str(host or "").strip()
+    resolved_port = int(port or 587)
+    resolved_use_tls = bool(use_tls)
+    normalized_email = str(sender_email or "").strip().lower()
+    domain = normalized_email.split("@", 1)[1] if "@" in normalized_email else ""
+
+    candidates = [
+        {
+            "host": resolved_host,
+            "port": resolved_port,
+            "use_tls": resolved_use_tls,
+            "use_ssl": (not resolved_use_tls and resolved_port == 465),
+            "label": "primary",
+        }
+    ]
+
+    if domain in {"gmail.com", "googlemail.com"} and resolved_host == "smtp.gmail.com":
+        fallback = {
+            "host": "smtp.gmail.com",
+            "port": 465,
+            "use_tls": False,
+            "use_ssl": True,
+            "label": "gmail_ssl_fallback",
+        }
+        already_present = any(
+            candidate["host"] == fallback["host"]
+            and candidate["port"] == fallback["port"]
+            and candidate["use_ssl"] == fallback["use_ssl"]
+            for candidate in candidates
+        )
+        if not already_present:
+            candidates.append(fallback)
+
+    return candidates
+
+
 def cleanup_temp_files(*paths):
     """Remove arquivos temporários silenciosamente."""
     for path in paths:
@@ -315,33 +353,61 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
             cte="base64",
         )
 
-    smtp_client = None
-    try:
-        if not use_tls and port == 465:
-            smtp_client = smtplib.SMTP_SSL(host, port, timeout=30)
-        else:
-            smtp_client = smtplib.SMTP(host, port, timeout=30)
-            smtp_client.ehlo()
-            if use_tls:
-                smtp_client.starttls()
-                smtp_client.ehlo()
+    smtp_token = validate_smtp_secret(sender_email, config.get("token") or "")
+    smtp_candidates = build_smtp_connection_candidates(host, port, use_tls, sender_email)
+    last_error = None
 
-        smtp_token = validate_smtp_secret(sender_email, config.get("token") or "")
-        smtp_client.login(sender_email, smtp_token)
-        smtp_client.send_message(message)
-    except smtplib.SMTPAuthenticationError as exc:
+    for smtp_candidate in smtp_candidates:
+        smtp_client = None
+        try:
+            if smtp_candidate["use_ssl"]:
+                smtp_client = smtplib.SMTP_SSL(
+                    smtp_candidate["host"],
+                    smtp_candidate["port"],
+                    timeout=30,
+                )
+            else:
+                smtp_client = smtplib.SMTP(
+                    smtp_candidate["host"],
+                    smtp_candidate["port"],
+                    timeout=30,
+                )
+                smtp_client.ehlo()
+                if smtp_candidate["use_tls"]:
+                    smtp_client.starttls()
+                    smtp_client.ehlo()
+
+            smtp_client.login(sender_email, smtp_token)
+            smtp_client.send_message(message)
+            return
+        except smtplib.SMTPAuthenticationError as exc:
+            last_error = exc
+        except Exception as exc:
+            last_error = exc
+            print(
+                " Aviso SMTP:",
+                smtp_candidate["label"],
+                smtp_candidate["host"],
+                smtp_candidate["port"],
+                exc,
+            )
+        finally:
+            if smtp_client is not None:
+                try:
+                    smtp_client.quit()
+                except Exception:
+                    pass
+
+    if isinstance(last_error, smtplib.SMTPAuthenticationError):
         domain = sender_email.split("@", 1)[1].lower() if "@" in sender_email else ""
         if domain in {"gmail.com", "googlemail.com"}:
             raise RuntimeError(
                 "Gmail rejeitou a autenticação SMTP. Verifique se o App Password está correto e se a conta usa verificação em duas etapas."
-            ) from exc
-        raise RuntimeError("Credenciais SMTP rejeitadas pelo provedor de email.") from exc
-    finally:
-        if smtp_client is not None:
-            try:
-                smtp_client.quit()
-            except Exception:
-                pass
+            ) from last_error
+        raise RuntimeError("Credenciais SMTP rejeitadas pelo provedor de email.") from last_error
+
+    if last_error is not None:
+        raise RuntimeError(f"Falha ao conectar ao servidor SMTP ({host}:{port}).") from last_error
 
 
 def enviar_email_com_anexos(destino, assunto, mensagem, attachment_files):
