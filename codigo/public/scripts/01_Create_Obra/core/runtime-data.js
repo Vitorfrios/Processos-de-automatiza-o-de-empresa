@@ -4,7 +4,7 @@ const RUNTIME_ROUTE_BUILDERS = {
         success: true,
         empresas: payload.empresas || []
     }),
-    '/api/backup-completo': (payload) => payload.backup || { obras: [] },
+    '/api/obras/catalog': (payload) => payload.obraCatalog || { obras: [] },
     '/api/session-obras': (payload) => payload.sessionObras || { session_id: null, obras: [] }
 };
 
@@ -19,7 +19,7 @@ function createEmptyRuntimePayload() {
             session_id: null,
             obras: []
         },
-        backup: {
+        obraCatalog: {
             obras: []
         },
         obrasSessao: []
@@ -29,7 +29,7 @@ function createEmptyRuntimePayload() {
 function normalizeRuntimePayload(payload = {}) {
     const fallback = createEmptyRuntimePayload();
     const sessionObras = payload.sessionObras || payload.session_obras || fallback.sessionObras;
-    const backup = payload.backup || fallback.backup;
+    const obraCatalog = payload.obraCatalog || payload.backup || fallback.obraCatalog;
     const obrasSessao = Array.isArray(payload.obrasSessao) ? payload.obrasSessao : fallback.obrasSessao;
 
     return {
@@ -39,9 +39,9 @@ function normalizeRuntimePayload(payload = {}) {
             session_id: sessionObras.session_id || null,
             obras: Array.isArray(sessionObras.obras) ? sessionObras.obras : []
         },
-        backup: {
-            ...backup,
-            obras: Array.isArray(backup.obras) ? backup.obras : []
+        obraCatalog: {
+            ...obraCatalog,
+            obras: Array.isArray(obraCatalog.obras) ? obraCatalog.obras : []
         },
         obrasSessao
     };
@@ -138,12 +138,12 @@ export function removeObraFromRuntimeBootstrap(obraId) {
 
         let removed = false;
 
-        if (payload.backup && Array.isArray(payload.backup.obras)) {
-            const previousLength = payload.backup.obras.length;
-            payload.backup.obras = payload.backup.obras.filter(
+        if (payload.obraCatalog && Array.isArray(payload.obraCatalog.obras)) {
+            const previousLength = payload.obraCatalog.obras.length;
+            payload.obraCatalog.obras = payload.obraCatalog.obras.filter(
                 (obra) => String(obra?.id || '').trim() !== obraIdStr
             );
-            removed = removed || payload.backup.obras.length !== previousLength;
+            removed = removed || payload.obraCatalog.obras.length !== previousLength;
         }
 
         if (payload.sessionObras && Array.isArray(payload.sessionObras.obras)) {
@@ -216,12 +216,17 @@ export async function getEmpresasRuntimeData(options = {}) {
 
 export async function getBackupRuntimeData(options = {}) {
     const payload = await loadRuntimeBootstrap(options);
-    return payload.backup || { obras: [] };
+    return payload.obraCatalog || { obras: [] };
 }
 
 export async function getBackupObrasRuntimeData(options = {}) {
     const backup = await getBackupRuntimeData(options);
     return Array.isArray(backup.obras) ? backup.obras : [];
+}
+
+export async function getObraCatalogRuntimeData(options = {}) {
+    const catalog = await getBackupRuntimeData(options);
+    return Array.isArray(catalog.obras) ? catalog.obras : [];
 }
 
 export async function getSessionObrasRuntimeData(options = {}) {

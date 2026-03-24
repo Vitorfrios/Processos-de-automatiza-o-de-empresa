@@ -10,5 +10,7 @@ setup(
         "pandas==2.0.3",
         "numpy==1.24.3",
         "openpyxl==3.1.2",
+        "psycopg[binary,pool]==3.2.6",
+        "pytz==2024.2",
     ],
 )

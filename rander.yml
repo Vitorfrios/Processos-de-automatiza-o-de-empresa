@@ -8,6 +8,9 @@ services:
       pip install --upgrade pip
       pip install setuptools==68.2.2
       pip install -r requirements.txt
-    startCommand: python app.py
-    healthCheckPath: /health
+    startCommand: python codigo/servidor.py
+    healthCheckPath: /health-check
+    envVars:
+      - key: DATABASE_URL
+        sync: false
     autoDeploy: true

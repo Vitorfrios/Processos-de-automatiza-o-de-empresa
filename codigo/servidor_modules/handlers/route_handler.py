@@ -180,6 +180,11 @@ class RouteHandler:
         backup = self.routes_core.handle_get_backup_completo()
         handler.send_json_response(backup)
 
+    def handle_get_obras_catalog(self, handler):
+        """GET /api/obras/catalog"""
+        catalog = self.routes_core.handle_get_obras_catalog()
+        handler.send_json_response(catalog)
+
     def handle_get_runtime_bootstrap(self, handler):
         """GET /api/runtime/bootstrap"""
         payload = self.routes_core.handle_get_runtime_bootstrap()

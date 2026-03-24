@@ -1,2 +1,1 @@
-"""Infraestrutura de persistencia SQLite para o backend."""
-
+"""Infraestrutura de persistencia PostgreSQL para o backend."""

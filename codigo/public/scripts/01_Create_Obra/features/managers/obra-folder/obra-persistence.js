@@ -25,6 +25,20 @@ async function fetchObras() {
   }
 }
 
+async function fetchObraById(obraId) {
+  const response = await fetch(`/obras/${encodeURIComponent(obraId)}`);
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`Erro HTTP ao buscar obra ${obraId}: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 async function atualizarObra(obraId, obraData) {
   try {
     if (!obraId || obraId === "undefined" || obraId === "null") {
@@ -47,8 +61,51 @@ async function atualizarObra(obraId, obraData) {
     obraId = ensureStringId(obraId);
 
     console.log(` Verificando se obra ${obraId} existe no servidor...`);
+    {
+      const obraExistenteNoServidor = await fetchObraById(obraId);
+      console.log(
+        ` Verificacao enxuta: Obra ${obraId} existe? ${!!obraExistenteNoServidor}`,
+      );
 
-    const todasObrasResponse = await fetch("/api/backup-completo");
+      if (!obraExistenteNoServidor) {
+        console.log(` Obra ${obraId} nao encontrada no servidor, criando nova...`);
+        console.log(` Criando nova obra com ID seguro preservado: ${obraId}`);
+        obraData.id = obraId;
+        return await supportFrom_saveObra(obraData);
+      }
+
+      console.log(" ATUALIZANDO OBRA EXISTENTE:", {
+        id: obraData.id,
+        nome: obraData.nome,
+        projetos: obraData.projetos?.length || 0,
+      });
+
+      const url = `/obras/${obraId}`;
+      console.log(` Fazendo PUT para: ${url}`);
+
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(obraData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro ao atualizar obra: ${errorText}`);
+      }
+
+      const updatedObra = await response.json();
+      showSystemStatus("Obra atualizada com sucesso!", "success");
+
+      console.log(" OBRA ATUALIZADA:", {
+        id: updatedObra.id,
+        nome: updatedObra.nome,
+        projetos: updatedObra.projetos?.length || 0,
+      });
+      return updatedObra;
+    }
+
+    const todasObrasResponse = await fetch("/api/obras/catalog");
     if (!todasObrasResponse.ok) {
       throw new Error("Falha ao carregar backup para verificação");
     }

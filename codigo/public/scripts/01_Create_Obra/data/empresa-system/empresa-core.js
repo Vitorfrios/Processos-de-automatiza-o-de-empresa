@@ -95,8 +95,8 @@ export class EmpresaCadastroInline {
         this.empresas = normalizeEmpresas(dados.empresas || []);
       }
 
-      // Carregar obras existentes do backup.json
-      const responseBackup = await fetch("/api/backup-completo");
+      // Carregar apenas o catalogo leve de obras
+      const responseBackup = await fetch("/api/obras/catalog");
       if (responseBackup.ok) {
         const backup = await responseBackup.json();
         this.obrasExistentes = backup.obras || [];

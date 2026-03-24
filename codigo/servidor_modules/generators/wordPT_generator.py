@@ -343,6 +343,16 @@ class WordPTGenerator:
         """Carrega um arquivo JSON com cache."""
         if filename in self._json_cache:
             return self._json_cache[filename]
+        if self.file_utils is not None:
+            try:
+                path = self.file_utils.find_json_file(filename, self.project_root)
+                data = self.file_utils.load_json_file(path, {})
+                self._json_cache[filename] = data
+                return data
+            except Exception as e:
+                print(f"Erro ao carregar {filename}: {e}")
+                self._json_cache[filename] = {}
+                return {}
             
         path = self.project_root / "json" / filename
         if not path.exists():

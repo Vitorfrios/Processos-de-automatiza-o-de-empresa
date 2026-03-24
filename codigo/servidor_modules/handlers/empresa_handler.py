@@ -355,32 +355,11 @@ class EmpresaHandler:
     def obter_proximo_numero_cliente(self, sigla):
         """Obtem proximo numero de cliente para uma sigla."""
         try:
-            backup_file = self.file_utils.find_json_file("backup.json")
-            backup_data = self.file_utils.load_json_file(backup_file, {"obras": []})
+            from servidor_modules.database.repositories.obra_repository import (
+                ObraRepository,
+            )
 
-            if not backup_data or "obras" not in backup_data:
-                return 1
-
-            obras = backup_data["obras"]
-            maior_numero = 0
-
-            for obra in obras:
-                if obra.get("empresaSigla") == sigla:
-                    numero = obra.get("numeroClienteFinal", 0)
-                    if numero > maior_numero:
-                        maior_numero = numero
-
-                id_gerado = obra.get("idGerado", "")
-                if id_gerado.startswith(f"obra_{sigla}_"):
-                    try:
-                        numero_str = id_gerado.split("_")[-1]
-                        numero = int(numero_str)
-                        if numero > maior_numero:
-                            maior_numero = numero
-                    except (ValueError, IndexError):
-                        continue
-
-            return maior_numero + 1
+            return ObraRepository(self.file_utils.find_project_root()).get_next_numero_cliente(sigla)
         except Exception as e:
             print(f"Erro ao obter proximo numero do cliente: {e}")
             return 1

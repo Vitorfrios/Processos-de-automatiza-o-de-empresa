@@ -223,6 +223,14 @@ function getObraDateValue(obra) {
     );
 }
 
+function getObraProjectCount(obra) {
+    if (Number.isFinite(Number(obra?.totalProjetos))) {
+        return Number(obra.totalProjetos);
+    }
+
+    return safeArray(obra?.projetos).length;
+}
+
 function getDuplicateMachineTypes(maquinas) {
     const counter = new Map();
 
@@ -248,7 +256,7 @@ function buildEmpresaRanking(obras) {
         const label = getObraEmpresaLabel(obra);
         const current = counter.get(label) || { label, totalObras: 0, totalProjetos: 0 };
         current.totalObras += 1;
-        current.totalProjetos += safeArray(obra?.projetos).length;
+        current.totalProjetos += getObraProjectCount(obra);
         counter.set(label, current);
     });
 
@@ -263,7 +271,7 @@ function buildRecentObras(obras) {
             id: String(obra?.id || '').trim(),
             nome: String(obra?.nome || obra?.id || 'Obra sem nome').trim(),
             empresa: getObraEmpresaLabel(obra),
-            totalProjetos: safeArray(obra?.projetos).length,
+            totalProjetos: getObraProjectCount(obra),
             rawDate: getObraDateValue(obra),
             parsedDate: parseDate(getObraDateValue(obra))
         }))
@@ -316,7 +324,7 @@ async function fetchDashboardData() {
     }
 
     try {
-        backupData = safeObject(await fetchJson('/api/backup-completo'));
+        backupData = safeObject(await fetchJson('/api/obras/catalog'));
     } catch (error) {
         console.warn('Erro ao buscar backup completo para o dashboard:', error);
     }
@@ -483,7 +491,7 @@ function processDashboardData(data) {
         credenciaisExpiradas,
         credenciaisExpirando,
         totalObras: data.obras.length,
-        obrasSemProjeto: data.obras.filter((obra) => safeArray(obra?.projetos).length === 0).length,
+        obrasSemProjeto: data.obras.filter((obra) => getObraProjectCount(obra) === 0).length,
         totalMaquinas: data.maquinas.length,
         duplicateMachineTypes,
         totalDutos: data.dutos.length,

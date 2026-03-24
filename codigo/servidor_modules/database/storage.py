@@ -1,8 +1,9 @@
-"""Camada de compatibilidade entre o contrato JSON legado e SQLite."""
+"""Camada de compatibilidade entre o contrato JSON legado e PostgreSQL."""
 
 from __future__ import annotations
 
 import json
+import os
 import threading
 from copy import deepcopy
 from pathlib import Path
@@ -25,7 +26,6 @@ DEFAULT_DOCUMENTS = {
         "dutos": [],
         "tubos": [],
     },
-    "backup.json": {"obras": []},
     "sessions.json": {"sessions": {"session_active": {"obras": []}}},
 }
 
@@ -86,6 +86,30 @@ def sanitize_dados_payload(payload):
     return sanitized
 
 
+def normalize_sessions_payload(payload):
+    if not isinstance(payload, dict):
+        payload = {}
+
+    sessions = payload.get("sessions")
+    if not isinstance(sessions, dict):
+        sessions = {}
+
+    normalized_sessions = {}
+    for session_id, session_payload in sessions.items():
+        if not isinstance(session_payload, dict):
+            session_payload = {}
+        obras = session_payload.get("obras")
+        if not isinstance(obras, list):
+            obras = []
+        normalized_sessions[str(session_id)] = {
+            **session_payload,
+            "obras": [str(obra_id) for obra_id in obras if str(obra_id).strip()],
+        }
+
+    normalized_sessions.setdefault("session_active", {"obras": []})
+    return {"sessions": normalized_sessions}
+
+
 class DatabaseStorage:
     def __init__(self, project_root):
         self.project_root = Path(project_root)
@@ -94,6 +118,10 @@ class DatabaseStorage:
         self.conn = get_connection(self.project_root)
         self._lock = threading.RLock()
         self._bootstrapped = False
+        self._mirror_to_disk = (
+            str(os.environ.get("ESI_WRITE_JSON_SNAPSHOTS", "")).strip().lower()
+            in {"1", "true", "yes", "on"}
+        )
 
     def default_document(self, name):
         return deepcopy(DEFAULT_DOCUMENTS.get(name, {}))
@@ -107,83 +135,94 @@ class DatabaseStorage:
                 if self._document_exists(name):
                     continue
 
-                disk_path = self.json_dir / name
-                payload = default_payload
-                if disk_path.exists():
-                    try:
-                        with open(disk_path, "r", encoding="utf-8") as file_obj:
-                            payload = json.load(file_obj)
-                    except Exception:
-                        payload = default_payload
+                payload = self._load_disk_snapshot(name, default_payload)
 
-                self._save_document_internal(name, payload, mirror_to_disk=True)
+                self._save_document_internal(name, payload, mirror_to_disk=self._mirror_to_disk)
 
             self._bootstrapped = True
 
     def load_document(self, name, default_payload=None):
         self.ensure_bootstrap()
-
-        row = self.conn.execute(
-            "SELECT payload_json FROM json_documents WHERE name = ?",
-            (name,),
-        ).fetchone()
-        if row is None:
-            payload = deepcopy(default_payload) if default_payload is not None else {}
-            self._save_document_internal(name, payload, mirror_to_disk=True)
-            return payload
-
-        payload = json.loads(row["payload_json"])
         if name == "dados.json":
-            payload = sanitize_dados_payload(payload)
-        return payload
+            return self._load_dados_document(default_payload)
+        if name == "sessions.json":
+            return self._load_sessions_document(default_payload)
+        if name == "backup.json":
+            from servidor_modules.database.repositories.obra_repository import (
+                ObraRepository,
+            )
+
+            return ObraRepository(self.project_root).get_backup_payload()
+        raise ValueError(f"Documento nao suportado: {name}")
 
     def save_document(self, name, payload):
         self.ensure_bootstrap()
-        self._save_document_internal(name, payload, mirror_to_disk=True)
+        self._save_document_internal(name, payload, mirror_to_disk=self._mirror_to_disk)
         return True
 
     def sync_document_to_disk(self, name):
+        if not self._mirror_to_disk:
+            return
         payload = self.load_document(name, self.default_document(name))
         self._write_snapshot(name, payload)
 
     def _document_exists(self, name):
-        row = self.conn.execute(
-            "SELECT 1 FROM json_documents WHERE name = ?",
-            (name,),
-        ).fetchone()
-        return row is not None
+        if name == "dados.json":
+            row = self.conn.execute(
+                """
+                SELECT (
+                    EXISTS(SELECT 1 FROM admins)
+                    OR EXISTS(SELECT 1 FROM empresas)
+                    OR EXISTS(SELECT 1 FROM constants)
+                    OR EXISTS(SELECT 1 FROM materials)
+                    OR EXISTS(SELECT 1 FROM machine_catalog)
+                    OR EXISTS(SELECT 1 FROM acessorios)
+                    OR EXISTS(SELECT 1 FROM dutos)
+                    OR EXISTS(SELECT 1 FROM tubos)
+                ) AS has_content
+                """
+            ).fetchone()
+            return bool(row and row["has_content"])
+
+        if name == "sessions.json":
+            row = self.conn.execute(
+                "SELECT EXISTS(SELECT 1 FROM sessions) AS has_content"
+            ).fetchone()
+            return bool(row and row["has_content"])
+
+        if name == "backup.json":
+            row = self.conn.execute(
+                "SELECT EXISTS(SELECT 1 FROM obras) AS has_content"
+            ).fetchone()
+            return bool(row and row["has_content"])
+
+        return False
 
     def _save_document_internal(self, name, payload, mirror_to_disk):
         if name == "dados.json":
             payload = sanitize_dados_payload(payload)
+        elif name == "sessions.json":
+            payload = normalize_sessions_payload(payload)
+        elif name == "backup.json":
+            from servidor_modules.database.repositories.obra_repository import (
+                ObraRepository,
+            )
 
-        payload_json = json.dumps(payload, ensure_ascii=False)
+            ObraRepository(self.project_root).replace_backup_payload(
+                payload or {"obras": []}
+            )
+            if mirror_to_disk:
+                self._write_snapshot(name, payload or {"obras": []})
+            return
+        else:
+            raise ValueError(f"Documento nao suportado: {name}")
 
         with self._lock:
             cursor = self.conn.cursor()
             cursor.execute("BEGIN")
             try:
-                cursor.execute(
-                    """
-                    INSERT INTO json_documents(name, payload_json, updated_at)
-                    VALUES(?, ?, CURRENT_TIMESTAMP)
-                    ON CONFLICT(name) DO UPDATE SET
-                        payload_json = excluded.payload_json,
-                        updated_at = CURRENT_TIMESTAMP
-                    """,
-                    (name, payload_json),
-                )
-
                 if name == "dados.json":
                     self._sync_dados(cursor, payload)
-                    backup_row = cursor.execute(
-                        "SELECT payload_json FROM json_documents WHERE name = ?",
-                        ("backup.json",),
-                    ).fetchone()
-                    if backup_row is not None:
-                        self._sync_backup(cursor, json.loads(backup_row["payload_json"]))
-                elif name == "backup.json":
-                    self._sync_backup(cursor, payload)
                 elif name == "sessions.json":
                     self._sync_sessions(cursor, payload)
 
@@ -199,6 +238,102 @@ class DatabaseStorage:
         file_path = self.json_dir / name
         with open(file_path, "w", encoding="utf-8") as file_obj:
             json.dump(payload, file_obj, ensure_ascii=False, indent=2)
+
+    def _load_disk_snapshot(self, name, default_payload):
+        disk_path = self.json_dir / name
+        payload = deepcopy(default_payload)
+        if disk_path.exists():
+            try:
+                with open(disk_path, "r", encoding="utf-8") as file_obj:
+                    payload = json.load(file_obj)
+            except Exception:
+                payload = deepcopy(default_payload)
+        return payload
+
+    def _load_dados_document(self, default_payload=None):
+        payload = deepcopy(default_payload) if default_payload is not None else {}
+        payload.update(
+            {
+                "ADM": self._load_admins(),
+                "empresas": self._load_empresas(),
+                "constants": self._load_constants(),
+                "machines": self._load_machines(),
+                "materials": self._load_materials(),
+                "banco_acessorios": self._load_acessorios(),
+                "dutos": self._load_dutos(),
+                "tubos": self._load_tubos(),
+            }
+        )
+        return sanitize_dados_payload(payload)
+
+    def _load_sessions_document(self, default_payload=None):
+        payload = deepcopy(default_payload) if default_payload is not None else {}
+        sessions = {}
+        rows = self.conn.execute(
+            "SELECT session_id, payload_json FROM sessions ORDER BY session_id"
+        ).fetchall()
+        for row in rows:
+            session_payload = row.get("payload_json")
+            try:
+                sessions[str(row["session_id"])] = (
+                    json.loads(session_payload) if session_payload else {}
+                )
+            except Exception:
+                sessions[str(row["session_id"])] = {}
+
+        payload["sessions"] = sessions
+        return normalize_sessions_payload(payload)
+
+    def _load_admins(self):
+        rows = self.conn.execute(
+            "SELECT raw_json FROM admins ORDER BY sort_order, usuario"
+        ).fetchall()
+        return [json.loads(row["raw_json"]) for row in rows]
+
+    def _load_empresas(self):
+        rows = self.conn.execute(
+            "SELECT raw_json FROM empresas ORDER BY sort_order, codigo"
+        ).fetchall()
+        return [json.loads(row["raw_json"]) for row in rows]
+
+    def _load_constants(self):
+        rows = self.conn.execute(
+            "SELECT key, value_json FROM constants ORDER BY key"
+        ).fetchall()
+        constants = {}
+        for row in rows:
+            constants[str(row["key"])] = json.loads(row["value_json"])
+        return constants
+
+    def _load_materials(self):
+        rows = self.conn.execute(
+            "SELECT key, raw_json FROM materials ORDER BY sort_order, key"
+        ).fetchall()
+        return {str(row["key"]): json.loads(row["raw_json"]) for row in rows}
+
+    def _load_machines(self):
+        rows = self.conn.execute(
+            "SELECT raw_json FROM machine_catalog ORDER BY sort_order, type"
+        ).fetchall()
+        return [json.loads(row["raw_json"]) for row in rows]
+
+    def _load_acessorios(self):
+        rows = self.conn.execute(
+            "SELECT tipo, raw_json FROM acessorios ORDER BY sort_order, tipo"
+        ).fetchall()
+        return {str(row["tipo"]): json.loads(row["raw_json"]) for row in rows}
+
+    def _load_dutos(self):
+        rows = self.conn.execute(
+            "SELECT raw_json FROM dutos ORDER BY sort_order, type"
+        ).fetchall()
+        return [json.loads(row["raw_json"]) for row in rows]
+
+    def _load_tubos(self):
+        rows = self.conn.execute(
+            "SELECT raw_json FROM tubos ORDER BY sort_order, polegadas"
+        ).fetchall()
+        return [json.loads(row["raw_json"]) for row in rows]
 
     def _sync_dados(self, cursor, payload):
         cursor.execute("DELETE FROM admins")
@@ -340,123 +475,9 @@ class DatabaseStorage:
                 ),
             )
 
-    def _sync_backup(self, cursor, payload):
-        cursor.execute("DELETE FROM sala_maquinas")
-        cursor.execute("DELETE FROM salas")
-        cursor.execute("DELETE FROM projetos")
-        cursor.execute("DELETE FROM obras")
-
-        for obra_index, obra in enumerate(payload.get("obras", [])):
-            if not isinstance(obra, dict):
-                continue
-
-            obra_id = str(obra.get("id", "")).strip()
-            if not obra_id:
-                continue
-
-            empresa_codigo = str(obra.get("empresaSigla", "")).strip() or None
-            empresa_nome = obra.get("empresaNome")
-            if empresa_codigo:
-                cursor.execute(
-                    """
-                    INSERT OR IGNORE INTO empresas(
-                        codigo, nome, credenciais_json, raw_json, sort_order
-                    )
-                    VALUES(?, ?, NULL, ?, 999999)
-                    """,
-                    (
-                        empresa_codigo,
-                        empresa_nome or empresa_codigo,
-                        json.dumps(
-                            {
-                                "codigo": empresa_codigo,
-                                "nome": empresa_nome or empresa_codigo,
-                                "credenciais": None,
-                            },
-                            ensure_ascii=False,
-                        ),
-                    ),
-                )
-
-            cursor.execute(
-                """
-                INSERT INTO obras(
-                    id, nome, empresa_codigo, empresa_id, empresa_nome,
-                    numero_cliente_final, raw_json, sort_order
-                )
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    obra_id,
-                    obra.get("nome"),
-                    empresa_codigo,
-                    obra.get("empresa_id"),
-                    empresa_nome,
-                    obra.get("numeroClienteFinal"),
-                    json.dumps(obra, ensure_ascii=False),
-                    obra_index,
-                ),
-            )
-
-            for projeto_index, projeto in enumerate(obra.get("projetos", [])):
-                if not isinstance(projeto, dict):
-                    continue
-                projeto_id = str(projeto.get("id") or f"{obra_id}::projeto::{projeto_index}")
-                cursor.execute(
-                    """
-                    INSERT INTO projetos(id, obra_id, nome, raw_json, sort_order)
-                    VALUES(?, ?, ?, ?, ?)
-                    """,
-                    (
-                        projeto_id,
-                        obra_id,
-                        projeto.get("nome"),
-                        json.dumps(projeto, ensure_ascii=False),
-                        projeto_index,
-                    ),
-                )
-
-                for sala_index, sala in enumerate(projeto.get("salas", [])):
-                    if not isinstance(sala, dict):
-                        continue
-                    sala_id = str(sala.get("id") or f"{projeto_id}::sala::{sala_index}")
-                    cursor.execute(
-                        """
-                        INSERT INTO salas(id, projeto_id, nome, raw_json, sort_order)
-                        VALUES(?, ?, ?, ?, ?)
-                        """,
-                        (
-                            sala_id,
-                            projeto_id,
-                            sala.get("nome"),
-                            json.dumps(sala, ensure_ascii=False),
-                            sala_index,
-                        ),
-                    )
-
-                    for machine_index, machine in enumerate(sala.get("maquinas", [])):
-                        if not isinstance(machine, dict):
-                            continue
-                        machine_id = str(machine.get("id") or f"{sala_id}::machine::{machine_index}")
-                        cursor.execute(
-                            """
-                            INSERT INTO sala_maquinas(
-                                id, sala_id, machine_type, raw_json, sort_order
-                            )
-                            VALUES(?, ?, ?, ?, ?)
-                            """,
-                            (
-                                machine_id,
-                                sala_id,
-                                machine.get("tipo") or machine.get("type"),
-                                json.dumps(machine, ensure_ascii=False),
-                                machine_index,
-                            ),
-                        )
-
     def _sync_sessions(self, cursor, payload):
         cursor.execute("DELETE FROM sessions")
-        for session_id, session_payload in (payload.get("sessions") or {}).items():
+        for session_id, session_payload in normalize_sessions_payload(payload).get("sessions", {}).items():
             cursor.execute(
                 """
                 INSERT INTO sessions(session_id, payload_json)

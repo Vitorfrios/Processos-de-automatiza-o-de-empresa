@@ -61,14 +61,23 @@ function getRequestedObra() {
     };
 }
 
-async function fetchBackupObras() {
-    const response = await fetch('/api/backup-completo');
+async function fetchObraCatalog() {
+    const response = await fetch('/api/obras/catalog');
     if (!response.ok) {
-        throw new Error(`Falha ao carregar backup: ${response.status}`);
+        throw new Error(`Falha ao carregar catalogo: ${response.status}`);
     }
 
     const payload = await response.json();
     return Array.isArray(payload?.obras) ? payload.obras : [];
+}
+
+async function fetchObraById(obraId) {
+    const response = await fetch(`/obras/${encodeURIComponent(obraId)}`);
+    if (!response.ok) {
+        throw new Error(`Falha ao carregar obra ${obraId}: ${response.status}`);
+    }
+
+    return response.json();
 }
 
 function findRequestedObra(obras) {
@@ -125,6 +134,37 @@ function bootstrapEmbedGlobals() {
 }
 
 async function loadRequestedObra(loadSingleObra, removeBaseObraFromHTML) {
+    {
+        const { obraId } = getRequestedObra();
+        let obraSolicitada = null;
+
+        if (obraId) {
+            obraSolicitada = await fetchObraById(obraId);
+        } else {
+            const obrasCatalogo = await fetchObraCatalog();
+            const obraCatalogo = findRequestedObra(obrasCatalogo);
+            if (obraCatalogo?.id) {
+                obraSolicitada = await fetchObraById(obraCatalogo.id);
+            }
+        }
+
+        if (!obraSolicitada) {
+            throw new Error('Obra solicitada nao encontrada.');
+        }
+
+        removeBaseObraFromHTML();
+
+        const carregadas = await loadSingleObra(obraSolicitada);
+        if (!carregadas) {
+            throw new Error('Nao foi possivel renderizar a obra selecionada.');
+        }
+
+        expandLoadedObra(obraSolicitada.id);
+        document.title = `${obraSolicitada.nome || obraSolicitada.id} | Sistema ESI`;
+        hideStatus();
+        return;
+    }
+
     const obras = await fetchBackupObras();
     const obra = findRequestedObra(obras);
 

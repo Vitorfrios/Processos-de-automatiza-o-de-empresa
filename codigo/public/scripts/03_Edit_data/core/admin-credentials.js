@@ -197,26 +197,28 @@ function renderEmailConfigPanel() {
                 </div>
             </div>
 
-            <div class="admin-form-grid admin-form-grid-simple">
-                <label class="admin-field">
-                    <span>Email do responsável</span>
-                    <input type="email" id="adminEmail" placeholder="Email do responsável" value="${escapeHtml(config.email || '')}">
-                </label>
+            <form id="adminEmailConfigForm" class="admin-email-config-form" autocomplete="on">
+                <div class="admin-form-grid admin-form-grid-simple">
+                    <label class="admin-field">
+                        <span>Email do responsável</span>
+                        <input type="email" id="adminEmail" name="adminEmail" autocomplete="email" placeholder="Email do responsável" value="${escapeHtml(config.email || '')}">
+                    </label>
 
-                <label class="admin-field">
-                    <span>Senha ou token SMTP</span>
-                    <input type="password" id="adminToken" placeholder="Senha ou token SMTP" value="${escapeHtml(config.token || '')}">
-                </label>
+                    <label class="admin-field">
+                        <span>Senha ou token SMTP</span>
+                        <input type="password" id="adminToken" name="adminToken" autocomplete="current-password" placeholder="Senha ou token SMTP" value="${escapeHtml(config.token || '')}">
+                    </label>
 
-                <label class="admin-field">
-                    <span>Nome do remetente</span>
-                    <input type="text" id="adminNome" placeholder="Nome do remetente" value="${escapeHtml(config.nome || '')}">
-                </label>
-            </div>
+                    <label class="admin-field">
+                        <span>Nome do remetente</span>
+                        <input type="text" id="adminNome" name="adminNome" autocomplete="name" placeholder="Nome do remetente" value="${escapeHtml(config.nome || '')}">
+                    </label>
+                </div>
 
-            <div class="modal-actions-adm">
-                <button class="btn btn-success" id="saveAdminEmailConfigBtn" type="button" onclick="salvarCredenciais()">Salvar</button>
-            </div>
+                <div class="modal-actions-adm">
+                    <button class="btn btn-success" id="saveAdminEmailConfigBtn" type="submit">Salvar</button>
+                </div>
+            </form>
         </section>
     `;
 }
@@ -480,12 +482,10 @@ function bindAdminEvents() {
     const addBtn = document.getElementById('btnAddAdmin');
     const adminGrid = document.querySelector('.admin-grid');
     const modalForm = document.getElementById('adminCredentialForm');
+    const emailConfigForm = document.getElementById('adminEmailConfigForm');
     const closeModalBtn = document.getElementById('closeAdminModalBtn');
     const cancelBtn = document.getElementById('cancelAdminCredentialBtn');
     const generateBtn = document.getElementById('generateAdminTokenBtn');
-    const saveEmailConfigBtn = document.getElementById('saveAdminEmailConfigBtn');
-
-
 
     if (addBtn) {
         addBtn.onclick = () => openAdminModal();
@@ -497,6 +497,13 @@ function bindAdminEvents() {
 
     if (modalForm) {
         modalForm.onsubmit = saveAdminFromForm;
+    }
+
+    if (emailConfigForm) {
+        emailConfigForm.onsubmit = (event) => {
+            event.preventDefault();
+            saveAdminEmailConfig();
+        };
     }
 
     if (closeModalBtn) {
@@ -514,10 +521,6 @@ function bindAdminEvents() {
                 tokenInput.value = generateToken();
             }
         };
-    }
-
-    if (saveEmailConfigBtn) {
-        saveEmailConfigBtn.onclick = saveAdminEmailConfig;
     }
 
     if (!adminState.modalListenerBound) {

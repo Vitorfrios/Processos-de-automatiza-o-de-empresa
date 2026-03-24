@@ -37,15 +37,19 @@ class WordPCGenerator:
         if filename in self._json_cache:
             return self._json_cache[filename]
 
-        path = self.project_root / "json" / filename
-        if not path.exists():
-            self._json_cache[filename] = {}
-            return {}
         try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                self._json_cache[filename] = data
-                return data
+            if self.file_utils is not None:
+                path = self.file_utils.find_json_file(filename, self.project_root)
+                data = self.file_utils.load_json_file(path, {})
+            else:
+                path = self.project_root / "json" / filename
+                if not path.exists():
+                    self._json_cache[filename] = {}
+                    return {}
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            self._json_cache[filename] = data
+            return data
         except Exception as e:
             print(f"❌ Erro ao carregar {filename}: {e}")
             self._json_cache[filename] = {}

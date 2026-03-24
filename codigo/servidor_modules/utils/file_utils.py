@@ -49,10 +49,11 @@ class FileUtils:
         
         target_file = json_dir / filename
 
-        if filename in {"backup.json", "dados.json", "sessions.json"}:
+        if filename in {"dados.json", "sessions.json"}:
             storage = self._get_storage(project_root)
             storage.load_document(filename, storage.default_document(filename))
-            storage.sync_document_to_disk(filename)
+        elif filename == "backup.json":
+            return target_file
         elif not target_file.exists():
             self.save_json_file(target_file, {})
         
@@ -62,7 +63,14 @@ class FileUtils:
         """Carrega arquivo JSON com tratamento de erro"""
         try:
             filepath = Path(filepath)
-            if filepath.name in {"backup.json", "dados.json", "sessions.json"}:
+            if filepath.name == "backup.json":
+                from servidor_modules.database.repositories.obra_repository import (
+                    ObraRepository,
+                )
+
+                return ObraRepository(filepath.parent.parent).get_backup_payload()
+
+            if filepath.name in {"dados.json", "sessions.json"}:
                 storage = self._get_storage(filepath.parent.parent)
                 return storage.load_document(filepath.name, default_data)
 
@@ -84,7 +92,17 @@ class FileUtils:
         """Salva dados em arquivo JSON"""
         try:
             filepath = Path(filepath)
-            if filepath.name in {"backup.json", "dados.json", "sessions.json"}:
+            if filepath.name == "backup.json":
+                from servidor_modules.database.repositories.obra_repository import (
+                    ObraRepository,
+                )
+
+                ObraRepository(filepath.parent.parent).replace_backup_payload(
+                    data or {"obras": []}
+                )
+                return True
+
+            if filepath.name in {"dados.json", "sessions.json"}:
                 storage = self._get_storage(filepath.parent.parent)
                 return storage.save_document(filepath.name, data)
 

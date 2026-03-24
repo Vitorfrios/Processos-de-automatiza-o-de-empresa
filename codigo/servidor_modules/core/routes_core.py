@@ -592,6 +592,14 @@ class RoutesCore:
             print(f"Erro ao salvar backup: {str(e)}")
             return {"status": "error", "message": str(e)}
 
+    def handle_get_obras_catalog(self):
+        """Retorna um catalogo leve de obras."""
+        try:
+            return {"obras": self.obra_repository.get_catalog()}
+        except Exception as e:
+            print(f"ERRO em handle_get_obras_catalog: {str(e)}")
+            return {"obras": []}
+
     def handle_post_reload_page(self, post_data):
         """Força recarregamento da página via Python"""
         try:
@@ -638,8 +646,8 @@ class RoutesCore:
             # ========== ROTA UNIVERSAL DELETE ==========
 
 
-    def handle_delete_universal(self, path_array):
-        """Deleta qualquer item no backup.json seguindo um caminho específico"""
+    def _handle_delete_universal_legacy(self, path_array):
+        """Implementacao legada mantida apenas para referencia."""
         try:
             print(f"🔍 [DELETE UNIVERSAL] Path recebido: {path_array}")
             print(f"🔍 [DELETE UNIVERSAL] Tipos dos elementos: {[type(item) for item in path_array]}")
@@ -811,6 +819,36 @@ class RoutesCore:
                 "success": False,
                 "error": f"Erro interno: {str(e)}",
                 "path": path_array
+            }
+
+    def handle_delete_universal(self, path_array):
+        """Deleta qualquer item no fluxo de obras usando o repositorio."""
+        try:
+            print(f"[DELETE UNIVERSAL] Path recebido: {path_array}")
+            print(f"[DELETE UNIVERSAL] Tipos dos elementos: {[type(item) for item in path_array]}")
+
+            result = self.obra_repository.delete_by_path(path_array)
+
+            if (
+                result.get("success")
+                and len(path_array) == 2
+                and str(path_array[0]) == "obras"
+            ):
+                obra_id = str(path_array[1])
+                self.sessions_manager.remove_obra(obra_id)
+                print(f"Obra {obra_id} tambem removida da sessao")
+
+            return result
+
+        except Exception as e:
+            print(f"Erro em handle_delete_universal: {e}")
+            import traceback
+            traceback.print_exc()
+
+            return {
+                "success": False,
+                "error": f"Erro interno: {str(e)}",
+                "path": path_array,
             }
 
     def handle_delete_universal_from_handler(self, handler):

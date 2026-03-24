@@ -85,6 +85,15 @@ def initialize_server():
     # Cria núcleo do servidor
     server_core = ServerCore()
     
+    from servidor_modules.database.connection import (
+        get_connection,
+        release_thread_connection,
+    )
+
+    print(" Validando conexao PostgreSQL...")
+    get_connection(server_core.project_root)
+    release_thread_connection(server_core.project_root)
+    
     # Configura porta
     print(" Configurando porta...")
     port = server_core.setup_port(8000)

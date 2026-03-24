@@ -1,4 +1,4 @@
-"""Persistencia e resolucao da configuracao de email administrativa via SQLite."""
+"""Persistencia e resolucao da configuracao de email administrativa via PostgreSQL."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def is_valid_email(value):
 
 
 class AdminEmailConfigStore:
-    """Le e grava a configuracao SMTP do administrador no SQLite."""
+    """Le e grava a configuracao SMTP do administrador no PostgreSQL."""
 
     def __init__(self, project_root=None):
         self.project_root = (

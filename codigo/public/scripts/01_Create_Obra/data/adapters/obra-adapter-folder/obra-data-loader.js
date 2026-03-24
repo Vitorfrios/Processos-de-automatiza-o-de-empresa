@@ -4,7 +4,7 @@ import {
 } from '../../empresa-system/empresa-data-extractor.js'
 import { isClientMode, matchesEmpresaContext } from '../../../core/config.js'
 import {
-    getBackupObrasRuntimeData,
+    getObraCatalogRuntimeData,
     getSessionObrasRuntimeData,
     getSessionScopedObrasRuntimeData
 } from '../../../core/runtime-data.js'
@@ -38,7 +38,7 @@ function filterObrasForCurrentMode(obras, { logRejected = false } = {}) {
 
 async function resolveObrasToLoad() {
     if (isClientMode()) {
-        const todasObras = await getBackupObrasRuntimeData()
+        const todasObras = await getObraCatalogRuntimeData()
         const obrasDaEmpresa = filterObrasForCurrentMode(todasObras)
 
         console.log(`[LOAD OBRAS] Modo client: ${obrasDaEmpresa.length} obra(s) encontradas para a empresa autenticada`)
@@ -71,6 +71,31 @@ async function resolveObrasToLoad() {
 
     console.log(`[LOAD OBRAS] Modo admin: ${obrasParaCarregar.length} obra(s) encontradas na sessao`)
     return filterObrasForCurrentMode(obrasParaCarregar, { logRejected: true })
+}
+
+async function fetchFullObraById(obraId) {
+    const response = await fetch(`/obras/${encodeURIComponent(obraId)}`)
+    if (!response.ok) {
+        throw new Error(`Falha ao carregar obra ${obraId}: ${response.status}`)
+    }
+
+    return response.json()
+}
+
+async function ensureFullObraData(obraData) {
+    if (!obraData || typeof obraData !== 'object') {
+        throw new Error('Obra invalida para carregamento')
+    }
+
+    if (Array.isArray(obraData.projetos)) {
+        return obraData
+    }
+
+    if (!obraData.id) {
+        throw new Error('Obra sem ID para carregamento completo')
+    }
+
+    return fetchFullObraById(obraData.id)
 }
 
 /**
@@ -144,6 +169,7 @@ async function loadSingleObra(obraData) {
 
         const promises = obrasPermitidas.map(async (obra) => {
             try {
+                const obraCompleta = await ensureFullObraData(obra)
                 const element = document.querySelector(`[data-obra-id="${obra.id}"]`)
                 if (!element) {
                     console.warn(`[LOAD OBRAS] Elemento nao encontrado para obra ${obra.id}`)
@@ -151,10 +177,10 @@ async function loadSingleObra(obraData) {
                 }
 
                 if (window.populateObraData) {
-                    await window.populateObraData(obra)
+                    await window.populateObraData(obraCompleta)
                 }
 
-                await prepararDadosEmpresaNaObra(obra, element)
+                await prepararDadosEmpresaNaObra(obraCompleta, element)
                 return true
             } catch (error) {
                 console.warn(`[LOAD OBRAS] Erro ao carregar obra ${obra.id}:`, error.message)
@@ -179,6 +205,7 @@ async function loadSingleObra(obraData) {
 
         const obraId = obraData.id.toString()
         const obraNome = obraData.nome || `Obra ${obraId}`
+        const obraCompleta = await ensureFullObraData(obraData)
 
         console.log(`[LOAD OBRAS] Carregando obra individual: "${obraNome}"`)
 
@@ -196,10 +223,10 @@ async function loadSingleObra(obraData) {
         }
 
         if (window.populateObraData) {
-            await window.populateObraData(obraData)
+            await window.populateObraData(obraCompleta)
         }
 
-        await prepararDadosEmpresaNaObra(obraData, element)
+        await prepararDadosEmpresaNaObra(obraCompleta, element)
 
         return 1
     } catch (error) {

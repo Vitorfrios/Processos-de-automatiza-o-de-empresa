@@ -35,7 +35,6 @@ class SessionsManager:
                 "sessions.json",
                 {"sessions": {"session_active": {"obras": []}}},
             )
-            self.storage.sync_document_to_disk("sessions.json")
                 
         except Exception as e:
             print(f"ERRO em ensure_sessions_file: {e}")

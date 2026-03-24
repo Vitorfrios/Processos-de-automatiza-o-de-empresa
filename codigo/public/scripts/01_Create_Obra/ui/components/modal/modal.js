@@ -465,9 +465,23 @@ async function completeDeletionImmediate(obraId, obraName) {
 async function verificarObraNoServidor(obraId) {
   try {
     console.log(` Verificando se obra ${obraId} existe no servidor...`);
+    {
+      const obraResponse = await fetch(`/obras/${encodeURIComponent(obraId)}`);
+      if (obraResponse.status === 404) {
+        return false;
+      }
+
+      if (!obraResponse.ok) {
+        console.log(" Nao foi possivel verificar a obra no servidor");
+        return false;
+      }
+
+      console.log(` Obra ${obraId} existe no servidor? true`);
+      return true;
+    }
 
     // Buscar todas as obras do servidor
-    const response = await fetch("/api/backup-completo");
+    const response = await fetch("/api/obras/catalog");
     if (!response.ok) {
       console.log(" Não foi possível verificar obras no servidor");
       return false;

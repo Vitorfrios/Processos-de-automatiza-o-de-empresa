@@ -17,6 +17,7 @@ import tempfile
 from servidor_modules.utils.file_utils import FileUtils
 from servidor_modules.utils.security_utils import SessionSecurity
 from servidor_modules.utils.background_jobs import background_jobs
+from servidor_modules.database.connection import release_thread_connection
 
 
 class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -94,6 +95,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     }
     AUTHENTICATED_API_ROUTES = {
         "/obras",
+        "/api/obras/catalog",
         "/api/backup-completo",
         "/api/runtime/bootstrap",
         "/api/runtime/system-bootstrap",
@@ -183,6 +185,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/session-obras": "handle_get_session_obras",
         "/api/session-obras": "handle_get_session_obras",
         "/api/sessions/current": "handle_get_sessions_current",
+        "/api/obras/catalog": "handle_get_obras_catalog",
         "/api/backup-completo": "handle_get_backup_completo",
         "/api/dados/empresas": "handle_get_empresas",
         "/api/runtime/bootstrap": "handle_get_runtime_bootstrap",
@@ -281,6 +284,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         serve_directory = self.project_root
         super().__init__(*args, directory=str(serve_directory), **kwargs)
+
+    def finish(self):
+        try:
+            super().finish()
+        finally:
+            release_thread_connection(self.project_root)
 
     @property
     def routes_core(self):
@@ -580,14 +589,14 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def _build_runtime_bootstrap_payload(self):
         session = self.get_auth_session() or {}
-        all_obras = self.routes_core.obra_repository.get_all()
-        allowed_obras = self._filter_obras_for_session(all_obras, session)
+        all_catalog = self.routes_core.obra_repository.get_catalog()
+        allowed_catalog = self._filter_obras_for_session(all_catalog, session)
 
         if session.get("role") == "admin":
             session_obras = self.routes_core.handle_get_session_obras()
             obras_sessao = self.routes_core.handle_get_obras()
             empresas = self.routes_core.empresa_handler.obter_empresas_publicas()
-            backup_payload = {"obras": all_obras}
+            obra_catalog = {"obras": all_catalog}
         else:
             empresa_publica = {
                 "codigo": session.get("empresaCodigo", ""),
@@ -596,16 +605,20 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             empresas = [empresa_publica] if empresa_publica["codigo"] else []
             session_obras = {
                 "session_id": self.routes_core.sessions_manager.get_current_session_id(),
-                "obras": [obra.get("id") for obra in allowed_obras if obra.get("id")],
+                "obras": [obra.get("id") for obra in allowed_catalog if obra.get("id")],
             }
-            obras_sessao = allowed_obras
-            backup_payload = {"obras": allowed_obras}
+            obras_sessao = self._filter_obras_for_session(
+                self.routes_core.obra_repository.get_all(),
+                session,
+            )
+            obra_catalog = {"obras": allowed_catalog}
 
         return {
             "success": True,
             "empresas": empresas,
             "sessionObras": session_obras,
-            "backup": backup_payload,
+            "obraCatalog": obra_catalog,
+            "backup": obra_catalog,
             "obrasSessao": obras_sessao,
         }
 
@@ -724,6 +737,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_backup_completo_secure(self):
         obras = self.routes_core.obra_repository.get_all()
         self.send_json_response({"obras": self._filter_obras_for_session(obras)})
+
+    def handle_get_obras_catalog_secure(self):
+        catalog = self.routes_core.obra_repository.get_catalog()
+        self.send_json_response({"obras": self._filter_obras_for_session(catalog)})
 
     def handle_get_obras_secure(self):
         if self._has_role("admin"):
@@ -885,6 +902,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         if path == "/api/backup-completo":
             self.handle_get_backup_completo_secure()
+            return
+
+        if path == "/api/obras/catalog":
+            self.handle_get_obras_catalog_secure()
             return
 
         if path in {"/session-obras", "/api/session-obras"}:
@@ -2094,15 +2115,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Carrega dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404,
-                )
-                return
 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
 
             # Verifica se existe a seção banco_acessorios
             banco_acessorios = dados_data.get("banco_acessorios", {})
@@ -2126,15 +2140,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         try:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404,
-                )
-                return
 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
 
             banco_acessorios = dados_data.get("banco_acessorios", {})
             types = list(banco_acessorios.keys())
@@ -2168,15 +2175,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404,
-                )
-                return
 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
 
             banco_acessorios = dados_data.get("banco_acessorios", {})
 
@@ -2245,15 +2245,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404,
-                )
-                return
 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
 
             # Garantir que existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
@@ -2330,15 +2323,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404,
-                )
-                return
 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
 
             # Verificar se existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
@@ -2421,15 +2407,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404,
-                )
-                return
 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
 
             # Verificar se existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
@@ -2499,15 +2478,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404,
-                )
-                return
 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
 
             # Verificar se existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
@@ -2586,15 +2558,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
 
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404,
-                )
-                return
 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
 
             # Verificar se existe a seção banco_acessorios
             if "banco_acessorios" not in dados_data:
@@ -2645,16 +2610,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """GET /api/dutos - Retorna todos os dutos"""
         try:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             # Verifica se existe a seção dutos
             dutos = dados_data.get("dutos", [])
@@ -2676,16 +2634,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """GET /api/dutos/types - Retorna tipos de dutos"""
         try:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             dutos = dados_data.get("dutos", [])
             # Retornar array de objetos com informações completas
@@ -2720,16 +2671,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """GET /api/dutos/opcionais - Retorna opcionais disponíveis"""
         try:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             dutos = dados_data.get("dutos", [])
             opcionais_por_tipo = {}
@@ -2798,16 +2742,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             tipo = path_parts[-1]
             
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             dutos = dados_data.get("dutos", [])
             
@@ -2877,16 +2814,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
             
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             dutos = dados_data.get("dutos", [])
             resultados = []
@@ -2954,16 +2884,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             # Garantir que existe a seção dutos
             if "dutos" not in dados_data:
@@ -3043,16 +2966,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             # Verificar se existe a seção dutos
             if "dutos" not in dados_data:
@@ -3135,16 +3051,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             # Verificar se existe a seção dutos
             if "dutos" not in dados_data:
@@ -3204,16 +3113,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """GET /api/tubos - Retorna todos os tubos"""
         try:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             # Verifica se existe a seção tubos
             tubos = dados_data.get("tubos", [])
@@ -3235,16 +3137,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """GET /api/tubos/polegadas - Retorna todas as polegadas disponíveis"""
         try:
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             tubos = dados_data.get("tubos", [])
             polegadas_lista = []
@@ -3306,16 +3201,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             polegada = path_parts[-1]
             
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             tubos = dados_data.get("tubos", [])
             
@@ -3361,16 +3249,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             # Garantir que existe a seção tubos
             if "tubos" not in dados_data:
@@ -3445,16 +3326,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             # Verificar se existe a seção tubos
             if "tubos" not in dados_data:
@@ -3534,16 +3408,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Carregar dados.json
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             # Verificar se existe a seção tubos
             if "tubos" not in dados_data:
@@ -3616,16 +3483,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
             
             dados_file = self.file_utils.find_json_file("dados.json", self.project_root)
-            
-            if not dados_file.exists():
-                self.send_json_response(
-                    {"success": False, "error": "Arquivo dados.json não encontrado"},
-                    status=404
-                )
-                return
+
                 
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_data = self.file_utils.load_json_file(dados_file, {})
             
             tubos = dados_data.get("tubos", [])
             resultados = []
@@ -4901,3 +4761,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             }, status=500)
             
         
+
+
+
+

@@ -127,12 +127,14 @@ class WordHandler:
                 pass
 
             if self._backup_cache is None:
-                backup_file = self.project_root / "json" / "backup.json"
-                if not backup_file.exists():
-                    return None
-
-                with open(backup_file, "r", encoding="utf-8") as f:
-                    self._backup_cache = json.load(f)
+                backup_file = self.file_utils.find_json_file(
+                    "backup.json",
+                    self.project_root,
+                )
+                self._backup_cache = self.file_utils.load_json_file(
+                    backup_file,
+                    {"obras": []},
+                )
 
             obras = self._backup_cache.get("obras", [])
             for obra in obras:
@@ -553,12 +555,14 @@ class WordHandler:
     def get_machine_types_with_specifications(self):
         """Obtém tipos de máquinas com suas especificações do BD"""
         try:
-            dados_file = self.project_root / "json" / "dados.json"
-            if not dados_file.exists():
-                return []
-            
-            with open(dados_file, "r", encoding="utf-8") as f:
-                dados_data = json.load(f)
+            dados_file = self.file_utils.find_json_file(
+                "dados.json",
+                self.project_root,
+            )
+            dados_data = self.file_utils.load_json_file(
+                dados_file,
+                {"machines": []},
+            )
             
             machines = dados_data.get("machines", [])
             machine_types = []

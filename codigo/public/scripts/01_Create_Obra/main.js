@@ -40,12 +40,14 @@ window.systemConstants = null;
 window.obraCounter = 0;
 window.GeralCount = 0;
 window.systemLoaded = false;
+window.systemInitializationCompleted = false;
 
 console.log(" Variáveis globais inicializadas:", {
   systemConstants: window.systemConstants,
   obraCounter: window.obraCounter,
   GeralCount: window.GeralCount,
   systemLoaded: window.systemLoaded,
+  systemInitializationCompleted: window.systemInitializationCompleted,
 });
 
 // IMPORTAR DOS MÓDULOS PRINCIPAIS
@@ -67,11 +69,14 @@ function checkSystemLoaded() {
   const statusBanner = document.querySelector(
     "#system-status-banner.system-status-banner.success",
   );
-  const isLoaded = !!statusBanner;
+  const initializedFlag =
+    window.systemLoaded === true || window.systemInitializationCompleted === true;
+  const isLoaded = initializedFlag || !!statusBanner;
 
   if (isLoaded && !window.systemLoaded) {
     console.log(" SISTEMA 100% CARREGADO - Botão Nova Obra liberado");
     window.systemLoaded = true;
+    window.systemInitializationCompleted = true;
     updateAddObraButtonState();
     setupAddObraButtonProtection();
   }
@@ -160,11 +165,15 @@ function setupAddObraButtonProtection() {
     return;
   }
 
+  if (window.addNewObra._protected) {
+    return;
+  }
+
   console.log(" Função addNewObra encontrada - configurando proteção");
 
   const originalAddNewObra = window.addNewObra;
 
-  window.addNewObra = function (...args) {
+  const protectedAddNewObra = function (...args) {
     if (!window.systemLoaded) {
       console.warn(
         " Tentativa de adicionar obra bloqueada - sistema não carregado",
@@ -176,6 +185,10 @@ function setupAddObraButtonProtection() {
     console.log(" Sistema carregado - executando addNewObra normalmente");
     return originalAddNewObra.apply(this, args);
   };
+
+  protectedAddNewObra._protected = true;
+  protectedAddNewObra._original = originalAddNewObra;
+  window.addNewObra = protectedAddNewObra;
 
   console.log(" Proteção do botão Nova Obra configurada com sucesso");
 }
@@ -247,6 +260,18 @@ function setupSystemLoadObserver() {
       console.log(" Verificação periódica do sistema - concluída");
     }
   }, 250);
+
+  document.addEventListener(
+    "systemInitialized",
+    () => {
+      window.systemInitializationCompleted = true;
+      checkSystemLoaded();
+      observer.disconnect();
+      clearInterval(intervalCheck);
+      console.log(" Evento systemInitialized recebido - observer finalizado");
+    },
+    { once: true },
+  );
 
   setTimeout(() => {
     clearInterval(intervalCheck);

@@ -147,7 +147,7 @@ export const API_CONSTANTS = {
         OBRAS: '/obras',
         MACHINES: '/machines',
         SESSIONS: '/api/sessions',
-        BACKUP: '/api/backup-completo',
+        BACKUP: '/api/obras/catalog',
         SYSTEM_CONSTANTS: '/api/system-constants',
     },
     

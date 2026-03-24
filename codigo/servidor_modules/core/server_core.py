@@ -26,6 +26,7 @@ class ServerCore:
     def __init__(self):
         self.servidor_rodando = True
         self.project_root = self._find_project_root()
+        self.is_production = bool(os.environ.get("RENDER"))
         
     def _find_project_root(self):
         """Encontra a raiz do projeto"""
@@ -93,6 +94,10 @@ class ServerCore:
 
     def setup_port(self, default_port):
         """Configura a porta do servidor"""
+        env_port = str(os.environ.get("PORT") or "").strip()
+        if env_port.isdigit():
+            return int(env_port)
+
         if not self.is_port_in_use(default_port):
             return default_port
         
@@ -123,9 +128,12 @@ class ServerCore:
     def create_server(self, port, handler_class):
         """Cria instância do servidor"""
         try:
-            server = socketserver.TCPServer(("", port), handler_class)
+            class ThreadingHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+                allow_reuse_address = True
+                daemon_threads = True
+
+            server = ThreadingHTTPServer(("", port), handler_class)
             server.timeout = 1  # 1 segundo timeout
-            server.allow_reuse_address = True
             return server
         except Exception as e:
             raise
@@ -134,11 +142,17 @@ class ServerCore:
         """Exibe informações do servidor"""
         print(f"\n SERVIDOR INICIADO COM SUCESSO!")
         print("=" * 50)
-        print(f" URL: http://localhost:{port}/admin/obras/create")
+        if self.is_production:
+            print(f" PORTA: {port}")
+            print(" MODO: producao")
+        else:
+            print(f" URL: http://localhost:{port}/admin/obras/create")
         print("=" * 50)
 
     def open_browser(self, port=8000):
         """Abre o navegador automaticamente"""
+        if self.is_production:
+            return
         time.sleep(2)
         
         url = f"http://localhost:{port}/admin/obras/create"
@@ -152,6 +166,8 @@ class ServerCore:
     def start_server_threads(self, port, httpd, monitor_function):
         """Inicia threads auxiliares"""
         try:
+            if self.is_production:
+                return
             browser_thread = threading.Thread(target=self.open_browser, args=(port,), daemon=True)
             browser_thread.start()
             

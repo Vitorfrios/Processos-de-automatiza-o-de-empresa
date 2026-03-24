@@ -297,9 +297,9 @@ const FilterSystem = (function () {
   function getCurrentEndpoint() {
     if (state.active) {
       console.log(
-        " [FILTER-SYSTEM] Endpoint: /api/backup-completo (TODAS as obras)",
+        " [FILTER-SYSTEM] Endpoint: /api/obras/catalog (catalogo leve)",
       );
-      return "/api/backup-completo";
+      return "/api/obras/catalog";
     } else {
       console.log(
         " [FILTER-SYSTEM] Endpoint: /api/session-obras (apenas sessão)",
@@ -393,13 +393,75 @@ const FilterSystem = (function () {
     console.log(" [FILTER-SYSTEM] Carregando TODAS as obras...");
 
     try {
+      const response = await fetch("/api/obras/catalog");
+      if (!response.ok) {
+        throw new Error(`Falha ao carregar catalogo de obras: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const catalogoObras = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.obras)
+          ? data.obras
+          : Array.isArray(data?.data)
+            ? data.data
+            : [];
+
+      console.log(
+        ` [FILTER-SYSTEM] ${catalogoObras.length} obra(s) encontradas no catalogo`,
+      );
+
+      if (catalogoObras.length === 0) {
+        console.log(" [FILTER-SYSTEM] Nenhuma obra salva encontrada no sistema");
+        state.currentObras = [];
+        showSavedObrasEmptyState();
+        return;
+      }
+
+      state.currentObras = catalogoObras.map((obra) => ({
+        ...obra,
+        empresaSigla: obra.empresaSigla || "",
+        empresaNome: obra.empresaNome || "",
+        numeroClienteFinal:
+          obra.numeroClienteFinal || obra.numeroCliente || null,
+        empresa_id: obra.empresa_id || "",
+      }));
+
+      const obrasFiltradas = aplicarFiltros(state.currentObras);
+      console.log(
+        ` [FILTER-SYSTEM] ${obrasFiltradas.length} obras apos filtros`,
+      );
+
+      if (obrasFiltradas.length > 0) {
+        console.log(
+          " [FILTER-SYSTEM] Obras filtradas (primeiras 3):",
+          obrasFiltradas.slice(0, 3).map((o) => ({
+            id: o.id,
+            nome: o.nome,
+            empresaSigla: o.empresaSigla,
+            empresaNome: o.empresaNome,
+            empresa_id: o.empresa_id,
+          })),
+        );
+      }
+
+      if (obrasFiltradas.length === 0) {
+        console.log(" [FILTER-SYSTEM] Nenhuma obra corresponde aos filtros");
+        showNoResultsMessage();
+        return;
+      }
+
+      await carregarObrasComEmpresa(obrasFiltradas);
+      return;
+
+      if (false) {
       // 1. Tentar diferentes endpoints para obter todas as obras
       let todasObras = [];
       let endpointUsed = "";
 
       // ENDPOINTS ESPECÍFICOS PARA TODAS AS OBRAS (conforme sua API)
       const endpointsToTry = [
-        "/api/backup-completo", // Primeiro endpoint
+        "/api/obras/catalog", // Primeiro endpoint
         "/obras", // Segundo endpoint
         "/api/obras", // Terceiro (fallback)
         "/all-obras", // Quarto (fallback)
@@ -493,6 +555,7 @@ const FilterSystem = (function () {
       // Usar loadSingleObra para garantir que empresa seja carregada
       // 4. Carregar obras
       await carregarObrasComEmpresa(obrasFiltradas);
+      }
     } catch (error) {
       console.error(" [FILTER-SYSTEM] Erro ao carregar todas as obras:", error);
       showErrorMessage(

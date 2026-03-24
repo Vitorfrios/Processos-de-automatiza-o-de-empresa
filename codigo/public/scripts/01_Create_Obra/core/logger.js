@@ -15,6 +15,24 @@ function resolveAppConfig(appConfig) {
     return window.APP_CONFIG || window.__APP_CONFIG_OVERRIDES__ || {};
 }
 
+function stringifyLogArg(arg) {
+    if (arg instanceof Error) {
+        const stack = typeof arg.stack === 'string' ? arg.stack : '';
+        return stack || `${arg.name}: ${arg.message}`;
+    }
+
+    if (typeof arg === 'object' && arg !== null) {
+        try {
+            return JSON.stringify(arg);
+        } catch (error) {
+            const objectName = arg?.constructor?.name || 'Object';
+            return `[${objectName} unserializable]`;
+        }
+    }
+
+    return String(arg);
+}
+
 export function createSmartLogger(appConfig = null) {
     class SmartLogger {
         constructor(runtimeAppConfig) {
@@ -145,9 +163,7 @@ export function createSmartLogger(appConfig = null) {
         }
 
         processLog(level, args) {
-            const message = args.map((arg) =>
-                typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-            ).join(' ');
+            const message = args.map((arg) => stringifyLogArg(arg)).join(' ');
 
             if (this.shouldSilence(message)) {
                 return;
