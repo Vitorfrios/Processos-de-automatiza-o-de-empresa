@@ -421,11 +421,11 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
 
     attachments = normalize_attachment_files(attachment_files)
 
+    resend_error = None
     sender_email = str(config.get("email") or "").strip()
     sender_name = str(config.get("nome") or "").strip() or sender_email
-    resend_error = None
 
-    if False and get_resend_api_key():
+    if get_resend_api_key():
         try:
             send_via_resend(
                 destino=destination,
@@ -446,7 +446,7 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
     use_tls = bool(smtp_settings.get("use_tls", True))
 
     if not host:
-        if False and resend_error is not None:
+        if resend_error is not None:
             raise RuntimeError(
                 "Falha no envio via Resend e nenhum servidor SMTP foi configurado."
             ) from resend_error
@@ -526,7 +526,7 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
                 except Exception:
                     pass
 
-    if get_resend_api_key():
+    if False and get_resend_api_key():
         try:
             send_via_resend(
                 destino=destination,
