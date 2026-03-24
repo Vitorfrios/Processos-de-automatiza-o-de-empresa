@@ -1741,19 +1741,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         token = str(recovery_target.get("token") or "").strip()
         nome = str(recovery_target.get("nome") or usuario).strip()
 
-        subject = f"ESI Energia Recuperacao de token - {context}".strip()
+        subject = f"Recuperacao de token | ESI Energia | {context}".strip()
         message = "\n".join(
             [
                 f"Olá, {nome}.",
-                "",
-                "Somos da equipe da ESI Energia.",
-                "",
-                f"Recebemos uma solicitação de recuperação de token para o acesso {account_label}.",
-                "",
-                f"Usuário: {usuario}",
+                f"Recebemos uma solicitacao de recuperacao de token para o acesso {account_label}.",
+                "Dados da solicitacao:",
+                f"Contexto: {context}",
+                f"Usuario: {usuario}",
                 f"Token atual: {token}",
-                "",
-                "Se você não solicitou esta recuperação, ignore este e-mail e entre em contato com o responsável pelo sistema para garantir a segurança da sua conta.",
+                "Se voce nao solicitou esta recuperacao, ignore esta mensagem e entre em contato com o responsavel pelo sistema para verificar a seguranca da sua conta.",
+                "Atenciosamente,",
+                "Equipe ESI Energia",
             ]
         ).strip()
         return subject, message
@@ -1764,8 +1763,6 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             AdminEmailConfigStore,
             is_valid_email,
         )
-        from servidor_modules.utils.export_utils import enviar_email
-
         try:
             payload = self._read_json_body()
         except json.JSONDecodeError:
@@ -1841,17 +1838,17 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         subject, message = self._build_recovery_email(recovery_target)
 
         try:
-            enviar_email(
+            job_id = self._queue_background_plain_email_job(
                 recovery_target.get("destinatario") or "",
                 subject,
                 message,
             )
         except Exception as exc:
-            print(f" Erro ao enviar email de recuperacao: {exc}")
+            print(f" Erro ao enfileirar email de recuperacao: {exc}")
             self.send_json_response(
                 {
                     "success": False,
-                    "error": "Nao foi possivel enviar o email de recuperacao.",
+                    "error": "Nao foi possivel iniciar o envio do email de recuperacao.",
                 },
                 500,
             )
@@ -1860,7 +1857,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_json_response(
             {
                 "success": True,
-                "message": "Token enviado para o email cadastrado.",
+                "message": "Solicitacao recebida. O token sera enviado para o email cadastrado em instantes.",
+                "job_id": job_id,
             },
             200,
         )
@@ -4118,6 +4116,23 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             },
         )
 
+    def _queue_background_plain_email_job(self, destinatario, assunto, mensagem):
+        def run_email_job(job_id):
+            return self._run_background_plain_email_job(
+                job_id,
+                destinatario,
+                assunto,
+                mensagem,
+            )
+
+        return background_jobs.submit(
+            "plain_email_send",
+            run_email_job,
+            metadata={
+                "destinatario": str(destinatario or "").strip(),
+            },
+        )
+
     def _queue_admin_notification_job(self, obra_data, attachment_files):
         obra = obra_data if isinstance(obra_data, dict) else {}
 
@@ -4166,6 +4181,21 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             }
         finally:
             cleanup_temp_files(*(file_info.get("path") for file_info in (attachment_files or [])))
+
+    def _run_background_plain_email_job(self, job_id, destinatario, assunto, mensagem):
+        from servidor_modules.utils.export_utils import enviar_email
+
+        background_jobs.set_stage(
+            job_id,
+            "sending_email",
+            "Enviando email em segundo plano...",
+        )
+
+        enviar_email(destinatario, assunto, mensagem)
+        return {
+            "message": "Email enviado com sucesso.",
+            "destinatario": str(destinatario or "").strip(),
+        }
 
     def _run_admin_notification_job(self, job_id, obra_data, attachment_files):
         from servidor_modules.utils.export_utils import cleanup_temp_files
@@ -5122,7 +5152,3 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             }, status=500)
             
         
-
-
-
-
