@@ -167,6 +167,8 @@ def send_via_resend(destino, assunto, mensagem, sender_email, sender_name, attac
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "app-esienergia/1.0",
         },
         method="POST",
     )

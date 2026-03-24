@@ -17,8 +17,13 @@ function parseCurrency(text) {
 /**
  * Utilitário: formata número para moeda brasileira
  */
+function normalizeCurrencyValue(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function formatCurrency(value) {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return normalizeCurrencyValue(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 /**

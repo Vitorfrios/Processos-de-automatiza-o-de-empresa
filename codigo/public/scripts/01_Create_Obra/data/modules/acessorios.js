@@ -706,7 +706,8 @@ function limparAcessorios(roomId) {
  * Formata valor para moeda brasileira
  */
 function formatarMoeda(valor) {
-  return valor.toLocaleString("pt-BR", {
+  const numericValue = Number(valor);
+  return (Number.isFinite(numericValue) ? numericValue : 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

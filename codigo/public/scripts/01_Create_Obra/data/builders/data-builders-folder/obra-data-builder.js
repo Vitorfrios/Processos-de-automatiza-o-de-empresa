@@ -8,6 +8,11 @@ import {
 } from "../../utils/id-generator.js";
 import { extractEmpresaData } from "../../empresa-system/empresa-data-extractor.js";
 
+function safeCurrencyNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 /**
  * Constrói o objeto de dados completo de uma obra a partir do HTML
  */
@@ -120,13 +125,13 @@ function buildObraData(obraIdOrElement) {
   if (Math.abs(valorTotalObra - somaVerificacao) > 0.01) {
     console.warn(` Diferença encontrada no valor total da obra "${obraName}":`);
     console.warn(
-      ` - Extraído do DOM: R$ ${valorTotalObra.toLocaleString("pt-BR")}`,
+      ` - Extraído do DOM: R$ ${safeCurrencyNumber(valorTotalObra).toLocaleString("pt-BR")}`,
     );
     console.warn(
-      ` - Soma dos projetos: R$ ${somaVerificacao.toLocaleString("pt-BR")}`,
+      ` - Soma dos projetos: R$ ${safeCurrencyNumber(somaVerificacao).toLocaleString("pt-BR")}`,
     );
     console.warn(
-      ` - Diferença: R$ ${(valorTotalObra - somaVerificacao).toLocaleString("pt-BR")}`,
+      ` - Diferença: R$ ${safeCurrencyNumber(valorTotalObra - somaVerificacao).toLocaleString("pt-BR")}`,
     );
 
     // Usa a soma dos projetos como fallback
@@ -136,7 +141,7 @@ function buildObraData(obraIdOrElement) {
   console.log(" Dados da obra construídos:", {
     obra: obraData.nome,
     id: obraData.id,
-    valorTotalObra: `R$ ${obraData.valorTotalObra.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+    valorTotalObra: `R$ ${safeCurrencyNumber(obraData.valorTotalObra).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
     projetos: `${projetosProcessados}/${projectElements.length} processados`,
   });
 
@@ -256,7 +261,7 @@ function buildProjectData(projectIdOrElement) {
     ` Projeto "${projectName}" processado: ${salasProcessadas}/${roomElements.length} salas`,
   );
   console.log(
-    ` Valor total do projeto: R$ ${valorTotalProjeto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+    ` Valor total do projeto: R$ ${safeCurrencyNumber(valorTotalProjeto).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
   );
   console.log(` Serviços extraídos:`, projectData.servicos);
 

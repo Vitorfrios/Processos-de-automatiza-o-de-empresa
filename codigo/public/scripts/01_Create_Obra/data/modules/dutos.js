@@ -1084,7 +1084,8 @@ function limparDutos(roomId) {
  * Formata moeda
  */
 function formatarMoeda(valor) {
-  return valor.toLocaleString("pt-BR", {
+  const numericValue = Number(valor);
+  return (Number.isFinite(numericValue) ? numericValue : 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

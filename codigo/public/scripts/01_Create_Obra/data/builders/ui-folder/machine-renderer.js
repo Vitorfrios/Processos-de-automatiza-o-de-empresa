@@ -3,6 +3,11 @@ import {
   addMachine,
 } from "../../modules/machines/machines-core.js";
 
+function safePriceNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 /**
  * Encontra seção de máquinas pelo título
  */
@@ -531,7 +536,7 @@ async function populateMachineData(machineElement, machineData) {
         `base-price-${machineId}`,
       );
       if (basePriceElement) {
-        basePriceElement.textContent = `R$ ${machineData.precoBase.toLocaleString("pt-BR")}`;
+        basePriceElement.textContent = `R$ ${safePriceNumber(machineData.precoBase).toLocaleString("pt-BR")}`;
       }
     }
 
@@ -540,7 +545,7 @@ async function populateMachineData(machineElement, machineData) {
         `total-price-${machineId}`,
       );
       if (totalPriceElement) {
-        totalPriceElement.textContent = `R$ ${machineData.precoTotal.toLocaleString("pt-BR")}`;
+        totalPriceElement.textContent = `R$ ${safePriceNumber(machineData.precoTotal).toLocaleString("pt-BR")}`;
       }
     }
 

@@ -621,8 +621,9 @@ function buildOptionsHTML(
       const isChecked = selectedOptions.some(
         (selected) => selected.id === option.id,
       );
-      const optionValue =
-        (selectedPower && option.values?.[selectedPower]) || 0;
+      const optionValue = safeNumber(
+        selectedPower && option.values?.[selectedPower],
+      );
       const displayValue = `+R$ ${optionValue.toLocaleString("pt-BR")}`;
 
       return `
@@ -1596,11 +1597,11 @@ function calculateMachinePrice(machineId) {
 
   updateElementText(
     `base-price-${machineId}`,
-    `R$ ${basePriceUnitario.toLocaleString("pt-BR")}`,
+    `R$ ${safeNumber(basePriceUnitario).toLocaleString("pt-BR")}`,
   );
   updateElementText(
     `total-price-${machineId}`,
-    `R$ ${totalPriceFinal.toLocaleString("pt-BR")}`,
+    `R$ ${safeNumber(totalPriceFinal).toLocaleString("pt-BR")}`,
   );
 
   const roomId = machineElement.dataset.roomId;
@@ -1632,8 +1633,9 @@ function updateOptionValues(machineId) {
       `option-${machineId}-${option.id}`,
     );
     if (checkbox) {
-      const optionValue =
-        (selectedPower && option.values?.[selectedPower]) || 0;
+      const optionValue = safeNumber(
+        selectedPower && option.values?.[selectedPower],
+      );
       checkbox.value = optionValue;
 
       const priceDisplay = checkbox
@@ -1890,7 +1892,7 @@ function updateAllMachinesTotal(roomId) {
   const total = calculateAllMachinesTotal(roomId);
   const display = document.getElementById(`total-all-machines-price-${roomId}`);
   if (display) {
-    display.textContent = `R$ ${total.toLocaleString("pt-BR")}`;
+    display.textContent = `R$ ${safeNumber(total).toLocaleString("pt-BR")}`;
 
     // Disparar evento
     const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
