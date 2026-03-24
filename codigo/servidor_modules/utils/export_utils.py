@@ -419,12 +419,35 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
 
     attachments = normalize_attachment_files(attachment_files)
 
+    resend_error = None
+    sender_email = str(config.get("email") or "").strip()
+    sender_name = str(config.get("nome") or "").strip() or sender_email
+
+    if get_resend_api_key():
+        try:
+            send_via_resend(
+                destino=destination,
+                assunto=str(assunto or "").strip() or "Exportação de obra",
+                mensagem=mensagem,
+                sender_email=sender_email,
+                sender_name=sender_name,
+                attachments=attachments,
+            )
+            return
+        except Exception as exc:
+            resend_error = exc
+            print(" Aviso Resend:", exc)
+
     smtp_settings = config_store.resolve_smtp_settings(config)
     host = str(smtp_settings.get("host") or "").strip()
     port = int(smtp_settings.get("port") or 587)
     use_tls = bool(smtp_settings.get("use_tls", True))
 
     if not host:
+        if resend_error is not None:
+            raise RuntimeError(
+                "Falha no envio via Resend e nenhum servidor SMTP foi configurado."
+            ) from resend_error
         raise RuntimeError("Não foi possível resolver o servidor SMTP")
 
     sender_email = str(config.get("email") or "").strip()
@@ -501,8 +524,7 @@ def enviar_email(destino, assunto, mensagem, attachment_files=None):
                 except Exception:
                     pass
 
-    resend_error = None
-    if get_resend_api_key():
+    if False and get_resend_api_key():
         try:
             send_via_resend(
                 destino=destination,
