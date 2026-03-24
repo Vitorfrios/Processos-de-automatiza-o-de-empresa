@@ -1185,7 +1185,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         try:
-            normalized_admins = self._load_admin_accounts()
+            active_admin = self._get_admin_account(usuario, token)
         except Exception as e:
             print(f" Erro ao carregar credenciais administrativas: {e}")
             self.send_json_response(
@@ -1197,18 +1197,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
             return
 
-        active_admin = next(
-            (
-                admin
-                for admin in normalized_admins
-                if str(admin["usuario"]).strip().lower() == normalized_usuario
-                and admin["token"] == token
-                and admin["status"] != "inativo"
-            ),
-            None,
-        )
-
-        if not normalized_admins:
+        if active_admin is False:
             self.send_json_response(
                 {
                     "success": False,
@@ -1219,7 +1208,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
             return
 
-        if not active_admin:
+        if active_admin is None:
             self.send_json_response(
                 {
                     "success": False,
@@ -1310,21 +1299,73 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         self.send_json_response(result, status)
 
+    def _get_admin_account(self, usuario, token):
+        from servidor_modules.database.storage import get_storage
+
+        normalized_user = str(usuario or "").strip().lower()
+        normalized_token = str(token or "").strip()
+        storage = get_storage(self.project_root)
+
+        count_row = storage.conn.execute(
+            "SELECT COUNT(*) AS total_admins FROM admins"
+        ).fetchone()
+        if not count_row or int(count_row.get("total_admins") or 0) == 0:
+            return False
+
+        row = storage.conn.execute(
+            """
+            SELECT raw_json
+            FROM admins
+            WHERE LOWER(usuario) = ?
+            LIMIT 1
+            """,
+            (normalized_user,),
+        ).fetchone()
+        if not row or not row.get("raw_json"):
+            return None
+
+        try:
+            admin = json.loads(row["raw_json"])
+        except Exception:
+            return None
+
+        admin_usuario = str(admin.get("usuario", "")).strip()
+        admin_token = str(admin.get("token", "")).strip()
+        admin_status = str(admin.get("status", "ativo")).strip().lower() or "ativo"
+
+        if (
+            admin_usuario.lower() != normalized_user
+            or admin_token != normalized_token
+            or admin_status == "inativo"
+        ):
+            return None
+
+        return {
+            "nome": str(admin.get("nome") or admin_usuario).strip(),
+            "email": str(admin.get("email") or "").strip(),
+            "usuario": admin_usuario,
+            "token": admin_token,
+            "status": admin_status,
+            "nivel": admin.get("nivel", "ADM"),
+        }
+
     def _load_admin_accounts(self):
         from servidor_modules.database.storage import get_storage
 
         storage = get_storage(self.project_root)
-        dados_data = storage.load_document("dados.json", {"ADM": []})
-        admin_data = dados_data.get("ADM")
-        if admin_data is None:
-            admin_data = dados_data.get("administradores", [])
+        rows = storage.conn.execute(
+            "SELECT raw_json FROM admins ORDER BY sort_order, usuario"
+        ).fetchall()
 
-        if isinstance(admin_data, dict):
-            source_admins = [admin_data]
-        elif isinstance(admin_data, list):
-            source_admins = admin_data
-        else:
-            source_admins = []
+        source_admins = []
+        for row in rows:
+            raw_json = row.get("raw_json")
+            if not raw_json:
+                continue
+            try:
+                source_admins.append(json.loads(raw_json))
+            except Exception:
+                continue
 
         normalized_admins = []
         for admin in source_admins:
@@ -1359,30 +1400,45 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return False
 
         storage = get_storage(self.project_root)
-        dados = storage.load_document("dados.json", {"ADM": []})
-        admins = list(dados.get("ADM", []))
-        updated = False
+        row = storage.conn.execute(
+            "SELECT raw_json, sort_order FROM admins WHERE LOWER(usuario) = ?",
+            (normalized_user,),
+        ).fetchone()
+        if not row or not row.get("raw_json"):
+            return False
 
-        for admin in admins:
-            if not isinstance(admin, dict):
-                continue
-            if str(admin.get("usuario", "")).strip().lower() != normalized_user:
-                continue
+        try:
+            admin = json.loads(row["raw_json"])
+        except Exception:
+            admin = {"usuario": usuario}
 
-            try:
-                admin["ultimoAcesso"] = datetime.now(
-                    ZoneInfo("America/Sao_Paulo")
-                ).isoformat()
-            except Exception:
-                admin["ultimoAcesso"] = datetime.now(timezone.utc).isoformat()
-            updated = True
-            break
+        try:
+            admin["ultimoAcesso"] = datetime.now(
+                ZoneInfo("America/Sao_Paulo")
+            ).isoformat()
+        except Exception:
+            admin["ultimoAcesso"] = datetime.now(timezone.utc).isoformat()
 
-        if updated:
-            dados["ADM"] = admins
-            storage.save_document("dados.json", dados)
-
-        return updated
+        cursor = storage.conn.cursor()
+        cursor.execute("BEGIN")
+        try:
+            cursor.execute(
+                """
+                UPDATE admins
+                SET raw_json = ?, sort_order = ?
+                WHERE LOWER(usuario) = ?
+                """,
+                (
+                    json.dumps(admin, ensure_ascii=False),
+                    int(row.get("sort_order") or 0),
+                    normalized_user,
+                ),
+            )
+            storage.conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            storage.conn.rollback()
+            raise
 
     def _find_recovery_targets(self, usuario, email):
         normalized_user = str(usuario or "").strip().lower()

@@ -14,27 +14,22 @@ import { supportFrom_saveObra, atualizarObra } from "./obra-persistence.js";
 import { prepararEmpresaParaSalvamento } from "../../../data/empresa-system/empresa-data-extractor.js";
 import { collapseElement } from "../../../ui/helpers.js";
 
-/**
- * Minimizar todos os toggles ao salvar
- */
 async function minimizarTogglesAposSalvamento(obraId) {
   console.log(` [TOGGLES] Minimizando todos os toggles para obra: ${obraId}`);
 
   try {
     const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
     if (!obraElement) {
-      console.error(` [TOGGLES] Obra ${obraId} não encontrada`);
+      console.error(` [TOGGLES] Obra ${obraId} nao encontrada`);
       return;
     }
 
-    // Minimizar obra principal
     const obraContent = obraElement.querySelector(".obra-content");
     const obraMinimizer = obraElement.querySelector(".minimizer");
     if (obraContent && obraMinimizer) {
       collapseElement(obraContent, obraMinimizer);
     }
 
-    // Minimizar todos os projetos
     const projetos = obraElement.querySelectorAll(".project-block");
     projetos.forEach((projeto) => {
       const projectContent = projeto.querySelector(".project-content");
@@ -43,7 +38,6 @@ async function minimizarTogglesAposSalvamento(obraId) {
         collapseElement(projectContent, projectMinimizer);
       }
 
-      // Minimizar todas as salas
       const salas = projeto.querySelectorAll(".room-block");
       salas.forEach((sala) => {
         const roomContent = sala.querySelector(".room-content");
@@ -56,7 +50,7 @@ async function minimizarTogglesAposSalvamento(obraId) {
 
     console.log(` [TOGGLES] Todos os toggles minimizados para obra ${obraId}`);
   } catch (error) {
-    console.error(` [TOGGLES] Erro ao minimizar toggles:`, error);
+    console.error(" [TOGGLES] Erro ao minimizar toggles:", error);
   }
 }
 
@@ -75,13 +69,29 @@ async function notificarAdminSobreObra(obraId) {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
-    throw new Error(payload.error || "Falha ao enviar notificação ao ADM.");
+    throw new Error(payload.error || "Falha ao enviar notificacao ao ADM.");
   }
 }
 
-/**
- * Função principal de salvamento
- */
+function agendarTarefasPosSalvamento(obraId) {
+  setTimeout(() => {
+    atualizarHeaderObraAposSalvamento(obraId).catch((error) => {
+      console.error(" [HEADER] Falha no pos-salvamento:", error);
+    });
+
+    minimizarTogglesAposSalvamento(obraId).catch((error) => {
+      console.error(" [TOGGLES] Falha no pos-salvamento:", error);
+    });
+
+    notificarAdminSobreObra(obraId).catch((notificationError) => {
+      console.error(
+        " [NOTIFICACAO] Falha ao enviar email ao ADM:",
+        notificationError,
+      );
+    });
+  }, 0);
+}
+
 async function saveObra(obraId, event) {
   if (event) {
     event.preventDefault();
@@ -94,34 +104,33 @@ async function saveObra(obraId, event) {
 
   if (!obraBlock) {
     console.error(
-      " Obra não encontrada no DOM após múltiplas tentativas:",
+      " Obra nao encontrada no DOM apos multiplas tentativas:",
       obraId,
     );
-    showSystemStatus("ERRO: Obra não encontrada na interface", "error");
+    showSystemStatus("ERRO: Obra nao encontrada na interface", "error");
     return;
   }
 
   const obraOriginalReference = obraBlock;
   const obraContainer = obraBlock.parentElement;
 
-  // Prepara os dados da empresa antes do salvamento da obra
   console.log(" [SALVAMENTO] Preparando empresa para salvamento com obra...");
   await prepararEmpresaParaSalvamento(obraBlock);
 
-  console.log(" REFERÊNCIA SALVA:", {
+  console.log(" REFERENCIA SALVA:", {
     obra: obraOriginalReference,
     container: obraContainer,
     obraNoContainer: obraContainer.contains(obraOriginalReference),
   });
 
   if (!isSessionActive()) {
-    console.log(" Iniciando sessão para primeira obra...");
+    console.log(" Iniciando sessao para primeira obra...");
     await startSessionOnFirstSave();
   }
 
   if (!isSessionActive()) {
-    console.warn(" Sessão não está ativa - obra não será salva");
-    showSystemStatus("ERRO: Sessão não está ativa. Obra não salva.", "error");
+    console.warn(" Sessao nao esta ativa - obra nao sera salva");
+    showSystemStatus("ERRO: Sessao nao esta ativa. Obra nao salva.", "error");
     return;
   }
 
@@ -143,7 +152,7 @@ async function saveObra(obraId, event) {
 
   if (!String(obraData.emailEmpresa || "").trim()) {
     showSystemStatus(
-      "O email da empresa não foi preenchido. Isso pode dificultar a recuperação do acesso posteriormente.",
+      "O email da empresa nao foi preenchido. Isso pode dificultar a recuperacao do acesso posteriormente.",
       "warning",
     );
   }
@@ -152,32 +161,19 @@ async function saveObra(obraId, event) {
   const obraIdFromData = obraData.id;
   const finalObraId = obraIdFromDOM || obraIdFromData;
 
-  console.log(" VERIFICAÇÃO DE OBRA MELHORADA:");
+  console.log(" VERIFICACAO DE OBRA MELHORADA:");
   console.log("- ID no DOM:", obraIdFromDOM);
   console.log("- ID nos dados:", obraIdFromData);
   console.log("- ID final para uso:", finalObraId);
-  console.log("- É ID seguro?:", finalObraId?.startsWith("obra_"));
+  console.log("- E ID seguro?:", finalObraId?.startsWith("obra_"));
 
-  let isNewObra = true;
+  const saveButton = obraBlock.querySelector(".obra-actions-footer .btn-save");
+  const updateButton = obraBlock.querySelector(
+    ".obra-actions-footer .btn-update",
+  );
+  const isNewObra = Boolean(saveButton) && !updateButton;
 
-  try {
-    {
-      const obraExistenteResponse = await fetch(
-        `/obras/${encodeURIComponent(finalObraId)}`,
-      );
-      if (obraExistenteResponse.ok) {
-        isNewObra = false;
-      } else if (obraExistenteResponse.status === 404) {
-        isNewObra = true;
-      }
-      console.log(`- Ja existe no servidor?: ${!isNewObra}`);
-    }
-  } catch (error) {
-    console.log(
-      "- Nao foi possivel verificar servidor, assumindo como nova obra",
-    );
-  }
-
+  console.log(`- Ja existe no servidor?: ${!isNewObra}`);
   console.log("- E nova obra?:", isNewObra);
 
   let novoFluxoResultado = null;
@@ -206,133 +202,112 @@ async function saveObra(obraId, event) {
     novoFluxoResultado = await atualizarObra(finalObraId, obraData);
   }
 
-  if (novoFluxoResultado) {
-    const novoFluxoFinalId = ensureStringId(novoFluxoResultado.id);
+  if (!novoFluxoResultado) {
+    console.error(" FALHA AO SALVAR OBRA NO SERVIDOR");
+    showSystemStatus("ERRO: Falha ao salvar obra no servidor", "error");
+    return;
+  }
 
-    let obraBlockAtualNovo = document.querySelector(
-      `[data-obra-id="${novoFluxoFinalId}"]`,
-    );
+  const novoFluxoFinalId = ensureStringId(novoFluxoResultado.id);
 
-    if (!obraBlockAtualNovo) {
-      console.error(" CRITICO: Obra desapareceu do DOM durante salvamento!");
-      console.log(" Tentando recuperar da referencia original...");
+  let obraBlockAtualNovo = document.querySelector(
+    `[data-obra-id="${novoFluxoFinalId}"]`,
+  );
 
-      if (obraContainer && document.body.contains(obraContainer)) {
-        const obrasNoContainer =
-          obraContainer.querySelectorAll("[data-obra-id]");
-        console.log(` Obras no container original: ${obrasNoContainer.length}`);
+  if (!obraBlockAtualNovo) {
+    console.error(" CRITICO: Obra desapareceu do DOM durante salvamento!");
+    console.log(" Tentando recuperar da referencia original...");
 
-        if (obraContainer.contains(obraOriginalReference)) {
-          obraBlockAtualNovo = obraOriginalReference;
-          console.log(" Obra recuperada da referencia original");
-        } else {
-          console.error(" Obra nao esta mais no container original");
-          showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
-          return;
-        }
+    if (obraContainer && document.body.contains(obraContainer)) {
+      const obrasNoContainer = obraContainer.querySelectorAll("[data-obra-id]");
+      console.log(` Obras no container original: ${obrasNoContainer.length}`);
+
+      if (obraContainer.contains(obraOriginalReference)) {
+        obraBlockAtualNovo = obraOriginalReference;
+        console.log(" Obra recuperada da referencia original");
       } else {
-        console.error(" Container original nao encontrado");
+        console.error(" Obra nao esta mais no container original");
         showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
         return;
       }
-    }
-
-    obraBlockAtualNovo.dataset.obraId = novoFluxoFinalId;
-    obraBlockAtualNovo.dataset.obraName = obraData.nome;
-
-    const titleElement = obraBlockAtualNovo.querySelector(".obra-title");
-    if (titleElement && titleElement.textContent !== obraData.nome) {
-      titleElement.textContent = obraData.nome;
-    }
-
-    if (
-      typeof updateObraButtonAfterSave === "function" &&
-      document.body.contains(obraBlockAtualNovo)
-    ) {
-      console.log(" Obra confirmada no DOM, atualizando botao...");
-      updateObraButtonAfterSave(obraData.nome, novoFluxoFinalId);
     } else {
-      console.error(" Obra nao esta no DOM para atualizar botao");
+      console.error(" Container original nao encontrado");
+      showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
+      return;
     }
-
-    console.log(" OBRA SALVA/ATUALIZADA:", {
-      id: novoFluxoFinalId,
-      nome: obraData.nome,
-      isNew: isNewObra,
-    });
-
-    if (typeof window.invalidateRuntimeBootstrap === "function") {
-      window.invalidateRuntimeBootstrap();
-    }
-
-    console.log(" [HEADER] Chamando atualização do header após salvamento...");
-    await atualizarHeaderObraAposSalvamento(novoFluxoFinalId);
-
-    console.log(" [SALVAMENTO] Minimizando toggles automaticamente...");
-    await minimizarTogglesAposSalvamento(novoFluxoFinalId);
-
-    console.log(
-      ` OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${novoFluxoFinalId}`,
-    );
-    let successMessage = isNewObra
-      ? "Obra salva com sucesso!"
-      : "Obra atualizada com sucesso!";
-
-    try {
-      await notificarAdminSobreObra(novoFluxoFinalId);
-    } catch (notificationError) {
-      console.error(
-        " [NOTIFICACAO] Falha ao enviar email ao ADM:",
-        notificationError,
-      );
-      successMessage = "Obra salva, mas a notificação ao ADM não foi enviada.";
-    }
-
-    showSystemStatus(
-      successMessage,
-      successMessage.includes("não foi enviada") ? "warning" : "success",
-    );
-  } else {
-    console.error(" FALHA AO SALVAR OBRA NO SERVIDOR");
-    showSystemStatus("ERRO: Falha ao salvar obra no servidor", "error");
   }
+
+  obraBlockAtualNovo.dataset.obraId = novoFluxoFinalId;
+  obraBlockAtualNovo.dataset.obraName = obraData.nome;
+
+  const titleElement = obraBlockAtualNovo.querySelector(".obra-title");
+  if (titleElement && titleElement.textContent !== obraData.nome) {
+    titleElement.textContent = obraData.nome;
+  }
+
+  if (
+    typeof updateObraButtonAfterSave === "function" &&
+    document.body.contains(obraBlockAtualNovo)
+  ) {
+    console.log(" Obra confirmada no DOM, atualizando botao...");
+    updateObraButtonAfterSave(obraData.nome, novoFluxoFinalId);
+  } else {
+    console.error(" Obra nao esta no DOM para atualizar botao");
+  }
+
+  console.log(" OBRA SALVA/ATUALIZADA:", {
+    id: novoFluxoFinalId,
+    nome: obraData.nome,
+    isNew: isNewObra,
+  });
+
+  if (typeof window.invalidateRuntimeBootstrap === "function") {
+    window.invalidateRuntimeBootstrap();
+  }
+
+  console.log(" [POS-SAVE] Agendando tarefas secundarias apos o salvamento...");
+  agendarTarefasPosSalvamento(novoFluxoFinalId);
+
+  console.log(
+    ` OBRA SALVA/ATUALIZADA COM SUCESSO! ID SEGURO: ${novoFluxoFinalId}`,
+  );
+
+  const successMessage = isNewObra
+    ? "Obra salva com sucesso!"
+    : "Obra atualizada com sucesso!";
+
+  showSystemStatus(successMessage, "success");
 }
 
-/**
- * Atualiza o header da obra após salvamento
- */
 async function atualizarHeaderObraAposSalvamento(obraId) {
   try {
     console.log(
-      ` [HEADER] Iniciando atualização do header para obra: ${obraId}`,
+      ` [HEADER] Iniciando atualizacao do header para obra: ${obraId}`,
     );
 
     const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
     if (!obraElement) {
-      console.error(` [HEADER] Obra ${obraId} não encontrada no DOM`);
+      console.error(` [HEADER] Obra ${obraId} nao encontrada no DOM`);
       return;
     }
 
-    // Importar as funções necessárias
-    const { extractEmpresaData } =
-      await import("../../../data/empresa-system/empresa-data-extractor.js");
-    const { atualizarInterfaceComEmpresa } =
-      await import("../../../data/empresa-system/empresa-form-manager.js");
+    const { extractEmpresaData } = await import(
+      "../../../data/empresa-system/empresa-data-extractor.js"
+    );
+    const { atualizarInterfaceComEmpresa } = await import(
+      "../../../data/empresa-system/empresa-form-manager.js"
+    );
 
-    // Extrair dados atualizados da empresa
     console.log(" [HEADER] Extraindo dados da empresa...");
     const empresaData = extractEmpresaData(obraElement);
 
-    console.log(" [HEADER] Dados extraídos:", empresaData);
+    console.log(" [HEADER] Dados extraidos:", empresaData);
 
     if (!empresaData.empresaSigla || !empresaData.empresaNome) {
-      console.log(
-        " [HEADER] Dados de empresa incompletos para atualizar header",
-      );
+      console.log(" [HEADER] Dados de empresa incompletos para atualizar header");
       return;
     }
 
-    // Atualizar a interface
     console.log(" [HEADER] Chamando atualizarInterfaceComEmpresa...");
     await atualizarInterfaceComEmpresa(obraElement, empresaData);
 

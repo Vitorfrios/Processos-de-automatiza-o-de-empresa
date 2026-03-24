@@ -145,12 +145,22 @@ export async function saveData() {
 
     console.log(" Validação passou. Enviando dados para API...");
 
+    const changedSections = Array.from(realPendingChanges);
+    const payload = {
+      changed_sections: changedSections,
+      data: {}
+    };
+
+    changedSections.forEach((section) => {
+      payload.data[section] = systemData[section];
+    });
+
     const response = await fetch("/api/system-data/save", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(systemData),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -166,9 +176,15 @@ export async function saveData() {
 
       clearPendingChanges();
       showSuccess(result.message || "Dados salvos com sucesso!");
-
-      // Recarregar para sincronização
-      setTimeout(() => loadData(), 500);
+      window.dispatchEvent(
+        new CustomEvent("dataApplied", {
+          detail: {
+            data: systemData,
+            changes: changedSections,
+            source: "saveData"
+          }
+        })
+      );
     } else {
       throw new Error(result.error || "Erro ao salvar dados");
     }

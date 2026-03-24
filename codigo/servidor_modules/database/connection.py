@@ -159,6 +159,8 @@ _PROXIES = {}
 _INITIALIZED_ROOTS = set()
 _POOL_LOCK = threading.Lock()
 _INITIALIZATION_LOCKS = {}
+_WARMUP_LOCKS = {}
+_WARMUP_STARTED_ROOTS = set()
 _DOTENV_LOCK = threading.Lock()
 _DOTENV_LOADED_PATHS = set()
 
@@ -250,6 +252,33 @@ def release_thread_connection(project_root=None) -> None:
 
     for proxy in _PROXIES.values():
         proxy.release()
+
+
+def start_connection_warmup(project_root) -> None:
+    root_key = str(Path(project_root).resolve())
+    warmup_lock = _WARMUP_LOCKS.setdefault(root_key, threading.Lock())
+
+    with warmup_lock:
+        if root_key in _WARMUP_STARTED_ROOTS:
+            return
+        _WARMUP_STARTED_ROOTS.add(root_key)
+
+    warmup_thread = threading.Thread(
+        target=_run_connection_warmup,
+        args=(project_root,),
+        daemon=True,
+        name=f"postgres-warmup-{Path(root_key).name}",
+    )
+    warmup_thread.start()
+
+
+def _run_connection_warmup(project_root) -> None:
+    try:
+        get_connection(project_root)
+        release_thread_connection(project_root)
+        print(" PostgreSQL pronto para uso.")
+    except Exception as exc:
+        print(f" Aviso no warmup do PostgreSQL: {exc}")
 
 
 def migrate_sqlite_to_postgres(project_root):

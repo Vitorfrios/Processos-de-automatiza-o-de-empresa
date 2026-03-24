@@ -86,13 +86,11 @@ def initialize_server():
     server_core = ServerCore()
     
     from servidor_modules.database.connection import (
-        get_connection,
-        release_thread_connection,
+        start_connection_warmup,
     )
 
-    print(" Validando conexao PostgreSQL...")
-    get_connection(server_core.project_root)
-    release_thread_connection(server_core.project_root)
+    print(" Agendando validacao PostgreSQL em segundo plano...")
+    start_connection_warmup(server_core.project_root)
     
     # Configura porta
     print(" Configurando porta...")

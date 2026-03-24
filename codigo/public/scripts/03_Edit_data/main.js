@@ -140,6 +140,46 @@ function ensureLoadDataFunction() {
     };
 }
 
+function refreshAdminArea() {
+  initializeDashboard();
+  initializeAdminCredentials();
+}
+
+function refreshChangedSections(changes = [], options = {}) {
+  const normalizedChanges = Array.isArray(changes) ? changes : [];
+  const refreshJsonEditor = options.refreshJsonEditor !== false;
+  const refreshDashboard = options.refreshDashboard !== false;
+
+  const loadersBySection = {
+    constants: () => window.loadConstants && window.loadConstants(),
+    machines: () => {
+      if (window.loadMachines) window.loadMachines();
+      if (window.filterMachines) window.filterMachines();
+    },
+    materials: () => window.loadMaterials && window.loadMaterials(),
+    empresas: () => window.loadEmpresas && window.loadEmpresas(),
+    banco_acessorios: () => window.loadAcessorios && window.loadAcessorios(),
+    dutos: () => window.loadDutos && window.loadDutos(),
+    tubos: () => window.loadTubos && window.loadTubos(),
+    ADM: () => initializeAdminCredentials(),
+  };
+
+  normalizedChanges.forEach((section) => {
+    const loader = loadersBySection[section];
+    if (typeof loader === "function") {
+      loader();
+    }
+  });
+
+  if (refreshDashboard && normalizedChanges.length > 0) {
+    initializeDashboard();
+  }
+
+  if (refreshJsonEditor && window.loadJSONEditor) {
+    window.loadJSONEditor();
+  }
+}
+
 // ==================== INICIALIZAÇÃO PRINCIPAL ====================
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -539,8 +579,7 @@ window.addEventListener("dataLoaded", function (event) {
     if (window.loadJSONEditor) window.loadJSONEditor();
 
     // Atualiza as novas abas
-    initializeDashboard();
-    initializeAdminCredentials();
+    refreshAdminArea();
 
     // Limpar staging
     window.stagingData = null;
@@ -568,8 +607,7 @@ window.addEventListener("dataImported", function (event) {
   if (window.loadJSONEditor) window.loadJSONEditor();
 
   // Atualiza as novas abas
-  initializeDashboard();
-  initializeAdminCredentials();
+  refreshAdminArea();
 
   // Limpar staging
   window.stagingData = null;
@@ -579,30 +617,15 @@ window.addEventListener("dataImported", function (event) {
 // Evento: Dados aplicados via botão "Aplicar JSON"
 window.addEventListener("dataApplied", function (event) {
   const data = event.detail.data;
-  const changes = event.detail.changes;
+  const changes = Array.isArray(event.detail.changes) ? event.detail.changes : [];
+  changes.summary = { total_changes: changes.length };
 
   console.log(" EVENTO dataApplied recebido:", changes);
 
   // Atualizar window.systemData
   window.systemData = data;
 
-  // Atualizar JSON Editor com os novos dados
-  if (window.loadJSONEditor) {
-    window.loadJSONEditor();
-  }
-
-  // Atualizar todas as tabs
-  if (window.loadConstants) window.loadConstants();
-  if (window.loadMachines) window.loadMachines();
-  if (window.loadMaterials) window.loadMaterials();
-  if (window.loadEmpresas) window.loadEmpresas();
-  if (window.loadAcessorios) window.loadAcessorios();
-  if (window.loadDutos) window.loadDutos();
-  if (window.loadTubos) window.loadTubos();
-
-  // Atualiza as novas abas
-  initializeDashboard();
-  initializeAdminCredentials();
+  refreshChangedSections(changes);
 
   // Registrar no logger se disponível
   if (window.logger && window.logger.log) {

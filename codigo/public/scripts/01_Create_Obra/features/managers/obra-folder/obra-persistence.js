@@ -60,75 +60,6 @@ async function atualizarObra(obraId, obraData) {
 
     obraId = ensureStringId(obraId);
 
-    console.log(` Verificando se obra ${obraId} existe no servidor...`);
-    {
-      const obraExistenteNoServidor = await fetchObraById(obraId);
-      console.log(
-        ` Verificacao enxuta: Obra ${obraId} existe? ${!!obraExistenteNoServidor}`,
-      );
-
-      if (!obraExistenteNoServidor) {
-        console.log(` Obra ${obraId} nao encontrada no servidor, criando nova...`);
-        console.log(` Criando nova obra com ID seguro preservado: ${obraId}`);
-        obraData.id = obraId;
-        return await supportFrom_saveObra(obraData);
-      }
-
-      console.log(" ATUALIZANDO OBRA EXISTENTE:", {
-        id: obraData.id,
-        nome: obraData.nome,
-        projetos: obraData.projetos?.length || 0,
-      });
-
-      const url = `/obras/${obraId}`;
-      console.log(` Fazendo PUT para: ${url}`);
-
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(obraData),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erro ao atualizar obra: ${errorText}`);
-      }
-
-      const updatedObra = await response.json();
-      showSystemStatus("Obra atualizada com sucesso!", "success");
-
-      console.log(" OBRA ATUALIZADA:", {
-        id: updatedObra.id,
-        nome: updatedObra.nome,
-        projetos: updatedObra.projetos?.length || 0,
-      });
-      return updatedObra;
-    }
-
-    const todasObrasResponse = await fetch("/api/obras/catalog");
-    if (!todasObrasResponse.ok) {
-      throw new Error("Falha ao carregar backup para verificação");
-    }
-
-    const backupData = await todasObrasResponse.json();
-    const todasObras = backupData.obras || [];
-    const obraExistente = todasObras.find(
-      (obra) => String(obra.id) === String(obraId),
-    );
-
-    console.log(` Verificação: Obra ${obraId} existe? ${!!obraExistente}`);
-    console.log(
-      ` TODAS as obras no backup:`,
-      todasObras.map((o) => ({ id: o.id, nome: o.nome })),
-    );
-
-    if (!obraExistente) {
-      console.log(` Obra ${obraId} não encontrada no backup, criando nova...`);
-      console.log(` Criando nova obra com ID seguro preservado: ${obraId}`);
-      obraData.id = obraId;
-      return await supportFrom_saveObra(obraData);
-    }
-
     console.log(" ATUALIZANDO OBRA EXISTENTE:", {
       id: obraData.id,
       nome: obraData.nome,
@@ -208,16 +139,9 @@ async function supportFrom_saveObra(obraData) {
 
     const createdObra = await response.json();
 
-    console.log(` Adicionando obra ${createdObra.id} à sessão...`);
-    await fetch("/api/sessions/add-obra", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ obra_id: createdObra.id }),
-    });
-
     showSystemStatus("Obra salva com sucesso!", "success");
 
-    console.log(" NOVA OBRA SALVA E ADICIONADA À SESSÃO:", {
+    console.log(" NOVA OBRA SALVA:", {
       id: createdObra.id,
       nome: createdObra.nome,
       projetos: createdObra.projetos?.length || 0,

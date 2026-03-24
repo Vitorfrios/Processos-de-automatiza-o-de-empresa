@@ -33,12 +33,118 @@ class EmpresaRepository:
             )
         return empresas
 
+    def exists_by_codigo(self, codigo):
+        codigo_normalizado = str(codigo or "").strip()
+        if not codigo_normalizado:
+            return False
+
+        row = self.conn.execute(
+            "SELECT 1 AS found FROM empresas WHERE codigo = ? LIMIT 1",
+            (codigo_normalizado,),
+        ).fetchone()
+        return bool(row)
+
+    def get_login_record(self, usuario):
+        usuario_normalizado = str(usuario or "").strip().lower()
+        if not usuario_normalizado:
+            return None
+
+        row = self.conn.execute(
+            """
+            SELECT codigo, nome, credenciais_json, raw_json
+            FROM empresas
+            WHERE LOWER(COALESCE(credenciais_json, '')) LIKE ?
+            ORDER BY sort_order, codigo
+            """,
+            (f'%\"usuario\": \"{usuario_normalizado}\"%',),
+        ).fetchall()
+
+        for candidate in row:
+            credenciais = None
+            empresa = None
+
+            raw_credenciais = candidate.get("credenciais_json")
+            if raw_credenciais:
+                try:
+                    credenciais = json.loads(raw_credenciais)
+                except Exception:
+                    credenciais = None
+
+            raw_empresa = candidate.get("raw_json")
+            if raw_empresa:
+                try:
+                    empresa = json.loads(raw_empresa)
+                except Exception:
+                    empresa = None
+
+            if not isinstance(credenciais, dict):
+                continue
+
+            empresa_usuario = str(credenciais.get("usuario") or "").strip().lower()
+            if empresa_usuario != usuario_normalizado:
+                continue
+
+            return {
+                "codigo": str(candidate.get("codigo") or "").strip(),
+                "nome": str(candidate.get("nome") or "").strip(),
+                "credenciais": credenciais,
+                "empresa": empresa if isinstance(empresa, dict) else None,
+            }
+
+        return None
+
     def replace_all(self, empresas):
-        dados = self.storage.load_document(
-            "dados.json", self.storage.default_document("dados.json")
-        )
-        dados["empresas"] = list(empresas or [])
-        self.storage.save_document("dados.json", dados)
+        normalized_empresas = []
+        for empresa in empresas or []:
+            empresa_normalizada = normalize_empresa(empresa)
+            if empresa_normalizada and empresa_normalizada.get("codigo"):
+                normalized_empresas.append(empresa_normalizada)
+
+        incoming_codes = {
+            str(empresa["codigo"]).strip()
+            for empresa in normalized_empresas
+            if str(empresa.get("codigo", "")).strip()
+        }
+
+        cursor = self.conn.cursor()
+        cursor.execute("BEGIN")
+        try:
+            for index, empresa in enumerate(normalized_empresas):
+                codigo = str(empresa.get("codigo", "")).strip()
+                cursor.execute(
+                    """
+                    INSERT INTO empresas(codigo, nome, credenciais_json, raw_json, sort_order)
+                    VALUES(?, ?, ?, ?, ?)
+                    ON CONFLICT(codigo) DO UPDATE SET
+                        nome = EXCLUDED.nome,
+                        credenciais_json = EXCLUDED.credenciais_json,
+                        raw_json = EXCLUDED.raw_json,
+                        sort_order = EXCLUDED.sort_order
+                    """,
+                    (
+                        codigo,
+                        str(empresa.get("nome", "")).strip(),
+                        json.dumps(empresa.get("credenciais"), ensure_ascii=False)
+                        if empresa.get("credenciais") is not None
+                        else None,
+                        json.dumps(empresa, ensure_ascii=False),
+                        index,
+                    ),
+                )
+
+            if incoming_codes:
+                placeholders = ", ".join(["?"] * len(incoming_codes))
+                cursor.execute(
+                    f"DELETE FROM empresas WHERE codigo NOT IN ({placeholders})",
+                    tuple(incoming_codes),
+                )
+            else:
+                cursor.execute("DELETE FROM empresas")
+
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
         return self.get_all()
 
     def add(self, empresa):
@@ -97,20 +203,15 @@ class EmpresaRepository:
         if not codigo_normalizado or not email_normalizado:
             return False
 
-        dados = self.storage.load_document(
-            "dados.json", self.storage.default_document("dados.json")
-        )
-        empresas = list(dados.get("empresas", []))
-        updated = False
-
-        for index, empresa in enumerate(empresas):
-            empresa_normalizada = normalize_empresa(empresa)
-            if not empresa_normalizada:
-                continue
-            if str(empresa_normalizada.get("codigo", "")).strip() != codigo_normalizado:
-                continue
-
-            credenciais = empresa_normalizada.get("credenciais")
+        empresa = self.get_by_codigo(codigo_normalizado)
+        if empresa is None:
+            empresa = {
+                "codigo": codigo_normalizado,
+                "nome": nome_normalizado or codigo_normalizado,
+                "credenciais": {"email": email_normalizado},
+            }
+        else:
+            credenciais = empresa.get("credenciais")
             if not isinstance(credenciais, dict):
                 credenciais = {}
             else:
@@ -120,27 +221,12 @@ class EmpresaRepository:
                 return False
 
             credenciais["email"] = email_normalizado
-            empresa_normalizada["credenciais"] = credenciais
-            if nome_normalizado and not empresa_normalizada.get("nome"):
-                empresa_normalizada["nome"] = nome_normalizado
+            empresa["credenciais"] = credenciais
+            if nome_normalizado and not empresa.get("nome"):
+                empresa["nome"] = nome_normalizado
 
-            empresas[index] = empresa_normalizada
-            updated = True
-            break
-
-        if not updated:
-            empresas.append(
-                {
-                    "codigo": codigo_normalizado,
-                    "nome": nome_normalizado or codigo_normalizado,
-                    "credenciais": {"email": email_normalizado},
-                }
-            )
-            updated = True
-
-        dados["empresas"] = empresas
-        self.storage.save_document("dados.json", dados)
-        return updated
+        self._upsert_empresa(empresa)
+        return True
 
     def upsert_credentials(
         self,
@@ -178,94 +264,110 @@ class EmpresaRepository:
         except (TypeError, ValueError):
             tempo_uso_normalizado = None
 
-        dados = self.storage.load_document(
-            "dados.json", self.storage.default_document("dados.json")
-        )
-        empresas = list(dados.get("empresas", []))
-        updated = False
+        empresa = self.get_by_codigo(codigo_normalizado) or {
+            "codigo": codigo_normalizado,
+            "nome": nome_normalizado or codigo_normalizado,
+            "credenciais": None,
+        }
 
-        for index, empresa in enumerate(empresas):
-            empresa_normalizada = normalize_empresa(empresa)
-            if not empresa_normalizada:
-                continue
-            if str(empresa_normalizada.get("codigo", "")).strip() != codigo_normalizado:
-                continue
-
-            credenciais = empresa_normalizada.get("credenciais")
-            if not isinstance(credenciais, dict):
-                credenciais = {}
-            else:
-                credenciais = dict(credenciais)
-
-            if should_sync_email:
-                credenciais["email"] = email_normalizado
-
-            if should_sync_credentials:
-                credenciais["usuario"] = usuario_normalizado
-                credenciais["token"] = token_normalizado
-
-            if tempo_uso_normalizado is not None:
-                credenciais["tempoUso"] = tempo_uso_normalizado
-            elif should_sync_credentials and not credenciais.get("tempoUso"):
-                credenciais["tempoUso"] = 30
-
-            if data_criacao_normalizada:
-                credenciais["data_criacao"] = data_criacao_normalizada
-            elif should_sync_credentials and not credenciais.get("data_criacao"):
-                credenciais["data_criacao"] = datetime.now().isoformat()
-
-            if data_expiracao_normalizada:
-                credenciais["data_expiracao"] = data_expiracao_normalizada
-            elif should_sync_credentials and not credenciais.get("data_expiracao"):
-                try:
-                    base_date = datetime.fromisoformat(
-                        str(credenciais.get("data_criacao") or datetime.now().isoformat())
-                    )
-                except ValueError:
-                    base_date = datetime.now()
-
-                validade_dias = int(credenciais.get("tempoUso") or 30)
-                credenciais["data_expiracao"] = (
-                    base_date + timedelta(days=validade_dias)
-                ).isoformat()
-
-            empresa_normalizada["credenciais"] = credenciais
-            if nome_normalizado and not empresa_normalizada.get("nome"):
-                empresa_normalizada["nome"] = nome_normalizado
-
-            empresas[index] = empresa_normalizada
-            updated = True
-            break
-
-        if not updated:
+        credenciais = empresa.get("credenciais")
+        if not isinstance(credenciais, dict):
             credenciais = {}
-            if should_sync_email:
-                credenciais["email"] = email_normalizado
-            if should_sync_credentials:
-                credenciais["usuario"] = usuario_normalizado
-                credenciais["token"] = token_normalizado
-                credenciais["tempoUso"] = tempo_uso_normalizado or 30
-                credenciais["data_criacao"] = (
-                    data_criacao_normalizada or datetime.now().isoformat()
-                )
-                try:
-                    base_date = datetime.fromisoformat(credenciais["data_criacao"])
-                except ValueError:
-                    base_date = datetime.now()
-                credenciais["data_expiracao"] = (
-                    data_expiracao_normalizada
-                    or (base_date + timedelta(days=int(credenciais["tempoUso"]))).isoformat()
-                )
+        else:
+            credenciais = dict(credenciais)
 
-            empresas.append(
-                {
-                    "codigo": codigo_normalizado,
-                    "nome": nome_normalizado or codigo_normalizado,
-                    "credenciais": credenciais or None,
-                }
+        if should_sync_email:
+            credenciais["email"] = email_normalizado
+
+        if should_sync_credentials:
+            credenciais["usuario"] = usuario_normalizado
+            credenciais["token"] = token_normalizado
+
+        if tempo_uso_normalizado is not None:
+            credenciais["tempoUso"] = tempo_uso_normalizado
+        elif should_sync_credentials and not credenciais.get("tempoUso"):
+            credenciais["tempoUso"] = 30
+
+        if data_criacao_normalizada:
+            credenciais["data_criacao"] = data_criacao_normalizada
+        elif should_sync_credentials and not credenciais.get("data_criacao"):
+            credenciais["data_criacao"] = datetime.now().isoformat()
+
+        if data_expiracao_normalizada:
+            credenciais["data_expiracao"] = data_expiracao_normalizada
+        elif should_sync_credentials and not credenciais.get("data_expiracao"):
+            try:
+                base_date = datetime.fromisoformat(
+                    str(credenciais.get("data_criacao") or datetime.now().isoformat())
+                )
+            except ValueError:
+                base_date = datetime.now()
+
+            validade_dias = int(credenciais.get("tempoUso") or 30)
+            credenciais["data_expiracao"] = (
+                base_date + timedelta(days=validade_dias)
+            ).isoformat()
+
+        empresa["credenciais"] = credenciais or None
+        if nome_normalizado and not empresa.get("nome"):
+            empresa["nome"] = nome_normalizado
+
+        self._upsert_empresa(empresa)
+        return True
+
+    def get_by_codigo(self, codigo):
+        row = self.conn.execute(
+            "SELECT raw_json FROM empresas WHERE codigo = ?",
+            (str(codigo),),
+        ).fetchone()
+        return json.loads(row["raw_json"]) if row else None
+
+    def _upsert_empresa(self, empresa, sort_order=None):
+        empresa_normalizada = normalize_empresa(empresa)
+        if not empresa_normalizada or not empresa_normalizada.get("codigo"):
+            raise ValueError("Estrutura de empresa invalida")
+
+        codigo = str(empresa_normalizada.get("codigo", "")).strip()
+        if sort_order is None:
+            existing_row = self.conn.execute(
+                "SELECT sort_order FROM empresas WHERE codigo = ?",
+                (codigo,),
+            ).fetchone()
+            if existing_row is not None:
+                sort_order = int(existing_row["sort_order"])
+            else:
+                next_row = self.conn.execute(
+                    "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_sort_order FROM empresas"
+                ).fetchone()
+                sort_order = int(next_row["next_sort_order"])
+
+        cursor = self.conn.cursor()
+        cursor.execute("BEGIN")
+        try:
+            cursor.execute(
+                """
+                INSERT INTO empresas(codigo, nome, credenciais_json, raw_json, sort_order)
+                VALUES(?, ?, ?, ?, ?)
+                ON CONFLICT(codigo) DO UPDATE SET
+                    nome = EXCLUDED.nome,
+                    credenciais_json = EXCLUDED.credenciais_json,
+                    raw_json = EXCLUDED.raw_json,
+                    sort_order = EXCLUDED.sort_order
+                """,
+                (
+                    codigo,
+                    str(empresa_normalizada.get("nome", "")).strip(),
+                    json.dumps(
+                        empresa_normalizada.get("credenciais"), ensure_ascii=False
+                    )
+                    if empresa_normalizada.get("credenciais") is not None
+                    else None,
+                    json.dumps(empresa_normalizada, ensure_ascii=False),
+                    sort_order,
+                ),
             )
-            updated = True
-
-        dados["empresas"] = empresas
-        self.storage.save_document("dados.json", dados)
-        return updated
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
+        return empresa_normalizada

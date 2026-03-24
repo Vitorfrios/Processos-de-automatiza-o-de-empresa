@@ -6,7 +6,10 @@ Manipulacao de empresas no dados.json
 """
 
 import os
+import json
 from datetime import datetime, timedelta, timezone
+
+from servidor_modules.database.repositories.empresa_repository import EmpresaRepository
 
 
 class EmpresaHandler:
@@ -18,6 +21,15 @@ class EmpresaHandler:
             from servidor_modules.utils.file_utils import FileUtils
 
             self.file_utils = FileUtils()
+        self._empresa_repository = None
+
+    @property
+    def empresa_repository(self):
+        if self._empresa_repository is None:
+            self._empresa_repository = EmpresaRepository(
+                self.file_utils.find_project_root()
+            )
+        return self._empresa_repository
 
     def normalizar_empresa(self, empresa):
         """Compatibilidade temporaria entre formato legado e novo formato."""
@@ -185,11 +197,27 @@ class EmpresaHandler:
         )
         return dados_file, dados_atualizados
 
+    def _carregar_empresas_do_banco(self):
+        try:
+            from servidor_modules.database.storage import get_storage
+
+            storage = get_storage(self.file_utils.find_project_root())
+            rows = storage.conn.execute(
+                "SELECT raw_json FROM empresas ORDER BY sort_order, codigo"
+            ).fetchall()
+            return [
+                json.loads(row["raw_json"])
+                for row in rows
+                if row.get("raw_json")
+            ]
+        except Exception as e:
+            print(f"Erro ao carregar empresas diretamente do banco: {e}")
+            return []
+
     def obter_empresas(self):
         """Obtem lista de empresas do dados.json no formato estruturado."""
         try:
-            _, dados = self.carregar_dados_empresas_atualizados()
-            empresas = self.normalizar_empresas(dados.get("empresas", []))
+            empresas = self.normalizar_empresas(self._carregar_empresas_do_banco())
             return empresas
         except Exception as e:
             print(f"Erro ao obter empresas: {e}")
@@ -290,8 +318,7 @@ class EmpresaHandler:
             }
 
         try:
-            _, dados = self.carregar_dados_empresas_atualizados()
-            empresas = self.normalizar_empresas(dados.get("empresas", []))
+            login_record = self.empresa_repository.get_login_record(normalized_user)
         except Exception as e:
             print(f"Erro ao carregar empresas para login: {e}")
             return {
@@ -300,56 +327,50 @@ class EmpresaHandler:
                 "message": "Nao foi possivel carregar empresas para autenticacao.",
             }
 
-        empresa_por_usuario = None
-
-        for empresa in empresas:
-            credenciais = empresa.get("credenciais")
-            if not isinstance(credenciais, dict):
-                continue
-
-            empresa_usuario = str(credenciais.get("usuario", "")).strip()
-            empresa_token = str(credenciais.get("token", "")).strip()
-
-            if not empresa_usuario or not empresa_token:
-                continue
-
-            if empresa_usuario.lower() != normalized_user:
-                continue
-
-            empresa_por_usuario = empresa
-
-            if empresa_token != normalized_token:
-                break
-
-            if self.credenciais_expiradas(credenciais):
-                return {
-                    "success": False,
-                    "reason": "expired",
-                    "message": "Token expirado. Solicite um novo acesso.",
-                }
-
-            expiration_date = self.calcular_data_expiracao_credenciais(credenciais)
-
+        if not login_record:
             return {
-                "success": True,
-                "empresa": self.serializar_empresa_publica(empresa),
-                "session": {
-                    "empresaCodigo": empresa.get("codigo", ""),
-                    "empresaNome": empresa.get("nome", ""),
-                    "empresaEmail": str(
-                        credenciais.get("email")
-                        or credenciais.get("recoveryEmail")
-                        or ""
-                    ).strip(),
-                    "usuario": empresa_usuario,
-                    "expiraEm": expiration_date.isoformat() if expiration_date else None,
-                },
+                "success": False,
+                "reason": "user_not_found",
+                "message": "Usuario nao encontrado ou token expirado.",
             }
 
+        credenciais = login_record.get("credenciais")
+        empresa = login_record.get("empresa") or {
+            "codigo": login_record.get("codigo", ""),
+            "nome": login_record.get("nome", ""),
+            "credenciais": credenciais,
+        }
+        empresa_usuario = str(credenciais.get("usuario", "")).strip()
+        empresa_token = str(credenciais.get("token", "")).strip()
+
+        if empresa_token != normalized_token:
+            return {
+                "success": False,
+                "reason": "invalid_token",
+                "message": "Token invalido.",
+            }
+
+        if self.credenciais_expiradas(credenciais):
+            return {
+                "success": False,
+                "reason": "expired",
+                "message": "Token expirado. Solicite um novo acesso.",
+            }
+
+        expiration_date = self.calcular_data_expiracao_credenciais(credenciais)
+
         return {
-            "success": False,
-            "reason": "invalid_token" if empresa_por_usuario else "user_not_found",
-            "message": "Token invalido." if empresa_por_usuario else "Usuario nao encontrado ou token expirado.",
+            "success": True,
+            "empresa": self.serializar_empresa_publica(empresa),
+            "session": {
+                "empresaCodigo": empresa.get("codigo", ""),
+                "empresaNome": empresa.get("nome", ""),
+                "empresaEmail": str(
+                    credenciais.get("email") or credenciais.get("recoveryEmail") or ""
+                ).strip(),
+                "usuario": empresa_usuario,
+                "expiraEm": expiration_date.isoformat() if expiration_date else None,
+            },
         }
 
     def obter_proximo_numero_cliente(self, sigla):
@@ -413,16 +434,9 @@ class EmpresaHandler:
 
             print(f"Verificando empresa: {empresa_sigla} - {empresa_nome}")
 
-            empresas_existentes = self.obter_empresas()
-            empresa_ja_existe = False
-
-            for empresa in empresas_existentes:
-                if empresa.get("codigo") == empresa_sigla:
-                    empresa_ja_existe = True
-                    print(f"Empresa {empresa_sigla} ja existe no sistema")
-                    break
-
-            if not empresa_ja_existe:
+            if self.empresa_repository.exists_by_codigo(empresa_sigla):
+                print(f"Empresa {empresa_sigla} ja existe no sistema")
+            else:
                 print(f"Criando nova empresa: {empresa_sigla} - {empresa_nome}")
                 success, message = self.adicionar_empresa_automatica(
                     empresa_sigla, empresa_nome

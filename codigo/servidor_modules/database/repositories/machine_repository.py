@@ -32,11 +32,29 @@ class MachineRepository:
         return [row["type"] for row in rows]
 
     def replace_all(self, machines):
-        dados = self.storage.load_document(
-            "dados.json", self.storage.default_document("dados.json")
-        )
-        dados["machines"] = list(machines or [])
-        self.storage.save_document("dados.json", dados)
+        cursor = self.conn.cursor()
+        cursor.execute("BEGIN")
+        try:
+            cursor.execute("DELETE FROM machine_catalog")
+            for index, machine in enumerate(machines or []):
+                if not isinstance(machine, dict) or not machine.get("type"):
+                    continue
+                cursor.execute(
+                    """
+                    INSERT INTO machine_catalog(type, aplicacao, raw_json, sort_order)
+                    VALUES(?, ?, ?, ?)
+                    """,
+                    (
+                        str(machine.get("type")),
+                        machine.get("aplicacao"),
+                        json.dumps(machine, ensure_ascii=False),
+                        index,
+                    ),
+                )
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
         return self.get_all()
 
     def add(self, machine):

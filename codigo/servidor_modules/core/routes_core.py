@@ -946,20 +946,69 @@ class RoutesCore:
         """Salva TODOS os dados do sistema"""
         try:
             new_data = json.loads(post_data)
-            required_keys = [
-                "constants", "machines", "materials", "empresas",
-                "banco_acessorios", "dutos", "tubos"
-            ]
-            if not all(key in new_data for key in required_keys):
+            changed_sections = list(new_data.get("changed_sections") or [])
+            payload = new_data.get("data") if isinstance(new_data.get("data"), dict) else new_data
+
+            if not changed_sections:
+                changed_sections = [
+                    key
+                    for key in (
+                        "ADM",
+                        "constants",
+                        "machines",
+                        "materials",
+                        "empresas",
+                        "banco_acessorios",
+                        "dutos",
+                        "tubos",
+                    )
+                    if key in payload
+                ]
+
+            if not changed_sections:
                 return {
                     "success": False,
-                    "error": "Estrutura de dados inválida. Faltam campos obrigatórios.",
+                    "error": "Nenhuma secao alterada foi informada para salvamento.",
                 }
 
-            new_data, _, _ = self.empresa_handler.limpar_credenciais_expiradas(new_data)
-            self.system_repository.save_dados_payload(new_data)
-            print(" TODOS os dados do sistema salvos (incluindo dutos e tubos)")
-            return {"success": True, "message": "Dados salvos com sucesso"}
+            if "ADM" in changed_sections:
+                self.system_repository.save_admins(payload.get("ADM", []))
+
+            if "constants" in changed_sections:
+                self.system_repository.save_constants(payload.get("constants", {}))
+
+            if "machines" in changed_sections:
+                self.machine_repository.replace_all(payload.get("machines", []))
+
+            if "materials" in changed_sections:
+                self.system_repository.save_materials(payload.get("materials", {}))
+
+            if "empresas" in changed_sections:
+                empresas_payload = {
+                    "empresas": payload.get("empresas", []),
+                }
+                empresas_payload, _, _ = self.empresa_handler.limpar_credenciais_expiradas(
+                    empresas_payload
+                )
+                self.empresa_repository.replace_all(empresas_payload.get("empresas", []))
+
+            if "banco_acessorios" in changed_sections:
+                self.system_repository.save_acessorios(
+                    payload.get("banco_acessorios", {})
+                )
+
+            if "dutos" in changed_sections:
+                self.system_repository.save_dutos(payload.get("dutos", []))
+
+            if "tubos" in changed_sections:
+                self.system_repository.save_tubos(payload.get("tubos", []))
+
+            print(f" Secoes salvas do sistema: {', '.join(changed_sections)}")
+            return {
+                "success": True,
+                "message": "Dados salvos com sucesso",
+                "changed_sections": changed_sections,
+            }
 
         except Exception as e:
             print(f"Erro ao salvar system data: {str(e)}")
