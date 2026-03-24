@@ -32,6 +32,144 @@ function setDisabled(input, disabled = true) {
     input.style.cursor = disabled ? 'not-allowed' : 'text';
 }
 
+const CLIENT_FINANCIAL_NODE_SELECTORS = [
+    '.option-price',
+    '.room-total-container',
+    '.project-total-value',
+    '.obra-total-value',
+    '.all-machines-total-price',
+    '.tubos-total-geral',
+    '[id^="total-all-machines-price-"]',
+    '[id^="total-geral-valor-"]',
+    '[id^="total-obra-valor-"]',
+    '[id^="total-projeto-valor-"]',
+    '[id^="room-total-"]',
+    '[id^="acessorios-total-"]',
+    '[id^="dutos-total-"]',
+    '[id^="base-price-"]',
+    '[id^="total-price-"]',
+    '[id^="acessorio-valor-"]',
+    '[id^="duto-valor-tipo-"]',
+    '[id^="duto-valor-opcional-"]',
+    '[id^="duto-valor-total-"]',
+    '[id^="valor-material-duto-"]'
+];
+
+let clientFinancialUiObserver = null;
+let financialScrubQueued = false;
+
+function removeElement(element) {
+    if (!element || !element.parentNode) {
+        return;
+    }
+
+    element.parentNode.removeChild(element);
+}
+
+function removeClosest(element, selector) {
+    if (!element) {
+        return;
+    }
+
+    const target = element.closest(selector);
+    if (target) {
+        removeElement(target);
+        return;
+    }
+
+    removeElement(element);
+}
+
+function scrubSelectorMatches(root) {
+    CLIENT_FINANCIAL_NODE_SELECTORS.forEach((selector) => {
+        root.querySelectorAll(selector).forEach((element) => {
+            if (
+                selector.startsWith('[id^="base-price-"') ||
+                selector.startsWith('[id^="total-price-"')
+            ) {
+                removeClosest(element, '.form-group');
+                return;
+            }
+
+            if (
+                selector.startsWith('[id^="acessorio-valor-"') ||
+                selector.startsWith('[id^="duto-valor-"')
+            ) {
+                removeClosest(element, '.selector-item');
+                return;
+            }
+
+            if (selector.startsWith('[id^="valor-material-duto-"')) {
+                removeClosest(element, '.material-inline');
+                return;
+            }
+
+            removeElement(element);
+        });
+    });
+}
+
+function scrubFinancialAttributes(root) {
+    root.querySelectorAll('[data-valor]').forEach((element) => {
+        element.removeAttribute('data-valor');
+    });
+
+    root.querySelectorAll('.option-checkbox input[type="checkbox"][value]').forEach((input) => {
+        input.value = '0';
+    });
+}
+
+function stripTableColumns(table, indices) {
+    if (!table) {
+        return;
+    }
+
+    table.querySelectorAll('tr').forEach((row) => {
+        const cells = Array.from(row.children);
+        indices
+            .slice()
+            .sort((a, b) => b - a)
+            .forEach((index) => {
+                if (cells[index]) {
+                    removeElement(cells[index]);
+                }
+            });
+    });
+
+    table.querySelectorAll('tfoot').forEach((tfoot) => {
+        removeElement(tfoot);
+    });
+}
+
+function scrubClientFinancialUi(root = document) {
+    if (!isClientMode() || !root?.querySelectorAll) {
+        return;
+    }
+
+    scrubSelectorMatches(root);
+    scrubFinancialAttributes(root);
+
+    root.querySelectorAll('.dutos-table').forEach((table) => {
+        stripTableColumns(table, [5, 6, 7]);
+    });
+
+    root.querySelectorAll('.acessorios-table').forEach((table) => {
+        stripTableColumns(table, [4, 5]);
+    });
+}
+
+function queueClientFinancialScrub() {
+    if (!isClientMode() || financialScrubQueued) {
+        return;
+    }
+
+    financialScrubQueued = true;
+    requestAnimationFrame(() => {
+        financialScrubQueued = false;
+        scrubClientFinancialUi(document);
+    });
+}
+
 function applyStaticUiRestrictions() {
     if (!isClientMode()) {
         return;
@@ -55,6 +193,8 @@ function applyStaticUiRestrictions() {
     if (!isFeatureEnabled('filtros')) {
         hideElement('.filtro-bloco-altura');
     }
+
+    queueClientFinancialScrub();
 }
 
 function updateClientPageTitle() {
@@ -318,6 +458,16 @@ function setupClientObservers() {
         return;
     }
 
+    if (!clientFinancialUiObserver && document.body) {
+        clientFinancialUiObserver = new MutationObserver(() => {
+            queueClientFinancialScrub();
+        });
+        clientFinancialUiObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
     document.addEventListener('obraCreated', (event) => {
         const obraId = event.detail?.obraId;
         const isFromServer = Boolean(event.detail?.isFromServer);
@@ -329,6 +479,7 @@ function setupClientObservers() {
 
         setTimeout(() => {
             ensureClientEmpresaForm(obraId);
+            queueClientFinancialScrub();
         }, 120);
     });
 }
@@ -349,6 +500,7 @@ function bootstrapClientMode() {
     applyStaticUiRestrictions();
     updateClientPageTitle();
     setupClientObservers();
+    queueClientFinancialScrub();
 
     return access;
 }

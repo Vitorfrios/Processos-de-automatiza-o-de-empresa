@@ -52,6 +52,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     )
     BLOCKED_STATIC_PREFIXES = (
         "/public/pages/",
+        "/public/scripts/",
+        "/public/static/00_Login/",
+        "/public/static/01_Create_Obra/",
+        "/public/static/03_Edit_data/",
         "/json/",
         "/servidor_modules/",
         "/utilitarios py/",
@@ -83,13 +87,24 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     CLIENT_SENSITIVE_OBRA_FIELDS = {
         "precoBase",
         "precoTotal",
+        "preco_base",
+        "preco_total",
         "valorTotalObra",
         "valorTotalProjeto",
         "valorTotalGeralTubos",
+        "valorTotalGeral",
+        "valor_total_geral",
         "valorTipo",
         "valorOpcional",
         "valorTotal",
         "valorUnitario",
+        "valor_tipo",
+        "valor_opcional",
+        "valor_total",
+        "valor_unitario",
+        "valor_material",
+        "valor_material_por_kg",
+        "valor_base",
         "valor",
         "value",
     }
@@ -522,6 +537,154 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if isinstance(obra, dict)
         ]
 
+    def _sanitize_machine_catalog_for_client(self, machines):
+        sanitized_catalog = []
+
+        for machine in (machines or []):
+            if not isinstance(machine, dict):
+                continue
+
+            sanitized_machine = dict(machine)
+            base_values = machine.get("baseValues", {})
+            sanitized_machine["baseValues"] = (
+                {key: 0 for key in base_values.keys()}
+                if isinstance(base_values, dict)
+                else {}
+            )
+
+            voltages = []
+            for voltage in machine.get("voltages", []) or []:
+                if not isinstance(voltage, dict):
+                    continue
+                sanitized_voltage = dict(voltage)
+                if "value" in sanitized_voltage:
+                    sanitized_voltage["value"] = 0
+                if "valor" in sanitized_voltage:
+                    sanitized_voltage["valor"] = 0
+                voltages.append(sanitized_voltage)
+            sanitized_machine["voltages"] = voltages
+
+            options = []
+            for option in machine.get("options", []) or []:
+                if not isinstance(option, dict):
+                    continue
+                sanitized_option = dict(option)
+                values = option.get("values", {})
+                sanitized_option["values"] = (
+                    {key: 0 for key in values.keys()}
+                    if isinstance(values, dict)
+                    else {}
+                )
+                if "value" in sanitized_option:
+                    sanitized_option["value"] = 0
+                if "valor" in sanitized_option:
+                    sanitized_option["valor"] = 0
+                options.append(sanitized_option)
+            sanitized_machine["options"] = options
+            sanitized_catalog.append(sanitized_machine)
+
+        return sanitized_catalog
+
+    def _sanitize_materials_for_client(self, materials):
+        sanitized_materials = {}
+
+        for key, material in (materials or {}).items():
+            if not isinstance(material, dict):
+                sanitized_materials[key] = material
+                continue
+
+            sanitized_material = dict(material)
+            if "value" in sanitized_material:
+                sanitized_material["value"] = 0
+            if "valor" in sanitized_material:
+                sanitized_material["valor"] = 0
+            sanitized_materials[key] = sanitized_material
+
+        return sanitized_materials
+
+    def _sanitize_acessorios_for_client(self, banco_acessorios):
+        sanitized_acessorios = {}
+
+        for tipo, acessorio in (banco_acessorios or {}).items():
+            if not isinstance(acessorio, dict):
+                sanitized_acessorios[tipo] = acessorio
+                continue
+
+            sanitized_acessorio = dict(acessorio)
+            valores_padrao = acessorio.get("valores_padrao", {})
+            sanitized_acessorio["valores_padrao"] = (
+                {key: 0 for key in valores_padrao.keys()}
+                if isinstance(valores_padrao, dict)
+                else {}
+            )
+            sanitized_acessorios[tipo] = sanitized_acessorio
+
+        return sanitized_acessorios
+
+    def _sanitize_dutos_for_client(self, dutos):
+        sanitized_dutos = []
+
+        for duto in (dutos or []):
+            if not isinstance(duto, dict):
+                continue
+
+            sanitized_duto = dict(duto)
+            if "valor" in sanitized_duto:
+                sanitized_duto["valor"] = 0
+            if "value" in sanitized_duto:
+                sanitized_duto["value"] = 0
+
+            opcionais_sanitizados = []
+            for opcional in duto.get("opcionais", []) or []:
+                if not isinstance(opcional, dict):
+                    continue
+                sanitized_opcional = dict(opcional)
+                if "value" in sanitized_opcional:
+                    sanitized_opcional["value"] = 0
+                if "valor" in sanitized_opcional:
+                    sanitized_opcional["valor"] = 0
+                opcionais_sanitizados.append(sanitized_opcional)
+
+            sanitized_duto["opcionais"] = opcionais_sanitizados
+            sanitized_dutos.append(sanitized_duto)
+
+        return sanitized_dutos
+
+    def _sanitize_tubos_for_client(self, tubos):
+        sanitized_tubos = []
+
+        for tubo in (tubos or []):
+            if not isinstance(tubo, dict):
+                continue
+
+            sanitized_tubo = dict(tubo)
+            if "valor" in sanitized_tubo:
+                sanitized_tubo["valor"] = 0
+            if "value" in sanitized_tubo:
+                sanitized_tubo["value"] = 0
+            sanitized_tubos.append(sanitized_tubo)
+
+        return sanitized_tubos
+
+    def _sanitize_system_payload_for_client(self, payload):
+        sanitized_payload = dict(payload or {})
+        sanitized_payload["machines"] = self._sanitize_machine_catalog_for_client(
+            sanitized_payload.get("machines", [])
+        )
+        sanitized_payload["materials"] = self._sanitize_materials_for_client(
+            sanitized_payload.get("materials", {})
+        )
+        sanitized_payload["banco_acessorios"] = self._sanitize_acessorios_for_client(
+            sanitized_payload.get("banco_acessorios", {})
+        )
+        sanitized_payload["dutos"] = self._sanitize_dutos_for_client(
+            sanitized_payload.get("dutos", [])
+        )
+        sanitized_payload["tubos"] = self._sanitize_tubos_for_client(
+            sanitized_payload.get("tubos", [])
+        )
+        return sanitized_payload
+
     def _apply_company_context_to_obra(self, obra_data, session=None):
         session = session or self.get_auth_session()
         payload = dict(obra_data or {})
@@ -660,7 +823,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "obrasSessao": obras_sessao,
         }
 
-    def _build_system_bootstrap_payload(self, include_admin_sections=False):
+    def _build_system_bootstrap_payload(
+        self, include_admin_sections=False, sanitize_for_client=False
+    ):
         dados_payload = self.routes_core.system_repository.get_dados_payload()
         base_payload = {
             "constants": dados_payload.get("constants", {}),
@@ -680,6 +845,9 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 }
             )
 
+        if sanitize_for_client:
+            return self._sanitize_system_payload_for_client(base_payload)
+
         return base_payload
 
     def _serialize_script_payload(self, payload):
@@ -692,7 +860,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if route_path in {"/obras/create", "/admin/obras/create", "/admin/obras/embed"}:
             runtime_payload = self._build_runtime_bootstrap_payload()
             system_payload = self._build_system_bootstrap_payload(
-                include_admin_sections=False
+                include_admin_sections=False,
+                sanitize_for_client=not self._has_role("admin"),
             )
             script_parts.append(
                 f"window.__RUNTIME_BOOTSTRAP__={self._serialize_script_payload(runtime_payload)};"
@@ -768,7 +937,8 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_runtime_system_bootstrap(self):
         self.send_json_response(
             self._build_system_bootstrap_payload(
-                include_admin_sections=self._has_role("admin")
+                include_admin_sections=self._has_role("admin"),
+                sanitize_for_client=not self._has_role("admin"),
             )
         )
 
@@ -1932,25 +2102,106 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(500, "Erro interno")
 
     def end_headers(self):
-        """Headers CORS otimizados"""
+        """Headers de segurança e CORS restrito ao mesmo host."""
         while self._pending_response_headers:
             header_name, header_value = self._pending_response_headers.pop(0)
             self.send_header(header_name, header_value)
-        self.send_header("Access-Control-Allow-Origin", "*")
+
+        allowed_origin = self._resolve_allowed_origin()
+        if allowed_origin:
+            self.send_header("Access-Control-Allow-Origin", allowed_origin)
+            self.send_header("Vary", "Origin")
+
         self.send_header(
             "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"
         )
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Content-Security-Policy", self._build_content_security_policy())
+        self.send_header("Referrer-Policy", "same-origin")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self.send_header("Cross-Origin-Resource-Policy", "same-origin")
+        self.send_header(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=(), usb=(), payment=(), browsing-topics=()",
+        )
+        self.send_header("X-Permitted-Cross-Domain-Policies", "none")
         # Headers anti-cache
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
+        if self.headers.get("X-Forwarded-Proto", "").lower() == "https":
+            self.send_header(
+                "Strict-Transport-Security",
+                "max-age=31536000; includeSubDomains",
+            )
         super().end_headers()
 
     def do_OPTIONS(self):
-        """CORS rápido"""
-        self.send_response(200)
+        """Preflight enxuto com as mesmas políticas."""
+        self.send_response(204)
         self.end_headers()
+
+    def _resolve_allowed_origin(self):
+        origin = str(self.headers.get("Origin") or "").strip()
+        if not origin:
+            return None
+
+        try:
+            parsed_origin = urlparse(origin)
+        except Exception:
+            return None
+
+        request_host = str(self.headers.get("Host") or "").strip().lower()
+        origin_host = str(parsed_origin.netloc or "").strip().lower()
+
+        if not request_host or not origin_host:
+            return None
+
+        if origin_host == request_host:
+            return origin
+
+        return None
+
+    def _build_content_security_policy(self):
+        directives = {
+            "default-src": ["'self'"],
+            "script-src": [
+                "'self'",
+                "'unsafe-inline'",
+                "https://cdnjs.cloudflare.com",
+                "https://unpkg.com",
+            ],
+            "style-src": [
+                "'self'",
+                "'unsafe-inline'",
+                "https://cdnjs.cloudflare.com",
+            ],
+            "img-src": [
+                "'self'",
+                "data:",
+                "https://esienergia.com.br",
+            ],
+            "font-src": [
+                "'self'",
+                "data:",
+                "https://cdnjs.cloudflare.com",
+            ],
+            "connect-src": [
+                "'self'",
+                "https://cdnjs.cloudflare.com",
+                "https://unpkg.com",
+                "https://esienergia.com.br",
+            ],
+            "object-src": ["'none'"],
+            "base-uri": ["'self'"],
+            "form-action": ["'self'"],
+            "frame-ancestors": ["'self'"],
+        }
+
+        return "; ".join(
+            f"{directive} {' '.join(values)}" for directive, values in directives.items()
+        )
 
     def log_message(self, format, *args):
         """Log SILENCIOSO - apenas erros e APIs importantes"""

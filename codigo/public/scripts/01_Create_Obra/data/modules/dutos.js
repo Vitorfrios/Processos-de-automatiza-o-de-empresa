@@ -784,8 +784,11 @@ function adicionarDuto(roomId) {
   const valorKg = kg * valorMaterial;
   const valorUnitario = valorTipo + valorOpcional + valorKg;
   const valorTotal = valorUnitario * quantidade;
+  const isClientMode =
+    typeof document !== "undefined" &&
+    document.body?.classList.contains("client-mode");
 
-  if (valorTotal <= 0) {
+  if (valorTotal <= 0 && !isClientMode) {
     alert("Valor inválido");
     return;
   }
