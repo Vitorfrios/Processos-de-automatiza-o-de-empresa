@@ -270,6 +270,36 @@ function getClimatizationRequiredCapacity(roomId) {
   return cargaEstimada * (1 + fatorSeguranca);
 }
 
+function getBackupAdditionalUnits(backupType) {
+  switch (backupType) {
+    case "n+1":
+      return 1;
+    case "n+2":
+      return 2;
+    default:
+      return 0;
+  }
+}
+
+function getClimatizationBackupType(roomId) {
+  const roomContent = document.getElementById(`room-content-${roomId}`);
+  if (!roomContent) return "n";
+
+  const backupSelect = roomContent.querySelector(".backup-select");
+  if (backupSelect?.value) {
+    return backupSelect.value;
+  }
+
+  const climaBackupInput = roomContent.querySelector(
+    '.clima-input[data-field="backup"]',
+  );
+  if (climaBackupInput?.value) {
+    return climaBackupInput.value;
+  }
+
+  return "n";
+}
+
 function updateClimatizationQuantityFromCapacity(machineId, options = {}) {
   const { force = false } = options;
 
@@ -294,6 +324,8 @@ function updateClimatizationQuantityFromCapacity(machineId, options = {}) {
 
   const capacidadeSelecionada = getGenericCapacityValue(powerSelect.value);
   const capacidadeNecessaria = getClimatizationRequiredCapacity(roomId);
+  const backupType = getClimatizationBackupType(roomId);
+  const backupAdditionalUnits = getBackupAdditionalUnits(backupType);
 
   if (
     !Number.isFinite(capacidadeSelecionada) ||
@@ -304,19 +336,33 @@ function updateClimatizationQuantityFromCapacity(machineId, options = {}) {
     return false;
   }
 
-  const quantidadeCalculada = Math.max(
+  const unidadesOperacionais = Math.max(
     1,
     Math.ceil(capacidadeNecessaria / capacidadeSelecionada),
   );
+  const quantidadeCalculada = unidadesOperacionais + backupAdditionalUnits;
   qntInput.value = quantidadeCalculada;
   qntInput.setAttribute("data-user-edited", "false");
 
   console.log(
-    ` Quantidade climatização atualizada para ${quantidadeCalculada} (necessária: ${capacidadeNecessaria.toFixed(2)} TR, máquina: ${capacidadeSelecionada} TR)`,
+    ` Quantidade climatização atualizada para ${quantidadeCalculada} (${unidadesOperacionais} operacionais + ${backupAdditionalUnits} backup, tipo: ${backupType}, necessária: ${capacidadeNecessaria.toFixed(2)} TR, máquina: ${capacidadeSelecionada} TR)`,
   );
 
   calculateMachinePrice(machineId);
   return true;
+}
+
+function syncClimatizationMachineQuantitiesFromCapacity(roomId) {
+  const roomMachines = document.querySelectorAll(
+    `[data-room-id="${roomId}"].climatization-machine`,
+  );
+
+  roomMachines.forEach((machineElement) => {
+    const machineId = machineElement.dataset.machineId;
+    if (!machineId) return;
+
+    updateClimatizationQuantityFromCapacity(machineId);
+  });
 }
 
 function calculateVentilationFlow(aplicacao, inputs) {
@@ -1968,6 +2014,7 @@ export {
   updateAllMachineNamesInRoom,
   handleAplicacaoChange,
   notifyMachineFieldChange,
+  syncClimatizationMachineQuantitiesFromCapacity,
 };
 
 // Disponibilização global
@@ -1986,6 +2033,8 @@ if (typeof window !== "undefined") {
   window.handleConfigChange = handleConfigChange;
   window.updateOptionSelection = updateOptionSelection;
   window.toggleConfig = toggleConfig;
+  window.syncClimatizationMachineQuantitiesFromCapacity =
+    syncClimatizationMachineQuantitiesFromCapacity;
   window.syncVentilationMachineCapacities = syncVentilationMachineCapacities;
 
   console.log(" Funções principais carregadas no escopo global");

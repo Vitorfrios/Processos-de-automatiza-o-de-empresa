@@ -131,4 +131,4 @@ ajustar ouso de backup nas maquians de climatização e nos words
 
 grade de proteção e proteção de chuva bydefout ja selecionado
 
-criar uma base de dados offline (bidirecional quando online )como fallback para o sistema, para caso o user/cli
+criar uma base de dados offline (bidirecional quando online ) como fallback para o sistema, para caso o user/cli

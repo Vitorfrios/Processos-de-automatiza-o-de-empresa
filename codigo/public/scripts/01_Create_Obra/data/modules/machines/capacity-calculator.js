@@ -301,6 +301,9 @@ function calculateCapacitySolution(roomId) {
     const folga = cargaEstimada > 0 ? ((total / cargaEstimada) - 1) * 100 : 0;
 
     updateCapacityDisplay(roomId, cargaEstimada, unidadesOperacionais, unidadesTotais, total, folga, backupType);
+    if (typeof window.syncClimatizationMachineQuantitiesFromCapacity === "function") {
+      window.syncClimatizationMachineQuantitiesFromCapacity(roomId);
+    }
     
     console.log(` Solução calculada para ${roomId}:`, {
       cargaEstimada,

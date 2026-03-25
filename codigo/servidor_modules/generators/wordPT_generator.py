@@ -28,6 +28,11 @@ class MaquinaProcessada:
     opcoes_selecionadas: List[str] = field(default_factory=list)
     tem_damper: bool = False
     aplicacao: str = ""
+    backup: str = "n"
+    backup_adicional: int = 0
+    quantidade_atuante: int = 1
+    quantidade_backup: int = 0
+    tem_backup: bool = False
     
     # Cache para conversão para dict
     _dict_cache: Optional[Dict] = field(default=None, repr=False)
@@ -83,7 +88,12 @@ class MaquinaProcessada:
                 "tensao_comando": self.tensao_comando,
                 "opcoes_selecionadas": self.opcoes_selecionadas,
                 "tem_damper": self.tem_damper,
-                "aplicacao": self.aplicacao
+                "aplicacao": self.aplicacao,
+                "backup": self.backup,
+                "backup_adicional": self.backup_adicional,
+                "quantidade_atuante": self.quantidade_atuante,
+                "quantidade_backup": self.quantidade_backup,
+                "tem_backup": self.tem_backup,
             }
         return self._dict_cache
 
@@ -450,6 +460,33 @@ class WordPTGenerator:
                     
         return sorted(tenses)
 
+    def _get_backup_adicional(self, backup_tipo: Any) -> int:
+        backup_tipo = str(backup_tipo or "n").strip().lower()
+
+        if backup_tipo == "n+1":
+            return 1
+        if backup_tipo == "n+2":
+            return 2
+        return 0
+
+    def _aplicar_backup_climatizacao(
+        self,
+        maquinas_climatizacao: List[MaquinaProcessada],
+        backup_tipo: Any,
+    ) -> None:
+        backup_normalizado = str(backup_tipo or "n").strip() or "n"
+        backup_adicional = self._get_backup_adicional(backup_normalizado)
+
+        for maq in maquinas_climatizacao:
+            quantidade_total = int(maq.quantidade or 0)
+            quantidade_backup = min(backup_adicional, quantidade_total) if backup_adicional > 0 else 0
+
+            maq.backup = backup_normalizado
+            maq.backup_adicional = backup_adicional
+            maq.quantidade_backup = quantidade_backup
+            maq.quantidade_atuante = max(0, quantidade_total - quantidade_backup)
+            maq.tem_backup = quantidade_backup > 0
+
     def _processar_sala(self, sala: Dict) -> SalaProcessada:
         """Processa uma sala, classificando suas máquinas (otimizado)."""
         maquinas_climatizacao = []
@@ -472,10 +509,15 @@ class WordPTGenerator:
             target_list = aplicacao_map.get(maq_proc.aplicacao)
             if target_list is not None:
                 target_list.append(maq_proc)
+
+        capacidade = sala.get("capacidade", {}) or {}
+        inputs = sala.get("inputs", {}) or {}
+        backup_tipo = capacidade.get("backup") or inputs.get("backup") or "n"
+        self._aplicar_backup_climatizacao(maquinas_climatizacao, backup_tipo)
         
         return SalaProcessada(
             nome=sala.get("nome", "Sala"),
-            inputs=sala.get("inputs", {}),
+            inputs=inputs,
             maquinas_climatizacao=maquinas_climatizacao,
             maquinas_pressurizacao=maquinas_pressurizacao,
             maquinas_exaustao_bateria=maquinas_exaustao_bateria,
