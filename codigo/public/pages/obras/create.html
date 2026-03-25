@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <!-- HTML Para o cliente -->
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,8 @@
     <link rel="icon" type="image/png" href="https://esienergia.com.br/wp-content/uploads/2024/02/favicon5.png">
     <link rel="stylesheet" href="/public/dist/obra-app.min.css?v=20260323-3">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <script>
         window.__APP_CONFIG_OVERRIDES__ = {
             mode: 'client',
@@ -51,7 +54,8 @@
             <div class="add-obra-section">
 
                 <div class="add-obra-actions">
-                    <button class="btn btn-add add-obra-button" onclick="addNewObra()" id="add-obra-btn" type="button" disabled>
+                    <button class="btn btn-add add-obra-button" onclick="addNewObra()" id="add-obra-btn" type="button"
+                        disabled>
                         + Adicionar Nova Obra
                     </button>
                 </div>
@@ -76,8 +80,11 @@
             </div>
         </div>
     </div>
-    <footer >@Vfrios-Github</footer>
-
+    <footer>
+        <a href="https://github.com/Vfrios" target="_blank" rel="noopener">
+            <i class="fa-brands fa-github"></i> Vitor Rios on GitHub
+        </a>
+    </footer>
     <script defer src="/public/dist/create-obras-page.min.js?v=20260323-2"></script>
     <script defer src="/public/dist/obra-app.min.js?v=20260324-1"></script>
 </body>

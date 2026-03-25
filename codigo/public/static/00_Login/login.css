@@ -280,7 +280,16 @@ body {
 
 .footer-version {
     color: var(--color-gray-400);
-    font-size: 0.75rem;
+    font-size: 15.75rem;
+}
+.footer-version a {
+  color: inherit;        
+  text-decoration: none; 
+  font-weight: 500;      
+}
+
+.footer-version a:hover {
+  opacity: 0.8;          
 }
 
 /* ===== BACKGROUND DECORATIVO ===== */

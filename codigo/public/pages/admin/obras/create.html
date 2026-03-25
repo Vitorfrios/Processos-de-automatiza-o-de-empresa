@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <!-- HTML Para o ADM -->
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | Obras | Sistema ESI</title>
     <link rel="icon" type="image/png" href="https://esienergia.com.br/wp-content/uploads/2024/02/favicon5.png">
     <link rel="stylesheet" href="/public/dist/obra-app.min.css?v=20260323-3">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- HTML principal -->
     <script src="https://unpkg.com/docx@8.3.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -31,7 +33,6 @@
     <nav class="navbar">
         <ul class="nav-list">
             <li><a href="/admin/obras/create" id="nav-criar-obras">Criar Obras</a></li>
-            <li><a href="/login" id="nav-login">Login</a></li>
             <li><a href="/admin/data" id="nav-editar-dados">Editar dados</a></li>
         </ul>
     </nav>
@@ -68,7 +69,8 @@
 
                 <!-- BOTÃO NO MESMO NÍVEL -->
                 <div class="add-obra-actions">
-                    <button class="btn btn-add add-obra-button" onclick="addNewObra()" id="add-obra-btn" type="button" disabled>
+                    <button class="btn btn-add add-obra-button" onclick="addNewObra()" id="add-obra-btn" type="button"
+                        disabled>
                         + Adicionar Nova Obra
                     </button>
                 </div>
@@ -99,7 +101,11 @@
             </div>
         </div>
     </div>
-    <footer >@Vfrios-Github</footer>
+    <footer>
+        <a href="https://github.com/Vfrios" target="_blank" rel="noopener">
+            <i class="fa-brands fa-github"></i> Vitor Rios on GitHub
+        </a>
+    </footer>
     <script defer src="/public/dist/create-obras-page.min.js?v=20260323-2"></script>
     <script defer src="/public/dist/obra-app.min.js?v=20260324-1"></script>
 </body>
