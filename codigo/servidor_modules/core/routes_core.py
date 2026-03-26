@@ -925,6 +925,26 @@ class RoutesCore:
                 "used_mb": 0,
                 "limit_mb": self.system_repository.DEFAULT_DATABASE_LIMIT_MB,
                 "percent_used": 0,
+                "status": "normal",
+                "message": self.system_repository.STORAGE_STATUS_MESSAGES["normal"],
+                "explanation": self.system_repository.STORAGE_EXPLANATION,
+                "update_note": self.system_repository.STORAGE_UPDATE_NOTE,
+            }
+
+    def handle_get_storage_status(self):
+        """Retorna status amigavel de armazenamento do banco"""
+        try:
+            return self.system_repository.get_storage_status()
+        except Exception as e:
+            print(f"Erro ao carregar status de armazenamento: {str(e)}")
+            return {
+                "used_mb": 0,
+                "limit_mb": self.system_repository.DEFAULT_DATABASE_LIMIT_MB,
+                "percent_used": 0,
+                "status": "normal",
+                "message": self.system_repository.STORAGE_STATUS_MESSAGES["normal"],
+                "explanation": self.system_repository.STORAGE_EXPLANATION,
+                "update_note": self.system_repository.STORAGE_UPDATE_NOTE,
             }
 
     def handle_get_database_table_usage(self):
@@ -935,22 +955,26 @@ class RoutesCore:
             print(f"Erro ao carregar uso por tabela: {str(e)}")
             return {"tables": []}
 
-    def handle_post_database_vacuum_full_obras(self):
-        """Executa VACUUM FULL em public.obras apenas em estado critico"""
+    def handle_post_storage_reorganize(self):
+        """Executa VACUUM para melhorar a reutilizacao interna do espaco"""
         try:
-            current_usage = self.system_repository.get_database_usage()
-            if float(current_usage.get("percent_used") or 0) < 95:
-                return {
-                    "success": False,
-                    "error": "Limpeza forcada liberada apenas quando o armazenamento estiver em estado critico.",
-                    "database_usage": current_usage,
-                }
-
-            result = self.system_repository.vacuum_full_obras()
-            result["before_usage"] = current_usage
+            current_status = self.system_repository.get_storage_status()
+            result = self.system_repository.reorganize_storage()
+            result["before_status"] = current_status
             return result
         except Exception as e:
-            print(f"Erro ao executar VACUUM FULL em obras: {str(e)}")
+            print(f"Erro ao reorganizar armazenamento: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
+    def handle_post_database_vacuum_full_obras(self):
+        """Compatibilidade: reorganiza o armazenamento com VACUUM"""
+        try:
+            return self.handle_post_storage_reorganize()
+        except Exception as e:
+            print(f"Erro ao executar reorganizacao de armazenamento: {str(e)}")
             return {
                 "success": False,
                 "error": str(e),

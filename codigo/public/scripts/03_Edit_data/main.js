@@ -1,7 +1,6 @@
 // scripts/03_Edit_data/main.js
 import { createSmartLogger } from "../01_Create_Obra/core/logger.js";
 import "../01_Create_Obra/core/system-bootstrap.js";
-import "../shared/admin-storage-alert.js";
 import { pendingChanges, hasRealChanges } from "./config/state.js";
 import { saveDataSilently } from "./config/api.js";
 import "./config/ui.js";

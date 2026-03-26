@@ -8,7 +8,6 @@ import { createSmartLogger } from "./core/logger.js";
 import { APP_CONFIG, isFeatureEnabled } from "./core/config.js";
 import "./core/runtime-data.js";
 import "./core/system-bootstrap.js";
-import "../shared/admin-storage-alert.js";
 import { bootstrapClientMode } from "./main-folder/client-mode.js";
 
 // INICIALIZAR LOGGER IMEDIATAMENTE

@@ -1,6 +1,7 @@
-import { showInfo, showSuccess, showWarning } from '../config/ui.js';
+import { showInfo, showWarning } from '../config/ui.js';
 
 const ADMIN_OBRAS_FILTER_URL = '/admin/obras/create?filtro=1';
+const STORAGE_STATUS_ENDPOINT = '/api/system/storage-status';
 
 const dashboardState = {
     initialized: false,
@@ -239,6 +240,7 @@ function normalizeDatabaseUsage(payload) {
     const activeAppMb = Number(payload?.active_app_mb || 0);
     const activeAppPercentOfLimit = Number(payload?.active_app_percent_of_limit || 0);
     const otherSchemasMb = Number(payload?.other_schemas_mb || 0);
+    const normalizedStatus = String(payload?.status || 'normal').trim().toLowerCase();
 
     return {
         used_mb: Number.isFinite(usedMb) ? usedMb : 0,
@@ -247,7 +249,15 @@ function normalizeDatabaseUsage(payload) {
         public_schema_mb: Number.isFinite(publicSchemaMb) ? publicSchemaMb : 0,
         active_app_mb: Number.isFinite(activeAppMb) ? activeAppMb : 0,
         active_app_percent_of_limit: Number.isFinite(activeAppPercentOfLimit) ? activeAppPercentOfLimit : 0,
-        other_schemas_mb: Number.isFinite(otherSchemasMb) ? otherSchemasMb : 0
+        other_schemas_mb: Number.isFinite(otherSchemasMb) ? otherSchemasMb : 0,
+        status: ['normal', 'warning', 'high'].includes(normalizedStatus) ? normalizedStatus : 'normal',
+        status_label: String(payload?.status_label || '').trim(),
+        message: String(payload?.message || 'Armazenamento funcionando normalmente.').trim(),
+        explanation: String(payload?.explanation || '').trim(),
+        update_note: String(payload?.update_note || '').trim(),
+        maintenance_available: payload?.maintenance_available !== false,
+        maintenance_action_label: String(payload?.maintenance_action_label || 'Reorganizar espaco do banco').trim(),
+        maintenance_message: String(payload?.maintenance_message || '').trim()
     };
 }
 
@@ -268,39 +278,28 @@ function formatStorageMb(value) {
 }
 
 function getDatabaseUsageStatus(databaseUsage) {
-    const percentUsed = Number(databaseUsage?.percent_used || 0);
-
-    if (percentUsed >= 95) {
+    if (databaseUsage?.status === 'high') {
         return {
-            level: 'critical',
-            label: 'Memoria quase cheia',
-            message: 'O banco esta perto do limite. Remova obras e dados pesados imediatamente.',
-            color: '#c53030'
+            level: 'high',
+            label: databaseUsage?.status_label || 'Alto uso',
+            message: databaseUsage?.message || 'O armazenamento esta proximo do limite, mas continua reutilizando espaco automaticamente.',
+            color: '#b7791f'
         };
     }
 
-    if (percentUsed >= 80) {
-        return {
-            level: 'warning',
-            label: 'Memoria em alerta',
-            message: 'O banco se aproxima do limite do plano gratuito. Vale revisar e remover obras antigas.',
-            color: '#d69e2e'
-        };
-    }
-
-    if (percentUsed >= 60) {
+    if (databaseUsage?.status === 'warning') {
         return {
             level: 'attention',
-            label: 'Uso em crescimento',
-            message: 'O consumo segue saudavel, mas ja vale acompanhar o crescimento das tabelas.',
+            label: databaseUsage?.status_label || 'Atencao',
+            message: databaseUsage?.message || 'O sistema segue normal e o banco reutiliza espaco automaticamente apos exclusoes.',
             color: '#2b6cb0'
         };
     }
 
     return {
         level: 'good',
-        label: 'Uso controlado',
-        message: 'Espaco disponivel com folga no plano atual.',
+        label: databaseUsage?.status_label || 'Normal',
+        message: databaseUsage?.message || 'Armazenamento funcionando normalmente.',
         color: '#2f855a'
     };
 }
@@ -405,7 +404,7 @@ async function fetchDashboardData() {
 
     const [backupResult, usageResult] = await Promise.allSettled([
         fetchJson('/api/obras/catalog'),
-        fetchJson(`/api/system/database-size?t=${Date.now()}`)
+        fetchJson(`${STORAGE_STATUS_ENDPOINT}?t=${Date.now()}`)
     ]);
 
     if (backupResult.status === 'fulfilled') {
@@ -523,24 +522,6 @@ function buildCadastroAlerts(data, stats) {
             actionLabel: 'Ver máquinas',
             actionType: 'tab',
             actionValue: 'machines'
-        });
-    }
-
-    if (stats.databaseUsage.percent_used >= 95) {
-        alerts.unshift({
-            title: 'Banco quase cheio',
-            meta: `${formatStorageMb(stats.databaseUsage.used_mb)} MB usados de ${formatStorageMb(stats.databaseUsage.limit_mb)} MB. Remova algumas obras antes de travar o sistema.`,
-            actionLabel: 'Revisar obras',
-            actionType: 'link',
-            actionValue: ADMIN_OBRAS_FILTER_URL
-        });
-    } else if (stats.databaseUsage.percent_used >= 80) {
-        alerts.unshift({
-            title: 'Alerta de armazenamento',
-            meta: `${formatStorageMb(stats.databaseUsage.used_mb)} MB usados de ${formatStorageMb(stats.databaseUsage.limit_mb)} MB. O banco esta chegando perto do limite.`,
-            actionLabel: 'Abrir obras',
-            actionType: 'link',
-            actionValue: ADMIN_OBRAS_FILTER_URL
         });
     }
 
@@ -952,50 +933,6 @@ function renderAlertsWidget(stats) {
     `;
 }
 
-async function forceObrasDatabaseCleanup(buttonElement) {
-    const confirmed = window.confirm(
-        'Executar VACUUM FULL em public.obras?\n\nIsso trava a tabela de obras durante a limpeza e deve ser usado apenas quando o armazenamento estiver critico.'
-    );
-
-    if (!confirmed) {
-        return;
-    }
-
-    const originalLabel = buttonElement?.textContent || 'Forçar limpeza';
-
-    try {
-        if (buttonElement) {
-            buttonElement.disabled = true;
-            buttonElement.textContent = 'Limpando...';
-            buttonElement.style.opacity = '0.75';
-        }
-
-        const response = await fetch('/api/system/database-size/vacuum-obras', {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json'
-            }
-        });
-
-        const payload = await response.json().catch(() => ({}));
-
-        if (!response.ok || payload?.success === false) {
-            throw new Error(payload?.error || 'Nao foi possivel executar a limpeza forcada.');
-        }
-
-        showSuccess(payload?.message || 'Limpeza forcada concluida.');
-        queueDashboardRender({ force: true });
-    } catch (error) {
-        showWarning(error?.message || 'Falha ao executar a limpeza forcada.');
-    } finally {
-        if (buttonElement) {
-            buttonElement.disabled = false;
-            buttonElement.textContent = originalLabel;
-            buttonElement.style.opacity = '1';
-        }
-    }
-}
-
 function renderDatabaseUsageWidget(stats) {
     const databaseUsage = normalizeDatabaseUsage(stats.databaseUsage);
     const status = stats.databaseUsageStatus || getDatabaseUsageStatus(databaseUsage);
@@ -1022,39 +959,29 @@ function renderDatabaseUsageWidget(stats) {
                     <div style="font-size:1.45rem; font-weight:700; color:#1a202c;">
                         ${formatStorageMb(databaseUsage.used_mb)} MB / ${formatStorageMb(databaseUsage.limit_mb)} MB
                     </div>
-                    <div class="muted-note">${formatStorageMb(databaseUsage.percent_used)}% do limite fisico do banco</div>
+                    <div class="muted-note">${formatStorageMb(databaseUsage.percent_used)}% do limite do plano</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-size:0.82rem; text-transform:uppercase; letter-spacing:0.08em; color:#718096;">Limite configurado</div>
+                    <div style="font-size:0.82rem; text-transform:uppercase; letter-spacing:0.08em; color:#718096;">Status atual</div>
                     <div style="font-size:0.95rem; font-weight:600; color:${status.color};">${escapeHtml(status.label)}</div>
                 </div>
             </div>
             <div style="position:relative; height:14px; border-radius:999px; background:#e2e8f0; overflow:hidden; margin-bottom:10px;">
                 <div style="height:100%; width:${progressPercent}%; background:linear-gradient(90deg, #2b6cb0 0%, ${status.color} 100%); border-radius:999px; transition:width 0.35s ease;"></div>
             </div>
-            <div class="muted-note" style="margin-bottom:14px;">${escapeHtml(status.message)}</div>
+            <div class="muted-note" style="margin-bottom:14px;">
+                ${escapeHtml(status.message)}
+            </div>
+            <div class="muted-note" style="margin-bottom:8px;">
+                ${escapeHtml(databaseUsage.explanation)}
+            </div>
+            <div class="muted-note" style="margin-bottom:14px;">
+                ${escapeHtml(databaseUsage.update_note)}
+            </div>
             <div class="muted-note" style="margin-bottom:14px;">
                 Tabelas do app em <code>public</code>: ${formatStorageMb(databaseUsage.public_schema_mb)} MB.
                 Base do projeto, extensoes e schemas padrao: ${formatStorageMb(databaseUsage.other_schemas_mb)} MB.
             </div>
-            ${status.level === 'critical' ? `
-                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 14px; border-radius:12px; background:#fff5f5; border:1px solid #fed7d7;">
-                    <div style="min-width:240px; flex:1;">
-                        <strong style="display:block; color:#9b2c2c; margin-bottom:4px;">Forçar limpeza da tabela de obras</strong>
-                        <div class="muted-note">
-                            Executa <code>VACUUM FULL public.obras</code>. Use apenas se o banco continuar cheio apos reabrir o sistema. A tabela fica travada durante a operacao.
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        class="btn btn-small"
-                        style="background:#c53030; color:#fff; border:none; border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer;"
-                        onclick="window.forceObrasDatabaseCleanup(this)"
-                    >
-                        Forçar limpeza
-                    </button>
-                </div>
-            ` : ''}
         </section>
     `;
 }
@@ -1231,7 +1158,6 @@ export function initializeDashboard() {
     ensureDashboardObraModal();
     window.openDashboardObraModal = openDashboardObraModal;
     window.closeDashboardObraModal = closeDashboardObraModal;
-    window.forceObrasDatabaseCleanup = forceObrasDatabaseCleanup;
 
     if (hasLoadedSystemData(window.systemData)) {
         dashboardState.dataReady = true;

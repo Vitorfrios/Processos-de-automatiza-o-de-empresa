@@ -274,16 +274,25 @@ class RouteHandler:
         payload = self.routes_core.handle_get_database_usage()
         handler.send_json_response(payload)
 
+    def handle_get_storage_status(self, handler):
+        """GET /system/storage-status - Retorna status amigavel do armazenamento"""
+        payload = self.routes_core.handle_get_storage_status()
+        handler.send_json_response(payload)
+
     def handle_get_database_table_usage(self, handler):
         """GET /api/system/database-usage/tables - Retorna uso por tabela"""
         payload = self.routes_core.handle_get_database_table_usage()
         handler.send_json_response(payload)
 
-    def handle_post_database_vacuum_full_obras(self, handler):
-        """POST /api/system/database-size/vacuum-obras - Executa VACUUM FULL public.obras"""
-        payload = self.routes_core.handle_post_database_vacuum_full_obras()
+    def handle_post_storage_reorganize(self, handler):
+        """POST /api/system/storage-status/reorganize - Executa VACUUM administrativo"""
+        payload = self.routes_core.handle_post_storage_reorganize()
         status = 200 if payload.get("success") else 409
         handler.send_json_response(payload, status=status)
+
+    def handle_post_database_vacuum_full_obras(self, handler):
+        """POST /api/system/database-size/vacuum-obras - Compatibilidade para reorganizacao"""
+        self.handle_post_storage_reorganize(handler)
 
     def handle_get_all_empresas(self, handler):
         """GET /api/empresas/all - Retorna todas empresas formatadas"""

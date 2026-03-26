@@ -17,6 +17,28 @@ class SystemRepository:
             "description": "Limite total do banco Supabase em MB para monitoramento do dashboard.",
         }
     }
+    STORAGE_STATUS_MESSAGES = {
+        "normal": "Armazenamento funcionando normalmente.",
+        "warning": "O sistema ainda esta funcionando normalmente. O banco de dados reutiliza espaco automaticamente apos exclusoes.",
+        "high": "O armazenamento esta proximo do limite, mas isso nao significa erro imediato. O Supabase pode demorar um pouco para liberar espaco apos exclusoes.",
+    }
+    STORAGE_STATUS_LABELS = {
+        "normal": "Normal",
+        "warning": "Atencao",
+        "high": "Alto uso",
+    }
+    STORAGE_EXPLANATION = (
+        "Quando dados sao removidos, o banco mantem o espaco reservado temporariamente "
+        "para manter a estabilidade e performance. Esse espaco é reutilizado automaticamente."
+    )
+    STORAGE_UPDATE_NOTE = (
+        "O tamanho pode demorar alguns minutos para atualizar após exclusões."
+    )
+    STORAGE_REORGANIZE_LABEL = "Reorganizar espaco do banco"
+    STORAGE_REORGANIZE_MESSAGE = (
+        "Executa VACUUM para melhorar a reutilizacao interna do espaco. "
+        "O tamanho exibido pode nao diminuir imediatamente."
+    )
     APP_ACTIVE_DATA_SIZE_SOURCES = (
         ("admins", "COALESCE(SUM(octet_length(raw_json)), 0)"),
         ("empresas", "COALESCE(SUM(octet_length(raw_json) + octet_length(COALESCE(credenciais_json, ''))), 0)"),
@@ -124,6 +146,35 @@ class SystemRepository:
             self.DEFAULT_DATABASE_LIMIT_MB,
         )
 
+    def _resolve_storage_status(self, percent_used):
+        normalized_percent = float(percent_used or 0)
+
+        if normalized_percent >= 90:
+            return "high"
+
+        if normalized_percent >= 70:
+            return "warning"
+
+        return "normal"
+
+    def _build_storage_status_payload(self, payload):
+        usage_payload = dict(payload or {})
+        status = self._resolve_storage_status(usage_payload.get("percent_used"))
+
+        usage_payload.update(
+            {
+                "status": status,
+                "status_label": self.STORAGE_STATUS_LABELS[status],
+                "message": self.STORAGE_STATUS_MESSAGES[status],
+                "explanation": self.STORAGE_EXPLANATION,
+                "update_note": self.STORAGE_UPDATE_NOTE,
+                "maintenance_available": True,
+                "maintenance_action_label": self.STORAGE_REORGANIZE_LABEL,
+                "maintenance_message": self.STORAGE_REORGANIZE_MESSAGE,
+            }
+        )
+        return usage_payload
+
     def get_dados_payload(self):
         payload = self.storage.load_document(
             "dados.json", self.storage.default_document("dados.json")
@@ -204,19 +255,31 @@ class SystemRepository:
     def get_materials(self):
         return self.get_dados_payload().get("materials", {})
 
-    def vacuum_full_obras(self):
+    def reorganize_storage(self):
         execute_maintenance_statements(
             self.storage.project_root,
             (
                 "SET statement_timeout TO 0",
-                "VACUUM FULL public.obras",
+                "VACUUM (ANALYZE) public.obras",
+                "VACUUM (ANALYZE) public.projetos",
+                "VACUUM (ANALYZE) public.salas",
+                "VACUUM (ANALYZE) public.sala_maquinas",
             ),
         )
         return {
             "success": True,
-            "message": "VACUUM FULL executado na tabela public.obras.",
-            "database_usage": self.get_database_usage(),
+            "message": (
+                "Rotina de reorganizacao executada com VACUUM. "
+                "O espaco interno fica mais disponivel para reutilizacao automatica."
+            ),
+            "storage_status": self.get_storage_status(),
         }
+
+    def vacuum_full_obras(self):
+        return self.reorganize_storage()
+
+    def get_storage_status(self, limit_mb=None):
+        return self.get_database_usage(limit_mb=limit_mb)
 
     def get_database_usage(self, limit_mb=None):
         row = self.conn.execute(
@@ -245,15 +308,17 @@ class SystemRepository:
             round((active_app_mb / limit_mb) * 100, 2) if limit_mb else 0.0
         )
 
-        return {
-            "used_mb": used_mb,
-            "limit_mb": limit_mb,
-            "percent_used": percent_used,
-            "public_schema_mb": public_schema_mb,
-            "active_app_mb": active_app_mb,
-            "active_app_percent_of_limit": active_app_percent_of_limit,
-            "other_schemas_mb": other_schemas_mb,
-        }
+        return self._build_storage_status_payload(
+            {
+                "used_mb": used_mb,
+                "limit_mb": limit_mb,
+                "percent_used": percent_used,
+                "public_schema_mb": public_schema_mb,
+                "active_app_mb": active_app_mb,
+                "active_app_percent_of_limit": active_app_percent_of_limit,
+                "other_schemas_mb": other_schemas_mb,
+            }
+        )
 
     def get_database_table_usage(self, limit_mb=None):
         rows = self._fetch_public_schema_table_rows()

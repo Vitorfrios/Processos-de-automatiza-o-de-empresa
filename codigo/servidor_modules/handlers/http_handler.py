@@ -158,8 +158,11 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/api/system/database-size",
         "/api/system/database-size/tables",
         "/api/system/database-size/vacuum-obras",
+        "/api/system/storage-status",
+        "/api/system/storage-status/reorganize",
         "/system/database-size",
         "/system/database-size/tables",
+        "/system/storage-status",
         "/api/constants",
         "/api/materials",
         "/api/empresas/all",
@@ -237,8 +240,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/api/system/database-usage/tables": "handle_get_database_table_usage",
         "/api/system/database-size": "handle_get_database_usage",
         "/api/system/database-size/tables": "handle_get_database_table_usage",
+        "/api/system/storage-status": "handle_get_storage_status",
         "/system/database-size": "handle_get_database_usage",
         "/system/database-size/tables": "handle_get_database_table_usage",
+        "/system/storage-status": "handle_get_storage_status",
         "/api/constants": "handle_get_constants_json",
         "/api/materials": "handle_get_materials",
         "/api/empresas/all": "handle_get_all_empresas",
@@ -1328,6 +1333,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         elif path == "/api/system/database-size/vacuum-obras":
             self.route_handler.handle_post_database_vacuum_full_obras(self)
+            return  
+
+        elif path == "/api/system/storage-status/reorganize":
+            self.route_handler.handle_post_storage_reorganize(self)
             return  
 
         elif path == "/api/constants/save":
