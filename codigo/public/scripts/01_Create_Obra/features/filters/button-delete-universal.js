@@ -475,6 +475,8 @@ class ButtonDeleteUniversal {
 
       // Remover atributos e classes
       button.classList.remove("delete-real");
+      button.classList.remove("filter-mode-active");
+      button.style.fontWeight = "";
       button.removeAttribute("data-original-onclick");
       button.removeAttribute("data-original-text");
       button.removeAttribute("data-button-type");

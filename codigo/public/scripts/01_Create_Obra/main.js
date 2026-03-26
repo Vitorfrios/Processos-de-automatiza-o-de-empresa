@@ -8,6 +8,7 @@ import { createSmartLogger } from "./core/logger.js";
 import { APP_CONFIG, isFeatureEnabled } from "./core/config.js";
 import "./core/runtime-data.js";
 import "./core/system-bootstrap.js";
+import "../shared/admin-storage-alert.js";
 import { bootstrapClientMode } from "./main-folder/client-mode.js";
 
 // INICIALIZAR LOGGER IMEDIATAMENTE
@@ -55,6 +56,10 @@ import { initializeSystem } from "./main-folder/system-init.js";
 import { checkAndLoadExistingSession } from "./main-folder/session-manager-main.js";
 import { showServerOfflineMessage } from "./main-folder/error-handler.js";
 import { configurarAutoFormatacaoData } from "./data/empresa-system/empresa-form-manager.js";
+import {
+  loadSingleObra,
+  removeBaseObraFromHTML,
+} from "./data/adapters/obra-adapter-folder/obra-data-loader.js";
 
 // IMPORTAR MÓDULOS DE FILTRO
 import "./features/filters/filter-system.js";
@@ -513,6 +518,103 @@ function showSystemStatusMessage(hasExistingSession) {
 /**
  * Verifica funções críticas do sistema - MOSTRA APENAS AS CARREGADAS
  */
+function getEmbeddedObraRequest() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("embed") !== "1") {
+    return null;
+  }
+
+  return {
+    obraId: String(params.get("obraId") || "").trim(),
+    obraNome: String(params.get("obra") || "").trim(),
+  };
+}
+
+function normalizeEmbeddedObraText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+async function fetchEmbeddedObraById(obraId) {
+  const response = await fetch(`/obras/${encodeURIComponent(obraId)}`);
+  if (!response.ok) {
+    throw new Error(`Falha ao carregar obra ${obraId}: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+async function resolveEmbeddedObraData(requestedObra) {
+  if (!requestedObra) {
+    return null;
+  }
+
+  if (requestedObra.obraId) {
+    return fetchEmbeddedObraById(requestedObra.obraId);
+  }
+
+  if (!requestedObra.obraNome) {
+    return null;
+  }
+
+  const response = await fetch("/api/obras/catalog");
+  if (!response.ok) {
+    throw new Error(
+      `Falha ao carregar catalogo de obras: ${response.status}`,
+    );
+  }
+
+  const payload = await response.json();
+  const obras = Array.isArray(payload?.obras) ? payload.obras : [];
+  const obraCatalogo = obras.find(
+    (obra) =>
+      normalizeEmbeddedObraText(obra?.nome) ===
+      normalizeEmbeddedObraText(requestedObra.obraNome),
+  );
+
+  if (!obraCatalogo?.id) {
+    return null;
+  }
+
+  return fetchEmbeddedObraById(obraCatalogo.id);
+}
+
+async function loadEmbeddedRequestedObra() {
+  const requestedObra = getEmbeddedObraRequest();
+  if (!requestedObra) {
+    return false;
+  }
+
+  console.log(
+    " [EMBED] Carregando obra solicitada diretamente no iframe...",
+    requestedObra,
+  );
+
+  const obraData = await resolveEmbeddedObraData(requestedObra);
+  if (!obraData) {
+    console.warn(" [EMBED] Obra solicitada nÃ£o encontrada");
+    return false;
+  }
+
+  removeBaseObraFromHTML();
+  const loadedCount = await loadSingleObra(obraData);
+
+  if (loadedCount > 0) {
+    window.dispatchEvent(
+      new CustomEvent("embeddedObraLoaded", {
+        detail: {
+          obraId: String(obraData?.id || requestedObra.obraId || "").trim(),
+        },
+      }),
+    );
+  }
+
+  console.log(
+    ` [EMBED] ${loadedCount} obra(s) carregada(s) diretamente no iframe`,
+  );
+
+  return loadedCount > 0;
+}
+
 function verifyCriticalFunctions() {
   const criticalFunctions = [
     "createEmptyObra",
@@ -763,7 +865,20 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     // Verificar e carregar sessão existente
     console.log(" Verificando sessão existente...");
-    const hasExistingSession = await checkAndLoadExistingSession();
+    let hasExistingSession = false;
+
+    try {
+      hasExistingSession = await loadEmbeddedRequestedObra();
+    } catch (embedError) {
+      console.warn(
+        " [EMBED] Falha no carregamento direto da obra solicitada:",
+        embedError,
+      );
+    }
+
+    if (!hasExistingSession) {
+      hasExistingSession = await checkAndLoadExistingSession();
+    }
 
     if (!hasExistingSession) {
       console.log(" Nenhuma sessão existente - sistema começa vazio");

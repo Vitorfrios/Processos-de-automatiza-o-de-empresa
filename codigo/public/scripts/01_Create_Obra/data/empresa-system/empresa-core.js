@@ -62,6 +62,49 @@ function limparCacheEmpresas() {
   console.log(" [CACHE] Cache de empresas limpo");
 }
 
+async function obterProximoNumeroClienteDoServidor(sigla) {
+  const response = await fetch(
+    `/api/dados/empresas/numero/${encodeURIComponent(sigla)}`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const numero = Number.parseInt(payload?.numero, 10);
+  if (Number.isNaN(numero) || numero < 1) {
+    throw new Error("Numero de cliente invalido retornado pelo servidor");
+  }
+
+  return numero;
+}
+
+function calcularProximoNumeroClienteLocal(obrasDaEmpresa, sigla) {
+  let maiorNumero = 0;
+
+  obrasDaEmpresa.forEach((obra) => {
+    if (obra.numeroClienteFinal) {
+      const numero = parseInt(obra.numeroClienteFinal, 10);
+      if (!isNaN(numero) && numero > maiorNumero) {
+        maiorNumero = numero;
+      }
+    }
+
+    if (obra.idGerado) {
+      const match = obra.idGerado.match(new RegExp(`obra_${sigla}_(\\d+)`));
+      if (match) {
+        const numero = parseInt(match[1], 10);
+        if (numero > maiorNumero) {
+          maiorNumero = numero;
+        }
+      }
+    }
+  });
+
+  return maiorNumero + 1;
+}
+
 /* ==== SEÇÃO 2: CLASSE PRINCIPAL - EMPRESA CADASTRO INLINE ==== */
 
 import { showSystemStatus } from "../../ui/components/status.js";
@@ -1978,6 +2021,88 @@ EmpresaCadastroInline.prototype.calcularNumeroClienteFinal = function (
     });
 
     const novoNumero = maiorNumero + 1;
+
+    if (obraId) {
+      const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);
+      if (obraElement) {
+        obraElement.dataset.empresaSigla = sigla;
+        obraElement.dataset.empresaCodigo = sigla;
+        obraElement.dataset.numeroClienteFinal = String(novoNumero);
+        obraElement.dataset.idGerado = `obra_${sigla}_${novoNumero}`;
+        obraElement.dataset.identificadorObra = `${sigla}-${novoNumero}`;
+      }
+
+      this.atualizarCampoNumeroCliente(obraId, novoNumero);
+
+      if (obraElement) {
+        const dados = {
+          empresaSigla: sigla,
+          empresaNome: obraElement.dataset.empresaNome || "",
+          numeroClienteFinal: novoNumero,
+          clienteFinal: obraElement.dataset.clienteFinal,
+          codigoCliente: obraElement.dataset.codigoCliente,
+          dataCadastro: obraElement.dataset.dataCadastro,
+          orcamentistaResponsavel: obraElement.dataset.orcamentistaResponsavel,
+        };
+        this.atualizarHeaderObra(obraElement, dados);
+      }
+
+      this.sincronizarObraExistenteParaNumeracao({
+        id: obraId,
+        empresaSigla: sigla,
+        empresaCodigo: sigla,
+        empresa_id:
+          obraElement?.dataset.empresaId ||
+          obraElement?.dataset.empresa_id ||
+          "",
+        numeroClienteFinal: novoNumero,
+        idGerado: `obra_${sigla}_${novoNumero}`,
+        identificadorObra: `${sigla}-${novoNumero}`,
+      });
+    }
+
+    return novoNumero;
+  } catch (error) {
+    console.error("[EMPRESA] Erro ao calcular numero do cliente final:", error);
+    return 1;
+  }
+};
+
+EmpresaCadastroInline.prototype.calcularNumeroClienteFinal = async function (
+  sigla,
+  obraId = null,
+) {
+  try {
+    console.log(
+      `[EMPRESA] Calculando numero para empresa: ${sigla}, obra: ${obraId}`,
+    );
+
+    if (!sigla) {
+      console.log("[EMPRESA] Sigla nao fornecida");
+      return 0;
+    }
+
+    const obrasDaEmpresa = this.obterObrasDaEmpresaParaNumeracao(sigla, obraId);
+    console.log(
+      `[EMPRESA] Encontradas ${obrasDaEmpresa.length} obras para ${sigla}`,
+    );
+
+    let novoNumero;
+    try {
+      novoNumero = await obterProximoNumeroClienteDoServidor(sigla);
+      console.log(
+        `[EMPRESA] Numero calculado no servidor: ${novoNumero} para ${sigla}`,
+      );
+    } catch (serverError) {
+      console.warn(
+        `[EMPRESA] Falha ao consultar numero no servidor para ${sigla}:`,
+        serverError,
+      );
+      novoNumero = calcularProximoNumeroClienteLocal(obrasDaEmpresa, sigla);
+      console.log(
+        `[EMPRESA] Numero calculado localmente: ${novoNumero} para ${sigla}`,
+      );
+    }
 
     if (obraId) {
       const obraElement = document.querySelector(`[data-obra-id="${obraId}"]`);

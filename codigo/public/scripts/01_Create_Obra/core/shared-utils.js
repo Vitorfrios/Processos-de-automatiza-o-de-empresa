@@ -12,11 +12,21 @@ function normalizeEmpresa(empresa) {
     return null;
   }
 
+  const numeroClienteAtual = Math.max(
+    Number.parseInt(empresa.numeroClienteAtual, 10) || 0,
+    0,
+  );
+
   if (empresa.codigo && empresa.nome) {
-    return empresa;
+    return {
+      ...empresa,
+      numeroClienteAtual,
+    };
   }
 
-  const codigo = Object.keys(empresa)[0];
+  const codigo = Object.keys(empresa).find(
+    (key) => !["credenciais", "numeroClienteAtual"].includes(key),
+  );
   if (!codigo) {
     return null;
   }
@@ -25,6 +35,7 @@ function normalizeEmpresa(empresa) {
     codigo,
     nome: empresa[codigo],
     credenciais: empresa.credenciais ?? null,
+    numeroClienteAtual,
   };
 }
 

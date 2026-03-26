@@ -915,6 +915,47 @@ class RoutesCore:
             print(f"Erro ao carregar materials: {str(e)}")
             return {"materials": {}}
 
+    def handle_get_database_usage(self):
+        """Retorna consumo atual do banco em MB"""
+        try:
+            return self.system_repository.get_database_usage()
+        except Exception as e:
+            print(f"Erro ao carregar uso do banco: {str(e)}")
+            return {
+                "used_mb": 0,
+                "limit_mb": self.system_repository.DEFAULT_DATABASE_LIMIT_MB,
+                "percent_used": 0,
+            }
+
+    def handle_get_database_table_usage(self):
+        """Retorna consumo por tabela do banco"""
+        try:
+            return self.system_repository.get_database_table_usage()
+        except Exception as e:
+            print(f"Erro ao carregar uso por tabela: {str(e)}")
+            return {"tables": []}
+
+    def handle_post_database_vacuum_full_obras(self):
+        """Executa VACUUM FULL em public.obras apenas em estado critico"""
+        try:
+            current_usage = self.system_repository.get_database_usage()
+            if float(current_usage.get("percent_used") or 0) < 95:
+                return {
+                    "success": False,
+                    "error": "Limpeza forcada liberada apenas quando o armazenamento estiver em estado critico.",
+                    "database_usage": current_usage,
+                }
+
+            result = self.system_repository.vacuum_full_obras()
+            result["before_usage"] = current_usage
+            return result
+        except Exception as e:
+            print(f"Erro ao executar VACUUM FULL em obras: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
     def handle_get_all_empresas(self):
         """Retorna todas empresas no formato correto"""
         try:

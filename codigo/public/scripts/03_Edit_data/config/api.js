@@ -116,17 +116,22 @@ export async function loadData() {
   }
 }
 
-export async function saveData() {
+export async function saveData(options = {}) {
+  const { silent = false, keepalive = false } = options;
   try {
     // Verificar se há mudanças reais pendentes
     const realPendingChanges = getRealPendingChanges();
 
     if (realPendingChanges.size === 0) {
-      showInfo("Nenhuma alteração real para salvar.");
-      return;
+      if (!silent) {
+        showInfo("Nenhuma alteração real para salvar.");
+      }
+      return { success: true, skipped: true, changedSections: [] };
     }
 
-    showLoading("Salvando dados...");
+    if (!silent) {
+      showLoading("Salvando dados...");
+    }
 
     // Debug: Verificar dados antes da validação
     console.log(" Tentando salvar dados...");
@@ -160,6 +165,7 @@ export async function saveData() {
       headers: {
         "Content-Type": "application/json",
       },
+      keepalive,
       body: JSON.stringify(payload),
     });
 
@@ -175,7 +181,9 @@ export async function saveData() {
       updateOriginalData(systemData);
 
       clearPendingChanges();
-      showSuccess(result.message || "Dados salvos com sucesso!");
+      if (!silent) {
+        showSuccess(result.message || "Dados salvos com sucesso!");
+      }
       window.dispatchEvent(
         new CustomEvent("dataApplied", {
           detail: {
@@ -185,19 +193,29 @@ export async function saveData() {
           }
         })
       );
+      return {
+        success: true,
+        changedSections,
+        message: result.message || "Dados salvos com sucesso!",
+      };
     } else {
       throw new Error(result.error || "Erro ao salvar dados");
     }
   } catch (error) {
     console.error("Erro ao salvar dados:", error);
-    showError(`Erro ao salvar: ${error.message}`);
+    if (!silent) {
+      showError(`Erro ao salvar: ${error.message}`);
 
-    // Mostrar detalhes do erro
-    showError(
-      `Detalhes: ${error.message}. Verifique o console para mais informações.`,
-    );
+      // Mostrar detalhes do erro
+      showError(
+        `Detalhes: ${error.message}. Verifique o console para mais informações.`,
+      );
+    }
+    return { success: false, error: error.message };
   } finally {
-    hideLoading();
+    if (!silent) {
+      hideLoading();
+    }
   }
 }
 
@@ -311,28 +329,41 @@ export function fixDataIssues() {
 }
 
 // Função de salvamento com correção automática
-export async function saveDataWithFix() {
+export async function saveDataWithFix(options = {}) {
   try {
     // Primeiro tentar corrigir problemas
     const issuesFixed = fixDataIssues();
 
     if (issuesFixed) {
-      showWarning(
-        "Problemas de dados corrigidos. Tentando salvar novamente...",
-      );
-      setTimeout(() => saveData(), 1000);
+      if (!options.silent) {
+        showWarning(
+          "Problemas de dados corrigidos. Tentando salvar novamente...",
+        );
+        setTimeout(() => saveData(options), 1000);
+        return { success: true, deferred: true };
+      }
+
+      return saveData(options);
     } else {
       // Se não há problemas, salvar normalmente
-      await saveData();
+      return await saveData(options);
     }
   } catch (error) {
     console.error("Erro no salvamento com correção:", error);
-    showError(`Erro ao salvar: ${error.message}`);
+    if (!options.silent) {
+      showError(`Erro ao salvar: ${error.message}`);
+    }
+    return { success: false, error: error.message };
   }
+}
+
+export async function saveDataSilently(options = {}) {
+  return saveDataWithFix({ ...options, silent: true });
 }
 
 // Exportar funções globalmente
 window.loadData = loadData;
 window.saveData = saveDataWithFix; // Usar versão com correção
+window.saveDataSilently = saveDataSilently;
 window.fixDataIssues = fixDataIssues;
 window.debugDataValidation = debugDataValidation;

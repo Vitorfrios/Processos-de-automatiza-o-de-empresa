@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta
 
+from servidor_modules.database.connection import has_empresas_numero_cliente_column
 from servidor_modules.database.storage import get_storage, normalize_empresa
 
 
@@ -12,12 +13,111 @@ class EmpresaRepository:
     def __init__(self, project_root):
         self.storage = get_storage(project_root)
         self.conn = self.storage.conn
+        self.project_root = self.storage.project_root
+
+    def _supports_numero_cliente_column(self):
+        return has_empresas_numero_cliente_column(
+            project_root=self.project_root,
+            conn=self.conn,
+        )
+
+    @staticmethod
+    def _normalize_numero_cliente_atual(value):
+        try:
+            numero = int(value)
+        except (TypeError, ValueError):
+            return 0
+        return max(numero, 0)
+
+    def _hydrate_empresa_row(self, row):
+        empresa = json.loads(row["raw_json"])
+        if isinstance(empresa, dict):
+            empresa["numeroClienteAtual"] = max(
+                self._normalize_numero_cliente_atual(
+                    empresa.get("numeroClienteAtual")
+                ),
+                self._normalize_numero_cliente_atual(
+                    row.get("ultimo_numero_cliente")
+                ),
+            )
+        return empresa
+
+    def _refresh_last_numero_cliente(self, codigos=None):
+        if not self._supports_numero_cliente_column():
+            return
+
+        filtros = [
+            str(codigo).strip()
+            for codigo in (codigos or [])
+            if str(codigo or "").strip()
+        ]
+
+        cursor = self.conn.cursor()
+        cursor.execute("BEGIN")
+        try:
+            if filtros:
+                placeholders = ", ".join(["?"] * len(filtros))
+                cursor.execute(
+                    f"""
+                    UPDATE empresas AS empresas_destino
+                    SET ultimo_numero_cliente = GREATEST(
+                        COALESCE(empresas_destino.ultimo_numero_cliente, 0),
+                        COALESCE(obras_agrupadas.max_numero_cliente, 0)
+                    )
+                    FROM (
+                        SELECT
+                            empresa_codigo,
+                            MAX(COALESCE(numero_cliente_final, 0)) AS max_numero_cliente
+                        FROM obras
+                        WHERE empresa_codigo IN ({placeholders})
+                        GROUP BY empresa_codigo
+                    ) AS obras_agrupadas
+                    WHERE empresas_destino.codigo = obras_agrupadas.empresa_codigo
+                    """,
+                    tuple(filtros),
+                )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE empresas AS empresas_destino
+                    SET ultimo_numero_cliente = GREATEST(
+                        COALESCE(empresas_destino.ultimo_numero_cliente, 0),
+                        COALESCE(obras_agrupadas.max_numero_cliente, 0)
+                    )
+                    FROM (
+                        SELECT
+                            empresa_codigo,
+                            MAX(COALESCE(numero_cliente_final, 0)) AS max_numero_cliente
+                        FROM obras
+                        WHERE COALESCE(empresa_codigo, '') <> ''
+                        GROUP BY empresa_codigo
+                    ) AS obras_agrupadas
+                    WHERE empresas_destino.codigo = obras_agrupadas.empresa_codigo
+                    """
+                )
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
 
     def get_all(self):
-        rows = self.conn.execute(
-            "SELECT raw_json FROM empresas ORDER BY sort_order, codigo"
-        ).fetchall()
-        return [json.loads(row["raw_json"]) for row in rows]
+        if self._supports_numero_cliente_column():
+            rows = self.conn.execute(
+                """
+                SELECT raw_json, ultimo_numero_cliente
+                FROM empresas
+                ORDER BY sort_order, codigo
+                """
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                """
+                SELECT raw_json, 0 AS ultimo_numero_cliente
+                FROM empresas
+                ORDER BY sort_order, codigo
+                """
+            ).fetchall()
+        return [self._hydrate_empresa_row(row) for row in rows]
 
     def get_public(self):
         empresas = []
@@ -109,28 +209,59 @@ class EmpresaRepository:
         cursor = self.conn.cursor()
         cursor.execute("BEGIN")
         try:
+            supports_numero_cliente = self._supports_numero_cliente_column()
             for index, empresa in enumerate(normalized_empresas):
                 codigo = str(empresa.get("codigo", "")).strip()
-                cursor.execute(
-                    """
-                    INSERT INTO empresas(codigo, nome, credenciais_json, raw_json, sort_order)
-                    VALUES(?, ?, ?, ?, ?)
-                    ON CONFLICT(codigo) DO UPDATE SET
-                        nome = EXCLUDED.nome,
-                        credenciais_json = EXCLUDED.credenciais_json,
-                        raw_json = EXCLUDED.raw_json,
-                        sort_order = EXCLUDED.sort_order
-                    """,
-                    (
-                        codigo,
-                        str(empresa.get("nome", "")).strip(),
-                        json.dumps(empresa.get("credenciais"), ensure_ascii=False)
-                        if empresa.get("credenciais") is not None
-                        else None,
-                        json.dumps(empresa, ensure_ascii=False),
-                        index,
-                    ),
-                )
+                if supports_numero_cliente:
+                    cursor.execute(
+                        """
+                        INSERT INTO empresas(
+                            codigo, nome, ultimo_numero_cliente, credenciais_json, raw_json, sort_order
+                        )
+                        VALUES(?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(codigo) DO UPDATE SET
+                            nome = EXCLUDED.nome,
+                            ultimo_numero_cliente = EXCLUDED.ultimo_numero_cliente,
+                            credenciais_json = EXCLUDED.credenciais_json,
+                            raw_json = EXCLUDED.raw_json,
+                            sort_order = EXCLUDED.sort_order
+                        """,
+                        (
+                            codigo,
+                            str(empresa.get("nome", "")).strip(),
+                            self._normalize_numero_cliente_atual(
+                                empresa.get("numeroClienteAtual")
+                            ),
+                            json.dumps(empresa.get("credenciais"), ensure_ascii=False)
+                            if empresa.get("credenciais") is not None
+                            else None,
+                            json.dumps(empresa, ensure_ascii=False),
+                            index,
+                        ),
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        INSERT INTO empresas(
+                            codigo, nome, credenciais_json, raw_json, sort_order
+                        )
+                        VALUES(?, ?, ?, ?, ?)
+                        ON CONFLICT(codigo) DO UPDATE SET
+                            nome = EXCLUDED.nome,
+                            credenciais_json = EXCLUDED.credenciais_json,
+                            raw_json = EXCLUDED.raw_json,
+                            sort_order = EXCLUDED.sort_order
+                        """,
+                        (
+                            codigo,
+                            str(empresa.get("nome", "")).strip(),
+                            json.dumps(empresa.get("credenciais"), ensure_ascii=False)
+                            if empresa.get("credenciais") is not None
+                            else None,
+                            json.dumps(empresa, ensure_ascii=False),
+                            index,
+                        ),
+                    )
 
             if incoming_codes:
                 placeholders = ", ".join(["?"] * len(incoming_codes))
@@ -145,6 +276,7 @@ class EmpresaRepository:
         except Exception:
             self.conn.rollback()
             raise
+        self._refresh_last_numero_cliente(incoming_codes if incoming_codes else None)
         return self.get_all()
 
     def add(self, empresa):
@@ -316,11 +448,25 @@ class EmpresaRepository:
         return True
 
     def get_by_codigo(self, codigo):
-        row = self.conn.execute(
-            "SELECT raw_json FROM empresas WHERE codigo = ?",
-            (str(codigo),),
-        ).fetchone()
-        return json.loads(row["raw_json"]) if row else None
+        if self._supports_numero_cliente_column():
+            row = self.conn.execute(
+                """
+                SELECT raw_json, ultimo_numero_cliente
+                FROM empresas
+                WHERE codigo = ?
+                """,
+                (str(codigo),),
+            ).fetchone()
+        else:
+            row = self.conn.execute(
+                """
+                SELECT raw_json, 0 AS ultimo_numero_cliente
+                FROM empresas
+                WHERE codigo = ?
+                """,
+                (str(codigo),),
+            ).fetchone()
+        return self._hydrate_empresa_row(row) if row else None
 
     def _upsert_empresa(self, empresa, sort_order=None):
         empresa_normalizada = normalize_empresa(empresa)
@@ -344,30 +490,63 @@ class EmpresaRepository:
         cursor = self.conn.cursor()
         cursor.execute("BEGIN")
         try:
-            cursor.execute(
-                """
-                INSERT INTO empresas(codigo, nome, credenciais_json, raw_json, sort_order)
-                VALUES(?, ?, ?, ?, ?)
-                ON CONFLICT(codigo) DO UPDATE SET
-                    nome = EXCLUDED.nome,
-                    credenciais_json = EXCLUDED.credenciais_json,
-                    raw_json = EXCLUDED.raw_json,
-                    sort_order = EXCLUDED.sort_order
-                """,
-                (
-                    codigo,
-                    str(empresa_normalizada.get("nome", "")).strip(),
-                    json.dumps(
-                        empresa_normalizada.get("credenciais"), ensure_ascii=False
+            if self._supports_numero_cliente_column():
+                cursor.execute(
+                    """
+                    INSERT INTO empresas(
+                        codigo, nome, ultimo_numero_cliente, credenciais_json, raw_json, sort_order
                     )
-                    if empresa_normalizada.get("credenciais") is not None
-                    else None,
-                    json.dumps(empresa_normalizada, ensure_ascii=False),
-                    sort_order,
-                ),
-            )
+                    VALUES(?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(codigo) DO UPDATE SET
+                        nome = EXCLUDED.nome,
+                        ultimo_numero_cliente = EXCLUDED.ultimo_numero_cliente,
+                        credenciais_json = EXCLUDED.credenciais_json,
+                        raw_json = EXCLUDED.raw_json,
+                        sort_order = EXCLUDED.sort_order
+                    """,
+                    (
+                        codigo,
+                        str(empresa_normalizada.get("nome", "")).strip(),
+                        self._normalize_numero_cliente_atual(
+                            empresa_normalizada.get("numeroClienteAtual")
+                        ),
+                        json.dumps(
+                            empresa_normalizada.get("credenciais"), ensure_ascii=False
+                        )
+                        if empresa_normalizada.get("credenciais") is not None
+                        else None,
+                        json.dumps(empresa_normalizada, ensure_ascii=False),
+                        sort_order,
+                    ),
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO empresas(
+                        codigo, nome, credenciais_json, raw_json, sort_order
+                    )
+                    VALUES(?, ?, ?, ?, ?)
+                    ON CONFLICT(codigo) DO UPDATE SET
+                        nome = EXCLUDED.nome,
+                        credenciais_json = EXCLUDED.credenciais_json,
+                        raw_json = EXCLUDED.raw_json,
+                        sort_order = EXCLUDED.sort_order
+                    """,
+                    (
+                        codigo,
+                        str(empresa_normalizada.get("nome", "")).strip(),
+                        json.dumps(
+                            empresa_normalizada.get("credenciais"), ensure_ascii=False
+                        )
+                        if empresa_normalizada.get("credenciais") is not None
+                        else None,
+                        json.dumps(empresa_normalizada, ensure_ascii=False),
+                        sort_order,
+                    ),
+                )
             self.conn.commit()
         except Exception:
             self.conn.rollback()
             raise
+        self._refresh_last_numero_cliente([codigo])
         return empresa_normalizada

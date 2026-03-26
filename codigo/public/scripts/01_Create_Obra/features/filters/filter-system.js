@@ -134,14 +134,14 @@ const FilterSystem = (function () {
 
     filterToggle.addEventListener("change", function (e) {
       const isActive = e.target.checked;
-      handleFilterToggleChange(isActive);
+      void handleFilterToggleChange(isActive);
     });
   }
 
   /**
    * Manipula mudança no switch
    */
-  function handleFilterToggleChange(isActive) {
+  async function handleFilterToggleChange(isActive) {
     filterToggle = filterToggle || document.getElementById("filter-toggle");
 
     if (state.isLoading) {
@@ -155,6 +155,25 @@ const FilterSystem = (function () {
     console.log(
       ` [FILTER-SYSTEM] Switch ${isActive ? "ATIVADO" : "DESATIVADO"}`,
     );
+
+    if (typeof window.autoSaveVisibleObrasBeforeContextSwitch === "function") {
+      const autoSaveResult =
+        await window.autoSaveVisibleObrasBeforeContextSwitch({
+          reason: isActive ? "create-to-edit" : "edit-to-create",
+        });
+
+      if (autoSaveResult?.success === false) {
+        console.warn(
+          " [FILTER-SYSTEM] Troca de modo abortada por falha no autosave",
+          autoSaveResult,
+        );
+
+        if (filterToggle) {
+          filterToggle.checked = !isActive;
+        }
+        return;
+      }
+    }
 
     // Atualizar estado
     state.active = isActive;
@@ -190,7 +209,7 @@ const FilterSystem = (function () {
     updateSwitchUI(isActive);
 
     // Recarregar obras com endpoint correto
-    reloadObrasWithCurrentEndpoint();
+    await reloadObrasWithCurrentEndpoint();
   }
 
   /**

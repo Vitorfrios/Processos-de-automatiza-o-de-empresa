@@ -350,9 +350,10 @@ export function editMachine(index) {
             </div>
             
             <div class="form-actions">
-                <button class="btn btn-success" onclick="saveMachineChanges()">
+                <!--
                     <i class="icon-save"></i> Salvar Alterações
                 </button>
+                -->
                 <button class="btn btn-secondary" onclick="closeMachineDetail()">
                     <i class="icon-close"></i> Fechar
                 </button>
@@ -370,6 +371,15 @@ export function editMachine(index) {
 }
 
 export function closeMachineDetail() {
+    const activeElement = document.activeElement;
+    if (
+        activeElement instanceof HTMLElement &&
+        document.getElementById('machineDetailView')?.contains(activeElement) &&
+        typeof activeElement.blur === 'function'
+    ) {
+        activeElement.blur();
+    }
+
     document.getElementById('machineDetailView').style.display = 'none';
     clearCurrentMachineIndex();
 }

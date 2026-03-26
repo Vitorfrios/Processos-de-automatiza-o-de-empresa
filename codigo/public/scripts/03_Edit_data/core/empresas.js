@@ -138,6 +138,16 @@ function buildEmpresaCredentialState(empresa, credenciais = null) {
     };
 }
 
+function getEmpresaNumeroClienteAtual(empresa) {
+    return Math.max(parseInt(empresa?.numeroClienteAtual, 10) || 0, 0);
+}
+
+function resolveNumeroClienteAtualInput(defaultValue = 0) {
+    const inputValue = document.getElementById('numeroClienteAtualInput')?.value;
+    const parsedValue = parseInt(inputValue, 10);
+    return Math.max(Number.isNaN(parsedValue) ? defaultValue : parsedValue, 0);
+}
+
 function syncEmpresaCredenciaisInRenderedObras(empresa, credenciais = null) {
     if (typeof document === 'undefined' || !empresa) {
         return;
@@ -276,6 +286,161 @@ function atualizarDataExpiracao() {
     }
 }
 
+function updateCredentialsAutosaveStatus(message, tone = 'muted') {
+    const statusElement = document.getElementById('credentialsAutosaveStatus');
+    if (!statusElement) {
+        return;
+    }
+
+    const palette = {
+        muted: '#a0aec0',
+        success: '#68d391',
+        warning: '#f6ad55',
+        error: '#fc8181'
+    };
+
+    statusElement.textContent = message || 'Pré-salvamento automático ao sair do campo.';
+    statusElement.style.color = palette[tone] || palette.muted;
+}
+
+function resolveCredentialTempoUso(showErrors = false) {
+    const tempoUsoRadio = document.querySelector('input[name="tempoUso"]:checked');
+
+    if (!tempoUsoRadio) {
+        if (showErrors) {
+            showError('Selecione o tempo de uso');
+        }
+        return null;
+    }
+
+    if (tempoUsoRadio.value === 'personalizado') {
+        const tempoPersonalizado = document.getElementById('tempoPersonalizado')?.value;
+        const tempoUso = parseInt(tempoPersonalizado, 10);
+
+        if (!tempoPersonalizado || Number.isNaN(tempoUso) || tempoUso < 1) {
+            if (showErrors) {
+                showError('Digite um valor válido para o tempo personalizado (mínimo 1 dia)');
+            }
+            return null;
+        }
+
+        if (tempoUso > 999) {
+            if (showErrors) {
+                showError('O tempo máximo é 999 dias');
+            }
+            return null;
+        }
+
+        return tempoUso;
+    }
+
+    return parseInt(tempoUsoRadio.value, 10) || 30;
+}
+
+function buildCredentialDraftPayload(currentCredenciais = null) {
+    const tempoUso = resolveCredentialTempoUso(false);
+    const dataCriacaoAtual = String(currentCredenciais?.data_criacao || '').trim();
+    const numeroClienteAtualPadrao = Math.max(
+        parseInt(document.getElementById('numeroClienteAtualInput')?.defaultValue, 10) || 0,
+        0
+    );
+
+    return {
+        usuario: document.getElementById('usuarioInput')?.value?.trim() || '',
+        email: document.getElementById('emailInput')?.value?.trim() || '',
+        token: document.getElementById('tokenInput')?.value?.trim() || '',
+        numeroClienteAtual: resolveNumeroClienteAtualInput(numeroClienteAtualPadrao),
+        tempoUso: tempoUso || parseInt(currentCredenciais?.tempoUso, 10) || 30,
+        data_criacao: dataCriacaoAtual || new Date().toISOString(),
+        data_expiracao: tempoUso ? calcularDataExpiracao(tempoUso) : String(currentCredenciais?.data_expiracao || '').trim(),
+        source: 'manual-edit-draft'
+    };
+}
+
+function persistCredentialModalState(empresaIndex, { quiet = true, showFeedback = false } = {}) {
+    try {
+        if (!systemData.empresas || !systemData.empresas[empresaIndex]) {
+            if (!quiet) {
+                showError('Empresa não encontrada');
+            }
+            updateCredentialsAutosaveStatus('Empresa não encontrada.', 'error');
+            return false;
+        }
+
+        const empresa = normalizeEmpresa(systemData.empresas[empresaIndex]);
+        const credenciaisAtuais = empresa?.credenciais && typeof empresa.credenciais === 'object'
+            ? empresa.credenciais
+            : readEmpresaCredentialDraft(empresa?.codigo, empresa?.nome);
+        const draft = buildCredentialDraftPayload(credenciaisAtuais);
+        const numeroClienteAtual = Math.max(parseInt(draft.numeroClienteAtual, 10) || 0, 0);
+
+        writeEmpresaCredentialDraft(empresa.codigo, empresa.nome, draft);
+
+        if (draft.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email)) {
+            if (!quiet) {
+                showError('Informe um email válido para recuperação.');
+            }
+            updateCredentialsAutosaveStatus('Rascunho salvo. Corrija o email para aplicar.', 'warning');
+            return false;
+        }
+
+        if (!draft.usuario || !draft.token) {
+            updateCredentialsAutosaveStatus('Rascunho salvo. Usuário e token são obrigatórios.', 'warning');
+            return false;
+        }
+
+        const tempoUso = resolveCredentialTempoUso(!quiet);
+        if (!tempoUso) {
+            updateCredentialsAutosaveStatus('Rascunho salvo. Defina um tempo de uso válido.', 'warning');
+            return false;
+        }
+
+        const dataCriacao = String(credenciaisAtuais?.data_criacao || draft.data_criacao || '').trim() || new Date().toISOString();
+        const credenciais = {
+            usuario: draft.usuario,
+            email: draft.email,
+            token: draft.token,
+            data_criacao: dataCriacao,
+            data_expiracao: calcularDataExpiracao(tempoUso),
+            tempoUso,
+            source: 'manual-edit'
+        };
+
+        systemData.empresas[empresaIndex] = {
+            ...empresa,
+            numeroClienteAtual,
+            credenciais
+        };
+
+        writeEmpresaCredentialDraft(empresa.codigo, empresa.nome, credenciais);
+        syncEmpresaCredenciaisInRenderedObras(empresa, credenciais);
+        addPendingChange('empresas');
+        updateCredentialsAutosaveStatus('Pré-salvo automaticamente.', 'success');
+
+        if (showFeedback) {
+            showSuccess(`Credenciais ${empresa.credenciais ? 'atualizadas' : 'criadas'} em pré-salvamento.`);
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Erro no pré-salvamento das credenciais:', error);
+        updateCredentialsAutosaveStatus('Falha ao pré-salvar.', 'error');
+        if (!quiet) {
+            showError('Erro ao processar credenciais');
+        }
+        return false;
+    }
+}
+
+function closeCredentialsModal(empresaIndex, { persist = true } = {}) {
+    if (persist) {
+        persistCredentialModalState(empresaIndex, { quiet: true });
+    }
+
+    document.getElementById('credentialsModal')?.remove();
+    loadEmpresas();
+}
+
 // Modal de gerenciamento de credenciais - MODO ESCURO (apenas o modal)
 function showCredentialsModal(index) {
     // Validar índice
@@ -306,7 +471,7 @@ function showCredentialsModal(index) {
     // Valores padrão para o formulário
     const credenciaisPersistidas = temCredenciais ? empresa.credenciais : null;
     const credenciaisRascunho = readEmpresaCredentialDraft(empresa.codigo, empresa.nome);
-    const credenciaisRascunhoValidas = credenciaisRascunho?.source === 'manual-edit'
+    const credenciaisRascunhoValidas = ['manual-edit', 'manual-edit-draft'].includes(credenciaisRascunho?.source)
         ? credenciaisRascunho
         : null;
     const credenciais = buildEmpresaCredentialState(
@@ -324,12 +489,14 @@ function showCredentialsModal(index) {
     
     // Verificar se o tempo atual está nos valores predefinidos
     const isPredefinedTime = [30, 60, 90].includes(tempoUsoAtual);
+    const numeroClienteAtual = getEmpresaNumeroClienteAtual(empresa);
     
     const modal = document.createElement('div');
     modal.id = 'credentialsModal';
     modal.className = 'modal';
     modal.dataset.empresaCodigo = empresa.codigo || '';
     modal.dataset.empresaNome = empresa.nome || '';
+    modal.dataset.empresaIndex = String(index);
     modal.style.cssText = `
         position: fixed;
         top: 0;
@@ -347,7 +514,7 @@ function showCredentialsModal(index) {
     // Fechar modal ao clicar fora
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
-            modal.remove();
+            closeCredentialsModal(index);
         }
     });
     
@@ -394,6 +561,18 @@ function showCredentialsModal(index) {
         </div>
         
         <form id="credentialsForm">
+            <div style="margin-bottom: 16px; opacity: 0.88;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #cbd5e0;">
+                    Nº Cliente:
+                </label>
+                <input type="number" id="numeroClienteAtualInput" value="${numeroClienteAtual}"
+                       min="0"
+                       inputmode="numeric"
+                       style="width: 140px; padding: 7px 8px; border: 1px solid #2d3748; border-radius: 6px; font-size: 0.95rem; background: #25303f; color: #cbd5e0;">
+                <small style="color: #a0aec0; display: block; margin-top: 5px; font-size: 0.8rem;">
+                    Último número de obra da empresa. O valor não retrocede abaixo do maior número já usado.
+                </small>
+            </div>
             <div style="margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #cbd5e0;">
                     Usuário:
@@ -490,18 +669,16 @@ function showCredentialsModal(index) {
                 </div>
             </div>
             
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid #2d3748; padding-top: 20px;">
-                <button type="button" onclick="document.getElementById('credentialsModal')?.remove()" 
+            <div style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 20px; border-top: 1px solid #2d3748; padding-top: 20px;">
+                <span id="credentialsAutosaveStatus" style="margin-right: auto; color: #a0aec0; font-size: 0.85rem;">
+                    Pré-salvamento automático ao sair do campo.
+                </span>
+                <button type="button" onclick="window.closeCredentialsModal?.(${index})" 
                         class="btn btn-secondary"
                         style="padding: 8px 16px; background: #4a5568; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: background 0.2s ease;"
                         onmouseover="this.style.background='#5f6b7a'" 
                         onmouseout="this.style.background='#4a5568'">
-                    Cancelar
-                </button>
-                <button type="submit" class="btn btn-success"
-                        style="padding: 8px 16px; background: linear-gradient(135deg, #2D774E 0%, #298650 100%); color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: opacity 0.2s ease;"
-                        onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                    ${temCredenciais ? 'Atualizar' : 'Salvar'} Credenciais
+                    Fechar
                 </button>
             </div>
         </form>
@@ -512,12 +689,18 @@ function showCredentialsModal(index) {
     
     // Adicionar eventos
     const closeBtn = modalContent.querySelector('.modal-close');
-    closeBtn.addEventListener('click', () => modal.remove());
+    closeBtn.addEventListener('click', () => closeCredentialsModal(index));
     
     const form = document.getElementById('credentialsForm');
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        saveCredentials(index);
+
+    form.addEventListener('focusout', (event) => {
+        if (event.target instanceof HTMLInputElement) {
+            persistCredentialModalState(index, { quiet: true });
+        }
+    });
+
+    form.addEventListener('change', () => {
+        persistCredentialModalState(index, { quiet: true });
     });
     
     // Adicionar funções globais para o modal
@@ -529,6 +712,8 @@ function showCredentialsModal(index) {
     };
     
     window.atualizarDataExpiracao = atualizarDataExpiracao;
+    window.closeCredentialsModal = closeCredentialsModal;
+    updateCredentialsAutosaveStatus();
 }
 
 // Função global para gerar novo token
@@ -537,23 +722,9 @@ window.generateNewToken = function() {
     if (tokenInput) {
         tokenInput.value = generateToken(32);
         const modal = document.getElementById('credentialsModal');
-        const codigo = modal?.dataset?.empresaCodigo || '';
-        const nome = modal?.dataset?.empresaNome || '';
-        if (codigo || nome) {
-            const selectedTempo = document.querySelector('input[name="tempoUso"]:checked')?.value;
-            const customTempo = parseInt(document.getElementById('tempoPersonalizado')?.value, 10);
-            const tempoUso = selectedTempo === 'personalizado'
-                ? (Number.isFinite(customTempo) && customTempo > 0 ? customTempo : 30)
-                : (parseInt(selectedTempo, 10) || 30);
-            writeEmpresaCredentialDraft(codigo, nome, {
-                usuario: document.getElementById('usuarioInput')?.value?.trim() || '',
-                email: document.getElementById('emailInput')?.value?.trim() || '',
-                token: tokenInput.value.trim(),
-                tempoUso,
-                data_criacao: new Date().toISOString(),
-                data_expiracao: calcularDataExpiracao(tempoUso),
-                source: 'manual-edit',
-            });
+        const empresaIndex = parseInt(modal?.dataset?.empresaIndex || '', 10);
+        if (Number.isInteger(empresaIndex)) {
+            persistCredentialModalState(empresaIndex, { quiet: true });
         }
     }
 };
@@ -716,6 +887,12 @@ window.saveCredentials = function(empresaIndex) {
 };
 
 // Função para remover credenciais (apenas localmente, sem chamada API)
+window.saveCredentials = function(empresaIndex) {
+    if (persistCredentialModalState(empresaIndex, { quiet: false, showFeedback: true })) {
+        closeCredentialsModal(empresaIndex, { persist: false });
+    }
+};
+
 async function removeCredentials(index, sigla) {
     try {
         if (!systemData.empresas || !systemData.empresas[index]) {
@@ -770,7 +947,7 @@ export function loadEmpresas() {
     if (systemData.empresas.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="4" style="text-align: center; padding: var(--spacing-xl, 30px);">
+                <td colspan="5" style="text-align: center; padding: var(--spacing-xl, 30px);">
                     <div class="empty-state">
                         <i class="icon-company" style="font-size: 48px; opacity: 0.5; color: var(--color-gray-400, #94A3B8);"></i>
                         <h3 style="color: var(--color-gray-700, #334155); margin: var(--spacing-md, 16px) 0 var(--spacing-sm, 8px);">Nenhuma empresa cadastrada</h3>
@@ -789,6 +966,7 @@ export function loadEmpresas() {
         const empresaNormalizada = normalizeEmpresa(empresa);
         const sigla = empresaNormalizada?.codigo || '';
         const nome = empresaNormalizada?.nome || '';
+        const numeroClienteAtual = getEmpresaNumeroClienteAtual(empresaNormalizada);
         const temCredenciais = empresaNormalizada?.credenciais && 
                               typeof empresaNormalizada.credenciais === 'object' && 
                               empresaNormalizada.credenciais !== null;
@@ -828,6 +1006,14 @@ export function loadEmpresas() {
                        style="width: 100%; padding: var(--spacing-xs, 6px) var(--spacing-sm, 10px); border: 1px solid var(--color-gray-300, #CBD5E0); border-radius: var(--border-radius, 4px); font-size: 0.95rem; transition: border-color 0.2s ease;"
                        onfocus="this.style.borderColor='var(--color-primary, #4A5568)'"
                        onblur="this.style.borderColor='var(--color-gray-300, #CBD5E0)'">
+            </td>
+            <td style="padding: var(--spacing-sm, 8px); text-align: center;">
+                <input type="number" value="${numeroClienteAtual}"
+                       min="0"
+                       onchange="updateEmpresaNumeroClienteAtual(${index}, this.value)"
+                       title="Último número de obra da empresa"
+                       class="form-input"
+                       style="width: 90px; padding: var(--spacing-xs, 6px) var(--spacing-sm, 10px); border: 1px solid var(--color-gray-300, #CBD5E0); border-radius: var(--border-radius, 4px); font-size: 0.95rem; background: var(--color-gray-50, #F8FAFC); color: var(--color-gray-700, #334155); text-align: center;">
             </td>
             <td class="credentials-cell" style="padding: var(--spacing-sm, 8px);">
                 ${temCredenciais ? `
@@ -892,7 +1078,7 @@ export function loadEmpresas() {
     
     const emptyRow = document.createElement('tr');
     emptyRow.innerHTML = `
-        <td colspan="4" style="text-align: center; padding: var(--spacing-lg, 20px); background: var(--color-gray-50, #F8FAFC);">
+        <td colspan="5" style="text-align: center; padding: var(--spacing-lg, 20px); background: var(--color-gray-50, #F8FAFC);">
             <button class="btn btn-success" onclick="addEmpresa()" style="padding: var(--spacing-sm, 8px) var(--spacing-lg, 20px); background: var(--success-gradient); color: var(--text-primary, white); border: none; border-radius: var(--border-radius, 4px); font-weight: 500; cursor: pointer; transition: opacity 0.2s ease;">
                 <i class="icon-add"></i> Adicionar Nova Empresa
             </button>
@@ -906,6 +1092,7 @@ export function addEmpresa() {
     systemData.empresas.push({ 
         codigo: newSigla, 
         nome: `Nova Empresa ${newSigla}`, 
+        numeroClienteAtual: 0,
         credenciais: null 
     });
     loadEmpresas();
@@ -980,6 +1167,32 @@ export function updateEmpresaNome(index, newNome) {
     }
 }
 
+export function updateEmpresaNumeroClienteAtual(index, newNumeroClienteAtual) {
+    try {
+        if (!systemData.empresas || !systemData.empresas[index]) {
+            showError('Empresa não encontrada');
+            return;
+        }
+
+        const empresa = normalizeEmpresa(systemData.empresas[index]);
+        const numeroClienteAtual = Math.max(parseInt(newNumeroClienteAtual, 10) || 0, 0);
+
+        if (numeroClienteAtual === getEmpresaNumeroClienteAtual(empresa)) {
+            return;
+        }
+
+        systemData.empresas[index] = {
+            ...empresa,
+            numeroClienteAtual
+        };
+        addPendingChange('empresas');
+        showInfo(`Nº Cliente atualizado para ${numeroClienteAtual}.`);
+    } catch (error) {
+        console.error('Erro ao atualizar número do cliente:', error);
+        showError('Erro ao atualizar número do cliente');
+    }
+}
+
 export async function deleteEmpresa(index, sigla) {
     try {
         if (!systemData.empresas || !systemData.empresas[index]) {
@@ -1017,6 +1230,7 @@ window.loadEmpresas = loadEmpresas;
 window.addEmpresa = addEmpresa;
 window.updateEmpresaSigla = updateEmpresaSigla;
 window.updateEmpresaNome = updateEmpresaNome;
+window.updateEmpresaNumeroClienteAtual = updateEmpresaNumeroClienteAtual;
 window.deleteEmpresa = deleteEmpresa;
 window.showCredentialsModal = showCredentialsModal;
 window.removeCredentials = removeCredentials;

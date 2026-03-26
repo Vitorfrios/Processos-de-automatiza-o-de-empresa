@@ -36,17 +36,31 @@ class EmpresaHandler:
         if not isinstance(empresa, dict):
             return None
 
+        try:
+            numero_cliente_atual = max(
+                int(empresa.get("numeroClienteAtual") or 0),
+                0,
+            )
+        except (TypeError, ValueError):
+            numero_cliente_atual = 0
+
         codigo = empresa.get("codigo")
         nome = empresa.get("nome")
 
         if codigo and nome:
             return {
+                **empresa,
                 "codigo": codigo,
                 "nome": nome,
                 "credenciais": empresa.get("credenciais"),
+                "numeroClienteAtual": numero_cliente_atual,
             }
 
-        chaves_empresa = [key for key in empresa.keys() if key != "credenciais"]
+        chaves_empresa = [
+            key
+            for key in empresa.keys()
+            if key not in {"credenciais", "numeroClienteAtual"}
+        ]
         if not chaves_empresa:
             return None
 
@@ -57,6 +71,7 @@ class EmpresaHandler:
             "codigo": codigo,
             "nome": nome,
             "credenciais": empresa.get("credenciais"),
+            "numeroClienteAtual": numero_cliente_atual,
         }
 
     def normalizar_empresas(self, empresas):

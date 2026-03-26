@@ -46,6 +46,10 @@ class ButtonModeManager {
 
     // DESATIVAR ButtonDeleteUniversal
     this.disableUniversalDeleteButtons();
+    this.normalizeObraDeleteButtons();
+    setTimeout(() => {
+      this.normalizeObraDeleteButtons();
+    }, 125);
   }
 
   /**
@@ -78,6 +82,8 @@ class ButtonModeManager {
         }
 
         button.classList.remove("delete-real");
+        button.classList.remove("filter-mode-active");
+        button.style.fontWeight = "";
         button.removeAttribute("data-original-onclick");
         button.removeAttribute("data-original-text");
         button.removeAttribute("data-button-type");
@@ -146,6 +152,71 @@ class ButtonModeManager {
     // Limpar cache
     this.state.originalTexts.clear();
     console.log(" Textos restaurados para modo normal");
+  }
+
+  /**
+   * Escapa valores usados no onclick inline
+   */
+  escapeSingleQuotedString(value) {
+    return String(value || "")
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'");
+  }
+
+  /**
+   * Normaliza botÃµes de obra ao sair do filtro
+   */
+  normalizeObraDeleteButtons() {
+    const deleteButtons = document.querySelectorAll(
+      '[onclick*="deleteObra"], .btn-delete.filter-mode-active, .delete-real, .btn-delete-obra, .delete-obra-btn',
+    );
+
+    let normalizedCount = 0;
+
+    deleteButtons.forEach((button) => {
+      const obraElement = button.closest("[data-obra-id]");
+      const obraId =
+        obraElement?.dataset?.obraId ||
+        (() => {
+          try {
+            const rawItemId = button.getAttribute("data-item-id");
+            return rawItemId ? JSON.parse(rawItemId)?.obraId || "" : "";
+          } catch (error) {
+            return "";
+          }
+        })();
+
+      const obraName =
+        obraElement?.dataset?.obraName ||
+        obraElement?.querySelector(".obra-title")?.textContent?.trim() ||
+        "Obra";
+
+      const resolvedObraId = String(obraId || "").trim();
+      if (!resolvedObraId) {
+        return;
+      }
+
+      button.setAttribute(
+        "onclick",
+        `window.deleteObra('${this.escapeSingleQuotedString(obraName)}', '${this.escapeSingleQuotedString(resolvedObraId)}')`,
+      );
+      button.textContent = "Remover Obra";
+      button.classList.remove("filter-mode-active");
+      button.classList.remove("delete-real");
+      button.style.fontWeight = "";
+      button.removeAttribute("data-original-onclick");
+      button.removeAttribute("data-original-text");
+      button.removeAttribute("data-button-type");
+      button.removeAttribute("data-item-id");
+      button.removeAttribute("data-item-name");
+      normalizedCount++;
+    });
+
+    if (normalizedCount > 0) {
+      console.log(
+        ` [BUTTON-MANAGER] ${normalizedCount} botÃµes de obra normalizados para modo create`,
+      );
+    }
   }
 
   /**

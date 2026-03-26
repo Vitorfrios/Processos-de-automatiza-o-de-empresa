@@ -102,13 +102,13 @@ async function saveObra(obraId, event) {
 
   let obraBlock = await findObraBlockWithRetry(obraId, 15);
 
-  if (!obraBlock) {
+    if (!obraBlock) {
     console.error(
       " Obra nao encontrada no DOM apos multiplas tentativas:",
       obraId,
     );
-    showSystemStatus("ERRO: Obra nao encontrada na interface", "error");
-    return;
+        showSystemStatus("ERRO: Obra nao encontrada na interface", "error");
+        return false;
   }
 
   const obraOriginalReference = obraBlock;
@@ -128,10 +128,10 @@ async function saveObra(obraId, event) {
     await startSessionOnFirstSave();
   }
 
-  if (!isSessionActive()) {
-    console.warn(" Sessao nao esta ativa - obra nao sera salva");
-    showSystemStatus("ERRO: Sessao nao esta ativa. Obra nao salva.", "error");
-    return;
+    if (!isSessionActive()) {
+        console.warn(" Sessao nao esta ativa - obra nao sera salva");
+        showSystemStatus("ERRO: Sessao nao esta ativa. Obra nao salva.", "error");
+        return false;
   }
 
   console.log(" Obra confirmada no DOM:", {
@@ -147,7 +147,7 @@ async function saveObra(obraId, event) {
   if (!obraData) {
     console.error(" Falha ao construir dados da obra");
     showSystemStatus("ERRO: Falha ao construir dados da obra", "error");
-    return;
+    return false;
   }
 
   if (!String(obraData.emailEmpresa || "").trim()) {
@@ -184,9 +184,9 @@ async function saveObra(obraId, event) {
     obraData.id = finalObraId;
 
     if (!obraData.id || !obraData.id.startsWith("obra_")) {
-      console.error(" Obra nao possui ID seguro valido para salvar");
-      showSystemStatus("ERRO: Obra nao possui ID valido", "error");
-      return;
+        console.error(" Obra nao possui ID seguro valido para salvar");
+        showSystemStatus("ERRO: Obra nao possui ID valido", "error");
+        return false;
     }
 
     novoFluxoResultado = await supportFrom_saveObra(obraData);
@@ -196,7 +196,7 @@ async function saveObra(obraId, event) {
     if (!finalObraId.startsWith("obra_")) {
       console.error(`ERRO: ID nao seguro para atualizacao: ${finalObraId}`);
       showSystemStatus("ERRO: ID da obra invalido para atualizacao", "error");
-      return;
+      return false;
     }
 
     novoFluxoResultado = await atualizarObra(finalObraId, obraData);
@@ -205,7 +205,7 @@ async function saveObra(obraId, event) {
   if (!novoFluxoResultado) {
     console.error(" FALHA AO SALVAR OBRA NO SERVIDOR");
     showSystemStatus("ERRO: Falha ao salvar obra no servidor", "error");
-    return;
+    return false;
   }
 
   const novoFluxoFinalId = ensureStringId(novoFluxoResultado.id);
@@ -228,12 +228,12 @@ async function saveObra(obraId, event) {
       } else {
         console.error(" Obra nao esta mais no container original");
         showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
-        return;
+        return false;
       }
     } else {
       console.error(" Container original nao encontrado");
       showSystemStatus("ERRO: Obra perdida durante salvamento", "error");
-      return;
+      return false;
     }
   }
 
@@ -277,6 +277,7 @@ async function saveObra(obraId, event) {
     : "Obra atualizada com sucesso!";
 
   showSystemStatus(successMessage, "success");
+  return true;
 }
 
 async function atualizarHeaderObraAposSalvamento(obraId) {

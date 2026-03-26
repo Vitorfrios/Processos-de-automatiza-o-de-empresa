@@ -1,4 +1,4 @@
-import { showInfo, showWarning } from '../config/ui.js';
+import { showInfo, showSuccess, showWarning } from '../config/ui.js';
 
 const ADMIN_OBRAS_FILTER_URL = '/admin/obras/create?filtro=1';
 
@@ -231,6 +231,80 @@ function getObraProjectCount(obra) {
     return safeArray(obra?.projetos).length;
 }
 
+function normalizeDatabaseUsage(payload) {
+    const usedMb = Number(payload?.used_mb || 0);
+    const limitMb = Number(payload?.limit_mb || 500);
+    const percentUsed = Number(payload?.percent_used || 0);
+    const publicSchemaMb = Number(payload?.public_schema_mb || 0);
+    const activeAppMb = Number(payload?.active_app_mb || 0);
+    const activeAppPercentOfLimit = Number(payload?.active_app_percent_of_limit || 0);
+    const otherSchemasMb = Number(payload?.other_schemas_mb || 0);
+
+    return {
+        used_mb: Number.isFinite(usedMb) ? usedMb : 0,
+        limit_mb: Number.isFinite(limitMb) && limitMb > 0 ? limitMb : 500,
+        percent_used: Number.isFinite(percentUsed) ? percentUsed : 0,
+        public_schema_mb: Number.isFinite(publicSchemaMb) ? publicSchemaMb : 0,
+        active_app_mb: Number.isFinite(activeAppMb) ? activeAppMb : 0,
+        active_app_percent_of_limit: Number.isFinite(activeAppPercentOfLimit) ? activeAppPercentOfLimit : 0,
+        other_schemas_mb: Number.isFinite(otherSchemasMb) ? otherSchemasMb : 0
+    };
+}
+
+function normalizeDatabaseTables(payload) {
+    return safeArray(payload?.tables).map((table) => ({
+        table_name: String(table?.table_name || '').trim(),
+        size_bytes: Number(table?.size_bytes || 0),
+        size_mb: Number(table?.size_mb || 0),
+        percent_of_limit: Number(table?.percent_of_limit || 0)
+    }));
+}
+
+function formatStorageMb(value) {
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: value < 100 ? 2 : 1,
+        maximumFractionDigits: value < 100 ? 2 : 1
+    }).format(Number(value || 0));
+}
+
+function getDatabaseUsageStatus(databaseUsage) {
+    const percentUsed = Number(databaseUsage?.percent_used || 0);
+
+    if (percentUsed >= 95) {
+        return {
+            level: 'critical',
+            label: 'Memoria quase cheia',
+            message: 'O banco esta perto do limite. Remova obras e dados pesados imediatamente.',
+            color: '#c53030'
+        };
+    }
+
+    if (percentUsed >= 80) {
+        return {
+            level: 'warning',
+            label: 'Memoria em alerta',
+            message: 'O banco se aproxima do limite do plano gratuito. Vale revisar e remover obras antigas.',
+            color: '#d69e2e'
+        };
+    }
+
+    if (percentUsed >= 60) {
+        return {
+            level: 'attention',
+            label: 'Uso em crescimento',
+            message: 'O consumo segue saudavel, mas ja vale acompanhar o crescimento das tabelas.',
+            color: '#2b6cb0'
+        };
+    }
+
+    return {
+        level: 'good',
+        label: 'Uso controlado',
+        message: 'Espaco disponivel com folga no plano atual.',
+        color: '#2f855a'
+    };
+}
+
 function getDuplicateMachineTypes(maquinas) {
     const counter = new Map();
 
@@ -297,7 +371,12 @@ function hasLoadedSystemData(data) {
 }
 
 async function fetchJson(url) {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+        cache: 'no-store',
+        headers: {
+            Accept: 'application/json'
+        }
+    });
     if (!response.ok) {
         throw new Error(`Falha em ${url}: ${response.status}`);
     }
@@ -311,6 +390,7 @@ async function fetchDashboardData() {
     const localSystemData = safeObject(window.systemData);
     let backupData = { obras: [] };
     let systemData = {};
+    let databaseUsage = normalizeDatabaseUsage(null);
 
     if (hasLoadedSystemData(localSystemData)) {
         systemData = localSystemData;
@@ -323,10 +403,21 @@ async function fetchDashboardData() {
         }
     }
 
-    try {
-        backupData = safeObject(await fetchJson('/api/obras/catalog'));
-    } catch (error) {
-        console.warn('Erro ao buscar backup completo para o dashboard:', error);
+    const [backupResult, usageResult] = await Promise.allSettled([
+        fetchJson('/api/obras/catalog'),
+        fetchJson(`/api/system/database-size?t=${Date.now()}`)
+    ]);
+
+    if (backupResult.status === 'fulfilled') {
+        backupData = safeObject(backupResult.value);
+    } else {
+        console.warn('Erro ao buscar backup completo para o dashboard:', backupResult.reason);
+    }
+
+    if (usageResult.status === 'fulfilled') {
+        databaseUsage = normalizeDatabaseUsage(usageResult.value);
+    } else {
+        console.warn('Erro ao buscar uso de armazenamento do banco:', usageResult.reason);
     }
 
     const data = {
@@ -337,7 +428,9 @@ async function fetchDashboardData() {
         dutos: normalizeDutos(systemData.dutos),
         tubos: safeArray(systemData.tubos),
         acessorios: safeObject(systemData.banco_acessorios),
-        constants: safeObject(systemData.constants)
+        constants: safeObject(systemData.constants),
+        databaseUsage,
+        databaseTables: []
     };
 
     console.log(' Dados do dashboard carregados:', {
@@ -347,7 +440,9 @@ async function fetchDashboardData() {
         maquinas: data.maquinas.length,
         dutos: data.dutos.length,
         tubos: data.tubos.length,
-        acessorios: Object.keys(data.acessorios).length
+        acessorios: Object.keys(data.acessorios).length,
+        databaseUsedMb: data.databaseUsage.used_mb,
+        databasePercentUsed: data.databaseUsage.percent_used
     });
 
     return data;
@@ -431,6 +526,24 @@ function buildCadastroAlerts(data, stats) {
         });
     }
 
+    if (stats.databaseUsage.percent_used >= 95) {
+        alerts.unshift({
+            title: 'Banco quase cheio',
+            meta: `${formatStorageMb(stats.databaseUsage.used_mb)} MB usados de ${formatStorageMb(stats.databaseUsage.limit_mb)} MB. Remova algumas obras antes de travar o sistema.`,
+            actionLabel: 'Revisar obras',
+            actionType: 'link',
+            actionValue: ADMIN_OBRAS_FILTER_URL
+        });
+    } else if (stats.databaseUsage.percent_used >= 80) {
+        alerts.unshift({
+            title: 'Alerta de armazenamento',
+            meta: `${formatStorageMb(stats.databaseUsage.used_mb)} MB usados de ${formatStorageMb(stats.databaseUsage.limit_mb)} MB. O banco esta chegando perto do limite.`,
+            actionLabel: 'Abrir obras',
+            actionType: 'link',
+            actionValue: ADMIN_OBRAS_FILTER_URL
+        });
+    }
+
     if (alerts.length === 0 && data.empresas.length > 0) {
         alerts.push({
             title: 'Cadastro em ordem',
@@ -480,6 +593,9 @@ function processDashboardData(data) {
     const rankingEmpresas = buildEmpresaRanking(data.obras);
     const obrasRecentes = buildRecentObras(data.obras);
     const duplicateMachineTypes = getDuplicateMachineTypes(data.maquinas);
+    const databaseUsage = normalizeDatabaseUsage(data.databaseUsage);
+    const databaseTables = normalizeDatabaseTables({ tables: data.databaseTables });
+    const databaseUsageStatus = getDatabaseUsageStatus(databaseUsage);
 
     const stats = {
         totalEmpresas: data.empresas.length,
@@ -497,6 +613,9 @@ function processDashboardData(data) {
         totalDutos: data.dutos.length,
         totalAcessorios: Object.keys(data.acessorios).length,
         totalTubos: data.tubos.length,
+        databaseUsage,
+        databaseTables,
+        databaseUsageStatus,
         rankingEmpresas,
         obrasRecentes,
         distribuicaoTipos: {
@@ -706,7 +825,9 @@ function renderActionButton(actionLabel, actionType, actionValue) {
 }
 
 function buildObraDashboardModalUrl(obra) {
-    const obraUrl = new URL('/admin/obras/embed', window.location.origin);
+    const obraUrl = new URL('/admin/obras/create', window.location.origin);
+    obraUrl.searchParams.set('embed', '1');
+    obraUrl.searchParams.set('v', '20260325-18');
 
     if (obra?.id) {
         obraUrl.searchParams.set('obraId', obra.id);
@@ -827,6 +948,113 @@ function renderAlertsWidget(stats) {
                     </div>
                 `).join('')}
             </div>
+        </section>
+    `;
+}
+
+async function forceObrasDatabaseCleanup(buttonElement) {
+    const confirmed = window.confirm(
+        'Executar VACUUM FULL em public.obras?\n\nIsso trava a tabela de obras durante a limpeza e deve ser usado apenas quando o armazenamento estiver critico.'
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const originalLabel = buttonElement?.textContent || 'Forçar limpeza';
+
+    try {
+        if (buttonElement) {
+            buttonElement.disabled = true;
+            buttonElement.textContent = 'Limpando...';
+            buttonElement.style.opacity = '0.75';
+        }
+
+        const response = await fetch('/api/system/database-size/vacuum-obras', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json'
+            }
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok || payload?.success === false) {
+            throw new Error(payload?.error || 'Nao foi possivel executar a limpeza forcada.');
+        }
+
+        showSuccess(payload?.message || 'Limpeza forcada concluida.');
+        queueDashboardRender({ force: true });
+    } catch (error) {
+        showWarning(error?.message || 'Falha ao executar a limpeza forcada.');
+    } finally {
+        if (buttonElement) {
+            buttonElement.disabled = false;
+            buttonElement.textContent = originalLabel;
+            buttonElement.style.opacity = '1';
+        }
+    }
+}
+
+function renderDatabaseUsageWidget(stats) {
+    const databaseUsage = normalizeDatabaseUsage(stats.databaseUsage);
+    const status = stats.databaseUsageStatus || getDatabaseUsageStatus(databaseUsage);
+    const progressPercent = Math.max(0, Math.min(databaseUsage.percent_used, 100));
+    const statusBadgeClass = status.level === 'good'
+        ? 'good'
+        : status.level === 'attention'
+            ? 'neutral'
+            : 'alert';
+
+    return `
+        <section class="widget-card">
+            <div class="widget-title-row">
+                <div>
+                    <span class="dashboard-eyebrow">Supabase</span>
+                    <h3>Database usage</h3>
+                </div>
+                <span class="info-badge ${statusBadgeClass}">
+                    ${escapeHtml(status.label)}
+                </span>
+            </div>
+            <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:10px;">
+                <div>
+                    <div style="font-size:1.45rem; font-weight:700; color:#1a202c;">
+                        ${formatStorageMb(databaseUsage.used_mb)} MB / ${formatStorageMb(databaseUsage.limit_mb)} MB
+                    </div>
+                    <div class="muted-note">${formatStorageMb(databaseUsage.percent_used)}% do limite fisico do banco</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:0.82rem; text-transform:uppercase; letter-spacing:0.08em; color:#718096;">Limite configurado</div>
+                    <div style="font-size:0.95rem; font-weight:600; color:${status.color};">${escapeHtml(status.label)}</div>
+                </div>
+            </div>
+            <div style="position:relative; height:14px; border-radius:999px; background:#e2e8f0; overflow:hidden; margin-bottom:10px;">
+                <div style="height:100%; width:${progressPercent}%; background:linear-gradient(90deg, #2b6cb0 0%, ${status.color} 100%); border-radius:999px; transition:width 0.35s ease;"></div>
+            </div>
+            <div class="muted-note" style="margin-bottom:14px;">${escapeHtml(status.message)}</div>
+            <div class="muted-note" style="margin-bottom:14px;">
+                Tabelas do app em <code>public</code>: ${formatStorageMb(databaseUsage.public_schema_mb)} MB.
+                Base do projeto, extensoes e schemas padrao: ${formatStorageMb(databaseUsage.other_schemas_mb)} MB.
+            </div>
+            ${status.level === 'critical' ? `
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 14px; border-radius:12px; background:#fff5f5; border:1px solid #fed7d7;">
+                    <div style="min-width:240px; flex:1;">
+                        <strong style="display:block; color:#9b2c2c; margin-bottom:4px;">Forçar limpeza da tabela de obras</strong>
+                        <div class="muted-note">
+                            Executa <code>VACUUM FULL public.obras</code>. Use apenas se o banco continuar cheio apos reabrir o sistema. A tabela fica travada durante a operacao.
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        class="btn btn-small"
+                        style="background:#c53030; color:#fff; border:none; border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer;"
+                        onclick="window.forceObrasDatabaseCleanup(this)"
+                    >
+                        Forçar limpeza
+                    </button>
+                </div>
+            ` : ''}
         </section>
     `;
 }
@@ -962,6 +1190,7 @@ export async function renderDashboard({ force = false } = {}) {
             </div>
 
             <div class="dashboard-grid support">
+                ${renderDatabaseUsageWidget(stats)}
                 ${renderAlertsWidget(stats)}
                 ${renderRankingWidget(stats)}
                 ${renderTimelineWidget(stats)}
@@ -1002,6 +1231,7 @@ export function initializeDashboard() {
     ensureDashboardObraModal();
     window.openDashboardObraModal = openDashboardObraModal;
     window.closeDashboardObraModal = closeDashboardObraModal;
+    window.forceObrasDatabaseCleanup = forceObrasDatabaseCleanup;
 
     if (hasLoadedSystemData(window.systemData)) {
         dashboardState.dataReady = true;

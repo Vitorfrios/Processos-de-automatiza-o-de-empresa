@@ -196,9 +196,10 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th width="15%">Código</th>
-                                <th width="55%">Nome da Empresa</th>
-                                <th width="15%">Credenciais</th>
+                                <th width="12%">Código</th>
+                                <th width="38%">Nome da Empresa</th>
+                                <th width="10%">Nº Cliente</th>
+                                <th width="25%">Credenciais</th>
                                 <th width="15%">Ações</th>
                             </tr>
                         </thead>
@@ -390,8 +391,10 @@
                     </div>
 
                     <div class="modal-actions">
-                        <button class="btn btn-success" id="saveAdminCredentialBtn" type="submit">Salvar</button>
-                        <button class="btn btn-secondary" id="cancelAdminCredentialBtn" type="button">Cancelar</button>
+                        <span id="adminCredentialStatus" style="margin-right:auto; font-size:0.85rem; color:#64748b;">
+                            Pré-salvamento automático ao sair do campo.
+                        </span>
+                        <button class="btn btn-secondary" id="cancelAdminCredentialBtn" type="button">Fechar</button>
                     </div>
                 </form>
             </div>
@@ -402,7 +405,7 @@
             <i class="fa-brands fa-github"></i> Vitor Rios on GitHub
         </a>
     </footer>
-    <script defer src="/public/dist/admin-data.min.js?v=20260323-2"></script>
+    <script defer src="/public/dist/admin-data.min.js?v=20260325-18"></script>
     <script>
         // Função para destacar e travar apenas o clique da página ativa
         function highlightAndLockActivePage() {

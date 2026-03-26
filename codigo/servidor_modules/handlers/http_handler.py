@@ -153,6 +153,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/api/acessorios/types",
         "/api/acessorios/dimensoes",
         "/api/system-data",
+        "/api/system/database-usage",
+        "/api/system/database-usage/tables",
+        "/api/system/database-size",
+        "/api/system/database-size/tables",
+        "/api/system/database-size/vacuum-obras",
+        "/system/database-size",
+        "/system/database-size/tables",
         "/api/constants",
         "/api/materials",
         "/api/empresas/all",
@@ -226,6 +233,12 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ========== NOVAS ROTAS PARA SISTEMA DE EDIÇÃO ==========
         # ROTAS GET - DADOS DO SISTEMA
         "/api/system-data": "handle_get_system_data",
+        "/api/system/database-usage": "handle_get_database_usage",
+        "/api/system/database-usage/tables": "handle_get_database_table_usage",
+        "/api/system/database-size": "handle_get_database_usage",
+        "/api/system/database-size/tables": "handle_get_database_table_usage",
+        "/system/database-size": "handle_get_database_usage",
+        "/system/database-size/tables": "handle_get_database_table_usage",
         "/api/constants": "handle_get_constants_json",
         "/api/materials": "handle_get_materials",
         "/api/empresas/all": "handle_get_all_empresas",
@@ -1311,6 +1324,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # ========== NOVAS ROTAS PARA EDIÇÃO DE DADOS ==========
         elif path == "/api/system-data/save":
             self.route_handler.handle_post_save_system_data(self)
+            return  
+
+        elif path == "/api/system/database-size/vacuum-obras":
+            self.route_handler.handle_post_database_vacuum_full_obras(self)
             return  
 
         elif path == "/api/constants/save":

@@ -269,6 +269,22 @@ class RouteHandler:
         materials = self.routes_core.handle_get_materials()
         handler.send_json_response(materials)
 
+    def handle_get_database_usage(self, handler):
+        """GET /api/system/database-usage - Retorna uso total do banco"""
+        payload = self.routes_core.handle_get_database_usage()
+        handler.send_json_response(payload)
+
+    def handle_get_database_table_usage(self, handler):
+        """GET /api/system/database-usage/tables - Retorna uso por tabela"""
+        payload = self.routes_core.handle_get_database_table_usage()
+        handler.send_json_response(payload)
+
+    def handle_post_database_vacuum_full_obras(self, handler):
+        """POST /api/system/database-size/vacuum-obras - Executa VACUUM FULL public.obras"""
+        payload = self.routes_core.handle_post_database_vacuum_full_obras()
+        status = 200 if payload.get("success") else 409
+        handler.send_json_response(payload, status=status)
+
     def handle_get_all_empresas(self, handler):
         """GET /api/empresas/all - Retorna todas empresas formatadas"""
         empresas = self.routes_core.handle_get_all_empresas()

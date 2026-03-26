@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 
+from servidor_modules.database.connection import has_empresas_numero_cliente_column
 from servidor_modules.database.storage import get_storage
 
 
@@ -12,6 +13,13 @@ class ObraRepository:
     def __init__(self, project_root):
         self.storage = get_storage(project_root)
         self.conn = self.storage.conn
+        self.project_root = self.storage.project_root
+
+    def _supports_numero_cliente_column(self):
+        return has_empresas_numero_cliente_column(
+            project_root=self.project_root,
+            conn=self.conn,
+        )
 
     def get_backup_payload(self):
         return {"obras": self.get_all()}
@@ -41,6 +49,8 @@ class ObraRepository:
 
             for sort_order, obra in enumerate(obras):
                 self._save_with_cursor(cursor, obra, sort_order=sort_order)
+
+            self._sync_empresas_numero_cliente(cursor)
 
             self.conn.commit()
         except Exception:
@@ -90,10 +100,16 @@ class ObraRepository:
         if not isinstance(obra, dict) or not obra.get("id"):
             raise ValueError("Obra invalida")
 
+        obra_existente = self.get_by_id(obra.get("id"))
         cursor = self.conn.cursor()
         cursor.execute("BEGIN")
         try:
             self._save_with_cursor(cursor, obra)
+            codigos_afetados = {
+                str((obra_existente or {}).get("empresaSigla") or "").strip(),
+                str(obra.get("empresaSigla") or "").strip(),
+            }
+            self._sync_empresas_numero_cliente(cursor, codigos_afetados)
             self.conn.commit()
         except Exception:
             self.conn.rollback()
@@ -101,11 +117,17 @@ class ObraRepository:
         return obra
 
     def delete(self, obra_id):
+        obra_existente = self.get_by_id(obra_id)
         cursor = self.conn.cursor()
         cursor.execute("BEGIN")
         try:
             cursor.execute("DELETE FROM obras WHERE id = ?", (str(obra_id),))
             deleted = cursor.rowcount > 0
+            codigo_empresa = str(
+                (obra_existente or {}).get("empresaSigla") or ""
+            ).strip()
+            if codigo_empresa:
+                self._sync_empresas_numero_cliente(cursor, [codigo_empresa])
             self.conn.commit()
             return deleted
         except Exception:
@@ -130,15 +152,48 @@ class ObraRepository:
         return [obras_by_id[obra_id] for obra_id in ordered_ids if obra_id in obras_by_id]
 
     def get_next_numero_cliente(self, sigla):
-        row = self.conn.execute(
-            """
-            SELECT MAX(COALESCE(numero_cliente_final, 0)) AS max_numero
-            FROM obras
-            WHERE empresa_codigo = ?
-            """,
-            (str(sigla),),
-        ).fetchone()
+        if self._supports_numero_cliente_column():
+            row = self.conn.execute(
+                """
+                SELECT GREATEST(
+                    COALESCE(
+                        (
+                            SELECT ultimo_numero_cliente
+                            FROM empresas
+                            WHERE codigo = ?
+                        ),
+                        0
+                    ),
+                    COALESCE((
+                        SELECT COALESCE(numero_cliente_final, 0)
+                        FROM obras
+                        WHERE empresa_codigo = ?
+                        ORDER BY numero_cliente_final DESC NULLS LAST
+                        LIMIT 1
+                    ), 0)
+                ) AS max_numero
+                """,
+                (str(sigla), str(sigla)),
+            ).fetchone()
+        else:
+            row = self.conn.execute(
+                """
+                SELECT COALESCE((
+                    SELECT COALESCE(numero_cliente_final, 0)
+                    FROM obras
+                    WHERE empresa_codigo = ?
+                    ORDER BY numero_cliente_final DESC NULLS LAST
+                    LIMIT 1
+                ), 0) AS max_numero
+                """,
+                (str(sigla),),
+            ).fetchone()
         max_numero = row["max_numero"] if row and row["max_numero"] is not None else 0
+        if not self._supports_numero_cliente_column():
+            max_numero = max(
+                int(max_numero),
+                self._get_empresa_numero_cliente_atual_from_json(str(sigla)),
+            )
         return int(max_numero) + 1
 
     def delete_by_path(self, path_array):
@@ -183,6 +238,156 @@ class ObraRepository:
             "path": path_array,
             "deleted_item": str(path_array[-1]),
         }
+
+    def _sync_empresas_numero_cliente(self, cursor, codigos=None):
+        codigos_normalizados = [
+            str(codigo).strip()
+            for codigo in (codigos or [])
+            if str(codigo or "").strip()
+        ]
+
+        if not self._supports_numero_cliente_column():
+            self._sync_empresas_numero_cliente_json(cursor, codigos_normalizados)
+            return
+
+        if codigos_normalizados:
+            placeholders = ", ".join(["?"] * len(codigos_normalizados))
+            cursor.execute(
+                f"""
+                UPDATE empresas AS empresas_destino
+                SET ultimo_numero_cliente = GREATEST(
+                    COALESCE(empresas_destino.ultimo_numero_cliente, 0),
+                    COALESCE(obras_agrupadas.max_numero_cliente, 0)
+                )
+                FROM (
+                    SELECT
+                        empresa_codigo,
+                        MAX(COALESCE(numero_cliente_final, 0)) AS max_numero_cliente
+                    FROM obras
+                    WHERE empresa_codigo IN ({placeholders})
+                    GROUP BY empresa_codigo
+                ) AS obras_agrupadas
+                WHERE empresas_destino.codigo = obras_agrupadas.empresa_codigo
+                """,
+                tuple(codigos_normalizados),
+            )
+            return
+
+        cursor.execute(
+            """
+            UPDATE empresas AS empresas_destino
+            SET ultimo_numero_cliente = GREATEST(
+                COALESCE(empresas_destino.ultimo_numero_cliente, 0),
+                COALESCE(obras_agrupadas.max_numero_cliente, 0)
+            )
+            FROM (
+                SELECT
+                    empresa_codigo,
+                    MAX(COALESCE(numero_cliente_final, 0)) AS max_numero_cliente
+                FROM obras
+                WHERE COALESCE(empresa_codigo, '') <> ''
+                GROUP BY empresa_codigo
+            ) AS obras_agrupadas
+            WHERE empresas_destino.codigo = obras_agrupadas.empresa_codigo
+            """
+        )
+
+    def _get_empresa_numero_cliente_atual_from_json(self, codigo):
+        row = self.conn.execute(
+            """
+            SELECT raw_json
+            FROM empresas
+            WHERE codigo = ?
+            """,
+            (str(codigo),),
+        ).fetchone()
+        if not row or not row.get("raw_json"):
+            return 0
+
+        try:
+            empresa = json.loads(row["raw_json"])
+        except Exception:
+            return 0
+
+        try:
+            return max(int(empresa.get("numeroClienteAtual") or 0), 0)
+        except (TypeError, ValueError, AttributeError):
+            return 0
+
+    def _sync_empresas_numero_cliente_json(self, cursor, codigos=None):
+        if codigos:
+            placeholders = ", ".join(["?"] * len(codigos))
+            rows = cursor.execute(
+                f"""
+                SELECT empresa_codigo, MAX(COALESCE(numero_cliente_final, 0)) AS max_numero_cliente
+                FROM obras
+                WHERE empresa_codigo IN ({placeholders})
+                GROUP BY empresa_codigo
+                """,
+                tuple(codigos),
+            ).fetchall()
+        else:
+            rows = cursor.execute(
+                """
+                SELECT empresa_codigo, MAX(COALESCE(numero_cliente_final, 0)) AS max_numero_cliente
+                FROM obras
+                WHERE COALESCE(empresa_codigo, '') <> ''
+                GROUP BY empresa_codigo
+                """
+            ).fetchall()
+
+        if not rows:
+            return
+
+        maximos_por_codigo = {
+            str(row["empresa_codigo"]).strip(): int(row["max_numero_cliente"] or 0)
+            for row in rows
+            if str(row.get("empresa_codigo") or "").strip()
+        }
+        if not maximos_por_codigo:
+            return
+
+        placeholders = ", ".join(["?"] * len(maximos_por_codigo))
+        empresas_rows = cursor.execute(
+            f"""
+            SELECT codigo, raw_json
+            FROM empresas
+            WHERE codigo IN ({placeholders})
+            """,
+            tuple(maximos_por_codigo.keys()),
+        ).fetchall()
+
+        for row in empresas_rows:
+            codigo = str(row.get("codigo") or "").strip()
+            if not codigo or not row.get("raw_json"):
+                continue
+
+            try:
+                empresa = json.loads(row["raw_json"])
+            except Exception:
+                continue
+
+            if not isinstance(empresa, dict):
+                continue
+
+            try:
+                numero_atual = max(int(empresa.get("numeroClienteAtual") or 0), 0)
+            except (TypeError, ValueError):
+                numero_atual = 0
+
+            novo_numero = max(numero_atual, maximos_por_codigo.get(codigo, 0))
+            if novo_numero == numero_atual:
+                continue
+
+            empresa["numeroClienteAtual"] = novo_numero
+            cursor.execute(
+                """
+                UPDATE empresas
+                SET raw_json = ?
+                WHERE codigo = ?
+                """,
+                (json.dumps(empresa, ensure_ascii=False), codigo),
+            )
 
     def _save_with_cursor(self, cursor, obra, sort_order=None):
         obra_payload = deepcopy(obra)

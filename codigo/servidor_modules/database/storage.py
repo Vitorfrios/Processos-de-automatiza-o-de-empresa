@@ -8,7 +8,10 @@ import threading
 from copy import deepcopy
 from pathlib import Path
 
-from servidor_modules.database.connection import get_connection
+from servidor_modules.database.connection import (
+    get_connection,
+    has_empresas_numero_cliente_column,
+)
 
 
 _STORAGES = {}
@@ -30,20 +33,35 @@ DEFAULT_DOCUMENTS = {
 }
 
 
+def normalize_numero_cliente_atual(value):
+    try:
+        numero = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return max(numero, 0)
+
+
 def normalize_empresa(empresa):
     if not isinstance(empresa, dict):
         return None
 
     codigo = empresa.get("codigo")
     nome = empresa.get("nome")
+    numero_cliente_atual = normalize_numero_cliente_atual(
+        empresa.get("numeroClienteAtual")
+    )
     if codigo and nome:
         return {
+            **empresa,
             "codigo": codigo,
             "nome": nome,
             "credenciais": empresa.get("credenciais"),
+            "numeroClienteAtual": numero_cliente_atual,
         }
 
-    company_keys = [key for key in empresa.keys() if key != "credenciais"]
+    company_keys = [
+        key for key in empresa.keys() if key not in {"credenciais", "numeroClienteAtual"}
+    ]
     if not company_keys:
         return None
 
@@ -52,6 +70,7 @@ def normalize_empresa(empresa):
         "codigo": codigo,
         "nome": empresa.get(codigo),
         "credenciais": empresa.get("credenciais"),
+        "numeroClienteAtual": numero_cliente_atual,
     }
 
 
@@ -121,6 +140,12 @@ class DatabaseStorage:
         self._mirror_to_disk = (
             str(os.environ.get("ESI_WRITE_JSON_SNAPSHOTS", "")).strip().lower()
             in {"1", "true", "yes", "on"}
+        )
+
+    def _supports_empresas_numero_cliente_column(self):
+        return has_empresas_numero_cliente_column(
+            project_root=self.project_root,
+            conn=self.conn,
         )
 
     def default_document(self, name):
@@ -291,10 +316,36 @@ class DatabaseStorage:
         return [json.loads(row["raw_json"]) for row in rows]
 
     def _load_empresas(self):
-        rows = self.conn.execute(
-            "SELECT raw_json FROM empresas ORDER BY sort_order, codigo"
-        ).fetchall()
-        return [json.loads(row["raw_json"]) for row in rows]
+        if self._supports_empresas_numero_cliente_column():
+            rows = self.conn.execute(
+                """
+                SELECT raw_json, ultimo_numero_cliente
+                FROM empresas
+                ORDER BY sort_order, codigo
+                """
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                """
+                SELECT raw_json, 0 AS ultimo_numero_cliente
+                FROM empresas
+                ORDER BY sort_order, codigo
+                """
+            ).fetchall()
+        empresas = []
+        for row in rows:
+            empresa = json.loads(row["raw_json"])
+            if isinstance(empresa, dict):
+                empresa["numeroClienteAtual"] = max(
+                    normalize_numero_cliente_atual(
+                        empresa.get("numeroClienteAtual")
+                    ),
+                    normalize_numero_cliente_atual(
+                        row.get("ultimo_numero_cliente")
+                    ),
+                )
+            empresas.append(empresa)
+        return empresas
 
     def _load_constants(self):
         rows = self.conn.execute(
@@ -366,23 +417,49 @@ class DatabaseStorage:
             if not empresa_normalizada or not empresa_normalizada.get("codigo"):
                 continue
 
-            cursor.execute(
-                """
-                INSERT INTO empresas(codigo, nome, credenciais_json, raw_json, sort_order)
-                VALUES(?, ?, ?, ?, ?)
-                """,
-                (
-                    str(empresa_normalizada.get("codigo", "")).strip(),
-                    str(empresa_normalizada.get("nome", "")).strip(),
-                    json.dumps(
-                        empresa_normalizada.get("credenciais"), ensure_ascii=False
+            if self._supports_empresas_numero_cliente_column():
+                cursor.execute(
+                    """
+                    INSERT INTO empresas(
+                        codigo, nome, ultimo_numero_cliente, credenciais_json, raw_json, sort_order
                     )
-                    if empresa_normalizada.get("credenciais") is not None
-                    else None,
-                    json.dumps(empresa_normalizada, ensure_ascii=False),
-                    index,
-                ),
-            )
+                    VALUES(?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        str(empresa_normalizada.get("codigo", "")).strip(),
+                        str(empresa_normalizada.get("nome", "")).strip(),
+                        normalize_numero_cliente_atual(
+                            empresa_normalizada.get("numeroClienteAtual")
+                        ),
+                        json.dumps(
+                            empresa_normalizada.get("credenciais"), ensure_ascii=False
+                        )
+                        if empresa_normalizada.get("credenciais") is not None
+                        else None,
+                        json.dumps(empresa_normalizada, ensure_ascii=False),
+                        index,
+                    ),
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO empresas(
+                        codigo, nome, credenciais_json, raw_json, sort_order
+                    )
+                    VALUES(?, ?, ?, ?, ?)
+                    """,
+                    (
+                        str(empresa_normalizada.get("codigo", "")).strip(),
+                        str(empresa_normalizada.get("nome", "")).strip(),
+                        json.dumps(
+                            empresa_normalizada.get("credenciais"), ensure_ascii=False
+                        )
+                        if empresa_normalizada.get("credenciais") is not None
+                        else None,
+                        json.dumps(empresa_normalizada, ensure_ascii=False),
+                        index,
+                    ),
+                )
 
         for key, constant_data in (payload.get("constants") or {}).items():
             cursor.execute(

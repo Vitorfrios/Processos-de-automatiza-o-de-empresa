@@ -499,10 +499,3 @@ document.addEventListener("keydown", function (e) {
 });
 
 // Salva edições pendentes antes de sair da página
-window.addEventListener("beforeunload", function (e) {
-  if (hasPendingEdits()) {
-    const message = "Há edições não salvas. Tem certeza que deseja sair?";
-    e.returnValue = message;
-    return message;
-  }
-});

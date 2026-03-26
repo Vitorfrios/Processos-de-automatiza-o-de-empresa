@@ -1,8 +1,9 @@
 // scripts/03_Edit_data/main.js
 import { createSmartLogger } from "../01_Create_Obra/core/logger.js";
 import "../01_Create_Obra/core/system-bootstrap.js";
-import "./config/state.js";
-import "./config/api.js";
+import "../shared/admin-storage-alert.js";
+import { pendingChanges, hasRealChanges } from "./config/state.js";
+import { saveDataSilently } from "./config/api.js";
 import "./config/ui.js";
 import "./core/constants.js";
 import "./core/machines.js";
@@ -180,10 +181,136 @@ function refreshChangedSections(changes = [], options = {}) {
   }
 }
 
+function hasUnsavedAdminDataChanges() {
+  for (const section of pendingChanges) {
+    if (hasRealChanges(section)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function autoSaveAdminDataBeforeNavigation(options = {}) {
+  if (!hasUnsavedAdminDataChanges()) {
+    return { success: true, skipped: true };
+  }
+
+  if (window.__adminDataAutoSavePromise) {
+    return window.__adminDataAutoSavePromise;
+  }
+
+  window.__adminDataAutoSavePromise = saveDataSilently(options).finally(() => {
+    window.__adminDataAutoSavePromise = null;
+  });
+
+  return window.__adminDataAutoSavePromise;
+}
+
+function resolveAutosaveNavigationTarget(target) {
+  const link = target.closest?.("a[href]");
+  if (link && !link.target) {
+    return {
+      url: link.href,
+      replace: false,
+    };
+  }
+
+  const clickable = target.closest?.("[onclick]");
+  const onclick = clickable?.getAttribute("onclick") || "";
+  const hrefMatch =
+    onclick.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i) ||
+    onclick.match(/window\.location\.replace\(\s*['"]([^'"]+)['"]\s*\)/i);
+
+  if (!hrefMatch) {
+    return null;
+  }
+
+  return {
+    url: new URL(hrefMatch[1], window.location.origin).toString(),
+    replace: /window\.location\.replace/i.test(hrefMatch[0]),
+  };
+}
+
+function isMeaningfulNavigation(targetUrl) {
+  try {
+    const currentUrl = new URL(window.location.href);
+    const nextUrl = new URL(targetUrl, window.location.origin);
+
+    currentUrl.hash = "";
+    nextUrl.hash = "";
+
+    return currentUrl.toString() !== nextUrl.toString();
+  } catch (error) {
+    console.warn("Falha ao analisar navegação para autosave:", error);
+    return false;
+  }
+}
+
+async function navigateWithAutoSave(url, { replace = false } = {}) {
+  const result = await autoSaveAdminDataBeforeNavigation();
+
+  if (result?.success === false) {
+    return false;
+  }
+
+  if (replace) {
+    window.location.replace(url);
+  } else {
+    window.location.href = url;
+  }
+
+  return true;
+}
+
+function bindAutoSaveNavigation() {
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const navigationTarget = resolveAutosaveNavigationTarget(event.target);
+      if (!navigationTarget || !navigationTarget.url) {
+        return;
+      }
+
+      if (!isMeaningfulNavigation(navigationTarget.url)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      void navigateWithAutoSave(navigationTarget.url, {
+        replace: navigationTarget.replace,
+      });
+    },
+    true,
+  );
+
+  window.addEventListener("pagehide", () => {
+    if (hasUnsavedAdminDataChanges()) {
+      void autoSaveAdminDataBeforeNavigation({ keepalive: true });
+    }
+  });
+}
+
 // ==================== INICIALIZAÇÃO PRINCIPAL ====================
 
 document.addEventListener("DOMContentLoaded", async function () {
   console.log(" Sistema de Edição de Dados iniciado");
+
+  window.navigateWithAutoSave = navigateWithAutoSave;
+  bindAutoSaveNavigation();
 
   // Carregar todos os módulos
   ensureLoadDataFunction();

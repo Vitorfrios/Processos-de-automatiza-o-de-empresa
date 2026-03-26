@@ -4,13 +4,7 @@ import { showConfirmation, showError, showSuccess, showInfo } from '../config/ui
 const adminState = {
     search: '',
     initialized: false,
-    modalListenerBound: false,
-    emailConfig: {
-        email: '',
-        token: '',
-        nome: ''
-    },
-    emailConfigLoaded: false
+    modalListenerBound: false
 };
 
 function escapeHtml(text) {
@@ -38,21 +32,6 @@ function formatDate(date) {
 
 function isValidEmail(value) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
-}
-
-function normalizeSmtpToken(email, token) {
-    const normalizedEmail = String(email || '').trim().toLowerCase();
-    const normalizedToken = String(token || '').trim();
-
-    if (!normalizedToken) {
-        return '';
-    }
-
-    if (normalizedEmail.endsWith('@gmail.com') || normalizedEmail.endsWith('@googlemail.com')) {
-        return normalizedToken.replace(/\s+/g, '');
-    }
-
-    return normalizedToken;
 }
 
 function generateToken() {
@@ -125,6 +104,98 @@ function saveAdmins(admins) {
     addPendingChange('ADM');
 }
 
+function updateAdminModalStatus(message, tone = 'muted') {
+    const statusElement = document.getElementById('adminCredentialStatus');
+    if (!statusElement) {
+        return;
+    }
+
+    const palette = {
+        muted: '#64748b',
+        success: '#2f855a',
+        warning: '#c05621',
+        error: '#c53030'
+    };
+
+    statusElement.textContent = message || 'Pré-salvamento automático ao sair do campo.';
+    statusElement.style.color = palette[tone] || palette.muted;
+}
+
+function persistAdminModalDraft({ quiet = true, closeOnSuccess = false } = {}) {
+    const id = document.getElementById('adminRecordId')?.value;
+    const usuario = document.getElementById('adminUsernameInput')?.value.trim();
+    const token = document.getElementById('adminTokenInput')?.value.trim();
+    const email = document.getElementById('adminEmailInput')?.value.trim() || '';
+
+    if (!id) {
+        updateAdminModalStatus('Registro inválido.', 'error');
+        return false;
+    }
+
+    if (email && !isValidEmail(email)) {
+        if (!quiet) {
+            showError('Informe um email válido para recuperação do ADM.');
+        }
+        updateAdminModalStatus('Rascunho retido. Corrija o email para aplicar.', 'warning');
+        return false;
+    }
+
+    if (!usuario || !token) {
+        updateAdminModalStatus('Rascunho retido. Usuário e senha são obrigatórios.', 'warning');
+        return false;
+    }
+
+    const admins = getAdmins();
+    const duplicateAdmin = admins.find(
+        (admin) => admin.usuario.toLowerCase() === usuario.toLowerCase() && admin.id !== id
+    );
+
+    if (duplicateAdmin) {
+        if (!quiet) {
+            showError('Ja existe um ADM com este usuario.');
+        }
+        updateAdminModalStatus('Usuário já existe. Ajuste para aplicar.', 'warning');
+        return false;
+    }
+
+    const existingAdmin = admins.find((admin) => admin.id === id);
+    let nextAdmins;
+
+    if (existingAdmin) {
+        nextAdmins = admins.map((admin) => (
+            admin.id === id
+                ? {
+                    ...admin,
+                    usuario,
+                    token,
+                    email
+                }
+                : admin
+        ));
+    } else {
+        nextAdmins = [
+            ...admins,
+            {
+                id,
+                usuario,
+                token,
+                email,
+                criadoEm: new Date().toISOString()
+            }
+        ];
+    }
+
+    saveAdmins(nextAdmins);
+    renderAdminCredentials();
+    updateAdminModalStatus('Pré-salvo automaticamente.', 'success');
+
+    if (closeOnSuccess) {
+        showSuccess('Credencial ADM salva em pré-salvamento.');
+    }
+
+    return true;
+}
+
 function filterAdmins(admins) {
     const search = adminState.search.trim().toLowerCase();
 
@@ -181,130 +252,6 @@ function renderAdminCard(admin, index) {
     `;
 }
 
-function renderEmailConfigPanel() {
-    const config = adminState.emailConfig || {};
-    const helperText = adminState.emailConfigLoaded
-        ? 'Use este remetente para exportação por email e notificações automáticas.'
-        : 'Carregando configuração de email...';
-
-    return `
-        <section class="admin-email-config-panel">
-            <div class="admin-section-header admin-section-header-panel">
-                <div class="admin-section-copy">
-                    <span class="dashboard-eyebrow">SMTP</span>
-                    <h3>Email do responsável</h3>
-                    <p>${helperText}</p>
-                </div>
-            </div>
-
-            <form id="adminEmailConfigForm" class="admin-email-config-form" autocomplete="on">
-                <div class="admin-form-grid admin-form-grid-simple">
-                    <label class="admin-field">
-                        <span>Email do responsável</span>
-                        <input type="email" id="adminEmail" name="adminEmail" autocomplete="email" placeholder="Email do responsável" value="${escapeHtml(config.email || '')}">
-                    </label>
-
-                    <label class="admin-field">
-                        <span>Senha ou token SMTP</span>
-                        <input type="password" id="adminToken" name="adminToken" autocomplete="current-password" placeholder="Senha ou token SMTP" value="${escapeHtml(config.token || '')}">
-                    </label>
-
-                    <label class="admin-field">
-                        <span>Nome do remetente</span>
-                        <input type="text" id="adminNome" name="adminNome" autocomplete="name" placeholder="Nome do remetente" value="${escapeHtml(config.nome || '')}">
-                    </label>
-                </div>
-
-                <div class="modal-actions-adm">
-                    <button class="btn btn-success" id="saveAdminEmailConfigBtn" type="submit">Salvar</button>
-                </div>
-            </form>
-        </section>
-    `;
-}
-
-async function loadAdminEmailConfig() {
-    try {
-        const response = await fetch('/api/admin/email-config');
-        const result = await response.json().catch(() => ({}));
-
-        if (!response.ok || !result.success) {
-            throw new Error(result.error || 'Falha ao carregar configuração de email.');
-        }
-
-        adminState.emailConfig = {
-            email: result.config?.email || '',
-            token: result.config?.token || '',
-            nome: result.config?.nome || ''
-        };
-        adminState.emailConfigLoaded = true;
-    } catch (error) {
-        adminState.emailConfigLoaded = true;
-        adminState.emailConfig = {
-            email: '',
-            token: '',
-            nome: ''
-        };
-        showInfo(error.message || 'Configuração SMTP ainda não definida.');
-    }
-}
-
-async function saveAdminEmailConfig() {
-    const email = document.getElementById('adminEmail')?.value.trim() || '';
-    const token = document.getElementById('adminToken')?.value.trim() || '';
-    const nome = document.getElementById('adminNome')?.value.trim() || '';
-
-    if (!isValidEmail(email)) {
-        showError('Informe um email válido para o responsável.');
-        return;
-    }
-
-    if (!token) {
-        showError('Informe a senha ou token SMTP.');
-        return;
-    }
-
-    const normalizedToken = normalizeSmtpToken(email, token);
-    if (
-        (email.toLowerCase().endsWith('@gmail.com') || email.toLowerCase().endsWith('@googlemail.com'))
-        && normalizedToken.length !== 16
-    ) {
-        showError('Para Gmail, informe a senha de app de 16 caracteres do Google.');
-        return;
-    }
-
-    if (!nome) {
-        showError('Informe o nome do remetente.');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/admin/email-config', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, token: normalizedToken, nome })
-        });
-
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || !result.success) {
-            throw new Error(result.error || 'Falha ao salvar configuração de email.');
-        }
-
-        adminState.emailConfig = {
-            email,
-            token: normalizedToken,
-            nome
-        };
-        adminState.emailConfigLoaded = true;
-        renderAdminCredentials();
-        showSuccess('Configuração de email salva com sucesso.');
-    } catch (error) {
-        showError(error.message || 'Falha ao salvar configuração de email.');
-    }
-}
-
 export function renderAdminCredentials() {
     const container = document.getElementById('adminCredentialsContent');
     if (!container) return;
@@ -313,8 +260,6 @@ export function renderAdminCredentials() {
     const filteredAdmins = filterAdmins(admins);
 
     container.innerHTML = `
-        ${renderEmailConfigPanel()}
-
         <div class="admin-section-header admin-section-header-panel">
             <div class="admin-section-copy">
                 <span class="dashboard-eyebrow">ADM</span>
@@ -362,9 +307,11 @@ function openAdminModal(admin = null) {
     }
 
     modal.style.display = 'flex';
+    updateAdminModalStatus();
 }
 
 function closeAdminModal() {
+    persistAdminModalDraft({ quiet: true });
     const modal = document.getElementById('adminCredentialModal');
     if (modal) {
         modal.style.display = 'none';
@@ -432,6 +379,14 @@ function saveAdminFromForm(event) {
     showSuccess('Credencial ADM salva com sucesso.');
 }
 
+function saveAdminFromFormLegacy(event) {
+    event.preventDefault();
+
+    if (persistAdminModalDraft({ quiet: false, closeOnSuccess: true })) {
+        closeAdminModal();
+    }
+}
+
 function handleAdminAction(event) {
     const card = event.target.closest('[data-admin-id]');
     if (!card) return;
@@ -482,7 +437,6 @@ function bindAdminEvents() {
     const addBtn = document.getElementById('btnAddAdmin');
     const adminGrid = document.querySelector('.admin-grid');
     const modalForm = document.getElementById('adminCredentialForm');
-    const emailConfigForm = document.getElementById('adminEmailConfigForm');
     const closeModalBtn = document.getElementById('closeAdminModalBtn');
     const cancelBtn = document.getElementById('cancelAdminCredentialBtn');
     const generateBtn = document.getElementById('generateAdminTokenBtn');
@@ -497,13 +451,17 @@ function bindAdminEvents() {
 
     if (modalForm) {
         modalForm.onsubmit = saveAdminFromForm;
-    }
-
-    if (emailConfigForm) {
-        emailConfigForm.onsubmit = (event) => {
-            event.preventDefault();
-            saveAdminEmailConfig();
-        };
+        if (!modalForm.dataset.autosaveBound) {
+            modalForm.addEventListener('focusout', (event) => {
+                if (event.target instanceof HTMLInputElement) {
+                    persistAdminModalDraft({ quiet: true });
+                }
+            });
+            modalForm.addEventListener('change', () => {
+                persistAdminModalDraft({ quiet: true });
+            });
+            modalForm.dataset.autosaveBound = 'true';
+        }
     }
 
     if (closeModalBtn) {
@@ -519,6 +477,7 @@ function bindAdminEvents() {
             const tokenInput = document.getElementById('adminTokenInput');
             if (tokenInput) {
                 tokenInput.value = generateToken();
+                persistAdminModalDraft({ quiet: true });
             }
         };
     }
@@ -545,11 +504,6 @@ export function initializeAdminCredentials() {
     window.addEventListener('dataLoaded', renderAdminCredentials);
     window.addEventListener('dataImported', renderAdminCredentials);
     window.addEventListener('dataApplied', renderAdminCredentials);
-    window.salvarCredenciais = saveAdminEmailConfig;
-
-    loadAdminEmailConfig().then(() => {
-        renderAdminCredentials();
-    });
 
     adminState.initialized = true;
 }

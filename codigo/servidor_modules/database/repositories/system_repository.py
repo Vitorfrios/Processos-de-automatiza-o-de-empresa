@@ -4,20 +4,141 @@ from __future__ import annotations
 
 import json
 
+from servidor_modules.database.connection import execute_maintenance_statements
 from servidor_modules.database.storage import get_storage
 
 
 class SystemRepository:
+    DATABASE_LIMIT_CONSTANT_KEY = "SUPABASE_DB_LIMIT_MB"
+    DEFAULT_DATABASE_LIMIT_MB = 500
+    SYSTEM_CONSTANT_DEFAULTS = {
+        DATABASE_LIMIT_CONSTANT_KEY: {
+            "value": DEFAULT_DATABASE_LIMIT_MB,
+            "description": "Limite total do banco Supabase em MB para monitoramento do dashboard.",
+        }
+    }
+    APP_ACTIVE_DATA_SIZE_SOURCES = (
+        ("admins", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("empresas", "COALESCE(SUM(octet_length(raw_json) + octet_length(COALESCE(credenciais_json, ''))), 0)"),
+        ("constants", "COALESCE(SUM(octet_length(value_json) + octet_length(COALESCE(description, '')) + octet_length(key)), 0)"),
+        ("materials", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("machine_catalog", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("acessorios", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("dutos", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("tubos", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("obras", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("projetos", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("salas", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("sala_maquinas", "COALESCE(SUM(octet_length(raw_json)), 0)"),
+        ("sessions", "COALESCE(SUM(octet_length(payload_json)), 0)"),
+        ("admin_email_config", "COALESCE(SUM(octet_length(email) + octet_length(token) + octet_length(nome) + octet_length(smtp_host) + octet_length(COALESCE(updated_at, ''))), 0)"),
+        ("obra_notifications", "COALESCE(SUM(octet_length(fingerprint) + octet_length(last_subject) + octet_length(last_message) + octet_length(last_sent_at) + octet_length(obra_id)), 0)"),
+    )
+
     def __init__(self, project_root):
         self.storage = get_storage(project_root)
         self.conn = self.storage.conn
 
-    def get_dados_payload(self):
-        return self.storage.load_document(
-            "dados.json", self.storage.default_document("dados.json")
+    @staticmethod
+    def _bytes_to_mb(size_bytes):
+        try:
+            return round(float(size_bytes or 0) / (1024 * 1024), 2)
+        except (TypeError, ValueError):
+            return 0.0
+
+    @staticmethod
+    def _normalize_numeric_value(value, fallback):
+        try:
+            normalized = float(value)
+        except (TypeError, ValueError):
+            normalized = float(fallback)
+
+        if normalized <= 0:
+            normalized = float(fallback)
+
+        return int(normalized) if normalized.is_integer() else round(normalized, 2)
+
+    def _fetch_public_schema_table_rows(self):
+        return self.conn.execute(
+            """
+            SELECT
+                relname AS table_name,
+                pg_total_relation_size(relid) AS size_bytes
+            FROM pg_catalog.pg_statio_user_tables
+            WHERE schemaname = 'public'
+            ORDER BY size_bytes DESC
+            """
+        ).fetchall()
+
+    def _get_active_app_data_size_bytes(self):
+        total_size_bytes = 0
+
+        for table_name, size_expression in self.APP_ACTIVE_DATA_SIZE_SOURCES:
+            row = self.conn.execute(
+                f"SELECT {size_expression} AS size_bytes FROM {table_name}"
+            ).fetchone()
+            total_size_bytes += int((row or {}).get("size_bytes") or 0)
+
+        return total_size_bytes
+
+    def _normalize_constants(self, constants):
+        normalized = {}
+
+        for key, constant_data in (constants or {}).items():
+            key_str = str(key or "").strip()
+            if not key_str:
+                continue
+
+            if isinstance(constant_data, dict):
+                normalized[key_str] = dict(constant_data)
+            else:
+                normalized[key_str] = {
+                    "value": constant_data,
+                    "description": "",
+                }
+
+        for key, default_data in self.SYSTEM_CONSTANT_DEFAULTS.items():
+            current_data = normalized.get(key, {})
+            if not isinstance(current_data, dict):
+                current_data = {}
+
+            normalized[key] = {
+                **current_data,
+                "value": self._normalize_numeric_value(
+                    current_data.get("value"),
+                    default_data["value"],
+                ),
+                "description": str(
+                    current_data.get("description") or default_data["description"]
+                ).strip()
+                or default_data["description"],
+            }
+
+        return normalized
+
+    def _resolve_database_limit_mb(self):
+        constants = self.get_constants()
+        constant_data = constants.get(self.DATABASE_LIMIT_CONSTANT_KEY, {})
+        return self._normalize_numeric_value(
+            constant_data.get("value"),
+            self.DEFAULT_DATABASE_LIMIT_MB,
         )
 
+    def get_dados_payload(self):
+        payload = self.storage.load_document(
+            "dados.json", self.storage.default_document("dados.json")
+        )
+        payload["constants"] = self._normalize_constants(payload.get("constants", {}))
+        return payload
+
     def save_dados_payload(self, payload):
+        if not isinstance(payload, dict):
+            payload = {}
+
+        payload = {
+            **payload,
+            "constants": self._normalize_constants(payload.get("constants", {})),
+        }
         self.storage.save_document("dados.json", payload)
         return self.get_dados_payload()
 
@@ -52,14 +173,15 @@ class SystemRepository:
         return admins
 
     def get_constants(self):
-        return self.get_dados_payload().get("constants", {})
+        return self._normalize_constants(self.get_dados_payload().get("constants", {}))
 
     def save_constants(self, constants):
+        normalized_constants = self._normalize_constants(constants)
         cursor = self.conn.cursor()
         cursor.execute("BEGIN")
         try:
             cursor.execute("DELETE FROM constants")
-            for key, constant_data in (constants or {}).items():
+            for key, constant_data in normalized_constants.items():
                 cursor.execute(
                     """
                     INSERT INTO constants(key, value_json, description)
@@ -77,10 +199,87 @@ class SystemRepository:
         except Exception:
             self.conn.rollback()
             raise
-        return constants
+        return normalized_constants
 
     def get_materials(self):
         return self.get_dados_payload().get("materials", {})
+
+    def vacuum_full_obras(self):
+        execute_maintenance_statements(
+            self.storage.project_root,
+            (
+                "SET statement_timeout TO 0",
+                "VACUUM FULL public.obras",
+            ),
+        )
+        return {
+            "success": True,
+            "message": "VACUUM FULL executado na tabela public.obras.",
+            "database_usage": self.get_database_usage(),
+        }
+
+    def get_database_usage(self, limit_mb=None):
+        row = self.conn.execute(
+            """
+            SELECT pg_database_size(current_database()) AS size_bytes
+            """
+        ).fetchone()
+        table_rows = self._fetch_public_schema_table_rows()
+
+        size_bytes = int((row or {}).get("size_bytes") or 0)
+        public_schema_size_bytes = sum(
+            int((table_row or {}).get("size_bytes") or 0)
+            for table_row in (table_rows or [])
+        )
+        active_app_data_size_bytes = self._get_active_app_data_size_bytes()
+        used_mb = self._bytes_to_mb(size_bytes)
+        public_schema_mb = self._bytes_to_mb(public_schema_size_bytes)
+        active_app_mb = self._bytes_to_mb(active_app_data_size_bytes)
+        other_schemas_mb = max(round(used_mb - public_schema_mb, 2), 0.0)
+        limit_mb = self._normalize_numeric_value(
+            limit_mb,
+            self._resolve_database_limit_mb(),
+        )
+        percent_used = round((used_mb / limit_mb) * 100, 2) if limit_mb else 0.0
+        active_app_percent_of_limit = (
+            round((active_app_mb / limit_mb) * 100, 2) if limit_mb else 0.0
+        )
+
+        return {
+            "used_mb": used_mb,
+            "limit_mb": limit_mb,
+            "percent_used": percent_used,
+            "public_schema_mb": public_schema_mb,
+            "active_app_mb": active_app_mb,
+            "active_app_percent_of_limit": active_app_percent_of_limit,
+            "other_schemas_mb": other_schemas_mb,
+        }
+
+    def get_database_table_usage(self, limit_mb=None):
+        rows = self._fetch_public_schema_table_rows()
+
+        safe_limit_mb = self._normalize_numeric_value(
+            limit_mb,
+            self._resolve_database_limit_mb(),
+        )
+        tables = []
+
+        for row in rows or []:
+            size_bytes = int((row or {}).get("size_bytes") or 0)
+            size_mb = self._bytes_to_mb(size_bytes)
+            percent_of_limit = (
+                round((size_mb / safe_limit_mb) * 100, 2) if safe_limit_mb else 0.0
+            )
+            tables.append(
+                {
+                    "table_name": str((row or {}).get("table_name") or "").strip(),
+                    "size_bytes": size_bytes,
+                    "size_mb": size_mb,
+                    "percent_of_limit": percent_of_limit,
+                }
+            )
+
+        return {"tables": tables}
 
     def save_materials(self, materials):
         cursor = self.conn.cursor()

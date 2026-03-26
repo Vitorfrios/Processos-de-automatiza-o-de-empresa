@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS admins (
 CREATE TABLE IF NOT EXISTS empresas (
     codigo TEXT PRIMARY KEY,
     nome TEXT NOT NULL,
+    ultimo_numero_cliente INTEGER NOT NULL DEFAULT 0,
     credenciais_json TEXT,
     raw_json TEXT NOT NULL,
     sort_order INTEGER NOT NULL
@@ -138,6 +139,7 @@ CREATE TABLE IF NOT EXISTS obra_notifications (
 CREATE INDEX IF NOT EXISTS idx_empresas_sort_order ON empresas(sort_order);
 CREATE INDEX IF NOT EXISTS idx_machine_catalog_sort_order ON machine_catalog(sort_order);
 CREATE INDEX IF NOT EXISTS idx_obras_empresa_codigo ON obras(empresa_codigo);
+CREATE INDEX IF NOT EXISTS idx_obras_empresa_codigo_numero_cliente ON obras(empresa_codigo, numero_cliente_final DESC);
 CREATE INDEX IF NOT EXISTS idx_obras_sort_order ON obras(sort_order);
 CREATE INDEX IF NOT EXISTS idx_obra_notifications_sent_at ON obra_notifications(last_sent_at);
 CREATE INDEX IF NOT EXISTS idx_projetos_obra_id_sort ON projetos(obra_id, sort_order);
@@ -161,6 +163,7 @@ _POOL_LOCK = threading.Lock()
 _INITIALIZATION_LOCKS = {}
 _WARMUP_LOCKS = {}
 _WARMUP_STARTED_ROOTS = set()
+_EMPRESAS_NUMERO_CLIENTE_COLUMN_CACHE = {}
 _DOTENV_LOCK = threading.Lock()
 _DOTENV_LOADED_PATHS = set()
 
@@ -240,6 +243,37 @@ def get_connection(project_root):
 
     _initialize_database(project_root, root_key)
     return proxy
+
+
+def execute_maintenance_statements(project_root, statements) -> None:
+    root_key = str(Path(project_root).resolve())
+    get_connection(project_root)
+    pool = _POOLS[root_key]
+    conn = pool.getconn()
+    previous_autocommit = conn.autocommit
+
+    try:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+
+        conn.autocommit = True
+        with conn.cursor() as cursor:
+            for statement in statements or ():
+                if str(statement or "").strip():
+                    cursor.execute(str(statement))
+    finally:
+        try:
+            conn.autocommit = previous_autocommit
+        except Exception:
+            pass
+
+        try:
+            if not conn.closed:
+                pool.putconn(conn)
+        except Exception:
+            pass
 
 
 def release_thread_connection(project_root=None) -> None:
@@ -386,6 +420,36 @@ def _execute_statements(conn, sql_script: str) -> None:
     with conn.cursor() as cursor:
         for statement in statements:
             cursor.execute(statement)
+
+
+def has_empresas_numero_cliente_column(project_root=None, conn=None) -> bool:
+    root_key = None
+    if project_root is not None:
+        root_key = str(Path(project_root).resolve())
+        cached = _EMPRESAS_NUMERO_CLIENTE_COLUMN_CACHE.get(root_key)
+        if cached is not None:
+            return bool(cached)
+
+    connection = conn or get_connection(project_root)
+    with connection.cursor(row_factory=dict_row) as cursor:
+        cursor.execute(
+            """
+            SELECT EXISTS(
+                SELECT 1
+                FROM pg_attribute
+                WHERE attrelid = to_regclass(current_schema() || '.empresas')
+                  AND attname = %s
+                  AND NOT attisdropped
+            ) AS has_column
+            """,
+            ("ultimo_numero_cliente",),
+        )
+        row = cursor.fetchone()
+
+    has_column = bool(row and row.get("has_column"))
+    if root_key is not None:
+        _EMPRESAS_NUMERO_CLIENTE_COLUMN_CACHE[root_key] = has_column
+    return has_column
 
 
 def _migrate_sqlite_if_needed(conn, project_root) -> None:
