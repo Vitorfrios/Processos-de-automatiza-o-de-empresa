@@ -364,6 +364,8 @@ function collectClimatizationInputs(climaSection, roomId) {
             value = input.checked;
         } else if (input.type === 'number' || input.type === 'text') {
             value = input.value !== "" ? (input.type === 'number' ? Number.parseFloat(input.value) : input.value) : "";
+        } else if (input.type === 'hidden') {
+            value = input.value || "";
         } else if (input.tagName === 'SELECT') {
             value = input.value !== "" ? input.value : "";
         }

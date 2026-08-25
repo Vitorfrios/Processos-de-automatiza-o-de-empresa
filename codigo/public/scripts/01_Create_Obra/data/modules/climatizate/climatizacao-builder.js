@@ -329,10 +329,11 @@ function buildClimaCell(field, roomId) {
 function buildAreaInput(field, roomId) {
   return `
  <div class="area-input-group">
- <button type="button" class="btn btn-small btn-secondary area-calc-button" onclick="openAreaCalculatorModal('${roomId}')">
+ <button type="button" class="btn btn-small btn-secondary area-calc-button" data-room-id="${roomId}" onclick="openAreaCalculatorModal('${roomId}')">
  Calcular
  </button>
  ${buildTextInput(field, roomId)}
+ <input type="hidden" class="clima-input area-shape-input" data-field="areaShape" data-room-id="${roomId}" value="">
  </div>
  `;
 }

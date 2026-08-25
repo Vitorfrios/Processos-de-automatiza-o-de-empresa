@@ -62,6 +62,108 @@ function formatAreaValue(value) {
   return parseAreaValue(value).toFixed(2);
 }
 
+function getAreaShapeInput(roomId = state.roomId) {
+  if (!roomId) return null;
+  return document.querySelector(
+    `input[data-field="areaShape"][data-room-id="${roomId}"]`,
+  );
+}
+
+function serializeAreaShape() {
+  return JSON.stringify({
+    version: 1,
+    points: state.points.map((point) => ({ x: point.x, y: point.y })),
+    walls: state.walls.map((wall) => ({ length: wall.length, angle: wall.angle })),
+    closed: state.closed,
+    scale: state.scale,
+    offsetX: state.offsetX,
+    offsetY: state.offsetY,
+    orthoMode: state.orthoMode,
+    angleSnapStep: state.angleSnapStep,
+    wallThickness: state.wallThickness,
+    area: calculatePolygonArea(),
+    perimeter: calculatePerimeter(),
+  });
+}
+
+function parseSavedAreaShape(roomId) {
+  const input = getAreaShapeInput(roomId);
+  if (!input?.value) return null;
+
+  try {
+    const parsed = JSON.parse(input.value);
+    if (!parsed || !Array.isArray(parsed.points) || !Array.isArray(parsed.walls)) {
+      return null;
+    }
+    if (parsed.points.length < 1 || parsed.walls.length < 1) {
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    console.warn("Forma CAD da area invalida para a sala:", roomId, error);
+    return null;
+  }
+}
+
+function hasSavedAreaShape(roomId) {
+  const savedShape = parseSavedAreaShape(roomId);
+  return !!(savedShape?.closed && savedShape.points.length >= 3);
+}
+
+function restoreSavedAreaShape(roomId) {
+  const savedShape = parseSavedAreaShape(roomId);
+  if (!savedShape) return false;
+
+  state.points = savedShape.points.map((point) => ({
+    x: Number(point.x) || 0,
+    y: Number(point.y) || 0,
+  }));
+  state.walls = savedShape.walls.map((wall) => ({
+    length: Number(wall.length) || 0,
+    angle: Number(wall.angle) || 0,
+  }));
+  state.closed = !!savedShape.closed;
+  state.isDrawing = !state.closed;
+  state.scale = Number(savedShape.scale) || 1;
+  state.offsetX = Number(savedShape.offsetX) || 0;
+  state.offsetY = Number(savedShape.offsetY) || 0;
+  state.orthoMode = savedShape.orthoMode !== undefined ? !!savedShape.orthoMode : true;
+  state.angleSnapStep = Number(savedShape.angleSnapStep) || 90;
+  state.wallThickness = Number(savedShape.wallThickness) || 0.15;
+  state.history = [snapshotWalls()];
+  state.historyIndex = 0;
+
+  if (canvasManager) {
+    canvasManager.updateState(state);
+  }
+  return true;
+}
+
+function refreshAreaCalculatorButton(roomId) {
+  const button = document.querySelector(
+    `.area-calc-button[data-room-id="${roomId}"]`,
+  );
+  if (!button) return;
+
+  const saved = hasSavedAreaShape(roomId);
+  button.textContent = saved ? "Visualizar" : "Calcular";
+  button.classList.toggle("has-area-shape", saved);
+  button.title = saved ? "Visualizar ou editar a forma salva" : "Calcular area pelo CAD";
+}
+
+function notifyAreaShapeChanged(roomId) {
+  refreshAreaCalculatorButton(roomId);
+  document.dispatchEvent(
+    new CustomEvent("area-shape-changed", { detail: { roomId } }),
+  );
+}
+
+function refreshAllAreaCalculatorButtons() {
+  document.querySelectorAll(".area-calc-button[data-room-id]").forEach((button) => {
+    refreshAreaCalculatorButton(button.dataset.roomId);
+  });
+}
+
 function getCanvas() {
   return document.getElementById("areaCalculatorCanvas");
 }
@@ -1096,10 +1198,16 @@ function confirmAreaCalculator() {
   const calculatedArea = calculatePolygonArea();
   if (calculatedArea > 0) {
     areaInput.value = formatAreaValue(calculatedArea);
+    const shapeInput = getAreaShapeInput(state.roomId);
+    if (shapeInput) {
+      shapeInput.value = serializeAreaShape();
+      shapeInput.dispatchEvent(new Event("change", { bubbles: true }));
+    }
     if (typeof window.updateRoomVolumeFromArea === "function") {
       window.updateRoomVolumeFromArea(areaInput);
     }
     calculateVazaoArAndThermalGains(state.roomId);
+    notifyAreaShapeChanged(state.roomId);
   }
 
   closeAreaCalculatorModal();
@@ -1116,6 +1224,8 @@ function openAreaCalculatorModal(roomId) {
   } else {
     canvasManager = new AreaCalculatorCanvas(state, { pixelsPerMeter: PIXELS_PER_METER });
   }
+
+  restoreSavedAreaShape(roomId);
 
   const angleSelect = document.getElementById("areaAngleSnap");
   if (angleSelect) angleSelect.value = String(state.angleSnapStep);
@@ -1149,6 +1259,14 @@ if (typeof window !== "undefined") {
   window.openAreaCalculatorModal = openAreaCalculatorModal;
   window.closeAreaCalculatorModal = closeAreaCalculatorModal;
   window.zoomArea = zoomArea;
+  window.refreshAreaCalculatorButton = refreshAreaCalculatorButton;
+  window.refreshAllAreaCalculatorButtons = refreshAllAreaCalculatorButtons;
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", refreshAllAreaCalculatorButtons);
+  } else {
+    refreshAllAreaCalculatorButtons();
+  }
 }
 
 export { openAreaCalculatorModal, closeAreaCalculatorModal };

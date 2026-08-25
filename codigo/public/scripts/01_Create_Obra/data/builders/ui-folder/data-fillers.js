@@ -132,6 +132,12 @@ function fillClimatizationInputs(roomElement, inputsData) {
       setTimeout(() => {
         const event = new Event("change", { bubbles: true });
         input.dispatchEvent(event);
+        if (
+          field === "areaShape" &&
+          typeof window.refreshAreaCalculatorButton === "function"
+        ) {
+          window.refreshAreaCalculatorButton(roomId);
+        }
       }, 50);
     });
 
