@@ -649,7 +649,7 @@ export class AreaCalculatorCanvas {
     return false;
   }
 
-  // Raios-guia (polar tracking) quando o modo ortogonal está ativo
+  // Raios-guia (polar tracking) quando o modo Perpendicular está ativo
   drawOrthoGuides() {
     if (this.state.closed || !this.state.isDrawing || this.state.points.length === 0) return;
     if (!this.isOrthoActive()) return;

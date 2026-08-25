@@ -299,15 +299,25 @@ function deleteWall(wallIndex) {
 // ============ FECHAR / REABRIR FORMA ============
 function closeShape() {
   if (state.points.length < 3) {
-    window.alert("Crie pelo menos 3 pontos antes de fechar a forma.");
+    // Mostra mensagem mais amigável
+    const status = document.getElementById("areaCalculatorStatus");
+    if (status) {
+      status.textContent = "⚠️ Crie pelo menos 3 pontos antes de fechar a forma.";
+      setTimeout(() => {
+        if (status.textContent === "⚠️ Crie pelo menos 3 pontos antes de fechar a forma.") {
+          updateAreaUI();
+        }
+      }, 2000);
+    }
     return;
   }
+  
   state.closed = true;
   state.isDrawing = false;
   hideFloatingInput();
   updateAreaUI();
-  // Auto-fit the finished shape into view — mirrors AutoCAD's "zoom extents"
-  // after finishing a polyline, so the user always sees the whole room.
+  
+  // Auto-fit da forma finalizada
   fitToView();
 }
 
@@ -445,6 +455,41 @@ function updateAreaUI() {
   const perimeterEl = document.getElementById("areaCalculatorPerimeter");
   const area = calculatePolygonArea();
 
+  // ===== Botão Confirmar =====
+  const confirmBtn = document.getElementById("btnConfirm");
+  if (confirmBtn) {
+    // Só libera se a forma estiver fechada E tiver pelo menos 3 pontos
+    if (state.closed && state.points.length >= 3) {
+      confirmBtn.disabled = false;
+      confirmBtn.classList.add("active");
+      confirmBtn.textContent = "✅ Confirmar";
+    } else {
+      confirmBtn.disabled = true;
+      confirmBtn.classList.remove("active");
+      confirmBtn.textContent = state.points.length >= 3 ? "🔒 Feche a forma" : "⚠️ Desenhe a forma";
+    }
+  }
+
+  // ===== Botão Fechar Forma =====
+  const closeBtn = document.querySelector('[data-area-action="close-shape"]');
+  const reopenBtn = document.querySelector('[data-area-action="reopen-shape"]');
+  
+  if (closeBtn) {
+    closeBtn.style.display = state.closed ? "none" : "inline-block";
+    closeBtn.disabled = state.points.length < 3;
+    // Se tiver menos de 3 pontos, mostra tooltip
+    if (state.points.length < 3) {
+      closeBtn.title = "Crie pelo menos 3 pontos antes de fechar";
+    } else {
+      closeBtn.title = "Fechar a forma";
+    }
+  }
+  
+  if (reopenBtn) {
+    reopenBtn.style.display = state.closed ? "inline-block" : "none";
+  }
+
+  // ===== Status =====
   if (status) {
     if (state.closed) {
       const warn = canvasManager && canvasManager.hasSelfIntersection()
@@ -457,11 +502,12 @@ function updateAreaUI() {
       status.textContent = "🔍 Modo navegação | Botão direito para mover | ESC para voltar a desenhar";
     } else {
       const snapText = state.snapActive ? " ⚡ Snap ativado!" : (state.gridSnapActive ? " ⊞ Grade" : "");
-      const orthoText = canvasManager && canvasManager.isOrthoActive() ? " 🔒 ORTHO" : "";
+      const orthoText = canvasManager && canvasManager.isOrthoActive() ? " 🔒 " : "";
       status.textContent = `🖱️ Clique para adicionar paredes | Duplo clique na parede para editar${orthoText}${snapText}`;
     }
   }
 
+  // ===== Resultados =====
   if (result) {
     result.textContent = `${formatAreaValue(area)} m²`;
   }
@@ -469,11 +515,7 @@ function updateAreaUI() {
     perimeterEl.textContent = `${calculatePerimeter().toFixed(2)} m`;
   }
 
-  const closeBtn = document.querySelector('[data-area-action="close-shape"]');
-  const reopenBtn = document.querySelector('[data-area-action="reopen-shape"]');
-  if (closeBtn) closeBtn.style.display = state.closed ? "none" : "inline-block";
-  if (reopenBtn) reopenBtn.style.display = state.closed ? "inline-block" : "none";
-
+  // ===== Badge =====
   const badge = document.getElementById("areaStatusBadge");
   if (badge) {
     if (state.closed) {
@@ -491,9 +533,16 @@ function updateAreaUI() {
     }
   }
 
+  // ===== Ortho =====
   const orthoBtn = document.querySelector('[data-area-action="toggle-ortho"]');
   if (orthoBtn) {
     orthoBtn.classList.toggle("active", !!state.orthoMode);
+  }
+
+  // ===== Contagem de paredes =====
+  const wallCount = document.getElementById("areaWallCount");
+  if (wallCount) {
+    wallCount.textContent = state.walls.length;
   }
 
   renderWallList();
@@ -625,17 +674,18 @@ function ensureModal() {
   modal.innerHTML = `
     <div class="area-calculator-dialog" role="dialog" aria-modal="true" aria-labelledby="areaCalculatorTitle">
       <div class="area-calculator-header">
-        <div>
-          <span class="area-calculator-kicker">Area</span>
+        <div class="header-title-group">
           <h3 id="areaCalculatorTitle">Cálculo da área</h3>
+          <div class="area-status-badge status-aguardando" id="areaStatusBadge">⏳ Aguardando</div>
+          <div class="area-calculator-result" id="areaCalculatorResult">0.00 m²</div>
         </div>
         <button type="button" class="btn btn-small btn-secondary" data-area-action="close">Fechar</button>
       </div>
+      
       <div class="area-calculator-body">
+        <!-- Painel esquerdo com controles -->
         <aside class="area-calculator-panel">
           <div class="area-calculator-status" id="areaCalculatorStatus">Clique no canvas para iniciar.</div>
-          <div class="area-status-badge status-aguardando" id="areaStatusBadge">⏳ Aguardando</div>
-          <div class="area-calculator-result" id="areaCalculatorResult">0.00 m²</div>
           <div class="area-result-detail">
             <span>Perímetro</span>
             <span id="areaCalculatorPerimeter">0.00 m</span>
@@ -643,8 +693,8 @@ function ensureModal() {
 
           <div class="area-config-group">
             <div class="area-config-row">
-              <span>Modo ortogonal</span>
-              <button type="button" class="btn btn-small area-ortho-toggle active" data-area-action="toggle-ortho">🔒 ORTHO</button>
+              <span>Modo Perpendicular</span>
+              <button type="button" class="btn btn-small area-ortho-toggle active" data-area-action="toggle-ortho">🔒</button>
             </div>
             <div class="area-config-row">
               <span>Ângulo de snap</span>
@@ -669,21 +719,41 @@ function ensureModal() {
           <div class="area-calculator-actions">
             <button type="button" class="btn btn-small btn-primary" data-area-action="zoom-in">Zoom +</button>
             <button type="button" class="btn btn-small btn-primary" data-area-action="zoom-out">Zoom -</button>
-            <button type="button" class="btn btn-small btn-success" data-area-action="close-shape">Fechar forma</button>
-            <button type="button" class="btn btn-small btn-warning" data-area-action="reopen-shape" style="display:none;">Reabrir</button>
+            <button type="button" class="btn btn-small btn-close-shape" data-area-action="close-shape" id="btnCloseShape" disabled>Criar forma</button>
+            <button type="button" class="btn btn-small btn-warning" data-area-action="reopen-shape" style="display:none;" id="btnReopenShape">Reabrir</button>
             <button type="button" class="btn btn-small btn-danger" data-area-action="reset">Limpar</button>
           </div>
-          <div class="area-wall-list" id="areaWallList"></div>
+          
+          <div class="area-calculator-actions-bottom">
+            <button type="button" class="btn btn-confirm" data-area-action="confirm" id="btnConfirm" disabled>⚠️ Desenhe a forma</button>
+            <button type="button" class="btn btn-secondary" data-area-action="close">Cancelar</button>
+          </div>
         </aside>
-        <div class="area-canvas-wrap">
-          <canvas id="areaCalculatorCanvas" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}"></canvas>
-          <div class="area-shift-indicator" id="areaShiftIndicator" style="display:none;">🔒 SHIFT</div>
-          <div class="area-snap-indicator" id="areaSnapIndicator" style="display:none;"></div>
-          <div class="area-zoom-info" id="areaZoomInfo">Zoom: 100%</div>
-          <div class="area-coords-info" id="areaCoordsInfo"></div>
-          <div class="area-navigation-hint" id="areaNavigationHint" style="display:none;">🔍 Modo navegação - Botão direito para mover</div>
+
+        <!-- Container central: Canvas + Lista de paredes lado a lado -->
+        <div class="area-canvas-and-walls">
+          <div class="area-canvas-wrap">
+            <canvas id="areaCalculatorCanvas" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}"></canvas>
+            <div class="area-shift-indicator" id="areaShiftIndicator" style="display:none;">🔒 SHIFT</div>
+            <div class="area-snap-indicator" id="areaSnapIndicator" style="display:none;"></div>
+            <div class="area-zoom-info" id="areaZoomInfo">Zoom: 100%</div>
+            <div class="area-coords-info" id="areaCoordsInfo"></div>
+            <div class="area-navigation-hint" id="areaNavigationHint" style="display:none;">🔍 Modo navegação - Botão direito para mover</div>
+          </div>
+          
+          <!-- Lista de paredes ao lado direito do canvas -->
+          <div class="area-wall-list-container">
+            <div class="area-wall-list-header">
+              <span>📋 Paredes</span>
+              <span class="wall-count" id="areaWallCount">0</span>
+            </div>
+            <div class="area-wall-list" id="areaWallList">
+              <div class="area-empty">Nenhuma parede criada.</div>
+            </div>
+          </div>
         </div>
       </div>
+
       <div class="area-float-input" id="areaFloatingInput" style="display:none;">
         <span class="area-float-label">📏 Medida</span>
         <input type="number" step="0.01" placeholder="0.00">
@@ -693,10 +763,6 @@ function ensureModal() {
         <span class="delete-icon">🗑️</span>
         <span class="delete-text">Deletar</span>
       </button>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-success" data-area-action="confirm">Confirmar</button>
-        <button type="button" class="btn btn-secondary" data-area-action="close">Cancelar</button>
-      </div>
     </div>
   `;
 
@@ -963,9 +1029,9 @@ function bindFloatingInputEvents() {
 
   document.addEventListener("click", (event) => {
     if (container.style.display !== "none" &&
-        !container.contains(event.target) &&
-        event.target !== getCanvas() &&
-        !event.target.closest("#areaDeleteWallBtn")) {
+      !container.contains(event.target) &&
+      event.target !== getCanvas() &&
+      !event.target.closest("#areaDeleteWallBtn")) {
       const index = Number(input.dataset.wallIndex);
       const value = Number.parseFloat(input.value);
       if (Number.isFinite(value) && value > 0 && state.walls[index]) {
@@ -1005,6 +1071,20 @@ function handleAreaAction(action) {
 }
 
 function confirmAreaCalculator() {
+  // Verifica se a forma está fechada
+  if (!state.closed || state.points.length < 3) {
+    const status = document.getElementById("areaCalculatorStatus");
+    if (status) {
+      status.textContent = "⚠️ Feche a forma antes de confirmar!";
+      setTimeout(() => {
+        if (status.textContent === "⚠️ Feche a forma antes de confirmar!") {
+          updateAreaUI();
+        }
+      }, 2000);
+    }
+    return;
+  }
+
   const areaInput = document.querySelector(
     `input[data-field="area"][data-room-id="${state.roomId}"]`,
   );
