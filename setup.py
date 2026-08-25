@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import stat
 from pathlib import Path
 
 from setuptools import Command, find_packages, setup
@@ -71,6 +72,20 @@ def copy_distribution_documents(output_dir: Path) -> None:
         shutil.copy2(source_path, output_dir / source_path.name)
 
 
+def remove_tree(path: Path) -> None:
+    if not path.exists():
+        return
+
+    def make_writable_and_retry(function, item_path, exc_info):
+        try:
+            os.chmod(item_path, stat.S_IWRITE)
+            function(item_path)
+        except Exception:
+            raise exc_info[1]
+
+    shutil.rmtree(path, onerror=make_writable_and_retry)
+
+
 class BuildExeCommand(Command):
     description = "Gera o executavel Windows com PyInstaller."
     user_options = [
@@ -99,7 +114,7 @@ class BuildExeCommand(Command):
         if self.clean:
             for target in (WORK_DIR, SPEC_DIR, DIST_DIR / APP_NAME):
                 if target.exists():
-                    shutil.rmtree(target, ignore_errors=True)
+                    remove_tree(target)
 
         SPEC_DIR.mkdir(parents=True, exist_ok=True)
         WORK_DIR.mkdir(parents=True, exist_ok=True)
@@ -155,7 +170,7 @@ class CleanExeCommand(Command):
     def run(self) -> None:
         for target in (WORK_DIR.parent, SPEC_DIR, DIST_DIR / APP_NAME):
             if target.exists():
-                shutil.rmtree(target, ignore_errors=True)
+                remove_tree(target)
 
 
 setup(

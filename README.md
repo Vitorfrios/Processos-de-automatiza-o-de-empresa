@@ -12,6 +12,7 @@ O projeto combina:
 - autenticacao para cliente e administrador;
 - exportacao de propostas tecnicas e comerciais;
 - persistencia de empresas, credenciais de acesso, catalogos, obras e sessoes.
+- build: python setup.py build_exe
 
 ## Visão geral
 
