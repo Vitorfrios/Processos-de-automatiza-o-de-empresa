@@ -5,12 +5,7 @@ from __future__ import annotations
 import json
 
 from servidor_modules.database.connection import (
-    evaluate_storage_guard,
-    execute_maintenance_statements,
     get_database_path,
-    get_storage_guard_snapshot,
-    has_pending_local_offline_changes,
-    mark_local_offline_change,
     refresh_local_sql_dump,
 )
 from servidor_modules.database.storage import get_storage
@@ -22,13 +17,12 @@ class SystemRepository:
     STORAGE_STATUS_MESSAGES = {
         "normal": "Armazenamento funcionando normalmente.",
         "warning": "O sistema ainda esta funcionando normalmente. O banco de dados reutiliza espaco automaticamente apos exclusoes.",
-        "high": "O armazenamento esta proximo do limite, mas isso nao significa erro imediato. O Supabase pode demorar um pouco para liberar espaco apos exclusoes.",
+        "high": "O armazenamento local esta proximo do limite configurado.",
     }
 
     def _sync_local_offline_sidecars(self, source):
         if getattr(self.conn, "is_sqlite", False):
             refresh_local_sql_dump(self.storage.project_root)
-            mark_local_offline_change(self.storage.project_root, source=source)
     STORAGE_STATUS_LABELS = {
         "normal": "Normal",
         "warning": "Atencao",
@@ -165,50 +159,14 @@ class SystemRepository:
         return usage_payload
 
     def _build_data_source_status_payload(self):
-        using_local_database = bool(getattr(self.conn, "is_sqlite", False))
-        pending_offline_changes = has_pending_local_offline_changes(
-            self.storage.project_root
-        )
-        storage_guard = get_storage_guard_snapshot(self.storage.project_root)
-        if pending_offline_changes or not using_local_database:
-            try:
-                storage_guard = evaluate_storage_guard(
-                    self.storage.project_root,
-                    conn=None if using_local_database else self.conn,
-                )
-            except Exception:
-                storage_guard = {
-                    "forced_offline": False,
-                    "reason": "",
-                }
-
-        if using_local_database:
-            mode = "offline"
-            mode_label = "Offline"
-            database_label = "Base local (SQLite)"
-            summary = "Usando base local."
-        else:
-            mode = "online"
-            mode_label = "Online"
-            database_label = "Base online (PostgreSQL)"
-            summary = "Usando base online."
-
-        pending_sync_message = ""
-        if pending_offline_changes:
-            pending_sync_message = (
-                "Alteracoes offline pendentes. Recomendado exportar antes de continuar."
-            )
-        elif storage_guard.get("forced_offline"):
-            pending_sync_message = str(storage_guard.get("reason") or "").strip()
-
         return {
-            "data_source_mode": mode,
-            "data_source_label": mode_label,
-            "database_label": database_label,
-            "data_source_summary": summary,
-            "pending_offline_changes": pending_offline_changes,
-            "storage_guard_active": bool(storage_guard.get("forced_offline")),
-            "pending_sync_message": pending_sync_message,
+            "data_source_mode": "offline",
+            "data_source_label": "Local",
+            "database_label": "Base local definitiva (SQLite)",
+            "data_source_summary": "Usando banco local definitivo.",
+            "pending_offline_changes": False,
+            "storage_guard_active": False,
+            "pending_sync_message": "",
         }
 
     def get_dados_payload(self):
@@ -294,21 +252,11 @@ class SystemRepository:
         return self.get_dados_payload().get("materials", {})
 
     def reorganize_storage(self):
-        execute_maintenance_statements(
-            self.storage.project_root,
-            (
-                "SET statement_timeout TO 0",
-                "VACUUM (ANALYZE) public.obras",
-                "VACUUM (ANALYZE) public.projetos",
-                "VACUUM (ANALYZE) public.salas",
-                "VACUUM (ANALYZE) public.sala_maquinas",
-            ),
-        )
+        self.conn.execute("VACUUM")
         return {
             "success": True,
             "message": (
-                "Rotina de reorganizacao executada com VACUUM. "
-                "O espaco interno fica mais disponivel para reutilizacao automatica."
+                "Banco local reorganizado com VACUUM."
             ),
             "storage_status": self.get_storage_status(),
         }
@@ -338,8 +286,8 @@ class SystemRepository:
                     "active_app_mb": used_mb,
                     "active_app_percent_of_limit": percent_used,
                     "other_schemas_mb": 0.0,
-                    "maintenance_available": False,
-                    "maintenance_message": "Rotinas de reorganizacao sao aplicaveis apenas ao banco online.",
+                    "maintenance_available": True,
+                    "maintenance_message": "Executa VACUUM no banco SQLite local.",
                 }
             )
 
@@ -382,6 +330,38 @@ class SystemRepository:
         )
 
     def get_database_table_usage(self, limit_mb=None):
+        if getattr(self.conn, "is_sqlite", False):
+            safe_limit_mb = self._normalize_numeric_value(
+                limit_mb,
+                self.DEFAULT_DATABASE_LIMIT_MB,
+            )
+            rows = self.conn.execute(
+                """
+                SELECT name AS table_name
+                FROM sqlite_master
+                WHERE type = 'table'
+                  AND name NOT LIKE 'sqlite_%'
+                ORDER BY name
+                """
+            ).fetchall()
+            tables = []
+            for row in rows or []:
+                table_name = str((row or {}).get("table_name") or "").strip()
+                count_row = self.conn.execute(
+                    f'SELECT COUNT(*) AS count FROM "{table_name}"'
+                ).fetchone()
+                size_bytes = int((count_row or {}).get("count") or 0)
+                size_mb = 0
+                tables.append(
+                    {
+                        "table_name": table_name,
+                        "size_bytes": size_bytes,
+                        "size_mb": size_mb,
+                        "percent_of_limit": 0.0 if safe_limit_mb else 0.0,
+                    }
+                )
+            return {"tables": tables}
+
         rows = self._fetch_public_schema_table_rows()
 
         safe_limit_mb = self._normalize_numeric_value(

@@ -1,4 +1,4 @@
-"""Gerenciamento centralizado da conexao PostgreSQL/Supabase."""
+"""Gerenciamento centralizado do banco SQLite local."""
 
 from __future__ import annotations
 
@@ -221,7 +221,7 @@ logging.getLogger("psycopg").setLevel(logging.CRITICAL)
 
 
 class SyncConflictError(RuntimeError):
-    """Erro de conflito entre snapshot local e banco online."""
+    """Erro de conflito entre base local e base externa legada."""
 
 
 @dataclass(frozen=True)
@@ -324,59 +324,13 @@ def get_database_url(project_root=None) -> str:
     raw_url = str(os.environ.get("DATABASE_URL") or "").strip()
     if not raw_url:
         raise RuntimeError(
-            "DATABASE_URL nao configurada. Defina a variavel de ambiente com a conexao PostgreSQL do Supabase."
+            "DATABASE_URL nao configurada para a conexao externa legada."
         )
     return _enforce_ssl_mode(raw_url)
 
 
 def get_connection(project_root, *, wait_timeout_seconds=None):
-    root_key = str(Path(project_root).resolve())
-    effective_wait_timeout = float(
-        _POOL_TIMEOUT_SECONDS if wait_timeout_seconds is None else wait_timeout_seconds
-    )
-    effective_connect_timeout = int(
-        max(1, round(min(_POOL_CONNECT_TIMEOUT_SECONDS, effective_wait_timeout)))
-    )
-    effective_reconnect_timeout = min(
-        _POOL_RECONNECT_TIMEOUT_SECONDS,
-        effective_wait_timeout,
-    )
-    with _POOL_LOCK:
-        proxy = _PROXIES.get(root_key)
-        if proxy is None:
-            pool = None
-            try:
-                pool = ConnectionPool(
-                    conninfo=get_database_url(project_root),
-                    min_size=1,
-                    max_size=int(os.environ.get("DATABASE_POOL_MAX_SIZE", "10")),
-                    timeout=effective_wait_timeout,
-                    reconnect_timeout=effective_reconnect_timeout,
-                    kwargs={
-                        "autocommit": False,
-                        "row_factory": dict_row,
-                        "connect_timeout": effective_connect_timeout,
-                    },
-                    open=True,
-                )
-                pool.wait(timeout=effective_wait_timeout)
-                proxy = DatabaseConnectionProxy(pool)
-                _POOLS[root_key] = pool
-                _PROXIES[root_key] = proxy
-                _clear_recent_online_failure(root_key)
-            except Exception as exc:
-                if pool is not None:
-                    try:
-                        pool.close()
-                    except Exception:
-                        pass
-                _record_recent_online_failure(root_key, exc)
-                raise
-        else:
-            _clear_recent_online_failure(root_key)
-
-    _initialize_database(project_root, root_key)
-    return proxy
+    return SQLiteConnectionProxy(ensure_local_sqlite_database(project_root))
 
 
 def execute_maintenance_statements(project_root, statements) -> None:
@@ -423,21 +377,8 @@ def release_thread_connection(project_root=None) -> None:
 
 
 def start_connection_warmup(project_root) -> None:
-    root_key = str(Path(project_root).resolve())
-    warmup_lock = _WARMUP_LOCKS.setdefault(root_key, threading.Lock())
-
-    with warmup_lock:
-        if root_key in _WARMUP_STARTED_ROOTS:
-            return
-        _WARMUP_STARTED_ROOTS.add(root_key)
-
-    warmup_thread = threading.Thread(
-        target=_run_connection_warmup,
-        args=(project_root,),
-        daemon=True,
-        name=f"postgres-warmup-{Path(root_key).name}",
-    )
-    warmup_thread.start()
+    ensure_local_sqlite_database(project_root)
+    print(" Banco local SQLite ativo como base definitiva.")
 
 
 def _run_connection_warmup(project_root) -> None:
@@ -492,8 +433,8 @@ def _run_connection_warmup(project_root) -> None:
             )
     except Exception as exc:
         print(
-            " Nao foi possivel conectar ao banco online em ate "
-            f"{_POOL_TIMEOUT_SECONDS:.0f} segundos. Inicializando o sistema offline."
+            " Nao foi possivel conectar a base externa legada em ate "
+            f"{_POOL_TIMEOUT_SECONDS:.0f} segundos. Inicializando o sistema local."
         )
         if os.environ.get("ESI_DEBUG_STARTUP") == "1" and str(exc).strip():
             print(f" Detalhe tecnico: {exc}")
@@ -685,7 +626,7 @@ def sync_sqlite_to_postgres(project_root, *, mode="manual-export"):
 
         return {
             "success": True,
-            "message": "Banco offline exportado com sucesso para o banco online.",
+            "message": "Banco local exportado com sucesso para a base externa legada.",
             "table_counts": table_counts,
             "online_digest": persisted_state["online_digest"],
             "local_digest": persisted_state["offline_digest"],
@@ -780,7 +721,7 @@ def reconcile_offline_and_online(project_root, *, mode="auto-reconcile"):
                 )
                 return {
                     "success": True,
-                    "message": "Copia local inicial criada a partir do banco online.",
+                    "message": "Copia local inicial criada a partir da base externa legada.",
                     "table_counts": sqlite_summary["table_counts"],
                     "online_digest": persisted_state["online_digest"],
                     "local_digest": persisted_state["offline_digest"],
@@ -928,7 +869,7 @@ def reconcile_offline_and_online(project_root, *, mode="auto-reconcile"):
             "success": False,
             "skipped": True,
             "online_available": True,
-            "message": "Banco online disponivel. Sistema usando o banco online no momento.",
+            "message": "Base externa legada disponivel. Sistema usando essa base no momento.",
             "error": error_text,
             "mode": mode,
             "failure_stage": "reconcile-runtime",
@@ -1130,6 +1071,154 @@ def clear_local_offline_change_flag(project_root) -> dict:
 def refresh_local_sql_dump(project_root) -> str:
     sql_dump_path = _refresh_sql_dump_from_existing_sqlite(project_root)
     return str(sql_dump_path)
+
+
+def export_local_database_payload(project_root) -> dict:
+    """Gera um arquivo SQL portavel com todos os dados do SQLite local."""
+    project_root = Path(project_root).resolve()
+    sqlite_path = ensure_local_sqlite_database(project_root)
+    sql_dump_path = refresh_local_sql_dump(project_root)
+    sql_dump = Path(sql_dump_path).read_text(encoding="utf-8")
+    payload = _dump_sqlite_sync_payload(sqlite_path, _SQLITE_SYNC_TABLES)
+    table_counts = {
+        table_name: len(payload.get(table_name) or [])
+        for table_name in _SQLITE_SYNC_TABLES
+    }
+    return {
+        "format": "esi-local-database-sql",
+        "version": 1,
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "source": {
+            "type": "sqlite",
+            "database": str(sqlite_path),
+            "sql_dump_path": str(sql_dump_path),
+        },
+        "filename": "esi-banco-local.sql",
+        "content_type": "application/sql;charset=utf-8",
+        "sql_dump": sql_dump,
+        "table_counts": table_counts,
+    }
+
+
+def import_local_database_payload(project_root, payload: dict) -> dict:
+    """Valida e substitui o SQLite local a partir de um export SQL ou JSON."""
+    if isinstance(payload, dict) and payload.get("format") == "esi-local-database-sql":
+        validated_payload = _validate_local_database_sql_import_payload(project_root, payload)
+    else:
+        validated_payload = _validate_local_database_import_payload(payload)
+    result = _write_sync_payload_to_sqlite_files(project_root, validated_payload)
+    return {
+        "success": True,
+        "message": "Banco local atualizado a partir do arquivo importado.",
+        **result,
+    }
+
+
+def _validate_local_database_import_payload(payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        raise ValueError("Arquivo invalido: JSON raiz deve ser um objeto.")
+
+    if payload.get("format") != "esi-local-database":
+        raise ValueError("Arquivo invalido: formato de banco nao reconhecido.")
+
+    if int(payload.get("version") or 0) != 1:
+        raise ValueError("Arquivo invalido: versao de exportacao nao suportada.")
+
+    tables = payload.get("tables")
+    if not isinstance(tables, dict):
+        raise ValueError("Arquivo invalido: bloco 'tables' ausente ou invalido.")
+
+    normalized_payload = _empty_sync_payload()
+    expected_columns = _get_sqlite_expected_columns()
+
+    for table_name in _SQLITE_SYNC_TABLES:
+        rows = tables.get(table_name)
+        if rows is None:
+            rows = []
+        if not isinstance(rows, list):
+            raise ValueError(f"Arquivo invalido: tabela '{table_name}' deve ser uma lista.")
+
+        allowed_columns = expected_columns.get(table_name) or set()
+        normalized_rows = []
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                raise ValueError(
+                    f"Arquivo invalido: registro {index + 1} da tabela '{table_name}' nao e um objeto."
+                )
+
+            unknown_columns = set(row.keys()) - allowed_columns
+            if unknown_columns:
+                unknown = ", ".join(sorted(unknown_columns))
+                raise ValueError(
+                    f"Arquivo invalido: coluna(s) desconhecida(s) em '{table_name}': {unknown}."
+                )
+
+            normalized_rows.append({key: row.get(key) for key in row.keys()})
+
+        normalized_payload[table_name] = normalized_rows
+
+    return normalized_payload
+
+
+def _validate_local_database_sql_import_payload(project_root, payload: dict) -> dict:
+    if int(payload.get("version") or 0) != 1:
+        raise ValueError("Arquivo invalido: versao de exportacao SQL nao suportada.")
+
+    sql_dump = str(payload.get("sql_dump") or "").strip()
+    if not sql_dump:
+        raise ValueError("Arquivo invalido: dump SQL vazio.")
+
+    project_root = Path(project_root).resolve()
+    database_dir = project_root / "database"
+    database_dir.mkdir(parents=True, exist_ok=True)
+    temp_sqlite_path = (database_dir / "app-import-validate.sqlite3.tmp").resolve()
+
+    try:
+        temp_sqlite_path.unlink()
+    except FileNotFoundError:
+        pass
+
+    sqlite_conn = sqlite3.connect(str(temp_sqlite_path))
+    try:
+        sqlite_conn.execute("PRAGMA foreign_keys = OFF")
+        sqlite_conn.executescript(sql_dump)
+        sqlite_conn.commit()
+    except Exception as exc:
+        raise ValueError(f"Arquivo SQL invalido ou corrompido: {exc}") from exc
+    finally:
+        sqlite_conn.close()
+
+    try:
+        payload_from_sql = _dump_sqlite_sync_payload(temp_sqlite_path, _SQLITE_SYNC_TABLES)
+        expected_columns = _get_sqlite_expected_columns()
+        for table_name, allowed_columns in expected_columns.items():
+            rows = payload_from_sql.get(table_name) or []
+            for row in rows:
+                unknown_columns = set(row.keys()) - allowed_columns
+                if unknown_columns:
+                    unknown = ", ".join(sorted(unknown_columns))
+                    raise ValueError(
+                        f"Arquivo SQL invalido: coluna(s) desconhecida(s) em '{table_name}': {unknown}."
+                    )
+        return payload_from_sql
+    finally:
+        try:
+            temp_sqlite_path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _get_sqlite_expected_columns() -> dict[str, set[str]]:
+    memory_conn = sqlite3.connect(":memory:")
+    try:
+        memory_conn.executescript(SCHEMA_SQL)
+        expected = {}
+        for table_name in _SQLITE_SYNC_TABLES:
+            rows = memory_conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()
+            expected[table_name] = {str(row[1]) for row in rows}
+        return expected
+    finally:
+        memory_conn.close()
 
 
 def _load_sync_baseline_payload(project_root):
@@ -1460,7 +1549,7 @@ def _merge_sync_payloads(
                             changed_columns=merged_row_result["blocked_columns"],
                             auto_merged_columns=merged_row_result["auto_merged_columns"],
                             reason=(
-                                "Alguns campos offline continuam apenas no computador porque o banco online "
+                                "Alguns campos locais continuam apenas no computador porque a base externa legada "
                                 "esta sem espaco suficiente para receber novas escritas agora."
                             ),
                         )
@@ -2539,7 +2628,7 @@ def _migrate_sqlite_if_needed(conn, project_root) -> None:
             if current_counts == table_counts:
                 return
             raise RuntimeError(
-                "O banco PostgreSQL possui registro de migracao do SQLite, mas a contagem atual diverge do esperado."
+                "A base externa legada possui registro de migracao do SQLite, mas a contagem atual diverge do esperado."
             )
 
         if any(count > 0 for count in current_counts.values()):
@@ -2547,7 +2636,7 @@ def _migrate_sqlite_if_needed(conn, project_root) -> None:
                 _store_migration_state(conn, source_signature, sqlite_path, table_counts)
                 return
             raise RuntimeError(
-                "O banco PostgreSQL ja contem dados e nao corresponde ao SQLite local. A migracao automatica foi abortada para evitar duplicacao."
+                "A base externa legada ja contem dados e nao corresponde ao SQLite local. A migracao automatica foi abortada para evitar duplicacao."
             )
 
         for table in sqlite_tables:
@@ -2561,7 +2650,7 @@ def _migrate_sqlite_if_needed(conn, project_root) -> None:
         migrated_counts = _collect_postgres_counts(conn, [table.name for table in ordered_tables])
         if migrated_counts != table_counts:
             raise RuntimeError(
-                f"Migracao concluida com contagem divergente. SQLite={table_counts} PostgreSQL={migrated_counts}"
+                f"Migracao concluida com contagem divergente. SQLite={table_counts} Base externa={migrated_counts}"
             )
 
         _store_migration_state(conn, source_signature, sqlite_path, table_counts)

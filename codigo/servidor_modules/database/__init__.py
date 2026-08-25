@@ -1,1 +1,1 @@
-"""Infraestrutura de persistencia PostgreSQL para o backend."""
+"""Infraestrutura de persistencia local para o backend."""

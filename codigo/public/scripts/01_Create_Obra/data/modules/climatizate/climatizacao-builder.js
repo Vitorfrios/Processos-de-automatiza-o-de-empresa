@@ -118,40 +118,6 @@ function buildClimatizationTable(roomId, roomName = "Sala") {
  ${buildClimaRow(
    [
      {
-       label: "Parede Oeste (m):",
-       field: "paredeOeste",
-       type: "number",
-       placeholder: "Ex: 5.5",
-     },
-     {
-       label: "Parede Leste (m):",
-       field: "paredeLeste",
-       type: "number",
-       placeholder: "Ex: 5.5",
-     },
-   ],
-   roomId,
- )}
- ${buildClimaRow(
-   [
-     {
-       label: "Parede Norte (m):",
-       field: "paredeNorte",
-       type: "number",
-       placeholder: "Ex: 8.0",
-     },
-     {
-       label: "Parede Sul (m):",
-       field: "paredeSul",
-       type: "number",
-       placeholder: "Ex: 8.0",
-     },
-   ],
-   roomId,
- )}
- ${buildClimaRow(
-   [
-     {
        label: "Área (m²):",
        field: "area",
        type: "number",
@@ -346,14 +312,27 @@ function buildClimaCell(field, roomId) {
   }
 
   const input =
-    field.type === "select"
-      ? buildSelectInput(field, roomId)
-      : buildTextInput(field, roomId);
+    field.field === "area"
+      ? buildAreaInput(field, roomId)
+      : field.type === "select"
+        ? buildSelectInput(field, roomId)
+        : buildTextInput(field, roomId);
 
   return `
  <div class="clima-cell">
  <label>${field.label}</label>
  ${input}
+ </div>
+ `;
+}
+
+function buildAreaInput(field, roomId) {
+  return `
+ <div class="area-input-group">
+ <button type="button" class="btn btn-small btn-secondary area-calc-button" onclick="openAreaCalculatorModal('${roomId}')">
+ Calcular
+ </button>
+ ${buildTextInput(field, roomId)}
  </div>
  `;
 }
@@ -430,18 +409,12 @@ function buildTextInput(field, roomId) {
   }
   // Para campo de área, adicionar evento para atualizar volume
   else if (field.field === "area") {
-    onInputEvents = `onchange="updateRoomVolumeFromArea(this); calculateVazaoArAndThermalGains('${roomId}')"`;
+    onInputEvents = `oninput="updateRoomVolumeFromArea(this)" onchange="updateRoomVolumeFromArea(this); calculateVazaoArAndThermalGains('${roomId}')"`;
   } else if (field.field && field.type !== "text") {
     onInputEvents = `onchange="calculateVazaoArAndThermalGains('${roomId}')"`;
   }
 
   // Sincronização para paredes e recálculo automático da área
-  if (field.field && field.field.includes("parede")) {
-    onInputEvents =
-      `onchange="if(window.updateRoomAreaFromWalls) window.updateRoomAreaFromWalls('${roomId}'); calculateVazaoArAndThermalGains('${roomId}')"` +
-      ` oninput="if(window.handleWallInputSync) window.handleWallInputSync('${roomId}', '${field.field}', this.value); if(window.updateRoomAreaFromWalls) window.updateRoomAreaFromWalls('${roomId}')"`;
-  }
-
   // Sincronização para campo ambiente
   if (field.field === "ambiente") {
     onInputEvents += ` oninput="if(window.syncAmbienteToTitle) window.syncAmbienteToTitle('${roomId}', this.value)"`;
@@ -582,36 +555,8 @@ function buildThermalGainsSection(roomId) {
  <td id="deltat-teto-${roomId}">0</td>
  <td id="ganho-teto-${roomId}">0</td>
  </tr>
- <tr>
- <td>Parede Oeste</td>
- <td id="area-parede-oeste-${roomId}">0</td>
- <td id="uvalue-parede-oeste-${roomId}">0</td>
- <td id="deltat-parede-oeste-${roomId}">0</td>
- <td id="ganho-parede-oeste-${roomId}">0</td>
- </tr>
- <tr>
- <td>Parede Leste</td>
- <td id="area-parede-leste-${roomId}">0</td>
- <td id="uvalue-parede-leste-${roomId}">0</td>
- <td id="deltat-parede-leste-${roomId}">0</td>
- <td id="ganho-parede-leste-${roomId}">0</td>
- </tr>
- <tr>
- <td>Parede Norte</td>
- <td id="area-parede-norte-${roomId}">0</td>
- <td id="uvalue-parede-norte-${roomId}">0</td>
- <td id="deltat-parede-norte-${roomId}">0</td>
- <td id="ganho-parede-norte-${roomId}">0</td>
- </tr>
- <tr>
- <td>Parede Sul</td>
- <td id="area-parede-sul-${roomId}">0</td>
- <td id="uvalue-parede-sul-${roomId}">0</td>
- <td id="deltat-parede-sul-${roomId}">0</td>
- <td id="ganho-parede-sul-${roomId}">0</td>
- </tr>
  <tr class="thermal-table-total">
- <td colspan="4">Total Paredes Externas e Teto</td>
+ <td colspan="4">Total Teto</td>
  <td id="total-externo-${roomId}">0</td>
  </tr>
  </tbody>
@@ -882,37 +827,11 @@ function updateRoomVolume(inputElement) {
   }
 }
 
-function getWallInputValue(roomId, fieldName) {
-  const input = document.querySelector(
-    `input[data-field="${fieldName}"][data-room-id="${roomId}"]`,
-  );
-  return input ? parseFloat(input.value) || 0 : 0;
-}
-
-function calculateAverageDimension(values) {
-  const validValues = values.filter(
-    (value) => Number.isFinite(value) && value > 0,
-  );
-  if (validValues.length === 0) return 0;
-
-  const total = validValues.reduce((sum, value) => sum + value, 0);
-  return total / validValues.length;
-}
-
 function calculateRoomAreaFromWalls(roomId) {
-  if (!roomId) return 0;
-
-  const mediaOesteLeste = calculateAverageDimension([
-    getWallInputValue(roomId, "paredeOeste"),
-    getWallInputValue(roomId, "paredeLeste"),
-  ]);
-
-  const mediaNorteSul = calculateAverageDimension([
-    getWallInputValue(roomId, "paredeNorte"),
-    getWallInputValue(roomId, "paredeSul"),
-  ]);
-
-  return mediaOesteLeste * mediaNorteSul;
+  const areaInput = document.querySelector(
+    `input[data-field="area"][data-room-id="${roomId}"]`,
+  );
+  return areaInput ? parseFloat(String(areaInput.value).replace(",", ".")) || 0 : 0;
 }
 
 function updateRoomAreaFromWalls(roomIdOrInput) {
@@ -923,17 +842,7 @@ function updateRoomAreaFromWalls(roomIdOrInput) {
 
   if (!roomId) return 0;
 
-  const area = calculateRoomAreaFromWalls(roomId);
-  const areaInput = document.querySelector(
-    `input[data-field="area"][data-room-id="${roomId}"]`,
-  );
-
-  if (areaInput) {
-    areaInput.value = area.toFixed(2);
-    updateRoomVolumeFromArea(areaInput);
-  }
-
-  return area;
+  return calculateRoomAreaFromWalls(roomId);
 }
 
 /**
@@ -1063,6 +972,7 @@ export {
   buildClimatizationTable,
   buildClimaRow,
   buildClimaCell,
+  buildAreaInput,
   buildSelectInput,
   buildTextInput,
   buildResultRow,

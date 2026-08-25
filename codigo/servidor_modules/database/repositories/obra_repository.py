@@ -7,7 +7,6 @@ from copy import deepcopy
 
 from servidor_modules.database.connection import (
     has_empresas_numero_cliente_column,
-    mark_local_offline_change,
     refresh_local_sql_dump,
 )
 from servidor_modules.database.storage import get_storage
@@ -26,7 +25,6 @@ class ObraRepository:
     def _sync_local_offline_sidecars(self, source):
         if getattr(self.conn, "is_sqlite", False):
             refresh_local_sql_dump(self.project_root)
-            mark_local_offline_change(self.project_root, source=source)
 
     def _supports_numero_cliente_column(self):
         return has_empresas_numero_cliente_column(
@@ -174,7 +172,7 @@ class ObraRepository:
             if supports_numero_cliente_column:
                 row = self.conn.execute(
                     """
-                    SELECT GREATEST(
+                    SELECT MAX(
                         COALESCE(
                             (
                                 SELECT ultimo_numero_cliente
@@ -187,7 +185,7 @@ class ObraRepository:
                             SELECT COALESCE(numero_cliente_final, 0)
                             FROM obras
                             WHERE empresa_codigo = ?
-                            ORDER BY numero_cliente_final DESC NULLS LAST
+                            ORDER BY COALESCE(numero_cliente_final, 0) DESC
                             LIMIT 1
                         ), 0)
                     ) AS max_numero
@@ -201,7 +199,7 @@ class ObraRepository:
                         SELECT COALESCE(numero_cliente_final, 0)
                         FROM obras
                         WHERE empresa_codigo = ?
-                        ORDER BY numero_cliente_final DESC NULLS LAST
+                        ORDER BY COALESCE(numero_cliente_final, 0) DESC
                         LIMIT 1
                     ), 0) AS max_numero
                     """,
@@ -216,7 +214,7 @@ class ObraRepository:
                     SELECT COALESCE(numero_cliente_final, 0)
                     FROM obras
                     WHERE empresa_codigo = ?
-                    ORDER BY numero_cliente_final DESC NULLS LAST
+                    ORDER BY COALESCE(numero_cliente_final, 0) DESC
                     LIMIT 1
                 ), 0) AS max_numero
                 """,
@@ -290,7 +288,7 @@ class ObraRepository:
                 cursor.execute(
                     f"""
                     UPDATE empresas AS empresas_destino
-                    SET ultimo_numero_cliente = GREATEST(
+                    SET ultimo_numero_cliente = MAX(
                         COALESCE(empresas_destino.ultimo_numero_cliente, 0),
                         COALESCE(obras_agrupadas.max_numero_cliente, 0)
                     )
@@ -311,7 +309,7 @@ class ObraRepository:
             cursor.execute(
                 """
                 UPDATE empresas AS empresas_destino
-                SET ultimo_numero_cliente = GREATEST(
+                SET ultimo_numero_cliente = MAX(
                     COALESCE(empresas_destino.ultimo_numero_cliente, 0),
                     COALESCE(obras_agrupadas.max_numero_cliente, 0)
                 )

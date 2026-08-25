@@ -246,6 +246,16 @@ async function autoSaveAdminDataBeforeNavigation(options = {}) {
 function resolveAutosaveNavigationTarget(target) {
   const link = target.closest?.("a[href]");
   if (link && !link.target) {
+    const href = String(link.getAttribute("href") || "");
+    if (
+      link.hasAttribute("download") ||
+      link.dataset.skipAutosave === "true" ||
+      href.startsWith("blob:") ||
+      href.startsWith("data:")
+    ) {
+      return null;
+    }
+
     return {
       url: link.href,
       replace: false,

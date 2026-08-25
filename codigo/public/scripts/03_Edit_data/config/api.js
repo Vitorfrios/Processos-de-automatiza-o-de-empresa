@@ -242,8 +242,7 @@ function getRealPendingChanges() {
 }
 
 function isOfflineSyncAvailable() {
-  const hostname = String(window.location.hostname || "").toLowerCase();
-  return !hostname.endsWith(".onrender.com");
+  return true;
 }
 
 function updateOfflineSyncButtonsState() {
@@ -262,8 +261,8 @@ function updateOfflineSyncButtonsState() {
     button.style.display = available ? "" : "none";
     button.setAttribute("aria-hidden", available ? "false" : "true");
     button.title = available
-      ? "Sincronizacao offline habilitada neste ambiente."
-      : "Disponivel apenas fora do ambiente Render.";
+      ? "Importa ou exporta o banco local definitivo."
+      : "Importacao/exportacao indisponivel neste ambiente.";
   });
 }
 
@@ -300,7 +299,7 @@ function abortAdminBackgroundRequests() {
 
 window.addEventListener("esi:shutdown-start", abortAdminBackgroundRequests);
 
-async function callOfflineSyncEndpoint(endpoint, { silent = false } = {}) {
+async function callOfflineSyncEndpoint(endpoint, { silent = false, body = {} } = {}) {
   if (isShutdownInProgress()) {
     return { success: false, skipped: true, message: "Shutdown em andamento." };
   }
@@ -314,7 +313,7 @@ async function callOfflineSyncEndpoint(endpoint, { silent = false } = {}) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify(body || {}),
       signal: controller.signal,
     });
 
@@ -637,7 +636,7 @@ function renderOfflineConflictFieldRows(conflict) {
       const recommendedText =
         recommendedAction === "import"
           ? "Importar o valor online para o computador"
-          : "Exportar o valor offline para o banco online";
+          : "Exportar o valor local para o arquivo";
 
       return `
         <tr>
@@ -845,7 +844,7 @@ function resolveFriendlyOfflineSyncMessage(result) {
   }
 
   if (result.success && result.skipped) {
-    return "Seus dados ja estavam atualizados entre a copia local e o banco online.";
+    return "Seus dados locais ja estavam atualizados.";
   }
 
   if (result.success) {
@@ -863,107 +862,15 @@ function resolveFriendlyOfflineSyncMessage(result) {
 }
 
 function applySystemStatusPayload(payload) {
-  const badge = document.getElementById("systemStatusBadge");
-  const text = document.getElementById("systemStatusText");
-  const notice = document.getElementById("offlineSyncNotice");
-
-  if (!badge || !text || !notice || !payload || typeof payload !== "object") {
-    return;
-  }
-
-  const mode = payload.data_source_mode === "online" ? "online" : "offline";
-  const summary =
-    payload.data_source_summary ||
-    (mode === "online"
-      ? "Sistema usando base online."
-      : "Sistema usando base local.");
-
-  badge.classList.remove("online", "offline");
-  badge.classList.add(mode);
-  text.textContent = summary;
-
-  const pendingMessage = String(payload.pending_sync_message || "").trim();
-  if (pendingMessage) {
-    notice.textContent = pendingMessage;
-    notice.style.display = "";
-  } else {
-    notice.textContent = "";
-    notice.style.display = "none";
-  }
+  return payload || null;
 }
 
 function applyBootstrapSystemStatus() {
-  const bootstrapPayload =
-    window.__SYSTEM_BOOTSTRAP__ && typeof window.__SYSTEM_BOOTSTRAP__ === "object"
-      ? window.__SYSTEM_BOOTSTRAP__
-      : null;
-
-  const storageStatus = bootstrapPayload?.storage_status;
-  if (storageStatus && typeof storageStatus === "object") {
-    applySystemStatusPayload(storageStatus);
-    return true;
-  }
-
   return false;
 }
 
 async function refreshSystemStatus() {
-  if (isShutdownInProgress()) {
-    return null;
-  }
-
-  const now = Date.now();
-  if (systemStatusRefreshInFlight) {
-    return systemStatusRefreshInFlight;
-  }
-
-  if (lastSystemStatusPayload && now - lastSystemStatusFetchedAt < SYSTEM_STATUS_CACHE_MS) {
-    applySystemStatusPayload(lastSystemStatusPayload);
-    return lastSystemStatusPayload;
-  }
-
-  try {
-    systemStatusAbortController = new AbortController();
-    systemStatusRefreshInFlight = fetch(`/api/system/storage-status?t=${Date.now()}`, {
-      cache: "no-store",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-      },
-      signal: systemStatusAbortController.signal,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Erro HTTP ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((payload) => {
-        lastSystemStatusPayload = payload;
-        lastSystemStatusFetchedAt = Date.now();
-        if (window.__SYSTEM_BOOTSTRAP__ && typeof window.__SYSTEM_BOOTSTRAP__ === "object") {
-          window.__SYSTEM_BOOTSTRAP__.storage_status = payload;
-        }
-        applySystemStatusPayload(payload);
-        return payload;
-      })
-      .finally(() => {
-        systemStatusRefreshInFlight = null;
-        systemStatusAbortController = null;
-      });
-
-    return await systemStatusRefreshInFlight;
-  } catch (error) {
-    if (isShutdownInProgress()) {
-      systemStatusRefreshInFlight = null;
-      systemStatusAbortController = null;
-      return null;
-    }
-    console.warn(" Falha ao atualizar status do sistema:", error);
-    systemStatusRefreshInFlight = null;
-    systemStatusAbortController = null;
-    return null;
-  }
+  return null;
 }
 
 function notifyOfflineStatusMessage(result) {
@@ -989,53 +896,11 @@ function notifyOfflineStatusMessage(result) {
 async function reconcileOfflineAndOnline({
   endpoint = "/api/system/offline/reconcile",
 } = {}) {
-  if (isShutdownInProgress()) {
-    return { success: false, skipped: true, message: "Shutdown em andamento." };
-  }
-
-  if (!isOfflineSyncAvailable()) {
-    return { success: false, skipped: true };
-  }
-
-  if (offlineReconcileInFlight) {
-    return {
-      success: false,
-      skipped: true,
-      message: "Uma reconciliacao offline/online ja esta em andamento.",
-    };
-  }
-
-  offlineReconcileInFlight = true;
-  try {
-    const result = await callOfflineSyncEndpoint(endpoint, { silent: true });
-    notifyOfflineReconcileWarnings(result);
-    notifyOfflineStatusMessage(result);
-    refreshSystemStatus();
-
-    if (result?.success) {
-      console.log(resolveFriendlyOfflineSyncMessage(result));
-      return result;
-    }
-
-    if (result?.skipped) {
-      console.info(resolveFriendlyOfflineSyncMessage(result));
-      return result;
-    }
-
-    console.warn(
-      " Falha na reconciliacao offline/online:",
-      result?.error || result?.message || "erro desconhecido",
-    );
-    return result;
-  } catch (error) {
-    if (isShutdownInProgress()) {
-      return { success: false, skipped: true, message: "Shutdown em andamento." };
-    }
-    console.warn(" Falha na reconciliacao offline/online:", error);
-    return { success: false, error: error.message };
-  } finally {
-    offlineReconcileInFlight = false;
-  }
+  return {
+    success: true,
+    skipped: true,
+    message: "Sincronizacao online removida. Banco local definitivo em uso.",
+  };
 }
 
 async function backgroundSyncOfflineAfterSave() {
@@ -1060,8 +925,16 @@ export async function importOnlineToOffline() {
       }
     }
 
-    showLoading("Importando dados online para o banco offline...");
-    const result = await callOfflineSyncEndpoint("/api/system/offline/import");
+    const file = await selectLocalDatabaseFile();
+    if (!file) {
+      return { success: false, skipped: true };
+    }
+
+    showLoading("Validando e importando arquivo do banco local...");
+    const importPayload = await readLocalDatabaseFile(file);
+    const result = await callOfflineSyncEndpoint("/api/system/offline/import", {
+      body: importPayload,
+    });
 
     const totalRegistros = Object.values(result.table_counts || {}).reduce(
       (total, count) => total + Number(count || 0),
@@ -1069,19 +942,15 @@ export async function importOnlineToOffline() {
     );
 
     showSuccess(
-      `Importacao concluida. ${totalRegistros} registros copiados para database/app.sqlite3.`,
+      `Importacao concluida. ${totalRegistros} registros carregados no banco local.`,
     );
-
-    if (result.sql_dump_path) {
-      showInfo("Copia de seguranca de dados local atualizada com sucesso.");
-    }
 
     refreshSystemStatus();
     await loadData();
 
     return result;
   } catch (error) {
-    console.error("Erro ao importar online para offline:", error);
+    console.error("Erro ao importar arquivo para banco local:", error);
     showError(`Erro ao importar: ${error.message}`);
     return { success: false, error: error.message };
   } finally {
@@ -1091,7 +960,7 @@ export async function importOnlineToOffline() {
 
 export async function exportOfflineToOnline() {
   try {
-    showLoading("Exportando banco offline para o online...");
+    showLoading("Exportando banco local...");
     const result = await callOfflineSyncEndpoint("/api/system/offline/export");
 
     if (result?.skipped) {
@@ -1099,12 +968,12 @@ export async function exportOfflineToOnline() {
       return result;
     }
 
-    showSuccess(result.message || "Banco offline exportado com sucesso.");
+    downloadLocalDatabaseExport(result);
+    showSuccess(result.message || "Banco local exportado com sucesso.");
     refreshSystemStatus();
-    await loadData();
     return result;
   } catch (error) {
-    console.error("Erro ao exportar offline para online:", error);
+    console.error("Erro ao exportar banco local:", error);
     showError(`Erro ao exportar: ${error.message}`);
     return { success: false, error: error.message };
   } finally {
@@ -1112,27 +981,79 @@ export async function exportOfflineToOnline() {
   }
 }
 
+function selectLocalDatabaseFile() {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".sql,.json,application/sql,application/json,text/plain";
+    input.style.display = "none";
+    input.addEventListener(
+      "change",
+      () => {
+        resolve(input.files?.[0] || null);
+        input.remove();
+      },
+      { once: true },
+    );
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
+function readLocalDatabaseFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const text = String(reader.result || "");
+        const fileName = String(file?.name || "").toLowerCase();
+        if (fileName.endsWith(".sql")) {
+          resolve({
+            format: "esi-local-database-sql",
+            version: 1,
+            sql_dump: text,
+          });
+          return;
+        }
+        resolve(JSON.parse(text));
+      } catch (error) {
+        reject(new Error("Arquivo invalido ou corrompido. Selecione um SQL ou JSON exportado pelo sistema."));
+      }
+    };
+    reader.onerror = () => reject(new Error("Nao foi possivel ler o arquivo selecionado."));
+    reader.readAsText(file, "utf-8");
+  });
+}
+
+function downloadLocalDatabaseExport(payload) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const filename = `esi-banco-local-${timestamp}.sql`;
+  const sqlDump = String(payload?.sql_dump || "");
+  if (!sqlDump.trim()) {
+    throw new Error("Exportacao sem conteudo SQL retornado pelo servidor.");
+  }
+  const blob = new Blob([sqlDump], {
+    type: "application/sql;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.rel = "noopener";
+  link.dataset.skipAutosave = "true";
+  document.body.appendChild(link);
+  link.click();
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
 window.closeOfflineConflictModal = closeOfflineConflictModal;
 window.runOfflineConflictSync = runOfflineConflictSync;
 
 function startOfflineReconnectMonitor() {
-  if (!isOfflineSyncAvailable() || offlineReconnectMonitorStarted) {
-    return;
-  }
-
   offlineReconnectMonitorStarted = true;
-  let onlineRecoveryChecked = false;
-
-  const triggerReconcile = () => {
-    if (onlineRecoveryChecked) {
-      return;
-    }
-    onlineRecoveryChecked = true;
-    reconcileOfflineAndOnline();
-  };
-
-  window.addEventListener("online", triggerReconcile);
-  setTimeout(triggerReconcile, 2000);
 }
 
 // Função para corrigir dados automaticamente

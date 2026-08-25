@@ -15,6 +15,8 @@
 @import url('components/tubos.css');
 @import url('components/servicos.css');
 @import url('components/ventilacao.css');
+@import url('components/area-calculator.css');
+@import url('components/area-calculator-in-modal.css');
 @import url('layout/grid.css');
 @import url('layout/modal.css');
 @import url('layout/exit-modal.css');

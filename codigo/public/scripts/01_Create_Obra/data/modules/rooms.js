@@ -307,7 +307,6 @@ function initializeRoomComponents(obraId, projectId, roomName, roomId) {
   scheduleRoomTask(
     () => {
       setupBidirectionalTitleAmbienteSync(roomId, roomName);
-      setupFirstInteractionWallSync(roomId);
       initializeDefaultValues(roomId, roomName);
       initializeAcessoriosSystem(roomId);
 
@@ -421,169 +420,13 @@ function setupTitleChangeObserver(roomTitle, roomId) {
   });
 }
 
-// FUNÇÃO PARA SINCRONIZAÇÃO DE PAREDES (APENAS PRIMEIRA INTERAÇÃO)
-function setupFirstInteractionWallSync(roomId) {
-  const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
-  if (!roomBlock) return;
-
-  const paredeOeste = roomBlock.querySelector(
-    'input[data-field="paredeOeste"]',
-  );
-  const paredeLeste = roomBlock.querySelector(
-    'input[data-field="paredeLeste"]',
-  );
-  const paredeNorte = roomBlock.querySelector(
-    'input[data-field="paredeNorte"]',
-  );
-  const paredeSul = roomBlock.querySelector('input[data-field="paredeSul"]');
-
-  if (paredeOeste && paredeLeste) {
-    setupFirstInteractionWallPair(
-      paredeOeste,
-      paredeLeste,
-      roomId,
-      "Oeste",
-      "Leste",
-    );
-  }
-
-  if (paredeNorte && paredeSul) {
-    setupFirstInteractionWallPair(
-      paredeNorte,
-      paredeSul,
-      roomId,
-      "Norte",
-      "Sul",
-    );
-  }
-}
-
-// FUNÇÃO PARA SINCRONIZAÇÃO DE PAR DE PAREDES (APENAS PRIMEIRA INTERAÇÃO)
-function setupFirstInteractionWallPair(input1, input2, roomId, name1, name2) {
-  let isFirstInteractionPair = true;
-  let isEditing1 = false;
-  let isEditing2 = false;
-
-  const placeholderValues = ["Ex: 5.5", "Ex: 8.0", ""];
-
-  function refreshCalculatedArea() {
-    if (typeof window.updateRoomAreaFromWalls === "function") {
-      window.updateRoomAreaFromWalls(roomId);
-    }
-  }
-
-  function syncDuringFirstEdit(editingInput, otherInput, value) {
-    if (!isFirstInteractionPair || !value || placeholderValues.includes(value))
-      return;
-
-    if (editingInput === input1 && isEditing1) {
-      otherInput.value = value;
-      refreshCalculatedArea();
-      triggerCalculation(roomId);
-    } else if (editingInput === input2 && isEditing2) {
-      otherInput.value = value;
-      refreshCalculatedArea();
-      triggerCalculation(roomId);
-    }
-  }
-
-  input1.addEventListener("focus", function () {
-    if (isFirstInteractionPair) isEditing1 = true;
-  });
-
-  input1.addEventListener("input", function () {
-    if (isEditing1) syncDuringFirstEdit(input1, input2, this.value);
-  });
-
-  input1.addEventListener("blur", function () {
-    if (isFirstInteractionPair) {
-      isFirstInteractionPair = false;
-      isEditing1 = false;
-      isEditing2 = false;
-    }
-    refreshCalculatedArea();
-  });
-
-  input2.addEventListener("focus", function () {
-    if (isFirstInteractionPair) isEditing2 = true;
-  });
-
-  input2.addEventListener("input", function () {
-    if (isEditing2) syncDuringFirstEdit(input2, input1, this.value);
-  });
-
-  input2.addEventListener("blur", function () {
-    if (isFirstInteractionPair) {
-      isFirstInteractionPair = false;
-      isEditing2 = false;
-      isEditing1 = false;
-    }
-    refreshCalculatedArea();
-  });
-
-  if (input1.value && !placeholderValues.includes(input1.value)) {
-    if (!input2.value || placeholderValues.includes(input2.value)) {
-      input2.value = input1.value;
-    }
-  } else if (input2.value && !placeholderValues.includes(input2.value)) {
-    if (!input1.value || placeholderValues.includes(input1.value)) {
-      input1.value = input2.value;
-    }
-  }
-
-  refreshCalculatedArea();
-}
-
 // FUNÇÃO PARA INICIALIZAÇÃO DOS VALORES PADRÃO
 function initializeDefaultValues(roomId, roomName) {
-  const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
-  if (!roomBlock) return;
-
-  const walls = [
-    { field: "paredeOeste", selector: 'input[data-field="paredeOeste"]' },
-    { field: "paredeLeste", selector: 'input[data-field="paredeLeste"]' },
-    { field: "paredeNorte", selector: 'input[data-field="paredeNorte"]' },
-    { field: "paredeSul", selector: 'input[data-field="paredeSul"]' },
-  ];
-
-  walls.forEach((wall) => {
-    const input = roomBlock.querySelector(wall.selector);
-    if (
-      input &&
-      input.value &&
-      input.value !== "Ex: 5.5" &&
-      input.value !== "Ex: 8.0"
-    ) {
-      syncOppositeWallInitial(roomId, wall.field, input.value);
-    }
-  });
-}
-
-// FUNÇÃO AUXILIAR PARA SINCRONIZAÇÃO INICIAL DAS PAREDES
-function syncOppositeWallInitial(roomId, field, value) {
-  const oppositeMap = {
-    paredeOeste: "paredeLeste",
-    paredeLeste: "paredeOeste",
-    paredeNorte: "paredeSul",
-    paredeSul: "paredeNorte",
-  };
-
-  const oppositeField = oppositeMap[field];
-  if (oppositeField) {
-    const roomBlock = document.querySelector(`[data-room-id="${roomId}"]`);
-    if (roomBlock) {
-      const oppositeInput = roomBlock.querySelector(
-        `input[data-field="${oppositeField}"]`,
-      );
-      if (
-        oppositeInput &&
-        (!oppositeInput.value ||
-          oppositeInput.value === "Ex: 5.5" ||
-          oppositeInput.value === "Ex: 8.0")
-      ) {
-        oppositeInput.value = value;
-      }
-    }
+  const areaInput = document.querySelector(
+    `input[data-field="area"][data-room-id="${roomId}"]`,
+  );
+  if (areaInput && (!areaInput.value || Number(areaInput.value) < 0)) {
+    areaInput.value = "0";
   }
 }
 
@@ -622,10 +465,7 @@ function verifyRoomSetupComplete(roomId) {
   const elements = {
     Titulo: roomBlock.querySelector(".room-title"),
     Ambiente: findAmbienteInput(roomId),
-    "Parede Oeste": roomBlock.querySelector('input[data-field="paredeOeste"]'),
-    "Parede Leste": roomBlock.querySelector('input[data-field="paredeLeste"]'),
-    "Parede Norte": roomBlock.querySelector('input[data-field="paredeNorte"]'),
-    "Parede Sul": roomBlock.querySelector('input[data-field="paredeSul"]'),
+    Area: roomBlock.querySelector('input[data-field="area"]'),
   };
 
   let allFound = true;
@@ -647,22 +487,7 @@ if (typeof window !== "undefined") {
         roomBlock.querySelector(".room-title")?.textContent,
       );
       console.log("- Ambiente:", findAmbienteInput(roomId)?.value);
-      console.log(
-        "- Parede Oeste:",
-        roomBlock.querySelector('input[data-field="paredeOeste"]')?.value,
-      );
-      console.log(
-        "- Parede Leste:",
-        roomBlock.querySelector('input[data-field="paredeLeste"]')?.value,
-      );
-      console.log(
-        "- Parede Norte:",
-        roomBlock.querySelector('input[data-field="paredeNorte"]')?.value,
-      );
-      console.log(
-        "- Parede Sul:",
-        roomBlock.querySelector('input[data-field="paredeSul"]')?.value,
-      );
+      console.log("- Area:", roomBlock.querySelector('input[data-field="area"]')?.value);
     }
   };
 }

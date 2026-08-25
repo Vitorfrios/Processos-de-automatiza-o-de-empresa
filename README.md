@@ -6,13 +6,12 @@ O projeto combina:
 
 - frontend em JavaScript modular, sem framework SPA tradicional;
 - backend Python com servidor HTTP proprio;
-- persistencia principal em PostgreSQL hospedado no Supabase;
-- snapshot offline local em SQLite para operacao e contingencia fora do ambiente online;
+- persistencia principal em SQLite local;
+- importacao/exportacao do banco local por arquivo SQL portavel;
 - servidor online hospedado por render.com [https://app-esienergia.onrender.com];
 - autenticacao para cliente e administrador;
 - exportacao de propostas tecnicas e comerciais;
-- sincronizacao de empresas, credenciais de acesso, catalogos, obras e sessoes;
-- reconciliacao assincrona entre banco online e snapshot offline local.
+- persistencia de empresas, credenciais de acesso, catalogos, obras e sessoes.
 
 ## Visão geral
 
@@ -485,37 +484,29 @@ Responsabilidades:
 
 ## Persistência de dados
 
-O sistema hoje e hibrido, mas com hierarquia clara entre online e offline.
+O sistema usa o SQLite local como banco definitivo. O fluxo com banco externo foi removido da operacao ativa.
 
-### Banco online principal
+### Banco local definitivo
 
-Banco principal de producao:
+Banco principal de producao local:
 
-- PostgreSQL acessado por `DATABASE_URL`
-- conexao com `sslmode=require`
-- pool gerenciado por `psycopg_pool`
-- inicializacao automatica do schema na primeira conexao
+- [app.sqlite3](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/database/app.sqlite3)
+- schema inicializado automaticamente pelo backend;
+- dump local atualizado em [app-offline-backup.sql](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/database/app-offline-backup.sql);
+- importacao/exportacao manual por arquivo SQL no painel `/admin/data`.
 
 Arquivos:
 
 - [connection.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/database/connection.py)
 - [storage.py](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/servidor_modules/database/storage.py)
 
-### Snapshot offline local
-
-Arquivos locais usados fora do ambiente Render:
-
-- [app.sqlite3](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/database/app.sqlite3)
-- [app-offline-backup.sql](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/database/app-offline-backup.sql)
-- [sync-base.json](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/database/sync-base.json)
-- [sync-metadata.json](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/database/sync-metadata.json)
+### Importacao e exportacao
 
 Uso:
 
-- manter um espelho local controlado do banco online;
-- permitir importacao online -> offline;
-- permitir exportacao offline -> online quando o baseline estiver alinhado;
-- registrar digests, conflitos e ultima direcao de sincronizacao.
+- Exportar baixa um arquivo `esi-banco-local-*.sql` com todas as tabelas do SQLite;
+- Importar abre o seletor de arquivo e substitui o banco local com um arquivo SQL exportado pelo sistema;
+- as rotas antigas de reconciliacao online continuam apenas como compatibilidade e nao sincronizam com banco externo.
 
 Schema central:
 
@@ -547,32 +538,14 @@ Diretório:
 
 - [json](/c:/Users/vitor/OneDrive/Repositórios/app.esienergia/codigo/json)
 
-## Sync online e offline
+## Banco local e arquivo portavel
 
-O banco online e a fonte primaria. O SQLite local funciona como snapshot sincronizado e nao como banco mestre permanente.
-
-Arquivos e artefatos principais:
-
-- `database/app.sqlite3`: snapshot local consultavel;
-- `database/app-offline-backup.sql`: dump SQL do snapshot local;
-- `database/sync-base.json`: baseline confiavel da ultima sincronizacao alinhada;
-- `database/sync-metadata.json`: status, digests, conflitos e historico da reconciliacao.
-
-Comportamento operacional:
-
-- no startup local, o backend aquece a conexao PostgreSQL e tenta reconciliar o snapshot local automaticamente;
-- no Render, as rotas e rotinas de snapshot offline local ficam desabilitadas;
-- importacao online -> offline sobrescreve o snapshot local apenas quando nao ha alteracoes locais fora do baseline;
-- exportacao offline -> online so acontece quando o online ainda corresponde ao baseline anterior, evitando sobrescrever alteracoes remotas;
-- a reconciliacao pode alinhar os lados automaticamente quando nao existe conflito destrutivo;
-- apos salvamentos online, o backend pode atualizar o snapshot local em background.
-
-Endpoints do fluxo offline:
+Endpoints mantidos para a interface administrativa:
 
 - `POST /api/system/offline/import`
 - `POST /api/system/offline/export`
-- `POST /api/system/offline/reconcile`
-- `POST /api/system/offline/background-save`
+- `POST /api/system/offline/reconcile` retorna compatibilidade sem sincronizacao;
+- `POST /api/system/offline/background-save` retorna compatibilidade sem sincronizacao.
 
 Implementacao central:
 
@@ -648,6 +621,8 @@ Comando:
 python setup.py build_exe
 ```
 
+Observacao sobre `codigo/public/dist`: este repositorio nao possui `package.json`, Vite, Webpack, Rollup ou script de minificacao para recriar essa pasta. O comando acima copia `codigo/public` para dentro do executavel, mas nao gera os arquivos minificados de `codigo/public/dist`.
+
 Fluxo recomendado:
 
 1. altere apenas os arquivos originais em `codigo/`, `setup.py`, `assets/` e templates;
@@ -694,8 +669,8 @@ Regras importantes:
 - a obra administrativa consegue criar credenciais da empresa sem sair da tela;
 - o grid de empresas também consegue criar e editar credenciais;
 - a sincronização empresa ↔ obra depende do salvamento do fluxo correspondente;
-- a persistencia principal esta no PostgreSQL online;
-- o SQLite local e um snapshot sincronizado para operacao offline e contingencia;
+- a persistencia principal esta no SQLite local;
+- Importar/Exportar em `/admin/data` trabalha com arquivo SQL portavel do banco local;
 - exportacao por email depende de email do ADM configurado, com tentativa via Resend e fallback SMTP;
 - recuperação de token depende de email de recuperação válido;
 - tokens podem ter validade e expiração;

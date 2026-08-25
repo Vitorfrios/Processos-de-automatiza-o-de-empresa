@@ -1,0 +1,2274 @@
+
+/* ==== INÍCIO: public/scripts/01_Create_Obra/data/modules/climatizate/area-calculator-canvas.js ==== */
+// area-calculator-canvas.js
+export class AreaCalculatorCanvas {
+  constructor(state) {
+    this.state = state;
+    this.mouse = null;
+    this.canvas = document.getElementById("areaCalculatorCanvas");
+    this.ctx = this.canvas?.getContext("2d");
+    this.SNAP_RAIO = 15;
+    this.GRID_SNAP_RAIO = 9;
+    this.PIXELS_PER_METER = 40;
+    this.editingWallIndex = -1;
+    this.hoveredWallIndex = -1;
+    this.lastGridSnap = false;
+  }
+
+  updateState(newState) {
+    this.state = newState;
+    this.mouse = null;
+    this.editingWallIndex = -1;
+    this.hoveredWallIndex = -1;
+    this.updateSnapVertices();
+  }
+
+  setEditingWall(index) {
+    this.editingWallIndex = index;
+  }
+
+  updateSnapVertices() {
+    this.state.snapVertices = this.state.points.map((p, index) => ({
+      x: p.x,
+      y: p.y,
+      index: index,
+      isFirst: index === 0,
+    }));
+  }
+
+  getPixelsPerMeter() {
+    return this.PIXELS_PER_METER * this.state.scale;
+  }
+
+  getCanvasCoords(clientX, clientY) {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left) - this.state.offsetX,
+      y: (clientY - rect.top) - this.state.offsetY,
+    };
+  }
+
+  getCanvasPoint(event) {
+    return this.getCanvasCoords(event.clientX, event.clientY);
+  }
+
+  // ---------- Snap em vértices existentes ----------
+  findSnapPoint(x, y) {
+    if (this.state.snapVertices.length === 0) return null;
+
+    let closest = null;
+    let closestDist = this.SNAP_RAIO;
+
+    for (let vertex of this.state.snapVertices) {
+      const dx = x - vertex.x;
+      const dy = y - vertex.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = vertex;
+      }
+    }
+
+    return closest;
+  }
+
+  // ---------- Snap na grade (precisão tipo CAD) ----------
+  findGridSnapPoint(x, y) {
+    const ppm = this.getPixelsPerMeter();
+    const passo = this.getGridStepMeters(ppm) * ppm;
+    if (passo < 5) return null;
+
+    const nearX = Math.round(x / passo) * passo;
+    const nearY = Math.round(y / passo) * passo;
+    const dist = Math.sqrt((x - nearX) ** 2 + (y - nearY) ** 2);
+
+    if (dist < this.GRID_SNAP_RAIO) {
+      return { x: nearX, y: nearY, isGrid: true };
+    }
+    return null;
+  }
+
+  getGridStepMeters(ppm) {
+    return ppm >= 40 ? 1 : (ppm >= 20 ? 0.5 : (ppm >= 10 ? 0.2 : 0.1));
+  }
+
+  // Resolve o ponto final considerando: vértice > grade > ortho (ângulo) > livre
+  resolvePoint(rawPoint) {
+    const vertexSnap = this.findSnapPoint(rawPoint.x, rawPoint.y);
+    if (vertexSnap) {
+      return { point: { x: vertexSnap.x, y: vertexSnap.y }, snap: vertexSnap, gridSnap: false };
+    }
+
+    const gridSnap = this.findGridSnapPoint(rawPoint.x, rawPoint.y);
+    if (gridSnap) {
+      return { point: { x: gridSnap.x, y: gridSnap.y }, snap: null, gridSnap: true };
+    }
+
+    return { point: rawPoint, snap: null, gridSnap: false };
+  }
+
+  isOrthoActive() {
+    return this.state.orthoMode !== this.state.shiftPressed; // XOR: toggle persistente + tecla temporária invertem
+  }
+
+  applyOrtho(last, point) {
+    if (!this.isOrthoActive() || !last) return point;
+    const step = ((this.state.angleSnapStep || 90) * Math.PI) / 180;
+    const dx = point.x - last.x;
+    const dy = point.y - last.y;
+    const angulo = Math.atan2(dy, dx);
+    const anguloAjustado = Math.round(angulo / step) * step;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    return {
+      x: last.x + Math.cos(anguloAjustado) * dist,
+      y: last.y + Math.sin(anguloAjustado) * dist,
+    };
+  }
+
+  handleMouseMove(event) {
+    if (this.state.closed || this.state.points.length === 0 || !this.state.isDrawing) {
+      this.mouse = null;
+      this.state.snapActive = false;
+      this.state.snapPoint = null;
+      this.state.gridSnapActive = false;
+      this.hoveredWallIndex = -1;
+      this.draw();
+      return;
+    }
+
+    const raw = this.getCanvasPoint(event);
+    this.hoveredWallIndex = this.findWallNearPoint(raw);
+
+    const resolved = this.resolvePoint(raw);
+
+    if (resolved.snap) {
+      this.state.snapActive = true;
+      this.state.gridSnapActive = false;
+      this.state.snapPoint = resolved.snap;
+      this.mouse = resolved.point;
+      this.draw();
+      return;
+    }
+
+    if (resolved.gridSnap) {
+      this.state.snapActive = false;
+      this.state.gridSnapActive = true;
+      this.state.snapPoint = resolved.point;
+      this.mouse = resolved.point;
+      this.draw();
+      return;
+    }
+
+    this.state.snapActive = false;
+    this.state.gridSnapActive = false;
+    this.state.snapPoint = null;
+    this.mouse = raw;
+    this.draw();
+  }
+
+  handleMouseLeave() {
+    this.mouse = null;
+    this.state.snapActive = false;
+    this.state.gridSnapActive = false;
+    this.state.snapPoint = null;
+    this.hoveredWallIndex = -1;
+    this.draw();
+  }
+
+  findWallNearPoint(point) {
+    const radius = 20;
+    for (let index = 0; index < this.state.walls.length; index += 1) {
+      const start = this.state.points[index];
+      const end = this.state.points[index + 1];
+      if (!start || !end) continue;
+
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const lengthSquared = dx * dx + dy * dy;
+      if (lengthSquared === 0) continue;
+
+      let t = ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared;
+      t = Math.max(0, Math.min(1, t));
+      const nearX = start.x + t * dx;
+      const nearY = start.y + t * dy;
+      const distance = Math.sqrt((point.x - nearX) ** 2 + (point.y - nearY) ** 2);
+      if (distance <= radius) {
+        return index;
+      }
+    }
+    return -1;
+  }
+
+  // =====================================================
+  // DRAW
+  // =====================================================
+  draw() {
+    if (!this.ctx || !this.canvas) return;
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.drawGrid();
+
+    if (this.state.points.length === 0) {
+      this.drawCompass();
+      this.drawRulers();
+      return;
+    }
+
+    this.drawWalls();
+    this.drawOrthoGuides();
+    this.drawGuideLine();
+    this.drawDimensions();
+    this.drawVertices();
+    this.drawCompass();
+    this.drawRulers();
+    this.updateSnapIndicator();
+  }
+
+  drawGrid() {
+    const ppm = this.getPixelsPerMeter();
+    const passo = this.getGridStepMeters(ppm);
+    const passoPixels = passo * ppm;
+
+    if (passoPixels < 5) return;
+
+    this.ctx.strokeStyle = "rgba(60, 60, 60, 0.15)";
+    this.ctx.lineWidth = 0.8;
+
+    for (let x = 0; x <= this.canvas.width; x += passoPixels) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, 0);
+      this.ctx.lineTo(x, this.canvas.height);
+      this.ctx.stroke();
+    }
+    for (let y = 0; y <= this.canvas.height; y += passoPixels) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, y);
+      this.ctx.lineTo(this.canvas.width, y);
+      this.ctx.stroke();
+    }
+
+    // Linhas "mestras" a cada 5 unidades de grade (mais escuras, tipo blueprint)
+    const passoMestrePixels = passoPixels * 5;
+    this.ctx.strokeStyle = "rgba(50, 60, 90, 0.28)";
+    this.ctx.lineWidth = 1;
+    for (let x = 0; x <= this.canvas.width; x += passoMestrePixels) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, 0);
+      this.ctx.lineTo(x, this.canvas.height);
+      this.ctx.stroke();
+    }
+    for (let y = 0; y <= this.canvas.height; y += passoMestrePixels) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, y);
+      this.ctx.lineTo(this.canvas.width, y);
+      this.ctx.stroke();
+    }
+  }
+
+  // Régua nas bordas superior e esquerda, em metros
+  drawRulers() {
+    const ppm = this.getPixelsPerMeter();
+    const passo = this.getGridStepMeters(ppm);
+    const passoPixels = passo * ppm;
+    if (passoPixels < 5) return;
+
+    const RULER_SIZE = 18;
+    this.ctx.save();
+    this.ctx.fillStyle = "rgba(30, 41, 59, 0.85)";
+    this.ctx.fillRect(0, 0, this.canvas.width, RULER_SIZE);
+    this.ctx.fillRect(0, 0, RULER_SIZE, this.canvas.height);
+
+    this.ctx.fillStyle = "#e2e8f0";
+    this.ctx.font = "9px Consolas, monospace";
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "top";
+
+    for (let x = passoPixels; x < this.canvas.width; x += passoPixels) {
+      const metros = x / ppm;
+      const isMajor = Math.abs(Math.round(metros) - metros) < 1e-6;
+      this.ctx.strokeStyle = "rgba(226,232,240,0.6)";
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, RULER_SIZE - (isMajor ? 10 : 5));
+      this.ctx.lineTo(x, RULER_SIZE);
+      this.ctx.stroke();
+      if (isMajor) this.ctx.fillText(metros.toFixed(0), x, 1);
+    }
+
+    this.ctx.textAlign = "left";
+    this.ctx.textBaseline = "middle";
+    for (let y = passoPixels; y < this.canvas.height; y += passoPixels) {
+      const metros = y / ppm;
+      const isMajor = Math.abs(Math.round(metros) - metros) < 1e-6;
+      this.ctx.strokeStyle = "rgba(226,232,240,0.6)";
+      this.ctx.beginPath();
+      this.ctx.moveTo(RULER_SIZE - (isMajor ? 10 : 5), y);
+      this.ctx.lineTo(RULER_SIZE, y);
+      this.ctx.stroke();
+      if (isMajor) {
+        this.ctx.save();
+        this.ctx.translate(2, y);
+        this.ctx.fillText(metros.toFixed(0), 6, 0);
+        this.ctx.restore();
+      }
+    }
+
+    // canto
+    this.ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+    this.ctx.fillRect(0, 0, RULER_SIZE, RULER_SIZE);
+    this.ctx.fillStyle = "#94a3b8";
+    this.ctx.font = "7px Consolas, monospace";
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "middle";
+    this.ctx.fillText("m", RULER_SIZE / 2, RULER_SIZE / 2);
+    this.ctx.restore();
+  }
+
+  drawCompass() {
+    const margin = 30;
+    const centerX = this.canvas.width - margin;
+    const centerY = margin;
+    const radius = 25;
+
+    this.ctx.save();
+
+    this.ctx.beginPath();
+    this.ctx.arc(centerX, centerY, radius + 8, 0, Math.PI * 2);
+    this.ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    this.ctx.fill();
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
+    this.ctx.lineWidth = 1;
+    this.ctx.stroke();
+
+    this.ctx.beginPath();
+    this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+    this.ctx.lineWidth = 1.5;
+    this.ctx.stroke();
+
+    this.ctx.beginPath();
+    this.ctx.arc(centerX, centerY, radius * 0.7, 0, Math.PI * 2);
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
+    this.ctx.lineWidth = 0.8;
+    this.ctx.stroke();
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(centerX, centerY - radius * 0.8);
+    this.ctx.lineTo(centerX - radius * 0.25, centerY + radius * 0.1);
+    this.ctx.lineTo(centerX + radius * 0.25, centerY + radius * 0.1);
+    this.ctx.closePath();
+    this.ctx.fillStyle = "#dc2626";
+    this.ctx.fill();
+    this.ctx.strokeStyle = "#991b1b";
+    this.ctx.lineWidth = 0.5;
+    this.ctx.stroke();
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(centerX, centerY + radius * 0.8);
+    this.ctx.lineTo(centerX - radius * 0.2, centerY - radius * 0.05);
+    this.ctx.lineTo(centerX + radius * 0.2, centerY - radius * 0.05);
+    this.ctx.closePath();
+    this.ctx.fillStyle = "#9ca3af";
+    this.ctx.fill();
+    this.ctx.strokeStyle = "#6b7280";
+    this.ctx.lineWidth = 0.5;
+    this.ctx.stroke();
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(centerX, centerY - radius * 0.8);
+    this.ctx.lineTo(centerX, centerY + radius * 0.8);
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+    this.ctx.lineWidth = 0.8;
+    this.ctx.stroke();
+
+    this.ctx.fillStyle = "#dc2626";
+    this.ctx.font = "bold 14px Arial";
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "bottom";
+    this.ctx.fillText("N", centerX, centerY - radius + 2);
+
+    this.ctx.fillStyle = "#6b7280";
+    this.ctx.textBaseline = "top";
+    this.ctx.fillText("S", centerX, centerY + radius - 4);
+
+    this.ctx.fillStyle = "#4b5563";
+    this.ctx.font = "bold 10px Arial";
+    this.ctx.textBaseline = "middle";
+    this.ctx.textAlign = "left";
+    this.ctx.fillText("E", centerX + radius * 0.65, centerY);
+    this.ctx.textAlign = "right";
+    this.ctx.fillText("W", centerX - radius * 0.65, centerY);
+
+    this.ctx.restore();
+  }
+
+  // Paredes desenhadas com espessura real (duas linhas + preenchimento), como planta baixa
+  drawWalls() {
+    const ppm = this.getPixelsPerMeter();
+    const thicknessPx = Math.max((this.state.wallThickness || 0.15) * ppm, 3);
+
+    this.state.walls.forEach((wall, index) => {
+      const start = this.state.points[index];
+      const end = this.state.points[index + 1];
+      if (!start || !end) return;
+
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const nx = -dy / len;
+      const ny = dx / len;
+      const hx = (nx * thicknessPx) / 2;
+      const hy = (ny * thicknessPx) / 2;
+
+      const isEditing = index === this.editingWallIndex;
+      const isHovered = index === this.hoveredWallIndex;
+
+      // corpo da parede (polígono com espessura)
+      this.ctx.beginPath();
+      this.ctx.moveTo(start.x + hx, start.y + hy);
+      this.ctx.lineTo(end.x + hx, end.y + hy);
+      this.ctx.lineTo(end.x - hx, end.y - hy);
+      this.ctx.lineTo(start.x - hx, start.y - hy);
+      this.ctx.closePath();
+      this.ctx.fillStyle = isEditing
+        ? "rgba(239, 68, 68, 0.18)"
+        : (isHovered ? "rgba(59, 130, 246, 0.18)" : "rgba(31, 41, 55, 0.08)");
+      this.ctx.fill();
+
+      this.ctx.lineWidth = isEditing ? 2.5 : (isHovered ? 2 : 1.5);
+      this.ctx.strokeStyle = isEditing ? "#ef4444" : (isHovered ? "#3b82f6" : (this.state.closed ? "#0f766e" : "#1f2937"));
+      this.ctx.stroke();
+
+      // eixo central (linha de referência tracejada, útil para conferência)
+      this.ctx.save();
+      this.ctx.setLineDash([4, 3]);
+      this.ctx.strokeStyle = "rgba(15, 23, 42, 0.35)";
+      this.ctx.lineWidth = 0.8;
+      this.ctx.beginPath();
+      this.ctx.moveTo(start.x, start.y);
+      this.ctx.lineTo(end.x, end.y);
+      this.ctx.stroke();
+      this.ctx.restore();
+    });
+
+    if (this.state.closed && this.state.points.length >= 3) {
+      this.ctx.fillStyle = "rgba(15, 118, 110, 0.08)";
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.state.points[0].x, this.state.points[0].y);
+      this.state.points.slice(1).forEach((point) => this.ctx.lineTo(point.x, point.y));
+      this.ctx.closePath();
+      this.ctx.fill();
+    }
+  }
+
+  // Raios-guia (polar tracking) quando o modo ortogonal está ativo
+  drawOrthoGuides() {
+    if (this.state.closed || !this.state.isDrawing || this.state.points.length === 0) return;
+    if (!this.isOrthoActive()) return;
+
+    const last = this.state.points[this.state.points.length - 1];
+    const step = (this.state.angleSnapStep || 90) * Math.PI / 180;
+    const rayLen = Math.max(this.canvas.width, this.canvas.height);
+
+    this.ctx.save();
+    this.ctx.setLineDash([2, 5]);
+    this.ctx.strokeStyle = "rgba(99, 102, 241, 0.35)";
+    this.ctx.lineWidth = 1;
+    for (let a = 0; a < Math.PI * 2; a += step) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(last.x, last.y);
+      this.ctx.lineTo(last.x + Math.cos(a) * rayLen, last.y + Math.sin(a) * rayLen);
+      this.ctx.stroke();
+    }
+    this.ctx.restore();
+  }
+
+  drawGuideLine() {
+    if (this.state.closed || !this.mouse || !this.state.isDrawing) {
+      return;
+    }
+
+    const last = this.state.points[this.state.points.length - 1];
+    let target = { x: this.mouse.x, y: this.mouse.y };
+
+    if (!this.state.snapActive) {
+      target = this.applyOrtho(last, target);
+    }
+
+    this.ctx.save();
+    this.ctx.setLineDash([6, 6]);
+    this.ctx.strokeStyle = this.state.snapActive
+      ? "#27ae60"
+      : (this.isOrthoActive() ? "#6366f1" : "#64748b");
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    this.ctx.moveTo(last.x, last.y);
+    this.ctx.lineTo(target.x, target.y);
+    this.ctx.stroke();
+    this.ctx.restore();
+
+    const dx = target.x - last.x;
+    const dy = target.y - last.y;
+    const distMetros = this.pixelsToMeters(Math.sqrt(dx * dx + dy * dy));
+    const text = `${distMetros.toFixed(2)} m`;
+
+    this.ctx.font = "bold 12px Arial";
+    this.ctx.textAlign = "left";
+    const width = this.ctx.measureText(text).width + 12;
+    this.ctx.fillStyle = "rgba(255,255,255,0.95)";
+    this.ctx.shadowColor = "rgba(0,0,0,0.3)";
+    this.ctx.shadowBlur = 6;
+    this.ctx.fillRect(target.x + 15, target.y - 25, width, 22);
+    this.ctx.shadowBlur = 0;
+    this.ctx.fillStyle = this.state.snapActive ? "#27ae60" : (this.isOrthoActive() ? "#6366f1" : "#1f2937");
+    this.ctx.fillText(text, target.x + 20, target.y - 8);
+
+    if (this.state.snapActive) {
+      this.ctx.fillStyle = "#27ae60";
+      this.ctx.font = "bold 10px Arial";
+      this.ctx.fillText("⚡ SNAP", target.x + 15, target.y - 42);
+    } else if (this.isOrthoActive()) {
+      const angulo = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+      this.ctx.fillStyle = "#6366f1";
+      this.ctx.font = "bold 10px Arial";
+      this.ctx.fillText(`🔒 ${angulo}°`, target.x + 15, target.y - 42);
+    }
+  }
+
+  // Cotas técnicas (linhas de extensão + linha de cota + setas), como em plantas de verdade
+  drawDimensions() {
+    const OFFSET = 20;
+    const EXT_GAP = 3;
+    const EXT_OVERSHOOT = 6;
+    const ARROW = 5;
+
+    this.state.walls.forEach((wall, index) => {
+      const start = this.state.points[index];
+      const end = this.state.points[index + 1];
+      if (!start || !end) return;
+
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      const nx = -uy;
+      const ny = ux;
+
+      const p1 = { x: start.x + nx * OFFSET, y: start.y + ny * OFFSET };
+      const p2 = { x: end.x + nx * OFFSET, y: end.y + ny * OFFSET };
+
+      const isEditing = index === this.editingWallIndex;
+      const color = isEditing ? "#ef4444" : "#2563eb";
+
+      this.ctx.save();
+      this.ctx.strokeStyle = color;
+      this.ctx.lineWidth = 1;
+
+      // linhas de extensão (saem da parede até a linha de cota)
+      this.ctx.beginPath();
+      this.ctx.moveTo(start.x + nx * EXT_GAP, start.y + ny * EXT_GAP);
+      this.ctx.lineTo(start.x + nx * (OFFSET + EXT_OVERSHOOT), start.y + ny * (OFFSET + EXT_OVERSHOOT));
+      this.ctx.stroke();
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(end.x + nx * EXT_GAP, end.y + ny * EXT_GAP);
+      this.ctx.lineTo(end.x + nx * (OFFSET + EXT_OVERSHOOT), end.y + ny * (OFFSET + EXT_OVERSHOOT));
+      this.ctx.stroke();
+
+      // linha de cota
+      this.ctx.beginPath();
+      this.ctx.moveTo(p1.x, p1.y);
+      this.ctx.lineTo(p2.x, p2.y);
+      this.ctx.stroke();
+
+      // setas (triângulos) apontando para dentro
+      this.drawArrowHead(p1, ux, uy, ARROW, color);
+      this.drawArrowHead(p2, -ux, -uy, ARROW, color);
+
+      // texto da medida, alinhado ao ângulo da parede
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2;
+      let angle = Math.atan2(dy, dx);
+      if (angle > Math.PI / 2 || angle < -Math.PI / 2) angle += Math.PI;
+
+      this.ctx.translate(midX, midY);
+      this.ctx.rotate(angle);
+      const text = `${wall.length.toFixed(2)} m`;
+      this.ctx.font = "bold 11px Consolas, monospace";
+      const textWidth = this.ctx.measureText(text).width + 8;
+      this.ctx.fillStyle = "rgba(255,255,255,0.92)";
+      this.ctx.fillRect(-textWidth / 2, -16, textWidth, 14);
+      this.ctx.fillStyle = color;
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillText(text, 0, -9);
+      this.ctx.restore();
+
+      // etiqueta da parede (letra), centrada sobre a própria parede
+      this.drawWallLetter(start, end, index, isEditing);
+    });
+  }
+
+  drawArrowHead(tip, ux, uy, size, color) {
+    const nx = -uy;
+    const ny = ux;
+    this.ctx.save();
+    this.ctx.fillStyle = color;
+    this.ctx.beginPath();
+    this.ctx.moveTo(tip.x, tip.y);
+    this.ctx.lineTo(tip.x + ux * size + nx * size * 0.4, tip.y + uy * size + ny * size * 0.4);
+    this.ctx.lineTo(tip.x + ux * size - nx * size * 0.4, tip.y + uy * size - ny * size * 0.4);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.restore();
+  }
+
+  drawWallLetter(start, end, index, isEditing) {
+    const x = (start.x + end.x) / 2;
+    const y = (start.y + end.y) / 2;
+    const letter = this.getWallLetter(index);
+    const radius = 10;
+
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+    this.ctx.fillStyle = isEditing ? "#ef4444" : "#2563eb";
+    this.ctx.shadowColor = "rgba(0,0,0,0.3)";
+    this.ctx.shadowBlur = 4;
+    this.ctx.fill();
+    this.ctx.shadowBlur = 0;
+    this.ctx.strokeStyle = "#ffffff";
+    this.ctx.lineWidth = 1.5;
+    this.ctx.stroke();
+
+    this.ctx.fillStyle = "#ffffff";
+    this.ctx.font = "bold 11px Arial";
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "middle";
+    this.ctx.fillText(letter, x, y + 0.5);
+    this.ctx.restore();
+  }
+
+  drawVertices() {
+    this.state.points.forEach((point, index) => {
+      const isSnapped = this.state.snapActive && this.state.snapPoint &&
+                        Math.abs(point.x - this.state.snapPoint.x) < 0.1 &&
+                        Math.abs(point.y - this.state.snapPoint.y) < 0.1;
+
+      if (isSnapped) {
+        this.ctx.beginPath();
+        this.ctx.arc(point.x, point.y, 12, 0, Math.PI * 2);
+        this.ctx.fillStyle = "rgba(39, 174, 96, 0.2)";
+        this.ctx.fill();
+        this.ctx.strokeStyle = "#27ae60";
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+      }
+
+      this.ctx.beginPath();
+      this.ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+      this.ctx.fillStyle = index === 0 ? "#2563eb" : (isSnapped ? "#27ae60" : "#111827");
+      this.ctx.fill();
+      this.ctx.strokeStyle = "#ffffff";
+      this.ctx.lineWidth = 1.5;
+      this.ctx.stroke();
+    });
+  }
+
+  updateSnapIndicator() {
+    const indicator = document.getElementById("areaSnapIndicator");
+    if (!indicator) return;
+
+    const rect = this.canvas.getBoundingClientRect();
+
+    if (this.state.snapActive && this.state.snapPoint) {
+      indicator.style.display = "block";
+      indicator.classList.remove("grid-snap");
+      indicator.style.left = (rect.left + this.state.snapPoint.x + this.state.offsetX - 11) + "px";
+      indicator.style.top = (rect.top + this.state.snapPoint.y + this.state.offsetY - 11) + "px";
+    } else if (this.state.gridSnapActive && this.state.snapPoint) {
+      indicator.style.display = "block";
+      indicator.classList.add("grid-snap");
+      indicator.style.left = (rect.left + this.state.snapPoint.x + this.state.offsetX - 11) + "px";
+      indicator.style.top = (rect.top + this.state.snapPoint.y + this.state.offsetY - 11) + "px";
+    } else {
+      indicator.style.display = "none";
+    }
+  }
+
+  pixelsToMeters(value) {
+    return Number(value || 0) / this.getPixelsPerMeter();
+  }
+
+  getWallLetter(index) {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (index < 26) {
+      return letters[index];
+    }
+    const first = Math.floor(index / 26) - 1;
+    const second = index % 26;
+    return (first >= 0 ? letters[first] : '') + letters[second];
+  }
+}
+/* ==== FIM: public/scripts/01_Create_Obra/data/modules/climatizate/area-calculator-canvas.js ==== */
+
+/* ==== INÍCIO: public/scripts/01_Create_Obra/data/modules/climatizate/area-calculator.js ==== */
+// area-calculator.js
+import { calculateVazaoArAndThermalGains } from "../../../features/calculations/air-flow.js";
+import { AreaCalculatorCanvas } from "./area-calculator-canvas.js";
+
+const MODAL_ID = "areaCalculatorModal";
+const CANVAS_WIDTH = 820;
+const CANVAS_HEIGHT = 560;
+const MAX_HISTORY = 50;
+
+let state = createInitialState();
+let canvasManager = null;
+let isEditingWall = false;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+let rightMouseDown = false;
+
+function createInitialState(roomId = "") {
+  return {
+    roomId,
+    points: [],
+    walls: [],
+    closed: false,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+    snapActive: false,
+    gridSnapActive: false,
+    snapPoint: null,
+    snapIndex: -1,
+    shiftPressed: false,
+    selectedWallIndex: -1,
+    snapVertices: [],
+    editingWallIndex: -1,
+    isDrawing: true,
+    showDeleteButton: false,
+    orthoMode: true,
+    angleSnapStep: 90,
+    wallThickness: 0.15,
+    history: [],
+    historyIndex: -1,
+  };
+}
+
+function parseAreaValue(value) {
+  const normalized = String(value ?? "").replace(",", ".").trim();
+  const numeric = Number.parseFloat(normalized);
+  return Number.isFinite(numeric) && numeric >= 0 ? numeric : 0;
+}
+
+function formatAreaValue(value) {
+  return parseAreaValue(value).toFixed(2);
+}
+
+function getCanvas() {
+  return document.getElementById("areaCalculatorCanvas");
+}
+
+function getPixelsPerMeter() {
+  const PIXELS_PER_METER = 40;
+  return PIXELS_PER_METER * state.scale;
+}
+
+function metersToPixels(value) {
+  return Number(value || 0) * getPixelsPerMeter();
+}
+
+function pixelsToMeters(value) {
+  return Number(value || 0) / getPixelsPerMeter();
+}
+
+// ============ HISTÓRICO (UNDO/REDO) ============
+function snapshotWalls() {
+  return state.walls.map((w) => ({ length: w.length, angle: w.angle }));
+}
+
+function pushHistory() {
+  // descarta futuro se estava no meio do histórico
+  state.history = state.history.slice(0, state.historyIndex + 1);
+  state.history.push(snapshotWalls());
+  if (state.history.length > MAX_HISTORY) {
+    state.history.shift();
+  }
+  state.historyIndex = state.history.length - 1;
+  updateUndoRedoButtons();
+}
+
+function undo() {
+  if (state.historyIndex <= 0) {
+    state.walls = [];
+    state.points = state.points.length ? [state.points[0]] : [];
+    state.historyIndex = -1;
+    finalizeHistoryRestore();
+    return;
+  }
+  state.historyIndex -= 1;
+  state.walls = state.history[state.historyIndex].map((w) => ({ ...w }));
+  finalizeHistoryRestore();
+}
+
+function redo() {
+  if (state.historyIndex >= state.history.length - 1) return;
+  state.historyIndex += 1;
+  state.walls = state.history[state.historyIndex].map((w) => ({ ...w }));
+  finalizeHistoryRestore();
+}
+
+function finalizeHistoryRestore() {
+  if (state.walls.length === 0 && state.points.length <= 1) {
+    if (state.points.length === 0) state.closed = false;
+  }
+  recalculatePointsFromWalls();
+  state.closed = false;
+  state.isDrawing = true;
+  hideFloatingInput();
+  updateAreaUI();
+  updateUndoRedoButtons();
+}
+
+function updateUndoRedoButtons() {
+  const undoBtn = document.querySelector('[data-area-action="undo"]');
+  const redoBtn = document.querySelector('[data-area-action="redo"]');
+  if (undoBtn) undoBtn.disabled = state.historyIndex < 0;
+  if (redoBtn) redoBtn.disabled = state.historyIndex >= state.history.length - 1;
+}
+
+// ============ ESCALA ============
+function zoomArea(factor) {
+  const ESCALA_MIN = 0.05;
+  const ESCALA_MAX = 5.0;
+
+  let novaEscala = state.scale * factor;
+  if (novaEscala < ESCALA_MIN) novaEscala = ESCALA_MIN;
+  if (novaEscala > ESCALA_MAX) novaEscala = ESCALA_MAX;
+  state.scale = novaEscala;
+
+  recalculatePointsFromWalls();
+  updateAreaUI();
+  updateZoomInfo();
+}
+
+function updateZoomInfo() {
+  const ppm = getPixelsPerMeter();
+  const zoomInfo = document.querySelector(".area-zoom-info");
+  if (zoomInfo) {
+    zoomInfo.textContent = `Zoom: ${Math.round(state.scale * 100)}% | ${ppm.toFixed(1)} px/m`;
+  }
+}
+
+// ============ PAREDES ============
+function getWallLetter(index) {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if (index < 26) {
+    return letters[index];
+  }
+  const first = Math.floor(index / 26) - 1;
+  const second = index % 26;
+  return (first >= 0 ? letters[first] : '') + letters[second];
+}
+
+function recalculatePointsFromWalls() {
+  if (state.points.length === 0) return;
+
+  let current = { ...state.points[0] };
+  const points = [current];
+
+  state.walls.forEach((wall) => {
+    current = {
+      x: current.x + Math.cos(wall.angle) * metersToPixels(wall.length),
+      y: current.y + Math.sin(wall.angle) * metersToPixels(wall.length),
+    };
+    points.push(current);
+  });
+
+  state.points = points;
+
+  if (canvasManager) {
+    canvasManager.updateSnapVertices();
+  }
+}
+
+function findWallNearPoint(point) {
+  const radius = 20;
+  for (let index = 0; index < state.walls.length; index += 1) {
+    const start = state.points[index];
+    const end = state.points[index + 1];
+    if (!start || !end) continue;
+
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const lengthSquared = dx * dx + dy * dy;
+    if (lengthSquared === 0) continue;
+
+    let t = ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared;
+    t = Math.max(0, Math.min(1, t));
+    const nearX = start.x + t * dx;
+    const nearY = start.y + t * dy;
+    const distance = Math.sqrt((point.x - nearX) ** 2 + (point.y - nearY) ** 2);
+    if (distance <= radius) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+function showFloatingInput(wallIndex) {
+  const input = document.getElementById("areaFloatingInput");
+  if (!input) return;
+
+  const start = state.points[wallIndex];
+  const end = state.points[wallIndex + 1];
+  if (!start || !end) return;
+
+  const canvas = getCanvas();
+  const rect = canvas.getBoundingClientRect();
+  const meioX = (start.x + end.x) / 2 + state.offsetX;
+  const meioY = (start.y + end.y) / 2 + state.offsetY;
+
+  input.style.display = "flex";
+  input.style.left = (rect.left + meioX) + "px";
+  input.style.top = (rect.top + meioY) + "px";
+
+  const inputElement = input.querySelector("input");
+  inputElement.value = state.walls[wallIndex].length.toFixed(2);
+  inputElement.dataset.wallIndex = wallIndex;
+  inputElement.focus();
+  inputElement.select();
+
+  state.selectedWallIndex = wallIndex;
+  state.editingWallIndex = wallIndex;
+  state.showDeleteButton = true;
+  isEditingWall = true;
+
+  if (canvasManager) {
+    canvasManager.setEditingWall(wallIndex);
+  }
+
+  showDeleteButton(wallIndex);
+}
+
+function hideFloatingInput() {
+  const input = document.getElementById("areaFloatingInput");
+  if (input) {
+    input.style.display = "none";
+  }
+  state.selectedWallIndex = -1;
+  state.editingWallIndex = -1;
+  state.showDeleteButton = false;
+  isEditingWall = false;
+
+  if (canvasManager) {
+    canvasManager.setEditingWall(-1);
+  }
+
+  hideDeleteButton();
+}
+
+function showDeleteButton(wallIndex) {
+  const deleteBtn = document.getElementById("areaDeleteWallBtn");
+  if (!deleteBtn) return;
+
+  const start = state.points[wallIndex];
+  const end = state.points[wallIndex + 1];
+  if (!start || !end) return;
+
+  const canvas = getCanvas();
+  const rect = canvas.getBoundingClientRect();
+  const meioX = (start.x + end.x) / 2 + state.offsetX;
+  const meioY = (start.y + end.y) / 2 + state.offsetY;
+
+  deleteBtn.style.display = "flex";
+  deleteBtn.style.left = (rect.left + meioX + 25) + "px";
+  deleteBtn.style.top = (rect.top + meioY - 40) + "px";
+  deleteBtn.dataset.wallIndex = wallIndex;
+}
+
+function hideDeleteButton() {
+  const deleteBtn = document.getElementById("areaDeleteWallBtn");
+  if (deleteBtn) {
+    deleteBtn.style.display = "none";
+  }
+}
+
+function deleteWall(wallIndex) {
+  if (wallIndex < 0 || wallIndex >= state.walls.length) return;
+
+  state.walls.splice(wallIndex, 1);
+
+  if (state.walls.length === 0) {
+    state.points = state.points.length ? [state.points[0]] : [];
+    state.closed = false;
+  } else {
+    recalculatePointsFromWalls();
+  }
+
+  hideFloatingInput();
+  pushHistory();
+  updateAreaUI();
+}
+
+// ============ FECHAR / REABRIR FORMA ============
+function closeShape() {
+  if (state.points.length < 3) {
+    window.alert("Crie pelo menos 3 pontos antes de fechar a forma.");
+    return;
+  }
+  state.closed = true;
+  state.isDrawing = false;
+  hideFloatingInput();
+  updateAreaUI();
+}
+
+function reopenShape() {
+  state.closed = false;
+  state.isDrawing = true;
+  updateAreaUI();
+}
+
+// ============ ÁREA / PERÍMETRO ============
+function calculatePolygonArea() {
+  if (!state.closed || state.points.length < 3) {
+    return 0;
+  }
+
+  let area = 0;
+  for (let index = 0; index < state.points.length; index += 1) {
+    const current = state.points[index];
+    const next = state.points[(index + 1) % state.points.length];
+    area += current.x * next.y - next.x * current.y;
+  }
+  return Math.abs(area / 2) / (getPixelsPerMeter() ** 2);
+}
+
+function calculatePerimeter() {
+  return state.walls.reduce((sum, wall) => sum + wall.length, 0);
+}
+
+// ============ LISTA DE PAREDES ============
+function renderWallList() {
+  const list = document.getElementById("areaWallList");
+  if (!list) return;
+
+  if (state.walls.length === 0) {
+    list.innerHTML = '<div class="area-empty">Nenhuma parede criada.</div>';
+    return;
+  }
+
+  list.innerHTML = state.walls
+    .map((wall, index) => {
+      const letter = getWallLetter(index);
+      const isEditing = index === state.editingWallIndex;
+      return `
+          <label class="area-wall-item ${isEditing ? 'editing' : ''}">
+            <span><strong>Parede ${letter}</strong></span>
+            <input type="number"
+                   min="0.01"
+                   step="0.01"
+                   value="${wall.length.toFixed(2)}"
+                   data-wall-index="${index}"
+                   class="${isEditing ? 'wall-input-editing' : ''}">
+            <span class="wall-letter-badge">${letter}</span>
+            ${isEditing ? '<span class="editing-indicator">✏️</span>' : ''}
+            <button type="button" class="btn-delete-wall" data-delete-wall="${index}" title="Deletar parede ${letter}">
+              🗑️
+            </button>
+          </label>
+        `;
+    })
+    .join("");
+
+  list.querySelectorAll("input[data-wall-index]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const index = Number(input.dataset.wallIndex);
+      const value = Number.parseFloat(input.value);
+      if (Number.isFinite(value) && value > 0 && state.walls[index]) {
+        updateWallLength(index, value);
+      }
+    });
+
+    input.addEventListener("change", () => {
+      const index = Number(input.dataset.wallIndex);
+      const value = Number.parseFloat(input.value);
+      if (Number.isFinite(value) && value > 0 && state.walls[index]) {
+        updateWallLength(index, value);
+        pushHistory();
+      }
+    });
+  });
+
+  list.querySelectorAll("button[data-delete-wall]").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const index = Number(btn.dataset.deleteWall);
+      deleteWall(index);
+    });
+  });
+}
+
+function updateWallLength(index, value) {
+  if (!state.walls[index]) return;
+
+  state.walls[index].length = value;
+  state.editingWallIndex = index;
+
+  recalculatePointsFromWalls();
+
+  if (canvasManager) {
+    canvasManager.setEditingWall(index);
+    canvasManager.draw();
+  }
+
+  updateWallListValues();
+  updateAreaResult();
+}
+
+function updateWallListValues() {
+  const inputs = document.querySelectorAll("#areaWallList input[data-wall-index]");
+  inputs.forEach((input) => {
+    const index = Number(input.dataset.wallIndex);
+    if (state.walls[index] && document.activeElement !== input) {
+      input.value = state.walls[index].length.toFixed(2);
+    }
+  });
+}
+
+function updateAreaResult() {
+  const result = document.getElementById("areaCalculatorResult");
+  const perimeterEl = document.getElementById("areaCalculatorPerimeter");
+  if (result) {
+    const area = calculatePolygonArea();
+    result.textContent = `${formatAreaValue(area)} m²`;
+  }
+  if (perimeterEl) {
+    perimeterEl.textContent = `${calculatePerimeter().toFixed(2)} m`;
+  }
+}
+
+// ============ ATUALIZA UI ============
+function updateAreaUI() {
+  const status = document.getElementById("areaCalculatorStatus");
+  const result = document.getElementById("areaCalculatorResult");
+  const perimeterEl = document.getElementById("areaCalculatorPerimeter");
+  const area = calculatePolygonArea();
+
+  if (status) {
+    if (state.closed) {
+      status.textContent = "✅ Forma fechada. Confirme para aplicar a área.";
+    } else if (state.points.length === 0) {
+      status.textContent = "🖱️ Clique para iniciar o desenho | Botão direito para navegar";
+    } else if (!state.isDrawing) {
+      status.textContent = "🔍 Modo navegação | Botão direito para mover | ESC para voltar a desenhar";
+    } else {
+      const snapText = state.snapActive ? " ⚡ Snap ativado!" : (state.gridSnapActive ? " ⊞ Grade" : "");
+      const orthoText = canvasManager && canvasManager.isOrthoActive() ? " 🔒 ORTHO" : "";
+      status.textContent = `🖱️ Clique para adicionar paredes | Duplo clique na parede para editar${orthoText}${snapText}`;
+    }
+  }
+
+  if (result) {
+    result.textContent = `${formatAreaValue(area)} m²`;
+  }
+  if (perimeterEl) {
+    perimeterEl.textContent = `${calculatePerimeter().toFixed(2)} m`;
+  }
+
+  const closeBtn = document.querySelector('[data-area-action="close-shape"]');
+  const reopenBtn = document.querySelector('[data-area-action="reopen-shape"]');
+  if (closeBtn) closeBtn.style.display = state.closed ? "none" : "inline-block";
+  if (reopenBtn) reopenBtn.style.display = state.closed ? "inline-block" : "none";
+
+  const badge = document.getElementById("areaStatusBadge");
+  if (badge) {
+    if (state.closed) {
+      badge.textContent = "✅ Concluído";
+      badge.className = "area-status-badge status-concluido";
+    } else if (state.points.length === 0) {
+      badge.textContent = "⏳ Aguardando";
+      badge.className = "area-status-badge status-aguardando";
+    } else if (!state.isDrawing) {
+      badge.textContent = "🔍 Navegando";
+      badge.className = "area-status-badge status-navegando";
+    } else {
+      badge.textContent = "✏️ Desenhando" + (state.snapActive ? " ⚡" : "");
+      badge.className = "area-status-badge status-desenhando";
+    }
+  }
+
+  const orthoBtn = document.querySelector('[data-area-action="toggle-ortho"]');
+  if (orthoBtn) {
+    orthoBtn.classList.toggle("active", !!state.orthoMode);
+  }
+
+  renderWallList();
+  updateUndoRedoButtons();
+
+  if (canvasManager) {
+    canvasManager.draw();
+  }
+
+  updateZoomInfo();
+  updateCanvasCursor();
+}
+
+function updateCanvasCursor() {
+  const canvas = getCanvas();
+  if (!canvas) return;
+
+  if (state.isDrawing && !state.closed) {
+    canvas.style.cursor = "crosshair";
+  } else {
+    canvas.style.cursor = "grab";
+  }
+}
+
+// ============ EVENTOS DO CANVAS ============
+function handleCanvasClick(event) {
+  if (!state.isDrawing || state.closed) {
+    return;
+  }
+
+  const manager = getCanvasManager();
+  const raw = manager.getCanvasPoint(event);
+
+  const resolved = manager.resolvePoint(raw);
+  let target = resolved.point;
+  state.snapActive = !!resolved.snap;
+  state.gridSnapActive = !!resolved.gridSnap;
+  state.snapPoint = resolved.snap || (resolved.gridSnap ? target : null);
+
+  if (state.points.length === 0) {
+    state.points.push({ x: target.x, y: target.y });
+    manager.updateSnapVertices();
+    updateAreaUI();
+    return;
+  }
+
+  const last = state.points[state.points.length - 1];
+
+  if (!resolved.snap) {
+    target = manager.applyOrtho(last, target);
+  }
+
+  const dx = target.x - last.x;
+  const dy = target.y - last.y;
+
+  const distMetros = pixelsToMeters(Math.sqrt(dx * dx + dy * dy));
+  if (distMetros < 0.01) return;
+
+  const angulo = Math.atan2(dy, dx);
+  state.walls.push({ length: distMetros, angle: angulo });
+  recalculatePointsFromWalls();
+  pushHistory();
+  updateAreaUI();
+
+  setTimeout(() => {
+    showFloatingInput(state.walls.length - 1);
+  }, 150);
+}
+
+function handleCanvasDoubleClick(event) {
+  if (state.closed) return;
+
+  const manager = getCanvasManager();
+  const point = manager.getCanvasPoint(event);
+  const wallIndex = findWallNearPoint(point);
+  if (wallIndex >= 0) {
+    showFloatingInput(wallIndex);
+  }
+}
+
+function getCanvasManager() {
+  if (!canvasManager) {
+    canvasManager = new AreaCalculatorCanvas(state);
+  }
+  return canvasManager;
+}
+
+// ============ MODAL ============
+function ensureModal() {
+  if (document.getElementById(MODAL_ID)) {
+    return;
+  }
+
+  const modal = document.createElement("div");
+  modal.id = MODAL_ID;
+  modal.className = "area-calculator-modal";
+  modal.innerHTML = `
+    <div class="area-calculator-dialog" role="dialog" aria-modal="true" aria-labelledby="areaCalculatorTitle">
+      <div class="area-calculator-header">
+        <div>
+          <span class="area-calculator-kicker">Area</span>
+          <h3 id="areaCalculatorTitle">Cálculo da área</h3>
+        </div>
+        <button type="button" class="btn btn-small btn-secondary" data-area-action="close">Fechar</button>
+      </div>
+      <div class="area-calculator-body">
+        <aside class="area-calculator-panel">
+          <div class="area-calculator-status" id="areaCalculatorStatus">Clique no canvas para iniciar.</div>
+          <div class="area-status-badge status-aguardando" id="areaStatusBadge">⏳ Aguardando</div>
+          <div class="area-calculator-result" id="areaCalculatorResult">0.00 m²</div>
+          <div class="area-result-detail">
+            <span>Perímetro</span>
+            <span id="areaCalculatorPerimeter">0.00 m</span>
+          </div>
+
+          <div class="area-config-group">
+            <div class="area-config-row">
+              <span>Modo ortogonal</span>
+              <button type="button" class="btn btn-small area-ortho-toggle active" data-area-action="toggle-ortho">🔒 ORTHO</button>
+            </div>
+            <div class="area-config-row">
+              <span>Ângulo de snap</span>
+              <select id="areaAngleSnap">
+                <option value="90">90°</option>
+                <option value="45">45°</option>
+                <option value="30">30°</option>
+              </select>
+            </div>
+            <div class="area-config-row">
+              <span>Espessura parede (m)</span>
+              <input type="number" id="areaWallThickness" min="0.05" max="0.5" step="0.01" value="0.15">
+            </div>
+          </div>
+
+          <div class="area-toolbar-row">
+            <button type="button" class="btn btn-small btn-secondary" data-area-action="undo" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+            <button type="button" class="btn btn-small btn-secondary" data-area-action="redo" title="Refazer (Ctrl+Y)">↷ Refazer</button>
+          </div>
+
+          <div class="area-calculator-actions">
+            <button type="button" class="btn btn-small btn-primary" data-area-action="zoom-in">Zoom +</button>
+            <button type="button" class="btn btn-small btn-primary" data-area-action="zoom-out">Zoom -</button>
+            <button type="button" class="btn btn-small btn-success" data-area-action="close-shape">Fechar forma</button>
+            <button type="button" class="btn btn-small btn-warning" data-area-action="reopen-shape" style="display:none;">Reabrir</button>
+            <button type="button" class="btn btn-small btn-danger" data-area-action="reset">Limpar</button>
+          </div>
+          <div class="area-wall-list" id="areaWallList"></div>
+        </aside>
+        <div class="area-canvas-wrap">
+          <canvas id="areaCalculatorCanvas" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}"></canvas>
+          <div class="area-shift-indicator" id="areaShiftIndicator" style="display:none;">🔒 SHIFT</div>
+          <div class="area-snap-indicator" id="areaSnapIndicator" style="display:none;"></div>
+          <div class="area-zoom-info" id="areaZoomInfo">Zoom: 100%</div>
+          <div class="area-coords-info" id="areaCoordsInfo"></div>
+          <div class="area-navigation-hint" id="areaNavigationHint" style="display:none;">🔍 Modo navegação - Botão direito para mover</div>
+        </div>
+      </div>
+      <div class="area-float-input" id="areaFloatingInput" style="display:none;">
+        <span class="area-float-label">📏 Medida</span>
+        <input type="number" step="0.01" placeholder="0.00">
+        <span class="area-float-unit">m</span>
+      </div>
+      <button type="button" class="area-delete-wall-btn" id="areaDeleteWallBtn" style="display:none;" title="Deletar parede">
+        <span class="delete-icon">🗑️</span>
+        <span class="delete-text">Deletar</span>
+      </button>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-success" data-area-action="confirm">Confirmar</button>
+        <button type="button" class="btn btn-secondary" data-area-action="close">Cancelar</button>
+      </div>
+    </div>
+  `;
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeAreaCalculatorModal();
+      return;
+    }
+
+    const action = event.target?.dataset?.areaAction;
+    if (action) {
+      handleAreaAction(action);
+    }
+  });
+
+  document.body.appendChild(modal);
+
+  bindCanvasEvents();
+  bindFloatingInputEvents();
+  bindDeleteButtonEvents();
+  bindConfigEvents();
+}
+
+function bindConfigEvents() {
+  const angleSelect = document.getElementById("areaAngleSnap");
+  if (angleSelect) {
+    angleSelect.addEventListener("change", () => {
+      state.angleSnapStep = Number.parseInt(angleSelect.value, 10) || 90;
+      if (canvasManager) canvasManager.draw();
+    });
+  }
+
+  const thicknessInput = document.getElementById("areaWallThickness");
+  if (thicknessInput) {
+    thicknessInput.addEventListener("input", () => {
+      const value = Number.parseFloat(thicknessInput.value);
+      if (Number.isFinite(value) && value > 0) {
+        state.wallThickness = value;
+        if (canvasManager) canvasManager.draw();
+      }
+    });
+  }
+}
+
+function bindDeleteButtonEvents() {
+  const deleteBtn = document.getElementById("areaDeleteWallBtn");
+  if (!deleteBtn) return;
+
+  deleteBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const wallIndex = Number(deleteBtn.dataset.wallIndex);
+    if (wallIndex >= 0 && wallIndex < state.walls.length) {
+      deleteWall(wallIndex);
+    }
+  });
+}
+
+function bindCanvasEvents() {
+  const canvas = getCanvas();
+  if (!canvas || canvas.dataset.areaBound === "true") {
+    return;
+  }
+
+  canvas.dataset.areaBound = "true";
+  const manager = getCanvasManager();
+
+  canvas.addEventListener("click", handleCanvasClick);
+  canvas.addEventListener("dblclick", handleCanvasDoubleClick);
+
+  canvas.addEventListener("mousedown", (event) => {
+    if (event.button === 2) {
+      event.preventDefault();
+      rightMouseDown = true;
+      isPanning = true;
+      panStartX = event.clientX;
+      panStartY = event.clientY;
+      canvas.style.cursor = "grabbing";
+
+      state.isDrawing = false;
+      hideFloatingInput();
+
+      const navHint = document.getElementById("areaNavigationHint");
+      if (navHint) navHint.style.display = "block";
+
+      updateAreaUI();
+    }
+  });
+
+  canvas.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+  });
+
+  canvas.addEventListener("mousemove", (event) => {
+    if (isPanning && rightMouseDown) {
+      const dx = event.clientX - panStartX;
+      const dy = event.clientY - panStartY;
+      state.offsetX += dx;
+      state.offsetY += dy;
+      panStartX = event.clientX;
+      panStartY = event.clientY;
+      manager.draw();
+      return;
+    }
+
+    if (!isPanning) {
+      manager.handleMouseMove(event);
+      updateCoordsInfo(event);
+    }
+  });
+
+  canvas.addEventListener("mouseleave", () => {
+    if (!isPanning) {
+      manager.handleMouseLeave();
+      const coordsInfo = document.getElementById("areaCoordsInfo");
+      if (coordsInfo) coordsInfo.textContent = "";
+    }
+  });
+
+  canvas.addEventListener(
+    "wheel",
+    (event) => {
+      event.preventDefault();
+      zoomArea(event.deltaY < 0 ? 1.1 : 0.9);
+    },
+    { passive: false },
+  );
+
+  document.addEventListener("mousemove", (event) => {
+    if (isPanning && rightMouseDown) {
+      const dx = event.clientX - panStartX;
+      const dy = event.clientY - panStartY;
+      state.offsetX += dx;
+      state.offsetY += dy;
+      panStartX = event.clientX;
+      panStartY = event.clientY;
+      manager.draw();
+    }
+  });
+
+  document.addEventListener("mouseup", (event) => {
+    if (event.button === 2) {
+      rightMouseDown = false;
+      isPanning = false;
+      canvas.style.cursor = "grab";
+
+      const navHint = document.getElementById("areaNavigationHint");
+      if (navHint) navHint.style.display = "none";
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const modalOpen = document.getElementById(MODAL_ID)?.classList.contains("is-open");
+    if (!modalOpen) return;
+
+    if (event.key === "Shift") {
+      state.shiftPressed = true;
+      const indicator = document.getElementById("areaShiftIndicator");
+      if (indicator) indicator.style.display = "block";
+      manager.draw();
+    }
+    if (event.key === "Escape") {
+      if (isEditingWall) {
+        hideFloatingInput();
+      } else if (!state.isDrawing) {
+        state.isDrawing = true;
+        updateAreaUI();
+      }
+    }
+    if (event.key === "Delete" && state.editingWallIndex >= 0) {
+      deleteWall(state.editingWallIndex);
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+      event.preventDefault();
+      undo();
+    }
+    if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === "y" || (event.shiftKey && event.key.toLowerCase() === "z"))) {
+      event.preventDefault();
+      redo();
+    }
+    if (event.key.toLowerCase() === "o" && !event.ctrlKey && !event.metaKey) {
+      toggleOrthoMode();
+    }
+  });
+
+  document.addEventListener("keyup", (event) => {
+    if (event.key === "Shift") {
+      state.shiftPressed = false;
+      const indicator = document.getElementById("areaShiftIndicator");
+      if (indicator) indicator.style.display = "none";
+      manager.draw();
+    }
+  });
+}
+
+function updateCoordsInfo(event) {
+  const coordsInfo = document.getElementById("areaCoordsInfo");
+  if (!coordsInfo || !canvasManager) return;
+  const point = canvasManager.getCanvasPoint(event);
+  const mx = pixelsToMeters(point.x);
+  const my = pixelsToMeters(point.y);
+  coordsInfo.textContent = `X: ${mx.toFixed(2)}m  Y: ${my.toFixed(2)}m`;
+}
+
+function bindFloatingInputEvents() {
+  const container = document.getElementById("areaFloatingInput");
+  if (!container) return;
+
+  const input = container.querySelector("input");
+  if (!input) return;
+
+  input.addEventListener("input", () => {
+    const index = Number(input.dataset.wallIndex);
+    const value = Number.parseFloat(input.value);
+    if (Number.isFinite(value) && value > 0 && state.walls[index]) {
+      updateWallLength(index, value);
+    }
+  });
+
+  input.addEventListener("change", () => {
+    const index = Number(input.dataset.wallIndex);
+    const value = Number.parseFloat(input.value);
+    if (Number.isFinite(value) && value > 0 && state.walls[index]) {
+      updateWallLength(index, value);
+    }
+  });
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      const index = Number(input.dataset.wallIndex);
+      const value = Number.parseFloat(input.value);
+      if (Number.isFinite(value) && value > 0 && state.walls[index]) {
+        updateWallLength(index, value);
+        pushHistory();
+        hideFloatingInput();
+      }
+    }
+    if (event.key === "Escape") {
+      hideFloatingInput();
+    }
+    if (event.key === "Delete") {
+      const index = Number(input.dataset.wallIndex);
+      if (index >= 0 && index < state.walls.length) {
+        deleteWall(index);
+      }
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (container.style.display !== "none" &&
+        !container.contains(event.target) &&
+        event.target !== getCanvas() &&
+        !event.target.closest("#areaDeleteWallBtn")) {
+      const index = Number(input.dataset.wallIndex);
+      const value = Number.parseFloat(input.value);
+      if (Number.isFinite(value) && value > 0 && state.walls[index]) {
+        pushHistory();
+      }
+      hideFloatingInput();
+    }
+  });
+}
+
+function toggleOrthoMode() {
+  state.orthoMode = !state.orthoMode;
+  updateAreaUI();
+}
+
+// ============ AÇÕES ============
+function handleAreaAction(action) {
+  if (action === "close") closeAreaCalculatorModal();
+  if (action === "close-shape") closeShape();
+  if (action === "reopen-shape") reopenShape();
+  if (action === "reset") {
+    const roomId = state.roomId;
+    state = createInitialState(roomId);
+    if (canvasManager) {
+      canvasManager.updateState(state);
+    }
+    updateAreaUI();
+  }
+  if (action === "zoom-in") zoomArea(1.2);
+  if (action === "zoom-out") zoomArea(0.8);
+  if (action === "confirm") confirmAreaCalculator();
+  if (action === "undo") undo();
+  if (action === "redo") redo();
+  if (action === "toggle-ortho") toggleOrthoMode();
+}
+
+function confirmAreaCalculator() {
+  const areaInput = document.querySelector(
+    `input[data-field="area"][data-room-id="${state.roomId}"]`,
+  );
+  if (!areaInput) {
+    closeAreaCalculatorModal();
+    return;
+  }
+
+  const calculatedArea = calculatePolygonArea();
+  if (calculatedArea > 0) {
+    areaInput.value = formatAreaValue(calculatedArea);
+    if (typeof window.updateRoomVolumeFromArea === "function") {
+      window.updateRoomVolumeFromArea(areaInput);
+    }
+    calculateVazaoArAndThermalGains(state.roomId);
+  }
+
+  closeAreaCalculatorModal();
+}
+
+function openAreaCalculatorModal(roomId) {
+  ensureModal();
+  state = createInitialState(roomId);
+
+  if (canvasManager) {
+    canvasManager.updateState(state);
+  } else {
+    canvasManager = new AreaCalculatorCanvas(state);
+  }
+
+  const angleSelect = document.getElementById("areaAngleSnap");
+  if (angleSelect) angleSelect.value = String(state.angleSnapStep);
+  const thicknessInput = document.getElementById("areaWallThickness");
+  if (thicknessInput) thicknessInput.value = String(state.wallThickness);
+
+  const modal = document.getElementById(MODAL_ID);
+  modal.classList.add("is-open");
+  document.body.classList.add("area-calculator-open");
+  updateAreaUI();
+}
+
+function closeAreaCalculatorModal() {
+  hideFloatingInput();
+  isPanning = false;
+  rightMouseDown = false;
+
+  const modal = document.getElementById(MODAL_ID);
+  if (modal) {
+    modal.classList.remove("is-open");
+  }
+  document.body.classList.remove("area-calculator-open");
+}
+
+// ============ EXPORT ============
+if (typeof window !== "undefined") {
+  window.openAreaCalculatorModal = openAreaCalculatorModal;
+  window.closeAreaCalculatorModal = closeAreaCalculatorModal;
+  window.zoomArea = zoomArea;
+}
+
+export { openAreaCalculatorModal, closeAreaCalculatorModal };
+/* ==== FIM: public/scripts/01_Create_Obra/data/modules/climatizate/area-calculator.js ==== */
+
+/* ==== INÍCIO: public/static/01_Create_Obra/components/area-calculator-in-modal.css ==== */
+/* area-calculator.css */
+
+.area-status-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+.status-aguardando {
+  background-color: #ffeaa7;
+  color: #d63031;
+  border-color: #d63031;
+}
+.status-desenhando {
+  background-color: #dff9fb;
+  color: #0984e3;
+  border-color: #0984e3;
+}
+.status-concluido {
+  background-color: #27ae60;
+  color: white;
+  border-color: #27ae60;
+}
+.status-navegando {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: white !important;
+}
+
+.area-shift-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(214, 48, 49, 0.9);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  display: none;
+  z-index: 6;
+  pointer-events: none;
+  letter-spacing: 1px;
+  animation: area-shift-pulse 0.5s ease;
+}
+@keyframes area-shift-pulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.area-snap-indicator {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid #27ae60;
+  border-radius: 50%;
+  pointer-events: none;
+  display: none;
+  z-index: 10000;
+  background: rgba(39, 174, 96, 0.15);
+  box-shadow: 0 0 30px rgba(39, 174, 96, 0.3);
+  animation: area-snap-pulse 0.8s ease-in-out infinite;
+  transform: translate(-50%, -50%);
+}
+.area-snap-indicator.grid-snap {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+}
+.area-snap-indicator::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px;
+  height: 5px;
+  background: #27ae60;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
+}
+@keyframes area-snap-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.7; }
+}
+
+.area-zoom-info {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(44, 62, 80, 0.85);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Consolas', monospace;
+  pointer-events: none;
+  z-index: 5;
+  backdrop-filter: blur(4px);
+}
+
+.area-coords-info {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(44, 62, 80, 0.85);
+  color: #a7f3d0;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Consolas', monospace;
+  pointer-events: none;
+  z-index: 5;
+  backdrop-filter: blur(4px);
+}
+
+.area-float-input {
+  position: fixed;
+  background: white;
+  border: 2px solid #3498db;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 10001;
+  transform: translate(-50%, -50%);
+  display: none;
+  align-items: center;
+  gap: 6px;
+  animation: area-float-in 0.2s ease;
+}
+@keyframes area-float-in {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.area-float-input input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.area-float-input input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+.area-float-label {
+  font-size: 11px;
+  color: #666;
+  font-weight: bold;
+}
+.area-float-unit {
+  font-size: 12px;
+  color: #666;
+  font-weight: bold;
+}
+
+.area-canvas-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #eef1f5;
+}
+
+/* ===== Toolbar CAD ===== */
+.area-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.area-calculator-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.area-calculator-actions .btn {
+  font-size: 11px;
+  padding: 6px 8px;
+  transition: all 0.2s;
+}
+.area-calculator-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.area-calculator-actions .btn:active {
+  transform: translateY(0);
+}
+.area-calculator-actions .btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.area-ortho-toggle {
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #475569;
+}
+.area-ortho-toggle.active {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.area-config-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.area-config-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: #475569;
+  font-weight: bold;
+}
+.area-config-row select,
+.area-config-row input[type="number"] {
+  width: 72px;
+  padding: 3px 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* ===== Resultado ===== */
+.area-calculator-result {
+  font-size: 22px;
+}
+.area-result-detail {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  font-family: 'Consolas', monospace;
+  border-top: 1px dashed #e2e8f0;
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+#areaCalculatorCanvas {
+  cursor: crosshair;
+  transition: cursor 0.1s;
+}
+#areaCalculatorCanvas.snap-active {
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .area-calculator-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .area-float-input {
+    padding: 6px 10px;
+  }
+  .area-float-input input {
+    width: 60px;
+    font-size: 12px;
+  }
+}
+
+.wall-letter-badge {
+  display: inline-block;
+  background: #2563eb;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.area-wall-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.area-wall-item span:first-child {
+  flex: 1;
+  min-width: 80px;
+}
+.area-wall-item input {
+  width: 70px;
+  padding: 2px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.area-wall-item.editing {
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: 6px;
+}
+
+/* Botão de deletar parede (flutuante no canvas) */
+.area-delete-wall-btn {
+  position: fixed;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+.area-delete-wall-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.6);
+}
+.area-delete-wall-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+.delete-icon { font-size: 16px; }
+.delete-text { font-size: 11px; letter-spacing: 0.5px; }
+
+.btn-delete-wall {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+.btn-delete-wall:hover {
+  background: rgba(239, 68, 68, 0.1);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.area-navigation-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 100;
+  animation: fadeInOut 2s ease-in-out infinite;
+}
+@keyframes fadeInOut {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+/* ==== FIM: public/static/01_Create_Obra/components/area-calculator-in-modal.css ==== */
+
+/* ==== INÍCIO: public/static/01_Create_Obra/components/area-calculator.css ==== */
+.area-input-group {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.area-calc-button {
+  min-height: 38px;
+  white-space: nowrap;
+}
+
+.area-calculator-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.62);
+}
+
+.area-calculator-modal.is-open {
+  display: flex;
+}
+
+.area-calculator-dialog {
+  width: min(1180px, 96vw);
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+}
+
+.area-calculator-header,
+.area-calculator-body {
+  display: flex;
+  gap: 16px;
+}
+
+.area-calculator-header {
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
+}
+
+.area-calculator-header h3 {
+  margin: 2px 0 0;
+  font-size: 1.2rem;
+}
+
+.area-calculator-kicker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.area-calculator-body {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.area-calculator-panel {
+  width: 280px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.area-calculator-status {
+  padding: 10px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.area-calculator-result {
+  padding: 12px;
+  border-radius: 6px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 1.6rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.area-calculator-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.area-wall-list {
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.area-wall-item {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.area-wall-item input {
+  width: 100%;
+  min-width: 0;
+}
+
+.area-empty {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.area-canvas-wrap {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+#areaCalculatorCanvas {
+  display: block;
+  max-width: none;
+  cursor: crosshair;
+}
+
+body.area-calculator-open {
+  overflow: hidden;
+}
+
+@media (max-width: 840px) {
+  .area-input-group,
+  .area-calculator-body {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .area-calculator-panel {
+    width: 100%;
+  }
+}
+/* ==== FIM: public/static/01_Create_Obra/components/area-calculator.css ==== */

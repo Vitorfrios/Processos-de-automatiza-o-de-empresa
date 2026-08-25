@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 
 from servidor_modules.database.connection import (
     has_empresas_numero_cliente_column,
-    mark_local_offline_change,
     refresh_local_sql_dump,
 )
 from servidor_modules.database.storage import get_storage, normalize_empresa
@@ -32,7 +31,6 @@ class EmpresaRepository:
     def _sync_local_offline_sidecars(self, source):
         if getattr(self.conn, "is_sqlite", False):
             refresh_local_sql_dump(self.project_root)
-            mark_local_offline_change(self.project_root, source=source)
 
     @staticmethod
     def _normalize_numero_cliente_atual(value):
@@ -73,7 +71,7 @@ class EmpresaRepository:
                 cursor.execute(
                     f"""
                     UPDATE empresas AS empresas_destino
-                    SET ultimo_numero_cliente = GREATEST(
+                    SET ultimo_numero_cliente = MAX(
                         COALESCE(empresas_destino.ultimo_numero_cliente, 0),
                         COALESCE(obras_agrupadas.max_numero_cliente, 0)
                     )
@@ -93,7 +91,7 @@ class EmpresaRepository:
                 cursor.execute(
                     """
                     UPDATE empresas AS empresas_destino
-                    SET ultimo_numero_cliente = GREATEST(
+                    SET ultimo_numero_cliente = MAX(
                         COALESCE(empresas_destino.ultimo_numero_cliente, 0),
                         COALESCE(obras_agrupadas.max_numero_cliente, 0)
                     )

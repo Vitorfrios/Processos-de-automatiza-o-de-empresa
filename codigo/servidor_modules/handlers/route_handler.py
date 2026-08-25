@@ -321,67 +321,28 @@ class RouteHandler:
         handler.send_json_response(result)
 
     def handle_post_import_online_to_offline(self, handler):
-        """POST /api/system/offline/import - Importa online para offline local."""
-        if os.environ.get("RENDER"):
-            handler.send_json_response(
-                {
-                    "success": False,
-                    "error": "A sincronizacao offline nao esta disponivel no ambiente Render.",
-                },
-                status=403,
-            )
-            return
+        """POST /api/system/offline/import - Importa arquivo exportado para SQLite local."""
+        content_length = int(handler.headers.get("Content-Length", 0) or 0)
+        post_data = handler.rfile.read(content_length).decode("utf-8") if content_length else "{}"
 
-        result = self.routes_core.handle_post_import_online_to_offline()
-        status = 409 if result.get("conflict") else (200 if result.get("success") else 500)
+        result = self.routes_core.handle_post_import_online_to_offline(post_data)
+        status = 200 if result.get("success") else 400
         handler.send_json_response(result, status=status)
 
     def handle_post_export_offline_to_online(self, handler):
-        """POST /api/system/offline/export - Exporta offline local para online."""
-        if os.environ.get("RENDER"):
-            handler.send_json_response(
-                {
-                    "success": False,
-                    "error": "A sincronizacao offline nao esta disponivel no ambiente Render.",
-                },
-                status=403,
-            )
-            return
-
+        """POST /api/system/offline/export - Exporta SQLite local para SQL portavel."""
         result = self.routes_core.handle_post_export_offline_to_online()
-        status = 409 if result.get("conflict") else (200 if result.get("success") else 500)
+        status = 200 if result.get("success") else 500
         handler.send_json_response(result, status=status)
 
     def handle_post_background_sync_offline(self, handler):
-        """POST /api/system/offline/background-save - Atualiza snapshot local em segundo plano."""
-        if os.environ.get("RENDER"):
-            handler.send_json_response(
-                {
-                    "success": False,
-                    "skipped": True,
-                    "error": "Sincronizacao local indisponivel no Render.",
-                },
-                status=403,
-            )
-            return
-
+        """POST /api/system/offline/background-save - Compatibilidade sem sincronizacao externa."""
         result = self.routes_core.handle_post_background_sync_offline()
         status = 200 if result.get("success") or result.get("skipped") else 500
         handler.send_json_response(result, status=status)
 
     def handle_post_reconcile_offline_online(self, handler):
-        """POST /api/system/offline/reconcile - Reconcilia alteracoes offline e online."""
-        if os.environ.get("RENDER"):
-            handler.send_json_response(
-                {
-                    "success": False,
-                    "skipped": True,
-                    "error": "Sincronizacao local indisponivel no Render.",
-                },
-                status=403,
-            )
-            return
-
+        """POST /api/system/offline/reconcile - Compatibilidade sem sincronizacao externa."""
         result = self.routes_core.handle_post_reconcile_offline_online(
             mode="reconnect-monitor",
         )

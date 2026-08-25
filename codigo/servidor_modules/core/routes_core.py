@@ -1106,92 +1106,56 @@ class RoutesCore:
             print(f"Erro ao salvar system data: {str(e)}")
             return {"success": False, "error": str(e)}
 
-    def handle_post_import_online_to_offline(self, *, mode="manual-import", allow_unmanaged_local=True):
-        """Baixa o banco online para o snapshot offline local."""
+    def handle_post_import_online_to_offline(self, post_data=None, *, mode="manual-import", allow_unmanaged_local=True):
+        """Importa arquivo exportado e substitui o banco SQLite local."""
         try:
             from servidor_modules.database.connection import (
-                SyncConflictError,
-                sync_postgres_to_sqlite,
+                import_local_database_payload,
             )
 
-            result = sync_postgres_to_sqlite(
+            payload = json.loads(post_data or "{}")
+            result = import_local_database_payload(
                 self.project_root,
-                mode=mode,
-                allow_unmanaged_local=allow_unmanaged_local,
+                payload,
             )
-            print(" Importacao online -> offline concluida com sucesso")
+            print(" Importacao de arquivo para SQLite local concluida com sucesso")
             return {
                 "success": True,
-                "message": (
-                    "Banco online importado para o fallback local em database/app.sqlite3 "
-                    "e dump SQL atualizado em database/app-offline-backup.sql."
-                ),
+                "message": "Banco local importado com sucesso.",
                 **result,
             }
-        except SyncConflictError as e:
-            print(f"Conflito ao importar online -> offline: {str(e)}")
-            return {"success": False, "conflict": True, "error": str(e)}
         except Exception as e:
-            print(f"Erro ao importar online -> offline: {str(e)}")
+            print(f"Erro ao importar arquivo para SQLite local: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_export_offline_to_online(self):
-        """Envia o snapshot offline local para o banco online."""
+        """Exporta o banco SQLite local para um payload JSON portavel."""
         try:
             from servidor_modules.database.connection import (
-                SyncConflictError,
-                sync_sqlite_to_postgres,
+                export_local_database_payload,
             )
 
-            result = sync_sqlite_to_postgres(
-                self.project_root,
-                mode="manual-export",
-            )
-            print(" Exportacao offline -> online concluida com sucesso")
-            return result
-        except SyncConflictError as e:
-            print(f"Conflito ao exportar offline -> online: {str(e)}")
-            return {"success": False, "conflict": True, "error": str(e)}
+            result = export_local_database_payload(self.project_root)
+            print(" Exportacao do SQLite local concluida com sucesso")
+            return {
+                "success": True,
+                "message": "Banco local exportado com sucesso.",
+                **result,
+            }
         except Exception as e:
-            print(f"Erro ao exportar offline -> online: {str(e)}")
+            print(f"Erro ao exportar SQLite local: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def handle_post_reconcile_offline_online(self, *, mode="manual-reconcile"):
-        """Reconcilia alteracoes seguras entre offline local e banco online."""
-        try:
-            from servidor_modules.database.connection import reconcile_offline_and_online
-
-            result = reconcile_offline_and_online(
-                self.project_root,
-                mode=mode,
-            )
-            if result.get("success"):
-                _log_offline_sync_status_once(" Reconciliacao offline <-> online concluida")
-            elif result.get("storage_guard_active"):
-                _log_offline_sync_status_once(
-                    " Banco online com pouco espaco. Dados locais mantidos ate o uso cair para 80%."
-                )
-            elif result.get("manual_sync_required"):
-                _log_offline_sync_status_once(
-                    " Historico local restaurado. Use Exportar para sincronizar com o banco online."
-                )
-            elif result.get("skipped"):
-                if result.get("online_available"):
-                    _log_offline_sync_status_once(" Banco online disponivel. Dados locais mantidos.")
-                else:
-                    _log_offline_sync_status_once(" Banco online indisponivel. Dados locais mantidos.")
-            else:
-                print(
-                    " Falha na reconciliacao offline <-> online:",
-                    result.get("error") or result.get("message"),
-                )
-            return result
-        except Exception as e:
-            print(f"Erro ao reconciliar offline <-> online: {str(e)}")
-            return {"success": False, "error": str(e)}
+        """Compatibilidade: sincronizacao online removida."""
+        return {
+            "success": True,
+            "skipped": True,
+            "message": "Sincronizacao online removida. O banco local SQLite e a base definitiva.",
+        }
 
     def handle_post_background_sync_offline(self):
-        """Atualiza discretamente o snapshot local apos salvar online."""
+        """Compatibilidade: sincronizacao automatica online removida."""
         return self.handle_post_reconcile_offline_online(mode="background-save")
 
     def handle_post_save_constants(self, post_data):

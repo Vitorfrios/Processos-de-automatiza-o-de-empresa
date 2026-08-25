@@ -54,10 +54,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     )
     BLOCKED_STATIC_PREFIXES = (
         "/public/pages/",
-        "/public/scripts/",
         "/public/static/00_Login/",
-        "/public/static/01_Create_Obra/",
-        "/public/static/03_Edit_data/",
         "/json/",
         "/servidor_modules/",
         "/utilitarios py/",

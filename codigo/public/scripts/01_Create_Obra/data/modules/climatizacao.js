@@ -2,6 +2,8 @@
 //  ARQUIVO PRINCIPAL - ORQUESTRADOR
 
 // Importar todos os módulos
+import './climatizate/area-calculator.js';
+
 import { 
     buildClimatizationSection,
     buildClimatizationTable, 

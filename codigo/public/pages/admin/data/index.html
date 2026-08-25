@@ -7,8 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | Dados | Sistema ESI</title>
     <link rel="icon" type="image/png" href="https://esienergia.com.br/wp-content/uploads/2024/02/favicon5.png">
-    <link rel="stylesheet" href="/public/dist/obra-app.min.css?v=20260323-3">
-    <link rel="stylesheet" href="/public/dist/admin-data.min.css?v=20260414-2">
+    <link rel="stylesheet" href="/public/static/01_Create_Obra/main.css?v=20260819-1">
+    <link rel="stylesheet" href="/public/static/03_Edit_data/edit_data.css?v=20260819-1">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
         .admin-email-config-panel {
@@ -142,14 +142,7 @@
                     <i class="icon-upload"></i> Exportar
                 </button>
             </div>
-            <div class="toolbar-right">
-                <div id="systemStatusBadge" class="system-status-badge offline">
-                    <span class="system-status-dot"></span>
-                    <span id="systemStatusText">Sistema offline</span>
-                </div>
-            </div>
         </div>
-        <div id="offlineSyncNotice" class="offline-sync-notice" style="display: none;"></div>
 
 
         <!-- Tabs de Navegação -->
@@ -492,7 +485,7 @@
             <i class="fa-brands fa-github"></i> Vitor Rios on GitHub
         </a>
     </footer>
-    <script defer src="/public/dist/admin-data.min.js?v=20260414-2"></script>
+    <script type="module" src="/public/scripts/03_Edit_data/main.js?v=20260819-1"></script>
     <script>
         // Função para destacar e travar apenas o clique da página ativa
         function highlightAndLockActivePage() {

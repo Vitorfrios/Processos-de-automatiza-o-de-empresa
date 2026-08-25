@@ -960,7 +960,7 @@ function renderDatabaseUsageWidget(stats) {
     const status = stats.databaseUsageStatus || getDatabaseUsageStatus(databaseUsage);
     const progressPercent = Math.max(0, Math.min(databaseUsage.percent_used, 100));
     const sourceEyebrow = databaseUsage.data_source_mode === 'online'
-        ? 'Supabase'
+        ? 'Base externa'
         : 'Base local';
     const sourceTitle = databaseUsage.data_source_mode === 'online'
         ? 'Database usage'
@@ -981,9 +981,6 @@ function renderDatabaseUsageWidget(stats) {
                 <span class="info-badge ${statusBadgeClass}">
                     ${escapeHtml(status.label)}
                 </span>
-            </div>
-            <div class="muted-note" style="margin-bottom:10px;">
-                ${escapeHtml(databaseUsage.data_source_summary || databaseUsage.database_label || '')}
             </div>
             <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:10px;">
                 <div>

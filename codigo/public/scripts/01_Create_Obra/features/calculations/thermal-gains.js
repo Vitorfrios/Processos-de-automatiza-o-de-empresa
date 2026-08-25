@@ -25,17 +25,6 @@ function calculateCeilingGain(area, uValue, deltaT) {
   return result;
 }
 
-function calculateWallGain(comprimento, peDireito, uValue, deltaT) {
-  const compNum = safeNumber(comprimento);
-  const peDireitoNum = safeNumber(peDireito);
-  const uValueNum = safeNumber(uValue);
-  const deltaTNum = safeNumber(deltaT);
-  const area = compNum * peDireitoNum;
-  const result = area * uValueNum * deltaTNum;
-  console.log(`[DEBUG DETAIL] calculateWallGain: (${compNum} * ${peDireitoNum}) = ${area}m * ${uValueNum} * ${deltaTNum} = ${result}`);
-  return result;
-}
-
 function calculatePartitionGain(inputArea, peDireito, uValue, deltaT) {
   const area = safeNumber(inputArea) * safeNumber(peDireito);
   const result = area * uValue * deltaT;
@@ -99,7 +88,7 @@ function calculateExternalAirLatentGain(vazaoArExterno, constants) {
  */
 
 function calculateTotals(gains) {
-  const totalExterno = gains.teto + gains.paredeOeste + gains.paredeLeste + gains.paredeNorte + gains.paredeSul;
+  const totalExterno = gains.teto;
   const totalDivisoes = gains.divisoriaNaoClima1 + gains.divisoriaNaoClima2 + gains.divisoriaClima1 + gains.divisoriaClima2;
   const totalPiso = gains.piso;
   const totalIluminacao = gains.iluminacao;
@@ -130,14 +119,6 @@ function calculateTotals(gains) {
   return totals;
 }
 
-function updateWallDisplay(roomId, direction, gain, uValue, inputWidth, peDireito, deltaT) {
-  const area = safeNumber(inputWidth) * safeNumber(peDireito);
-  updateElementText(`area-parede-${direction}-${roomId}`, Math.ceil(area));
-  updateElementText(`uvalue-parede-${direction}-${roomId}`, uValue.toFixed(3));
-  updateElementText(`deltat-parede-${direction}-${roomId}`, deltaT || 0);
-  updateElementText(`ganho-parede-${direction}-${roomId}`, Math.ceil(gain));
-}
-
 function updatePartitionDisplay(roomId, type, gain, uValue, inputArea, peDireito, deltaT) {
   const areaCalculada = safeNumber(inputArea) * safeNumber(peDireito);
   updateElementText(`area-divi-${type}-${roomId}`, Math.ceil(areaCalculada));
@@ -158,11 +139,6 @@ function updateThermalGainsDisplay(roomId, gains, totals, uValues, inputData) {
   updateElementText(`uvalue-teto-${roomId}`, uValues.teto.toFixed(3));
   updateElementText(`deltat-teto-${roomId}`, window.systemConstants?.deltaT_teto.value || 20);
   updateElementText(`ganho-teto-${roomId}`, Math.ceil(gains.teto));
-
-  updateWallDisplay(roomId, "oeste", gains.paredeOeste, uValues.parede, inputData.paredeOeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Oes.value || 0);
-  updateWallDisplay(roomId, "leste", gains.paredeLeste, uValues.parede, inputData.paredeLeste, inputData.peDireito, window.systemConstants?.deltaT_parede_Les.value || 0);
-  updateWallDisplay(roomId, "norte", gains.paredeNorte, uValues.parede, inputData.paredeNorte, inputData.peDireito, window.systemConstants?.deltaT_parede_Nor.value || 0);
-  updateWallDisplay(roomId, "sul", gains.paredeSul, uValues.parede, inputData.paredeSul, inputData.peDireito, window.systemConstants?.deltaT_parede_Sul.value || 0);
 
   updatePartitionDisplay(roomId, "nc1", gains.divisoriaNaoClima1, uValues.parede, inputData.divisoriaNaoClima1, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim1.value || 0);
   updatePartitionDisplay(roomId, "nc2", gains.divisoriaNaoClima2, uValues.parede, inputData.divisoriaNaoClima2, inputData.peDireito, window.systemConstants?.deltaT_divi_N_clim2.value || 0);
@@ -335,10 +311,6 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
     const calcData = {
       ...inputData,
       area: safeNumber(inputData.area),
-      paredeOeste: safeNumber(inputData.paredeOeste),
-      paredeLeste: safeNumber(inputData.paredeLeste),
-      paredeNorte: safeNumber(inputData.paredeNorte),
-      paredeSul: safeNumber(inputData.paredeSul),
       peDireito: safeNumber(inputData.peDireito),
       divisoriaNaoClima1: safeNumber(inputData.divisoriaNaoClima1),
       divisoriaNaoClima2: safeNumber(inputData.divisoriaNaoClima2),
@@ -354,10 +326,6 @@ async function calculateThermalGains(roomId, vazaoArExterno = 0) {
 
     const gains = {
       teto: calculateCeilingGain(calcData.area, uValues.teto, window.systemConstants.deltaT_teto.value),
-      paredeOeste: calculateWallGain(calcData.paredeOeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Oes.value),
-      paredeLeste: calculateWallGain(calcData.paredeLeste, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Les.value),
-      paredeNorte: calculateWallGain(calcData.paredeNorte, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Nor.value),
-      paredeSul: calculateWallGain(calcData.paredeSul, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_parede_Sul.value),
       divisoriaNaoClima1: calculatePartitionGain(calcData.divisoriaNaoClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim1.value),
       divisoriaNaoClima2: calculatePartitionGain(calcData.divisoriaNaoClima2, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_N_clim2.value),
       divisoriaClima1: calculatePartitionGain(calcData.divisoriaClima1, calcData.peDireito, uValues.parede, window.systemConstants.deltaT_divi_clim1.value),
@@ -414,7 +382,6 @@ export {
   calculateAuxiliaryVariables,
   findRoomContentThermal,
   calculateCeilingGain,
-  calculateWallGain,
   calculatePartitionGain,
   calculateFloorGain,
   calculateLightingGain,
@@ -424,7 +391,6 @@ export {
   calculateExternalAirLatentGain,
   calculateTotals,
   updateThermalGainsDisplay,
-  updateWallDisplay,
   updatePartitionDisplay
 };
 
@@ -435,7 +401,6 @@ if (typeof window !== 'undefined') {
   window.calculateAuxiliaryVariables = calculateAuxiliaryVariables;
   window.findRoomContentThermal = findRoomContentThermal;
   window.calculateCeilingGain = calculateCeilingGain;
-  window.calculateWallGain = calculateWallGain;
   window.calculatePartitionGain = calculatePartitionGain;
   window.calculateFloorGain = calculateFloorGain;
   window.calculateLightingGain = calculateLightingGain;
@@ -445,6 +410,5 @@ if (typeof window !== 'undefined') {
   window.calculateExternalAirLatentGain = calculateExternalAirLatentGain;
   window.calculateTotals = calculateTotals;
   window.updateThermalGainsDisplay = updateThermalGainsDisplay;
-  window.updateWallDisplay = updateWallDisplay;
   window.updatePartitionDisplay = updatePartitionDisplay;
 }
