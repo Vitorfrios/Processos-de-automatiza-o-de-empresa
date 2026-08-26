@@ -132,6 +132,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/health-check",
         "/api/admin/login",
         "/api/client/login",
+        "/api/auth/login",
         "/api/auth/recover-token",
     }
     AUTHENTICATED_API_ROUTES = {
@@ -330,7 +331,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     BRIDGE_HEADER = "X-App-Seed"
     BRIDGE_ROUTE_HEADER = "X-App-View"
     BRIDGE_STORAGE_KEY = "__app_x"
-    BRIDGE_STAMP = "202608261"
+    BRIDGE_STAMP = "202608262"
     BRIDGE_REQUIRED_PAGE_ROUTES = (
         "/login",
         "/obras/create",
@@ -1664,6 +1665,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_post_client_login()
             return
 
+        elif path == "/api/auth/login":
+            self.handle_post_auth_login()
+            return
+
         elif path == "/api/auth/recover-token":
             self.handle_post_recover_token()
             return
@@ -1949,6 +1954,110 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
 
         self.send_json_response(result, status)
+
+    def handle_post_auth_login(self):
+        """POST /api/auth/login - Valida ADM ou cliente em uma unica requisicao."""
+        try:
+            payload = self._read_json_body()
+        except json.JSONDecodeError:
+            self.send_json_response({"success": False, "error": "JSON invalido"}, 400)
+            return
+        except Exception as e:
+            print(f" Erro ao ler corpo do login: {e}")
+            self.send_json_response(
+                {"success": False, "error": "Erro ao processar login"},
+                500,
+            )
+            return
+
+        usuario = str(payload.get("usuario", "")).strip()
+        token = str(payload.get("token", "")).strip()
+
+        if not usuario or not token:
+            self.send_json_response(
+                {
+                    "success": False,
+                    "reason": "missing_credentials",
+                    "message": "Usuario e senha sao obrigatorios.",
+                },
+                400,
+            )
+            return
+
+        try:
+            active_admin = self._get_admin_account(usuario, token)
+        except Exception as e:
+            print(f" Erro ao carregar credenciais administrativas: {e}")
+            active_admin = None
+
+        if active_admin:
+            self._touch_admin_last_access(active_admin["usuario"])
+            admin_session_token, _ = self.session_security.create_signed_token(
+                {
+                    "role": "admin",
+                    "usuario": active_admin["usuario"],
+                    "nome": active_admin["nome"],
+                    "nivel": active_admin["nivel"],
+                }
+            )
+            self.queue_response_header(
+                "Set-Cookie",
+                self.session_security.build_set_cookie_header(admin_session_token),
+            )
+            self.send_json_response(
+                {
+                    "success": True,
+                    "role": "admin",
+                    "session": {
+                        "usuario": active_admin["usuario"],
+                        "nome": active_admin["nome"],
+                        "perfil": "ADM",
+                        "nivel": active_admin["nivel"],
+                    },
+                    "redirectTo": "/admin/obras/create",
+                },
+                200,
+            )
+            return
+
+        result = self.routes_core.empresa_handler.validar_login_empresa(usuario, token)
+        if result.get("reason") == "load_error":
+            self.send_json_response(result, 500)
+            return
+
+        if not result.get("success"):
+            self.send_json_response(
+                {
+                    **result,
+                    "message": result.get("message") or "Usuario ou senha invalidos.",
+                },
+                200,
+            )
+            return
+
+        session_payload = result.get("session") or {}
+        client_session_token, _ = self.session_security.create_signed_token(
+            {
+                "role": "client",
+                "usuario": session_payload.get("usuario", ""),
+                "empresaCodigo": session_payload.get("empresaCodigo", ""),
+                "empresaNome": session_payload.get("empresaNome", ""),
+                "empresaEmail": session_payload.get("empresaEmail", ""),
+                "expiraEm": session_payload.get("expiraEm"),
+            }
+        )
+        self.queue_response_header(
+            "Set-Cookie",
+            self.session_security.build_set_cookie_header(client_session_token),
+        )
+        self.send_json_response(
+            {
+                **result,
+                "role": "client",
+                "redirectTo": "/obras/create",
+            },
+            200,
+        )
 
     def _get_admin_account(self, usuario, token):
         from servidor_modules.database.storage import get_storage

@@ -6,6 +6,7 @@ import {
 
 const CLIENT_AUTH_ENDPOINT = '/api/client/login';
 const ADMIN_AUTH_ENDPOINT = '/api/admin/login';
+const AUTH_ENDPOINT = '/api/auth/login';
 const ADMIN_REDIRECT_PATH = '/admin/obras/create';
 
 function buildClientSession(empresaRecord = {}) {
@@ -221,6 +222,75 @@ async function loginAdmin({ usuario, token }) {
     };
 }
 
+async function login({ usuario, token }) {
+    const normalizedUser = (usuario || '').trim();
+    const normalizedToken = (token || '').trim();
+
+    if (!normalizedUser || !normalizedToken) {
+        return {
+            success: false,
+            reason: 'missing_credentials',
+            message: 'Usuario e senha sao obrigatorios.'
+        };
+    }
+
+    let response;
+    let payload = null;
+
+    try {
+        response = await fetch(AUTH_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                usuario: normalizedUser,
+                token: normalizedToken
+            })
+        });
+    } catch (error) {
+        return {
+            success: false,
+            reason: 'network_error',
+            message: 'Nao foi possivel validar o acesso.'
+        };
+    }
+
+    try {
+        payload = await response.json();
+    } catch (error) {
+        payload = null;
+    }
+
+    if (!response.ok || !payload?.success) {
+        return {
+            success: false,
+            reason: payload?.reason || 'auth_error',
+            message: payload?.message || payload?.error || 'Falha ao autenticar.'
+        };
+    }
+
+    if (payload.role === 'client') {
+        const session = persistClientSession(buildClientSession(payload.session));
+        return {
+            success: true,
+            role: 'client',
+            session,
+            redirectTo: payload.redirectTo || APP_CONFIG.auth?.redirectAfterLogin || '/obras/create'
+        };
+    }
+
+    return {
+        success: true,
+        role: 'admin',
+        session: payload.session || {
+            usuario: normalizedUser,
+            perfil: 'ADM'
+        },
+        redirectTo: payload.redirectTo || ADMIN_REDIRECT_PATH
+    };
+}
+
 function hasValidClientSession() {
     const session = getClientSession();
     if (!session) {
@@ -308,6 +378,7 @@ export {
     persistClientSession,
     clearClientSession,
     validateToken,
+    login,
     loginClient,
     loginAdmin,
     hasValidClientSession,

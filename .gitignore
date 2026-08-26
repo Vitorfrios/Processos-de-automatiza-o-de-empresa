@@ -8,5 +8,7 @@ dist/
 *.zip
 *.rar
 .env
-codigo/database/
+codigo/database/*
+!codigo/database/
+!codigo/database/app-offline-backup.sql
 codigo/json/

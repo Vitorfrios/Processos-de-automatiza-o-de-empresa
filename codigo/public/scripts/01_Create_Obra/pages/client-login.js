@@ -2,8 +2,7 @@ import { APP_CONFIG } from '../core/config.js';
 import { createSmartLogger } from '../core/logger.js';
 import {
     clearClientSession,
-    loginAdmin,
-    loginClient,
+    login,
     redirectToAdminApp,
     redirectToClientApp
 } from '../core/auth.js';
@@ -170,17 +169,15 @@ function bindLoginForm() {
                 usuario: usernameInput.value,
                 token: passwordInput.value
             };
-            const adminResult = await loginAdmin(credentials);
+            const loginResult = await login(credentials);
 
-            if (adminResult?.success) {
-                redirectToAdminApp(adminResult.redirectTo);
+            if (!loginResult?.success) {
+                setFeedback(loginResult?.message || 'Falha ao autenticar.', 'error');
                 return;
             }
 
-            const clientResult = await loginClient(credentials);
-
-            if (!clientResult?.success) {
-                setFeedback(clientResult?.message || 'Falha ao autenticar.', 'error');
+            if (loginResult.role === 'admin') {
+                redirectToAdminApp(loginResult.redirectTo);
                 return;
             }
 

@@ -307,6 +307,7 @@ def has_recent_online_failure(project_root, *, max_age_seconds=120) -> bool:
 def ensure_local_sqlite_database(project_root) -> Path:
     sqlite_path = get_database_path(project_root).resolve()
     sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+    _restore_sqlite_from_seed_if_needed(sqlite_path)
 
     sqlite_conn = sqlite3.connect(str(sqlite_path))
     try:
@@ -317,6 +318,46 @@ def ensure_local_sqlite_database(project_root) -> Path:
         sqlite_conn.close()
 
     return sqlite_path
+
+
+def _restore_sqlite_from_seed_if_needed(sqlite_path: Path) -> None:
+    seed_path = sqlite_path.parent / "app-offline-backup.sql"
+    if not seed_path.exists():
+        return
+
+    if sqlite_path.exists() and _sqlite_database_has_app_rows(sqlite_path):
+        return
+
+    if sqlite_path.exists():
+        sqlite_path.unlink()
+
+    sqlite_conn = sqlite3.connect(str(sqlite_path))
+    try:
+        sqlite_conn.executescript(seed_path.read_text(encoding="utf-8"))
+        sqlite_conn.commit()
+        print(f" Banco SQLite restaurado de {seed_path}.")
+    finally:
+        sqlite_conn.close()
+
+
+def _sqlite_database_has_app_rows(sqlite_path: Path) -> bool:
+    if not sqlite_path.exists() or sqlite_path.stat().st_size == 0:
+        return False
+
+    sqlite_conn = sqlite3.connect(str(sqlite_path))
+    try:
+        for table_name in ("admins", "empresas", "obras"):
+            try:
+                row = sqlite_conn.execute(
+                    f'SELECT COUNT(*) FROM "{table_name}"'
+                ).fetchone()
+            except sqlite3.Error:
+                continue
+            if row and int(row[0] or 0) > 0:
+                return True
+        return False
+    finally:
+        sqlite_conn.close()
 
 
 def get_database_url(project_root=None) -> str:
