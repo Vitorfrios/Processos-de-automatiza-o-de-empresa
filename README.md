@@ -13,6 +13,7 @@ O projeto combina:
 - exportacao de propostas tecnicas e comerciais;
 - persistencia de empresas, credenciais de acesso, catalogos, obras e sessoes.
 - build: python setup.py build_exe
+- render/cache JS: python setup.py refresh_render_links
 
 ## Visão geral
 
@@ -627,8 +628,11 @@ Observacao sobre `codigo/public/dist`: este repositorio nao possui `package.json
 Fluxo recomendado:
 
 1. altere apenas os arquivos originais em `codigo/`, `setup.py`, `assets/` e templates;
-2. execute `python setup.py build_exe`;
-3. envie ao cliente a pasta gerada em `dist/ESI-Energia`.
+2. para deploy no Render, execute `python setup.py refresh_render_links`;
+3. para gerar o executavel local, execute `python setup.py build_exe`;
+4. envie ao cliente a pasta gerada em `dist/ESI-Energia`.
+
+O comando `refresh_render_links` atualiza os `?v=` dos scripts JS nas paginas HTML e renova o stamp usado pelo bridge de requisicoes. Use `python setup.py refresh_render_links --version=YYYYMMDD-1` quando quiser fixar uma versao especifica.
 
 Regras importantes:
 

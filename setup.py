@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import stat
 from pathlib import Path
+from datetime import datetime
 
 from setuptools import Command, find_packages, setup
 
@@ -48,6 +50,55 @@ COLLECT_DATA_PACKAGES = (
     "docxtpl",
     "jinja2",
 )
+
+HTML_PAGES_ROOT = SOURCE_ROOT / "public" / "pages"
+BRIDGE_FILES = (
+    SOURCE_ROOT / "servidor_modules" / "handlers" / "http_handler.py",
+)
+
+
+def build_asset_version() -> str:
+    return datetime.now().strftime("%Y%m%d-1")
+
+
+def update_js_asset_versions(version: str) -> list[Path]:
+    changed_files: list[Path] = []
+    script_version_pattern = re.compile(
+        r'((?:src=["\']/public/scripts/[^"\']+?\.js)\?v=)[^"\']+',
+        flags=re.IGNORECASE,
+    )
+
+    for html_path in sorted(HTML_PAGES_ROOT.rglob("*.html")):
+        content = html_path.read_text(encoding="utf-8")
+        updated_content = script_version_pattern.sub(rf"\g<1>{version}", content)
+        if updated_content != content:
+            html_path.write_text(updated_content, encoding="utf-8", newline="\n")
+            changed_files.append(html_path)
+
+    return changed_files
+
+
+def update_bridge_stamp(version: str) -> list[Path]:
+    changed_files: list[Path] = []
+    normalized_stamp = re.sub(r"[^0-9A-Za-z]", "", version).lower()
+    if not normalized_stamp:
+        return changed_files
+
+    for bridge_file in BRIDGE_FILES:
+        if not bridge_file.exists():
+            continue
+        content = bridge_file.read_text(encoding="utf-8")
+        updated_content = re.sub(
+            r'(BRIDGE_STAMP\s*=\s*")[^"]+(")',
+            rf"\g<1>{normalized_stamp}\2",
+            content,
+            count=1,
+        )
+        if updated_content != content:
+            bridge_file.write_text(updated_content, encoding="utf-8", newline="\n")
+            changed_files.append(bridge_file)
+
+    return changed_files
 
 
 def read_requirements() -> list[str]:
@@ -173,6 +224,34 @@ class CleanExeCommand(Command):
                 remove_tree(target)
 
 
+class RefreshRenderLinksCommand(Command):
+    description = "Atualiza os ?v= dos scripts JS locais e o stamp do bridge para deploy no Render."
+    user_options = [
+        ("version=", None, "Versao a aplicar. Padrao: YYYYMMDD-1."),
+    ]
+
+    def initialize_options(self) -> None:
+        self.version = None
+
+    def finalize_options(self) -> None:
+        self.version = str(self.version or build_asset_version()).strip()
+        if not self.version:
+            raise RuntimeError("Versao invalida para refresh_render_links.")
+
+    def run(self) -> None:
+        changed_files = []
+        changed_files.extend(update_js_asset_versions(self.version))
+        changed_files.extend(update_bridge_stamp(self.version))
+
+        if not changed_files:
+            print(f"Nenhum link JS precisava ser atualizado para v={self.version}.")
+            return
+
+        print(f"Links JS atualizados para v={self.version}:")
+        for path in changed_files:
+            print(f"- {path.relative_to(PROJECT_ROOT)}")
+
+
 setup(
     name="app-esienergia",
     version="1.1.0",
@@ -185,5 +264,6 @@ setup(
     cmdclass={
         "build_exe": BuildExeCommand,
         "clean_exe": CleanExeCommand,
+        "refresh_render_links": RefreshRenderLinksCommand,
     },
 )

@@ -330,7 +330,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     BRIDGE_HEADER = "X-App-Seed"
     BRIDGE_ROUTE_HEADER = "X-App-View"
     BRIDGE_STORAGE_KEY = "__app_x"
-    BRIDGE_STAMP = "6b5e2a103df4"
+    BRIDGE_STAMP = "202608261"
     BRIDGE_REQUIRED_PAGE_ROUTES = (
         "/login",
         "/obras/create",
@@ -1855,7 +1855,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "reason": "admin_not_configured",
                     "error": "Credenciais administrativas nao configuradas no dados.json",
                 },
-                500,
+                200,
             )
             return
 
@@ -1866,7 +1866,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "reason": "invalid_credentials",
                     "error": "Usuario ou senha de administrador invalidos",
                 },
-                401,
+                200,
             )
             return
 
@@ -1925,7 +1925,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             payload.get("token", ""),
         )
 
-        status = 200 if result.get("success") else 401
+        status = 200
         if result.get("reason") == "missing_credentials":
             status = 400
         elif result.get("reason") == "load_error":
@@ -1957,11 +1957,13 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         normalized_token = str(token or "").strip()
         storage = get_storage(self.project_root)
 
+        env_admin = self._get_env_admin_account(normalized_user, normalized_token)
+
         count_row = storage.conn.execute(
             "SELECT COUNT(*) AS total_admins FROM admins"
         ).fetchone()
         if not count_row or int(count_row.get("total_admins") or 0) == 0:
-            return False
+            return env_admin if env_admin is not None else False
 
         row = storage.conn.execute(
             """
@@ -1973,7 +1975,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             (normalized_user,),
         ).fetchone()
         if not row or not row.get("raw_json"):
-            return None
+            return env_admin
 
         try:
             admin = json.loads(row["raw_json"])
@@ -1989,7 +1991,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             or admin_token != normalized_token
             or admin_status == "inativo"
         ):
-            return None
+            return env_admin
 
         return {
             "nome": str(admin.get("nome") or admin_usuario).strip(),
@@ -1998,6 +2000,45 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "token": admin_token,
             "status": admin_status,
             "nivel": admin.get("nivel", "ADM"),
+        }
+
+    def _get_env_admin_account(self, normalized_user, normalized_token):
+        env_user = str(
+            os.environ.get("ESI_ADMIN_USER")
+            or os.environ.get("ADMIN_USER")
+            or ""
+        ).strip()
+        env_token = str(
+            os.environ.get("ESI_ADMIN_TOKEN")
+            or os.environ.get("ADMIN_TOKEN")
+            or ""
+        ).strip()
+
+        if not env_user or not env_token:
+            return None
+
+        if env_user.lower() != normalized_user or env_token != normalized_token:
+            return None
+
+        return {
+            "nome": str(
+                os.environ.get("ESI_ADMIN_NAME")
+                or os.environ.get("ADMIN_NAME")
+                or env_user
+            ).strip(),
+            "email": str(
+                os.environ.get("ESI_ADMIN_EMAIL")
+                or os.environ.get("ADMIN_EMAIL")
+                or ""
+            ).strip(),
+            "usuario": env_user,
+            "token": env_token,
+            "status": "ativo",
+            "nivel": str(
+                os.environ.get("ESI_ADMIN_LEVEL")
+                or os.environ.get("ADMIN_LEVEL")
+                or "ADM"
+            ).strip(),
         }
 
     def _load_admin_accounts(self):

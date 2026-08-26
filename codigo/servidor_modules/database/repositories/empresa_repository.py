@@ -171,17 +171,15 @@ class EmpresaRepository:
         if not usuario_normalizado:
             return None
 
-        row = self.conn.execute(
+        candidates = self.conn.execute(
             """
             SELECT codigo, nome, credenciais_json, raw_json
             FROM empresas
-            WHERE LOWER(COALESCE(credenciais_json, '')) LIKE ?
             ORDER BY sort_order, codigo
-            """,
-            (f'%\"usuario\": \"{usuario_normalizado}\"%',),
+            """
         ).fetchall()
 
-        for candidate in row:
+        for candidate in candidates:
             credenciais = None
             empresa = None
 

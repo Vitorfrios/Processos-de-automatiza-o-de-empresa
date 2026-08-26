@@ -170,15 +170,14 @@ function bindLoginForm() {
                 usuario: usernameInput.value,
                 token: passwordInput.value
             };
-            const [adminResult, clientResult] = await Promise.all([
-                loginAdmin(credentials),
-                loginClient(credentials)
-            ]);
+            const adminResult = await loginAdmin(credentials);
 
             if (adminResult?.success) {
                 redirectToAdminApp(adminResult.redirectTo);
                 return;
             }
+
+            const clientResult = await loginClient(credentials);
 
             if (!clientResult?.success) {
                 setFeedback(clientResult?.message || 'Falha ao autenticar.', 'error');

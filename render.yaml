@@ -10,4 +10,13 @@ services:
       pip install -r requirements.txt
     startCommand: python codigo/servidor.py
     healthCheckPath: /health-check
+    envVars:
+      - key: ESI_ADMIN_USER
+        sync: false
+      - key: ESI_ADMIN_TOKEN
+        sync: false
+      - key: ESI_ADMIN_NAME
+        sync: false
+      - key: ESI_ADMIN_EMAIL
+        sync: false
     autoDeploy: true
