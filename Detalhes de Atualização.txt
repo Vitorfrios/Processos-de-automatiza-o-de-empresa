@@ -1,5 +1,1 @@
-remover qualquer coisa desse aviso 
-            <div class="muted-note" style="margin-bottom:10px;">
-                ${escapeHtml(databaseUsage.data_source_summary || databaseUsage.database_label || '')}
-            </div>
-            
+adicional dentro e fora de serviço

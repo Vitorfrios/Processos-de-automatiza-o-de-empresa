@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: obra-system
+    name: app-esienergia
     runtime: python
     plan: free
     pythonVersion: "3.11.9"
@@ -10,7 +10,4 @@ services:
       pip install -r requirements.txt
     startCommand: python codigo/servidor.py
     healthCheckPath: /health-check
-    envVars:
-      - key: DATABASE_URL
-        sync: false
     autoDeploy: true

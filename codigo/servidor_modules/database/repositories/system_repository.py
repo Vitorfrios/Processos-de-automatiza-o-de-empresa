@@ -13,7 +13,10 @@ from servidor_modules.database.storage import get_storage
 
 class SystemRepository:
     DEFAULT_DATABASE_LIMIT_MB = 500
-    EXCLUDED_CONSTANT_KEYS = {"SUPABASE_DB_LIMIT_MB"}
+    EXCLUDED_CONSTANT_KEYS = {
+        "DATABASE_STORAGE_LIMIT_MB",
+        "SUPABASE_DB_LIMIT_MB",
+    }
     STORAGE_STATUS_MESSAGES = {
         "normal": "Armazenamento funcionando normalmente.",
         "warning": "O sistema ainda esta funcionando normalmente. O banco de dados reutiliza espaco automaticamente apos exclusoes.",
