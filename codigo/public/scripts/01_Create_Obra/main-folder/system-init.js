@@ -170,7 +170,6 @@ async function loadAllModules() {
       // Obras
       addNewObra: obraManagerModule.addNewObra,
       saveOrUpdateObra: obraManagerModule.saveObra,
-      verifyObraData: obraManagerModule.verifyObraData,
       deleteObra: obraManagerModule.deleteObra,
       saveObra: obraManagerModule.saveObra,
       fetchObras: obraManagerModule.fetchObras,

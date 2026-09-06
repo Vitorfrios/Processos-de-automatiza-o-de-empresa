@@ -13,12 +13,66 @@ function hideManageSections() {
     });
 }
 
+function removeManageFinancialElement(element) {
+    if (element?.parentNode) {
+        element.parentNode.removeChild(element);
+    }
+}
+
+function removeManageFinancialUi() {
+    const container = document.getElementById('projects-container');
+    if (!container) return;
+
+    container.querySelectorAll(
+        '.climatization-form-grid .form-group:has(.price-display), ' +
+        '.option-price, ' +
+        '.all-machines-total-price, ' +
+        '.room-total-container, ' +
+        '.project-total-value, ' +
+        '.obra-total-value, ' +
+        '.tubos-total-geral, ' +
+        '.field-group:has(.input-valor), ' +
+        '.total-item-valor, ' +
+        '.duto-header-line .material-inline, ' +
+        '.duto-selector .selector-item:has([id^="duto-valor-tipo-"]), ' +
+        '.duto-selector .selector-item:has([id^="duto-valor-opcional-"]), ' +
+        '.duto-selector .selector-item:has([id^="duto-valor-total-"]), ' +
+        '.acessorio-selector .selector-item:has([id^="acessorio-valor-"])'
+    ).forEach(removeManageFinancialElement);
+
+    container.querySelectorAll('[id^="total-geral-valor-"]').forEach((element) => {
+        removeManageFinancialElement(element.closest('.total-geral-item') || element);
+    });
+
+    container.querySelectorAll('.dutos-table').forEach((table) => {
+        table.querySelectorAll('tr').forEach((row) => {
+            [7, 6, 5].forEach((index) => {
+                if (row.children[index]) removeManageFinancialElement(row.children[index]);
+            });
+        });
+        table.querySelectorAll('tfoot').forEach(removeManageFinancialElement);
+    });
+
+    container.querySelectorAll('.acessorios-table').forEach((table) => {
+        table.querySelectorAll('tr').forEach((row) => {
+            [5, 4].forEach((index) => {
+                if (row.children[index]) removeManageFinancialElement(row.children[index]);
+            });
+        });
+        table.querySelectorAll('tfoot').forEach(removeManageFinancialElement);
+    });
+}
+
 function initializeManageSectionVisibility() {
     const container = document.getElementById('projects-container');
     if (!container) return;
 
     hideManageSections();
-    new MutationObserver(hideManageSections).observe(container, {
+    removeManageFinancialUi();
+    new MutationObserver(() => {
+        hideManageSections();
+        removeManageFinancialUi();
+    }).observe(container, {
         childList: true,
         subtree: true,
     });

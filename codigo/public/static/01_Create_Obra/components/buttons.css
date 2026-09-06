@@ -53,11 +53,6 @@
 }
 
 /* ===== BOTÕES ESPECÍFICOS PARA OBRA/PROJETO ===== */
-.btn-verify {
-  background: var(--btn-verify-gradient);
-  color: var(--color-white);
-}
-
 .btn-save {
   background: var(--btn-save-gradient);
   color: var(--color-white);

@@ -112,7 +112,6 @@ function buildObraActionsFooter(obraId, _obraName, hasId = false) {
 
     return `
     <div class="obra-actions-footer">
-        <button class="btn btn-verify" onclick="verifyObraData('${obraId}')">Verificar Dados</button>
         <button class="btn ${buttonClass}" onclick="event.preventDefault(); saveOrUpdateObra('${obraId}')">${buttonText}</button>
         ${hasIdBool ? `
         ${exportButtonHtml}

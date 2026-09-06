@@ -51,7 +51,6 @@
 
   /* Gradientes de botões – buttons.css */
   --btn-save-gradient:     var(--success-gradient);
-  --btn-verify-gradient:   linear-gradient(135deg, #5f71ca 0%, #5065a2 100%);
   --btn-download-gradient: linear-gradient(135deg, #4A90E2 0%, #1C3F94 100%);
 
   /* Gradientes de status – projects.css */

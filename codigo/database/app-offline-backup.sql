@@ -28,7 +28,7 @@ CREATE TABLE admins (
     raw_json TEXT NOT NULL,
     sort_order INTEGER NOT NULL
 );
-INSERT INTO "admins" VALUES('adm','5tgrySVdG458','{"usuario": "adm", "token": "5tgrySVdG458", "email": "matheus@esienergia.com.br", "criadoEm": "2026-03-19T14:30:59.996Z", "ultimoAcesso": "2026-09-06T15:13:28.382335-03:00"}',0);
+INSERT INTO "admins" VALUES('adm','5tgrySVdG458','{"usuario": "adm", "token": "5tgrySVdG458", "email": "matheus@esienergia.com.br", "criadoEm": "2026-03-19T14:30:59.996Z", "ultimoAcesso": "2026-09-06T16:29:38.461699-03:00"}',0);
 CREATE TABLE constants (
     key TEXT PRIMARY KEY,
     value_json TEXT NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE empresas (
     raw_json TEXT NOT NULL,
     sort_order INTEGER NOT NULL
 );
-INSERT INTO "empresas" VALUES('ACT','ACTEMIUM',154,'{"usuario": "ACTE", "email": "", "token": "mt3br4g4.mbfv3pg1el8.33ebc472b6a", "data_criacao": "2026-08-18T13:49:11.152Z", "data_expiracao": "2026-09-25T17:12:57.768Z", "tempoUso": 30, "source": "manual-edit"}','{"codigo": "ACT", "nome": "ACTEMIUM", "credenciais": {"usuario": "ACTE", "email": "", "token": "mt3br4g4.mbfv3pg1el8.33ebc472b6a", "data_criacao": "2026-08-18T13:49:11.152Z", "data_expiracao": "2026-09-25T17:12:57.768Z", "tempoUso": 30, "source": "manual-edit"}, "numeroClienteAtual": 154}',0);
+INSERT INTO "empresas" VALUES('ACT','ACTEMIUM',154,'{"usuario": "ACTE", "email": "", "token": "mt3br4g4.mbfv3pg1el8.33ebc472b6a", "data_criacao": "2026-08-18T13:49:11.152Z", "data_expiracao": "2026-10-06T19:29:34.301Z", "tempoUso": 30, "source": "manual-edit"}','{"codigo": "ACT", "nome": "ACTEMIUM", "credenciais": {"usuario": "ACTE", "email": "", "token": "mt3br4g4.mbfv3pg1el8.33ebc472b6a", "data_criacao": "2026-08-18T13:49:11.152Z", "data_expiracao": "2026-10-06T19:29:34.301Z", "tempoUso": 30, "source": "manual-edit"}, "numeroClienteAtual": 154}',0);
 INSERT INTO "empresas" VALUES('AMC','AMC SOLUÇÕES',5,NULL,'{"codigo": "AMC", "nome": "AMC SOLUÇÕES", "credenciais": null, "numeroClienteAtual": 5}',1);
 INSERT INTO "empresas" VALUES('ARC','ARCON',0,NULL,'{"codigo": "ARC", "nome": "ARCON", "credenciais": null, "numeroClienteAtual": 0}',2);
 INSERT INTO "empresas" VALUES('ART','ARTECAL',1,NULL,'{"codigo": "ART", "nome": "ARTECAL", "credenciais": null, "numeroClienteAtual": 1}',3);
