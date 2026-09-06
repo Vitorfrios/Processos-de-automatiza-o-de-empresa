@@ -448,7 +448,7 @@ function renderAdminCredentialTempoUsoField({
   }
 
   const normalizedTempoUso = Number.parseInt(tempoUso, 10) || 30;
-  const isPredefinedTime = [30, 60, 90].includes(normalizedTempoUso);
+  const isPredefinedTime = [30, 90, 120].includes(normalizedTempoUso);
   const customValue = isPredefinedTime ? "" : normalizedTempoUso;
 
   return `
@@ -467,18 +467,18 @@ function renderAdminCredentialTempoUsoField({
           <label class="empresa-tempo-uso-option">
             <input type="radio"
               name="empresa-tempo-uso-${obraId}"
-              value="60"
-              ${normalizedTempoUso === 60 ? "checked" : ""}
-              onchange="window.handleEmpresaTempoUsoChange?.('${obraId}')">
-            <span>60</span>
-          </label>
-          <label class="empresa-tempo-uso-option">
-            <input type="radio"
-              name="empresa-tempo-uso-${obraId}"
               value="90"
               ${normalizedTempoUso === 90 ? "checked" : ""}
               onchange="window.handleEmpresaTempoUsoChange?.('${obraId}')">
             <span>90</span>
+          </label>
+          <label class="empresa-tempo-uso-option">
+            <input type="radio"
+              name="empresa-tempo-uso-${obraId}"
+              value="120"
+              ${normalizedTempoUso === 120 ? "checked" : ""}
+              onchange="window.handleEmpresaTempoUsoChange?.('${obraId}')">
+            <span>120</span>
           </label>
         </div>
         <div class="empresa-tempo-uso-custom-slot">
@@ -542,7 +542,7 @@ function setEmpresaTempoUsoCustomVisibility(
 
 function setEmpresaTempoUsoValue(obraId, tempoUso = 30) {
   const normalizedTempoUso = Number.parseInt(tempoUso, 10) || 30;
-  const selectedValue = [30, 60, 90].includes(normalizedTempoUso)
+  const selectedValue = [30, 90, 120].includes(normalizedTempoUso)
     ? String(normalizedTempoUso)
     : "personalizado";
 
