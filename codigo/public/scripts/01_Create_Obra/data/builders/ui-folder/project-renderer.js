@@ -81,6 +81,18 @@ function renderProjectFromData(projectData, obraId = null, obraName = null) {
     }, 250);
   }
 
+  if (projectData.adicionaisProjeto?.length > 0) {
+    setTimeout(async () => {
+      const projectElement = await waitForElement(
+        `[data-project-id="${projectId}"]`,
+        250,
+      );
+      if (projectElement && typeof window.populateAdicionaisProjetoData === "function") {
+        await window.populateAdicionaisProjetoData(projectElement, projectData.adicionaisProjeto);
+      }
+    }, 250);
+  }
+
   if (projectId) {
     updateProjectButton(projectName, true);
   }
@@ -191,6 +203,10 @@ async function populateProjectData(
   console.log(
     ` Projeto "${projectName}" preenchido com sucesso - ${salas.length} sala(s) processada(s)`,
   );
+
+  if (projectData.adicionaisProjeto?.length > 0 && typeof window.populateAdicionaisProjetoData === "function") {
+    await window.populateAdicionaisProjetoData(projectElement, projectData.adicionaisProjeto);
+  }
 }
 
 export { renderProjectFromData, populateProjectData };

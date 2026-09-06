@@ -232,6 +232,7 @@ function buildProjectData(projectIdOrElement) {
     nome: projectName,
     salas: [],
     servicos: extractServicosData(projectElement),
+    adicionaisProjeto: extractAdicionaisProjetoData(projectElement),
     valorTotalProjeto: valorTotalProjeto,
   };
 
@@ -335,6 +336,23 @@ function extractServicosData(projectElement) {
   return servicosData;
 }
 
+function extractAdicionaisProjetoData(projectElement) {
+  const adicionaisContainer = projectElement.querySelector(
+    ".adicionais-projeto-section .adicionais-container",
+  );
+  if (!adicionaisContainer) return [];
+
+  return Array.from(adicionaisContainer.querySelectorAll(".adicional-item")).map(
+    (item, index) => ({
+      id: item.dataset.itemId || `adicional-projeto-${index}`,
+      valor: item.querySelector(".input-valor")
+        ? parseFloat(item.querySelector(".input-valor").value) || 0
+        : 0,
+      descricao: item.querySelector(".input-texto")?.value || "",
+    }),
+  );
+}
+
 /**
  * Extrai dados da subseção de Engenharia
  */
@@ -386,5 +404,6 @@ export {
   buildObraData,
   buildProjectData,
   extractServicosData,
+  extractAdicionaisProjetoData,
   extractValorTotalObra,
 };

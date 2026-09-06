@@ -120,6 +120,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/backup",
         "/machines",
         "/session-obras",
+        "/admin/obras/manage",
     }
     PAGE_ACCESS_ROLES = {
         "/login": None,
@@ -127,6 +128,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/admin/obras/create": {"admin"},
         "/admin/obras/embed": {"admin"},
         "/admin/data": {"admin"},
+        "/admin/obras/manage": {"admin"},
     }
     PUBLIC_API_ROUTES = {
         "/health-check",
@@ -327,6 +329,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/admin/obras/create": "public/pages/admin/obras/create.html",
         "/admin/obras/embed": "public/pages/admin/obras/embed.html",
         "/admin/data": "public/pages/admin/data/index.html",
+        "/admin/obras/manage": "public/pages/admin/obras/manage.html",
     }
     BRIDGE_HEADER = "X-App-Seed"
     BRIDGE_ROUTE_HEADER = "X-App-View"
@@ -337,6 +340,7 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         "/obras/create",
         "/admin/obras/create",
         "/admin/data",
+        "/admin/obras/manage",
     )
     BRIDGE_PAGE_RULES = {
         "/login": {
@@ -385,6 +389,18 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             "tokens": (
                 "https://github.com/Vfrios",
                 "Vitor Rios on GitHub",
+            ),
+        },
+        "/admin/obras/manage": {
+            "page": "A4",
+            "html": "m4n8",
+            "css": "g7:t2",
+            "js": "mg8r1",
+            "href": "https://github.com/Vfrios",
+            "text": "vitor rios on github",
+            "tokens": (
+                "/admin/obras/manage",
+                "Gerenciar Obras",
             ),
         },
         "/admin/obras/embed": {
@@ -525,7 +541,10 @@ class UniversalHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if normalized_path in self.PUBLIC_API_ROUTES:
             return True
 
-        if self._get_request_bridge_route() != self.ADMIN_CREATE_ROUTE:
+        if self._get_request_bridge_route() not in {
+            self.ADMIN_CREATE_ROUTE,
+            "/admin/obras/manage",
+        }:
             return False
 
         if normalized_path in self.ADMIN_CREATE_ALLOWED_REQUEST_PATHS:

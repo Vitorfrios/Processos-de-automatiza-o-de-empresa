@@ -113,6 +113,29 @@ function buildServicosInProject(projectId) {
     `
 }
 
+function buildAdicionaisProjetoInProject(projectId) {
+    if (!projectId) return ''
+
+    return `
+        <div class="section-block adicionais-projeto-section" data-project-id="${projectId}">
+            <div class="subsection-header">
+                <button class="minimizer" onclick="toggleSubsection('adicionais-obra-${projectId}')">+</button>
+                <h5 class="subsection-title">Adicionais</h5>
+            </div>
+
+            <div class="subsection-content collapsed" id="subsection-content-adicionais-obra-${projectId}">
+                <div class="adicionais-container" id="adicionais-obra-container-${projectId}"></div>
+
+                <div class="adicionais-actions">
+                    <button class="btn btn-add-secondary" onclick="addAdicionalConjunto('${projectId}', 'adicionais-obra-container-${projectId}')">+ Conjunto</button>
+                    <button class="btn btn-add-secondary" onclick="addAdicionalValor('${projectId}', 'adicionais-obra-container-${projectId}')">+ Valor</button>
+                    <button class="btn btn-add-secondary" onclick="addAdicionalTexto('${projectId}', 'adicionais-obra-container-${projectId}')">+ Texto</button>
+                </div>
+            </div>
+        </div>
+    `
+}
+
 /**
  * Alterna visibilidade da seção principal
  */
@@ -152,11 +175,18 @@ function toggleSubsection(subsectionId) {
 /**
  * Adiciona um conjunto de adicional
  */
-function addAdicionalConjunto(projectId) {
-    const container = document.getElementById(`adicionais-container-${projectId}`)
+function getAdicionaisContainer(projectId, containerId = null) {
+    return document.getElementById(containerId || `adicionais-container-${projectId}`)
+}
+
+function addAdicionalConjunto(projectId, containerId = null) {
+    const container = getAdicionaisContainer(projectId, containerId)
     if (!container) return
 
     const itemId = `adicional-${Date.now()}`
+    const removeCall = containerId
+        ? `removeAdicionalItem('${projectId}', '${itemId}', '${containerId}')`
+        : `removeAdicionalItem('${projectId}', '${itemId}')`
     const html = `
         <div class="adicional-item" data-item-id="${itemId}">
             <div class="field-group">
@@ -171,7 +201,7 @@ function addAdicionalConjunto(projectId) {
                 <textarea placeholder="Descrição" 
                       class="input-texto"></textarea>
             </div>    
-            <button class="btn btn-remove" onclick="removeAdicionalItem('${projectId}', '${itemId}')">×</button>
+            <button class="btn btn-remove" onclick="${removeCall}">×</button>
         </div>
     `
 
@@ -181,11 +211,14 @@ function addAdicionalConjunto(projectId) {
 /**
  * Adiciona um adicional do tipo valor
  */
-function addAdicionalValor(projectId) {
-    const container = document.getElementById(`adicionais-container-${projectId}`)
+function addAdicionalValor(projectId, containerId = null) {
+    const container = getAdicionaisContainer(projectId, containerId)
     if (!container) return
 
     const itemId = `adicional-${Date.now()}`
+    const removeCall = containerId
+        ? `removeAdicionalItem('${projectId}', '${itemId}', '${containerId}')`
+        : `removeAdicionalItem('${projectId}', '${itemId}')`
     const html = `
         <div class="adicional-item" data-item-id="${itemId}">
             <label>Valor</label>            
@@ -193,7 +226,7 @@ function addAdicionalValor(projectId) {
                    placeholder="Valor" 
                    class="input-valor"
                    oninput="updateServicosTotal('${projectId}')">
-            <button class="btn btn-remove" onclick="removeAdicionalItem('${projectId}', '${itemId}')">×</button>
+            <button class="btn btn-remove" onclick="${removeCall}">×</button>
         </div>
     `
 
@@ -203,17 +236,20 @@ function addAdicionalValor(projectId) {
 /**
  * Adiciona um adicional do tipo texto
  */
-function addAdicionalTexto(projectId) {
-    const container = document.getElementById(`adicionais-container-${projectId}`)
+function addAdicionalTexto(projectId, containerId = null) {
+    const container = getAdicionaisContainer(projectId, containerId)
     if (!container) return
 
     const itemId = `adicional-${Date.now()}`
+    const removeCall = containerId
+        ? `removeAdicionalItem('${projectId}', '${itemId}', '${containerId}')`
+        : `removeAdicionalItem('${projectId}', '${itemId}')`
     const html = `
         <div class="adicional-item" data-item-id="${itemId}">
             <label>Descrição</label>
             <textarea placeholder="Descrição" 
                       class="input-texto"></textarea>
-            <button class="btn btn-remove" onclick="removeAdicionalItem('${projectId}', '${itemId}')">×</button>
+            <button class="btn btn-remove" onclick="${removeCall}">×</button>
         </div>
     `
 
@@ -223,8 +259,8 @@ function addAdicionalTexto(projectId) {
 /**
  * Remove um item adicional
  */
-function removeAdicionalItem(projectId, itemId) {
-    const container = document.getElementById(`adicionais-container-${projectId}`)
+function removeAdicionalItem(projectId, itemId, containerId = null) {
+    const container = getAdicionaisContainer(projectId, containerId)
     if (!container) return
 
     const item = container.querySelector(`[data-item-id="${itemId}"]`)
@@ -240,6 +276,7 @@ function removeAdicionalItem(projectId, itemId) {
 // Adiciona ao escopo global
 if (typeof window !== 'undefined') {
     window.buildServicosInProject = buildServicosInProject
+    window.buildAdicionaisProjetoInProject = buildAdicionaisProjetoInProject
     window.toggleSection = toggleSection
     window.toggleSubsection = toggleSubsection
     window.addAdicionalConjunto = addAdicionalConjunto
@@ -252,6 +289,7 @@ if (typeof window !== 'undefined') {
 
 export {
     buildServicosInProject,
+    buildAdicionaisProjetoInProject,
     toggleSection,
     toggleSubsection,
     addAdicionalConjunto,

@@ -37,6 +37,12 @@ function filterObrasForCurrentMode(obras, { logRejected = false } = {}) {
 }
 
 async function resolveObrasToLoad() {
+    if (window.location.pathname.replace(/\/$/, '') === '/admin/obras/manage') {
+        const catalogoCompleto = await getObraCatalogRuntimeData()
+        console.log(`[LOAD OBRAS] Gerenciamento: ${catalogoCompleto.length} obra(s) no catalogo completo`)
+        return catalogoCompleto
+    }
+
     if (isClientMode()) {
         const todasObras = await getObraCatalogRuntimeData()
         const obrasDaEmpresa = filterObrasForCurrentMode(todasObras)

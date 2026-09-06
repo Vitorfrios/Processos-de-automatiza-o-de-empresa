@@ -287,10 +287,43 @@ async function populateServicosData(projectElement, servicosData) {
     } catch (error) {}
 }
 
+async function populateAdicionaisProjetoData(projectElement, adicionaisData) {
+    if (!projectElement || !Array.isArray(adicionaisData) || adicionaisData.length === 0) return;
+
+    const container = projectElement.querySelector('.adicionais-projeto-section .adicionais-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const projectId = projectElement.dataset.projectId;
+
+    for (const adicional of adicionaisData) {
+        const temValor = adicional?.valor && adicional.valor > 0;
+        const temDescricao = adicional?.descricao && adicional.descricao.trim() !== '';
+        if (!temValor && !temDescricao) continue;
+
+        const action = temValor && temDescricao
+            ? 'addAdicionalConjunto'
+            : temValor
+                ? 'addAdicionalValor'
+                : 'addAdicionalTexto';
+
+        window[action]?.(projectId, container.id);
+        await new Promise(resolve => setTimeout(resolve, 6));
+
+        const item = container.querySelector('.adicional-item:last-child');
+        if (!item) continue;
+        const valorInput = item.querySelector('.input-valor');
+        const descricaoInput = item.querySelector('.input-texto');
+        if (valorInput && temValor) valorInput.value = adicional.valor;
+        if (descricaoInput && temDescricao) descricaoInput.value = adicional.descricao;
+    }
+}
+
 
 // ADICIONAR FUNÇÕES AUXILIARES AO OBJETO GLOBAL
 if (typeof window !== 'undefined') {
     window.populateServicosData = populateServicosData;
+    window.populateAdicionaisProjetoData = populateAdicionaisProjetoData;
     window.removeProjectEmptyMessage = removeProjectEmptyMessage;
 
     if (document.readyState === 'loading') {
@@ -308,5 +341,6 @@ export {
     populateObraData,
     processProjectAsync,
     populateServicosData, 
+    populateAdicionaisProjetoData,
 
 };

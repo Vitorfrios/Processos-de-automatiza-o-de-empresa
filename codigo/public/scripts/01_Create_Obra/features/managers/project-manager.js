@@ -3,7 +3,7 @@ import { generateProjectId } from '../../data/utils/id-generator.js';
 import { getNextProjectNumber } from '../../data/utils/data-utils.js';
 import { removeEmptyObraMessage } from '../../ui/helpers.js';
 import { addNewRoomToProject } from '../../data/modules/rooms.js';
-import { buildServicosInProject } from './servicos.js';
+import { buildServicosInProject, buildAdicionaisProjetoInProject } from './servicos.js';
 
 /**
  * Utilitário: converte texto monetário para número
@@ -131,6 +131,7 @@ function buildProjectHTML(obraId, obraName, projectId, projectName) {
                     </span>
                 </div>
                 ${buildServicosInProject(finalProjectId)}
+                ${buildAdicionaisProjetoInProject(finalProjectId)}
             </div>
         </div>
     `;

@@ -11,6 +11,10 @@ let embeddedObraLoadCompleted = false;
 let embeddedOverlayHideTimeout = null;
 
 function getModeBaseTitle(modoEdicao) {
+    if (window.location.pathname.toLowerCase().startsWith('/admin/obras/manage')) {
+        return 'Gerenciar Obras';
+    }
+
     return modoEdicao ? DEFAULT_EDIT_TITLE : DEFAULT_CREATE_TITLE;
 }
 
@@ -356,6 +360,10 @@ function resolveActiveLink() {
 
     if (currentPath.startsWith('/obras/create') || currentPath.startsWith('/admin/obras/create')) {
         return document.getElementById('nav-criar-obras');
+    }
+
+    if (currentPath.startsWith('/admin/obras/manage')) {
+        return document.getElementById('nav-gerenciar-obras');
     }
 
     if (currentPath.startsWith('/admin/data')) {

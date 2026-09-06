@@ -10,12 +10,14 @@
 @import url('components/machines.css');
 @import url('components/capacity-tables.css');
 @import url('components/empresa-cadastro-inline.css');
+
 @import url('components/acessorios.css');
 @import url('components/dutos.css');
 @import url('components/tubos.css');
 @import url('components/servicos.css');
 @import url('components/ventilacao.css');
 @import url('components/area-calculator.css');
+
 @import url('components/area-calculator-in-modal.css');
 @import url('layout/grid.css');
 @import url('layout/modal.css');

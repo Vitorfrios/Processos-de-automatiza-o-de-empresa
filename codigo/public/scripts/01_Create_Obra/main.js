@@ -15,6 +15,7 @@ function prewarmInitialBootstraps() {
   const routePath = String(window.location.pathname || "").trim();
   if (
     routePath !== "/admin/obras/create" &&
+  routePath !== "/admin/obras/manage" &&
     routePath !== "/obras/create" &&
     routePath !== "/admin/obras/embed"
   ) {

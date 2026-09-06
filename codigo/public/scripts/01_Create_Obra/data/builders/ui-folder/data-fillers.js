@@ -353,8 +353,13 @@ async function ensureAllRoomSections(roomElement) {
   // Função simples para verificar seção
   const checkSection = (title) => {
     const sections = roomElement.querySelectorAll(".section-title");
+    const normalizeTitle = (value) => String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    const normalizedTitle = normalizeTitle(title);
     for (let sectionTitle of sections) {
-      if (sectionTitle.textContent.includes(title)) {
+      if (normalizeTitle(sectionTitle.textContent).includes(normalizedTitle)) {
         return true;
       }
     }
@@ -364,7 +369,7 @@ async function ensureAllRoomSections(roomElement) {
   // Verificar seções
   const climatizationExists = checkSection("Climatização");
   const machinesExists = checkSection("Máquinas");
-  const acessoriosExists = checkSection("Acessorios");
+  const acessoriosExists = checkSection("Acessórios");
   const dutosExists = checkSection("Dutos");
   const tubosExists = checkSection("Tubulação");
 
@@ -389,6 +394,19 @@ async function ensureAllRoomSections(roomElement) {
     console.warn(` DUPLICAÇÃO DETECTADA: ${tubosCount} seções de Tubulação`);
     fixDuplicatedSections(roomElement, "Tubulação de Cobre");
     return true; // Já corrigiu, não precisa criar
+  }
+
+  const acessoriosCount = Array.from(tubosSections).filter((title) =>
+    title.textContent
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .includes("Acessorios de Difusao e Controle de Ar"),
+  ).length;
+
+  if (acessoriosCount > 1) {
+    console.warn(` DUPLICAÇÃO DETECTADA: ${acessoriosCount} seções de Acessórios`);
+    fixDuplicatedSections(roomElement, "Acessórios de Difusão e Controle de Ar");
+    return true;
   }
 
   // Se todas existem, retornar true
@@ -481,7 +499,13 @@ function fixDuplicatedSections(roomElement, sectionTitle) {
   // Encontrar todas as seções com o título especificado
   allSections.forEach((section) => {
     const titleElement = section.querySelector(".section-title");
-    if (titleElement && titleElement.textContent.includes(sectionTitle)) {
+    const normalizedSectionTitle = titleElement?.textContent
+      ?.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    const normalizedTargetTitle = String(sectionTitle)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    if (normalizedSectionTitle && normalizedSectionTitle.includes(normalizedTargetTitle)) {
       targetSections.push(section);
     }
   });

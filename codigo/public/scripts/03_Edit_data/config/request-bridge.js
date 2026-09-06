@@ -31,6 +31,14 @@ const BRIDGE_PAGE_RULES = {
     href: "https://github.com/Vfrios",
     text: "vitor rios on github",
   },
+  "/admin/obras/manage": {
+    page: "A4",
+    html: "m4n8",
+    css: "g7:t2",
+    js: "mg8r1",
+    href: "https://github.com/Vfrios",
+    text: "vitor rios on github",
+  },
   "/admin/obras/embed": {
     page: "E5",
     html: "u1x0",

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Gerenciar Obras | Sistema ESI</title>
+    <link rel="icon" type="image/png" href="https://esienergia.com.br/wp-content/uploads/2024/02/favicon5.png">
+    <link rel="stylesheet" href="/public/static/01_Create_Obra/main.css">
+    <style>
+        .manage-obras-filter {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--border-radius-lg);
+            background: var(--bg-primary);
+            box-shadow: var(--card-shadow);
+        }
+
+        .manage-obras-filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .manage-obras-filter-field label {
+            color: var(--color-gray-700);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .manage-obras-filter-field input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--border-radius);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .manage-obras-filter-field {
+            position: relative;
+        }
+
+        .manage-obras-company-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            z-index: 1000;
+            display: none;
+            max-height: 240px;
+            overflow-y: auto;
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--border-radius);
+            background: var(--bg-primary);
+            box-shadow: 0 8px 18px rgba(15, 23, 42, .14);
+        }
+
+        .manage-obras-company-option {
+            display: block;
+            width: 100%;
+            padding: 9px 10px;
+            border: 0;
+            background: transparent;
+            color: var(--color-gray-700);
+            cursor: pointer;
+            font: inherit;
+            text-align: left;
+        }
+
+        .manage-obras-company-option:hover,
+        .manage-obras-company-option.is-active {
+            background: var(--color-gray-100);
+        }
+
+        @media (max-width: 900px) {
+            .manage-obras-filter {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .manage-obras-page .price-display,
+        .manage-obras-page .obra-total-value,
+        .manage-obras-page .project-total-value,
+        .manage-obras-page [id*="price" i],
+        .manage-obras-page [id*="valor" i],
+        .manage-obras-page .input-valor {
+            visibility: hidden;
+        }
+    </style>
+</head>
+
+<body class="manage-obras-page">
+    <header class="header">
+        <div class="header-left">
+            <img src="https://esienergia.com.br/wp-content/uploads/2023/08/logo-esienergia-white.png"
+                alt="Logo Esquerda" class="logo">
+        </div>
+        <div class="header-center">
+            <h1 id="page-title">Gerenciar Obras</h1>
+        </div>
+        <button class="shutdown-btn" onclick="shutdownManual()" title="Encerrar Servidor">
+            Encerrar Servidor
+        </button>
+    </header>
+
+    <nav class="navbar">
+        <ul class="nav-list">
+            <li><a href="/admin/obras/create" id="nav-criar-obras">Criar Obras</a></li>
+            <li><a href="/admin/obras/manage" id="nav-gerenciar-obras" class="active" data-current-page="true">Gerenciar Obras</a></li>
+            <li><a href="/admin/data" id="nav-editar-dados">Editar dados</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="manage-obras-filter" role="search" aria-label="Filtrar obras">
+                <div class="manage-obras-filter-field">
+                    <label for="manage-obras-filter-empresa">Empresa</label>
+                    <input type="search" id="manage-obras-filter-empresa" placeholder="Empresa" autocomplete="off">
+                    <div id="manage-obras-filter-empresa-dropdown" class="manage-obras-company-dropdown" role="listbox"></div>
+                </div>
+                <div class="manage-obras-filter-field">
+                    <label for="manage-obras-filter-numero-cliente">Nº cliente</label>
+                    <input type="search" id="manage-obras-filter-numero-cliente" placeholder="Nº cliente" inputmode="numeric" autocomplete="off">
+                </div>
+                <div class="manage-obras-filter-field">
+                    <label for="manage-obras-filter-nome-obra">Nome da obra</label>
+                    <input type="search" id="manage-obras-filter-nome-obra" placeholder="Nome da obra" autocomplete="off">
+                </div>
+            </div>
+
+            <div id="projects-container">
+                <!-- Hierarquia: Obra -> Projeto -> Sala -->
+            </div>
+        </div>
+    </main>
+
+    <div id="confirmationModal" class="confirmation-modal hidden">
+        <div class="modal-content">
+            <h2 class="modal-title">Remover da Visualização</h2>
+            <p class="modal-message" id="modalMessage"></p>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" onclick="window.closeConfirmationModal()">Manter</button>
+                <button class="modal-btn btn-confirm" onclick="window.confirmDeletion()">Remover</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <a href="https://github.com/Vfrios" target="_blank" rel="noopener">
+            <i class="fa-brands fa-github"></i> Vitor Rios on GitHub
+        </a>
+    </footer>
+
+    <script type="module" src="/public/scripts/01_Create_Obra/pages/create-obras-page.js"></script>
+    <script type="module" src="/public/scripts/01_Create_Obra/pages/manage-obras-filter.js"></script>
+    <script type="module" src="/public/scripts/01_Create_Obra/pages/manage-obras-visibility.js"></script>
+    <script type="module" src="/public/scripts/01_Create_Obra/main.js"></script>
+</body>
+</html>

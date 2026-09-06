@@ -28,7 +28,7 @@ CREATE TABLE admins (
     raw_json TEXT NOT NULL,
     sort_order INTEGER NOT NULL
 );
-INSERT INTO "admins" VALUES('adm','5tgrySVdG458','{"usuario": "adm", "token": "5tgrySVdG458", "email": "matheus@esienergia.com.br", "criadoEm": "2026-03-19T14:30:59.996Z", "ultimoAcesso": "2026-09-06T14:25:55.332951-03:00"}',0);
+INSERT INTO "admins" VALUES('adm','5tgrySVdG458','{"usuario": "adm", "token": "5tgrySVdG458", "email": "matheus@esienergia.com.br", "criadoEm": "2026-03-19T14:30:59.996Z", "ultimoAcesso": "2026-09-06T15:13:28.382335-03:00"}',0);
 CREATE TABLE constants (
     key TEXT PRIMARY KEY,
     value_json TEXT NOT NULL,
